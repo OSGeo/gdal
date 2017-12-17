@@ -319,7 +319,12 @@ void GRIBRasterBand::FindPDSTemplate()
         {
             GByte *pabyBody = static_cast<GByte *>(CPLMalloc(nSectSize));
             memcpy(pabyBody, abyHead, 5);
-            VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
+            if( VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp) !=
+                    nSectSize - 5 )
+            {
+                CPLFree(pabyBody);
+                return;
+            }
 
             GUInt16 nCoordCount = 0;
             memcpy(&nCoordCount, pabyBody + 6-1, 2);

@@ -2557,7 +2557,7 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
     // we have JPEG_DUAL_MODE_8_12 support, as we'll try again with 12bit JPEG
     // driver.
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(JPGDataset)
-    if (strstr(buffer, "Unsupported JPEG data precision 12") == NULL)
+    if (strstr(buffer, "Unsupported JPEG data precision 12") == nullptr)
 #endif
     CPLError(CE_Failure, CPLE_AppDefined, "libjpeg: %s", buffer);
 
@@ -3040,7 +3040,7 @@ JPGDataset::CreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
                      poSrcDS->GetRasterBand(1)->GetRasterDataType()));
 
         if( bStrict )
-            return NULL;
+            return nullptr;
     }
 
     if( eDT == GDT_UInt16 || eDT == GDT_Int16 )

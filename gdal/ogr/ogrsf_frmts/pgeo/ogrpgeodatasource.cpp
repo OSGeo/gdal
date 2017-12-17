@@ -300,9 +300,7 @@ OGRLayer * OGRPGeoDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRPGeoSelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRPGeoSelectLayer( this, poStmt );
+    OGRPGeoSelectLayer* poLayer = new OGRPGeoSelectLayer( this, poStmt );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

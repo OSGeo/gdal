@@ -838,9 +838,8 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 /*      Turn into a spatial reference.                                  */
 /* -------------------------------------------------------------------- */
     char *pszWKT = papszResult[0];
-    OGRSpatialReference *poSRS = nullptr;
 
-    poSRS = new OGRSpatialReference();
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
     if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;

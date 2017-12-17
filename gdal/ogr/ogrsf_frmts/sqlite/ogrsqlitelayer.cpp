@@ -644,10 +644,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             OGRGeometry *poGeometry = nullptr;
             if ( poGeomFieldDefn->eGeomFormat == OSGF_WKT )
             {
-                char *pszWKTCopy, *pszWKT = nullptr;
-
-                pszWKT = (char *) sqlite3_column_text( hStmt, poGeomFieldDefn->iCol );
-                pszWKTCopy = pszWKT;
+                char* pszWKT = (char *) sqlite3_column_text( hStmt, poGeomFieldDefn->iCol );
+                char* pszWKTCopy = pszWKT;
                 OGRGeometryFactory::createFromWkt(
                         &pszWKTCopy, nullptr, &poGeometry );
             }

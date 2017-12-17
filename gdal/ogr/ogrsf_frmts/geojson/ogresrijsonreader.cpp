@@ -322,8 +322,7 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
 /* -------------------------------------------------------------------- */
     CPLAssert( nullptr != poFeature );
 
-    json_object* poObjProps = nullptr;
-    poObjProps = OGRGeoJSONFindMemberByName( poObj, "attributes" );
+    json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "attributes" );
     if( nullptr != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object )
     {

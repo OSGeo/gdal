@@ -464,11 +464,9 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
 
     if( pszTableStart != nullptr )
     {
-        const char     *pszEnd = nullptr;
-
         pszForcedTables = CPLStrdup( pszTableStart + 7 );
 
-        pszEnd = strchr(pszTableStart, ' ');
+        const char* pszEnd = strchr(pszTableStart, ' ');
         if( pszEnd == nullptr )
             pszEnd = pszConnectionName + strlen(pszConnectionName);
 
@@ -2168,7 +2166,6 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Try looking up in spatial_ref_sys table.                        */
 /* -------------------------------------------------------------------- */
-    PGresult        *hResult = nullptr;
     CPLString        osCommand;
     OGRSpatialReference *poSRS = nullptr;
 
@@ -2176,7 +2173,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
              "SELECT srtext FROM spatial_ref_sys "
              "WHERE srid = %d",
              nId );
-    hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand.c_str() );
 
     if( hResult
         && PQresultStatus(hResult) == PGRES_TUPLES_OK
@@ -2648,10 +2645,9 @@ OGRErr OGRPGDataSource::DoTransactionCommand(const char* pszCommand)
 
 {
     OGRErr      eErr = OGRERR_NONE;
-    PGresult    *hResult = nullptr;
     PGconn      *l_hPGConn = GetPGConn();
 
-    hResult = OGRPG_PQexec(l_hPGConn, pszCommand);
+    PGresult* hResult = OGRPG_PQexec(l_hPGConn, pszCommand);
     osDebugLastTransactionCommand = pszCommand;
 
     if( !hResult || PQresultStatus(hResult) != PGRES_COMMAND_OK )
@@ -2886,14 +2882,13 @@ OGRLayer * OGRPGDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
         if( hResult && PQresultStatus(hResult) == PGRES_COMMAND_OK )
         {
-            OGRPGResultLayer *poLayer = nullptr;
-
             OGRPGClearResult( hResult );
 
             osCommand.Printf( "FETCH 0 in %s", "executeSQLCursor" );
             hResult = OGRPG_PQexec(hPGConn, osCommand );
 
-            poLayer = new OGRPGResultLayer( this, pszSQLCommand, hResult );
+            OGRPGResultLayer* poLayer =
+                new OGRPGResultLayer( this, pszSQLCommand, hResult );
 
             OGRPGClearResult( hResult );
 

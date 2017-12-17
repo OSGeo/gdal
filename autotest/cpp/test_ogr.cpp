@@ -493,7 +493,7 @@ namespace tut
     void object::test<8>()
     {
         OGRField sField;
-        ensure(OGRParseDate("2017/11/31 12:34:56", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 2017);
         ensure_equals(sField.Date.Month, 11);
         ensure_equals(sField.Date.Day, 31);
@@ -502,32 +502,32 @@ namespace tut
         ensure_equals(sField.Date.Second, 56.0f);
         ensure_equals(sField.Date.TZFlag, 0);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56+00", &sField, 0), TRUE);
         ensure_equals(sField.Date.TZFlag, 100);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56+12:00", &sField, 0), TRUE);
         ensure_equals(sField.Date.TZFlag, 100 + 12 * 4);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56+1200", &sField, 0), TRUE);
         ensure_equals(sField.Date.TZFlag, 100 + 12 * 4);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56+815", &sField, 0), TRUE);
         ensure_equals(sField.Date.TZFlag, 100 + 8 * 4 + 1);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56-12:00", &sField, 0), TRUE);
         ensure_equals(sField.Date.TZFlag, 100 - 12 * 4);
 
-        ensure(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0));
+        ensure_equals(OGRParseDate(" 2017/11/31 12:34:56", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 2017);
 
-        ensure(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:56.789", &sField, 0), TRUE);
         ensure_equals(sField.Date.Second, 56.789f);
 
         // Leap second
-        ensure(OGRParseDate("2017/11/31 12:34:60", &sField, 0));
+        ensure_equals(OGRParseDate("2017/11/31 12:34:60", &sField, 0), TRUE);
         ensure_equals(sField.Date.Second, 60.0f);
 
-        ensure(OGRParseDate("2017-11-31T12:34:56", &sField, 0));
+        ensure_equals(OGRParseDate("2017-11-31T12:34:56", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 2017);
         ensure_equals(sField.Date.Month, 11);
         ensure_equals(sField.Date.Day, 31);
@@ -536,15 +536,15 @@ namespace tut
         ensure_equals(sField.Date.Second, 56.0f);
         ensure_equals(sField.Date.TZFlag, 0);
 
-        ensure(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0));
+        ensure_equals(OGRParseDate("2017-11-31T12:34:56Z", &sField, 0), TRUE);
         ensure_equals(sField.Date.Second, 56.0f);
         ensure_equals(sField.Date.TZFlag, 100);
 
-        ensure(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0));
+        ensure_equals(OGRParseDate("2017-11-31T12:34:56.789Z", &sField, 0), TRUE);
         ensure_equals(sField.Date.Second, 56.789f);
         ensure_equals(sField.Date.TZFlag, 100);
 
-        ensure(OGRParseDate("2017-11-31", &sField, 0));
+        ensure_equals(OGRParseDate("2017-11-31", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 2017);
         ensure_equals(sField.Date.Month, 11);
         ensure_equals(sField.Date.Day, 31);
@@ -553,7 +553,7 @@ namespace tut
         ensure_equals(sField.Date.Second, 0.0f);
         ensure_equals(sField.Date.TZFlag, 0);
 
-        ensure(OGRParseDate("12:34", &sField, 0));
+        ensure_equals(OGRParseDate("12:34", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 0);
         ensure_equals(sField.Date.Month, 0);
         ensure_equals(sField.Date.Day, 0);
@@ -562,8 +562,8 @@ namespace tut
         ensure_equals(sField.Date.Second, 0.0f);
         ensure_equals(sField.Date.TZFlag, 0);
 
-        ensure(OGRParseDate("12:34:56", &sField, 0));
-        ensure(OGRParseDate("12:34:56.789", &sField, 0));
+        ensure_equals(OGRParseDate("12:34:56", &sField, 0), TRUE);
+        ensure_equals(OGRParseDate("12:34:56.789", &sField, 0), TRUE);
 
         ensure(!OGRParseDate("2017", &sField, 0));
         ensure(!OGRParseDate("12:", &sField, 0));
@@ -604,7 +604,7 @@ namespace tut
 
         ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
 
-        ensure( oPoly.IsPointOnSurface(&oPoint) );
+        ensure_equals( oPoly.IsPointOnSurface(&oPoint), TRUE );
 
         oPoint.setX(5);
         oPoint.setY(5);

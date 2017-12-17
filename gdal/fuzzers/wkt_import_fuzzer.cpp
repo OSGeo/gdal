@@ -44,13 +44,13 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRGeometryH hGeom = NULL;
+    OGRGeometryH hGeom = nullptr;
     char* pszWKT = static_cast<char*>(CPLMalloc( len + 1 ));
     memcpy(pszWKT, buf, len);
     pszWKT[len] = '\0';
     char* pszWKTParam = pszWKT;
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OGR_G_CreateFromWkt( &pszWKTParam, NULL, &hGeom );
+    OGR_G_CreateFromWkt( &pszWKTParam, nullptr, &hGeom );
     CPLPopErrorHandler();
     CPLFree(pszWKT);
     OGR_G_DestroyGeometry(hGeom);

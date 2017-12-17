@@ -550,10 +550,8 @@ OGRLayer * OGRGFTDataSource::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
-    OGRGFTResultLayer *poLayer = nullptr;
-
     CPLString osSQL = pszSQLCommand;
-    poLayer = new OGRGFTResultLayer( this, osSQL );
+    OGRGFTResultLayer* poLayer = new OGRGFTResultLayer( this, osSQL );
     if (!poLayer->RunSQL())
     {
         delete poLayer;

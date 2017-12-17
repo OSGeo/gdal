@@ -116,8 +116,9 @@ int OGRGeomediaDataSource::Open( const char * pszNewName, int bUpdate,
         pszDSN = CPLStrdup( pszNewName + 9 );
     else
     {
-        const char *pszDSNStringTemplate = nullptr;
-        pszDSNStringTemplate = CPLGetConfigOption( "GEOMEDIA_DRIVER_TEMPLATE", "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
+        const char *pszDSNStringTemplate = 
+            CPLGetConfigOption( "GEOMEDIA_DRIVER_TEMPLATE",
+                            "DRIVER=Microsoft Access Driver (*.mdb);DBQ=%s");
         if (!CheckDSNStringTemplate(pszDSNStringTemplate))
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -414,9 +415,8 @@ OGRLayer * OGRGeomediaDataSource::ExecuteSQL( const char *pszSQLCommand,
 /*      Create a results layer.  It will take ownership of the          */
 /*      statement.                                                      */
 /* -------------------------------------------------------------------- */
-    OGRGeomediaSelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRGeomediaSelectLayer( this, poStmt );
+    OGRGeomediaSelectLayer *poLayer =
+                                new OGRGeomediaSelectLayer( this, poStmt );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

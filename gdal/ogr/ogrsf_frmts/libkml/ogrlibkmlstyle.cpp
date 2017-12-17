@@ -310,7 +310,7 @@ StylePtr addstylestring2kml(
                 if( !nullcheck &&
                     poStyleLabel->GetRGBFromString( pszcolor, nR, nG, nB, nA ) )
                 {
-                    if( poKmlLabelStyle == nullptr )
+                    if( !poKmlLabelStyle )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
                     poKmlLabelStyle->set_color(
                         Color32 ( static_cast<GByte>(nA),
@@ -325,7 +325,7 @@ StylePtr addstylestring2kml(
                 if( !nullcheck )
                 {
                     dfScale /= 100.0;
-                    if( poKmlLabelStyle == nullptr )
+                    if( !poKmlLabelStyle )
                         poKmlLabelStyle = poKmlFactory->CreateLabelStyle();
                     poKmlLabelStyle->set_scale( dfScale );
                 }
@@ -372,7 +372,7 @@ StylePtr addstylestring2kml(
                 const char * const pszText =
                     poStyleLabel->TextString( nullcheck );
 
-                if( !nullcheck && poKmlFeature != nullptr )
+                if( !nullcheck && poKmlFeature )
                 {
                         poKmlFeature->set_name( pszText );
                 }
@@ -391,7 +391,7 @@ StylePtr addstylestring2kml(
 
     if( poKmlLineStyle || poKmlPolyStyle || poKmlIconStyle || poKmlLabelStyle )
     {
-        if( poKmlStyle == nullptr )
+        if( !poKmlStyle )
             poKmlStyle = poKmlFactory->CreateStyle();
 
         if( poKmlLineStyle )
@@ -926,8 +926,7 @@ static StyleSelectorPtr StyleFromStyleURL(
                 ParseStyles( AsDocument( poKmlContainer ), &poStyleTable );
 
                 /***** look for the style we need to map to in the table *****/
-                const char *pszTest = nullptr;
-                pszTest = poStyleTable->Find(pszRemoteStyleName);
+                const char *pszTest = poStyleTable->Find(pszRemoteStyleName);
 
                 /***** if found copy it to the table as a new style *****/
                 if( pszTest )
@@ -1038,7 +1037,7 @@ void ParseStyles(
         char *pszStyleMapId = CPLStrdup( poKmlStyle->get_id().c_str() );
         poKmlStyle =
             StyleFromStyleMap(kmldom::AsStyleMap(poKmlStyle), *poStyleTable);
-        if( poKmlStyle == nullptr )
+        if( !poKmlStyle )
         {
             CPLFree(pszStyleMapId);
             continue;
@@ -1052,8 +1051,7 @@ void ParseStyles(
 
         // Change the name of the new style in the style table
 
-        const char *pszTest = nullptr;
-        pszTest = (*poStyleTable)->Find(pszStyleId);
+        const char *pszTest = (*poStyleTable)->Find(pszStyleId);
         // If we found the style we want in the style table we...
         if( pszTest )
         {

@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2009,  Frank Warmerdam
  * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +39,7 @@
 #include <map>
 #include <set>
 #include <queue>
+#include <memory>
 
 class OGRDXFDataSource;
 class OGRDXFFeature;
@@ -264,6 +266,7 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateLINE();
     OGRDXFFeature *     TranslatePOLYLINE();
     OGRDXFFeature *     TranslateLWPOLYLINE();
+    OGRDXFFeature *     TranslateMLINE();
     OGRDXFFeature *     TranslateCIRCLE();
     OGRDXFFeature *     TranslateELLIPSE();
     OGRDXFFeature *     TranslateARC();
@@ -278,6 +281,19 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateLEADER();
     OGRDXFFeature *     TranslateMLEADER();
 
+    void                TranslateINSERTCore( OGRDXFFeature* const poTemplateFeature,
+                                             const CPLString& osBlockName,
+                                             OGRDXFInsertTransformer oTransformer,
+                                             const double dfExtraXOffset,
+                                             const double dfExtraYOffset,
+                                             char** const papszAttribs,
+                         const std::vector<std::unique_ptr<OGRDXFFeature>>& apoAttribs );
+    OGRLineString *     InsertSplineWithChecks( const int nDegree,
+                                                std::vector<double>& adfControlPoints,
+                                                int nControlPoints,
+                                                std::vector<double>& adfKnots,
+                                                int nKnots,
+                                                std::vector<double>& adfWeights );
     static OGRGeometry *SimplifyBlockGeometry( OGRGeometryCollection * );
     OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
                                            OGRDXFInsertTransformer oTransformer,

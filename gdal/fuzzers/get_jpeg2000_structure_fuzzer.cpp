@@ -52,7 +52,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     VSILFILE* fp = VSIFileFromMemBuffer( MEM_FILENAME,
             reinterpret_cast<GByte*>(const_cast<uint8_t*>(buf)), len, FALSE );
     VSIFCloseL(fp);
-    char** papszOptions = CSLSetNameValue(NULL, "ALL", "YES");
+    char** papszOptions = CSLSetNameValue(nullptr, "ALL", "YES");
     CPLPushErrorHandler(CPLQuietErrorHandler);
     CPLXMLNode* psNode = GDALGetJPEG2000Structure(MEM_FILENAME, papszOptions);
     CPLPopErrorHandler();

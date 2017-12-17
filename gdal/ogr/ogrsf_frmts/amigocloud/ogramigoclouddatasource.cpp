@@ -156,7 +156,7 @@ bool OGRAmigoCloudDataSource::ListDatasets()
 
     if( result != nullptr )
     {
-        int type = json_object_get_type(result);
+        auto type = json_object_get_type(result);
         if(type == json_type_object)
         {
             json_object *poResults = CPL_json_object_object_get(result, "results");
@@ -166,7 +166,7 @@ bool OGRAmigoCloudDataSource::ListDatasets()
                     CPLprintf("List of available datasets for project id: %s\n", GetProjectId());
                     CPLprintf("| id \t | name\n");
                     CPLprintf("|--------|-------------------\n");
-                    for(int i = 0; i < res->length; i++) {
+                    for(decltype(res->length) i = 0; i < res->length; i++) {
                         json_object *ds = (json_object*)array_list_get_idx(res, i);
                         if(ds!=nullptr) {
                             const char *name = nullptr;
@@ -541,9 +541,8 @@ bool OGRAmigoCloudDataSource::waitForJobToFinish(const char* jobId)
 {
     std::stringstream url;
     url << std::string(GetAPIURL()) << "/me/jobs/" << std::string(jobId);
-    bool done = false;
     int count = 0;
-    while (!done && count<5) {
+    while (count<5) {
         count++;
         json_object *result = RunGET(url.str().c_str());
         if (result == nullptr) {

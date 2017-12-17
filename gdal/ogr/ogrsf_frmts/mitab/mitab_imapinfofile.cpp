@@ -234,7 +234,6 @@ OGRFeature *IMapInfoFile::GetNextFeature()
 TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
 {
     TABFeature *poTABFeature = nullptr;
-    OGRGeometry   *poGeom = nullptr;
     OGRwkbGeometryType eGType;
     TABPoint *poTABPointFeature = nullptr;
     TABRegion *poTABRegionFeature = nullptr;
@@ -245,7 +244,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
      * from TABFeature... so we have to do our best to map to the right
      * feature type based on the geometry type.
      *----------------------------------------------------------------*/
-    poGeom = poFeature->GetGeometryRef();
+    OGRGeometry* poGeom = poFeature->GetGeometryRef();
     if( poGeom != nullptr )
         eGType = poGeom->getGeometryType();
     else

@@ -2605,7 +2605,7 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
         // start index
         returnErrorAndCleanupIf( !ReadVarUInt32(pabyCur, pabyEnd, nTmp),
                                  VSIFree(pabyExtShapeBuffer) );
-        nTmp = CPL_LSBWORD32(nTmp);
+        CPL_LSBPTR32(&nTmp);
         memcpy( pabyExtShapeBuffer + nOffset, &nTmp, 4 );
         nOffset += 4;
 

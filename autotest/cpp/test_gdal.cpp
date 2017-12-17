@@ -417,15 +417,15 @@ namespace tut
     template<> template<> void object::test<13>()
     {
         ensure( !GDALDataTypeIsInteger(GDT_Unknown) );
-        ensure( GDALDataTypeIsInteger(GDT_Byte) );
-        ensure( GDALDataTypeIsInteger(GDT_UInt16) );
-        ensure( GDALDataTypeIsInteger(GDT_Int16) );
-        ensure( GDALDataTypeIsInteger(GDT_UInt32) );
-        ensure( GDALDataTypeIsInteger(GDT_Int32) );
+        ensure_equals( GDALDataTypeIsInteger(GDT_Byte), TRUE );
+        ensure_equals( GDALDataTypeIsInteger(GDT_UInt16), TRUE );
+        ensure_equals( GDALDataTypeIsInteger(GDT_Int16), TRUE );
+        ensure_equals( GDALDataTypeIsInteger(GDT_UInt32), TRUE );
+        ensure_equals( GDALDataTypeIsInteger(GDT_Int32), TRUE );
         ensure( !GDALDataTypeIsInteger(GDT_Float32) );
         ensure( !GDALDataTypeIsInteger(GDT_Float64) );
-        ensure( GDALDataTypeIsInteger(GDT_CInt16) );
-        ensure( GDALDataTypeIsInteger(GDT_CInt32) );
+        ensure_equals( GDALDataTypeIsInteger(GDT_CInt16), TRUE );
+        ensure_equals( GDALDataTypeIsInteger(GDT_CInt32), TRUE );
         ensure( !GDALDataTypeIsInteger(GDT_CFloat32) );
         ensure( !GDALDataTypeIsInteger(GDT_CFloat64) );
     }
@@ -439,12 +439,12 @@ namespace tut
         ensure( !GDALDataTypeIsFloating(GDT_Int16) );
         ensure( !GDALDataTypeIsFloating(GDT_UInt32) );
         ensure( !GDALDataTypeIsFloating(GDT_Int32) );
-        ensure( GDALDataTypeIsFloating(GDT_Float32) );
-        ensure( GDALDataTypeIsFloating(GDT_Float64) );
+        ensure_equals( GDALDataTypeIsFloating(GDT_Float32), TRUE );
+        ensure_equals( GDALDataTypeIsFloating(GDT_Float64), TRUE );
         ensure( !GDALDataTypeIsFloating(GDT_CInt16) );
         ensure( !GDALDataTypeIsFloating(GDT_CInt32) );
-        ensure( GDALDataTypeIsFloating(GDT_CFloat32) );
-        ensure( GDALDataTypeIsFloating(GDT_CFloat64) );
+        ensure_equals( GDALDataTypeIsFloating(GDT_CFloat32), TRUE );
+        ensure_equals( GDALDataTypeIsFloating(GDT_CFloat64), TRUE );
     }
 
     // Test GDALDataTypeIsComplex()
@@ -458,10 +458,10 @@ namespace tut
         ensure( !GDALDataTypeIsComplex(GDT_Int32) );
         ensure( !GDALDataTypeIsComplex(GDT_Float32) );
         ensure( !GDALDataTypeIsComplex(GDT_Float64) );
-        ensure( GDALDataTypeIsComplex(GDT_CInt16) );
-        ensure( GDALDataTypeIsComplex(GDT_CInt32) );
-        ensure( GDALDataTypeIsComplex(GDT_CFloat32) );
-        ensure( GDALDataTypeIsComplex(GDT_CFloat64) );
+        ensure_equals( GDALDataTypeIsComplex(GDT_CInt16), TRUE );
+        ensure_equals( GDALDataTypeIsComplex(GDT_CInt32), TRUE );
+        ensure_equals( GDALDataTypeIsComplex(GDT_CFloat32), TRUE );
+        ensure_equals( GDALDataTypeIsComplex(GDT_CFloat64), TRUE );
     }
 
 } // namespace tut

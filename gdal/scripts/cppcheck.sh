@@ -22,7 +22,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -UGDAL_NO_AUTOLOAD \
         -DHAVE_MITAB \
         -Dva_copy=va_start \
-        -D__cplusplus \
+        -D__cplusplus=201103 \
         -DVSIRealloc=realloc \
         -DCPPCHECK \
         -DDEBUG_MUTEX \

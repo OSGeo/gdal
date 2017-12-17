@@ -242,9 +242,8 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
     {
         const CPLString osNewURL =
             CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
-        CPLHTTPResult* pResult = nullptr;
         CPLErrorReset();
-        pResult = CPLHTTPFetch( osNewURL, nullptr );
+        CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
         if( pResult != nullptr &&
             pResult->nDataLen != 0 &&
             CPLGetLastErrorNo() == 0 &&
@@ -663,6 +662,7 @@ void RegisterOGRGeoJSON()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String IntegerList "
                                "Integer64List RealList StringList" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
 
     poDriver->pfnOpen = OGRGeoJSONDriverOpen;
     poDriver->pfnIdentify = OGRGeoJSONDriverIdentify;

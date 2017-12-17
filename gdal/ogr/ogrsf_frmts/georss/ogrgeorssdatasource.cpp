@@ -406,7 +406,6 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
         return TRUE;
     }
 
-    const char* pszHeader = nullptr;
     const char* pszTitle = nullptr;
     const char* pszDescription = nullptr;
     const char* pszLink = nullptr;
@@ -414,7 +413,7 @@ int OGRGeoRSSDataSource::Create( const char *pszFilename,
     const char* pszAuthorName = nullptr;
     const char* pszId = nullptr;
 
-    pszHeader = CSLFetchNameValue(papszOptions, "HEADER");
+    const char* pszHeader = CSLFetchNameValue(papszOptions, "HEADER");
 
     if (eFormat == GEORSS_RSS && pszHeader == nullptr)
     {

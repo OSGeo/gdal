@@ -1301,6 +1301,7 @@ CPLString OGRGMLASLayer::LaunderFieldName(const CPLString& osFieldName)
         CPLString osCandidate;
         do
         {
+            nCounter ++;
             osCandidate = OGRGMLASAddSerialNumber( osLaunderedName,
                                                    nCounter,
                                                    nCounter + 1,

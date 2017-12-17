@@ -257,7 +257,7 @@ FeaturePtr feat2kml(
         poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
         wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
         (camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
-                                 poOgrFeat, poKmlFactory)) != nullptr)
+                                 poOgrFeat, poKmlFactory)) )
     {
         const int iLeftFovField = poOgrFeat->GetFieldIndex(oFC.leftfovfield);
         const int iRightFovField = poOgrFeat->GetFieldIndex(oFC.rightfovfield);
@@ -477,7 +477,7 @@ FeaturePtr feat2kml(
     }
 
     // NetworkLink.
-    if( poKmlFeature == nullptr && iNetworkLink >= 0 &&
+    if( !poKmlFeature && iNetworkLink >= 0 &&
         poOgrFeat->IsFieldSetAndNotNull(iNetworkLink) )
     {
         const NetworkLinkPtr poKmlNetworkLink =
@@ -606,7 +606,7 @@ FeaturePtr feat2kml(
     }
 
     // Model.
-    else if( poKmlFeature == nullptr &&
+    else if( !poKmlFeature &&
              iModel >= 0 &&
              poOgrFeat->IsFieldSetAndNotNull(iModel) &&
              poOgrGeom != nullptr && !poOgrGeom->IsEmpty() &&
@@ -738,7 +738,7 @@ FeaturePtr feat2kml(
                                 EQUAL(pszExtension, "png") ||
                                 EQUAL(pszExtension, "gif") )
                             {
-                                if( resourceMap == nullptr )
+                                if( !resourceMap )
                                     resourceMap =
                                         poKmlFactory->CreateResourceMap();
                                 const AliasPtr alias =
@@ -762,7 +762,7 @@ FeaturePtr feat2kml(
                         }
                     }
                 }
-                if( resourceMap != nullptr )
+                if( resourceMap )
                     model->set_resourcemap(resourceMap);
                 VSIFCloseL(fp);
             }
@@ -772,7 +772,7 @@ FeaturePtr feat2kml(
     }
 
     // Camera.
-    else if( poKmlFeature == nullptr && poOgrGeom != nullptr &&
+    else if( !poKmlFeature && poOgrGeom != nullptr &&
              !poOgrGeom->IsEmpty() &&
              wkbFlatten(poOgrGeom->getGeometryType()) == wkbPoint &&
              poOgrFeat->GetFieldIndex(oFC.camera_longitude_field) < 0 &&
@@ -830,7 +830,7 @@ FeaturePtr feat2kml(
             camera->set_roll(poOgrFeat->GetFieldAsDouble(iRoll));
         poKmlPlacemark->set_abstractview(camera);
     }
-    else if( poKmlFeature == nullptr )
+    else if( !poKmlFeature )
     {
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
@@ -840,10 +840,10 @@ FeaturePtr feat2kml(
         poKmlPlacemark->set_geometry( AsGeometry( poKmlElement ) );
     }
 
-    if( camera == nullptr )
+    if( !camera )
         camera = feat2kmlcamera(oFC, iHeading, iTilt, iRoll,
                                 poOgrFeat, poKmlFactory);
-    if( camera != nullptr )
+    if( camera )
         poKmlFeature->set_abstractview(camera);
 
     /***** style *****/

@@ -758,21 +758,19 @@ class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
                         VSIVirtualHandle* poBaseHandle,
                         VSICryptFileHeader* poHeader,
                         int nPerms );
-    virtual ~VSICryptFileHandle();
+    ~VSICryptFileHandle() override;
 
     int                  Init( const CPLString& osKey,
                                bool bWriteHeader = false );
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t       Read( void *pBuffer, size_t nSize,
-                               size_t nMemb ) override;
-    virtual size_t       Write( const void *pBuffer, size_t nSize,
-                                size_t nMemb ) override;
-    virtual int          Eof() override;
-    virtual int          Flush() override;
-    virtual int          Close() override;
-    virtual int          Truncate( vsi_l_offset nNewSize ) override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
+    int Truncate( vsi_l_offset nNewSize ) override;
 };
 
 /************************************************************************/
@@ -1421,18 +1419,16 @@ class VSICryptFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
 public:
     VSICryptFilesystemHandler();
-    virtual ~VSICryptFilesystemHandler();
+    ~VSICryptFilesystemHandler() override;
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
-    virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Rename( const char *oldpath, const char *newpath )
-        override;
-    virtual char**   ReadDirEx( const char *pszDirname, int nMaxFiles )
-        override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
+    char** ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 };
 
 /************************************************************************/
@@ -2065,17 +2061,17 @@ class VSIDummyCryptFilesystemHandler : public VSIFilesystemHandler
 public:
     VSIDummyCryptFilesystemHandler() {}
 
-    virtual VSIVirtualHandle *Open( const char * /* pszFilename */,
-                                    const char * /* pszAccess */,
-                                    bool /* bSetError */ ) override
+    VSIVirtualHandle *Open( const char * /* pszFilename */,
+                            const char * /* pszAccess */,
+                            bool /* bSetError */ ) override
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);
         return nullptr;
     }
 
-    virtual int Stat( const char * /* pszFilename */,
-                      VSIStatBufL * /*pStatBuf */, int /* nFlags */ ) override
+    int Stat( const char * /* pszFilename */,
+              VSIStatBufL * /*pStatBuf */, int /* nFlags */ ) override
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s support not available in this build", VSICRYPT_PREFIX);

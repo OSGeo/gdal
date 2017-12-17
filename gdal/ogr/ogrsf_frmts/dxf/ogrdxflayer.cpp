@@ -7,6 +7,7 @@
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +36,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <memory>
 
 CPL_CVSID("$Id$")
 
@@ -1545,6 +1547,209 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
 }
 
 /************************************************************************/
+/*                           TranslateMLINE()                           */
+/************************************************************************/
+
+OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
+
+    bool bIsClosed = false;
+    int nNumVertices = 0;
+    int nNumElements = 0;
+
+    while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 &&
+        nCode != 11 )
+    {
+        switch( nCode )
+        {
+          case 71:
+            bIsClosed = ( atoi(szLineBuf) & 2 ) == 2;
+            break;
+
+          case 72:
+            nNumVertices = atoi(szLineBuf);
+            break;
+
+          case 73:
+            nNumElements = atoi(szLineBuf);
+            break;
+
+          default:
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return nullptr;
+    }
+
+    if( nCode == 0 || nCode == 11 )
+        poDS->UnreadValue();
+
+/* -------------------------------------------------------------------- */
+/*      Read in the position and parameters for each vertex, and        */
+/*      translate these values into line geometries.                    */
+/* -------------------------------------------------------------------- */
+
+    OGRMultiLineString *poMLS = new OGRMultiLineString();
+    std::vector<std::unique_ptr<OGRLineString>> apoCurrentLines( nNumElements );
+
+    // For use when bIsClosed is true
+    std::vector<DXFTriple> aoInitialVertices( nNumElements );
+
+#define EXPECT_CODE(code) \
+    if( poDS->ReadValue( szLineBuf, sizeof(szLineBuf) ) != (code) ) \
+    { \
+        DXF_LAYER_READER_ERROR(); \
+        delete poFeature; \
+        delete poMLS; \
+        return nullptr; \
+    }
+
+    for( int iVertex = 0; iVertex < nNumVertices; iVertex++ )
+    {
+        EXPECT_CODE(11);
+        const double dfVertexX = CPLAtof(szLineBuf);
+        EXPECT_CODE(21);
+        const double dfVertexY = CPLAtof(szLineBuf);
+        EXPECT_CODE(31);
+        const double dfVertexZ = CPLAtof(szLineBuf);
+
+        EXPECT_CODE(12);
+        const double dfSegmentDirectionX = CPLAtof(szLineBuf);
+        EXPECT_CODE(22);
+        const double dfSegmentDirectionY = CPLAtof(szLineBuf);
+        EXPECT_CODE(32);
+        const double dfSegmentDirectionZ = CPLAtof(szLineBuf);
+
+        EXPECT_CODE(13);
+        const double dfMiterDirectionX = CPLAtof(szLineBuf);
+        EXPECT_CODE(23);
+        const double dfMiterDirectionY = CPLAtof(szLineBuf);
+        EXPECT_CODE(33);
+        const double dfMiterDirectionZ = CPLAtof(szLineBuf);
+
+        for( int iElement = 0; iElement < nNumElements; iElement++ )
+        {
+            double dfStartSegmentX = 0.0;
+            double dfStartSegmentY = 0.0;
+            double dfStartSegmentZ = 0.0;
+
+            EXPECT_CODE(74);
+            const int nNumParameters = atoi(szLineBuf);
+
+            // The first parameter is special: it is a distance along the
+            // miter vector from the initial vertex to the start of the
+            // element line.
+            if( nNumParameters > 0 )
+            {
+                EXPECT_CODE(41);
+                const double dfDistance = CPLAtof(szLineBuf);
+
+                dfStartSegmentX = dfVertexX + dfMiterDirectionX * dfDistance;
+                dfStartSegmentY = dfVertexY + dfMiterDirectionY * dfDistance;
+                dfStartSegmentZ = dfVertexZ + dfMiterDirectionZ * dfDistance;
+
+                if( bIsClosed && iVertex == 0 )
+                {
+                    aoInitialVertices[iElement] = DXFTriple( dfStartSegmentX,
+                        dfStartSegmentY, dfStartSegmentZ );
+                }
+
+                // If we have an unfinished line for this element, we need
+                // to close it off.
+                if( apoCurrentLines[iElement] )
+                {
+                    apoCurrentLines[iElement]->addPoint(
+                        dfStartSegmentX, dfStartSegmentY, dfStartSegmentZ );
+                    poMLS->addGeometryDirectly(
+                        apoCurrentLines[iElement].release() );
+                }
+            }
+
+            // Parameters with an odd index give pen-up distances (breaks),
+            // while even indexes are pen-down distances (line segments).
+            for( int iParameter = 1;
+                 iParameter < nNumParameters;
+                 iParameter++ )
+            {
+                EXPECT_CODE(41);
+                const double dfDistance = CPLAtof(szLineBuf);
+
+                const double dfCurrentX = dfStartSegmentX +
+                    dfSegmentDirectionX * dfDistance;
+                const double dfCurrentY = dfStartSegmentY +
+                    dfSegmentDirectionY * dfDistance;
+                const double dfCurrentZ = dfStartSegmentZ +
+                    dfSegmentDirectionZ * dfDistance;
+
+                if( iParameter % 2 == 0 )
+                {
+                    // The dfCurrent(X,Y,Z) point is the end of a line segment
+                    CPLAssert( apoCurrentLines[iElement] );
+                    apoCurrentLines[iElement]->addPoint(
+                        dfCurrentX, dfCurrentY, dfCurrentZ );
+                    poMLS->addGeometryDirectly(
+                        apoCurrentLines[iElement].release() );
+                }
+                else
+                {
+                    // The dfCurrent(X,Y,Z) point is the end of a break
+                    apoCurrentLines[iElement] =
+                        std::unique_ptr<OGRLineString>( new OGRLineString() );
+                    apoCurrentLines[iElement]->addPoint( dfCurrentX,
+                        dfCurrentY, dfCurrentZ );
+                }
+            }
+
+            EXPECT_CODE(75);
+            const int nNumAreaFillParams = atoi(szLineBuf);
+
+            for( int iParameter = 0;
+                 iParameter < nNumAreaFillParams;
+                 iParameter++ )
+            {
+                EXPECT_CODE(42);
+            }
+        }
+    }
+
+#undef EXPECT_CODE
+
+    // Close the MLINE if required.
+    if( bIsClosed )
+    {
+        for( int iElement = 0; iElement < nNumElements; iElement++ )
+        {
+            if( apoCurrentLines[iElement] )
+            {
+                apoCurrentLines[iElement]->addPoint(
+                    aoInitialVertices[iElement].dfX,
+                    aoInitialVertices[iElement].dfY,
+                    aoInitialVertices[iElement].dfZ );
+                poMLS->addGeometryDirectly(
+                    apoCurrentLines[iElement].release() );
+            }
+        }
+    }
+
+    poFeature->ApplyOCSTransformer( poMLS );
+    poFeature->SetGeometryDirectly( poMLS );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                          TranslateCIRCLE()                           */
 /************************************************************************/
 
@@ -1877,27 +2082,21 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 {
     char szLineBuf[257];
     int nCode;
+    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
+
+    std::vector<double> adfControlPoints( 1, 0.0 );
+    std::vector<double> adfKnots( 1, 0.0 );
+    std::vector<double> adfWeights( 1, 0.0 );
     int nDegree = -1;
-    int nOrder = -1;
-    int i;
     int nControlPoints = -1;
     int nKnots = -1;
-    bool bResult = false;
-    bool bCalculateKnots = false;
-    OGRDXFFeature *poFeature = new OGRDXFFeature( poFeatureDefn );
-    std::vector<double> adfControlPoints;
-    std::vector<double> adfKnots;
-    std::vector<double> adfWeights;
-
-    adfControlPoints.push_back(0.0);
-    adfKnots.push_back(0.0);
-    adfWeights.push_back(0.0);
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
 /* -------------------------------------------------------------------- */
     while( (nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf))) > 0 )
     {
+        bool bStop = false;
         switch( nCode )
         {
           case 10:
@@ -1953,10 +2152,19 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
             }
             break;
 
+          case 100:
+            if( EQUAL(szLineBuf, "AcDbHelix") )
+                bStop = true;
+            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
         }
+
+        if( bStop )
+            break;
     }
     if( nCode < 0 )
     {
@@ -1969,11 +2177,44 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         poDS->UnreadValue();
 
 /* -------------------------------------------------------------------- */
+/*      Use the helper function to check the input data and insert      */
+/*      the spline.                                                     */
+/* -------------------------------------------------------------------- */
+    OGRLineString *poLS = InsertSplineWithChecks( nDegree,
+        adfControlPoints, nControlPoints, adfKnots, nKnots, adfWeights );
+
+    if( !poLS )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return nullptr;
+    }
+
+    poFeature->SetGeometryDirectly( poLS );
+
+    PrepareLineStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                       InsertSplineWithChecks()                       */
+/*                                                                      */
+/*     Inserts a spline based on unchecked DXF input.  The arrays are   */
+/*     one-based.                                                       */
+/************************************************************************/
+
+OGRLineString *OGRDXFLayer::InsertSplineWithChecks( const int nDegree,
+    std::vector<double>& adfControlPoints, int nControlPoints,
+    std::vector<double>& adfKnots, int nKnots,
+    std::vector<double>& adfWeights )
+{
+/* -------------------------------------------------------------------- */
 /*      Sanity checks                                                   */
 /* -------------------------------------------------------------------- */
-    nOrder = nDegree + 1;
+    const int nOrder = nDegree + 1;
 
-    bResult = ( nOrder >= 2 );
+    bool bResult = ( nOrder >= 2 );
     if( bResult == true )
     {
         // Check whether nctrlpts value matches number of vertices read
@@ -1987,6 +2228,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         bResult = ( nControlPoints >= nOrder && nControlPoints == nCheck);
     }
 
+    bool bCalculateKnots = false;
     if( bResult == true )
     {
         int nCheck = static_cast<int>(adfKnots.size()) - 1;
@@ -1998,7 +2240,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
         if( nCheck == 0 )
         {
             bCalculateKnots = true;
-            for( i = 0; i < (nControlPoints + nOrder); i++ )
+            for( int i = 0; i < (nControlPoints + nOrder); i++ )
                 adfKnots.push_back( 0.0 );
 
             nCheck = static_cast<int>(adfKnots.size()) - 1;
@@ -2019,7 +2261,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
 
         if( nWeights == 0 )
         {
-            for( i = 0; i < nControlPoints; i++ )
+            for( int i = 0; i < nControlPoints; i++ )
                 adfWeights.push_back( 1.0 );
 
             nWeights = static_cast<int>(adfWeights.size()) - 1;
@@ -2030,11 +2272,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     }
 
     if( bResult == false )
-    {
-        DXF_LAYER_READER_ERROR();
-        delete poFeature;
         return nullptr;
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Interpolate spline                                              */
@@ -2043,7 +2281,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     std::vector<double> p;
 
     p.push_back( 0.0 );
-    for( i = 0; i < 3*p1; i++ )
+    for( int i = 0; i < 3*p1; i++ )
         p.push_back( 0.0 );
 
     rbspline2( nControlPoints, nOrder, p1, &(adfControlPoints[0]),
@@ -2055,14 +2293,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateSPLINE()
     OGRLineString *poLS = new OGRLineString();
 
     poLS->setNumPoints( p1 );
-    for( i = 0; i < p1; i++ )
+    for( int i = 0; i < p1; i++ )
         poLS->setPoint( i, p[i*3+1], p[i*3+2] );
 
-    poFeature->SetGeometryDirectly( poLS );
-
-    PrepareLineStyle( poFeature );
-
-    return poFeature;
+    return poLS;
 }
 
 /************************************************************************/
@@ -2736,13 +2970,17 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
     char szLineBuf[257];
     int nCode = 0;
 
-    OGRDXFFeature* poFeature = new OGRDXFFeature( poFeatureDefn );
+    OGRDXFFeature *poTemplateFeature = new OGRDXFFeature( poFeatureDefn );
     OGRDXFInsertTransformer oTransformer;
     CPLString osBlockName;
 
+    int nColumnCount = 1;
+    int nRowCount = 1;
+    double dfColumnSpacing = 0.0;
+    double dfRowSpacing = 0.0;
+
     bool bHasAttribs = false;
-    // TODO change this to use smart pointers when C++11 mode is enabled
-    std::queue<OGRDXFFeature *> apoAttribs;
+    std::vector<std::unique_ptr<OGRDXFFeature>> apoAttribs;
 
 /* -------------------------------------------------------------------- */
 /*      Process values.                                                 */
@@ -2775,6 +3013,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             oTransformer.dfZScale = CPLAtof(szLineBuf);
             break;
 
+          case 44:
+            dfColumnSpacing = CPLAtof(szLineBuf);
+            break;
+
+          case 45:
+            dfRowSpacing = CPLAtof(szLineBuf);
+            break;
+
           case 50:
             // We want to transform this to radians.
             // It is apparently always in degrees regardless of $AUNITS
@@ -2785,19 +3031,27 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             bHasAttribs = atoi(szLineBuf) == 1;
             break;
 
+          case 70:
+            nColumnCount = atoi(szLineBuf);
+            break;
+
+          case 71:
+            nRowCount = atoi(szLineBuf);
+            break;
+
           case 2:
             osBlockName = szLineBuf;
             break;
 
           default:
-            TranslateGenericProperty( poFeature, nCode, szLineBuf );
+            TranslateGenericProperty( poTemplateFeature, nCode, szLineBuf );
             break;
         }
     }
     if( nCode < 0 )
     {
         DXF_LAYER_READER_ERROR();
-        delete poFeature;
+        delete poTemplateFeature;
         return nullptr;
     }
 
@@ -2812,33 +3066,96 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             if( !EQUAL( szLineBuf, "ATTRIB" ) )
             {
                 DXF_LAYER_READER_ERROR();
-
-                delete poFeature;
-                while( !apoAttribs.empty() )
-                {
-                    delete apoAttribs.front();
-                    apoAttribs.pop();
-                }
-
+                delete poTemplateFeature;
                 return nullptr;
             }
 
             OGRDXFFeature *poAttribFeature = TranslateTEXT( true );
 
             if( poAttribFeature && poAttribFeature->osAttributeTag != "" )
-                apoAttribs.push( poAttribFeature );
+            {
+                apoAttribs.push_back(
+                    std::unique_ptr<OGRDXFFeature>( poAttribFeature ) );
+            }
             else
+            {
                 delete poAttribFeature;
+            }
 
             nCode = poDS->ReadValue(szLineBuf,sizeof(szLineBuf));
         }
     }
     else if( nCode == 0 )
+    {
         poDS->UnreadValue();
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Prepare a string list of the attributes and their text values   */
+/*      as space-separated entries, to be stored in the                 */
+/*      BlockAttributes field if we are not inlining blocks.            */
+/* -------------------------------------------------------------------- */
+
+    char** papszAttribs = nullptr;
+    if( !poDS->InlineBlocks() && bHasAttribs &&
+        poFeatureDefn->GetFieldIndex( "BlockAttributes" ) != -1 )
+    {
+        papszAttribs = new char*[apoAttribs.size() + 1];
+        int iIndex = 0;
+
+        for( auto oIt = apoAttribs.begin(); oIt != apoAttribs.end(); ++oIt )
+        {
+            CPLString osAttribString = (*oIt)->osAttributeTag;
+            osAttribString += " ";
+            osAttribString += (*oIt)->GetFieldAsString( "Text" );
+
+            papszAttribs[iIndex] = new char[osAttribString.length() + 1];
+            CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
+                osAttribString.length() + 1 );
+
+            iIndex++;
+        }
+        papszAttribs[iIndex] = nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Perform the actual block insertion.                             */
 /* -------------------------------------------------------------------- */
+
+    for( int iRow = 0; iRow < nRowCount; iRow++ )
+    {
+        for( int iColumn = 0; iColumn < nColumnCount; iColumn++ )
+        {
+            TranslateINSERTCore( poTemplateFeature, osBlockName, oTransformer,
+                iColumn * dfColumnSpacing * cos( oTransformer.dfAngle ) +
+                    iRow * dfRowSpacing * -sin( oTransformer.dfAngle ),
+                iColumn * dfColumnSpacing * sin( oTransformer.dfAngle ) +
+                    iRow * dfRowSpacing * cos( oTransformer.dfAngle ),
+                papszAttribs, apoAttribs );
+        }
+    }
+
+    // The block geometries were appended to apoPendingFeatures
+    delete poTemplateFeature;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                        TranslateINSERTCore()                         */
+/*                                                                      */
+/*      Helper function for TranslateINSERT.                            */
+/************************************************************************/
+
+void OGRDXFLayer::TranslateINSERTCore(
+    OGRDXFFeature* const poTemplateFeature, const CPLString& osBlockName,
+    OGRDXFInsertTransformer oTransformer, const double dfExtraXOffset,
+    const double dfExtraYOffset, char** const papszAttribs,
+    const std::vector<std::unique_ptr<OGRDXFFeature>>& apoAttribs )
+{
+    OGRDXFFeature* poFeature = poTemplateFeature->CloneDXFFeature();
+
+    oTransformer.dfXOffset += dfExtraXOffset;
+    oTransformer.dfYOffset += dfExtraYOffset;
 
     // If we are not inlining blocks, just insert a point that refers
     // to this block
@@ -2847,77 +3164,58 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         poFeature = InsertBlockReference( osBlockName, oTransformer,
             poFeature );
 
-        if( bHasAttribs && 
-            poFeature->GetFieldIndex( "BlockAttributes" ) != -1 )
-        {
-            // Store the attributes and their text values as space-separated
-            // entries in the BlockAttributes field
-            char** papszAttribs = new char*[apoAttribs.size() + 1];
-            int iIndex = 0;
-
-            while( !apoAttribs.empty() )
-            {
-                CPLString osAttribString = apoAttribs.front()->osAttributeTag;
-                osAttribString += " ";
-                osAttribString += apoAttribs.front()->GetFieldAsString( "Text" );
-
-                papszAttribs[iIndex] = new char[osAttribString.length() + 1];
-                CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
-                    osAttribString.length() + 1 );
-
-                delete apoAttribs.front();
-                apoAttribs.pop();
-                iIndex++;
-            }
-            papszAttribs[iIndex] = nullptr;
-
+        if( papszAttribs )
             poFeature->SetField( "BlockAttributes", papszAttribs );
-        }
-        else
-        {
-            while( !apoAttribs.empty() )
-            {
-                delete apoAttribs.front();
-                apoAttribs.pop();
-            }
-        }
+
+        apoPendingFeatures.push( poFeature );
     }
     // Otherwise, try inlining the contents of this block
     else
     {
+        std::queue<OGRDXFFeature *> apoExtraFeatures;
         try
         {
-            poFeature = InsertBlockInline( osBlockName, oTransformer,
-                poFeature, apoPendingFeatures,
+            poFeature = InsertBlockInline( osBlockName,
+                oTransformer, poFeature, apoExtraFeatures,
                 true, poDS->ShouldMergeBlockGeometries() );
         }
         catch( const std::invalid_argument& )
         {
             // Block doesn't exist
             delete poFeature;
-            while( !apoAttribs.empty() )
-            {
-                delete apoAttribs.front();
-                apoAttribs.pop();
-            }
-            return nullptr;
+            return;
+        }
+
+        if( poFeature )
+            apoPendingFeatures.push( poFeature );
+
+        while( !apoExtraFeatures.empty() )
+        {
+            apoPendingFeatures.push( apoExtraFeatures.front() );
+            apoExtraFeatures.pop();
         }
 
         // Append the attribute features to the pending feature stack
-        while( !apoAttribs.empty() )
+        if( !apoAttribs.empty() )
         {
-            apoPendingFeatures.push( apoAttribs.front() );
-            apoAttribs.pop();
+            OGRDXFInsertTransformer oAttribTransformer;
+            oAttribTransformer.dfXOffset = dfExtraXOffset;
+            oAttribTransformer.dfYOffset = dfExtraYOffset;
+
+            for( auto oIt = apoAttribs.begin(); oIt != apoAttribs.end(); ++oIt )
+            {
+                OGRDXFFeature* poAttribFeature = (*oIt)->CloneDXFFeature();
+
+                if( poAttribFeature->GetGeometryRef() )
+                {
+                    poAttribFeature->GetGeometryRef()->transform(
+                        &oAttribTransformer );
+                }
+
+                apoPendingFeatures.push( poAttribFeature );
+            }
         }
     }
-
-    if( !poFeature )
-    {
-        // The block geometries were appended to apoPendingFeatures
-        delete poFeature;
-        return nullptr;
-    }
-    return poFeature;
 }
 
 /************************************************************************/
@@ -3002,6 +3300,10 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateLWPOLYLINE();
         }
+        else if( EQUAL(szLineBuf,"MLINE") )
+        {
+            poFeature = TranslateMLINE();
+        }
         else if( EQUAL(szLineBuf,"CIRCLE") )
         {
             poFeature = TranslateCIRCLE();
@@ -3014,7 +3316,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateARC();
         }
-        else if( EQUAL(szLineBuf,"SPLINE") )
+        else if( EQUAL(szLineBuf,"SPLINE") ||
+            EQUAL(szLineBuf,"HELIX") )
         {
             poFeature = TranslateSPLINE();
         }
@@ -3034,7 +3337,8 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateHATCH();
         }
-        else if( EQUAL(szLineBuf,"SOLID") )
+        else if( EQUAL(szLineBuf,"SOLID") ||
+            EQUAL(szLineBuf,"TRACE") )
         {
             poFeature = TranslateSOLID();
         }

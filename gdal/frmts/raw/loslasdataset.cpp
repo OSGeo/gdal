@@ -81,11 +81,11 @@ class LOSLASDataset : public RawDataset
     double      adfGeoTransform[6];
 
   public:
-                LOSLASDataset();
-    virtual ~LOSLASDataset();
+    LOSLASDataset();
+    ~LOSLASDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );

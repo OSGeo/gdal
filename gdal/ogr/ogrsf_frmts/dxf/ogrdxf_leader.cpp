@@ -824,8 +824,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
                 // The following bits are copied from
                 // OGRDXFLayer::InsertBlockInline
-                poAttribFeature->GetGeometryRef()->transform(
-                    &oBlockTransformer );
+                if( poAttribFeature->GetGeometryRef() )
+                {
+                    poAttribFeature->GetGeometryRef()->transform(
+                        &oBlockTransformer );
+                }
 
                 if( EQUAL( poAttribFeature->GetFieldAsString( "Layer" ), "0" ) &&
                     !EQUAL( poOverallFeature->GetFieldAsString( "Layer" ), "" ) )

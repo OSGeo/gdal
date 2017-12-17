@@ -373,9 +373,8 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
                 if ( STARTS_WITH_CI(papszLines[iLine], "MMPLL,") )
                 {
                     CPLDebug( "MMPLL", "%s", papszLines[iLine] );
-                    char **papszTok = nullptr;
 
-                    papszTok = CSLTokenizeString2( papszLines[iLine], ",",
+                    char** papszTok = CSLTokenizeString2( papszLines[iLine], ",",
                                                    CSLT_STRIPLEADSPACES
                                                    | CSLT_STRIPENDSPACES );
 

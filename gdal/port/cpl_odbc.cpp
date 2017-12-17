@@ -92,8 +92,7 @@ int CPLODBCDriverInstaller::InstallDriver( const char* pszDriver,
         if( pszEnvIni == nullptr )
         {
             // Read HOME location.
-            char* pszEnvHome = nullptr;
-            pszEnvHome = getenv("HOME");
+            char* pszEnvHome = getenv("HOME");
 
             CPLAssert( nullptr != pszEnvHome );
             CPLDebug( "ODBC", "HOME=%s", pszEnvHome );

@@ -451,6 +451,7 @@ GDALDataset *GRASSDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !bDoneGISInit )
     {
+        bDoneGISInit = TRUE;
         G_set_error_routine( (GrassErrorHandler) Grass2CPLErrorHook );
         G_gisinit_2( "GDAL", NULL, NULL, NULL );
     }

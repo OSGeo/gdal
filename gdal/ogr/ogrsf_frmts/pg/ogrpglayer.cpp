@@ -1934,9 +1934,8 @@ OGRErr OGRPGLayer::RunGetExtentRequest( OGREnvelope *psExtent,
         return OGRERR_FAILURE;
 
     PGconn      *hPGConn = poDS->GetPGConn();
-    PGresult    *hResult = nullptr;
-
-    hResult = OGRPG_PQexec( hPGConn, osCommand, FALSE, bErrorAsDebug );
+    PGresult    *hResult = 
+        OGRPG_PQexec( hPGConn, osCommand, FALSE, bErrorAsDebug );
     if( ! hResult || PQresultStatus(hResult) != PGRES_TUPLES_OK || PQgetisnull(hResult,0,0) )
     {
         OGRPGClearResult( hResult );

@@ -2458,8 +2458,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
             if( EQUAL(pszValue, CF_PT_AEA) )
             {
-                char **papszStdParallels = nullptr;
-
                 dfCenterLon =
                     poDS->FetchCopyParm(szGridMappingValue,
                                          CF_PP_LONG_CENTRAL_MERIDIAN, 0.0);
@@ -2472,7 +2470,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     poDS->FetchCopyParm(szGridMappingValue,
                                          CF_PP_FALSE_NORTHING, 0.0);
 
-                papszStdParallels =
+                char** papszStdParallels =
                     FetchStandardParallels(szGridMappingValue);
 
                 if( papszStdParallels != nullptr )
@@ -2616,8 +2614,6 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             // Lambert conformal conic.
             else if( EQUAL(pszValue, CF_PT_LCC) )
             {
-                char **papszStdParallels = nullptr;
-
                 dfCenterLon = poDS->FetchCopyParm(
                     szGridMappingValue, CF_PP_LONG_CENTRAL_MERIDIAN, 0.0);
 
@@ -2630,7 +2626,7 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 dfFalseNorthing = poDS->FetchCopyParm(
                     szGridMappingValue, CF_PP_FALSE_NORTHING, 0.0);
 
-                papszStdParallels = FetchStandardParallels(szGridMappingValue);
+                char** papszStdParallels = FetchStandardParallels(szGridMappingValue);
 
                 // 2SP variant.
                 if( CSLCount(papszStdParallels) == 2 )
@@ -2721,10 +2717,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             else if( EQUAL(pszValue, CF_PT_MERCATOR) )
             {
 
-                char **papszStdParallels = nullptr;
-
                 // If there is a standard_parallel, know it is Mercator 2SP.
-                papszStdParallels = FetchStandardParallels(szGridMappingValue);
+                char** papszStdParallels = FetchStandardParallels(szGridMappingValue);
 
                 if(nullptr != papszStdParallels)
                 {
@@ -2801,12 +2795,10 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             // Polar Stereographic.
             else if( EQUAL(pszValue, CF_PT_POLAR_STEREO) )
             {
-                char **papszStdParallels = nullptr;
-
                 dfScale = poDS->FetchCopyParm(szGridMappingValue,
                                               CF_PP_SCALE_FACTOR_ORIGIN, -1.0);
 
-                papszStdParallels = FetchStandardParallels(szGridMappingValue);
+                char** papszStdParallels = FetchStandardParallels(szGridMappingValue);
 
                 // CF allows the use of standard_parallel (lat_ts) OR
                 // scale_factor (k0), make sure we have standard_parallel, using
@@ -4447,8 +4439,6 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
         OGRSpatialReference oSRS2;
         oSRS2.importFromWkt(&pszWKT2);
 
-        double *padYVal = nullptr;
-        double *padXVal = nullptr;
         size_t startX[1];
         size_t countX[1];
         size_t startY[1];
@@ -4456,9 +4446,9 @@ CPLErr netCDFDataset::AddProjectionVars( GDALProgressFunc pfnProgress,
 
         CPLDebug("GDAL_netCDF", "Getting (X,Y) values");
 
-        padXVal =
+        double* padXVal =
             static_cast<double *>(CPLMalloc(nRasterXSize * sizeof(double)));
-        padYVal =
+        double* padYVal =
             static_cast<double *>(CPLMalloc(nRasterYSize * sizeof(double)));
 
         // Get Y values.

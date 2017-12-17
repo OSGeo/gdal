@@ -54,8 +54,8 @@ class ROIPACDataset : public RawDataset
     char        *pszProjection;
 
   public:
-                ROIPACDataset( void );
-    virtual ~ROIPACDataset( void );
+    ROIPACDataset();
+    ~ROIPACDataset() override;
 
     static GDALDataset *Open( GDALOpenInfo *poOpenInfo );
     static int          Identify( GDALOpenInfo *poOpenInfo );
@@ -63,12 +63,12 @@ class ROIPACDataset : public RawDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char **papszOptions );
 
-    virtual void        FlushCache( void ) override;
+    void        FlushCache() override;
     CPLErr              GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr      SetGeoTransform( double *padfTransform ) override;
+    CPLErr      SetGeoTransform( double *padfTransform ) override;
     const char         *GetProjectionRef( void ) override;
-    virtual CPLErr      SetProjection( const char *pszNewProjection ) override;
-    virtual char      **GetFileList( void ) override;
+    CPLErr      SetProjection( const char *pszNewProjection ) override;
+    char      **GetFileList() override;
 };
 
 /************************************************************************/

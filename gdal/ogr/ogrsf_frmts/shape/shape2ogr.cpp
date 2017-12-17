@@ -1214,8 +1214,8 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     {
         if( !poDefn->IsGeometryIgnored() )
         {
-            OGRGeometry* poGeometry = nullptr;
-            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+            OGRGeometry* poGeometry =
+                SHPReadOGRObject( hSHP, iShape, psShape );
 
             // Two possibilities are expected here (both are tested by
             // GDAL Autotests):

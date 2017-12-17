@@ -27,12 +27,18 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define JSON_C_VER_013 (13 << 8)
+
 #include "ogrgeojsonwriter.h"
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
 #include "ogrgeojsonreader.h"
 #include <json.h>  // JSON-C
+
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
 #include <json_object_private.h>
+#endif
+
 #include <printbuf.h>
 #include <ogr_api.h>
 #include <ogr_p.h>
@@ -136,27 +142,28 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
     if( nDepth == 0 )
         return OGRGeoJSONIsPatchablePosition(poJSonArray, poNativeArray);
 
-    int nLength = 0;
     if( json_object_get_type(poJSonArray) == json_type_array &&
-        json_object_get_type(poNativeArray) == json_type_array &&
-        (nLength = json_object_array_length(poJSonArray)) ==
-                            json_object_array_length(poNativeArray) )
+        json_object_get_type(poNativeArray) == json_type_array )
     {
-        if( nLength > 0 )
+        auto nLength = json_object_array_length(poJSonArray);
+        if( nLength == json_object_array_length(poNativeArray) )
         {
-            json_object* poJSonChild =
-                json_object_array_get_idx(poJSonArray, 0);
-            json_object* poNativeChild =
-                json_object_array_get_idx(poNativeArray, 0);
-            if( !OGRGeoJSONIsPatchableArray(poJSonChild, poNativeChild,
-                                            nDepth - 1) )
+            if( nLength > 0 )
             {
-                return false;
+                json_object* poJSonChild =
+                    json_object_array_get_idx(poJSonArray, 0);
+                json_object* poNativeChild =
+                    json_object_array_get_idx(poNativeArray, 0);
+                if( !OGRGeoJSONIsPatchableArray(poJSonChild, poNativeChild,
+                                                nDepth - 1) )
+                {
+                    return false;
+                }
+                // Light check as a former extensive check was done in
+                // OGRGeoJSONComputePatchableOrCompatibleArray
             }
-            // Light check as a former extensive check was done in
-            // OGRGeoJSONComputePatchableOrCompatibleArray
+            return true;
         }
-        return true;
     }
     return false;
 }
@@ -186,37 +193,36 @@ static bool OGRGeoJSONComputePatchableOrCompatibleArrayInternal(
                                                             0)) != json_type_array;
     }
 
-    int nLength = 0;
     if( json_object_get_type(poJSonArray) == json_type_array &&
-        json_object_get_type(poNativeArray) == json_type_array &&
-        (nLength = json_object_array_length(poJSonArray)) ==
-                            json_object_array_length(poNativeArray) )
+        json_object_get_type(poNativeArray) == json_type_array )
     {
-        for( int i=0; i < nLength; i++ )
+        auto nLength = json_object_array_length(poJSonArray);
+        if (nLength == json_object_array_length(poNativeArray) )
         {
-            json_object* poJSonChild =
-                json_object_array_get_idx(poJSonArray, i);
-            json_object* poNativeChild =
-                json_object_array_get_idx(poNativeArray, i);
-            if( !OGRGeoJSONComputePatchableOrCompatibleArrayInternal(poJSonChild,
-                                                   poNativeChild,
-                                                   nDepth - 1,
-                                                   bOutPatchable,
-                                                   bOutCompatible) )
+            for( decltype(nLength) i=0; i < nLength; i++ )
             {
-                return false;
+                json_object* poJSonChild =
+                    json_object_array_get_idx(poJSonArray, i);
+                json_object* poNativeChild =
+                    json_object_array_get_idx(poNativeArray, i);
+                if( !OGRGeoJSONComputePatchableOrCompatibleArrayInternal(poJSonChild,
+                                                    poNativeChild,
+                                                    nDepth - 1,
+                                                    bOutPatchable,
+                                                    bOutCompatible) )
+                {
+                    return false;
+                }
+                if (!bOutPatchable && !bOutCompatible)
+                    break;
             }
-            if (!bOutPatchable && !bOutCompatible)
-                break;
+            return true;
         }
-        return true;
     }
-    else
-    {
-        bOutPatchable = false;
-        bOutCompatible = false;
-        return false;
-    }
+
+    bOutPatchable = false;
+    bOutCompatible = false;
+    return false;
 }
 
 /* Returns true if the objects are comparable, ie Point vs Point, LineString
@@ -318,27 +324,28 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
             json_object* poJSonGeometries =
                 CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
-            int nLength = 0;
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
-                json_object_get_type(poNativeGeometries) == json_type_array &&
-                (nLength = json_object_array_length(poJSonGeometries)) ==
-                    json_object_array_length(poNativeGeometries) )
+                json_object_get_type(poNativeGeometries) == json_type_array )
             {
-                for( int i=0; i < nLength; i++ )
+                auto nLength = json_object_array_length(poJSonGeometries);
+                if( nLength == json_object_array_length(poNativeGeometries) )
                 {
-                    json_object* poJSonChild =
-                        json_object_array_get_idx(poJSonGeometries, i);
-                    json_object* poNativeChild =
-                        json_object_array_get_idx(poNativeGeometries, i);
-                    if( !OGRGeoJSONIsPatchableGeometry(poJSonChild,
-                                                       poNativeChild,
-                                                       bOutPatchableCoords,
-                                                       bOutCompatibleCoords) )
+                    for( decltype(nLength) i=0; i < nLength; i++ )
                     {
-                        return false;
+                        json_object* poJSonChild =
+                            json_object_array_get_idx(poJSonGeometries, i);
+                        json_object* poNativeChild =
+                            json_object_array_get_idx(poNativeGeometries, i);
+                        if( !OGRGeoJSONIsPatchableGeometry(poJSonChild,
+                                                        poNativeChild,
+                                                        bOutPatchableCoords,
+                                                        bOutCompatibleCoords) )
+                        {
+                            return false;
+                        }
                     }
+                    return true;
                 }
-                return true;
             }
             return false;
         }
@@ -1381,13 +1388,17 @@ static int OGR_json_double_with_precision_to_string( struct json_object *jso,
 {
     // TODO(schwehr): Explain this casting.
     const int nPrecision =
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
         static_cast<int>(reinterpret_cast<GUIntptr_t>(jso->_userdata));
+#else
+        static_cast<int>(reinterpret_cast<GUIntptr_t>(json_object_get_userdata(jso)));
+#endif
     char szBuffer[75] = {};
-    OGRFormatDouble( szBuffer, sizeof(szBuffer), jso->o.c_double, '.',
+    OGRFormatDouble( szBuffer, sizeof(szBuffer), json_object_get_double(jso), '.',
                      (nPrecision < 0) ? 15 : nPrecision );
     if( szBuffer[0] == 't' /*oobig */ )
     {
-        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", jso->o.c_double);
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.18g", json_object_get_double(jso));
     }
     return printbuf_memappend(pb, szBuffer, static_cast<int>(strlen(szBuffer)));
 }
@@ -1417,11 +1428,11 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
 {
     char szBuffer[75] = {};
     int nSize = 0;
-    if( CPLIsNan(jso->o.c_double))
+    if( CPLIsNan(json_object_get_double(jso)))
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "NaN");
-    else if( CPLIsInf(jso->o.c_double) )
+    else if( CPLIsInf(json_object_get_double(jso)) )
     {
-        if( jso->o.c_double > 0 )
+        if( json_object_get_double(jso) > 0 )
             nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "Infinity");
         else
             nSize = CPLsnprintf(szBuffer, sizeof(szBuffer), "-Infinity");
@@ -1429,13 +1440,17 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
     else
     {
         char szFormatting[32] = {};
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
         const int nSignificantFigures = (int) (GUIntptr_t) jso->_userdata;
+#else
+        const int nSignificantFigures = (int) (GUIntptr_t) json_object_get_userdata(jso);
+#endif
         const int nInitialSignificantFigures =
             nSignificantFigures >= 0 ? nSignificantFigures : 17;
         CPLsnprintf(szFormatting, sizeof(szFormatting),
                     "%%.%dg", nInitialSignificantFigures);
         nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
-                            szFormatting, jso->o.c_double);
+                            szFormatting, json_object_get_double(jso));
         const char* pszDot = nullptr;
         if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
             (pszDot = strchr(szBuffer, '.')) == nullptr )
@@ -1457,7 +1472,7 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                 CPLsnprintf(szFormatting, sizeof(szFormatting),
                             "%%.%dg", nInitialSignificantFigures- i);
                 nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
-                                    szFormatting, jso->o.c_double);
+                                    szFormatting, json_object_get_double(jso));
                 pszDot = strchr(szBuffer, '.');
                 if( pszDot != nullptr &&
                     strstr(pszDot, "999999") == nullptr &&
@@ -1472,7 +1487,7 @@ OGR_json_double_with_significant_figures_to_string( struct json_object *jso,
                 CPLsnprintf(szFormatting, sizeof(szFormatting),
                             "%%.%dg", nInitialSignificantFigures);
                 nSize = CPLsnprintf(szBuffer, sizeof(szBuffer),
-                                    szFormatting, jso->o.c_double);
+                                    szFormatting, json_object_get_double(jso));
                 if( nSize+2 < static_cast<int>(sizeof(szBuffer)) &&
                     strchr(szBuffer, '.') == nullptr )
                 {

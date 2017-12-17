@@ -310,6 +310,11 @@ typedef GIntBig GSpacing;
  * */
 #define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
 
+/** List of (space separated) vector field sub-types support by the CreateField() API.
+ * @since GDAL 2.3
+ * */
+#define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
+
 /** Capability set by a driver that exposes Subdatasets. */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 

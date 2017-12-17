@@ -761,9 +761,8 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName, void* att
     for(unsigned int idx=0; true ;idx++)
     {
         char* pszAttrKey = nullptr;
-        char* pszAttrVal = nullptr;
 
-        pszAttrVal = GetAttributeByIdx(attr, idx, &pszAttrKey);
+        char* pszAttrVal = GetAttributeByIdx(attr, idx, &pszAttrKey);
         if( pszAttrVal == nullptr )
             break;
 

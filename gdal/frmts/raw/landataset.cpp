@@ -114,14 +114,14 @@ class LAN4BitRasterBand : public GDALPamRasterBand
 
   public:
                    LAN4BitRasterBand( LANDataset *, int );
-    virtual ~LAN4BitRasterBand();
+    ~LAN4BitRasterBand() override;
 
-    virtual GDALColorTable *GetColorTable() override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr SetColorTable( GDALColorTable * ) override;
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
+    GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr SetColorTable( GDALColorTable * ) override;
+    CPLErr SetColorInterpretation( GDALColorInterp ) override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -144,16 +144,16 @@ class LANDataset : public RawDataset
     CPLString   osSTAFilename;
     void        CheckForStatistics(void);
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
   public:
                 LANDataset();
-    virtual ~LANDataset();
+    ~LANDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double * padfTransform ) override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection( const char * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,

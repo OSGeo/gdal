@@ -871,10 +871,9 @@ void OGRNTFDataSource::EstablishGenericLayers()
 /* -------------------------------------------------------------------- */
     for( int iFile = 0; iFile < nNTFFileCount; iFile++ )
     {
-        NTFFileReader   *poPReader = nullptr;
         int              bHasZ = FALSE;
 
-        poPReader = papoNTFFileReader[iFile];
+        NTFFileReader* poPReader = papoNTFFileReader[iFile];
         if( poPReader->GetProductId() != NPC_UNKNOWN )
             continue;
 

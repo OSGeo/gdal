@@ -27,11 +27,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define JSON_C_VER_013 (13 << 8)
+
 #include "ogrgeojsonreader.h"
 #include "ogrgeojsonutils.h"
 #include "ogr_geojson.h"
 #include <json.h> // JSON-C
-#include "libjson/json_object_private.h" // just for sizeof(struct json_object)
+
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
+#include <json_object_private.h> // just for sizeof(struct json_object)
+#endif
+
 #include "cpl_json_streaming_parser.h"
 #include <ogr_api.h>
 
@@ -42,7 +48,15 @@ OGRGeometry* OGRGeoJSONReadGeometry( json_object* poObj,
                                      OGRSpatialReference* poParentSRS );
 
 const size_t MAX_OBJECT_SIZE = 100 * 1024 * 1024;
+
+#if (!defined(JSON_C_VERSION_NUM)) || (JSON_C_VERSION_NUM < JSON_C_VER_013)
 const size_t ESTIMATE_BASE_OBJECT_SIZE = sizeof(struct json_object);
+#elif JSON_C_VERSION_NUM == JSON_C_VER_013 // no way to get the size
+const size_t ESTIMATE_BASE_OBJECT_SIZE = 96;
+#elif JSON_C_VERSION_NUM > JSON_C_VER_013 // we have json_c_object_sizeof()
+const size_t ESTIMATE_BASE_OBJECT_SIZE = json_c_object_sizeof();
+#endif
+
 const size_t ESTIMATE_ARRAY_SIZE = ESTIMATE_BASE_OBJECT_SIZE +
                                    sizeof(struct array_list);
 const size_t ESTIMATE_ARRAY_ELT_SIZE = sizeof(void*);
@@ -2029,8 +2043,7 @@ bool OGRGeoJSONReader::AddFeature( OGRGeoJSONLayer* poLayer,
 
     if( nullptr != poGeometry )
     {
-        OGRFeature* poFeature = nullptr;
-        poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+        OGRFeature* poFeature = new OGRFeature( poLayer->GetLayerDefn() );
         poFeature->SetGeometryDirectly( poGeometry );
 
         bAdded = AddFeature( poLayer, poFeature );
@@ -2076,8 +2089,7 @@ OGRGeometry* OGRGeoJSONReader::ReadGeometry( json_object* poObj,
         if( !bGeometryPreserve_
             && wkbGeometryCollection != poGeometry->getGeometryType() )
         {
-            OGRGeometryCollection* poMetaGeometry = nullptr;
-            poMetaGeometry = new OGRGeometryCollection();
+            OGRGeometryCollection* poMetaGeometry = new OGRGeometryCollection();
             poMetaGeometry->addGeometryDirectly( poGeometry );
             return poMetaGeometry;
         }
@@ -2281,8 +2293,7 @@ OGRFeature* OGRGeoJSONReader::ReadFeature( OGRGeoJSONLayer* poLayer,
 {
     CPLAssert( nullptr != poObj );
 
-    OGRFeature* poFeature = nullptr;
-    poFeature = new OGRFeature( poLayer->GetLayerDefn() );
+    OGRFeature* poFeature = new OGRFeature( poLayer->GetLayerDefn() );
 
     if( bStoreNativeData_ )
     {
@@ -2787,8 +2798,8 @@ OGRMultiPoint* OGRGeoJSONReadMultiPoint( json_object* poObj )
 
         for( int i = 0; i < nPoints; ++i)
         {
-            json_object* poObjCoords = nullptr;
-            poObjCoords = json_object_array_get_idx( poObjPoints, i );
+            json_object* poObjCoords =
+                json_object_array_get_idx( poObjPoints, i );
 
             OGRPoint pt;
             if( poObjCoords != nullptr &&
@@ -2902,10 +2913,9 @@ OGRMultiLineString* OGRGeoJSONReadMultiLineString( json_object* poObj )
 
         for( int i = 0; i < nLines; ++i)
         {
-            json_object* poObjLine = nullptr;
-            poObjLine = json_object_array_get_idx( poObjLines, i );
+            json_object* poObjLine = json_object_array_get_idx( poObjLines, i );
 
-            OGRLineString* poLine = nullptr;
+            OGRLineString* poLine;
             if( poObjLine != nullptr )
                 poLine = OGRGeoJSONReadLineString( poObjLine , true );
             else
@@ -3048,8 +3058,8 @@ OGRMultiPolygon* OGRGeoJSONReadMultiPolygon( json_object* poObj )
 {
     CPLAssert( nullptr != poObj );
 
-    json_object* poObjPolys = nullptr;
-    poObjPolys = OGRGeoJSONFindMemberByName( poObj, "coordinates" );
+    json_object* poObjPolys =
+        OGRGeoJSONFindMemberByName( poObj, "coordinates" );
     if( nullptr == poObjPolys )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

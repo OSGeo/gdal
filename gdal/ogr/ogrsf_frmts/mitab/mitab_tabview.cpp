@@ -1564,13 +1564,16 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
      *          one new feature for each of them.
      *----------------------------------------------------------------*/
     TABFeature *poRelFeature=nullptr;
-    GByte *pKey = BuildFieldKey(poMainFeature, m_nMainFieldNo,
-                            m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
-                                m_nRelFieldIndexNo);
-    int nRelFeatureId = m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
+    if( m_poRelINDFileRef )
+    {
+        GByte *pKey = BuildFieldKey(poMainFeature, m_nMainFieldNo,
+                                m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
+                                    m_nRelFieldIndexNo);
+        int nRelFeatureId = m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
 
-    if (nRelFeatureId > 0)
-        poRelFeature = m_poRelTable->GetFeatureRef(nRelFeatureId);
+        if (nRelFeatureId > 0)
+            poRelFeature = m_poRelTable->GetFeatureRef(nRelFeatureId);
+    }
 
     /*-----------------------------------------------------------------
      * Copy fields from poMainFeature
