@@ -2085,8 +2085,7 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
             }
             else
             {
-                std::map<CPLString, OGRGMLASLayer*>::const_iterator oIter =
-                    m_oMapElementIdToLayer.find(osId);
+                const auto oIter = m_oMapElementIdToLayer.find(osId);
                 if( oIter != m_oMapElementIdToLayer.end() )
                 {
                     OGRGMLASLayer* poTargetLayer = oIter->second;
@@ -2097,8 +2096,7 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
                     const int nLinkFieldOGRId =
                         m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
                             osLinkFieldXPath);
-                    std::map<CPLString, CPLString>::const_iterator oIter2 =
-                        m_oMapElementIdToPKID.find(osId);
+                    const auto oIter2 = m_oMapElementIdToPKID.find(osId);
                     if( oIter2 != m_oMapElementIdToPKID.end() )
                     {
                         m_oCurCtxt.m_poFeature->SetField(nLinkFieldOGRId,
@@ -2234,8 +2232,7 @@ void GMLASReader::ExploreXMLDoc( const CPLString& osAttrXPath,
     CPLString osMatchedXPathRule;
     if( oMatcher.MatchesRefXPath(osXPath, osMatchedXPathRule) )
     {
-        std::map<CPLString, size_t>::const_iterator oIter =
-                        oMapFieldXPathToIdx.find(osMatchedXPathRule);
+        const auto oIter = oMapFieldXPathToIdx.find(osMatchedXPathRule);
         CPLAssert( oIter != oMapFieldXPathToIdx.end() );
         const size_t nFieldRuleIdx = oIter->second;
         const CPLString osDerivedFieldXPath(
@@ -2905,8 +2902,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
         {
             // Check if the srsName indicates unusual axis order,
             // and if so swap x and y coordinates.
-            std::map<CPLString, bool>::iterator oIter =
-                m_oMapSRSNameToInvertedAxis.find(pszSRSName);
+            const auto oIter = m_oMapSRSNameToInvertedAxis.find(pszSRSName);
             if( oIter == m_oMapSRSNameToInvertedAxis.end() )
             {
                 OGRSpatialReference oSRS;
@@ -3325,12 +3321,10 @@ bool GMLASReader::RunFirstPass(GDALProgressFunc pfnProgress,
         for(size_t i=0; i < m_papoLayers->size(); i++ )
         {
             poLayer = (*m_papoLayers)[i];
-            std::set<CPLString>& oSetUnusedFields = oMapUnusedFields[poLayer];
-            std::set<CPLString>::iterator oIter = oSetUnusedFields.begin();
-            for( ; oIter != oSetUnusedFields.end(); ++oIter )
+            for( const auto& oIter: oMapUnusedFields[poLayer] )
             {
                 poLayer->RemoveField(
-                    poLayer->GetLayerDefn()->GetFieldIndex(*oIter) );
+                    poLayer->GetLayerDefn()->GetFieldIndex(oIter) );
             }
 
             // We need to run this again since we may have delete the
@@ -3361,19 +3355,15 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
     bool bRemoveUnusedFields,
     std::map<OGRGMLASLayer*, std::set<CPLString> >&oMapUnusedFields)
 {
-    std::map<std::pair<OGRGMLASLayer*, CPLString>,
-                std::vector<CPLString> >::const_iterator
-        oIter = m_oMapFieldXPathToLinkValue.begin();
-    for( ; oIter != m_oMapFieldXPathToLinkValue.end(); ++oIter )
+    for( const auto& oIter: m_oMapFieldXPathToLinkValue )
     {
-        OGRGMLASLayer* poReferingLayer = oIter->first.first;
-        const CPLString& osReferingField = oIter->first.second;
-        const std::vector<CPLString>& aosLinks = oIter->second;
+        OGRGMLASLayer* poReferingLayer = oIter.first.first;
+        const CPLString& osReferingField = oIter.first.second;
+        const std::vector<CPLString>& aosLinks = oIter.second;
         std::set<OGRGMLASLayer*> oSetTargetLayers;
         for( size_t i = 0; i < aosLinks.size(); i++ )
         {
-            std::map<CPLString, OGRGMLASLayer*>::const_iterator oIter2 =
-                m_oMapElementIdToLayer.find(aosLinks[i]);
+            const auto oIter2 = m_oMapElementIdToLayer.find(aosLinks[i]);
             if( oIter2 == m_oMapElementIdToLayer.end() )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -3407,29 +3397,24 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
 
 void GMLASReader::CreateFieldsForURLSpecificRules()
 {
-    std::map<OGRGMLASLayer*, std::map<CPLString, std::set<int> > >::const_iterator
-        oIter = m_oMapXLinkFields.begin();
-    for( ; oIter != m_oMapXLinkFields.end(); ++oIter )
+    for( const auto& oIter: m_oMapXLinkFields )
     {
-        OGRGMLASLayer* poLayer = oIter->first;
-        const std::map<CPLString, std::set<int> >& oMap2 = oIter->second;
-        std::map<CPLString, std::set<int> >::const_iterator oIter2 =
-                                                            oMap2.begin();
-        for( ; oIter2 != oMap2.end(); ++oIter2 )
+        OGRGMLASLayer* poLayer = oIter.first;
+        const auto& oMap2 = oIter.second;
+        for( const auto& oIter2: oMap2 )
         {
-            const CPLString& osFieldXPath(oIter2->first);
+            const CPLString& osFieldXPath(oIter2.first);
             // Note that CreateFieldsForURLSpecificRule() running on a previous
             // iteration will have inserted new OGR fields, so we really need
             // to compute that index now.
             const int nFieldIdx = poLayer->GetOGRFieldIndexFromXPath(osFieldXPath);
             CPLAssert(nFieldIdx >= 0);
             int nInsertFieldIdx = nFieldIdx + 1;
-            const std::set<int>& oSetRuleIndex = oIter2->second;
-            std::set<int>::const_iterator oIter3 = oSetRuleIndex.begin();
-            for( ; oIter3 != oSetRuleIndex.end(); ++ oIter3 )
+            const auto& oSetRuleIndex = oIter2.second;
+            for( const auto& nRuleIdx: oSetRuleIndex )
             {
                 const GMLASXLinkResolutionConf::URLSpecificResolution& oRule =
-                    m_oXLinkResolver.GetConf().m_aoURLSpecificRules[*oIter3];
+                    m_oXLinkResolver.GetConf().m_aoURLSpecificRules[nRuleIdx];
                 CreateFieldsForURLSpecificRule( poLayer, nFieldIdx,
                                                 osFieldXPath,
                                                 nInsertFieldIdx,

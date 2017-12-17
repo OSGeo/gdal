@@ -616,12 +616,10 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
         nNSIdx ++;
     }
 
-    std::map<CPLString,CPLString>::const_iterator oIter =
-                                                m_oMapURIToPrefix.begin();
-    for( ; oIter != m_oMapURIToPrefix.end(); ++oIter )
+    for( const auto& oIter: m_oMapURIToPrefix )
     {
-        const CPLString& osURI( oIter->first );
-        const CPLString& osPrefix( oIter->second );
+        const CPLString& osURI( oIter.first );
+        const CPLString& osPrefix( oIter.second );
 
         if( oSetVisitedURI.find( osURI ) == oSetVisitedURI.end() &&
             osURI != szXML_URI &&
@@ -659,18 +657,19 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
         delete poFeature;
     }
 
-    std::set<CPLString>::const_iterator oIterSet = oSetSchemaURLs.begin();
     int nSchemaIdx = 1;
-    for( ; bExposeSchemaNames &&
-           oIterSet != oSetSchemaURLs.end(); ++oIterSet )
+    if( bExposeSchemaNames )
     {
-        OGRFeature* poFeature = new OGRFeature(poFDefn);
-        poFeature->SetField( szKEY, CPLSPrintf(szSCHEMA_NAME_FMT, nSchemaIdx) );
-        poFeature->SetField( szVALUE, (*oIterSet).c_str() );
-        CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
-        delete poFeature;
+        for( const auto& osSchemaURL: oSetSchemaURLs )
+        {
+            OGRFeature* poFeature = new OGRFeature(poFDefn);
+            poFeature->SetField( szKEY, CPLSPrintf(szSCHEMA_NAME_FMT, nSchemaIdx) );
+            poFeature->SetField( szVALUE, osSchemaURL.c_str() );
+            CPL_IGNORE_RET_VAL( m_poOtherMetadataLayer->CreateFeature(poFeature) );
+            delete poFeature;
 
-        nSchemaIdx ++;
+            nSchemaIdx ++;
+        }
     }
 }
 
@@ -747,11 +746,9 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo* poOpenInfo)
                                     m_oConf.m_aosIgnoredXPaths );
 
     {
-        std::map<CPLString, std::vector<CPLString> >::const_iterator oIter =
-                            m_oConf.m_oMapChildrenElementsConstraints.begin();
         std::vector<CPLString> oVector;
-        for( ; oIter != m_oConf.m_oMapChildrenElementsConstraints.end(); ++oIter )
-            oVector.push_back(oIter->first);
+        for(const auto& oIter: m_oConf.m_oMapChildrenElementsConstraints )
+            oVector.push_back(oIter.first);
         m_oChildrenElementsConstraintsXPathMatcher.SetRefXPaths(
             m_oConf.m_oMapPrefixToURITypeConstraints,
             oVector );

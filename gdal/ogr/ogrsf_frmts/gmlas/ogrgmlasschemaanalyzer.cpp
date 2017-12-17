@@ -141,8 +141,7 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
     CPLString osPrefix( transcode(prefix) );
     if( osPrefix.empty() )
     {
-        std::map<CPLString, CPLString>::const_iterator oIter 
-            = m_oMapDocNSURIToPrefix.find( osURI );
+        const auto oIter = m_oMapDocNSURIToPrefix.find( osURI );
         if( oIter != m_oMapDocNSURIToPrefix.end() )
         {
             osPrefix = oIter->second;
@@ -150,8 +149,7 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh* const prefix,
     }
     if( !osPrefix.empty() )
     {
-        std::map<CPLString, CPLString>::iterator oIter =
-                    m_oMapURIToPrefix.find( osURI );
+        const auto oIter = m_oMapURIToPrefix.find( osURI );
         if( oIter == m_oMapURIToPrefix.end() )
         {
             m_oMapURIToPrefix[ osURI ] = osPrefix;
@@ -272,8 +270,7 @@ CPLString GMLASSchemaAnalyzer::GetPrefix( const CPLString& osNamespaceURI )
 {
     if( osNamespaceURI.empty() )
         return "";
-    std::map<CPLString,CPLString>::const_iterator oIter =
-                                        m_oMapURIToPrefix.find(osNamespaceURI);
+    const auto oIter = m_oMapURIToPrefix.find(osNamespaceURI);
     if( oIter != m_oMapURIToPrefix.end() )
         return oIter->second;
     else if( !osNamespaceURI.empty() )
@@ -373,12 +370,10 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
         }
 
         // Iterate over the unique names
-        std::map<CPLString, std::vector<int> >::const_iterator
-                oIter = oSetNames.begin();
-        for(; oIter != oSetNames.end(); ++oIter)
+        for( const auto& oIter: oSetNames )
         {
             // Has it duplicates ?
-            const size_t nOccurrences = oIter->second.size();
+            const size_t nOccurrences = oIter.second.size();
             if( nOccurrences > 1 )
             {
                 const CPLString oClassNS =
@@ -387,7 +382,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
 
                 for(size_t i=0; i<nOccurrences;i++)
                 {
-                    GMLASField& oField = aoFields[oIter->second[i]];
+                    GMLASField& oField = aoFields[oIter.second[i]];
                     // CPLDebug("GMLAS", "%s", oField.GetXPath().c_str() );
                     const CPLString oNS(
                                 GetNSOfLastXPathComponent(oField.GetXPath()));
@@ -420,7 +415,7 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
                 {
                     for(size_t i=0; i<nOccurrences;i++)
                     {
-                        GMLASField& oField = aoFields[oIter->second[i]];
+                        GMLASField& oField = aoFields[oIter.second[i]];
                         if( i > 0 )
                         {
                             bHasDoneSomeRenaming = true;
@@ -476,17 +471,15 @@ void GMLASSchemaAnalyzer::LaunderFieldNames( GMLASFeatureClass& oClass )
     }
 
     // Iterate over the unique names
-    std::map<CPLString, std::vector<int> >::const_iterator
-            oIter = oSetNames.begin();
-    for(; oIter != oSetNames.end(); ++oIter)
+    for( const auto& oIter: oSetNames )
     {
         // Has it duplicates ?
-        const size_t nOccurrences = oIter->second.size();
+        const size_t nOccurrences = oIter.second.size();
         if( nOccurrences > 1 )
         {
             for(size_t i=0; i<nOccurrences;i++)
             {
-                GMLASField& oField = aoFields[oIter->second[i]];
+                GMLASField& oField = aoFields[oIter.second[i]];
                 oField.SetName( OGRGMLASAddSerialNumber( oField.GetName(),
                                                     static_cast<int>(i+1),
                                                     nOccurrences,
@@ -570,17 +563,15 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
     }
 
     // Iterate over the unique names
-    std::map<CPLString, std::vector<int> >::const_iterator
-            oIter = oSetNames.begin();
-    for(; oIter != oSetNames.end(); ++oIter)
+    for( const auto& oIter: oSetNames )
     {
         // Has it duplicates ?
-        const size_t nOccurrences = oIter->second.size();
+        const size_t nOccurrences = oIter.second.size();
         if( nOccurrences > 1 )
         {
             for(size_t i=0; i<nOccurrences;i++)
             {
-                GMLASFeatureClass* poClass = aoClasses[oIter->second[i]];
+                GMLASFeatureClass* poClass = aoClasses[oIter.second[i]];
                 poClass->SetName( OGRGMLASAddSerialNumber(poClass->GetName(),
                                                   static_cast<int>(i+1),
                                                   nOccurrences,
@@ -632,12 +623,10 @@ XSElementDeclaration* GMLASSchemaAnalyzer::GetTopElementDeclarationFromXPath(
         CPLString osName = pszName;
         CPLString osNSURI;
 
-        std::map<CPLString, CPLString>::const_iterator oIterNS =
-                                            m_oMapURIToPrefix.begin();
-        for( ; oIterNS != m_oMapURIToPrefix.end(); ++oIterNS)
+        for( const auto& oIterNS: m_oMapURIToPrefix )
         {
-            const CPLString& osIterNSURI(oIterNS->first);
-            const CPLString& osIterNSPrefix(oIterNS->second);
+            const CPLString& osIterNSURI(oIterNS.first);
+            const CPLString& osIterNSPrefix(oIterNS.second);
             if( osNSPrefix == osIterNSPrefix )
             {
                 osNSURI = osIterNSURI;
@@ -834,11 +823,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
     // and group models that have names
     std::map<CPLString, CPLString> oMapURIToPrefixWithEmpty(m_oMapURIToPrefix);
     oMapURIToPrefixWithEmpty[""] = "";
-    std::map<CPLString, CPLString>::const_iterator oIterNS =
-                                                oMapURIToPrefixWithEmpty.begin();
-    for( ; oIterNS != oMapURIToPrefixWithEmpty.end(); ++oIterNS)
+    for( const auto& oIterNS: oMapURIToPrefixWithEmpty )
     {
-        const CPLString& osNSURI(oIterNS->first);
+        const CPLString& osNSURI(oIterNS.first);
         if( osNSURI == szXS_URI ||
             osNSURI == szXSI_URI ||
             osNSURI == szXMLNS_URI ||
@@ -865,7 +852,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         }
 
         CPLDebug("GMLAS", "Discovering substitutions of %s (%s)",
-                 oIterNS->second.c_str(), osNSURI.c_str());
+                 oIterNS.second.c_str(), osNSURI.c_str());
 
         XSNamedMap<XSObject>* poMapElements = poModel->getComponentsByNamespace(
                             XSConstants::ELEMENT_DECLARATION, xmlNamespace);
@@ -933,10 +920,9 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
         CPLDebug("GMLAS", "Did not find element in 'first choice' namespaces. "
                  "Falling back to the namespaces they import");
         aoNamespaces.clear();
-        oIterNS = oMapURIToPrefixWithEmpty.begin();
-        for( ; oIterNS != oMapURIToPrefixWithEmpty.end(); ++oIterNS)
+        for( const auto& oIterNS: oMapURIToPrefixWithEmpty )
         {
-            const CPLString& osNSURI(oIterNS->first);
+            const CPLString& osNSURI(oIterNS.first);
             if( osNSURI == szXS_URI ||
                 osNSURI == szXSI_URI ||
                 osNSURI == szXMLNS_URI ||
@@ -1038,22 +1024,16 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache& oCache,
 
     // Find ambiguous class names
     {
-        std::set<XSElementDeclaration*>::const_iterator oIter =
-                                            m_oSetEltsForTopClass.begin();
-        for(; oIter != m_oSetEltsForTopClass.end(); ++oIter )
+        for( const auto& oIter: m_oSetEltsForTopClass )
         {
-            CPLString osName(transcode((*oIter)->getName()));
+            CPLString osName(transcode(oIter->getName()));
             m_oMapEltNamesToInstanceCount[osName] ++;
         }
     }
 
     // Instantiate all needed typenames
-    std::vector<XSElementDeclaration*>::iterator oIter =
-                                        oVectorEltsForTopClass.begin();
-    for(; oIter != oVectorEltsForTopClass.end(); ++oIter )
+    for( const auto& poEltDecl: oVectorEltsForTopClass )
     {
-        XSElementDeclaration* poEltDecl = *oIter;
-
         const CPLString osXPath(MakeXPath(
                             transcode(poEltDecl->getNamespace()),
                             transcode(poEltDecl->getName())));
@@ -1390,14 +1370,11 @@ bool GMLASSchemaAnalyzer::IsSame( const XSModelGroup* poModelGroup1,
 
 XSModelGroupDefinition* GMLASSchemaAnalyzer::GetGroupDefinition( const XSModelGroup* poModelGroup )
 {
-    std::map< XSModelGroup*, XSModelGroupDefinition*>::const_iterator oIter =
-        m_oMapModelGroupToMGD.begin();
-    for(; oIter != m_oMapModelGroupToMGD.end(); ++oIter )
+    for( const auto& oIter: m_oMapModelGroupToMGD )
     {
-        const XSModelGroup* psIterModelGroup = oIter->first;
-        if( IsSame(poModelGroup, psIterModelGroup) )
+        if( IsSame(poModelGroup, oIter.first) )
         {
-            return oIter->second;
+            return oIter.second;
         }
     }
 
@@ -1512,8 +1489,7 @@ void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
                                 XSElementDeclaration* poParentElt,
                                 std::vector<XSElementDeclaration*>& apoImplEltList)
 {
-    tMapParentEltToChildElt::const_iterator oIter =
-        m_oMapParentEltToChildElt.find( poParentElt );
+    const auto oIter = m_oMapParentEltToChildElt.find( poParentElt );
     if( oIter != m_oMapParentEltToChildElt.end() )
     {
         for( size_t j = 0; j < oIter->second.size(); j++ )
@@ -1560,8 +1536,7 @@ std::vector<XSElementDeclaration*>
                 osSubEltPrefix = osSubElt.substr(0, nPos);
                 osSubEltType = osSubElt.substr(nPos+1);
 
-                std::map<CPLString, CPLString>::const_iterator oIter2 =
-                    oMapPrefixToURI.find(osSubEltPrefix);
+                const auto oIter2 = oMapPrefixToURI.find(osSubEltPrefix);
                 if( oIter2 != oMapPrefixToURI.end() )
                 {
                     osSubEltURI = oIter2->second;
@@ -1575,8 +1550,7 @@ std::vector<XSElementDeclaration*>
             }
 
             const CPLString osSubEltXPath(MakeXPath(osSubEltURI, osSubEltType));
-            std::map<CPLString, XSElementDeclaration*>::const_iterator oIter2 =
-                m_oMapXPathToEltDecl.find(osSubEltXPath);
+            const auto oIter2 = m_oMapXPathToEltDecl.find(osSubEltXPath);
             if( oIter2 != m_oMapXPathToEltDecl.end() )
             {
                 XSElementDeclaration* poSubElt = oIter2->second;
@@ -2433,8 +2407,7 @@ bool GMLASSchemaAnalyzer::IsGMLNamespace(const CPLString& osURI)
     if( osURI.find(szGML_URI) == 0 )
         return true;
     // Below is mostly for unit tests were we use xmlns:gml="http://fake_gml"
-    std::map<CPLString,CPLString>::const_iterator oIter =
-                                        m_oMapURIToPrefix.find(osURI);
+    const auto oIter = m_oMapURIToPrefix.find(osURI);
     return oIter != m_oMapURIToPrefix.end() && oIter->second == szGML_PREFIX;
 }
 
@@ -2597,8 +2570,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
             XSElementDeclaration* poElt = poParticle->getElementTerm();
             const CPLString osEltName(transcode(poElt->getName()));
 
-            std::map< CPLString, int >::const_iterator oIter =
-                oMapCountOccurrencesOfSameName.find(osEltName);
+            const auto oIter = oMapCountOccurrencesOfSameName.find(osEltName);
             const bool bEltNameWillNeedPrefix =
                 oIter != oMapCountOccurrencesOfSameName.end() &&
                 oIter->second > 1;
