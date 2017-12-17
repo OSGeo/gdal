@@ -389,7 +389,6 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
  retry:
     int nSampleMax = (nSteps + 1)*(nSteps + 1);
 
-    double dfRatio = 0.0;
     double dfStep = 1.0 / nSteps;
     double *padfY = nullptr;
     double *padfZ = nullptr;
@@ -423,7 +422,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     // Take N_STEPS steps.
     for( int iStep = 0; iStep <= nSteps; iStep++ )
     {
-        dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
+        double dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
         // Along top.
         padfX[iStep] = dfRatio * nInXSize;
@@ -497,7 +496,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
                     break;
                 }
 
-                dfRatio = (i % (nSteps + 1)) * dfStep;
+                double dfRatio = (i % (nSteps + 1)) * dfStep;
                 if( dfRatio > 0.99 )
                     dfRatio = 1.0;
 
@@ -550,7 +549,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         // Take N_STEPS steps.
         for( int iStep = 0; iStep <= nSteps; iStep++ )
         {
-            dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
+            double dfRatio = (iStep == nSteps) ? 1.0 : iStep * dfStep;
 
             for( int iStep2 = 0; iStep2 <= nSteps; iStep2++ )
             {
@@ -786,23 +785,23 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     double dfPixelSizeX = dfPixelSize;
     double dfPixelSizeY = dfPixelSize;
 
-    double adfExtent[4] = {};
     const double adfRatioArray[] = { 0.000, 0.001, 0.010, 0.100, 1.000 };
-    size_t nRetry = 0;
 
 /* -------------------------------------------------------------------- */
 /*      Check that the right border is not completely out of source     */
 /*      image. If so, adjust the x pixel size a bit in the hope it will */
 /*      fit.                                                            */
 /* -------------------------------------------------------------------- */
-    for( nRetry = 0; nRetry < CPL_ARRAYSIZE(adfRatioArray); nRetry++ )
+    for( const auto& dfRatio : adfRatioArray )
     {
         const double dfTryPixelSizeX =
-            dfPixelSizeX - dfPixelSizeX * adfRatioArray[nRetry] / *pnPixels;
-        adfExtent[0] = dfMinXOut;
-        adfExtent[1] = dfMaxYOut - (*pnLines) * dfPixelSizeY;
-        adfExtent[2] = dfMinXOut + (*pnPixels) * dfTryPixelSizeX;
-        adfExtent[3] = dfMaxYOut;
+            dfPixelSizeX - dfPixelSizeX * dfRatio / *pnPixels;
+        double adfExtent[4] = {
+            dfMinXOut,
+            dfMaxYOut - (*pnLines) * dfPixelSizeY,
+            dfMinXOut + (*pnPixels) * dfTryPixelSizeX,
+            dfMaxYOut
+        };
         if( !GDALSuggestedWarpOutput2_MustAdjustForRightBorder(
                                             pfnTransformer, pTransformArg,
                                             adfExtent, *pnPixels,  *pnLines,
@@ -818,14 +817,16 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
 /*      image. If so, adjust the y pixel size a bit in the hope it will */
 /*      fit.                                                            */
 /* -------------------------------------------------------------------- */
-    for( nRetry = 0; nRetry < CPL_ARRAYSIZE(adfRatioArray); nRetry++ )
+    for( const auto& dfRatio : adfRatioArray )
     {
         const double dfTryPixelSizeY =
-            dfPixelSizeY - dfPixelSizeY * adfRatioArray[nRetry] / *pnLines;
-        adfExtent[0] = dfMinXOut;
-        adfExtent[1] = dfMaxYOut - (*pnLines) * dfTryPixelSizeY;
-        adfExtent[2] = dfMinXOut + (*pnPixels) * dfPixelSizeX;
-        adfExtent[3] = dfMaxYOut;
+            dfPixelSizeY - dfPixelSizeY * dfRatio / *pnLines;
+        double adfExtent[4] = {
+            dfMinXOut,
+            dfMaxYOut - (*pnLines) * dfTryPixelSizeY,
+            dfMinXOut + (*pnPixels) * dfPixelSizeX,
+            dfMaxYOut
+        };
         if( !GDALSuggestedWarpOutput2_MustAdjustForBottomBorder(
                                             pfnTransformer, pTransformArg,
                                             adfExtent, *pnPixels,  *pnLines,
