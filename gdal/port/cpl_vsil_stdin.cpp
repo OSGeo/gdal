@@ -87,16 +87,15 @@ static void VSIStdinInit()
 
 class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
-public:
-                              VSIStdinFilesystemHandler();
-    virtual                  ~VSIStdinFilesystemHandler();
+  public:
+    VSIStdinFilesystemHandler();
+    ~VSIStdinFilesystemHandler() override;
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf,
-                                    int nFlags ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 };
 
 /************************************************************************/
@@ -112,17 +111,15 @@ class VSIStdinHandle CPL_FINAL : public VSIVirtualHandle
     int               ReadAndCache( void* pBuffer, int nToRead );
 
   public:
-                      VSIStdinHandle();
-    virtual          ~VSIStdinHandle();
+    VSIStdinHandle();
+    ~VSIStdinHandle() override;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Close() override;
 };
 
 /************************************************************************/

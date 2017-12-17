@@ -299,17 +299,15 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   public:
     VSICurlStreamingHandle( VSICurlStreamingFSHandler* poFS,
                             const char* pszURL );
-    virtual ~VSICurlStreamingHandle();
+    ~VSICurlStreamingHandle() override;
 
-    virtual int          Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t       Read( void *pBuffer, size_t nSize,
-                               size_t nMemb ) override;
-    virtual size_t       Write( const void *pBuffer, size_t nSize,
-                                size_t nMemb ) override;
-    virtual int          Eof() override;
-    virtual int          Flush() override;
-    virtual int          Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 
     void                 DownloadInThread();
     size_t               ReceivedBytes( GByte *buffer, size_t count,
@@ -1713,15 +1711,15 @@ class VSIS3StreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
 protected:
-    virtual CPLString GetFSPrefix() override { return "/vsis3_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
-        override;
+    CPLString GetFSPrefix() override { return "/vsis3_streaming/"; }
+    VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
 
 public:
-        VSIS3StreamingFSHandler() {}
+    VSIS3StreamingFSHandler() {}
+    ~VSIS3StreamingFSHandler() override {}
 
-        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
-        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+    void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+    void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
 
 /************************************************************************/
@@ -1762,7 +1760,7 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(
         oMapBucketsToS3Params.find(poS3HandleHelper->GetBucket());
     if( oIter != oMapBucketsToS3Params.end() )
     {
-        oIter->second.UpdateHandlerHelper(poS3HandleHelper);  
+        oIter->second.UpdateHandlerHelper(poS3HandleHelper);
     }
 }
 
@@ -1775,18 +1773,19 @@ class VSIS3LikeStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
     IVSIS3LikeHandleHelper* m_poS3HandleHelper;
 
   protected:
-    virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                                const struct curl_slist* psExistingHeaders) override;
-    virtual bool StopReceivingBytesOnError() override { return false; }
-    virtual bool CanRestartOnError( const char* pszErrorMsg,
-                                    const char* pszHeaders,
-                                    bool bSetError ) override;
-    virtual bool InterpretRedirect() override { return false; }
+    struct curl_slist* GetCurlHeaders(
+        const CPLString& osVerb,
+        const struct curl_slist* psExistingHeaders) override;
+    bool StopReceivingBytesOnError() override { return false; }
+    bool CanRestartOnError( const char* pszErrorMsg,
+                            const char* pszHeaders,
+                            bool bSetError ) override;
+    bool InterpretRedirect() override { return false; }
 
   public:
     VSIS3LikeStreamingHandle( IVSIS3LikeStreamingFSHandler* poFS,
-                          IVSIS3LikeHandleHelper* poS3HandleHelper );
-    virtual ~VSIS3LikeStreamingHandle();
+                              IVSIS3LikeHandleHelper* poS3HandleHelper );
+    ~VSIS3LikeStreamingHandle() override;
 };
 
 /************************************************************************/
@@ -1866,13 +1865,13 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError( const char* pszErrorMsg,
 
 class VSIGSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
-protected:
-    virtual CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
-        override;
+  protected:
+    CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
+    VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
 
-public:
-        VSIGSStreamingFSHandler() {}
+  public:
+    VSIGSStreamingFSHandler() {}
+    ~VSIGSStreamingFSHandler() override {}
 };
 
 /************************************************************************/
@@ -1898,13 +1897,13 @@ VSIGSStreamingFSHandler::CreateFileHandle( const char* pszURL )
 
 class VSIAzureStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
-protected:
-    virtual CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
-        override;
+  protected:
+    CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
+    VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
 
-public:
-        VSIAzureStreamingFSHandler() {}
+  public:
+    VSIAzureStreamingFSHandler() {}
+    ~VSIAzureStreamingFSHandler() override {}
 };
 
 /************************************************************************/
@@ -1932,16 +1931,16 @@ class VSIOSSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
 {
     std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
 
-protected:
-    virtual CPLString GetFSPrefix() override { return "/vsioss_streaming/"; }
-    virtual VSICurlStreamingHandle* CreateFileHandle( const char* pszURL )
-        override;
+  protected:
+    CPLString GetFSPrefix() override { return "/vsioss_streaming/"; }
+    VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
 
-public:
-        VSIOSSStreamingFSHandler() {}
+  public:
+    VSIOSSStreamingFSHandler() {}
+    ~VSIOSSStreamingFSHandler() override {}
 
-        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
-        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+    void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+    void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
 
 /************************************************************************/

@@ -58,7 +58,7 @@ class VSIAzureBlobHandleHelper: public IVSIS3LikeHandleHelper
                                   const CPLString& osObjectKey,
                                   bool bUseHTTPS);
 
-        virtual void RebuildURL() CPL_OVERRIDE;
+        void RebuildURL() override;
 
     public:
         VSIAzureBlobHandleHelper(const CPLString& osEndpoint,
@@ -75,9 +75,9 @@ class VSIAzureBlobHandleHelper: public IVSIS3LikeHandleHelper
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
                                           const struct curl_slist* psExistingHeaders,
                                           const void *pabyDataContent = nullptr,
-                                          size_t nBytesContent = 0) const CPL_OVERRIDE;
+                                          size_t nBytesContent = 0) const override;
 
-        const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
+        const CPLString& GetURL() const override { return m_osURL; }
 };
 
 

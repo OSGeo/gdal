@@ -58,17 +58,16 @@ class VSISubFileHandle : public VSIVirtualHandle
     vsi_l_offset  nSubregionSize;
     bool          bAtEOF;
 
-                      VSISubFileHandle() : fp(nullptr), nSubregionOffset(0),
-                                           nSubregionSize(0), bAtEOF(false) {}
+    VSISubFileHandle() : fp(nullptr), nSubregionOffset(0),
+                         nSubregionSize(0), bAtEOF(false) {}
+    ~VSISubFileHandle() override {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Close() override;
 };
 
 /************************************************************************/
@@ -79,24 +78,24 @@ class VSISubFileHandle : public VSIVirtualHandle
 
 class VSISubFileFilesystemHandler : public VSIFilesystemHandler
 {
-public:
-                     VSISubFileFilesystemHandler();
-    virtual          ~VSISubFileFilesystemHandler();
+  public:
+    VSISubFileFilesystemHandler();
+    ~VSISubFileFilesystemHandler() override;
 
     static int              DecomposePath( const char *pszPath,
                                     CPLString &osFilename,
                                     vsi_l_offset &nSubFileOffset,
                                     vsi_l_offset &nSubFileSize );
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
-    virtual int      Unlink( const char *pszFilename ) override;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) override;
-    virtual int      Rmdir( const char *pszDirname ) override;
-    virtual char   **ReadDir( const char *pszDirname ) override;
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    char **ReadDir( const char *pszDirname ) override;
 };
 
 /************************************************************************/
