@@ -156,7 +156,8 @@ OGRFeatureDefn * OGRAmigoCloudTableLayer::GetLayerDefnInternal(CPL_UNUSED json_o
             if(poRows!=nullptr && json_object_get_type(poRows) == json_type_array)
             {
                 mFIDs.clear();
-                for(int i = 0; i < json_object_array_length(poRows); i++)
+                auto nLength = json_object_array_length(poRows);
+                for(decltype(nLength) i = 0; i < nLength; i++)
                 {
                     json_object *obj = json_object_array_get_idx(poRows, i);
 

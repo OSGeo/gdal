@@ -514,7 +514,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
             json_object* poKeys = CPL_json_object_object_get(jsobj, "keys");
             if (nKey >= 0 && poKeys != nullptr &&
                 json_object_is_type(poKeys, json_type_array) &&
-                nKey < json_object_array_length(poKeys))
+                nKey < static_cast<int>(json_object_array_length(poKeys)))
             {
                 json_object* poKey = json_object_array_get_idx(poKeys, nKey);
                 if (poKey != nullptr && json_object_is_type(poKey, json_type_string))

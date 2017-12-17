@@ -2031,7 +2031,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             json_object* poMetadatas = CPL_json_object_object_get(poRootInstance, "metadata");
             if( poMetadatas && json_object_get_type(poMetadatas) == json_type_array )
             {
-                for( int i = 0; i < json_object_array_length(poMetadatas); ++i )
+                auto nLength = json_object_array_length(poMetadatas);
+                for( decltype(nLength) i = 0; i < nLength; ++i )
                 {
                     json_object* poMetadata =
                         json_object_array_get_idx(poMetadatas, i);
@@ -2125,9 +2126,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             json_object* poAnnotations = CPL_json_object_object_get(poRootInstance, "annotations");
             if( poAnnotations && json_object_get_type(poAnnotations) == json_type_array )
             {
-                for( int i = 0;
-                     i < json_object_array_length(poAnnotations);
-                     ++i )
+                auto nLength = json_object_array_length(poAnnotations);
+                for( decltype(nLength) i = 0; i < nLength; ++i )
                 {
                     json_object* poAnnotation = json_object_array_get_idx(poAnnotations, i);
                     if( poAnnotation && json_object_get_type(poAnnotation) == json_type_string )
@@ -2144,9 +2144,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( poGMLFileList &&
                 json_object_get_type(poGMLFileList) == json_type_array )
             {
-                for( int i = 0;
-                     i < json_object_array_length(poGMLFileList);
-                     ++i )
+                auto nLength = json_object_array_length(poGMLFileList);
+                for( decltype(nLength) i = 0; i < nLength; ++i )
                 {
                     json_object* poGMLFile =
                         json_object_array_get_idx(poGMLFileList, i);
@@ -2215,7 +2214,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             json_object* poStyles = CPL_json_object_object_get(poRootInstance, "styles");
             if( poStyles && json_object_get_type(poStyles) == json_type_array )
             {
-                for( int i = 0; i < json_object_array_length(poStyles); ++i )
+                auto nLength = json_object_array_length(poStyles);
+                for( decltype(nLength) i = 0; i < nLength; ++i )
                 {
                     json_object* poStyle = json_object_array_get_idx(poStyles, i);
                     if( poStyle && json_object_get_type(poStyle) == json_type_object )
@@ -2258,9 +2258,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             json_object* poExtensions = CPL_json_object_object_get(poRootInstance, "extensions");
             if( poExtensions && json_object_get_type(poExtensions) == json_type_array )
             {
-                for( int i = 0;
-                     i < json_object_array_length(poExtensions);
-                     ++i )
+                auto nLength = json_object_array_length(poExtensions);
+                for( decltype(nLength) i = 0; i < nLength; ++i )
                 {
                     json_object* poExtension = json_object_array_get_idx(poExtensions, i);
                     if( poExtension && json_object_get_type(poExtension) == json_type_object )
@@ -2304,7 +2303,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         json_object* poBoxes = CPL_json_object_object_get(poObj, "boxes");
         if( poBoxes && json_object_get_type(poBoxes) == json_type_array )
         {
-            for( int i = 0; i < json_object_array_length(poBoxes); ++i )
+            auto nLength = json_object_array_length(poBoxes);
+            for( decltype(nLength) i = 0; i < nLength; ++i )
             {
                 json_object* poBox = json_object_array_get_idx(poBoxes, i);
                 if( poBox && json_object_get_type(poBox) == json_type_object )
