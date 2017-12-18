@@ -378,7 +378,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             /* Default to 1.1 */
             CPLError(CE_Warning, CPLE_AppDefined, "GPX schema version is unknown. "
-                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.");
+                     "The driver may not be able to handle the file correctly "
+                     "and will behave as if it is GPX 1.1.");
             pszVersion = CPLStrdup("1.1");
         }
         else if (strcmp(pszVersion, "1.0") == 0 || strcmp(pszVersion, "1.1") == 0)
@@ -389,7 +390,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "GPX schema version '%s' is not handled by the driver. "
-                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.", pszVersion);
+                     "The driver may not be able to handle the file correctly "
+                     "and will behave as if it is GPX 1.1.", pszVersion);
         }
 
         nLayers = 5;
@@ -412,7 +414,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                    "OGR/GPX driver has not been built with read support. Expat library required");
+                     "OGR/GPX driver has not been built with read support. "
+                     "Expat library required");
         }
         VSIFCloseL(fp);
     }
@@ -437,14 +440,15 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         pszFilename = "/vsistdout/";
 
 /* -------------------------------------------------------------------- */
-/*     Do not override exiting file.                                    */
+/*     Do not overwrite exiting file.                                   */
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "You have to delete %s before being able to create it with the GPX driver",
+                 "You have to delete %s before being able to create it with "
+                 "the GPX driver",
                  pszFilename);
         return FALSE;
     }
