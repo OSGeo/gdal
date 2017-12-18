@@ -52,19 +52,19 @@ class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     CPLHashSet     *hSet;
     CPLLock        *hLock;
 
-    public:
-           explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
-           virtual ~GDALHashSetBandBlockCache();
+  public:
+    explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
+    ~GDALHashSetBandBlockCache() override;
 
-           virtual bool             Init() override;
-           virtual bool             IsInitOK() override;
-           virtual CPLErr           FlushCache() override;
-           virtual CPLErr           AdoptBlock( GDALRasterBlock * ) override;
-           virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
-                                                          int nYBlockYOff ) override;
-           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock ) override;
-           virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff,
-                                                int bWriteDirtyBlock ) override;
+    bool Init() override;
+    bool IsInitOK() override;
+    CPLErr FlushCache() override;
+    CPLErr AdoptBlock( GDALRasterBlock * ) override;
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
+                                           int nYBlockYOff ) override;
+    CPLErr UnreferenceBlock( GDALRasterBlock* poBlock ) override;
+    CPLErr FlushBlock( int nXBlockOff, int nYBlockOff,
+                       int bWriteDirtyBlock ) override;
 };
 
 /************************************************************************/

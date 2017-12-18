@@ -111,11 +111,11 @@ class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
     virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
     virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
-    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                            void *, int, int, GDALDataType,
-                            GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                    void *, int, int, GDALDataType,
+                    GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
     char **GetMetadataDomainList() override;
