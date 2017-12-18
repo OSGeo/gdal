@@ -957,7 +957,7 @@ class XMMReg4Double
     {
         __m256d ymm_tmp1, ymm_tmp2;
         ymm_tmp2 = _mm256_hadd_pd(ymm, ymm);
-        ymm_tmp1 = _mm256_permute2f128_pd(ymm_tmp2, ymm_tmp2, 1); 
+        ymm_tmp1 = _mm256_permute2f128_pd(ymm_tmp2, ymm_tmp2, 1);
         ymm_tmp1 = _mm256_add_pd(ymm_tmp1, ymm_tmp2);
         return _mm_cvtsd_f64(_mm256_castpd256_pd128(ymm_tmp1));
     }

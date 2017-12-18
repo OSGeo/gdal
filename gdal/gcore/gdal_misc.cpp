@@ -136,15 +136,15 @@ GDALDataType CPL_STDCALL
 GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
 
 {
-    const int panBits[] = { 
-        GetDataTypeElementSizeBits( eType1 ), 
-        GetDataTypeElementSizeBits( eType2 ) 
+    const int panBits[] = {
+        GetDataTypeElementSizeBits( eType1 ),
+        GetDataTypeElementSizeBits( eType2 )
     };
 
     if( panBits[0] == 0 || panBits[1] == 0 )
         return GDT_Unknown;
 
-    const bool pabSigned[] = { 
+    const bool pabSigned[] = {
         CPL_TO_BOOL( GDALDataTypeIsSigned( eType1 ) ),
         CPL_TO_BOOL( GDALDataTypeIsSigned( eType2 ) )
     };
@@ -155,7 +155,7 @@ GDALDataTypeUnion( GDALDataType eType1, GDALDataType eType2 )
         CPL_TO_BOOL(GDALDataTypeIsFloating(eType2))
     };
     const bool bFloating = pabFloating[0] || pabFloating[1];
-    const bool bComplex = 
+    const bool bComplex =
         CPL_TO_BOOL( GDALDataTypeIsComplex( eType1 ) ) ||
         CPL_TO_BOOL( GDALDataTypeIsComplex( eType2 ) );
 
@@ -2328,7 +2328,7 @@ double CPL_STDCALL GDALDecToPackedDMS( double dfDec )
  * inputs.  A special case has been implemented for corner corner coordinates
  * given in TL, TR, BR, BL order.  So when using this to get a geotransform
  * from 4 corner coordinates, pass them in this order.
- * 
+ *
  * Starting with GDAL 2.2.2, if bApproxOK = FALSE, the
  * GDAL_GCPS_TO_GEOTRANSFORM_APPROX_OK configuration option will be read. If
  * set to YES, then bApproxOK will be overridden with TRUE.

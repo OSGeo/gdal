@@ -1344,7 +1344,7 @@ template<class T> static inline void GDALResampleConvolutionVertical_16cols(
         XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
         XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
         XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
-        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+0*nStride) * w0; 
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+ 0+0*nStride) * w0;
         v_acc1 += XMMReg4Double::Load4Val(pChunk+j+ 4+0*nStride) * w0;
         v_acc2 += XMMReg4Double::Load4Val(pChunk+j+ 8+0*nStride) * w0;
         v_acc3 += XMMReg4Double::Load4Val(pChunk+j+12+0*nStride) * w0;
@@ -1396,7 +1396,7 @@ template<class T> static inline void GDALResampleConvolutionVertical_8cols(
         XMMReg4Double w1 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+1);
         XMMReg4Double w2 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+2);
         XMMReg4Double w3 = XMMReg4Double::Load1ValHighAndLow(padfWeights+i+3);
-        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+0*nStride) * w0; 
+        v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+0*nStride) * w0;
         v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+0*nStride) * w0;
         v_acc0 += XMMReg4Double::Load4Val(pChunk+j+0+1*nStride) * w1;
         v_acc1 += XMMReg4Double::Load4Val(pChunk+j+4+1*nStride) * w1;

@@ -522,7 +522,7 @@ void GDALRasterBlock::FlushDirtyBlocks()
  * be recursively called on the same dataset.
  *
  * This method implements a reference counter and is thread-safe.
- * 
+ *
  * This call must be paired with a corresponding LeaveDisableDirtyBlockFlush().
  *
  * @since GDAL 2.2.2
