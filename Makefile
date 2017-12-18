@@ -7,8 +7,10 @@ EMCONFIGURE_JS ?= 0
 GDAL_EMCC_CFLAGS := -msse -Oz
 PROJ_EMCC_CFLAGS := -msse -Oz
 EXPORTED_FUNCTIONS = "[\
+  '_CSLCount',\
   '_GDALAllRegister',\
   '_GDALOpen',\
+  '_GDALClose',\
   '_GDALGetRasterXSize',\
   '_GDALGetRasterYSize',\
   '_GDALGetRasterCount',\
@@ -37,6 +39,7 @@ gdal: gdal.js
 gdal.js: $(GDAL)/libgdal.a
 	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a $(PROJ4)/src/.libs/libproj.a -o gdal.js \
 		-s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS) \
+		-s TOTAL_MEMORY=256MB \
 		--preload-file $(GDAL)/data/pcs.csv@/usr/local/share/gdal/pcs.csv \
 		--preload-file $(GDAL)/data/gcs.csv@/usr/local/share/gdal/gcs.csv \
 		--preload-file $(GDAL)/data/gcs.override.csv@/usr/local/share/gdal/gcs.override.csv \
@@ -46,7 +49,6 @@ gdal.js: $(GDAL)/libgdal.a
 		--preload-file $(GDAL)/data/coordinate_axis.csv@/usr/local/share/gdal/coordinate_axis.csv \
 		--preload-file $(GDAL)/data/vertcs.override.csv@/usr/local/share/gdal/vertcs.override.csv \
 		--preload-file $(GDAL)/data/vertcs.csv@/usr/local/share/gdal/vertcs.csv \
-		--preload-file $(GDAL)/data/compdcs.override.csv@/usr/local/share/gdal/compdcs.override.csv \
 		--preload-file $(GDAL)/data/compdcs.csv@/usr/local/share/gdal/compdcs.csv \
 		--preload-file $(GDAL)/data/geoccs.csv@/usr/local/share/gdal/geoccs.csv \
 		--preload-file $(GDAL)/data/stateplane.csv@/usr/local/share/gdal/stateplane.csv

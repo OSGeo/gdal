@@ -13,7 +13,7 @@ A += --without-grass
 A += --without-libgrass
 A += --without-cfitsio
 A += --without-pcraster
-A += --without-png
+A += --with-libpng=internal
 A += --without-mrf
 A += --without-dds
 A += --without-gta
