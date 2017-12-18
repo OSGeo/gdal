@@ -164,8 +164,8 @@ class OGRProj4CT : public OGRCoordinateTransformation
     bool        bNoTransform;
 
 public:
-                OGRProj4CT();
-    virtual     ~OGRProj4CT();
+    OGRProj4CT();
+    ~OGRProj4CT() override;
 
     int         Initialize( OGRSpatialReference *poSource,
                             OGRSpatialReference *poTarget );

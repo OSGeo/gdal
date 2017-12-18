@@ -266,7 +266,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
   public:
 
     OGRStylePen();
-    virtual ~OGRStylePen();
+    ~OGRStylePen() override;
 
     /**********************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools  Pen  */
@@ -314,7 +314,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
   public:
 
     OGRStyleBrush();
-    virtual ~OGRStyleBrush();
+    ~OGRStyleBrush() override;
 
     /* Explicit fct for all parameters defined in the Drawing tools Brush */
 
@@ -360,7 +360,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
   public:
 
     OGRStyleSymbol();
-    virtual ~OGRStyleSymbol();
+    ~OGRStyleSymbol() override;
 
     /*****************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools  */
@@ -418,7 +418,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
   public:
 
     OGRStyleLabel();
-    virtual ~OGRStyleLabel();
+    ~OGRStyleLabel() override;
 
     /*****************************************************************/
     /* Explicit fct for all parameters defined in the Drawing tools  */
