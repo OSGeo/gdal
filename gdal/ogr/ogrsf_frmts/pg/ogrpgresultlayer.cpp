@@ -92,8 +92,7 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         PGresult* hResult = OGRPG_PQexec(poDS->GetPGConn(), osRequest );
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK)
         {
-            int iCol;
-            for( iCol = 0; iCol < PQntuples(hResult); iCol++ )
+            for( int iCol = 0; iCol < PQntuples(hResult); iCol++ )
             {
                 const char* pszAttNum = PQgetvalue(hResult,iCol,0);
                 const char* pszAttRelid = PQgetvalue(hResult,iCol,1);
