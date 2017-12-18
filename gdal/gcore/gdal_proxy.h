@@ -45,55 +45,55 @@
 
 class CPL_DLL GDALProxyDataset : public GDALDataset
 {
-    protected:
-        GDALProxyDataset() {}
+  protected:
+    GDALProxyDataset() {}
 
-        virtual GDALDataset *RefUnderlyingDataset() = 0;
-        virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
+    virtual GDALDataset *RefUnderlyingDataset() = 0;
+    virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset);
 
-        virtual CPLErr IBuildOverviews( const char *, int, int *,
-                                    int, int *, GDALProgressFunc, void * ) CPL_OVERRIDE;
-        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                int, int *, GSpacing, GSpacing, GSpacing,
-                                GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
-    public:
+    CPLErr IBuildOverviews( const char *, int, int *,
+                            int, int *, GDALProgressFunc, void * ) override;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      int, int *, GSpacing, GSpacing, GSpacing,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
 
-        virtual char      **GetMetadataDomainList() CPL_OVERRIDE;
-        virtual char      **GetMetadata( const char * pszDomain  ) CPL_OVERRIDE;
-        virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                        const char * pszDomain  ) CPL_OVERRIDE;
-        virtual const char *GetMetadataItem( const char * pszName,
-                                            const char * pszDomain  ) CPL_OVERRIDE;
-        virtual CPLErr      SetMetadataItem( const char * pszName,
-                                            const char * pszValue,
-                                            const char * pszDomain ) CPL_OVERRIDE;
+  public:
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain  ) override;
+    CPLErr SetMetadata( char ** papszMetadata,
+                            const char * pszDomain  ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                const char * pszDomain  ) override;
+    CPLErr SetMetadataItem( const char * pszName,
+                            const char * pszValue,
+                            const char * pszDomain ) override;
 
-        virtual void FlushCache(void) CPL_OVERRIDE;
+    void FlushCache() override;
 
-        virtual const char *GetProjectionRef(void) CPL_OVERRIDE;
-        virtual CPLErr SetProjection( const char * ) CPL_OVERRIDE;
+    const char *GetProjectionRef(void) override;
+    CPLErr SetProjection( const char * ) override;
 
-        virtual CPLErr GetGeoTransform( double * ) CPL_OVERRIDE;
-        virtual CPLErr SetGeoTransform( double * ) CPL_OVERRIDE;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
-        virtual void *GetInternalHandle( const char * ) CPL_OVERRIDE;
-        virtual GDALDriver *GetDriver(void) CPL_OVERRIDE;
-        virtual char      **GetFileList(void) CPL_OVERRIDE;
+    void *GetInternalHandle( const char * ) override;
+    GDALDriver *GetDriver() override;
+    char **GetFileList() override;
 
-        virtual int    GetGCPCount() CPL_OVERRIDE;
-        virtual const char *GetGCPProjection() CPL_OVERRIDE;
-        virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
-        virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                                const char *pszGCPProjection ) CPL_OVERRIDE;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
 
-        virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize,
-                                GDALDataType eDT,
-                                int nBandCount, int *panBandList,
-                                char **papszOptions ) CPL_OVERRIDE;
+    CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                       int nBufXSize, int nBufYSize,
+                       GDALDataType eDT,
+                       int nBandCount, int *panBandList,
+                       char **papszOptions ) override;
 
-        virtual CPLErr          CreateMaskBand( int nFlags ) CPL_OVERRIDE;
+    CPLErr          CreateMaskBand( int nFlags ) override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyDataset)
@@ -105,95 +105,95 @@ class CPL_DLL GDALProxyDataset : public GDALDataset
 
 class CPL_DLL GDALProxyRasterBand : public GDALRasterBand
 {
-    protected:
-        GDALProxyRasterBand() {}
+  protected:
+    GDALProxyRasterBand() {}
 
-        virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
-        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
+    virtual GDALRasterBand* RefUnderlyingRasterBand() = 0;
+    virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand);
 
-        virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
-        virtual CPLErr IWriteBlock( int, int, void * ) CPL_OVERRIDE;
-        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
+    virtual CPLErr IReadBlock( int, int, void * ) override;
+    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                            void *, int, int, GDALDataType,
+                            GSpacing, GSpacing, GDALRasterIOExtraArg* psExtraArg ) override;
 
-    public:
+  public:
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain  ) override;
+    CPLErr SetMetadata( char ** papszMetadata,
+                        const char * pszDomain  ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                const char * pszDomain  ) override;
+    CPLErr SetMetadataItem( const char * pszName,
+                            const char * pszValue,
+                            const char * pszDomain ) override;
+    CPLErr FlushCache() override;
+    char **GetCategoryNames() override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetMinimum( int *pbSuccess = nullptr ) override;
+    double GetMaximum(int *pbSuccess = nullptr ) override;
+    double GetOffset( int *pbSuccess = nullptr ) override;
+    double GetScale( int *pbSuccess = nullptr ) override;
+    const char *GetUnitType() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0) override;
 
-        virtual char      **GetMetadataDomainList() CPL_OVERRIDE;
-        virtual char      **GetMetadata( const char * pszDomain  ) CPL_OVERRIDE;
-        virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                        const char * pszDomain  ) CPL_OVERRIDE;
-        virtual const char *GetMetadataItem( const char * pszName,
-                                            const char * pszDomain  ) CPL_OVERRIDE;
-        virtual CPLErr      SetMetadataItem( const char * pszName,
-                                            const char * pszValue,
-                                            const char * pszDomain ) CPL_OVERRIDE;
-        virtual CPLErr FlushCache() CPL_OVERRIDE;
-        virtual char **GetCategoryNames() CPL_OVERRIDE;
-        virtual double GetNoDataValue( int *pbSuccess = nullptr ) CPL_OVERRIDE;
-        virtual double GetMinimum( int *pbSuccess = nullptr ) CPL_OVERRIDE;
-        virtual double GetMaximum(int *pbSuccess = nullptr ) CPL_OVERRIDE;
-        virtual double GetOffset( int *pbSuccess = nullptr ) CPL_OVERRIDE;
-        virtual double GetScale( int *pbSuccess = nullptr ) CPL_OVERRIDE;
-        virtual const char *GetUnitType() CPL_OVERRIDE;
-        virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
-        virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
-        virtual CPLErr Fill(double dfRealValue, double dfImaginaryValue = 0) CPL_OVERRIDE;
+    CPLErr SetCategoryNames( char ** ) override;
+    CPLErr SetNoDataValue( double ) override;
+    CPLErr DeleteNoDataValue() override;
+    CPLErr SetColorTable( GDALColorTable * ) override;
+    CPLErr SetColorInterpretation( GDALColorInterp ) override;
+    CPLErr SetOffset( double ) override;
+    CPLErr SetScale( double ) override;
+    CPLErr SetUnitType( const char * ) override;
 
-        virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
-        virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
-        virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
-        virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
-        virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_OVERRIDE;
-        virtual CPLErr SetOffset( double ) CPL_OVERRIDE;
-        virtual CPLErr SetScale( double ) CPL_OVERRIDE;
-        virtual CPLErr SetUnitType( const char * ) CPL_OVERRIDE;
+    CPLErr GetStatistics( int bApproxOK, int bForce,
+                          double *pdfMin, double *pdfMax,
+                          double *pdfMean, double *padfStdDev ) override;
+    CPLErr ComputeStatistics( int bApproxOK,
+                              double *pdfMin, double *pdfMax,
+                              double *pdfMean, double *pdfStdDev,
+                              GDALProgressFunc, void *pProgressData ) override;
+    CPLErr SetStatistics( double dfMin, double dfMax,
+                          double dfMean, double dfStdDev ) override;
+    CPLErr ComputeRasterMinMax( int, double* ) override;
 
-        virtual CPLErr GetStatistics( int bApproxOK, int bForce,
-                                    double *pdfMin, double *pdfMax,
-                                    double *pdfMean, double *padfStdDev ) CPL_OVERRIDE;
-        virtual CPLErr ComputeStatistics( int bApproxOK,
-                                        double *pdfMin, double *pdfMax,
-                                        double *pdfMean, double *pdfStdDev,
-                                        GDALProgressFunc, void *pProgressData ) CPL_OVERRIDE;
-        virtual CPLErr SetStatistics( double dfMin, double dfMax,
-                                    double dfMean, double dfStdDev ) CPL_OVERRIDE;
-        virtual CPLErr ComputeRasterMinMax( int, double* ) CPL_OVERRIDE;
+    int HasArbitraryOverviews() override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview( int ) override;
+    GDALRasterBand *GetRasterSampleOverview( GUIntBig ) override;
+    CPLErr BuildOverviews( const char *, int, int *,
+                           GDALProgressFunc, void * ) override;
 
-        virtual int HasArbitraryOverviews() CPL_OVERRIDE;
-        virtual int GetOverviewCount() CPL_OVERRIDE;
-        virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
-        virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig ) CPL_OVERRIDE;
-        virtual CPLErr BuildOverviews( const char *, int, int *,
-                                    GDALProgressFunc, void * ) CPL_OVERRIDE;
+    CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
+                       int nBufXSize, int nBufYSize,
+                       GDALDataType eDT, char **papszOptions ) override;
 
-        virtual CPLErr AdviseRead( int nXOff, int nYOff, int nXSize, int nYSize,
-                                int nBufXSize, int nBufYSize,
-                                GDALDataType eDT, char **papszOptions ) CPL_OVERRIDE;
+    CPLErr  GetHistogram( double dfMin, double dfMax,
+                          int nBuckets, GUIntBig * panHistogram,
+                          int bIncludeOutOfRange, int bApproxOK,
+                          GDALProgressFunc, void *pProgressData ) override;
 
-        virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                            int nBuckets, GUIntBig * panHistogram,
-                            int bIncludeOutOfRange, int bApproxOK,
-                            GDALProgressFunc, void *pProgressData ) CPL_OVERRIDE;
+    CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
+                                int *pnBuckets, GUIntBig ** ppanHistogram,
+                                int bForce,
+                                GDALProgressFunc, void *pProgressData) override;
+    CPLErr SetDefaultHistogram( double dfMin, double dfMax,
+                                int nBuckets, GUIntBig *panHistogram ) override;
 
-        virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                            int *pnBuckets, GUIntBig ** ppanHistogram,
-                                            int bForce,
-                                            GDALProgressFunc, void *pProgressData) CPL_OVERRIDE;
-        virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                            int nBuckets, GUIntBig *panHistogram ) CPL_OVERRIDE;
+    GDALRasterAttributeTable *GetDefaultRAT() override;
+    CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) override;
 
-        virtual GDALRasterAttributeTable *GetDefaultRAT() CPL_OVERRIDE;
-        virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * ) CPL_OVERRIDE;
+    GDALRasterBand *GetMaskBand() override;
+    int GetMaskFlags() override;
+    CPLErr CreateMaskBand( int nFlags ) override;
 
-        virtual GDALRasterBand *GetMaskBand() CPL_OVERRIDE;
-        virtual int             GetMaskFlags() CPL_OVERRIDE;
-        virtual CPLErr          CreateMaskBand( int nFlags ) CPL_OVERRIDE;
+    CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
+                                       int *pnPixelSpace,
+                                       GIntBig *pnLineSpace,
+                                       char **papszOptions ) override;
 
-        virtual CPLVirtualMem  *GetVirtualMemAuto( GDALRWFlag eRWFlag,
-                                                int *pnPixelSpace,
-                                                GIntBig *pnLineSpace,
-                                                char **papszOptions ) CPL_OVERRIDE;
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyRasterBand)
 };
@@ -207,7 +207,7 @@ class     GDALProxyPoolRasterBand;
 
 class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 {
-    private:
+  private:
         GIntBig          responsiblePID;
 
         char            *pszProjectionRef;
@@ -225,44 +225,46 @@ class CPL_DLL GDALProxyPoolDataset : public GDALProxyDataset
 
         GDALDataset *RefUnderlyingDataset(bool bForceOpen);
 
-    protected:
-        virtual GDALDataset *RefUnderlyingDataset() CPL_OVERRIDE;
-        virtual void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) CPL_OVERRIDE;
+  protected:
+    GDALDataset *RefUnderlyingDataset() override;
+    void UnrefUnderlyingDataset(GDALDataset* poUnderlyingDataset) override;
 
-        friend class     GDALProxyPoolRasterBand;
+    friend class     GDALProxyPoolRasterBand;
 
-    public:
-        GDALProxyPoolDataset(const char* pszSourceDatasetDescription,
-                            int nRasterXSize, int nRasterYSize,
-                            GDALAccess eAccess = GA_ReadOnly,
-                            int bShared = FALSE,
-                            const char * pszProjectionRef = nullptr,
-                            double * padfGeoTransform = nullptr,
-                            const char* pszOwner = nullptr);
-        virtual ~GDALProxyPoolDataset();
+  public:
+    GDALProxyPoolDataset( const char* pszSourceDatasetDescription,
+                          int nRasterXSize, int nRasterYSize,
+                          GDALAccess eAccess = GA_ReadOnly,
+                          int bShared = FALSE,
+                          const char * pszProjectionRef = nullptr,
+                          double * padfGeoTransform = nullptr,
+                          const char* pszOwner = nullptr );
+    ~GDALProxyPoolDataset() override;
 
-        void         SetOpenOptions(char** papszOpenOptions);
-        void         AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+    void SetOpenOptions( char** papszOpenOptions );
+    void AddSrcBandDescription( GDALDataType eDataType, int nBlockXSize,
+                                int nBlockYSize );
 
-        virtual void FlushCache(void) CPL_OVERRIDE;
+    void FlushCache() override;
 
-        virtual const char *GetProjectionRef(void) CPL_OVERRIDE;
-        virtual CPLErr SetProjection( const char * ) CPL_OVERRIDE;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection( const char * ) override;
 
-        virtual CPLErr GetGeoTransform( double * ) CPL_OVERRIDE;
-        virtual CPLErr SetGeoTransform( double * ) CPL_OVERRIDE;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
-        /* Special behaviour for the following methods : they return a pointer */
-        /* data type, that must be cached by the proxy, so it doesn't become invalid */
-        /* when the underlying object get closed */
-        virtual char      **GetMetadata( const char * pszDomain  ) CPL_OVERRIDE;
-        virtual const char *GetMetadataItem( const char * pszName,
-                                            const char * pszDomain  ) CPL_OVERRIDE;
+    // Special behaviour for the following methods : they return a pointer
+    // data type, that must be cached by the proxy, so it doesn't become invalid
+    // when the underlying object get closed.
+    char **GetMetadata( const char * pszDomain  ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                 const char * pszDomain  ) override;
 
-        virtual void *GetInternalHandle( const char * pszRequest ) CPL_OVERRIDE;
+    void *GetInternalHandle( const char * pszRequest ) override;
 
-        virtual const char *GetGCPProjection() CPL_OVERRIDE;
-        virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolDataset)
 };
@@ -276,52 +278,55 @@ class GDALProxyPoolMaskBand;
 
 class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
 {
-    private:
-        CPLHashSet      *metadataSet;
-        CPLHashSet      *metadataItemSet;
-        char            *pszUnitType;
-        char           **papszCategoryNames;
-        GDALColorTable  *poColorTable;
+  private:
+    CPLHashSet      *metadataSet;
+    CPLHashSet      *metadataItemSet;
+    char            *pszUnitType;
+    char           **papszCategoryNames;
+    GDALColorTable  *poColorTable;
 
-        int                               nSizeProxyOverviewRasterBand;
-        GDALProxyPoolOverviewRasterBand **papoProxyOverviewRasterBand;
-        GDALProxyPoolMaskBand            *poProxyMaskBand;
+    int                               nSizeProxyOverviewRasterBand;
+    GDALProxyPoolOverviewRasterBand **papoProxyOverviewRasterBand;
+    GDALProxyPoolMaskBand            *poProxyMaskBand;
 
-        void Init();
+    void Init();
 
-        GDALRasterBand* RefUnderlyingRasterBand(bool bForceOpen);
+    GDALRasterBand* RefUnderlyingRasterBand( bool bForceOpen );
 
-    protected:
-        virtual GDALRasterBand* RefUnderlyingRasterBand() CPL_OVERRIDE;
-        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand) CPL_OVERRIDE;
+  protected:
+    GDALRasterBand* RefUnderlyingRasterBand() override;
+    void UnrefUnderlyingRasterBand( GDALRasterBand* poUnderlyingRasterBand )
+        override;
 
-        friend class GDALProxyPoolOverviewRasterBand;
-        friend class GDALProxyPoolMaskBand;
+    friend class GDALProxyPoolOverviewRasterBand;
+    friend class GDALProxyPoolMaskBand;
 
-    public:
-        GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS, int nBand,
-                                GDALDataType eDataType,
-                                int nBlockXSize, int nBlockYSize);
-        GDALProxyPoolRasterBand(GDALProxyPoolDataset* poDS,
-                                GDALRasterBand* poUnderlyingRasterBand);
-        virtual ~GDALProxyPoolRasterBand();
+  public:
+    GDALProxyPoolRasterBand( GDALProxyPoolDataset* poDS, int nBand,
+                             GDALDataType eDataType,
+                             int nBlockXSize, int nBlockYSize );
+    GDALProxyPoolRasterBand( GDALProxyPoolDataset* poDS,
+                             GDALRasterBand* poUnderlyingRasterBand );
+    ~GDALProxyPoolRasterBand() override;
 
-        void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize, int nBlockYSize);
+    void AddSrcMaskBandDescription( GDALDataType eDataType, int nBlockXSize,
+                                    int nBlockYSize );
 
-        /* Special behaviour for the following methods : they return a pointer */
-        /* data type, that must be cached by the proxy, so it doesn't become invalid */
-        /* when the underlying object get closed */
-        virtual char      **GetMetadata( const char * pszDomain  ) CPL_OVERRIDE;
-        virtual const char *GetMetadataItem( const char * pszName,
-                                            const char * pszDomain  ) CPL_OVERRIDE;
-        virtual char **GetCategoryNames() CPL_OVERRIDE;
-        virtual const char *GetUnitType() CPL_OVERRIDE;
-        virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
-        virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
-        virtual GDALRasterBand *GetRasterSampleOverview( GUIntBig nDesiredSamples) CPL_OVERRIDE; // TODO
-        virtual GDALRasterBand *GetMaskBand() CPL_OVERRIDE;
+    // Special behaviour for the following methods : they return a pointer
+    // data type, that must be cached by the proxy, so it doesn't become invalid
+    // when the underlying object get closed.
+    char **GetMetadata( const char * pszDomain ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                 const char * pszDomain ) override;
+    char **GetCategoryNames() override;
+    const char *GetUnitType() override;
+    GDALColorTable *GetColorTable() override;
+    GDALRasterBand *GetOverview( int ) override;
+    GDALRasterBand *GetRasterSampleOverview( GUIntBig nDesiredSamples ) override; // TODO
+    GDALRasterBand *GetMaskBand() override;
 
-        virtual CPLErr FlushCache() CPL_OVERRIDE;
+    CPLErr FlushCache() override;
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALProxyPoolRasterBand)
 };
@@ -332,23 +337,24 @@ class CPL_DLL GDALProxyPoolRasterBand : public GDALProxyRasterBand
 
 class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
 {
-    private:
-        GDALProxyPoolRasterBand *poMainBand;
-        int                      nOverviewBand;
+  private:
+    GDALProxyPoolRasterBand *poMainBand;
+    int                      nOverviewBand;
 
-        GDALRasterBand          *poUnderlyingMainRasterBand;
-        int                      nRefCountUnderlyingMainRasterBand;
+    GDALRasterBand          *poUnderlyingMainRasterBand;
+    int                      nRefCountUnderlyingMainRasterBand;
 
-    protected:
-        virtual GDALRasterBand* RefUnderlyingRasterBand() CPL_OVERRIDE;
-        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand) CPL_OVERRIDE;
+  protected:
+    GDALRasterBand* RefUnderlyingRasterBand() override;
+    void UnrefUnderlyingRasterBand( GDALRasterBand* poUnderlyingRasterBand )
+        override;
 
-    public:
-        GDALProxyPoolOverviewRasterBand(GDALProxyPoolDataset* poDS,
-                                        GDALRasterBand* poUnderlyingOverviewBand,
-                                        GDALProxyPoolRasterBand* poMainBand,
-                                        int nOverviewBand);
-        virtual ~GDALProxyPoolOverviewRasterBand();
+  public:
+    GDALProxyPoolOverviewRasterBand( GDALProxyPoolDataset* poDS,
+                                     GDALRasterBand* poUnderlyingOverviewBand,
+                                     GDALProxyPoolRasterBand* poMainBand,
+                                     int nOverviewBand );
+    ~GDALProxyPoolOverviewRasterBand() override;
 };
 
 /* ******************************************************************** */
@@ -357,25 +363,26 @@ class GDALProxyPoolOverviewRasterBand : public GDALProxyPoolRasterBand
 
 class GDALProxyPoolMaskBand : public GDALProxyPoolRasterBand
 {
-    private:
-        GDALProxyPoolRasterBand *poMainBand;
+  private:
+    GDALProxyPoolRasterBand *poMainBand;
 
-        GDALRasterBand          *poUnderlyingMainRasterBand;
-        int                      nRefCountUnderlyingMainRasterBand;
+    GDALRasterBand          *poUnderlyingMainRasterBand;
+    int                      nRefCountUnderlyingMainRasterBand;
 
-    protected:
-        virtual GDALRasterBand* RefUnderlyingRasterBand() CPL_OVERRIDE;
-        virtual void UnrefUnderlyingRasterBand(GDALRasterBand* poUnderlyingRasterBand) CPL_OVERRIDE;
+  protected:
+    GDALRasterBand* RefUnderlyingRasterBand() override;
+    void UnrefUnderlyingRasterBand( GDALRasterBand* poUnderlyingRasterBand )
+        override;
 
-    public:
-        GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
-                              GDALRasterBand* poUnderlyingMaskBand,
-                              GDALProxyPoolRasterBand* poMainBand);
-        GDALProxyPoolMaskBand(GDALProxyPoolDataset* poDS,
-                              GDALProxyPoolRasterBand* poMainBand,
-                              GDALDataType eDataType,
-                              int nBlockXSize, int nBlockYSize);
-        virtual ~GDALProxyPoolMaskBand();
+  public:
+    GDALProxyPoolMaskBand( GDALProxyPoolDataset* poDS,
+                           GDALRasterBand* poUnderlyingMaskBand,
+                           GDALProxyPoolRasterBand* poMainBand );
+    GDALProxyPoolMaskBand( GDALProxyPoolDataset* poDS,
+                           GDALProxyPoolRasterBand* poMainBand,
+                           GDALDataType eDataType,
+                           int nBlockXSize, int nBlockYSize );
+    ~GDALProxyPoolMaskBand() override;
 };
 
 #endif
