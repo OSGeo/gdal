@@ -30,21 +30,27 @@ unless (-r $config) {
 # 2) The C++ compiler.
 #
 my $cxx = '';
+my $INSTALL_BASE = '';
+for (@ARGV) {
+    ($INSTALL_BASE) = $1 if /INSTALL_BASE=(.*)/;
+}
 my $opt = "$source_tree/GDALmake.opt";
 open(my $fh, "<", $opt) or die "Can't open < $opt: $!";
-my ($INSTALL_BASE) = $ARGV[0] =~ /INSTALL_BASE=(.*)/;
 while (<$fh>) {
     if (/(\w+)\s+=\s+(.*)/) {
         my $key = $1;
         my $val = $2;
         $val =~ s/\s+$//;
-        if ($key eq 'prefix') {
-            die 'prefix in GDALmake.opt is different from \$INSTALL_BASE' unless $INSTALL_BASE eq $val;
-        } elsif ($key eq 'INST_MAN') {
-            $val =~ s/\$\{prefix\}/$INSTALL_BASE/;
-            push @ARGV, "INSTALLSITEMAN1DIR=$val/man1";
-            push @ARGV, "INSTALLSITEMAN3DIR=$val/man3";
-        } elsif ($key eq 'CXX') {
+        if ($INSTALL_BASE) {
+            if ($key eq 'prefix') {
+                warn 'prefix in GDALmake.opt is different from \$INSTALL_BASE' unless $INSTALL_BASE eq $val;
+            } elsif ($key eq 'INST_MAN') {
+                $val =~ s/\$\{prefix\}/$INSTALL_BASE/;
+                push @ARGV, "INSTALLSITEMAN1DIR=$val/man1";
+                push @ARGV, "INSTALLSITEMAN3DIR=$val/man3";
+            }
+        }
+        if ($key eq 'CXX') {
             ($cxx) = $val =~ /\)\s*(.*)$/;
         }
     }

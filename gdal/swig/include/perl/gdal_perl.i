@@ -517,7 +517,7 @@ sub Driver {
     return 'Geo::GDAL::Driver' unless @_;
     my $name = shift;
     my $driver = GetDriver($name);
-    error("Driver \"$name\" not found. Is it built in? Check with Geo::GDAL::Drivers or Geo::OGR::Drivers.") 
+    error("Driver \"$name\" not found. Is it built in? Check with Geo::GDAL::Drivers or Geo::OGR::Drivers.")
         unless $driver;
     return $driver;
 }
@@ -808,7 +808,7 @@ use Exporter 'import';
 Geo::GDAL->import(qw(:INTERNAL));
 
 use vars qw/@EXPORT @DOMAINS @CAPABILITIES %CAPABILITIES/;
- 
+
 @EXPORT = qw/BuildVRT/;
 @DOMAINS = qw/IMAGE_STRUCTURE SUBDATASETS GEOLOCATION/;
 
@@ -1697,7 +1697,7 @@ sub Piddle {
     my $t = $self->{DataType};
     unless (defined wantarray) {
         my $pdl = shift;
-        error("The datatype of the Piddle and the band do not match.") 
+        error("The datatype of the Piddle and the band do not match.")
           unless $PDL2DATATYPE{$pdl->get_datatype} == $t;
         my ($xoff, $yoff, $xsize, $ysize) = @_;
         $xoff //= 0;
