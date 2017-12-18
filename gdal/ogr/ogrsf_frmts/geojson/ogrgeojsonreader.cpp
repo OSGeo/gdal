@@ -3181,7 +3181,7 @@ json_object* json_ex_get_object_by_path( json_object* poObj,
     if( poObj == nullptr || json_object_get_type(poObj) != json_type_object ||
         pszPath == nullptr || *pszPath == '\0' )
     {
-        return poObj;
+        return nullptr;
     }
     char** papszTokens = CSLTokenizeString2( pszPath, ".", 0 );
     for( int i = 0; papszTokens[i] != nullptr; i++ )
