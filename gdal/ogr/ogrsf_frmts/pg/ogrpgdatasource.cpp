@@ -655,11 +655,11 @@ int OGRPGDataSource::Open( const char * pszNewName, int bUpdate,
                 if ( PQfformat( hResult, 0 ) == 1 ) // Binary data representation
                 {
                     CPLAssert(PQgetlength(hResult, 0, 0) == 8);
-                    double dVal;
-                    unsigned int nVal[2];
+                    unsigned int nVal[2] = { 0, 0 };
                     memcpy( nVal, PQgetvalue( hResult, 0, 0 ), 8 );
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
+                    double dVal = 0.0;
                     memcpy( &dVal, PQgetvalue( hResult, 0, 0 ), 8 );
                     CPL_MSBPTR64(&dVal);
                     if (nVal[0] == 0 && nVal[1] == 1000000)
@@ -1207,7 +1207,7 @@ void OGRPGDataSource::LoadTables()
         /* ------------------------------------------------------------------ */
         /*      Parse the returned table list                                 */
         /* ------------------------------------------------------------------ */
-            int bHasDoneSomething;
+            bool bHasDoneSomething = false;
             do
             {
                 /* Iterate over the tuples while we have managed to resolved at least one */
@@ -1216,7 +1216,7 @@ void OGRPGDataSource::LoadTables()
                 /* The first pass will add B to the set of tables */
                 /* The second pass will add C to the set of tables */
 
-                bHasDoneSomething = FALSE;
+                bHasDoneSomething = false;
 
                 for( int iRecord = 0; iRecord < PQntuples(hResult); iRecord++ )
                 {
@@ -1236,13 +1236,14 @@ void OGRPGDataSource::LoadTables()
                             /* The parent table of this table is already in the set, so we */
                             /* can now add the table in the set if it was not in it already */
 
-                            bHasDoneSomething = TRUE;
+                            bHasDoneSomething = true;
 
                             if (psEntry == nullptr)
                                 psEntry = OGRPGAddTableEntry(hSetTables, pszTable, pszSchemaName, nullptr);
 
-                            int iGeomColumn;
-                            for(iGeomColumn = 0; iGeomColumn < psParentEntry->nGeomColumnCount; iGeomColumn++)
+                            for( int iGeomColumn = 0;
+                                 iGeomColumn < psParentEntry->nGeomColumnCount;
+                                 iGeomColumn++ )
                             {
                                 papsTables = (PGTableEntry**)CPLRealloc(papsTables, sizeof(PGTableEntry*) * (nTableCount + 1));
                                 papsTables[nTableCount] = (PGTableEntry*) CPLCalloc(1, sizeof(PGTableEntry));
@@ -1260,7 +1261,7 @@ void OGRPGDataSource::LoadTables()
                         }
                     }
                 }
-            } while(bHasDoneSomething);
+            } while( bHasDoneSomething );
 
         /* -------------------------------------------------------------------- */
         /*      Cleanup                                                         */
@@ -1570,8 +1571,6 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 /*      Do we already have this layer?  If so, should we blow it        */
 /*      away?                                                           */
 /* -------------------------------------------------------------------- */
-    int iLayer;
-
     CPLString osSQLLayerName;
     if (pszSchemaName == nullptr ||
         ( !osCurrentSchema.empty() &&
@@ -1595,7 +1594,8 @@ OGRPGDataSource::ICreateLayer( const char * pszLayerName,
 
     /* Force loading of all registered tables */
     GetLayerCount();
-    for( iLayer = 0; iLayer < nLayers; iLayer++ )
+
+    for( int iLayer = 0; iLayer < nLayers; iLayer++ )
     {
         if( EQUAL(osSQLLayerName.c_str(),papoLayers[iLayer]->GetName()) )
         {
@@ -2023,11 +2023,9 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
     if ( ! pszNameIn )
         return nullptr;
 
-    int  i;
-
     /* first a case sensitive check */
     /* do NOT force loading of all registered tables */
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
     {
         OGRPGTableLayer *poLayer = papoLayers[i];
 
@@ -2038,7 +2036,7 @@ OGRLayer *OGRPGDataSource::GetLayerByName( const char *pszNameIn )
     }
 
     /* then case insensitive */
-    for( i = 0; i < nLayers; i++ )
+    for( int i = 0; i < nLayers; i++ )
     {
         OGRPGTableLayer *poLayer = papoLayers[i];
 
@@ -2153,9 +2151,7 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      First, we look through our SRID cache, is it there?             */
 /* -------------------------------------------------------------------- */
-    int  i;
-
-    for( i = 0; i < nKnownSRID; i++ )
+    for( int i = 0; i < nKnownSRID; i++ )
     {
         if( panSRID[i] == nId )
             return papoSRS[i];
@@ -2317,9 +2313,7 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      If the command actually failed, then the metadata table is      */
 /*      likely missing. Try defining it.                                */
 /* -------------------------------------------------------------------- */
-    int         bTableMissing;
-
-    bTableMissing =
+    const bool bTableMissing =
         hResult == nullptr || PQresultStatus(hResult) == PGRES_NONFATAL_ERROR;
 
     OGRPGClearResult( hResult );
@@ -2335,15 +2329,11 @@ int OGRPGDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     hResult = OGRPG_PQexec(hPGConn, "SELECT MAX(srid) FROM spatial_ref_sys" );
 
-    int nSRSId;
+    int nSRSId = 1;
     if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK )
     {
         nSRSId = atoi(PQgetvalue(hResult,0,0)) + 1;
         OGRPGClearResult( hResult );
-    }
-    else
-    {
-        nSRSId = 1;
     }
 
 /* -------------------------------------------------------------------- */

@@ -212,108 +212,102 @@ typedef struct NumericVar
 static char *
 OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 {
-        char   *str;
-        char   *cp;
-        char   *endcp;
-        int     i;
-        int     d;
-        NumericDigit dig;
-        NumericDigit d1;
+    const int dscale = var->dscale;
 
-        int dscale = var->dscale;
+    /*
+    * Allocate space for the result.
+    *
+    * i is set to to # of decimal digits before decimal point. dscale is the
+    * # of decimal digits we will print after decimal point. We may generate
+    * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
+    * need room for sign, decimal point, null terminator.
+    */
+    int i = (var->weight + 1) * DEC_DIGITS;
+    if( i <= 0 )
+        i = 1;
 
-        /*
-        * Allocate space for the result.
-        *
-        * i is set to to # of decimal digits before decimal point. dscale is the
-        * # of decimal digits we will print after decimal point. We may generate
-        * as many as DEC_DIGITS-1 excess digits at the end, and in addition we
-        * need room for sign, decimal point, null terminator.
-        */
-        i = (var->weight + 1) * DEC_DIGITS;
-        if (i <= 0)
-                i = 1;
+    char *str = (char*)CPLMalloc(i + dscale + DEC_DIGITS + 2);
+    char *cp = str;
 
-        str = (char*)CPLMalloc(i + dscale + DEC_DIGITS + 2);
-        cp = str;
+    /*
+    * Output a dash for negative values
+    */
+    if (var->sign == NUMERIC_NEG)
+        *cp++ = '-';
 
-        /*
-        * Output a dash for negative values
-        */
-        if (var->sign == NUMERIC_NEG)
-                *cp++ = '-';
-
-        /*
-        * Output all digits before the decimal point
-        */
-        if (var->weight < 0)
+    /*
+    * Output all digits before the decimal point
+    */
+    int d = 0;
+    if (var->weight < 0)
+    {
+        d = var->weight + 1;
+        *cp++ = '0';
+    }
+    else
+    {
+        for (d = 0; d <= var->weight; d++)
         {
-                d = var->weight + 1;
-                *cp++ = '0';
+            NumericDigit dig = (d < var->ndigits) ? var->digits[d] : 0;
+            CPL_MSBPTR16(&dig);
+            // In the first digit, suppress extra leading decimal zeroes.
+            {
+                bool putit = (d > 0);
+
+                NumericDigit d1;
+                d1 = dig / 1000;
+                dig -= d1 * 1000;
+                putit |= (d1 > 0);
+                if( putit )
+                    *cp++ = (char)(d1 + '0');
+                d1 = dig / 100;
+                dig -= d1 * 100;
+                putit |= (d1 > 0);
+                if( putit )
+                    *cp++ = (char)(d1 + '0');
+                d1 = dig / 10;
+                dig -= d1 * 10;
+                putit |= (d1 > 0);
+                if( putit )
+                    *cp++ = (char)(d1 + '0');
+                *cp++ = (char)(dig + '0');
+            }
         }
-        else
+    }
+
+    /*
+    * If requested, output a decimal point and all the digits that follow it.
+    * We initially put out a multiple of DEC_DIGITS digits, then truncate if
+    * needed.
+    */
+    if( dscale > 0 )
+    {
+        *cp++ = '.';
+        char *endcp = cp + dscale;
+        for (i = 0; i < dscale; d++, i += DEC_DIGITS)
         {
-                for (d = 0; d <= var->weight; d++)
-                {
-                        dig = (d < var->ndigits) ? var->digits[d] : 0;
-                        CPL_MSBPTR16(&dig);
-                        /* In the first digit, suppress extra leading
-                           decimal zeroes */
-                        {
-                                bool putit = (d > 0);
-
-                                d1 = dig / 1000;
-                                dig -= d1 * 1000;
-                                putit |= (d1 > 0);
-                                if (putit)
-                                        *cp++ = (char)(d1 + '0');
-                                d1 = dig / 100;
-                                dig -= d1 * 100;
-                                putit |= (d1 > 0);
-                                if (putit)
-                                        *cp++ = (char)(d1 + '0');
-                                d1 = dig / 10;
-                                dig -= d1 * 10;
-                                putit |= (d1 > 0);
-                                if (putit)
-                                        *cp++ = (char)(d1 + '0');
-                                *cp++ = (char)(dig + '0');
-                        }
-                }
+            NumericDigit dig =
+                (d >= 0 && d < var->ndigits) ? var->digits[d] : 0;
+            CPL_MSBPTR16(&dig);
+            NumericDigit d1 = dig / 1000;
+            dig -= d1 * 1000;
+            *cp++ = (char)(d1 + '0');
+            d1 = dig / 100;
+            dig -= d1 * 100;
+            *cp++ = (char)(d1 + '0');
+            d1 = dig / 10;
+            dig -= d1 * 10;
+            *cp++ = (char)(d1 + '0');
+            *cp++ = (char)(dig + '0');
         }
+        cp = endcp;
+    }
 
-        /*
-        * If requested, output a decimal point and all the digits that follow it.
-        * We initially put out a multiple of DEC_DIGITS digits, then truncate if
-        * needed.
-        */
-        if (dscale > 0)
-        {
-                *cp++ = '.';
-                endcp = cp + dscale;
-                for (i = 0; i < dscale; d++, i += DEC_DIGITS)
-                {
-                        dig = (d >= 0 && d < var->ndigits) ? var->digits[d] : 0;
-                        CPL_MSBPTR16(&dig);
-                        d1 = dig / 1000;
-                        dig -= d1 * 1000;
-                        *cp++ = (char)(d1 + '0');
-                        d1 = dig / 100;
-                        dig -= d1 * 100;
-                        *cp++ = (char)(d1 + '0');
-                        d1 = dig / 10;
-                        dig -= d1 * 10;
-                        *cp++ = (char)(d1 + '0');
-                        *cp++ = (char)(dig + '0');
-                }
-                cp = endcp;
-        }
-
-        /*
-        * terminate the string and return it
-        */
-        *cp = '\0';
-        return str;
+    /*
+    * terminate the string and return it
+    */
+    *cp = '\0';
+    return str;
 }
 
 /************************************************************************/
@@ -327,19 +321,13 @@ OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 static
 void OGRPGj2date(int jd, int *year, int *month, int *day)
 {
-    unsigned int julian;
-    unsigned int quad;
-    unsigned int extra;
-    int y;
-
-    julian = jd;
-    julian += 32044;
-    quad = julian / 146097;
-    extra = (julian - quad * 146097) * 4 + 3;
+    unsigned int julian = jd + 32044;
+    unsigned int quad = julian / 146097;
+    const unsigned int extra = (julian - quad * 146097) * 4 + 3;
     julian += 60 + quad * 3 + extra / 146097;
     quad = julian / 1461;
     julian -= quad * 1461;
-    y = julian * 4 / 1461;
+    int y = julian * 4 / 1461;
     julian = ((y != 0) ? ((julian + 305) % 365) : ((julian + 306) % 366))
         + 123;
     y += quad * 4;
@@ -366,9 +354,7 @@ static
 void
 OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec, double *fsec)
 {
-    GIntBig time;
-
-    time = jd;
+    GIntBig time = jd;
 
     *hour = (int) (time / USECS_PER_HOUR);
     time -= (GIntBig) (*hour) * USECS_PER_HOUR;
@@ -382,9 +368,7 @@ static
 void
 OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec, double *fsec)
 {
-    double time;
-
-    time = jd;
+    double time = jd;
 
     *hour = (int) (time / 3600.);
     time -= (*hour) * 3600.;
@@ -410,12 +394,8 @@ static
 int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
                                       int* hour, int* min, double* pdfSec)
 {
-    GIntBig date;
-    GIntBig time;
-    int nSec;
-    double dfSec;
-
-    time = dt;
+    GIntBig time = dt;
+    GIntBig date = 0;
     TMODULO(time, date, USECS_PER_DAY);
 
     if (time < 0)
@@ -432,6 +412,8 @@ int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
         return -1;
 
     OGRPGj2date((int) date, year, month, day);
+    int nSec = 0;
+    double dfSec = 0.0;
     OGRPGdt2timeInt8(time, hour, min, &nSec, &dfSec);
     *pdfSec += nSec + dfSec;
 
@@ -579,7 +561,6 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /* -------------------------------------------------------------------- */
 /*      Create a feature from the current result.                       */
 /* -------------------------------------------------------------------- */
-    int         iField;
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
     poFeature->SetFID( iNextShapeId );
@@ -588,12 +569,10 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /* ==================================================================== */
 /*      Transfer all result fields we can.                              */
 /* ==================================================================== */
-    for( iField = 0;
+    for( int iField = 0;
          iField < PQnfields(hResult);
          iField++ )
     {
-        int     iOGRField;
-
 #if defined(BINARY_CURSOR_ENABLED)
         int nTypeOID = PQftype(hResult, iField);
 #endif
@@ -609,7 +588,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             {
                 if ( nTypeOID == INT4OID)
                 {
-                    int nVal;
+                    int nVal = 0;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(int));
                     memcpy( &nVal, PQgetvalue( hResult, iRecord, iField ), sizeof(int) );
                     CPL_MSBPTR32(&nVal);
@@ -617,7 +596,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
                 else if ( nTypeOID == INT8OID)
                 {
-                    GIntBig nVal;
+                    GIntBig nVal = 0;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(GIntBig));
                     memcpy( &nVal, PQgetvalue( hResult, iRecord, iField ), sizeof(GIntBig) );
                     CPL_MSBPTR64(&nVal);
@@ -837,7 +816,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
 /* -------------------------------------------------------------------- */
 /*      Transfer regular data fields.                                   */
 /* -------------------------------------------------------------------- */
-        iOGRField = panMapFieldNameToIndex[iField];
+        const int iOGRField = panMapFieldNameToIndex[iField];
 
         if( iOGRField < 0 )
             continue;
@@ -888,7 +867,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         else
                         {
                             CPLAssert( nSize == sizeof(GInt16) );
-                            GInt16 nVal;
+                            GInt16 nVal = 0;
                             memcpy( &nVal, pData, nSize );
                             CPL_MSBPTR16(&nVal);
                             panList[i] = nVal;
@@ -1038,9 +1017,9 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                         }
                         else
                         {
-                            float fVal;
                             CPLAssert( nSize == sizeof(float) );
 
+                            float fVal = 0.0f;
                             memcpy( &fVal, pData, nSize );
                             CPL_MSBPTR32(&fVal);
 
@@ -1152,14 +1131,16 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
                 else if ( nTypeOID == TIMEOID )
                 {
-                    int nHour, nMinute, nSecond;
+                    int nHour = 0;
+                    int nMinute = 0;
+                    int nSecond = 0;
                     char szTime[32];
-                    double dfsec;
+                    double dfsec = 0.0f;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == 8);
                     if (poDS->bBinaryTimeFormatIsInt8)
                     {
                         unsigned int nVal[2];
-                        GIntBig llVal;
+                        GIntBig llVal = 0;
                         memcpy( nVal, PQgetvalue( hResult, iRecord, iField ), 8 );
                         CPL_MSBPTR32(&nVal[0]);
                         CPL_MSBPTR32(&nVal[1]);
@@ -1168,7 +1149,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                     }
                     else
                     {
-                        double dfVal;
+                        double dfVal = 0.0;
                         memcpy( &dfVal, PQgetvalue( hResult, iRecord, iField ), 8 );
                         CPL_MSBPTR64(&dfVal);
                         OGRPGdt2timeFloat8(dfVal, &nHour, &nMinute, &nSecond, &dfsec);
@@ -1179,8 +1160,12 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 else if ( nTypeOID == TIMESTAMPOID || nTypeOID == TIMESTAMPTZOID )
                 {
                     unsigned int nVal[2];
-                    GIntBig llVal;
-                    int nYear, nMonth, nDay, nHour, nMinute;
+                    GIntBig llVal = 0;
+                    int nYear = 0;
+                    int nMonth = 0;
+                    int nDay = 0;
+                    int nHour = 0;
+                    int nMinute = 0;
                     double dfSecond = 0.0;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == 8);
                     memcpy( nVal, PQgetvalue( hResult, iRecord, iField ), 8 );
@@ -1244,25 +1229,26 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
             {
                 if ( nTypeOID == BOOLOID )
                 {
-                    char cVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(char));
-                    cVal = *PQgetvalue( hResult, iRecord, iField );
+                    const char cVal = *PQgetvalue( hResult, iRecord, iField );
                     poFeature->SetField( iOGRField, cVal );
                 }
                 else if ( nTypeOID == NUMERICOID )
                 {
-                    unsigned short sLen, sSign, sDscale;
-                    short sWeight;
                     char* pabyData = PQgetvalue( hResult, iRecord, iField );
+                    unsigned short sLen = 0;
                     memcpy( &sLen, pabyData, sizeof(short));
                     pabyData += sizeof(short);
                     CPL_MSBPTR16(&sLen);
+                    short sWeight = 0;
                     memcpy( &sWeight, pabyData, sizeof(short));
                     pabyData += sizeof(short);
                     CPL_MSBPTR16(&sWeight);
+                    unsigned short sSign = 0;
                     memcpy( &sSign, pabyData, sizeof(short));
                     pabyData += sizeof(short);
                     CPL_MSBPTR16(&sSign);
+                    unsigned short sDscale = 0;
                     memcpy( &sDscale, pabyData, sizeof(short));
                     pabyData += sizeof(short);
                     CPL_MSBPTR16(&sDscale);
@@ -1280,43 +1266,43 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                 }
                 else if ( nTypeOID == INT2OID )
                 {
-                    short sVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(short));
+                    short sVal = 0;
                     memcpy( &sVal, PQgetvalue( hResult, iRecord, iField ), sizeof(short) );
                     CPL_MSBPTR16(&sVal);
                     poFeature->SetField( iOGRField, sVal );
                 }
                 else if ( nTypeOID == INT4OID )
                 {
-                    int nVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(int));
+                    int nVal = 0;
                     memcpy( &nVal, PQgetvalue( hResult, iRecord, iField ), sizeof(int) );
                     CPL_MSBPTR32(&nVal);
                     poFeature->SetField( iOGRField, nVal );
                 }
                 else if ( nTypeOID == INT8OID )
                 {
-                    unsigned int nVal[2];
-                    GIntBig llVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == 8);
+                    unsigned int nVal[2] = { 0, 0 };
                     memcpy( nVal, PQgetvalue( hResult, iRecord, iField ), 8 );
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
-                    llVal = (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
+                    GIntBig llVal =
+                        (GIntBig) ((((GUIntBig)nVal[0]) << 32) | nVal[1]);
                     poFeature->SetField( iOGRField, llVal );
                 }
                 else if ( nTypeOID == FLOAT4OID )
                 {
-                    float fVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(float));
+                    float fVal = 0.0f;
                     memcpy( &fVal, PQgetvalue( hResult, iRecord, iField ), sizeof(float) );
                     CPL_MSBPTR32(&fVal);
                     poFeature->SetField( iOGRField, fVal );
                 }
                 else if ( nTypeOID == FLOAT8OID )
                 {
-                    double dfVal;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) == sizeof(double));
+                    double dfVal = 0.0;
                     memcpy( &dfVal, PQgetvalue( hResult, iRecord, iField ), sizeof(double) );
                     CPL_MSBPTR64(&dfVal);
                     poFeature->SetField( iOGRField, dfVal );
@@ -2019,18 +2005,15 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 /* -------------------------------------------------------------------- */
     poFeatureDefn = new OGRPGFeatureDefn( "sql_statement" );
     SetDescription( poFeatureDefn->GetName() );
-    int            iRawField;
 
     poFeatureDefn->Reference();
 
-    for( iRawField = 0; iRawField < PQnfields(hResult); iRawField++ )
+    for( int iRawField = 0; iRawField < PQnfields(hResult); iRawField++ )
     {
-        OGRFieldDefn    oField( PQfname(hResult,iRawField), OFTString);
-        Oid             nTypeOID;
+        OGRFieldDefn oField( PQfname(hResult,iRawField), OFTString);
+        const Oid nTypeOID = PQftype(hResult,iRawField);
 
-        nTypeOID = PQftype(hResult,iRawField);
-
-        int iGeomFuncPrefix;
+        int iGeomFuncPrefix = 0;
         if( EQUAL(oField.GetNameRef(),"ogc_fid") )
         {
             if (pszFIDColumn)
