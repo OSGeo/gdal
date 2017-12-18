@@ -43,7 +43,7 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     int                 m_nWORLDFILEIndex;
 
   protected:
-    virtual int         CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
     GDALJP2AbstractDataset();

@@ -446,11 +446,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 //! @endcond
 
   public:
-    virtual     ~GDALDataset();
+     ~GDALDataset() override;
 
-    int         GetRasterXSize( void );
-    int         GetRasterYSize( void );
-    int         GetRasterCount( void );
+    int GetRasterXSize();
+    int GetRasterYSize();
+    int GetRasterCount();
     GDALRasterBand *GetRasterBand( int );
 
     virtual void FlushCache(void);
@@ -927,7 +927,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
                 GDALRasterBand();
     explicit    GDALRasterBand(int bForceCachedIO);
 
-    virtual     ~GDALRasterBand();
+    ~GDALRasterBand() override;
 
     int         GetXSize();
     int         GetYSize();

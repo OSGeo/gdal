@@ -57,49 +57,48 @@ class GDALOverviewBand;
 
 class GDALOverviewDataset : public GDALDataset
 {
-    private:
+  private:
+    friend class GDALOverviewBand;
 
-        friend class GDALOverviewBand;
+    GDALDataset* poMainDS;
 
-        GDALDataset* poMainDS;
+    GDALDataset* poOvrDS;  // Will be often NULL.
+    int          nOvrLevel;
+    int          bThisLevelOnly;
 
-        GDALDataset* poOvrDS;  // Will be often NULL.
-        int          nOvrLevel;
-        int          bThisLevelOnly;
+    int          nGCPCount;
+    GDAL_GCP    *pasGCPList;
+    char       **papszMD_RPC;
+    char       **papszMD_GEOLOCATION;
 
-        int          nGCPCount;
-        GDAL_GCP    *pasGCPList;
-        char       **papszMD_RPC;
-        char       **papszMD_GEOLOCATION;
+    static void  Rescale( char**& papszMD, const char* pszItem,
+                          double dfRatio, double dfDefaultVal );
 
-        static void  Rescale( char**& papszMD, const char* pszItem,
-                              double dfRatio, double dfDefaultVal );
+  protected:
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      int, int *,
+                      GSpacing, GSpacing, GSpacing,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
 
-    protected:
-        virtual CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
-                                  void *, int, int, GDALDataType,
-                                  int, int *,
-                                  GSpacing, GSpacing, GSpacing,
-                                  GDALRasterIOExtraArg* psExtraArg ) override;
+  public:
+    GDALOverviewDataset( GDALDataset* poMainDS,
+                         int nOvrLevel,
+                         int bThisLevelOnly );
+    ~GDALOverviewDataset() override;
 
-    public:
-                        GDALOverviewDataset( GDALDataset* poMainDS,
-                                             int nOvrLevel,
-                                             int bThisLevelOnly );
-        virtual        ~GDALOverviewDataset();
+    const char *GetProjectionRef( void ) override;
+    CPLErr GetGeoTransform( double * ) override;
 
-        virtual const char *GetProjectionRef( void ) override;
-        virtual CPLErr GetGeoTransform( double * ) override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-        virtual int    GetGCPCount() override;
-        virtual const char *GetGCPProjection() override;
-        virtual const GDAL_GCP *GetGCPs() override;
+    char  **GetMetadata( const char * pszDomain = "" ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                 const char * pszDomain = "" ) override;
 
-        virtual char  **GetMetadata( const char * pszDomain = "" ) override;
-        virtual const char *GetMetadataItem( const char * pszName,
-                                             const char * pszDomain = "" ) override;
-
-        virtual int        CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOverviewDataset)
@@ -111,20 +110,20 @@ class GDALOverviewDataset : public GDALDataset
 
 class GDALOverviewBand : public GDALProxyRasterBand
 {
-    protected:
-        friend class GDALOverviewDataset;
+  protected:
+    friend class GDALOverviewDataset;
 
-        GDALRasterBand*         poUnderlyingBand;
-        virtual GDALRasterBand* RefUnderlyingRasterBand() override;
+    GDALRasterBand*         poUnderlyingBand;
+    GDALRasterBand* RefUnderlyingRasterBand() override;
 
-    public:
-                    GDALOverviewBand( GDALOverviewDataset* poDS, int nBand );
-        virtual    ~GDALOverviewBand();
+  public:
+    GDALOverviewBand( GDALOverviewDataset* poDS, int nBand );
+    ~GDALOverviewBand() override;
 
-        virtual CPLErr FlushCache() override;
+    CPLErr FlushCache() override;
 
-        virtual int GetOverviewCount() override;
-        virtual GDALRasterBand *GetOverview( int ) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview( int ) override;
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALOverviewBand)
