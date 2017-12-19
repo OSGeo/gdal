@@ -982,8 +982,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
-// #if HAVE_CXX11 || _MSC_VER >= 1500
-
 /** To be used in public headers only. For non-public headers or .cpp files,
  * use override directly. */
 #  define CPL_OVERRIDE override

@@ -90,15 +90,9 @@ TABDATFile::TABDATFile( const char* pszEncoding ) :
     m_bWriteHeaderInitialized(FALSE),
     m_bWriteEOF(FALSE),
     m_bUpdated(FALSE),
-    m_osEncoding(pszEncoding)
-#if HAVE_CXX11
-    , m_szBuffer{}
-#endif
-{
-#ifndef HAVE_CXX11
-  memset(m_szBuffer, 0, sizeof(m_szBuffer));
-#endif
-}
+    m_osEncoding(pszEncoding),
+    m_szBuffer{}
+{}
 
 /**********************************************************************
  *                   TABDATFile::~TABDATFile()

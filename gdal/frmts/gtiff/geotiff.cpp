@@ -38,11 +38,6 @@
 #include "cpl_port.h"  // Must be first.
 #include "gtiff.h"
 
-// TODO(schwehr): Move this to cpl_port.h?
-#if HAVE_CXX11 && !defined(__MINGW32__)
-#define HAVE_CXX11_MUTEX 1
-#endif
-
 #include <cerrno>
 #include <climits>
 #include <cmath>
@@ -60,9 +55,7 @@
 
 #include <algorithm>
 #include <memory>
-#if HAVE_CXX11_MUTEX
-#  include <mutex>
-#endif
+#include <mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -18478,20 +18471,12 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
-#else
-static CPLMutex* hGTiffOneTimeInitMutex = nullptr;
-#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#else
-    CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);
-#endif
 
     static bool bOneTimeInitDone = false;
     if( bOneTimeInitDone )
@@ -18554,14 +18539,6 @@ void GDALDeregister_GTiff( GDALDriver * )
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
     GTIFDeaccessCSV();
 #endif
-
-#if !HAVE_CXX11
-    if( hGTiffOneTimeInitMutex != nullptr )
-    {
-        CPLDestroyMutex(hGTiffOneTimeInitMutex);
-        hGTiffOneTimeInitMutex = nullptr;
-    }
-#endif  // !HAVE_CXX11
 
     LibgeotiffOneTimeCleanupMutex();
 }
