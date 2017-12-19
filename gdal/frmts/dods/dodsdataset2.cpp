@@ -206,9 +206,9 @@ private:
 
     friend class DODSRasterBand;
 
-public:
-                    DODSDataset();
-    virtual        ~DODSDataset();
+  public:
+    DODSDataset();
+    ~DODSDataset() override;
 
     // Overridden GDALDataset methods
     CPLErr GetGeoTransform(double *padfTransform) override;
@@ -258,15 +258,15 @@ private:
 public:
     DODSRasterBand( DODSDataset *poDS, string oVarName, string oCE,
                     int nOverviewFactor );
-    virtual ~DODSRasterBand();
+    ~DODSRasterBand() override;
 
-    virtual int    GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
-    virtual CPLErr IReadBlock(int, int, void *) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual CPLErr          SetNoDataValue( double ) override;
-    virtual double          GetNoDataValue( int * ) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview( int ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr SetNoDataValue( double ) override;
+    double GetNoDataValue( int * ) override;
 };
 
 /************************************************************************/
@@ -1047,7 +1047,8 @@ DODSDataset::Open(GDALOpenInfo *poOpenInfo)
 
     catch (Error &e) {
         string msg =
-"An error occurred while creating a virtual connection to the DAP server:\n";
+            "An error occurred while creating a virtual connection "
+            "to the DAP server:";
         msg += e.get_error_message();
         CPLError(CE_Failure, CPLE_AppDefined, "%s", msg.c_str());
         delete poDS;

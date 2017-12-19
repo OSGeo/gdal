@@ -66,12 +66,12 @@ class BLXRasterBand : public GDALPamRasterBand
   public:
     BLXRasterBand( BLXDataset *, int, int overviewLevel=0 );
 
-    virtual double  GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual GDALColorInterp GetColorInterpretation(void) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
+    double  GetNoDataValue( int *pbSuccess = nullptr ) override;
+    GDALColorInterp GetColorInterpretation(void) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview( int ) override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )

@@ -77,10 +77,10 @@ class AirSARDataset : public GDALPamDataset
 class AirSARRasterBand : public GDALPamRasterBand
 {
   public:
-                AirSARRasterBand( AirSARDataset *, int );
-    virtual     ~AirSARRasterBand();
+    AirSARRasterBand( AirSARDataset *, int );
+    ~AirSARRasterBand() override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /* locations of stokes matrix values within padfMatrix ... same order as they

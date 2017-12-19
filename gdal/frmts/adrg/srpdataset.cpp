@@ -77,21 +77,21 @@ class SRPDataset : public GDALPamDataset
     static DDFRecord*  FindRecordInGENForIMG(DDFModule& module,
         const char* pszGENFileName, const char* pszIMGFileName);
 
-public:
+  public:
     SRPDataset();
-    virtual     ~SRPDataset();
+    ~SRPDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    char **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
-    bool                GetFromRecord( const char* pszFileName,
-                                       DDFRecord * record );
-    void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
-    void  AddMetadatafromFromTHF(const char* pszFileName);
+    bool GetFromRecord( const char* pszFileName, DDFRecord *record );
+    void AddSubDataset( const char* pszGENFileName,
+                        const char* pszIMGFileName );
+    void AddMetadatafromFromTHF(const char* pszFileName);
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -107,14 +107,14 @@ class SRPRasterBand : public GDALPamRasterBand
     friend class SRPDataset;
 
   public:
-                            SRPRasterBand( SRPDataset *, int );
+    SRPRasterBand( SRPDataset *, int );
 
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
 };
 
 /************************************************************************/

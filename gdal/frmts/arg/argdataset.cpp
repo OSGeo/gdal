@@ -46,21 +46,21 @@ CPL_CVSID("$Id$")
 
 class ARGDataset : public RawDataset
 {
-        VSILFILE *fpImage;  // image data file.
-        double adfGeoTransform[6];
-        char *pszFilename;
+    VSILFILE *fpImage;  // image data file.
+    double adfGeoTransform[6];
+    char *pszFilename;
 
-    public:
-        ARGDataset();
-        virtual ~ARGDataset();
+  public:
+    ARGDataset();
+    ~ARGDataset() override;
 
-        CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
 
-        static int Identify( GDALOpenInfo * );
-        static GDALDataset *Open( GDALOpenInfo * );
-        static GDALDataset *CreateCopy( const char *, GDALDataset *, int,
-            char **, GDALProgressFunc, void *);
-        virtual char **GetFileList(void) override;
+    static int Identify( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *CreateCopy( const char *, GDALDataset *, int,
+                                    char **, GDALProgressFunc, void *);
+    char **GetFileList(void) override;
 };
 
 /************************************************************************/
