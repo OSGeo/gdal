@@ -64,10 +64,9 @@ class CEOSRasterBand : public GDALPamRasterBand
     friend class CEOSDataset;
 
   public:
+    CEOSRasterBand( CEOSDataset *, int );
 
-                CEOSRasterBand( CEOSDataset *, int );
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

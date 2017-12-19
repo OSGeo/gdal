@@ -68,14 +68,14 @@ class CPL_DLL AIGDataset : public GDALPamDataset
     GDALRasterAttributeTable *poRAT;
 
   public:
-                AIGDataset();
-    virtual ~AIGDataset();
+    AIGDataset();
+    ~AIGDataset() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual char **GetFileList(void) override;
+    CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef(void) override;
+    char **GetFileList(void) override;
 };
 
 /************************************************************************/
@@ -90,17 +90,16 @@ class AIGRasterBand : public GDALPamRasterBand
     friend class AIGDataset;
 
   public:
-
                    AIGRasterBand( AIGDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual double GetMinimum( int *pbSuccess ) override;
-    virtual double GetMaximum( int *pbSuccess ) override;
-    virtual double GetNoDataValue( int *pbSuccess ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    double GetMinimum( int *pbSuccess ) override;
+    double GetMaximum( int *pbSuccess ) override;
+    double GetNoDataValue( int *pbSuccess ) override;
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual GDALRasterAttributeTable *GetDefaultRAT() override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    GDALRasterAttributeTable *GetDefaultRAT() override;
 };
 
 /************************************************************************/

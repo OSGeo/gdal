@@ -107,11 +107,11 @@ class E00GRIDDataset : public GDALPamDataset
     static void        Rewind(void* ptr);
 
   public:
-                 E00GRIDDataset();
-    virtual     ~E00GRIDDataset();
+    E00GRIDDataset();
+    ~E00GRIDDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
+    const char* GetProjectionRef() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -128,17 +128,17 @@ class E00GRIDRasterBand : public GDALPamRasterBand
     friend class E00GRIDDataset;
 
   public:
-                E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
+    E00GRIDRasterBand( E00GRIDDataset *, int, GDALDataType );
 
-    virtual CPLErr      IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 
-    virtual double      GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual const char *GetUnitType() override;
-    virtual double      GetMinimum( int *pbSuccess = nullptr ) override;
-    virtual double      GetMaximum( int *pbSuccess = nullptr ) override;
-    virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
-                                       double *pdfMin, double *pdfMax,
-                                       double *pdfMean, double *padfStdDev ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    const char *GetUnitType() override;
+    double GetMinimum( int *pbSuccess = nullptr ) override;
+    double GetMaximum( int *pbSuccess = nullptr ) override;
+    CPLErr GetStatistics( int bApproxOK, int bForce,
+                          double *pdfMin, double *pdfMax,
+                          double *pdfMean, double *padfStdDev ) override;
 };
 
 /************************************************************************/

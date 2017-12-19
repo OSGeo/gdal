@@ -55,11 +55,11 @@ class DTEDDataset : public GDALPamDataset
     char       *pszProjection;
 
   public:
-                 DTEDDataset();
-    virtual     ~DTEDDataset();
+    DTEDDataset();
+    ~DTEDDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
 
     const char* GetFileName() { return pszFilename; }
     void SetFileName(const char* pszFilename);
@@ -82,15 +82,14 @@ class DTEDRasterBand : public GDALPamRasterBand
     double      dfNoDataValue;
 
   public:
+    DTEDRasterBand( DTEDDataset *, int );
 
-                DTEDRasterBand( DTEDDataset *, int );
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
-    virtual double  GetNoDataValue( int *pbSuccess = nullptr ) override;
-
-    virtual const char* GetUnitType() override { return "m"; }
+    const char* GetUnitType() override { return "m"; }
 };
 
 /************************************************************************/

@@ -129,11 +129,11 @@ class ELASDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
   public:
-                 ELASDataset();
-    virtual ~ELASDataset();
+    ELASDataset();
+    ~ELASDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual CPLErr SetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * ) override;
+    CPLErr SetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -141,7 +141,7 @@ class ELASDataset : public GDALPamDataset
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 
-    virtual void FlushCache( void ) override;
+    void FlushCache() override;
 };
 
 /************************************************************************/
@@ -155,13 +155,12 @@ class ELASRasterBand : public GDALPamRasterBand
     friend class ELASDataset;
 
   public:
-
-                   ELASRasterBand( ELASDataset *, int );
+    ELASRasterBand( ELASDataset *, int );
 
     // should override RasterIO eventually.
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual CPLErr IWriteBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

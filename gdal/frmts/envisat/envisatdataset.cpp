@@ -50,7 +50,7 @@ class MerisL2FlagBand : public GDALPamRasterBand
 {
   public:
     MerisL2FlagBand( GDALDataset *, int, VSILFILE*, vsi_l_offset, int );
-    virtual ~MerisL2FlagBand();
+    ~MerisL2FlagBand() override;
     virtual CPLErr IReadBlock( int, int, void * ) override;
 
   private:
