@@ -183,12 +183,16 @@
 /* as a minimum */
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#  if !(__cplusplus >= 201103L || _MSC_VER >= 1800)
+#  if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800))
 #    error Must have C++11 or newer.
 #  endif
 #  if __cplusplus >= 201402L
 #    define HAVE_CXX14 1
 #  endif
+#  if !(defined(_MSC_VER) && _MSC_VER < 1900)
+// List initialization not supported with MSVC_VER=1800 / VS 2013
+#    define CXX11_LIST_INITIALIZATION 1
+#endif
 /* TODO(schwehr): What is the correct test for C++ 17? */
 #endif  /* __cplusplus */
 
