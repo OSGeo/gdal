@@ -109,16 +109,16 @@ char ** RPCInfoToMD( GDALRPCInfo *psRPCInfo )
     papszMD = CSLSetNameValue( papszMD, RPC_HEIGHT_SCALE, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfMIN_LONG );
-    papszMD = CSLSetNameValue( papszMD, "MIN_LONG", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_MIN_LONG, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfMIN_LAT );
-    papszMD = CSLSetNameValue( papszMD, "MIN_LAT", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_MIN_LAT, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfMAX_LONG );
-    papszMD = CSLSetNameValue( papszMD, "MAX_LONG", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_MAX_LONG, osField );
 
     osField.Printf( "%.15g", psRPCInfo->dfMAX_LAT );
-    papszMD = CSLSetNameValue( papszMD, "MAX_LAT", osField );
+    papszMD = CSLSetNameValue( papszMD, RPC_MAX_LAT, osField );
 
     for( int i = 0; i < 20; i++ )
     {
