@@ -43,9 +43,7 @@ OGRDXFReader::OGRDXFReader() :
     iSrcBufferOffset(0),
     nSrcBufferBytes(0),
     iSrcBufferFileOffset(0),
-#if HAVE_CXX11
     achSrcBuffer{},
-#endif
     nLastValueSize(0),
     nLineNumber(0)
 {}

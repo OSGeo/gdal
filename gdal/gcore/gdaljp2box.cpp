@@ -55,18 +55,12 @@ CPL_CVSID("$Id$")
 // GDALJP2Box does *not* take ownership of fpIn
 GDALJP2Box::GDALJP2Box( VSILFILE *fpIn ) :
     fpVSIL(fpIn),
-#if HAVE_CXX11
     szBoxType{'\0', '\0', '\0', '\0', '\0'},
-#endif
     nBoxOffset(-1),
     nBoxLength(0),
     nDataOffset(-1),
     pabyData(nullptr)
-{
-#if !HAVE_CXX11
-    std::fill_n(szBoxType, CPL_ARRAYSIZE(szBoxType), '\0');
-#endif
-}
+{}
 
 /************************************************************************/
 /*                            ~GDALJP2Box()                             */
