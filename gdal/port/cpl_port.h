@@ -191,7 +191,9 @@
 #  endif
 #  if !(defined(_MSC_VER) && _MSC_VER < 1900)
 // List initialization not supported with MSVC_VER=1800 / VS 2013
+/*! @cond Doxygen_Suppress */
 #    define CXX11_LIST_INITIALIZATION 1
+/*! @endcond */
 #endif
 /* TODO(schwehr): What is the correct test for C++ 17? */
 #endif  /* __cplusplus */
