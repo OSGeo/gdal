@@ -8,7 +8,7 @@ OBJ	=	gdalmediancut.o gdaldither.o gdal_crs.o gdaltransformer.o \
 		gdalgrid.o gdalcutline.o gdalproximity.o rasterfill.o \
 		gdalrasterpolygonenumerator.o \
 		gdalsievefilter.o gdalwarpkernel_opencl.o polygonize.o \
-		contour.o gdaltransformgeolocs.o \
+		contour.o gdaltransformgeolocs.o gdallinearsystem.o \
 		gdal_octave.o gdal_simplesurf.o gdalmatching.o delaunay.o \
 		gdalpansharpen.o gdalapplyverticalshiftgrid.o
 
