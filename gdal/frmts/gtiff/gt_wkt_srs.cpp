@@ -126,15 +126,6 @@ void LibgeotiffOneTimeInit()
 }
 
 /************************************************************************/
-/*                   LibgeotiffOneTimeCleanupMutex()                    */
-/************************************************************************/
-
-void LibgeotiffOneTimeCleanupMutex()
-{
-    // >= C++11 uses a lock_guard that does not need cleanup.
-}
-
-/************************************************************************/
 /*                       GTIFToCPLRecyleString()                        */
 /*                                                                      */
 /*      This changes a string from the libgeotiff heap to the GDAL      */
