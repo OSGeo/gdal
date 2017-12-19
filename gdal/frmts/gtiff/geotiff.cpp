@@ -18539,8 +18539,6 @@ void GDALDeregister_GTiff( GDALDriver * )
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
     GTIFDeaccessCSV();
 #endif
-
-    LibgeotiffOneTimeCleanupMutex();
 }
 
 /************************************************************************/
