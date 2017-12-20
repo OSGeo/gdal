@@ -283,8 +283,6 @@ int CPL_DLL CPLVASPrintf( char **buf,
                           CPL_FORMAT_STRING(const char *fmt), va_list args )
     CPL_PRINT_FUNC_FORMAT(2, 0);
 
-const char CPL_DLL *CPLMD5String(const char *pszText);
-
 /* -------------------------------------------------------------------- */
 /*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
 /* -------------------------------------------------------------------- */

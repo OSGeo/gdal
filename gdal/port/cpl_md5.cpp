@@ -33,47 +33,30 @@ this file is only about 3k of object code.  */
         memset(ctx, 0, sizeof(ctx)); */   /* In case it's sensitive */
 /* at the end of cvs_MD5Final */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <string.h>  /* for memcpy() and memset() */
-
-#include "cpl_port.h"
-#include "md5.h"
+#include "cpl_md5.h"
+#include "cpl_string.h"
 
 CPL_CVSID("$Id$")
 
-/* Little-endian byte-swapping routines.  Note that these do not
-depend on the size of datatypes such as cvs_uint32, nor do they require
-us to detect the endianness of the machine we are running on.  It
-is possible they should be macros for speed, but I would be
-surprised if they were a performance bottleneck for MD5.  */
-
-static cvs_uint32 getu32(const unsigned char *addr)
+static GUInt32 getu32(const unsigned char *addr)
 {
-    return (((((cvs_uint32)addr[3] << 8) | addr[2]) << 8)
+    return (((((GUInt32)addr[3] << 8) | addr[2]) << 8)
         | addr[1]) << 8 | addr[0];
 }
 
-static void
-putu32 (
-        cvs_uint32 data,
-        unsigned char *addr)
+static void putu32 (GUInt32 data, unsigned char *addr)
 {
     addr[0] = (unsigned char)(data & 0xff);
     addr[1] = (unsigned char)((data >> 8) & 0xff);
     addr[2] = (unsigned char)((data >> 16) & 0xff);
-    addr[3] = (unsigned char)((data >> 24) & 0xff); /* cvs_uint32 might be 64bit wide */
+    addr[3] = (unsigned char)((data >> 24) & 0xff);
 }
 
 /*
 * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
 * initialization constants.
 */
-void
-cvs_MD5Init (
-struct cvs_MD5Context *ctx)
+void CPLMD5Init(struct CPLMD5Context *ctx)
 {
     ctx->buf[0] = 0x67452301;
     ctx->buf[1] = 0xefcdab89;
@@ -88,18 +71,14 @@ struct cvs_MD5Context *ctx)
 * Update context to reflect the concatenation of another buffer full
 * of bytes.
 */
-void
-cvs_MD5Update (
-struct cvs_MD5Context *ctx,
-    unsigned char const *buf,
-    unsigned len)
+void CPLMD5Update(struct CPLMD5Context *ctx, unsigned char const *buf, unsigned len)
 {
-    cvs_uint32 t;
+    GUInt32 t;
 
     /* Update bitcount */
 
     t = ctx->bits[0];
-    if ((ctx->bits[0] = (t + ((cvs_uint32)len << 3)) & 0xffffffff) < t)
+    if ((ctx->bits[0] = (t + ((GUInt32)len << 3)) & 0xffffffff) < t)
         ctx->bits[1]++;  /* Carry from low to high */
     ctx->bits[1] += len >> 29;
 
@@ -116,7 +95,7 @@ struct cvs_MD5Context *ctx,
             return;
         }
         memcpy(p, buf, t);
-        cvs_MD5Transform (ctx->buf, ctx->in);
+        CPLMD5Transform (ctx->buf, ctx->in);
         buf += t;
         len -= (unsigned)t;
     }
@@ -125,7 +104,7 @@ struct cvs_MD5Context *ctx,
 
     while (len >= 64) {
         memcpy(ctx->in, buf, 64);
-        cvs_MD5Transform (ctx->buf, ctx->in);
+        CPLMD5Transform (ctx->buf, ctx->in);
         buf += 64;
         len -= 64;
     }
@@ -139,10 +118,7 @@ struct cvs_MD5Context *ctx,
 * Final wrapup - pad to 64-byte boundary with the bit pattern
 * 1 0* (64-bit count of bits processed, MSB-first)
 */
-void
-cvs_MD5Final (
-              unsigned char digest[16],
-struct cvs_MD5Context *ctx)
+void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *ctx)
 {
     unsigned count;
     unsigned char *p;
@@ -162,7 +138,7 @@ struct cvs_MD5Context *ctx)
     if (count < 8) {
         /* Two lots of padding:  Pad the first block to 64 bytes */
         memset(p, 0, count);
-        cvs_MD5Transform (ctx->buf, ctx->in);
+        CPLMD5Transform (ctx->buf, ctx->in);
 
         /* Now fill the next block with 56 bytes */
         memset(ctx->in, 0, 56);
@@ -175,7 +151,7 @@ struct cvs_MD5Context *ctx)
     putu32(ctx->bits[0], ctx->in + 56);
     putu32(ctx->bits[1], ctx->in + 60);
 
-    cvs_MD5Transform (ctx->buf, ctx->in);
+    CPLMD5Transform (ctx->buf, ctx->in);
     putu32(ctx->buf[0], digest);
     putu32(ctx->buf[1], digest + 4);
     putu32(ctx->buf[2], digest + 8);
@@ -203,13 +179,10 @@ struct cvs_MD5Context *ctx)
 * the data and converts bytes into longwords for this routine.
 */
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-void
-cvs_MD5Transform (
-                  cvs_uint32 buf[4],
-                  const unsigned char inraw[64])
+void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64])
 {
-    cvs_uint32 a, b, c, d;
-    cvs_uint32 in[16];
+    GUInt32 a, b, c, d;
+    GUInt32 in[16];
     int i;
 
     for (i = 0; i < 16; ++i)
@@ -294,3 +267,27 @@ cvs_MD5Transform (
     buf[3] += d;
 }
 #endif
+
+/**
+ * @brief CPLMD5String Transform string to MD5 hash
+ * @param pszText Text to transform
+ * @return MD5 hash string
+ */
+const char *CPLMD5String(const char *pszText)
+{
+    unsigned char hash[16];
+    char hhash[33];
+    const char *tohex = "0123456789abcdef";
+    struct CPLMD5Context context;
+    CPLMD5Init(&context);
+    CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(pszText),
+                  static_cast<int>(strlen(pszText)));
+    CPLMD5Final(hash, &context);
+    for (int i = 0; i < 16; ++i)
+    {
+        hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
+        hhash[i * 2 + 1] = tohex[hash[i] & 0xf];
+    }
+    hhash[32] = '\0';
+    return CPLSPrintf( "%s", hhash );
+}

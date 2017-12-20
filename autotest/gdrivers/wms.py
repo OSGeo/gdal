@@ -35,6 +35,7 @@ import sys
 from osgeo import gdal
 import shutil
 from time import sleep
+import hashlib
 
 sys.path.append( '../pymod' )
 
@@ -400,7 +401,7 @@ def wms_8():
         gdaltest.post_reason( 'did not get expected cache path metadata item' )
         return 'fail'
 
-    cache_subfolder = gdal.MD5String(server_url_mask)
+    cache_subfolder = hashlib.md5(server_url_mask).hexdigest()
 
     gdal.ErrorReset()
     data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
@@ -410,10 +411,10 @@ def wms_8():
 
     ds = None
 
-    file1 = gdal.MD5String(server_url + wmstms_version + '/1/0/0.png')
-    file2 = gdal.MD5String(server_url + wmstms_version + '/1/1/0.png')
-    file3 = gdal.MD5String(server_url + wmstms_version + '/1/0/1.png')
-    file4 = gdal.MD5String(server_url + wmstms_version + '/1/1/1.png')
+    file1 = hashlib.md5(server_url + wmstms_version + '/1/0/0.png').hexdigest()
+    file2 = hashlib.md5(server_url + wmstms_version + '/1/1/0.png').hexdigest()
+    file3 = hashlib.md5(server_url + wmstms_version + '/1/0/1.png').hexdigest()
+    file4 = hashlib.md5(server_url + wmstms_version + '/1/1/1.png').hexdigest()
 
     expected_files = [ 'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file1[0], file1[1], file1),
                        'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file2[0], file2[1], file2),

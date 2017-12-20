@@ -1329,10 +1329,6 @@ def GetConfigOption(*args):
     """GetConfigOption(char const * pszKey, char const * pszDefault=None) -> char const *"""
     return _gdal.GetConfigOption(*args)
 
-def MD5String(*args):
-    """MD5String(char const * pszText) -> char const *"""
-    return _gdal.MD5String(*args)
-
 def CPLBinaryToHex(*args):
     """CPLBinaryToHex(int nBytes) -> retStringAndCPLFree *"""
     return _gdal.CPLBinaryToHex(*args)
