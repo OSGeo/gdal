@@ -1,6 +1,6 @@
 include ../../GDALmake.opt
 include java.opt
-#CFLAGS += -DSWIG_NOARRAYS  # use for Swig 2.0.4 and earlier
+CFLAGS += -DSWIG_NOARRAYS  # use for Swig 2.0.4 and earlier
 
 all: build
 
