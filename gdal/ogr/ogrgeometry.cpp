@@ -3594,11 +3594,10 @@ OGRGeometry *OGRGeometry::Boundary() const
 
 #else
 
-    GEOSGeom hGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct = GEOSBoundary_r( hGEOSCtxt, hGeosGeom );
@@ -3730,11 +3729,10 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
 
 #else
 
-    GEOSGeom hGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct =
@@ -3874,17 +3872,15 @@ OGRGeometry *OGRGeometry::Intersection(
 
     #else
 
-        GEOSGeom hThisGeosGeom = nullptr;
-        GEOSGeom hOtherGeosGeom = nullptr;
-        GEOSGeom hGeosProduct = nullptr;
         OGRGeometry *poOGRProduct = nullptr;
 
         GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
         if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
         {
-            hGeosProduct = GEOSIntersection_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
+            GEOSGeom hGeosProduct = GEOSIntersection_r(
+                hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
 
             if( hGeosProduct != nullptr )
             {
@@ -4018,17 +4014,15 @@ OGRGeometry *OGRGeometry::Union(
 
     #else
 
-        GEOSGeom hThisGeosGeom = nullptr;
-        GEOSGeom hOtherGeosGeom = nullptr;
-        GEOSGeom hGeosProduct = nullptr;
         OGRGeometry *poOGRProduct = nullptr;
 
         GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
         if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
         {
-            hGeosProduct = GEOSUnion_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
+            GEOSGeom hGeosProduct =
+                GEOSUnion_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
 
             if( hGeosProduct != nullptr )
             {
@@ -4114,11 +4108,10 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
               "GEOS support not enabled." );
     return nullptr;
 #else
-    GEOSGeom hThisGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct = GEOSUnionCascaded_r(hGEOSCtxt, hThisGeosGeom);
@@ -4243,17 +4236,15 @@ OGRGeometry *OGRGeometry::Difference(
 
     #else
 
-        GEOSGeom hThisGeosGeom = nullptr;
-        GEOSGeom hOtherGeosGeom = nullptr;
-        GEOSGeom hGeosProduct = nullptr;
         OGRGeometry *poOGRProduct = nullptr;
 
         GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
         if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
         {
-            hGeosProduct = GEOSDifference_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
+            GEOSGeom hGeosProduct =
+                GEOSDifference_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
 
             if( hGeosProduct != nullptr )
             {
@@ -4374,13 +4365,11 @@ OGRGeometry::SymDifference(
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct =
@@ -4515,13 +4504,11 @@ OGRGeometry::Disjoint( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRBoolean bResult = FALSE;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
         bResult = GEOSDisjoint_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
@@ -4598,13 +4585,11 @@ OGRGeometry::Touches( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRBoolean bResult = FALSE;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
 
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
@@ -4712,13 +4697,11 @@ OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
     #else
 
-        GEOSGeom hThisGeosGeom = nullptr;
-        GEOSGeom hOtherGeosGeom = nullptr;
         OGRBoolean bResult = FALSE;
 
         GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
 
         if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
         {
@@ -4797,13 +4780,11 @@ OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRBoolean bResult = FALSE;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
         bResult = GEOSWithin_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
@@ -4880,13 +4861,11 @@ OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRBoolean bResult = FALSE;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
         bResult = GEOSContains_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
@@ -4964,13 +4943,11 @@ OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-    GEOSGeom hOtherGeosGeom = nullptr;
     OGRBoolean bResult = FALSE;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
     {
         bResult = GEOSOverlaps_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
@@ -5095,10 +5072,8 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
 
 #else
 
-    GEOSGeom hThisGeosGeom = nullptr;
-
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
 
     if( hThisGeosGeom != nullptr )
     {
@@ -5247,11 +5222,11 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
               "GEOS support not enabled." );
     return nullptr;
 #else
-    GEOSGeom hThisGeosGeom = nullptr;
+
     OGRGeometry* poThis = reinterpret_cast<OGRGeometry *>(hGeom);
 
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
-    hThisGeosGeom = poThis->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = poThis->exportToGEOS(hGEOSCtxt);
 
     if( hThisGeosGeom != nullptr )
     {
@@ -5446,11 +5421,10 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(
     return nullptr;
 
 #else
-    GEOSGeom hThisGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct =
@@ -5550,11 +5524,10 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation(double /*dfTolerance*/,
 OGRGeometry *OGRGeometry::DelaunayTriangulation( double dfTolerance,
                                                  int bOnlyEdges ) const
 {
-    GEOSGeom hThisGeosGeom = nullptr;
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    hThisGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
     if( hThisGeosGeom != nullptr )
     {
         GEOSGeom hGeosProduct =
@@ -5668,13 +5641,12 @@ OGRGeometry *OGRGeometry::Polygonize() const
 
     int iCount = poColl->getNumGeometries();
 
-    GEOSGeom *hGeosGeomList = nullptr;
     OGRGeometry *poPolygsOGRGeom = nullptr;
     bool bError = false;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
 
-    hGeosGeomList = new GEOSGeom [iCount];
+    GEOSGeom*hGeosGeomList = new GEOSGeom [iCount];
     for( int ig = 0; ig < iCount; ig++ )
     {
         GEOSGeom hGeosGeom = nullptr;

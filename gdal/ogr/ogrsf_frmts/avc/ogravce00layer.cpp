@@ -453,7 +453,7 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 {
     if (psTableRead == nullptr)
         return false;
-
+#ifdef deadcode
 /* -------------------------------------------------------------------- */
 /*      Open the table if it is currently closed.                       */
 /* -------------------------------------------------------------------- */
@@ -472,7 +472,7 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
         }
         nTablePos = 0;
     }
-
+#endif
 /* -------------------------------------------------------------------- */
 /*      Read the info record.                                           */
 /*                                                                      */

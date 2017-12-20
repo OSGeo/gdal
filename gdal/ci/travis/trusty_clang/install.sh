@@ -51,9 +51,6 @@ make USER_DEFS="-Wextra -Werror" -j3 check
 cd ..
 cd ..
 
-# Check that override is not used in public headers
-if grep override /usr/include/gdal*.h /usr/include/ogr*.h /usr/include/gnm*.h /usr/include/cpl*.h | grep -v "One can override" | grep -v cpl_port | grep -v "Use this file to override"; then echo "Error: override keyword found in public headers instead of CPL_OVERRIDE" && /bin/false; fi 
-
 cd ../autotest/cpp
 make -j3
 cd ../../gdal

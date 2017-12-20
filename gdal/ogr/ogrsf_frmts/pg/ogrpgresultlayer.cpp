@@ -92,8 +92,7 @@ OGRPGResultLayer::OGRPGResultLayer( OGRPGDataSource *poDSIn,
         PGresult* hResult = OGRPG_PQexec(poDS->GetPGConn(), osRequest );
         if( hResult && PQresultStatus(hResult) == PGRES_TUPLES_OK)
         {
-            int iCol;
-            for( iCol = 0; iCol < PQntuples(hResult); iCol++ )
+            for( int iCol = 0; iCol < PQntuples(hResult); iCol++ )
             {
                 const char* pszAttNum = PQgetvalue(hResult,iCol,0);
                 const char* pszAttRelid = PQgetvalue(hResult,iCol,1);
@@ -192,7 +191,6 @@ GIntBig OGRPGResultLayer::GetFeatureCount( int bForce )
         return OGRPGLayer::GetFeatureCount( bForce );
 
     PGconn              *hPGConn = poDS->GetPGConn();
-    PGresult            *hResult = nullptr;
     CPLString           osCommand;
     int                 nCount = 0;
 
@@ -200,7 +198,7 @@ GIntBig OGRPGResultLayer::GetFeatureCount( int bForce )
         "SELECT count(*) FROM (%s) AS ogrpgcount",
         pszQueryStatement );
 
-    hResult = OGRPG_PQexec(hPGConn, osCommand);
+    PGresult* hResult = OGRPG_PQexec(hPGConn, osCommand);
     if( hResult != nullptr && PQresultStatus(hResult) == PGRES_TUPLES_OK )
         nCount = atoi(PQgetvalue(hResult,0,0));
     else

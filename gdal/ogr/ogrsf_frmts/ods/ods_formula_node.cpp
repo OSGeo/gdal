@@ -1434,6 +1434,13 @@ bool ods_formula_node::EvaluateListArgOp( IODSCellEvaluator* poEvaluator )
 
         case ODS_AVERAGE:
         {
+            if( adfVal.empty() )
+            {
+                eNodeType = SNT_CONSTANT;
+                field_type = ODS_FIELD_TYPE_EMPTY;
+                FreeSubExpr();
+                return true;
+            }
             for( int i = 0; i < (int)adfVal.size(); i++ )
             {
                 dfVal += adfVal[i];

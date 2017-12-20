@@ -926,8 +926,7 @@ static StyleSelectorPtr StyleFromStyleURL(
                 ParseStyles( AsDocument( poKmlContainer ), &poStyleTable );
 
                 /***** look for the style we need to map to in the table *****/
-                const char *pszTest = nullptr;
-                pszTest = poStyleTable->Find(pszRemoteStyleName);
+                const char *pszTest = poStyleTable->Find(pszRemoteStyleName);
 
                 /***** if found copy it to the table as a new style *****/
                 if( pszTest )
@@ -1052,8 +1051,7 @@ void ParseStyles(
 
         // Change the name of the new style in the style table
 
-        const char *pszTest = nullptr;
-        pszTest = (*poStyleTable)->Find(pszStyleId);
+        const char *pszTest = (*poStyleTable)->Find(pszStyleId);
         // If we found the style we want in the style table we...
         if( pszTest )
         {

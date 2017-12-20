@@ -996,10 +996,9 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     {
         int nCount, nOff = 0, j;
         const int *panItems = poFeature->GetFieldAsIntegerList(i,&nCount);
-        char *pszNeedToFree = nullptr;
 
         const size_t nLen = nCount * 13 + 10;
-        pszNeedToFree = (char *) CPLMalloc(nLen);
+        char *pszNeedToFree = (char *) CPLMalloc(nLen);
         strcpy( pszNeedToFree, "'{" );
         for( j = 0; j < nCount; j++ )
         {
@@ -1021,10 +1020,9 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
     {
         int nCount, nOff = 0, j;
         const GIntBig *panItems = poFeature->GetFieldAsInteger64List(i,&nCount);
-        char *pszNeedToFree = nullptr;
 
         const size_t nLen = nCount * 26 + 10;
-        pszNeedToFree = (char *) CPLMalloc(nLen);
+        char *pszNeedToFree = (char *) CPLMalloc(nLen);
         strcpy( pszNeedToFree, "'{" );
         for( j = 0; j < nCount; j++ )
         {
@@ -1048,10 +1046,9 @@ void OGRPGCommonAppendFieldValue(CPLString& osCommand,
         int nCount = 0;
         int nOff = 0;
         const double *padfItems = poFeature->GetFieldAsDoubleList(i,&nCount);
-        char *pszNeedToFree = nullptr;
 
         const size_t nLen = nCount * 40 + 10;
-        pszNeedToFree = (char *) CPLMalloc(nLen);
+        char *pszNeedToFree = (char *) CPLMalloc(nLen);
         strcpy( pszNeedToFree, "'{" );
         for( int j = 0; j < nCount; j++ )
         {

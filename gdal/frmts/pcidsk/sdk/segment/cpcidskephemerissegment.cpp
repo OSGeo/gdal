@@ -193,14 +193,13 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
 {
     int  nBlock = 0, nLine = 0;
     int nPos = 0;
-    AvhrrSeg_t *as = nullptr;
 
     int nDataLength = seg_data.buffer_size;
 /* -------------------------------------------------------------------- */
 /*  Allocate the AVHRR segment portion of EphemerisSeg_t.               */
 /* -------------------------------------------------------------------- */
     psEphSegRec->AvhrrSeg = new AvhrrSeg_t();
-    as = psEphSegRec->AvhrrSeg;
+    AvhrrSeg_t* as = psEphSegRec->AvhrrSeg;
 
 /* -------------------------------------------------------------------- */
 /*  Read in the Ninth Block which contains general info + ephemeris     */
@@ -372,8 +371,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /* -------------------------------------------------------------------- */
 /*  Check that the AvhrrSeg is not NULL.                                */
 /* -------------------------------------------------------------------- */
-    AvhrrSeg_t *as = nullptr;
-    as = psEphSegRec->AvhrrSeg;
+    AvhrrSeg_t* as = psEphSegRec->AvhrrSeg;
 
     if ( as == nullptr)
     {

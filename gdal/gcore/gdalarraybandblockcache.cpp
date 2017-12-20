@@ -62,17 +62,19 @@ class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
         GDALRasterBlock ***papapoBlocks;
     } u;
 
-    public:
-           explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
-           virtual ~GDALArrayBandBlockCache();
+  public:
+    explicit GDALArrayBandBlockCache( GDALRasterBand* poBand );
+    ~GDALArrayBandBlockCache() override;
 
-           virtual bool             Init() override;
-           virtual bool             IsInitOK() override;
-           virtual CPLErr           FlushCache() override;
-           virtual CPLErr           AdoptBlock( GDALRasterBlock * )  override;
-           virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff, int nYBlockYOff ) override;
-           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock ) override;
-           virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff, int bWriteDirtyBlock ) override;
+    bool Init() override;
+    bool IsInitOK() override;
+    CPLErr FlushCache() override;
+    CPLErr AdoptBlock( GDALRasterBlock * )  override;
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
+                                           int nYBlockYOff ) override;
+    CPLErr UnreferenceBlock( GDALRasterBlock* poBlock ) override;
+    CPLErr FlushBlock( int nXBlockOff, int nYBlockOff,
+                       int bWriteDirtyBlock ) override;
 };
 
 /************************************************************************/

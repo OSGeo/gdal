@@ -2291,12 +2291,9 @@ OGRErr OGRSpatialReference::morphFromESRI()
             // Found the ESRI datum name in the map.
             if( EQUAL(DMGetESRIName(i), pszDatumOrig) )
             {
-                const char *pszFilename = nullptr;
-                char **papszRecord = nullptr;
-
                 // Look for GEOGCS corresponding to this datum.
-                pszFilename = CSVFilename("gcs.csv");
-                papszRecord = CSVScanFileByName( pszFilename, "DATUM_CODE",
+                const char* pszFilename = CSVFilename("gcs.csv");
+                char ** papszRecord = CSVScanFileByName( pszFilename, "DATUM_CODE",
                                                  DMGetEPSGCode(i), CC_Integer );
                 if( papszRecord != nullptr )
                 {

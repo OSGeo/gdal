@@ -38,11 +38,6 @@
 #include "cpl_port.h"  // Must be first.
 #include "gtiff.h"
 
-// TODO(schwehr): Move this to cpl_port.h?
-#if HAVE_CXX11 && !defined(__MINGW32__)
-#define HAVE_CXX11_MUTEX 1
-#endif
-
 #include <cerrno>
 #include <climits>
 #include <cmath>
@@ -60,9 +55,7 @@
 
 #include <algorithm>
 #include <memory>
-#if HAVE_CXX11_MUTEX
-#  include <mutex>
-#endif
+#include <mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -15856,9 +15849,7 @@ static bool GTIFFQuantizationTablesEqual( const GByte* paby1, int nLen1,
             GTIFFFindNextTable(paby2, 0xDB, nLen2, &nLenTable2);
         if( paby1New == nullptr && paby2New == nullptr )
             return bFound;
-        if( paby1New == nullptr && paby2New != nullptr )
-            return false;
-        if( paby1New != nullptr && paby2New == nullptr )
+        if( paby1New == nullptr || paby2New == nullptr )
             return false;
         if( nLenTable1 != nLenTable2 )
             return false;
@@ -16957,13 +16948,17 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 #endif
 
+#if defined(HAVE_LIBJPEG) && !defined(BIGTIFF_SUPPORT)
+    else
+#endif
+
 #if !defined(BIGTIFF_SUPPORT)
     /* -------------------------------------------------------------------- */
     /*      If we are writing jpeg compression we need to write some        */
     /*      imagery to force the jpegtables to get created.  This is,       */
     /*      likely only needed with libtiff >= 3.9.3 (#3633)                */
     /* -------------------------------------------------------------------- */
-    else if( l_nCompression == COMPRESSION_JPEG
+    if( l_nCompression == COMPRESSION_JPEG
             && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
     {
         CPLDebug( "GDAL",
@@ -18398,8 +18393,6 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 static void
 GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 {
-    char *pszModFmt = nullptr;
-
 #if SIZEOF_VOIDP == 4
     // Case of one-strip file where the strip size is > 2GB (#5403).
     if( strcmp(module, "TIFFStripSize") == 0 &&
@@ -18433,7 +18426,7 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
     }
 #endif
 
-    pszModFmt = PrepareTIFFErrorFormat( module, fmt );
+    char* pszModFmt = PrepareTIFFErrorFormat( module, fmt );
     CPLErrorV( CE_Failure, CPLE_AppDefined, pszModFmt, ap );
     CPLFree( pszModFmt );
 }
@@ -18478,20 +18471,12 @@ static void GTiffTagExtender(TIFF *tif)
 #include <dlfcn.h>
 #endif
 
-#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
-#else
-static CPLMutex* hGTiffOneTimeInitMutex = nullptr;
-#endif  // HAVE_CXX11_MUTEX
 
 int GTiffOneTimeInit()
 
 {
-#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#else
-    CPLMutexHolder oHolder( &hGTiffOneTimeInitMutex);
-#endif
 
     static bool bOneTimeInitDone = false;
     if( bOneTimeInitDone )
@@ -18554,16 +18539,6 @@ void GDALDeregister_GTiff( GDALDriver * )
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
     GTIFDeaccessCSV();
 #endif
-
-#if !HAVE_CXX11
-    if( hGTiffOneTimeInitMutex != nullptr )
-    {
-        CPLDestroyMutex(hGTiffOneTimeInitMutex);
-        hGTiffOneTimeInitMutex = nullptr;
-    }
-#endif  // !HAVE_CXX11
-
-    LibgeotiffOneTimeCleanupMutex();
 }
 
 /************************************************************************/
@@ -18625,8 +18600,6 @@ void GDALRegister_GTiff()
     char szCreateOptions[5000] = { '\0' };
     char szOptionalCompressItems[500] = { '\0' };
     bool bHasJPEG = false;
-    bool bHasLZW = false;
-    bool bHasDEFLATE = false;
     bool bHasLZMA = false;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -18644,9 +18617,11 @@ void GDALRegister_GTiff()
             "       <Value>JPEG</Value>"
             "       <Value>LZW</Value>"
             "       <Value>DEFLATE</Value>" );
-    bHasLZW = true;
-    bHasDEFLATE = true;
+    bool bHasLZW = true;
+    bool bHasDEFLATE = true;
 #else
+    bool bHasLZW = false;
+    bool bHasDEFLATE = false;
     TIFFCodec *codecs = TIFFGetConfiguredCODECs();
 
     for( TIFFCodec *c = codecs; c->name; ++c )

@@ -5168,7 +5168,7 @@ static int OGRGF_DetectArc( const OGRLineString* poLS, int i,
             //        "dfLogRelDiff - dfLastLogRelDiff=%f\n",
             //         dfLogRelDiff, dfLastLogRelDiff,
             //         dfLogRelDiff - dfLastLogRelDiff);
-            if( dfLogRelDiff > 0.0 && dfLastLogRelDiff > 0.0 &&
+            if( dfLogRelDiff > 0.0 &&
                 dfLastLogRelDiff >= 8.0 && dfLogRelDiff <= 8.0 &&
                 dfLogRelDiff < dfLastLogRelDiff - 2.0 )
             {

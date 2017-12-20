@@ -234,25 +234,25 @@ class BMPDataset : public GDALPamDataset
     VSILFILE            *fp;
 
   protected:
-    virtual CPLErr      IRasterIO( GDALRWFlag, int, int, int, int,
-                                   void *, int, int, GDALDataType,
-                                   int, int *,
-                                   GSpacing nPixelSpace, GSpacing nLineSpace,
-                                   GSpacing nBandSpace,
-                                   GDALRasterIOExtraArg* psExtraArg ) override;
+    CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
+                      void *, int, int, GDALDataType,
+                      int, int *,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      GSpacing nBandSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
 
   public:
-                BMPDataset();
-    virtual ~BMPDataset();
+    BMPDataset();
+    ~BMPDataset() override;
 
-    static int           Identify( GDALOpenInfo * );
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static GDALDataset  *Create( const char * pszFilename,
+    static int Identify( GDALOpenInfo * );
+    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
                                 GDALDataType eType, char ** papszParmList );
 
-    CPLErr              GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr      SetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double * ) override;
 };
 
 /************************************************************************/
@@ -272,15 +272,14 @@ class BMPRasterBand : public GDALPamRasterBand
     GByte           *pabyScan;
 
   public:
+    BMPRasterBand( BMPDataset *, int );
+    ~BMPRasterBand() override;
 
-                BMPRasterBand( BMPDataset *, int );
-    virtual    ~BMPRasterBand();
-
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-    virtual CPLErr          IWriteBlock( int, int, void * ) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable  *GetColorTable() override;
-    CPLErr                  SetColorTable( GDALColorTable * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr SetColorTable( GDALColorTable * ) override;
 };
 
 /************************************************************************/
@@ -687,11 +686,11 @@ class BMPComprRasterBand : public BMPRasterBand
     GByte           *pabyUncomprBuf;
 
   public:
-                BMPComprRasterBand( BMPDataset *, int );
-    virtual    ~BMPComprRasterBand();
+    BMPComprRasterBand( BMPDataset *, int );
+    ~BMPComprRasterBand() override;
 
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-//    virtual CPLErr        IWriteBlock( int, int, void * );
+    CPLErr IReadBlock( int, int, void * ) override;
+    // virtual CPLErr IWriteBlock( int, int, void * );
 };
 
 /************************************************************************/

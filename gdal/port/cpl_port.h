@@ -183,12 +183,18 @@
 /* as a minimum */
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#  if !(__cplusplus >= 201103L || _MSC_VER >= 1800)
+#  if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800))
 #    error Must have C++11 or newer.
 #  endif
 #  if __cplusplus >= 201402L
 #    define HAVE_CXX14 1
 #  endif
+#  if !(defined(_MSC_VER) && _MSC_VER < 1900)
+// List initialization not supported with MSVC_VER=1800 / VS 2013
+/*! @cond Doxygen_Suppress */
+#    define CXX11_LIST_INITIALIZATION 1
+/*! @endcond */
+#endif
 /* TODO(schwehr): What is the correct test for C++ 17? */
 #endif  /* __cplusplus */
 
@@ -981,8 +987,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #endif
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-
-// #if HAVE_CXX11 || _MSC_VER >= 1500
 
 /** To be used in public headers only. For non-public headers or .cpp files,
  * use override directly. */

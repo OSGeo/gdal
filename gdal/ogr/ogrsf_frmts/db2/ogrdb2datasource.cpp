@@ -305,10 +305,9 @@ OGRLayer *OGRDB2DataSource::GetLayerByName( const char* pszLayerName )
     char *pszTableName = nullptr;
     char *pszSchemaName = nullptr;
     OGRLayer *poLayer = nullptr;
-    char *pszLayerNameUpper = nullptr;
     CPLDebug("OGR_DB2DataSource::GetLayerByName", "pszLayerName: '%s'",
              pszLayerName);
-    pszLayerNameUpper = ToUpper(pszLayerName);
+    char* pszLayerNameUpper = ToUpper(pszLayerName);
     const char* pszDotPos = strstr(pszLayerNameUpper,".");
     if ( pszDotPos != nullptr )
     {
@@ -1470,9 +1469,7 @@ OGRLayer * OGRDB2DataSource::ExecuteSQL( const char *pszSQLCommand,
     /*      statement.                                                      */
     /* -------------------------------------------------------------------- */
 
-    OGRDB2SelectLayer *poLayer = nullptr;
-
-    poLayer = new OGRDB2SelectLayer( this, poStatement );
+    OGRDB2SelectLayer* poLayer = new OGRDB2SelectLayer( this, poStatement );
 
     if( poSpatialFilter != nullptr )
         poLayer->SetSpatialFilter( poSpatialFilter );

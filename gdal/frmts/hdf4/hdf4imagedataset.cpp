@@ -1098,10 +1098,9 @@ long HDF4ImageDataset::USGSMnemonicToCode( const char* pszMnemonic )
 
 void HDF4ImageDataset::ToGeoref( double *pdfGeoX, double *pdfGeoY )
 {
-    OGRCoordinateTransformation *poTransform = nullptr;
-    OGRSpatialReference *poLatLong = nullptr;
-    poLatLong = oSRS.CloneGeogCS();
-    poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );
+    OGRSpatialReference* poLatLong = oSRS.CloneGeogCS();
+    OGRCoordinateTransformation* poTransform =
+        OGRCreateCoordinateTransformation( poLatLong, &oSRS );
 
     if( poTransform != nullptr )
         poTransform->Transform( 1, pdfGeoX, pdfGeoY, nullptr );

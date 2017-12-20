@@ -960,7 +960,7 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
 /*                       EXIFFormatTagValue()                           */
 /************************************************************************/
 
-typedef enum 
+typedef enum
 {
     MAIN_IFD,
     EXIF_IFD,
@@ -1107,7 +1107,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                 {
                     // ok
                 }
-                else if( nTokens > tagdescArray[i].length) 
+                else if( nTokens > tagdescArray[i].length)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Value of %s will be truncated",
@@ -1142,7 +1142,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                 tag.nLengthBytes = tag.nLength * nDataTypeSize;
             }
             else if( tag.datatype == TIFF_RATIONAL ||
-                     tag.datatype == TIFF_SRATIONAL ) 
+                     tag.datatype == TIFF_SRATIONAL )
             {
                 char** papszTokens = CSLTokenizeString2(pszValue, " ", 0);
                 GUInt32 nTokens = static_cast<GUInt32>(CSLCount(papszTokens));
@@ -1152,7 +1152,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                 {
                     // ok
                 }
-                else if( nTokens > tagdescArray[i].length) 
+                else if( nTokens > tagdescArray[i].length)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Value of %s will be truncated",

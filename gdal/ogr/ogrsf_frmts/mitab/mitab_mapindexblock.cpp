@@ -593,12 +593,11 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
     // Try to load corresponding child... if it fails then we are
     // likely in a leaf node, so we'll add the new entry in the current
     // node.
-    TABRawBinBlock *poBlock = nullptr;
 
     // Prevent error message if referred block not committed yet.
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    poBlock = TABCreateMAPBlockFromFile(m_fp,
+    TABRawBinBlock* poBlock = TABCreateMAPBlockFromFile(m_fp,
                                     m_asEntries[nBestCandidate].nBlockPtr,
                                     m_nBlockSize, TRUE, TABReadWrite);
     if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)
@@ -795,12 +794,11 @@ int     TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin,
             // Try to load corresponding child... if it fails then we are
             // likely in a leaf node, so we'll add the new entry in the current
             // node.
-            TABRawBinBlock *poBlock = nullptr;
 
             // Prevent error message if referred block not committed yet.
             CPLPushErrorHandler(CPLQuietErrorHandler);
 
-            poBlock = TABCreateMAPBlockFromFile(m_fp,
+            TABRawBinBlock* poBlock = TABCreateMAPBlockFromFile(m_fp,
                                        m_asEntries[nBestCandidate].nBlockPtr,
                                        m_nBlockSize, TRUE, TABReadWrite);
             if (poBlock != nullptr && poBlock->GetBlockClass() == TABMAP_INDEX_BLOCK)

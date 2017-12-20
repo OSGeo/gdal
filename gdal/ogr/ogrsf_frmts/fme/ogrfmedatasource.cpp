@@ -1293,9 +1293,7 @@ OGRFeature *OGRFMEDataSource::ProcessFeature( OGRFMELayer *poLayer,
 /* -------------------------------------------------------------------- */
 /*      Translate the geometry.                                         */
 /* -------------------------------------------------------------------- */
-    OGRGeometry      *poOGRGeom = NULL;
-
-    poOGRGeom = ProcessGeometry( poLayer, poSrcFeature,
+    OGRGeometry* poOGRGeom = ProcessGeometry( poLayer, poSrcFeature,
                                  poLayer->GetLayerDefn()->GetGeomType() );
     if( poOGRGeom != NULL )
         poFeature->SetGeometryDirectly( poOGRGeom );

@@ -87,18 +87,18 @@ class CALSRasterBand: public GDALPamRasterBand
         eDataType = GDT_Byte;
     }
 
-    virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) override
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void * pData ) override
     {
         return poUnderlyingBand->ReadBlock(nBlockXOff, nBlockYOff, pData);
     }
 
-    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                              int nXOff, int nYOff, int nXSize, int nYSize,
-                              void * pData, int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType,
-                              GSpacing nPixelSpace,
-                              GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override
+    CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                      int nXOff, int nYOff, int nXSize, int nYSize,
+                      void * pData, int nBufXSize, int nBufYSize,
+                      GDALDataType eBufType,
+                      GSpacing nPixelSpace,
+                      GSpacing nLineSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override
     {
         return poUnderlyingBand->RasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize,
@@ -106,22 +106,23 @@ class CALSRasterBand: public GDALPamRasterBand
             nPixelSpace, nLineSpace, psExtraArg ) ;
     }
 
-    virtual GDALColorTable* GetColorTable() override
+    GDALColorTable* GetColorTable() override
     {
         return poUnderlyingBand->GetColorTable();
     }
 
-    virtual GDALColorInterp GetColorInterpretation() override
+    GDALColorInterp GetColorInterpretation() override
     {
         return GCI_PaletteIndex;
     }
 
-    virtual char** GetMetadata(const char* pszDomain) override
+    char** GetMetadata(const char* pszDomain) override
     {
         return poUnderlyingBand->GetMetadata(pszDomain);
     }
 
-    virtual const char* GetMetadataItem(const char* pszKey, const char* pszDomain) override
+    const char* GetMetadataItem( const char* pszKey,
+                                 const char* pszDomain ) override
     {
         return poUnderlyingBand->GetMetadataItem(pszKey, pszDomain);
     }
@@ -163,39 +164,39 @@ class CALSWrapperSrcBand: public GDALPamRasterBand
             }
         }
 
-        virtual CPLErr IReadBlock( int /* nBlockXOff */,
-                                   int /* nBlockYOff */,
-                                   void * /* pData */ ) override
-        {
-            // Should not be called.
-            return CE_Failure;
-        }
+    CPLErr IReadBlock( int /* nBlockXOff */,
+                       int /* nBlockYOff */,
+                       void * /* pData */ ) override
+    {
+        // Should not be called.
+        return CE_Failure;
+    }
 
-        virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                                  int nXOff, int nYOff, int nXSize, int nYSize,
-                                  void * pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType,
-                                  GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
-                                  GDALRasterIOExtraArg* psExtraArg ) override
+    CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                      int nXOff, int nYOff, int nXSize, int nYSize,
+                      void * pData, int nBufXSize, int nBufYSize,
+                      GDALDataType eBufType,
+                      GSpacing nPixelSpace,
+                      GSpacing nLineSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override
+    {
+        const CPLErr eErr =
+            poSrcDS->GetRasterBand(1)->RasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                pData, nBufXSize, nBufYSize, eBufType,
+                nPixelSpace, nLineSpace, psExtraArg ) ;
+        if( bInvertValues )
         {
-            const CPLErr eErr =
-                poSrcDS->GetRasterBand(1)->RasterIO(
-                    eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                    pData, nBufXSize, nBufYSize, eBufType,
-                    nPixelSpace, nLineSpace, psExtraArg ) ;
-            if( bInvertValues )
+            for( int j = 0; j < nBufYSize; j++ )
             {
-                for( int j = 0; j < nBufYSize; j++ )
-                {
-                    for( int i = 0; i < nBufXSize; i++ )
-                        ((GByte*)pData)[j * nLineSpace + i * nPixelSpace] =
-                            1 - ((GByte*)pData)[j * nLineSpace +
-                                                i * nPixelSpace];
-                }
+                for( int i = 0; i < nBufXSize; i++ )
+                    ((GByte*)pData)[j * nLineSpace + i * nPixelSpace] =
+                        1 - ((GByte*)pData)[j * nLineSpace +
+                                            i * nPixelSpace];
             }
-            return eErr;
         }
+        return eErr;
+    }
 };
 
 /************************************************************************/

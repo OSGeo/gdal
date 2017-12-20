@@ -532,7 +532,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
     if( bNorth )
         nShortTemp = -nShortTemp;
 
-    nShortTemp = CPL_LSBWORD16( nShortTemp );
+    CPL_LSBPTR16(&nShortTemp);
     memcpy( abyHeader + 24, &nShortTemp, 2 );
 
 /* -------------------------------------------------------------------- */
@@ -544,7 +544,7 @@ CPLErr BTDataset::SetProjection( const char *pszNewProjection )
             atoi(oSRS.GetAuthorityCode( "GEOGCS|DATUM" )) + 2000);
     else
         nShortTemp = -2;
-    nShortTemp = CPL_LSBWORD16( nShortTemp ); /* datum unknown */
+    CPL_LSBPTR16(&nShortTemp); /* datum unknown */
     memcpy( abyHeader + 26, &nShortTemp, 2 );
 
 /* -------------------------------------------------------------------- */
@@ -620,7 +620,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
     GInt16 nDataSize = 0;
     memcpy( &nDataSize, poDS->abyHeader+18, 2 );
-    nDataSize = CPL_LSBWORD16( nDataSize );
+    CPL_LSBPTR16(&nDataSize);
 
     GDALDataType eType = GDT_Unknown;
     if( poDS->abyHeader[20] != 0 && nDataSize == 4 )
@@ -687,15 +687,15 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         GInt16 nUTMZone = 0;
         memcpy( &nUTMZone, poDS->abyHeader + 24, 2 );
-        nUTMZone = CPL_LSBWORD16( nUTMZone );
+        CPL_LSBPTR16(&nUTMZone);
 
         GInt16 nDatum = 0;
         memcpy( &nDatum, poDS->abyHeader + 26, 2 );
-        nDatum = CPL_LSBWORD16( nDatum );
+        CPL_LSBPTR16(&nDatum);
 
         GInt16 nHUnits = 0;
         memcpy( &nHUnits, poDS->abyHeader + 22, 2 );
-        nHUnits = CPL_LSBWORD16( nHUnits );
+        CPL_LSBPTR16(&nHUnits);
 
         if( nUTMZone != 0 )
             oSRS.SetUTM( std::abs(static_cast<int>(nUTMZone)), nUTMZone > 0 );

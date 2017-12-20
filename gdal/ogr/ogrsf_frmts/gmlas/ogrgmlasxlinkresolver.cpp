@@ -197,8 +197,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString& osURL,
 
     // Check memory cache first
     {
-        std::map<CPLString,CPLString>::const_iterator oIter =
-            m_oMapURLToContent.find(osURL);
+        const auto oIter = m_oMapURLToContent.find(osURL);
         if( oIter != m_oMapURLToContent.end() )
             return oIter->second;
     }

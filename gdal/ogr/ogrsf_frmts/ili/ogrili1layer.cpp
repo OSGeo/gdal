@@ -850,11 +850,10 @@ void OGRILI1Layer::PolygonizeAreaLayer( OGRILI1Layer* poAreaLineLayer,
     //associate polygon feature with data row according to centroid
 #if defined(HAVE_GEOS)
     OGRPolygon emptyPoly;
-    GEOSGeom *ahInGeoms = nullptr;
 
     CPLDebug( "OGR_ILI", "Associating layer %s with area polygons",
               GetLayerDefn()->GetName());
-    ahInGeoms = static_cast<GEOSGeom *>(
+    GEOSGeom* ahInGeoms = static_cast<GEOSGeom *>(
         CPLCalloc(sizeof(void*), polys->getNumGeometries() ) );
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     for( int i = 0; i < polys->getNumGeometries(); i++ )

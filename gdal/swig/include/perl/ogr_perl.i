@@ -27,12 +27,11 @@
  *****************************************************************************/
 
 %init %{
-
-  /*UseExceptions(); is set by GDAL module */
-  if ( OGRGetDriverCount() == 0 ) {
-    OGRRegisterAll();
-  }
-
+    /* %init code */
+    UseExceptions();
+    if ( OGRGetDriverCount() == 0 ) {
+        OGRRegisterAll();
+    }
 %}
 
 %include callback.i
@@ -632,7 +631,7 @@ sub new {
                     }
                 }
             }
-            
+
             if ($fd->{GeometryType} or ($fd->{Type} && s_exists(geometry_type => $fd->{Type}))) {
                 $d = Geo::OGR::GeomFieldDefn->new(%$fd);
             } else {
@@ -1968,7 +1967,7 @@ sub GetGeometryRef {
     return $ref;
 }
 *Geometry = *GetGeometryRef;
-    
+
 *AsText = *ExportToWkt;
 *AsBinary = *ExportToWkb;
 *AsGML = *ExportToGML;

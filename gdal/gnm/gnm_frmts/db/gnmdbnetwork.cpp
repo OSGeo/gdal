@@ -351,11 +351,10 @@ CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename, char **papszOptions
         if (pszActiveSchemaStart != nullptr)
         {
             char           *pszActiveSchema;
-            const char     *pszEnd = nullptr;
 
             pszActiveSchema = CPLStrdup( pszActiveSchemaStart + strlen("active_schema=") );
 
-            pszEnd = strchr(pszActiveSchemaStart, ' ');
+            const char* pszEnd = strchr(pszActiveSchemaStart, ' ');
             if( pszEnd == nullptr )
                 pszEnd = pszFilename + strlen(pszFilename);
 

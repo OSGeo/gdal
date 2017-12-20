@@ -118,7 +118,7 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         bool m_bUseHTTPS;
         bool m_bUseVirtualHosting;
 
-        virtual void RebuildURL() CPL_OVERRIDE;
+        void RebuildURL() override;
 
         static bool GetConfigurationFromEC2(CPLString& osSecretAccessKey,
                                             CPLString& osAccessKeyId,
@@ -151,16 +151,18 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                                   const CPLString& osObjectKey,
                                   bool bUseHTTPS, bool bUseVirtualHosting);
 
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerb,
-                                          const struct curl_slist* psExistingHeaders,
-                                          const void *pabyDataContent = nullptr,
-                                          size_t nBytesContent = 0) const CPL_OVERRIDE;
+        struct curl_slist* GetCurlHeaders(
+            const CPLString& osVerb,
+            const struct curl_slist* psExistingHeaders,
+            const void *pabyDataContent = nullptr,
+            size_t nBytesContent = 0) const override;
 
-        bool AllowAutomaticRedirection() CPL_OVERRIDE { return false; }
+        bool AllowAutomaticRedirection() override { return false; }
         bool CanRestartOnError(const char*, const char* pszHeaders,
-                               bool bSetError, bool* pbUpdateMap = nullptr) CPL_OVERRIDE;
+                               bool bSetError,
+                               bool* pbUpdateMap = nullptr) override;
 
-        const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
+        const CPLString& GetURL() const override { return m_osURL; }
         const CPLString& GetBucket() const { return m_osBucket; }
         const CPLString& GetObjectKey() const { return m_osObjectKey; }
         const CPLString& GetEndpoint()const  { return m_osEndpoint; }

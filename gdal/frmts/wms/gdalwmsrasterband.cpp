@@ -209,8 +209,7 @@ CPLErr GDALWMSRasterBand::ReadBlocks(int x, int y, void *buffer, int bx0, int by
                                     cache->Insert(request.URL, file_name);
                             } else {
                                 CPLError(ret, CPLE_AppDefined,
-                                        "GDALWMS: ReadBlockFromFile (%s) failed.",
-                                         request.URL.c_str());
+                                        "GDALWMS: ReadBlockFromFile (%s) failed.", request.URL.c_str());
                             }
                         }
                     }
@@ -838,10 +837,13 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(const CPLString& soFileName, int x,
                                             int y, int to_buffer_band,
                                             void *buffer, int advise_read)
 {
-    GDALDataset *ds = reinterpret_cast<GDALDataset*>(
-                        GDALOpenEx( soFileName, GDAL_OF_RASTER |
-                                   GDAL_OF_READONLY | GDAL_OF_VERBOSE_ERROR, nullptr,
-                                   m_parent_dataset->m_tileOO, nullptr ) );
+    GDALDataset *ds = reinterpret_cast<GDALDataset*>(GDALOpenEx( soFileName,
+                                                        GDAL_OF_RASTER
+                                                        | GDAL_OF_READONLY
+                                                        | GDAL_OF_VERBOSE_ERROR,
+                                                        nullptr,
+                                                        m_parent_dataset->m_tileOO,
+                                                        nullptr ) );
     if( ds == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");

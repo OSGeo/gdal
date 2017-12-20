@@ -836,7 +836,19 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
     {
         m_nXTileOffset =
             static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) *
-            nTileXSize * nTileYSize;
+            nTileXSize;
+        if( m_nXTileOffset > GINTBIG_MAX / nTileYSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
+        m_nXTileOffset *= nTileYSize;
+
+        if( m_nXTileOffset > GINTBIG_MAX / l_nBlocksPerRow )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
         m_nYTileOffset = m_nXTileOffset * l_nBlocksPerRow;
     }
 

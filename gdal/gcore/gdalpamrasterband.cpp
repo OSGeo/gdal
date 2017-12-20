@@ -281,6 +281,7 @@ void GDALPamRasterBand::PamInitialize()
     if( poParentDS == nullptr ) {
         // Should never happen.
         CPLAssert(false);
+        return;
     }
 
     poParentDS->PamInitialize();

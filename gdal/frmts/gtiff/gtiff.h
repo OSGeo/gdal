@@ -40,7 +40,6 @@
 CPL_C_START
 int    GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
-void   LibgeotiffOneTimeCleanupMutex();
 CPL_C_END
 
 void    GTIFFSetInExternalOvr( bool b );
