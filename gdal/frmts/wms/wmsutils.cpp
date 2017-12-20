@@ -30,22 +30,6 @@
 
 CPL_CVSID("$Id$")
 
-CPLString MD5String(const char *s) {
-    unsigned char hash[16];
-    char hhash[33];
-    const char *tohex = "0123456789abcdef";
-    struct cvs_MD5Context context;
-    cvs_MD5Init(&context);
-    cvs_MD5Update(&context, reinterpret_cast<unsigned char const *>(s), static_cast<int>(strlen(s)));
-    cvs_MD5Final(hash, &context);
-    for (int i = 0; i < 16; ++i) {
-        hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
-        hhash[i * 2 + 1] = tohex[hash[i] & 0xf];
-    }
-    hhash[32] = '\0';
-    return CPLString(hhash);
-}
-
 CPLString ProjToWKT(const CPLString &proj) {
     char* wkt = nullptr;
     OGRSpatialReference sr;

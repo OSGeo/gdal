@@ -8,6 +8,8 @@
  ******************************************************************************
  * Copyright (c) 2007, Adam Nowacki
  * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017, Dmitry Baryshnikov, <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS, <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -228,16 +230,30 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
         }
     }
 
+    CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
+    if (service_node == nullptr) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+            "GDALWMS: No Service specified.");
+        return CE_Failure;
+    }
+
     if (ret == CE_None) {
         CPLXMLNode *cache_node = CPLGetXMLNode(config, "Cache");
         if (cache_node != nullptr) {
             m_cache = new GDALWMSCache();
-            if (m_cache->Initialize(cache_node) != CE_None) {
+            if (m_cache->Initialize(CPLGetXMLValue(service_node, "ServerUrl", nullptr),
+                                    cache_node) != CE_None) {
                 delete m_cache;
                 m_cache = nullptr;
                 CPLError(CE_Failure, CPLE_AppDefined,
                     "GDALWMS: Failed to initialize cache.");
                 ret = CE_Failure;
+            }
+            else {
+                // NOTE: Save cache path to metadata. For example, this is
+                // useful for deleting a cache folder when removing dataset or
+                // to fill the cache for specified area and zoom levels
+                SetMetadataItem("CACHE_PATH", m_cache->CachePath(), nullptr);
             }
         }
     }
@@ -255,12 +271,6 @@ CPLErr GDALWMSDataset::Initialize(CPLXMLNode *config, char **l_papszOpenOptions)
     }
 
     // Initialize the minidriver, which can set parameters for the dataset using member functions
-    CPLXMLNode *service_node = CPLGetXMLNode(config, "Service");
-    if (service_node == nullptr) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "GDALWMS: No Service specified.");
-        return CE_Failure;
-    }
 
     const CPLString service_name = CPLGetXMLValue(service_node, "name", "");
     if (service_name.empty()) {
@@ -677,7 +687,7 @@ char **GDALWMSDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "WMS", NULL);
+                                   "WMS", nullptr);
 }
 
 /************************************************************************/
@@ -725,4 +735,3 @@ const char * const * GDALWMSDataset::GetHTTPRequestOpts()
     m_http_options = opts;
     return m_http_options;
 }
-

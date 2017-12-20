@@ -180,6 +180,22 @@
 			<td class="desc">Append to cache files. (optional, defaults to none)</td>
 		</tr>
 		<tr>
+			<td class="xml">        &lt;Type&gt;<span class="value">file</span>&lt;/Type&gt;</td>
+			<td class="desc">Cache type. Now supported only 'file' type. In file cache type a files stored in file system folders.</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Expires&gt;<span class="value">604800</span>&lt;/Expires&gt;</td>
+			<td class="desc">Time in second cached files will stay valid. If cached file expires, it may be deleted then maximum size of cache will reached. Default value is 7 days (604800s).</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;MaxSize&gt;<span class="value">67108864</span>&lt;/MaxSize&gt;</td>
+			<td class="desc">The cache maximum size in bytes. If cache reached maximum size, expired cached files will be deleted. Default value is 64 Mb (67108864 bytes).</td>
+		</tr>
+		<tr>
+			<td class="xml">        &lt;Unique&gt;<span class="value">True</span>&lt;/Unique&gt;</td>
+			<td class="desc">If set to true the path will appended with md5 hash of ServerURL. Default value is true.</td>
+		</tr>
+		<tr>
 			<td class="xml">    &lt;/Cache&gt;</td>
 			<td class="desc"></td>
 		</tr>
