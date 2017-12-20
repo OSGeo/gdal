@@ -295,9 +295,9 @@ public:
     CPLLocaleC();
     ~CPLLocaleC();
 
-	/* Make it non-copyable */
-	CPLLocaleC(const CPLLocaleC&) = delete;
-	CPLLocaleC& operator=(const CPLLocaleC&) = delete;
+    /* Make it non-copyable */
+    CPLLocaleC(const CPLLocaleC&) = delete;
+    CPLLocaleC& operator=(const CPLLocaleC&) = delete;
 
 private:
     char *pszOldLocale;
@@ -314,9 +314,9 @@ public:
     CPLThreadLocaleC();
     ~CPLThreadLocaleC();
 
-	/* Make it non-copyable */
-	CPLThreadLocaleC(const CPLThreadLocaleC&) = delete;
-	CPLThreadLocaleC& operator=(const CPLThreadLocaleC&) = delete;
+    /* Make it non-copyable */
+    CPLThreadLocaleC(const CPLThreadLocaleC&) = delete;
+    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&) = delete;
 
 private:
     CPLThreadLocaleCPrivate* m_private;
@@ -341,9 +341,9 @@ public:
                           bool bSetOnlyIfUndefined);
     ~CPLConfigOptionSetter();
 
-	/* Make it non-copyable */
-	CPLConfigOptionSetter(const CPLConfigOptionSetter&) = delete;
-	CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&) = delete;
+    /* Make it non-copyable */
+    CPLConfigOptionSetter(const CPLConfigOptionSetter&) = delete;
+    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&) = delete;
 
 private:
     char* m_pszKey;
