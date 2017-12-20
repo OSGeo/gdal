@@ -1,5 +1,6 @@
 include ../../GDALmake.opt
 include java.opt
+#CFLAGS += -DSWIG_NOARRAYS  # use for Swig 2.0.4 and earlier
 
 all: build
 
@@ -99,8 +100,8 @@ test:
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 	${JAVA_RUN} OSRTest
 
-$(JAVA_MODULES): $(JAVA_OBJECTS)
-	$(LINK) $(LDFLAGS) $^ $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
+$(JAVA_MODULES): $(JAVA_OBJECTS) 
+	$(LINK) $(LDFLAGS) $^ $(GDAL_LIB) $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
 
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
