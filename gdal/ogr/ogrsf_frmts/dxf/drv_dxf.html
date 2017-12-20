@@ -116,7 +116,7 @@ a POINT for the text.
 MULTILINESTRING (MULTILEADER). Arrowheads, if present, are translated as one or
 more additional features. Text for MULTILEADER entities is translated into a
 POINT feature with a label. Block content for MULTILEADERS is treated as for
-INSERT. Spline paths are not supported for either type of leader.
+INSERT. Spline leaders are tessellated into line segments.
 <li>(GDAL &lt;= 2.2.x) No support.
 </ul>
 
@@ -129,9 +129,10 @@ translating entities. Currently no effort is made to preserve complex line types
 
 The approximation of arcs, ellipses, circles and rounded polylines as
 linestrings is done by splitting the arcs into subarcs of no more than a
-threshold angle.  This angle is the OGR_ARC_STEPSIZE.  This defaults to
-four degrees, but may be overridden by setting the configuration variable
-OGR_ARC_STEPSIZE.<p>
+threshold angle.  This angle is the OGR_ARC_STEPSIZE.  This defaults to four
+degrees, but may be overridden by setting the configuration variable
+OGR_ARC_STEPSIZE.  For splines, the interpolated polyline contains eight
+vertices for each control point.<p>
 
 Object coordinate systems (OCS), also known as "extrusions", are supported for
 all entities to which they apply as per the DXF specification, except DIMENSION,
