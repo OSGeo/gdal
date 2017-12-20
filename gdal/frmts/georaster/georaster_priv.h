@@ -244,7 +244,7 @@ class GeoRasterRasterBand : public GDALRasterBand
                          int nBand,
                          int nLevel,
                          GDALDataset* poJP2Dataset = NULL );
-    ~GeoRasterRasterBand(); override
+    ~GeoRasterRasterBand() override;
 
 private:
     GeoRasterWrapper*   poGeoRaster;
