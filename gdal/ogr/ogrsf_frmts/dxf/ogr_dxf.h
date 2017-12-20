@@ -186,6 +186,21 @@ struct DXFTriple
         adfOut[1] = dfY;
         adfOut[2] = dfZ;
     }
+
+    DXFTriple& operator*=( const double dfValue )
+    {
+        dfX *= dfValue;
+        dfY *= dfValue;
+        dfZ *= dfValue;
+        return *this;
+    }
+    DXFTriple& operator/=( const double dfValue )
+    {
+        dfX /= dfValue;
+        dfY /= dfValue;
+        dfZ /= dfValue;
+        return *this;
+    }
 };
 
 /************************************************************************/
@@ -308,9 +323,9 @@ class OGRDXFLayer : public OGRLayer
                                          int nPrecision );
     void                InsertArrowhead( OGRDXFFeature* const poFeature,
                                          const CPLString& osBlockName,
-                                         const OGRPoint& oPoint1,
-                                         const OGRPoint& oPoint2,
-                                         const double dfArrowheadSize );
+                                         OGRLineString* const poLine,
+                                         const double dfArrowheadSize,
+                                         const bool bReverse = false );
     OGRErr              CollectBoundaryPath( OGRGeometryCollection *poGC,
                                              const double dfElevation );
     OGRErr              CollectPolylinePath( OGRGeometryCollection *poGC,
