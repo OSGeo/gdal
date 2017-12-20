@@ -751,7 +751,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x,
                             }
                             // Get the data from the PNG as stored instead of converting, if the server asks for that
                             // TODO: This hack is from #3493 - not sure it really belongs here.
-                            if ((GDT_Int16 == dt) && (GDT_UInt16 == ds->GetRasterBand(ib)->GetRasterDataType()))
+                            if( (GDT_Int16 == dt) &&
+                                (GDT_UInt16 == ds->GetRasterBand(ib)->GetRasterDataType()))
                             {
                                 dt = GDT_UInt16;
                             }
@@ -760,7 +761,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x,
                                              1, &nSourceBand, pixel_space,
                                              line_space, 0, nullptr) != CE_None)
                             {
-                                CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "GDALWMS: RasterIO failed on downloaded block.");
                                 ret = CE_Failure;
                             }
                         }
@@ -790,7 +792,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromDataset(GDALDataset *ds, int x,
                                          eDataType, 1, nullptr, pixel_space,
                                          line_space, 0, nullptr) != CE_None)
                         {
-                            CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: RasterIO failed on downloaded block.");
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "GDALWMS: RasterIO failed on downloaded block.");
                             ret = CE_Failure;
                         }
 
@@ -846,7 +849,8 @@ CPLErr GDALWMSRasterBand::ReadBlockFromFile(const CPLString& soFileName, int x,
                                                         nullptr ) );
     if( ds == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALWMS: Unable to open downloaded block.");
         return CE_Failure;
     }
 
@@ -860,13 +864,15 @@ CPLErr GDALWMSRasterBand::ReadBlockFromCache(const char* pszKey, int x, int y,
     GDALWMSCache *cache = m_parent_dataset->m_cache;
     if( nullptr == cache )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALWMS: Unable to open downloaded block.");
         return CE_Failure;
     }
     GDALDataset *ds = cache->GetDataset( pszKey, m_parent_dataset->m_tileOO );
     if( ds == nullptr )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALWMS: Unable to open downloaded block.");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "GDALWMS: Unable to open downloaded block.");
         return CE_Failure;
     }
 
