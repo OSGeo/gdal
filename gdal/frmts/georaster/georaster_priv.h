@@ -221,6 +221,7 @@ public:
                GDALProgressFunc pfnProgress,
                void* pProgresoversData ) override;
     CPLErr CreateMaskBand( int nFlags ) override;
+    // cppcheck-suppress functionStatic
     OGRErr StartTransaction(int /* bForce */ =FALSE) override
         { return CE_None; }
     OGRErr CommitTransaction() override { return CE_None; }
