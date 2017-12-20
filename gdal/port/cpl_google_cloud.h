@@ -64,7 +64,7 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
                                          CPLString& osOAuth2ClientSecret,
                                          CPLString& osCredentials);
 
-        virtual void RebuildURL() CPL_OVERRIDE;
+        void RebuildURL() override;
 
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
@@ -78,12 +78,13 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix);
 
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
-                                          const  struct curl_slist* psExistingHeaders,
-                                          const void *pabyDataContent = nullptr,
-                                          size_t nBytesContent = 0) const CPL_OVERRIDE;
+        struct curl_slist* GetCurlHeaders(
+            const CPLString& osVerbosVerb,
+            const  struct curl_slist* psExistingHeaders,
+            const void *pabyDataContent = nullptr,
+            size_t nBytesContent = 0) const override;
 
-        const CPLString& GetURL() const CPL_OVERRIDE { return m_osURL; }
+        const CPLString& GetURL() const override { return m_osURL; }
 
         static void CleanMutex();
         static void ClearCache();

@@ -282,7 +282,7 @@ void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 class GDALDefaultAsyncReader : public GDALAsyncReader
 {
   private:
-    char **         papszOptions;
+    char **papszOptions;
 
   public:
     GDALDefaultAsyncReader(GDALDataset* poDS,
@@ -294,13 +294,13 @@ class GDALDefaultAsyncReader : public GDALAsyncReader
                              int nBandCount, int* panBandMap,
                              int nPixelSpace, int nLineSpace,
                              int nBandSpace, char **papszOptions);
-    virtual ~GDALDefaultAsyncReader();
+    ~GDALDefaultAsyncReader() override;
 
-    virtual GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
-                                                     int* pnBufXOff,
-                                                     int* pnBufYOff,
-                                                     int* pnBufXSize,
-                                                     int* pnBufYSize) override;
+    GDALAsyncStatusType GetNextUpdatedRegion(double dfTimeout,
+                                             int* pnBufXOff,
+                                             int* pnBufYOff,
+                                             int* pnBufXSize,
+                                             int* pnBufYSize) override;
 };
 
 /************************************************************************/

@@ -58,9 +58,7 @@
 #endif
 
 // FIXME: Disabled following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//#include <mutex>
-//#endif
+// #include <mutex>
 
 CPL_CVSID("$Id$")
 
@@ -74,9 +72,7 @@ static volatile GDALDriverManager *poDM = nullptr;
 static CPLMutex *hDMMutex = nullptr;
 
 // FIXME: Disabled following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//static std::mutex oDeleteMutex;
-//#endif
+// static std::mutex oDeleteMutex;
 
 CPLMutex** GDALGetphDMMutex() { return &hDMMutex; }
 
@@ -895,9 +891,7 @@ void CPL_STDCALL GDALDestroyDriverManager( void )
     // deregistration.
 
 // FIXME: Disable following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//    std::lock_guard<std::mutex> oLock(oDeleteMutex);
-//#endif
+// std::lock_guard<std::mutex> oLock(oDeleteMutex);
 
     if( poDM != nullptr )
     {

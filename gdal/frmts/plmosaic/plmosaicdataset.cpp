@@ -861,7 +861,7 @@ int PLMosaicDataset::OpenMosaic()
             {
                 osCacheStr = "    <Cache><Path>";
                 osCacheStr += GetMosaicCachePath();
-                osCacheStr += "</Path></Cache>\n";
+                osCacheStr += "</Path><Unique>False</Unique></Cache>\n";
             }
 
             CPLString osTMSURL(pszLinksTiles);

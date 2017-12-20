@@ -411,9 +411,13 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
 
     if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
+    {
+        CPL_LSBPTR32( &nGType );
+    }
     else
-        nGType = CPL_MSBWORD32( nGType );
+    {
+        CPL_MSBPTR32( &nGType );
+    }
 
     memcpy( pabyData, &nGType, 4 );
     pabyData += 4;

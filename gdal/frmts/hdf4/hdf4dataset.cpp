@@ -607,8 +607,7 @@ char** HDF4Dataset::TranslateHDF4Attributes(
     }
     else
     {
-        char *pszTemp = nullptr;
-        pszTemp = SPrintArray( GetDataType(iNumType), pData, nValues, ", " );
+        char* pszTemp = SPrintArray( GetDataType(iNumType), pData, nValues, ", " );
         papszMetadata = CSLAddNameValue( papszMetadata, pszAttrName, pszTemp );
         CPLFree( pszTemp );
     }

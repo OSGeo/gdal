@@ -104,10 +104,10 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
   public:
-                AAIGDataset();
-       virtual ~AAIGDataset();
+    AAIGDataset();
+    ~AAIGDataset() override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
     static GDALDataset *CommonOpen( GDALOpenInfo * poOpenInfo,
                                     GridFormat eFormat );
@@ -122,8 +122,8 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef(void) override;
 };
 
 /************************************************************************/
@@ -134,11 +134,11 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 
 class GRASSASCIIDataset : public AAIGDataset
 {
-    virtual int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
   public:
-                GRASSASCIIDataset() : AAIGDataset() {}
-       virtual ~GRASSASCIIDataset() {}
+    GRASSASCIIDataset() : AAIGDataset() {}
+    ~GRASSASCIIDataset() override {}
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -157,13 +157,12 @@ class AAIGRasterBand : public GDALPamRasterBand
     GUIntBig      *panLineOffset;
 
   public:
+    AAIGRasterBand( AAIGDataset *, int );
+    ~AAIGRasterBand() override;
 
-                   AAIGRasterBand( AAIGDataset *, int );
-    virtual       ~AAIGRasterBand();
-
-    virtual double GetNoDataValue( int * ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    double GetNoDataValue( int * ) override;
+    CPLErr SetNoDataValue( double ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 #endif  // GDAL_FRMTS_AAIGRID_AAIGRIDDATASET_H_INCLUDED

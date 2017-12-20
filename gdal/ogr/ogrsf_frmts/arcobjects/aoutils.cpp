@@ -338,10 +338,8 @@ bool OGRGeometryToAOGeometry(OGRGeometry* pOGRGeom, esriGeometry::IGeometry** pp
 
   *ppGeometry = NULL;
 
-  GByte* pWKB = NULL;
-
   long wkbSize = pOGRGeom->WkbSize();
-  pWKB = (GByte *) CPLMalloc(wkbSize);
+  GByte* pWKB = (GByte *) CPLMalloc(wkbSize);
 
   if( pOGRGeom->exportToWkb( wkbNDR, pWKB ) != OGRERR_NONE )
   {

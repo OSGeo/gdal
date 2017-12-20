@@ -1,13 +1,11 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  GDAL
- * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
- *           metadata from JP2Boxes
- * Author:   Even Rouault <even dot rouault at mines-paris dot org>
+ * Purpose:  Linear system solver
+ * Author:   VIZRT Development Team.
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2017 Alan Thomas <alant@outlook.com.au>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,36 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#ifndef GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
-#define GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED
+/*! @cond Doxygen_Suppress */
 
-//! @cond Doxygen_Suppress
-#include "gdalgeorefpamdataset.h"
+#ifndef GDALLINEARSYSTEM_H_INCLUDED
+#define GDALLINEARSYSTEM_H_INCLUDED
 
-class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
-{
-    char*               pszWldFilename;
+bool GDALLinearSystemSolve( const int nDim, const int nRHS,
+    const double adfA[], const double adfRHS[], double adfOut[] );
 
-    GDALDataset*        poMemDS;
-    char**              papszMetadataFiles;
-    int                 m_nWORLDFILEIndex;
+#endif /* #ifndef GDALLINEARSYSTEM_H_INCLUDED */
 
-  protected:
-    int CloseDependentDatasets() override;
-
-  public:
-    GDALJP2AbstractDataset();
-    ~GDALJP2AbstractDataset() override;
-
-    void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                          const char* pszOverrideFilename = nullptr );
-    void LoadVectorLayers( int bOpenRemoteResources = FALSE );
-
-    char **GetFileList( void ) override;
-
-    int GetLayerCount() override;
-    OGRLayer *GetLayer( int i ) override;
-};
-//! @endcond
-
-#endif /* GDAL_JP2_ABSTRACT_DATASET_H_INCLUDED */
+/*! @endcond */

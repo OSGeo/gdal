@@ -356,11 +356,13 @@ static bool GET_DEBUG_VSIPRELOAD_COND( const char* path )
 {
     return
         DEBUG_VSIPRELOAD &&
+    // cppcheck-suppress knownConditionTrueFalse
         (!DEBUG_VSIPRELOAD_ONLY_VSIL || STARTS_WITH(path, "/vsi"));
 }
 
 static bool GET_DEBUG_VSIPRELOAD_COND(VSILFILE* fpVSIL)
 {
+    // cppcheck-suppress knownConditionTrueFalse
     return DEBUG_VSIPRELOAD && (!DEBUG_VSIPRELOAD_ONLY_VSIL || fpVSIL != nullptr);
 }
 
@@ -368,6 +370,7 @@ static bool GET_DEBUG_VSIPRELOAD_COND(VSIDIR* dirP)
 {
     return
         DEBUG_VSIPRELOAD &&
+    // cppcheck-suppress knownConditionTrueFalse
         (!DEBUG_VSIPRELOAD_ONLY_VSIL ||
          oSetVSIDIR.find(dirP) != oSetVSIDIR.end());
 }

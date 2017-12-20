@@ -1577,6 +1577,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
 
           case 73:
             nNumElements = atoi(szLineBuf);
+            // No-one should ever need more than 1000 elements!
+            if( nNumElements > 1000 )
+            {
+                CPLDebug( "DXF", "Number of MLINE elements (73) exceeds 1000" );
+                DXF_LAYER_READER_ERROR();
+                delete poFeature;
+                return nullptr;
+            }
             break;
 
           default:
@@ -2446,7 +2454,6 @@ static bool PointXYZEqualityComparer(const OGRPoint& oP1, const OGRPoint& oP2)
 OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
 
 {
-    CPLDebug("SOLID", "translating solid");
     char szLineBuf[257];
     int nCode = 0;
     OGRDXFFeature *poFeature = new OGRDXFFeature(poFeatureDefn);

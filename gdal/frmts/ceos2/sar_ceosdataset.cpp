@@ -143,15 +143,15 @@ class SAR_CEOSDataset : public GDALPamDataset
     int         ScanForMapProjection();
 
   public:
-                SAR_CEOSDataset();
-    virtual ~SAR_CEOSDataset();
+    SAR_CEOSDataset();
+    ~SAR_CEOSDataset() override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char * pszDomain ) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -167,9 +167,9 @@ class CCPRasterBand : public GDALPamRasterBand
     friend class SAR_CEOSDataset;
 
   public:
-                   CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+    CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -183,9 +183,9 @@ class PALSARRasterBand : public GDALPamRasterBand
     friend class SAR_CEOSDataset;
 
   public:
-                   PALSARRasterBand( SAR_CEOSDataset *, int );
+    PALSARRasterBand( SAR_CEOSDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -199,9 +199,9 @@ class SAR_CEOSRasterBand : public GDALPamRasterBand
     friend class SAR_CEOSDataset;
 
   public:
-                   SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+    SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

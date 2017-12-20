@@ -50,6 +50,9 @@ CPL_CVSID("$Id$")
 void rbspline2( int npts,int k,int p1,double b[],double h[],
                 bool bCalculateKnots, double x[], double p[] );
 
+/* used by ogrdxf_leader.cpp */
+void basis( int c, double t, int npts, double x[], double N[] );
+
 /* used by DWG driver */
 void rbspline(int npts,int k,int p1,double b[],double h[], double p[]);
 void rbsplinu(int npts,int k,int p1,double b[],double h[], double p[]);
@@ -113,16 +116,16 @@ static void knot( int n, int c, double x[] )
 }
 
 /************************************************************************/
-/*                               rbasis()                               */
+/*                                basis()                               */
 /************************************************************************/
 
-/*  Subroutine to generate rational B-spline basis functions--open knot vector
+/*  Subroutine to generate B-spline basis functions--open knot vector
 
         C code for An Introduction to NURBS
         by David F. Rogers. Copyright (C) 2000 David F. Rogers,
         All rights reserved.
 
-        Name: rbais
+        Name: rbasis (split into rbasis and basis by AT)
         Language: C
         Subroutines called: none
         Book reference: Chapter 4, Sec. 4. , p 296
@@ -136,27 +139,24 @@ static void knot( int n, int c, double x[] )
     r[]      = array containing the rationalbasis functions
                r[1] contains the basis function associated with B1 etc.
     t        = parameter value
-    temp[]   = temporary array
+    N[]      = array output from bbasis containing the values of the
+               basis functions; should have capacity npts + c + 1
     x[]      = knot vector
 */
 
-static void rbasis( int c, double t, int npts,
-                    double x[], double h[], double r[] )
+void basis( int c, double t, int npts, double x[], double N[] )
 
 {
     const int nplusc = npts + c;
-
-    std::vector<double> temp;
-    temp.resize( nplusc+1 );
 
     /* calculate the first order nonrational basis functions n[i] */
 
     for( int i = 1; i<= nplusc-1; i++ )
     {
         if (( t >= x[i]) && (t < x[i+1]))
-            temp[i] = 1.0;
+            N[i] = 1.0;
         else
-            temp[i] = 0.0;
+            N[i] = 0.0;
     }
 
     /* calculate the higher order nonrational basis functions */
@@ -167,31 +167,50 @@ static void rbasis( int c, double t, int npts,
         {
             double d = 0.0;
             double e = 0.0;
-            if (temp[i] != 0)    /* if the lower order basis function is zero skip the calculation */
+            if (N[i] != 0)    /* if the lower order basis function is zero skip the calculation */
             {
                 double denom = x[i+k-1]-x[i];
                 if( denom != 0 )
-                    d = ((t-x[i])*temp[i])/denom;
+                    d = ((t-x[i])*N[i])/denom;
             }
             // else
             //    d = 0.0 ;
 
-            if (temp[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
+            if (N[i+1] != 0)     /* if the lower order basis function is zero skip the calculation */
             {
                 double denom = x[i+k]-x[i+1];
                 if( denom != 0 )
-                    e = ((x[i+k]-t)*temp[i+1])/denom;
+                    e = ((x[i+k]-t)*N[i+1])/denom;
             }
             // else
             //     e = 0.0;
 
-            temp[i] = d + e;
+            N[i] = d + e;
         }
     }
 
     if (t == (double)x[nplusc]){  /* pick up last point */
-        temp[npts] = 1;
+        N[npts] = 1;
     }
+}
+
+/************************************************************************/
+/*                               rbasis()                               */
+/*                                                                      */
+/*      Subroutine to generate rational B-spline basis functions.       */
+/*      See the comment for basis() above.                              */
+/************************************************************************/
+
+static void rbasis( int c, double t, int npts,
+    double x[], double h[], double r[] )
+
+{
+    const int nplusc = npts + c;
+
+    std::vector<double> temp;
+    temp.resize( nplusc+1 );
+
+    basis( c, t, npts, x, &temp[0] );
 
 /* calculate sum for denominator of rational basis functions */
 

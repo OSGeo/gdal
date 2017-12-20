@@ -261,7 +261,7 @@ static void DumpFTYPBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             memcpy(szBranding, pabyIter, 4);
             szBranding[4] = 0;
             AddField(psDecodedContent,
-                     psLastChild, 
+                     psLastChild,
                         CPLSPrintf("CL%d", nCLIndex),
                         4, szBranding);
             pabyIter += 4;
@@ -472,7 +472,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
             if( nRemainingLength >= 1 )
             {
                 b8BitOnly &= (*pabyIter <= 7);
-                AddField(psDecodedContent, psLastChild, 
+                AddField(psDecodedContent, psLastChild,
                             CPLSPrintf("B%d", i),
                             *pabyIter,
                             GetInterpretationOfBPC(*pabyIter));
@@ -488,7 +488,7 @@ static void DumpPCLRBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                 {
                     if( nRemainingLength >= 1 )
                     {
-                        AddField(psDecodedContent, psLastChild, 
+                        AddField(psDecodedContent, psLastChild,
                                 CPLSPrintf("C_%d_%d", j, i),
                                 *pabyIter);
                         pabyIter += 1;
@@ -707,7 +707,7 @@ static void DumpRESxBox(CPLXMLNode* psBox, GDALJP2Box& oBox)
                     CPLSPrintf("%.03f", 1.0 * nNumV / nDenomV * pow(10.0, nExpV));
             AddElement(psDecodedContent, psLastChild,
                 CPLCreateXMLElementAndValue( nullptr, "VRes", pszVRes ));
-            const char* pszHRes = 
+            const char* pszHRes =
                 (nDenomH == 0) ? "invalid" :
                     CPLSPrintf("%.03f", 1.0 * nNumH / nDenomH * pow(10.0, nExpH));
             AddElement(psDecodedContent, psLastChild,
@@ -1029,7 +1029,7 @@ static CPLXMLNode* DumpJPK2CodeStream(CPLXMLNode* psBox,
             break;
         }
 
-        CPLXMLNode* psMarker = CreateMarker( psCSBox, psLastChildCSBox, 
+        CPLXMLNode* psMarker = CreateMarker( psCSBox, psLastChildCSBox,
                         GetMarkerName(abyMarker[1]), nOffset, nMarkerSize );
         CPLXMLNode* psLastChild = nullptr;
         if( VSIFReadL(pabyMarkerData, nMarkerSize - 2, 1, fp) != 1 )

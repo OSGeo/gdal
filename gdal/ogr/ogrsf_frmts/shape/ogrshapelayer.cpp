@@ -138,8 +138,8 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
                                 tm.tm_mon + 1, tm.tm_mday );
     }
 
-    const char* pszShapeEncoding = nullptr;
-    pszShapeEncoding = CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
+    const char* pszShapeEncoding =
+        CSLFetchNameValue(poDS->GetOpenOptions(), "ENCODING");
     if( pszShapeEncoding == nullptr && osEncoding == "")
         pszShapeEncoding = CSLFetchNameValue( papszCreateOptions, "ENCODING" );
     if( pszShapeEncoding == nullptr )

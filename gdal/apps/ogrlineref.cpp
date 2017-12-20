@@ -423,11 +423,10 @@ static OGRErr CreateSubline(OGRLayer* const poPkLayer,
                      CPL_UNUSED int bDisplayProgress,
                      int bQuiet)
 {
-    OGRFeature* pFeature = nullptr;
     double dfBeg, dfEnd, dfStep;
     //get step
     poPkLayer->ResetReading();
-    pFeature = poPkLayer->GetNextFeature();
+    OGRFeature* pFeature = poPkLayer->GetNextFeature();
     if (nullptr != pFeature)
     {
         // FIXME: Clang Static Analyzer rightly found that the following

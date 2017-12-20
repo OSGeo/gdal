@@ -142,27 +142,28 @@ static bool OGRGeoJSONIsPatchableArray( json_object* poJSonArray,
     if( nDepth == 0 )
         return OGRGeoJSONIsPatchablePosition(poJSonArray, poNativeArray);
 
-    int nLength = 0;
     if( json_object_get_type(poJSonArray) == json_type_array &&
-        json_object_get_type(poNativeArray) == json_type_array &&
-        (nLength = json_object_array_length(poJSonArray)) ==
-                            json_object_array_length(poNativeArray) )
+        json_object_get_type(poNativeArray) == json_type_array )
     {
-        if( nLength > 0 )
+        auto nLength = json_object_array_length(poJSonArray);
+        if( nLength == json_object_array_length(poNativeArray) )
         {
-            json_object* poJSonChild =
-                json_object_array_get_idx(poJSonArray, 0);
-            json_object* poNativeChild =
-                json_object_array_get_idx(poNativeArray, 0);
-            if( !OGRGeoJSONIsPatchableArray(poJSonChild, poNativeChild,
-                                            nDepth - 1) )
+            if( nLength > 0 )
             {
-                return false;
+                json_object* poJSonChild =
+                    json_object_array_get_idx(poJSonArray, 0);
+                json_object* poNativeChild =
+                    json_object_array_get_idx(poNativeArray, 0);
+                if( !OGRGeoJSONIsPatchableArray(poJSonChild, poNativeChild,
+                                                nDepth - 1) )
+                {
+                    return false;
+                }
+                // Light check as a former extensive check was done in
+                // OGRGeoJSONComputePatchableOrCompatibleArray
             }
-            // Light check as a former extensive check was done in
-            // OGRGeoJSONComputePatchableOrCompatibleArray
+            return true;
         }
-        return true;
     }
     return false;
 }
@@ -192,37 +193,36 @@ static bool OGRGeoJSONComputePatchableOrCompatibleArrayInternal(
                                                             0)) != json_type_array;
     }
 
-    int nLength = 0;
     if( json_object_get_type(poJSonArray) == json_type_array &&
-        json_object_get_type(poNativeArray) == json_type_array &&
-        (nLength = json_object_array_length(poJSonArray)) ==
-                            json_object_array_length(poNativeArray) )
+        json_object_get_type(poNativeArray) == json_type_array )
     {
-        for( int i=0; i < nLength; i++ )
+        auto nLength = json_object_array_length(poJSonArray);
+        if (nLength == json_object_array_length(poNativeArray) )
         {
-            json_object* poJSonChild =
-                json_object_array_get_idx(poJSonArray, i);
-            json_object* poNativeChild =
-                json_object_array_get_idx(poNativeArray, i);
-            if( !OGRGeoJSONComputePatchableOrCompatibleArrayInternal(poJSonChild,
-                                                   poNativeChild,
-                                                   nDepth - 1,
-                                                   bOutPatchable,
-                                                   bOutCompatible) )
+            for( decltype(nLength) i=0; i < nLength; i++ )
             {
-                return false;
+                json_object* poJSonChild =
+                    json_object_array_get_idx(poJSonArray, i);
+                json_object* poNativeChild =
+                    json_object_array_get_idx(poNativeArray, i);
+                if( !OGRGeoJSONComputePatchableOrCompatibleArrayInternal(poJSonChild,
+                                                    poNativeChild,
+                                                    nDepth - 1,
+                                                    bOutPatchable,
+                                                    bOutCompatible) )
+                {
+                    return false;
+                }
+                if (!bOutPatchable && !bOutCompatible)
+                    break;
             }
-            if (!bOutPatchable && !bOutCompatible)
-                break;
+            return true;
         }
-        return true;
     }
-    else
-    {
-        bOutPatchable = false;
-        bOutCompatible = false;
-        return false;
-    }
+
+    bOutPatchable = false;
+    bOutCompatible = false;
+    return false;
 }
 
 /* Returns true if the objects are comparable, ie Point vs Point, LineString
@@ -324,27 +324,28 @@ static bool OGRGeoJSONIsPatchableGeometry( json_object* poJSonGeometry,
             json_object* poJSonGeometries =
                 CPL_json_object_object_get(poJSonGeometry, "geometries");
             json_object* poNativeGeometries = it.val;
-            int nLength = 0;
             if( json_object_get_type(poJSonGeometries) == json_type_array &&
-                json_object_get_type(poNativeGeometries) == json_type_array &&
-                (nLength = json_object_array_length(poJSonGeometries)) ==
-                    json_object_array_length(poNativeGeometries) )
+                json_object_get_type(poNativeGeometries) == json_type_array )
             {
-                for( int i=0; i < nLength; i++ )
+                auto nLength = json_object_array_length(poJSonGeometries);
+                if( nLength == json_object_array_length(poNativeGeometries) )
                 {
-                    json_object* poJSonChild =
-                        json_object_array_get_idx(poJSonGeometries, i);
-                    json_object* poNativeChild =
-                        json_object_array_get_idx(poNativeGeometries, i);
-                    if( !OGRGeoJSONIsPatchableGeometry(poJSonChild,
-                                                       poNativeChild,
-                                                       bOutPatchableCoords,
-                                                       bOutCompatibleCoords) )
+                    for( decltype(nLength) i=0; i < nLength; i++ )
                     {
-                        return false;
+                        json_object* poJSonChild =
+                            json_object_array_get_idx(poJSonGeometries, i);
+                        json_object* poNativeChild =
+                            json_object_array_get_idx(poNativeGeometries, i);
+                        if( !OGRGeoJSONIsPatchableGeometry(poJSonChild,
+                                                        poNativeChild,
+                                                        bOutPatchableCoords,
+                                                        bOutCompatibleCoords) )
+                        {
+                            return false;
+                        }
                     }
+                    return true;
                 }
-                return true;
             }
             return false;
         }

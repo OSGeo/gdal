@@ -716,10 +716,9 @@ boolean GeoRasterDataset::JPEG_CopyDirect( const char* pszJPGFilename,
                                            void* pProgressData )
 {
     OWConnection*  poConnection  = poGeoRaster->poConnection;
-    OWStatement*   poStmt = nullptr;
     OCILobLocator* poLocator;
     
-    poStmt = poConnection->CreateStatement( CPLSPrintf( 
+    OWStatement* poStmt = poConnection->CreateStatement( CPLSPrintf( 
                    "select rasterblock from %s where rasterid = %lld "
                    "and rownum = 1 for update",
                    poGeoRaster->sDataTable.c_str(),
@@ -844,9 +843,7 @@ GDALDataset *GeoRasterDataset::Create( const char *pszFilename,
     //  Open the Dataset
     //  -------------------------------------------------------------------
 
-    GeoRasterDataset* poGRD = nullptr;
-
-    poGRD = (GeoRasterDataset*) GDALOpen( pszFilename, GA_Update );
+    GeoRasterDataset* poGRD = (GeoRasterDataset*) GDALOpen( pszFilename, GA_Update );
 
     if( ! poGRD )
     {

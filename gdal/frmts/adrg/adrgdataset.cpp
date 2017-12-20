@@ -75,19 +75,20 @@ class ADRGDataset : public GDALPamDataset
                                              const char* pszGENFileName, const char* pszIMGFileName);
 
   public:
-                 ADRGDataset();
-    virtual     ~ADRGDataset();
+    ADRGDataset();
+    ~ADRGDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * padfGeoTransform ) override;
-    virtual CPLErr SetGeoTransform( double * padfGeoTransform ) override;
+    const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * padfGeoTransform ) override;
+    CPLErr SetGeoTransform( double * padfGeoTransform ) override;
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain = "" ) override;
 
-    virtual char      **GetFileList() override;
+    char **GetFileList() override;
 
-    void                AddSubDataset( const char* pszGENFileName, const char* pszIMGFileName );
+    void AddSubDataset( const char* pszGENFileName,
+                        const char* pszIMGFileName );
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create(const char* pszFilename, int nXSize, int nYSize,
@@ -111,16 +112,16 @@ class ADRGRasterBand : public GDALPamRasterBand
     friend class ADRGDataset;
 
   public:
-                            ADRGRasterBand( ADRGDataset *, int );
+    ADRGRasterBand( ADRGDataset *, int );
 
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-    virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IWriteBlock( int, int, void * ) override;
 
-    virtual double          GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
-//    virtual int             GetOverviewCount();
-//    virtual GDALRasterBand* GetOverview(int i);
+    // virtual int GetOverviewCount();
+    // virtual GDALRasterBand* GetOverview(int i);
 };
 
 /************************************************************************/

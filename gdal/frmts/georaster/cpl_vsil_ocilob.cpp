@@ -14,16 +14,16 @@
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
@@ -41,19 +41,17 @@ CPL_CVSID("$Id: cpl_vsil_ocilob.cpp $")
 
 class WSIOCILobFSHandle : public VSIFilesystemHandler
 {
+  public:
+    WSIOCILobFSHandle();
+    ~WSIOCILobFSHandle() override;
 
-public:
-                              WSIOCILobFSHandle();
-    virtual                  ~WSIOCILobFSHandle();
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int               Stat( const char *pszFilename,
+                            VSIStatBufL *pStatBuf, int nFlags ) override;
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename, 
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf, int nFlags ) override;
-
-private:
-
+  private:
     OWConnection*     poConnection;
     OWStatement*      poStatement;
     OCILobLocator*    phLocator;
@@ -77,18 +75,18 @@ class VSIOCILobHandle : public VSIVirtualHandle
     boolean           bUpdate;
 
   public:
-                      VSIOCILobHandle( OWConnection* poConnectionIn,
-                                       OWStatement* poStatementIn,
-                                       OCILobLocator* phLocatorIn,
-                                       boolean bUpdateIn );
-    virtual          ~VSIOCILobHandle();
+    VSIOCILobHandle( OWConnection* poConnectionIn,
+                     OWStatement* poStatementIn,
+                     OCILobLocator* phLocatorIn,
+                     boolean bUpdateIn );
+    ~VSIOCILobHandle() override;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Close() override;
 };
 
 // ****************************************************************************
@@ -139,7 +137,7 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
         return nullptr;
     }
 
-    char** papszParam = CSLTokenizeString2( 
+    char** papszParam = CSLTokenizeString2(
                             &pszFilename[strlen("/vsiocilob/")], ",",
                             CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS |
                             CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
@@ -157,7 +155,7 @@ char** WSIOCILobFSHandle::ParseIdentificator( const char* pszFilename )
 //                                                                        Open()
 // -----------------------------------------------------------------------------
 
-VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename, 
+VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
                                            const char* pszAccess,
                                            bool /* bSetError*/ )
 {
@@ -194,8 +192,8 @@ VSIVirtualHandle* WSIOCILobFSHandle::Open( const char* pszFilename,
         bUpdate = true;
     }
 
-    poStatement = poConnection->CreateStatement( CPLSPrintf( 
-                    "select rasterblock from %s where rasterid = %s and rownum = 1 %s", 
+    poStatement = poConnection->CreateStatement( CPLSPrintf(
+                    "select rasterblock from %s where rasterid = %s and rownum = 1 %s",
                     papszParam[3], papszParam[4], pszUpdate ) );
 
     poStatement->Define( &phLocator );

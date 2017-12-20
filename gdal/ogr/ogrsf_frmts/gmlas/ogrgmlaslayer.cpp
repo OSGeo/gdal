@@ -451,8 +451,7 @@ void OGRGMLASLayer::ProcessDataRecordFillFeature(CPLXMLNode* psDataRecord,
             oFieldDefn.SetSubType(eSubType);
             if( psChildNode == nullptr )
                 continue;
-            std::map<CPLString, CPLString>::const_iterator oIter =
-                m_oMapSWEFieldToOGRFieldName.find(osName);
+            const auto oIter = m_oMapSWEFieldToOGRFieldName.find(osName);
             CPLAssert( oIter != m_oMapSWEFieldToOGRFieldName.end() );
             osName = oIter->second;
             for(  CPLXMLNode* psIter2 = psChildNode->psChild;
@@ -1052,14 +1051,12 @@ bool OGRGMLASLayer::RemoveField( int nIdx )
 
     {
         std::map<int, int>             oMapOGRFieldIdxtoFCFieldIdx;
-        std::map<int, int>::const_iterator oIter =
-                            m_oMapOGRFieldIdxtoFCFieldIdx.begin();
-        for( ; oIter != m_oMapOGRFieldIdxtoFCFieldIdx.end(); ++oIter )
+        for( const auto& oIter: m_oMapOGRFieldIdxtoFCFieldIdx )
         {
-            if( oIter->first < nIdx )
-                oMapOGRFieldIdxtoFCFieldIdx[oIter->first] = oIter->second;
-            else if( oIter->first > nIdx )
-                oMapOGRFieldIdxtoFCFieldIdx[oIter->first - 1] = oIter->second;
+            if( oIter.first < nIdx )
+                oMapOGRFieldIdxtoFCFieldIdx[oIter.first] = oIter.second;
+            else if( oIter.first > nIdx )
+                oMapOGRFieldIdxtoFCFieldIdx[oIter.first - 1] = oIter.second;
         }
         m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
     }
@@ -1091,11 +1088,10 @@ bool OGRGMLASLayer::RemoveField( int nIdx )
 
 static void InsertTargetIndex(std::map<CPLString, int>& oMap, int nIdx)
 {
-    std::map<CPLString, int>::iterator oIter = oMap.begin();
-    for( ; oIter != oMap.end(); ++oIter )
+    for( auto& oIter: oMap )
     {
-        if( oIter->second >= nIdx )
-            oIter->second ++;
+        if( oIter.second >= nIdx )
+            oIter.second ++;
     }
 }
 
@@ -1128,14 +1124,12 @@ void OGRGMLASLayer::InsertNewField( int nInsertPos,
 
     {
         std::map<int, int>             oMapOGRFieldIdxtoFCFieldIdx;
-        std::map<int, int>::const_iterator oIter =
-                            m_oMapOGRFieldIdxtoFCFieldIdx.begin();
-        for( ; oIter != m_oMapOGRFieldIdxtoFCFieldIdx.end(); ++oIter )
+        for( const auto& oIter: m_oMapOGRFieldIdxtoFCFieldIdx )
         {
-            if( oIter->first < nInsertPos )
-                oMapOGRFieldIdxtoFCFieldIdx[oIter->first] = oIter->second;
+            if( oIter.first < nInsertPos )
+                oMapOGRFieldIdxtoFCFieldIdx[oIter.first] = oIter.second;
             else
-                oMapOGRFieldIdxtoFCFieldIdx[oIter->first + 1] = oIter->second;
+                oMapOGRFieldIdxtoFCFieldIdx[oIter.first + 1] = oIter.second;
         }
         m_oMapOGRFieldIdxtoFCFieldIdx = oMapOGRFieldIdxtoFCFieldIdx;
     }
@@ -1166,8 +1160,7 @@ void OGRGMLASLayer::InsertNewField( int nInsertPos,
 
 int OGRGMLASLayer::GetOGRFieldIndexFromXPath(const CPLString& osXPath) const
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapFieldXPathToOGRFieldIdx.find(osXPath);
+    const auto oIter = m_oMapFieldXPathToOGRFieldIdx.find(osXPath);
     if( oIter == m_oMapFieldXPathToOGRFieldIdx.end() )
         return -1;
     return oIter->second;
@@ -1183,12 +1176,10 @@ CPLString OGRGMLASLayer::GetXPathFromOGRFieldIndex(int nIdx) const
     if( nFCIdx >= 0 )
         return m_oFC.GetFields()[nFCIdx].GetXPath();
 
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapFieldXPathToOGRFieldIdx.begin();
-    for( ; oIter != m_oMapFieldXPathToOGRFieldIdx.end(); ++oIter )
+    for( const auto& oIter: m_oMapFieldXPathToOGRFieldIdx )
     {
-        if( oIter->second == nIdx )
-            return oIter->first;
+        if( oIter.second == nIdx )
+            return oIter.first;
     }
     return CPLString();
 }
@@ -1199,8 +1190,7 @@ CPLString OGRGMLASLayer::GetXPathFromOGRFieldIndex(int nIdx) const
 
 int OGRGMLASLayer::GetOGRGeomFieldIndexFromXPath(const CPLString& osXPath) const
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapFieldXPathToOGRGeomFieldIdx.find(osXPath);
+    const auto oIter = m_oMapFieldXPathToOGRGeomFieldIdx.find(osXPath);
     if( oIter == m_oMapFieldXPathToOGRGeomFieldIdx.end() )
         return -1;
     return oIter->second;
@@ -1212,8 +1202,7 @@ int OGRGMLASLayer::GetOGRGeomFieldIndexFromXPath(const CPLString& osXPath) const
 
 int OGRGMLASLayer::GetFCFieldIndexFromOGRFieldIdx(int iOGRFieldIdx) const
 {
-    std::map<int, int>::const_iterator oIter =
-        m_oMapOGRFieldIdxtoFCFieldIdx.find(iOGRFieldIdx);
+    const auto oIter = m_oMapOGRFieldIdxtoFCFieldIdx.find(iOGRFieldIdx);
     if( oIter == m_oMapOGRFieldIdxtoFCFieldIdx.end() )
         return -1;
     return oIter->second;
@@ -1225,8 +1214,7 @@ int OGRGMLASLayer::GetFCFieldIndexFromOGRFieldIdx(int iOGRFieldIdx) const
 
 int OGRGMLASLayer::GetFCFieldIndexFromXPath(const CPLString& osXPath) const
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapFieldXPathToFCFieldIdx.find(osXPath);
+    const auto oIter = m_oMapFieldXPathToFCFieldIdx.find(osXPath);
     if( oIter == m_oMapFieldXPathToFCFieldIdx.end() )
         return -1;
     return oIter->second;
@@ -1238,8 +1226,7 @@ int OGRGMLASLayer::GetFCFieldIndexFromXPath(const CPLString& osXPath) const
 
 int OGRGMLASLayer::GetFCFieldIndexFromOGRGeomFieldIdx(int iOGRGeomFieldIdx) const
 {
-    std::map<int, int>::const_iterator oIter =
-        m_oMapOGRGeomFieldIdxtoFCFieldIdx.find(iOGRGeomFieldIdx);
+    const auto oIter = m_oMapOGRGeomFieldIdxtoFCFieldIdx.find(iOGRGeomFieldIdx);
     if( oIter == m_oMapOGRGeomFieldIdxtoFCFieldIdx.end() )
         return -1;
     return oIter->second;

@@ -163,7 +163,7 @@ retry:  // TODO(schwehr): Stop using goto.
             atoi(CPLGetConfigOption("GDAL_INGESTED_BYTES_AT_OPEN", "1024"));
         if( nBufSize < 1024 )
             nBufSize = 1024;
-        else if( nBufSize > 10 * 1024 * 1024) 
+        else if( nBufSize > 10 * 1024 * 1024)
             nBufSize = 10 * 1024 * 1024;
         pabyHeader = static_cast<GByte *>( CPLCalloc(nBufSize+1, 1) );
         nHeaderBytesTried = nBufSize;

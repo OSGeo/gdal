@@ -77,8 +77,7 @@ class LayerDescription
 
         int GetOGRIdxFromFieldName( const CPLString& osFieldName ) const
         {
-            std::map< CPLString, int >::const_iterator oIter =
-                                        oMapFieldNameToOGRIdx.find(osFieldName);
+            const auto oIter = oMapFieldNameToOGRIdx.find(osFieldName);
             if( oIter == oMapFieldNameToOGRIdx.end() )
                 return -1;
             return oIter->second;
@@ -449,11 +448,9 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     const char* pszLayers = CSLFetchNameValue(m_papszOptions, szLAYERS_OPTION);
     if( pszLayers )
     {
-        std::map<CPLString, int>::iterator oLayerIter =
-                                                m_oMapLayerNameToIdx.begin();
-        for(; oLayerIter != m_oMapLayerNameToIdx.end(); ++oLayerIter)
+        for( const auto& oLayerIter: m_oMapLayerNameToIdx )
         {
-            LayerDescription& oDesc = m_aoLayerDesc[oLayerIter->second];
+            LayerDescription& oDesc = m_aoLayerDesc[oLayerIter.second];
             oDesc.bIsSelected = false;
         }
 
@@ -462,19 +459,15 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         {
             if( EQUAL(*papszIter, "{SPATIAL_LAYERS}") )
             {
-                oLayerIter = m_oMapLayerNameToIdx.begin();
-                for(; oLayerIter != m_oMapLayerNameToIdx.end(); ++oLayerIter)
+                for( const auto& oLayerIter: m_oMapLayerNameToIdx )
                 {
-                    LayerDescription& oDesc = m_aoLayerDesc[oLayerIter->second];
+                    LayerDescription& oDesc = m_aoLayerDesc[oLayerIter.second];
                     if( oDesc.bIsTopLevel )
                     {
-                        std::map< int, GMLASField >::const_iterator
-                                    oFieldIter = oDesc.oMapIdxToField.begin();
                         bool bIsGeometric = false;
-                        for(; oFieldIter != oDesc.oMapIdxToField.end();
-                              ++oFieldIter)
+                        for( const auto& oFieldIter: oDesc.oMapIdxToField )
                         {
-                            if( oFieldIter->second.GetType() ==
+                            if( oFieldIter.second.GetType() ==
                                                             GMLAS_FT_GEOMETRY )
                             {
                                 bIsGeometric = true;
@@ -487,7 +480,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
             }
             else
             {
-                oLayerIter = m_oMapLayerNameToIdx.find(*papszIter);
+                const auto oLayerIter = m_oMapLayerNameToIdx.find(*papszIter);
                 if( oLayerIter == m_oMapLayerNameToIdx.end() )
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -523,11 +516,9 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
     if( pfnProgress != nullptr || bWFS2FeatureCollection )
     {
         nTotalTopLevelFeatures = 0;
-        std::map<CPLString, int>::const_iterator oLayerIter =
-                                                m_oMapLayerNameToIdx.begin();
-        for(; oLayerIter != m_oMapLayerNameToIdx.end(); ++oLayerIter)
+        for( const auto& oLayerIter: m_oMapLayerNameToIdx )
         {
-            const LayerDescription& oDesc = m_aoLayerDesc[oLayerIter->second];
+            const LayerDescription& oDesc = m_aoLayerDesc[oLayerIter.second];
             OGRLayer* poSrcLayer = m_poSrcDS->GetLayerByName(oDesc.osName);
             if( oDesc.bIsSelected && poSrcLayer != nullptr )
             {
@@ -596,19 +587,19 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
         return false;
 
     // Iterate over layers
-    std::map<CPLString, int>::const_iterator oLayerIter =
-                                                m_oMapLayerNameToIdx.begin();
     GIntBig nFeaturesWritten = 0;
     bool bRet = true;
-    for(; bRet && oLayerIter != m_oMapLayerNameToIdx.end(); ++oLayerIter)
+    for(const auto& oLayerIter : m_oMapLayerNameToIdx )
     {
-        if( m_aoLayerDesc[oLayerIter->second].bIsSelected )
+        if( m_aoLayerDesc[oLayerIter.second].bIsSelected )
         {
             bRet = WriteLayer( bWFS2FeatureCollection,
-                               m_aoLayerDesc[oLayerIter->second],
+                               m_aoLayerDesc[oLayerIter.second],
                                nFeaturesWritten,
                                nTotalTopLevelFeatures,
                                pfnProgress, pProgressData );
+            if( !bRet )
+                break;
         }
     }
     CPLDebug("GMLAS", CPL_FRMT_GIB " top level features written",
@@ -640,8 +631,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress,
 // a map to cache instead of linear search.
 OGRLayer* GMLASWriter::GetLayerByName(const CPLString& osName)
 {
-    std::map<CPLString, OGRLayer*>::const_iterator oIter =
-                                m_oMapLayerNameToLayer.find(osName);
+    const auto oIter = m_oMapLayerNameToLayer.find(osName);
     if( oIter == m_oMapLayerNameToLayer.end() )
     {
         OGRLayer* poLayer = m_poSrcDS->GetLayerByName(osName);
@@ -858,8 +848,7 @@ bool GMLASWriter::WriteXMLHeader(
         CPLString osPrefix;
         if( !osURI.empty() )
         {
-            std::map<CPLString, CPLString>::const_iterator oIter =
-                                        oMapURIToPrefix.find(osURI);
+            const auto oIter = oMapURIToPrefix.find(osURI);
             if( oIter != oMapURIToPrefix.end() )
             {
                 osPrefix = oIter->second;
@@ -867,8 +856,7 @@ bool GMLASWriter::WriteXMLHeader(
         }
         if( !osPrefix.empty() )
         {
-            std::map<CPLString, CPLString>::const_iterator oIter =
-                                        aoWrittenPrefixes.find( osPrefix );
+            const auto& oIter = aoWrittenPrefixes.find( osPrefix );
             if( oIter != aoWrittenPrefixes.end() )
             {
                 if( oIter->second != osURI )
@@ -1075,8 +1063,7 @@ bool GMLASWriter::CollectFields()
         oField.SetName( poFeature->GetFieldAsString( szFIELD_NAME ) );
 
         CPLString osLayerName( poFeature->GetFieldAsString( szLAYER_NAME ) );
-        std::map<CPLString, int>::const_iterator oIterToIdx =
-                                        m_oMapLayerNameToIdx.find(osLayerName);
+        const auto& oIterToIdx = m_oMapLayerNameToIdx.find(osLayerName);
         if( oIterToIdx == m_oMapLayerNameToIdx.end() )
         {
             // Shouldn't happen for well behaved metadata
@@ -1347,20 +1334,16 @@ void GMLASWriter::ComputeTopLevelFIDs()
 
                 // Determine if the referencing field points to a junction
                 // table
-                std::map<CPLString, int>::const_iterator oIter =
-                    m_oMapLayerNameToIdx.find(
+                const auto oIter = m_oMapLayerNameToIdx.find(
                                         oDesc.aoReferencingLayers[j].first);
                 if( oIter != m_oMapLayerNameToIdx.end() )
                 {
                     const LayerDescription& oReferencingLayerDesc =
                                                 m_aoLayerDesc[oIter->second];
-                    std::map< int, GMLASField >::const_iterator oIterField =
-                        oReferencingLayerDesc.oMapIdxToField.begin();
-                    for( ;
-                        oIterField != oReferencingLayerDesc.oMapIdxToField.end();
-                        ++oIterField )
+                    for( const auto& oIterField:
+                                            oReferencingLayerDesc.oMapIdxToField )
                     {
-                        const GMLASField& oField = oIterField->second;
+                        const GMLASField& oField = oIterField.second;
                         if( oField.GetName() ==
                                         oDesc.aoReferencingLayers[j].second )
                         {
@@ -1461,14 +1444,12 @@ static XPathComponents SplitXPathInternal( const CPLString& osXPath )
 
 const XPathComponents& GMLASWriter::SplitXPath( const CPLString& osXPath )
 {
-    std::map<CPLString, XPathComponents>::const_iterator oIter =
-                                    m_oMapXPathToComponents.find(osXPath);
-    if( oIter == m_oMapXPathToComponents.end() )
-    {
-        m_oMapXPathToComponents[ osXPath ] = SplitXPathInternal(osXPath);
-        oIter = m_oMapXPathToComponents.find(osXPath);
-    }
-    return oIter->second;
+    const auto oIter = m_oMapXPathToComponents.find(osXPath);
+    if( oIter != m_oMapXPathToComponents.end() )
+        return oIter->second;
+
+    m_oMapXPathToComponents[ osXPath ] = SplitXPathInternal(osXPath);
+    return m_oMapXPathToComponents[ osXPath ];
 }
 
 /************************************************************************/
@@ -1729,11 +1710,9 @@ bool GMLASWriter::WriteFeature(
     XPathComponents aoLayerComponents;
     bool bAtLeastOneFieldWritten = false;
     bool bCurIsRegularField = false;
-    std::map< int, GMLASField >::const_iterator oIter =
-                                            oLayerDesc.oMapIdxToField.begin();
-    for( ; oIter != oLayerDesc.oMapIdxToField.end(); ++oIter )
+    for( const auto& oIter: oLayerDesc.oMapIdxToField )
     {
-        const GMLASField& oField = oIter->second;
+        const GMLASField& oField = oIter.second;
         const GMLASField::Category eCategory( oField.GetCategory() );
         if( eCategory == GMLASField::REGULAR )
         {
@@ -1877,8 +1856,7 @@ static bool AreGeomsEqualAxisOrderInsensitive(OGRGeometry* poGeomRef,
 
 bool GMLASWriter::GetCoordSwap( const OGRSpatialReference* poSRS )
 {
-    std::map<const OGRSpatialReference*, bool>::const_iterator oIter =
-                                            m_oMapSRSToCoordSwap.find(poSRS);
+    const auto oIter = m_oMapSRSToCoordSwap.find(poSRS);
     if( oIter != m_oMapSRSToCoordSwap.end() )
         return oIter->second;
 
@@ -2516,8 +2494,7 @@ bool GMLASWriter::WriteFieldNoLink(
                         bool& bAtLeastOneFieldWritten,
                         bool& bCurIsRegularField)
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
+    const auto oIter = m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
     if( oIter == m_oMapXPathToIdx.end() )
     {
         // Not necessary to be more verbose in case of truncated
@@ -2755,8 +2732,7 @@ bool GMLASWriter::WriteFieldWithLink(
                         bool& bAtLeastOneFieldWritten,
                         bool& bCurIsRegularField)
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
+    const auto oIter = m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
     if( oIter == m_oMapXPathToIdx.end() )
     {
         // Not necessary to be more verbose in case of truncated
@@ -2911,8 +2887,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
                         bool& bAtLeastOneFieldWritten,
                         bool& bCurIsRegularField)
 {
-    std::map<CPLString, int>::const_iterator oIter =
-        m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
+    const auto oIter = m_oMapXPathToIdx.find( oField.GetRelatedClassXPath() );
     if( oIter == m_oMapXPathToIdx.end() )
     {
         // Not necessary to be more verbose in case of truncated

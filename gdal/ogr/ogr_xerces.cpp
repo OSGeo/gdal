@@ -193,10 +193,9 @@ class OGRXercesBinInputStream : public BinInputStream
     bool bFirstCallToReadBytes;
 #endif
 
-public :
-
-    explicit OGRXercesBinInputStream(VSILFILE* fp);
-    virtual ~OGRXercesBinInputStream();
+  public:
+    explicit OGRXercesBinInputStream( VSILFILE* fp );
+    ~OGRXercesBinInputStream() override;
 
     virtual XMLFilePos curPos() const override;
     virtual XMLSize_t readBytes(XMLByte* const toFill,
@@ -213,11 +212,11 @@ class OGRXercesInputSource : public InputSource
 {
     OGRXercesBinInputStream* pBinInputStream;
 
-public:
-             OGRXercesInputSource(VSILFILE* fp,
-                            MemoryManager* const manager =
-                                XMLPlatformUtils::fgMemoryManager);
-    virtual ~OGRXercesInputSource();
+  public:
+    OGRXercesInputSource(VSILFILE* fp,
+                         MemoryManager* const manager =
+                         XMLPlatformUtils::fgMemoryManager);
+    ~OGRXercesInputSource() override;
 
     virtual BinInputStream* makeStream() const override
         { return pBinInputStream; }

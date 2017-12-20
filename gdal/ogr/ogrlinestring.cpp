@@ -1637,9 +1637,13 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
         nGType = getIsoGeometryType();
 
     if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
+    {
+        CPL_LSBPTR32( &nGType );
+    }
     else
-        nGType = CPL_MSBWORD32( nGType );
+    {
+        CPL_MSBPTR32( &nGType );
+    }
 
     memcpy( pabyData + 1, &nGType, 4 );
 

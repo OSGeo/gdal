@@ -154,13 +154,11 @@ CPLErr WCSParseGMLCoverage( CPLXMLNode *psXML,
 /* -------------------------------------------------------------------- */
 /*      Extract offset(s)                                               */
 /* -------------------------------------------------------------------- */
-    char **papszOffset1Tokens = nullptr;
-    char **papszOffset2Tokens = nullptr;
     bool bSuccess = false;
 
-    papszOffset1Tokens =
+    char** papszOffset1Tokens =
         CSLTokenizeStringComplex( pszOffset1, " ,", FALSE, FALSE );
-    papszOffset2Tokens =
+    char** papszOffset2Tokens =
         CSLTokenizeStringComplex( pszOffset2, " ,", FALSE, FALSE );
 
     if( CSLCount(papszOffset1Tokens) >= 2

@@ -32,22 +32,11 @@
 
 /*! @cond Doxygen_Suppress */
 
-#if defined(HAVE_ARMADILLO) && !defined(DO_NOT_USE_DEBUG_BOOL)
-#define DO_NOT_USE_DEBUG_BOOL
-#endif
-
 #include "cpl_port.h"
 #include "thinplatespline.h"
-
-#ifdef HAVE_ARMADILLO
-// Include before #define A(r,c) because armadillo uses A in its include files.
-#include "armadillo"
-#endif
+#include "gdallinearsystem.h"
 
 #include <climits>
-#ifndef DEBUG_BOOL  // TODO(schwehr): Why?
-#include <cmath>
-#endif
 #include <cstdio>
 #include <cstring>
 
@@ -67,8 +56,6 @@ CPL_CVSID("$Id$")
 #define Ainv(r,c) _Ainv[ _nof_eqs * (r) + (c) ]
 
 // #define VIZ_GEOREF_SPLINE_DEBUG 0
-
-static int matrixInvert( int N, double input[], double output[] );
 
 bool VizGeorefSpline2D::grow_points()
 
@@ -563,13 +550,9 @@ int VizGeorefSpline2D::solve()
 
     double* _AA = static_cast<double *>(
         VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
-    double* _Ainv = static_cast< double *>(
-        VSI_CALLOC_VERBOSE(_nof_eqs * _nof_eqs, sizeof(double)));
 
-    if( _AA == nullptr || _Ainv == nullptr )
+    if( _AA == nullptr )
     {
-        VSIFree(_AA);
-        VSIFree(_Ainv);
         return 0;
     }
 
@@ -608,74 +591,30 @@ int VizGeorefSpline2D::solve()
 
 #endif
 
-    int ret = 4;
-#ifdef HAVE_ARMADILLO
-    try
-    {
-        arma::mat matA(_AA, _nof_eqs, _nof_eqs,false);
-        arma::mat matRHS(_nof_eqs, _nof_vars);
-        for( int row = 0; row < _nof_eqs; row++ )
-            for( int col = 0; col < _nof_vars; col++ )
-                matRHS.at(row, col) = rhs[col][row];
-        arma::mat matCoefs(_nof_vars, _nof_eqs);
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
-#endif
+    double* adfRHS = (double*) VSICalloc( _nof_eqs * _nof_vars, sizeof(double) );
+    for( int iRHS = 0; iRHS < _nof_vars; iRHS++ )
+        for( int iRow = 0; iRow < _nof_eqs; iRow++ )
+            adfRHS[iRow * _nof_vars + iRHS] = rhs[iRHS][iRow];
 
-#if ARMA_VERSION_MAJOR > 6 || (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500 )
-        // Perhaps available in earlier versions, but didn't check
-        if( !arma::solve(matCoefs, matA, matRHS, arma::solve_opts::no_approx) )
-#else
-        if( !arma::solve(matCoefs, matA, matRHS) )
-#endif
+    double* adfCoef = (double*) VSICalloc( _nof_eqs * _nof_vars, sizeof(double) );
 
-#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
-#pragma GCC diagnostic pop
-#endif
-        {
-            ret = 0;
-        }
-        else
-        {
-            for( int row = 0; row < _nof_eqs; row++ )
-                for( int col = 0; col < _nof_vars; col++ )
-                    coef[col][row] = matCoefs.at(row, col);
-        }
-    }
-    catch(...)
+    if( !GDALLinearSystemSolve( _nof_eqs, _nof_vars, _AA, adfRHS, adfCoef ) )
     {
-        ret = 0;
-    }
-    if( ret == 0 )
-#endif
-    {
-        const int status = matrixInvert( _nof_eqs, _AA, _Ainv );
-
-        if( !status )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                    "There is a problem inverting the interpolation matrix.");
-            ret = 0;
-        }
-        else
-        {
-            ret = 4;
-            // calc the coefs
-            for( int v = 0; v < _nof_vars; v++ )
-                for( int r = 0; r < _nof_eqs; r++ )
-                {
-                    coef[v][r] = 0.0;
-                    for( int c = 0; c < _nof_eqs; c++ )
-                        coef[v][r] += Ainv(r, c) * rhs[v][c];
-                }
-        }
+        VSIFree(adfRHS);
+        VSIFree(adfCoef);
+        VSIFree(_AA);
+        return 0;
     }
 
+    for( int iRHS = 0; iRHS < _nof_vars; iRHS++ )
+        for( int iRow = 0; iRow < _nof_eqs; iRow++ )
+            coef[iRHS][iRow] = adfCoef[iRow * _nof_vars + iRHS];
+
+    VSIFree(adfRHS);
+    VSIFree(adfCoef);
     VSIFree(_AA);
-    VSIFree(_Ainv);
 
-    return ret;
+    return 4;
 }
 
 int VizGeorefSpline2D::get_point( const double Px, const double Py,
@@ -767,7 +706,6 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
-        // break;  // TODO(schwehr): Remove this assuming no compiler needs it.
     }
     case VIZ_GEOREF_SPLINE_POINT_WAS_DELETED:
     {
@@ -777,147 +715,13 @@ int VizGeorefSpline2D::get_point( const double Px, const double Py,
         for( int v = 0; v < _nof_vars; v++ )
             vars[v] = 0.0;
         return 0;
-        // break;  // TODO(schwehr): Remove this assuming no compiler needs it.
     }
     default:
     {
         return 0;
-        // break;  // TODO(schwehr): Remove this assuming no compiler needs it.
     }
     }
     return 1;
-}
-
-static int matrixInvert( int N, double input[], double output[] )
-{
-    // Receives an array of dimension NxN as input.  This is passed as a one-
-    // dimensional array of N-squared size.  It produces the inverse of the
-    // input matrix, returned as output, also of size N-squared.  The Gauss-
-    // Jordan Elimination method is used.  (Adapted from a BASIC routine in
-    // "Basic Scientific Subroutines Vol. 1", courtesy of Scott Edwards.)
-
-    // Array elements 0...N-1 are for the first row, N...2N-1 are for the
-    // second row, etc.
-
-    // We need to have a temporary array of size N x 2N.  We'll refer to the
-    // "left" and "right" halves of this array.
-
-#if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion input matrix (N=%d)\n", N);/*ok*/
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            fprintf(stderr, "%5.2f ", input[row*N + col]);/*ok*/
-        }
-        fprintf(stderr, "\n");/*ok*/
-    }
-#endif
-
-    const int tempSize = 2 * N * N;
-    double* temp = new double[tempSize];
-
-    if( temp == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "matrixInvert(): ERROR - memory allocation failed.");
-        return false;
-    }
-
-    // First create a double-width matrix with the input array on the left
-    // and the identity matrix on the right.
-
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col<N; col++ )
-        {
-            // Our index into the temp array is X2 because it's twice as wide
-            // as the input matrix.
-
-            temp[ 2*row*N + col ] = input[ row*N+col ];  // left = input matrix
-            temp[ 2*row*N + col + N ] = 0.0f;            // right = 0
-        }
-        temp[ 2*row*N + row + N ] = 1.0f;  // 1 on the diagonal of RHS
-    }
-
-    // Now perform row-oriented operations to convert the left hand side
-    // of temp to the identity matrix.  The inverse of input will then be
-    // on the right.
-
-    int max = 0;
-    int k = 0;
-    for( k = 0; k < N; k++ )
-    {
-        if( k + 1 < N )  // If not on the last row.
-        {
-            max = k;
-            for( int row = k + 1; row < N; row++ )  // Find the maximum element.
-            {
-                if( fabs( temp[row*2*N + k] ) > fabs( temp[max*2*N + k] ) )
-                {
-                    max = row;
-                }
-            }
-
-            if( max != k )  // Swap all the elements in the two rows.
-            {
-                for( int col = k; col < 2 * N; col++ )
-                {
-                    std::swap(temp[k*2*N + col], temp[max*2*N + col]);
-                }
-            }
-        }
-
-        const double ftemp = temp[k*2*N + k];
-        if( ftemp == 0.0f )  // Matrix cannot be inverted.
-        {
-            delete[] temp;
-            return false;
-        }
-
-        for( int col = k; col < 2 * N; col++ )
-        {
-            temp[k*2*N + col] /= ftemp;
-        }
-
-        const int i2 = k * 2 * N;
-        for( int row = 0; row < N; row++ )
-        {
-            if( row != k )
-            {
-                const int i1 = row * 2 * N;
-                const double ftemp2 = temp[ i1 + k ];
-                for( int col = k; col < 2*N; col++ )
-                {
-                    temp[i1 + col] -= ftemp2 * temp[i2 + col];
-                }
-            }
-        }
-    }
-
-    // Retrieve inverse from the right side of temp.
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            output[row*N + col] = temp[row*2*N + col + N ];
-        }
-    }
-    delete [] temp;
-
-#if DEBUG_VERBOSE
-    fprintf(stderr, "Matrix Inversion result matrix:\n");/*ok*/
-    for( int row = 0; row < N; row++ )
-    {
-        for( int col = 0; col < N; col++ )
-        {
-            fprintf(stderr, "%5.2f ", output[row*N + col]);/*ok*/
-        }
-        fprintf(stderr, "\n");/*ok*/
-    }
-#endif
-
-    return true;
 }
 
 /*! @endcond */

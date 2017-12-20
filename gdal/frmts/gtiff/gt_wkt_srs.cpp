@@ -37,12 +37,7 @@
 #include <cstring>
 
 #include <algorithm>
-#if HAVE_CXX11 && !defined(__MINGW32__)
-#define HAVE_CXX11_MUTEX 1
-#endif
-#if HAVE_CXX11_MUTEX
 #include <mutex>
-#endif
 
 #include "cpl_conv.h"
 #include "cpl_csv.h"
@@ -109,19 +104,11 @@ static const char * const papszDatumEquiv[] =
 /*                       LibgeotiffOneTimeInit()                        */
 /************************************************************************/
 
-#if HAVE_CXX11_MUTEX
 static std::mutex oDeleteMutex;
-#else
-static CPLMutex* hMutex = nullptr;
-#endif  // HAVE_CXX11_MUTEX
 
 void LibgeotiffOneTimeInit()
 {
-#if HAVE_CXX11_MUTEX
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
-#else
-    CPLMutexHolder oHolder( &hMutex);
-#endif  // HAVE_CXX11_MUTEX
 
     static bool bOneTimeInitDone = false;
 
@@ -136,22 +123,6 @@ void LibgeotiffOneTimeInit()
 
     // This isn't thread-safe, so better do it now
     XTIFFInitialize();
-}
-
-/************************************************************************/
-/*                   LibgeotiffOneTimeCleanupMutex()                    */
-/************************************************************************/
-
-void LibgeotiffOneTimeCleanupMutex()
-{
-#if !HAVE_CXX11_MUTEX
-    // >= C++11 uses a lock_guard that does not need cleanup.
-    if( hMutex == nullptr )
-        return;
-
-    CPLDestroyMutex(hMutex);
-    hMutex = nullptr;
-#endif
 }
 
 /************************************************************************/
@@ -2624,12 +2595,10 @@ int GTIFSetFromOGISDefnEx( GTIF * psGTIF, const char *pszOGCWKT,
 /* -------------------------------------------------------------------- */
     if( poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) != nullptr )
     {
-        const char *pszValue = nullptr;
-
         GTIFKeySet( psGTIF, VerticalCitationGeoKey, TYPE_ASCII, 0,
                     poSRS->GetAttrValue( "COMPD_CS|VERT_CS" ) );
 
-        pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
+        const char *pszValue = poSRS->GetAuthorityCode( "COMPD_CS|VERT_CS" );
         if( pszValue && atoi(pszValue) )
             GTIFKeySet( psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1,
                         atoi(pszValue) );

@@ -176,8 +176,7 @@ int OGRCouchDBLayer::TestCapability( const char * pszCap )
 
 OGRFeature* OGRCouchDBLayer::TranslateFeature( json_object* poObj )
 {
-    OGRFeature* poFeature = nullptr;
-    poFeature = new OGRFeature( GetLayerDefn() );
+    OGRFeature* poFeature = new OGRFeature( GetLayerDefn() );
 
     json_object* poId = CPL_json_object_object_get(poObj, "_id");
     const char* pszId = json_object_get_string(poId);

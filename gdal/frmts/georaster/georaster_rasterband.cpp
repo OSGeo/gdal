@@ -804,9 +804,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
         return nullptr;
     }
 
-    OCIParam* phDesc = nullptr;
-
-    phDesc = poGDS->poGeoRaster->poConnection->GetDescription( l_pszVATName );
+    OCIParam* phDesc = poGDS->poGeoRaster->poConnection->GetDescription( l_pszVATName );
 
     if( phDesc == nullptr )
     {
@@ -876,9 +874,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
     // Read VAT and load RAT
     // ----------------------------------------------------------
 
-    OWStatement* poStmt = nullptr;
-
-    poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
+    OWStatement* poStmt = poGeoRaster->poConnection->CreateStatement( CPLSPrintf (
         "SELECT %s FROM %s", szColumnList, l_pszVATName ) );
 
     char** papszValue = (char**) CPLMalloc( sizeof(char**) * iCol );

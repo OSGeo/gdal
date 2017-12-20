@@ -242,9 +242,8 @@ GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount( int bForce )
     {
         const CPLString osNewURL =
             CPLURLAddKVP(poDS->GetURL(), "returnCountOnly", "true");
-        CPLHTTPResult* pResult = nullptr;
         CPLErrorReset();
-        pResult = CPLHTTPFetch( osNewURL, nullptr );
+        CPLHTTPResult* pResult = CPLHTTPFetch( osNewURL, nullptr );
         if( pResult != nullptr &&
             pResult->nDataLen != 0 &&
             CPLGetLastErrorNo() == 0 &&

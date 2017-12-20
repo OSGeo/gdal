@@ -332,12 +332,12 @@ class CPL_DLL OGRPoint : public OGRGeometry
     double      m;
 
   public:
-                OGRPoint();
-                OGRPoint( double x, double y );
-                OGRPoint( double x, double y, double z );
-                OGRPoint( double x, double y, double z, double m );
-                OGRPoint( const OGRPoint& other );
-    virtual     ~OGRPoint();
+    OGRPoint();
+    OGRPoint( double x, double y );
+    OGRPoint( double x, double y, double z );
+    OGRPoint( double x, double y, double z, double m );
+    OGRPoint( const OGRPoint& other );
+    ~OGRPoint() override;
 
     OGRPoint& operator=( const OGRPoint& other );
 
@@ -455,7 +455,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual double get_AreaOfCurveSegments() const = 0;
 
   public:
-    virtual ~OGRCurve();
+    ~OGRCurve() override;
 
 //! @cond Doxygen_Suppress
     OGRCurve& operator=( const OGRCurve& other );
@@ -525,7 +525,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 OGRSimpleCurve( const OGRSimpleCurve& other );
 
   public:
-    virtual     ~OGRSimpleCurve();
+    ~OGRSimpleCurve() override;
 
     OGRSimpleCurve& operator=( const OGRSimpleCurve& other );
 
@@ -651,9 +651,9 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     static OGRLinearRing* CastToLinearRing( OGRLineString* poLS );
 
   public:
-                OGRLineString();
-                OGRLineString( const OGRLineString& other );
-    virtual    ~OGRLineString();
+    OGRLineString();
+    OGRLineString( const OGRLineString& other );
+    ~OGRLineString() override;
 
     OGRLineString& operator=(const OGRLineString& other);
 
@@ -719,10 +719,10 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     static OGRLineString* CastToLineString( OGRLinearRing* poLR );
 
   public:
-                        OGRLinearRing();
-                        OGRLinearRing( const OGRLinearRing& other );
-               explicit OGRLinearRing( OGRLinearRing * );
-    virtual            ~OGRLinearRing();
+    OGRLinearRing();
+    OGRLinearRing( const OGRLinearRing& other );
+    explicit OGRLinearRing( OGRLinearRing * );
+    ~OGRLinearRing() override;
 
     OGRLinearRing& operator=( const OGRLinearRing& other );
 
@@ -786,9 +786,9 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 //! @endcond
 
   public:
-                OGRCircularString();
-                OGRCircularString(const OGRCircularString& other);
-    virtual    ~OGRCircularString();
+    OGRCircularString();
+    OGRCircularString( const OGRCircularString& other );
+    ~OGRCircularString() override;
 
     OGRCircularString& operator=(const OGRCircularString& other);
 
@@ -954,9 +954,9 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
 //! @endcond
 
   public:
-                OGRCompoundCurve();
-                OGRCompoundCurve( const OGRCompoundCurve& other );
-    virtual     ~OGRCompoundCurve();
+    OGRCompoundCurve();
+    OGRCompoundCurve( const OGRCompoundCurve& other );
+    ~OGRCompoundCurve() override;
 
     OGRCompoundCurve& operator=( const OGRCompoundCurve& other );
 
@@ -1102,9 +1102,9 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     static OGRPolygon* CastToPolygon( OGRCurvePolygon* poCP );
 
   public:
-                OGRCurvePolygon();
-                OGRCurvePolygon( const OGRCurvePolygon& );
-    virtual    ~OGRCurvePolygon();
+    OGRCurvePolygon();
+    OGRCurvePolygon( const OGRCurvePolygon& );
+    ~OGRCurvePolygon() override;
 
     OGRCurvePolygon& operator=( const OGRCurvePolygon& other );
 
@@ -1216,9 +1216,9 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 //! @endcond
 
   public:
-                OGRPolygon();
-                OGRPolygon(const OGRPolygon& other);
-    virtual    ~OGRPolygon();
+    OGRPolygon();
+    OGRPolygon(const OGRPolygon& other);
+    ~OGRPolygon() override;
 
     OGRPolygon& operator=(const OGRPolygon& other);
 
@@ -1301,7 +1301,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
     OGRTriangle( const OGRTriangle &other );
     OGRTriangle( const OGRPolygon &other, OGRErr &eErr );
     OGRTriangle& operator=( const OGRTriangle& other );
-    virtual ~OGRTriangle();
+    ~OGRTriangle() override;
     virtual const char *getGeometryName() const CPL_OVERRIDE;
     virtual OGRwkbGeometryType getGeometryType() const CPL_OVERRIDE;
 
@@ -1353,9 +1353,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRBoolean         isCompatibleSubType( OGRwkbGeometryType ) const;
 
   public:
-                OGRGeometryCollection();
-                OGRGeometryCollection( const OGRGeometryCollection& other );
-    virtual     ~OGRGeometryCollection();
+    OGRGeometryCollection();
+    OGRGeometryCollection( const OGRGeometryCollection& other );
+    ~OGRGeometryCollection() override;
 
     OGRGeometryCollection& operator=( const OGRGeometryCollection& other );
 
@@ -1441,9 +1441,9 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
         const CPL_OVERRIDE;
 
   public:
-            OGRMultiSurface();
-            OGRMultiSurface( const OGRMultiSurface& other );
-    virtual ~OGRMultiSurface();
+    OGRMultiSurface();
+    OGRMultiSurface( const OGRMultiSurface& other );
+    ~OGRMultiSurface() override;
 
     OGRMultiSurface& operator=( const OGRMultiSurface& other );
 
@@ -1495,9 +1495,9 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 
 
   public:
-            OGRMultiPolygon();
-            OGRMultiPolygon(const OGRMultiPolygon& other);
-    virtual ~OGRMultiPolygon();
+    OGRMultiPolygon();
+    OGRMultiPolygon( const OGRMultiPolygon& other );
+    ~OGRMultiPolygon() override;
 
     OGRMultiPolygon& operator=(const OGRMultiPolygon& other);
 
@@ -1550,8 +1550,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 
   public:
     OGRPolyhedralSurface();
-    OGRPolyhedralSurface(const OGRPolyhedralSurface &poGeom);
-    virtual ~OGRPolyhedralSurface();
+    OGRPolyhedralSurface( const OGRPolyhedralSurface &poGeom );
+    ~OGRPolyhedralSurface() override;
     OGRPolyhedralSurface& operator=(const OGRPolyhedralSurface& other);
 
     // IWks Interface.
@@ -1663,9 +1663,9 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
         const CPL_OVERRIDE;
 
   public:
-            OGRMultiPoint();
-            OGRMultiPoint(const OGRMultiPoint& other);
-    virtual ~OGRMultiPoint();
+    OGRMultiPoint();
+    OGRMultiPoint(const OGRMultiPoint& other);
+    ~OGRMultiPoint() override;
 
     OGRMultiPoint& operator=(const OGRMultiPoint& other);
 
@@ -1705,9 +1705,9 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
         const CPL_OVERRIDE;
 
   public:
-            OGRMultiCurve();
-            OGRMultiCurve( const OGRMultiCurve& other );
-    virtual ~OGRMultiCurve();
+    OGRMultiCurve();
+    OGRMultiCurve( const OGRMultiCurve& other );
+    ~OGRMultiCurve() override;
 
     OGRMultiCurve& operator=( const OGRMultiCurve& other );
 
@@ -1743,9 +1743,9 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
         const CPL_OVERRIDE;
 
   public:
-            OGRMultiLineString();
-            OGRMultiLineString( const OGRMultiLineString& other );
-    virtual ~OGRMultiLineString();
+    OGRMultiLineString();
+    OGRMultiLineString( const OGRMultiLineString& other );
+    ~OGRMultiLineString() override;
 
     OGRMultiLineString& operator=( const OGRMultiLineString& other );
 

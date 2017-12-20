@@ -329,14 +329,8 @@ the approach is as above in all these cases.
     poMLS->addGeometry( &oLine );
 
     // Insert default arrowheads.
-    OGRPoint oPoint1, oPoint2;
-    oLine.getPoint( 0, &oPoint1 );
-    oLine.getPoint( 1, &oPoint2 );
-
-    InsertArrowhead( poFeature, "", oPoint1, oPoint2,
-        dfArrowheadSize * dfScale );
-    InsertArrowhead( poFeature, "", oPoint2, oPoint1,
-        dfArrowheadSize * dfScale );
+    InsertArrowhead( poFeature, "", &oLine, dfArrowheadSize * dfScale );
+    InsertArrowhead( poFeature, "", &oLine, dfArrowheadSize * dfScale, true );
 
     // Dimension line from Target1 to Arrow1 with a small extension.
     oLine.setPoint( 0, dfTargetX1 + dfVec1X * dfExtLineOffset,

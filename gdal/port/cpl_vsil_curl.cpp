@@ -6425,14 +6425,12 @@ class VSIAzureWriteHandle CPL_FINAL : public VSIVirtualHandle
                           VSIAzureBlobHandleHelper* poHandleHelper );
         virtual ~VSIAzureWriteHandle();
 
-        virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-        virtual vsi_l_offset Tell() override;
-        virtual size_t    Read( void *pBuffer, size_t nSize,
-                                size_t nMemb ) override;
-        virtual size_t    Write( const void *pBuffer, size_t nSize,
-                                 size_t nMemb ) override;
-        virtual int       Eof() override;
-        virtual int       Close() override;
+        int Seek( vsi_l_offset nOffset, int nWhence ) override;
+        vsi_l_offset Tell() override;
+        size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+        size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+        int  Eof() override;
+        int  Close() override;
 
         bool              IsOK() { return m_pabyBuffer != nullptr; }
 };
@@ -7154,28 +7152,30 @@ class VSIOSSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
     std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
 
 protected:
-        virtual VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
-        virtual CPLString GetURLFromDirname( const CPLString& osDirname ) override;
+        VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
+        CPLString GetURLFromDirname( const CPLString& osDirname ) override;
 
-        virtual const char* GetDebugKey() const override { return "OSS"; }
+        const char* GetDebugKey() const override { return "OSS"; }
 
-        virtual IVSIS3LikeHandleHelper* CreateHandleHelper(
-                const char* pszURI, bool bAllowNoObject) override;
+        IVSIS3LikeHandleHelper* CreateHandleHelper(
+            const char* pszURI, bool bAllowNoObject) override;
 
-        virtual CPLString GetFSPrefix() override { return "/vsioss/"; }
+        CPLString GetFSPrefix() override { return "/vsioss/"; }
 
-        virtual void        ClearCache() override;
+        void ClearCache() override;
 
 public:
         VSIOSSFSHandler() {}
-        virtual ~VSIOSSFSHandler();
+        ~VSIOSSFSHandler() override;
 
-        virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                        const char *pszAccess,
-                                        bool bSetError ) override;
+        VSIVirtualHandle *Open( const char *pszFilename,
+                                const char *pszAccess,
+                                bool bSetError ) override;
 
-        virtual void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
-        virtual void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        void UpdateMapFromHandle(
+            IVSIS3LikeHandleHelper * poHandleHelper ) override;
+        void UpdateHandleFromMap(
+            IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
 
 /************************************************************************/
@@ -7187,15 +7187,16 @@ class VSIOSSHandle CPL_FINAL : public IVSIS3LikeHandle
     VSIOSSHandleHelper* m_poHandleHelper;
 
   protected:
-        virtual struct curl_slist* GetCurlHeaders( const CPLString& osVerb,
-                    const struct curl_slist* psExistingHeaders ) override;
-        virtual bool CanRestartOnError( const char*, const char*, bool ) override;
+    struct curl_slist* GetCurlHeaders(
+        const CPLString& osVerb,
+        const struct curl_slist* psExistingHeaders ) override;
+    bool CanRestartOnError( const char*, const char*, bool ) override;
 
-    public:
-        VSIOSSHandle( VSIOSSFSHandler* poFS,
-                     const char* pszFilename,
-                     VSIOSSHandleHelper* poHandleHelper );
-        virtual ~VSIOSSHandle();
+  public:
+    VSIOSSHandle( VSIOSSFSHandler* poFS,
+                  const char* pszFilename,
+                  VSIOSSHandleHelper* poHandleHelper );
+    ~VSIOSSHandle() override;
 };
 
 /************************************************************************/

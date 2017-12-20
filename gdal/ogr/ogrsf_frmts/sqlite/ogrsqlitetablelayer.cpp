@@ -790,9 +790,7 @@ OGRFeature *OGRSQLiteTableLayer::GetFeature( GIntBig nFeatureId )
 /* -------------------------------------------------------------------- */
 /*      Get the feature if possible.                                    */
 /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = nullptr;
-
-    poFeature = GetNextRawFeature();
+    OGRFeature *poFeature = GetNextRawFeature();
 
     ResetReading();
 

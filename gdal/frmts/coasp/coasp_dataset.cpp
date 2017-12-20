@@ -279,13 +279,12 @@ public:
  ********************************************************************/
 
 class COASPRasterBand : public GDALRasterBand {
-        VSILFILE *fp;
-        /*int ePol;*/
-public:
-        COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
-                         int ePol, VSILFILE *fp );
-        virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void *pImage) override;
+    VSILFILE *fp;
+    // int ePol;
+  public:
+    COASPRasterBand( COASPDataset *poDS, GDALDataType eDataType,
+                     int ePol, VSILFILE *fp );
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage) override;
 };
 
 COASPRasterBand::COASPRasterBand( COASPDataset *poDSIn,

@@ -66,6 +66,12 @@
 #define RPC_SAMP_NUM_COEFF  "SAMP_NUM_COEFF"
 #define RPC_SAMP_DEN_COEFF  "SAMP_DEN_COEFF"
 
+/* Optional */
+#define RPC_MIN_LONG        "MIN_LONG"
+#define RPC_MIN_LAT         "MIN_LAT"
+#define RPC_MAX_LONG        "MAX_LONG"
+#define RPC_MAX_LAT         "MAX_LAT"
+
 /**
  * Enumerator of metadata readers
  */

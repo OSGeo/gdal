@@ -89,9 +89,7 @@ int OGRFMELayer::Initialize( IFMEFeature * poSchemaFeature,
                              OGRSpatialReference *poSRS )
 
 {
-    IFMEString  *poFMEString = NULL;
-
-    poFMEString = poDS->GetFMESession()->createString();
+    IFMEString* poFMEString = poDS->GetFMESession()->createString();
     poFMEFeature = poDS->GetFMESession()->createFeature();
 
     if( poSRS != NULL )
