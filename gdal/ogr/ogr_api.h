@@ -629,7 +629,10 @@ OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 /*! @endcond */
 
 /* note: this is also declared in ogrsf_frmts.h */
+#ifndef OGRREGISTERALL_DEFINED
+#define OGRREGISTERALL_DEFINED
 void CPL_DLL OGRRegisterAll(void);
+#endif
 /** Clean-up all drivers (including raster ones starting with GDAL 2.0.
  * See GDALDestroyDriverManager() */
 void CPL_DLL OGRCleanupAll(void);

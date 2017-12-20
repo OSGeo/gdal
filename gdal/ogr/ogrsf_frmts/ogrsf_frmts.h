@@ -353,7 +353,11 @@ class CPL_DLL OGRSFDriverRegistrar
 /*      Various available registration methods.                         */
 /* -------------------------------------------------------------------- */
 CPL_C_START
-void CPL_DLL OGRRegisterAll();
+/* note: this is also declared in ogr_api.h. TODO: remove that one ? */
+#ifndef OGRREGISTERALL_DEFINED
+#define OGRREGISTERALL_DEFINED
+void CPL_DLL OGRRegisterAll(void);
+#endif
 
 //! @cond Doxygen_Suppress
 void OGRRegisterAllInternal();
