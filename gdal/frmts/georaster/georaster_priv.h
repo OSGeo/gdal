@@ -140,12 +140,11 @@ class GeoRasterDataset : public GDALDataset
 {
     friend class GeoRasterRasterBand;
 
-public:
-                        GeoRasterDataset();
-    virtual            ~GeoRasterDataset();
+  public:
+    GeoRasterDataset();
+    ~GeoRasterDataset() override;
 
-private:
-
+  private:
     GeoRasterWrapper*   poGeoRaster;
     bool                bGeoTransform;
     bool                bForcedSRID;
@@ -185,48 +184,49 @@ public:
                             GDALDataType eType,
                             char** papszOptions );
     static GDALDataset* CreateCopy( const char* pszFilename,
-                            GDALDataset* poSrcDS,
-                            int bStrict,
-                            char** papszOptions,
-                            GDALProgressFunc pfnProgress,
-                            void* pProgressData );
-    virtual CPLErr      GetGeoTransform( double* padfTransform ) override;
-    virtual CPLErr      SetGeoTransform( double* padfTransform ) override;
-    virtual const char* GetProjectionRef() override;
-    virtual CPLErr      SetProjection( const char* pszProjString ) override;
-    virtual char      **GetMetadataDomainList() override;
-    virtual char**      GetMetadata( const char* pszDomain ) override;
-    virtual void        FlushCache() override;
-    virtual CPLErr      IRasterIO( GDALRWFlag eRWFlag,
-                            int nXOff, int nYOff, int nXSize, int nYSize,
-                            void *pData, int nBufXSize, int nBufYSize,
-                            GDALDataType eBufType,
-                            int nBandCount, int *panBandMap,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
-                            GSpacing nBandSpace,
-                            GDALRasterIOExtraArg* psExtraArg ) override;
-    virtual int         GetGCPCount() override;
-    virtual const char* GetGCPProjection() override;
-    virtual const GDAL_GCP*
-                        GetGCPs() override;
-    virtual CPLErr      SetGCPs(
-                            int nGCPCount,
-                            const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
-    virtual CPLErr      IBuildOverviews(
-                            const char* pszResampling,
-                            int nOverviews,
-                            int* panOverviewList,
-                            int nListBandsover,
-                            int* panBandList,
-                            GDALProgressFunc pfnProgress,
-                            void* pProgresoversData ) override;
-    virtual CPLErr      CreateMaskBand( int nFlags ) override;
-    virtual OGRErr      StartTransaction(int /* bForce */ =FALSE) override {return CE_None;}
-    virtual OGRErr      CommitTransaction() override {return CE_None;}
-    virtual OGRErr      RollbackTransaction() override {return CE_None;}
+                                    GDALDataset* poSrcDS,
+                                    int bStrict,
+                                    char** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void* pProgressData );
+    CPLErr GetGeoTransform( double* padfTransform ) override;
+    CPLErr SetGeoTransform( double* padfTransform ) override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection( const char* pszProjString ) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char* pszDomain ) override;
+    void FlushCache() override;
+    CPLErr IRasterIO( GDALRWFlag eRWFlag,
+                      int nXOff, int nYOff, int nXSize, int nYSize,
+                      void *pData, int nBufXSize, int nBufYSize,
+                      GDALDataType eBufType,
+                      int nBandCount, int *panBandMap,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      GSpacing nBandSpace,
+                      GDALRasterIOExtraArg* psExtraArg ) override;
+    int GetGCPCount() override;
+    const char* GetGCPProjection() override;
+    const GDAL_GCP*
+                GetGCPs() override;
+    CPLErr SetGCPs(
+               int nGCPCount,
+               const GDAL_GCP *pasGCPList,
+               const char *pszGCPProjection ) override;
+    CPLErr IBuildOverviews(
+               const char* pszResampling,
+               int nOverviews,
+               int* panOverviewList,
+               int nListBandsover,
+               int* panBandList,
+               GDALProgressFunc pfnProgress,
+               void* pProgresoversData ) override;
+    CPLErr CreateMaskBand( int nFlags ) override;
+    OGRErr StartTransaction(int /* bForce */ =FALSE) override
+        { return CE_None; }
+    OGRErr CommitTransaction() override { return CE_None; }
+    OGRErr RollbackTransaction() override { return CE_None; }
     
-    virtual char**      GetFileList() override;
+    char** GetFileList() override;
 
     void                AssignGeoRaster( GeoRasterWrapper* poGRW );
 };
@@ -239,15 +239,14 @@ class GeoRasterRasterBand : public GDALRasterBand
 {
     friend class GeoRasterDataset;
 
-public:
-                        GeoRasterRasterBand( GeoRasterDataset* poGDS,
-                            int nBand,
-                            int nLevel,
-                            GDALDataset* poJP2Dataset = NULL );
-    virtual            ~GeoRasterRasterBand();
+  public:
+    GeoRasterRasterBand( GeoRasterDataset* poGDS,
+                         int nBand,
+                         int nLevel,
+                         GDALDataset* poJP2Dataset = NULL );
+    ~GeoRasterRasterBand(); override
 
 private:
-
     GeoRasterWrapper*   poGeoRaster;
     GDALColorTable*     poColorTable;
     GDALRasterAttributeTable*
@@ -272,34 +271,28 @@ private:
     void                ApplyNoDataArry( void* pBuffer );
 
 public:
-
-    virtual double      GetNoDataValue( int *pbSuccess = NULL ) override;
-    virtual CPLErr      SetNoDataValue( double dfNoDataValue ) override;
-    virtual double      GetMinimum( int* pbSuccess = NULL ) override;
-    virtual double      GetMaximum( int* pbSuccess = NULL ) override;
-    virtual GDALColorTable*
-                        GetColorTable() override;
-    virtual CPLErr      SetColorTable( GDALColorTable *poInColorTable ) override;
-    virtual GDALColorInterp
-                        GetColorInterpretation() override;
-    virtual CPLErr      IReadBlock( int nBlockXOff, int nBlockYOff,
-                            void *pImage ) override;
-    virtual CPLErr      IWriteBlock( int nBlockXOff, int nBlockYOff,
-                            void *pImage ) override;
-    virtual CPLErr      SetStatistics( double dfMin, double dfMax,
-                            double dfMean, double dfStdDev ) override;
-    virtual CPLErr      GetStatistics( int bApproxOK, int bForce,
-                            double* pdfMin, double* pdfMax,
-                            double* pdfMean, double* pdfStdDev ) override;
-    virtual             GDALRasterAttributeTable *GetDefaultRAT() override;
-    virtual CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT ) override;
-    virtual int         GetOverviewCount() override;
-    virtual GDALRasterBand*
-                        GetOverview( int ) override;
-    virtual CPLErr      CreateMaskBand( int nFlags ) override;
-    virtual GDALRasterBand*
-                        GetMaskBand() override;
-    virtual int         GetMaskFlags() override;
+    double GetNoDataValue( int *pbSuccess = NULL ) override;
+    CPLErr SetNoDataValue( double dfNoDataValue ) override;
+    double GetMinimum( int* pbSuccess = NULL ) override;
+    double GetMaximum( int* pbSuccess = NULL ) override;
+    GDALColorTable *GetColorTable() override;
+    CPLErr SetColorTable( GDALColorTable *poInColorTable ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    CPLErr IWriteBlock( int nBlockXOff, int nBlockYOff, void *pImage ) override;
+    CPLErr SetStatistics( double dfMin, double dfMax,
+                          double dfMean, double dfStdDev ) override;
+    CPLErr GetStatistics( int bApproxOK, int bForce,
+                          double* pdfMin, double* pdfMax,
+                          double* pdfMean, double* pdfStdDev ) override;
+    GDALRasterAttributeTable *GetDefaultRAT() override;
+    CPLErr      SetDefaultRAT( const GDALRasterAttributeTable *poRAT ) override;
+    int         GetOverviewCount() override;
+    GDALRasterBand*
+                GetOverview( int ) override;
+    CPLErr      CreateMaskBand( int nFlags ) override;
+    GDALRasterBand *GetMaskBand() override;
+    int GetMaskFlags() override;
 };
 
 //  ---------------------------------------------------------------------------
@@ -308,14 +301,11 @@ public:
 
 class GeoRasterWrapper
 {
+  public:
+    GeoRasterWrapper();
+    virtual ~GeoRasterWrapper();
 
-public:
-
-                        GeoRasterWrapper();
-    virtual            ~GeoRasterWrapper();
-
-private:
-
+  private:
     OCILobLocator**     pahLocator;
     unsigned long       nBlockCount;
     unsigned long       nBlockBytes;
