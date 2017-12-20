@@ -233,23 +233,6 @@ int SDTSRawPolygon::AssembleRings()
         return FALSE;
 
 /* -------------------------------------------------------------------- */
-/*      Allocate ring arrays.                                           */
-/* -------------------------------------------------------------------- */
-    panRingStart = reinterpret_cast<int *>( CPLMalloc( sizeof(int) * nEdges ) );
-
-    nVertices = 0;
-    for( int iEdge = 0; iEdge < nEdges; iEdge++ )
-    {
-        nVertices += papoEdges[iEdge]->nVertices;
-    }
-
-    padfX = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
-    padfY = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
-    padfZ = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
-
-    nVertices = 0;
-
-/* -------------------------------------------------------------------- */
 /*      Setup array of line markers indicating if they have been        */
 /*      added to a ring yet.                                            */
 /* -------------------------------------------------------------------- */
@@ -257,6 +240,31 @@ int SDTSRawPolygon::AssembleRings()
 
     int *panEdgeConsumed = reinterpret_cast<int *>(
         CPLCalloc( sizeof(int), nEdges ) );
+
+/* -------------------------------------------------------------------- */
+/*      Allocate ring arrays.                                           */
+/* -------------------------------------------------------------------- */
+    panRingStart = reinterpret_cast<int *>( CPLMalloc( sizeof(int) * nEdges ) );
+
+    nVertices = 0;
+    for( int iEdge = 0; iEdge < nEdges; iEdge++ )
+    {
+        if( papoEdges[iEdge]->nVertices < 2 )
+        {
+            panEdgeConsumed[iEdge] = TRUE;
+            nRemainingEdges--;
+        }
+        else
+        {
+            nVertices += papoEdges[iEdge]->nVertices;
+        }
+    }
+
+    padfX = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfY = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+    padfZ = reinterpret_cast<double *>( CPLMalloc( sizeof(double) * nVertices ) );
+
+    nVertices = 0;
 
 /* ==================================================================== */
 /*      Loop generating rings.                                          */
