@@ -60,7 +60,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_azure.obj \
 		cpl_alibaba_oss.obj \
 		cpl_json_streaming_parser.obj \
-		md5.obj \
+		cpl_md5.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

@@ -29,6 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_md5.h"
 #include "wmsdriver.h"
 
 CPL_CVSID("$Id$")
