@@ -68,11 +68,11 @@ class GRASSDataset : public GDALDataset
     double      adfGeoTransform[6];
 
   public:
-                 GRASSDataset();
-                 ~GRASSDataset();
+    GRASSDataset();
+    ~GRASSDataset() override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -99,17 +99,15 @@ class GRASSRasterBand : public GDALRasterBand
     double      dfNoData;
 
   public:
+    GRASSRasterBand( GRASSDataset *, int, const char *, const char * );
+    ~GRASSRasterBand() override;
 
-                   GRASSRasterBand( GRASSDataset *, int,
-                                    const char *, const char * );
-    virtual        ~GRASSRasterBand();
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
-    virtual GDALColorTable *GetColorTable() override;
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum( int *pbSuccess = NULL ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
+    GDALColorTable *GetColorTable() override;
+    double GetMinimum( int *pbSuccess = NULL ) override;
+    double GetMaximum( int *pbSuccess = NULL ) override;
+    double GetNoDataValue( int *pbSuccess = NULL ) override;
 };
 
 /************************************************************************/
