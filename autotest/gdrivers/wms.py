@@ -401,7 +401,7 @@ def wms_8():
         gdaltest.post_reason( 'did not get expected cache path metadata item' )
         return 'fail'
 
-    cache_subfolder = hashlib.md5(server_url_mask).hexdigest()
+    cache_subfolder = hashlib.md5(server_url_mask.encode('utf-8')).hexdigest()
 
     gdal.ErrorReset()
     data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
@@ -411,10 +411,10 @@ def wms_8():
 
     ds = None
 
-    file1 = hashlib.md5(server_url + wmstms_version + '/1/0/0.png').hexdigest()
-    file2 = hashlib.md5(server_url + wmstms_version + '/1/1/0.png').hexdigest()
-    file3 = hashlib.md5(server_url + wmstms_version + '/1/0/1.png').hexdigest()
-    file4 = hashlib.md5(server_url + wmstms_version + '/1/1/1.png').hexdigest()
+    file1 = hashlib.md5((server_url + wmstms_version + '/1/0/0.png').encode('utf-8')).hexdigest()
+    file2 = hashlib.md5((server_url + wmstms_version + '/1/1/0.png').encode('utf-8')).hexdigest()
+    file3 = hashlib.md5((server_url + wmstms_version + '/1/0/1.png').encode('utf-8')).hexdigest()
+    file4 = hashlib.md5((server_url + wmstms_version + '/1/1/1.png').encode('utf-8')).hexdigest()
 
     expected_files = [ 'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file1[0], file1[1], file1),
                        'tmp/gdalwmscache/%s/%s/%s/%s' % (cache_subfolder, file2[0], file2[1], file2),
