@@ -265,6 +265,7 @@ protected:
 
 private:
     GDALWMSCacheImpl* m_poCache;
+    CPLJoinableThread* m_hThread;
 };
 
 /************************************************************************/

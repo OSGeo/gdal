@@ -209,13 +209,17 @@ GDALWMSCache::GDALWMSCache() :
     m_osCachePath("./gdalwmscache"),
     m_bIsCleanThreadRunning(false),
     m_nCleanThreadLastRunTime(0),
-    m_poCache(nullptr)
+    m_poCache(nullptr),
+    m_hThread(nullptr)
 {
 
 }
 
 GDALWMSCache::~GDALWMSCache()
 {
+    if( m_hThread )
+        CPLJoinThread(m_hThread);
+    delete m_poCache;
 }
 
 CPLErr GDALWMSCache::Initialize(const char *pszUrl, CPLXMLNode *pConfig) {
@@ -258,8 +262,10 @@ CPLErr GDALWMSCache::Insert(const char *pszKey, const CPLString &soFileName)
             // Start clean thread
             if( !m_bIsCleanThreadRunning && time(nullptr) - m_nCleanThreadLastRunTime > CLEAN_THREAD_RUN_TIMEOUT)
             {
+                if( m_hThread )
+                    CPLJoinThread(m_hThread);
                 m_bIsCleanThreadRunning = true;
-                CPLCreateThread(CleanCacheThread, this);
+                m_hThread = CPLCreateJoinableThread(CleanCacheThread, this);
             }
         }
         return result;
