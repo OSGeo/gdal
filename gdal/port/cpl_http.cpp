@@ -33,8 +33,10 @@
 #include <cstddef>
 #include <cstring>
 
+#include <algorithm>
 #include <map>
 #include <string>
+#include <vector>
 
 #include "cpl_http.h"
 #include "cpl_error.h"
@@ -64,6 +66,7 @@ CPL_CVSID("$Id$")
 
 #ifdef HAVE_CURL
 static std::map<CPLString, CURL*>* poSessionMap = nullptr;
+static std::map<CPLString, CURLM*>* poSessionMultiMap = nullptr;
 static CPLMutex *hSessionMapMutex = nullptr;
 static bool bHasCheckVersion = false;
 static bool bSupportGZip = false;
@@ -176,11 +179,12 @@ static void CheckCurlFeatures()
 /************************************************************************/
 
 
-typedef struct
+class CPLHTTPResultWithLimit
 {
-    CPLHTTPResult* psResult;
-    int            nMaxFileSize;
-} CPLHTTPResultWithLimit;
+public:
+    CPLHTTPResult* psResult = nullptr;
+    int            nMaxFileSize = 0;
+};
 
 static size_t
 CPLWriteFct(void *buffer, size_t size, size_t nmemb, void *reqInfo)
@@ -312,6 +316,35 @@ double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay)
         return 0;
     }
 }
+
+#ifdef HAVE_CURL
+
+/************************************************************************/
+/*                      CPLHTTPEmitFetchDebug()                         */
+/************************************************************************/
+
+static void CPLHTTPEmitFetchDebug(const char* pszURL,
+                                  const char* pszExtraDebug = "")
+{
+    const char* pszArobase = strchr(pszURL, '@');
+    const char* pszSlash = strchr(pszURL, '/');
+    const char* pszColon = (pszSlash) ? strchr(pszSlash, ':') : nullptr;
+    if( pszArobase != nullptr && pszColon != nullptr && pszArobase - pszColon > 0 )
+    {
+        /* http://user:password@www.example.com */
+        char* pszSanitizedURL = CPLStrdup(pszURL);
+        pszSanitizedURL[pszColon-pszURL] = 0;
+        CPLDebug( "HTTP", "Fetch(%s:#password#%s%s)",
+                  pszSanitizedURL, pszArobase, pszExtraDebug );
+        CPLFree(pszSanitizedURL);
+    }
+    else
+    {
+        CPLDebug( "HTTP", "Fetch(%s%s)", pszURL, pszExtraDebug );
+    }
+}
+
+#endif
 
 /************************************************************************/
 /*                           CPLHTTPFetch()                             */
@@ -529,22 +562,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 /* -------------------------------------------------------------------- */
     char szCurlErrBuf[CURL_ERROR_SIZE+1] = {};
 
-    const char* pszArobase = strchr(pszURL, '@');
-    const char* pszSlash = strchr(pszURL, '/');
-    const char* pszColon = (pszSlash) ? strchr(pszSlash, ':') : nullptr;
-    if( pszArobase != nullptr && pszColon != nullptr && pszArobase - pszColon > 0 )
-    {
-        /* http://user:password@www.example.com */
-        char* pszSanitizedURL = CPLStrdup(pszURL);
-        pszSanitizedURL[pszColon-pszURL] = 0;
-        CPLDebug( "HTTP", "Fetch(%s:#password#%s)",
-                  pszSanitizedURL, pszArobase );
-        CPLFree(pszSanitizedURL);
-    }
-    else
-    {
-        CPLDebug( "HTTP", "Fetch(%s)", pszURL );
-    }
+    CPLHTTPEmitFetchDebug(pszURL);
 
     CPLHTTPResult *psResult =
         static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
@@ -747,6 +765,321 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     return psResult;
 #endif /* def HAVE_CURL */
 }
+
+#ifdef HAVE_CURL
+/************************************************************************/
+/*                       CPLMultiPerformWait()                          */
+/************************************************************************/
+
+bool CPLMultiPerformWait(void* hCurlMultiHandleIn, int& repeats)
+{
+    CURLM* hCurlMultiHandle = static_cast<CURLM*>(hCurlMultiHandleIn);
+
+    // Wait for events on the sockets
+    // Using curl_multi_wait() is preferred to avoid hitting the 1024 file
+    // descriptor limit
+    // 7.28.0
+#if LIBCURL_VERSION_NUM >= 0x071C00
+    int numfds = 0;
+    if( curl_multi_wait(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "curl_multi_wait() failed");
+        return false;
+    }
+    /* 'numfds' being zero means either a timeout or no file descriptors to
+        wait for. Try timeout on first occurrence, then assume no file
+        descriptors and no file descriptors to wait for 100
+        milliseconds. */
+    if(!numfds)
+    {
+        repeats++; /* count number of repeated zero numfds */
+        if(repeats > 1)
+        {
+            CPLSleep(0.1); /* sleep 100 milliseconds */
+        }
+    }
+    else
+    {
+        repeats = 0;
+    }
+#else
+    (void)repeats;
+
+    struct timeval timeout;
+    fd_set fdread, fdwrite, fdexcep;
+    int maxfd;
+    FD_ZERO(&fdread);
+    FD_ZERO(&fdwrite);
+    FD_ZERO(&fdexcep);
+    curl_multi_fdset(hCurlMultiHandle, &fdread, &fdwrite, &fdexcep, &maxfd);
+    if( maxfd >= 0 )
+    {
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000;
+        if( select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout) < 0 )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "select() failed");
+            return false;
+        }
+    }
+#endif
+    return true;
+}
+
+class CPLHTTPErrorBuffer
+{
+    public:
+        char szBuffer[CURL_ERROR_SIZE+1];
+
+        CPLHTTPErrorBuffer() { szBuffer[0] = '\0'; }
+};
+
+#endif // HAVE_CURL
+
+/************************************************************************/
+/*                           CPLHTTPMultiFetch()                        */
+/************************************************************************/
+
+/**
+ * \brief Fetch several documents at once
+ *
+ * @param papszURL array of valid URLs recognized by underlying download library (libcurl)
+ * @param nURLCount number of URLs of papszURL
+ * @param nMaxSimultaneous maximum number of downloads to issue simultaneously.
+ *                         Any negative or zer value means unlimited.
+ * @param papszOptions option list as a NULL-terminated array of strings. May be NULL.
+ *                     Refer to CPLHTTPFetch() for valid options.
+ * @return an array of CPLHTTPResult* structures that must be freed by
+ * CPLHTTPDestroyResult(), the array itself with CPLFree(),
+ * or NULL if libcurl support is disabled
+ *
+ * @since GDAL 2.3
+ */
+CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
+                                   int nURLCount,
+                                   int nMaxSimultaneous,
+                                   char **papszOptions)
+{
+#ifndef HAVE_CURL
+    (void) papszURL;
+    (void) nURLCount;
+    (void) nMaxSimultaneous;
+    (void) papszOptions;
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GDAL/OGR not compiled with libcurl support, "
+              "remote requests not supported." );
+    return nullptr;
+#else /* def HAVE_CURL */
+
+/* -------------------------------------------------------------------- */
+/*      Are we using a persistent named session?  If so, search for     */
+/*      or create it.                                                   */
+/*                                                                      */
+/*      Currently this code does not attempt to protect against         */
+/*      multiple threads asking for the same named session.  If that    */
+/*      occurs it will be in use in multiple threads at once, which     */
+/*      will lead to potential crashes in libcurl.                      */
+/* -------------------------------------------------------------------- */
+    CURLM *hCurlMultiHandle = nullptr;
+
+    const char *pszPersistent = CSLFetchNameValue( papszOptions, "PERSISTENT" );
+    const char *pszClosePersistent =
+        CSLFetchNameValue( papszOptions, "CLOSE_PERSISTENT" );
+    if( pszPersistent )
+    {
+        CPLString osSessionName = pszPersistent;
+        CPLMutexHolder oHolder( &hSessionMapMutex );
+
+        if( poSessionMultiMap == nullptr )
+            poSessionMultiMap = new std::map<CPLString, CURLM *>;
+        if( poSessionMultiMap->count( osSessionName ) == 0 )
+        {
+            (*poSessionMultiMap)[osSessionName] = curl_multi_init();
+            CPLDebug( "HTTP", "Establish persistent session named '%s'.",
+                      osSessionName.c_str() );
+        }
+
+        hCurlMultiHandle = (*poSessionMultiMap)[osSessionName];
+    }
+/* -------------------------------------------------------------------- */
+/*      Are we requested to close a persistent named session?           */
+/* -------------------------------------------------------------------- */
+    else if( pszClosePersistent )
+    {
+        CPLString osSessionName = pszClosePersistent;
+        CPLMutexHolder oHolder( &hSessionMapMutex );
+
+        if( poSessionMultiMap )
+        {
+            auto oIter = poSessionMultiMap->find( osSessionName );
+            if( oIter != poSessionMultiMap->end() )
+            {
+                curl_multi_cleanup(oIter->second);
+                poSessionMultiMap->erase(oIter);
+                if( poSessionMultiMap->empty() )
+                {
+                    delete poSessionMultiMap;
+                    poSessionMultiMap = nullptr;
+                }
+                CPLDebug( "HTTP", "Ended persistent session named '%s'.",
+                        osSessionName.c_str() );
+            }
+            else
+            {
+                CPLDebug(
+                    "HTTP", "Could not find persistent session named '%s'.",
+                    osSessionName.c_str() );
+            }
+        }
+
+        return nullptr;
+    }
+    else
+    {
+        hCurlMultiHandle = curl_multi_init();
+    }
+
+    CPLHTTPResult** papsResults = static_cast<CPLHTTPResult**>(
+        CPLCalloc(nURLCount, sizeof(CPLHTTPResult*)));
+    std::vector<CURL*> asHandles;
+    std::vector<CPLHTTPResultWithLimit> asResults;
+    asResults.resize(nURLCount);
+    std::vector<struct curl_slist*> aHeaders;
+    aHeaders.resize(nURLCount);
+    std::vector<CPLHTTPErrorBuffer> asErrorBuffers;
+    asErrorBuffers.resize(nURLCount);
+
+    for( int i = 0; i < nURLCount; i++ )
+    {
+        papsResults[i] = static_cast<CPLHTTPResult*>(
+                                CPLCalloc(1, sizeof(CPLHTTPResult)));
+
+        const char* pszURL = papszURL[i];
+        CURL* http_handle = curl_easy_init();
+        curl_easy_setopt(http_handle, CURLOPT_URL, pszURL );
+
+        aHeaders[i] = reinterpret_cast<struct curl_slist*>(
+                            CPLHTTPSetOptions(http_handle, papszOptions));
+
+        // Set Headers.
+        const char *pszHeaders = CSLFetchNameValue( papszOptions, "HEADERS" );
+        if( pszHeaders != nullptr )
+        {
+            char** papszTokensHeaders = CSLTokenizeString2(pszHeaders, "\r\n", 0);
+            for( int j=0; papszTokensHeaders[j] != nullptr; ++j )
+                aHeaders[i] = curl_slist_append(aHeaders[i], papszTokensHeaders[j]);
+            CSLDestroy(papszTokensHeaders);
+        }
+
+        if( aHeaders[i] != nullptr )
+            curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, aHeaders[i]);
+
+        // Capture response headers.
+        curl_easy_setopt(http_handle, CURLOPT_HEADERDATA, papsResults[i]);
+        curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
+
+        asResults[i].psResult = papsResults[i];
+        const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
+                                                    "MAX_FILE_SIZE");
+        if( pszMaxFileSize != nullptr )
+        {
+            asResults[i].nMaxFileSize = atoi(pszMaxFileSize);
+            // Only useful if size is returned by server before actual download.
+            curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+                            asResults[i].nMaxFileSize);
+        }
+
+        curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &asResults[i] );
+        curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
+
+
+        curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER,
+                         asErrorBuffers[i].szBuffer );
+
+        if( bSupportGZip &&
+            CPLTestBool(CPLGetConfigOption("CPL_CURL_GZIP", "YES")) )
+        {
+            curl_easy_setopt(http_handle, CURLOPT_ENCODING, "gzip");
+        }
+
+        asHandles.push_back(http_handle);
+    }
+
+    int iCurRequest = 0;
+    for( ; iCurRequest < std::min(nURLCount,
+                    nMaxSimultaneous > 0 ? nMaxSimultaneous : INT_MAX); iCurRequest++ )
+    {
+        CPLHTTPEmitFetchDebug(papszURL[iCurRequest],
+                              CPLSPrintf(" %d/%d",iCurRequest+1, nURLCount));
+        curl_multi_add_handle(hCurlMultiHandle, asHandles[iCurRequest]);
+    }
+
+    int repeats = 0;
+    void* old_handler = CPLHTTPIgnoreSigPipe();
+    while( true )
+    {
+        int still_running = 0;
+        while (curl_multi_perform(hCurlMultiHandle, &still_running) ==
+                                        CURLM_CALL_MULTI_PERFORM )
+        {
+            // loop
+        }
+        if( !still_running && iCurRequest == nURLCount )
+        {
+            break;
+        }
+
+        bool bRequestsAdded = false;
+        CURLMsg *msg;
+        do
+        {
+            int msgq = 0;
+            msg = curl_multi_info_read(hCurlMultiHandle, &msgq);
+            if(msg && (msg->msg == CURLMSG_DONE))
+            {
+                if( iCurRequest < nURLCount )
+                {
+                    CPLHTTPEmitFetchDebug(papszURL[iCurRequest],
+                              CPLSPrintf(" %d/%d",iCurRequest+1, nURLCount));
+                    curl_multi_add_handle(hCurlMultiHandle,
+                                          asHandles[iCurRequest]);
+                    iCurRequest ++;
+                    bRequestsAdded = true;
+                }
+            }
+        }
+        while(msg);
+
+        if( !bRequestsAdded )
+            CPLMultiPerformWait(hCurlMultiHandle, repeats);
+    }
+    CPLHTTPRestoreSigPipeHandler(old_handler);
+
+    for( int i = 0; i < nURLCount; i++ )
+    {
+        if( asErrorBuffers[i].szBuffer[0] != '\0' )
+            papsResults[i]->pszErrBuf = CPLStrdup(asErrorBuffers[i].szBuffer);
+
+        curl_easy_getinfo( asHandles[i], CURLINFO_CONTENT_TYPE,
+                           &(papsResults[i]->pszContentType) );
+        if( papsResults[i]->pszContentType != nullptr )
+            papsResults[i]->pszContentType = CPLStrdup(papsResults[i]->pszContentType);
+
+        curl_multi_remove_handle(hCurlMultiHandle, asHandles[i]);
+        curl_easy_cleanup(asHandles[i]);
+    }
+
+    if( !pszPersistent )
+        curl_multi_cleanup(hCurlMultiHandle);
+
+    for( size_t i = 0; i < aHeaders.size(); i++ )
+        curl_slist_free_all(aHeaders[i]);
+
+    return papsResults;
+#endif /* def HAVE_CURL */
+}
+
 
 #ifdef HAVE_CURL
 
@@ -1242,6 +1575,18 @@ void CPLHTTPCleanup()
             }
             delete poSessionMap;
             poSessionMap = nullptr;
+        }
+        if( poSessionMultiMap )
+        {
+            for( std::map<CPLString, CURLM *>::iterator oIt =
+                     poSessionMultiMap->begin();
+                 oIt != poSessionMultiMap->end();
+                 oIt++ )
+            {
+                curl_multi_cleanup( oIt->second );
+            }
+            delete poSessionMultiMap;
+            poSessionMultiMap = nullptr;
         }
     }
 
