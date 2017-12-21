@@ -26,14 +26,15 @@
 
 #include "gdal_unit_test.h"
 
-#include <cpl_error.h>
-#include <cpl_hash_set.h>
-#include <cpl_list.h>
-#include <cpl_sha256.h>
-#include <cpl_string.h>
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_list.h"
+#include "cpl_sha256.h"
+#include "cpl_string.h"
 #include "cpl_safemaths.hpp"
 #include "cpl_time.h"
 #include "cpl_json_streaming_parser.h"
+#include "cpl_mem_cache.h"
 
 #include <fstream>
 #include <string>
@@ -1893,4 +1894,65 @@ namespace tut
             ensure( !oParser.GetException().empty() );
         }
     }
+
+    // Test cpl_mem_cache
+    template<>
+    template<>
+    void object::test<30>()
+    {
+        lru11::Cache<int,int> cache(2,1);
+        ensure_equals( cache.size(), 0U );
+        ensure( cache.empty() );
+        cache.clear();
+        int val;
+        ensure( !cache.tryGet(0, val) );
+        try
+        {
+            cache.get(0);
+            ensure( false );
+        }
+        catch( const lru11::KeyNotFound& )
+        {
+            ensure( true );
+        }
+        ensure( !cache.remove(0) );
+        ensure( !cache.contains(0) );
+        ensure_equals( cache.getMaxSize(), 2U );
+        ensure_equals( cache.getElasticity(), 1U );
+        ensure_equals( cache.getMaxAllowedSize(), 3U );
+
+        cache.insert(0, 1);
+        val = 0;
+        ensure( cache.tryGet(0, val) );
+        ensure_equals( val, 1 );
+        ensure_equals( cache.get(0), 1 );
+        ensure_equals( cache.getCopy(0), 1);
+        ensure_equals( cache.size(), 1U );
+        ensure( !cache.empty() );
+        ensure( cache.contains(0) );
+        bool visited = false;
+        auto lambda = [&visited] (const lru11::KeyValuePair<int, int>& kv)
+        {
+            if(kv.key == 0 && kv.value == 1)
+                visited = true;
+        };
+        cache.cwalk( lambda );
+        ensure( visited) ;
+        cache.insert(0, 2);
+        ensure_equals( cache.get(0), 2 );
+        ensure_equals( cache.size(), 1U );
+        cache.insert(1, 3);
+        cache.insert(2, 4);
+        ensure_equals( cache.size(), 3U );
+        cache.insert(3, 5);
+        ensure_equals( cache.size(), 2U );
+        ensure( cache.contains(2) );
+        ensure( cache.contains(3) );
+        ensure( !cache.contains(0) );
+        ensure( !cache.contains(1) );
+        ensure( cache.remove(2) );
+        ensure( !cache.contains(2) );
+        ensure_equals( cache.size(), 1U );
+    }
+
 } // namespace tut
