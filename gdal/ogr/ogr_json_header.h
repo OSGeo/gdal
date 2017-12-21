@@ -39,4 +39,24 @@
 #define json_object_object_foreachC(obj,iter) \
  for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : nullptr) != nullptr; iter.entry = iter.entry->next)
 
+
+#include <memory>
+
+/*! @cond Doxygen_Suppress */
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+struct JSonObjectReleaser
+{
+    void operator()(json_object* poObj) { json_object_put(poObj); }
+};
+
+using JsonObjUniquePtr = std::unique_ptr< json_object, JSonObjectReleaser>;
+
+} // extern "C++"
+
+#endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
+/*! @endcond */
+
 #endif /* OGR_JSON_HEADER_H */
