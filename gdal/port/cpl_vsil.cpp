@@ -340,6 +340,38 @@ int VSIMkdir( const char *pszPathname, long mode )
 }
 
 /************************************************************************/
+/*                       VSIMkdirRecursive()                            */
+/************************************************************************/
+
+/**
+ * \brief Create a directory and all its ancestors
+ *
+ * @param pszPathname the path to the directory to create. UTF-8 encoded.
+ * @param mode the permissions mode.
+ *
+ * @return 0 on success or -1 on an error.
+ * @since GDAL 2.3
+ */
+
+int VSIMkdirRecursive( const char *pszPathname, long mode )
+{
+    VSIStatBufL sStat;
+    CPLString osPathname(pszPathname);
+    CPLString osParentPath(CPLGetPath(osPathname));
+    if( VSIStatL( osParentPath, &sStat) != 0 )
+    {
+        if( VSIMkdirRecursive( osParentPath, mode ) != 0 )
+            return -1;
+    }
+    if( VSIStatL( osPathname, &sStat) == 0 &&
+        VSI_ISDIR(sStat.st_mode) )
+    {
+        return 0;
+    }
+    return VSIMkdir( osPathname, mode );
+}
+
+/************************************************************************/
 /*                             VSIUnlink()                              */
 /************************************************************************/
 
@@ -425,6 +457,56 @@ int VSIRmdir( const char * pszDirname )
         VSIFileManager::GetHandler( pszDirname );
 
     return poFSHandler->Rmdir( pszDirname );
+}
+
+/************************************************************************/
+/*                              VSIRmdir()                              */
+/************************************************************************/
+
+/**
+ * \brief Delete a directory recursively
+ *
+ * Deletes a directory object and its content from the file system.
+ *
+ * @return 0 on success or -1 on an error.
+ * @since GDAL 2.3
+ */
+
+int VSIRmdirRecursive( const char* pszDirname )
+{
+    char** papszFiles = VSIReadDir(pszDirname);
+    for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
+    {
+        if( strcmp(*papszIter, ".") == 0 ||
+            strcmp(*papszIter, "..") == 0 )
+        {
+            continue;
+        }
+        VSIStatBufL sStat;
+        CPLString osFilename(
+            CPLFormFilename(pszDirname, *papszIter, nullptr));
+        if( VSIStatL(osFilename, &sStat) == 0 )
+        {
+            if( VSI_ISDIR( sStat.st_mode ) )
+            {
+                if( VSIRmdirRecursive(osFilename) != 0 )
+                {
+                    CSLDestroy(papszFiles);
+                    return -1;
+                }
+            }
+            else
+            {
+                if( VSIUnlink(osFilename) != 0 )
+                {
+                    CSLDestroy(papszFiles);
+                    return -1;
+                }
+            }
+        }
+    }
+    CSLDestroy(papszFiles);
+    return VSIRmdir(pszDirname);
 }
 
 /************************************************************************/
