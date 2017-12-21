@@ -993,6 +993,8 @@ def rda_real_cache_dir():
     gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
 
     handler = webserver.SequentialHandler()
+    if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'authorization.json')):
+        handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
     handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
