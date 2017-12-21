@@ -1003,6 +1003,22 @@ def rda_real_cache_dir():
     if os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo')):
         return 'fail'
 
+    # 493 = 0755
+    gdal.MkdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo', 'baz'), 493)
+
+    handler = webserver.SequentialHandler()
+    if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'authorization.json')):
+        handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
+    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            gdal.Open('{"graph-id":"foo","node-id":"bar"}')
+
+    if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'foo', 'baz')):
+        return 'fail'
+
+    gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
+
     return 'success'
 
 ###############################################################################
@@ -1052,7 +1068,7 @@ def rda_real_expired_authentication():
 
     handler = webserver.SequentialHandler()
     # As we have a 60 second security margin, expires_in=1 will already have expired
-    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": "1" }')
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 1 }')
     handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
@@ -1141,6 +1157,38 @@ def rda_bad_tile():
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
     handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile_data)
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
+        with gdaltest.error_handler():
+            data = ds.GetRasterBand(1).ReadBlock(0,0)
+        if data is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
+    handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
+        with gdaltest.error_handler():
+            data = ds.ReadRaster()
+        if data is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    ds = None
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar"}')
