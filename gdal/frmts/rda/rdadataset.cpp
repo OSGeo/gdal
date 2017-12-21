@@ -148,7 +148,7 @@ class GDALRDADataset: public GDALDataset
                              const void* pData, size_t nDataLen );
 
         char**    GetHTTPOptions();
-        GByte*    Download(const CPLString& osURL, size_t* pnLength = nullptr);
+        GByte*    Download(const CPLString& osURL);
         bool      Open( GDALOpenInfo* poOpenInfo );
 
         std::string MakeKeyCache(int64_t nTileX, int64_t nTileY);
@@ -277,7 +277,7 @@ GDALRDADataset::~GDALRDADataset()
             }
             nCount ++;
         }
-        if( nCount == 1 )
+        if( nCount == 0 )
         {
             VSIRmdir(CPLGetPath(m_osTileCacheDir));
         }
@@ -678,7 +678,7 @@ char** GDALRDADataset::GetHTTPOptions()
 /*                            Download()                                */
 /************************************************************************/
 
-GByte* GDALRDADataset::Download(const CPLString& osURL, size_t* pnLength)
+GByte* GDALRDADataset::Download(const CPLString& osURL)
 {
     char** papszOptions = GetHTTPOptions();
     const char* pszURL = osURL.c_str();
@@ -686,9 +686,6 @@ GByte* GDALRDADataset::Download(const CPLString& osURL, size_t* pnLength)
     CSLDestroy(papszOptions);
     if( pasResult == nullptr )
         return nullptr;
-
-    if( pnLength )
-        *pnLength = 0;
 
     CPLHTTPResult* psResult = pasResult[0];
     if( psResult->pszErrBuf != nullptr )
@@ -717,8 +714,6 @@ GByte* GDALRDADataset::Download(const CPLString& osURL, size_t* pnLength)
     CPLDebug("RDA", "%s", psResult->pabyData);
     GByte* pabyRes = psResult->pabyData;
     psResult->pabyData = nullptr;
-    if( pnLength )
-        *pnLength = static_cast<size_t>(psResult->nDataLen);
     CPLHTTPDestroyResult(psResult);
     CPLFree(pasResult);
     return pabyRes;
