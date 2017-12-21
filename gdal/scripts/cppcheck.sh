@@ -33,6 +33,7 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         --include=port/cpl_config.h \
         --include=port/cpl_port.h \
         -I port -I gcore -I ogr -I ogr/ogrsf_frmts \
+        -i cpl_mem_cache.h \
         -i ogrdissolve.cpp \
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
@@ -312,7 +313,7 @@ if [[ $? -eq 0 ]] ; then
     ret_code=1
 fi
 
-grep "functionStatic" ${LOG_FILE} | grep -v "OGRSQLiteDataSource::OpenRaster" | grep -v "OGRSQLiteDataSource::OpenRasterSubDataset"
+grep "functionStatic" ${LOG_FILE} | grep -v "OGRSQLiteDataSource::OpenRaster" | grep -v "OGRSQLiteDataSource::OpenRasterSubDataset" | grep -v cpl_mem_cache
 if [[ $? -eq 0 ]] ; then
     echo "functionStatic check failed"
     ret_code=1
