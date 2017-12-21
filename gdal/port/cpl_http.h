@@ -88,6 +88,10 @@ typedef struct {
 
 int CPL_DLL   CPLHTTPEnabled( void );
 CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
+CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
+                                           int nURLCount,
+                                           int nMaxSimultaneous,
+                                           char **papszOptions);
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
@@ -125,6 +129,7 @@ char** CPLHTTPGetOptionsFromEnv();
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay);
 void* CPLHTTPIgnoreSigPipe();
 void CPLHTTPRestoreSigPipeHandler(void* old_handler);
+bool CPLMultiPerformWait(void* hCurlMultiHandle, int& repeats);
 /*! @endcond */
 
 bool CPLIsMachinePotentiallyGCEInstance();
