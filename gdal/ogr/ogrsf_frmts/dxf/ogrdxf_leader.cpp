@@ -1256,19 +1256,29 @@ static std::vector<DXFTriple> GetBSplineControlPoints(
 static void InterpolateSpline( OGRLineString* const poLine,
     const DXFTriple& oEndTangentDirection )
 {
-    const int nDataPoints = static_cast<int>( poLine->getNumPoints() );
+    int nDataPoints = static_cast<int>( poLine->getNumPoints() );
     if ( nDataPoints < 2 )
         return;
 
     // Transfer line vertices into DXFTriple objects
     std::vector<DXFTriple> aoDataPoints;
+    OGRPoint oPrevPoint;
     for( int iIndex = 0; iIndex < nDataPoints; iIndex++ )
     {
         OGRPoint oPoint;
         poLine->getPoint( iIndex, &oPoint );
+
+        // Remove sequential duplicate points
+        if( iIndex > 0 && oPrevPoint.Equals( &oPoint ) )
+            continue;
+
         aoDataPoints.push_back( DXFTriple( oPoint.getX(), oPoint.getY(),
             oPoint.getZ() ) );
+        oPrevPoint = oPoint;
     }
+    nDataPoints = static_cast<int>( aoDataPoints.size() );
+    if( nDataPoints < 2 )
+        return;
 
     // Work out the chord length parameterisation
     std::vector<double> adfParameters;
