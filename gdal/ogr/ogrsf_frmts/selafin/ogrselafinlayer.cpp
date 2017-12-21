@@ -191,7 +191,11 @@ OGRFeature* OGRSelafinLayer::GetFeature(GIntBig nFID) {
         poPolygon->addRingDirectly(poLinearRing);
         poPolygon->closeRings();
         poFeature->SetGeometryDirectly(poPolygon);
-        for (int i=0;i<poHeader->nVar;++i) poFeature->SetField(i,anData[i]/poHeader->nPointsPerElement);
+        if( poHeader->nPointsPerElement )
+        {
+            for (int i=0;i<poHeader->nVar;++i)
+                poFeature->SetField(i,anData[i]/poHeader->nPointsPerElement);
+        }
         CPLFree(anData);
         return poFeature;
     }
