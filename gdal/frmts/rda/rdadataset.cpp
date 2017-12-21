@@ -581,7 +581,7 @@ bool GDALRDADataset::ParseAuthorizationResponse(const CPLString& osAuth)
                  osAuth.c_str());
         return false;
     }
-    JsonObjUniquePtr oObj(poObj);
+    JsonObjectUniquePtr oObj(poObj);
 
     json_object* poAccessToken =
         json_ex_get_object_by_path(poObj, "access_token");
@@ -621,7 +621,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
                  "Invalid JSon document as dataset name");
         return false;
     }
-    JsonObjUniquePtr oObj(poObj);
+    JsonObjectUniquePtr oObj(poObj);
 
     json_object* poGraphId =
         CPL_json_object_object_get(poObj, "graph-id");
@@ -855,7 +855,7 @@ bool GDALRDADataset::ReadImageMetadata()
     if( poObj == nullptr )
         return false;
 
-    JsonObjUniquePtr oObj(poObj);
+    JsonObjectUniquePtr oObj(poObj);
 
     bool bError = false;
     bool bNonFatalError = false;
@@ -1023,7 +1023,7 @@ bool GDALRDADataset::ReadGeoreferencing()
     if( poObj == nullptr )
         return false;
 
-    JsonObjUniquePtr oObj(poObj);
+    JsonObjectUniquePtr oObj(poObj);
 
     bool bError = false;
     CPLString osSRS =
@@ -1109,7 +1109,7 @@ bool GDALRDADataset::ReadRPCs()
     if( poObj == nullptr )
         return false;
 
-    JsonObjUniquePtr oObj(poObj);
+    JsonObjectUniquePtr oObj(poObj);
 
     bool bError = false;
 
