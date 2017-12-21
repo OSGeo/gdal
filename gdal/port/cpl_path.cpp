@@ -1128,3 +1128,28 @@ const char *CPLExpandTilde( const char *pszFilename )
 
     return CPLFormFilename( pszHome, pszFilename + 2, nullptr );
 }
+
+/************************************************************************/
+/*                         CPLGetHomeDir()                              */
+/************************************************************************/
+
+/**
+ * Return the path to the home directory
+ *
+ * That is the value of the USERPROFILE environment variable on Windows,
+ * or HOME on other platforms.
+ *
+ * @return the home directory, or NULL.
+ *
+ * @since GDAL 2.3
+ */
+
+const char *CPLGetHomeDir()
+
+{
+#ifdef WIN32
+    return CPLGetConfigOption("USERPROFILE", nullptr);
+#else
+    return CPLGetConfigOption("HOME", nullptr);
+#endif
+}
