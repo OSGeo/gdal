@@ -3535,7 +3535,7 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic wmts $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda $OPT_GDAL_FORMATS"
 
 fi
 
