@@ -523,6 +523,22 @@ class CPL_DLL CPLStringList
     operator char**(void) { return List(); }
 };
 
+#ifdef GDAL_COMPILATION
+
+#include <memory>
+
+/*! @cond Doxygen_Suppress */
+struct CSLDestroyReleaser
+{
+    void operator()(char** papszStr) { CSLDestroy(papszStr); }
+};
+/*! @endcond */
+
+/** Unique pointer type to use with CSL functions returning a char** */
+using CSLUniquePtr = std::unique_ptr< char*, CSLDestroyReleaser>;
+
+#endif
+
 } // extern "C++"
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
