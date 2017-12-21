@@ -164,7 +164,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (read_dir) wrapper_VSIReadDirEx;
 %rename (read_dir_recursive) VSIReadDirRecursive;
 %rename (mkdir) VSIMkdir;
+%rename (mkdir_recursive) VSIMkdirRecursive;
 %rename (rmdir) VSIRmdir;
+%rename (rmdir_recursive) VSIRmdirRecursive;
 %rename (rename) VSIRename;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) wrapper_CPLGetConfigOption;
@@ -188,7 +190,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (ReadDir) wrapper_VSIReadDirEx;
 %rename (ReadDirRecursive) VSIReadDirRecursive;
 %rename (Mkdir) VSIMkdir;
+%rename (MkdirRecursive) VSIMkdirRecursive;
 %rename (Rmdir) VSIRmdir;
+%rename (RmdirRecursive) VSIRmdirRecursive;
 %rename (Rename) VSIRename;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
@@ -442,6 +446,10 @@ int wrapper_HasThreadSupport()
 /* Added for GDAL 1.8 */
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
+
+/* Added for GDAL 2.3 */
+VSI_RETVAL VSIMkdirRecursive(const char *utf8_path, int mode );
+VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 
 %apply (const char* utf8_path) {(const char* pszOld)};
 %apply (const char* utf8_path) {(const char* pszNew)};
