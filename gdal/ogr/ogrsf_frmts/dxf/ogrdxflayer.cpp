@@ -1578,9 +1578,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
           case 73:
             nNumElements = atoi(szLineBuf);
             // No-one should ever need more than 1000 elements!
-            if( nNumElements > 1000 )
+            if( nNumElements <= 0 || nNumElements > 1000 )
             {
-                CPLDebug( "DXF", "Number of MLINE elements (73) exceeds 1000" );
+                CPLDebug( "DXF", "Invalid number of MLINE elements (73): %s",
+                          szLineBuf );
                 DXF_LAYER_READER_ERROR();
                 delete poFeature;
                 return nullptr;
