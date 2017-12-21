@@ -1949,6 +1949,20 @@ def config_option(key, val):
     gdal.SetConfigOption(key, oldval)
 
 ###############################################################################
+# Temporarily define a set of configuration options
+
+@contextlib.contextmanager
+def config_options(options):
+  oldvals = { key: gdal.GetConfigOption(key) for key in options }
+  for key in options:
+    gdal.SetConfigOption(key, options[key])
+  try:
+    yield
+  finally:
+    for key in options:
+        gdal.SetConfigOption(key, oldvals[key])
+
+###############################################################################
 run_func = gdaltestaux.run_func
 urlescape = gdaltestaux.urlescape
 gdalurlopen = gdaltestaux.gdalurlopen
