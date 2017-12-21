@@ -1357,6 +1357,14 @@ def Rmdir(*args):
     """Rmdir(char const * utf8_path) -> VSI_RETVAL"""
     return _gdal.Rmdir(*args)
 
+def MkdirRecursive(*args):
+    """MkdirRecursive(char const * utf8_path, int mode) -> VSI_RETVAL"""
+    return _gdal.MkdirRecursive(*args)
+
+def RmdirRecursive(*args):
+    """RmdirRecursive(char const * utf8_path) -> VSI_RETVAL"""
+    return _gdal.RmdirRecursive(*args)
+
 def Rename(*args):
     """Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"""
     return _gdal.Rename(*args)
@@ -1926,6 +1934,11 @@ class Dataset(MajorObject):
     def WriteRaster(self, *args, **kwargs):
         """WriteRaster(Dataset self, int xoff, int yoff, int xsize, int ysize, GIntBig buf_len, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, GIntBig * buf_pixel_space=None, GIntBig * buf_line_space=None, GIntBig * buf_band_space=None) -> CPLErr"""
         return _gdal.Dataset_WriteRaster(self, *args, **kwargs)
+
+
+    def AdviseRead(self, *args):
+        """AdviseRead(Dataset self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, int band_list=0, char ** options=None) -> CPLErr"""
+        return _gdal.Dataset_AdviseRead(self, *args)
 
 
     def BeginAsyncReader(self, *args, **kwargs):
@@ -2503,6 +2516,11 @@ class Band(MajorObject):
     def GetDataCoverageStatus(self, *args):
         """GetDataCoverageStatus(Band self, int nXOff, int nYOff, int nXSize, int nYSize, int nMaskFlagStop=0) -> int"""
         return _gdal.Band_GetDataCoverageStatus(self, *args)
+
+
+    def AdviseRead(self, *args):
+        """AdviseRead(Band self, int xoff, int yoff, int xsize, int ysize, int * buf_xsize=None, int * buf_ysize=None, GDALDataType * buf_type=None, char ** options=None) -> CPLErr"""
+        return _gdal.Band_AdviseRead(self, *args)
 
 
     def ReadRaster1(self, *args, **kwargs):

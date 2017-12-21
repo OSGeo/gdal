@@ -701,6 +701,27 @@ CPLErr SetDefaultHistogram( double min, double max,
     %clear (double *);
 #endif
 
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
+                    int *buf_xsize = 0, int *buf_ysize = 0,
+                    GDALDataType *buf_type = 0,
+                    char** options = NULL )
+{
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      ntype = GDALGetRasterDataType( self );
+    }
+    return GDALRasterAdviseRead(self, xoff, yoff, xsize, ysize,
+                                nxsize, nysize, ntype, options);
+}
+%clear (GDALDataType *buf_type);
+%clear (int band_list, int *pband_list );
+
+
 } /* %extend */
 
 };
