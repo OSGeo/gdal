@@ -150,7 +150,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
     UINT uOldErrorMode =
         SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
 
-#if _MSC_VER >= 1310 || __MSVCRT_VERSION__ >= 0x0601
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
     if( CPLTestBool( CPLGetConfigOption( "GDAL_FILENAME_IS_UTF8", "YES" ) ) )
     {
         wchar_t *pwszFilename =

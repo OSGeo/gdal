@@ -179,22 +179,16 @@
 /*      Which versions of C++ are available.                            */
 /* -------------------------------------------------------------------- */
 
-/* MSVC fails to define a decent value of __cplusplus. Try to target VS2013 */
+/* MSVC fails to define a decent value of __cplusplus. Try to target VS2015*/
 /* as a minimum */
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#  if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1800))
+#  if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
 #    error Must have C++11 or newer.
 #  endif
 #  if __cplusplus >= 201402L
 #    define HAVE_CXX14 1
 #  endif
-#  if !(defined(_MSC_VER) && _MSC_VER < 1900)
-// List initialization not supported with MSVC_VER=1800 / VS 2013
-/*! @cond Doxygen_Suppress */
-#    define CXX11_LIST_INITIALIZATION 1
-/*! @endcond */
-#endif
 /* TODO(schwehr): What is the correct test for C++ 17? */
 #endif  /* __cplusplus */
 
@@ -291,9 +285,7 @@ typedef int              GPtrDiff_t;
 
 #ifdef GDAL_COMPILATION
 #if HAVE_UINTPTR_T
-#if !defined(_MSC_VER) || _MSC_VER > 1500
 #include <stdint.h>
-#endif
 typedef uintptr_t GUIntptr_t;
 #elif SIZEOF_VOIDP == 8
 typedef GUIntBig GUIntptr_t;
@@ -320,12 +312,7 @@ typedef unsigned int  GUIntptr_t;
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
 /*! @cond Doxygen_Suppress */
-/* Workaround VC6 bug */
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-#define GUINTBIG_TO_DOUBLE(x) (double)(GIntBig)(x)
-#else
 #define GUINTBIG_TO_DOUBLE(x) (double)(x)
-#endif
 /*! @endcond */
 
 /*! @cond Doxygen_Suppress */
@@ -915,27 +902,20 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
+#if defined(_MSC_VER) && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
 #include <sal.h>
-# if _MSC_VER > 1400
 /** Macro into which to wrap the format argument of a printf-like function.
  * Only used if ANALYZE=1 is specified to nmake */
 #  define CPL_FORMAT_STRING(arg) _Printf_format_string_ arg
 /** Macro into which to wrap the format argument of a sscanf-like function.
  * Only used if ANALYZE=1 is specified to nmake */
 #  define CPL_SCANF_FORMAT_STRING(arg) _Scanf_format_string_ arg
-# else
-/** Macro into which to wrap the format argument of a printf-like function */
-#  define CPL_FORMAT_STRING(arg) __format_string arg
-/** Macro into which to wrap the format argument of a sscanf-like function. */
-#  define CPL_SCANF_FORMAT_STRING(arg) arg
-# endif
 #else
 /** Macro into which to wrap the format argument of a printf-like function */
 # define CPL_FORMAT_STRING(arg) arg
 /** Macro into which to wrap the format argument of a sscanf-like function. */
 # define CPL_SCANF_FORMAT_STRING(arg) arg
-#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 && defined(GDAL_COMPILATION) */
+#endif /* defined(_MSC_VER) && defined(GDAL_COMPILATION) */
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** Qualifier to warn when the return value of a function is not used */
