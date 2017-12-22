@@ -118,8 +118,7 @@ class GDALRDADataset: public GDALDataset
         bool      m_bTriedReadGeoreferencing = false;
         CPLString m_osWKT;
         bool      m_bGotGeoTransform = false;
-        std::array<double,6> m_adfGeoTransform =
-            std::array<double,6>{{ 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }};
+        std::array<double,6> m_adfGeoTransform{{ 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 }};
         bool      m_bTriedReadRPC = false;
 
         int       m_nXOffAdvise = 0;
