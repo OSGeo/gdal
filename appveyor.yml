@@ -1,27 +1,24 @@
 environment:
   matrix:
-  - platform: x64
-    VSCOMNTOOLS: $(VS140COMNTOOLS)
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    platform: x86
+    VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+    SDK: release-1911
+    MSVC_VER: 1911
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+    platform: x64
+    VCVARSALL: $(VS140COMNTOOLS)\..\..\VC\vcvarsall.bat
     SDK: release-1900-x64
     MSVC_VER: 1900
-# Disabled to be faster
-#  - platform: x64
-#    VSCOMNTOOLS: $(VS120COMNTOOLS)
-#    SDK: release-1800-x64
-#    MSVC_VER: 1800
-  - platform: x86
-    VSCOMNTOOLS: $(VS120COMNTOOLS)
-    SDK: release-1800
-    MSVC_VER: 1800
 
 shallow_clone: true
 
 install:
 - if "%platform%" == "x86" SET PATH=c:\python27;%PATH%
 - if "%platform%" == "x64" SET PATH=c:\Python27-x64;%PATH%
-- if "%platform%" == "x86" call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat"
+- if "%platform%" == "x86" call "%VCVARSALL%" x86
 - if "%platform%" == "x64" "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-- if "%platform%" == "x64" call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" x86_amd64
+- if "%platform%" == "x64" call "%VCVARSALL%" x86_amd64
 - if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
 - set SDK_ZIP=%SDK%-dev.zip
 - set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
