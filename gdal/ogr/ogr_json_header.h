@@ -47,12 +47,12 @@
 
 extern "C++"
 {
-struct JSonObjectReleaser
+struct JsonObjectReleaser
 {
     void operator()(json_object* poObj) { json_object_put(poObj); }
 };
 
-using JsonObjectUniquePtr = std::unique_ptr<json_object, JSonObjectReleaser>;
+using JsonObjectUniquePtr = std::unique_ptr<json_object, JsonObjectReleaser>;
 
 } // extern "C++"
 
