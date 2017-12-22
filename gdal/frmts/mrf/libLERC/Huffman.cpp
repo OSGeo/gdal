@@ -233,7 +233,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
 
     m_codeTable.resize(size);
     std::fill( m_codeTable.begin(), m_codeTable.end(),
-                std::pair<short, unsigned int>(0, 0) );
+                std::pair<short, unsigned int>(static_cast<short>(0), 0) );
 
     if( GetIndexWrapAround(i0, size) >= size ||
         GetIndexWrapAround(i1 - 1, size) >= size )
