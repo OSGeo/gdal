@@ -3,7 +3,7 @@ GDAL - Geospatial Data Abstraction Library
 
 | Environment              | Status        |
 | ------------------------ |:-------------:|
-| Ubuntu 12.04 64 bit      | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=precise_clang&label=precise_clang)](https://travis-ci.org/OSGeo/gdal) |
+| Ubuntu 12.04 64 bit      | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=precise&label=precise)](https://travis-ci.org/OSGeo/gdal) |
 | Ubuntu 14.04 32 bit      | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=trusty_32bit&label=trusty_32bit)](https://travis-ci.org/OSGeo/gdal) |
 | Ubuntu 14.04 64 bit      | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=trusty_clang&label=trusty_clang)](https://travis-ci.org/OSGeo/gdal) |
 | Ubuntu 16.04 64 / CL 3.9 | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=ubuntu_1604&label=ubuntu_1604)](https://travis-ci.org/OSGeo/gdal) |
