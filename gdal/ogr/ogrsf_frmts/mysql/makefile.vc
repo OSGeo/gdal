@@ -8,10 +8,8 @@ GDAL_ROOT	=	..\..\..
 
 EXTRAFLAGS = -I.. -I..\.. -I$(MYSQL_INC_DIR)
 
-!IF $(MSVC_VER) >= 1900
 # Visual Studio 2015 has timespec structure, so we should prevent my_global.h (in mysql 5.7.12 e.g) from redefining it
 EXTRAFLAGS = $(EXTRAFLAGS) -DHAVE_STRUCT_TIMESPEC
-!ENDIF
 
 default:	$(OBJ)
 
