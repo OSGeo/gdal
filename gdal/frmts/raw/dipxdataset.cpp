@@ -118,15 +118,15 @@ DIPExDataset::DIPExDataset() :
     sHeader.H4322 = 0;
     fill( sHeader.unused1,
           sHeader.unused1 + CPL_ARRAYSIZE(sHeader.unused1),
-          0 );
+          static_cast<char>(0) );
     fill( sHeader.IH19,
           sHeader.IH19 + CPL_ARRAYSIZE(sHeader.IH19),
-          0 );
+          static_cast<GByte>(0) );
     sHeader.IH20 = 0;
     sHeader.SRID = 0;
     fill( sHeader.unused2,
           sHeader.unused2 + CPL_ARRAYSIZE(sHeader.unused2),
-          0 );
+          static_cast<char>(0) );
     sHeader.YOffset = 0.0;
     sHeader.XOffset = 0.0;
     sHeader.YPixSize = 0.0;
@@ -137,13 +137,13 @@ DIPExDataset::DIPExDataset() :
     sHeader.Matrix[3] = 0.0;
     fill( sHeader.unused3,
           sHeader.unused3 + CPL_ARRAYSIZE(sHeader.unused3),
-          0 );
+          static_cast<char>(0) );
     fill( sHeader.ColorTable,
           sHeader.ColorTable + CPL_ARRAYSIZE(sHeader.ColorTable),
-          0 );
+          static_cast<GUInt16>(0) );
     fill( sHeader.unused4,
           sHeader.unused4 + CPL_ARRAYSIZE(sHeader.unused4),
-          0 );
+          static_cast<char>(0) );
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;

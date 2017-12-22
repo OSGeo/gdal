@@ -208,7 +208,7 @@ CPLErr JDEMRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 JDEMDataset::JDEMDataset() :
     fp(nullptr)
 {
-    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), 0);
+    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), static_cast<GByte>(0));
 }
 
 /************************************************************************/

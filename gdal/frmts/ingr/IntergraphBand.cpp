@@ -61,8 +61,8 @@ INGR_TileHeader::INGR_TileHeader() :
     TileSize(0),
     Reserved3(0)
 {
-    fill( Reserved, Reserved + CPL_ARRAYSIZE(Reserved), 0 );
-    fill( Reserved2, Reserved2 + CPL_ARRAYSIZE(Reserved2), 0 );
+    fill( Reserved, Reserved + CPL_ARRAYSIZE(Reserved), static_cast<uint16>(0) );
+    fill( Reserved2, Reserved2 + CPL_ARRAYSIZE(Reserved2), static_cast<uint8>(0) );
     First.Start = 0;
     First.Allocated = 0;
     First.Used = 0;
