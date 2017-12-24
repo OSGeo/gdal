@@ -41,6 +41,7 @@
 #include <cmath>
 
 #include <algorithm>
+#include <vector>
 
 /* Cf PDF reference v1.7, Appendix C, page 993 */
 #define MAXIMUM_SIZE_IN_UNITS   14400
@@ -2165,6 +2166,114 @@ static void DrawGeometry(VSILFILE* fp, OGRGeometryH hGeom, double adfMatrix[4], 
 }
 
 /************************************************************************/
+/*                           CalculateText()                            */
+/************************************************************************/
+
+static void CalculateText( const CPLString& osText, CPLString& osFont,
+    const double dfSize, const bool bBold, const bool bItalic,
+    double& dfWidth, double& dfHeight )
+{
+    // Character widths of Helvetica, Win-1252 characters 32 to 255
+    // Helvetica bold, oblique and bold oblique have their own widths,
+    // but for now we will put up with these widths on all Helvetica variants
+    static const GUInt16 anHelveticaCharWidths[] = {
+        569, 569, 727, 1139,1139,1821,1366,391, 682, 682, 797, 1196,569, 682, 569, 569,
+        1139,1139,1139,1139,1139,1139,1139,1139,1139,1139,569, 569, 1196,1196,1196,1139,
+        2079,1366,1366,1479,1479,1366,1251,1593,1479,569, 1024,1366,1139,1706,1479,1593,
+        1366,1593,1479,1366,1251,1479,1366,1933,1366,1366,1251,569, 569, 569, 961, 1139,
+        682, 1139,1139,1024,1139,1139,569, 1139,1139,455, 455, 1024,455, 1706,1139,1139,
+        1139,1139,682, 1024,569, 1139,1024,1479,1024,1024,1024,684, 532, 684, 1196,1536,
+        1139,2048,455, 1139,682, 2048,1139,1139,682, 2048,1366,682, 2048,2048,1251,2048,
+        2048,455, 455, 682, 682, 717, 1139,2048,682, 2048,1024,682, 1933,2048,1024,1366,
+        569, 682, 1139,1139,1139,1139,532, 1139,682, 1509,758, 1139,1196,682, 1509,1131,
+        819, 1124,682, 682, 682, 1180,1100,682, 682, 682, 748, 1139,1708,1708,1708,1251,
+        1366,1366,1366,1366,1366,1366,2048,1479,1366,1366,1366,1366,569, 569, 569, 569,
+        1479,1479,1593,1593,1593,1593,1593,1196,1593,1479,1479,1479,1479,1366,1366,1251,
+        1139,1139,1139,1139,1139,1139,1821,1024,1139,1139,1139,1139,569, 569, 569, 569,
+        1139,1139,1139,1139,1139,1139,1139,1124,1251,1139,1139,1139,1139,1024,1139,1024
+    };
+
+    // Character widths of Times-Roman, Win-1252 characters 32 to 255
+    // Times bold, italic and bold italic have their own widths,
+    // but for now we will put up with these widths on all Times variants
+    static const GUInt16 anTimesCharWidths[] = {
+        512, 682, 836, 1024,1024,1706,1593,369, 682, 682, 1024,1155,512, 682, 512, 569,
+        1024,1024,1024,1024,1024,1024,1024,1024,1024,1024,569, 569, 1155,1155,1155,909,
+        1886,1479,1366,1366,1479,1251,1139,1479,1479,682, 797, 1479,1251,1821,1479,1479,
+        1139,1479,1366,1139,1251,1479,1479,1933,1479,1479,1251,682, 569, 682, 961, 1024,
+        682, 909, 1024,909, 1024,909, 682, 1024,1024,569, 569, 1024,569, 1593,1024,1024,
+        1024,1024,682, 797, 569, 1024,1024,1479,1024,1024,909, 983, 410, 983, 1108,0,
+        1024,2048,682, 1024,909, 2048,1024,1024,682 ,2048,1139,682 ,1821,2048,1251,2048,
+        2048,682, 682, 909, 909, 717 ,1024,2048,682 ,2007,797, 682 ,1479,2048,909, 1479,
+        512, 682, 1024,1024,1024,1024,410, 1024,682, 1556,565, 1024,1155,682, 1556,1024,
+        819, 1124,614, 614, 682, 1180,928, 682, 682, 614, 635, 1024,1536,1536,1536,909,
+        1479,1479,1479,1479,1479,1479,1821,1366,1251,1251,1251,1251,682, 682, 682, 682,
+        1479,1479,1479,1479,1479,1479,1479,1155,1479,1479,1479,1479,1479,1479,1139,1024,
+        909, 909, 909, 909, 909, 909, 1366,909, 909, 909, 909, 909, 569, 569, 569, 569,
+        1024,1024,1024,1024,1024,1024,1024,1124,1024,1024,1024,1024,1024,1024,1024,1024
+    };
+
+    const GUInt16* panCharacterWidths = nullptr;
+
+    if( STARTS_WITH_CI( osFont, "times" ) ||
+        osFont.find( "Serif", 0 ) != std::string::npos )
+    {
+        if( bBold && bItalic )
+            osFont = "Times-BoldItalic";
+        else if( bBold )
+            osFont = "Times-Bold";
+        else if( bItalic )
+            osFont = "Times-Italic";
+        else
+            osFont = "Times-Roman";
+
+        panCharacterWidths = anTimesCharWidths;
+        dfHeight = dfSize * 1356.0 / 2048;
+    }
+    else if( STARTS_WITH_CI( osFont, "courier" ) ||
+        osFont.find( "Mono", 0 ) != std::string::npos )
+    {
+        if( bBold && bItalic )
+            osFont = "Courier-BoldOblique";
+        else if( bBold )
+            osFont = "Courier-Bold";
+        else if( bItalic )
+            osFont = "Courier-Oblique";
+        else
+            osFont = "Courier";
+
+        dfHeight = dfSize * 1170.0 / 2048;
+    }
+    else
+    {
+        if( bBold && bItalic )
+            osFont = "Helvetica-BoldOblique";
+        else if( bBold )
+            osFont = "Helvetica-Bold";
+        else if( bItalic )
+            osFont = "Helvetica-Oblique";
+        else
+            osFont = "Helvetica";
+
+        panCharacterWidths = anHelveticaCharWidths;
+        dfHeight = dfSize * 1467.0 / 2048;
+    }
+
+    dfWidth = 0.0;
+    for( const char& ch : osText )
+    {
+        const int nCh = static_cast<int>( ch );
+        if( nCh < 32 )
+            continue;
+
+        dfWidth += ( panCharacterWidths ?
+            panCharacterWidths[nCh - 32] :
+            1229 ); // Courier's fixed character width
+    }
+    dfWidth *= dfSize / 2048;
+}
+
+/************************************************************************/
 /*                          WriteOGRFeature()                           */
 /************************************************************************/
 
@@ -2245,10 +2354,16 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
     unsigned int nSymbolG = 0;
     unsigned int nSymbolB = 0;
     unsigned int nSymbolA = 255;
+    bool bHasPenBrushOrSymbol = false;
+    CPLString osTextFont;
+    bool bTextBold = false;
+    bool bTextItalic = false;
     double dfTextSize = 12.0;
     double dfTextAngle = 0.0;
+    double dfTextStretch = 1.0;
     double dfTextDx = 0.0;
     double dfTextDy = 0.0;
+    int nTextAnchor = 1;
     double dfPenWidth = 1.0;
     double dfSymbolSize = 5.0;
     CPLString osDashArray;
@@ -2266,8 +2381,12 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         OGRStyleToolH hTool = OGR_SM_GetPart(hSM, iPart, nullptr);
         if (hTool)
         {
+            // Figure out how to involve adfMatrix[3] here and below
+            OGR_ST_SetUnit( hTool, OGRSTUMM, 1000.0 / adfMatrix[1] );
             if (OGR_ST_GetType(hTool) == OGRSTCPen)
             {
+                bHasPenBrushOrSymbol = true;
+
                 int bIsNull = TRUE;
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTPenColor, &bIsNull);
                 if (pszColor && !bIsNull)
@@ -2296,7 +2415,9 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     {
                         for(int i=0;i<nTokens;i++)
                         {
-                            osDashArray += CPLSPrintf("%d ", atoi(papszTokens[i]));
+                            double dfElement = CPLAtof(papszTokens[i]);
+                            dfElement *= adfMatrix[1]; // should involve adfMatrix[3] too
+                            osDashArray += CPLSPrintf("%f ", dfElement);
                         }
                     }
                     CSLDestroy(papszTokens);
@@ -2309,6 +2430,8 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             }
             else if (OGR_ST_GetType(hTool) == OGRSTCBrush)
             {
+                bHasPenBrushOrSymbol = true;
+
                 int bIsNull;
                 const char* pszColor = OGR_ST_GetParamStr(hTool, OGRSTBrushFColor, &bIsNull);
                 if (pszColor)
@@ -2370,32 +2493,46 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                     }
                 }
 
+                pszStr = OGR_ST_GetParamStr(hTool, OGRSTLabelFontName, &bIsNull);
+                if (pszStr && !bIsNull)
+                    osTextFont = pszStr;
+
                 double dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelSize, &bIsNull);
                 if (!bIsNull)
-                {
                     dfTextSize = dfVal;
-                }
 
                 dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelAngle, &bIsNull);
                 if (!bIsNull)
-                {
-                    dfTextAngle = dfVal;
-                }
+                    dfTextAngle = dfVal * M_PI / 180.0;
+
+                dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelStretch, &bIsNull);
+                if (!bIsNull)
+                    dfTextStretch = dfVal / 100.0;
 
                 dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelDx, &bIsNull);
                 if (!bIsNull)
-                {
                     dfTextDx = dfVal;
-                }
 
                 dfVal = OGR_ST_GetParamDbl(hTool, OGRSTLabelDy, &bIsNull);
                 if (!bIsNull)
-                {
                     dfTextDy = dfVal;
-                }
+
+                int nVal = OGR_ST_GetParamNum(hTool, OGRSTLabelAnchor, &bIsNull);
+                if (!bIsNull)
+                    nTextAnchor = nVal;
+
+                nVal = OGR_ST_GetParamNum(hTool, OGRSTLabelBold, &bIsNull);
+                if (!bIsNull)
+                    bTextBold = (nVal != 0);
+
+                nVal = OGR_ST_GetParamNum(hTool, OGRSTLabelItalic, &bIsNull);
+                if (!bIsNull)
+                    bTextItalic = (nVal != 0);
             }
             else if (OGR_ST_GetType(hTool) == OGRSTCSymbol)
             {
+                bHasPenBrushOrSymbol = true;
+
                 int bIsNull;
                 const char* pszSymbolId = OGR_ST_GetParamStr(hTool, OGRSTSymbolId, &bIsNull);
                 if (pszSymbolId && !bIsNull)
@@ -2491,315 +2628,328 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
     double dfRadius = dfSymbolSize * dfUserUnit;
 
+    // For a POINT with only a LABEL style string and non-empty text, we do not
+    // output any geometry other than the text itself.
+    bool bLabelOnly = wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint &&
+        !bHasPenBrushOrSymbol && !osLabelText.empty();
+
     /* -------------------------------------------------------------- */
     /*  Write object dictionary                                       */
     /* -------------------------------------------------------------- */
-    int nObjectId = AllocNewObject();
-    int nObjectLengthId = AllocNewObject();
-
-    osVectorDesc.aIds.push_back(nObjectId);
-
-    int bboxXMin, bboxYMin, bboxXMax, bboxYMax;
-    if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint && nImageSymbolId != 0)
+    if (!bLabelOnly)
     {
-        bboxXMin = (int)floor(sEnvelope.MinX * adfMatrix[1] + adfMatrix[0] - nImageWidth / 2);
-        bboxYMin = (int)floor(sEnvelope.MinY * adfMatrix[3] + adfMatrix[2] - nImageHeight / 2);
-        bboxXMax = (int)ceil(sEnvelope.MaxX * adfMatrix[1] + adfMatrix[0] + nImageWidth / 2);
-        bboxYMax = (int)ceil(sEnvelope.MaxY * adfMatrix[3] + adfMatrix[2] + nImageHeight / 2);
-    }
-    else
-    {
-        double dfMargin = dfPenWidth;
-        if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint )
+        int nObjectId = AllocNewObject();
+        int nObjectLengthId = AllocNewObject();
+
+        osVectorDesc.aIds.push_back(nObjectId);
+
+        int bboxXMin, bboxYMin, bboxXMax, bboxYMax;
+        if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint && nImageSymbolId != 0)
         {
-            if (osSymbolId == "ogr-sym-6" ||
-                osSymbolId == "ogr-sym-7")
-            {
-                const double dfSqrt3 = 1.73205080757;
-                dfMargin += dfRadius * 2 * dfSqrt3 / 3;
-            }
-            else
-                dfMargin += dfRadius;
+            bboxXMin = (int)floor(sEnvelope.MinX * adfMatrix[1] + adfMatrix[0] - nImageWidth / 2);
+            bboxYMin = (int)floor(sEnvelope.MinY * adfMatrix[3] + adfMatrix[2] - nImageHeight / 2);
+            bboxXMax = (int)ceil(sEnvelope.MaxX * adfMatrix[1] + adfMatrix[0] + nImageWidth / 2);
+            bboxYMax = (int)ceil(sEnvelope.MaxY * adfMatrix[3] + adfMatrix[2] + nImageHeight / 2);
         }
-        bboxXMin = (int)floor(sEnvelope.MinX * adfMatrix[1] + adfMatrix[0] - dfMargin);
-        bboxYMin = (int)floor(sEnvelope.MinY * adfMatrix[3] + adfMatrix[2] - dfMargin);
-        bboxXMax = (int)ceil(sEnvelope.MaxX * adfMatrix[1] + adfMatrix[0] + dfMargin);
-        bboxYMax = (int)ceil(sEnvelope.MaxY * adfMatrix[3] + adfMatrix[2] + dfMargin);
-    }
-
-    int iField = -1;
-    const char* pszLinkVal = nullptr;
-    if (pszOGRLinkField != nullptr &&
-        (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRLinkField)) >= 0 &&
-        OGR_F_IsFieldSetAndNotNull(hFeat, iField) &&
-        strcmp((pszLinkVal = OGR_F_GetFieldAsString(hFeat, iField)), "") != 0)
-    {
-        int nAnnotId = AllocNewObject();
-        oPageContext.anAnnotationsId.push_back(nAnnotId);
-        StartObj(nAnnotId);
+        else
         {
-            GDALPDFDictionaryRW oDict;
-            oDict.Add("Type", GDALPDFObjectRW::CreateName("Annot"));
-            oDict.Add("Subtype", GDALPDFObjectRW::CreateName("Link"));
-            oDict.Add("Rect", &(new GDALPDFArrayRW())->Add(bboxXMin).Add(bboxYMin).Add(bboxXMax).Add(bboxYMax));
-            oDict.Add("A", &(new GDALPDFDictionaryRW())->
-                Add("S", GDALPDFObjectRW::CreateName("URI")).
-                Add("URI", pszLinkVal));
-            oDict.Add("BS", &(new GDALPDFDictionaryRW())->
-                Add("Type", GDALPDFObjectRW::CreateName("Border")).
-                Add("S", GDALPDFObjectRW::CreateName("S")).
-                Add("W", 0));
-            oDict.Add("Border", &(new GDALPDFArrayRW())->Add(0).Add(0).Add(0));
-            oDict.Add("H", GDALPDFObjectRW::CreateName("I"));
-
-            if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon &&
-                OGR_G_GetGeometryCount(hGeom) == 1 )
+            double dfMargin = dfPenWidth;
+            if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint )
             {
-                OGRGeometryH hSubGeom = OGR_G_GetGeometryRef(hGeom, 0);
-                int nPoints = OGR_G_GetPointCount(hSubGeom);
-                if( nPoints == 4 || nPoints == 5 )
+                if (osSymbolId == "ogr-sym-6" ||
+                    osSymbolId == "ogr-sym-7")
                 {
-                    std::vector<double> adfX, adfY;
-                    for(int i=0;i<nPoints;i++)
+                    const double dfSqrt3 = 1.73205080757;
+                    dfMargin += dfRadius * 2 * dfSqrt3 / 3;
+                }
+                else
+                    dfMargin += dfRadius;
+            }
+            bboxXMin = (int)floor(sEnvelope.MinX * adfMatrix[1] + adfMatrix[0] - dfMargin);
+            bboxYMin = (int)floor(sEnvelope.MinY * adfMatrix[3] + adfMatrix[2] - dfMargin);
+            bboxXMax = (int)ceil(sEnvelope.MaxX * adfMatrix[1] + adfMatrix[0] + dfMargin);
+            bboxYMax = (int)ceil(sEnvelope.MaxY * adfMatrix[3] + adfMatrix[2] + dfMargin);
+        }
+
+        int iField = -1;
+        const char* pszLinkVal = nullptr;
+        if (pszOGRLinkField != nullptr &&
+            (iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRLinkField)) >= 0 &&
+            OGR_F_IsFieldSetAndNotNull(hFeat, iField) &&
+            strcmp((pszLinkVal = OGR_F_GetFieldAsString(hFeat, iField)), "") != 0)
+        {
+            int nAnnotId = AllocNewObject();
+            oPageContext.anAnnotationsId.push_back(nAnnotId);
+            StartObj(nAnnotId);
+            {
+                GDALPDFDictionaryRW oDict;
+                oDict.Add("Type", GDALPDFObjectRW::CreateName("Annot"));
+                oDict.Add("Subtype", GDALPDFObjectRW::CreateName("Link"));
+                oDict.Add("Rect", &(new GDALPDFArrayRW())->Add(bboxXMin).Add(bboxYMin).Add(bboxXMax).Add(bboxYMax));
+                oDict.Add("A", &(new GDALPDFDictionaryRW())->
+                    Add("S", GDALPDFObjectRW::CreateName("URI")).
+                    Add("URI", pszLinkVal));
+                oDict.Add("BS", &(new GDALPDFDictionaryRW())->
+                    Add("Type", GDALPDFObjectRW::CreateName("Border")).
+                    Add("S", GDALPDFObjectRW::CreateName("S")).
+                    Add("W", 0));
+                oDict.Add("Border", &(new GDALPDFArrayRW())->Add(0).Add(0).Add(0));
+                oDict.Add("H", GDALPDFObjectRW::CreateName("I"));
+
+                if( wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPolygon &&
+                    OGR_G_GetGeometryCount(hGeom) == 1 )
+                {
+                    OGRGeometryH hSubGeom = OGR_G_GetGeometryRef(hGeom, 0);
+                    int nPoints = OGR_G_GetPointCount(hSubGeom);
+                    if( nPoints == 4 || nPoints == 5 )
                     {
-                        double dfX = OGR_G_GetX(hSubGeom, i) * adfMatrix[1] + adfMatrix[0];
-                        double dfY = OGR_G_GetY(hSubGeom, i) * adfMatrix[3] + adfMatrix[2];
-                        adfX.push_back(dfX);
-                        adfY.push_back(dfY);
-                    }
-                    if( nPoints == 4 )
-                    {
-                        oDict.Add("QuadPoints", &(new GDALPDFArrayRW())->
-                            Add(adfX[0]).Add(adfY[0]).
-                            Add(adfX[1]).Add(adfY[1]).
-                            Add(adfX[2]).Add(adfY[2]).
-                            Add(adfX[0]).Add(adfY[0]));
-                    }
-                    else if( nPoints == 5 )
-                    {
-                        oDict.Add("QuadPoints", &(new GDALPDFArrayRW())->
-                            Add(adfX[0]).Add(adfY[0]).
-                            Add(adfX[1]).Add(adfY[1]).
-                            Add(adfX[2]).Add(adfY[2]).
-                            Add(adfX[3]).Add(adfY[3]));
+                        std::vector<double> adfX, adfY;
+                        for(int i=0;i<nPoints;i++)
+                        {
+                            double dfX = OGR_G_GetX(hSubGeom, i) * adfMatrix[1] + adfMatrix[0];
+                            double dfY = OGR_G_GetY(hSubGeom, i) * adfMatrix[3] + adfMatrix[2];
+                            adfX.push_back(dfX);
+                            adfY.push_back(dfY);
+                        }
+                        if( nPoints == 4 )
+                        {
+                            oDict.Add("QuadPoints", &(new GDALPDFArrayRW())->
+                                Add(adfX[0]).Add(adfY[0]).
+                                Add(adfX[1]).Add(adfY[1]).
+                                Add(adfX[2]).Add(adfY[2]).
+                                Add(adfX[0]).Add(adfY[0]));
+                        }
+                        else if( nPoints == 5 )
+                        {
+                            oDict.Add("QuadPoints", &(new GDALPDFArrayRW())->
+                                Add(adfX[0]).Add(adfY[0]).
+                                Add(adfX[1]).Add(adfY[1]).
+                                Add(adfX[2]).Add(adfY[2]).
+                                Add(adfX[3]).Add(adfY[3]));
+                        }
                     }
                 }
+
+                VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
             }
+            EndObj();
+        }
+
+        StartObj(nObjectId);
+        {
+            GDALPDFDictionaryRW oDict;
+            GDALPDFArrayRW* poBBOX = new GDALPDFArrayRW();
+            poBBOX->Add(bboxXMin).Add(bboxYMin).Add(bboxXMax). Add(bboxYMax);
+            oDict.Add("Length", nObjectLengthId, 0)
+                .Add("Type", GDALPDFObjectRW::CreateName("XObject"))
+                .Add("BBox", poBBOX)
+                .Add("Subtype", GDALPDFObjectRW::CreateName("Form"));
+            if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
+            {
+                oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+            }
+
+            GDALPDFDictionaryRW* poGS1 = new GDALPDFDictionaryRW();
+            poGS1->Add("Type", GDALPDFObjectRW::CreateName("ExtGState"));
+            if (nPenA != 255)
+                poGS1->Add("CA", (nPenA == 127 || nPenA == 128) ? 0.5 : nPenA / 255.0);
+            if (nBrushA != 255)
+                poGS1->Add("ca", (nBrushA == 127 || nBrushA == 128) ? 0.5 : nBrushA / 255.0 );
+
+            GDALPDFDictionaryRW* poExtGState = new GDALPDFDictionaryRW();
+            poExtGState->Add("GS1", poGS1);
+
+            GDALPDFDictionaryRW* poResources = new GDALPDFDictionaryRW();
+            poResources->Add("ExtGState", poExtGState);
+
+            if( nImageSymbolId != 0 )
+            {
+                GDALPDFDictionaryRW* poDictXObject = new GDALPDFDictionaryRW();
+                poResources->Add("XObject", poDictXObject);
+
+                poDictXObject->Add(CPLSPrintf("SymImage%d", nImageSymbolId), nImageSymbolId, 0);
+            }
+
+            oDict.Add("Resources", poResources);
 
             VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
         }
-        EndObj();
-    }
 
-    StartObj(nObjectId);
-    {
-        GDALPDFDictionaryRW oDict;
-        GDALPDFArrayRW* poBBOX = new GDALPDFArrayRW();
-        poBBOX->Add(bboxXMin).Add(bboxYMin).Add(bboxXMax). Add(bboxYMax);
-        oDict.Add("Length", nObjectLengthId, 0)
-            .Add("Type", GDALPDFObjectRW::CreateName("XObject"))
-            .Add("BBox", poBBOX)
-            .Add("Subtype", GDALPDFObjectRW::CreateName("Form"));
+        /* -------------------------------------------------------------- */
+        /*  Write object stream                                           */
+        /* -------------------------------------------------------------- */
+        VSIFPrintfL(fp, "stream\n");
+
+        vsi_l_offset nStreamStart = VSIFTellL(fp);
+
+        VSILFILE* fpGZip = nullptr;
+        VSILFILE* fpBack = fp;
         if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
         {
-            oDict.Add("Filter", GDALPDFObjectRW::CreateName("FlateDecode"));
+            fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
+            fp = fpGZip;
         }
 
-        GDALPDFDictionaryRW* poGS1 = new GDALPDFDictionaryRW();
-        poGS1->Add("Type", GDALPDFObjectRW::CreateName("ExtGState"));
-        if (nPenA != 255)
-            poGS1->Add("CA", (nPenA == 127 || nPenA == 128) ? 0.5 : nPenA / 255.0);
-        if (nBrushA != 255)
-            poGS1->Add("ca", (nBrushA == 127 || nBrushA == 128) ? 0.5 : nBrushA / 255.0 );
+        VSIFPrintfL(fp, "q\n");
 
-        GDALPDFDictionaryRW* poExtGState = new GDALPDFDictionaryRW();
-        poExtGState->Add("GS1", poGS1);
+        VSIFPrintfL(fp, "/GS1 gs\n");
 
-        GDALPDFDictionaryRW* poResources = new GDALPDFDictionaryRW();
-        poResources->Add("ExtGState", poExtGState);
-
-        if( nImageSymbolId != 0 )
+        if (nImageSymbolId == 0)
         {
-            GDALPDFDictionaryRW* poDictXObject = new GDALPDFDictionaryRW();
-            poResources->Add("XObject", poDictXObject);
+            VSIFPrintfL(fp, "%f w\n"
+                            "0 J\n"
+                            "0 j\n"
+                            "10 M\n"
+                            "[%s]0 d\n",
+                            dfPenWidth,
+                            osDashArray.c_str());
 
-            poDictXObject->Add(CPLSPrintf("SymImage%d", nImageSymbolId), nImageSymbolId, 0);
+            VSIFPrintfL(fp, "%f %f %f RG\n", nPenR / 255.0, nPenG / 255.0, nPenB / 255.0);
+            VSIFPrintfL(fp, "%f %f %f rg\n", nBrushR / 255.0, nBrushG / 255.0, nBrushB / 255.0);
         }
 
-        oDict.Add("Resources", poResources);
-
-        VSIFPrintfL(fp, "%s\n", oDict.Serialize().c_str());
-    }
-
-    /* -------------------------------------------------------------- */
-    /*  Write object stream                                           */
-    /* -------------------------------------------------------------- */
-    VSIFPrintfL(fp, "stream\n");
-
-    vsi_l_offset nStreamStart = VSIFTellL(fp);
-
-    VSILFILE* fpGZip = nullptr;
-    VSILFILE* fpBack = fp;
-    if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
-    {
-        fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
-        fp = fpGZip;
-    }
-
-    VSIFPrintfL(fp, "q\n");
-
-    VSIFPrintfL(fp, "/GS1 gs\n");
-
-    if (nImageSymbolId == 0)
-    {
-        VSIFPrintfL(fp, "%f w\n"
-                        "0 J\n"
-                        "0 j\n"
-                        "10 M\n"
-                        "[%s]0 d\n",
-                        dfPenWidth,
-                        osDashArray.c_str());
-
-        VSIFPrintfL(fp, "%f %f %f RG\n", nPenR / 255.0, nPenG / 255.0, nPenB / 255.0);
-        VSIFPrintfL(fp, "%f %f %f rg\n", nBrushR / 255.0, nBrushG / 255.0, nBrushB / 255.0);
-    }
-
-    if (wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
-    {
-        double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0];
-        double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2];
-
-        if (nImageSymbolId != 0)
+        if ((bHasPenBrushOrSymbol || osLabelText.empty()) &&
+            wkbFlatten(OGR_G_GetGeometryType(hGeom)) == wkbPoint)
         {
-            VSIFPrintfL(fp, "%d 0 0 %d %f %f cm\n",
-                        nImageWidth, nImageHeight,
-                        dfX - nImageWidth / 2, dfY - nImageHeight / 2);
-            VSIFPrintfL(fp, "/SymImage%d Do\n", nImageSymbolId);
-        }
-        else if (osSymbolId == "")
-            osSymbolId = "ogr-sym-3"; /* symbol by default */
-        else if ( !(osSymbolId == "ogr-sym-0" ||
-                    osSymbolId == "ogr-sym-1" ||
-                    osSymbolId == "ogr-sym-2" ||
-                    osSymbolId == "ogr-sym-3" ||
-                    osSymbolId == "ogr-sym-4" ||
-                    osSymbolId == "ogr-sym-5" ||
-                    osSymbolId == "ogr-sym-6" ||
-                    osSymbolId == "ogr-sym-7" ||
-                    osSymbolId == "ogr-sym-8" ||
-                    osSymbolId == "ogr-sym-9") )
-        {
-            CPLDebug("PDF", "Unhandled symbol id : %s. Using ogr-sym-3 instead", osSymbolId.c_str());
-            osSymbolId = "ogr-sym-3";
-        }
+            double dfX = OGR_G_GetX(hGeom, 0) * adfMatrix[1] + adfMatrix[0];
+            double dfY = OGR_G_GetY(hGeom, 0) * adfMatrix[3] + adfMatrix[2];
 
-        if (osSymbolId == "ogr-sym-0") /* cross (+)  */
-        {
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY);
-            VSIFPrintfL(fp, "%f %f m\n", dfX, dfY - dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + dfRadius);
-            VSIFPrintfL(fp, "S\n");
-        }
-        else if (osSymbolId == "ogr-sym-1") /* diagcross (X) */
-        {
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
-            VSIFPrintfL(fp, "S\n");
-        }
-        else if (osSymbolId == "ogr-sym-2" ||
-                 osSymbolId == "ogr-sym-3") /* circle */
-        {
-            /* See http://www.whizkidtech.redprince.net/bezier/circle/kappa/ */
-            const double dfKappa = 0.5522847498;
-
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
-            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                        dfX - dfRadius, dfY - dfRadius * dfKappa,
-                        dfX - dfRadius * dfKappa, dfY - dfRadius,
-                        dfX, dfY - dfRadius);
-            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                        dfX + dfRadius * dfKappa, dfY - dfRadius,
-                        dfX + dfRadius, dfY - dfRadius * dfKappa,
-                        dfX + dfRadius, dfY);
-            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                        dfX + dfRadius, dfY + dfRadius * dfKappa,
-                        dfX + dfRadius * dfKappa, dfY + dfRadius,
-                        dfX, dfY + dfRadius);
-            VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
-                        dfX - dfRadius * dfKappa, dfY + dfRadius,
-                        dfX - dfRadius, dfY + dfRadius * dfKappa,
-                        dfX - dfRadius, dfY);
-            if (osSymbolId == "ogr-sym-2")
-                VSIFPrintfL(fp, "s\n"); /* not filled */
-            else
-                VSIFPrintfL(fp, "b*\n"); /* filled */
-        }
-        else if (osSymbolId == "ogr-sym-4" ||
-                 osSymbolId == "ogr-sym-5") /* square */
-        {
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
-            VSIFPrintfL(fp, "%f %f l\n", dfX - dfRadius, dfY - dfRadius);
-            if (osSymbolId == "ogr-sym-4")
-                VSIFPrintfL(fp, "s\n"); /* not filled */
-            else
-                VSIFPrintfL(fp, "b*\n"); /* filled */
-        }
-        else if (osSymbolId == "ogr-sym-6" ||
-                 osSymbolId == "ogr-sym-7") /* triangle */
-        {
-            const double dfSqrt3 = 1.73205080757;
-            VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius * dfSqrt3 / 3);
-            VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + 2 * dfRadius * dfSqrt3 / 3);
-            VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius * dfSqrt3 / 3);
-            if (osSymbolId == "ogr-sym-6")
-                VSIFPrintfL(fp, "s\n"); /* not filled */
-            else
-                VSIFPrintfL(fp, "b*\n"); /* filled */
-        }
-        else if (osSymbolId == "ogr-sym-8" ||
-                 osSymbolId == "ogr-sym-9") /* star */
-        {
-            const double dfSin18divSin126 = 0.38196601125;
-            VSIFPrintfL(fp, "%f %f m\n", dfX, dfY + dfRadius);
-            for(int i=1; i<10;i++)
+            if (nImageSymbolId != 0)
             {
-                double dfFactor = ((i % 2) == 1) ? dfSin18divSin126 : 1.0;
-                VSIFPrintfL(fp, "%f %f l\n",
-                            dfX + cos(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor,
-                            dfY + sin(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor);
+                VSIFPrintfL(fp, "%d 0 0 %d %f %f cm\n",
+                            nImageWidth, nImageHeight,
+                            dfX - nImageWidth / 2, dfY - nImageHeight / 2);
+                VSIFPrintfL(fp, "/SymImage%d Do\n", nImageSymbolId);
             }
-            if (osSymbolId == "ogr-sym-8")
-                VSIFPrintfL(fp, "s\n"); /* not filled */
-            else
-                VSIFPrintfL(fp, "b*\n"); /* filled */
+            else if (osSymbolId == "")
+                osSymbolId = "ogr-sym-3"; /* symbol by default */
+            else if ( !(osSymbolId == "ogr-sym-0" ||
+                        osSymbolId == "ogr-sym-1" ||
+                        osSymbolId == "ogr-sym-2" ||
+                        osSymbolId == "ogr-sym-3" ||
+                        osSymbolId == "ogr-sym-4" ||
+                        osSymbolId == "ogr-sym-5" ||
+                        osSymbolId == "ogr-sym-6" ||
+                        osSymbolId == "ogr-sym-7" ||
+                        osSymbolId == "ogr-sym-8" ||
+                        osSymbolId == "ogr-sym-9") )
+            {
+                CPLDebug("PDF", "Unhandled symbol id : %s. Using ogr-sym-3 instead", osSymbolId.c_str());
+                osSymbolId = "ogr-sym-3";
+            }
+
+            if (osSymbolId == "ogr-sym-0") /* cross (+)  */
+            {
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY);
+                VSIFPrintfL(fp, "%f %f m\n", dfX, dfY - dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + dfRadius);
+                VSIFPrintfL(fp, "S\n");
+            }
+            else if (osSymbolId == "ogr-sym-1") /* diagcross (X) */
+            {
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
+                VSIFPrintfL(fp, "S\n");
+            }
+            else if (osSymbolId == "ogr-sym-2" ||
+                     osSymbolId == "ogr-sym-3") /* circle */
+            {
+                /* See http://www.whizkidtech.redprince.net/bezier/circle/kappa/ */
+                const double dfKappa = 0.5522847498;
+
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY);
+                VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                            dfX - dfRadius, dfY - dfRadius * dfKappa,
+                            dfX - dfRadius * dfKappa, dfY - dfRadius,
+                            dfX, dfY - dfRadius);
+                VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                            dfX + dfRadius * dfKappa, dfY - dfRadius,
+                            dfX + dfRadius, dfY - dfRadius * dfKappa,
+                            dfX + dfRadius, dfY);
+                VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                            dfX + dfRadius, dfY + dfRadius * dfKappa,
+                            dfX + dfRadius * dfKappa, dfY + dfRadius,
+                            dfX, dfY + dfRadius);
+                VSIFPrintfL(fp, "%f %f %f %f %f %f c\n",
+                            dfX - dfRadius * dfKappa, dfY + dfRadius,
+                            dfX - dfRadius, dfY + dfRadius * dfKappa,
+                            dfX - dfRadius, dfY);
+                if (osSymbolId == "ogr-sym-2")
+                    VSIFPrintfL(fp, "s\n"); /* not filled */
+                else
+                    VSIFPrintfL(fp, "b*\n"); /* filled */
+            }
+            else if (osSymbolId == "ogr-sym-4" ||
+                     osSymbolId == "ogr-sym-5") /* square */
+            {
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY + dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY + dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius);
+                VSIFPrintfL(fp, "%f %f l\n", dfX - dfRadius, dfY - dfRadius);
+                if (osSymbolId == "ogr-sym-4")
+                    VSIFPrintfL(fp, "s\n"); /* not filled */
+                else
+                    VSIFPrintfL(fp, "b*\n"); /* filled */
+            }
+            else if (osSymbolId == "ogr-sym-6" ||
+                     osSymbolId == "ogr-sym-7") /* triangle */
+            {
+                const double dfSqrt3 = 1.73205080757;
+                VSIFPrintfL(fp, "%f %f m\n", dfX - dfRadius, dfY - dfRadius * dfSqrt3 / 3);
+                VSIFPrintfL(fp, "%f %f l\n", dfX, dfY + 2 * dfRadius * dfSqrt3 / 3);
+                VSIFPrintfL(fp, "%f %f l\n", dfX + dfRadius, dfY - dfRadius * dfSqrt3 / 3);
+                if (osSymbolId == "ogr-sym-6")
+                    VSIFPrintfL(fp, "s\n"); /* not filled */
+                else
+                    VSIFPrintfL(fp, "b*\n"); /* filled */
+            }
+            else if (osSymbolId == "ogr-sym-8" ||
+                     osSymbolId == "ogr-sym-9") /* star */
+            {
+                const double dfSin18divSin126 = 0.38196601125;
+                VSIFPrintfL(fp, "%f %f m\n", dfX, dfY + dfRadius);
+                for(int i=1; i<10;i++)
+                {
+                    double dfFactor = ((i % 2) == 1) ? dfSin18divSin126 : 1.0;
+                    VSIFPrintfL(fp, "%f %f l\n",
+                                dfX + cos(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor,
+                                dfY + sin(M_PI / 2 - i * M_PI * 36 / 180) * dfRadius * dfFactor);
+                }
+                if (osSymbolId == "ogr-sym-8")
+                    VSIFPrintfL(fp, "s\n"); /* not filled */
+                else
+                    VSIFPrintfL(fp, "b*\n"); /* filled */
+            }
         }
+        else
+        {
+            DrawGeometry(fp, hGeom, adfMatrix);
+        }
+
+        VSIFPrintfL(fp, "Q");
+
+        if (fpGZip)
+            VSIFCloseL(fpGZip);
+        fp = fpBack;
+
+        vsi_l_offset nStreamEnd = VSIFTellL(fp);
+        VSIFPrintfL(fp, "\n");
+        VSIFPrintfL(fp, "endstream\n");
+        EndObj();
+
+        StartObj(nObjectLengthId);
+        VSIFPrintfL(fp,
+                    "   %ld\n",
+                    (long)(nStreamEnd - nStreamStart));
+        EndObj();
     }
     else
     {
-        DrawGeometry(fp, hGeom, adfMatrix);
+        osVectorDesc.aIds.push_back(0);
     }
-
-    VSIFPrintfL(fp, "Q");
-
-    if (fpGZip)
-        VSIFCloseL(fpGZip);
-    fp = fpBack;
-
-    vsi_l_offset nStreamEnd = VSIFTellL(fp);
-    VSIFPrintfL(fp, "\n");
-    VSIFPrintfL(fp, "endstream\n");
-    EndObj();
-
-    StartObj(nObjectLengthId);
-    VSIFPrintfL(fp,
-                "   %ld\n",
-                (long)(nStreamEnd - nStreamStart));
-    EndObj();
 
     /* -------------------------------------------------------------- */
     /*  Write label                                                   */
@@ -2810,10 +2960,41 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             osVectorDesc.nOCGTextId = WriteOCG("Text", osVectorDesc.nOGCId);
 
         /* -------------------------------------------------------------- */
+        /*  Work out the text metrics for alignment purposes              */
+        /* -------------------------------------------------------------- */
+        double dfWidth, dfHeight;
+        CalculateText(osLabelText, osTextFont, dfTextSize,
+            bTextBold, bTextItalic, dfWidth, dfHeight);
+        dfWidth *= dfTextStretch;
+
+        if (nTextAnchor % 3 == 2) // horizontal center
+        {
+            dfTextDx -= (dfWidth / 2) * cos(dfTextAngle);
+            dfTextDy -= (dfWidth / 2) * sin(dfTextAngle);
+        }
+        else if (nTextAnchor % 3 == 0) // right
+        {
+            dfTextDx -= dfWidth * cos(dfTextAngle);
+            dfTextDy -= dfWidth * sin(dfTextAngle);
+        }
+
+        if (nTextAnchor >= 4 && nTextAnchor <= 6) // vertical center
+        {
+            dfTextDx += (dfHeight / 2) * sin(dfTextAngle);
+            dfTextDy -= (dfHeight / 2) * cos(dfTextAngle);
+        }
+        else if (nTextAnchor >= 7 && nTextAnchor <= 9) // top
+        {
+            dfTextDx += dfHeight * sin(dfTextAngle);
+            dfTextDy -= dfHeight * cos(dfTextAngle);
+        }
+        // modes 10,11,12 (baseline) unsupported for the time being
+
+        /* -------------------------------------------------------------- */
         /*  Write object dictionary                                       */
         /* -------------------------------------------------------------- */
-        nObjectId = AllocNewObject();
-        nObjectLengthId = AllocNewObject();
+        int nObjectId = AllocNewObject();
+        int nObjectLengthId = AllocNewObject();
 
         osVectorDesc.aIdsText.push_back(nObjectId);
 
@@ -2849,14 +3030,14 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
                 poResources->Add("ExtGState", poExtGState);
             }
 
-            GDALPDFDictionaryRW* poDictFTimesRoman = new GDALPDFDictionaryRW();
-            poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
-            poDictFTimesRoman->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Roman"));
-            poDictFTimesRoman->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
-            poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
+            GDALPDFDictionaryRW* poDictF1 = new GDALPDFDictionaryRW();
+            poDictF1->Add("Type", GDALPDFObjectRW::CreateName("Font"));
+            poDictF1->Add("BaseFont", GDALPDFObjectRW::CreateName(osTextFont));
+            poDictF1->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
+            poDictF1->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
 
             GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
-            poDictFont->Add("FTimesRoman", poDictFTimesRoman);
+            poDictFont->Add("F1", poDictF1);
             poResources->Add("Font", poDictFont);
 
             oDict.Add("Resources", poResources);
@@ -2869,10 +3050,10 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         /* -------------------------------------------------------------- */
         VSIFPrintfL(fp, "stream\n");
 
-        nStreamStart = VSIFTellL(fp);
+        vsi_l_offset nStreamStart = VSIFTellL(fp);
 
-        fpGZip = nullptr;
-        fpBack = fp;
+        VSILFILE* fpGZip = nullptr;
+        VSILFILE* fpBack = fp;
         if( oPageContext.eStreamCompressMethod != COMPRESS_NONE )
         {
             fpGZip = (VSILFILE* )VSICreateGZipWritable( (VSIVirtualHandle*) fp, TRUE, FALSE );
@@ -2888,33 +3069,31 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
         {
             VSIFPrintfL(fp, "/GS1 gs\n");
         }
-        if (dfTextAngle == 0)
-        {
-            VSIFPrintfL(fp, "%f %f Td\n", dfX, dfY);
-        }
-        else
-        {
-            dfTextAngle = - dfTextAngle * M_PI / 180.0;
-            VSIFPrintfL(fp, "%f %f %f %f %f %f Tm\n",
-                        cos(dfTextAngle), -sin(dfTextAngle),
-                        sin(dfTextAngle), cos(dfTextAngle),
-                        dfX, dfY);
-        }
+
+        VSIFPrintfL(fp, "%f %f %f %f %f %f Tm\n",
+                    cos(dfTextAngle) * adfMatrix[1] * dfTextStretch,
+                    sin(dfTextAngle) * adfMatrix[3] * dfTextStretch,
+                    -sin(dfTextAngle) * adfMatrix[1],
+                    cos(dfTextAngle) * adfMatrix[3],
+                    dfX, dfY);
+
         VSIFPrintfL(fp, "%f %f %f rg\n", nTextR / 255.0, nTextG / 255.0, nTextB / 255.0);
-        VSIFPrintfL(fp, "/FTimesRoman %f Tf\n", dfTextSize);
+        // The factor of adfMatrix[1] is introduced in the call to SetUnit near the top
+        // of this function. Because we are handling the 2D stretch correctly in Tm above,
+        // we don't need that factor here
+        VSIFPrintfL(fp, "/F1 %f Tf\n", dfTextSize / adfMatrix[1]);
         VSIFPrintfL(fp, "(");
         for(size_t i=0;i<osLabelText.size();i++)
         {
-            /*if (osLabelText[i] == '\n')
-                VSIFPrintfL(fp, ") Tj T* (");
-            else */
-
-            /* Tautology.  Always true. */
-            /* if (osLabelText[i] >= 32 && osLabelText[i] <= 127) { */
-            VSIFPrintfL(fp, "%c", osLabelText[i]);
-            /* } else {
-                   VSIFPrintfL(fp, "_");
-            } */
+            if (osLabelText[i] == '(' || osLabelText[i] == ')' ||
+                osLabelText[i] == '\\')
+            {
+                VSIFPrintfL(fp, "\\%c", osLabelText[i]);
+            }
+            else
+            {
+                VSIFPrintfL(fp, "%c", osLabelText[i]);
+            }
         }
         VSIFPrintfL(fp, ") Tj\n");
         VSIFPrintfL(fp, "ET\n");
@@ -2924,7 +3103,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
             VSIFCloseL(fpGZip);
         fp = fpBack;
 
-        nStreamEnd = VSIFTellL(fp);
+        vsi_l_offset nStreamEnd = VSIFTellL(fp);
         VSIFPrintfL(fp, "\n");
         VSIFPrintfL(fp, "endstream\n");
         EndObj();
@@ -2949,7 +3128,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc& osVectorDesc,
 
     if (bWriteOGRAttributes)
     {
-        iField = -1;
+        int iField = -1;
         if (pszOGRDisplayField )
             iField = OGR_FD_GetFieldIndex(OGR_F_GetDefnRef(hFeat), pszOGRDisplayField);
         if( iField >= 0 )
@@ -3021,9 +3200,6 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
         osOffLayers = pszOffLayers;
     if( pszExclusiveLayers )
         osExclusiveLayers = pszExclusiveLayers;
-
-    int bHasTimesRoman = pszExtraStream && strstr(pszExtraStream, "/FTimesRoman");
-    int bHasTimesBold = pszExtraStream && strstr(pszExtraStream, "/FTimesBold");
 
     /* -------------------------------------------------------------- */
     /*  Write extra images                                            */
@@ -3188,21 +3364,24 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
 
         for(size_t iVector = 0; iVector < oLayerDesc.aIds.size(); iVector ++)
         {
-            CPLString osName = oLayerDesc.aFeatureNames[iVector];
-            if (!osName.empty() )
+            if (oLayerDesc.aIds[iVector])
             {
-                VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
-                            iObj);
+                CPLString osName = oLayerDesc.aFeatureNames[iVector];
+                if (!osName.empty() )
+                {
+                    VSIFPrintfL(fp, "/feature <</MCID %d>> BDC\n",
+                                iObj);
+                }
+
+                VSIFPrintfL(fp, "/Vector%d Do\n", oLayerDesc.aIds[iVector]);
+
+                if (!osName.empty() )
+                {
+                    VSIFPrintfL(fp, "EMC\n");
+                }
             }
 
             iObj ++;
-
-            VSIFPrintfL(fp, "/Vector%d Do\n", oLayerDesc.aIds[iVector]);
-
-            if (!osName.empty() )
-            {
-                VSIFPrintfL(fp, "EMC\n");
-            }
         }
 
         VSIFPrintfL(fp, "EMC\n");
@@ -3220,7 +3399,7 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOGCId);
             VSIFPrintfL(fp, "/OC /Lyr%d BDC\n", oLayerDesc.nOCGTextId);
 
-            for(size_t iVector = 0; iVector < oLayerDesc.aIds.size(); iVector ++)
+            for(size_t iVector = 0; iVector < oLayerDesc.aIdsText.size(); iVector ++)
             {
                 if (oLayerDesc.aIdsText[iVector])
                 {
@@ -3369,42 +3548,72 @@ int GDALPDFWriter::EndPage(const char* pszExtraImages,
             GDALPDFLayerDesc& oLayerDesc = oPageContext.asVectorDesc[iLayer];
             for(size_t iVector = 0; iVector < oLayerDesc.aIds.size(); iVector ++)
             {
-                poDictXObject->Add(CPLSPrintf("Vector%d", oLayerDesc.aIds[iVector]),
-                                oLayerDesc.aIds[iVector], 0);
+                if (oLayerDesc.aIds[iVector])
+                    poDictXObject->Add(CPLSPrintf("Vector%d", oLayerDesc.aIds[iVector]),
+                        oLayerDesc.aIds[iVector], 0);
+            }
+            for(size_t iVector = 0; iVector < oLayerDesc.aIdsText.size(); iVector ++)
+            {
                 if (oLayerDesc.aIdsText[iVector])
                     poDictXObject->Add(CPLSPrintf("Text%d", oLayerDesc.aIdsText[iVector]),
-                                oLayerDesc.aIdsText[iVector], 0);
+                        oLayerDesc.aIdsText[iVector], 0);
             }
         }
 
-        GDALPDFDictionaryRW* poDictFTimesRoman = nullptr;
-        if (bHasTimesRoman)
+        if (pszExtraStream)
         {
-            poDictFTimesRoman = new GDALPDFDictionaryRW();
-            poDictFTimesRoman->Add("Type", GDALPDFObjectRW::CreateName("Font"));
-            poDictFTimesRoman->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Roman"));
-            poDictFTimesRoman->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
-            poDictFTimesRoman->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
-        }
+            std::vector<CPLString> aosNeededFonts;
+            if (strstr(pszExtraStream, "/FTimes"))
+            {
+                aosNeededFonts.push_back("Times-Roman");
+                aosNeededFonts.push_back("Times-Bold");
+                aosNeededFonts.push_back("Times-Italic");
+                aosNeededFonts.push_back("Times-BoldItalic");
+            }
+            if (strstr(pszExtraStream, "/FHelvetica"))
+            {
+                aosNeededFonts.push_back("Helvetica");
+                aosNeededFonts.push_back("Helvetica-Bold");
+                aosNeededFonts.push_back("Helvetica-Oblique");
+                aosNeededFonts.push_back("Helvetica-BoldOblique");
+            }
+            if (strstr(pszExtraStream, "/FCourier"))
+            {
+                aosNeededFonts.push_back("Courier");
+                aosNeededFonts.push_back("Courier-Bold");
+                aosNeededFonts.push_back("Courier-Oblique");
+                aosNeededFonts.push_back("Courier-BoldOblique");
+            }
+            if (strstr(pszExtraStream, "/FSymbol"))
+                aosNeededFonts.push_back("Symbol");
+            if (strstr(pszExtraStream, "/FZapfDingbats"))
+                aosNeededFonts.push_back("ZapfDingbats");
 
-        GDALPDFDictionaryRW* poDictFTimesBold = nullptr;
-        if (bHasTimesBold)
-        {
-            poDictFTimesBold = new GDALPDFDictionaryRW();
-            poDictFTimesBold->Add("Type", GDALPDFObjectRW::CreateName("Font"));
-            poDictFTimesBold->Add("BaseFont", GDALPDFObjectRW::CreateName("Times-Bold"));
-            poDictFTimesBold->Add("Encoding", GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
-            poDictFTimesBold->Add("Subtype", GDALPDFObjectRW::CreateName("Type1"));
-        }
+            if (!aosNeededFonts.empty())
+            {
+                GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
 
-        if (poDictFTimesRoman != nullptr || poDictFTimesBold != nullptr)
-        {
-            GDALPDFDictionaryRW* poDictFont = new GDALPDFDictionaryRW();
-            if (poDictFTimesRoman)
-                poDictFont->Add("FTimesRoman", poDictFTimesRoman);
-            if (poDictFTimesBold)
-                poDictFont->Add("FTimesBold", poDictFTimesBold);
-            oDict.Add("Font", poDictFont);
+                for (CPLString& osFont : aosNeededFonts)
+                {
+                    GDALPDFDictionaryRW* poDictFontInner = new GDALPDFDictionaryRW();
+                    poDictFontInner->Add("Type",
+                        GDALPDFObjectRW::CreateName("Font"));
+                    poDictFontInner->Add("BaseFont",
+                        GDALPDFObjectRW::CreateName(osFont));
+                    poDictFontInner->Add("Encoding",
+                        GDALPDFObjectRW::CreateName("WinAnsiEncoding"));
+                    poDictFontInner->Add("Subtype",
+                        GDALPDFObjectRW::CreateName("Type1"));
+
+                    osFont = "F" + osFont;
+                    const size_t nHyphenPos = osFont.find('-');
+                    if (nHyphenPos != std::string::npos)
+                        osFont.erase(nHyphenPos, 1);
+                    poDictFont->Add(osFont, poDictFontInner);
+                }
+
+                oDict.Add("Font", poDictFont);
+            }
         }
 
         if (!asOCGs.empty() )
