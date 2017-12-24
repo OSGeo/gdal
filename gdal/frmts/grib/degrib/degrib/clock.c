@@ -1755,6 +1755,8 @@ void Clock_ScanDate (double *l_clock, sInt4 year, int mon, int day)
 
    if ((mon < 1) || (mon > 12) || (day < 0) || (day > 31))
       return;
+   if( year < -10000 || year > 10000 )
+       return;
    totDay = Clock_NumDay (mon, day, year, 0);
    if (day > totDay)
       return;
