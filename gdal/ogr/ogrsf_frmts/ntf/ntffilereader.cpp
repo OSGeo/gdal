@@ -763,20 +763,32 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
 
         poGeometry = poLine;
         poLine->setNumPoints( nNumCoord );
+        const GUInt32 nErrorsBefore = CPLGetErrorCounter();
         for( int iCoord = 0; iCoord < nNumCoord; iCoord++ )
         {
             const int iStart = 14 + iCoord * (GetXYLen()*2+nZWidth+2);
 
-            const double dfX = atoi(poRecord->GetField(iStart+0,
-                                          iStart+GetXYLen()-1))
+            const char* pszX = poRecord->GetField(iStart+0,
+                                          iStart+GetXYLen()-1);
+            bool bSpace = pszX[0] == ' ';
+            const double dfX = atoi(pszX)
                 * GetXYMult() + GetXOrigin();
-            const double dfY = atoi(poRecord->GetField(iStart+GetXYLen(),
-                                          iStart+GetXYLen()*2-1))
+            const char* pszY = poRecord->GetField(iStart+GetXYLen(),
+                                          iStart+GetXYLen()*2-1);
+            bSpace |= pszY[0] == ' ';
+            const double dfY = atoi(pszY)
                 * GetXYMult() + GetYOrigin();
 
-            const double dfZ = atoi(poRecord->GetField(iStart+1+2*GetXYLen(),
-                                          iStart+1+2*GetXYLen()+nZWidth-1))
+            const char* pszZ = poRecord->GetField(iStart+1+2*GetXYLen(),
+                                          iStart+1+2*GetXYLen()+nZWidth-1);
+            bSpace |= pszZ[0] == ' ';
+            const double dfZ = atoi(pszZ)
                 * dfZMult;
+            if( bSpace && CPLGetErrorCounter() != nErrorsBefore )
+            {
+                delete poGeometry;
+                return nullptr;
+            }
 
             if( iCoord == 0 )
             {

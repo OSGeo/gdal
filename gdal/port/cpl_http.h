@@ -98,6 +98,11 @@ CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
                                        void *pProgressArg,
                                        CPLHTTPFetchWriteFunc pfnWrite,
                                        void *pWriteArg);
+CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
+                                           int nURLCount,
+                                           int nMaxSimultaneous,
+                                           char **papszOptions);
+
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
@@ -135,13 +140,14 @@ char** CPLHTTPGetOptionsFromEnv();
 double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay);
 void* CPLHTTPIgnoreSigPipe();
 void CPLHTTPRestoreSigPipeHandler(void* old_handler);
+bool CPLMultiPerformWait(void* hCurlMultiHandle, int& repeats);
 /*! @endcond */
 
 bool CPLIsMachinePotentiallyGCEInstance();
 bool CPLIsMachineForSureGCEInstance();
 
 /** Manager of Google OAuth2 authentication.
- *
+ * 
  * This class handles different authentication methods and handles renewal
  * of access token.
  *

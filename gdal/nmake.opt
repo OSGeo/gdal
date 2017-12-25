@@ -4,11 +4,11 @@
 #
 # Usage examples (see details below):
 # nmake -f makefile.vc
-# nmake -f makefile.vc MSVC_VER=1400
-# nmake -f makefile.vc MSVC_VER=1500 DEBUG=1
-# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
-# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1 WITH_PDB=1
-# nmake -f makefile.vc MSVC_VER=1400 WIN64=1
+# nmake -f makefile.vc MSVC_VER=1900
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 ANALYZE=1
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 ANALYZE=1 WITH_PDB=1
+# nmake -f makefile.vc MSVC_VER=1900 WIN64=1
 #
 # Options:
 #    DEBUG - set to disable optimizations and link with debug runtimes; also implies WITH_PDB.
@@ -32,20 +32,13 @@
 ###############################################################################
 # Check version of Visual C++ compiler:
 # nmake -f makefile.vc MSVC_VER=xxxx
-# where xxxx is one of following:
+# where xxxx is one of following (older versions no longer supported):
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
-# 1800 = 12.0(2013)
-# 1700 = 11.0(2012)
-# 1600 = 10.0(2010)
-# 1500 = 9.0 (2008)
-# 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
-# 1310 = 7.1 (2003) # is it still supported ?
-# 1300 = 7.0 (2002) # is it still supported ?
 #
 !IFNDEF MSVC_VER
-#assume msvc VS2008.
-MSVC_VER=1500
+#assume msvc VS2015.
+MSVC_VER=1900
 !ENDIF
 
 ###############################################################################
@@ -128,19 +121,11 @@ CXX_PDB_FLAGS=
 !ENDIF
 
 !IFNDEF OPTFLAGS
-!IF $(MSVC_VER) >= 1400
 !IFNDEF DEBUG
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MDd /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
-!ELSE
-!IFNDEF DEBUG
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /FC /DNDEBUG
-!ELSE
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MDd /EHsc /GR /FC /DDEBUG
-!ENDIF
-!ENDIF  #MSVC_VER
 !ENDIF  # OPTFLAGS
 
 # 
@@ -159,14 +144,6 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MDd /EHsc /GR /FC /DDEBUG
 # 
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
 
-!IF $(MSVC_VER) >= 1500
-!IF $(MSVC_VER) < 1700
-# VS 2008 / MSVC_VER = 1500 and VS 2010 / MSVC_VER = 1600 recognizes override, but as an extension.
-# warning C4481: nonstandard extension used: override specifier 'override'
-WARNFLAGS = $(WARNFLAGS) /wd4481
-!ENDIF
-!ENDIF
-
 !ENDIF
 
 # 
@@ -178,12 +155,9 @@ SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
 #SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
-# VS2010 SP1 or later in fact required for runtime detection of AVX instruction set
 !IFNDEF AVXFLAGS
-!IF $(MSVC_VER) >= 1600
 AVXFLAGS = /DHAVE_AVX_AT_COMPILE_TIME
 AVX_ARCH_FLAGS = /arch:AVX
-!ENDIF
 !ENDIF
 
 # The following are extra disables that can be applied to external source
@@ -816,12 +790,8 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-!IF $(MSVC_VER) >= 1900
 # legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
 ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
-!ELSE
-ODBCLIB = odbc32.lib odbccp32.lib user32.lib
-!ENDIF
 !ENDIF
 
 !IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)

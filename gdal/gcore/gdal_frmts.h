@@ -191,6 +191,7 @@ void CPL_DLL GDALRegister_Derived(void);
 void CPL_DLL GDALRegister_JP2Lura(void);
 void CPL_DLL GDALRegister_PRF(void);
 void CPL_DLL GDALRegister_NULL(void);
+void CPL_DLL GDALRegister_RDA(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

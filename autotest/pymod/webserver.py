@@ -91,7 +91,10 @@ class SequentialHandler:
                         request.send_header('Content-Length', '0')
                     request.end_headers()
                     if req_resp.body:
-                        request.wfile.write(req_resp.body.encode('ascii'))
+                        try:
+                            request.wfile.write(req_resp.body)
+                        except:
+                            request.wfile.write(req_resp.body.encode('ascii'))
 
                 return
 

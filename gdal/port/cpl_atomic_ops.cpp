@@ -55,12 +55,8 @@ int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
 
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-  return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
-#else
   return InterlockedExchangeAdd((volatile LONG*)(ptr),
                                 (LONG)(increment)) + increment;
-#endif
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)

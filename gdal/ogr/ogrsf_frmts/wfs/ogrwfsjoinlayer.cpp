@@ -27,7 +27,7 @@
  ****************************************************************************/
 
 #include "ogr_wfs.h"
-#include "md5.h"
+#include "cpl_md5.h"
 
 CPL_CVSID("$Id$")
 
@@ -573,9 +573,9 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
 
         OGRFeature* poNewFeature = new OGRFeature(poFeatureDefn);
 
-        struct cvs_MD5Context sMD5Context;
+        struct CPLMD5Context sMD5Context;
         if( bDistinct )
-            cvs_MD5Init(&sMD5Context);
+            CPLMD5Init(&sMD5Context);
 
         for(int i=0;i<(int)aoSrcFieldNames.size();i++)
         {
@@ -602,22 +602,22 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                     if( eType == OFTInteger )
                     {
                         int nVal = poNewFeature->GetFieldAsInteger(i);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                        CPLMD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
                     }
                     else if( eType == OFTInteger64 )
                     {
                         GIntBig nVal = poNewFeature->GetFieldAsInteger64(i);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
+                        CPLMD5Update( &sMD5Context, (const GByte*)&nVal, sizeof(nVal));
                     }
                     else if( eType == OFTReal )
                     {
                         double dfVal = poNewFeature->GetFieldAsDouble(i);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)&dfVal, sizeof(dfVal));
+                        CPLMD5Update( &sMD5Context, (const GByte*)&dfVal, sizeof(dfVal));
                     }
                     else
                     {
                         const char* pszStr = poNewFeature->GetFieldAsString(i);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)pszStr, static_cast<int>(strlen(pszStr)));
+                        CPLMD5Update( &sMD5Context, (const GByte*)pszStr, static_cast<int>(strlen(pszStr)));
                     }
                 }
             }
@@ -637,7 +637,7 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
                         int nSize = poGeom->WkbSize();
                         GByte* pabyGeom = (GByte*)CPLMalloc(nSize);
                         poGeom->exportToWkb(wkbNDR, pabyGeom);
-                        cvs_MD5Update( &sMD5Context, (const GByte*)pabyGeom, nSize);
+                        CPLMD5Update( &sMD5Context, (const GByte*)pabyGeom, nSize);
                         CPLFree(pabyGeom);
                     }
 
@@ -652,7 +652,7 @@ OGRFeature* OGRWFSJoinLayer::GetNextFeature()
         if( bDistinct )
         {
             CPLString osDigest = "0123456789abcdef";
-            cvs_MD5Final((unsigned char*)osDigest.c_str(), &sMD5Context);
+            CPLMD5Final((unsigned char*)osDigest.c_str(), &sMD5Context);
             if( aoSetMD5.find(osDigest) == aoSetMD5.end() )
             {
                 aoSetMD5.insert(osDigest);

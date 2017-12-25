@@ -241,10 +241,8 @@ PLUGIN_MONGODBDIR = mongodb
 !ENDIF
 !ENDIF
 
-!IF $(MSVC_VER) >= 1800
 CAD_DIR = cad
 CAD_OBJ = cad\*.obj cad\libopencad\*.obj cad\libopencad\dwg\*.obj
-!ENDIF
 
 !ELSE
 

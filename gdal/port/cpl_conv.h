@@ -174,6 +174,7 @@ int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
 const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLExpandTilde( const char *pszFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
@@ -295,12 +296,12 @@ public:
     CPLLocaleC();
     ~CPLLocaleC();
 
+    /* Make it non-copyable */
+    CPLLocaleC(const CPLLocaleC&) = delete;
+    CPLLocaleC& operator=(const CPLLocaleC&) = delete;
+
 private:
     char *pszOldLocale;
-
-    /* Make it non-copyable */
-    CPLLocaleC(const CPLLocaleC&);
-    CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
 // Does the same as CPLLocaleC except that, when available, it tries to
@@ -314,12 +315,12 @@ public:
     CPLThreadLocaleC();
     ~CPLThreadLocaleC();
 
+    /* Make it non-copyable */
+    CPLThreadLocaleC(const CPLThreadLocaleC&) = delete;
+    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&) = delete;
+
 private:
     CPLThreadLocaleCPrivate* m_private;
-
-    /* Make it non-copyable */
-    CPLThreadLocaleC(const CPLThreadLocaleC&);
-    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&);
 };
 
 #endif /* def __cplusplus */
@@ -341,14 +342,14 @@ public:
                           bool bSetOnlyIfUndefined);
     ~CPLConfigOptionSetter();
 
+    /* Make it non-copyable */
+    CPLConfigOptionSetter(const CPLConfigOptionSetter&) = delete;
+    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&) = delete;
+
 private:
     char* m_pszKey;
     char *m_pszOldValue;
     bool m_bRestoreOldValue;
-
-    /* Make it non-copyable */
-    CPLConfigOptionSetter(const CPLConfigOptionSetter&);
-    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&);
 };
 
 #endif /* def __cplusplus */

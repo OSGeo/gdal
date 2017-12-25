@@ -353,7 +353,6 @@ class CPL_DLL OGRSFDriverRegistrar
 /*      Various available registration methods.                         */
 /* -------------------------------------------------------------------- */
 CPL_C_START
-void CPL_DLL OGRRegisterAll();
 
 //! @cond Doxygen_Suppress
 void OGRRegisterAllInternal();

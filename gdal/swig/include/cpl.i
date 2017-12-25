@@ -164,7 +164,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (read_dir) wrapper_VSIReadDirEx;
 %rename (read_dir_recursive) VSIReadDirRecursive;
 %rename (mkdir) VSIMkdir;
+%rename (mkdir_recursive) VSIMkdirRecursive;
 %rename (rmdir) VSIRmdir;
+%rename (rmdir_recursive) VSIRmdirRecursive;
 %rename (rename) VSIRename;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) wrapper_CPLGetConfigOption;
@@ -173,7 +175,6 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (file_from_mem_buffer) wrapper_VSIFileFromMemBuffer;
 %rename (unlink) VSIUnlink;
 %rename (has_thread_support) wrapper_HasThreadSupport;
-%rename (md5_string) wrapper_CPLMD5String;
 #else
 %rename (PushErrorHandler) CPLPushErrorHandler;
 %rename (PopErrorHandler) CPLPopErrorHandler;
@@ -189,7 +190,9 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (ReadDir) wrapper_VSIReadDirEx;
 %rename (ReadDirRecursive) VSIReadDirRecursive;
 %rename (Mkdir) VSIMkdir;
+%rename (MkdirRecursive) VSIMkdirRecursive;
 %rename (Rmdir) VSIRmdir;
+%rename (RmdirRecursive) VSIRmdirRecursive;
 %rename (Rename) VSIRename;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
@@ -198,7 +201,6 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (FileFromMemBuffer) wrapper_VSIFileFromMemBuffer;
 %rename (Unlink) VSIUnlink;
 %rename (HasThreadSupport) wrapper_HasThreadSupport;
-%rename (MD5String) wrapper_CPLMD5String;
 #endif
 
 retStringAndCPLFree*
@@ -363,14 +365,6 @@ const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDef
 }
 %clear const char * pszKey;
 
-%inline {
-const char *wrapper_CPLMD5String( const char * pszText )
-{
-    return CPLMD5String( pszText );
-}
-}
-%clear const char * pszText;
-
 /* Provide hooks to hex encoding methods */
 #if defined(SWIGJAVA) || defined(SWIGPERL)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
@@ -452,6 +446,10 @@ int wrapper_HasThreadSupport()
 /* Added for GDAL 1.8 */
 VSI_RETVAL VSIMkdir(const char *utf8_path, int mode );
 VSI_RETVAL VSIRmdir(const char *utf8_path );
+
+/* Added for GDAL 2.3 */
+VSI_RETVAL VSIMkdirRecursive(const char *utf8_path, int mode );
+VSI_RETVAL VSIRmdirRecursive(const char *utf8_path );
 
 %apply (const char* utf8_path) {(const char* pszOld)};
 %apply (const char* utf8_path) {(const char* pszNew)};

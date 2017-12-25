@@ -99,7 +99,7 @@ static void ParseParameters(CPLXMLNode *service,
         if (kv.size() < 2) {
             continue;
         }
-        transform(kv[0].begin(), kv[0].end(), kv[0].begin(), toupper);
+        kv[0].toupper();
         if (kv[0] == "RANGESUBSET") {
             range = kv[1];
         } else if (kv[0] == "SUBSET") {

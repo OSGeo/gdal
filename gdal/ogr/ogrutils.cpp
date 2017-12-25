@@ -103,6 +103,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     if( chConversionSpecifier == 'g' && strchr(pszBuffer, 'e') )
         return;
 
+    const bool bRound =
+        CPLTestBool(CPLGetConfigOption("OGR_WKT_ROUND", "TRUE"));
+
     int nTruncations = 0;
     while( nPrecision > 0 )
     {
@@ -126,7 +129,7 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
     /* -------------------------------------------------------------------- */
     /*      Trim trailing 00000x's as they are likely roundoff error.       */
     /* -------------------------------------------------------------------- */
-        if( i > 10 )
+        if( i > 10 && bRound )
         {
             if(  // && pszBuffer[i-1] == '1' &&
                 pszBuffer[i-2] == '0'
@@ -159,6 +162,9 @@ void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
         {
             pszBuffer[--i] = '\0';
         }
+
+        if( !bRound )
+            return;
 
     /* -------------------------------------------------------------------- */
     /*      Detect trailing 99999X's as they are likely roundoff error.     */

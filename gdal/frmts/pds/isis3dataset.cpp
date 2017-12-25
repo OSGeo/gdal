@@ -14,6 +14,8 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2010, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2017 Hobu Inc
+ * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +36,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_json_header.h"
+#include "cpl_json.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi_error.h"
@@ -109,429 +111,6 @@ CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
-/*                             CPLJsonObject                            */
-/* ==================================================================== */
-/************************************************************************/
-
-// This class is intended to be general purpose
-
-class CPLJsonObject
-{
-    public:
-        enum Type
-        {
-            UNINIT,
-            JSON_NULL,
-            INT,
-            BOOLEAN,
-            DOUBLE,
-            STRING,
-            OBJECT,
-            ARRAY
-        };
-
-    private:
-        static const CPLJsonObject m_gUninitObject;
-
-        Type m_eType;
-        // Maintain both a list and a map to keep insertion order
-        std::vector< std::pair< CPLString, CPLJsonObject* > > m_oList;
-        std::map< CPLString, int> m_oMap;
-        GIntBig m_nVal;
-        double m_dfVal;
-        CPLString m_osVal;
-
-        void add( json_object* poObj )
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == ARRAY );
-            m_eType = ARRAY;
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                CPLString(), new CPLJsonObject(poObj)) );
-        }
-
-    public:
-
-        static const CPLJsonObject JSON_NULL_CST;
-
-        CPLJsonObject() : m_eType(UNINIT), m_nVal(0), m_dfVal(0) {}
-
-        ~CPLJsonObject()
-        {
-            clear();
-        }
-
-        CPLJsonObject(const CPLJsonObject& other) :
-            m_eType(other.m_eType),
-            m_oList(other.m_oList),
-            m_oMap(other.m_oMap),
-            m_nVal(other.m_nVal),
-            m_dfVal(other.m_dfVal),
-            m_osVal(other.m_osVal)
-        {
-            for(size_t i=0;i<m_oList.size();++i)
-                m_oList[i].second = new CPLJsonObject( *m_oList[i].second );
-        }
-
-        explicit CPLJsonObject(int nVal) :
-            m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(GIntBig nVal) :
-            m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(bool bVal) :
-            m_eType(BOOLEAN), m_nVal(bVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(double dfVal) :
-            m_eType(DOUBLE), m_nVal(0), m_dfVal(dfVal) {}
-
-        explicit CPLJsonObject(const char* pszVal) :
-            m_eType(STRING), m_nVal(0), m_dfVal(0.0), m_osVal(pszVal) {}
-
-        explicit CPLJsonObject(Type eType):
-            m_eType(eType), m_nVal(0), m_dfVal(0) {}
-
-        explicit CPLJsonObject(json_object* poObj):
-            m_eType(UNINIT), m_nVal(0), m_dfVal(0.0)
-        {
-            *this = poObj;
-        }
-
-        void clear()
-        {
-            if( m_eType != UNINIT )
-            {
-                m_eType = UNINIT;
-                for(size_t i=0;i<m_oList.size();++i)
-                    delete m_oList[i].second;
-                m_oList.clear();
-                m_oMap.clear();
-                m_nVal = 0;
-                m_dfVal = 0.0;
-                m_osVal.clear();
-            }
-        }
-
-        Type getType() const { return m_eType; }
-        bool getBool() const { return m_nVal == 1; }
-        GIntBig getInt() const { return m_nVal; }
-        double getDouble() const { return m_dfVal; }
-        const char* getString() const { return m_osVal.c_str(); }
-
-        json_object* asLibJsonObj() const
-        {
-            json_object* obj = nullptr;
-            if( m_eType == INT )
-                obj = json_object_new_int64(m_nVal);
-            else if( m_eType == BOOLEAN )
-                obj = json_object_new_boolean( m_nVal == 1 );
-            else if( m_eType == DOUBLE )
-                obj = json_object_new_double(m_dfVal);
-            else if( m_eType == STRING )
-                obj = json_object_new_string(m_osVal);
-            else if( m_eType == OBJECT )
-            {
-                obj = json_object_new_object();
-                for( size_t i=0; i < m_oList.size(); ++i )
-                {
-                    json_object_object_add(obj,
-                                           m_oList[i].first.c_str(),
-                                           m_oList[i].second->asLibJsonObj());
-                }
-            }
-            else if( m_eType == ARRAY )
-            {
-                obj = json_object_new_array();
-                for( size_t i=0; i < m_oList.size(); ++i )
-                {
-                    json_object_array_add(obj,
-                                          m_oList[i].second->asLibJsonObj());
-                }
-            }
-            return obj;
-        }
-
-        // Non-const accessor. Creates then entry if needed
-        CPLJsonObject& operator[](const CPLString& osKey)
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == OBJECT );
-            m_eType = OBJECT;
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-                return *(m_oList[ oIter->second ].second);
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                                osKey, new CPLJsonObject()) );
-            m_oMap[osKey] = static_cast<int>(m_oList.size()) - 1;
-            return *(m_oList.back().second);
-        }
-
-        void insert(size_t nPos, const CPLString& osKey, const CPLJsonObject& obj )
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( nPos <= m_oList.size() );
-            del(osKey);
-            std::map<CPLString,int>::iterator oIter = m_oMap.begin();
-            for( ; oIter != m_oMap.end(); ++oIter )
-            {
-                if( oIter->second >= static_cast<int>(nPos) )
-                    oIter->second ++;
-            }
-            m_oList.insert( m_oList.begin() + nPos,
-                            std::pair<CPLString,CPLJsonObject*>(
-                                            osKey, new CPLJsonObject(obj)) );
-            m_oMap[osKey] = static_cast<int>(nPos);
-        }
-
-        bool has(const CPLString& osKey) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            return oIter != m_oMap.end();
-        }
-
-        void del(const CPLString& osKey)
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::iterator oIter = m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-            {
-                const int nIdx = oIter->second;
-                delete m_oList[nIdx].second;
-                m_oList.erase( m_oList.begin() + nIdx );
-                m_oMap.erase(oIter);
-
-                oIter = m_oMap.begin();
-                for( ; oIter != m_oMap.end(); ++oIter )
-                {
-                    if( oIter->second > nIdx )
-                        oIter->second --;
-                }
-            }
-        }
-
-        const CPLJsonObject& operator[](const CPLString& osKey) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-                return *(m_oList[ oIter->second ].second);
-            return m_gUninitObject;
-        }
-
-        CPLJsonObject& operator[](int i)
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        CPLJsonObject& operator[](size_t i)
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLJsonObject& operator[](int i) const
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLJsonObject& operator[](size_t i) const
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLString& getKey(int i) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return m_oList[i].first;
-        }
-
-        const CPLString& getKey(size_t i) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return m_oList[i].first;
-        }
-
-        void add( const CPLJsonObject& newChild )
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == ARRAY );
-            m_eType = ARRAY;
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                CPLString(), new CPLJsonObject(newChild)) );
-        }
-
-        size_t size() const
-        {
-            CPLAssert( m_eType == OBJECT || m_eType == ARRAY );
-            return m_oList.size();
-        }
-
-        CPLJsonObject& operator= (int nVal)
-        {
-            m_eType = INT;
-            m_nVal = nVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (GIntBig nVal)
-        {
-            m_eType = INT;
-            m_nVal = nVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (bool bVal)
-        {
-            m_eType = BOOLEAN;
-            m_nVal = bVal;
-            return *this;
-        }
-        CPLJsonObject& operator= (double dfVal)
-        {
-            m_eType = DOUBLE;
-            m_dfVal = dfVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (const char* pszVal)
-        {
-            m_eType = STRING;
-            m_osVal = pszVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (const CPLJsonObject& other)
-        {
-            if( &other != this )
-            {
-                clear();
-                m_eType = other.m_eType;
-                m_oList = other.m_oList;
-                m_oMap = other.m_oMap;
-                m_nVal = other.m_nVal;
-                m_dfVal = other.m_dfVal;
-                m_osVal = other.m_osVal;
-                for(size_t i=0;i<m_oList.size();++i)
-                    m_oList[i].second = new CPLJsonObject(*m_oList[i].second);
-            }
-            return *this;
-        }
-
-        CPLJsonObject& operator= (json_object* poObj)
-        {
-            clear();
-            if( poObj == nullptr )
-            {
-                m_eType = JSON_NULL;
-                return *this;
-            }
-            int eType = json_object_get_type(poObj);
-            if( eType == json_type_boolean)
-            {
-                m_eType = BOOLEAN;
-                m_nVal = json_object_get_boolean(poObj);
-                return *this;
-            }
-            if( eType == json_type_int )
-            {
-                m_eType = INT;
-                m_nVal = json_object_get_int64(poObj);
-                return *this;
-            }
-            if( eType == json_type_double )
-            {
-                m_eType = DOUBLE;
-                m_dfVal = json_object_get_double(poObj);
-                return *this;
-            }
-            if( eType == json_type_string )
-            {
-                m_eType = STRING;
-                m_osVal = json_object_get_string(poObj);
-                return *this;
-            }
-            if( eType == json_type_object )
-            {
-                m_eType = OBJECT;
-                json_object_iter it;
-                it.key = nullptr;
-                it.val = nullptr;
-                it.entry = nullptr;
-                json_object_object_foreachC( poObj, it )
-                {
-                    (*this)[it.key] = it.val;
-                }
-                return *this;
-            }
-            if( eType == json_type_array )
-            {
-                m_eType = ARRAY;
-                const int nLength = json_object_array_length(poObj);
-                for( int i = 0; i < nLength; i++ )
-                {
-                    add( json_object_array_get_idx(poObj, i) );
-                }
-                return *this;
-            }
-            CPLAssert(false);
-            return *this;
-        }
-
-        bool operator== (const CPLJsonObject& other) const
-        {
-            if( m_eType != other.m_eType )
-                return false;
-
-            if( m_eType == INT || m_eType == BOOLEAN )
-                return m_nVal == other.m_nVal;
-            if( m_eType == DOUBLE )
-                return m_dfVal == other.m_dfVal;
-            if( m_eType == STRING )
-                return m_osVal == other.m_osVal;
-            if( m_eType == OBJECT )
-            {
-                if( m_oList.size() != other.m_oList.size() )
-                    return false;
-                for(size_t i=0;i<m_oList.size();++i)
-                {
-                    if( *m_oList[i].second != other[m_oList[i].first] )
-                        return false;
-                }
-            }
-            if( m_eType == ARRAY )
-            {
-                if( m_oList.size() != other.m_oList.size() )
-                    return false;
-                for(size_t i=0;i<m_oList.size();++i)
-                {
-                    if( *m_oList[i].second != *other.m_oList[i].second )
-                        return false;
-                }
-            }
-            return true;
-        }
-
-        bool operator!= (const CPLJsonObject& other) const
-        {
-            return !((*this) == other);
-        }
-};
-
-const CPLJsonObject CPLJsonObject::m_gUninitObject;
-const CPLJsonObject CPLJsonObject::JSON_NULL_CST(CPLJsonObject::JSON_NULL);
-
-/************************************************************************/
-/* ==================================================================== */
 /*                             ISISDataset                              */
 /* ==================================================================== */
 /************************************************************************/
@@ -583,7 +162,7 @@ class ISIS3Dataset : public RawDataset
     bool        m_bWriteBoundingDegrees;
     CPLString   m_osBoundingDegrees;
 
-    json_object  *m_poJSonLabel;
+    CPLJSONObject m_oJSonLabel;
     CPLString     m_osHistory; // creation only
     bool          m_bUseSrcLabel; // creation only
     bool          m_bUseSrcMapping; // creation only
@@ -591,7 +170,7 @@ class ISIS3Dataset : public RawDataset
     bool          m_bAddGDALHistory; // creation only
     CPLString     m_osGDALHistory; // creation only
     std::vector<NonPixelSection> m_aoNonPixelSections; // creation only
-    json_object  *m_poSrcJSonLabel; // creation only
+    CPLJSONObject m_oSrcJSonLabel; // creation only
     CPLStringList m_aosISIS3MD;
     CPLStringList m_aosAdditionalFiles;
     CPLString     m_osFromFilename; // creation only
@@ -605,8 +184,8 @@ class ISIS3Dataset : public RawDataset
     void         WriteLabel();
     void         InvalidateLabel();
 
-    static CPLString SerializeAsPDL( json_object* poObj );
-    static void SerializeAsPDL( VSILFILE* fp, json_object* poObj,
+    static CPLString SerializeAsPDL( const CPLJSONObject& oObj );
+    static void SerializeAsPDL( VSILFILE* fp, const CPLJSONObject& oObj,
                                 int nDepth = 0 );
 
 public:
@@ -963,6 +542,29 @@ static void RemapNoData( GDALDataType eDataType,
     }
 }
 
+/**
+ * Get or create CPLJSONObject.
+ * @param  oParent Parent CPLJSONObject.
+ * @param  pszKey  Key name.
+ * @return         CPLJSONObject class instance.
+ */
+static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent, const char* pszKey)
+{
+    CPLJSONObject oChild = oParent[pszKey];
+    if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Object )
+    {
+        oParent.Delete(pszKey);
+        oChild.Reset();
+    }
+
+    if( !oChild.IsValid() )
+    {
+        oChild = CPLJSONObject();
+        oParent.Add(pszKey, oChild);
+    }
+    return oChild;
+}
+
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
@@ -1163,7 +765,7 @@ CPLErr ISIS3RawRasterBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 }
 
 /************************************************************************/
-/*                             IReadBlock()                             */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr ISIS3RawRasterBand::IWriteBlock( int nXBlock, int nYBlock,
@@ -1742,12 +1344,10 @@ ISIS3Dataset::ISIS3Dataset() :
     m_dfSrcNoData(0.0),
     m_bForce360(false),
     m_bWriteBoundingDegrees(true),
-    m_poJSonLabel(nullptr),
     m_bUseSrcLabel(true),
     m_bUseSrcMapping(false),
     m_bUseSrcHistory(true),
-    m_bAddGDALHistory(true),
-    m_poSrcJSonLabel(nullptr)
+    m_bAddGDALHistory(true)
 {
     m_oKeywords.SetStripSurroundingQuotes(true);
     m_adfGeoTransform[0] = 0.0;
@@ -1756,6 +1356,10 @@ ISIS3Dataset::ISIS3Dataset() :
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
+
+    // Deinit JSON objects
+    m_oJSonLabel.Reset();
+    m_oSrcJSonLabel.Reset();
 }
 
 /************************************************************************/
@@ -1777,10 +1381,7 @@ ISIS3Dataset::~ISIS3Dataset()
         VSIFCloseL( m_fpLabel );
     if( m_fpImage != nullptr && m_fpImage != m_fpLabel )
         VSIFCloseL( m_fpImage );
-    if( m_poJSonLabel != nullptr )
-        json_object_put(m_poJSonLabel);
-    if( m_poSrcJSonLabel != nullptr )
-        json_object_put(m_poSrcJSonLabel);
+
     CloseDependentDatasets();
 }
 
@@ -1919,14 +1520,16 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
     {
         if( m_aosISIS3MD.empty() )
         {
-            if( eAccess == GA_Update && m_poJSonLabel == nullptr )
+            if( eAccess == GA_Update && !m_oJSonLabel.IsValid() )
             {
                 BuildLabel();
             }
-            CPLAssert( m_poJSonLabel != nullptr );
-            const char* pszJSon = json_object_to_json_string_ext(
-                m_poJSonLabel, JSON_C_TO_STRING_PRETTY);
-            m_aosISIS3MD.InsertString(0, pszJSon);
+            CPLAssert( m_oJSonLabel.IsValid() );
+            const char* pszJSon = m_oJSonLabel.Format(CPLJSONObject::Pretty);
+            if(nullptr != pszJSon)
+            {
+                m_aosISIS3MD.InsertString(0, pszJSon);
+            }
         }
         return m_aosISIS3MD.List();
     }
@@ -1939,9 +1542,7 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
 
 void ISIS3Dataset::InvalidateLabel()
 {
-    if( m_poJSonLabel )
-            json_object_put(m_poJSonLabel);
-        m_poJSonLabel = nullptr;
+    m_oJSonLabel.Reset();
     m_aosISIS3MD.Clear();
 }
 
@@ -1954,13 +1555,19 @@ CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
     if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL( pszDomain, "json:ISIS3" ) )
     {
-        if( m_poSrcJSonLabel )
-            json_object_put(m_poSrcJSonLabel);
-        m_poSrcJSonLabel = nullptr;
+        m_oSrcJSonLabel.Reset();
         InvalidateLabel();
         if( papszMD != nullptr && papszMD[0] != nullptr )
         {
-            if( !OGRJSonParse( papszMD[0], &m_poSrcJSonLabel, true ) )
+            CPLJSONDocument oJSONDocument;
+            const GByte *pabyData = reinterpret_cast<const GByte *>(papszMD[0]);
+            if( !oJSONDocument.LoadMemory( pabyData ) )
+            {
+                return CE_Failure;
+            }
+
+            m_oSrcJSonLabel = oJSONDocument.GetRoot();
+            if( !m_oSrcJSonLabel.IsValid() )
             {
                 return CE_Failure;
             }
@@ -1989,6 +1596,7 @@ int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
+
 {
 /* -------------------------------------------------------------------- */
 /*      Does this look like a CUBE dataset?                             */
@@ -2008,60 +1616,48 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         return nullptr;
     }
-    poDS->m_poJSonLabel = poDS->m_oKeywords.StealJSon();
-    json_object_object_add(poDS->m_poJSonLabel, "_filename",
-                           json_object_new_string(poOpenInfo->pszFilename));
+    poDS->m_oJSonLabel = poDS->m_oKeywords.GetJsonObject();
+    poDS->m_oJSonLabel.Add( "_filename", poOpenInfo->pszFilename );
 
     // Find additional files from the label
-    CPLJsonObject oObjLabel(poDS->m_poJSonLabel);
-    if( oObjLabel.getType() == CPLJsonObject::OBJECT )
+    CPLJSONObject **paoObjLabelChildren = poDS->m_oJSonLabel.GetChildren();
+    if( nullptr != paoObjLabelChildren )
     {
-        const size_t nSize = oObjLabel.size();
-        for( size_t i = 0; i < nSize; ++i )
+        int i = 0;
+        while( paoObjLabelChildren[i] != nullptr )
         {
-            const CPLJsonObject& oObj(oObjLabel[i]);
-            if( oObj.getType() == CPLJsonObject::OBJECT )
-            {
-                const CPLString& osKey = oObjLabel.getKey(i);
+            CPLJSONObject *poObj = paoObjLabelChildren[i++];
 
-                CPLString osContainerName(osKey);
-                if( oObj.has( "_container_name" ) )
+            if( poObj->GetType() == CPLJSONObject::Object )
+            {
+                CPLString osContainerName = poObj->GetName();
+                CPLJSONObject oContainerName = poObj->GetObject("_container_name");
+                if( oContainerName.GetType() == CPLJSONObject::String )
                 {
-                    const CPLJsonObject& oContainerName(
-                        oObj["_container_name"]);
-                    if( oContainerName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osContainerName = oContainerName.getString();
-                    }
+                    osContainerName = oContainerName.ToString();
                 }
 
-                if( oObj.has( "^" + osContainerName ) )
+                CPLJSONObject oFilename = poObj->GetObject(("^" + osContainerName).c_str());
+                if( oFilename.GetType() == CPLJSONObject::String )
                 {
-                    const CPLJsonObject& oFilename(
-                                        oObj["^" + osContainerName]);
-                    if( oFilename.getType() == CPLJsonObject::STRING )
+                    VSIStatBufL sStat;
+                    CPLString osFilename( CPLFormFilename(
+                        CPLGetPath(poOpenInfo->pszFilename),
+                        oFilename.ToString(),
+                        nullptr ) );
+                    if( VSIStatL( osFilename, &sStat ) == 0 )
                     {
-                        VSIStatBufL sStat;
-                        CPLString osFilename( CPLFormFilename(
-                            CPLGetPath(poOpenInfo->pszFilename),
-                            oFilename.getString(),
-                            nullptr ) );
-                        if( VSIStatL( osFilename, &sStat ) == 0 )
-                        {
-                            poDS->m_aosAdditionalFiles.AddString(
-                                osFilename);
-                        }
-                        else
-                        {
-                            CPLDebug("ISIS3",
-                                        "File %s referenced but not foud",
-                                        osFilename.c_str());
-                        }
+                        poDS->m_aosAdditionalFiles.AddString(osFilename);
+                    }
+                    else
+                    {
+                        CPLDebug("ISIS3", "File %s referenced but not foud",
+                                    osFilename.c_str());
                     }
                 }
             }
         }
+        CPLJSONObject::DestroyJSONObjectList(paoObjLabelChildren);
     }
 
     VSIFCloseL( poOpenInfo->fpL );
@@ -2116,8 +1712,7 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 
     /*************   Skipbytes     *****************************/
-    int nSkipBytes =
-            atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1"));
+    int nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1"));
     if( nSkipBytes <= 1 )
         nSkipBytes = 0;
     else
@@ -2766,23 +2361,26 @@ double ISIS3Dataset::FixLong( double dfLong )
 
 void ISIS3Dataset::BuildLabel()
 {
+    CPLJSONObject oLabel = m_oSrcJSonLabel;
+    if( !oLabel.IsValid() )
+    {
+        oLabel = CPLJSONObject();
+    }
     // If we have a source label, then edit it directly
-    CPLJsonObject oLabel( m_poSrcJSonLabel );
-    if( m_poSrcJSonLabel == nullptr )
-        oLabel.clear();
-
-    CPLJsonObject& oIsisCube = oLabel["IsisCube"];
-    if( oIsisCube.getType() != CPLJsonObject::OBJECT )
-        oIsisCube.clear();
-    oIsisCube["_type"] = "object";
+    CPLJSONObject oIsisCube = GetOrCreateJSONObject(oLabel, "IsisCube");
+    oIsisCube.Set( "_type", "object");
 
     if( !m_osComment.empty() )
-        oIsisCube.insert(0, "_comment", CPLJsonObject(m_osComment));
+        oIsisCube.Set( "_comment", m_osComment );
 
-    CPLJsonObject& oCore = oIsisCube["Core"];
-    if( oCore.getType() != CPLJsonObject::OBJECT )
-        oCore.clear();
-    oCore["_type"] = "object";
+    CPLJSONObject oCore = GetOrCreateJSONObject(oIsisCube, "Core");
+    if( oCore.GetType() != CPLJSONObject::Object )
+    {
+        oIsisCube.Delete("Core");
+        oCore = CPLJSONObject();
+        oIsisCube.Add("Core", oCore);
+    }
+    oCore.Set( "_type", "object" );
 
     if( !m_osExternalFilename.empty() )
     {
@@ -2798,7 +2396,7 @@ void ISIS3Dataset::BuildLabel()
                                 GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF");
             if( pszOffset )
             {
-                oCore["StartByte"] = 1 + atoi(pszOffset);
+                oCore.Set( "StartByte", 1 + atoi(pszOffset) );
             }
             else
             {
@@ -2806,85 +2404,82 @@ void ISIS3Dataset::BuildLabel()
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Missing BLOCK_OFFSET_0_0");
                 m_bGeoTIFFAsRegularExternal = false;
-                oCore["StartByte"] = 1;
+                oCore.Set( "StartByte", 1 );
             }
         }
         else
         {
-            oCore["StartByte"] = 1;
+            oCore.Set( "StartByte", 1 );
         }
-        oCore["^Core"] = CPLGetFilename(m_osExternalFilename);
+        oCore.Set( "^Core", CPLGetFilename(m_osExternalFilename) );
     }
     else
     {
-        oCore["StartByte"] = pszSTARTBYTE_PLACEHOLDER;
-        oCore.del("^Core");
+        oCore.Set( "StartByte", pszSTARTBYTE_PLACEHOLDER);
+        oCore.Delete( "^Core" );
     }
 
     if( m_poExternalDS && !m_bGeoTIFFAsRegularExternal )
     {
-        oCore["Format"] = "GeoTIFF";
-        oCore.del("TileSamples");
-        oCore.del("TileLines");
+        oCore.Set( "Format", "GeoTIFF" );
+        oCore.Delete( "TileSamples" );
+        oCore.Delete( "TileLines" );
     }
     else if( m_bIsTiled )
     {
-        oCore["Format"] = "Tile";
+        oCore.Set( "Format", "Tile");
         int nBlockXSize = 1, nBlockYSize = 1;
         GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        oCore["TileSamples"] = nBlockXSize;
-        oCore["TileLines"] = nBlockYSize;
+        oCore.Set( "TileSamples", nBlockXSize );
+        oCore.Set( "TileLines", nBlockYSize );
     }
     else
     {
-        oCore["Format"] = "BandSequential";
-        oCore.del("TileSamples");
-        oCore.del("TileLines");
+        oCore.Set( "Format", "BandSequential" );
+        oCore.Delete( "TileSamples" );
+        oCore.Delete( "TileLines" );
     }
 
-    CPLJsonObject& oDimensions = oCore["Dimensions"];
-    if( oDimensions.getType() != CPLJsonObject::OBJECT )
-        oDimensions.clear();
-    oDimensions["_type"] = "group";
-    oDimensions["Samples"] = nRasterXSize;
-    oDimensions["Lines"] = nRasterYSize;
-    oDimensions["Bands"] = nBands;
+    CPLJSONObject oDimensions = GetOrCreateJSONObject(oCore, "Dimensions");
+    oDimensions.Set( "_type", "group" );
+    oDimensions.Set( "Samples", nRasterXSize );
+    oDimensions.Set( "Lines", nRasterYSize );
+    oDimensions.Set( "Bands", nBands );
 
-    CPLJsonObject& oPixels = oCore["Pixels"];
-    if( oPixels.getType() != CPLJsonObject::OBJECT )
-        oPixels.clear();
-    oPixels["_type"] = "group";
-        const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
-    oPixels["Type"] =
+    CPLJSONObject oPixels = GetOrCreateJSONObject(oCore, "Pixels");
+    oPixels.Set( "_type", "group" );
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    oPixels.Set( "Type",
         (eDT == GDT_Byte) ?   "UnsignedByte" :
         (eDT == GDT_UInt16) ? "UnsignedWord" :
         (eDT == GDT_Int16) ?  "SignedWord" :
-                                "Real";
+                                "Real" );
 
-    oPixels["ByteOrder"] = "Lsb";
-    oPixels["Base"] = GetRasterBand(1)->GetOffset();
-    oPixels["Multiplier"] = GetRasterBand(1)->GetScale();
+    oPixels.Set( "ByteOrder", "Lsb" );
+    oPixels.Set( "Base", GetRasterBand(1)->GetOffset() );
+    oPixels.Set( "Multiplier", GetRasterBand(1)->GetScale() );
 
     OGRSpatialReference oSRS;
 
-    if( !m_bUseSrcMapping && oIsisCube.has("Mapping") )
-        oIsisCube["Mapping"].clear();
-
-    if( m_bUseSrcMapping && oIsisCube.has("Mapping") &&
-        oIsisCube["Mapping"].getType() == CPLJsonObject::OBJECT)
+    if( !m_bUseSrcMapping )
     {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
+        oIsisCube.Delete("Mapping");
+    }
+
+    CPLJSONObject oMapping = GetOrCreateJSONObject(oIsisCube, "Mapping");
+    if( m_bUseSrcMapping && oMapping.IsValid() &&
+        oMapping.GetType() == CPLJSONObject::Object )
+    {
         if( !m_osTargetName.empty() )
-            oMapping["TargetName"] = m_osTargetName;
+            oMapping.Set( "TargetName", m_osTargetName );
         if( !m_osLatitudeType.empty() )
-            oMapping["LatitudeType"] = m_osLatitudeType;
+            oMapping.Set( "LatitudeType", m_osLatitudeType );
         if( !m_osLongitudeDirection.empty() )
-            oMapping["LongitudeDirection"] = m_osLongitudeDirection;
+            oMapping.Set( "LongitudeDirection", m_osLongitudeDirection );
     }
     else if( !m_bUseSrcMapping && !m_osProjection.empty() )
     {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
-        oMapping["_type"] = "group";
+        oMapping.Add( "_type", "group" );
 
         oSRS.SetFromUserInput(m_osProjection);
         if( oSRS.IsProjected() || oSRS.IsGeographic() )
@@ -2903,22 +2498,22 @@ void ISIS3Dataset::BuildLabel()
                 }
             }
             if( !osTargetName.empty() )
-                oMapping["TargetName"] = osTargetName;
+                oMapping.Add( "TargetName", osTargetName );
 
-            oMapping["EquatorialRadius"]["value"] = oSRS.GetSemiMajor();
-            oMapping["EquatorialRadius"]["unit"] = "meters";
-            oMapping["PolarRadius"]["value"] = oSRS.GetSemiMinor();
-            oMapping["PolarRadius"]["unit"] = "meters";
+            oMapping.Add( "EquatorialRadius/value", oSRS.GetSemiMajor() );
+            oMapping.Add( "EquatorialRadius/unit", "meters" );
+            oMapping.Add( "PolarRadius/value", oSRS.GetSemiMinor() );
+            oMapping.Add( "PolarRadius/unit", "meters" );
 
             if( !m_osLatitudeType.empty() )
-                oMapping["LatitudeType"] = m_osLatitudeType;
+                oMapping.Add( "LatitudeType", m_osLatitudeType );
             else
-                oMapping["LatitudeType"] = "Planetocentric";
+                oMapping.Add( "LatitudeType", "Planetocentric" );
 
             if( !m_osLongitudeDirection.empty() )
-                oMapping["LongitudeDirection"] = m_osLongitudeDirection;
+                oMapping.Add( "LongitudeDirection", m_osLongitudeDirection );
             else
-                oMapping["LongitudeDirection"] = "PositiveEast";
+                oMapping.Add( "LongitudeDirection", "PositiveEast" );
 
             double adfX[4] = {0};
             double adfY[4] = {0};
@@ -2964,11 +2559,11 @@ void ISIS3Dataset::BuildLabel()
             if( bLongLatCorners && (
                     m_bForce360 || adfX[0] <- 180.0 || adfX[3] > 180.0) )
             {
-                oMapping["LongitudeDomain"] = 360;
+                oMapping.Add( "LongitudeDomain", 360 );
             }
             else
             {
-                oMapping["LongitudeDomain"] = 180;
+                oMapping.Add( "LongitudeDomain", 180 );
             }
 
             if( m_bWriteBoundingDegrees && !m_osBoundingDegrees.empty() )
@@ -2977,36 +2572,36 @@ void ISIS3Dataset::BuildLabel()
                         CSLTokenizeString2(m_osBoundingDegrees, ",", 0);
                 if( CSLCount(papszTokens) == 4 )
                 {
-                    oMapping["MinimumLatitude"]  = CPLAtof(papszTokens[1]);
-                    oMapping["MinimumLongitude"] = CPLAtof(papszTokens[0]);
-                    oMapping["MaximumLatitude"]  = CPLAtof(papszTokens[3]);
-                    oMapping["MaximumLongitude"] = CPLAtof(papszTokens[2]);
+                    oMapping.Add( "MinimumLatitude", CPLAtof(papszTokens[1]) );
+                    oMapping.Add( "MinimumLongitude", CPLAtof(papszTokens[0]) );
+                    oMapping.Add( "MaximumLatitude", CPLAtof(papszTokens[3]) );
+                    oMapping.Add( "MaximumLongitude", CPLAtof(papszTokens[2]) );
                 }
                 CSLDestroy(papszTokens);
             }
             else if( m_bWriteBoundingDegrees && bLongLatCorners )
             {
-                oMapping["MinimumLatitude"] = std::min(
-                    std::min(adfY[0], adfY[1]), std::min(adfY[2],adfY[3]));
-                oMapping["MinimumLongitude"] = std::min(
-                    std::min(adfX[0], adfX[1]), std::min(adfX[2],adfX[3]));
-                oMapping["MaximumLatitude"] = std::max(
-                    std::max(adfY[0], adfY[1]), std::max(adfY[2],adfY[3]));
-                oMapping["MaximumLongitude"] = std::max(
-                    std::max(adfX[0], adfX[1]), std::max(adfX[2],adfX[3]));
+                oMapping.Add( "MinimumLatitude", std::min(
+                    std::min(adfY[0], adfY[1]), std::min(adfY[2],adfY[3])) );
+                oMapping.Add( "MinimumLongitude", std::min(
+                    std::min(adfX[0], adfX[1]), std::min(adfX[2],adfX[3])) );
+                oMapping.Add( "MaximumLatitude", std::max(
+                    std::max(adfY[0], adfY[1]), std::max(adfY[2],adfY[3])) );
+                oMapping.Add( "MaximumLongitude", std::max(
+                    std::max(adfX[0], adfX[1]), std::max(adfX[2],adfX[3])) );
             }
 
             const char* pszProjection = oSRS.GetAttrValue("PROJECTION");
             if( pszProjection == nullptr )
             {
-                oMapping["ProjectionName"] = "SimpleCylindrical";
-                oMapping["CenterLongitude"] = 0.0;
-                oMapping["CenterLatitude"] = 0.0;
-                oMapping["CenterLatitudeRadius"] = oSRS.GetSemiMajor();
+                oMapping.Add( "ProjectionName", "SimpleCylindrical" );
+                oMapping.Add( "CenterLongitude", 0.0 );
+                oMapping.Add( "CenterLatitude", 0.0 );
+                oMapping.Add( "CenterLatitudeRadius", oSRS.GetSemiMajor() );
             }
             else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
             {
-                oMapping["ProjectionName"] = "Equirectangular";
+                oMapping.Add( "ProjectionName", "Equirectangular" );
                 if( oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
                                                                     != 0.0 )
                 {
@@ -3014,11 +2609,11 @@ void ISIS3Dataset::BuildLabel()
                              "Ignoring %s. Only 0 value supported",
                              SRS_PP_LATITUDE_OF_ORIGIN);
                 }
-                oMapping["CenterLongitude"] =
-                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+                oMapping.Add( "CenterLongitude",
+                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
                 const double dfCenterLat =
                         oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
-                oMapping["CenterLatitude"] = dfCenterLat;
+                oMapping.Add( "CenterLatitude", dfCenterLat );
 
                   // in radians
                 const double radLat = dfCenterLat * M_PI / 180;
@@ -3028,69 +2623,69 @@ void ISIS3Dataset::BuildLabel()
                         = semi_major * semi_minor
                         / sqrt( pow( semi_minor * cos( radLat ), 2)
                             + pow( semi_major * sin( radLat ), 2) );
-                oMapping["CenterLatitudeRadius"] = localRadius;
+                oMapping.Add( "CenterLatitudeRadius", localRadius );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC) )
             {
-                oMapping["ProjectionName"] = "Orthographic";
-                oMapping["CenterLongitude"] = FixLong(
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                oMapping.Add( "ProjectionName", "Orthographic" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
             {
-                oMapping["ProjectionName"] = "Sinusoidal";
-                oMapping["CenterLongitude"] = FixLong(
-                    oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+                oMapping.Add( "ProjectionName", "Sinusoidal" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                    oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0)) );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
             {
-                oMapping["ProjectionName"] = "Mercator";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add( "ProjectionName", "Mercator" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) );
+                oMapping.Add( "scaleFactor",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0) );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
             {
-                oMapping["ProjectionName"] = "PolarStereographic";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add( "ProjectionName", "PolarStereographic" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) );
+                oMapping.Add( "scaleFactor",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0) );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
             {
-                oMapping["ProjectionName"] = "TransverseMercator";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add( "ProjectionName", "TransverseMercator" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) );
+                oMapping.Add( "scaleFactor",
+                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0) );
             }
 
             else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
             {
-                oMapping["ProjectionName"] = "LambertConformal";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["FirstStandardParallel"] =
-                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
-                oMapping["SecondStandardParallel"] =
-                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0);
+                oMapping.Add( "ProjectionName", "LambertConformal" );
+                oMapping.Add( "CenterLongitude", FixLong(
+                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0)) );
+                oMapping.Add( "CenterLatitude",
+                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) );
+                oMapping.Add( "FirstStandardParallel",
+                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0) );
+                oMapping.Add( "SecondStandardParallel",
+                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0) );
             }
 
             else
@@ -3100,7 +2695,8 @@ void ISIS3Dataset::BuildLabel()
                          pszProjection);
             }
 
-            if( oMapping.has("ProjectionName") )
+
+            if( oMapping["ProjectionName"].IsValid() )
             {
                 if( oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
                 {
@@ -3125,8 +2721,7 @@ void ISIS3Dataset::BuildLabel()
 
     if( !m_bUseSrcMapping && m_bGotTransform )
     {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
-        oMapping["_type"] = "group";
+        oMapping.Add( "_type", "group" );
 
         const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
         if( !m_osProjection.empty() && oSRS.IsProjected() )
@@ -3135,99 +2730,94 @@ void ISIS3Dataset::BuildLabel()
             // Maybe we should deal differently with non meter units ?
             const double dfRes = m_adfGeoTransform[1] * dfLinearUnits;
             const double dfScale = dfDegToMeter / dfRes;
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
-            oMapping["PixelResolution"]["value"] = dfRes;
-            oMapping["PixelResolution"]["unit"] = "meters/pixel";
-            oMapping["Scale"]["value"] = dfScale;
-            oMapping["Scale"]["unit"] = "pixels/degree";
+            oMapping.Add( "UpperLeftCornerX", m_adfGeoTransform[0] );
+            oMapping.Add( "UpperLeftCornerY", m_adfGeoTransform[3] );
+            oMapping.Add( "PixelResolution/value", dfRes );
+            oMapping.Add( "PixelResolution/unit", "meters/pixel" );
+            oMapping.Add( "Scale/value", dfScale );
+            oMapping.Add( "Scale/unit", "pixels/degree" );
         }
         else if( !m_osProjection.empty() && oSRS.IsGeographic() )
         {
             const double dfScale = 1.0 / m_adfGeoTransform[1];
             const double dfRes = m_adfGeoTransform[1] * dfDegToMeter;
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0] * dfDegToMeter;
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3] * dfDegToMeter;
-            oMapping["PixelResolution"]["value"] = dfRes;
-            oMapping["PixelResolution"]["unit"] = "meters/pixel";
-            oMapping["Scale"]["value"] = dfScale;
-            oMapping["Scale"]["unit"] = "pixels/degree";
+            oMapping.Add( "UpperLeftCornerX", m_adfGeoTransform[0] * dfDegToMeter );
+            oMapping.Add( "UpperLeftCornerY", m_adfGeoTransform[3] * dfDegToMeter );
+            oMapping.Add( "PixelResolution/value", dfRes );
+            oMapping.Add( "PixelResolution/unit", "meters/pixel" );
+            oMapping.Add( "Scale/value", dfScale );
+            oMapping.Add( "Scale/unit", "pixels/degree" );
         }
         else
         {
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
-            oMapping["PixelResolution"] = m_adfGeoTransform[1];
+            oMapping.Add( "UpperLeftCornerX", m_adfGeoTransform[0] );
+            oMapping.Add( "UpperLeftCornerY", m_adfGeoTransform[3] );
+            oMapping.Add( "PixelResolution", m_adfGeoTransform[1] );
         }
     }
 
-    CPLJsonObject& oLabelLabel = oLabel["Label"];
-    if( oLabelLabel.getType() != CPLJsonObject::OBJECT )
-        oLabelLabel.clear();
-    oLabelLabel["_type"] = "object";
-    oLabelLabel["Bytes"] = pszLABEL_BYTES_PLACEHOLDER;
+    CPLJSONObject oLabelLabel = GetOrCreateJSONObject(oLabel, "Label");
+    oLabelLabel.Set( "_type", "object" );
+    oLabelLabel.Set( "Bytes", pszLABEL_BYTES_PLACEHOLDER );
 
     // Deal with History object
     BuildHistory();
 
+    oLabel.Delete("History");
     if( !m_osHistory.empty() )
     {
-        CPLJsonObject& oHistory = oLabel["History"];
-        oHistory.clear();
-        oHistory["_type"] = "object";
-        oHistory["Name"] = "IsisCube";
+        CPLJSONObject oHistory;
+        oHistory.Add( "_type", "object" );
+        oHistory.Add( "Name", "IsisCube" );
         if( m_osExternalFilename.empty() )
-            oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
+            oHistory.Add( "StartByte", pszHISTORY_STARTBYTE_PLACEHOLDER );
         else
-            oHistory["StartByte"] = 1;
-        oHistory["Bytes"] = static_cast<GIntBig>(m_osHistory.size());
+            oHistory.Add( "StartByte", 1 );
+        oHistory.Add( "Bytes", static_cast<GIntBig>(m_osHistory.size()) );
         if( !m_osExternalFilename.empty() )
         {
             CPLString osFilename(CPLGetBasename(GetDescription()));
             osFilename += ".History.IsisCube";
-            oHistory["^History"] = osFilename;
+            oHistory.Add( "^History", osFilename );
         }
-    }
-    else
-    {
-        oLabel.del("History");
+        oLabel.Add( "History", oHistory );
     }
 
     // Deal with other objects that have StartByte & Bytes
     m_aoNonPixelSections.clear();
-    if( m_poSrcJSonLabel )
+    if( m_oSrcJSonLabel.IsValid() )
     {
         CPLString osLabelSrcFilename;
-        if( oLabel.has("_filename") )
+        CPLJSONObject oFilename = oLabel["_filename"];
+        if( oFilename.GetType() == CPLJSONObject::String )
         {
-            const CPLJsonObject& oFilename = oLabel["_filename"];
-            if( oFilename.getType() == CPLJsonObject::STRING )
-            {
-                osLabelSrcFilename = oFilename.getString();
-            }
+            osLabelSrcFilename = oFilename.ToString();
         }
 
-        for( size_t i = 0; i < oLabel.size(); )
+        CPLJSONObject **paoObjLabelChildren = oLabel.GetChildren();
+        if( nullptr != paoObjLabelChildren )
         {
-            if( oLabel[i].getType() == CPLJsonObject::OBJECT )
+            int i = 0;
+            while( paoObjLabelChildren[i] != nullptr )
             {
-                const CPLString& osKey = oLabel.getKey(i);
+                CPLJSONObject *poObj = paoObjLabelChildren[i++];
+                CPLString osKey = poObj->GetName();
                 if( osKey == "History" )
                 {
-                    ++i;
                     continue;
                 }
 
-                CPLJsonObject& oObj(oLabel[i]);
-                if( oObj.getType() != CPLJsonObject::OBJECT ||
-                    !oObj.has("Bytes") ||
-                    oObj["Bytes"].getType() != CPLJsonObject::INT ||
-                    oObj["Bytes"].getInt() <= 0 ||
-                    !oObj.has("StartByte") ||
-                    oObj["StartByte"].getType() != CPLJsonObject::INT ||
-                    oObj["StartByte"].getInt() <= 0 )
+                CPLJSONObject oBytes = poObj->GetObject("Bytes");
+                if( oBytes.GetType() != CPLJSONObject::Integer ||
+                    oBytes.ToInteger() <= 0 )
                 {
-                    ++i;
+                    continue;
+                }
+
+                CPLJSONObject oStartByte = poObj->GetObject("StartByte");
+                if( oStartByte.GetType() != CPLJSONObject::Integer ||
+                    oStartByte.ToInteger() <= 0 )
+                {
                     continue;
                 }
 
@@ -3238,74 +2828,60 @@ void ISIS3Dataset::BuildLabel()
                             "source ISIS3 metadata. Removing object "
                             "%s from the label.",
                             osKey.c_str());
-                    oLabel.del( osKey );
-                    // Do not increment i due to deletion.
+                    oLabel.Delete( osKey );
                     continue;
                 }
 
                 NonPixelSection oSection;
                 oSection.osSrcFilename = osLabelSrcFilename;
                 oSection.nSrcOffset = static_cast<vsi_l_offset>(
-                    oObj["StartByte"].getInt()) - 1U;
+                    poObj->GetInteger("StartByte")) - 1U;
                 oSection.nSize = static_cast<vsi_l_offset>(
-                    oObj["Bytes"].getInt());
+                    poObj->GetInteger("Bytes"));
 
                 CPLString osName;
-                if( oObj.has( "Name" ) )
+                CPLJSONObject oName = poObj->GetObject("Name");
+                if( oName.GetType() == CPLJSONObject::String )
                 {
-                    const CPLJsonObject& oName(oObj["Name"]);
-                    if( oName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osName = oName.getString();
-                    }
+                    osName = oName.ToString();
                 }
 
                 CPLString osContainerName(osKey);
-                if( oObj.has( "_container_name" ) )
+                CPLJSONObject oContainerName = poObj->GetObject("_container_name");
+                if( oContainerName.GetType() == CPLJSONObject::String )
                 {
-                    const CPLJsonObject& oContainerName(
-                        oObj["_container_name"]);
-                    if( oContainerName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osContainerName = oContainerName.getString();
-                    }
+                    osContainerName = oContainerName.ToString();
                 }
 
                 const CPLString osKeyFilename( "^" + osContainerName );
-                if( oObj.has( osKeyFilename ) )
+                CPLJSONObject oFilenameCap = poObj->GetObject(osKeyFilename);
+                if( oFilenameCap.GetType() == CPLJSONObject::String )
                 {
-                    const CPLJsonObject& oFilename(oObj[osKeyFilename]);
-                    if( oFilename.getType() == CPLJsonObject::STRING )
+                    VSIStatBufL sStat;
+                    const CPLString osSrcFilename( CPLFormFilename(
+                        CPLGetPath(osLabelSrcFilename),
+                        oFilenameCap.ToString(),
+                        nullptr ) );
+                    if( VSIStatL( osSrcFilename, &sStat ) == 0 )
                     {
-                        VSIStatBufL sStat;
-                        const CPLString osSrcFilename( CPLFormFilename(
-                            CPLGetPath(osLabelSrcFilename),
-                            oFilename.getString(),
-                            nullptr ) );
-                        if( VSIStatL( osSrcFilename, &sStat ) == 0 )
-                        {
-                            oSection.osSrcFilename = osSrcFilename;
-                        }
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Object %s points to %s, which does "
-                                     "not exist. Removing this section "
-                                     "from the label",
-                                     osKey.c_str(),
-                                     osSrcFilename.c_str());
-                            oLabel.del( osKey );
-                            // Do not increment i due to deletion.
-                            continue;
-                        }
+                        oSection.osSrcFilename = osSrcFilename;
+                    }
+                    else
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Object %s points to %s, which does "
+                                 "not exist. Removing this section "
+                                 "from the label",
+                                 osKey.c_str(),
+                                 osSrcFilename.c_str());
+                        oLabel.Delete( osKey );
+                        continue;
                     }
                 }
 
                 if( !m_osExternalFilename.empty() )
                 {
-                    oObj["StartByte"] = 1;
+                    poObj->Set("StartByte", 1);
                 }
                 else
                 {
@@ -3313,14 +2889,13 @@ void ISIS3Dataset::BuildLabel()
                     osPlaceHolder.Printf(
                         "!*^PLACEHOLDER_%d_STARTBYTE^*!",
                         static_cast<int>(m_aoNonPixelSections.size()) + 1);
-                    oObj["StartByte"] = osPlaceHolder;
+                    poObj->Set("StartByte", osPlaceHolder);
                     oSection.osPlaceHolder = osPlaceHolder;
                 }
 
                 if( !m_osExternalFilename.empty() )
                 {
-                    CPLString osDstFilename(
-                            CPLGetBasename(GetDescription()));
+                    CPLString osDstFilename( CPLGetBasename(GetDescription()) );
                     osDstFilename += ".";
                     osDstFilename += osContainerName;
                     if( !osName.empty() )
@@ -3334,39 +2909,20 @@ void ISIS3Dataset::BuildLabel()
                         osDstFilename,
                         nullptr );
 
-                    if( oObj.has(osKeyFilename) )
-                        oObj[osKeyFilename] = osDstFilename;
-                    else
-                    {
-                        // Insert before first sub-group/object if there's one
-                        size_t j = 0;
-                        for(;  j < oObj.size(); ++j )
-                        {
-                            if( oObj[j].getType() == CPLJsonObject::OBJECT )
-                            {
-                                break;
-                            }
-                        }
-                        oObj.insert( j, osKeyFilename,
-                                     CPLJsonObject(osDstFilename) );
-                    }
+                    poObj->Set(osKeyFilename, osDstFilename);
                 }
                 else
                 {
-                    oObj.del(osKeyFilename);
+                    poObj->Delete(osKeyFilename);
                 }
 
                 m_aoNonPixelSections.push_back(oSection);
             }
-
-            // Do not move that in for() loop.
-            ++i;
         }
+        CPLJSONObject::DestroyJSONObjectList(paoObjLabelChildren);
     }
 
-    if( m_poJSonLabel )
-        json_object_put(m_poJSonLabel);
-    m_poJSonLabel = oLabel.asLibJsonObj();
+    m_oJSonLabel = oLabel;
 }
 
 /************************************************************************/
@@ -3377,61 +2933,47 @@ void ISIS3Dataset::BuildHistory()
 {
     CPLString osHistory;
 
-    if( m_poSrcJSonLabel != nullptr && m_bUseSrcHistory )
+    if( m_oSrcJSonLabel.IsValid() && m_bUseSrcHistory )
     {
-        CPLJsonObject oLabel( m_poSrcJSonLabel );
         vsi_l_offset nHistoryOffset = 0;
         int nHistorySize = 0;
         CPLString osSrcFilename;
-        if( oLabel.has("_filename") )
+
+        CPLJSONObject oFilename = m_oSrcJSonLabel["_filename"];
+        if( oFilename.GetType() == CPLJSONObject::String )
         {
-            const CPLJsonObject& oFilename = oLabel["_filename"];
-            if( oFilename.getType() == CPLJsonObject::STRING )
-            {
-                osSrcFilename = oFilename.getString();
-            }
+            osSrcFilename = oFilename.ToString();
         }
         CPLString osHistoryFilename(osSrcFilename);
-        if( oLabel.has("History") )
+        CPLJSONObject oHistory = m_oSrcJSonLabel["History"];
+        if( oHistory.GetType() == CPLJSONObject::Object )
         {
-            const CPLJsonObject& oHistory = oLabel["History"];
-            if( oHistory.getType() == CPLJsonObject::OBJECT )
+            CPLJSONObject oHistoryFilename = oHistory["^History"];
+            if( oHistoryFilename.GetType() == CPLJSONObject::String )
             {
-                if( oHistory.has("^History") )
-                {
-                    const CPLJsonObject& oHistoryFilename =
-                                                    oHistory["^History"];
-                    if( oHistoryFilename.getType() == CPLJsonObject::STRING )
-                    {
-                        osHistoryFilename =
-                            CPLFormFilename( CPLGetPath(osSrcFilename),
-                                             oHistoryFilename.getString(),
-                                             nullptr );
-                    }
-                }
+                osHistoryFilename =
+                        CPLFormFilename( CPLGetPath(osSrcFilename),
+                                         oHistoryFilename.ToString(),
+                                         nullptr );
+            }
 
-                if( oHistory.has("StartByte") )
+            CPLJSONObject oStartByte = oHistory["StartByte"];
+            if( oStartByte.GetType() == CPLJSONObject::Integer )
+            {
+                if( oStartByte.ToInteger() > 0 )
                 {
-                    const CPLJsonObject& oStartByte = oHistory["StartByte"];
-                    if( oStartByte.getType() == CPLJsonObject::INT &&
-                        oStartByte.getInt() > 0 )
-                    {
-                        nHistoryOffset = static_cast<vsi_l_offset>(
-                            oStartByte.getInt()) - 1U;
-                    }
-                }
-
-                if( oHistory.has("Bytes") )
-                {
-                    const CPLJsonObject& oBytes = oHistory["Bytes"];
-                    if( oBytes.getType() == CPLJsonObject::INT )
-                    {
-                        nHistorySize = static_cast<int>(
-                            oBytes.getInt());
-                    }
+                    nHistoryOffset = static_cast<vsi_l_offset>(
+                        oStartByte.ToInteger()) - 1U;
                 }
             }
+
+            CPLJSONObject oBytes = oHistory["Bytes"];
+            if( oBytes.GetType() == CPLJSONObject::Integer )
+            {
+                nHistorySize = static_cast<int>( oBytes.ToInteger() );
+            }
         }
+
         if( osHistoryFilename.empty() )
         {
             CPLDebug("ISIS3", "Cannot find filename for source history");
@@ -3481,56 +3023,59 @@ void ISIS3Dataset::BuildHistory()
         if( !osHistory.empty() )
             osHistory += "\n";
 
-        CPLJsonObject oHistoryObj;
+        CPLJSONObject oHistoryObj;
         char szFullFilename[2048] = { 0 };
         if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
             strcpy(szFullFilename, "unknown_program");
         const CPLString osProgram(CPLGetBasename(szFullFilename));
         const CPLString osPath(CPLGetPath(szFullFilename));
-        CPLJsonObject& oObj = oHistoryObj[osProgram];
-        oObj["_type"] = "object";
-        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
+
+        CPLJSONObject oObj;
+        oHistoryObj.Add(osProgram, oObj);
+
+        oObj.Add( "_type", "object" );
+        oObj.Add( "GdalVersion", GDALVersionInfo("RELEASE_NAME") );
         if( osPath != "." )
-            oObj["ProgramPath"] = osPath;
+            oObj.Add( "ProgramPath", osPath );
         time_t nCurTime = time(nullptr);
         if( nCurTime != -1 )
         {
             struct tm mytm;
             CPLUnixTimeToYMDHMS(nCurTime, &mytm);
-            oObj["ExecutionDateTime"] =
+            oObj.Add( "ExecutionDateTime",
                 CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
                             mytm.tm_year + 1900,
                             mytm.tm_mon + 1,
                             mytm.tm_mday,
                             mytm.tm_hour,
                             mytm.tm_min,
-                            mytm.tm_sec);
+                            mytm.tm_sec) );
         }
         char szHostname[256] = { 0 };
         if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
         {
-            oObj["HostName"] = szHostname;
+            oObj.Add( "HostName", szHostname );
         }
         const char* pszUsername = CPLGetConfigOption("USERNAME", nullptr);
         if( pszUsername == nullptr )
             pszUsername = CPLGetConfigOption("USER", nullptr);
         if( pszUsername != nullptr )
         {
-            oObj["UserName"] = pszUsername;
+            oObj.Add( "UserName", pszUsername );
         }
-        oObj["Description"] = "GDAL conversion";
+        oObj.Add( "Description", "GDAL conversion" );
 
-        CPLJsonObject& oUserParameters = oObj["UserParameters"];
-        oUserParameters["_type"] = "group";
+        CPLJSONObject oUserParameters;
+        oObj.Add( "UserParameters", oUserParameters );
+
+        oUserParameters.Add( "_type", "group");
         if( !m_osFromFilename.empty() )
-            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
-        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
+            oUserParameters.Add( "FROM", CPLGetFilename( m_osFromFilename ) );
+        oUserParameters.Add( "TO", CPLGetFilename( GetDescription() ) );
         if( m_bForce360 )
-            oUserParameters["Force_360"] = "true";
+            oUserParameters.Add( "Force_360", "true");
 
-        json_object* poObj = oHistoryObj.asLibJsonObj();
-        osHistory += SerializeAsPDL( poObj );
-        json_object_put(poObj);
+        osHistory += SerializeAsPDL( oHistoryObj );
     }
 
     m_osHistory = osHistory;
@@ -3544,11 +3089,11 @@ void ISIS3Dataset::WriteLabel()
 {
     m_bIsLabelWritten = true;
 
-    if( m_poJSonLabel == nullptr )
+    if( !m_oJSonLabel.IsValid() )
         BuildLabel();
 
     // Serialize label
-    CPLString osLabel( SerializeAsPDL(m_poJSonLabel) );
+    CPLString osLabel( SerializeAsPDL(m_oJSonLabel) );
     osLabel += "End\n";
     char *pszLabel = &osLabel[0];
     const int nLabelSize = static_cast<int>(osLabel.size());
@@ -3615,8 +3160,7 @@ void ISIS3Dataset::WriteLabel()
                                     strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
         memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
         memset(pszHistoryStartBytes + strlen(pszStartByte), ' ',
-               strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) -
-                                                        strlen(pszStartByte));
+               strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) - strlen(pszStartByte));
     }
 
     // Replace placeholders in other sections
@@ -3800,11 +3344,11 @@ void ISIS3Dataset::WriteLabel()
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
-CPLString ISIS3Dataset::SerializeAsPDL( json_object* poObj )
+CPLString ISIS3Dataset::SerializeAsPDL( const CPLJSONObject &oObj )
 {
-    CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", poObj) );
+    CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", oObj.GetInternalHandle()) );
     VSILFILE* fpTmp = VSIFOpenL( osTmpFile, "wb+" );
-    SerializeAsPDL( fpTmp, poObj );
+    SerializeAsPDL( fpTmp, oObj );
     VSIFCloseL( fpTmp );
     CPLString osContent( reinterpret_cast<char*>(
                             VSIGetMemFileBuffer( osTmpFile, nullptr, FALSE )) );
@@ -3816,7 +3360,7 @@ CPLString ISIS3Dataset::SerializeAsPDL( json_object* poObj )
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
-void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
+void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                                    int nDepth )
 {
     CPLString osIndentation;
@@ -3824,239 +3368,279 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
         osIndentation += "  ";
     const size_t WIDTH = 79;
 
-    json_object_iter it;
-    it.key = nullptr;
-    it.val = nullptr;
-    it.entry = nullptr;
+    CPLJSONObject **paoObjChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
-    json_object_object_foreachC( poObj, it )
+    if( paoObjChildren != nullptr )
     {
-        if( it.val == nullptr ||
-            strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 ||
-            strcmp(it.key, "_filename") == 0 )
+        int i = 0;
+        while( paoObjChildren[i] != nullptr )
         {
-            continue;
-        }
-        const int nValType = json_object_get_type(it.val);
-        if( nValType == json_type_string ||
-            nValType == json_type_int ||
-            nValType == json_type_double ||
-            nValType == json_type_array )
-        {
-            if( strlen(it.key) > nMaxKeyLength )
-                nMaxKeyLength = strlen(it.key);
-        }
-        else if( nValType == json_type_object )
-        {
-            json_object* poValue = CPL_json_object_object_get(it.val,
-                                                                  "value");
-            json_object* poUnit = CPL_json_object_object_get(it.val,
-                                                                "unit");
-            if( poValue && poUnit &&
-                json_object_get_type(poUnit) == json_type_string )
+            CPLJSONObject *pItem = paoObjChildren[i++];
+            const char* pszKey = pItem->GetName();
+            if( EQUAL(pszKey, "_type") ||
+                EQUAL(pszKey, "_container_name") ||
+                EQUAL(pszKey, "_filename") )
             {
-                if( strlen(it.key) > nMaxKeyLength )
-                    nMaxKeyLength = strlen(it.key);
+                continue;
             }
-        }
-    }
 
-    it.key = nullptr;
-    it.val = nullptr;
-    it.entry = nullptr;
-    json_object_object_foreachC( poObj, it )
-    {
-        if( it.val == nullptr ||
-            strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 ||
-            strcmp(it.key, "_filename") == 0 )
-        {
-            continue;
-        }
-        if( STARTS_WITH(it.key, "_comment") )
-        {
-            if(json_object_get_type(it.val) == json_type_string )
+            enum CPLJSONObject::Type eType = pItem->GetType();
+            if( eType == CPLJSONObject::String ||
+                eType == CPLJSONObject::Integer ||
+                eType == CPLJSONObject::Double ||
+                eType == CPLJSONObject::Array )
             {
-                VSIFPrintfL(fp, "#%s\n",
-                            json_object_get_string(it.val));
-            }
-            continue;
-        }
-        std::string osPadding;
-        if( strlen(it.key) < nMaxKeyLength )
-            osPadding.append( nMaxKeyLength - strlen(it.key), ' ' );
-        const int nValType = json_object_get_type(it.val);
-        if( nValType == json_type_object )
-        {
-            json_object* poType = CPL_json_object_object_get(it.val, "_type");
-            json_object* poContainerName =
-                CPL_json_object_object_get(it.val, "_container_name");
-            const char* pszContainerName = it.key;
-            if( poContainerName &&
-                json_object_get_type(poContainerName) == json_type_string )
-            {
-                pszContainerName = json_object_get_string(poContainerName);
-            }
-            if( poType && json_object_get_type(poType) == json_type_string )
-            {
-                const char* pszType = json_object_get_string(poType);
-                if( EQUAL(pszType, "Object") )
+                if( strlen(pszKey) > nMaxKeyLength )
                 {
-                    if( nDepth == 0 && VSIFTellL(fp) != 0 )
+                    nMaxKeyLength = strlen(pszKey);
+                }
+            }
+            else if( eType == CPLJSONObject::Object )
+            {
+                CPLJSONObject oValue = pItem->GetObject( "value" );
+                CPLJSONObject oUnit = pItem->GetObject( "unit" );
+                if( oValue.IsValid() && oUnit.GetType() == CPLJSONObject::String )
+                {
+                    if( strlen(pszKey) > nMaxKeyLength )
+                    {
+                        nMaxKeyLength = strlen(pszKey);
+                    }
+                }
+            }
+        }
+
+        i = 0;
+        while( paoObjChildren[i] != nullptr )
+        {
+            CPLJSONObject *poItem = paoObjChildren[i++];
+            const char* pszKey = poItem->GetName();
+            if( EQUAL(pszKey, "_type") ||
+                EQUAL(pszKey, "_container_name") ||
+                EQUAL(pszKey, "_filename") )
+            {
+                continue;
+            }
+            if( STARTS_WITH(pszKey, "_comment") )
+            {
+                if( poItem->GetType() == CPLJSONObject::String )
+                {
+                    VSIFPrintfL(fp, "#%s\n", poItem->ToString() );
+                }
+                continue;
+            }
+            CPLString osPadding;
+            size_t nLen = strlen(pszKey);
+            if( nLen < nMaxKeyLength )
+            {
+                osPadding.append( nMaxKeyLength - nLen, ' ' );
+            }
+
+            enum CPLJSONObject::Type eType = poItem->GetType();
+            if( eType == CPLJSONObject::Object )
+            {
+                CPLJSONObject oType = poItem->GetObject( "_type" );
+                CPLJSONObject oContainerName = poItem->GetObject( "_container_name" );
+                const char* pszContainerName = pszKey;
+                if( oContainerName.GetType() == CPLJSONObject::String )
+                {
+                    pszContainerName = oContainerName.ToString();
+                }
+                if( oType.GetType() == CPLJSONObject::String )
+                {
+                    const char* pszType = oType.ToString();
+                    if( EQUAL(pszType, "Object") )
+                    {
+                        if( nDepth == 0 && VSIFTellL(fp) != 0 )
+                            VSIFPrintfL(fp, "\n");
+                        VSIFPrintfL(fp, "%sObject = %s\n",
+                                    osIndentation.c_str(), pszContainerName);
+                        SerializeAsPDL( fp, *poItem, nDepth + 1 );
+                        VSIFPrintfL(fp, "%sEnd_Object\n",
+                                    osIndentation.c_str());
+                    }
+                    else if( EQUAL(pszType, "Group") )
+                    {
                         VSIFPrintfL(fp, "\n");
-                    VSIFPrintfL(fp, "%sObject = %s\n",
-                                osIndentation.c_str(), pszContainerName);
-                    SerializeAsPDL( fp, it.val, nDepth + 1 );
-                    VSIFPrintfL(fp, "%sEnd_Object\n",
-                                osIndentation.c_str());
-                }
-                else if( EQUAL(pszType, "Group") )
-                {
-                    VSIFPrintfL(fp, "\n");
-                    VSIFPrintfL(fp, "%sGroup = %s\n",
-                                osIndentation.c_str(), pszContainerName);
-                    SerializeAsPDL( fp, it.val, nDepth + 1 );
-                    VSIFPrintfL(fp, "%sEnd_Group\n",
-                                osIndentation.c_str());
-                }
-            }
-            else
-            {
-                json_object* poValue = CPL_json_object_object_get(it.val,
-                                                                  "value");
-                json_object* poUnit = CPL_json_object_object_get(it.val,
-                                                                 "unit");
-                if( poValue && poUnit &&
-                    json_object_get_type(poUnit) == json_type_string )
-                {
-                    const char* pszUnit = json_object_get_string(poUnit);
-                    const int nValueType = json_object_get_type(poValue);
-                    if( nValueType == json_type_int )
-                    {
-                        const int nVal = json_object_get_int(poValue);
-                        VSIFPrintfL(fp, "%s%s%s = %d <%s>\n",
-                                    osIndentation.c_str(), it.key,
-                                    osPadding.c_str(),
-                                    nVal, pszUnit);
+                        VSIFPrintfL(fp, "%sGroup = %s\n",
+                                    osIndentation.c_str(), pszContainerName);
+                        SerializeAsPDL( fp, *poItem, nDepth + 1 );
+                        VSIFPrintfL(fp, "%sEnd_Group\n",
+                                    osIndentation.c_str());
                     }
-                    else if( nValueType == json_type_double )
-                    {
-                        const double dfVal = json_object_get_double(poValue);
-                        if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                            static_cast<int>(dfVal) == dfVal )
-                        {
-                            VSIFPrintfL(fp, "%s%s%s = %d.0 <%s>\n",
-                                        osIndentation.c_str(), it.key,
-                                        osPadding.c_str(),
-                                        static_cast<int>(dfVal), pszUnit);
-                        }
-                        else
-                        {
-                            VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
-                                        osIndentation.c_str(), it.key,
-                                        osPadding.c_str(),
-                                        dfVal, pszUnit);
-                        }
-                    }
-                }
-            }
-        }
-        else if( nValType == json_type_string )
-        {
-            const char* pszVal = json_object_get_string(it.val);
-            if( pszVal[0] == '\0' ||
-                strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
-                strstr(pszVal, "\\r") )
-            {
-                CPLString osVal(pszVal);
-                osVal.replaceAll("\\n", "\n");
-                osVal.replaceAll("\\r", "\r");
-                VSIFPrintfL(fp, "%s%s%s = \"%s\"\n",
-                            osIndentation.c_str(), it.key,
-                            osPadding.c_str(), osVal.c_str());
-            }
-            else
-            {
-                if( osIndentation.size() + strlen(it.key) + osPadding.size() +
-                    strlen(" = ") + strlen(pszVal) > WIDTH &&
-                    osIndentation.size() + strlen(it.key) + osPadding.size() +
-                    strlen(" = ") < WIDTH )
-                {
-                    size_t nFirstPos = osIndentation.size() + strlen(it.key) +
-                                     osPadding.size() + strlen(" = ");
-                    VSIFPrintfL(fp, "%s%s%s = ",
-                                osIndentation.c_str(), it.key,
-                                osPadding.c_str());
-                    size_t nCurPos = nFirstPos;
-                    for( int i = 0; pszVal[i] != '\0'; i++ )
-                    {
-                        nCurPos ++;
-                        if( nCurPos == WIDTH && pszVal[i+1] != '\0' )
-                        {
-                            VSIFPrintfL( fp, "-\n" );
-                            for( size_t j=0;j<nFirstPos;j++ )
-                            {
-                                const char chSpace = ' ';
-                                VSIFWriteL(&chSpace, 1, 1, fp);
-                            }
-                            nCurPos = nFirstPos + 1;
-                        }
-                        VSIFWriteL( &pszVal[i], 1, 1, fp );
-                    }
-                    VSIFPrintfL(fp, "\n");
                 }
                 else
                 {
-                    VSIFPrintfL(fp, "%s%s%s = %s\n",
-                                osIndentation.c_str(), it.key,
-                                osPadding.c_str(), pszVal);
+                    CPLJSONObject oValue = poItem->GetObject( "value" );
+                    CPLJSONObject oUnit = poItem->GetObject( "unit" );
+                    if( oValue.IsValid() &&
+                        oUnit.GetType() == CPLJSONObject::String )
+                    {
+                        const char* pszUnit = oUnit.ToString();
+                        enum CPLJSONObject::Type eValueType = oValue.GetType();
+                        if( eValueType == CPLJSONObject::Integer )
+                        {
+                            VSIFPrintfL(fp, "%s%s%s = %d <%s>\n",
+                                        osIndentation.c_str(), pszKey,
+                                        osPadding.c_str(),
+                                        oValue.ToInteger(), pszUnit);
+                        }
+                        else if( eValueType == CPLJSONObject::Double )
+                        {
+                            const double dfVal = oValue.ToDouble();
+                            if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                                static_cast<int>(dfVal) == dfVal )
+                            {
+                                VSIFPrintfL(fp, "%s%s%s = %d.0 <%s>\n",
+                                            osIndentation.c_str(), pszKey,
+                                            osPadding.c_str(),
+                                            static_cast<int>(dfVal), pszUnit);
+                            }
+                            else
+                            {
+                                VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
+                                            osIndentation.c_str(), pszKey,
+                                            osPadding.c_str(),
+                                            dfVal, pszUnit);
+                            }
+                        }
+                    }
                 }
             }
-        }
-        else if( nValType == json_type_int )
-        {
-            const int nVal = json_object_get_int(it.val);
-            VSIFPrintfL(fp, "%s%s%s = %d\n",
-                        osIndentation.c_str(), it.key,
-                        osPadding.c_str(), nVal);
-        }
-        else if( nValType == json_type_double )
-        {
-            const double dfVal = json_object_get_double(it.val);
-            if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                static_cast<int>(dfVal) == dfVal )
+            else if( eType == CPLJSONObject::String )
             {
-                VSIFPrintfL(fp, "%s%s%s = %d.0\n",
-                        osIndentation.c_str(), it.key,
-                        osPadding.c_str(), static_cast<int>(dfVal));
-            }
-            else
-            {
-                VSIFPrintfL(fp, "%s%s%s = %.18g\n",
-                            osIndentation.c_str(), it.key,
-                            osPadding.c_str(), dfVal);
-            }
-        }
-        else if( nValType == json_type_array )
-        {
-            const int nLength = json_object_array_length(it.val);
-            size_t nFirstPos = osIndentation.size() + strlen(it.key) +
-                                     osPadding.size() + strlen(" = (");
-            VSIFPrintfL(fp, "%s%s%s = (",
-                        osIndentation.c_str(), it.key,
-                        osPadding.c_str());
-            size_t nCurPos = nFirstPos;
-            for( int idx = 0; idx < nLength; idx++ )
-            {
-                json_object* poItem = json_object_array_get_idx(it.val, idx);
-                const int nItemType = json_object_get_type(poItem);
-                if( nItemType == json_type_string )
+                const char* pszVal = poItem->ToString();
+                if( pszVal[0] == '\0' ||
+                    strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
+                    strstr(pszVal, "\\r") )
                 {
-                    const char* pszVal = json_object_get_string(poItem);
-                    if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
+                    CPLString osVal(pszVal);
+                    osVal.replaceAll("\\n", "\n");
+                    osVal.replaceAll("\\r", "\r");
+                    VSIFPrintfL(fp, "%s%s%s = \"%s\"\n",
+                                osIndentation.c_str(), pszKey,
+                                osPadding.c_str(), osVal.c_str());
+                }
+                else
+                {
+                    if( osIndentation.size() + strlen(pszKey) + osPadding.size() +
+                        strlen(" = ") + strlen(pszVal) > WIDTH &&
+                        osIndentation.size() + strlen(pszKey) + osPadding.size() +
+                        strlen(" = ") < WIDTH )
                     {
-                        if( idx > 0 )
+                        size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
+                                         osPadding.size() + strlen(" = ");
+                        VSIFPrintfL(fp, "%s%s%s = ",
+                                    osIndentation.c_str(), pszKey,
+                                    osPadding.c_str());
+                        size_t nCurPos = nFirstPos;
+                        for( int j = 0; pszVal[j] != '\0'; j++ )
+                        {
+                            nCurPos ++;
+                            if( nCurPos == WIDTH && pszVal[j+1] != '\0' )
+                            {
+                                VSIFPrintfL( fp, "-\n" );
+                                for( size_t k=0;k<nFirstPos;k++ )
+                                {
+                                    const char chSpace = ' ';
+                                    VSIFWriteL(&chSpace, 1, 1, fp);
+                                }
+                                nCurPos = nFirstPos + 1;
+                            }
+                            VSIFWriteL( &pszVal[j], 1, 1, fp );
+                        }
+                        VSIFPrintfL(fp, "\n");
+                    }
+                    else
+                    {
+                        VSIFPrintfL(fp, "%s%s%s = %s\n",
+                                    osIndentation.c_str(), pszKey,
+                                    osPadding.c_str(), pszVal);
+                    }
+                }
+            }
+            else if( eType == CPLJSONObject::Integer )
+            {
+                const int nVal = poItem->ToInteger();
+                VSIFPrintfL(fp, "%s%s%s = %d\n",
+                            osIndentation.c_str(), pszKey,
+                            osPadding.c_str(), nVal);
+            }
+            else if( eType == CPLJSONObject::Double )
+            {
+                const double dfVal = poItem->ToDouble();
+                if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                    static_cast<int>(dfVal) == dfVal )
+                {
+                    VSIFPrintfL(fp, "%s%s%s = %d.0\n",
+                            osIndentation.c_str(), pszKey,
+                            osPadding.c_str(), static_cast<int>(dfVal));
+                }
+                else
+                {
+                    VSIFPrintfL(fp, "%s%s%s = %.18g\n",
+                                osIndentation.c_str(), pszKey,
+                                osPadding.c_str(), dfVal);
+                }
+            }
+            else if( eType == CPLJSONObject::Array )
+            {
+                CPLJSONArray oArrayItem(*poItem);
+                const int nLength = oArrayItem.Size();
+                size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
+                                         osPadding.size() + strlen(" = (");
+                VSIFPrintfL(fp, "%s%s%s = (",
+                            osIndentation.c_str(), pszKey,
+                            osPadding.c_str());
+                size_t nCurPos = nFirstPos;
+                for( int idx = 0; idx < nLength; idx++ )
+                {
+                    CPLJSONObject oItem = oArrayItem[idx];
+                    enum CPLJSONObject::Type eArrayItemType = oItem.GetType();
+                    if( eArrayItemType == CPLJSONObject::String )
+                    {
+                        const char* pszVal = oItem.ToString();
+                        if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
+                        {
+                            if( idx > 0 )
+                            {
+                                VSIFPrintfL( fp, "\n" );
+                                for( size_t j=0;j<nFirstPos;j++ )
+                                {
+                                    const char chSpace = ' ';
+                                    VSIFWriteL(&chSpace, 1, 1, fp);
+                                }
+                                nCurPos = nFirstPos;
+                            }
+
+                            for( int j = 0; pszVal[j] != '\0'; j++ )
+                            {
+                                nCurPos ++;
+                                if( nCurPos == WIDTH && pszVal[j+1] != '\0' )
+                                {
+                                    VSIFPrintfL( fp, "-\n" );
+                                    for( size_t k=0;k<nFirstPos;k++ )
+                                    {
+                                        const char chSpace = ' ';
+                                        VSIFWriteL(&chSpace, 1, 1, fp);
+                                    }
+                                    nCurPos = nFirstPos + 1;
+                                }
+                                VSIFWriteL( &pszVal[j], 1, 1, fp );
+                            }
+                        }
+                        else
+                        {
+                            VSIFPrintfL( fp, "%s", pszVal );
+                            nCurPos += strlen(pszVal);
+                        }
+                    }
+                    else if( eArrayItemType == CPLJSONObject::Integer )
+                    {
+                        const int nVal = oItem.ToInteger();
+                        const char* pszVal = CPLSPrintf("%d", nVal);
+                        const size_t nValLen = strlen(pszVal);
+                        if( nFirstPos < WIDTH && idx > 0 &&
+                            nCurPos + nValLen > WIDTH )
                         {
                             VSIFPrintfL( fp, "\n" );
                             for( size_t j=0;j<nFirstPos;j++ )
@@ -4066,87 +3650,49 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                             }
                             nCurPos = nFirstPos;
                         }
-
-                        for( int i = 0; pszVal[i] != '\0'; i++ )
+                        VSIFPrintfL( fp, "%d", nVal );
+                        nCurPos += nValLen;
+                    }
+                    else if( eArrayItemType == CPLJSONObject::Double )
+                    {
+                        const double dfVal = oItem.ToDouble();
+                        CPLString osVal;
+                        if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                            static_cast<int>(dfVal) == dfVal )
                         {
-                            nCurPos ++;
-                            if( nCurPos == WIDTH && pszVal[i+1] != '\0' )
+                            osVal = CPLSPrintf("%d.0", static_cast<int>(dfVal));
+                        }
+                        else
+                        {
+                            osVal = CPLSPrintf("%.18g", dfVal);
+                        }
+                        const size_t nValLen = osVal.size();
+                        if( nFirstPos < WIDTH && idx > 0 &&
+                            nCurPos + nValLen > WIDTH )
+                        {
+                            VSIFPrintfL( fp, "\n" );
+                            for( size_t j=0;j<nFirstPos;j++ )
                             {
-                                VSIFPrintfL( fp, "-\n" );
-                                for( size_t j=0;j<nFirstPos;j++ )
-                                {
-                                    const char chSpace = ' ';
-                                    VSIFWriteL(&chSpace, 1, 1, fp);
-                                }
-                                nCurPos = nFirstPos + 1;
+                                const char chSpace = ' ';
+                                VSIFWriteL(&chSpace, 1, 1, fp);
                             }
-                            VSIFWriteL( &pszVal[i], 1, 1, fp );
+                            nCurPos = nFirstPos;
                         }
+                        VSIFPrintfL( fp, "%s", osVal.c_str() );
+                        nCurPos += nValLen;
                     }
-                    else
+                    if( idx < nLength - 1 )
                     {
-                        VSIFPrintfL( fp, "%s", pszVal );
-                        nCurPos += strlen(pszVal);
+                        VSIFPrintfL( fp, ", " );
+                        nCurPos += 2;
                     }
                 }
-                else if( nItemType == json_type_int )
-                {
-                    const int nVal = json_object_get_int(poItem);
-                    const char* pszVal = CPLSPrintf("%d", nVal);
-                    const size_t nValLen = strlen(pszVal);
-                    if( nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH )
-                    {
-                        VSIFPrintfL( fp, "\n" );
-                        for( size_t j=0;j<nFirstPos;j++ )
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL( fp, "%d", nVal );
-                    nCurPos += nValLen;
-                }
-                else if( nItemType == json_type_double )
-                {
-                    const double dfVal = json_object_get_double(poItem);
-                    CPLString osVal;
-                    if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                        static_cast<int>(dfVal) == dfVal )
-                    {
-                        osVal = CPLSPrintf("%d.0", static_cast<int>(dfVal));
-                    }
-                    else
-                    {
-                        osVal = CPLSPrintf("%.18g", dfVal);
-                    }
-                    const size_t nValLen = osVal.size();
-                    if( nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH )
-                    {
-                        VSIFPrintfL( fp, "\n" );
-                        for( size_t j=0;j<nFirstPos;j++ )
-                        {
-                            const char chSpace = ' ';
-                            VSIFWriteL(&chSpace, 1, 1, fp);
-                        }
-                        nCurPos = nFirstPos;
-                    }
-                    VSIFPrintfL( fp, "%s", osVal.c_str() );
-                    nCurPos += nValLen;
-                }
-                if( idx < nLength - 1 )
-                {
-                    VSIFPrintfL( fp, ", " );
-                    nCurPos += 2;
-                }
+                VSIFPrintfL(fp, ")\n" );
             }
-            VSIFPrintfL(fp, ")\n" );
         }
+        CPLJSONObject::DestroyJSONObjectList( paoObjChildren );
     }
 }
-
 
 /************************************************************************/
 /*                           Create()                                   */

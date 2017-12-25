@@ -141,7 +141,7 @@ bool CPLJSONDocument::Load(const char *pszPath)
         return false;
     }
 
-    bool bResult = Load(pabyOut, static_cast<int>(nSize));
+    bool bResult = LoadMemory(pabyOut, static_cast<int>(nSize));
     VSIFree(pabyOut);
     return bResult;
 }
@@ -154,7 +154,7 @@ bool CPLJSONDocument::Load(const char *pszPath)
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::Load(const GByte *pabyData, int nLength)
+bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 {
     if(nullptr == pabyData)
     {
@@ -367,7 +367,10 @@ CPLJSONObject::~CPLJSONObject()
 {
     // Should delete m_poJsonObject only if CPLJSONObject has no parent
     if( m_poJsonObject )
+    {
         json_object_put( TO_JSONOBJ(m_poJsonObject) );
+        m_poJsonObject = nullptr;
+    }
 }
 
 CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
@@ -398,6 +401,8 @@ CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
  */
 void CPLJSONObject::Add(const char *pszName, const CPLString &soValue)
 {
+    if( nullptr == pszName )
+        return;
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
     if( object.IsValid() )
@@ -442,7 +447,7 @@ void CPLJSONObject::Add(const char *pszName, double dfValue)
         return;
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
-    if(object.IsValid())
+    if( object.IsValid() )
     {
         json_object *poVal = json_object_new_double( dfValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
@@ -545,7 +550,7 @@ void CPLJSONObject::Add(const char *pszName, bool bValue)
         return;
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
-    if(object.IsValid())
+    if( object.IsValid() )
     {
         json_object *poVal = json_object_new_boolean( bValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
@@ -659,7 +664,7 @@ CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
         return CPLJSONObject( "", nullptr );
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
-    if(object.IsValid())
+    if( object.IsValid() )
     {
         json_object* poVal = nullptr;
         if(json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
@@ -695,7 +700,7 @@ void CPLJSONObject::Delete(const char *pszName)
         return;
     char objectName[JSON_NAME_MAX_SIZE];
     CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
-    if(object.IsValid())
+    if( object.IsValid() )
     {
         json_object_object_del( TO_JSONOBJ(object.GetInternalHandle()), objectName );
     }
@@ -712,7 +717,7 @@ void CPLJSONObject::Delete(const char *pszName)
 const char *CPLJSONObject::GetString(const char *pszName, const char* pszDefault) const
 {
     if( nullptr == pszName )
-        return pszDefault;
+        return pszDefault == nullptr ? "" : pszDefault;
     CPLJSONObject object = GetObject( pszName );
     return object.ToString( pszDefault );
 }
@@ -726,10 +731,10 @@ const char *CPLJSONObject::GetString(const char *pszName, const char* pszDefault
  */
 const char* CPLJSONObject::ToString(const char* pszDefault) const
 {
-    if( m_poJsonObject && json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
-            json_type_string )
+    if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
+            json_type_string*/ )
         return json_object_get_string( TO_JSONOBJ(m_poJsonObject) );
-    return pszDefault;
+    return pszDefault == nullptr ? "" : pszDefault;
 }
 
 /**
@@ -893,6 +898,32 @@ bool CPLJSONObject::ToBool(bool bDefault) const
     return bDefault;
 }
 
+/**
+ * Stringify object to json format.
+ * @param  eFormat Format type,
+ * @return         A string in JSON format.
+ *
+ * @since GDAL 2.3
+ */
+const char* CPLJSONObject::Format(enum PrettyFormat eFormat) const
+{
+    if( m_poJsonObject )
+    {
+        switch ( eFormat ) {
+            case Spaced:
+                return json_object_to_json_string_ext(
+                    TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_SPACED );
+            case Pretty:
+                return json_object_to_json_string_ext(
+                    TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_PRETTY );
+            default:
+                return json_object_to_json_string_ext(
+                    TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_PLAIN);
+        }
+    }
+    return "";
+}
+
 /*! @cond Doxygen_Suppress */
 CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName) const
 {
@@ -934,7 +965,7 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
 CPLJSONObject::Type CPLJSONObject::GetType() const
 {
     if(nullptr == m_poJsonObject)
-        return CPLJSONObject::Null;
+        return CPLJSONObject::Unknown;
     switch ( json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ) {
     case  json_type_null:
         return CPLJSONObject::Null;
@@ -951,7 +982,7 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
     case json_type_string:
         return CPLJSONObject::String;
     }
-    return CPLJSONObject::Null;
+    return CPLJSONObject::Unknown;
 }
 
 /**
@@ -961,6 +992,19 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
 bool CPLJSONObject::IsValid() const
 {
     return nullptr != m_poJsonObject;
+}
+
+/**
+ * Decrement internal pointer counter and make pointer NULL.
+ * A json object will become invalid.
+ */
+void CPLJSONObject::Reset()
+{
+    if( m_poJsonObject )
+    {
+        json_object_put( TO_JSONOBJ(m_poJsonObject) );
+        m_poJsonObject = nullptr;
+    }
 }
 
 /**
@@ -1000,6 +1044,11 @@ CPLJSONArray::CPLJSONArray(const CPLString &soName, JSONObjectH poJsonObject) :
 {
 
 }
+
+CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
+{
+
+}
 /*! @endcond */
 
 /**
@@ -1019,9 +1068,64 @@ int CPLJSONArray::Size() const
  */
 void CPLJSONArray::Add(const CPLJSONObject &oValue)
 {
-    if( oValue.m_poJsonObject )
+    if( m_poJsonObject && oValue.m_poJsonObject )
         json_object_array_add( TO_JSONOBJ(m_poJsonObject),
                                json_object_get( TO_JSONOBJ(oValue.m_poJsonObject) ) );
+}
+
+/**
+ * Add value to array
+ * @param pszValue Value to add.
+ */
+void CPLJSONArray::Add(const char* pszValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_string( pszValue ) );
+}
+
+/**
+ * Add value to array
+ * @param dfValue Value to add.
+ */
+void CPLJSONArray::Add(double dfValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_double( dfValue ) );
+}
+
+/**
+ * Add value to array
+ * @param nValue Value to add.
+ */
+void CPLJSONArray::Add(int nValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_int( nValue ) );
+}
+
+/**
+ * Add value to array
+ * @param nValue Value to add.
+ */
+void CPLJSONArray::Add(GInt64 nValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_int64( nValue ) );
+}
+
+/**
+ * Add value to array
+ * @param bValue Value to add.
+ */
+void CPLJSONArray::Add(bool bValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_boolean( bValue ) );
 }
 
 /**

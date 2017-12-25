@@ -5708,7 +5708,7 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
 OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
 {
     CPLJSONDocument oDocument;
-    if( !oDocument.Load(reinterpret_cast<const GByte*>(pszJsonString), -1) )
+    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString)) )
     {
         return nullptr;
     }

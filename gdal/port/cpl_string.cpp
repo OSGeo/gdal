@@ -59,8 +59,6 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi.h"
 
-#include "md5.h"
-
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy __va_copy
 #endif
@@ -2811,28 +2809,4 @@ size_t CPLStrnlen ( const char *pszStr, size_t nMaxLen )
 char ** CSLParseCommandLine(const char* pszCommandLine)
 {
     return CSLTokenizeString(pszCommandLine);
-}
-
-/**
- * @brief CPLMD5String Transform string to MD5 hash
- * @param pszText Text to transform
- * @return MD5 hash string
- */
-const char *CPLMD5String(const char *pszText)
-{
-    unsigned char hash[16];
-    char hhash[33];
-    const char *tohex = "0123456789abcdef";
-    struct cvs_MD5Context context;
-    cvs_MD5Init(&context);
-    cvs_MD5Update(&context, reinterpret_cast<unsigned char const *>(pszText),
-                  static_cast<int>(strlen(pszText)));
-    cvs_MD5Final(hash, &context);
-    for (int i = 0; i < 16; ++i)
-    {
-        hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
-        hhash[i * 2 + 1] = tohex[hash[i] & 0xf];
-    }
-    hhash[32] = '\0';
-    return CPLSPrintf( "%s", hhash );
 }

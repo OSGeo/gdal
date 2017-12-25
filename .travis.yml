@@ -5,7 +5,7 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      compiler: clang
+      compiler: gcc
       language: cpp
       sudo: required
       dist: precise
@@ -14,7 +14,7 @@ matrix:
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise_clang
+        - BUILD_NAME=precise
         - DETAILS="debug build, no libtool"
     - os: linux
       compiler: clang

@@ -283,8 +283,6 @@ int CPL_DLL CPLVASPrintf( char **buf,
                           CPL_FORMAT_STRING(const char *fmt), va_list args )
     CPL_PRINT_FUNC_FORMAT(2, 0);
 
-const char CPL_DLL *CPLMD5String(const char *pszText);
-
 /* -------------------------------------------------------------------- */
 /*      RFC 23 character set conversion/recoding API (cpl_recode.cpp).  */
 /* -------------------------------------------------------------------- */
@@ -524,6 +522,22 @@ class CPL_DLL CPLStringList
     /** Return lists */
     operator char**(void) { return List(); }
 };
+
+#ifdef GDAL_COMPILATION
+
+#include <memory>
+
+/*! @cond Doxygen_Suppress */
+struct CSLDestroyReleaser
+{
+    void operator()(char** papszStr) { CSLDestroy(papszStr); }
+};
+/*! @endcond */
+
+/** Unique pointer type to use with CSL functions returning a char** */
+using CSLUniquePtr = std::unique_ptr< char*, CSLDestroyReleaser>;
+
+#endif
 
 } // extern "C++"
 

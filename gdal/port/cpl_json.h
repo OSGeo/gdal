@@ -57,6 +57,7 @@ public:
      * Json object types
      */
     enum Type {
+        Unknown,
         Null,
         Object,
         Array,
@@ -65,6 +66,12 @@ public:
         Integer,
         Long,
         Double
+    };
+
+    enum PrettyFormat {
+        Plain,
+        Spaced,
+        Pretty
     };
 
 public:
@@ -103,16 +110,17 @@ public:
 /*! @endcond */
 
     // getters
-    const char *GetString(const char *pszName, const char *pszDefault = nullptr) const;
+    const char *GetString(const char *pszName, const char *pszDefault = "") const;
     double GetDouble(const char *pszName, double dfDefault = 0.0) const;
     int GetInteger(const char *pszName, int nDefault = 0) const;
     GInt64 GetLong(const char *pszName, GInt64 nDefault = 0) const;
     bool GetBool(const char *pszName, bool bDefault = false) const;
-    const char *ToString(const char *pszDefault = nullptr) const;
+    const char *ToString(const char *pszDefault = "") const;
     double ToDouble(double dfDefault = 0.0) const;
     int ToInteger(int nDefault = 0) const;
     GInt64 ToLong(GInt64 nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
+    const char* Format(enum PrettyFormat eFormat) const;
 
     //
     void Delete(const char* pszName);
@@ -126,6 +134,7 @@ public:
 
     CPLJSONObject **GetChildren() const;
     bool IsValid() const;
+    void Reset();
 
     static void DestroyJSONObjectList(CPLJSONObject **papsoList);
 
@@ -150,6 +159,7 @@ public:
 /*! @cond Doxygen_Suppress */
     CPLJSONArray();
     explicit CPLJSONArray(const CPLString &soName);
+    explicit CPLJSONArray(const CPLJSONObject &other);
 
 #if !_MSC_VER
 private:
@@ -159,6 +169,11 @@ private:
 public:
     int Size() const;
     void Add(const CPLJSONObject &oValue);
+    void Add(const char* pszValue);
+    void Add(double dfValue);
+    void Add(int nValue);
+    void Add(GInt64 nValue);
+    void Add(bool bValue);
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
 };
@@ -179,7 +194,7 @@ public:
     bool Save(const char *pszPath);
     CPLJSONObject GetRoot();
     bool Load(const char *pszPath);
-    bool Load(const GByte *pabyData, int nLength = -1);
+    bool LoadMemory(const GByte *pabyData, int nLength = -1);
     bool LoadChunks(const char *pszPath, size_t nChunkSize = 16384,
                     GDALProgressFunc pfnProgress = nullptr,
                     void *pProgressArg = nullptr);

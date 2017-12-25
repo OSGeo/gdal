@@ -949,65 +949,6 @@ static GIntBig VSICurlGetExpiresFromS3LikeSignedURL( const char* pszURL )
     return CPLAtoGIntBig(pszExpires + strlen("&Expires="));
 }
 
-
-/************************************************************************/
-/*                        MultiPerformWait()                            */
-/************************************************************************/
-
-static bool MultiPerformWait(CURLM* hCurlMultiHandle, int& repeats)
-{
-
-    // Wait for events on the sockets
-    // Using curl_multi_wait() is preferred to avoid hitting the 1024 file
-    // descriptor limit
-    // 7.28.0
-#if LIBCURL_VERSION_NUM >= 0x071C00
-    int numfds = 0;
-    if( curl_multi_wait(hCurlMultiHandle, nullptr, 0, 1000, &numfds) != CURLM_OK )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "curl_multi_wait() failed");
-        return false;
-    }
-    /* 'numfds' being zero means either a timeout or no file descriptors to
-        wait for. Try timeout on first occurrence, then assume no file
-        descriptors and no file descriptors to wait for 100
-        milliseconds. */
-    if(!numfds)
-    {
-        repeats++; /* count number of repeated zero numfds */
-        if(repeats > 1)
-        {
-            CPLSleep(0.1); /* sleep 100 milliseconds */
-        }
-    }
-    else
-    {
-        repeats = 0;
-    }
-#else
-    (void)repeats;
-
-    struct timeval timeout;
-    fd_set fdread, fdwrite, fdexcep;
-    int maxfd;
-    FD_ZERO(&fdread);
-    FD_ZERO(&fdwrite);
-    FD_ZERO(&fdexcep);
-    curl_multi_fdset(hCurlMultiHandle, &fdread, &fdwrite, &fdexcep, &maxfd);
-    if( maxfd >= 0 )
-    {
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 100000;
-        if( select(maxfd + 1, &fdread, &fdwrite, &fdexcep, &timeout) < 0 )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "select() failed");
-            return false;
-        }
-    }
-#endif
-    return true;
-}
-
 /************************************************************************/
 /*                           MultiPerform()                             */
 /************************************************************************/
@@ -1046,7 +987,7 @@ static void MultiPerform(CURLM* hCurlMultiHandle,
         } while(msg);
 #endif
 
-        MultiPerformWait(hCurlMultiHandle, repeats);
+        CPLMultiPerformWait(hCurlMultiHandle, repeats);
     }
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
@@ -5146,7 +5087,7 @@ VSIS3WriteHandle::WriteChunked( const void *pBuffer, size_t nSize, size_t nMemb 
             }
         } while(msg);
 
-        MultiPerformWait(m_hCurlMulti, repeats);
+        CPLMultiPerformWait(m_hCurlMulti, repeats);
     }
 
     if( headers )

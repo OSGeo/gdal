@@ -401,7 +401,7 @@ IRISDataset::IRISDataset() :
     pszSRS_WKT(nullptr),
     bHasLoadedProjection(false)
 {
-    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), 0);
+    std::fill_n(abyHeader, CPL_ARRAYSIZE(abyHeader), static_cast<GByte>(0));
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
     adfGeoTransform[2] = 0.0;

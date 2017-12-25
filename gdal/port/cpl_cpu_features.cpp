@@ -67,29 +67,6 @@ CPL_CVSID("$Id$")
 
 #define CPL_CPUID(level, array) GCC_CPUID(level, array[0], array[1], array[2], array[3])
 
-#elif defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1310
-static void inline __cpuid( int cpuinfo[4], int level )
-{
-    __asm
-    {
-        push   ebx
-        push   esi
-
-        mov    esi,cpuinfo
-        mov    eax, level
-        cpuid
-        mov    dword ptr [esi], eax
-        mov    dword ptr [esi+4], ebx
-        mov    dword ptr [esi+8], ecx
-        mov    dword ptr [esi+0Ch], edx
-
-        pop    esi
-        pop    ebx
-    }
-}
-
-#define CPL_CPUID(level, array) __cpuid(array, level)
-
 #elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
 
 #include <intrin.h>

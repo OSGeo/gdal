@@ -514,14 +514,14 @@ void NASHandler::endElement( const XMLCh* const /* uri */ ,
        if( m_osElementName == "Name" && m_nDepth == m_nNameOrValueDepth )
        {
            CPLAssert( m_osLastPropertyName == "" );
-           m_osLastPropertyName = m_pszCurField;
+           m_osLastPropertyName = m_pszCurField ? m_pszCurField : "";
            m_pszCurField = nullptr;
            m_nNameOrValueDepth = 0;
        }
        else if( m_osElementName == "Value" && m_nDepth == m_nNameOrValueDepth )
        {
            CPLAssert( m_osLastPropertyValue == "" );
-           m_osLastPropertyValue = m_pszCurField;
+           m_osLastPropertyValue = m_pszCurField ? m_pszCurField : "";
            m_pszCurField = nullptr;
            m_nNameOrValueDepth = 0;
        }

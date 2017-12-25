@@ -89,19 +89,19 @@ ELASHeader::ELASHeader() :
     LABL(0),
     HEAD(0)
 {
-    fill( YLabel, YLabel + CPL_ARRAYSIZE(YLabel), 0 );
-    fill( XLabel, XLabel + CPL_ARRAYSIZE(XLabel), 0 );
+    fill( YLabel, YLabel + CPL_ARRAYSIZE(YLabel), static_cast<char>(0) );
+    fill( XLabel, XLabel + CPL_ARRAYSIZE(XLabel), static_cast<char>(0) );
     fill( Matrix, Matrix + CPL_ARRAYSIZE(Matrix), 0.f );
-    fill( IH19, IH19 + CPL_ARRAYSIZE(IH19), 0 );
-    fill( unused1, unused1 + CPL_ARRAYSIZE(unused1), 0 );
-    fill( Comment1, Comment1 + CPL_ARRAYSIZE(Comment1), 0 );
-    fill( Comment2, Comment2 + CPL_ARRAYSIZE(Comment2), 0 );
-    fill( Comment3, Comment3 + CPL_ARRAYSIZE(Comment3), 0 );
-    fill( Comment4, Comment4 + CPL_ARRAYSIZE(Comment4), 0 );
-    fill( Comment5, Comment5 + CPL_ARRAYSIZE(Comment5), 0 );
-    fill( Comment6, Comment6 + CPL_ARRAYSIZE(Comment6), 0 );
-    fill( ColorTable, ColorTable + CPL_ARRAYSIZE(ColorTable), 0 );
-    fill( unused2, unused2 + CPL_ARRAYSIZE(unused2), 0 );
+    fill( IH19, IH19 + CPL_ARRAYSIZE(IH19), static_cast<GByte>(0) );
+    fill( unused1, unused1 + CPL_ARRAYSIZE(unused1), static_cast<char>(0) );
+    fill( Comment1, Comment1 + CPL_ARRAYSIZE(Comment1), static_cast<char>(0) );
+    fill( Comment2, Comment2 + CPL_ARRAYSIZE(Comment2), static_cast<char>(0) );
+    fill( Comment3, Comment3 + CPL_ARRAYSIZE(Comment3), static_cast<char>(0) );
+    fill( Comment4, Comment4 + CPL_ARRAYSIZE(Comment4), static_cast<char>(0) );
+    fill( Comment5, Comment5 + CPL_ARRAYSIZE(Comment5), static_cast<char>(0) );
+    fill( Comment6, Comment6 + CPL_ARRAYSIZE(Comment6), static_cast<char>(0) );
+    fill( ColorTable, ColorTable + CPL_ARRAYSIZE(ColorTable), static_cast<GUInt16>(0) );
+    fill( unused2, unused2 + CPL_ARRAYSIZE(unused2), static_cast<char>(0) );
 }
 
 /************************************************************************/
