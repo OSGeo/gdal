@@ -128,4 +128,4 @@ onmessage = function(msg) {
         return;
     }
     inspectTiff(msg.data);
-}
+};

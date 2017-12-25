@@ -68,7 +68,7 @@ var Module = {
             'OCTTransform',
             'number',
             ['number', 'number', 'number', 'number', 'number']
-        )
+        );
 
         // Create a "directory" where user-selected files will be placed
         FS.mkdir(TIFFPATH);
@@ -181,4 +181,4 @@ onmessage = function(msg) {
         return;
     }
     inspectTiff(msg.data);
-}
+};

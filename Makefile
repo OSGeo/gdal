@@ -8,21 +8,34 @@ GDAL_EMCC_CFLAGS := -msse -Oz
 PROJ_EMCC_CFLAGS := -msse -Oz
 EXPORTED_FUNCTIONS = "[\
   '_CSLCount',\
+  '_GDALSetCacheMax',\
   '_GDALAllRegister',\
   '_GDALOpen',\
   '_GDALClose',\
+  '_GDALGetDriverByName',\
+  '_GDALCreate',\
+  '_GDALCreateCopy',\
   '_GDALGetRasterXSize',\
   '_GDALGetRasterYSize',\
   '_GDALGetRasterCount',\
+  '_GDALGetRasterDataType',\
+  '_GDALGetRasterBand',\
   '_GDALGetProjectionRef',\
+  '_GDALSetProjection',\
   '_GDALGetGeoTransform',\
+  '_GDALSetGeoTransform',\
   '_OSRNewSpatialReference',\
   '_OSRImportFromEPSG',\
   '_OCTNewCoordinateTransformation',\
   '_OCTTransform',\
+  '_GDALCreateGenImgProjTransformer',\
+  '_GDALGenImgProjTransform',\
+  '_GDALDestroyGenImgProjTransformer',\
+  '_GDALSuggestedWarpOutput',\
   '_GDALTranslate',\
   '_GDALTranslateOptionsNew',\
-  '_GDALTranslateOptionsFree'\
+  '_GDALTranslateOptionsFree',\
+  '_GDALReprojectImage'\
 ]"
 
 export EMCONFIGURE_JS
@@ -40,6 +53,7 @@ gdal.js: $(GDAL)/libgdal.a
 	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a $(PROJ4)/src/.libs/libproj.a -o gdal.js \
 		-s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS) \
 		-s TOTAL_MEMORY=256MB \
+		-s RESERVED_FUNCTION_POINTERS=1 \
 		--preload-file $(GDAL)/data/pcs.csv@/usr/local/share/gdal/pcs.csv \
 		--preload-file $(GDAL)/data/gcs.csv@/usr/local/share/gdal/gcs.csv \
 		--preload-file $(GDAL)/data/gcs.override.csv@/usr/local/share/gdal/gcs.override.csv \

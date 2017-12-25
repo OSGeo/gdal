@@ -43,7 +43,7 @@ var Module = {
         // Returns a pointer to a new GDAL Dataset
         GDALTranslate = Module.cwrap('GDALTranslate', 'number', ['string', 'number', 'number', 'number']);
         // Params: array of option strings as to gdal_translate; pointer to a struct that should be null.
-        GDALTranslateOptionsNew = Module.cwrap('GDALTranslateOptionsNew', 'number' ['number', 'number']);
+        GDALTranslateOptionsNew = Module.cwrap('GDALTranslateOptionsNew', 'number', ['number', 'number']);
         GDALTranslateOptionsFree = Module.cwrap('GDALTranslateOptionsFree', 'number', ['number']);
 
         CSLCount = Module.cwrap('CSLCount', 'number', ['number']);
@@ -148,4 +148,4 @@ onmessage = function(msg) {
         return;
     }
     translateTiff(msg.data);
-}
+};

@@ -1,0 +1,21 @@
+<html>
+<head>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+    integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+    crossorigin=""/>
+  <title>Test GDAL.js</title>
+</head>
+<body>
+<input type="file" id="geotiff-select">
+<button onclick="makeThumbnail()">Thumbnail</button>
+<p>Select a GeoTIFF using the Browse... button.
+Click on the "Thumbnail" button and a thumbnail of the image will be
+displayed on the map below.</p>
+
+<div id="leaflet" style="height: 600px"></div>
+<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+  integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+  crossorigin=""></script>
+<script src="index.js"></script>
+</body>
+</html>
