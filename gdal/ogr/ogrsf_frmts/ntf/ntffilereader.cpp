@@ -770,19 +770,21 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D( NTFRecord * poRecord,
 
             const char* pszX = poRecord->GetField(iStart+0,
                                           iStart+GetXYLen()-1);
+            bool bSpace = pszX[0] == ' ';
             const double dfX = atoi(pszX)
                 * GetXYMult() + GetXOrigin();
             const char* pszY = poRecord->GetField(iStart+GetXYLen(),
                                           iStart+GetXYLen()*2-1);
+            bSpace |= pszY[0] == ' ';
             const double dfY = atoi(pszY)
                 * GetXYMult() + GetYOrigin();
 
             const char* pszZ = poRecord->GetField(iStart+1+2*GetXYLen(),
                                           iStart+1+2*GetXYLen()+nZWidth-1);
+            bSpace |= pszZ[0] == ' ';
             const double dfZ = atoi(pszZ)
                 * dfZMult;
-            if( (pszX[0] == ' ' || pszY[0] == ' ' || pszZ[0] == ' ') &&
-                CPLGetErrorCounter() != nErrorsBefore )
+            if( bSpace && CPLGetErrorCounter() != nErrorsBefore )
             {
                 delete poGeometry;
                 return nullptr;
