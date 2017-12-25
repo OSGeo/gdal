@@ -1631,13 +1631,13 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
             if( poObj->GetType() == CPLJSONObject::Object )
             {
                 CPLString osContainerName = poObj->GetName();
-                CPLJSONObject oContainerName = poObj->GetObject("_container_name");
+                CPLJSONObject oContainerName = poObj->GetObj("_container_name");
                 if( oContainerName.GetType() == CPLJSONObject::String )
                 {
                     osContainerName = oContainerName.ToString();
                 }
 
-                CPLJSONObject oFilename = poObj->GetObject(("^" + osContainerName).c_str());
+                CPLJSONObject oFilename = poObj->GetObj(("^" + osContainerName).c_str());
                 if( oFilename.GetType() == CPLJSONObject::String )
                 {
                     VSIStatBufL sStat;
@@ -2807,14 +2807,14 @@ void ISIS3Dataset::BuildLabel()
                     continue;
                 }
 
-                CPLJSONObject oBytes = poObj->GetObject("Bytes");
+                CPLJSONObject oBytes = poObj->GetObj("Bytes");
                 if( oBytes.GetType() != CPLJSONObject::Integer ||
                     oBytes.ToInteger() <= 0 )
                 {
                     continue;
                 }
 
-                CPLJSONObject oStartByte = poObj->GetObject("StartByte");
+                CPLJSONObject oStartByte = poObj->GetObj("StartByte");
                 if( oStartByte.GetType() != CPLJSONObject::Integer ||
                     oStartByte.ToInteger() <= 0 )
                 {
@@ -2840,21 +2840,21 @@ void ISIS3Dataset::BuildLabel()
                     poObj->GetInteger("Bytes"));
 
                 CPLString osName;
-                CPLJSONObject oName = poObj->GetObject("Name");
+                CPLJSONObject oName = poObj->GetObj("Name");
                 if( oName.GetType() == CPLJSONObject::String )
                 {
                     osName = oName.ToString();
                 }
 
                 CPLString osContainerName(osKey);
-                CPLJSONObject oContainerName = poObj->GetObject("_container_name");
+                CPLJSONObject oContainerName = poObj->GetObj("_container_name");
                 if( oContainerName.GetType() == CPLJSONObject::String )
                 {
                     osContainerName = oContainerName.ToString();
                 }
 
                 const CPLString osKeyFilename( "^" + osContainerName );
-                CPLJSONObject oFilenameCap = poObj->GetObject(osKeyFilename);
+                CPLJSONObject oFilenameCap = poObj->GetObj(osKeyFilename);
                 if( oFilenameCap.GetType() == CPLJSONObject::String )
                 {
                     VSIStatBufL sStat;
@@ -3397,8 +3397,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
             }
             else if( eType == CPLJSONObject::Object )
             {
-                CPLJSONObject oValue = pItem->GetObject( "value" );
-                CPLJSONObject oUnit = pItem->GetObject( "unit" );
+                CPLJSONObject oValue = pItem->GetObj( "value" );
+                CPLJSONObject oUnit = pItem->GetObj( "unit" );
                 if( oValue.IsValid() && oUnit.GetType() == CPLJSONObject::String )
                 {
                     if( strlen(pszKey) > nMaxKeyLength )
@@ -3438,8 +3438,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
             enum CPLJSONObject::Type eType = poItem->GetType();
             if( eType == CPLJSONObject::Object )
             {
-                CPLJSONObject oType = poItem->GetObject( "_type" );
-                CPLJSONObject oContainerName = poItem->GetObject( "_container_name" );
+                CPLJSONObject oType = poItem->GetObj( "_type" );
+                CPLJSONObject oContainerName = poItem->GetObj( "_container_name" );
                 const char* pszContainerName = pszKey;
                 if( oContainerName.GetType() == CPLJSONObject::String )
                 {
@@ -3470,8 +3470,8 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                 }
                 else
                 {
-                    CPLJSONObject oValue = poItem->GetObject( "value" );
-                    CPLJSONObject oUnit = poItem->GetObject( "unit" );
+                    CPLJSONObject oValue = poItem->GetObj( "value" );
+                    CPLJSONObject oUnit = poItem->GetObj( "unit" );
                     if( oValue.IsValid() &&
                         oUnit.GetType() == CPLJSONObject::String )
                     {

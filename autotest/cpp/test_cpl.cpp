@@ -1958,7 +1958,6 @@ namespace tut
         ensure_equals( cache.size(), 1U );
     }
 
-
     // Test CPLJSONDocument
     template<>
     template<>
@@ -1992,7 +1991,7 @@ namespace tut
             ensure( oJsonRoot.IsValid() );
             ensure_equals( oJsonRoot.GetInteger("resource/id", 10), 0 );
 
-            CPLJSONObject oJsonResource = oJsonRoot.GetObject("resource");
+            CPLJSONObject oJsonResource = oJsonRoot.GetObj("resource");
             ensure( oJsonResource.IsValid() );
             CPLJSONObject ** children = oJsonResource.GetChildren();
             ensure_not(children == nullptr);
@@ -2011,7 +2010,7 @@ namespace tut
             ensure( oaScopes.IsValid() );
             ensure_equals( oaScopes.Size(), 2);
 
-            CPLJSONObject oHasChildren = oJsonRoot.GetObject("resource/children");
+            CPLJSONObject oHasChildren = oJsonRoot.GetObj("resource/children");
             ensure( oHasChildren.IsValid() );
             ensure_equals( oHasChildren.ToBool(), true );
 

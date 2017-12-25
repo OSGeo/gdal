@@ -37,6 +37,8 @@
  * Interface for read and write JSON documents
  */
 
+
+
 /*! @cond Doxygen_Suppress */
 typedef void *JSONObjectH;
 
@@ -68,10 +70,13 @@ public:
         Double
     };
 
+    /**
+     * Json object format to string options
+     */
     enum PrettyFormat {
-        Plain,
-        Spaced,
-        Pretty
+        Plain,  ///< No extra whitespace or formatting applied
+        Spaced, ///< Minimal whitespace inserted
+        Pretty  ///< Formated output
     };
 
 public:
@@ -125,7 +130,7 @@ public:
     //
     void Delete(const char* pszName);
     CPLJSONArray GetArray(const char *pszName) const;
-    CPLJSONObject GetObject(const char *pszName) const;
+    CPLJSONObject GetObj(const char *pszName) const;
     CPLJSONObject operator[](const char *pszName) const;
     enum Type GetType() const;
 /*! @cond Doxygen_Suppress */

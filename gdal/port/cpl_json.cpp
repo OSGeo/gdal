@@ -658,7 +658,7 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
  *
  * @since GDAL 2.3
  */
-CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
+CPLJSONObject CPLJSONObject::GetObj(const char *pszName) const
 {
     if( nullptr == pszName )
         return CPLJSONObject( "", nullptr );
@@ -685,7 +685,7 @@ CPLJSONObject CPLJSONObject::GetObject(const char *pszName) const
  */
 CPLJSONObject CPLJSONObject::operator[](const char *pszName) const
 {
-    return GetObject(pszName);
+    return GetObj(pszName);
 }
 
 /**
@@ -718,7 +718,7 @@ const char *CPLJSONObject::GetString(const char *pszName, const char* pszDefault
 {
     if( nullptr == pszName )
         return pszDefault == nullptr ? "" : pszDefault;
-    CPLJSONObject object = GetObject( pszName );
+    CPLJSONObject object = GetObj( pszName );
     return object.ToString( pszDefault );
 }
 
@@ -749,7 +749,7 @@ double CPLJSONObject::GetDouble(const char *pszName, double dfDefault) const
 {
     if( nullptr == pszName )
         return dfDefault;
-    CPLJSONObject object = GetObject( pszName );
+    CPLJSONObject object = GetObj( pszName );
     return object.ToDouble( dfDefault );
 }
 
@@ -780,7 +780,7 @@ int CPLJSONObject::GetInteger(const char *pszName, int nDefault) const
 {
     if( nullptr == pszName )
         return nDefault;
-    CPLJSONObject object = GetObject( pszName );
+    CPLJSONObject object = GetObj( pszName );
     return object.ToInteger( nDefault );
 }
 
@@ -811,7 +811,7 @@ GInt64 CPLJSONObject::GetLong(const char *pszName, GInt64 nDefault) const
 {
     if( nullptr == pszName )
         return nDefault;
-    CPLJSONObject object = GetObject( pszName );
+    CPLJSONObject object = GetObj( pszName );
     return object.ToLong( nDefault );
 }
 
@@ -842,7 +842,7 @@ bool CPLJSONObject::GetBool(const char *pszName, bool bDefault) const
 {
     if( nullptr == pszName )
         return bDefault;
-    CPLJSONObject object = GetObject( pszName );
+    CPLJSONObject object = GetObj( pszName );
     return object.ToBool( bDefault );
 }
 
