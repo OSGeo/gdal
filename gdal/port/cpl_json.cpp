@@ -1018,7 +1018,8 @@ void CPLJSONObject::DestroyJSONObjectList(CPLJSONObject **papsoList)
 
     for( CPLJSONObject **papsoPtr = papsoList; *papsoPtr != nullptr; ++papsoPtr )
     {
-        CPLFree(*papsoPtr);
+        // The CPLJSONObject class instance allocated via new, so delete it here.
+        delete(*papsoPtr);
     }
 
     CPLFree(papsoList);
