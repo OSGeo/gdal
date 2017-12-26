@@ -13,22 +13,42 @@ Developing
 Usage
 ---------------
 This library exports the following GDAL functions:
+- CSLCount
+- GDALSetCacheMax
 - GDALAllRegister
 - GDALOpen
-- GDALGetRasterCount
+- GDALClose
+- GDALGetDriverByName
+- GDALCreate
+- GDALCreateCopy
 - GDALGetRasterXSize
 - GDALGetRasterYSize
+- GDALGetRasterCount
+- GDALGetRasterDataType
+- GDALGetRasterBand
 - GDALGetProjectionRef
+- GDALSetProjection
 - GDALGetGeoTransform
+- GDALSetGeoTransform
 - OSRNewSpatialReference
+- OSRImportFromEPSG
 - OCTNewCoordinateTransformation
 - OCTTransform
-(and untested)
+- GDALCreateGenImgProjTransformer
+- GDALGenImgProjTransform
+- GDALDestroyGenImgProjTransformer
+- GDALSuggestedWarpOutput
 - GDALTranslate
 - GDALTranslateOptionsNew
 - GDALTranslateOptionsFree
+- GDALReprojectImage
 
 To see full-fledged examples using all of these functions from within a WebWorker, check out the
-`examples` directory.
+`examples` directory. From simplest to most complex, these examples are:
 
-In order to limit Javascript build size, GDAL is currently built with support for GeoTIFFs only.
+1. `inspect_geotiff`
+2. `map_extent`
+3. `thumbnail`
+4. `thumbnail_map`
+
+In order to limit Javascript build size, GDAL is currently built with support for GeoTIFFs and PNGs only.
