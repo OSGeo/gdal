@@ -74,7 +74,7 @@ NASAKeywordHandler::NASAKeywordHandler() :
     pszHeaderNext(nullptr),
     m_bStripSurroundingQuotes(false)
 {
-    oJSon.Reset();
+    oJSon.Deinit();
 }
 
 /************************************************************************/

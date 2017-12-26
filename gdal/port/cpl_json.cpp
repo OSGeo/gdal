@@ -849,38 +849,30 @@ bool CPLJSONObject::GetBool(const char *pszName, bool bDefault) const
 /**
  * \brief Get json object children.
  *
- * This is not an array [], but list {}. Any modification of children will not store in json document. This function is useful when keys is not know and need to iterate over json object items and get keys and values.
+ * This function is useful when keys is not know and need to
+ * iterate over json object items and get keys and values.
  *
- * @return Array of CPLJSONObject pointers. The caller must free this array using CPLJSONObject::DestroyJSONObjectList static function.
+ * @return Array of CPLJSONObject class instncess.
  *
  * @since GDAL 2.3
  */
-CPLJSONObject **CPLJSONObject::GetChildren() const
+std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
 {
+    std::vector<CPLJSONObject> aoChildren;
     if(nullptr == m_poJsonObject)
     {
-        return nullptr;
+        return aoChildren;
     }
-    CPLJSONObject **papoChildren = nullptr;
-    size_t nChildrenCount = 0;
+
     json_object_iter it;
     it.key = nullptr;
     it.val = nullptr;
     it.entry = nullptr;
     json_object_object_foreachC( TO_JSONOBJ(m_poJsonObject), it ) {
-        CPLJSONObject *child = new CPLJSONObject(it.key, it.val);
-        papoChildren = reinterpret_cast<CPLJSONObject **>(
-            CPLRealloc( papoChildren,  sizeof(CPLJSONObject *) *
-                        (nChildrenCount + 1) ) );
-        papoChildren[nChildrenCount++] = child;
+        aoChildren.push_back(CPLJSONObject(it.key, it.val));
     }
 
-    papoChildren = reinterpret_cast<CPLJSONObject **>(
-        CPLRealloc( papoChildren,  sizeof(CPLJSONObject *) *
-                    (nChildrenCount + 1) ) );
-    papoChildren[nChildrenCount] = nullptr;
-
-    return papoChildren;
+    return aoChildren;
 }
 
 /**
@@ -961,6 +953,8 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
 /**
  * Get json object type.
  * @return Json object type.
+ *
+ * @since GDAL 2.3
  */
 CPLJSONObject::Type CPLJSONObject::GetType() const
 {
@@ -988,6 +982,8 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
 /**
  * Check if json object valid.
  * @return true if json object valid.
+ *
+ * @since GDAL 2.3
  */
 bool CPLJSONObject::IsValid() const
 {
@@ -995,34 +991,18 @@ bool CPLJSONObject::IsValid() const
 }
 
 /**
- * Decrement internal pointer counter and make pointer NULL.
+ * Decrement reference counter and make pointer NULL.
  * A json object will become invalid.
+ *
+ * @since GDAL 2.3
  */
-void CPLJSONObject::Reset()
+void CPLJSONObject::Deinit()
 {
     if( m_poJsonObject )
     {
         json_object_put( TO_JSONOBJ(m_poJsonObject) );
         m_poJsonObject = nullptr;
     }
-}
-
-/**
- * Free memory allocated by GetChildren method.
- * @param papsoList Null terminated array of json object pointers.
- */
-void CPLJSONObject::DestroyJSONObjectList(CPLJSONObject **papsoList)
-{
-    if( !papsoList )
-        return;
-
-    for( CPLJSONObject **papsoPtr = papsoList; *papsoPtr != nullptr; ++papsoPtr )
-    {
-        // The CPLJSONObject class instance allocated via new, so delete it here.
-        delete(*papsoPtr);
-    }
-
-    CPLFree(papsoList);
 }
 
 //------------------------------------------------------------------------------
@@ -1055,6 +1035,8 @@ CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
 /**
  * Get array size.
  * @return Array size.
+ *
+ * @since GDAL 2.3
  */
 int CPLJSONArray::Size() const
 {
@@ -1066,6 +1048,8 @@ int CPLJSONArray::Size() const
 /**
  * Add json object to array.
  * @param oValue Json array.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(const CPLJSONObject &oValue)
 {
@@ -1077,6 +1061,8 @@ void CPLJSONArray::Add(const CPLJSONObject &oValue)
 /**
  * Add value to array
  * @param pszValue Value to add.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(const char* pszValue)
 {
@@ -1088,6 +1074,8 @@ void CPLJSONArray::Add(const char* pszValue)
 /**
  * Add value to array
  * @param dfValue Value to add.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(double dfValue)
 {
@@ -1099,6 +1087,8 @@ void CPLJSONArray::Add(double dfValue)
 /**
  * Add value to array
  * @param nValue Value to add.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(int nValue)
 {
@@ -1110,6 +1100,8 @@ void CPLJSONArray::Add(int nValue)
 /**
  * Add value to array
  * @param nValue Value to add.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(GInt64 nValue)
 {
@@ -1121,6 +1113,8 @@ void CPLJSONArray::Add(GInt64 nValue)
 /**
  * Add value to array
  * @param bValue Value to add.
+ *
+ * @since GDAL 2.3
  */
 void CPLJSONArray::Add(bool bValue)
 {
@@ -1133,6 +1127,8 @@ void CPLJSONArray::Add(bool bValue)
  * Get array item by index.
  * @param  nIndex Item index.
  * @return        Json object.
+ *
+ * @since GDAL 2.3
  */
 CPLJSONObject CPLJSONArray::operator[](int nIndex)
 {
@@ -1145,6 +1141,8 @@ CPLJSONObject CPLJSONArray::operator[](int nIndex)
  * Get array const item by index.
  * @param  nIndex Item index.
  * @return        Json object.
+ *
+ * @since GDAL 2.3
  */
 const CPLJSONObject CPLJSONArray::operator[](int nIndex) const
 {

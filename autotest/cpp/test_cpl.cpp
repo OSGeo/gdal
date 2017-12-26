@@ -1993,18 +1993,8 @@ namespace tut
 
             CPLJSONObject oJsonResource = oJsonRoot.GetObj("resource");
             ensure( oJsonResource.IsValid() );
-            CPLJSONObject ** children = oJsonResource.GetChildren();
-            ensure_not(children == nullptr);
-            int count = 0;
-            if(nullptr != children)
-            {
-                while(children[count++] != nullptr)
-                {
-
-                }
-                CPLJSONObject::DestroyJSONObjectList(children);
-            }
-            ensure_equals(count, 12);
+            std::vector<CPLJSONObject> children = oJsonResource.GetChildren();
+            ensure(children.size() == 11);
 
             CPLJSONArray oaScopes = oJsonRoot.GetArray("resource/scopes");
             ensure( oaScopes.IsValid() );

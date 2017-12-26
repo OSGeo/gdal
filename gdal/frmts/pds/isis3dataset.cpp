@@ -554,7 +554,7 @@ static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent, const char* p
     if( oChild.IsValid() && oChild.GetType() != CPLJSONObject::Object )
     {
         oParent.Delete(pszKey);
-        oChild.Reset();
+        oChild.Deinit();
     }
 
     if( !oChild.IsValid() )
@@ -1358,8 +1358,8 @@ ISIS3Dataset::ISIS3Dataset() :
     m_adfGeoTransform[5] = 1.0;
 
     // Deinit JSON objects
-    m_oJSonLabel.Reset();
-    m_oSrcJSonLabel.Reset();
+    m_oJSonLabel.Deinit();
+    m_oSrcJSonLabel.Deinit();
 }
 
 /************************************************************************/
@@ -1542,7 +1542,7 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
 
 void ISIS3Dataset::InvalidateLabel()
 {
-    m_oJSonLabel.Reset();
+    m_oJSonLabel.Deinit();
     m_aosISIS3MD.Clear();
 }
 
@@ -1555,7 +1555,7 @@ CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
     if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
         EQUAL( pszDomain, "json:ISIS3" ) )
     {
-        m_oSrcJSonLabel.Reset();
+        m_oSrcJSonLabel.Deinit();
         InvalidateLabel();
         if( papszMD != nullptr && papszMD[0] != nullptr )
         {
@@ -1620,44 +1620,36 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_oJSonLabel.Add( "_filename", poOpenInfo->pszFilename );
 
     // Find additional files from the label
-    CPLJSONObject **paoObjLabelChildren = poDS->m_oJSonLabel.GetChildren();
-    if( nullptr != paoObjLabelChildren )
+    for( const CPLJSONObject& oObj : poDS->m_oJSonLabel.GetChildren() )
     {
-        int i = 0;
-        while( paoObjLabelChildren[i] != nullptr )
+        if( oObj.GetType() == CPLJSONObject::Object )
         {
-            CPLJSONObject *poObj = paoObjLabelChildren[i++];
-
-            if( poObj->GetType() == CPLJSONObject::Object )
+            CPLString osContainerName = oObj.GetName();
+            CPLJSONObject oContainerName = oObj.GetObj("_container_name");
+            if( oContainerName.GetType() == CPLJSONObject::String )
             {
-                CPLString osContainerName = poObj->GetName();
-                CPLJSONObject oContainerName = poObj->GetObj("_container_name");
-                if( oContainerName.GetType() == CPLJSONObject::String )
-                {
-                    osContainerName = oContainerName.ToString();
-                }
+                osContainerName = oContainerName.ToString();
+            }
 
-                CPLJSONObject oFilename = poObj->GetObj(("^" + osContainerName).c_str());
-                if( oFilename.GetType() == CPLJSONObject::String )
+            CPLJSONObject oFilename = oObj.GetObj(("^" + osContainerName).c_str());
+            if( oFilename.GetType() == CPLJSONObject::String )
+            {
+                VSIStatBufL sStat;
+                CPLString osFilename( CPLFormFilename(
+                    CPLGetPath(poOpenInfo->pszFilename),
+                    oFilename.ToString(),
+                    nullptr ) );
+                if( VSIStatL( osFilename, &sStat ) == 0 )
                 {
-                    VSIStatBufL sStat;
-                    CPLString osFilename( CPLFormFilename(
-                        CPLGetPath(poOpenInfo->pszFilename),
-                        oFilename.ToString(),
-                        nullptr ) );
-                    if( VSIStatL( osFilename, &sStat ) == 0 )
-                    {
-                        poDS->m_aosAdditionalFiles.AddString(osFilename);
-                    }
-                    else
-                    {
-                        CPLDebug("ISIS3", "File %s referenced but not foud",
-                                    osFilename.c_str());
-                    }
+                    poDS->m_aosAdditionalFiles.AddString(osFilename);
+                }
+                else
+                {
+                    CPLDebug("ISIS3", "File %s referenced but not foud",
+                                osFilename.c_str());
                 }
             }
         }
-        CPLJSONObject::DestroyJSONObjectList(paoObjLabelChildren);
     }
 
     VSIFCloseL( poOpenInfo->fpL );
@@ -2794,134 +2786,126 @@ void ISIS3Dataset::BuildLabel()
             osLabelSrcFilename = oFilename.ToString();
         }
 
-        CPLJSONObject **paoObjLabelChildren = oLabel.GetChildren();
-        if( nullptr != paoObjLabelChildren )
+        for( CPLJSONObject& oObj : oLabel.GetChildren() )
         {
-            int i = 0;
-            while( paoObjLabelChildren[i] != nullptr )
+            CPLString osKey = oObj.GetName();
+            if( osKey == "History" )
             {
-                CPLJSONObject *poObj = paoObjLabelChildren[i++];
-                CPLString osKey = poObj->GetName();
-                if( osKey == "History" )
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                CPLJSONObject oBytes = poObj->GetObj("Bytes");
-                if( oBytes.GetType() != CPLJSONObject::Integer ||
-                    oBytes.ToInteger() <= 0 )
-                {
-                    continue;
-                }
+            CPLJSONObject oBytes = oObj.GetObj("Bytes");
+            if( oBytes.GetType() != CPLJSONObject::Integer ||
+                oBytes.ToInteger() <= 0 )
+            {
+                continue;
+            }
 
-                CPLJSONObject oStartByte = poObj->GetObj("StartByte");
-                if( oStartByte.GetType() != CPLJSONObject::Integer ||
-                    oStartByte.ToInteger() <= 0 )
-                {
-                    continue;
-                }
+            CPLJSONObject oStartByte = oObj.GetObj("StartByte");
+            if( oStartByte.GetType() != CPLJSONObject::Integer ||
+                oStartByte.ToInteger() <= 0 )
+            {
+                continue;
+            }
 
-                if( osLabelSrcFilename.empty() )
+            if( osLabelSrcFilename.empty() )
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                        "Cannot find _filename attribute in "
+                        "source ISIS3 metadata. Removing object "
+                        "%s from the label.",
+                        osKey.c_str());
+                oLabel.Delete( osKey );
+                continue;
+            }
+
+            NonPixelSection oSection;
+            oSection.osSrcFilename = osLabelSrcFilename;
+            oSection.nSrcOffset = static_cast<vsi_l_offset>(
+                oObj.GetInteger("StartByte")) - 1U;
+            oSection.nSize = static_cast<vsi_l_offset>(
+                oObj.GetInteger("Bytes"));
+
+            CPLString osName;
+            CPLJSONObject oName = oObj.GetObj("Name");
+            if( oName.GetType() == CPLJSONObject::String )
+            {
+                osName = oName.ToString();
+            }
+
+            CPLString osContainerName(osKey);
+            CPLJSONObject oContainerName = oObj.GetObj("_container_name");
+            if( oContainerName.GetType() == CPLJSONObject::String )
+            {
+                osContainerName = oContainerName.ToString();
+            }
+
+            const CPLString osKeyFilename( "^" + osContainerName );
+            CPLJSONObject oFilenameCap = oObj.GetObj(osKeyFilename);
+            if( oFilenameCap.GetType() == CPLJSONObject::String )
+            {
+                VSIStatBufL sStat;
+                const CPLString osSrcFilename( CPLFormFilename(
+                    CPLGetPath(osLabelSrcFilename),
+                    oFilenameCap.ToString(),
+                    nullptr ) );
+                if( VSIStatL( osSrcFilename, &sStat ) == 0 )
+                {
+                    oSection.osSrcFilename = osSrcFilename;
+                }
+                else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Cannot find _filename attribute in "
-                            "source ISIS3 metadata. Removing object "
-                            "%s from the label.",
-                            osKey.c_str());
+                             "Object %s points to %s, which does "
+                             "not exist. Removing this section "
+                             "from the label",
+                             osKey.c_str(),
+                             osSrcFilename.c_str());
                     oLabel.Delete( osKey );
                     continue;
                 }
-
-                NonPixelSection oSection;
-                oSection.osSrcFilename = osLabelSrcFilename;
-                oSection.nSrcOffset = static_cast<vsi_l_offset>(
-                    poObj->GetInteger("StartByte")) - 1U;
-                oSection.nSize = static_cast<vsi_l_offset>(
-                    poObj->GetInteger("Bytes"));
-
-                CPLString osName;
-                CPLJSONObject oName = poObj->GetObj("Name");
-                if( oName.GetType() == CPLJSONObject::String )
-                {
-                    osName = oName.ToString();
-                }
-
-                CPLString osContainerName(osKey);
-                CPLJSONObject oContainerName = poObj->GetObj("_container_name");
-                if( oContainerName.GetType() == CPLJSONObject::String )
-                {
-                    osContainerName = oContainerName.ToString();
-                }
-
-                const CPLString osKeyFilename( "^" + osContainerName );
-                CPLJSONObject oFilenameCap = poObj->GetObj(osKeyFilename);
-                if( oFilenameCap.GetType() == CPLJSONObject::String )
-                {
-                    VSIStatBufL sStat;
-                    const CPLString osSrcFilename( CPLFormFilename(
-                        CPLGetPath(osLabelSrcFilename),
-                        oFilenameCap.ToString(),
-                        nullptr ) );
-                    if( VSIStatL( osSrcFilename, &sStat ) == 0 )
-                    {
-                        oSection.osSrcFilename = osSrcFilename;
-                    }
-                    else
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Object %s points to %s, which does "
-                                 "not exist. Removing this section "
-                                 "from the label",
-                                 osKey.c_str(),
-                                 osSrcFilename.c_str());
-                        oLabel.Delete( osKey );
-                        continue;
-                    }
-                }
-
-                if( !m_osExternalFilename.empty() )
-                {
-                    poObj->Set("StartByte", 1);
-                }
-                else
-                {
-                    CPLString osPlaceHolder;
-                    osPlaceHolder.Printf(
-                        "!*^PLACEHOLDER_%d_STARTBYTE^*!",
-                        static_cast<int>(m_aoNonPixelSections.size()) + 1);
-                    poObj->Set("StartByte", osPlaceHolder);
-                    oSection.osPlaceHolder = osPlaceHolder;
-                }
-
-                if( !m_osExternalFilename.empty() )
-                {
-                    CPLString osDstFilename( CPLGetBasename(GetDescription()) );
-                    osDstFilename += ".";
-                    osDstFilename += osContainerName;
-                    if( !osName.empty() )
-                    {
-                        osDstFilename += ".";
-                        osDstFilename += osName;
-                    }
-
-                    oSection.osDstFilename = CPLFormFilename(
-                        CPLGetPath( GetDescription() ),
-                        osDstFilename,
-                        nullptr );
-
-                    poObj->Set(osKeyFilename, osDstFilename);
-                }
-                else
-                {
-                    poObj->Delete(osKeyFilename);
-                }
-
-                m_aoNonPixelSections.push_back(oSection);
             }
-        }
-        CPLJSONObject::DestroyJSONObjectList(paoObjLabelChildren);
-    }
 
+            if( !m_osExternalFilename.empty() )
+            {
+                oObj.Set("StartByte", 1);
+            }
+            else
+            {
+                CPLString osPlaceHolder;
+                osPlaceHolder.Printf(
+                    "!*^PLACEHOLDER_%d_STARTBYTE^*!",
+                    static_cast<int>(m_aoNonPixelSections.size()) + 1);
+                oObj.Set("StartByte", osPlaceHolder);
+                oSection.osPlaceHolder = osPlaceHolder;
+            }
+
+            if( !m_osExternalFilename.empty() )
+            {
+                CPLString osDstFilename( CPLGetBasename(GetDescription()) );
+                osDstFilename += ".";
+                osDstFilename += osContainerName;
+                if( !osName.empty() )
+                {
+                    osDstFilename += ".";
+                    osDstFilename += osName;
+                }
+
+                oSection.osDstFilename = CPLFormFilename(
+                    CPLGetPath( GetDescription() ),
+                    osDstFilename,
+                    nullptr );
+
+                oObj.Set(osKeyFilename, osDstFilename);
+            }
+            else
+            {
+                oObj.Delete(osKeyFilename);
+            }
+
+            m_aoNonPixelSections.push_back(oSection);
+        }
+    }
     m_oJSonLabel = oLabel;
 }
 
@@ -3368,171 +3352,242 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
         osIndentation += "  ";
     const size_t WIDTH = 79;
 
-    CPLJSONObject **paoObjChildren = oObj.GetChildren();
+    std::vector<CPLJSONObject> aoChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
-    if( paoObjChildren != nullptr )
+    for( const CPLJSONObject& oChild : aoChildren )
     {
-        int i = 0;
-        while( paoObjChildren[i] != nullptr )
+        const char* pszKey = oChild.GetName();
+        if( EQUAL(pszKey, "_type") ||
+            EQUAL(pszKey, "_container_name") ||
+            EQUAL(pszKey, "_filename") )
         {
-            CPLJSONObject *pItem = paoObjChildren[i++];
-            const char* pszKey = pItem->GetName();
-            if( EQUAL(pszKey, "_type") ||
-                EQUAL(pszKey, "_container_name") ||
-                EQUAL(pszKey, "_filename") )
-            {
-                continue;
-            }
+            continue;
+        }
 
-            enum CPLJSONObject::Type eType = pItem->GetType();
-            if( eType == CPLJSONObject::String ||
-                eType == CPLJSONObject::Integer ||
-                eType == CPLJSONObject::Double ||
-                eType == CPLJSONObject::Array )
+        enum CPLJSONObject::Type eType = oChild.GetType();
+        if( eType == CPLJSONObject::String ||
+            eType == CPLJSONObject::Integer ||
+            eType == CPLJSONObject::Double ||
+            eType == CPLJSONObject::Array )
+        {
+            if( strlen(pszKey) > nMaxKeyLength )
+            {
+                nMaxKeyLength = strlen(pszKey);
+            }
+        }
+        else if( eType == CPLJSONObject::Object )
+        {
+            CPLJSONObject oValue = oChild.GetObj( "value" );
+            CPLJSONObject oUnit = oChild.GetObj( "unit" );
+            if( oValue.IsValid() && oUnit.GetType() == CPLJSONObject::String )
             {
                 if( strlen(pszKey) > nMaxKeyLength )
                 {
                     nMaxKeyLength = strlen(pszKey);
                 }
             }
-            else if( eType == CPLJSONObject::Object )
+        }
+    }
+
+    for( const CPLJSONObject& oChild : aoChildren )
+    {
+        const char* pszKey = oChild.GetName();
+        if( EQUAL(pszKey, "_type") ||
+            EQUAL(pszKey, "_container_name") ||
+            EQUAL(pszKey, "_filename") )
+        {
+            continue;
+        }
+        if( STARTS_WITH(pszKey, "_comment") )
+        {
+            if( oChild.GetType() == CPLJSONObject::String )
             {
-                CPLJSONObject oValue = pItem->GetObj( "value" );
-                CPLJSONObject oUnit = pItem->GetObj( "unit" );
-                if( oValue.IsValid() && oUnit.GetType() == CPLJSONObject::String )
+                VSIFPrintfL(fp, "#%s\n", oChild.ToString() );
+            }
+            continue;
+        }
+        CPLString osPadding;
+        size_t nLen = strlen(pszKey);
+        if( nLen < nMaxKeyLength )
+        {
+            osPadding.append( nMaxKeyLength - nLen, ' ' );
+        }
+
+        enum CPLJSONObject::Type eType = oChild.GetType();
+        if( eType == CPLJSONObject::Object )
+        {
+            CPLJSONObject oType = oChild.GetObj( "_type" );
+            CPLJSONObject oContainerName = oChild.GetObj( "_container_name" );
+            const char* pszContainerName = pszKey;
+            if( oContainerName.GetType() == CPLJSONObject::String )
+            {
+                pszContainerName = oContainerName.ToString();
+            }
+            if( oType.GetType() == CPLJSONObject::String )
+            {
+                const char* pszType = oType.ToString();
+                if( EQUAL(pszType, "Object") )
                 {
-                    if( strlen(pszKey) > nMaxKeyLength )
+                    if( nDepth == 0 && VSIFTellL(fp) != 0 )
+                        VSIFPrintfL(fp, "\n");
+                    VSIFPrintfL(fp, "%sObject = %s\n",
+                                osIndentation.c_str(), pszContainerName);
+                    SerializeAsPDL( fp, oChild, nDepth + 1 );
+                    VSIFPrintfL(fp, "%sEnd_Object\n", osIndentation.c_str());
+                }
+                else if( EQUAL(pszType, "Group") )
+                {
+                    VSIFPrintfL(fp, "\n");
+                    VSIFPrintfL(fp, "%sGroup = %s\n",
+                                osIndentation.c_str(), pszContainerName);
+                    SerializeAsPDL( fp, oChild, nDepth + 1 );
+                    VSIFPrintfL(fp, "%sEnd_Group\n", osIndentation.c_str());
+                }
+            }
+            else
+            {
+                CPLJSONObject oValue = oChild.GetObj( "value" );
+                CPLJSONObject oUnit = oChild.GetObj( "unit" );
+                if( oValue.IsValid() &&
+                    oUnit.GetType() == CPLJSONObject::String )
+                {
+                    const char* pszUnit = oUnit.ToString();
+                    enum CPLJSONObject::Type eValueType = oValue.GetType();
+                    if( eValueType == CPLJSONObject::Integer )
                     {
-                        nMaxKeyLength = strlen(pszKey);
+                        VSIFPrintfL(fp, "%s%s%s = %d <%s>\n",
+                                    osIndentation.c_str(), pszKey,
+                                    osPadding.c_str(),
+                                    oValue.ToInteger(), pszUnit);
+                    }
+                    else if( eValueType == CPLJSONObject::Double )
+                    {
+                        const double dfVal = oValue.ToDouble();
+                        if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                            static_cast<int>(dfVal) == dfVal )
+                        {
+                            VSIFPrintfL(fp, "%s%s%s = %d.0 <%s>\n",
+                                        osIndentation.c_str(), pszKey,
+                                        osPadding.c_str(),
+                                        static_cast<int>(dfVal), pszUnit);
+                        }
+                        else
+                        {
+                            VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
+                                        osIndentation.c_str(), pszKey,
+                                        osPadding.c_str(),
+                                        dfVal, pszUnit);
+                        }
                     }
                 }
             }
         }
-
-        i = 0;
-        while( paoObjChildren[i] != nullptr )
+        else if( eType == CPLJSONObject::String )
         {
-            CPLJSONObject *poItem = paoObjChildren[i++];
-            const char* pszKey = poItem->GetName();
-            if( EQUAL(pszKey, "_type") ||
-                EQUAL(pszKey, "_container_name") ||
-                EQUAL(pszKey, "_filename") )
+            const char* pszVal = oChild.ToString();
+            if( pszVal[0] == '\0' ||
+                strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
+                strstr(pszVal, "\\r") )
             {
-                continue;
+                CPLString osVal(pszVal);
+                osVal.replaceAll("\\n", "\n");
+                osVal.replaceAll("\\r", "\r");
+                VSIFPrintfL(fp, "%s%s%s = \"%s\"\n",
+                            osIndentation.c_str(), pszKey,
+                            osPadding.c_str(), osVal.c_str());
             }
-            if( STARTS_WITH(pszKey, "_comment") )
+            else
             {
-                if( poItem->GetType() == CPLJSONObject::String )
+                if( osIndentation.size() + strlen(pszKey) + osPadding.size() +
+                    strlen(" = ") + strlen(pszVal) > WIDTH &&
+                    osIndentation.size() + strlen(pszKey) + osPadding.size() +
+                    strlen(" = ") < WIDTH )
                 {
-                    VSIFPrintfL(fp, "#%s\n", poItem->ToString() );
-                }
-                continue;
-            }
-            CPLString osPadding;
-            size_t nLen = strlen(pszKey);
-            if( nLen < nMaxKeyLength )
-            {
-                osPadding.append( nMaxKeyLength - nLen, ' ' );
-            }
-
-            enum CPLJSONObject::Type eType = poItem->GetType();
-            if( eType == CPLJSONObject::Object )
-            {
-                CPLJSONObject oType = poItem->GetObj( "_type" );
-                CPLJSONObject oContainerName = poItem->GetObj( "_container_name" );
-                const char* pszContainerName = pszKey;
-                if( oContainerName.GetType() == CPLJSONObject::String )
-                {
-                    pszContainerName = oContainerName.ToString();
-                }
-                if( oType.GetType() == CPLJSONObject::String )
-                {
-                    const char* pszType = oType.ToString();
-                    if( EQUAL(pszType, "Object") )
-                    {
-                        if( nDepth == 0 && VSIFTellL(fp) != 0 )
-                            VSIFPrintfL(fp, "\n");
-                        VSIFPrintfL(fp, "%sObject = %s\n",
-                                    osIndentation.c_str(), pszContainerName);
-                        SerializeAsPDL( fp, *poItem, nDepth + 1 );
-                        VSIFPrintfL(fp, "%sEnd_Object\n",
-                                    osIndentation.c_str());
-                    }
-                    else if( EQUAL(pszType, "Group") )
-                    {
-                        VSIFPrintfL(fp, "\n");
-                        VSIFPrintfL(fp, "%sGroup = %s\n",
-                                    osIndentation.c_str(), pszContainerName);
-                        SerializeAsPDL( fp, *poItem, nDepth + 1 );
-                        VSIFPrintfL(fp, "%sEnd_Group\n",
-                                    osIndentation.c_str());
-                    }
-                }
-                else
-                {
-                    CPLJSONObject oValue = poItem->GetObj( "value" );
-                    CPLJSONObject oUnit = poItem->GetObj( "unit" );
-                    if( oValue.IsValid() &&
-                        oUnit.GetType() == CPLJSONObject::String )
-                    {
-                        const char* pszUnit = oUnit.ToString();
-                        enum CPLJSONObject::Type eValueType = oValue.GetType();
-                        if( eValueType == CPLJSONObject::Integer )
-                        {
-                            VSIFPrintfL(fp, "%s%s%s = %d <%s>\n",
-                                        osIndentation.c_str(), pszKey,
-                                        osPadding.c_str(),
-                                        oValue.ToInteger(), pszUnit);
-                        }
-                        else if( eValueType == CPLJSONObject::Double )
-                        {
-                            const double dfVal = oValue.ToDouble();
-                            if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                                static_cast<int>(dfVal) == dfVal )
-                            {
-                                VSIFPrintfL(fp, "%s%s%s = %d.0 <%s>\n",
-                                            osIndentation.c_str(), pszKey,
-                                            osPadding.c_str(),
-                                            static_cast<int>(dfVal), pszUnit);
-                            }
-                            else
-                            {
-                                VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
-                                            osIndentation.c_str(), pszKey,
-                                            osPadding.c_str(),
-                                            dfVal, pszUnit);
-                            }
-                        }
-                    }
-                }
-            }
-            else if( eType == CPLJSONObject::String )
-            {
-                const char* pszVal = poItem->ToString();
-                if( pszVal[0] == '\0' ||
-                    strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
-                    strstr(pszVal, "\\r") )
-                {
-                    CPLString osVal(pszVal);
-                    osVal.replaceAll("\\n", "\n");
-                    osVal.replaceAll("\\r", "\r");
-                    VSIFPrintfL(fp, "%s%s%s = \"%s\"\n",
+                    size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
+                                     osPadding.size() + strlen(" = ");
+                    VSIFPrintfL(fp, "%s%s%s = ",
                                 osIndentation.c_str(), pszKey,
-                                osPadding.c_str(), osVal.c_str());
+                                osPadding.c_str());
+                    size_t nCurPos = nFirstPos;
+                    for( int j = 0; pszVal[j] != '\0'; j++ )
+                    {
+                        nCurPos ++;
+                        if( nCurPos == WIDTH && pszVal[j+1] != '\0' )
+                        {
+                            VSIFPrintfL( fp, "-\n" );
+                            for( size_t k=0;k<nFirstPos;k++ )
+                            {
+                                const char chSpace = ' ';
+                                VSIFWriteL(&chSpace, 1, 1, fp);
+                            }
+                            nCurPos = nFirstPos + 1;
+                        }
+                        VSIFWriteL( &pszVal[j], 1, 1, fp );
+                    }
+                    VSIFPrintfL(fp, "\n");
                 }
                 else
                 {
-                    if( osIndentation.size() + strlen(pszKey) + osPadding.size() +
-                        strlen(" = ") + strlen(pszVal) > WIDTH &&
-                        osIndentation.size() + strlen(pszKey) + osPadding.size() +
-                        strlen(" = ") < WIDTH )
+                    VSIFPrintfL(fp, "%s%s%s = %s\n",
+                                osIndentation.c_str(), pszKey,
+                                osPadding.c_str(), pszVal);
+                }
+            }
+        }
+        else if( eType == CPLJSONObject::Integer )
+        {
+            const int nVal = oChild.ToInteger();
+            VSIFPrintfL(fp, "%s%s%s = %d\n",
+                        osIndentation.c_str(), pszKey,
+                        osPadding.c_str(), nVal);
+        }
+        else if( eType == CPLJSONObject::Double )
+        {
+            const double dfVal = oChild.ToDouble();
+            if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                static_cast<int>(dfVal) == dfVal )
+            {
+                VSIFPrintfL(fp, "%s%s%s = %d.0\n",
+                        osIndentation.c_str(), pszKey,
+                        osPadding.c_str(), static_cast<int>(dfVal));
+            }
+            else
+            {
+                VSIFPrintfL(fp, "%s%s%s = %.18g\n",
+                            osIndentation.c_str(), pszKey,
+                            osPadding.c_str(), dfVal);
+            }
+        }
+        else if( eType == CPLJSONObject::Array )
+        {
+            CPLJSONArray oArrayItem(oChild);
+            const int nLength = oArrayItem.Size();
+            size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
+                                     osPadding.size() + strlen(" = (");
+            VSIFPrintfL(fp, "%s%s%s = (",
+                        osIndentation.c_str(), pszKey,
+                        osPadding.c_str());
+            size_t nCurPos = nFirstPos;
+            for( int idx = 0; idx < nLength; idx++ )
+            {
+                CPLJSONObject oItem = oArrayItem[idx];
+                enum CPLJSONObject::Type eArrayItemType = oItem.GetType();
+                if( eArrayItemType == CPLJSONObject::String )
+                {
+                    const char* pszVal = oItem.ToString();
+                    if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
                     {
-                        size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
-                                         osPadding.size() + strlen(" = ");
-                        VSIFPrintfL(fp, "%s%s%s = ",
-                                    osIndentation.c_str(), pszKey,
-                                    osPadding.c_str());
-                        size_t nCurPos = nFirstPos;
+                        if( idx > 0 )
+                        {
+                            VSIFPrintfL( fp, "\n" );
+                            for( size_t j=0;j<nFirstPos;j++ )
+                            {
+                                const char chSpace = ' ';
+                                VSIFWriteL(&chSpace, 1, 1, fp);
+                            }
+                            nCurPos = nFirstPos;
+                        }
+
                         for( int j = 0; pszVal[j] != '\0'; j++ )
                         {
                             nCurPos ++;
@@ -3548,149 +3603,68 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, const CPLJSONObject &oObj,
                             }
                             VSIFWriteL( &pszVal[j], 1, 1, fp );
                         }
-                        VSIFPrintfL(fp, "\n");
                     }
                     else
                     {
-                        VSIFPrintfL(fp, "%s%s%s = %s\n",
-                                    osIndentation.c_str(), pszKey,
-                                    osPadding.c_str(), pszVal);
+                        VSIFPrintfL( fp, "%s", pszVal );
+                        nCurPos += strlen(pszVal);
                     }
                 }
-            }
-            else if( eType == CPLJSONObject::Integer )
-            {
-                const int nVal = poItem->ToInteger();
-                VSIFPrintfL(fp, "%s%s%s = %d\n",
-                            osIndentation.c_str(), pszKey,
-                            osPadding.c_str(), nVal);
-            }
-            else if( eType == CPLJSONObject::Double )
-            {
-                const double dfVal = poItem->ToDouble();
-                if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                    static_cast<int>(dfVal) == dfVal )
+                else if( eArrayItemType == CPLJSONObject::Integer )
                 {
-                    VSIFPrintfL(fp, "%s%s%s = %d.0\n",
-                            osIndentation.c_str(), pszKey,
-                            osPadding.c_str(), static_cast<int>(dfVal));
+                    const int nVal = oItem.ToInteger();
+                    const char* pszVal = CPLSPrintf("%d", nVal);
+                    const size_t nValLen = strlen(pszVal);
+                    if( nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH )
+                    {
+                        VSIFPrintfL( fp, "\n" );
+                        for( size_t j=0;j<nFirstPos;j++ )
+                        {
+                            const char chSpace = ' ';
+                            VSIFWriteL(&chSpace, 1, 1, fp);
+                        }
+                        nCurPos = nFirstPos;
+                    }
+                    VSIFPrintfL( fp, "%d", nVal );
+                    nCurPos += nValLen;
                 }
-                else
+                else if( eArrayItemType == CPLJSONObject::Double )
                 {
-                    VSIFPrintfL(fp, "%s%s%s = %.18g\n",
-                                osIndentation.c_str(), pszKey,
-                                osPadding.c_str(), dfVal);
+                    const double dfVal = oItem.ToDouble();
+                    CPLString osVal;
+                    if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                        static_cast<int>(dfVal) == dfVal )
+                    {
+                        osVal = CPLSPrintf("%d.0", static_cast<int>(dfVal));
+                    }
+                    else
+                    {
+                        osVal = CPLSPrintf("%.18g", dfVal);
+                    }
+                    const size_t nValLen = osVal.size();
+                    if( nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH )
+                    {
+                        VSIFPrintfL( fp, "\n" );
+                        for( size_t j=0;j<nFirstPos;j++ )
+                        {
+                            const char chSpace = ' ';
+                            VSIFWriteL(&chSpace, 1, 1, fp);
+                        }
+                        nCurPos = nFirstPos;
+                    }
+                    VSIFPrintfL( fp, "%s", osVal.c_str() );
+                    nCurPos += nValLen;
+                }
+                if( idx < nLength - 1 )
+                {
+                    VSIFPrintfL( fp, ", " );
+                    nCurPos += 2;
                 }
             }
-            else if( eType == CPLJSONObject::Array )
-            {
-                CPLJSONArray oArrayItem(*poItem);
-                const int nLength = oArrayItem.Size();
-                size_t nFirstPos = osIndentation.size() + strlen(pszKey) +
-                                         osPadding.size() + strlen(" = (");
-                VSIFPrintfL(fp, "%s%s%s = (",
-                            osIndentation.c_str(), pszKey,
-                            osPadding.c_str());
-                size_t nCurPos = nFirstPos;
-                for( int idx = 0; idx < nLength; idx++ )
-                {
-                    CPLJSONObject oItem = oArrayItem[idx];
-                    enum CPLJSONObject::Type eArrayItemType = oItem.GetType();
-                    if( eArrayItemType == CPLJSONObject::String )
-                    {
-                        const char* pszVal = oItem.ToString();
-                        if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
-                        {
-                            if( idx > 0 )
-                            {
-                                VSIFPrintfL( fp, "\n" );
-                                for( size_t j=0;j<nFirstPos;j++ )
-                                {
-                                    const char chSpace = ' ';
-                                    VSIFWriteL(&chSpace, 1, 1, fp);
-                                }
-                                nCurPos = nFirstPos;
-                            }
-
-                            for( int j = 0; pszVal[j] != '\0'; j++ )
-                            {
-                                nCurPos ++;
-                                if( nCurPos == WIDTH && pszVal[j+1] != '\0' )
-                                {
-                                    VSIFPrintfL( fp, "-\n" );
-                                    for( size_t k=0;k<nFirstPos;k++ )
-                                    {
-                                        const char chSpace = ' ';
-                                        VSIFWriteL(&chSpace, 1, 1, fp);
-                                    }
-                                    nCurPos = nFirstPos + 1;
-                                }
-                                VSIFWriteL( &pszVal[j], 1, 1, fp );
-                            }
-                        }
-                        else
-                        {
-                            VSIFPrintfL( fp, "%s", pszVal );
-                            nCurPos += strlen(pszVal);
-                        }
-                    }
-                    else if( eArrayItemType == CPLJSONObject::Integer )
-                    {
-                        const int nVal = oItem.ToInteger();
-                        const char* pszVal = CPLSPrintf("%d", nVal);
-                        const size_t nValLen = strlen(pszVal);
-                        if( nFirstPos < WIDTH && idx > 0 &&
-                            nCurPos + nValLen > WIDTH )
-                        {
-                            VSIFPrintfL( fp, "\n" );
-                            for( size_t j=0;j<nFirstPos;j++ )
-                            {
-                                const char chSpace = ' ';
-                                VSIFWriteL(&chSpace, 1, 1, fp);
-                            }
-                            nCurPos = nFirstPos;
-                        }
-                        VSIFPrintfL( fp, "%d", nVal );
-                        nCurPos += nValLen;
-                    }
-                    else if( eArrayItemType == CPLJSONObject::Double )
-                    {
-                        const double dfVal = oItem.ToDouble();
-                        CPLString osVal;
-                        if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                            static_cast<int>(dfVal) == dfVal )
-                        {
-                            osVal = CPLSPrintf("%d.0", static_cast<int>(dfVal));
-                        }
-                        else
-                        {
-                            osVal = CPLSPrintf("%.18g", dfVal);
-                        }
-                        const size_t nValLen = osVal.size();
-                        if( nFirstPos < WIDTH && idx > 0 &&
-                            nCurPos + nValLen > WIDTH )
-                        {
-                            VSIFPrintfL( fp, "\n" );
-                            for( size_t j=0;j<nFirstPos;j++ )
-                            {
-                                const char chSpace = ' ';
-                                VSIFWriteL(&chSpace, 1, 1, fp);
-                            }
-                            nCurPos = nFirstPos;
-                        }
-                        VSIFPrintfL( fp, "%s", osVal.c_str() );
-                        nCurPos += nValLen;
-                    }
-                    if( idx < nLength - 1 )
-                    {
-                        VSIFPrintfL( fp, ", " );
-                        nCurPos += 2;
-                    }
-                }
-                VSIFPrintfL(fp, ")\n" );
-            }
+            VSIFPrintfL(fp, ")\n" );
         }
-        CPLJSONObject::DestroyJSONObjectList( paoObjChildren );
     }
 }
 

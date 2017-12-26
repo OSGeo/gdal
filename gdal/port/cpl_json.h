@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "cpl_progress.h"
 
+#include <vector>
+
 /**
  * \file cpl_json.h
  *
@@ -137,11 +139,9 @@ public:
     const char *GetName() const { return m_soKey; }
 /*! @endcond */
 
-    CPLJSONObject **GetChildren() const;
+    std::vector<CPLJSONObject> GetChildren() const;
     bool IsValid() const;
-    void Reset();
-
-    static void DestroyJSONObjectList(CPLJSONObject **papsoList);
+    void Deinit();
 
 protected:
 /*! @cond Doxygen_Suppress */
