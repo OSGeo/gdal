@@ -75,11 +75,7 @@ static void test_huge_mapping()
 }
 #endif
 
-#ifdef GDAL_TEST_ROOT_DIR
-#define DATA_DIR GDAL_TEST_ROOT_DIR "/gcore/data/"
-#else
-#define DATA_DIR "../gcore/data/"
-#endif
+#include "test_data.h"
 
 static void test_two_pages_cbk(CPLVirtualMem* /* ctxt */,
                   size_t nOffset,
@@ -241,7 +237,7 @@ int main(int /* argc */, char* /* argv */[])
     if( CPLIsVirtualMemFileMapAvailable() )
     {
         printf("Testing CPLVirtualMemFileMapNew()\n");
-        VSILFILE* fp = VSIFOpenL(DATA_DIR "byte.tif", "rb");
+        VSILFILE* fp = VSIFOpenL(GCORE_DATA_DIR "byte.tif", "rb");
         assert(fp);
         VSIFSeekL(fp, 0, SEEK_END);
         size_t nSize = (size_t)VSIFTellL(fp);

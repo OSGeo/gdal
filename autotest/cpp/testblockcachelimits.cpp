@@ -35,11 +35,7 @@
 
 #include <cassert>
 
-#ifdef GDAL_TEST_ROOT_DIR
-#define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR "/gcore/data/"
-#else
-#define GCORE_DATA_DIR "../gcore/data/"
-#endif
+#include "test_data.h"
 
 static void thread_func(void* /* unused */)
 {

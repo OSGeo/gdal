@@ -33,11 +33,7 @@
 #include <limits>
 #include <string>
 
-#ifdef GDAL_TEST_ROOT_DIR
-#define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR "/gcore/data/"
-#else
-#define GCORE_DATA_DIR "../gcore/data/"
-#endif
+#include "test_data.h"
 
 namespace tut
 {

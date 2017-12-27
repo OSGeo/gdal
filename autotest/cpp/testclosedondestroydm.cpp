@@ -35,13 +35,7 @@
 
 #include <cassert>
 
-#ifdef GDAL_TEST_ROOT_DIR
-#define GCORE_DATA_DIR GDAL_TEST_ROOT_DIR "/gcore/data/"
-#define GDRIVERS_DIR GDAL_TEST_ROOT_DIR "/gdrivers/"
-#else
-#define GCORE_DATA_DIR "../gcore/data/"
-#define GDRIVERS_DIR "../gdrivers/"
-#endif
+#include "test_data.h"
 
 static void OpenJPEG2000(const char* pszFilename)
 {
