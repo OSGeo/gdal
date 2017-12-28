@@ -569,6 +569,14 @@ const char *CPLFormFilename( const char * pszPath,
             STARTS_WITH(pszPath, "/vsimem/") ||
             STARTS_WITH(pszPath, "/vsicurl/") ||
             STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
+            STARTS_WITH(pszPath, "/vsis3/") ||
+            STARTS_WITH(pszPath, "/vsis3_streaming/") ||
+            STARTS_WITH(pszPath, "/vsigs/") ||
+            STARTS_WITH(pszPath, "/vsigs_streaming/") ||
+            STARTS_WITH(pszPath, "/vsiaz/") ||
+            STARTS_WITH(pszPath, "/vsiaz_streaming/") ||
+            STARTS_WITH(pszPath, "/vsioss/") ||
+            STARTS_WITH(pszPath, "/vsioss_streaming/") ||
             STARTS_WITH(pszPath, "/vsizip/") )
             pszAddedPathSep = "/";
         else
@@ -751,8 +759,18 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         // prefers as directory separator?
         const char* pszAddedPathSep = nullptr;
         if( strcmp(pszStaticResult, "/vsimem") == 0 ||
+            STARTS_WITH(pszStaticResult, "/vsimem/") ||
             STARTS_WITH(pszStaticResult, "/vsicurl/") ||
-            STARTS_WITH(pszStaticResult, "/vsimem/") )
+            STARTS_WITH(pszStaticResult, "/vsicurl_streaming/") ||
+            STARTS_WITH(pszStaticResult, "/vsis3/") ||
+            STARTS_WITH(pszStaticResult, "/vsis3_streaming/") ||
+            STARTS_WITH(pszStaticResult, "/vsigs/") ||
+            STARTS_WITH(pszStaticResult, "/vsigs_streaming/") ||
+            STARTS_WITH(pszStaticResult, "/vsiaz/") ||
+            STARTS_WITH(pszStaticResult, "/vsiaz_streaming/") ||
+            STARTS_WITH(pszStaticResult, "/vsioss/") ||
+            STARTS_WITH(pszStaticResult, "/vsioss_streaming/") ||
+            STARTS_WITH(pszStaticResult, "/vsizip/") )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
