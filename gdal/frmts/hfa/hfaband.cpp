@@ -682,10 +682,9 @@ static CPLErr UncompressBlock( GByte *pabyCData, int nSrcBytes,
             }
             else if( nNumBits == 32 )
             {
-                nRawValue = 256 * 256 * 256 * *(pabyValues++);
-                nRawValue += 256 * 256 * *(pabyValues++);
-                nRawValue += 256 * *(pabyValues++);
-                nRawValue += *(pabyValues++);
+                memcpy(&nRawValue, pabyValues, 4);
+                CPL_MSBPTR32(&nRawValue);
+                pabyValues += 4;
             }
             else
             {
