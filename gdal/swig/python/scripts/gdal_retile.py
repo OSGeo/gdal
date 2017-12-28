@@ -680,21 +680,24 @@ def getTileName(minfo,ti,xIndex,yIndex,level = -1):
     if parts[0][0]=="@" : #remove possible leading "@"
        parts = ( parts[0][1:len(parts[0])], parts[1])
 
+    yIndex_str = ("%0"+str(countDigits)+"i") % (yIndex,)
+    xIndex_str = ("%0"+str(countDigits)+"i") % (xIndex,)
+
     if UseDirForEachRow :
-        format=getTargetDir(level)+str(yIndex)+os.sep+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"
+        format=getTargetDir(level)+str(yIndex)+os.sep+parts[0]+"_"+yIndex_str+"_"+xIndex_str
         #See if there was a switch in the row, if so then create new dir for row.
         if LastRowIndx < yIndex :
             LastRowIndx = yIndex
             if (os.path.exists(getTargetDir(level)+str(yIndex)) == False) :
                 os.mkdir(getTargetDir(level)+str(yIndex))
     else:
-        format=getTargetDir(level)+parts[0]+"_%0"+str(countDigits)+"i"+"_%0"+str(countDigits)+"i"
+        format=getTargetDir(level)+parts[0]+"_"+yIndex_str+"_"+xIndex_str
     #Check for the extension that should be used.
     if Extension is None:
         format=format+parts[1]
     else:
         format=format+"."+Extension
-    return format % (yIndex,xIndex)
+    return format
 
 def UsageFormat():
     print('Valid formats:')
