@@ -33,6 +33,8 @@
 #include <limits>
 #include <string>
 
+#include "test_data.h"
+
 namespace tut
 {
     // Common fixture with test data
@@ -291,7 +293,7 @@ namespace tut
         GetGDALDriverManager()->RegisterDriver( poDriver );
         const char* args[] = { "-of", "DatasetWithErrorInFlushCache", nullptr };
         GDALTranslateOptions* psOptions = GDALTranslateOptionsNew((char**)args, nullptr);
-        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALDatasetH hOutDS = GDALTranslate("", hSrcDS, psOptions, nullptr);
@@ -313,7 +315,7 @@ namespace tut
         GetGDALDriverManager()->RegisterDriver( poDriver );
         const char* args[] = { "-of", "DatasetWithErrorInFlushCache", nullptr };
         GDALWarpAppOptions* psOptions = GDALWarpAppOptionsNew((char**)args, nullptr);
-        GDALDatasetH hSrcDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+        GDALDatasetH hSrcDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
         GDALDatasetH hOutDS = GDALWarp("/", nullptr, 1, &hSrcDS, psOptions, nullptr);
