@@ -467,9 +467,9 @@ to target layer if they exist in source layer..</dd>
 <dt> <b>-unsetDefault</b>:</dt><dd>(starting with GDAL 2.0) Do not propagate default field values
 to target layer if they exist in source layer..</dd>
 <dt> <b>-unsetFid</b>:</dt><dd>(starting with GDAL 2.0) Can be specify to prevent
-the new default behaviour that consists in, if the output driver
-has a FID layer creation option and we are not in append mode, to preserve the
-name of the source FID column and source feature IDs</dd>
+the name of the source FID column and source feature IDs from being re-used for
+the target layer. This option can for example be useful if selecting source features
+with a ORDER BY clause.</dd>
 <dt> <b>-nomd</b>:</dt><dd>(starting with GDAL 2.0) To disable copying of metadata
 from source dataset and layers into target dataset and layers, when supported by
 output driver.</dd>
