@@ -54,6 +54,7 @@ static void Usage(const char* pszErrorMsg, int bShort)
             "       [-srcwin xoff yoff xsize ysize] [-epo] [-eco]\n"
             "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
             "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
+            "       [-a_scale value] [-a_offset value]\n"
             "       [-gcp pixel line easting northing [elevation]]*\n"
             "       [-mo \"META-TAG=VALUE\"]* [-q] [-sds]\n"
             "       [-co \"NAME=VALUE\"]* [-stats] [-norat]\n"
