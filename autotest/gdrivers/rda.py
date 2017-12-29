@@ -505,7 +505,7 @@ def rda_nominal():
             gdaltest.post_reason('fail')
             return 'fail'
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.5, 1.0, 0.0, 463.0, 0.0, 2.0):
+    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
         gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
@@ -523,7 +523,7 @@ def rda_nominal():
     with gdaltest.config_options(config_options):
         ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
     got_gt = ds.GetGeoTransform()
-    if got_gt != (125.5, 1.0, 0.0, 463.0, 0.0, 2.0):
+    if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
         gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
