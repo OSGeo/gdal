@@ -323,6 +323,7 @@ gdal_translate [--help-general]
        [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
        [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
+       [-a_scale value] [-a_offset value]
        [-gcp pixel line easting northing [elevation]]*
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
        [-co "NAME=VALUE"]* [-stats] [-norat]
@@ -424,6 +425,10 @@ outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
 complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+<dt> <b>-a_scale</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band scaling
+value(no modification of pixel values is done)</dd>
+<dt> <b>-a_offset</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band offset
+value (no modification of pixel values is done)</dd>
 <dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
 Assign/override the georeferenced bounds of the output file.  This assigns
 georeferenced bounds to the output file, ignoring what would have been derived
