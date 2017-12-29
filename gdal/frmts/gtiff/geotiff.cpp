@@ -604,6 +604,8 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     static void SaveICCProfile( GTiffDataset *pDS, TIFF *hTIFF,
                                 char **papszParmList, uint32 nBitsPerSample );
+
+    static bool HasVerticalCS(const char* pszProjectionIn);
 };
 
 /************************************************************************/
@@ -10808,15 +10810,30 @@ void GTiffDataset::WriteGeoTIFFInfo()
         if( adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
                 && adfGeoTransform[5] < 0.0 )
         {
+            double dfOffset = 0.0;
             if( !EQUAL(osProfile,szPROFILE_BASELINE) )
             {
+                // In the case the SRS has a vertical component and we have
+                // a single band, encode its scale/offset in the GeoTIFF tags
+                int bHasScale = FALSE;
+                double dfScale = GetRasterBand(1)->GetScale(&bHasScale);
+                int bHasOffset = FALSE;
+                dfOffset = GetRasterBand(1)->GetOffset(&bHasOffset);
+                const bool bApplyScaleOffset =
+                    HasVerticalCS(GetProjectionRef()) &&
+                    GetRasterCount() == 1;
+                if( bApplyScaleOffset && !bHasScale )
+                    dfScale = 1.0;
+                if( !bApplyScaleOffset || !bHasOffset )
+                    dfOffset = 0.0;
                 const double adfPixelScale[3] = {
-                    adfGeoTransform[1], fabs(adfGeoTransform[5]), 0.0 };
+                    adfGeoTransform[1], fabs(adfGeoTransform[5]),
+                    bApplyScaleOffset ? dfScale  : 0.0 };
                 TIFFSetField( hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale );
             }
 
             double adfTiePoints[6] = {
-                0.0, 0.0, 0.0, adfGeoTransform[0], adfGeoTransform[3], 0.0 };
+                0.0, 0.0, 0.0, adfGeoTransform[0], adfGeoTransform[3], dfOffset };
 
             if( bPixelIsPoint && !bPointGeoIgnore )
             {
@@ -11343,8 +11360,19 @@ bool GTiffDataset::WriteMetadata( GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
         const double dfOffset = poBand->GetOffset();
         const double dfScale = poBand->GetScale();
+        bool bGeoTIFFScaleOffsetInZ = false;
+        double adfGeoTransform[6];
+        // Check if we have already encoded scale/offset in the GeoTIFF tags
+        if( poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
+            adfGeoTransform[2] == 0.0 && adfGeoTransform[4] == 0.0
+            && adfGeoTransform[5] < 0.0 &&
+            HasVerticalCS(poSrcDS->GetProjectionRef()) &&
+            poSrcDS->GetRasterCount() == 1 )
+        {
+            bGeoTIFFScaleOffsetInZ = true;
+        }
 
-        if( dfOffset != 0.0 || dfScale != 1.0 )
+        if( (dfOffset != 0.0 || dfScale != 1.0) && !bGeoTIFFScaleOffsetInZ )
         {
             char szValue[128] = {};
 
@@ -14342,9 +14370,10 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                 adfGeoTransform[4] = 0.0;
                 adfGeoTransform[5] = 1.0;
 
+                uint16 nCountScale = 0;
                 if( TIFFGetField(hTIFF, TIFFTAG_GEOPIXELSCALE,
-                                 &nCount, &padfScale )
-                    && nCount >= 2
+                                 &nCountScale, &padfScale )
+                    && nCountScale >= 2
                     && padfScale[0] != 0.0 && padfScale[1] != 0.0 )
                 {
                     adfGeoTransform[1] = padfScale[0];
@@ -14404,6 +14433,26 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
 
                         bGeoTransformValid = true;
                         m_nGeoTransformGeorefSrcIndex = nIndex;
+
+                        if( nCountScale >= 3 && GetRasterCount() == 1 &&
+                            (padfScale[2] != 0.0 ||
+                             padfTiePoints[2] != 0.0 ||
+                             padfTiePoints[5] != 0.0) )
+                        {
+                            /* modelTiePointTag = (pixel, line, z0, X, Y, Z0) */
+                            /* thus Z(some_point) = (z(some_point) - z0) * scaleZ + Z0 */
+                            /* equivalently written as */
+                            /* Z(some_point) = z(some_point) * scaleZ + offsetZ with */
+                            /* offsetZ = - z0 * scaleZ + Z0 */
+                            double dfScale = padfScale[2];
+                            double dfOffset =
+                                -padfTiePoints[2] * dfScale + padfTiePoints[5];
+                            GTiffRasterBand* poBand =
+                                reinterpret_cast<GTiffRasterBand*>(GetRasterBand(1));
+                            poBand->bHaveOffsetScale = true;
+                            poBand->dfScale = dfScale;
+                            poBand->dfOffset = dfOffset;
+                        }
                     }
                 }
 
@@ -16802,12 +16851,31 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         if( bGeoTIFF )
         {
+            l_pszProjection = poSrcDS->GetProjectionRef();
+
             if( l_adfGeoTransform[2] == 0.0 && l_adfGeoTransform[4] == 0.0
                 && l_adfGeoTransform[5] < 0.0 )
             {
+                double dfOffset = 0.0;
                 {
+                    // In the case the SRS has a vertical component and we have
+                    // a single band, encode its scale/offset in the GeoTIFF tags
+                    int bHasScale = FALSE;
+                    double dfScale =
+                        poSrcDS->GetRasterBand(1)->GetScale(&bHasScale);
+                    int bHasOffset = FALSE;
+                    dfOffset =
+                        poSrcDS->GetRasterBand(1)->GetOffset(&bHasOffset);
+                    const bool bApplyScaleOffset =
+                        HasVerticalCS(l_pszProjection) &&
+                        poSrcDS->GetRasterCount() == 1;
+                    if( bApplyScaleOffset && !bHasScale )
+                        dfScale = 1.0;
+                    if( !bApplyScaleOffset || !bHasOffset )
+                        dfOffset = 0.0;
                     const double adfPixelScale[3] = {
-                        l_adfGeoTransform[1], fabs(l_adfGeoTransform[5]), 0.0 };
+                        l_adfGeoTransform[1], fabs(l_adfGeoTransform[5]),
+                        bApplyScaleOffset ? dfScale : 0.0 };
 
                     TIFFSetField( l_hTIFF, TIFFTAG_GEOPIXELSCALE, 3,
                                   adfPixelScale );
@@ -16819,7 +16887,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                     0.0,
                     l_adfGeoTransform[0],
                     l_adfGeoTransform[3],
-                    0.0
+                    dfOffset
                 };
 
                 if( bPixelIsPoint && !bPointGeoIgnore )
@@ -16854,8 +16922,6 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 TIFFSetField( l_hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix );
             }
-
-            l_pszProjection = poSrcDS->GetProjectionRef();
         }
 
 /* -------------------------------------------------------------------- */
@@ -17578,6 +17644,25 @@ const char *GTiffDataset::GetProjectionRef()
     }
 
     return "";
+}
+
+
+/************************************************************************/
+/*                           HasVerticalCS()                            */
+/************************************************************************/
+
+bool GTiffDataset::HasVerticalCS(const char *pszProjectionIn)
+{
+    if( pszProjectionIn != nullptr && pszProjectionIn[0] != '\0' )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(pszProjectionIn);
+        return oSRS.IsVertical();
+    }
+    else
+    {
+        return false;
+    }
 }
 
 /************************************************************************/
