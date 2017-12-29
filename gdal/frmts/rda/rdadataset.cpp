@@ -1046,10 +1046,10 @@ bool GDALRDADataset::ReadGeoreferencing()
     double dfShearY = GetJsonDouble(poObj, "shearY", true, bError);
 
     double adfPixelToPixelTranslate[6] = {
-        m_nMinX + 0.5,
+        static_cast<double>(m_nMinX),
         1.0,
         0.0,
-        m_nMinY + 0.5,
+        static_cast<double>(m_nMinY),
         0.0,
         1.0 };
     double adfPixelToMap[6] = { dfTranslateX, dfScaleX, dfShearX,
