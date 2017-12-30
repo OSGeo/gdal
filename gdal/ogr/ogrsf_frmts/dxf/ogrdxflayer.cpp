@@ -3150,6 +3150,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
                 break;
             }
         }
+        if( apoPendingFeatures.size() > 100000 )
+            break;
     }
 
     // The block geometries were appended to apoPendingFeatures
