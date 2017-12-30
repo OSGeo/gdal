@@ -98,9 +98,11 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
             pszInput += 2;
         }
         else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
-            || STARTS_WITH_CI(pszInput, "%%o") ) )
+            || STARTS_WITH_CI(pszInput, "%%o")
+            || STARTS_WITH_CI(pszInput, "%%k") ) )
         {
-            // Underline and overline markers. These have no effect in MTEXT
+            // Underline, overline, and strikethrough markers.
+            // These have no effect in MTEXT
             pszInput += 2;
         }
         else
