@@ -17657,7 +17657,7 @@ bool GTiffDataset::HasVerticalCS(const char *pszProjectionIn)
     {
         OGRSpatialReference oSRS;
         oSRS.SetFromUserInput(pszProjectionIn);
-        return oSRS.IsVertical();
+        return CPL_TO_BOOL(oSRS.IsVertical());
     }
     else
     {
