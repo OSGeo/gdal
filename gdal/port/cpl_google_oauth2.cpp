@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifdef HAVE_CRYPTOPP
+#define DO_NOT_USE_DEBUG_BOOL
+#endif
+
 #include "cpl_http.h"
 #include "cpl_port.h"
 

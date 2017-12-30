@@ -64,7 +64,7 @@ static bool StringCISortFunction(const CPLString& a, const CPLString& b)
     return STRCASECMP(a.c_str(), b.c_str()) < 0;
 }
 
-static void Usage(const char* pszAdditionalMsg, bool bShort = true)
+static void Usage(const char* pszAdditionalMsg = nullptr, bool bShort = true)
 {
     printf( "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
             "               [-select field_list] [-where restricted_where|@filename]\n"
@@ -180,11 +180,6 @@ static void Usage(const char* pszAdditionalMsg, bool bShort = true)
         fprintf(stderr, "\nFAILURE: %s\n", pszAdditionalMsg);
 }
 
-static void Usage(bool bShort = TRUE)
-{
-    Usage(nullptr, bShort);
-}
-
 /************************************************************************/
 /*                 GDALVectorTranslateOptionsForBinaryNew()             */
 /************************************************************************/
@@ -265,7 +260,7 @@ MAIN_START(nArgc, papszArgv)
         }
         else if ( EQUAL(papszArgv[iArg], "--long-usage") )
         {
-            Usage(false);
+            Usage(nullptr, false);
             goto exit;
         }
     }

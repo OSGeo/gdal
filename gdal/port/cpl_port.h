@@ -1090,6 +1090,7 @@ class MSVCPedanticBool
         bool operator! () const { return !b; }
         operator bool() const { return b; }
         operator int() const { return b; }
+        operator GIntBig() const { return b; }
 };
 
 inline bool operator== (const bool& one, const MSVCPedanticBool& other) { return one == other.b; }
@@ -1105,6 +1106,15 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <functional>
+#include <memory>
+#include <queue>
+#include <mutex>
+#include <unordered_map>
+#include <thread>
+#include <unordered_set>
+#include <complex>
+#include <iomanip>
 
 } /* extern C++ */
 

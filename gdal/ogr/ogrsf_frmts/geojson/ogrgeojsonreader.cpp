@@ -896,7 +896,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer( OGRGeoJSONDataSource* poDS,
             // to avoid killing ourselves during layer deletion
             poLayer->UnsetReader();
             delete poLayer;
-            return FALSE;
+            return false;
         }
         if( bFinished || (nIter % 100) == 0 )
         {

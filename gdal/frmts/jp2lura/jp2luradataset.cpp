@@ -1323,7 +1323,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Assign creation options.                                        */
     /* -------------------------------------------------------------------- */
-        SetPropGeneral(cJP2_Prop_Write_TLM_Marker, TLM);
+        SetPropGeneral(cJP2_Prop_Write_TLM_Marker, static_cast<int>(TLM));
         SetPropGeneral(cJP2_Prop_Height, nYSize);
         SetPropGeneral(cJP2_Prop_Width, nXSize);
 
@@ -1341,7 +1341,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 { cJP2_Quant_Expounded, cJP2_Quant_Expounded,
                   cJP2_Quant_Expounded };
 
-            if (REVERSIBLE == 0)
+            if (REVERSIBLE == false)
             {
                 if (RATE == 0 && QUALITY != 0)
                 {
@@ -1397,7 +1397,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 SetPropPerChannel(cJP2_Prop_Signed_Samples, pvSpc[channel], 
                                   channel);
 
-                if (REVERSIBLE == 0)
+                if (REVERSIBLE == false)
                 {
                     if(QUALITY==0 && RATE==0)
                     {
@@ -1443,7 +1443,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 SetPropGeneral(cJP2_Prop_Rate_Bytes, ulMaxBytes);
             }
             SetPropGeneral(cJP2_Prop_Wavelet_Filter, cJP2_Wavelet);
-            if (REVERSIBLE == 0)
+            if (REVERSIBLE == false)
             {
                 SetPropGeneral(cJP2_Prop_Quantization_Style, cJP2_Quant);
             }

@@ -314,7 +314,7 @@ GDALDataset *GIFDataset::Open( GDALOpenInfo * poOpenInfo )
         }
 #if defined(GIFLIB_MAJOR) && GIFLIB_MAJOR >= 5
         // Since giflib 5, de-interlacing is done by DGifSlurp().
-        psImage->ImageDesc.Interlace = 0;
+        psImage->ImageDesc.Interlace = false;
 #endif
         poDS->SetBand( poDS->nBands+1,
                        new GIFRasterBand( poDS, poDS->nBands+1, psImage,
