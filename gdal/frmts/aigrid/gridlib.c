@@ -178,7 +178,7 @@ CPLErr AIGProcessRaw16BitBlock( GByte *pabyCur, int nDataSize, int nMin,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
-        panData[i] = pabyCur[0] * 256 + pabyCur[1] + nMin;
+        panData[i] = AIGRolloverSignedAdd(pabyCur[0] * 256 + pabyCur[1], nMin);
         pabyCur += 2;
     }
 
@@ -211,9 +211,9 @@ CPLErr AIGProcessRaw4BitBlock( GByte *pabyCur, int nDataSize, int nMin,
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
         if( i % 2 == 0 )
-            panData[i] = ((*(pabyCur) & 0xf0) >> 4) + nMin;
+            panData[i] = AIGRolloverSignedAdd((*(pabyCur) & 0xf0) >> 4, nMin);
         else
-            panData[i] = (*(pabyCur++) & 0xf) + nMin;
+            panData[i] = AIGRolloverSignedAdd(*(pabyCur++) & 0xf, nMin);
     }
 
     return( CE_None );
@@ -245,7 +245,7 @@ CPLErr AIGProcessRaw1BitBlock( GByte *pabyCur, int nDataSize, int nMin,
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
         if( pabyCur[i>>3] & (0x80 >> (i&0x7)) )
-            panData[i] = 1 + nMin;
+            panData[i] = AIGRolloverSignedAdd(1, nMin);
         else
             panData[i] = 0 + nMin;
     }
@@ -277,7 +277,7 @@ CPLErr AIGProcessRawBlock( GByte *pabyCur, int nDataSize, int nMin,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
-        panData[i] = *(pabyCur++) + nMin;
+        panData[i] = AIGRolloverSignedAdd(*(pabyCur++), nMin);
     }
 
     return( CE_None );
@@ -324,7 +324,7 @@ CPLErr AIGProcessFFBlock( GByte *pabyCur, int nDataSize, int nMin,
     for( i = 0; i < nBlockXSize * nBlockYSize; i++ )
     {
         if( pabyIntermediate[i>>3] & (0x80 >> (i&0x7)) )
-            panData[i] = nMin+1;
+            panData[i] = AIGRolloverSignedAdd(nMin, 1);
         else
             panData[i] = nMin;
     }
@@ -483,7 +483,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
             while( nMarker > 0 && nDataSize > 0 )
             {
-                panData[nPixels++] = *(pabyCur++) + nMin;
+                panData[nPixels++] = AIGRolloverSignedAdd(*(pabyCur++), nMin);
                 nMarker--;
                 nDataSize--;
             }
@@ -506,7 +506,7 @@ CPLErr AIGProcessBlock( GByte *pabyCur, int nDataSize, int nMin, int nMagic,
 
             while( nMarker > 0 && nDataSize >= 2 )
             {
-                nValue = pabyCur[0] * 256 + pabyCur[1] + nMin;
+                nValue = AIGRolloverSignedAdd(pabyCur[0] * 256 + pabyCur[1], nMin);
                 panData[nPixels++] = nValue;
                 pabyCur += 2;
 
