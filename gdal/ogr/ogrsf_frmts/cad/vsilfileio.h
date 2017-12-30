@@ -31,6 +31,7 @@
 #ifndef VSILFILEIO_H
 #define VSILFILEIO_H
 
+#include "cpl_port.h"
 #include "cadfileio.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
