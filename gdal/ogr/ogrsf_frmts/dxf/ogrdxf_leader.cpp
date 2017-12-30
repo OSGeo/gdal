@@ -407,7 +407,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
               case 302:
                 if( osBlockAttributeHandle != "" )
                 {
-                    oBlockAttributes[osBlockAttributeHandle] = szLineBuf;
+                    oBlockAttributes[osBlockAttributeHandle] =
+                        TextUnescape( szLineBuf, true );
                     osBlockAttributeHandle = "";
                 }
                 break;

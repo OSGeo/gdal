@@ -3025,9 +3025,15 @@ def ogr_dxf_44():
         f.DumpReadable()
         return 'fail'
 
+    if version_info >= (3,0,0):
+        test_text = 'Apples\u00B1'
+    else:
+        exec("test_text = u'Apples\u00B1'")
+        test_text = test_text.encode('utf-8')
+
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"Apples",p:2,s:1g,c:#ff0000,a:10)' \
-    or f.GetField('Text') != 'Apples' \
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"' + test_text + '",p:2,s:1g,c:#ff0000,a:10)' \
+    or f.GetField('Text') != test_text \
     or ogrtest.check_feature_geometry(f, 'POINT Z (-42.7597068401767 -14.5165110820149 0)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
