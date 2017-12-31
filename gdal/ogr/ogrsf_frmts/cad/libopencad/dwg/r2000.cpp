@@ -808,8 +808,12 @@ int DWGFileR2000::CreateFileMap()
             }
             else
             {
-                previousObjHandleOffset.first += tmpOffset.first;
-                previousObjHandleOffset.second += tmpOffset.second;
+                if(std::numeric_limits<long>::max() - tmpOffset.first >
+                        previousObjHandleOffset.first)
+                    previousObjHandleOffset.first += tmpOffset.first;
+                if(std::numeric_limits<long>::max() - tmpOffset.second >
+                        previousObjHandleOffset.second)
+                    previousObjHandleOffset.second += tmpOffset.second;
             }
 #ifdef _DEBUG
             assert( mapObjects.find( previousObjHandleOffset.first ) ==
@@ -1071,7 +1075,7 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
 CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long dBlockRefHandle )
 {
     CADGeometry * poGeometry = nullptr;
-    unique_ptr<CADEntityObject> readedObject( static_cast<CADEntityObject *>(GetObject( dHandle )) );
+    unique_ptr<CADEntityObject> readedObject( dynamic_cast<CADEntityObject *>(GetObject( dHandle )) );
 
     if( nullptr == readedObject )
         return nullptr;
@@ -1122,7 +1126,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             long                          currentVertexH = cadPolyline3D->hVertexes[0].getAsLong();
             while( currentVertexH != 0 )
             {
-                vertex.reset( static_cast<CADVertex3DObject *>(
+                vertex.reset( dynamic_cast<CADVertex3DObject *>(
                                       GetObject( currentVertexH )) );
 
                 if( vertex == nullptr )
@@ -1141,7 +1145,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 // Last vertex is reached. read it and break reading.
                 if( currentVertexH == cadPolyline3D->hVertexes[1].getAsLong() )
                 {
-                    vertex.reset( static_cast<CADVertex3DObject *>(
+                    vertex.reset( dynamic_cast<CADVertex3DObject *>(
                                           GetObject( currentVertexH )) );
                     polyline->addVertex( vertex->vertPosition );
                     break;
@@ -1344,32 +1348,34 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                     readedObject.get());
 
             unique_ptr<CADImageDefObject> cadImageDef(
-                static_cast<CADImageDefObject *>( GetObject(
+                dynamic_cast<CADImageDefObject *>( GetObject(
                     cadImage->hImageDef.getAsLong() ) ) );
 
-
-            image->setClippingBoundaryType( cadImage->dClipBoundaryType );
-            image->setFilePath( cadImageDef->sFilePath );
-            image->setVertInsertionPoint( cadImage->vertInsertion );
-            CADVector imageSize( cadImage->dfSizeX, cadImage->dfSizeY );
-            image->setImageSize( imageSize );
-            CADVector imageSizeInPx( cadImageDef->dfXImageSizeInPx, cadImageDef->dfYImageSizeInPx );
-            image->setImageSizeInPx( imageSizeInPx );
-            CADVector pixelSizeInACADUnits( cadImageDef->dfXPixelSize, cadImageDef->dfYPixelSize );
-            image->setPixelSizeInACADUnits( pixelSizeInACADUnits );
-            image->setResolutionUnits(
-                static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
-            bool bTransparency = (cadImage->dDisplayProps & 0x08) != 0;
-            image->setOptions( bTransparency,
-                               cadImage->bClipping,
-                               cadImage->dBrightness,
-                               cadImage->dContrast );
-            for( const CADVector& clipPt : cadImage->avertClippingPolygonVertexes )
+            if(cadImageDef)
             {
-                image->addClippingPoint( clipPt );
-            }
+                image->setClippingBoundaryType( cadImage->dClipBoundaryType );
+                image->setFilePath( cadImageDef->sFilePath );
+                image->setVertInsertionPoint( cadImage->vertInsertion );
+                CADVector imageSize( cadImage->dfSizeX, cadImage->dfSizeY );
+                image->setImageSize( imageSize );
+                CADVector imageSizeInPx( cadImageDef->dfXImageSizeInPx, cadImageDef->dfYImageSizeInPx );
+                image->setImageSizeInPx( imageSizeInPx );
+                CADVector pixelSizeInACADUnits( cadImageDef->dfXPixelSize, cadImageDef->dfYPixelSize );
+                image->setPixelSizeInACADUnits( pixelSizeInACADUnits );
+                image->setResolutionUnits(
+                    static_cast<CADImage::ResolutionUnit>( cadImageDef->dResUnits ) );
+                bool bTransparency = (cadImage->dDisplayProps & 0x08) != 0;
+                image->setOptions( bTransparency,
+                                   cadImage->bClipping,
+                                   cadImage->dBrightness,
+                                   cadImage->dContrast );
+                for( const CADVector& clipPt : cadImage->avertClippingPolygonVertexes )
+                {
+                    image->addClippingPoint( clipPt );
+                }
 
-            poGeometry = image;
+                poGeometry = image;
+            }
             break;
         }
 
@@ -1422,7 +1428,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             auto                             dLastEntHandle    = cadpolyPface->hVertexes[1].getAsLong();
             while( true )
             {
-                vertex.reset( static_cast<CADVertexPFaceObject *>(
+                vertex.reset( dynamic_cast<CADVertexPFaceObject *>(
                                       GetObject( dCurrentEntHandle )) );
                 /* TODO: this check is excessive, but if something goes wrong way -
              * some part of geometries will be parsed. */
@@ -1447,9 +1453,12 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
                 if( dCurrentEntHandle == dLastEntHandle )
                 {
-                    vertex.reset( static_cast<CADVertexPFaceObject *>(
+                    vertex.reset( dynamic_cast<CADVertexPFaceObject *>(
                                           GetObject( dCurrentEntHandle )) );
-                    polyline->addVertex( vertex->vertPosition );
+                    if(vertex)
+                    {
+                        polyline->addVertex( vertex->vertPosition );
+                    }
                     break;
                 }
             }
@@ -1626,9 +1635,9 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
     if( dBlockRefHandle != 0 )
     {
         vector<CADAttrib>           blockRefAttributes;
-        unique_ptr<CADInsertObject> spoBlockRef( static_cast<CADInsertObject *>( GetObject( dBlockRefHandle ) ) );
+        unique_ptr<CADInsertObject> spoBlockRef( dynamic_cast<CADInsertObject *>( GetObject( dBlockRefHandle ) ) );
 
-        if( !spoBlockRef->hAttribs.empty() )
+        if( spoBlockRef && !spoBlockRef->hAttribs.empty() )
         {
             long dCurrentEntHandle = spoBlockRef->hAttribs[0].getAsLong();
             long dLastEntHandle    = spoBlockRef->hAttribs[0].getAsLong();
@@ -1636,7 +1645,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             while( spoBlockRef->bHasAttribs )
             {
                 // FIXME: memory leak, somewhere in CAD* destructor is a bug
-                CADEntityObject * attDefObj = static_cast<CADEntityObject *>(
+                CADEntityObject * attDefObj = dynamic_cast<CADEntityObject *>(
                         GetObject( dCurrentEntHandle, true ) );
 
                 if( dCurrentEntHandle == dLastEntHandle )
@@ -3626,7 +3635,7 @@ CADDictionary DWGFileR2000::GetNOD()
     CADDictionary stNOD;
 
     unique_ptr<CADDictionaryObject> spoNamedDictObj(
-            static_cast<CADDictionaryObject*>( GetObject( oTables.GetTableHandle(
+            dynamic_cast<CADDictionaryObject*>( GetObject( oTables.GetTableHandle(
                 CADTables::NamedObjectsDict ).getAsLong() ) ) );
     if( spoNamedDictObj == nullptr )
         return stNOD;

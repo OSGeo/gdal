@@ -85,7 +85,7 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 {
     // Reading Layer Control obj, and aLayers.
     unique_ptr<CADLayerControlObject> spLayerControl(
-            static_cast<CADLayerControlObject *>(pCADFile->GetObject( dLayerControlHandle )) );
+            dynamic_cast<CADLayerControlObject *>(pCADFile->GetObject( dLayerControlHandle )) );
     if( spLayerControl == nullptr )
         return CADErrorCodes::TABLE_READ_FAILED;
 
@@ -97,19 +97,22 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 
             // Init CADLayer from CADLayerObject properties
             unique_ptr<CADLayerObject> oCADLayerObj(
-                    static_cast<CADLayerObject *>(pCADFile->GetObject( spLayerControl->hLayers[i].getAsLong() )) );
+                    dynamic_cast<CADLayerObject *>(pCADFile->GetObject( spLayerControl->hLayers[i].getAsLong() )) );
 
-            oCADLayer.setName( oCADLayerObj->sLayerName );
-            oCADLayer.setFrozen( oCADLayerObj->bFrozen );
-            oCADLayer.setOn( oCADLayerObj->bOn );
-            oCADLayer.setFrozenByDefault( oCADLayerObj->bFrozenInNewVPORT );
-            oCADLayer.setLocked( oCADLayerObj->bLocked );
-            oCADLayer.setLineWeight( oCADLayerObj->dLineWeight );
-            oCADLayer.setColor( oCADLayerObj->dCMColor );
-            oCADLayer.setId( aLayers.size() + 1 );
-            oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
+            if(oCADLayerObj)
+            {
+                oCADLayer.setName( oCADLayerObj->sLayerName );
+                oCADLayer.setFrozen( oCADLayerObj->bFrozen );
+                oCADLayer.setOn( oCADLayerObj->bOn );
+                oCADLayer.setFrozenByDefault( oCADLayerObj->bFrozenInNewVPORT );
+                oCADLayer.setLocked( oCADLayerObj->bLocked );
+                oCADLayer.setLineWeight( oCADLayerObj->dLineWeight );
+                oCADLayer.setColor( oCADLayerObj->dCMColor );
+                oCADLayer.setId( aLayers.size() + 1 );
+                oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
 
-            aLayers.push_back( oCADLayer );
+                aLayers.push_back( oCADLayer );
+            }
         }
     }
 
@@ -118,20 +121,25 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
         return CADErrorCodes::TABLE_READ_FAILED;
 
     unique_ptr<CADBlockHeaderObject> spModelSpace(
-            static_cast<CADBlockHeaderObject *>(pCADFile->GetObject( iterBlockMS->second.getAsLong() )) );
+            dynamic_cast<CADBlockHeaderObject *>(pCADFile->GetObject( iterBlockMS->second.getAsLong() )) );
+    if(!spModelSpace || spModelSpace->hEntities.size() < 2)
+    {
+        return CADErrorCodes::TABLE_READ_FAILED;
+    }
 
     auto dCurrentEntHandle = spModelSpace->hEntities[0].getAsLong();
     auto dLastEntHandle    = spModelSpace->hEntities[1].getAsLong();
     while( dCurrentEntHandle != 0 )
     {
-        unique_ptr<CADEntityObject> spEntityObj( static_cast<CADEntityObject *>(
-                                                         pCADFile->GetObject( dCurrentEntHandle, true )) );
+        CADObject* pObject = pCADFile->GetObject( dCurrentEntHandle, true );
+        unique_ptr<CADEntityObject> spEntityObj(
+                    dynamic_cast<CADEntityObject *>( pObject ) );
 
         if( spEntityObj == nullptr )
         {
             DebugMsg( "Entity object is null\n" );
             break;
-        }
+        } 
         else if ( dCurrentEntHandle == dLastEntHandle )
         {
             FillLayer( spEntityObj.get() );
@@ -158,6 +166,11 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 
 void CADTables::FillLayer( const CADEntityObject * pEntityObject )
 {
+    if(nullptr == pEntityObject)
+    {
+        return;
+    }
+
     for( CADLayer& oLayer : aLayers )
     {
         if( pEntityObject->stChed.hLayer.getAsLong( pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
