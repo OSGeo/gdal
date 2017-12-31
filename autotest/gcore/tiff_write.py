@@ -7747,6 +7747,45 @@ def tiff_write_166():
     return 'success'
 
 ###############################################################################
+def tiff_write_167_deflate_zlevel():
+
+    src_ds = gdal.Open('data/byte.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'ZLEVEL=1'])
+    size1 = gdal.VSIStatL('/vsimem/out.tif').size
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'NUM_THREADS=2',
+                                                        'ZLEVEL=9'])
+    size2 = gdal.VSIStatL('/vsimem/out.tif').size
+    gdal.Unlink('/vsimem/out.tif')
+
+    if size2 >= size1:
+        gdaltest.post_reason('fail')
+        print(size1, size2)
+        return 'fail'
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/out.tif', 20, 20, 1,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'ZLEVEL=9'])
+    ds.SetProjection(src_ds.GetProjectionRef())
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    ds.WriteRaster(0, 0, 20, 20, src_ds.ReadRaster())
+    ds = None
+
+    size2_create = gdal.VSIStatL('/vsimem/out.tif').size
+    gdal.Unlink('/vsimem/out.tif')
+
+    if size2 != size2_create:
+        gdaltest.post_reason('fail')
+        print(size2, size2_create)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7942,6 +7981,7 @@ gdaltest_list = [
     tiff_write_164,
     tiff_write_165,
     tiff_write_166,
+    tiff_write_167_deflate_zlevel,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
