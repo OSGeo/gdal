@@ -100,8 +100,12 @@ test:
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 	${JAVA_RUN} OSRTest
 
+ifdef INCLUDE_GDAL_LIB
+    LIB_GDAL=$(GDAL_LIB)
+endif
+
 $(JAVA_MODULES): $(JAVA_OBJECTS) 
-	$(LINK) $(LDFLAGS) $^ $(GDAL_LIB) $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
+	$(LINK) $(LDFLAGS) $^ $(LIB_GDAL) $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
 
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
