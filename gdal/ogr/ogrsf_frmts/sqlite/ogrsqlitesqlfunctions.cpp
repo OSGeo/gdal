@@ -1185,7 +1185,7 @@ void* OGRSQLiteRegisterSQLFunctions(sqlite3* hDB)
         REGISTER_ST_op(2, Intersection);
         REGISTER_ST_op(2, Difference);
         // Union() is invalid
-        sqlite3_create_function(hDB, "ST_Union", 2, SQLITE_ANY, NULL,
+        sqlite3_create_function(hDB, "ST_Union", 2, SQLITE_ANY, nullptr,
                                 OGR2SQLITE_ST_Union, nullptr, nullptr);
         REGISTER_ST_op(2, SymDifference);
 
