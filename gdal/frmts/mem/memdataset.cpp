@@ -1512,7 +1512,7 @@ GDALDataset *MEMDataset::Create( const char * /* pszFilename */,
         CPLError( CE_Failure, CPLE_OutOfMemory,
                   "Cannot allocate " CPL_FRMT_GUIB " bytes on this platform.",
                   nGlobalBigSize );
-        return NULL;
+        return nullptr;
     }
 #endif
 

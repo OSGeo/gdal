@@ -2021,7 +2021,7 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
             CE_Failure, CPLE_AppDefined,
             "nLength = " CPL_FRMT_GUIB " incompatible with 32 bit architecture",
             nLength);
-        return NULL;
+        return nullptr;
     }
     if( nOffset + CPLGetPageSize() !=
         static_cast<vsi_l_offset>(
@@ -2031,7 +2031,7 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
                  "nOffset = " CPL_FRMT_GUIB
                  " incompatible with 32 bit architecture",
                  nOffset);
-        return NULL;
+        return nullptr;
     }
 #endif
 
