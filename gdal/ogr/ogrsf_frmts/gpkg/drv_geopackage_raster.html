@@ -396,9 +396,9 @@ Translation of a GeoTIFF into GeoPackage using GoogleMapsCompatible tiling schem
 </li>
 
 <li>
-Building of overviews of an existing GeoPackage
+Building of overviews of an existing GeoPackage, and forcing JPEG tiles
 <pre>
-% gdaladdo -r cubic my.gpkg 2 4 8 16 32 64
+% gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
 </pre>
 </li>
 
