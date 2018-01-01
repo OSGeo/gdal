@@ -5836,10 +5836,10 @@ CPLErr GTiffRGBABand::IReadBlock( int nBlockXOff, int nBlockYOff,
     if( poGDS->nCompression == COMPRESSION_OJPEG )
     {
         // Need to fetch all offsets for Old-JPEG compression
-        if( poGDS->pabyBlockBuf == NULL )
+        if( poGDS->pabyBlockBuf == nullptr )
         {
-            toff_t *panByteCounts = NULL;
-            toff_t *panOffsets = NULL;
+            toff_t *panByteCounts = nullptr;
+            toff_t *panOffsets = nullptr;
             const bool bIsTiled = CPL_TO_BOOL( TIFFIsTiled(poGDS->hTIFF) );
 
             if( bIsTiled )
@@ -6971,7 +6971,7 @@ GTiffBitmapBand::GTiffBitmapBand( GTiffDataset *poDSIn, int nBandIn )
     else
     {
 #ifdef ESRI_BUILD
-        poColorTable = NULL;
+        poColorTable = nullptr;
 #else
         const GDALColorEntry oWhite = { 255, 255, 255, 255 };
         const GDALColorEntry oBlack = { 0, 0, 0, 255 };
@@ -9455,7 +9455,7 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
             return false;
         }
 
-        if( hTIFF->tif_dir.td_stripoffset == NULL )
+        if( hTIFF->tif_dir.td_stripoffset == nullptr )
         {
             nStripArrayAlloc = 0;
         }
@@ -12267,7 +12267,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                       poOpenInfo->fpL );
     CPLPopErrorHandler();
 #if SIZEOF_VOIDP == 4
-    if( l_hTIFF == NULL )
+    if( l_hTIFF == nullptr )
     {
         // Case of one-strip file where the strip size is > 2GB (#5403).
         if( bGlobalStripIntegerOverflow )
@@ -15204,7 +15204,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
             "4GB but this is the largest size a TIFF can be, and BigTIFF "
             "is unavailable.  Creation failed.",
             nXSize, nYSize, l_nBands, GDALGetDataTypeName(eType) );
-        return NULL;
+        return nullptr;
 #endif
     }
 
@@ -16296,7 +16296,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 /*      likely only needed with libtiff >= 3.9.3 (#3633)                */
 /* -------------------------------------------------------------------- */
     if( poDS->nCompression == COMPRESSION_JPEG
-        && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
+        && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != nullptr )
     {
         CPLDebug( "GDAL",
                   "Writing zero block to force creation of JPEG tables." );
@@ -17025,7 +17025,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     /*      likely only needed with libtiff >= 3.9.3 (#3633)                */
     /* -------------------------------------------------------------------- */
     if( l_nCompression == COMPRESSION_JPEG
-            && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != NULL )
+            && strstr(TIFFLIB_VERSION_STR, "Version 3.9") != nullptr )
     {
         CPLDebug( "GDAL",
                   "Writing zero block to force creation of JPEG tables." );
@@ -17921,7 +17921,7 @@ char **GTiffDataset::GetMetadataDomainList()
         TRUE,
         "", "ProxyOverviewRequest", MD_DOMAIN_RPC, MD_DOMAIN_IMD,
         "SUBDATASETS", "EXIF",
-        "xml:XMP", "COLOR_PROFILE", NULL);
+        "xml:XMP", "COLOR_PROFILE", nullptr);
 }
 
 /************************************************************************/
@@ -18055,8 +18055,8 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
     }
 
 #ifdef DEBUG_REACHED_VIRTUAL_MEM_IO
-    else if( pszDomain != NULL && EQUAL(pszDomain, "_DEBUG_") &&
-             pszName != NULL &&
+    else if( pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_") &&
+             pszName != nullptr &&
              EQUAL(pszName, "UNREACHED_VIRTUALMEMIO_CODE_PATH") )
     {
         CPLString osMissing;
@@ -18069,7 +18069,7 @@ const char *GTiffDataset::GetMetadataItem( const char *pszName,
                 osMissing += CPLSPrintf("%d", i);
             }
         }
-        return (osMissing.size()) ? CPLSPrintf("%s", osMissing.c_str()) : NULL;
+        return (osMissing.size()) ? CPLSPrintf("%s", osMissing.c_str()) : nullptr;
     }
 #endif
     else if( pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_") &&
@@ -18481,13 +18481,13 @@ GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 #if SIZEOF_VOIDP == 4
     // Case of one-strip file where the strip size is > 2GB (#5403).
     if( strcmp(module, "TIFFStripSize") == 0 &&
-        strstr(fmt, "Integer overflow") != NULL )
+        strstr(fmt, "Integer overflow") != nullptr )
     {
         bGlobalStripIntegerOverflow = true;
         return;
     }
     if( bGlobalStripIntegerOverflow &&
-        strstr(fmt, "Cannot handle zero strip size") != NULL )
+        strstr(fmt, "Cannot handle zero strip size") != nullptr )
     {
         return;
     }
