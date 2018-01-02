@@ -625,6 +625,22 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
 }
 
 /************************************************************************/
+/*                           TextStyleExists()                          */
+/************************************************************************/
+
+bool OGRDXFDataSource::TextStyleExists( const char *pszTextStyle )
+
+{
+    if( !pszTextStyle )
+        return false;
+
+    CPLString osTextStyleUpper = pszTextStyle;
+    osTextStyleUpper.toupper();
+
+    return oTextStyleTable.count( osTextStyleUpper ) > 0;
+}
+
+/************************************************************************/
 /*                       LookupTextStyleProperty()                      */
 /************************************************************************/
 

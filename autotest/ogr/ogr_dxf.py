@@ -1121,7 +1121,7 @@ def ogr_dxf_22():
         feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"SwissCheese",bo:1,t:"' + test_text + '",a:45,s:10g,w:51,c:#ff0000)':
         gdaltest.post_reason('bad style')
         feat.DumpReadable()
         print(style)
@@ -1154,7 +1154,7 @@ def ogr_dxf_22():
         feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"SwissCheese",bo:1,t:"' + test_text + '",a:45,s:10g,w:51,c:#ff0000)':
         gdaltest.post_reason('bad style')
         feat.DumpReadable()
         print(style)

@@ -472,6 +472,41 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
 }
 
 /************************************************************************/
+/*                     PrepareTextStyleDefinition()                     */
+/************************************************************************/
+std::map<CPLString, CPLString>
+OGRDXFWriterLayer::PrepareTextStyleDefinition( OGRStyleLabel *poLabelTool )
+{
+    GBool bDefault;
+
+    std::map<CPLString, CPLString> oTextStyleDef;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the data for this text style.                             */
+/* -------------------------------------------------------------------- */
+    const char *pszFontName = poLabelTool->FontName(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Font"] = pszFontName;
+
+    const GBool bBold = poLabelTool->Bold(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Bold"] = bBold ? "1" : "0";
+
+    const GBool bItalic = poLabelTool->Italic(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Italic"] = bItalic ? "1" : "0";
+
+    const double dfStretch = poLabelTool->Stretch(bDefault);
+    if( !bDefault )
+    {
+        oTextStyleDef["Width"] = CPLString().Printf( "%f",
+            dfStretch / 100.0 );
+    }
+
+    return oTextStyleDef;
+}
+
+/************************************************************************/
 /*                             WriteTEXT()                              */
 /************************************************************************/
 
@@ -561,8 +596,43 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         if( pszText != nullptr && !bDefault )
         {
             CPLString osEscaped = TextEscape( pszText );
+            while( osEscaped.size() > 250 )
+            {
+                WriteValue( 3, osEscaped.substr( 0, 250 ).c_str() );
+                osEscaped.erase( 0, 250 );
+            }
             WriteValue( 1, osEscaped );
         }
+
+/* -------------------------------------------------------------------- */
+/*      Store the text style in the map.                                */
+/* -------------------------------------------------------------------- */
+        std::map<CPLString, CPLString> oTextStyleDef =
+            PrepareTextStyleDefinition( poLabel );
+        CPLString osStyleName;
+
+        for( const auto& oPair: oNewTextStyles )
+        {
+            if( oPair.second == oTextStyleDef )
+            {
+                osStyleName = oPair.first;
+                break;
+            }
+        }
+
+        if( osStyleName == "" )
+        {
+
+            do
+            {
+                osStyleName.Printf( "AutoTextStyle-%d", nNextAutoID++ );
+            }
+            while( poDS->oHeaderDS.TextStyleExists( osStyleName ) );
+
+            oNewTextStyles[osStyleName] = oTextStyleDef;
+        }
+
+        WriteValue( 7, osStyleName );
     }
 
     delete poTool;
@@ -974,9 +1044,14 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
     WriteValue( 100, "AcDbEntity" );
     WriteValue( 100, "AcDbHatch" );
 
-    WriteValue( 10, 0 ); // elevation point X. 0 for DXF
-    WriteValue( 20, 0 ); // elevation point Y
-    WriteValue( 30, 0 ); // elevation point Z
+    // Figure out "average" elevation
+    OGREnvelope3D oEnv;
+    poGeom->getEnvelope( &oEnv );
+    WriteValue( 10, 0 ); // elevation point X = 0
+    WriteValue( 20, 0 ); // elevation point Y = 0
+    // elevation point Z = constant elevation
+    WriteValue( 30, oEnv.MinZ + ( oEnv.MaxZ - oEnv.MinZ ) / 2 );
+
     WriteValue(210, 0 ); // extrusion direction X
     WriteValue(220, 0 ); // extrusion direction Y
     WriteValue(230,1.0); // extrusion direction Z

@@ -474,6 +474,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     std::vector<double> LookupLineType( const char *pszName );
+    bool                TextStyleExists( const char *pszTextStyle );
     CPLString           GetTextStyleNameByHandle( const char *pszID );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
@@ -524,8 +525,10 @@ class OGRDXFWriterLayer : public OGRLayer
     static CPLString    TextEscape( const char * );
     static int          ColorStringToDXFColor( const char * );
     static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static std::map<CPLString, CPLString> PrepareTextStyleDefinition( OGRStyleLabel* );
 
     std::map<CPLString,CPLString> oNewLineTypes;
+    std::map<CPLString,std::map<CPLString,CPLString>> oNewTextStyles;
     int                 nNextAutoID;
     int                 bWriteHatch;
 
@@ -545,7 +548,10 @@ class OGRDXFWriterLayer : public OGRLayer
 
     void                ResetFP( VSILFILE * );
 
-    std::map<CPLString,CPLString>& GetNewLineTypeMap() { return oNewLineTypes;}
+    std::map<CPLString,CPLString>& GetNewLineTypeMap()
+        { return oNewLineTypes; }
+    std::map<CPLString,std::map<CPLString,CPLString>>& GetNewTextStyleMap()
+        { return oNewTextStyles; }
 };
 
 /************************************************************************/
@@ -607,6 +613,7 @@ class OGRDXFWriterDS : public OGRDataSource
                                          const char *pszTarget );
 
     bool                WriteNewLineTypeRecords( VSILFILE *fp );
+    bool                WriteNewTextStyleRecords( VSILFILE *fp );
     bool                WriteNewBlockRecords( VSILFILE * );
     bool                WriteNewBlockDefinitions( VSILFILE * );
     bool                WriteNewLayerDefinitions( VSILFILE * );
