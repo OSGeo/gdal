@@ -640,7 +640,7 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(
 
     if( pszProperty &&
         oTextStyleTable.count( osTextStyleUpper ) > 0 &&
-        oTextStyleTable[pszTextStyle].count( pszProperty ) > 0 )
+        oTextStyleTable[osTextStyleUpper].count( pszProperty ) > 0 )
     {
         return (oTextStyleTable[osTextStyleUpper])[pszProperty];
     }
