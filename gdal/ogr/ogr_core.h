@@ -715,6 +715,7 @@ typedef union {
 #ifdef __cplusplus
 /** Return the number of milliseconds from a datetime with decimal seconds */
 inline int OGR_GET_MS(float fSec) {
+  if( CPLIsNan(fSec) ) return 0;
   if( fSec >= 999 ) return 999;
   if( fSec <= 0 ) return 0;
   const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
