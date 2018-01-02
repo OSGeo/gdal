@@ -28,12 +28,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cpl_port.h>
+
+#include <cstdlib>
+
+#include <string>
+
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "cpl_vsi_error.h"
 
-#include <cstdlib>
 
 CPL_CVSID("$Id$")
 
