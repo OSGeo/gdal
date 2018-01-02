@@ -665,12 +665,12 @@ void ACAdjustText( const double dfAngle, const double dfScaleX,
         {
             const double dfAngleRadians = dfAngle * M_PI / 180.0;
 
-            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6gg",
                 dfScaleX * dfOldDx * cos( dfAngleRadians ) +
                 dfScaleY * dfOldDy * -sin( dfAngleRadians ) );
             papszTokens = CSLSetNameValue( papszTokens, "dx", szBuffer );
 
-            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6gg",
                 dfScaleX * dfOldDx * sin( dfAngleRadians ) +
                 dfScaleY * dfOldDy * cos( dfAngleRadians ) );
             papszTokens = CSLSetNameValue( papszTokens, "dy", szBuffer );

@@ -500,6 +500,9 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* ==================================================================== */
 /*      Process the LABEL tool.                                         */
 /* ==================================================================== */
+    double dfDx = 0.0;
+    double dfDy = 0.0;
+
     if( poTool && poTool->GetType() == OGRSTCLabel )
     {
         OGRStyleLabel *poLabel = (OGRStyleLabel *) poTool;
@@ -517,8 +520,6 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
         const double dfAngle = poLabel->Angle(bDefault);
 
-        // The DXF2000 reference says this is in radians, but in files
-        // I see it seems to be in degrees. Perhaps this is version dependent?
         if( !bDefault )
             WriteValue( 50, dfAngle );
 
@@ -547,6 +548,12 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Offset                                                          */
+/* -------------------------------------------------------------------- */
+        dfDx = poLabel->SpacingX(bDefault);
+        dfDy = poLabel->SpacingY(bDefault);
+
+/* -------------------------------------------------------------------- */
 /*      Escape the text, and convert to ISO8859.                        */
 /* -------------------------------------------------------------------- */
         const char *pszText = poLabel->TextString( bDefault );
@@ -565,8 +572,8 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
 
-    WriteValue( 10, poPoint->getX() );
-    if( !WriteValue( 20, poPoint->getY() ) )
+    WriteValue( 10, poPoint->getX() + dfDx );
+    if( !WriteValue( 20, poPoint->getY() + dfDy ) )
         return OGRERR_FAILURE;
 
     if( poPoint->getGeometryType() == wkbPoint25D )

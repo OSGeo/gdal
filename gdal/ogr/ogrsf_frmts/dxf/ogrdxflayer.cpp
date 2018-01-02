@@ -1012,13 +1012,13 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
     if( bHasAlignmentPoint && dfAlignmentPointX != dfX )
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfAlignmentPointX - dfX);
-        osStyle += CPLString().Printf(",dx:%s", szBuffer);
+        osStyle += CPLString().Printf(",dx:%sg", szBuffer);
     }
 
     if( bHasAlignmentPoint && dfAlignmentPointY != dfY )
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfAlignmentPointY - dfY);
-        osStyle += CPLString().Printf(",dy:%s", szBuffer);
+        osStyle += CPLString().Printf(",dy:%sg", szBuffer);
     }
 
     // Color
