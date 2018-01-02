@@ -356,19 +356,19 @@ int VSIMkdir( const char *pszPathname, long mode )
 int VSIMkdirRecursive( const char *pszPathname, long mode )
 {
     VSIStatBufL sStat;
-    CPLString osPathname(pszPathname);
-    CPLString osParentPath(CPLGetPath(osPathname));
-    if( VSIStatL( osParentPath, &sStat) != 0 )
+    const CPLString osPathname(pszPathname);
+    const CPLString osParentPath(CPLGetPath(osPathname));
+    if( VSIStatL(osParentPath, &sStat) != 0 )
     {
-        if( VSIMkdirRecursive( osParentPath, mode ) != 0 )
+        if( VSIMkdirRecursive(osParentPath, mode) != 0 )
             return -1;
     }
-    if( VSIStatL( osPathname, &sStat) == 0 &&
+    if( VSIStatL(osPathname, &sStat) == 0 &&
         VSI_ISDIR(sStat.st_mode) )
     {
         return 0;
     }
-    return VSIMkdir( osPathname, mode );
+    return VSIMkdir(osPathname, mode);
 }
 
 /************************************************************************/
@@ -483,11 +483,11 @@ int VSIRmdirRecursive( const char* pszDirname )
             continue;
         }
         VSIStatBufL sStat;
-        CPLString osFilename(
+        const CPLString osFilename(
             CPLFormFilename(pszDirname, *papszIter, nullptr));
         if( VSIStatL(osFilename, &sStat) == 0 )
         {
-            if( VSI_ISDIR( sStat.st_mode ) )
+            if( VSI_ISDIR(sStat.st_mode) )
             {
                 if( VSIRmdirRecursive(osFilename) != 0 )
                 {
