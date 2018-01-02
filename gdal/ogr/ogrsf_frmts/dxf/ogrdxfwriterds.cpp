@@ -33,6 +33,8 @@
 #include "cpl_string.h"
 #include "cpl_vsi_error.h"
 
+#include <cstdlib>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -329,6 +331,19 @@ bool OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
 {
     oHeaderDS.ResetReadPointer( 0 );
 
+    // We don't like non-finite extents. In this case, just write a generic
+    // bounding box. Most CAD programs probably ignore this anyway.
+    if( !std::isfinite( oGlobalEnvelope.MinX ) ||
+        !std::isfinite( oGlobalEnvelope.MinY ) ||
+        !std::isfinite( oGlobalEnvelope.MaxX ) ||
+        !std::isfinite( oGlobalEnvelope.MaxY ) )
+    {
+        oGlobalEnvelope.MinX = 0.0;
+        oGlobalEnvelope.MinY = 0.0;
+        oGlobalEnvelope.MaxX = 10.0;
+        oGlobalEnvelope.MaxY = 10.0;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Copy header, inserting in new objects as needed.                */
 /* -------------------------------------------------------------------- */
@@ -364,6 +379,14 @@ bool OGRDXFWriterDS::TransferUpdateHeader( VSILFILE *fpOut )
             if( osTable == "LTYPE" )
             {
                 if( !WriteNewLineTypeRecords( fp ) )
+                    return false;
+            }
+
+            // If at the end of the STYLE TABLE consider inserting
+            // missing layer type definitions.
+            if( osTable == "STYLE" )
+            {
+                if( !WriteNewTextStyleRecords( fp ) )
                     return false;
             }
 
@@ -705,6 +728,51 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
 
         CPLDebug( "DXF", "Define Line type '%s'.",
                   (*oIt).first.c_str() );
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      WriteNewTextStyleRecords()                      */
+/************************************************************************/
+
+bool OGRDXFWriterDS::WriteNewTextStyleRecords( VSILFILE *fpIn )
+
+{
+    if( poLayer == nullptr )
+        return true;
+
+    auto& oNewTextStyles = poLayer->GetNewTextStyleMap();
+
+    for( auto& oPair : oNewTextStyles )
+    {
+        WriteValue( fpIn, 0, "STYLE" );
+        WriteEntityID( fpIn );
+        WriteValue( fpIn, 100, "AcDbSymbolTableRecord" );
+        WriteValue( fpIn, 100, "AcDbTextStyleTableRecord" );
+        WriteValue( fpIn, 2, oPair.first );
+        WriteValue( fpIn, 70, "0" );
+        WriteValue( fpIn, 40, "0.0" );
+
+        if( oPair.second.count("Width") )
+            WriteValue( fpIn, 41, oPair.second["Width"] );
+        else
+            WriteValue( fpIn, 41, "1.0" );
+
+        WriteValue( fpIn, 50, "0.0" );
+        WriteValue( fpIn, 71, "0" );
+        WriteValue( fpIn, 1001, "ACAD" );
+
+        if( oPair.second.count("Font") )
+            WriteValue( fpIn, 1000, oPair.second["Font"] );
+
+        int nStyleValue = 0;
+        if( oPair.second.count("Italic") && oPair.second["Italic"] == "1" )
+            nStyleValue |= 0x1000000;
+        if( oPair.second.count("Bold") && oPair.second["Bold"] == "1" )
+            nStyleValue |= 0x2000000;
+        WriteValue( fpIn, 1071, std::to_string( nStyleValue ).c_str() );
     }
 
     return true;

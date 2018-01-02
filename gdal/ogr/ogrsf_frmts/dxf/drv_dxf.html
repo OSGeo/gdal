@@ -224,6 +224,33 @@ your geometries do not have a constant elevation, as the DXF HATCH entity
 cannot represent such geometries.
 </ul>
 
+Only the first tool (PEN, BRUSH, etc) in the style string is read. The following
+style string parameters are understood: <p>
+
+<table border="1">
+
+<tr>
+<th>Tool</th>
+<th>Available on geometry types</th>
+<th>Supported parameters</th>
+</tr>
+
+<tr><td>PEN</td><td>Point, (Multi)LineString</td><td>color (c); width (w); dash
+pattern (p)</td></tr>
+
+<tr><td>BRUSH</td><td>(Multi)Polygon, Triangle</td><td>foreground color (fc)</td></tr>
+
+<tr><td>SYMBOL</td><td>Point</td><td>color (c)</td></tr>
+
+<tr><td rowspan="2">LABEL</td><td rowspan="2">Point</td><td>GDAL >= 2.3.0: text
+(t); font name (f); font size (s), treated as cap height; bold (bo); italic
+(it); text color (c); x and y offsets (dx, dy); angle (a); anchor point (p);
+stretch (w)</td></tr>
+<tr><td>GDAL <= 2.2.x: text (t); font size (s), treated as cap height; text
+color (c); angle (a); anchor point (p)</td></tr>
+
+</table><p>
+
 The dataset creation supports the following dataset creation options:<p>
 
 <ul>
