@@ -205,18 +205,19 @@ void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
     OGRDXFFeature* const poBlockFeature /* = NULL */ )
 
 {
-    if( poFeature->oStyleProperties.count( "WantBrush" ) )
+    const char* pszStyleString = poFeature->GetStyleString();
+
+    if( pszStyleString && STARTS_WITH_CI( pszStyleString, "BRUSH(" ) )
     {
-        PrepareHatchStyle( poFeature, poBlockFeature );
+        PrepareBrushStyle( poFeature, poBlockFeature );
     }
-    else if( poFeature->GetStyleString() &&
-        STARTS_WITH_CI( poFeature->GetStyleString(), "LABEL(" ) )
+    else if( pszStyleString && STARTS_WITH_CI( pszStyleString, "LABEL(" ) )
     {
         // Find the new color of this feature, and replace it into
         // the style string
         const CPLString osNewColor = poFeature->GetColor( poDS, poBlockFeature );
 
-        CPLString osNewStyle = poFeature->GetStyleString();
+        CPLString osNewStyle = pszStyleString;
         const size_t nColorStartPos = osNewStyle.rfind( ",c:" );
         if( nColorStartPos != std::string::npos )
         {
@@ -235,6 +236,21 @@ void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
     {
         PrepareLineStyle( poFeature, poBlockFeature );
     }
+}
+
+/************************************************************************/
+/*                         PrepareBrushStyle()                          */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareBrushStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
+    CPLString osStyle = "BRUSH(fc:";
+    osStyle += poFeature->GetColor( poDS, poBlockFeature );
+    osStyle += ")";
+
+    poFeature->SetStyleString( osStyle );
 }
 
 /************************************************************************/
@@ -2417,7 +2433,7 @@ OGRDXFFeature *OGRDXFLayer::Translate3DFACE()
     poFeature->ApplyOCSTransformer( poLR );
     poFeature->SetGeometryDirectly( poPoly );
 
-    /* PrepareLineStyle( poFeature ); */
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -2532,6 +2548,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         delete poFeature;
         return nullptr;
     }
+    if (nCode == 0)
+        poDS->UnreadValue();
 
     // do we want Z-coordinates?
     const bool bWantZ = dfZ1 != 0.0 || dfZ2 != 0.0 ||
@@ -2573,6 +2591,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
     if( nCornerCount == 1 )
     {
         poFinalGeom = poCorners[0].clone();
+
+        PrepareLineStyle( poFeature );
     }
     else if( nCornerCount == 2 )
     {
@@ -2580,6 +2600,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         poLS->setPoint( 0, &poCorners[0] );
         poLS->setPoint( 1, &poCorners[1] );
         poFinalGeom = poLS;
+
+        PrepareLineStyle( poFeature );
     }
     else
     {
@@ -2602,19 +2624,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         OGRPolygon* poPoly = new OGRPolygon();
         poPoly->addRingDirectly( poLinearRing );
         poFinalGeom = poPoly;
+
+        PrepareBrushStyle( poFeature );
     }
 
     delete[] poCorners;
 
     poFeature->ApplyOCSTransformer( poFinalGeom );
-
     poFeature->SetGeometryDirectly( poFinalGeom );
-
-    if (nCode == 0)
-        poDS->UnreadValue();
-
-    // Set style pen color
-    PrepareLineStyle(poFeature);
 
     return poFeature;
 }

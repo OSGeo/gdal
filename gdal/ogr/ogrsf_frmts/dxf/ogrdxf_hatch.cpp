@@ -139,28 +139,9 @@ OGRDXFFeature *OGRDXFLayer::TranslateHATCH()
     poFeature->ApplyOCSTransformer( poFinalGeom );
     poFeature->SetGeometryDirectly( poFinalGeom );
 
-    // This is used when hatches are inserted as part of a block, so we know
-    // to give a BRUSH(...) style string
-    poFeature->oStyleProperties["WantBrush"] = "1";
-
-    PrepareHatchStyle( poFeature );
+    PrepareBrushStyle( poFeature );
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                         PrepareHatchStyle()                          */
-/************************************************************************/
-
-void OGRDXFLayer::PrepareHatchStyle( OGRDXFFeature* const poFeature,
-    OGRDXFFeature* const poBlockFeature /* = NULL */ )
-
-{
-    CPLString osStyle = "BRUSH(fc:";
-    osStyle += poFeature->GetColor( poDS, poBlockFeature );
-    osStyle += ")";
-
-    poFeature->SetStyleString( osStyle );
 }
 
 /************************************************************************/

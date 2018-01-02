@@ -272,7 +272,7 @@ class OGRDXFLayer : public OGRLayer
 
     void                PrepareFeatureStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
-    void                PrepareHatchStyle( OGRDXFFeature* const poFeature,
+    void                PrepareBrushStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
     void                PrepareLineStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
