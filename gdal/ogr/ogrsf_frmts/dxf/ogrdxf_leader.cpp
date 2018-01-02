@@ -1057,7 +1057,7 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
         GenerateDefaultArrowhead( poArrowheadFeature, oPoint1, oPoint2,
             dfArrowheadSize / dfFirstSegmentLength );
 
-        PrepareLineStyle( poArrowheadFeature );
+        PrepareBrushStyle( poArrowheadFeature );
     }
     else
     {

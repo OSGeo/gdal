@@ -2612,13 +2612,15 @@ def ogr_dxf_38():
     ds = ogr.Open('data/solid-less-than-4-vertices.dxf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)':
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)' \
+    or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)':
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)' \
+    or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -2890,7 +2892,7 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#ff0000)' \
+    if f.GetStyleString() != 'BRUSH(fc:#ff0000)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((-20.9601206293303 38.1204894796201 30,-21.121645731992 38.035579873508 30,-20.9963899665916 38.1682862909638 30,-20.9601206293303 38.1204894796201 30))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -2905,7 +2907,7 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#00ff00)' \
+    if f.GetStyleString() != 'BRUSH(fc:#00ff00)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 80.4,30.4 82.8,32.8 79.6,29.6 77.2,27.2 80.4))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -2989,14 +2991,14 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#0000ff)' \
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((7.1420359016196 -8.4432726642857 0,5 -5 0,8.1429872575166 -7.56243547109634 0,7.1420359016196 -8.4432726642857 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#0000ff)' \
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((18.6352657907565 -13.8186312970179 0,20 -10 0,19.9475102227214 -14.0548352947716 0,18.6352657907565 -13.8186312970179 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -3339,7 +3341,7 @@ def ogr_dxf_48():
     # colored ByLayer; the layer the block is inserted on (_K_POINTS)
     # is colored red
     f = lyr.GetFeature(4)
-    if f.GetStyleString() != 'PEN(c:#ff0000)':
+    if f.GetStyleString() != 'BRUSH(fc:#ff0000)':
         gdaltest.post_reason( 'Wrong style string on feature 4' )
         f.DumpReadable()
         return 'fail'
@@ -3358,7 +3360,7 @@ def ogr_dxf_48():
     # The second arrowhead, like the dimension line, is set directly
     # to blue
     f = lyr.GetFeature(6)
-    if f.GetStyleString() != 'PEN(c:#0000ff)':
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 6' )
         f.DumpReadable()
         return 'fail'
