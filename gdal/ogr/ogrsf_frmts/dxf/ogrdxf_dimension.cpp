@@ -213,6 +213,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateDIMENSION()
     const double dfTextHeight = CPLAtof(oDimStyleProperties["DIMTXT"]);
     const int nUnitsPrecision = atoi(oDimStyleProperties["DIMDEC"]);
     const bool bTextSupposedlyCentered = atoi(oDimStyleProperties["DIMTAD"]) == 0;
+    const CPLString osTextColor = oDimStyleProperties["DIMCLRT"];
 
 /*************************************************************************
 
@@ -427,7 +428,9 @@ the approach is as above in all these cases.
         osStyle += CPLString().Printf(",s:%sg", szBuffer);
     }
 
-    // Add color!
+    poLabelFeature->oStyleProperties["Color"] = osTextColor;
+    osStyle += ",c:";
+    osStyle += poLabelFeature->GetColor( poDS, poFeature );
 
     osStyle += ")";
 

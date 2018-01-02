@@ -286,7 +286,7 @@ def ogr_dxf_8():
     if ogrtest.check_feature_geometry( feat, 'POINT (42.815907752635709 131.936242584545397)' ):
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g)'
+    expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -3238,7 +3238,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:11,s:0.18g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:11,s:0.18g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on first DIMENSION text' )
         f.DumpReadable()
         return 'fail'
@@ -3270,7 +3270,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"7.1",p:11,a:-45,s:0.48g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"7.1",p:11,a:-45,s:0.48g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on second DIMENSION text' )
         f.DumpReadable()
         return 'fail'
@@ -3302,7 +3302,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on third DIMENSION text' )
         f.DumpReadable()
         return 'fail'

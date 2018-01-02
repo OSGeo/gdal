@@ -507,7 +507,7 @@ const unsigned char *ACGetColorTable()
 const int* ACGetKnownDimStyleCodes()
 {
     static const int aiKnownCodes[] = {
-        40, 41, 42, 44, 75, 76, 77, 140, 147, 176, 271, 341, 0
+        40, 41, 42, 44, 75, 76, 77, 140, 147, 176, 178, 271, 341, 0
     };
 
     return aiKnownCodes;
@@ -534,6 +534,7 @@ const char *ACGetDimStylePropertyName( const int iDimStyleCode )
         case 140: return "DIMTXT";
         case 147: return "DIMGAP";
         case 176: return "DIMCLRD";
+        case 178: return "DIMCLRT";
         case 271: return "DIMDEC";
         case 341: return "DIMLDRBLK";
         default: return nullptr;
@@ -563,6 +564,7 @@ const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
         case 140: return "0.18";
         case 147: return "0.09";
         case 176: return "0";
+        case 178: return "0";
         case 271: return "4";
         case 341: return "";
         default: return "0";
