@@ -3428,7 +3428,7 @@ def ogr_dxf_49():
         gdaltest.post_reason( 'Wrong Text value on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293,c:#ff0000)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293g,c:#ff0000)':
         gdaltest.post_reason( 'Wrong style string on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
@@ -3494,7 +3494,7 @@ def ogr_dxf_50():
     # Text in Times New Roman bold italic, stretched 190%, color ByLayer
     # inside block inserted on a blue layer
     f = lyr.GetFeature(0)
-    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151,dy:4.88825,c:#0000ff)':
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151g,dy:4.88825g,c:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 0' )
         f.DumpReadable()
         return 'fail'
@@ -3548,7 +3548,7 @@ def ogr_dxf_51():
 
     lyr = ds.GetLayer(0)
 
-    wanted_style = ['a:330','c:#000000','dx:1.96672','dy:-1.13549','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
+    wanted_style = ['a:330','c:#000000','dx:1.96672g','dy:-1.13549g','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
 
     # Three text features, all with the same effective geometry and style
     for x in range(3):
@@ -3619,7 +3619,7 @@ def ogr_dxf_52():
         return 'fail'
 
     # INSERT with rows/columns (MInsert)
-    minsert_attrib_style = 'LABEL(f:"Arial",t:"N",p:5,a:13,s:8g,w:120,dx:2.21818,dy:4.61732,c:#000000)'
+    minsert_attrib_style = 'LABEL(f:"Arial",t:"N",p:5,a:13,s:8g,w:120,dx:2.21818g,dy:4.61732g,c:#000000)'
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (57.7504894565613 50.7437006478524,69.4429302339842 53.4431132999787,71.6924407774228 43.6994126521264,60 41,57.7504894565613 50.7437006478524)') != 0:
