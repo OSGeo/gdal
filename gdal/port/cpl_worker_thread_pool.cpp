@@ -286,7 +286,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 #endif
             CPLAcquireMutex(psWorkerThread->hMutex, 1000.0);
 
-            // CPLAssert(psWorkerThread->psNextJob == NULL);
+            // CPLAssert(psWorkerThread->psNextJob == nullptr);
             // psWorkerThread->psNextJob =
             //     (CPLWorkerThreadJob*)psJobQueue->pData;
             // psNext = psJobQueue->psNext;
@@ -385,7 +385,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads,
         }
 
         aWT[i].bMarkedAsWaiting = FALSE;
-        // aWT[i].psNextJob = NULL;
+        // aWT[i].psNextJob = nullptr;
 
         aWT[i].hThread =
             CPLCreateJoinableThread(WorkerThreadFunction, &(aWT[i]));
@@ -497,7 +497,7 @@ CPLWorkerThreadPool::GetNextJob( CPLWorkerThread* psWorkerThread )
 
         // TODO(rouault): Explain or delete.
         // CPLWorkerThreadJob* psJob = psWorkerThread->psNextJob;
-        // psWorkerThread->psNextJob = NULL;
+        // psWorkerThread->psNextJob = nullptr;
 
         CPLReleaseMutex(psWorkerThread->hMutex);
 

@@ -149,7 +149,7 @@ int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 
 #include "cpl_multiproc.h"
 
-static CPLLock *hAtomicOpLock = NULL;
+static CPLLock *hAtomicOpLock = nullptr;
 
 // Slow, but safe, implementation using a mutex.
 int CPLAtomicAdd(volatile int* ptr, int increment)

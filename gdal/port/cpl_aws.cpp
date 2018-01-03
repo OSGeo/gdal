@@ -711,7 +711,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
     const CPLString osProfile(pszProfile[0] != '\0' ? pszProfile : "default");
 
 #ifdef WIN32
-    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
     static const char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", nullptr);

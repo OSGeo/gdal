@@ -104,7 +104,7 @@ void *CPLGetSymbol( const char * pszLibrary, const char * pszSymbolName )
      * on how dlcompat is configured it may or may not add the leading
      * underscore.  If dlsym() fails, add an underscore and try again.
      */
-    if( pSymbol == NULL )
+    if( pSymbol == nullptr )
     {
         char withUnder[256] = {};
         snprintf(withUnder, sizeof(withUnder), "_%s", pszSymbolName);

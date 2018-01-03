@@ -351,7 +351,7 @@ static char **CSVSplitLine( CSVTable* psTable,
         {
             nListAlloc = 10 + 2 * nListAlloc;
             char** papszRetListNew = static_cast<char**>(
-                VSI_REALLOC_VERBOSE(papszRetList, 
+                VSI_REALLOC_VERBOSE(papszRetList,
                                     (nListAlloc + 1) * sizeof(char*)));
             if( papszRetListNew == nullptr )
             {

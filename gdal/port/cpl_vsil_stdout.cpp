@@ -214,7 +214,7 @@ VSIStdoutFilesystemHandler::Open( const char * /* pszFilename */,
     }
 
 #ifdef WIN32
-    if ( strchr(pszAccess, 'b') != NULL )
+    if ( strchr(pszAccess, 'b') != nullptr )
         setmode( fileno( stdout ), O_BINARY );
 #endif
 
@@ -424,7 +424,7 @@ int VSIStdoutRedirectFilesystemHandler::Stat( const char * /* pszFilename */,
  * output stream.
  *
  * The file operations available are of course limited to Write().
- * 
+ *
  * A variation of this file system exists as the /vsistdout_redirect/ file
  * system handler, where the output function can be defined with
  * VSIStdoutSetRedirection().

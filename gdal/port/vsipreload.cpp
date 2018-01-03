@@ -79,7 +79,7 @@ static int DEBUG_VSIPRELOAD_ONLY_VSIL = 1;
 
 #define DECLARE_SYMBOL(x, retType, args) \
     typedef retType (*fn ## x ## Type)args;\
-    static fn ## x ## Type pfn ## x = NULL
+    static fn ## x ## Type pfn ## x = nullptr
 
 DECLARE_SYMBOL(fopen, FILE*, (const char *path, const char *mode));
 DECLARE_SYMBOL(fopen64, FILE*, (const char *path, const char *mode));
