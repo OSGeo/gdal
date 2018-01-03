@@ -50,10 +50,6 @@ CPL_CVSID("$Id$")
 #pragma clang diagnostic pop
 #endif
 
-// For CHECK_ARITY and clang 5
-#undef NULL
-#define NULL nullptr
-
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/

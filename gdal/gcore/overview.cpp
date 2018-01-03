@@ -2631,7 +2631,7 @@ static CPLErr GDALResampleChunk32RMultiBands_Convolution(
     const char* pszNBITS =
         papoDstBands[0]->GetMetadataItem("NBITS", "IMAGE_STRUCTURE");
     GDALDataType eBandDT = papoDstBands[0]->GetRasterDataType();
-    if( eResample != GRA_Bilinear && pszNBITS != NULL &&
+    if( eResample != GRA_Bilinear && pszNBITS != nullptr &&
         (eBandDT == GDT_Byte || eBandDT == GDT_UInt16 ||
          eBandDT == GDT_UInt32) )
     {
@@ -2724,7 +2724,7 @@ GDALResampleFunctionMultiBands GDALGetResampleFunctionMultiBands(
         return GDALResampleChunk32RMultiBands_Convolution;
     }
 
-    return NULL;
+    return nullptr;
 }
 #endif
 

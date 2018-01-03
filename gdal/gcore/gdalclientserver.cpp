@@ -1668,7 +1668,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "WSAStartup() failed with error: %d\n", nRet1);
-            return NULL;
+            return nullptr;
         }
 #endif
 
@@ -1724,12 +1724,12 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
         {
             struct hostent *hp;
             hp = gethostbyname(osHost);
-            if (hp == NULL)
+            if (hp == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unknown host : %s", osHost.c_str());
                 WSACleanup();
-                return NULL;
+                return nullptr;
             }
             else
             {
@@ -1745,7 +1745,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
             CPLError(CE_Failure, CPLE_AppDefined,
                      "socket() failed with error: %d", WSAGetLastError());
             WSACleanup();
-            return NULL;
+            return nullptr;
         }
 
         if (connect(nConnSocket, (const SOCKADDR *)&sockAddrIn, sizeof (sockAddrIn)) == SOCKET_ERROR )
@@ -1754,7 +1754,7 @@ static GDALServerSpawnedProcess* GDALServerSpawnAsync()
                      "connect() function failed with error: %d", WSAGetLastError());
             closesocket(nConnSocket);
             WSACleanup();
-            return NULL;
+            return nullptr;
         }
 #endif
 
@@ -2675,9 +2675,9 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
         }
         /*else if( instr == INSTR_SetDescription )
         {
-            if( poDS == NULL )
+            if( poDS == nullptr )
                 break;
-            char* pszDescription = NULL;
+            char* pszDescription = nullptr;
             if( !GDALPipeRead(p, &pszDescription) )
                 break;
             poDS->SetDescription(pszDescription);

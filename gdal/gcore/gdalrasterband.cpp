@@ -1075,9 +1075,9 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
 {
 #ifdef notdef
-    if( poBandBlockCache == NULL || !poBandBlockCache->IsInitOK() )
+    if( poBandBlockCache == nullptr || !poBandBlockCache->IsInitOK() )
     {
-        if( poBandBlockCache == NULL )
+        if( poBandBlockCache == nullptr )
             printf("poBandBlockCache == NULL\n");/*ok*/
         else
             printf("!poBandBlockCache->IsInitOK()\n");/*ok*/
@@ -1089,7 +1089,7 @@ CPLErr GDALRasterBand::UnreferenceBlock( GDALRasterBlock* poBlock )
         printf("nBlockXSize = %d\n", nBlockXSize);/*ok*/
         printf("nBlockYSize = %d\n", nBlockYSize);/*ok*/
         poBlock->DumpBlock();
-        if( GetDataset() != NULL )
+        if( GetDataset() != nullptr )
             printf("Dataset: %s\n", GetDataset()->GetDescription());/*ok*/
         GDALRasterBlock::Verify();
         abort();
