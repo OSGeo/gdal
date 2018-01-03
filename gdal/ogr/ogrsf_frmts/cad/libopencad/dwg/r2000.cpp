@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -808,7 +808,11 @@ int DWGFileR2000::CreateFileMap()
             }
             else
             {
+                if(tmpOffset.first < 0 || (tmpOffset.first >= 0 &&
+                   std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first))
                     previousObjHandleOffset.first += tmpOffset.first;
+                if(tmpOffset.second < 0 || (tmpOffset.second >= 0 &&
+                   std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second))
                     previousObjHandleOffset.second += tmpOffset.second;
             }
 #ifdef _DEBUG
@@ -2270,11 +2274,21 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     }
 
     vertixesCount = buffer.ReadBITLONG();
+    if(vertixesCount < 1)
+    {
+        delete polyline;
+        return nullptr;
+    }
     polyline->avertVertexes.reserve( static_cast<size_t>(vertixesCount) );
 
     if( dataFlag & 16 )
     {
         nBulges = buffer.ReadBITLONG();
+        if(nBulges < 0)
+        {
+            delete polyline;
+            return nullptr;
+        }
         polyline->adfBulges.reserve( static_cast<size_t>(nBulges) );
     }
 
@@ -2282,6 +2296,11 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     if( dataFlag & 32 )
     {
         nNumWidths = buffer.ReadBITLONG();
+        if(nNumWidths < 0)
+        {
+            delete polyline;
+            return nullptr;
+        }
         polyline->astWidths.reserve( static_cast<size_t>(nNumWidths) );
     }
 
@@ -2380,6 +2399,11 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->vectEndTangDir = vectEndTangDir;
 
         spline->nNumFitPts = buffer.ReadBITLONG();
+        if(spline->nNumFitPts < 0)
+        {
+            delete spline;
+            return nullptr;
+        }
         spline->averFitPoints.reserve( static_cast<size_t>(spline->nNumFitPts) );
     } else if( spline->dScenario == 1 )
     {
@@ -2390,13 +2414,22 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->dfCtrlTol = buffer.ReadBITDOUBLE();
 
         spline->nNumKnots = buffer.ReadBITLONG();
+        if(spline->nNumKnots < 0)
+        {
+            delete spline;
+            return nullptr;
+        }
         spline->adfKnots.reserve( static_cast<size_t>(spline->nNumKnots) );
 
         spline->nNumCtrlPts = buffer.ReadBITLONG();
+        if(spline->nNumCtrlPts < 0)
+        {
+            delete spline;
+            return nullptr;
+        }
         spline->avertCtrlPoints.reserve( static_cast<size_t>(spline->nNumCtrlPts) );
         if( spline->bWeight )
             spline->adfCtrlPointsWeight.reserve( static_cast<size_t>(spline->nNumCtrlPts) );
-
         spline->bWeight = buffer.ReadBIT();
     }
 #ifdef _DEBUG
