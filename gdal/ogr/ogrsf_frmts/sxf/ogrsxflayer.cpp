@@ -280,7 +280,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
         return OGRERR_FAILURE;
 
     oNextIt = mnRecordDesc.begin();
-    std::advance(oNextIt, nIndex);
+    std::advance(oNextIt, static_cast<size_t>(nIndex));
 
     return OGRERR_NONE;
 }
