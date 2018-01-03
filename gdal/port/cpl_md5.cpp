@@ -29,19 +29,21 @@ need to worry about whether the system supplies an MD5 library, as
 this file is only about 3k of object code.  */
 
 /* Modified by E. Rouault, to fix :
-   warning: argument to 'sizeof' in 'memset' call is the same expression as the destination; did you mean to dereference it? [-Wsizeof-pointer-memaccess]
+   warning: argument to 'sizeof' in 'memset' call is the same expression as
+   the destination; did you mean to dereference it? [-Wsizeof-pointer-memaccess]
         memset(ctx, 0, sizeof(ctx)); */   /* In case it's sensitive */
 /* at the end of cvs_MD5Final */
 
 #include "cpl_md5.h"
+
 #include "cpl_string.h"
 
 CPL_CVSID("$Id$")
 
-static GUInt32 getu32(const unsigned char *addr)
+static GUInt32 getu32( const unsigned char *addr )
 {
-    return (((((GUInt32)addr[3] << 8) | addr[2]) << 8)
-        | addr[1]) << 8 | addr[0];
+    return
+        (((((GUInt32)addr[3] << 8) | addr[2]) << 8) | addr[1]) << 8 | addr[0];
 }
 
 static void putu32 (GUInt32 data, unsigned char *addr)
@@ -56,79 +58,77 @@ static void putu32 (GUInt32 data, unsigned char *addr)
 * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
 * initialization constants.
 */
-void CPLMD5Init(struct CPLMD5Context *ctx)
+void CPLMD5Init(struct CPLMD5Context *context)
 {
-    ctx->buf[0] = 0x67452301;
-    ctx->buf[1] = 0xefcdab89;
-    ctx->buf[2] = 0x98badcfe;
-    ctx->buf[3] = 0x10325476;
+    context->buf[0] = 0x67452301;
+    context->buf[1] = 0xefcdab89;
+    context->buf[2] = 0x98badcfe;
+    context->buf[3] = 0x10325476;
 
-    ctx->bits[0] = 0;
-    ctx->bits[1] = 0;
+    context->bits[0] = 0;
+    context->bits[1] = 0;
 }
 
 /*
 * Update context to reflect the concatenation of another buffer full
 * of bytes.
 */
-void CPLMD5Update(struct CPLMD5Context *ctx, unsigned char const *buf, unsigned len)
+void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
+                   unsigned len )
 {
-    GUInt32 t;
-
-    /* Update bitcount */
-
-    t = ctx->bits[0];
-    if ((ctx->bits[0] = (t + ((GUInt32)len << 3)) & 0xffffffff) < t)
-        ctx->bits[1]++;  /* Carry from low to high */
-    ctx->bits[1] += len >> 29;
+    // Update bitcount
+    GUInt32 t = context->bits[0];
+    if ((context->bits[0] = (t + ((GUInt32)len << 3)) & 0xffffffff) < t)
+        context->bits[1]++;  /* Carry from low to high */
+    context->bits[1] += len >> 29;
 
     t = (t >> 3) & 0x3f;  /* Bytes already in shsInfo->data */
 
     /* Handle any leading odd-sized chunks */
 
-    if ( t ) {
-        unsigned char *p = ctx->in + t;
+    if( t )
+    {
+        unsigned char *p = context->in + t;
 
         t = 64-t;
-        if (len < t) {
+        if( len < t )
+        {
             memcpy(p, buf, len);
             return;
         }
         memcpy(p, buf, t);
-        CPLMD5Transform (ctx->buf, ctx->in);
+        CPLMD5Transform(context->buf, context->in);
         buf += t;
         len -= (unsigned)t;
     }
 
     /* Process data in 64-byte chunks */
 
-    while (len >= 64) {
-        memcpy(ctx->in, buf, 64);
-        CPLMD5Transform (ctx->buf, ctx->in);
+    while( len >= 64 )
+    {
+        memcpy(context->in, buf, 64);
+        CPLMD5Transform(context->buf, context->in);
         buf += 64;
         len -= 64;
     }
 
     /* Handle any remaining bytes of data. */
 
-    memcpy(ctx->in, buf, len);
+    memcpy(context->in, buf, len);
 }
 
 /*
 * Final wrapup - pad to 64-byte boundary with the bit pattern
 * 1 0* (64-bit count of bits processed, MSB-first)
 */
-void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *ctx)
+void CPLMD5Final( unsigned char digest[16], struct CPLMD5Context *context )
 {
-    unsigned count;
-    unsigned char *p;
-
     /* Compute number of bytes mod 64 */
-    count = (unsigned)((ctx->bits[0] >> 3) & 0x3F);
+    unsigned count = (unsigned)((context->bits[0] >> 3) & 0x3F);
 
     /* Set the first char of padding to 0x80.  This is safe since there is
     always at least one byte free */
-    p = ctx->in + count;
+    unsigned char *p = context->in + count;
     *p++ = 0x80;
 
     /* Bytes of padding needed to make 64 bytes */
@@ -138,25 +138,25 @@ void CPLMD5Final(unsigned char digest[16], struct CPLMD5Context *ctx)
     if (count < 8) {
         /* Two lots of padding:  Pad the first block to 64 bytes */
         memset(p, 0, count);
-        CPLMD5Transform (ctx->buf, ctx->in);
+        CPLMD5Transform(context->buf, context->in);
 
         /* Now fill the next block with 56 bytes */
-        memset(ctx->in, 0, 56);
+        memset(context->in, 0, 56);
     } else {
         /* Pad block to 56 bytes */
         memset(p, 0, count-8);
     }
 
     /* Append length in bits and transform */
-    putu32(ctx->bits[0], ctx->in + 56);
-    putu32(ctx->bits[1], ctx->in + 60);
+    putu32(context->bits[0], context->in + 56);
+    putu32(context->bits[1], context->in + 60);
 
-    CPLMD5Transform (ctx->buf, ctx->in);
-    putu32(ctx->buf[0], digest);
-    putu32(ctx->buf[1], digest + 4);
-    putu32(ctx->buf[2], digest + 8);
-    putu32(ctx->buf[3], digest + 12);
-    memset(ctx, 0, sizeof(*ctx));  /* In case it's sensitive */
+    CPLMD5Transform (context->buf, context->in);
+    putu32(context->buf[0], digest);
+    putu32(context->buf[1], digest + 4);
+    putu32(context->buf[2], digest + 8);
+    putu32(context->buf[3], digest + 12);
+    memset(context, 0, sizeof(*context));  /* In case it's sensitive */
 }
 
 #ifndef ASM_MD5
