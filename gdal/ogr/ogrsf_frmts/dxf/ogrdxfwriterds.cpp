@@ -28,11 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cpl_port.h>
+#include "cpl_port.h"
 
 #include <cstdlib>
-
-#include <string>
 
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
@@ -777,7 +775,7 @@ bool OGRDXFWriterDS::WriteNewTextStyleRecords( VSILFILE *fpIn )
             nStyleValue |= 0x1000000;
         if( oPair.second.count("Bold") && oPair.second["Bold"] == "1" )
             nStyleValue |= 0x2000000;
-        WriteValue( fpIn, 1071, std::to_string( nStyleValue ).c_str() );
+        WriteValue( fpIn, 1071, CPLString().Printf( "%d", nStyleValue ).c_str() );
     }
 
     return true;
