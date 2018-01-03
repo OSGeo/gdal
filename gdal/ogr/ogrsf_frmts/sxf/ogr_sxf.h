@@ -55,7 +55,7 @@ protected:
     GByte              nLayerID;
     std::map<unsigned, CPLString> mnClassificators;
     std::map<long, vsi_l_offset> mnRecordDesc;
-    std::map<long, vsi_l_offset>::const_iterator oNextIt;
+    std::map<long, GIntBig>::const_iterator oNextIt;
     SXFMapDescription  stSXFMapDescription;
     std::set<GUInt16> snAttributeCodes;
     int m_nSXFFormatVer;
