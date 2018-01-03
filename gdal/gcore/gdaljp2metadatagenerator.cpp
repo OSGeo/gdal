@@ -50,6 +50,11 @@ CPL_CVSID("$Id$")
 #pragma clang diagnostic pop
 #endif
 
+// For CHECK_ARITY and clang 5
+// CHECK_ARITY: check the number of args passed to an XPath function matches.
+#undef NULL
+#define NULL nullptr
+
 /************************************************************************/
 /*                            GDALGMLJP2Expr                            */
 /************************************************************************/
