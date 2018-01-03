@@ -1351,7 +1351,7 @@ const char *GDALPamDataset::GetMetadataItem( const char *pszName,
 char **GDALPamDataset::GetMetadata( const char *pszDomain )
 
 {
-//    if( pszDomain == NULL || !EQUAL(pszDomain,"ProxyOverviewRequest") )
+    // if( pszDomain == nullptr || !EQUAL(pszDomain,"ProxyOverviewRequest") )
     return GDALDataset::GetMetadata( pszDomain );
 }
 

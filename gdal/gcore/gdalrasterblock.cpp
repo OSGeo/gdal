@@ -55,7 +55,7 @@ static GDALRasterBlock *poNewest = nullptr;  // Head.
 static int nDisableDirtyBlockFlushCounter = 0;
 
 #if 0
-static CPLMutex *hRBLock = NULL;
+static CPLMutex *hRBLock = nullptr;
 #define INITIALIZE_LOCK CPLMutexHolderD( &hRBLock )
 #define TAKE_LOCK       CPLMutexHolderOptionalLockD( hRBLock )
 #define DESTROY_LOCK    CPLDestroyMutex( hRBLock )
@@ -739,17 +739,17 @@ void GDALRasterBlock::Verify()
 {
     TAKE_LOCK;
 
-    CPLAssert( (poNewest == NULL && poOldest == NULL)
-               || (poNewest != NULL && poOldest != NULL) );
+    CPLAssert( (poNewest == nullptr && poOldest == nullptr)
+               || (poNewest != nullptr && poOldest != nullptr) );
 
-    if( poNewest != NULL )
+    if( poNewest != nullptr )
     {
-        CPLAssert( poNewest->poPrevious == NULL );
-        CPLAssert( poOldest->poNext == NULL );
+        CPLAssert( poNewest->poPrevious == nullptr );
+        CPLAssert( poOldest->poNext == nullptr );
 
-        GDALRasterBlock* poLast = NULL;
+        GDALRasterBlock* poLast = nullptr;
         for( GDALRasterBlock *poBlock = poNewest;
-             poBlock != NULL;
+             poBlock != nullptr;
              poBlock = poBlock->poNext )
         {
             CPLAssert( poBlock->poPrevious == poLast );
@@ -770,7 +770,7 @@ void GDALRasterBlock::CheckNonOrphanedBlocks( GDALRasterBand* poBand )
 {
     TAKE_LOCK;
     for( GDALRasterBlock *poBlock = poNewest;
-                          poBlock != NULL;
+                          poBlock != nullptr;
                           poBlock = poBlock->poNext )
     {
         if ( poBlock->GetBand() == poBand )
@@ -1179,7 +1179,7 @@ void GDALRasterBlock::DumpAll()
 {
     int iBlock = 0;
     for( GDALRasterBlock *poBlock = poNewest;
-         poBlock != NULL;
+         poBlock != nullptr;
          poBlock = poBlock->poNext )
     {
         printf("Block %d\n", iBlock);/*ok*/
