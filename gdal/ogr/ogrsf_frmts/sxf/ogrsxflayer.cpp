@@ -291,7 +291,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
 
 OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
 {
-    std::map<long, vsi_l_offset>::const_iterator IT = mnRecordDesc.find(static_cast<long>(nFID));
+    const auto IT = mnRecordDesc.find(static_cast<long>(nFID));
     if (IT != mnRecordDesc.end())
     {
         VSIFSeekL(fpSXF, IT->second, SEEK_SET);
