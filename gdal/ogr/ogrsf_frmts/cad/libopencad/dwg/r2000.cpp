@@ -808,11 +808,11 @@ int DWGFileR2000::CreateFileMap()
             }
             else
             {
-                if(tmpOffset.first < 0 || (tmpOffset.first >= 0 &&
-                   std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first))
+                if(tmpOffset.first < 0 ||
+                   std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first)
                     previousObjHandleOffset.first += tmpOffset.first;
-                if(tmpOffset.second < 0 || (tmpOffset.second >= 0 &&
-                   std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second))
+                if(tmpOffset.second < 0 ||
+                   std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second)
                     previousObjHandleOffset.second += tmpOffset.second;
             }
 #ifdef _DEBUG
