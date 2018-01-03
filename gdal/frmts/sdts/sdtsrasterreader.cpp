@@ -144,9 +144,9 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
         CPLError( CE_Failure, CPLE_AppDefined, "Can't find INTR subfield of LDEF field" );
         return FALSE;
     }
-    strcpy( szINTR, pszINTR );
+    snprintf( szINTR, sizeof(szINTR), "%s", pszINTR );
     if( EQUAL(szINTR,"") )
-        strcpy( szINTR, "CE" );
+        snprintf( szINTR, sizeof(szINTR), "%s", "CE" );
 
     if( !EQUAL(szINTR,"CE") && !EQUAL(szINTR,"TL") )
     {
@@ -154,7 +154,7 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
                   "Unsupported INTR value of `%s', assume CE.\n"
                   "Positions may be off by one pixel.\n",
                   szINTR );
-        strcpy( szINTR, "CE" );
+        snprintf( szINTR, sizeof(szINTR), "%s", "CE" );
     }
 
 /* -------------------------------------------------------------------- */
@@ -315,17 +315,17 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
 /*      Get some values we are interested in.                           */
 /* -------------------------------------------------------------------- */
     if( poRecord->GetStringSubfield("DDSH",0,"FMT",0) != nullptr )
-        strcpy( szFMT, poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
+        snprintf( szFMT, sizeof(szFMT), "%s", poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
     else
-        strcpy( szFMT, "BUI16" );
+        snprintf( szFMT, sizeof(szFMT), "%s", "BUI16" );
 
     if( poRecord->GetStringSubfield("DDSH",0,"UNIT",0) != nullptr )
-        strcpy( szUNITS, poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
+        snprintf( szUNITS, sizeof(szUNITS), "%s", poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
     else
-        strcpy( szUNITS, "METERS" );
+        snprintf( szUNITS, sizeof(szUNITS), "%s", "METERS" );
 
     if( poRecord->GetStringSubfield("DDSH",0,"ATLB",0) != nullptr )
-        strcpy( szLabel, poRecord->GetStringSubfield("DDSH",0,"ATLB",0) );
+        snprintf( szLabel, sizeof(szLabel), "%s", poRecord->GetStringSubfield("DDSH",0,"ATLB",0) );
     else
         strcpy( szLabel, "" );
 
