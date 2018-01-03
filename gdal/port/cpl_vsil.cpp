@@ -873,7 +873,7 @@ int VSIFCloseL( VSILFILE * fp )
  * Caution: vsi_l_offset is a unsigned type, so SEEK_CUR can only be used
  * for positive seek. If negative seek is needed, use
  * VSIFSeekL( fp, VSIFTellL(fp) + negative_offset, SEEK_SET ).
- * 
+ *
  * @param fp file handle opened with VSIFOpenL().
  * @param nOffset offset in bytes.
  * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.

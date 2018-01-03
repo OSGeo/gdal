@@ -450,10 +450,10 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     if( !ctxt->sBase.bSingleThreadUsage )
     {
         ctxt->hMutexThreadArray = CPLCreateMutex();
-        IGNORE_OR_ASSERT_IN_DEBUG(ctxt->hMutexThreadArray != NULL);
+        IGNORE_OR_ASSERT_IN_DEBUG(ctxt->hMutexThreadArray != nullptr);
         CPLReleaseMutex(ctxt->hMutexThreadArray);
         ctxt->nThreads = 0;
-        ctxt->pahThreads = NULL;
+        ctxt->pahThreads = nullptr;
     }
 #endif
 
@@ -764,7 +764,7 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
                 usleep(1);
 
             /* Restore old SIGUSR1 signal handler */
-            IGNORE_OR_ASSERT_IN_DEBUG(sigaction(SIGUSR1, &oldact, NULL) == 0);
+            IGNORE_OR_ASSERT_IN_DEBUG(sigaction(SIGUSR1, &oldact, nullptr) == 0);
 
             int nRet = mprotect( target_addr, ctxt->sBase.nPageSize,
                                  PROT_READ | PROT_WRITE );
@@ -1971,7 +1971,7 @@ CPLVirtualMem *CPLVirtualMemNew(
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemNew() unsupported on "
              "this operating system / configuration");
-    return NULL;
+    return nullptr;
 }
 
 void CPLVirtualMemDeclareThread( CPLVirtualMem* /* ctxt */ ) {}
@@ -2126,7 +2126,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemFileMapNew() unsupported on this "
              "operating system / configuration");
-    return NULL;
+    return nullptr;
 }
 
 #endif  // HAVE_MMAP

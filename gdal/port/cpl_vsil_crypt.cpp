@@ -109,8 +109,8 @@ static const unsigned int VSICRYPT_WRITE = 0x2;
 // Borrowed from dlltest.cpp of crypto++
 #if defined(WIN32) && defined(USE_ONLY_CRYPTODLL_ALG)
 
-static CryptoPP::PNew s_pNew = NULL;
-static CryptoPP::PDelete s_pDelete = NULL;
+static CryptoPP::PNew s_pNew = nullptr;
+static CryptoPP::PDelete s_pDelete = nullptr;
 
 extern "C" __declspec(dllexport)
 void __cdecl SetNewAndDeleteFromCryptoPP(
@@ -1856,7 +1856,7 @@ static int VSICryptIdentify(GDALOpenInfo* poOpenInfo)
 static GDALDataset* VSICryptOpen(GDALOpenInfo* poOpenInfo)
 {
     if( !VSICryptIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
     return GDALOpen(
         (CPLString(VSICRYPT_PREFIX) + poOpenInfo->pszFilename).c_str(),
         poOpenInfo->eAccess );
@@ -2033,7 +2033,7 @@ void VSIInstallCryptFileHandler(void)
                                     new VSICryptFilesystemHandler );
 
 #ifdef VSICRYPT_DRIVER
-    if( GDALGetDriverByName( "VSICRYPT" ) != NULL )
+    if( GDALGetDriverByName( "VSICRYPT" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

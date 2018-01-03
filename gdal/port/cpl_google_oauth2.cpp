@@ -597,7 +597,7 @@ static GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
         std::string message;
         message.assign(static_cast<const char*>(pabyData), nDataLen);
 
-        CryptoPP::StringSource stringSource(message, true, 
+        CryptoPP::StringSource stringSource(message, true,
             new CryptoPP::SignerFilter(prng, signer,
                 new CryptoPP::StringSink(signature)));
     }
@@ -808,8 +808,8 @@ GOA2Manager::GOA2Manager() :
 /************************************************************************/
 
 /** Specifies that the authentication will be done using the local
- * credentials of the current Google Compute Engine VM 
- * 
+ * credentials of the current Google Compute Engine VM
+ *
  * This queries http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
  *
  * @param papszOptions NULL terminated list of options.
@@ -866,7 +866,7 @@ bool GOA2Manager::SetAuthFromRefreshToken( const char* pszRefreshToken,
 
 /** Specifies that the authentication will be done using the OAuth2 service
  * account method.
- * 
+ *
  * See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
  *
  * @param pszPrivateKey RSA private key. Must be non NULL.
@@ -914,9 +914,9 @@ bool GOA2Manager::SetAuthFromServiceAccount(const char* pszPrivateKey,
 /************************************************************************/
 
 /** Return the access token.
- * 
+ *
  * This is the value to append to a "Authorization: Bearer " HTTP header.
- * 
+ *
  * A network request is issued only if no access token has been yet queried,
  * or if its expiration delay has been reached.
  *

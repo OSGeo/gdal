@@ -1894,7 +1894,7 @@ error:
     psInfo->bInitDone = true;
     assert( pthread_cond_signal( &(psInfo->sCond) ) == 0);
     assert( pthread_mutex_unlock( &(psInfo->sMutex) ) == 0);
-    return NULL;
+    return nullptr;
 #endif
 }
 
@@ -1921,7 +1921,7 @@ int CPLCreateThread( CPLThreadFunc pfnMain, void *pThreadArg )
     psInfo->bInitDone = false;
     pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
     psInfo->sMutex = sMutex;
-    if( pthread_cond_init(&(psInfo->sCond), NULL) != 0 )
+    if( pthread_cond_init(&(psInfo->sCond), nullptr) != 0 )
     {
         CPLFree( psInfo );
         fprintf(stderr, "CPLCreateThread() failed.\n");
@@ -1991,11 +1991,11 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     psInfo->bInitDone = false;
     pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
     psInfo->sMutex = sMutex;
-    if( pthread_cond_init(&(psInfo->sCond), NULL) != 0 )
+    if( pthread_cond_init(&(psInfo->sCond), nullptr) != 0 )
     {
         CPLFree( psInfo );
         fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
-        return NULL;
+        return nullptr;
     }
 #endif
 
@@ -2036,7 +2036,7 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
         pthread_join( psInfo->hThread, &status);
         CPLFree( psInfo );
         fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
-        return NULL;
+        return nullptr;
     }
 #endif
 

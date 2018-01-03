@@ -236,7 +236,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
   protected:
     VSICurlStreamingFSHandler* m_poFS;
     char**          m_papszHTTPOptions;
-    
+
   private:
     char*           m_pszURL;
 
@@ -559,7 +559,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     CURL* hLocalHandle = curl_easy_init();
 
-    struct curl_slist* headers = 
+    struct curl_slist* headers =
         VSICurlSetOptions(hLocalHandle, m_pszURL, m_papszHTTPOptions);
 
     VSICURLStreamingInitWriteFuncStruct(&sWriteFuncHeaderData);
@@ -592,7 +592,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 
     // We need that otherwise OSGEO4W's libcurl issue a dummy range request
     // when doing a HEAD when recycling connections.
-    curl_easy_setopt(hLocalHandle, CURLOPT_RANGE, NULL);
+    curl_easy_setopt(hLocalHandle, CURLOPT_RANGE, nullptr);
 
     // Bug with older curl versions (<=7.16.4) and FTP.
     // See http://curl.haxx.se/mail/lib-2007-08/0312.html
@@ -1029,7 +1029,7 @@ VSICurlStreamingHandleReceivedBytesHeader( void *buffer, size_t count,
 
 void VSICurlStreamingHandle::DownloadInThread()
 {
-    struct curl_slist* headers = 
+    struct curl_slist* headers =
         VSICurlSetOptions(hCurlHandle, m_pszURL, m_papszHTTPOptions);
     headers = VSICurlMergeHeaders(headers, GetCurlHeaders("GET", headers));
     curl_easy_setopt(hCurlHandle, CURLOPT_HTTPHEADER, headers);
@@ -1071,10 +1071,10 @@ void VSICurlStreamingHandle::DownloadInThread()
     if( headers != nullptr )
         curl_slist_free_all(headers);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, NULL);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, NULL);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, NULL);
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, NULL);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, nullptr);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERDATA, nullptr);
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
 
     AcquireMutex();
     if( !bAskDownloadEnd && eRet == 0 && !bHasComputedFileSize )
@@ -1222,7 +1222,7 @@ size_t VSICurlStreamingHandle::Read( void * const pBuffer, size_t const nSize,
                  curOffset, curOffset + nBufferRequestSize, m_pszURL);
 
 #ifdef notdef
-    if( pCachedData != NULL && nCachedSize >= 1024 &&
+    if( pCachedData != nullptr && nCachedSize >= 1024 &&
         nRecomputedChecksumOfFirst1024Bytes == 0 )
     {
         for( size_t i = 0; i < 1024 / sizeof(int); i++ )
@@ -1560,7 +1560,7 @@ void VSICurlStreamingFSHandler::ClearCache()
     {
         CPLFree(iterCacheFileSize->second);
     }
-    cacheFileSize.clear();  
+    cacheFileSize.clear();
 }
 
 /************************************************************************/

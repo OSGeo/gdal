@@ -410,7 +410,7 @@ char *CPLGetCurrentDir()
     return getcwd( pszDirPath, nPathMax );
 }
 #else  // !HAVE_GETCWD
-char *CPLGetCurrentDir() { return NULL; }
+char *CPLGetCurrentDir() { return nullptr; }
 #endif // HAVE_GETCWD
 
 /************************************************************************/
@@ -1121,7 +1121,7 @@ const char *CPLGenerateTempFilename( const char *pszStem )
 
 /**
  * Expands ~/ at start of filename.
- * 
+ *
  * Assumes that the HOME configuration option is defined.
  *
  * @param pszFilename filename potentially starting with ~/

@@ -1095,11 +1095,11 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 {
     DWORD nResLen;
     const DWORD nBufSize = MAX_PATH + 1;
-    char *pszFilePart = NULL;
+    char *pszFilePart = nullptr;
 
     char *pszPath = static_cast<char*>(CPLCalloc(1, nBufSize));
 
-    nResLen = SearchPathA(NULL, "curl-ca-bundle.crt", NULL,
+    nResLen = SearchPathA(nullptr, "curl-ca-bundle.crt", nullptr,
                           nBufSize, pszPath, &pszFilePart);
     if (nResLen > 0)
     {
@@ -1108,7 +1108,7 @@ static const char* CPLFindWin32CurlCaBundleCrt()
         return pszRet;
     }
     CPLFree(pszPath);
-    return NULL;
+    return nullptr;
 }
 
 #endif // WIN32
@@ -1121,7 +1121,7 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 // has completed, and we must be careful not to set short lived strings
 // with curl_easy_setopt(), as long as we need to support curl < 7.17
 // see https://curl.haxx.se/libcurl/c/curl_easy_setopt.html
-// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS 
+// caution: if we remove that assumption, we'll needto use CURLOPT_COPYPOSTFIELDS
 
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
 {
@@ -1387,7 +1387,7 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // after CURL_CA_BUNDLE
         pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", nullptr);
 #ifdef WIN32
-    if( pszCAInfo == NULL )
+    if( pszCAInfo == nullptr )
     {
         pszCAInfo = CPLFindWin32CurlCaBundleCrt();
     }
@@ -1507,7 +1507,7 @@ void* CPLHTTPIgnoreSigPipe()
     memcpy(ret, &old_pipe_act, sizeof(old_pipe_act));
     return ret;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 

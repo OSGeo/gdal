@@ -51,7 +51,7 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
                                         const CPLString& osStorageKeyB64 )
 {
     /* See https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services */
-    
+
     CPLString osDate = CPLGetConfigOption("CPL_AZURE_TIMESTAMP", "");
     if( osDate.empty() )
     {
@@ -209,7 +209,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
                                                 CPLString& osStorageKey)
 {
     bUseHTTPS = CPLTestBool(CPLGetConfigOption("CPL_AZURE_USE_HTTPS", "YES"));
-    osEndpoint = 
+    osEndpoint =
         CPLGetConfigOption("CPL_AZURE_ENDPOINT",
                                     "blob.core.windows.net");
 
@@ -247,7 +247,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
                 CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", "");
             if( osStorageKey.empty() )
             {
-                const char* pszMsg = 
+                const char* pszMsg =
                     "AZURE_STORAGE_ACCESS_KEY configuration option "
                     "not defined";
                 CPLDebug("AZURE", "%s", pszMsg);
