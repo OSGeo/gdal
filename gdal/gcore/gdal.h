@@ -1002,7 +1002,7 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
-/** Strucutre to store Rational Polynomial Coefficients / Rigorous Projection
+/** Structure to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
 {
