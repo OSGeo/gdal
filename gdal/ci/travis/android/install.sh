@@ -9,5 +9,5 @@ unset CXX
 export PATH=$HOME/android-toolchain/bin:$PATH
 
 cd gdal
-CC="ccache arm-linux-androideabi-gcc" CXX="ccache arm-linux-androideabi-g++" CFLAGS="-mthumb" CXXFLAGS="-mthumb" LIBS="-lsupc++ -lstdc++" ./configure --host=arm-linux-androideabi
+CC="ccache arm-linux-androideabi-clang" CXX="ccache arm-linux-androideabi-clang++" CFLAGS="-mthumb" CXXFLAGS="-mthumb" ./configure --host=arm-linux-androideabi
 make USER_DEFS="-Wextra -Werror" -j3
