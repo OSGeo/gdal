@@ -361,7 +361,7 @@ int VSIMkdirRecursive( const char *pszPathname, long mode )
         return -1;
     }
 
-    VSIStatBufL sStat = {};
+    VSIStatBufL sStat;
     const CPLString osPathname(pszPathname);
     const CPLString osParentPath(CPLGetPath(osPathname));
     if( VSIStatL(osParentPath, &sStat) != 0 )
@@ -493,7 +493,7 @@ int VSIRmdirRecursive( const char* pszDirname )
         {
             continue;
         }
-        VSIStatBufL sStat = {};
+        VSIStatBufL sStat;
         const CPLString osFilename(
             CPLFormFilename(pszDirname, *papszIter, nullptr));
         if( VSIStatL(osFilename, &sStat) == 0 )
