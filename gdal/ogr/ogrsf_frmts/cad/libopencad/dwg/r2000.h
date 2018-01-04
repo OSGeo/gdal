@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -201,6 +201,9 @@ protected:
     unsigned short validateEntityCRC(CADBuffer& buffer, unsigned int dObjectSize,
                                      const char * entityName = "ENTITY",
                                      bool bSwapEndianness = false );
+    bool readBasicData(CADBaseControlObject * pBaseControlObject,
+                       unsigned int dObjectSize,
+                       CADBuffer &buffer);
 protected:
     int                               imageSeeker;
     std::vector<SectionLocatorRecord> sectionLocatorRecords;

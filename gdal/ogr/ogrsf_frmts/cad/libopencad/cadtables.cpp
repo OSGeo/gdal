@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -84,10 +84,15 @@ CADHandle CADTables::GetTableHandle( enum TableType eType )
 int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHandle )
 {
     // Reading Layer Control obj, and aLayers.
+    CADObject* pCADObject = pCADFile->GetObject( dLayerControlHandle );
+
     unique_ptr<CADLayerControlObject> spLayerControl(
-            dynamic_cast<CADLayerControlObject *>(pCADFile->GetObject( dLayerControlHandle )) );
-    if( spLayerControl == nullptr )
+            dynamic_cast<CADLayerControlObject *>(pCADObject) );
+    if( !spLayerControl )
+    {
+        delete pCADObject;
         return CADErrorCodes::TABLE_READ_FAILED;
+    }
 
     for( size_t i = 0; i < spLayerControl->hLayers.size(); ++i )
     {
@@ -96,8 +101,10 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
             CADLayer oCADLayer( pCADFile );
 
             // Init CADLayer from CADLayerObject properties
+            CADObject* pCADLayerObject = pCADFile->GetObject(
+                        spLayerControl->hLayers[i].getAsLong() );
             unique_ptr<CADLayerObject> oCADLayerObj(
-                    dynamic_cast<CADLayerObject *>(pCADFile->GetObject( spLayerControl->hLayers[i].getAsLong() )) );
+                    dynamic_cast<CADLayerObject *>( pCADLayerObject ) );
 
             if(oCADLayerObj)
             {
@@ -113,6 +120,10 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 
                 aLayers.push_back( oCADLayer );
             }
+            else
+            {
+                delete pCADLayerObject;
+            }
         }
     }
 
@@ -120,9 +131,17 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
     if( iterBlockMS == mapTables.end() )
         return CADErrorCodes::TABLE_READ_FAILED;
 
+    CADObject* pCADBlockObject = pCADFile->GetObject(
+                iterBlockMS->second.getAsLong() );
     unique_ptr<CADBlockHeaderObject> spModelSpace(
-            dynamic_cast<CADBlockHeaderObject *>(pCADFile->GetObject( iterBlockMS->second.getAsLong() )) );
-    if(!spModelSpace || spModelSpace->hEntities.size() < 2)
+            dynamic_cast<CADBlockHeaderObject *>( pCADBlockObject ) );
+    if(!spModelSpace)
+    {
+        delete pCADBlockObject;
+        return CADErrorCodes::TABLE_READ_FAILED;
+    }
+
+    if(spModelSpace->hEntities.size() < 2)
     {
         return CADErrorCodes::TABLE_READ_FAILED;
     }
@@ -131,12 +150,13 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
     auto dLastEntHandle    = spModelSpace->hEntities[1].getAsLong();
     while( dCurrentEntHandle != 0 )
     {
-        CADObject* pObject = pCADFile->GetObject( dCurrentEntHandle, true );
+        CADObject* pCADEntityObject = pCADFile->GetObject( dCurrentEntHandle, true );
         unique_ptr<CADEntityObject> spEntityObj(
-                    dynamic_cast<CADEntityObject *>( pObject ) );
+                    dynamic_cast<CADEntityObject *>( pCADEntityObject ) );
 
-        if( spEntityObj == nullptr )
+        if( !spEntityObj )
         {
+            delete pCADEntityObject;
             DebugMsg( "Entity object is null\n" );
             break;
         } 
