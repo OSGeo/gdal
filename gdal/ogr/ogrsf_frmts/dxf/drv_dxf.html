@@ -18,13 +18,16 @@ versions of AutoCAD, and writing DXF files that are compatible with AutoCAD
 OGR layer named "entities".  <p>
 
 DXF files are considered to have no georeferencing information through OGR.
-Features will all have the following generic attributes:
+Features will all have the following generic fields:
 
 <ul>
 <li> Layer: The name of the DXF layer.  The default layer is "0".
 <li> SubClasses: Where available, a list of classes to which an entity belongs.
-<li> ExtendedEntity: Where available, extended entity attributes all appended
-to form a single text attribute.
+<li> ExtendedEntity (GDAL <= 2.2.x): The values of extended entity attributes
+all appended to form a single text field, where available.
+<li> RawCodeValues (GDAL >= 2.3.x): Only available when the configuration option
+DXF_INCLUDE_RAW_CODE_VALUES is set to TRUE. A string list containing all group
+codes and values that are not handled by the DXF reader.
 <li> Linetype: Where available, the line type used for this entity.
 <li> EntityHandle: The hexadecimal entity handle.  A sort of feature id.
 <li> Text: The text of labels.

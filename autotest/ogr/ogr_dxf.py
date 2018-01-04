@@ -62,7 +62,7 @@ def ogr_dxf_1():
         return 'fail'
 
     defn = gdaltest.dxf_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 6:
+    if defn.GetFieldCount() != 5:
         gdaltest.post_reason( 'did not get expected number of fields.' )
         return 'fail'
 
@@ -1821,11 +1821,13 @@ def ogr_dxf_31():
     return 'success'
 
 ###############################################################################
-# OCS2WCS transformations 2
+# OCS2WCS transformations 2. Also test RawCodeValues
 
 def ogr_dxf_32():
 
+    gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', 'TRUE')
     ds = ogr.Open('data/ocs2wcs2.dxf')
+    gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', None)
     lyr = ds.GetLayer(0)
 
 # INFO: Open of `ocs2wcs2.dxf' using driver `DXF' successful.
@@ -1850,7 +1852,8 @@ def ogr_dxf_32():
 #   EntityHandle (String) = 1B3
 #   LINESTRING (1 1,2 1,1 2,1 1)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'LINESTRING (1 1,2 1,1 2,1 1)'):
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (1 1,2 1,1 2,1 1)') \
+    or feat.GetField('RawCodeValues') != ['43 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -1858,7 +1861,8 @@ def ogr_dxf_32():
 #   EntityHandle (String) = 1B4
 #   LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)'):
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)') \
+    or feat.GetField('RawCodeValues') != ['66      1','10 0.0','20 0.0','30 0.0']:
         feat.DumpReadable()
         return 'fail'
 
