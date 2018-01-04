@@ -46,19 +46,19 @@ static GUInt32 getu32( const unsigned char *addr )
         (((((GUInt32)addr[3] << 8) | addr[2]) << 8) | addr[1]) << 8 | addr[0];
 }
 
-static void putu32 (GUInt32 data, unsigned char *addr)
+static void putu32( GUInt32 data, unsigned char *addr )
 {
-    addr[0] = (unsigned char)(data & 0xff);
-    addr[1] = (unsigned char)((data >> 8) & 0xff);
-    addr[2] = (unsigned char)((data >> 16) & 0xff);
-    addr[3] = (unsigned char)((data >> 24) & 0xff);
+    addr[0] = static_cast<unsigned char>(data & 0xff);
+    addr[1] = static_cast<unsigned char>((data >> 8) & 0xff);
+    addr[2] = static_cast<unsigned char>((data >> 16) & 0xff);
+    addr[3] = static_cast<unsigned char>((data >> 24) & 0xff);
 }
 
 /*
 * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
 * initialization constants.
 */
-void CPLMD5Init(struct CPLMD5Context *context)
+void CPLMD5Init( struct CPLMD5Context *context )
 {
     context->buf[0] = 0x67452301;
     context->buf[1] = 0xefcdab89;
@@ -90,7 +90,7 @@ void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
     {
         unsigned char *p = context->in + t;
 
-        t = 64-t;
+        t = 64 - t;
         if( len < t )
         {
             memcpy(p, buf, len);
@@ -99,7 +99,7 @@ void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
         memcpy(p, buf, t);
         CPLMD5Transform(context->buf, context->in);
         buf += t;
-        len -= (unsigned)t;
+        len -= static_cast<unsigned>(t);
     }
 
     /* Process data in 64-byte chunks */
@@ -179,19 +179,16 @@ void CPLMD5Final( unsigned char digest[16], struct CPLMD5Context *context )
 * the data and converts bytes into longwords for this routine.
 */
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64])
+void CPLMD5Transform( GUInt32 buf[4], const unsigned char inraw[64] )
 {
-    GUInt32 a, b, c, d;
     GUInt32 in[16];
-    int i;
+    for( int i = 0; i < 16; ++i )
+        in[i] = getu32(inraw + 4 * i);
 
-    for (i = 0; i < 16; ++i)
-        in[i] = getu32 (inraw + 4 * i);
-
-    a = buf[0];
-    b = buf[1];
-    c = buf[2];
-    d = buf[3];
+    GUInt32 a = buf[0];
+    GUInt32 b = buf[1];
+    GUInt32 c = buf[2];
+    GUInt32 d = buf[3];
 
     MD5STEP(F1, a, b, c, d, in[ 0]+0xd76aa478,  7);
     MD5STEP(F1, d, a, b, c, in[ 1]+0xe8c7b756, 12);
@@ -273,16 +270,17 @@ void CPLMD5Transform(GUInt32 buf[4], const unsigned char inraw[64])
  * @param pszText Text to transform
  * @return MD5 hash string
  */
-const char *CPLMD5String(const char *pszText)
+const char *CPLMD5String( const char *pszText )
 {
-    unsigned char hash[16];
-    char hhash[33];
-    const char *tohex = "0123456789abcdef";
     struct CPLMD5Context context;
     CPLMD5Init(&context);
     CPLMD5Update(&context, reinterpret_cast<unsigned char const *>(pszText),
                   static_cast<int>(strlen(pszText)));
+    unsigned char hash[16];
     CPLMD5Final(hash, &context);
+
+    constexpr char tohex[] = "0123456789abcdef";
+    char hhash[33];
     for (int i = 0; i < 16; ++i)
     {
         hhash[i * 2] = tohex[(hash[i] >> 4) & 0xf];
