@@ -51,7 +51,8 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn ) :
 {
     poFeatureDefn->Reference();
 
-    poDS->AddStandardFields( poFeatureDefn );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
+        !poDS->InlineBlocks(), poDS->ShouldIncludeRawCodeValues() );
 
     SetDescription( poFeatureDefn->GetName() );
 }
@@ -153,26 +154,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->SetField( "EntityHandle", pszValue );
         break;
 
-        // Extended entity data
-      case 1000:
-      case 1002:
-      case 1004:
-      case 1005:
-      case 1040:
-      case 1041:
-      case 1070:
-      case 1071:
-      {
-          CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
-
-          if( !osAggregate.empty() )
-              osAggregate += " ";
-          osAggregate += TextRecode(pszValue);
-
-          poFeature->SetField( "ExtendedEntity", osAggregate );
-      }
-      break;
-
       // OCS vector.
       case 210:
         poFeature->oOCS.dfX = CPLAtof( pszValue );
@@ -186,7 +167,24 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->oOCS.dfZ = CPLAtof( pszValue );
         break;
 
+      case 330:
+        // No-one cares about this, so exclude from RawCodeValues
+        break;
+
       default:
+        if( poDS->ShouldIncludeRawCodeValues() )
+        {
+            char** papszRawCodeValues =
+                poFeature->GetFieldAsStringList( "RawCodeValues" );
+
+            papszRawCodeValues = CSLDuplicate( papszRawCodeValues );
+
+            papszRawCodeValues = CSLAddString( papszRawCodeValues,
+                CPLString().Printf( "%d %s", nCode,
+                TextRecode( pszValue ).c_str() ).c_str() );
+
+            poFeature->SetField( "RawCodeValues", papszRawCodeValues );
+        }
         break;
     }
 }

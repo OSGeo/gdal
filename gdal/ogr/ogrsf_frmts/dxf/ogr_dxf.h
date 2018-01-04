@@ -426,6 +426,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                bInlineBlocks;
     bool                bMergeBlockGeometries;
     bool                bTranslateEscapeSequences;
+    bool                bIncludeRawCodeValues;
 
     OGRDXFReader        oReader;
 
@@ -449,7 +450,10 @@ class OGRDXFDataSource : public OGRDataSource
     bool                InlineBlocks() const { return bInlineBlocks; }
     bool                ShouldMergeBlockGeometries() const { return bMergeBlockGeometries; }
     bool                ShouldTranslateEscapes() const { return bTranslateEscapeSequences; }
-    void                AddStandardFields( OGRFeatureDefn *poDef );
+    bool                ShouldIncludeRawCodeValues() const { return bIncludeRawCodeValues; }
+    static void         AddStandardFields( OGRFeatureDefn *poDef,
+                                           const bool bIncludeExtraBlockFields,
+                                           const bool bIncludeRawCodeField );
 
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();

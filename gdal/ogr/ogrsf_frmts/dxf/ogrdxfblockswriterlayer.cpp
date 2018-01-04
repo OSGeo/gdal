@@ -44,44 +44,7 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
 {
     poFeatureDefn->Reference();
 
-    OGRFieldDefn  oLayerField( "Layer", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLayerField );
-
-    OGRFieldDefn  oClassField( "SubClasses", OFTString );
-    poFeatureDefn->AddFieldDefn( &oClassField );
-
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
-    poFeatureDefn->AddFieldDefn( &oExtendedField );
-
-    OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLinetypeField );
-
-    OGRFieldDefn  oEntityHandleField( "EntityHandle", OFTString );
-    poFeatureDefn->AddFieldDefn( &oEntityHandleField );
-
-    OGRFieldDefn  oTextField( "Text", OFTString );
-    poFeatureDefn->AddFieldDefn( &oTextField );
-
-    OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockNameField );
-
-    OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oScaleField );
-
-    OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
-    poFeatureDefn->AddFieldDefn( &oBlockAngleField );
-
-    OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
-
-    OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
-
-    OGRFieldDefn  oBlockField( "Block", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockField );
-
-    OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
-    poFeatureDefn->AddFieldDefn( &oAttributeTagField );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn, true, false );
 }
 
 /************************************************************************/
