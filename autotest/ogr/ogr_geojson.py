@@ -2918,10 +2918,10 @@ def ogr_geojson_55():
     gdal.VectorTranslate('/vsimem/out.json', """{
    "type": "FeatureCollection",
   "features": [
-      { "type": "Feature", "geometry": { "type": "Point", "coordinates": [2.123456789, 49] } },
-      { "type": "Feature", "geometry": { "type": "Point", "coordinates": [3, 50] } }
+      { "type": "Feature", "id": 123, "properties": {}, "geometry": { "type": "Point", "coordinates": [2.123456789, 49] } },
+      { "type": "Feature", "id": 124, "properties": {}, "geometry": { "type": "Point", "coordinates": [3, 50] } }
   ]
-}""", format = 'GeoJSON', layerCreationOptions = ['RFC7946=YES', 'WRITE_BBOX=YES'])
+}""", options = '-f GeoJSON -lco RFC7946=YES -lco WRITE_BBOX=YES -preserve_fid')
 
     got = read_file('/vsimem/out.json')
     gdal.Unlink('/vsimem/out.json')
@@ -2929,8 +2929,8 @@ def ogr_geojson_55():
 "type": "FeatureCollection",
 "bbox": [ 2.1234568, 49.0000000, 3.0000000, 50.0000000 ],
 "features": [
-{ "type": "Feature", "properties": { }, "bbox": [ 2.1234568, 49.0, 2.1234568, 49.0 ], "geometry": { "type": "Point", "coordinates": [ 2.1234568, 49.0 ] } },
-{ "type": "Feature", "properties": { }, "bbox": [ 3.0, 50.0, 3.0, 50.0 ], "geometry": { "type": "Point", "coordinates": [ 3.0, 50.0 ] } }
+{ "type": "Feature", "id": 123, "properties": { }, "bbox": [ 2.1234568, 49.0, 2.1234568, 49.0 ], "geometry": { "type": "Point", "coordinates": [ 2.1234568, 49.0 ] } },
+{ "type": "Feature", "id": 124, "properties": { }, "bbox": [ 3.0, 50.0, 3.0, 50.0 ], "geometry": { "type": "Point", "coordinates": [ 3.0, 50.0 ] } }
 ]
 }
 """
