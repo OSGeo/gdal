@@ -32,9 +32,9 @@
 #include "cpl_vsi.h"
 
 #include <cassert>
-#include <cstring>
 #include <cstdarg>
 #include <cstddef>
+#include <cstring>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -355,7 +355,13 @@ int VSIMkdir( const char *pszPathname, long mode )
 
 int VSIMkdirRecursive( const char *pszPathname, long mode )
 {
-    VSIStatBufL sStat;
+    if( pszPathname == nullptr || pszPathname[0] == '\0' ||
+        strncmp("/", pszPathname, 2) == 0 )
+    {
+        return -1;
+    }
+
+    VSIStatBufL sStat = {};
     const CPLString osPathname(pszPathname);
     const CPLString osParentPath(CPLGetPath(osPathname));
     if( VSIStatL(osParentPath, &sStat) != 0 )
@@ -474,6 +480,11 @@ int VSIRmdir( const char * pszDirname )
 
 int VSIRmdirRecursive( const char* pszDirname )
 {
+    if( pszDirname == nullptr || pszDirname[0] == '\0' ||
+        strncmp("/", pszDirname, 2) == 0 )
+    {
+        return -1;
+    }
     char** papszFiles = VSIReadDir(pszDirname);
     for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
     {
@@ -482,7 +493,7 @@ int VSIRmdirRecursive( const char* pszDirname )
         {
             continue;
         }
-        VSIStatBufL sStat;
+        VSIStatBufL sStat = {};
         const CPLString osFilename(
             CPLFormFilename(pszDirname, *papszIter, nullptr));
         if( VSIStatL(osFilename, &sStat) == 0 )
