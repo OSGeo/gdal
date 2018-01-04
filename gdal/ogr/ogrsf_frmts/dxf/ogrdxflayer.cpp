@@ -38,7 +38,7 @@
 #include <stdexcept>
 #include <memory>
 
-CPL_CVSID("$Id$")
+CPL_CVSID("$Id$");
 
 /************************************************************************/
 /*                            OGRDXFLayer()                             */
@@ -1205,8 +1205,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
     int nNumVertices = 1;   // use 1 based index
     int npolyarcVertexCount = 1;
     double dfBulge = 0.0;
+    double dfConstantWidth = 0.0;
     DXFSmoothPolyline smoothPolyline;
 
+    CPLString osRawCodeValuesBuf;
+    
     smoothPolyline.setCoordinateDimension(2);
 
 /* -------------------------------------------------------------------- */
@@ -1266,6 +1269,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
             dfBulge = CPLAtof(szLineBuf);
             break;
 
+          case 43:
+            dfConstantWidth = CPLAtof(szLineBuf);
+            break;
+
           default:
             TranslateGenericProperty( poFeature, nCode, szLineBuf );
             break;
@@ -1302,6 +1309,19 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
     PrepareLineStyle( poFeature );
 
+/* -------------------------------------------------------------------- */
+/*      Prepare RawCodeValues property.                                 */
+/* -------------------------------------------------------------------- */
+
+    if( dfConstantWidth > 0.0 )
+    {
+        char szBuffer[64];
+        CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfConstantWidth);
+        osRawCodeValuesBuf += CPLString().Printf( "43=%s", szBuffer );
+    }
+
+    poFeature->SetField( "RawCodeValues", TextUnescape(osRawCodeValuesBuf) );
+    
     return poFeature;
 }
 
