@@ -1111,7 +1111,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::POINT:
         {
-            CADPoint3D     * point    = new CADPoint3D();
+            CADPoint3D * point = new CADPoint3D();
             CADPointObject * cadPoint = static_cast<CADPointObject *>(
                     readedObject.get());
 
@@ -1150,7 +1150,8 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 if( vertex->stCed.bNoLinks == true )
                 {
                     ++currentVertexH;
-                } else
+                }
+                else
                 {
                     currentVertexH = vertex->stChed.hNextEntity.getAsLong(
                                 vertex->stCed.hObjectHandle );
@@ -1483,16 +1484,16 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
                 if( dCurrentEntHandle == dLastEntHandle )
                 {
-                    CADObject *pCADVertexPFaceObject = GetObject( dCurrentEntHandle );
+                    CADObject *pCADVertexPFaceObjectV = GetObject( dCurrentEntHandle );
                     vertex.reset( dynamic_cast<CADVertexPFaceObject *>(
-                                          pCADVertexPFaceObject) );
+                                          pCADVertexPFaceObjectV) );
                     if(vertex)
                     {
                         polyline->addVertex( vertex->vertPosition );
                     }
                     else
                     {
-                        delete pCADVertexPFaceObject;
+                        delete pCADVertexPFaceObjectV;
                     }
                     break;
                 }
@@ -1694,16 +1695,16 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
                 while( spoBlockRef->bHasAttribs )
                 {
-                    CADObject *pCADEntityObject = GetObject( dCurrentEntHandle, true );
+                    CADObject *pCADAttDefObj = GetObject( dCurrentEntHandle, true );
 
                     CADEntityObject * attDefObj =
-                            dynamic_cast<CADEntityObject *>( pCADEntityObject );
+                            dynamic_cast<CADEntityObject *>( pCADAttDefObj );
 
                     if( dCurrentEntHandle == dLastEntHandle )
                     {
                         if( attDefObj == nullptr )
                         {
-                            delete pCADEntityObject;
+                            delete pCADAttDefObj;
                             break;
                         }
 
@@ -1738,7 +1739,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                     }
                     else
                     {
-                        delete pCADEntityObject;;
+                        delete pCADAttDefObj;
                     }
                 }
                 poGeometry->setBlockAttributes( blockRefAttributes );
@@ -2859,11 +2860,6 @@ CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, CADBuff
     ltype->dfPatternLen = buffer.ReadBITDOUBLE();
     ltype->dAlignment   = buffer.ReadCHAR();
     ltype->nNumDashes   = buffer.ReadCHAR();
-    if(ltype->nNumDashes < 0)
-    {
-        delete ltype;
-        return nullptr;
-    }
 
     CADDash     dash;
     for( size_t i = 0; i < ltype->nNumDashes; ++i )
@@ -2916,11 +2912,6 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
     mline->vectExtrusion = vectExtrusion;
     mline->dOpenClosed   = buffer.ReadBITSHORT();
     mline->nLinesInStyle = buffer.ReadCHAR();
-    if(mline->nLinesInStyle < 0)
-    {
-        delete mline;
-        return nullptr;
-    }
     mline->nNumVertexes  = buffer.ReadBITSHORT();
     if(mline->nNumVertexes < 0)
     {

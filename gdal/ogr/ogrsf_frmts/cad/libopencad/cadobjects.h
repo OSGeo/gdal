@@ -695,7 +695,7 @@ class CADLayerControlObject : public CADBaseControlObject
 public:
     CADLayerControlObject();
     virtual ~CADLayerControlObject(){}
-;
+
     long           nNumEntries; // counts layer "0"
     CADHandle      hNull;
     CADHandle      hXDictionary;
