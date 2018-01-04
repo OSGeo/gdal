@@ -361,19 +361,28 @@ int VSIMkdirRecursive( const char *pszPathname, long mode )
         return -1;
     }
 
-    VSIStatBufL sStat;
     const CPLString osPathname(pszPathname);
-    const CPLString osParentPath(CPLGetPath(osPathname));
-    if( VSIStatL(osParentPath, &sStat) != 0 )
-    {
-        if( VSIMkdirRecursive(osParentPath, mode) != 0 )
-            return -1;
-    }
+    VSIStatBufL sStat;
     if( VSIStatL(osPathname, &sStat) == 0 &&
         VSI_ISDIR(sStat.st_mode) )
     {
         return 0;
     }
+    const CPLString osParentPath(CPLGetPath(osPathname));
+
+    // Prevent crazy paths from recursing forever.
+    if( osParentPath == osPathname ||
+        osParentPath.length() >= osPathname.length() )
+    {
+        return -1;
+    }
+
+    if( VSIStatL(osParentPath, &sStat) != 0 )
+    {
+        if( VSIMkdirRecursive(osParentPath, mode) != 0 )
+            return -1;
+    }
+
     return VSIMkdir(osPathname, mode);
 }
 
