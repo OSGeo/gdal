@@ -151,6 +151,7 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature( OGRFeature* poFeature )
     {
         poFeatureToWrite = new OGRFeature(poFeatureDefn_);
         poFeatureToWrite->SetFrom( poFeature );
+        poFeatureToWrite->SetFID( poFeature->GetFID() );
         OGRGeometry* poGeometry = poFeatureToWrite->GetGeometryRef();
         if( poGeometry )
         {
