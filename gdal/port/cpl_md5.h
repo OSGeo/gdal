@@ -21,7 +21,7 @@ void CPLMD5Init( struct CPLMD5Context *context );
 void CPLMD5Update( struct CPLMD5Context *context, unsigned char const *buf,
                    unsigned len );
 void CPLMD5Final( unsigned char digest[16], struct CPLMD5Context *context );
-void CPLMD5Transform( GUInt32 buf[4], const unsigned char in[64] );
+void CPLMD5Transform( GUInt32 buf[4], const unsigned char inraw[64] );
 
 #endif // #ifndef DOXYGEN_SKIP
 
