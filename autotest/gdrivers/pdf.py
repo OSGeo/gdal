@@ -1597,16 +1597,16 @@ def pdf_write_ogr_with_reprojection():
     options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr_with_reprojection.pdf', src_ds, options = options)
     del ds
     src_ds = None
 
-    ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
+    ogr_ds = ogr.Open('tmp/pdf_write_ogr_with_reprojection.pdf')
     ogr_lyr = ogr_ds.GetLayer(0)
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
 
-    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr_with_reprojection.pdf')
 
     gdal.Unlink('tmp/test.csv')
     gdal.Unlink('tmp/test.vrt')
