@@ -628,8 +628,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 1:
           case 3:
-            if( osText != "" )
-                osText += "\n";
             osText += TextUnescape(szLineBuf, true);
             break;
 
