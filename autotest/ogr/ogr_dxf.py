@@ -2927,7 +2927,7 @@ def ogr_dxf_44():
     # Check that the very long text string in the MTEXT entity associated
     # to this LEADER is captured correctly
     f = lyr.GetNextFeature()
-    if len( f.GetField('Text') ) != 320:
+    if len( f.GetField('Text') ) != 319:
         gdaltest.post_reason( 'Wrong text length: got %d' % len( f.GetField('Text') ) )
         return 'fail'
 
