@@ -4,7 +4,7 @@
  * Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nextgis.com
  *
  ******************************************************************************
- * Copyright (c) 2016-2017 NextGIS, <info@nextgis.com>
+ * Copyright (c) 2017-2018 NextGIS, <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -852,7 +852,7 @@ bool CPLJSONObject::GetBool(const char *pszName, bool bDefault) const
  * This function is useful when keys is not know and need to
  * iterate over json object items and get keys and values.
  *
- * @return Array of CPLJSONObject class instncess.
+ * @return Array of CPLJSONObject class instance.
  *
  * @since GDAL 2.3
  */

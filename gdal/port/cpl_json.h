@@ -4,7 +4,7 @@
  * Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nextgis.com
  *
  ******************************************************************************
- * Copyright (c) 2016-2017 NextGIS, <info@nextgis.com>
+ * Copyright (c) 2017-2018 NextGIS, <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,8 +38,6 @@
  *
  * Interface for read and write JSON documents
  */
-
-
 
 /*! @cond Doxygen_Suppress */
 typedef void *JSONObjectH;
@@ -89,9 +87,7 @@ public:
     CPLJSONObject(const CPLJSONObject &other);
     CPLJSONObject &operator=(const CPLJSONObject &other);
 
-#if !_MSC_VER
 private:
-#endif // ! _MSC_VER
     explicit CPLJSONObject(const CPLString &soName, JSONObjectH poJsonObject);
 /*! @endcond */
 
@@ -166,9 +162,7 @@ public:
     explicit CPLJSONArray(const CPLString &soName);
     explicit CPLJSONArray(const CPLJSONObject &other);
 
-#if !_MSC_VER
 private:
-#endif // ! _MSC_VER
     explicit CPLJSONArray(const CPLString &soName, JSONObjectH poJsonObject);
 /*! @endcond */
 public:
