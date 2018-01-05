@@ -193,12 +193,15 @@ void CADTables::FillLayer( const CADEntityObject * pEntityObject )
 
     for( CADLayer& oLayer : aLayers )
     {
-        if( pEntityObject->stChed.hLayer.getAsLong( pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
+        if( pEntityObject->stChed.hLayer.getAsLong(
+                    pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
         {
             DebugMsg( "Object with type: %s is attached to layer named: %s\n",
-                      getNameByType( pEntityObject->getType() ).c_str(), oLayer.getName().c_str() );
+                      getNameByType( pEntityObject->getType() ).c_str(),
+                      oLayer.getName().c_str() );
 
-            oLayer.addHandle( pEntityObject->stCed.hObjectHandle.getAsLong(), pEntityObject->getType() );
+            oLayer.addHandle( pEntityObject->stCed.hObjectHandle.getAsLong(),
+                              pEntityObject->getType() );
             break;
         }
     }
