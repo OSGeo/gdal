@@ -1,5 +1,27 @@
- 0
+  0
 SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+STYLE
+  0
+STYLE
+  2
+abc
+ 41
+0.50995
+1001
+ACAD
+1000
+SwissCheese
+1071
+33554432
+  0
+ENDTAB
+  0
+ENDSEC
   2
 ENTITIES
   0
@@ -14,6 +36,8 @@ MTEXT
 10.0
  1
 \A1;test^Itext\~\pt0.2;{\H0.7x;\Sab\/c\~d%%p^ ef\^ g.h\#i;} j{\L\Ok\ol}m
+ 7
+abc
  50
 45.0
  62

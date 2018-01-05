@@ -51,6 +51,7 @@ CPL_CVSID("$Id$")
 #endif
 
 // For CHECK_ARITY and clang 5
+// CHECK_ARITY: check the number of args passed to an XPath function matches.
 #undef NULL
 #define NULL nullptr
 

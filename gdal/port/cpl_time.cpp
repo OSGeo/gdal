@@ -216,7 +216,7 @@ static const char* const aszMonthStr[] = {
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
 /** Parse a RFC822 formatted date-time string.
- * 
+ *
  * Such as [Fri,] 28 Dec 2007 05:24[:17] GMT
  *
  * @param pszRFC822DateTime formatted string.

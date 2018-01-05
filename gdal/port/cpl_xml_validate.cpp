@@ -152,12 +152,12 @@ static bool CPLHasLibXMLBug()
     xmlSchemaSetParserErrors(pSchemaParserCtxt,
                              CPLHasLibXMLBugWarningCallback,
                              CPLHasLibXMLBugWarningCallback,
-                             NULL);
+                             nullptr);
 
     xmlSchemaPtr pSchema = xmlSchemaParse(pSchemaParserCtxt);
     xmlSchemaFreeParserCtxt(pSchemaParserCtxt);
 
-    bHasLibXMLBug = pSchema == NULL;
+    bHasLibXMLBug = pSchema == nullptr;
     bLibXMLBugChecked = true;
 
     if( pSchema )
@@ -317,7 +317,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
              strcmp(CPLGetXMLValue(psIter, "name", ""), "VectorType") == 0 )
     {
         CPLXMLNode* psSimpleContent =
-            CPLCreateXMLNode(NULL, CXT_Element, "simpleContent");
+            CPLCreateXMLNode(nullptr, CXT_Element, "simpleContent");
         CPLXMLNode* psExtension =
             CPLCreateXMLNode(psSimpleContent, CXT_Element, "extension");
         CPLXMLNode* psExtensionBase =
@@ -330,7 +330,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
         CPLCreateXMLNode(psAttributeGroupRef, CXT_Text,
                          "gml:SRSReferenceGroup");
 
-        CPLXMLNode* psName = CPLCreateXMLNode(NULL, CXT_Attribute, "name");
+        CPLXMLNode* psName = CPLCreateXMLNode(nullptr, CXT_Attribute, "name");
         CPLCreateXMLNode(psName, CXT_Text, "VectorType");
 
         CPLDestroyXMLNode(psIter->psChild);
@@ -348,7 +348,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
                      "formulaCitation") == 0) )
     {
         CPLXMLNode* psComplexType =
-            CPLCreateXMLNode(NULL, CXT_Element, "complexType");
+            CPLCreateXMLNode(nullptr, CXT_Element, "complexType");
         CPLXMLNode* psSequence =
             CPLCreateXMLNode(psComplexType, CXT_Element, "sequence");
         CPLXMLNode* psSequenceMinOccurs =
@@ -362,7 +362,7 @@ static bool CPLWorkaroundLibXMLBug( CPLXMLNode* psIter )
             CPLCreateXMLNode(psAny, CXT_Attribute, " processContents");
         CPLCreateXMLNode(psAnyProcessContents, CXT_Text, "lax");
 
-        CPLXMLNode* psName = CPLCreateXMLNode(NULL, CXT_Attribute, "name");
+        CPLXMLNode* psName = CPLCreateXMLNode(nullptr, CXT_Attribute, "name");
         CPLCreateXMLNode(psName, CXT_Text, CPLGetXMLValue(psIter, "name", ""));
 
         CPLDestroyXMLNode(psIter->psChild);

@@ -1164,11 +1164,11 @@ static const char* CPLFindWin32CurlCaBundleCrt()
 {
     DWORD nResLen;
     const DWORD nBufSize = MAX_PATH + 1;
-    char *pszFilePart = NULL;
+    char *pszFilePart = nullptr;
 
     char *pszPath = static_cast<char*>(CPLCalloc(1, nBufSize));
 
-    nResLen = SearchPathA(NULL, "curl-ca-bundle.crt", NULL,
+    nResLen = SearchPathA(nullptr, "curl-ca-bundle.crt", nullptr,
                           nBufSize, pszPath, &pszFilePart);
     if (nResLen > 0)
     {
@@ -1177,7 +1177,7 @@ static const char* CPLFindWin32CurlCaBundleCrt()
         return pszRet;
     }
     CPLFree(pszPath);
-    return NULL;
+    return nullptr;
 }
 
 #endif // WIN32
@@ -1456,7 +1456,7 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // after CURL_CA_BUNDLE
         pszCAInfo = CPLGetConfigOption("SSL_CERT_FILE", nullptr);
 #ifdef WIN32
-    if( pszCAInfo == NULL )
+    if( pszCAInfo == nullptr )
     {
         pszCAInfo = CPLFindWin32CurlCaBundleCrt();
     }
@@ -1576,7 +1576,7 @@ void* CPLHTTPIgnoreSigPipe()
     memcpy(ret, &old_pipe_act, sizeof(old_pipe_act));
     return ret;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 

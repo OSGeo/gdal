@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -218,7 +218,7 @@ protected:
     ObjectType type;
     unsigned short CRC;
 
-        explicit CADObject(ObjectType typeIn) : size(0), type(typeIn), CRC(0) {}
+    explicit CADObject(ObjectType typeIn) : size(0), type(typeIn), CRC(0) {}
 };
 
 std::string getNameByType( CADObject::ObjectType eType );
@@ -619,18 +619,30 @@ public:
 };
 
 /**
- * @brief The CADBlockControlObject class
+ * @brief The CADBaseControlObject class
  */
-class CADBlockControlObject : public CADObject
+class CADBaseControlObject : public CADObject
 {
 public:
-    CADBlockControlObject();
-    virtual ~CADBlockControlObject(){}
+    virtual ~CADBaseControlObject(){}
     long           nObjectSizeInBits;
     CADHandle      hObjectHandle;
     CADEedArray    aEED;
     long           nNumReactors;
     bool           bNoXDictionaryPresent;
+
+protected:
+    explicit CADBaseControlObject(ObjectType typeIn);
+};
+
+/**
+ * @brief The CADBlockControlObject class
+ */
+class CADBlockControlObject : public CADBaseControlObject
+{
+public:
+    CADBlockControlObject();
+    virtual ~CADBlockControlObject(){}
     long           nNumEntries; // doesn't count MODELSPACE and PAPERSPACE
     CADHandle      hNull;
     CADHandle      hXDictionary;
@@ -640,16 +652,11 @@ public:
 /**
  * @brief The CADBlockHeaderObject class
  */
-class CADBlockHeaderObject : public CADObject
+class CADBlockHeaderObject : public CADBaseControlObject
 {
 public:
     CADBlockHeaderObject();
     virtual ~CADBlockHeaderObject(){}
-    long                  nObjectSizeInBits;
-    CADHandle             hObjectHandle;
-    CADEedArray           aEED;
-    long                  nNumReactors;
-    bool                  bNoXDictionaryPresent;
     std::string           sEntryName;
     bool                  b64Flag;
     short                 dXRefIndex;
@@ -683,17 +690,12 @@ public:
 /**
  * @brief The CADLayerControlObject class
  */
-class CADLayerControlObject : public CADObject
+class CADLayerControlObject : public CADBaseControlObject
 {
 public:
     CADLayerControlObject();
     virtual ~CADLayerControlObject(){}
 
-    long           nObjectSizeInBits;
-    CADHandle      hObjectHandle;
-    CADEedArray    aEED;
-    long           nNumReactors;
-    bool           bNoXDictionaryPresent;
     long           nNumEntries; // counts layer "0"
     CADHandle      hNull;
     CADHandle      hXDictionary;
@@ -703,17 +705,12 @@ public:
 /**
  * @brief The CADLayerObject class
  */
-class CADLayerObject : public CADObject
+class CADLayerObject : public CADBaseControlObject
 {
 public:
     CADLayerObject();
     virtual ~CADLayerObject(){}
 
-    long        nObjectSizeInBits;
-    CADHandle   hObjectHandle;
-    CADEedArray aEED;
-    long        nNumReactors;
-    bool        bNoXDictionaryPresent;
     std::string sLayerName;
     bool        b64Flag;
     short       dXRefIndex;
@@ -739,17 +736,12 @@ public:
 /**
  * @brief The CADLineTypeControlObject class
  */
-class CADLineTypeControlObject : public CADObject
+class CADLineTypeControlObject : public CADBaseControlObject
 {
 public:
     CADLineTypeControlObject();
     virtual ~CADLineTypeControlObject(){}
 
-    long           nObjectSizeInBits;
-    CADHandle      hObjectHandle;
-    CADEedArray    aEED;
-    long           nNumReactors;
-    bool           bNoXDictionaryPresent;
     long           nNumEntries; // doesn't count BYBLOCK / BYLAYER.
     CADHandle      hNull;
     CADHandle      hXDictionary;
@@ -770,17 +762,12 @@ typedef struct _dash
 /**
  * @brief The CADLineTypeObject class
  */
-class CADLineTypeObject : public CADObject
+class CADLineTypeObject : public CADBaseControlObject
 {
 public:
     CADLineTypeObject();
     virtual ~CADLineTypeObject(){}
 
-    long                  nObjectSizeInBits;
-    CADHandle             hObjectHandle;
-    CADEedArray           aEED;
-    long                  nNumReactors;
-    bool                  bNoXDictionaryPresent;
     std::string           sEntryName;
     bool                  b64Flag;
     short                 dXRefIndex;
@@ -874,17 +861,12 @@ public:
 /**
  * @brief The CADDictionaryObject class
  */
-class CADDictionaryObject : public CADObject
+class CADDictionaryObject : public CADBaseControlObject
 {
 public:
     CADDictionaryObject();
     virtual ~CADDictionaryObject(){}
 
-    long          nObjectSizeInBits;
-    CADHandle     hObjectHandle;
-    CADEedArray   aEED;
-    long          nNumReactors;
-    bool          bNoXDictionaryPresent;
     long          nNumItems;
     short         dCloningFlag;
     unsigned char dHardOwnerFlag;
@@ -1139,17 +1121,12 @@ public:
 /**
  * @brief The CADImageDefReactorObject class
  */
-class CADImageDefReactorObject : public CADObject
+class CADImageDefReactorObject : public CADBaseControlObject
 {
 public:
     explicit CADImageDefReactorObject(ObjectType typeIn = IMAGEDEFREACTOR);
     virtual ~CADImageDefReactorObject(){}
 
-    long              nObjectSizeInBits;
-    CADHandle         hObjectHandle;
-    std::vector<CADEed>    aEED;
-    long              nNumReactors;
-    bool              bNoXDictionaryPresent;
     long              dClassVersion;
     CADHandle         hParentHandle;
     std::vector<CADHandle> hReactors;
@@ -1326,16 +1303,12 @@ public:
 /**
  * @brief The CADXRecordObject class
  */
-class CADXRecordObject : public CADObject
+class CADXRecordObject : public CADBaseControlObject
 {
 public:
     CADXRecordObject();
     virtual ~CADXRecordObject(){}
-    long                                nObjectSizeInBits;
-    CADHandle                           hObjectHandle;
-    CADEedArray                         aEED;
-    long                                nNumReactors;
-    bool                                bNoXDictionaryPresent;
+
     long                                nNumDataBytes;
     std::vector<char>                   abyDataBytes;
     short                               dCloningFlag;

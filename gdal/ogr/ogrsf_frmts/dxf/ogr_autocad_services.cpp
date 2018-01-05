@@ -98,9 +98,11 @@ CPLString ACTextUnescape( const char *pszRawInput, const char *pszEncoding,
             pszInput += 2;
         }
         else if( !bIsMText && ( STARTS_WITH_CI(pszInput, "%%u")
-            || STARTS_WITH_CI(pszInput, "%%o") ) )
+            || STARTS_WITH_CI(pszInput, "%%o")
+            || STARTS_WITH_CI(pszInput, "%%k") ) )
         {
-            // Underline and overline markers. These have no effect in MTEXT
+            // Underline, overline, and strikethrough markers.
+            // These have no effect in MTEXT
             pszInput += 2;
         }
         else
@@ -505,7 +507,7 @@ const unsigned char *ACGetColorTable()
 const int* ACGetKnownDimStyleCodes()
 {
     static const int aiKnownCodes[] = {
-        40, 41, 42, 44, 75, 76, 77, 140, 147, 176, 271, 341, 0
+        40, 41, 42, 44, 75, 76, 77, 140, 147, 176, 178, 271, 341, 0
     };
 
     return aiKnownCodes;
@@ -532,6 +534,7 @@ const char *ACGetDimStylePropertyName( const int iDimStyleCode )
         case 140: return "DIMTXT";
         case 147: return "DIMGAP";
         case 176: return "DIMCLRD";
+        case 178: return "DIMCLRT";
         case 271: return "DIMDEC";
         case 341: return "DIMLDRBLK";
         default: return nullptr;
@@ -561,6 +564,7 @@ const char *ACGetDimStylePropertyDefault( const int iDimStyleCode )
         case 140: return "0.18";
         case 147: return "0.09";
         case 176: return "0";
+        case 178: return "0";
         case 271: return "4";
         case 341: return "";
         default: return "0";
@@ -663,12 +667,12 @@ void ACAdjustText( const double dfAngle, const double dfScaleX,
         {
             const double dfAngleRadians = dfAngle * M_PI / 180.0;
 
-            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6gg",
                 dfScaleX * dfOldDx * cos( dfAngleRadians ) +
                 dfScaleY * dfOldDy * -sin( dfAngleRadians ) );
             papszTokens = CSLSetNameValue( papszTokens, "dx", szBuffer );
 
-            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6g",
+            CPLsnprintf( szBuffer, sizeof(szBuffer), "%.6gg",
                 dfScaleX * dfOldDx * sin( dfAngleRadians ) +
                 dfScaleY * dfOldDy * cos( dfAngleRadians ) );
             papszTokens = CSLSetNameValue( papszTokens, "dy", szBuffer );

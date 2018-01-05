@@ -272,7 +272,7 @@ class OGRDXFLayer : public OGRLayer
 
     void                PrepareFeatureStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
-    void                PrepareHatchStyle( OGRDXFFeature* const poFeature,
+    void                PrepareBrushStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
     void                PrepareLineStyle( OGRDXFFeature* const poFeature,
                             OGRDXFFeature* const poBlockFeature = nullptr );
@@ -426,6 +426,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                bInlineBlocks;
     bool                bMergeBlockGeometries;
     bool                bTranslateEscapeSequences;
+    bool                bIncludeRawCodeValues;
 
     OGRDXFReader        oReader;
 
@@ -449,7 +450,10 @@ class OGRDXFDataSource : public OGRDataSource
     bool                InlineBlocks() const { return bInlineBlocks; }
     bool                ShouldMergeBlockGeometries() const { return bMergeBlockGeometries; }
     bool                ShouldTranslateEscapes() const { return bTranslateEscapeSequences; }
-    void                AddStandardFields( OGRFeatureDefn *poDef );
+    bool                ShouldIncludeRawCodeValues() const { return bIncludeRawCodeValues; }
+    static void         AddStandardFields( OGRFeatureDefn *poDef,
+                                           const bool bIncludeExtraBlockFields,
+                                           const bool bIncludeRawCodeField );
 
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();
@@ -474,6 +478,7 @@ class OGRDXFDataSource : public OGRDataSource
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
     std::vector<double> LookupLineType( const char *pszName );
+    bool                TextStyleExists( const char *pszTextStyle );
     CPLString           GetTextStyleNameByHandle( const char *pszID );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
@@ -524,8 +529,10 @@ class OGRDXFWriterLayer : public OGRLayer
     static CPLString    TextEscape( const char * );
     static int          ColorStringToDXFColor( const char * );
     static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static std::map<CPLString, CPLString> PrepareTextStyleDefinition( OGRStyleLabel* );
 
     std::map<CPLString,CPLString> oNewLineTypes;
+    std::map<CPLString,std::map<CPLString,CPLString>> oNewTextStyles;
     int                 nNextAutoID;
     int                 bWriteHatch;
 
@@ -545,7 +552,10 @@ class OGRDXFWriterLayer : public OGRLayer
 
     void                ResetFP( VSILFILE * );
 
-    std::map<CPLString,CPLString>& GetNewLineTypeMap() { return oNewLineTypes;}
+    std::map<CPLString,CPLString>& GetNewLineTypeMap()
+        { return oNewLineTypes; }
+    std::map<CPLString,std::map<CPLString,CPLString>>& GetNewTextStyleMap()
+        { return oNewTextStyles; }
 };
 
 /************************************************************************/
@@ -607,6 +617,7 @@ class OGRDXFWriterDS : public OGRDataSource
                                          const char *pszTarget );
 
     bool                WriteNewLineTypeRecords( VSILFILE *fp );
+    bool                WriteNewTextStyleRecords( VSILFILE *fp );
     bool                WriteNewBlockRecords( VSILFILE * );
     bool                WriteNewBlockDefinitions( VSILFILE * );
     bool                WriteNewLayerDefinitions( VSILFILE * );

@@ -2045,6 +2045,14 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                   nMinute,
                   fSecond );
     else  // Default format.
+    {
+        if( CPLIsNan(fSecond) )
+        {
+            fSecond = 0.0;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGRFeatureFormatDateTimeBuffer: fSecond is NaN.  "
+                     "Forcing to 0.0.");
+        }
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%04d/%02d/%02d %02d:%02d:%02d",
                   nYear,
@@ -2053,6 +2061,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                   nHour,
                   nMinute,
                   static_cast<int>(fSecond) );
+    }
 
     if( nTZFlag > 1 )
     {

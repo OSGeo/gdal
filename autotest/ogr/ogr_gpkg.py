@@ -618,7 +618,7 @@ def ogr_gpkg_11():
     gdaltest.gpkg_ds = None
     gdaltest.gpkg_ds = ogr.Open('tmp/gpkg_test.gpkg', update = 1)
     gdaltest.gpkg_ds.ExecuteSQL('CREATE INDEX tbl_linestring_fld_integer_idx ON tbl_linestring(fld_integer)')
-    gdaltest.gpkg_ds.ExecuteSQL('ALTER TABLE tbl_linestring RENAME TO tbl_linestring_renamed')
+    gdaltest.gpkg_ds.ExecuteSQL('ALTER TABLE tbl_linestring RENAME TO tbl_linestring_renamed;')
     gdaltest.gpkg_ds.ExecuteSQL('VACUUM')
     gdaltest.gpkg_ds = None
 

@@ -1435,9 +1435,9 @@ int CPLODBCStatement::GetColumns( const char *pszTable,
 
 {
 #ifdef notdef
-    if( pszCatalog == NULL )
+    if( pszCatalog == nullptr )
         pszCatalog = "";
-    if( pszSchema == NULL )
+    if( pszSchema == nullptr )
         pszSchema = "";
 #endif
 

@@ -2813,7 +2813,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         }
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        const bool bFpAvailableBefore = oOpenInfo.fpL != NULL;
+        const bool bFpAvailableBefore = oOpenInfo.fpL != nullptr;
         CPLErrorReset();
 #endif
 
@@ -2929,7 +2929,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx( const char *pszFilename,
         }
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        if( bFpAvailableBefore && oOpenInfo.fpL == NULL )
+        if( bFpAvailableBefore && oOpenInfo.fpL == nullptr )
         {
             // In case the file descriptor was "consumed" by a driver
             // that ultimately failed, re-open it for next drivers.

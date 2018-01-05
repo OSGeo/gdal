@@ -739,7 +739,7 @@ GDALAsyncStatusType CPL_DLL CPL_STDCALL GDALGetAsyncStatusTypeByName(
 {
     VALIDATE_POINTER1( pszName, "GDALGetAsyncStatusTypeByName", GARIO_ERROR);
 
-    for( int iType = 1; iType < GARIO_TypeCount; iType++ )
+    for( int iType = 0; iType < GARIO_TypeCount; iType++ )
     {
         if( GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType) != nullptr
             && EQUAL(GDALGetAsyncStatusTypeName((GDALAsyncStatusType)iType),

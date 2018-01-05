@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -156,9 +156,17 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
 #endif //_DEBUG
     if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        std::unique_ptr<CADAttdef> attdef( static_cast< CADAttdef *>(
-                         pCADFile->GetGeometry( this->getId() - 1, handle ) ) );
-        attributesNames.insert( attdef->getTag() );
+        CADGeometry* pCADGeometry = pCADFile->GetGeometry( this->getId() - 1,
+                                                           handle );
+        std::unique_ptr<CADAttdef> attdef( dynamic_cast<CADAttdef*>(pCADGeometry) );
+        if(attdef)
+        {
+            attributesNames.insert( attdef->getTag() );
+        }
+        else
+        {
+            delete pCADGeometry;
+        }
     }
 
     if( type == CADObject::INSERT )
@@ -166,13 +174,13 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
         // TODO: transform insert to block of objects (do we need to transform
         // coordinates according to insert point)?
         std::unique_ptr<CADObject> insert( pCADFile->GetObject( handle, false ) );
-        CADInsertObject * pInsert = static_cast<CADInsertObject *>(insert.get());
+        CADInsertObject * pInsert = dynamic_cast<CADInsertObject *>(insert.get());
         if( nullptr != pInsert )
         {
             std::unique_ptr<CADObject> blockHeader( pCADFile->GetObject(
                                     pInsert->hBlockHeader.getAsLong(), false ) );
             CADBlockHeaderObject * pBlockHeader =
-                          static_cast<CADBlockHeaderObject *>(blockHeader.get());
+                          dynamic_cast<CADBlockHeaderObject *>(blockHeader.get());
             if( nullptr != pBlockHeader )
             {
 #ifdef _DEBUG
@@ -189,15 +197,16 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
 
                 while( true )
                 {
-                    std::unique_ptr<CADEntityObject> entity(
-                        static_cast< CADEntityObject * >( pCADFile->GetObject(
-                                                    dCurrentEntHandle, true ) ) );
+                    std::unique_ptr<CADObject> entity(pCADFile->GetObject(
+                                                       dCurrentEntHandle, true ));
+                    CADEntityObject* pEntity =
+                            dynamic_cast<CADEntityObject *>( entity.get() );
 
                     if( dCurrentEntHandle == dLastEntHandle )
                     {
-                        if( entity != nullptr )
+                        if( nullptr != pEntity )
                         {
-                            addHandle( dCurrentEntHandle, entity->getType(), handle );
+                            addHandle( dCurrentEntHandle, pEntity->getType(), handle );
                             Matrix mat;
                             mat.translate( pInsert->vertInsertionPoint );
                             mat.scale( pInsert->vertScales );
@@ -211,21 +220,25 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                         }
                     }
 
-                    if( entity != nullptr )
+                    if( nullptr != pEntity )
                     {
-                        addHandle( dCurrentEntHandle, entity->getType(), handle );
+                        addHandle( dCurrentEntHandle, pEntity->getType(), handle );
                         Matrix mat;
                         mat.translate( pInsert->vertInsertionPoint );
                         mat.scale( pInsert->vertScales );
                         mat.rotate( pInsert->dfRotation );
                         transformations[dCurrentEntHandle] = mat;
 
-                        if( entity->stCed.bNoLinks )
+                        if( pEntity->stCed.bNoLinks )
+                        {
                             ++dCurrentEntHandle;
+                        }
                         else
+                        {
                             dCurrentEntHandle =
-                                entity->stChed.hNextEntity.getAsLong(
-                                    entity->stCed.hObjectHandle );
+                                pEntity->stChed.hNextEntity.getAsLong(
+                                    pEntity->stCed.hObjectHandle );
+                        }
                     }
                     else
                     {

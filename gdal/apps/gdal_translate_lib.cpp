@@ -155,6 +155,14 @@ struct GDALTranslateOptions
      *  It is also often necessary to reset the output datatype with GDALTranslateOptions::eOutputType */
     bool bUnscale;
 
+    bool bSetScale;
+
+    double dfScale;
+
+    bool bSetOffset;
+
+    double dfOffset;
+
     /*! the size of pasScaleParams */
     int nScaleRepeat;
 
@@ -896,6 +904,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     if( psOptions->eOutputType == GDT_Unknown
         && psOptions->nScaleRepeat == 0 && psOptions->nExponentRepeat == 0 && !psOptions->bUnscale
+        && !psOptions->bSetScale && !psOptions->bSetOffset
         && CSLCount(psOptions->papszMetadataOptions) == 0 && bAllBandsInOrder
         && psOptions->eMaskMode == MASK_AUTO
         && bSpatialArrangementPreserved
@@ -1671,7 +1680,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         {
             CopyBandInfo( poSrcBand, poVRTBand,
                           !psOptions->bStats && !bFilterOutStatsMetadata,
-                          !psOptions->bUnscale,
+                          !psOptions->bUnscale && !psOptions->bSetScale &&
+                            !psOptions->bSetOffset,
                           !psOptions->bSetNoData && !psOptions->bUnsetNoData );
             if( psOptions->nScaleRepeat == 0 &&
                 psOptions->nExponentRepeat == 0 &&
@@ -1741,6 +1751,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
             poVRTBand->SetNoDataValue( dfVal );
         }
+
+        if( psOptions->bSetScale )
+            poVRTBand->SetScale( psOptions->dfScale );
+
+        if( psOptions->bSetOffset )
+            poVRTBand->SetOffset( psOptions->dfOffset );
 
         if (psOptions->eMaskMode == MASK_AUTO &&
             (GDALGetMaskFlags(GDALGetRasterBand(hSrcDataset, 1)) & GMF_PER_DATASET) == 0 &&
@@ -1966,6 +1982,10 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
     psOptions->adfSrcWin[3] = 0;
     psOptions->bStrict = false;
     psOptions->bUnscale = false;
+    psOptions->bSetScale = false;
+    psOptions->dfScale = 1.0;
+    psOptions->bSetOffset = false;
+    psOptions->dfOffset = 0.0;
     psOptions->nScaleRepeat = 0;
     psOptions->pasScaleParams = nullptr;
     psOptions->bHasUsedExplicitScaleBand = false;
@@ -2167,6 +2187,21 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             }
             i += 1;
         }
+
+        else if( EQUAL(papszArgv[i],"-a_scale") && papszArgv[i+1] )
+        {
+            psOptions->bSetScale = true;
+            psOptions->dfScale = CPLAtofM(papszArgv[i+1]);
+            i += 1;
+        }
+
+        else if( EQUAL(papszArgv[i],"-a_offset") && papszArgv[i+1] )
+        {
+            psOptions->bSetOffset = true;
+            psOptions->dfOffset = CPLAtofM(papszArgv[i+1]);
+            i += 1;
+        }
+
 
         else if( i + 4 < argc && EQUAL(papszArgv[i],"-a_ullr") )
         {

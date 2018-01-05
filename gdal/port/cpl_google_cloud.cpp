@@ -46,10 +46,10 @@ static GOA2Manager oStaticManager;
 /************************************************************************/
 
 /** Returns whether the current machine is surely a Google Compute Engine instance.
- * 
+ *
  * This does a very quick check without network access.
  * Note: only works for Linux GCE instances.
- * 
+ *
  * @return true if the current machine is surely a GCE instance.
  * @since GDAL 2.3
  */
@@ -102,11 +102,11 @@ bool CPLIsMachineForSureGCEInstance()
 /************************************************************************/
 
 /** Returns whether the current machine is potentially a Google Compute Engine instance.
- * 
+ *
  * This does a very quick check without network access. To confirm if the
  * machine is effectively a GCE instance, metadata.google.internal must be
  * queried.
- * 
+ *
  * @return true if the current machine is potentially a GCE instance.
  * @since GDAL 2.3
  */
@@ -239,7 +239,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
                                                 CPLString& osCredentials)
 {
 #ifdef WIN32
-    const char* pszHome = CPLGetConfigOption("USERPROFILE", NULL);
+    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
     static const char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", nullptr);
@@ -344,7 +344,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
 
         if( bFirstTimeForDebugMessage )
         {
-            CPLDebug("GS", 
+            CPLDebug("GS",
                      "Using GS_SECRET_ACCESS_KEY and "
                      "GS_ACCESS_KEY_ID configuration options");
         }

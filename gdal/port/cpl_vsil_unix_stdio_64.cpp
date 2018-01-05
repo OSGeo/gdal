@@ -589,7 +589,7 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus( vsi_l_offset
 VSIUnixStdioFilesystemHandler::VSIUnixStdioFilesystemHandler()
 #ifdef VSI_COUNT_BYTES_READ
      : nTotalBytesRead(0),
-       hMutex(NULL)
+       hMutex(nullptr)
 #endif
 {}
 
@@ -605,9 +605,9 @@ VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
               CPL_FRMT_GUIB,
               nTotalBytesRead );
 
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 #endif
 

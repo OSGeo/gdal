@@ -51,7 +51,8 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn ) :
 {
     poFeatureDefn->Reference();
 
-    poDS->AddStandardFields( poFeatureDefn );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
+        !poDS->InlineBlocks(), poDS->ShouldIncludeRawCodeValues() );
 
     SetDescription( poFeatureDefn->GetName() );
 }
@@ -153,26 +154,6 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->SetField( "EntityHandle", pszValue );
         break;
 
-        // Extended entity data
-      case 1000:
-      case 1002:
-      case 1004:
-      case 1005:
-      case 1040:
-      case 1041:
-      case 1070:
-      case 1071:
-      {
-          CPLString osAggregate = poFeature->GetFieldAsString("ExtendedEntity");
-
-          if( !osAggregate.empty() )
-              osAggregate += " ";
-          osAggregate += TextRecode(pszValue);
-
-          poFeature->SetField( "ExtendedEntity", osAggregate );
-      }
-      break;
-
       // OCS vector.
       case 210:
         poFeature->oOCS.dfX = CPLAtof( pszValue );
@@ -186,7 +167,24 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
         poFeature->oOCS.dfZ = CPLAtof( pszValue );
         break;
 
+      case 330:
+        // No-one cares about this, so exclude from RawCodeValues
+        break;
+
       default:
+        if( poDS->ShouldIncludeRawCodeValues() )
+        {
+            char** papszRawCodeValues =
+                poFeature->GetFieldAsStringList( "RawCodeValues" );
+
+            papszRawCodeValues = CSLDuplicate( papszRawCodeValues );
+
+            papszRawCodeValues = CSLAddString( papszRawCodeValues,
+                CPLString().Printf( "%d %s", nCode,
+                TextRecode( pszValue ).c_str() ).c_str() );
+
+            poFeature->SetField( "RawCodeValues", papszRawCodeValues );
+        }
         break;
     }
 }
@@ -205,18 +203,19 @@ void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
     OGRDXFFeature* const poBlockFeature /* = NULL */ )
 
 {
-    if( poFeature->oStyleProperties.count( "WantBrush" ) )
+    const char* pszStyleString = poFeature->GetStyleString();
+
+    if( pszStyleString && STARTS_WITH_CI( pszStyleString, "BRUSH(" ) )
     {
-        PrepareHatchStyle( poFeature, poBlockFeature );
+        PrepareBrushStyle( poFeature, poBlockFeature );
     }
-    else if( poFeature->GetStyleString() &&
-        STARTS_WITH_CI( poFeature->GetStyleString(), "LABEL(" ) )
+    else if( pszStyleString && STARTS_WITH_CI( pszStyleString, "LABEL(" ) )
     {
         // Find the new color of this feature, and replace it into
         // the style string
         const CPLString osNewColor = poFeature->GetColor( poDS, poBlockFeature );
 
-        CPLString osNewStyle = poFeature->GetStyleString();
+        CPLString osNewStyle = pszStyleString;
         const size_t nColorStartPos = osNewStyle.rfind( ",c:" );
         if( nColorStartPos != std::string::npos )
         {
@@ -235,6 +234,21 @@ void OGRDXFLayer::PrepareFeatureStyle( OGRDXFFeature* const poFeature,
     {
         PrepareLineStyle( poFeature, poBlockFeature );
     }
+}
+
+/************************************************************************/
+/*                         PrepareBrushStyle()                          */
+/************************************************************************/
+
+void OGRDXFLayer::PrepareBrushStyle( OGRDXFFeature* const poFeature,
+    OGRDXFFeature* const poBlockFeature /* = NULL */ )
+
+{
+    CPLString osStyle = "BRUSH(fc:";
+    osStyle += poFeature->GetColor( poDS, poBlockFeature );
+    osStyle += ")";
+
+    poFeature->SetStyleString( osStyle );
 }
 
 /************************************************************************/
@@ -614,8 +628,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateMTEXT()
 
           case 1:
           case 3:
-            if( osText != "" )
-                osText += "\n";
             osText += TextUnescape(szLineBuf, true);
             break;
 
@@ -996,13 +1008,13 @@ OGRDXFFeature *OGRDXFLayer::TranslateTEXT( const bool bIsAttribOrAttdef )
     if( bHasAlignmentPoint && dfAlignmentPointX != dfX )
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfAlignmentPointX - dfX);
-        osStyle += CPLString().Printf(",dx:%s", szBuffer);
+        osStyle += CPLString().Printf(",dx:%sg", szBuffer);
     }
 
     if( bHasAlignmentPoint && dfAlignmentPointY != dfY )
     {
         CPLsnprintf(szBuffer, sizeof(szBuffer), "%.6g", dfAlignmentPointY - dfY);
-        osStyle += CPLString().Printf(",dy:%s", szBuffer);
+        osStyle += CPLString().Printf(",dy:%sg", szBuffer);
     }
 
     // Color
@@ -2417,7 +2429,7 @@ OGRDXFFeature *OGRDXFLayer::Translate3DFACE()
     poFeature->ApplyOCSTransformer( poLR );
     poFeature->SetGeometryDirectly( poPoly );
 
-    /* PrepareLineStyle( poFeature ); */
+    PrepareLineStyle( poFeature );
 
     return poFeature;
 }
@@ -2532,6 +2544,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         delete poFeature;
         return nullptr;
     }
+    if (nCode == 0)
+        poDS->UnreadValue();
 
     // do we want Z-coordinates?
     const bool bWantZ = dfZ1 != 0.0 || dfZ2 != 0.0 ||
@@ -2573,6 +2587,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
     if( nCornerCount == 1 )
     {
         poFinalGeom = poCorners[0].clone();
+
+        PrepareLineStyle( poFeature );
     }
     else if( nCornerCount == 2 )
     {
@@ -2580,6 +2596,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         poLS->setPoint( 0, &poCorners[0] );
         poLS->setPoint( 1, &poCorners[1] );
         poFinalGeom = poLS;
+
+        PrepareLineStyle( poFeature );
     }
     else
     {
@@ -2602,19 +2620,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
         OGRPolygon* poPoly = new OGRPolygon();
         poPoly->addRingDirectly( poLinearRing );
         poFinalGeom = poPoly;
+
+        PrepareBrushStyle( poFeature );
     }
 
     delete[] poCorners;
 
     poFeature->ApplyOCSTransformer( poFinalGeom );
-
     poFeature->SetGeometryDirectly( poFinalGeom );
-
-    if (nCode == 0)
-        poDS->UnreadValue();
-
-    // Set style pen color
-    PrepareLineStyle(poFeature);
 
     return poFeature;
 }
@@ -3140,7 +3153,18 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
                 iColumn * dfColumnSpacing * sin( oTransformer.dfAngle ) +
                     iRow * dfRowSpacing * cos( oTransformer.dfAngle ),
                 papszAttribs, apoAttribs );
+
+            // Prevent excessive memory usage with an arbitrary limit
+            if( apoPendingFeatures.size() > 100000 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                    "Too many features generated by MInsertBlock. "
+                    "Some features have been omitted." );
+                break;
+            }
         }
+        if( apoPendingFeatures.size() > 100000 )
+            break;
     }
 
     // The block geometries were appended to apoPendingFeatures

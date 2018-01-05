@@ -32,9 +32,9 @@
 #include "cpl_vsi.h"
 
 #include <cassert>
-#include <cstring>
 #include <cstdarg>
 #include <cstddef>
+#include <cstring>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -355,20 +355,35 @@ int VSIMkdir( const char *pszPathname, long mode )
 
 int VSIMkdirRecursive( const char *pszPathname, long mode )
 {
-    VSIStatBufL sStat;
-    CPLString osPathname(pszPathname);
-    CPLString osParentPath(CPLGetPath(osPathname));
-    if( VSIStatL( osParentPath, &sStat) != 0 )
+    if( pszPathname == nullptr || pszPathname[0] == '\0' ||
+        strncmp("/", pszPathname, 2) == 0 )
     {
-        if( VSIMkdirRecursive( osParentPath, mode ) != 0 )
-            return -1;
+        return -1;
     }
-    if( VSIStatL( osPathname, &sStat) == 0 &&
+
+    const CPLString osPathname(pszPathname);
+    VSIStatBufL sStat;
+    if( VSIStatL(osPathname, &sStat) == 0 &&
         VSI_ISDIR(sStat.st_mode) )
     {
         return 0;
     }
-    return VSIMkdir( osPathname, mode );
+    const CPLString osParentPath(CPLGetPath(osPathname));
+
+    // Prevent crazy paths from recursing forever.
+    if( osParentPath == osPathname ||
+        osParentPath.length() >= osPathname.length() )
+    {
+        return -1;
+    }
+
+    if( VSIStatL(osParentPath, &sStat) != 0 )
+    {
+        if( VSIMkdirRecursive(osParentPath, mode) != 0 )
+            return -1;
+    }
+
+    return VSIMkdir(osPathname, mode);
 }
 
 /************************************************************************/
@@ -474,6 +489,11 @@ int VSIRmdir( const char * pszDirname )
 
 int VSIRmdirRecursive( const char* pszDirname )
 {
+    if( pszDirname == nullptr || pszDirname[0] == '\0' ||
+        strncmp("/", pszDirname, 2) == 0 )
+    {
+        return -1;
+    }
     char** papszFiles = VSIReadDir(pszDirname);
     for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
     {
@@ -483,11 +503,11 @@ int VSIRmdirRecursive( const char* pszDirname )
             continue;
         }
         VSIStatBufL sStat;
-        CPLString osFilename(
+        const CPLString osFilename(
             CPLFormFilename(pszDirname, *papszIter, nullptr));
         if( VSIStatL(osFilename, &sStat) == 0 )
         {
-            if( VSI_ISDIR( sStat.st_mode ) )
+            if( VSI_ISDIR(sStat.st_mode) )
             {
                 if( VSIRmdirRecursive(osFilename) != 0 )
                 {
@@ -873,7 +893,7 @@ int VSIFCloseL( VSILFILE * fp )
  * Caution: vsi_l_offset is a unsigned type, so SEEK_CUR can only be used
  * for positive seek. If negative seek is needed, use
  * VSIFSeekL( fp, VSIFTellL(fp) + negative_offset, SEEK_SET ).
- * 
+ *
  * @param fp file handle opened with VSIFOpenL().
  * @param nOffset offset in bytes.
  * @param nWhence one of SEEK_SET, SEEK_CUR or SEEK_END.

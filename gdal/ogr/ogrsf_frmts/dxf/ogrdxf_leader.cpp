@@ -407,7 +407,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
               case 302:
                 if( osBlockAttributeHandle != "" )
                 {
-                    oBlockAttributes[osBlockAttributeHandle] = szLineBuf;
+                    oBlockAttributes[osBlockAttributeHandle] =
+                        TextUnescape( szLineBuf, true );
                     osBlockAttributeHandle = "";
                 }
                 break;
@@ -1056,7 +1057,7 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
         GenerateDefaultArrowhead( poArrowheadFeature, oPoint1, oPoint2,
             dfArrowheadSize / dfFirstSegmentLength );
 
-        PrepareLineStyle( poArrowheadFeature );
+        PrepareBrushStyle( poArrowheadFeature );
     }
     else
     {
@@ -1285,13 +1286,21 @@ static void InterpolateSpline( OGRLineString* const poLine,
     adfParameters.push_back( 0.0 );
     for( int iIndex = 1; iIndex < nDataPoints; iIndex++ )
     {
-        adfParameters.push_back( adfParameters[iIndex - 1] +
+        const double dfParameter = adfParameters[iIndex - 1] +
             PointDist( aoDataPoints[iIndex - 1].dfX,
                 aoDataPoints[iIndex - 1].dfY,
                 aoDataPoints[iIndex - 1].dfZ,
                 aoDataPoints[iIndex].dfX,
                 aoDataPoints[iIndex].dfY,
-                aoDataPoints[iIndex].dfZ ) );
+                aoDataPoints[iIndex].dfZ );
+
+        // Bail out in pathological cases. This will happen when
+        // some lengths are very large (above 10^16) and others are
+        // very small (such as 1)
+        if( dfParameter == adfParameters[iIndex - 1] )
+            return;
+
+        adfParameters.push_back( dfParameter );
     }
 
     const double dfTotalChordLength = adfParameters[adfParameters.size() - 1];

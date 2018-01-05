@@ -280,7 +280,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
         return OGRERR_FAILURE;
 
     oNextIt = mnRecordDesc.begin();
-    std::advance(oNextIt, nIndex);
+    std::advance(oNextIt, static_cast<size_t>(nIndex));
 
     return OGRERR_NONE;
 }
@@ -291,7 +291,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
 
 OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
 {
-    std::map<long, vsi_l_offset>::const_iterator IT = mnRecordDesc.find(static_cast<long>(nFID));
+    const auto IT = mnRecordDesc.find(static_cast<long>(nFID));
     if (IT != mnRecordDesc.end())
     {
         VSIFSeekL(fpSXF, IT->second, SEEK_SET);

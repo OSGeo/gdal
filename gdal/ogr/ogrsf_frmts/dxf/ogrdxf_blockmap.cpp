@@ -222,7 +222,8 @@ bool OGRDXFDataSource::PushBlockInsertion( const CPLString& osBlockName )
             aosBlockInsertionStack.end(), osBlockName )
         != aosBlockInsertionStack.end() )
     {
-        CPLDebug( "DXF", "Dangerous block recursion detected. "
+        CPLError( CE_Warning, CPLE_AppDefined,
+            "Dangerous block recursion detected. "
             "Some blocks have not been inserted." );
         return false;
     }

@@ -115,7 +115,7 @@ void CPLJSonStreamingParser::AdvanceChar(const char*& pStr, size_t& nLength)
         m_nLineCounter ++;
         m_nCharCounter = 0;
     }
-    else if( *pStr == 10 && m_nLastChar != 13 ) 
+    else if( *pStr == 10 && m_nLastChar != 13 )
     {
         m_nLineCounter ++;
         m_nCharCounter = 0;

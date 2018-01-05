@@ -65,7 +65,7 @@ struct tut_posix
     pid_t fork()
     {
         test_object<T> *self = dynamic_cast< tut::test_object<T>* >(this);
-        ensure("trying to call 'tut_fork' in ctor of test object", self != NULL);
+        ensure("trying to call 'tut_fork' in ctor of test object", self != nullptr);
 
         return self->fork_();
     }
@@ -73,7 +73,7 @@ struct tut_posix
     pid_t waitpid(pid_t pid, int *status, int flags = 0)
     {
         test_object<T> *self = dynamic_cast< tut::test_object<T>* >(this);
-        ensure("trying to call 'tut_waitpid' in ctor of test object", self != NULL);
+        ensure("trying to call 'tut_waitpid' in ctor of test object", self != nullptr);
 
         return self->waitpid_(pid, status, flags);
     }
@@ -81,7 +81,7 @@ struct tut_posix
     void ensure_child_exit(pid_t pid, int exit_status = 0)
     {
         test_object<T> *self = dynamic_cast< tut::test_object<T>* >(this);
-        ensure("trying to call 'ensure_child_exit' in ctor of test object", self != NULL);
+        ensure("trying to call 'ensure_child_exit' in ctor of test object", self != nullptr);
 
         int status;
         self->waitpid_(pid, &status);
@@ -93,7 +93,7 @@ struct tut_posix
     void ensure_child_signal(pid_t pid, int signal = SIGTERM)
     {
         test_object<T> *self = dynamic_cast< tut::test_object<T>* >(this);
-        ensure("trying to call 'ensure_child_signal' in ctor of test object", self != NULL);
+        ensure("trying to call 'ensure_child_signal' in ctor of test object", self != nullptr);
 
         int status;
         self->waitpid_(pid, &status);
@@ -106,7 +106,7 @@ struct tut_posix
         using namespace std;
 
         const test_object<T> *self = dynamic_cast< const tut::test_object<T>* >(this);
-        ensure("trying to call 'get_pids' in ctor of test object", self != NULL);
+        ensure("trying to call 'get_pids' in ctor of test object", self != nullptr);
 
         return self->get_pids_();
     }
@@ -333,7 +333,7 @@ private:
 
         FD_SET(pipe, &fdset);
 
-        int result = select(pipe+1, &fdset, NULL, NULL, &tv);
+        int result = select(pipe+1, &fdset, nullptr, nullptr, &tv);
         ensure_errno("sanity check on select() failed", result >= 0);
 
         if(result > 0)

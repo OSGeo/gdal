@@ -4938,6 +4938,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     FlushMetadata();
 
     CPLString osSQLCommand(pszSQLCommand);
+    if( !osSQLCommand.empty() && osSQLCommand.back() == ';' )
+        osSQLCommand.resize(osSQLCommand.size() - 1);
 
     if( pszDialect == nullptr || !EQUAL(pszDialect, "DEBUG") )
     {
@@ -4963,9 +4965,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case DELLAYER: command.                                 */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszSQLCommand, "DELLAYER:") )
+    if( STARTS_WITH_CI(osSQLCommand, "DELLAYER:") )
     {
-        const char *pszLayerName = pszSQLCommand + strlen("DELLAYER:");
+        const char *pszLayerName = osSQLCommand.c_str() + strlen("DELLAYER:");
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
@@ -4982,9 +4984,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Special case RECOMPUTE EXTENT ON command.                       */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszSQLCommand, "RECOMPUTE EXTENT ON ") )
+    if( STARTS_WITH_CI(osSQLCommand, "RECOMPUTE EXTENT ON ") )
     {
-        const char *pszLayerName = pszSQLCommand + strlen("RECOMPUTE EXTENT ON ");
+        const char *pszLayerName = osSQLCommand.c_str() + strlen("RECOMPUTE EXTENT ON ");
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
@@ -5003,9 +5005,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Intercept DROP TABLE                                            */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszSQLCommand, "DROP TABLE ") )
+    if( STARTS_WITH_CI(osSQLCommand, "DROP TABLE ") )
     {
-        const char *pszLayerName = pszSQLCommand + strlen("DROP TABLE ");
+        const char *pszLayerName = osSQLCommand.c_str() + strlen("DROP TABLE ");
 
         while( *pszLayerName == ' ' )
             pszLayerName++;
@@ -5021,9 +5023,9 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /* -------------------------------------------------------------------- */
 /*      Intercept ALTER TABLE ... RENAME TO                             */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszSQLCommand, "ALTER TABLE ") )
+    if( STARTS_WITH_CI(osSQLCommand, "ALTER TABLE ") )
     {
-        char **papszTokens = SQLTokenize( pszSQLCommand );
+        char **papszTokens = SQLTokenize( osSQLCommand );
         /* ALTER TABLE src_table RENAME TO dst_table */
         if( CSLCount(papszTokens) == 6 && EQUAL(papszTokens[3], "RENAME") &&
             EQUAL(papszTokens[4], "TO") )
@@ -5043,42 +5045,42 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         CSLDestroy(papszTokens);
     }
 
-    if( EQUAL(pszSQLCommand, "VACUUM") )
+    if( EQUAL(osSQLCommand, "VACUUM") )
     {
         ResetReadingAllLayers();
     }
 
-    if( EQUAL(pszSQLCommand, "BEGIN") )
+    if( EQUAL(osSQLCommand, "BEGIN") )
     {
         SoftStartTransaction();
         return nullptr;
     }
-    else if( EQUAL(pszSQLCommand, "COMMIT") )
+    else if( EQUAL(osSQLCommand, "COMMIT") )
     {
         SoftCommitTransaction();
         return nullptr;
     }
-    else if( EQUAL(pszSQLCommand, "ROLLBACK") )
+    else if( EQUAL(osSQLCommand, "ROLLBACK") )
     {
         SoftRollbackTransaction();
         return nullptr;
     }
 
     if( pszDialect != nullptr && EQUAL(pszDialect,"OGRSQL") )
-        return GDALDataset::ExecuteSQL( pszSQLCommand,
+        return GDALDataset::ExecuteSQL( osSQLCommand,
                                           poSpatialFilter,
                                           pszDialect );
     else if( pszDialect != nullptr && EQUAL(pszDialect,"INDIRECT_SQLITE") )
-        return GDALDataset::ExecuteSQL( pszSQLCommand,
+        return GDALDataset::ExecuteSQL( osSQLCommand,
                                           poSpatialFilter,
                                           "SQLITE" );
 
 #if SQLITE_VERSION_NUMBER < 3007017
     // Emulate PRAGMA application_id
-    if( EQUAL(pszSQLCommand, "PRAGMA application_id") )
+    if( EQUAL(osSQLCommand, "PRAGMA application_id") )
     {
         return new OGRSQLiteSingleFeatureLayer
-                                ( pszSQLCommand + 7, m_nApplicationId );
+                                ( osSQLCommand.c_str() + 7, m_nApplicationId );
     }
 #endif
 
@@ -5092,6 +5094,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
     /* the layer definition. */
     bool bUseStatementForGetNextFeature = true;
     bool bEmptyLayer = false;
+    CPLString osSQLCommandTruncated(osSQLCommand);
 
     if( osSQLCommand.ifind("SELECT ") == 0 &&
         CPLString(osSQLCommand.substr(1)).ifind("SELECT ") == std::string::npos &&
@@ -5102,20 +5105,20 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         size_t nOrderByPos = osSQLCommand.ifind(" ORDER BY ");
         if( nOrderByPos != std::string::npos )
         {
-            osSQLCommand.resize(nOrderByPos);
+            osSQLCommandTruncated.resize(nOrderByPos);
             bUseStatementForGetNextFeature = false;
         }
     }
 
-    int rc = sqlite3_prepare_v2( hDB, osSQLCommand.c_str(),
-                              static_cast<int>(osSQLCommand.size()),
+    int rc = sqlite3_prepare_v2( hDB, osSQLCommandTruncated.c_str(),
+                              static_cast<int>(osSQLCommandTruncated.size()),
                               &hSQLStmt, nullptr );
 
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
-                osSQLCommand.c_str(), sqlite3_errmsg(hDB) );
+                osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB) );
 
         if( hSQLStmt != nullptr )
         {
@@ -5135,13 +5138,13 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                   "In ExecuteSQL(): sqlite3_step(%s):\n  %s",
-                  osSQLCommand.c_str(), sqlite3_errmsg(hDB) );
+                  osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB) );
 
             sqlite3_finalize( hSQLStmt );
             return nullptr;
         }
 
-        if( EQUAL(pszSQLCommand, "VACUUM") )
+        if( EQUAL(osSQLCommand, "VACUUM") )
         {
             sqlite3_finalize( hSQLStmt );
             /* VACUUM rewrites the DB, so we need to reset the application id */
@@ -5149,7 +5152,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             return nullptr;
         }
 
-        if( !STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
+        if( !STARTS_WITH_CI(osSQLCommand, "SELECT ") )
         {
             sqlite3_finalize( hSQLStmt );
             return nullptr;
@@ -5163,12 +5166,12 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Special case for some functions which must be run               */
 /*      only once                                                       */
 /* -------------------------------------------------------------------- */
-    if( STARTS_WITH_CI(pszSQLCommand, "SELECT ") )
+    if( STARTS_WITH_CI(osSQLCommand, "SELECT ") )
     {
         for( unsigned int i=0; i < sizeof(apszFuncsWithSideEffects) /
                sizeof(apszFuncsWithSideEffects[0]); i++ )
         {
-            if( EQUALN(apszFuncsWithSideEffects[i], pszSQLCommand + 7,
+            if( EQUALN(apszFuncsWithSideEffects[i], osSQLCommand.c_str() + 7,
                        strlen(apszFuncsWithSideEffects[i])) )
             {
                 if (sqlite3_column_count( hSQLStmt ) == 1 &&
@@ -5184,7 +5187,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             }
         }
     }
-    else if( STARTS_WITH_CI(pszSQLCommand, "PRAGMA ") )
+    else if( STARTS_WITH_CI(osSQLCommand, "PRAGMA ") )
     {
         if (sqlite3_column_count( hSQLStmt ) == 1 &&
             sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_INTEGER )
@@ -5194,7 +5197,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             sqlite3_finalize( hSQLStmt );
 
             return new OGRSQLiteSingleFeatureLayer
-                                ( pszSQLCommand + 7, ret );
+                                ( osSQLCommand.c_str() + 7, ret );
         }
         else if (sqlite3_column_count( hSQLStmt ) == 1 &&
                  sqlite3_column_type( hSQLStmt, 0 ) == SQLITE_TEXT )
@@ -5202,7 +5205,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
             const char* pszRet = (const char*) sqlite3_column_text( hSQLStmt, 0 );
 
             OGRLayer* poRet = new OGRSQLiteSingleFeatureLayer
-                                ( pszSQLCommand + 7, pszRet );
+                                ( osSQLCommand.c_str() + 7, pszRet );
 
             sqlite3_finalize( hSQLStmt );
 
@@ -5214,7 +5217,7 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
 /*      Create layer.                                                   */
 /* -------------------------------------------------------------------- */
 
-    CPLString osSQL = pszSQLCommand;
+    CPLString osSQL = osSQLCommand;
     OGRLayer* poLayer = new OGRGeoPackageSelectLayer(
         this, osSQL, hSQLStmt,
         bUseStatementForGetNextFeature, bEmptyLayer );

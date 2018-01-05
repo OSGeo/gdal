@@ -1392,9 +1392,9 @@ CPLErr GDALDataset::RasterIOResampled(
     // Do the resampling.
     if( bUseWarp )
     {
-        VRTDatasetH hVRTDS = NULL;
-        GDALRasterBandH hVRTBand = NULL;
-        if( GetDataset() == NULL )
+        VRTDatasetH hVRTDS = nullptr;
+        GDALRasterBandH hVRTBand = nullptr;
+        if( GetDataset() == nullptr )
         {
             /* Create VRT dataset that wraps the whole dataset */
             hVRTDS = VRTCreate(nRasterXSize, nRasterYSize);
@@ -1406,7 +1406,7 @@ CPLErr GDALDataset::RasterIOResampled(
                                 nRasterXSize, nRasterYSize,
                                 0, 0,
                                 nRasterXSize, nRasterYSize,
-                                NULL, VRT_NODATA_UNSET );
+                                nullptr, VRT_NODATA_UNSET );
 
             /* Add a mask band if needed */
             if( GetMaskFlags() != GMF_ALL_VALID )
@@ -1449,8 +1449,8 @@ CPLErr GDALDataset::RasterIOResampled(
                                       nBufXSize, nBufYSize );
         GDALDestroyWarpOperation( hWarpOperation );
 
-        psWarpOptions->panSrcBands = NULL;
-        psWarpOptions->panDstBands = NULL;
+        psWarpOptions->panSrcBands = nullptr;
+        psWarpOptions->panDstBands = nullptr;
         GDALDestroyWarpOptions( psWarpOptions );
 
         if( hVRTDS )
@@ -1693,7 +1693,7 @@ CPLErr GDALDataset::RasterIOResampled(
                         eWrkDataType,
                         (GByte*)pChunk,
                         nBandCount,
-                        bNoDataMaskFullyOpaque ? NULL : pabyChunkNoDataMask,
+                        bNoDataMaskFullyOpaque ? nullptr : pabyChunkNoDataMask,
                         nChunkXOffQueried - (bHasXOffVirtual ? 0 : nXOff),
                         nChunkXSizeQueried,
                         nChunkYOffQueried - (bHasYOffVirtual ? 0 : nYOff),
@@ -1706,7 +1706,7 @@ CPLErr GDALDataset::RasterIOResampled(
                         pszResampling,
                         FALSE /*bHasNoData*/,
                         0.f /* fNoDataValue */,
-                        NULL /* color table*/,
+                        nullptr /* color table*/,
                         eDataType );
                 }
                 else

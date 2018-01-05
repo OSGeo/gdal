@@ -847,7 +847,7 @@ static int unzlocal_GetCurrentFileInfoInternal (
     }
 
 #if 0
-    if ((err==UNZ_OK) && (extraField!=NULL))
+    if ((err==UNZ_OK) && (extraField != nullptr))
     {
         uLong64 uSizeRead = 0;
         if (file_info.size_file_extra<extraFieldBufferSize)
@@ -1012,7 +1012,7 @@ static int unzlocal_GetCurrentFileInfoInternal (
     }
 
 #if 0
-    if ((err==UNZ_OK) && (szComment!=NULL))
+    if ((err==UNZ_OK) && (szComment != nullptr))
     {
         uLong64 uSizeRead = 0;
         if (file_info.size_file_comment<commentBufferSize)
@@ -1446,7 +1446,7 @@ extern int ZEXPORT cpl_unzOpenCurrentFile3 (unzFile file, int* method,
     s->pfile_in_zip_read = pfile_in_zip_read_info;
 
 #    ifndef NOUNCRYPT
-    if (password != NULL)
+    if (password != nullptr)
     {
         s->pcrc_32_tab = get_crc_table();
         init_keys(password,s->keys,s->pcrc_32_tab);

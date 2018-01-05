@@ -459,11 +459,11 @@ void CPLEmergencyError( const char *pszMessage )
 static int CPLGetProcessMemorySize()
 {
     FILE* fp = fopen("/proc/self/status", "r");
-    if( fp == NULL )
+    if( fp == nullptr )
         return -1;
     int nRet = -1;
     char szLine[128] = {};
-    while( fgets(szLine, sizeof(szLine), fp) != NULL )
+    while( fgets(szLine, sizeof(szLine), fp) != nullptr )
     {
         if( STARTS_WITH(szLine, "VmSize:") )
         {

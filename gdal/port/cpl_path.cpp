@@ -410,7 +410,7 @@ char *CPLGetCurrentDir()
     return getcwd( pszDirPath, nPathMax );
 }
 #else  // !HAVE_GETCWD
-char *CPLGetCurrentDir() { return NULL; }
+char *CPLGetCurrentDir() { return nullptr; }
 #endif // HAVE_GETCWD
 
 /************************************************************************/
@@ -473,6 +473,27 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
     }
 
     return pszStaticResult;
+}
+
+/************************************************************************/
+/*                       RequiresUnixPathSeparator()                    */
+/************************************************************************/
+
+static bool RequiresUnixPathSeparator(const char* pszPath)
+{
+    return strcmp(pszPath, "/vsimem") == 0 ||
+            STARTS_WITH(pszPath, "/vsimem/") ||
+            STARTS_WITH(pszPath, "/vsicurl/") ||
+            STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
+            STARTS_WITH(pszPath, "/vsis3/") ||
+            STARTS_WITH(pszPath, "/vsis3_streaming/") ||
+            STARTS_WITH(pszPath, "/vsigs/") ||
+            STARTS_WITH(pszPath, "/vsigs_streaming/") ||
+            STARTS_WITH(pszPath, "/vsiaz/") ||
+            STARTS_WITH(pszPath, "/vsiaz_streaming/") ||
+            STARTS_WITH(pszPath, "/vsioss/") ||
+            STARTS_WITH(pszPath, "/vsioss_streaming/") ||
+            STARTS_WITH(pszPath, "/vsizip/");
 }
 
 /************************************************************************/
@@ -565,11 +586,7 @@ const char *CPLFormFilename( const char * pszPath,
     {
         // FIXME? Would be better to ask the filesystems what it
         // prefers as directory separator?
-        if( strcmp(pszPath, "/vsimem") == 0 ||
-            STARTS_WITH(pszPath, "/vsimem/") ||
-            STARTS_WITH(pszPath, "/vsicurl/") ||
-            STARTS_WITH(pszPath, "/vsicurl_streaming/") ||
-            STARTS_WITH(pszPath, "/vsizip/") )
+        if( RequiresUnixPathSeparator(pszPath) )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -750,9 +767,7 @@ const char *CPLProjectRelativeFilename( const char *pszProjectDir,
         // FIXME: Better to ask the filesystems what it
         // prefers as directory separator?
         const char* pszAddedPathSep = nullptr;
-        if( strcmp(pszStaticResult, "/vsimem") == 0 ||
-            STARTS_WITH(pszStaticResult, "/vsicurl/") ||
-            STARTS_WITH(pszStaticResult, "/vsimem/") )
+        if( RequiresUnixPathSeparator(pszStaticResult) )
             pszAddedPathSep = "/";
         else
             pszAddedPathSep = SEP_STRING;
@@ -1106,7 +1121,7 @@ const char *CPLGenerateTempFilename( const char *pszStem )
 
 /**
  * Expands ~/ at start of filename.
- * 
+ *
  * Assumes that the HOME configuration option is defined.
  *
  * @param pszFilename filename potentially starting with ~/

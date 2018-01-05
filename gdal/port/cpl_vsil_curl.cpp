@@ -1480,7 +1480,7 @@ retry:
         osHeaderRange.Printf("Range: bytes=%s", rangeStr);
         // So it gets included in Azure signature
         headers = curl_slist_append(headers, osHeaderRange.c_str());
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
     }
     else
         curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, rangeStr);
@@ -1992,7 +1992,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
             char* pszRange = CPLStrdup(osHeaderRange);
             apszRanges.push_back(pszRange);
             headers = curl_slist_append(headers, pszRange);
-            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+            curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
         }
         else
         {
@@ -4149,7 +4149,7 @@ char** VSICurlFilesystemHandler::GetFileList(const char *pszDirname,
         struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, osDirname.c_str(), nullptr);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
         WriteFuncStruct sWriteFuncData;
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
@@ -4521,7 +4521,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
     bool IsDirectoryFromExists( const char* pszVerb,
                                 int response_code ) override
         {
-            // A bit dirty, but on S3, a GET on a existing directory returns a 416 
+            // A bit dirty, but on S3, a GET on a existing directory returns a 416
             return response_code == 416 && EQUAL(pszVerb, "GET") &&
                    CPLString(m_pszURL).back() == '/';
         }
@@ -5500,11 +5500,11 @@ VSIVirtualHandle* VSIS3FSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != NULL)
+        /*if( strchr(pszAccess, '+') != nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "w+ not supported for /vsis3. Only w");
-            return NULL;
+            return nullptr;
         }*/
         VSIS3HandleHelper* poS3HandleHelper =
             VSIS3HandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
@@ -5900,12 +5900,12 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
                 poS3HandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
         }
 
-        struct curl_slist* headers = 
+        struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, poS3HandleHelper->GetURL(), nullptr);
         // Disable automatic redirection
         curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0 );
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
@@ -6707,11 +6707,11 @@ VSIVirtualHandle* VSIAzureFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != NULL)
+        /*if( strchr(pszAccess, '+') != nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "w+ not supported for /vsis3. Only w");
-            return NULL;
+            return nullptr;
         }*/
         VSIAzureBlobHandleHelper* poHandleHelper =
             VSIAzureBlobHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
@@ -6959,10 +6959,10 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
                 poHandleHelper->AddQueryParameter("prefix", osObjectKey + "/");
         }
 
-        struct curl_slist* headers = 
+        struct curl_slist* headers =
             VSICurlSetOptions(hCurlHandle, poHandleHelper->GetURL(), nullptr);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, NULL);
+        curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, nullptr);
 
         VSICURLInitWriteFuncStruct(&sWriteFuncData, nullptr, nullptr, nullptr);
         curl_easy_setopt(hCurlHandle, CURLOPT_WRITEDATA, &sWriteFuncData);
@@ -7153,11 +7153,11 @@ VSIVirtualHandle* VSIOSSFSHandler::Open( const char *pszFilename,
 
     if( strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr )
     {
-        /*if( strchr(pszAccess, '+') != NULL)
+        /*if( strchr(pszAccess, '+') != nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                     "w+ not supported for /vsioss. Only w");
-            return NULL;
+            return nullptr;
         }*/
         VSIOSSHandleHelper* poHandleHelper =
             VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),

@@ -146,7 +146,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
     char *pszTmpPath = CPLStrdup(pszFname);
     const int nTotalLen = static_cast<int>(strlen(pszTmpPath));
     int iTmpPtr = nTotalLen;
-    GBool bValidPath = false;
+    bool bValidPath = false;
 
     while(iTmpPtr > 0 && !bValidPath)
     {

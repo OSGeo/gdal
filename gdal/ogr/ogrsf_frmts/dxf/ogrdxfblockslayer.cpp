@@ -44,7 +44,8 @@ OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
 
     poFeatureDefn->Reference();
 
-    poDS->AddStandardFields( poFeatureDefn );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
+        !poDS->InlineBlocks(), poDS->ShouldIncludeRawCodeValues() );
 }
 
 /************************************************************************/

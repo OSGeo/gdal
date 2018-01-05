@@ -62,7 +62,7 @@ def ogr_dxf_1():
         return 'fail'
 
     defn = gdaltest.dxf_layer.GetLayerDefn()
-    if defn.GetFieldCount() != 6:
+    if defn.GetFieldCount() != 5:
         gdaltest.post_reason( 'did not get expected number of fields.' )
         return 'fail'
 
@@ -286,7 +286,7 @@ def ogr_dxf_8():
     if ogrtest.check_feature_geometry( feat, 'POINT (42.815907752635709 131.936242584545397)' ):
         return 'fail'
 
-    expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g)'
+    expected_style = 'LABEL(f:"Arial",t:"54.33",p:5,a:43.3,s:2.5g,c:#000000)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string:\n%s\ninstead of:\n%s' % (feat.GetStyleString(),expected_style) )
         return 'fail'
@@ -1121,7 +1121,7 @@ def ogr_dxf_22():
         feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"SwissCheese",bo:1,t:"' + test_text + '",a:45,s:10g,w:51,c:#ff0000)':
         gdaltest.post_reason('bad style')
         feat.DumpReadable()
         print(style)
@@ -1154,7 +1154,7 @@ def ogr_dxf_22():
         feat.DumpReadable()
         return 'fail'
     style = feat.GetStyleString()
-    if style != 'LABEL(f:"Arial",t:"' + test_text + '",a:45,s:10g,c:#ff0000)':
+    if style != 'LABEL(f:"SwissCheese",bo:1,t:"' + test_text + '",a:45,s:10g,w:51,c:#ff0000)':
         gdaltest.post_reason('bad style')
         feat.DumpReadable()
         print(style)
@@ -1821,11 +1821,13 @@ def ogr_dxf_31():
     return 'success'
 
 ###############################################################################
-# OCS2WCS transformations 2
+# OCS2WCS transformations 2. Also test RawCodeValues
 
 def ogr_dxf_32():
 
+    gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', 'TRUE')
     ds = ogr.Open('data/ocs2wcs2.dxf')
+    gdal.SetConfigOption('DXF_INCLUDE_RAW_CODE_VALUES', None)
     lyr = ds.GetLayer(0)
 
 # INFO: Open of `ocs2wcs2.dxf' using driver `DXF' successful.
@@ -1850,7 +1852,8 @@ def ogr_dxf_32():
 #   EntityHandle (String) = 1B3
 #   LINESTRING (1 1,2 1,1 2,1 1)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'LINESTRING (1 1,2 1,1 2,1 1)'):
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING (1 1,2 1,1 2,1 1)') \
+    or feat.GetField('RawCodeValues') != ['43 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -1858,7 +1861,8 @@ def ogr_dxf_32():
 #   EntityHandle (String) = 1B4
 #   LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry( feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)'):
+    if ogrtest.check_feature_geometry( feat, 'LINESTRING Z (1 1 0,1 2 0,2 2 0,1 1 0)') \
+    or feat.GetField('RawCodeValues') != ['66      1','10 0.0','20 0.0','30 0.0']:
         feat.DumpReadable()
         return 'fail'
 
@@ -2612,13 +2616,15 @@ def ogr_dxf_38():
     ds = ogr.Open('data/solid-less-than-4-vertices.dxf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)':
+    if f.GetGeometryRef().ExportToWkt() != 'POINT (0 2)' \
+    or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)':
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (0.5 2.0,1 2)' \
+    or f.GetStyleString() != 'PEN(c:#000000)':
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -2890,7 +2896,7 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#ff0000)' \
+    if f.GetStyleString() != 'BRUSH(fc:#ff0000)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((-20.9601206293303 38.1204894796201 30,-21.121645731992 38.035579873508 30,-20.9963899665916 38.1682862909638 30,-20.9601206293303 38.1204894796201 30))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -2905,7 +2911,7 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#00ff00)' \
+    if f.GetStyleString() != 'BRUSH(fc:#00ff00)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON ((27.2 80.4,30.4 82.8,32.8 79.6,29.6 77.2,27.2 80.4))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -2921,7 +2927,7 @@ def ogr_dxf_44():
     # Check that the very long text string in the MTEXT entity associated
     # to this LEADER is captured correctly
     f = lyr.GetNextFeature()
-    if len( f.GetField('Text') ) != 320:
+    if len( f.GetField('Text') ) != 319:
         gdaltest.post_reason( 'Wrong text length: got %d' % len( f.GetField('Text') ) )
         return 'fail'
 
@@ -2989,14 +2995,14 @@ def ogr_dxf_44():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#0000ff)' \
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((7.1420359016196 -8.4432726642857 0,5 -5 0,8.1429872575166 -7.56243547109634 0,7.1420359016196 -8.4432726642857 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'PEN(c:#0000ff)' \
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)' \
     or ogrtest.check_feature_geometry(f, 'POLYGON Z ((18.6352657907565 -13.8186312970179 0,20 -10 0,19.9475102227214 -14.0548352947716 0,18.6352657907565 -13.8186312970179 0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -3025,9 +3031,15 @@ def ogr_dxf_44():
         f.DumpReadable()
         return 'fail'
 
+    if version_info >= (3,0,0):
+        test_text = 'Apples\u00B1'
+    else:
+        exec("test_text = u'Apples\u00B1'")
+        test_text = test_text.encode('utf-8')
+
     f = lyr.GetNextFeature()
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"Apples",p:2,s:1g,c:#ff0000,a:10)' \
-    or f.GetField('Text') != 'Apples' \
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"' + test_text + '",p:2,s:1g,c:#ff0000,a:10)' \
+    or f.GetField('Text') != test_text \
     or ogrtest.check_feature_geometry(f, 'POINT Z (-42.7597068401767 -14.5165110820149 0)') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -3230,7 +3242,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:11,s:0.18g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"10.0000",p:11,s:0.18g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on first DIMENSION text' )
         f.DumpReadable()
         return 'fail'
@@ -3262,7 +3274,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"7.1",p:11,a:-45,s:0.48g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"7.1",p:11,a:-45,s:0.48g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on second DIMENSION text' )
         f.DumpReadable()
         return 'fail'
@@ -3294,7 +3306,7 @@ def ogr_dxf_47():
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"±2 3\n\\P4 5.0000",p:11,s:0.18g,c:#000000)':
         gdaltest.post_reason( 'Wrong style string on third DIMENSION text' )
         f.DumpReadable()
         return 'fail'
@@ -3333,7 +3345,7 @@ def ogr_dxf_48():
     # colored ByLayer; the layer the block is inserted on (_K_POINTS)
     # is colored red
     f = lyr.GetFeature(4)
-    if f.GetStyleString() != 'PEN(c:#ff0000)':
+    if f.GetStyleString() != 'BRUSH(fc:#ff0000)':
         gdaltest.post_reason( 'Wrong style string on feature 4' )
         f.DumpReadable()
         return 'fail'
@@ -3352,7 +3364,7 @@ def ogr_dxf_48():
     # The second arrowhead, like the dimension line, is set directly
     # to blue
     f = lyr.GetFeature(6)
-    if f.GetStyleString() != 'PEN(c:#0000ff)':
+    if f.GetStyleString() != 'BRUSH(fc:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 6' )
         f.DumpReadable()
         return 'fail'
@@ -3420,7 +3432,7 @@ def ogr_dxf_49():
         gdaltest.post_reason( 'Wrong Text value on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
-    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293,c:#ff0000)':
+    if f.GetStyleString() != 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293g,c:#ff0000)':
         gdaltest.post_reason( 'Wrong style string on first ATTRIB on first INSERT' )
         f.DumpReadable()
         return 'fail'
@@ -3486,7 +3498,7 @@ def ogr_dxf_50():
     # Text in Times New Roman bold italic, stretched 190%, color ByLayer
     # inside block inserted on a blue layer
     f = lyr.GetFeature(0)
-    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151,dy:4.88825,c:#0000ff)':
+    if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Some nice text",p:5,s:10g,w:190,dx:84.3151g,dy:4.88825g,c:#0000ff)':
         gdaltest.post_reason( 'Wrong style string on feature 0' )
         f.DumpReadable()
         return 'fail'
@@ -3540,7 +3552,7 @@ def ogr_dxf_51():
 
     lyr = ds.GetLayer(0)
 
-    wanted_style = ['a:330','c:#000000','dx:1.96672','dy:-1.13549','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
+    wanted_style = ['a:330','c:#000000','dx:1.96672g','dy:-1.13549g','f:"Arial"','p:2','s:3g','t:"some text"','w:25']
 
     # Three text features, all with the same effective geometry and style
     for x in range(3):
@@ -3611,7 +3623,7 @@ def ogr_dxf_52():
         return 'fail'
 
     # INSERT with rows/columns (MInsert)
-    minsert_attrib_style = 'LABEL(f:"Arial",t:"N",p:5,a:13,s:8g,w:120,dx:2.21818,dy:4.61732,c:#000000)'
+    minsert_attrib_style = 'LABEL(f:"Arial",t:"N",p:5,a:13,s:8g,w:120,dx:2.21818g,dy:4.61732g,c:#000000)'
 
     f = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(f, 'LINESTRING (57.7504894565613 50.7437006478524,69.4429302339842 53.4431132999787,71.6924407774228 43.6994126521264,60 41,57.7504894565613 50.7437006478524)') != 0:

@@ -707,7 +707,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     if (level==1)
       zi->ci.flag |= 6;
 #ifndef NOCRYPT
-    if (password != NULL)
+    if (password != nullptr)
       zi->ci.flag |= 1;
 #endif
 
@@ -821,7 +821,7 @@ extern int ZEXPORT cpl_zipOpenNewFileInZip3 (
     }
 #ifndef NOCRYPT
     zi->ci.crypt_header_size = 0;
-    if ((err==Z_OK) && (password != NULL))
+    if ((err==Z_OK) && (password != nullptr))
     {
         unsigned char bufHead[RAND_HEAD_LEN];
         unsigned int sizeHead = 0;

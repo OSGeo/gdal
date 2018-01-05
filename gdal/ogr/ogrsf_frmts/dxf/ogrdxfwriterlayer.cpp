@@ -52,44 +52,7 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
-    OGRFieldDefn  oLayerField( "Layer", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLayerField );
-
-    OGRFieldDefn  oClassField( "SubClasses", OFTString );
-    poFeatureDefn->AddFieldDefn( &oClassField );
-
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
-    poFeatureDefn->AddFieldDefn( &oExtendedField );
-
-    OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
-    poFeatureDefn->AddFieldDefn( &oLinetypeField );
-
-    OGRFieldDefn  oEntityHandleField( "EntityHandle", OFTString );
-    poFeatureDefn->AddFieldDefn( &oEntityHandleField );
-
-    OGRFieldDefn  oTextField( "Text", OFTString );
-    poFeatureDefn->AddFieldDefn( &oTextField );
-
-    OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockNameField );
-
-    OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oScaleField );
-
-    OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
-    poFeatureDefn->AddFieldDefn( &oBlockAngleField );
-
-    OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
-
-    OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
-    poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
-
-    OGRFieldDefn  oBlockField( "Block", OFTString );
-    poFeatureDefn->AddFieldDefn( &oBlockField );
-
-    OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
-    poFeatureDefn->AddFieldDefn( &oAttributeTagField );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn, true, false );
 }
 
 /************************************************************************/
@@ -472,6 +435,41 @@ CPLString OGRDXFWriterLayer::TextEscape( const char *pszInput )
 }
 
 /************************************************************************/
+/*                     PrepareTextStyleDefinition()                     */
+/************************************************************************/
+std::map<CPLString, CPLString>
+OGRDXFWriterLayer::PrepareTextStyleDefinition( OGRStyleLabel *poLabelTool )
+{
+    GBool bDefault;
+
+    std::map<CPLString, CPLString> oTextStyleDef;
+
+/* -------------------------------------------------------------------- */
+/*      Fetch the data for this text style.                             */
+/* -------------------------------------------------------------------- */
+    const char *pszFontName = poLabelTool->FontName(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Font"] = pszFontName;
+
+    const GBool bBold = poLabelTool->Bold(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Bold"] = bBold ? "1" : "0";
+
+    const GBool bItalic = poLabelTool->Italic(bDefault);
+    if( !bDefault )
+        oTextStyleDef["Italic"] = bItalic ? "1" : "0";
+
+    const double dfStretch = poLabelTool->Stretch(bDefault);
+    if( !bDefault )
+    {
+        oTextStyleDef["Width"] = CPLString().Printf( "%f",
+            dfStretch / 100.0 );
+    }
+
+    return oTextStyleDef;
+}
+
+/************************************************************************/
 /*                             WriteTEXT()                              */
 /************************************************************************/
 
@@ -500,6 +498,9 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* ==================================================================== */
 /*      Process the LABEL tool.                                         */
 /* ==================================================================== */
+    double dfDx = 0.0;
+    double dfDy = 0.0;
+
     if( poTool && poTool->GetType() == OGRSTCLabel )
     {
         OGRStyleLabel *poLabel = (OGRStyleLabel *) poTool;
@@ -517,8 +518,6 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
         const double dfAngle = poLabel->Angle(bDefault);
 
-        // The DXF2000 reference says this is in radians, but in files
-        // I see it seems to be in degrees. Perhaps this is version dependent?
         if( !bDefault )
             WriteValue( 50, dfAngle );
 
@@ -547,6 +546,12 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         }
 
 /* -------------------------------------------------------------------- */
+/*      Offset                                                          */
+/* -------------------------------------------------------------------- */
+        dfDx = poLabel->SpacingX(bDefault);
+        dfDy = poLabel->SpacingY(bDefault);
+
+/* -------------------------------------------------------------------- */
 /*      Escape the text, and convert to ISO8859.                        */
 /* -------------------------------------------------------------------- */
         const char *pszText = poLabel->TextString( bDefault );
@@ -554,8 +559,43 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
         if( pszText != nullptr && !bDefault )
         {
             CPLString osEscaped = TextEscape( pszText );
+            while( osEscaped.size() > 250 )
+            {
+                WriteValue( 3, osEscaped.substr( 0, 250 ).c_str() );
+                osEscaped.erase( 0, 250 );
+            }
             WriteValue( 1, osEscaped );
         }
+
+/* -------------------------------------------------------------------- */
+/*      Store the text style in the map.                                */
+/* -------------------------------------------------------------------- */
+        std::map<CPLString, CPLString> oTextStyleDef =
+            PrepareTextStyleDefinition( poLabel );
+        CPLString osStyleName;
+
+        for( const auto& oPair: oNewTextStyles )
+        {
+            if( oPair.second == oTextStyleDef )
+            {
+                osStyleName = oPair.first;
+                break;
+            }
+        }
+
+        if( osStyleName == "" )
+        {
+
+            do
+            {
+                osStyleName.Printf( "AutoTextStyle-%d", nNextAutoID++ );
+            }
+            while( poDS->oHeaderDS.TextStyleExists( osStyleName ) );
+
+            oNewTextStyles[osStyleName] = oTextStyleDef;
+        }
+
+        WriteValue( 7, osStyleName );
     }
 
     delete poTool;
@@ -565,8 +605,8 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
 
-    WriteValue( 10, poPoint->getX() );
-    if( !WriteValue( 20, poPoint->getY() ) )
+    WriteValue( 10, poPoint->getX() + dfDx );
+    if( !WriteValue( 20, poPoint->getY() + dfDy ) )
         return OGRERR_FAILURE;
 
     if( poPoint->getGeometryType() == wkbPoint25D )
@@ -967,9 +1007,14 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
     WriteValue( 100, "AcDbEntity" );
     WriteValue( 100, "AcDbHatch" );
 
-    WriteValue( 10, 0 ); // elevation point X. 0 for DXF
-    WriteValue( 20, 0 ); // elevation point Y
-    WriteValue( 30, 0 ); // elevation point Z
+    // Figure out "average" elevation
+    OGREnvelope3D oEnv;
+    poGeom->getEnvelope( &oEnv );
+    WriteValue( 10, 0 ); // elevation point X = 0
+    WriteValue( 20, 0 ); // elevation point Y = 0
+    // elevation point Z = constant elevation
+    WriteValue( 30, oEnv.MinZ + ( oEnv.MaxZ - oEnv.MinZ ) / 2 );
+
     WriteValue(210, 0 ); // extrusion direction X
     WriteValue(220, 0 ); // extrusion direction Y
     WriteValue(230,1.0); // extrusion direction Z

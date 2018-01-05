@@ -1221,7 +1221,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
 
 #ifdef notdef
     if( location == EXIF_IFD &&
-        CSLFetchNameValue(papszEXIFMetadata, "EXIF_ExifVersion") == NULL )
+        CSLFetchNameValue(papszEXIFMetadata, "EXIF_ExifVersion") == nullptr )
     {
         const GUInt16 EXIF_VERSION = 0x9000;
         TagValue tag;

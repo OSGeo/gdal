@@ -44,7 +44,8 @@ OGRDXFDataSource::OGRDXFDataSource() :
     iEntitiesSectionOffset(0),
     bInlineBlocks(false),
     bMergeBlockGeometries(false),
-    bTranslateEscapeSequences(false)
+    bTranslateEscapeSequences(false),
+    bIncludeRawCodeValues(false)
 {}
 
 /************************************************************************/
@@ -112,6 +113,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
     bTranslateEscapeSequences = CPLTestBool(
         CPLGetConfigOption( "DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE" ) );
+    bIncludeRawCodeValues = CPLTestBool(
+        CPLGetConfigOption( "DXF_INCLUDE_RAW_CODE_VALUES", "FALSE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
@@ -625,6 +628,22 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
 }
 
 /************************************************************************/
+/*                           TextStyleExists()                          */
+/************************************************************************/
+
+bool OGRDXFDataSource::TextStyleExists( const char *pszTextStyle )
+
+{
+    if( !pszTextStyle )
+        return false;
+
+    CPLString osTextStyleUpper = pszTextStyle;
+    osTextStyleUpper.toupper();
+
+    return oTextStyleTable.count( osTextStyleUpper ) > 0;
+}
+
+/************************************************************************/
 /*                       LookupTextStyleProperty()                      */
 /************************************************************************/
 
@@ -640,7 +659,7 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(
 
     if( pszProperty &&
         oTextStyleTable.count( osTextStyleUpper ) > 0 &&
-        oTextStyleTable[pszTextStyle].count( pszProperty ) > 0 )
+        oTextStyleTable[osTextStyleUpper].count( pszProperty ) > 0 )
     {
         return (oTextStyleTable[osTextStyleUpper])[pszProperty];
     }
@@ -877,7 +896,8 @@ const char *OGRDXFDataSource::GetVariable( const char *pszName,
 /*                         AddStandardFields()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
+void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
+    const bool bIncludeExtraBlockFields, const bool bIncludeRawCodeField )
 
 {
     OGRFieldDefn  oLayerField( "Layer", OFTString );
@@ -886,8 +906,11 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     OGRFieldDefn  oClassField( "SubClasses", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
 
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
-    poFeatureDefn->AddFieldDefn( &oExtendedField );
+    if( bIncludeRawCodeField )
+    {
+        OGRFieldDefn  oRawCodeField( "RawCodeValues", OFTStringList );
+        poFeatureDefn->AddFieldDefn( &oRawCodeField );
+    }
 
     OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
     poFeatureDefn->AddFieldDefn( &oLinetypeField );
@@ -898,7 +921,7 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    if( !bInlineBlocks )
+    if( bIncludeExtraBlockFields )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
