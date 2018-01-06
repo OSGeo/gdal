@@ -106,18 +106,22 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
-    return ReadGroup( "" );
+    return ReadGroup( "", 0 );
 }
 
 /************************************************************************/
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-bool CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
+bool CPLKeywordParser::ReadGroup( const char *pszPathPrefix, int nRecLevel )
 
 {
     CPLString osName;
     CPLString osValue;
+
+    // Arbitrary threshold to avoid stack overflow
+    if( nRecLevel == 100 )
+        return false;
 
     for( ; true; )
     {
@@ -126,7 +130,8 @@ bool CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 
         if( EQUAL(osName, "BEGIN_GROUP") || EQUAL(osName, "GROUP") )
         {
-            if( !ReadGroup((CPLString(pszPathPrefix) + osValue + ".").c_str()) )
+            if( !ReadGroup((CPLString(pszPathPrefix) + osValue + ".").c_str(),
+                           nRecLevel + 1) )
                 return false;
         }
         else if( STARTS_WITH_CI(osName, "END") )
