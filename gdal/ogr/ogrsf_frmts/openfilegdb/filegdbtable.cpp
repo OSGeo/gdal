@@ -61,6 +61,17 @@ namespace OpenFileGDB
 {
 
 /************************************************************************/
+/*                           SanitizeScale()                            */
+/************************************************************************/
+
+static double SanitizeScale(double dfVal)
+{
+    if( dfVal == 0.0 )
+        return std::numeric_limits<double>::min(); // to prevent divide by zero
+    return dfVal;
+}
+
+/************************************************************************/
 /*                      FileGDBTablePrintError()                        */
 /************************************************************************/
 
@@ -980,6 +991,7 @@ int FileGDBTable::Open(const char* pszFilename,
                 READ_DOUBLE(poField->dfXOrigin);
                 READ_DOUBLE(poField->dfYOrigin);
                 READ_DOUBLE(poField->dfXYScale);
+                returnErrorIf( poField->dfXYScale == 0 );
 
                 if( poField->bHasM )
                 {
@@ -2386,12 +2398,13 @@ template <class ZSetter> int FileGDBOGRGeometryConverterImpl::ReadZArray(ZSetter
                                                       GIntBig& dz)
 {
     const int errorRetValue = FALSE;
+    const double dfZScale = SanitizeScale(poGeomField->GetZScale());
     for(GUInt32 i = 0; i < nPoints; i++ )
     {
         returnErrorIf(pabyCur >= pabyEnd);
         ReadVarIntAndAddNoCheck(pabyCur, dz);
 
-        double dfZ = dz / poGeomField->GetZScale() + poGeomField->GetZOrigin();
+        double dfZ = dz / dfZScale + poGeomField->GetZOrigin();
         setter.set(i, dfZ);
     }
     return TRUE;
@@ -2691,14 +2704,16 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             if( bHasZ )
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
-                dfZ = (z - 1) / poGeomField->GetZScale() + poGeomField->GetZOrigin();
+                const double dfZScale = SanitizeScale(poGeomField->GetZScale());
+                dfZ = (z - 1) / dfZScale + poGeomField->GetZOrigin();
                 if( bHasM )
                 {
                     GUIntBig m = 0;
                     ReadVarUInt64NoCheck(pabyCur, m);
+                    const double dfMScale =
+                        SanitizeScale(poGeomField->GetMScale());
                     const double dfM =
-                        (m - 1) /
-                        poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                        (m - 1) / dfMScale + poGeomField->GetMOrigin();
                     return new OGRPoint(dfX, dfY, dfZ, dfM);
                 }
                 return new OGRPoint(dfX, dfY, dfZ);
@@ -2708,9 +2723,9 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
                 OGRPoint* poPoint = new OGRPoint(dfX, dfY);
                 GUIntBig m = 0;
                 ReadVarUInt64NoCheck(pabyCur, m);
+                const double dfMScale = SanitizeScale(poGeomField->GetMScale());
                 const double dfM =
-                    (m - 1) /
-                    poGeomField->GetMScale() + poGeomField->GetMOrigin();
+                    (m - 1) / dfMScale + poGeomField->GetMOrigin();
                 poPoint->setM(dfM);
                 return poPoint;
             }

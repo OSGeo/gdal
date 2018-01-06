@@ -156,8 +156,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
 #endif //_DEBUG
     if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        CADGeometry* pCADGeometry = pCADFile->GetGeometry( this->getId() - 1,
-                                                           handle );
+        CADGeometry* pCADGeometry = pCADFile->GetGeometry( getId() - 1, handle );
         std::unique_ptr<CADAttdef> attdef( dynamic_cast<CADAttdef*>(pCADGeometry) );
         if(attdef)
         {
@@ -193,7 +192,9 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
                 auto dLastEntHandle    = pBlockHeader->hEntities.back().getAsLong(); // FIXME: in 2000+ entities probably has no links to each other.
 
                 if( dCurrentEntHandle == dLastEntHandle ) // Blocks can be empty (contain no objects)
+                {
                     return;
+                }
 
                 while( true )
                 {
@@ -253,33 +254,43 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
     if( isCommonEntityType( type ) )
     {
         if( type == CADObject::IMAGE )
+        {
             imageHandles.push_back( handle );
+        }
         else
         {
             if( pCADFile->isReadingUnsupportedGeometries() == false )
             {
                 if( isSupportedGeometryType( type ) )
                 {
-                    if( geometryTypes.empty() ) geometryTypes.push_back( type );
+                    if( geometryTypes.empty() )
+                    {
+                        geometryTypes.push_back( type );
+                    }
 
                     if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                         geometryTypes.end() )
                     {
                         geometryTypes.push_back( type );
                     }
-                    geometryHandles.push_back( std::make_pair( handle, cadinserthandle ) );
+                    geometryHandles.push_back(
+                                std::make_pair( handle, cadinserthandle ) );
                 }
             }
             else
             {
-                if( geometryTypes.empty() ) geometryTypes.push_back( type );
+                if( geometryTypes.empty() )
+                {
+                    geometryTypes.push_back( type );
+                }
 
                 if( find( geometryTypes.begin(), geometryTypes.end(), type ) ==
                     geometryTypes.end() )
                 {
                     geometryTypes.push_back( type );
                 }
-                geometryHandles.push_back( std::make_pair( handle, cadinserthandle ) );
+                geometryHandles.push_back(
+                            std::make_pair( handle, cadinserthandle ) );
             }
         }
     }

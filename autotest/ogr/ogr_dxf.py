@@ -964,6 +964,18 @@ def ogr_dxf_18():
     dst_feat.SetStyleString( 'PEN(c:#ffff00,w:2g,p:"3.0g 4.0g")' )
     lyr.CreateFeature( dst_feat )
 
+    # Write a feature with a linetype proportional to a predefined one.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 20)') )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:0.3mm,p:"6.35g 3.0617284g")' )
+    lyr.CreateFeature( dst_feat )
+
+    # Write a feature with a linetype proportional to an auto-created one.
+    dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('LINESTRING(5 5,40 10)') )
+    dst_feat.SetStyleString( 'PEN(c:#ffff00,w:20px,p:"6.0g 8.0g")' )
+    lyr.CreateFeature( dst_feat )
+
     ds = None
 
     # Reopen and check contents.
@@ -1012,6 +1024,29 @@ def ogr_dxf_18():
         return 'fail'
 
     if ogrtest.check_feature_geometry( feat, 'LINESTRING (5 5,40 30)' ):
+        return 'fail'
+
+    # Check fourth feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'DASHED':
+        gdaltest.post_reason( 'Got wrong linetype. (4)' )
+        return 'fail'
+
+    # TODO why did the lineweight go AWOL here?
+    if feat.GetStyleString() != 'PEN(c:#ffff00,p:"6.35g 3.0617283946g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( "got wrong style string (4)" )
+        return 'fail'
+
+    # Check fifth feature.
+    feat = lyr.GetNextFeature()
+    if feat.GetField('Linetype') != 'AutoLineType-1':
+        gdaltest.post_reason( 'Got wrong linetype. (5)' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'PEN(c:#ffff00,w:0.01g,p:"6g 8g")':
+        print(feat.GetStyleString())
+        gdaltest.post_reason( "got wrong style string (5)" )
         return 'fail'
 
     # Cleanup

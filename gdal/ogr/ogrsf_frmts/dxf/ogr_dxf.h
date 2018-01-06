@@ -477,6 +477,8 @@ class OGRDXFDataSource : public OGRDataSource
                                                  const char *pszDefault );
     bool                LookupDimStyle( const char *pszDimstyle,
                          std::map<CPLString, CPLString>& oDimStyleProperties );
+    const std::map<CPLString, std::vector<double>>& GetLineTypeTable() const
+    { return oLineTypeTable; }
     std::vector<double> LookupLineType( const char *pszName );
     bool                TextStyleExists( const char *pszTextStyle );
     CPLString           GetTextStyleNameByHandle( const char *pszID );
@@ -528,10 +530,10 @@ class OGRDXFWriterLayer : public OGRLayer
 
     static CPLString    TextEscape( const char * );
     static int          ColorStringToDXFColor( const char * );
-    static CPLString    PrepareLineTypeDefinition( OGRFeature*, OGRStyleTool* );
+    static std::vector<double> PrepareLineTypeDefinition( OGRStylePen* );
     static std::map<CPLString, CPLString> PrepareTextStyleDefinition( OGRStyleLabel* );
 
-    std::map<CPLString,CPLString> oNewLineTypes;
+    std::map<CPLString,std::vector<double>> oNewLineTypes;
     std::map<CPLString,std::map<CPLString,CPLString>> oNewTextStyles;
     int                 nNextAutoID;
     int                 bWriteHatch;
@@ -552,7 +554,7 @@ class OGRDXFWriterLayer : public OGRLayer
 
     void                ResetFP( VSILFILE * );
 
-    std::map<CPLString,CPLString>& GetNewLineTypeMap()
+    std::map<CPLString,std::vector<double>>& GetNewLineTypeMap()
         { return oNewLineTypes; }
     std::map<CPLString,std::map<CPLString,CPLString>>& GetNewTextStyleMap()
         { return oNewTextStyles; }
