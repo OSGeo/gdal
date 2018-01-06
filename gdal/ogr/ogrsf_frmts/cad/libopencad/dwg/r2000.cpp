@@ -1640,14 +1640,17 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 sEED += "Point: {";
                 double dfX = 0, dfY = 0, dfZ = 0;
-                memcpy( & dfX, citer->acData.data() + 1, 8 );
-                memcpy( & dfY, citer->acData.data() + 9, 8 );
-                memcpy( & dfZ, citer->acData.data() + 17, 8 );
-                sEED += to_string( dfX );
+                if(citer->acData.size() > 24)
+                {
+                    memcpy( & dfX, citer->acData.data() + 1, 8 );
+                    memcpy( & dfY, citer->acData.data() + 9, 8 );
+                    memcpy( & dfZ, citer->acData.data() + 17, 8 );
+                }
+                sEED += std::to_string( dfX );
                 sEED += ';';
-                sEED += to_string( dfY );
+                sEED += std::to_string( dfY );
                 sEED += ';';
-                sEED += to_string( dfZ );
+                sEED += std::to_string( dfZ );
                 sEED += '}';
                 break;
             }
@@ -1659,25 +1662,25 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 double dfVal = 0;
                 if(citer->acData.size() > 7)
                     memcpy( & dfVal, citer->acData.data() + 1, 8 );
-                sEED += to_string( dfVal );
+                sEED += std::to_string( dfVal );
                 break;
             }
             case 70:
             {
                 sEED += "Short:";
-                short dVal = 0;
+                int16_t dVal = 0;
                 if(citer->acData.size() > 1)
                     memcpy( & dVal, citer->acData.data() + 1, 2 );
-                sEED += to_string( dVal );
+                sEED += std::to_string( dVal );
                 break;
             }
             case 71:
             {
                 sEED += "Long Int:";
-                long dVal = 0;
+                int32_t dVal = 0;
                 if(citer->acData.size() > 3)
                     memcpy( & dVal, citer->acData.data() + 1, 4 );
-                sEED += to_string( dVal );
+                sEED += std::to_string( dVal );
                 break;
             }
             default:
