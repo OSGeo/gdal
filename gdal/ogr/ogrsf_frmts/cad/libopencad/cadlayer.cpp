@@ -156,8 +156,7 @@ void CADLayer::addHandle( long handle, CADObject::ObjectType type, long cadinser
 #endif //_DEBUG
     if( type == CADObject::ATTRIB || type == CADObject::ATTDEF )
     {
-        CADGeometry* pCADGeometry = pCADFile->GetGeometry( this->getId() - 1,
-                                                           handle );
+        CADGeometry* pCADGeometry = pCADFile->GetGeometry( getId() - 1, handle );
         std::unique_ptr<CADAttdef> attdef( dynamic_cast<CADAttdef*>(pCADGeometry) );
         if(attdef)
         {
