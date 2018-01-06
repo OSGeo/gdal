@@ -621,26 +621,24 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /************************************************************************/
 /*                     PrepareLineTypeDefinition()                      */
 /************************************************************************/
-CPLString
-OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
-                                              OGRStyleTool *poTool )
+std::vector<double>
+OGRDXFWriterLayer::PrepareLineTypeDefinition( OGRStylePen *poPen )
 {
-    OGRStylePen *poPen = (OGRStylePen *) poTool;
-    GBool  bDefault;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch pattern.                                                  */
 /* -------------------------------------------------------------------- */
+    GBool bDefault;
     const char *pszPattern = poPen->Pattern( bDefault );
+
     if( bDefault || strlen(pszPattern) == 0 )
-        return "";
+        return std::vector<double>();
 
 /* -------------------------------------------------------------------- */
 /*      Split into pen up / pen down bits.                              */
 /* -------------------------------------------------------------------- */
     char **papszTokens = CSLTokenizeString(pszPattern);
-    double dfTotalLength = 0;
-    CPLString osDef;
+    std::vector<double> adfWeightTokens;
 
     for( int i = 0; papszTokens != nullptr && papszTokens[i] != nullptr; i++ )
     {
@@ -662,28 +660,36 @@ OGRDXFWriterLayer::PrepareLineTypeDefinition( CPL_UNUSED OGRFeature *poFeature,
         // Even entries are "pen down" represented as positive in DXF.
         // "Pen up" entries (gaps) are represented as negative.
         if( i%2 == 0 )
-            osDXFEntry.Printf( " 49\n%s\n 74\n0\n", osAmount.c_str() );
+            adfWeightTokens.push_back( CPLAtof( osAmount ) );
         else
-            osDXFEntry.Printf( " 49\n-%s\n 74\n0\n", osAmount.c_str() );
-
-        osDef += osDXFEntry;
-
-        dfTotalLength += CPLAtof(osAmount);
+            adfWeightTokens.push_back( -CPLAtof( osAmount ) );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Prefix 73 and 40 items to the definition.                       */
-/* -------------------------------------------------------------------- */
-    CPLString osPrefix;
-
-    osPrefix.Printf( " 73\n%d\n 40\n%.6g\n",
-                     CSLCount(papszTokens),
-                     dfTotalLength );
-    osDef = osPrefix + osDef;
 
     CSLDestroy( papszTokens );
 
-    return osDef;
+    return adfWeightTokens;
+}
+
+/************************************************************************/
+/*                       IsLineTypeProportional()                       */
+/************************************************************************/
+
+static double IsLineTypeProportional( const std::vector<double>& adfA,
+    const std::vector<double>& adfB )
+{
+    // If they are not the same length, they are not the same linetype
+    if( adfA.size() != adfB.size() )
+        return 0.0;
+
+    // Determine the proportion of the first elements
+    const double dfRatio = ( adfA[0] != 0.0 ) ? ( adfB[0] / adfA[0] ) : 0.0;
+
+    // Check if all elements follow this proportionality
+    for( size_t iIndex = 1; iIndex < adfA.size(); iIndex++ )
+        if( fabs( adfB[iIndex] - ( adfA[iIndex] * dfRatio ) ) > 1e-6 )
+            return 0.0;
+
+    return dfRatio;
 }
 
 /************************************************************************/
@@ -827,51 +833,102 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
 /*      Do we have a Linetype for the feature?                          */
 /* -------------------------------------------------------------------- */
     CPLString osLineType = poFeature->GetFieldAsString( "Linetype" );
+    double dfLineTypeScale = 0.0;
 
-    if( !osLineType.empty()
-        && (poDS->oHeaderDS.LookupLineType( osLineType ).size() > 0
-            || oNewLineTypes.count(osLineType) > 0 ) )
+    bool bGotLinetype = false;
+
+    if( !osLineType.empty() )
     {
-        // Already define -> just reference it.
-        WriteValue( 6, osLineType );
+        std::vector<double> adfLineType =
+            poDS->oHeaderDS.LookupLineType( osLineType );
+
+        if( adfLineType.empty() && oNewLineTypes.count(osLineType) > 0 )
+            adfLineType = oNewLineTypes[osLineType];
+
+        if( !adfLineType.empty() )
+        {
+            bGotLinetype = true;
+            WriteValue( 6, osLineType );
+
+            // If the given linetype is proportional to the linetype data
+            // in the style string, then apply a linetype scale
+            if( poTool != nullptr && poTool->GetType() == OGRSTCPen )
+            {
+                std::vector<double> adfDefinition = PrepareLineTypeDefinition(
+                    static_cast<OGRStylePen *>( poTool ) );
+                
+                if( !adfDefinition.empty() )
+                {
+                    dfLineTypeScale = IsLineTypeProportional( adfLineType,
+                        adfDefinition );
+
+                    if( dfLineTypeScale != 0.0 && 
+                        fabs( dfLineTypeScale - 1.0 ) > 1e-4 )
+                    {
+                        WriteValue( 48, dfLineTypeScale );
+                    }
+                }
+            }
+        }
     }
-    else if( poTool != nullptr && poTool->GetType() == OGRSTCPen )
-    {
-        CPLString osDefinition = PrepareLineTypeDefinition( poFeature,
-                                                            poTool );
 
-        if( osDefinition != "" && osLineType == "" )
+    if( !bGotLinetype && poTool != nullptr && poTool->GetType() == OGRSTCPen )
+    {
+        std::vector<double> adfDefinition = PrepareLineTypeDefinition(
+            static_cast<OGRStylePen *>( poTool ) );
+
+        if( !adfDefinition.empty() )
         {
             // Is this definition already created and named?
-            std::map<CPLString,CPLString>::iterator it;
-
-            for( it = oNewLineTypes.begin();
-                 it != oNewLineTypes.end();
-                 ++it )
+            for( const auto& oPair : poDS->oHeaderDS.GetLineTypeTable() )
             {
-                if( (*it).second == osDefinition )
+                dfLineTypeScale = IsLineTypeProportional( oPair.second,
+                    adfDefinition );
+                if( dfLineTypeScale != 0.0 )
                 {
-                    osLineType = (*it).first;
+                    osLineType = oPair.first;
                     break;
                 }
             }
 
-            // create an automatic name for it.
+            if( dfLineTypeScale == 0.0 )
+            {
+                for( const auto& oPair : oNewLineTypes )
+                {
+                    dfLineTypeScale = IsLineTypeProportional( oPair.second,
+                        adfDefinition );
+                    if( dfLineTypeScale != 0.0 )
+                    {
+                        osLineType = oPair.first;
+                        break;
+                    }
+                }
+            }
+
+            // If not, create an automatic name for it.
             if( osLineType == "" )
             {
+                dfLineTypeScale = 1.0;
                 do
                 {
                     osLineType.Printf( "AutoLineType-%d", nNextAutoID++ );
                 }
                 while( poDS->oHeaderDS.LookupLineType(osLineType).size() > 0 );
             }
-        }
 
-        // If it isn't already defined, add it now.
-        if( osDefinition != "" && oNewLineTypes.count(osLineType) == 0 )
-        {
-            oNewLineTypes[osLineType] = osDefinition;
+            // If it isn't already defined, add it now.
+            if( poDS->oHeaderDS.LookupLineType( osLineType ).empty() &&
+                oNewLineTypes.count( osLineType ) == 0 )
+            {
+                oNewLineTypes[osLineType] = adfDefinition;
+            }
+
             WriteValue( 6, osLineType );
+
+            if( dfLineTypeScale != 0.0 && fabs( dfLineTypeScale - 1.0 ) > 1e-4 )
+            {
+                WriteValue( 48, dfLineTypeScale );
+            }
         }
     }
 
