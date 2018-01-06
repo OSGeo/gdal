@@ -926,6 +926,11 @@ CADObject * DWGFileR2000::GetObject( long dHandle, bool bHandlesOnly )
         }
         stCommonEntityData.bbEntMode        = objectBuffer.Read2B();
         stCommonEntityData.nNumReactors     = objectBuffer.ReadBITLONG();
+        if(stCommonEntityData.nNumReactors < 0 ||
+           stCommonEntityData.nNumReactors > 5000)
+        {
+            return nullptr;
+        }
         stCommonEntityData.bNoLinks         = objectBuffer.ReadBIT();
         stCommonEntityData.nCMColor         = objectBuffer.ReadBITSHORT();
         stCommonEntityData.dfLTypeScale     = objectBuffer.ReadBITDOUBLE();
@@ -1181,7 +1186,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::LWPOLYLINE:
         {
-            CADLWPolyline       * lwPolyline    = new CADLWPolyline();
+            CADLWPolyline * lwPolyline = new CADLWPolyline();
             CADLWPolylineObject * cadlwPolyline = static_cast<CADLWPolylineObject *>(
                     readedObject.get());
 
@@ -1200,7 +1205,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::CIRCLE:
         {
-            CADCircle       * circle    = new CADCircle();
+            CADCircle * circle = new CADCircle();
             CADCircleObject * cadCircle = static_cast<CADCircleObject *>(
                     readedObject.get());
 
@@ -1215,7 +1220,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::ATTRIB:
         {
-            CADAttrib       * attrib    = new CADAttrib();
+            CADAttrib * attrib = new CADAttrib();
             CADAttribObject * cadAttrib = static_cast<CADAttribObject *>(
                     readedObject.get() );
 
@@ -1260,7 +1265,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::ELLIPSE:
         {
-            CADEllipse       * ellipse    = new CADEllipse();
+            CADEllipse * ellipse = new CADEllipse();
             CADEllipseObject * cadEllipse = static_cast<CADEllipseObject *>(
                     readedObject.get());
 
@@ -1290,7 +1295,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::RAY:
         {
-            CADRay       * ray    = new CADRay();
+            CADRay * ray = new CADRay();
             CADRayObject * cadRay = static_cast<CADRayObject *>(
                     readedObject.get());
 
@@ -1303,7 +1308,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::SPLINE:
         {
-            CADSpline       * spline    = new CADSpline();
+            CADSpline * spline = new CADSpline();
             CADSplineObject * cadSpline = static_cast<CADSplineObject *>(
                     readedObject.get());
 
@@ -1312,7 +1317,8 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             if( spline->getScenario() == 2 )
             {
                 spline->setFitTollerance( cadSpline->dfFitTol );
-            } else if( spline->getScenario() == 1 )
+            }
+            else if( spline->getScenario() == 1 )
             {
                 spline->setRational( cadSpline->bRational );
                 spline->setClosed( cadSpline->bClosed );
@@ -1333,7 +1339,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::TEXT:
         {
-            CADText       * text    = new CADText();
+            CADText * text = new CADText();
             CADTextObject * cadText = static_cast<CADTextObject *>(
                     readedObject.get());
 
@@ -1350,7 +1356,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::SOLID:
         {
-            CADSolid       * solid    = new CADSolid();
+            CADSolid * solid = new CADSolid();
             CADSolidObject * cadSolid = static_cast<CADSolidObject *>(
                     readedObject.get());
 
@@ -1366,7 +1372,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::IMAGE:
         {
-            CADImage       * image    = new CADImage();
+            CADImage * image = new CADImage();
             CADImageObject * cadImage = static_cast<CADImageObject *>(
                     readedObject.get());
 
@@ -1408,7 +1414,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::MLINE:
         {
-            CADMLine       * mline    = new CADMLine();
+            CADMLine * mline = new CADMLine();
             CADMLineObject * cadmLine = static_cast<CADMLineObject *>(
                     readedObject.get());
 
@@ -1534,7 +1540,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         case CADObject::VERTEX_MESH:
         case CADObject::VERTEX_PFACE_FACE:
         default:
-            std::cerr << "Asked geometry has unsupported type." << endl;
+            std::cerr << "Asked geometry has unsupported type.\n";
             poGeometry = new CADUnknown();
             break;
     }
@@ -2919,10 +2925,10 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
         return nullptr;
     }
 
-    CADMLineVertex stVertex;
-    CADLineStyle   stLStyle;
-    for( long i = 0; i < mline->nNumVertexes; ++i )
+    for( short i = 0; i < mline->nNumVertexes; ++i )
     {
+        CADMLineVertex stVertex;
+
         CADVector vertPosition = buffer.ReadVector();
         stVertex.vertPosition = vertPosition;
 
@@ -2931,16 +2937,17 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
 
         CADVector vectMIterDirection = buffer.ReadVector();
         stVertex.vectMIterDirection = vectMIterDirection;
-        for( size_t j = 0; j < mline->nLinesInStyle; ++j )
-        {
+        for( unsigned char j = 0; j < mline->nLinesInStyle; ++j )
+        {            
+            CADLineStyle   stLStyle;
             stLStyle.nNumSegParms = buffer.ReadBITSHORT();
-            if(stLStyle.nNumSegParms > 0) // Or return null here?
+            if( stLStyle.nNumSegParms > 0 ) // Or return null here?
             {
                 for( short k = 0; k < stLStyle.nNumSegParms; ++k )
                     stLStyle.adfSegparms.push_back( buffer.ReadBITDOUBLE() );
             }
             stLStyle.nAreaFillParms = buffer.ReadBITSHORT();
-            if(stLStyle.nAreaFillParms < 0)
+            if( stLStyle.nAreaFillParms > 0 )
             {
                 for( short k = 0; k < stLStyle.nAreaFillParms; ++k )
                     stLStyle.adfAreaFillParameters.push_back( buffer.ReadBITDOUBLE() );
