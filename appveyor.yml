@@ -1,132 +1,136 @@
+
 environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     platform: x86
-    VCVARSALL: C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat
+    VS_VER: 2017
     SDK: release-1911
     MSVC_VER: 1911
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     platform: x64
-    VCVARSALL: $(VS140COMNTOOLS)\..\..\VC\vcvarsall.bat
+    VS_VER: 2015
     SDK: release-1900-x64
     MSVC_VER: 1900
 
 shallow_clone: true
 
+init:
+  - ps: |
+      function exec
+      {
+        param ( [ScriptBlock] $ScriptBlock )
+        & $ScriptBlock 2>&1 | ForEach-Object -Process { "$_" }
+        if ($LastExitCode -ne 0) { exit $LastExitCode }
+      }
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 install:
-- if "%platform%" == "x86" SET PATH=c:\python27;%PATH%
-- if "%platform%" == "x64" SET PATH=c:\Python27-x64;%PATH%
-- if "%platform%" == "x86" call "%VCVARSALL%" x86
-- if "%platform%" == "x64" "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-- if "%platform%" == "x64" call "%VCVARSALL%" x86_amd64
-- if "%platform%" == "x64" set WIN64_ARG="WIN64=YES"
-- set SDK_ZIP=%SDK%-dev.zip
-- set SDK_URL=http://download.gisinternals.com/sdk/downloads/%SDK_ZIP%
-- echo "%SDK_ZIP%"
-- echo "%SDK_URL%"
-- mkdir sdk
-- cd sdk
-- appveyor DownloadFile "%SDK_URL%"
-- 7z x "%SDK_ZIP%" > nul
-- cd ..
-- set SDK_PREFIX=%CD%\sdk\%SDK%
-- set SDK_INC=%CD%\sdk\%SDK%\include
-- set SDK_LIB=%CD%\sdk\%SDK%\lib
-- set SDK_BIN=%CD%\sdk\%SDK%\bin
-#- copy %SDK_INC%\hdf4\*.h %SDK_INC%
-#- ps: Start-FileDownload http://download.osgeo.org/proj/proj-4.9.1.tar.gz
-#- 7z x proj-4.9.1.tar.gz
-#- 7z x proj-4.9.1.tar
-#- cd proj-4.9.1
-#- nmake /f makefile.vc
-#- nmake /f makefile.vc install-all
-#- cd ..
-- cd gdal
-- echo GEOS_CFLAGS=-I$(SDK_INC) -DHAVE_GEOS > nmake.local
-- echo GEOS_LIB=$(SDK_LIB)\geos_c.lib >> nmake.local
-- echo PG_INC_DIR = $(SDK_INC) >> nmake.local
-- echo PG_LIB = $(SDK_LIB)\libpqdll.lib wsock32.lib >> nmake.local
-- echo CURL_DIR=bla >> nmake.local
-- echo CURL_INC = -I$(SDK_INC) >> nmake.local
-- echo CURL_LIB = $(SDK_LIB)\libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib >> nmake.local
-- echo SQLITE_INC=-I$(SDK_INC) -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION >> nmake.local
-- echo SQLITE_LIB=$(SDK_LIB)\spatialite_i.lib $(SDK_LIB)\sqlite3_i.lib >> nmake.local
-- echo KMLSUPEROVERLAY_SUPPORTED = YES >> nmake.local
-- echo MINIZIP_INCLUDE = -I$(SDK_INC) >> nmake.local
-- echo MINIZIP_LIBRARY = $(SDK_LIB)\minizip.lib >> nmake.local
-- echo MYSQL_INC_DIR=$(SDK_INC) >> nmake.local
-- echo MYSQL_LIB=$(SDK_LIB)\libmysql.lib advapi32.lib >> nmake.local
-- echo XERCES_DIR=bla >> nmake.local
-- echo XERCES_INCLUDE=-I$(SDK_INC) -I$(SDK_INC)\xercesc >> nmake.local
-- echo XERCES_LIB=$(SDK_LIB)\xerces-c_3.lib >> nmake.local
-- echo ILI_ENABLED = YES >> nmake.local
-- echo EXPAT_DIR=bla >> nmake.local
-- echo EXPAT_INCLUDE=-I$(SDK_INC) >> nmake.local
-- echo EXPAT_LIB=$(SDK_LIB)\expat.lib >> nmake.local
-- echo LIBKML_DIR=bla >> nmake.local
-- echo LIBKML_INCLUDE=-I$(SDK_INC) >> nmake.local
-- echo LIBKML_LIBS=$(SDK_LIB)\libkmlbase.lib $(SDK_LIB)\libkmlconvenience.lib $(SDK_LIB)\libkmldom.lib $(SDK_LIB)\libkmlengine.lib $(SDK_LIB)\libkmlregionator.lib $(SDK_LIB)\libkmlxsd.lib $(SDK_LIB)\expat.lib $(SDK_LIB)\zdll.lib >> nmake.local
-- echo POPPLER_ENABLED = YES >> nmake.local
-- echo POPPLER_CFLAGS = -I$(SDK_INC) -I$(SDK_INC)\poppler >> nmake.local
-- echo POPPLER_HAS_OPTCONTENT = YES >> nmake.local
-- echo POPPLER_0_20_OR_LATER = YES >> nmake.local
-- echo POPPLER_0_23_OR_LATER = YES >> nmake.local
-- echo POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES >> nmake.local
-- echo POPPLER_LIBS = $(SDK_LIB)\poppler.lib $(SDK_LIB)\freetype2411.lib advapi32.lib gdi32.lib >> nmake.local
-- echo OPENJPEG_ENABLED = YES >> nmake.local
-- echo OPENJPEG_CFLAGS = -I$(SDK_INC)\openjpeg-2.1 >> nmake.local
-- echo OPENJPEG_LIB = $(SDK_LIB)\openjp2.lib >> nmake.local
-- echo ECWDIR=bla >> nmake.local
-- echo ECWLIB=$(SDK_LIB)\libecwj2.lib >> nmake.local
-- echo ECWFLAGS=-DECWSDK_VERSION=33 -I$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI >> nmake.local
-#- echo LIBICONV_DIR = bla >> nmake.local
-#- echo LIBICONV_INCLUDE = -I$(SDK_INC) >> nmake.local
-#- echo LIBICONV_LIBRARY = $(SDK_LIB)\iconv.lib >> nmake.local
-#- echo LIBICONV_CFLAGS = -DICONV_CONST=const >> nmake.local
-#- echo HDF4_DIR = $(SDK_PREFIX) >> nmake.local
-#- echo HDF4_LIB = $(SDK_LIB)\hdfdll.lib $(SDK_LIB)\mfhdfdll.lib Ws2_32.lib >> nmake.local
-- echo HDF5_DIR = $(SDK_PREFIX) >> nmake.local
-- echo HDF5_LIB = $(SDK_LIB)\hdf5.lib  >> nmake.local
-- echo KEA_CFLAGS = -I$(SDK_INC) >> nmake.local
-- echo KEA_LIB = $(SDK_LIB)\libkea.lib >> nmake.local
-- echo NETCDF_SETTING=yes >> nmake.local
-- echo NETCDF_LIB=$(SDK_LIB)\netcdf.lib >> nmake.local
-- echo NETCDF_INC_DIR=$(SDK_INC) >> nmake.local
-- echo NETCDF_HAS_NC4 = yes >> nmake.local
-- nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
-- cd apps
-- nmake /f makefile.vc test_ogrsf.exe MSVC_VER=%MSVC_VER% %WIN64_ARG% USER_DEFS=/WX
-- cd ..
-- SET DISTUTILS_USE_SDK=1
-- SET MSSdk=1
-- cd swig\python
-- python setup.py build
-- python setup.py install
-- cd ..\..
-- cd ..\autotest\cpp
-- nmake /f makefile.vc MSVC_VER=%MSVC_VER% %WIN64_ARG%
-- cd ..\..
+  - ps: |
+      Install-PackageProvider NuGet -Force
+      Import-PackageProvider NuGet -Force
+      Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+      Install-Module Pscx -AllowClobber
+      Install-Module VSSetup -Scope CurrentUser
+      # Install SWIG and VC for Python2.7 by Choco
+      cinst -y --no-progress swig vcpython27
+      if($env:platform -eq "x86")
+      {
+        Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture x86
+        $env:PATH="c:\python27;$env:PATH"
+        $env:WIN64_ARG=""
+        exec { pip install numpy }
+      }
+      else
+      {
+        Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture amd64
+        $env:PATH="c:\python27-x64;$env:PATH"
+        $env:WIN64_ARG="WIN64=YES"
+        exec { pip install "https://pypi.python.org/packages/64/f2/2aa3b3274abe211b773e8a6d8801e19a9451646c213a333359c6a600484a/numpy-1.14.2-cp27-none-win_amd64.whl#md5=187a94722b84d65cc3a9ecfce27ee3b2" }
+      }
+      $env:SDK_ZIP="$env:SDK"+"-dev.zip"
+      $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
+      New-Item -ItemType directory -Path "$env:APPVEYOR_BUILD_FOLDER\sdk"
+      cd $env:APPVEYOR_BUILD_FOLDER\sdk
+      appveyor DownloadFile "$env:SDK_URL"
+      exec { 7z x $env:SDK_ZIP }
+      $env:SDK_PREFIX="$env:APPVEYOR_BUILD_FOLDER\sdk\$env:SDK"
+      $env:SDK_INC="$env:SDK_PREFIX\include"
+      $env:SDK_LIB="$env:SDK_PREFIX\lib"
+      $env:SDK_BIN="$env:SDK_PREFIX\bin"
+      $env:NMAKE_LOCAL= "GEOS_CFLAGS=-I`$(SDK_INC) -DHAVE_GEOS`n"
+      $env:NMAKE_LOCAL+="GEOS_LIB=`$(SDK_LIB)\geos_c.lib`n"
+      $env:NMAKE_LOCAL+="PG_INC_DIR=`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="PG_LIB=`$(SDK_LIB)\libpqdll.lib wsock32.lib`n"
+      $env:NMAKE_LOCAL+="CURL_DIR=bla`n"
+      $env:NMAKE_LOCAL+="CURL_INC=-I`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="CURL_LIB=`$(SDK_LIB)\libcurl_imp.lib wsock32.lib wldap32.lib winmm.lib`n"
+      $env:NMAKE_LOCAL+="SQLITE_INC=-I`$(SDK_INC) -DHAVE_SPATIALITE -DSPATIALITE_AMALGAMATION`n"
+      $env:NMAKE_LOCAL+="SQLITE_LIB=`$(SDK_LIB)\spatialite_i.lib `$(SDK_LIB)\sqlite3_i.lib`n"
+      $env:NMAKE_LOCAL+="KMLSUPEROVERLAY_SUPPORTED = YES`n"
+      $env:NMAKE_LOCAL+="MINIZIP_INCLUDE = -I`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="MINIZIP_LIBRARY = `$(SDK_LIB)\minizip.lib`n"
+      $env:NMAKE_LOCAL+="MYSQL_INC_DIR=`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="MYSQL_LIB=`$(SDK_LIB)\libmysql.lib advapi32.lib`n"
+      $env:NMAKE_LOCAL+="XERCES_DIR=bla`n"
+      $env:NMAKE_LOCAL+="XERCES_INCLUDE=-I`$(SDK_INC) -I`$(SDK_INC)\xercesc`n"
+      $env:NMAKE_LOCAL+="XERCES_LIB=`$(SDK_LIB)\xerces-c_3.lib`n"
+      $env:NMAKE_LOCAL+="ILI_ENABLED = YES`n"
+      $env:NMAKE_LOCAL+="EXPAT_DIR=bla`n"
+      $env:NMAKE_LOCAL+="EXPAT_INCLUDE=-I`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="EXPAT_LIB=`$(SDK_LIB)\expat.lib`n"
+      $env:NMAKE_LOCAL+="LIBKML_DIR=bla`n"
+      $env:NMAKE_LOCAL+="LIBKML_INCLUDE=-I`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="LIBKML_LIBS=`$(SDK_LIB)\libkmlbase.lib `$(SDK_LIB)\libkmlconvenience.lib `$(SDK_LIB)\libkmldom.lib `$(SDK_LIB)\libkmlengine.lib `$(SDK_LIB)\libkmlregionator.lib `$(SDK_LIB)\libkmlxsd.lib `$(SDK_LIB)\expat.lib `$(SDK_LIB)\zdll.lib`n"
+      $env:NMAKE_LOCAL+="POPPLER_ENABLED = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_CFLAGS = -I`$(SDK_INC) -I`$(SDK_INC)\poppler`n"
+      $env:NMAKE_LOCAL+="POPPLER_HAS_OPTCONTENT = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_0_20_OR_LATER = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_0_23_OR_LATER = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES`n"
+      $env:NMAKE_LOCAL+="POPPLER_LIBS = `$(SDK_LIB)\poppler.lib `$(SDK_LIB)\freetype2411.lib advapi32.lib gdi32.lib`n"
+      $env:NMAKE_LOCAL+="OPENJPEG_ENABLED = YES`n"
+      $env:NMAKE_LOCAL+="OPENJPEG_CFLAGS = -I`$(SDK_INC)\openjpeg-2.1`n"
+      $env:NMAKE_LOCAL+="OPENJPEG_LIB = `$(SDK_LIB)\openjp2.lib`n"
+      $env:NMAKE_LOCAL+="ECWDIR=bla`n"
+      $env:NMAKE_LOCAL+="ECWLIB=`$(SDK_LIB)\libecwj2.lib`n"
+      $env:NMAKE_LOCAL+="ECWFLAGS=-DECWSDK_VERSION=33 -I`$(SDK_INC) /D_MBCS /D_UNICODE /DUNICODE /D_WINDOWS  /DLIBECWJ2 /DWIN32 /D_WINDLL -DNO_X86_MMI`n"
+      $env:NMAKE_LOCAL+="HDF5_DIR = `$(SDK_PREFIX)`n"
+      $env:NMAKE_LOCAL+="HDF5_LIB = `$(SDK_LIB)\hdf5.lib`n"
+      $env:NMAKE_LOCAL+="KEA_CFLAGS = -I`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="KEA_LIB = `$(SDK_LIB)\libkea.lib`n"
+      $env:NMAKE_LOCAL+="NETCDF_SETTING=yes`n"
+      $env:NMAKE_LOCAL+="NETCDF_LIB=`$(SDK_LIB)\netcdf.lib`n"
+      $env:NMAKE_LOCAL+="NETCDF_INC_DIR=`$(SDK_INC)`n"
+      $env:NMAKE_LOCAL+="NETCDF_HAS_NC4 = yes`n"
+      $env:NMAKE_LOCAL | Set-Content "$env:APPVEYOR_BUILD_FOLDER\gdal\nmake.local"
+      #
+      cd $env:APPVEYOR_BUILD_FOLDER\gdal
+      exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
+      cd apps
+      exec { nmake /f makefile.vc test_ogrsf.exe MSVC_VER=$env:MSVC_VER $env:WIN64_ARG USER_DEFS=/WX }
+      $env:DISTUTILS_USE_SDK=1
+      $env:MSSdk=1
+      cd $env:APPVEYOR_BUILD_FOLDER\gdal\swig\python
+      exec { python setup.py build }
+      exec { python setup.py install }
+      cd $env:APPVEYOR_BUILD_FOLDER\autotest\cpp
+      exec { nmake /f makefile.vc MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
 
-
-build_script:
-  - echo build_script
+build: off
 
 test_script:
-  - echo test_script
-  - set SDK_PREFIX=%CD%\sdk\%SDK%
-  - set SDK_BIN=%CD%\sdk\%SDK%\bin
-  - SET PATH=%CD%\gdal;%CD%\gdal\apps;%SDK_BIN%;%PATH%
-  - SET GDAL_DATA=%CD%\gdal\data
-  - SET PROJ_LIB=%SDK_BIN%\proj\SHARE
-  - cd autotest
-  - cd cpp
-  - SET DO_NOT_FAIL_ON_RECODE_ERRORS=YES
-# The ca-bundle.crt file which we could point to is invalid in the current SDK
-# See https://github.com/gisinternals/buildsystem/issues/104
-  - SET GDAL_HTTP_UNSAFESSL=YES
-  - nmake /f makefile.vc check MSVC_VER=%MSVC_VER% %WIN64_ARG%
-  - cd ..
-  - python run_all.py
+  - ps: |
+      $env:PATH="$env:APPVEYOR_BUILD_FOLDER\gdal;$env:APPVEYOR_BUILD_FOLDER\gdal\apps;$env:SDK_BIN;$env:PATH"
+      $env:GDAL_DATA="$env:APPVEYOR_BUILD_FOLDER\gdal\data"
+      $env:PROJ_LIB="$env:SDK_BIN\proj\SHARE"
+      $env:DO_NOT_FAIL_ON_RECODE_ERRORS="YES"
+      # The ca-bundle.crt file which we could point to is invalid in the current SDK
+      # See https://github.com/gisinternals/buildsystem/issues/104
+      $env:GDAL_HTTP_UNSAFESSL="YES"
+      cd $env:APPVEYOR_BUILD_FOLDER\autotest\cpp
+      exec { nmake /f makefile.vc check MSVC_VER=$env:MSVC_VER $env:WIN64_ARG }
+      cd $env:APPVEYOR_BUILD_FOLDER\autotest
+      exec { python run_all.py }
 
 deploy: off
 
