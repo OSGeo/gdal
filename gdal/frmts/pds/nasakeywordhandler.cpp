@@ -162,17 +162,17 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCu
             if( (osValue == "Table" || osValue == "Field") &&
                 (oName.GetType() == CPLJSONObject::String) )
             {
-                oCur.Add( (osValue + "_" + oName.ToString()).c_str(), oNewGroup );
+                oCur.Add( osValue + "_" + oName.ToString(), oNewGroup );
                 oNewGroup.Add( "_container_name", osValue );
             }
             else if( oCur[osValue].IsValid() )
             {
                 int nIter = 2;
-                while( oCur[(osValue + CPLSPrintf("_%d", nIter)).c_str()].IsValid() )
+                while( oCur[osValue + CPLSPrintf("_%d", nIter)].IsValid() )
                 {
                     nIter ++;
                 }
-                oCur.Add( (osValue + CPLSPrintf("_%d", nIter)).c_str(), oNewGroup );
+                oCur.Add( osValue + CPLSPrintf("_%d", nIter), oNewGroup );
                 oNewGroup.Add( "_container_name", osValue );
             }
             else

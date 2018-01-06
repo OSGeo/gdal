@@ -38,7 +38,6 @@
 #define TO_JSONOBJ(x) static_cast<json_object*>(x)
 
 static const char *JSON_PATH_DELIMITER = "/";
-static const unsigned short JSON_NAME_MAX_SIZE = 255;
 
 //------------------------------------------------------------------------------
 // JSONDocument
@@ -77,18 +76,18 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 
 /**
  * Save json document at specified path
- * @param  pszPath Path to save json document
+ * @param  osPath Path to save json document
  * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::Save(const char *pszPath)
+bool CPLJSONDocument::Save(const std::string &osPath)
 {
-    VSILFILE *fp = VSIFOpenL( pszPath, "wt" );
+    VSILFILE *fp = VSIFOpenL( osPath.c_str(), "wt" );
     if( nullptr == fp )
     {
         CPLError( CE_Failure, CPLE_NoWriteAccess, "Open file %s to write failed",
-                 pszPath );
+                 osPath.c_str() );
         return false;
     }
 
@@ -126,18 +125,18 @@ CPLJSONObject CPLJSONDocument::GetRoot()
 
 /**
  * Load json document from file by provided path
- * @param  pszPath Path to json file.
+ * @param  osPath Path to json file.
  * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::Load(const char *pszPath)
+bool CPLJSONDocument::Load(const std::string &osPath)
 {
     GByte *pabyOut = nullptr;
     vsi_l_offset nSize = 0;
-    if( !VSIIngestFile( nullptr, pszPath, &pabyOut, &nSize, 4 * 1024 * 1024) ) // Maximum 4 Mb allowed
+    if( !VSIIngestFile( nullptr, osPath.c_str(), &pabyOut, &nSize, 8 * 1024 * 1024) ) // Maximum 8 Mb allowed
     {
-        CPLError( CE_Failure, CPLE_FileIO, "Load json file %s failed", pszPath );
+        CPLError( CE_Failure, CPLE_FileIO, "Load json file %s failed", osPath.c_str() );
         return false;
     }
 
@@ -178,7 +177,7 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 
 /**
  * Load json document from file using small chunks of data.
- * @param  pszPath      Path to json document file.
+ * @param  osPath      Path to json document file.
  * @param  nChunkSize   Chunk size.
  * @param  pfnProgress  a function to report progress of the json data loading.
  * @param  pProgressArg application data passed into progress function.
@@ -186,21 +185,21 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
  *
  * @since GDAL 2.3
  */
-bool CPLJSONDocument::LoadChunks(const char *pszPath, size_t nChunkSize,
+bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
                                  GDALProgressFunc pfnProgress,
                                  void *pProgressArg)
 {
     VSIStatBufL sStatBuf;
-    if(VSIStatL(pszPath, &sStatBuf) != 0)
+    if(VSIStatL( osPath.c_str(), &sStatBuf ) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszPath);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", osPath.c_str());
         return false;
     }
 
-    VSILFILE *fp = VSIFOpenL(pszPath, "rb");
+    VSILFILE *fp = VSIFOpenL( osPath.c_str(), "rb" );
     if( fp == nullptr )
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", pszPath);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s", osPath.c_str());
         return false;
     }
 
@@ -284,7 +283,7 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
 
 /**
  * Load json document from web.
- * @param  pszUrl       Url to json document.
+ * @param  osUrl       Url to json document.
  * @param  papszOptions Option list as a NULL-terminated array of strings. May be NULL.
  * The available keys are same for CPLHTTPFetch method. Addtional key JSON_DEPTH
  * define json parse depth. Default is 10.
@@ -296,11 +295,11 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  */
 
 #ifdef HAVE_CURL
-bool CPLJSONDocument::LoadUrl(const char *pszUrl, char **papszOptions,
+bool CPLJSONDocument::LoadUrl(const std::string &osUrl, char **papszOptions,
                               GDALProgressFunc pfnProgress,
                               void *pProgressArg)
 #else
-bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
+bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOptions*/,
                               GDALProgressFunc /*pfnProgress*/,
                               void * /*pProgressArg*/)
 #endif // HAVE_CURL
@@ -310,7 +309,7 @@ bool CPLJSONDocument::LoadUrl(const char * /*pszUrl*/, char ** /*papszOptions*/,
     JsonContext ctx = { nullptr, json_tokener_new_ex(nDepth), 0 };
 
     CPLHTTPFetchWriteFunc pWriteFunc = CPLJSONWriteFunction;
-    CPLHTTPResult *psResult = CPLHTTPFetchEx( pszUrl, papszOptions,
+    CPLHTTPResult *psResult = CPLHTTPFetchEx( osUrl.c_str(), papszOptions,
                                               pfnProgress, pProgressArg,
                                               pWriteFunc, &ctx );
 
@@ -348,17 +347,17 @@ CPLJSONObject::CPLJSONObject() : m_poJsonObject(json_object_new_object())
 
 }
 
-CPLJSONObject::CPLJSONObject(const char *pszName, const CPLJSONObject &oParent) :
+CPLJSONObject::CPLJSONObject(const std::string &osName, const CPLJSONObject &oParent) :
     m_poJsonObject(json_object_get(json_object_new_object())),
-    m_soKey(pszName)
+    m_osKey(osName)
 {
-    json_object_object_add( TO_JSONOBJ(oParent.m_poJsonObject), pszName,
+    json_object_object_add( TO_JSONOBJ(oParent.m_poJsonObject), osName.c_str(),
                             TO_JSONOBJ(m_poJsonObject) );
 }
 
-CPLJSONObject::CPLJSONObject(const CPLString &soName, JSONObjectH poJsonObject) :
+CPLJSONObject::CPLJSONObject(const std::string &osName, JSONObjectH poJsonObject) :
     m_poJsonObject( json_object_get( TO_JSONOBJ(poJsonObject) ) ),
-    m_soKey(soName)
+    m_osKey(osName)
 {
 
 }
@@ -375,7 +374,7 @@ CPLJSONObject::~CPLJSONObject()
 
 CPLJSONObject::CPLJSONObject(const CPLJSONObject &other) :
     m_poJsonObject(json_object_get( TO_JSONOBJ(other.m_poJsonObject) )),
-    m_soKey(other.m_soKey)
+    m_osKey(other.m_osKey)
 {
 }
 
@@ -384,7 +383,7 @@ CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
     if( this == &other )
         return *this;
 
-    m_soKey = other.m_soKey;
+    m_osKey = other.m_osKey;
     if( m_poJsonObject )
         json_object_put( TO_JSONOBJ(m_poJsonObject) );
     m_poJsonObject = json_object_get( TO_JSONOBJ(other.m_poJsonObject) );
@@ -394,253 +393,256 @@ CPLJSONObject &CPLJSONObject::operator=(const CPLJSONObject &other)
 
 /**
  * Add new key - value pair to json object.
- * @param pszName Key name.
- * @param soValue String value.
+ * @param osName Key name.
+ * @param osValue String value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, const CPLString &soValue)
+void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
-        json_object *poVal = json_object_new_string( soValue.c_str() );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object *poVal = json_object_new_string( osValue.c_str() );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName Key name.
  * @param pszValue String value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, const char *pszValue)
+void CPLJSONObject::Add(const std::string &osName, const char *pszValue)
 {
-    if( nullptr == pszName )
+    if(nullptr == pszValue)
+    {
         return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    }
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_string( pszValue );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param dfValue Double value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, double dfValue)
+void CPLJSONObject::Add(const std::string &osName, double dfValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_double( dfValue );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param nValue Integer value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, int nValue)
+void CPLJSONObject::Add(const std::string &osName, int nValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_int( nValue );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param nValue Long value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, GInt64 nValue)
+void CPLJSONObject::Add(const std::string &osName, GInt64 nValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_int64( static_cast<int64_t>(nValue) );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param oValue   Array value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, const CPLJSONArray &oValue)
+void CPLJSONObject::Add(const std::string &osName, const CPLJSONArray &oValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath(pszName, &objectName[0]);
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                objectName.c_str(),
                                 json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param oValue   Json object value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, const CPLJSONObject &oValue)
+void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                objectName.c_str(),
                                 json_object_get( TO_JSONOBJ(oValue.GetInternalHandle()) ) );
     }
 }
 
 /**
  * Add new key - value pair to json object.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param bValue   Boolean value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const char *pszName, bool bValue)
+void CPLJSONObject::Add(const std::string &osName, bool bValue)
 {
-    if( nullptr == pszName )
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = json_object_new_boolean( bValue );
-        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()), objectName,
-                                poVal );
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), poVal );
     }
 }
 
 /**
  * Change value by key.
- * @param pszName  Key name.
+ * @param osName  Key name.
+ * @param osValue String value.
+ *
+ * @since GDAL 2.3
+ */
+void CPLJSONObject::Set(const std::string &osName, const std::string &osValue)
+{
+    Delete( osName );
+    Add( osName, osValue );
+}
+
+/**
+ * Change value by key.
+ * @param osName  Key name.
  * @param pszValue String value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, const char *pszValue)
+void CPLJSONObject::Set(const std::string &osName, const char * pszValue)
 {
-    Delete( pszName );
-    Add( pszName, pszValue );
+    if(nullptr == pszValue)
+        return;
+    Delete( osName );
+    Add( osName, pszValue );
 }
 
 /**
  * Change value by key.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param dfValue  Double value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, double dfValue)
+void CPLJSONObject::Set(const std::string &osName, double dfValue)
 {
-    Delete( pszName );
-    Add( pszName, dfValue );
+    Delete( osName );
+    Add( osName, dfValue );
 }
 
 /**
  * Change value by key.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param nValue   Integer value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, int nValue)
+void CPLJSONObject::Set(const std::string &osName, int nValue)
 {
-    Delete( pszName );
-    Add( pszName, nValue );
+    Delete( osName );
+    Add( osName, nValue );
 }
 
 /**
  * Change value by key.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param nValue   Long value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, GInt64 nValue)
+void CPLJSONObject::Set(const std::string &osName, GInt64 nValue)
 {
-    Delete( pszName );
-    Add( pszName, nValue );
+    Delete( osName );
+    Add( osName, nValue );
 }
 
 /**
  * Change value by key.
- * @param pszName  Key name.
+ * @param osName  Key name.
  * @param bValue   Boolean value.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const char *pszName, bool bValue)
+void CPLJSONObject::Set(const std::string &osName, bool bValue)
 {
-    Delete( pszName );
-    Add( pszName, bValue );
+    Delete( osName );
+    Add( osName, bValue );
 }
 
 /**
  * Get value by key.
- * @param  pszName Key name.
+ * @param  osName Key name.
  * @return         Json array object.
  *
  * @since GDAL 2.3
  */
-CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
+CPLJSONArray CPLJSONObject::GetArray(const std::string &osName) const
 {
-    if( nullptr == pszName )
-        return CPLJSONArray( "", nullptr );
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object *poVal = nullptr;
         if( json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
-                                       objectName, &poVal ) )
+                                       objectName.c_str(), &poVal ) )
         {
             if( poVal && json_object_get_type( poVal ) == json_type_array )
             {
@@ -653,22 +655,20 @@ CPLJSONArray CPLJSONObject::GetArray(const char *pszName) const
 
 /**
  * Get value by key.
- * @param  pszName Key name.
+ * @param  osName Key name.
  * @return         Json object.
  *
  * @since GDAL 2.3
  */
-CPLJSONObject CPLJSONObject::GetObj(const char *pszName) const
+CPLJSONObject CPLJSONObject::GetObj(const std::string &osName) const
 {
-    if( nullptr == pszName )
-        return CPLJSONObject( "", nullptr );
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
         json_object* poVal = nullptr;
         if(json_object_object_get_ex( TO_JSONOBJ(object.GetInternalHandle()),
-                                      objectName, &poVal ) )
+                                      objectName.c_str(), &poVal ) )
         {
             return CPLJSONObject( objectName, poVal );
         }
@@ -678,78 +678,80 @@ CPLJSONObject CPLJSONObject::GetObj(const char *pszName) const
 
 /**
  * Get value by key.
- * @param  pszName Key name.
+ * @param  osName Key name.
  * @return         Json object.
  *
  * @since GDAL 2.3
  */
-CPLJSONObject CPLJSONObject::operator[](const char *pszName) const
+CPLJSONObject CPLJSONObject::operator[](const std::string &osName) const
 {
-    return GetObj(pszName);
+    return GetObj(osName);
 }
 
 /**
  * Delete json object by key.
- * @param  pszName Key name.
+ * @param  osName Key name.
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Delete(const char *pszName)
+void CPLJSONObject::Delete(const std::string &osName)
 {
-    if(nullptr == pszName)
-        return;
-    char objectName[JSON_NAME_MAX_SIZE];
-    CPLJSONObject object = GetObjectByPath( pszName, &objectName[0] );
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
     if( object.IsValid() )
     {
-        json_object_object_del( TO_JSONOBJ(object.GetInternalHandle()), objectName );
+        json_object_object_del( TO_JSONOBJ(object.GetInternalHandle()),
+                                objectName.c_str() );
     }
 }
 
 /**
  * Get value by key.
- * @param  pszName    Key name.
- * @param  pszDefault Default value.
+ * @param  osName    Key name.
+ * @param  osDefault Default value.
  * @return            String value.
  *
  * @since GDAL 2.3
  */
-const char *CPLJSONObject::GetString(const char *pszName, const char* pszDefault) const
+std::string CPLJSONObject::GetString(const std::string &osName,
+                                     const std::string &osDefault) const
 {
-    if( nullptr == pszName )
-        return pszDefault == nullptr ? "" : pszDefault;
-    CPLJSONObject object = GetObj( pszName );
-    return object.ToString( pszDefault );
+    CPLJSONObject object = GetObj( osName );
+    return object.ToString( osDefault );
 }
 
 /**
  * Get value.
- * @param  pszDefault Default value.
+ * @param  osDefault Default value.
  * @return            String value.
  *
  * @since GDAL 2.3
  */
-const char* CPLJSONObject::ToString(const char* pszDefault) const
+std::string CPLJSONObject::ToString(const std::string &osDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_string*/ )
-        return json_object_get_string( TO_JSONOBJ(m_poJsonObject) );
-    return pszDefault == nullptr ? "" : pszDefault;
+    {
+        const char *pszString = json_object_get_string( TO_JSONOBJ(m_poJsonObject) );
+        if(nullptr != pszString)
+        {
+            return pszString;
+        }
+    }
+    return osDefault;
 }
 
 /**
  * Get value by key.
- * @param  pszName    Key name.
+ * @param  osName    Key name.
  * @param  dfDefault  Default value.
  * @return            Double value.
  *
  * @since GDAL 2.3
  */
-double CPLJSONObject::GetDouble(const char *pszName, double dfDefault) const
+double CPLJSONObject::GetDouble(const std::string &osName, double dfDefault) const
 {
-    if( nullptr == pszName )
-        return dfDefault;
-    CPLJSONObject object = GetObj( pszName );
+    CPLJSONObject object = GetObj( osName );
     return object.ToDouble( dfDefault );
 }
 
@@ -770,17 +772,15 @@ double CPLJSONObject::ToDouble(double dfDefault) const
 
 /**
  * Get value by key.
- * @param  pszName    Key name.
+ * @param  osName    Key name.
  * @param  nDefault   Default value.
  * @return            Integer value.
  *
  * @since GDAL 2.3
  */
-int CPLJSONObject::GetInteger(const char *pszName, int nDefault) const
+int CPLJSONObject::GetInteger(const std::string &osName, int nDefault) const
 {
-    if( nullptr == pszName )
-        return nDefault;
-    CPLJSONObject object = GetObj( pszName );
+    CPLJSONObject object = GetObj( osName );
     return object.ToInteger( nDefault );
 }
 
@@ -801,17 +801,15 @@ int CPLJSONObject::ToInteger(int nDefault) const
 
 /**
  * Get value by key.
- * @param  pszName    Key name.
+ * @param  osName    Key name.
  * @param  nDefault   Default value.
  * @return            Long value.
  *
  * @since GDAL 2.3
  */
-GInt64 CPLJSONObject::GetLong(const char *pszName, GInt64 nDefault) const
+GInt64 CPLJSONObject::GetLong(const std::string &osName, GInt64 nDefault) const
 {
-    if( nullptr == pszName )
-        return nDefault;
-    CPLJSONObject object = GetObj( pszName );
+    CPLJSONObject object = GetObj( osName );
     return object.ToLong( nDefault );
 }
 
@@ -832,17 +830,15 @@ GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
 
 /**
  * Get value by key.
- * @param  pszName    Key name.
+ * @param  osName    Key name.
  * @param  bDefault   Default value.
  * @return            Boolean value.
  *
  * @since GDAL 2.3
  */
-bool CPLJSONObject::GetBool(const char *pszName, bool bDefault) const
+bool CPLJSONObject::GetBool(const std::string &osName, bool bDefault) const
 {
-    if( nullptr == pszName )
-        return bDefault;
-    CPLJSONObject object = GetObj( pszName );
+    CPLJSONObject object = GetObj( osName );
     return object.ToBool( bDefault );
 }
 
@@ -897,31 +893,39 @@ bool CPLJSONObject::ToBool(bool bDefault) const
  *
  * @since GDAL 2.3
  */
-const char* CPLJSONObject::Format(enum PrettyFormat eFormat) const
+std::string CPLJSONObject::Format(enum PrettyFormat eFormat) const
 {
     if( m_poJsonObject )
     {
+        const char *pszFormatString = nullptr;
         switch ( eFormat ) {
             case Spaced:
-                return json_object_to_json_string_ext(
+                pszFormatString = json_object_to_json_string_ext(
                     TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_SPACED );
+                break;
             case Pretty:
-                return json_object_to_json_string_ext(
+                pszFormatString = json_object_to_json_string_ext(
                     TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_PRETTY );
+                break;
             default:
-                return json_object_to_json_string_ext(
+                pszFormatString = json_object_to_json_string_ext(
                     TO_JSONOBJ(m_poJsonObject), JSON_C_TO_STRING_PLAIN);
+        }
+        if(nullptr != pszFormatString)
+        {
+            return pszFormatString;
         }
     }
     return "";
 }
 
 /*! @cond Doxygen_Suppress */
-CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName) const
+CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
+                                             std::string &osName) const
 {
     json_object *poVal = nullptr;
-    CPLStringList pathPortions( CSLTokenizeString2( pszPath, JSON_PATH_DELIMITER,
-                                                    0 ) );
+    CPLStringList pathPortions( CSLTokenizeString2( osPath.c_str(),
+                                                    JSON_PATH_DELIMITER, 0 ) );
     int portionsCount = pathPortions.size();
     if( 0 == portionsCount )
         return CPLJSONObject( "", nullptr );
@@ -944,8 +948,8 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const char *pszPath, char *pszName)
 //    if(json_object_object_get_ex(object.m_jsonObject,
 //                                 pathPortions[portionsCount - 1], &poVal))
 //        return JSONObject(nullptr);
-
-    CPLStrlcpy( pszName, pathPortions[portionsCount - 1], JSON_NAME_MAX_SIZE );
+//
+    osName = pathPortions[portionsCount - 1];
     return object;
 }
 /*! @endcond */
@@ -960,7 +964,8 @@ CPLJSONObject::Type CPLJSONObject::GetType() const
 {
     if(nullptr == m_poJsonObject)
         return CPLJSONObject::Unknown;
-    switch ( json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ) {
+    switch ( json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) )
+    {
     case  json_type_null:
         return CPLJSONObject::Null;
     case json_type_boolean:
@@ -1014,14 +1019,14 @@ CPLJSONArray::CPLJSONArray()
     m_poJsonObject = json_object_new_array();
 }
 
-CPLJSONArray::CPLJSONArray(const CPLString &soName) :
-    CPLJSONObject( soName, json_object_new_array() )
+CPLJSONArray::CPLJSONArray(const std::string &osName) :
+    CPLJSONObject( osName, json_object_new_array() )
 {
 
 }
 
-CPLJSONArray::CPLJSONArray(const CPLString &soName, JSONObjectH poJsonObject) :
-    CPLJSONObject(soName, poJsonObject)
+CPLJSONArray::CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject) :
+    CPLJSONObject(osName, poJsonObject)
 {
 
 }
@@ -1040,9 +1045,9 @@ CPLJSONArray::CPLJSONArray(const CPLJSONObject &other) : CPLJSONObject(other)
  */
 int CPLJSONArray::Size() const
 {
-    if( nullptr == m_poJsonObject )
-        return 0;
-    return json_object_array_length( TO_JSONOBJ(m_poJsonObject) );
+    if( m_poJsonObject )
+        return json_object_array_length( TO_JSONOBJ(m_poJsonObject) );
+    return 0;
 }
 
 /**
@@ -1060,12 +1065,27 @@ void CPLJSONArray::Add(const CPLJSONObject &oValue)
 
 /**
  * Add value to array
+ * @param osValue Value to add.
+ *
+ * @since GDAL 2.3
+ */
+void CPLJSONArray::Add(const std::string &osValue)
+{
+    if( m_poJsonObject )
+        json_object_array_add( TO_JSONOBJ(m_poJsonObject),
+            json_object_new_string( osValue.c_str() ) );
+}
+
+/**
+ * Add value to array
  * @param pszValue Value to add.
  *
  * @since GDAL 2.3
  */
-void CPLJSONArray::Add(const char* pszValue)
+void CPLJSONArray::Add(const char *pszValue)
 {
+    if(nullptr == pszValue)
+        return;
     if( m_poJsonObject )
         json_object_array_add( TO_JSONOBJ(m_poJsonObject),
             json_object_new_string( pszValue ) );
