@@ -305,37 +305,42 @@ written entities layer.  If the layer is not already defined in the template
 header then a new layer definition will be introduced, copied from the
 definition of the default layer ("0").
 
-<h3>Line Type Definitions</h2>
+<h3>Linetype Definitions</h2>
 
-When writing LWPOLYLINE entities the following rules apply with regard to
-Linetype definitions.<p>
+When writing linestring geometries, the following rules apply with regard to
+linetype (dash pattern) definitions.<p>
 
 <ul>
-<li> If the Linetype field is set on the written features, and that Linetype
-is already defined in the template header then it will be referenced from
-the entities regardless of whether an OGR style string existed.
-<li> If the Linetype is set, but the Linetype is not predefined in the
+<li> If the Linetype field is set on a written feature, and that linetype
+is already defined in the template header, then it will be referenced from
+the entity. If a style string is present with a "p" pattern proportional to the
+linetype defined in the header, a linetype scale value is written.
+<li> If the Linetype field is set, but the linetype is not defined in the
 header template, then a definition will be added if the feature has an
 OGR style string with a PEN tool and a "p" pattern setting.
 <li> If the feature has no Linetype field set, but it does have an OGR
-style string with a PEN tool with a "p" pattern set then an automatically
-named Linetype will be created in the output file.
-<li> It is assumed that patterns are using "g" (georeferenced) units for
-defining the line pattern.  If not the scaling of the DXF patterns is likely to be wrong - potentially very wrong.
+style string with a PEN tool with a "p" pattern set, then an automatically
+named linetype will be created in the output file. Or, if an appropriate
+linetype was previously created, that linetype will be referenced, with a
+linetype scale if required.
 </ul>
 
 The intention is that "dot dash" style patterns will be preserved when written
 to DXF and that specific linetypes can be predefined in the header template,
 and referenced using the Linetype field if desired.<p>
 
-The DXF writer does not support linetype scaling. DXF files with the $LTSCALE
-system variable or group code 48 set to something other than 1 may not
-round-trip correctly.<p>
+It is assumed that patterns are using "g" (georeferenced) units for
+defining the line pattern.  If not, the scaling of the DXF patterns is likely
+to be wrong - potentially very wrong.<p>
 
 <h3>Units</h2>
 
-At the moment GDAL writes DXF to report the measurement units as "English - Inches".
-For changing the units edit $MEASUREMENT and $INSUNITS variables in the header template.
+GDAL writes DXF files with measurement units set to "Imperial - Inches". If you
+need to change the units, edit the
+<a href="https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-1D074C55-0B63-482E-8A37-A52AC0C7C8FE-htm.html">$MEASUREMENT</a>
+and
+<a href="https://knowledge.autodesk.com/support/autocad/learn-explore/caas/CloudHelp/cloudhelp/2018/ENU/AutoCAD-Core/files/GUID-A58A87BB-482B-4042-A00A-EEF55A2B4FD8-htm.html">$INSUNITS</a>
+variables in the header template.
 
 <h3>See also</h2>
 
