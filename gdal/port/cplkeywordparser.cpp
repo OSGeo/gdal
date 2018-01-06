@@ -113,7 +113,7 @@ int CPLKeywordParser::Ingest( VSILFILE *fp )
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
+bool CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 
 {
     CPLString osName;
@@ -122,16 +122,16 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
     for( ; true; )
     {
         if( !ReadPair( osName, osValue ) )
-            return FALSE;
+            return false;
 
         if( EQUAL(osName, "BEGIN_GROUP") || EQUAL(osName, "GROUP") )
         {
             if( !ReadGroup((CPLString(pszPathPrefix) + osValue + ".").c_str()) )
-                return FALSE;
+                return false;
         }
         else if( STARTS_WITH_CI(osName, "END") )
         {
-            return TRUE;
+            return true;
         }
         else
         {
@@ -149,14 +149,14 @@ int CPLKeywordParser::ReadGroup( const char *pszPathPrefix )
 /*      white space, ignore comments, split on '='.                     */
 /************************************************************************/
 
-int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
+bool CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
 
 {
     osName = "";
     osValue = "";
 
     if( !ReadWord( osName ) )
-        return FALSE;
+        return false;
 
     SkipWhite();
 
@@ -166,10 +166,7 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     if( *pszHeaderNext != '=' )
     {
         // ISIS3 does not have anything after the end group/object keyword.
-        if( EQUAL(osName, "End_Group") || EQUAL(osName, "End_Object") )
-            return TRUE;
-        else
-            return FALSE;
+        return EQUAL(osName, "End_Group") || EQUAL(osName, "End_Object");
     }
 
     pszHeaderNext++;
@@ -219,14 +216,14 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
     else // Handle more normal "single word" values.
     {
         if( !ReadWord( osValue ) )
-            return FALSE;
+            return false;
     }
 
     SkipWhite();
 
     // No units keyword?
     if( *pszHeaderNext != '<' )
-        return TRUE;
+        return true;
 
     // Append units keyword.  For lines that like like this:
     //  MAP_RESOLUTION               = 4.0 <PIXEL/DEGREE>
@@ -244,14 +241,14 @@ int CPLKeywordParser::ReadPair( CPLString &osName, CPLString &osValue )
             break;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
 /*                              ReadWord()                              */
 /************************************************************************/
 
-int CPLKeywordParser::ReadWord( CPLString &osWord )
+bool CPLKeywordParser::ReadWord( CPLString &osWord )
 
 {
     osWord = "";
@@ -259,7 +256,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
     SkipWhite();
 
     if( *pszHeaderNext == '\0' || *pszHeaderNext == '=' )
-        return FALSE;
+        return false;
 
     while( *pszHeaderNext != '\0'
            && *pszHeaderNext != '='
@@ -272,7 +269,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
             while( *pszHeaderNext != '"' )
             {
                 if( *pszHeaderNext == '\0' )
-                    return FALSE;
+                    return false;
 
                 osWord += *(pszHeaderNext++);
             }
@@ -284,7 +281,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
             while( *pszHeaderNext != '\'' )
             {
                 if( *pszHeaderNext == '\0' )
-                    return FALSE;
+                    return false;
 
                 osWord += *(pszHeaderNext++);
             }
@@ -300,7 +297,7 @@ int CPLKeywordParser::ReadWord( CPLString &osWord )
     if( *pszHeaderNext == ';' )
         pszHeaderNext++;
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/

@@ -51,9 +51,9 @@ class CPLKeywordParser
     const char *pszHeaderNext;
 
     void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
+    bool    ReadWord( CPLString &osWord );
+    bool    ReadPair( CPLString &osName, CPLString &osValue );
+    bool    ReadGroup( const char *pszPathPrefix );
 
 public:
     CPLKeywordParser();
