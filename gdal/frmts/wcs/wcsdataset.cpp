@@ -1213,6 +1213,11 @@ static void ParseURL(CPLString &url, CPLString &version, CPLString &coverage, CP
 GDALDataset *WCSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
+    if( !Identify(poOpenInfo) )
+    {
+        return nullptr;
+    }
+
     CPLString cache = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "");
     if (!SetupCache(cache,
                     CPLFetchBool(poOpenInfo->papszOpenOptions, "CLEAR_CACHE", false)))
