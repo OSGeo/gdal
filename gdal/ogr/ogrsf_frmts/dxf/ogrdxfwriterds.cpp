@@ -725,7 +725,7 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
         WriteValue( fpIn, 70, "0" );
         WriteValue( fpIn, 3, "" );
         WriteValue( fpIn, 72, "65" );
-        WriteValue( fpIn, 73, oPair.second.size() );
+        WriteValue( fpIn, 73, static_cast<int>(oPair.second.size()) );
 
         double dfTotalLength = 0.0;
         for( const double& dfSegment : oPair.second )
