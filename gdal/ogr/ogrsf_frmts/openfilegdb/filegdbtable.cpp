@@ -2386,12 +2386,15 @@ template <class ZSetter> int FileGDBOGRGeometryConverterImpl::ReadZArray(ZSetter
                                                       GIntBig& dz)
 {
     const int errorRetValue = FALSE;
+    double dfZScale = poGeomField->GetZScale();
+    if( dfZScale == 0 )
+        dfZScale = std::numeric_limits<double>::min(); // to prevent divide by zero
     for(GUInt32 i = 0; i < nPoints; i++ )
     {
         returnErrorIf(pabyCur >= pabyEnd);
         ReadVarIntAndAddNoCheck(pabyCur, dz);
 
-        double dfZ = dz / poGeomField->GetZScale() + poGeomField->GetZOrigin();
+        double dfZ = dz / dfZScale + poGeomField->GetZOrigin();
         setter.set(i, dfZ);
     }
     return TRUE;
