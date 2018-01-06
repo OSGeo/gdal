@@ -712,25 +712,31 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords( VSILFILE *fpIn )
     if( poLayer == nullptr )
         return true;
 
-    std::map<CPLString,CPLString>::iterator oIt;
-    std::map<CPLString,CPLString>& oNewLineTypes =
+    std::map<CPLString,std::vector<double>>& oNewLineTypes =
         poLayer->GetNewLineTypeMap();
 
-    for( oIt = oNewLineTypes.begin();
-         oIt != oNewLineTypes.end(); ++oIt )
+    for( const auto& oPair : oNewLineTypes )
     {
         WriteValue( fpIn, 0, "LTYPE" );
         WriteEntityID( fpIn );
         WriteValue( fpIn, 100, "AcDbSymbolTableRecord" );
         WriteValue( fpIn, 100, "AcDbLinetypeTableRecord" );
-        WriteValue( fpIn, 2, (*oIt).first );
+        WriteValue( fpIn, 2, oPair.first );
         WriteValue( fpIn, 70, "0" );
         WriteValue( fpIn, 3, "" );
         WriteValue( fpIn, 72, "65" );
-        VSIFWriteL( (*oIt).second.c_str(), 1, (*oIt).second.size(), fpIn );
+        WriteValue( fpIn, 73, oPair.second.size() );
 
-        CPLDebug( "DXF", "Define Line type '%s'.",
-                  (*oIt).first.c_str() );
+        double dfTotalLength = 0.0;
+        for( const double& dfSegment : oPair.second )
+            dfTotalLength += fabs( dfSegment );
+        WriteValue( fpIn, 40, dfTotalLength );
+
+        for( const double& dfSegment : oPair.second )
+        {
+            WriteValue( fpIn, 49, dfSegment );
+            WriteValue( fpIn, 74, "0" );
+        }
     }
 
     return true;
