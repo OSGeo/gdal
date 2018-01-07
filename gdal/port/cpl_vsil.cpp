@@ -795,6 +795,12 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
                        int bSetError )
 
 {
+    // Too long filenames can cause excessive memory allocation due to
+    // recursion in some filesystem handlers
+    const size_t knMaxPath = 8192;
+    if( CPLStrnlen(pszFilename, knMaxPath) == knMaxPath )
+        return nullptr;
+
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );
 
