@@ -2968,7 +2968,7 @@ def ogr_dxf_44():
 
     # MULTILEADER with custom arrowhead
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((26.8 32.6,10 20,25 10,25 5,40 20,48 20))') != 0:
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((26.8 32.6,10 20,25 10,25 5,40 20),(40 20,48 20))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3024,7 +3024,7 @@ def ogr_dxf_44():
     # MULTILEADER with multiple leader lines and formatted text
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#0000ff)' \
-    or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((7.6425115795681 -8.00285406769102,18.2 -20.0),(19.2913880067389 -13.9367332958948,18.2 -20.0),(18.2 -20.0,38 -20),(54.8204921137545 -22.5800753657327,60.2227692307692 -20.0,52.2227692307692 -20.0))') != 0:
+    or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((7.6425115795681 -8.00285406769102,18.2 -20.0),(19.2913880067389 -13.9367332958948,18.2 -20.0),(18.2 -20.0,38 -20),(54.8204921137545 -22.5800753657327,60.2227692307692 -20.0),(60.2227692307692 -20.0,52.2227692307692 -20.0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3055,7 +3055,7 @@ def ogr_dxf_44():
     # different leader color
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'PEN(c:#ff00ff)' \
-    or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((-41.8919467995818 -22.8930851139176,-36.1215379759023 -17.6108145786645,-44.0 -19.0))') != 0:
+    or ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((-41.8919467995818 -22.8930851139176,-36.1215379759023 -17.6108145786645),(-36.1215379759023 -17.6108145786645,-44.0 -19.0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3129,6 +3129,13 @@ def ogr_dxf_44():
     f = lyr.GetNextFeature()
     if f.GetStyleString() != 'LABEL(f:"Arial",t:"Splines",p:7,a:342,s:2g,c:#000000)' \
     or ogrtest.check_feature_geometry(f, 'POINT (110.7043505591 -4.20673403616296)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    # MULTILEADER with DIMBREAK
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((50.8917622404846 41.5635728657296,51.2877903403879 42.2579494192141),(51.9070696740577 43.3437639093041,54.3108962133801 47.5585173269448,55.9270734326513 48.2521008552884),(57.0757636753042 48.7450620367561,59.4256548786735 49.7535194092661),(60 50,60 50),(60 50,60 50),(60.625 50.0,61.875 50.0),(63.125 50.0,63.6 50.0))') != 0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
