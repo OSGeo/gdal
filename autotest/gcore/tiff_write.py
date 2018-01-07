@@ -7786,6 +7786,38 @@ def tiff_write_167_deflate_zlevel():
     return 'success'
 
 ###############################################################################
+# Test CCITTFAX3
+
+def tiff_write_168_ccitfax3():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize1bit.tif', 1, 5918,
+                            options = [ 'NBITS=1', 'COMPRESS=CCITTFAX3' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test CCITTRLE
+
+def tiff_write_169_ccitrle():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize1bit.tif', 1, 5918,
+                            options = [ 'NBITS=1', 'COMPRESS=CCITTRLE' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test invalid compression method
+
+def tiff_write_170_invalid_compresion():
+
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                        options = [ 'COMPRESS=INVALID' ] )
+    if gdal.GetLastErrorMsg() == '':
+        return 'fail'
+    gdal.Unlink('/vsimem/out.tif')
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7982,10 +8014,13 @@ gdaltest_list = [
     tiff_write_165,
     tiff_write_166,
     tiff_write_167_deflate_zlevel,
+    tiff_write_168_ccitfax3,
+    tiff_write_169_ccitrle,
+    tiff_write_170_invalid_compresion,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_166 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_170_invalid_compresion ]
 
 if __name__ == '__main__':
 

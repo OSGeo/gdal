@@ -582,9 +582,19 @@ def mask_14():
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'TRUE')
     src_ds = None
 
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'YES')
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK', 'NO')
+    # The only flag value supported for internal mask is GMF_PER_DATASET
+    with gdaltest.error_handler():
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            ret = ds.CreateMaskBand(0)
+    if ret == 0:
+        gdaltest.post_reason( 'Error expected' )
+        return 'fail'
+
+    with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+        ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    if ret != 0:
+        gdaltest.post_reason( 'Creation failed' )
+        return 'fail'
 
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     if cs != 0:
@@ -598,6 +608,22 @@ def mask_14():
     if cs != 400:
         print(cs)
         gdaltest.post_reason( 'Got wrong checksum for the mask (2)' )
+        return 'fail'
+
+    # This TIFF dataset has already an internal mask band
+    with gdaltest.error_handler():
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    if ret == 0:
+        gdaltest.post_reason( 'Error expected' )
+        return 'fail'
+
+    # This TIFF dataset has already an internal mask band
+    with gdaltest.error_handler():
+        with gdaltest.config_option('GDAL_TIFF_INTERNAL_MASK', 'YES'):
+            ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
+    if ret == 0:
+        gdaltest.post_reason( 'Error expected' )
         return 'fail'
 
     ds = None
