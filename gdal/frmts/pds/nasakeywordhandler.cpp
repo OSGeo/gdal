@@ -133,16 +133,21 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
-    return ReadGroup( "", poJSon );
+    return ReadGroup( "", poJSon, 0 );
 }
 
 /************************************************************************/
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur )
+int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur,
+                                   int nRecLevel )
 
 {
+    // Arbitrary threshold to avoid stack overflow
+    if( nRecLevel == 100 )
+        return FALSE;
+
     for( ; true; )
     {
         CPLString osName, osValue;
@@ -156,7 +161,7 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur
                 json_object_new_string( EQUAL(osName,"OBJECT") ?
                                                     "object" : "group" ) );
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str(),
-                            poNewGroup ) )
+                            poNewGroup, nRecLevel + 1 ) )
             {
                 json_object_put(poNewGroup);
                 return FALSE;
