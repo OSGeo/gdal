@@ -4,8 +4,8 @@ EMMAKE ?= emmake
 EMCC ?= emcc
 EMCONFIGURE ?= emconfigure
 EMCONFIGURE_JS ?= 0
-GDAL_EMCC_CFLAGS := -msse -Oz
-PROJ_EMCC_CFLAGS := -msse -Oz
+GDAL_EMCC_CFLAGS := -msse -O3
+PROJ_EMCC_CFLAGS := -msse -O3
 EXPORTED_FUNCTIONS = "[\
   '_CSLCount',\
   '_GDALSetCacheMax',\
@@ -20,21 +20,32 @@ EXPORTED_FUNCTIONS = "[\
   '_GDALGetRasterCount',\
   '_GDALGetRasterDataType',\
   '_GDALGetRasterBand',\
+  '_GDALGetRasterStatistics',\
+  '_GDALGetRasterMinimum',\
+  '_GDALGetRasterMaximum',\
+  '_GDALGetRasterNoDataValue',\
   '_GDALGetProjectionRef',\
   '_GDALSetProjection',\
   '_GDALGetGeoTransform',\
   '_GDALSetGeoTransform',\
   '_OSRNewSpatialReference',\
+  '_OSRDestroySpatialReference',\
   '_OSRImportFromEPSG',\
   '_OCTNewCoordinateTransformation',\
+  '_OCTDestroyCoordinateTransformation',\
   '_OCTTransform',\
   '_GDALCreateGenImgProjTransformer',\
+  '_GDALDestroyGenImgProjTransformer',\
   '_GDALGenImgProjTransform',\
   '_GDALDestroyGenImgProjTransformer',\
   '_GDALSuggestedWarpOutput',\
   '_GDALTranslate',\
   '_GDALTranslateOptionsNew',\
   '_GDALTranslateOptionsFree',\
+  '_GDALWarpAppOptionsNew',\
+  '_GDALWarpAppOptionsSetProgress',\
+  '_GDALWarpAppOptionsFree',\
+  '_GDALWarp',\
   '_GDALReprojectImage'\
 ]"
 
@@ -53,6 +64,8 @@ gdal.js: $(GDAL)/libgdal.a
 	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a $(PROJ4)/src/.libs/libproj.a -o gdal.js \
 		-s EXPORTED_FUNCTIONS=$(EXPORTED_FUNCTIONS) \
 		-s TOTAL_MEMORY=256MB \
+		-s WASM=1 \
+		-s NO_EXIT_RUNTIME=1 \
 		-s RESERVED_FUNCTION_POINTERS=1 \
 		--preload-file $(GDAL)/data/pcs.csv@/usr/local/share/gdal/pcs.csv \
 		--preload-file $(GDAL)/data/gcs.csv@/usr/local/share/gdal/gcs.csv \
