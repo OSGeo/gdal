@@ -290,16 +290,25 @@ OGRDXFFeature *OGRDXFLayer::TranslateLEADER()
 }
 
 /************************************************************************/
-/*                          DXFMLEADERLeader                            */
+/*       DXFMLEADERVertex, DXFMLEADERLeaderLine, DXFMLEADERLeader       */
 /************************************************************************/
 
+struct DXFMLEADERVertex {
+    DXFTriple                oCoords;
+    std::vector<std::pair<DXFTriple, DXFTriple>> aoBreaks;
+
+    DXFMLEADERVertex( double dfX, double dfY )
+        : oCoords( DXFTriple( dfX, dfY, 0.0 ) ) {}
+};
+
 struct DXFMLEADERLeader {
-    double                       dfLandingX;
-    double                       dfLandingY;
-    double                       dfDoglegVectorX;
-    double                       dfDoglegVectorY;
-    double                       dfDoglegLength;
-    std::vector<OGRLineString *> apoLeaderLines;
+    double                   dfLandingX;
+    double                   dfLandingY;
+    double                   dfDoglegVectorX;
+    double                   dfDoglegVectorY;
+    double                   dfDoglegLength;
+    std::vector<std::pair<DXFTriple, DXFTriple>> aoDoglegBreaks;
+    std::vector<std::vector<DXFMLEADERVertex>> aaoLeaderLines;
 };
 
 /************************************************************************/
@@ -319,14 +328,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     DXFMLEADERLeader oLeader;
     std::vector<DXFMLEADERLeader> aoLeaders;
 
-    OGRLineString *poLine = nullptr;
-    bool bHaveX = false;
-    bool bHaveY = false;
+    std::vector<DXFMLEADERVertex> oLeaderLine;
     double dfCurrentX = 0.0;
     double dfCurrentY = 0.0;
+    double dfCurrentX2 = 0.0;
+    double dfCurrentY2 = 0.0;
+    size_t nCurrentVertex = 0;
 
     double dfScale = 1.0;
-    int nLeaderLineType = 1; // 0 = none, 1 = straight, 2 = spline
     bool bHasDogleg = true;
     CPLString osLeaderColor = "0";
 
@@ -334,7 +343,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     CPLString osTextStyleHandle;
     double dfTextX = 0.0;
     double dfTextY = 0.0;
-    int iTextAlignment = 1; // 1 = left, 2 = center, 3 = right
+    int nTextAlignment = 1; // 1 = left, 2 = center, 3 = right
     double dfTextAngle = 0.0;
     double dfTextHeight = 4.0;
 
@@ -346,6 +355,12 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
     CPLString osArrowheadBlockHandle;
     double dfArrowheadSize = 4.0;
+
+    // The different leader line types
+    const int MLT_NONE = 0;
+    const int MLT_STRAIGHT = 1;
+    const int MLT_SPLINE = 2;
+    int nLeaderLineType = MLT_STRAIGHT;
 
     // Group codes mean different things in different sections of the
     // MLEADER entity. We need to keep track of the section we are in.
@@ -473,7 +488,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                 break;
 
               case 171:
-                iTextAlignment = atoi( szLineBuf );
+                nTextAlignment = atoi( szLineBuf );
                 break;
 
               case 341:
@@ -515,7 +530,6 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
               case 304:
                 nSection = MLS_LEADER_LINE;
-                poLine = new OGRLineString();
                 break;
 
               case 10:
@@ -534,6 +548,25 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                 oLeader.dfDoglegVectorY = CPLAtof(szLineBuf);
                 break;
 
+              case 12:
+                dfCurrentX = CPLAtof(szLineBuf);
+                break;
+
+              case 22:
+                dfCurrentY = CPLAtof(szLineBuf);
+                break;
+
+              case 13:
+                dfCurrentX2 = CPLAtof(szLineBuf);
+                break;
+
+              case 23:
+                dfCurrentY2 = CPLAtof(szLineBuf);
+                oLeader.aoDoglegBreaks.push_back( std::make_pair(
+                    DXFTriple( dfCurrentX, dfCurrentY, 0.0 ),
+                    DXFTriple( dfCurrentX2, dfCurrentY2, 0.0 ) ) );
+                break;
+
               case 40:
                 oLeader.dfDoglegLength = CPLAtof(szLineBuf);
                 break;
@@ -545,67 +578,52 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             {
               case 305:
                 nSection = MLS_LEADER;
-                if( bHaveX && bHaveY && poLine )
-                {
-                    poLine->addPoint( dfCurrentX, dfCurrentY );
-                    bHaveX = bHaveY = false;
-                }
-                oLeader.apoLeaderLines.push_back( poLine );
-                poLine = nullptr;
+                oLeader.aaoLeaderLines.push_back( oLeaderLine );
+                oLeaderLine.clear();
                 break;
 
               case 10:
-                // add the previous point onto the linestring
-                if( bHaveX && bHaveY )
-                {
-                    poLine->addPoint( dfCurrentX, dfCurrentY );
-                    bHaveY = false;
-                }
                 dfCurrentX = CPLAtof(szLineBuf);
-                bHaveX = true;
                 break;
 
               case 20:
-                // add the previous point onto the linestring
-                if( bHaveX && bHaveY )
-                {
-                    poLine->addPoint( dfCurrentX, dfCurrentY );
-                    bHaveX = false;
-                }
                 dfCurrentY = CPLAtof(szLineBuf);
-                bHaveY = true;
+                oLeaderLine.push_back(
+                    DXFMLEADERVertex( dfCurrentX, dfCurrentY ) );
+                break;
+
+              case 90:
+                nCurrentVertex = atoi(szLineBuf);
+                if( nCurrentVertex > oLeaderLine.size() )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                        "Wrong group code 90 in LEADER_LINE: %s", szLineBuf );
+                    DXF_LAYER_READER_ERROR();
+                    delete poOverallFeature;
+                    return nullptr;
+                }
+                break;
+
+              case 11:
+                dfCurrentX = CPLAtof(szLineBuf);
+                break;
+
+              case 21:
+                dfCurrentY = CPLAtof(szLineBuf);
+                break;
+
+              case 12:
+                dfCurrentX2 = CPLAtof(szLineBuf);
+                break;
+
+              case 22:
+                dfCurrentY2 = CPLAtof(szLineBuf);
+                oLeaderLine[nCurrentVertex].aoBreaks.push_back( std::make_pair(
+                    DXFTriple( dfCurrentX, dfCurrentY, 0.0 ),
+                    DXFTriple( dfCurrentX2, dfCurrentY2, 0.0 ) ) );
                 break;
             }
             break;
-        }
-    }
-
-    if( poLine )
-    {
-        delete poLine;
-        poLine = nullptr;
-    }
-
-    // delete any lines left in a stray, unclosed LEADER{...} group
-    while( !oLeader.apoLeaderLines.empty() )
-    {
-        delete oLeader.apoLeaderLines.back();
-        oLeader.apoLeaderLines.pop_back();
-    }
-
-    // if we don't need any leaders, delete them
-    if( nCode < 0 || nLeaderLineType == 0 )
-    {
-        while( !aoLeaders.empty() )
-        {
-            std::vector<OGRLineString *>& apoLeaderLines =
-                aoLeaders.back().apoLeaderLines;
-            while( !apoLeaderLines.empty() )
-            {
-                delete apoLeaderLines.back();
-                apoLeaderLines.pop_back();
-            }
-            aoLeaders.pop_back();
         }
     }
 
@@ -642,10 +660,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         poArrowheadOwningFeature = poOverallFeature;
 
     for( std::vector<DXFMLEADERLeader>::iterator oIt = aoLeaders.begin();
-         nLeaderLineType != 0 && oIt != aoLeaders.end();
+         nLeaderLineType != MLT_NONE && oIt != aoLeaders.end();
          ++oIt )
     {
-        const bool bLeaderHasDogleg = bHasDogleg && nLeaderLineType != 2 &&
+        const bool bLeaderHasDogleg = bHasDogleg &&
+            nLeaderLineType != MLT_SPLINE &&
             oIt->dfDoglegLength != 0.0 &&
             ( oIt->dfDoglegVectorX != 0.0 || oIt->dfDoglegVectorY != 0.0 );
 
@@ -659,39 +678,78 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         // When the dogleg is turned off or we are in spline mode, it seems
         // that the dogleg and landing data are still present in the DXF file,
         // but they are not supposed to be drawn.
-        if( !bHasDogleg || nLeaderLineType == 2 )
+        if( !bHasDogleg || nLeaderLineType == MLT_SPLINE )
         {
             oIt->dfLandingX = dfDoglegX;
             oIt->dfLandingY = dfDoglegY;
         }
 
-        for( std::vector<OGRLineString *>::iterator oLineIt =
-                    oIt->apoLeaderLines.begin();
-                oLineIt != oIt->apoLeaderLines.end();
-                ++oLineIt )
+        // Iterate through each leader line
+        for( const auto& aoLineVertices : oIt->aaoLeaderLines )
         {
-            OGRLineString *poLeaderLine = *oLineIt;
-            if( poLeaderLine->getNumPoints() == 0 )
-            {
-                delete poLeaderLine;
+            if( aoLineVertices.empty() )
                 continue;
+
+            OGRLineString* poLeaderLine = new OGRLineString();
+
+            // Get the first line segment for arrowhead purposes
+            poLeaderLine->addPoint(
+                aoLineVertices[0].oCoords.dfX,
+                aoLineVertices[0].oCoords.dfY );
+
+            if( aoLineVertices.size() > 1 )
+            {
+                poLeaderLine->addPoint(
+                    aoLineVertices[1].oCoords.dfX,
+                    aoLineVertices[1].oCoords.dfY );
             }
-
-            // Add the final vertex (the landing) to the end of the line
-            poLeaderLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
-
-            // If there is only one leader line, add the dogleg directly
-            // onto it
-            if( oIt->apoLeaderLines.size() == 1 && bLeaderHasDogleg )
-                poLeaderLine->addPoint( dfDoglegX, dfDoglegY );
+            else
+            {
+                poLeaderLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+            }
 
             // Add an arrowhead if required
             InsertArrowhead( poArrowheadOwningFeature,
                 osArrowheadBlockHandle, poLeaderLine,
                 dfArrowheadSize * dfScale );
 
+            poLeaderLine->setNumPoints( 1 );
+
+            // Go through the vertices of the leader line, adding them,
+            // as well as break start and end points, to the linestring.
+            for( size_t iVertex = 0; iVertex < aoLineVertices.size();
+                 iVertex++ )
+            {
+                if( iVertex > 0 )
+                {
+                    poLeaderLine->addPoint(
+                        aoLineVertices[iVertex].oCoords.dfX,
+                        aoLineVertices[iVertex].oCoords.dfY );
+                }
+
+                // Breaks are ignored for spline leaders
+                if( nLeaderLineType != MLT_SPLINE )
+                {
+                    for( const auto& oBreak :
+                         aoLineVertices[iVertex].aoBreaks )
+                    {
+                        poLeaderLine->addPoint( oBreak.first.dfX,
+                            oBreak.first.dfY );
+
+                        poMLS->addGeometryDirectly( poLeaderLine );
+                        poLeaderLine = new OGRLineString();
+
+                        poLeaderLine->addPoint( oBreak.second.dfX,
+                            oBreak.second.dfY );
+                    }
+                }
+            }
+
+            // Add the final vertex (the landing) to the end of the line
+            poLeaderLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+
             // Make the spline geometry for spline leaders
-            if( nLeaderLineType == 2 )
+            if( nLeaderLineType == MLT_SPLINE )
             {
                 DXFTriple oEndTangent;
                 if( osBlockName.empty() )
@@ -705,12 +763,25 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
             poMLS->addGeometryDirectly( poLeaderLine );
         }
 
-        // Add the dogleg as a separate line in the MLS where there is
-        // more than one leader line
-        if( oIt->apoLeaderLines.size() != 1 && bLeaderHasDogleg )
+        // Add the dogleg as a separate line in the MLS
+        if( bLeaderHasDogleg )
         {
             OGRLineString *poDoglegLine = new OGRLineString();
             poDoglegLine->addPoint( oIt->dfLandingX, oIt->dfLandingY );
+
+            // Interrupt the dogleg line at breaks
+            for( const auto& oBreak : oIt->aoDoglegBreaks )
+            {
+                poDoglegLine->addPoint( oBreak.first.dfX,
+                    oBreak.first.dfY );
+
+                poMLS->addGeometryDirectly( poDoglegLine );
+                poDoglegLine = new OGRLineString();
+
+                poDoglegLine->addPoint( oBreak.second.dfX,
+                    oBreak.second.dfY );
+            }
+
             poDoglegLine->addPoint( dfDoglegX, dfDoglegY );
             poMLS->addGeometryDirectly( poDoglegLine );
         }
@@ -933,7 +1004,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
     }
 
     osStyle += CPLString().Printf(",t:\"%s\",p:%d", osText.c_str(),
-        iTextAlignment + 6); // 7,8,9: vertical align top
+        nTextAlignment + 6); // 7,8,9: vertical align top
 
     if( dfTextAngle != 0.0 )
     {
