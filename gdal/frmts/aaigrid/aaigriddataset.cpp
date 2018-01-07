@@ -602,6 +602,16 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         return FALSE;
     }
 
+    // TODO(schwehr): Would be good to also factor the file size into the max.
+    // TODO(schwehr): Allow the user to disable this check.
+    // The driver allocates a panLineOffset array based on nRasterYSize
+    const int kMaxDimSize =  10000000;  // 1e7 cells.
+    if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
+    {
+        CSLDestroy(papszTokens);
+        return FALSE;
+    }
+
     const int iNorth = CSLFindString(papszTokens, "north");
     const int iSouth = CSLFindString(papszTokens, "south");
     const int iEast = CSLFindString(papszTokens, "east");
