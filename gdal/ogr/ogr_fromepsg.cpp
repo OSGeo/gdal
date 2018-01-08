@@ -38,6 +38,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -79,6 +80,8 @@ static const char * const apszDatumEquiv[] =
 static CPLMutex* hFindMatchesMutex = nullptr;
 static std::vector<OGRSpatialReference*>* papoSRSCache_PROJCS = nullptr;
 static std::vector<OGRSpatialReference*>* papoSRSCache_GEOGCS = nullptr;
+static std::map<CPLString, int>* poMapESRIPROJCSNameToEPSGCode = nullptr;
+static std::map<CPLString, int>* poMapESRIGEOGCSNameToEPSGCode = nullptr;
 
 /************************************************************************/
 /*                      OGREPSGDatumNameMassage()                       */
@@ -2915,6 +2918,11 @@ void CleanupFindMatchesCacheAndMutex()
         delete papoSRSCache_PROJCS;
         papoSRSCache_PROJCS = nullptr;
     }
+    delete poMapESRIPROJCSNameToEPSGCode;
+    poMapESRIPROJCSNameToEPSGCode = nullptr;
+    delete poMapESRIGEOGCSNameToEPSGCode;
+    poMapESRIGEOGCSNameToEPSGCode = nullptr;
+
 }
 
 /************************************************************************/
@@ -3072,6 +3080,7 @@ static void IngestDict(const char* pszDictFile,
                             }
                         }
                     }
+                    poSRS->morphFromESRI();
 
                     papoSRSCache->push_back(poSRS);
 
@@ -3095,16 +3104,67 @@ static void IngestDict(const char* pszDictFile,
 }
 
 /************************************************************************/
+/*                        BuildESRICSNameCache()                        */
+/************************************************************************/
+
+static void BuildESRICSNameCache(const char* pszSRSType,
+                                 std::map<CPLString, int>* poMapCSNameToCode,
+                                 VSILFILE* fpOut)
+{
+    const char *pszFilename = CPLFindFile( "gdal", "esri_epsg.wkt" );
+    if( pszFilename == nullptr )
+        return;
+
+    VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
+    if( fp == nullptr )
+        return;
+
+/* -------------------------------------------------------------------- */
+/*      Process lines.                                                  */
+/* -------------------------------------------------------------------- */
+    const char *pszLine = nullptr;
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
+    {
+        if( pszLine[0] == '#' )
+            continue;
+
+        const char* pszComma = strchr(pszLine, ',');
+        if( pszComma )
+        {
+            const char* pszWKT = pszComma + 1;
+            if( STARTS_WITH(pszWKT, pszSRSType) )
+            {
+                OGRSpatialReference oSRS;
+                if( oSRS.SetFromUserInput(pszWKT) == OGRERR_NONE )
+                {
+                    const char* pszSRSName = oSRS.GetAttrValue(pszSRSType);
+                    const char* pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+                    if( pszSRSName && pszAuthCode )
+                    {
+                        (*poMapCSNameToCode)[pszSRSName] = atoi(pszAuthCode);
+                        VSIFPrintfL(fpOut, "%s,%s\n", pszSRSName, pszAuthCode);
+                    }
+                }
+            }
+        }
+    }
+
+    VSIFCloseL( fp );
+}
+
+/************************************************************************/
 /*                            GetSRSCache()                             */
 /************************************************************************/
 
 const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
-                                                    const char* pszSRSType)
+                                const char* pszSRSType,
+                                const std::map<CPLString, int>*& poMapCSNameToCodeOut)
 {
     if( pszSRSType == nullptr )
         return nullptr;
 
     std::vector<OGRSpatialReference*>* papoSRSCache = nullptr;
+    std::map<CPLString, int>* poMapCSNameToCode = nullptr;
 
     CPLMutexHolderD(&hFindMatchesMutex);
     CPLString osFilename;
@@ -3116,6 +3176,8 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             return papoSRSCache_PROJCS;
         papoSRSCache_PROJCS = new std::vector<OGRSpatialReference*>();
         papoSRSCache = papoSRSCache_PROJCS;
+        poMapESRIPROJCSNameToEPSGCode = new std::map<CPLString, int>();
+        poMapCSNameToCode = poMapESRIPROJCSNameToEPSGCode;
     }
     else if( EQUAL(pszSRSType, "GEOGCS") )
     {
@@ -3124,18 +3186,17 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             return papoSRSCache_GEOGCS;
         papoSRSCache_GEOGCS = new std::vector<OGRSpatialReference*>();
         papoSRSCache = papoSRSCache_GEOGCS;
+        poMapESRIGEOGCSNameToEPSGCode = new std::map<CPLString, int>();
+        poMapCSNameToCode = poMapESRIGEOGCSNameToEPSGCode;
     }
     else
     {
         return nullptr;
     }
+    poMapCSNameToCodeOut = poMapCSNameToCode;
 
     // First try to look an already built SRS cache in ~/.gdal/X.Y/srs_cache
-#ifdef WIN32
-    const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
-#else
-    const char* pszHome = CPLGetConfigOption("HOME", nullptr);
-#endif
+    const char* pszHome = CPLGetHomeDir();
     const char* pszCSVFilename = CSVFilename(pszFilename);
     CPLString osCacheFilename;
     CPLString osCacheDirectory =
@@ -3160,6 +3221,7 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
         VSIStatBufL sStatCache;
         VSIStatBufL sStatCSV;
         VSILFILE* fp = nullptr;
+        VSILFILE* fpESRINames = nullptr;
         if( VSIStatL((osCacheFilename + ".gz").c_str(), &sStatCache) == 0 &&
             VSIStatL(pszCSVFilename, &sStatCSV) == 0 &&
             sStatCache.st_mtime >= sStatCSV.st_mtime &&
@@ -3167,17 +3229,13 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
                 pszCSVFilename, "override.csv"), &sStatCSV) != 0 ||
                 sStatCache.st_mtime >= sStatCSV.st_mtime) )
         {
-            osCacheFilename += ".gz";
-            fp = VSIFOpenL(("/vsigzip/" + osCacheFilename).c_str(), "rb");
-        }
-        else if( VSIStatL(osCacheFilename, &sStatCache) == 0 &&
-            VSIStatL(pszCSVFilename, &sStatCSV) == 0 &&
-            sStatCache.st_mtime >= sStatCSV.st_mtime &&
-            (VSIStatL(CPLResetExtension(
-                pszCSVFilename, "override.csv"), &sStatCSV) != 0 ||
-                sStatCache.st_mtime >= sStatCSV.st_mtime) )
-        {
-            fp = VSIFOpenL(osCacheFilename, "rb");
+            fp = VSIFOpenL(("/vsigzip/" + osCacheFilename + ".gz").c_str(), "rb");
+            if( fp )
+            {
+                fpESRINames = VSIFOpenL(
+                    (CPLString("/vsigzip/") +
+                     CPLResetExtension(osCacheFilename, "esri.gz")).c_str(), "rb");
+            }
         }
         if( fp )
         {
@@ -3190,8 +3248,29 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
                                 new OGRSpatialReference();
                 poSRS->SetFromUserInput(pszLine);
                 papoSRSCache->push_back(poSRS);
+                const char* pszSRSName = poSRS->GetAttrValue(pszSRSType);
+                const char* pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+                if( pszSRSName && pszAuthCode )
+                {
+                    (*poMapCSNameToCode)[pszSRSName] = atoi(pszAuthCode);
+                }
             }
             VSIFCloseL(fp);
+
+            if( fpESRINames )
+            {
+                while( (pszLine = CPLReadLineL(fpESRINames)) != nullptr )
+                {
+                    const char* pszComma = strchr(pszLine, ',');
+                    if( pszComma )
+                    {
+                        CPLString osName(pszLine);
+                        osName.resize(pszComma - pszLine);
+                        (*poMapCSNameToCode)[osName] = atoi(pszComma + 1);
+                    }
+                }
+                VSIFCloseL(fpESRINames);
+            }
 
             return papoSRSCache;
         }
@@ -3217,8 +3296,6 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
         VSIMkdir( osDirname, 0755 );
         fpOut = VSIFOpenL(
             ("/vsigzip/" + osCacheFilename + ".gz").c_str(), "wb");
-        if( fpOut == nullptr )
-            fpOut = VSIFOpenL(osCacheFilename, "wb");
         if( fpOut != nullptr )
         {
             VSIFPrintfL(fpOut, "# From %s\n", pszFilename);
@@ -3259,6 +3336,11 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
             }
 
             papoSRSCache->push_back(poSRS);
+            const char* pszSRSName = poSRS->GetAttrValue(pszSRSType);
+            if( pszSRSName )
+            {
+                (*poMapCSNameToCode)[pszSRSName] = nCode;
+            }
             poSRS = nullptr;
         }
     }
@@ -3270,6 +3352,15 @@ const std::vector<OGRSpatialReference*>* OGRSpatialReference::GetSRSCache(
 
     if( fpOut )
         VSIFCloseL(fpOut);
+
+    fpOut = VSIFOpenL(
+        (CPLString("/vsigzip/") +
+            CPLResetExtension(osCacheFilename, "esri.gz")).c_str(), "wb");
+    if( fpOut != nullptr )
+    {
+        BuildESRICSNameCache(pszSRSType, poMapCSNameToCode, fpOut);
+        VSIFCloseL(fpOut);
+    }
 
     return papoSRSCache;
 }
@@ -3366,13 +3457,46 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     if( pszSRSName == nullptr )
         return nullptr;
 
+    const std::map<CPLString, int>* poMapCSNameToCode = nullptr;
     const std::vector<OGRSpatialReference*>* papoSRSCache =
-                                                    GetSRSCache(pszSRSType);
+        GetSRSCache(pszSRSType, poMapCSNameToCode);
     if( papoSRSCache == nullptr )
         return nullptr;
 
-    std::vector< OGRSpatialReference* > apoSameSRS;
+    // If we have an exact match with a coordinate system name coming from
+    // EPSG entries (either ours or ESRI), and the SRS are equivalent, then
+    // use that exact match
     const char* apszOptions[] = { "TOWGS84=ONLY_IF_IN_BOTH", nullptr };
+    if( poMapCSNameToCode )
+    {
+        auto oIter = poMapCSNameToCode->find(pszSRSName);
+        if( oIter != poMapCSNameToCode->end() )
+        {
+            OGRSpatialReference oSRS;
+            if( oSRS.importFromEPSG(oIter->second) == OGRERR_NONE )
+            {
+                if( IsSame(&oSRS, apszOptions) )
+                {
+                    OGRSpatialReferenceH* pahRet =
+                        static_cast<OGRSpatialReferenceH*>(
+                                CPLCalloc(sizeof(OGRSpatialReferenceH), 2));
+                    pahRet[0] = reinterpret_cast<OGRSpatialReferenceH>(
+                        oSRS.Clone());
+                    if( pnEntries )
+                        *pnEntries = 1;
+                    if( ppanMatchConfidence )
+                    {
+                        *ppanMatchConfidence = static_cast<int*>(
+                            CPLMalloc(sizeof(int)));
+                        (*ppanMatchConfidence)[0] = 100;
+                    }
+                    return pahRet;
+                }
+            }
+        }
+    }
+
+    std::vector< OGRSpatialReference* > apoSameSRS;
     CPLString osSRSName(MassageSRSName(pszSRSName, false));
     CPLString osSRSNameExtra(MassageSRSName(osSRSName, true));
     std::vector<size_t> anMatchingSRSNameIndices;
@@ -3380,7 +3504,7 @@ OGRSpatialReferenceH* OGRSpatialReference::FindMatches(
     {
         const OGRSpatialReference* poOtherSRS = (*papoSRSCache)[i];
 #ifdef notdef
-        if( EQUAL(poOtherSRS->GetAuthorityCode(NULL), "2765") )
+        if( EQUAL(poOtherSRS->GetAuthorityCode(nullptr), "2765") )
         {
             printf("brkpt\n"); /* ok */
         }
