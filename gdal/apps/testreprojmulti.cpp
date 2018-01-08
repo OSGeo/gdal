@@ -35,28 +35,29 @@
 
 CPL_CVSID("$Id$")
 
-double* padfRefX;
-double* padfRefY;
-double* padfRefResultX;
-double* padfRefResultY;
-OGRCoordinateTransformation *poCT;
+double* padfRefX = nullptr;
+double* padfRefY = nullptr;
+double* padfRefResultX = nullptr;
+double* padfRefResultY = nullptr;
+OGRCoordinateTransformation *poCT = nullptr;
 volatile int nIter = 0;
-int bCreateCTInThread = FALSE;
-OGRSpatialReference oSrcSRS, oDstSRS;
+bool bCreateCTInThread = false;
+OGRSpatialReference oSrcSRS;
+OGRSpatialReference oDstSRS;
 int nCountIter = 10000;
 
-void ReprojFunc(void* unused)
+static void ReprojFunc(void* /* unused */)
 {
     double* padfResultX =
         static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
     double* padfResultY =
         static_cast<double *>(CPLMalloc(1024 * sizeof(double)));
     OGRCoordinateTransformation *poCTInThread;
-    if (!bCreateCTInThread)
+    if( !bCreateCTInThread )
         poCTInThread = poCT;
     while( true )
     {
-        if (bCreateCTInThread)
+        if( bCreateCTInThread )
             poCTInThread = OGRCreateCoordinateTransformation(&oSrcSRS,&oDstSRS);
 
         CPLAtomicInc(&nIter);
@@ -68,7 +69,7 @@ void ReprojFunc(void* unused)
         assert(memcmp(padfResultX, padfRefResultX, 1024 * sizeof(double)) == 0);
         assert(memcmp(padfResultY, padfRefResultY, 1024 * sizeof(double)) == 0);
 
-        if (bCreateCTInThread)
+        if( bCreateCTInThread )
             OGRCoordinateTransformation::DestroyCT(poCTInThread);
     }
 }
@@ -84,7 +85,7 @@ int main(int argc, char* argv[])
         else if (EQUAL(argv[i], "-iter") && i+1 < argc)
             nCountIter = atoi(argv[++i]);
         else if (EQUAL(argv[i], "-createctinthread"))
-            bCreateCTInThread = TRUE;
+            bCreateCTInThread = true;
     }
 
     oSrcSRS.importFromEPSG(4326);
