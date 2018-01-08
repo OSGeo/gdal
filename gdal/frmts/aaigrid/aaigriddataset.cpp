@@ -440,7 +440,7 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
     // TODO(schwehr): Would be good to also factor the file size into the max.
     // TODO(schwehr): Allow the user to disable this check.
     // The driver allocates a panLineOffset array based on nRasterYSize
-    const int kMaxDimSize =  10000000;  // 1e7 cells.
+    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
     if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
     {
         CSLDestroy(papszTokens);
@@ -605,7 +605,7 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
     // TODO(schwehr): Would be good to also factor the file size into the max.
     // TODO(schwehr): Allow the user to disable this check.
     // The driver allocates a panLineOffset array based on nRasterYSize
-    const int kMaxDimSize =  10000000;  // 1e7 cells.
+    constexpr int kMaxDimSize = 10000000;  // 1e7 cells.
     if (nRasterXSize > kMaxDimSize || nRasterYSize > kMaxDimSize)
     {
         CSLDestroy(papszTokens);
@@ -773,7 +773,7 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         poDS->eDataType != GDT_Float32 && poDS->eDataType != GDT_Float64)
     {
         // Allocate 100K chunk + 1 extra byte for NULL character.
-        const size_t nChunkSize = 1024 * 100;
+        constexpr size_t nChunkSize = 1024 * 100;
         GByte *pabyChunk = static_cast<GByte *>(
             VSI_CALLOC_VERBOSE(nChunkSize + 1, sizeof(GByte)));
         if (pabyChunk == nullptr)
