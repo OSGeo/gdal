@@ -15,7 +15,7 @@
 
   static {
     try {
-      System.loadLibrary("gdaljni");
+      System.loadLibrary("gdalalljni");
       available = true;
 
       if (gdal.HasThreadSupport() == 0)

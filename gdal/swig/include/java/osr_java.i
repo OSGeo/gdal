@@ -16,21 +16,13 @@
 #endif
 
 %pragma(java) jniclasscode=%{
-  private static boolean available = false;
 
   static {
-    try {
-      System.loadLibrary("osrjni");
-      available = true;
-    } catch (UnsatisfiedLinkError e) {
-      available = false;
-      System.err.println("Native library load failed.");
-      System.err.println(e);
-    }
+    gdalJNI.isAvailable();   // force gdalJNI static initializer to run and load library
   }
 
   public static boolean isAvailable() {
-    return available;
+    return gdalJNI.isAvailable();
   }
 %}
 
@@ -42,8 +34,8 @@
     }
 %}
 
-/* This hacks turns the osrJNI class into a package private class */
 %pragma(java) jniclassimports=%{
+import org.gdal.gdal.gdalJNI;
 %}
 
 /*
