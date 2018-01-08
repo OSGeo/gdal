@@ -679,6 +679,23 @@ def vsifile_15():
 
     return 'success'
 
+###############################################################################
+# Test failes gdal.Rename() with exceptions enabled
+
+def vsifile_16():
+
+    old_val = gdal.GetUseExceptions()
+    gdal.UseExceptions()
+    try:
+        gdal.Rename('/tmp/i_dont_exist_vsifile_16.tif', '/tmp/me_neither.tif')
+        ret = 'fail'
+    except:
+        ret = 'success'
+    if not old_val:
+        gdal.DontUseExceptions()
+    return ret
+
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -693,7 +710,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_12,
                   vsifile_13,
                   vsifile_14,
-                  vsifile_15 ]
+                  vsifile_15,
+                  vsifile_16 ]
 
 if __name__ == '__main__':
 

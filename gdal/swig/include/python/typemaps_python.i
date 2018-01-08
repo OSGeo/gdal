@@ -22,7 +22,25 @@
  */
 %include "typemaps.i"
 
-%apply (int) {VSI_RETVAL};
+%typemap(out) VSI_RETVAL
+{
+  /* %typemap(out) VSI_RETVAL */
+  if ( result != 0 && bUseExceptions) {
+    const char* pszMessage = CPLGetLastErrorMsg();
+    if( pszMessage[0] != '\0' )
+        PyErr_SetString( PyExc_RuntimeError, pszMessage );
+    else
+        PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+    SWIG_fail;
+  }
+}
+
+%typemap(ret) VSI_RETVAL
+{
+  /* %typemap(ret) VSI_RETVAL */
+  resultobj = PyInt_FromLong( $1 );
+}
+
 
 %apply (double *OUTPUT) { double *argout };
 

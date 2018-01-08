@@ -8250,10 +8250,24 @@ SWIGINTERN PyObject *_wrap_Unlink(PyObject *SWIGUNUSEDPARM(self), PyObject *args
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -8346,10 +8360,24 @@ SWIGINTERN PyObject *_wrap_Mkdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -8402,10 +8430,24 @@ SWIGINTERN PyObject *_wrap_Rmdir(PyObject *SWIGUNUSEDPARM(self), PyObject *args)
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -8467,10 +8509,24 @@ SWIGINTERN PyObject *_wrap_MkdirRecursive(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -8523,10 +8579,24 @@ SWIGINTERN PyObject *_wrap_RmdirRecursive(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -8596,7 +8666,17 @@ SWIGINTERN PyObject *_wrap_Rename(PyObject *SWIGUNUSEDPARM(self), PyObject *args
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
@@ -8604,6 +8684,10 @@ SWIGINTERN PyObject *_wrap_Rename(PyObject *SWIGUNUSEDPARM(self), PyObject *args
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg2, bToFree2);
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
@@ -9183,7 +9267,21 @@ SWIGINTERN PyObject *_wrap_VSIFCloseL(PyObject *SWIGUNUSEDPARM(self), PyObject *
     }
 #endif
   }
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  {
+    /* %typemap(out) VSI_RETVAL */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, "unknown error occurred" );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) VSI_RETVAL */
+    resultobj = PyInt_FromLong( result );
+  }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
