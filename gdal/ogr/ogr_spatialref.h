@@ -32,8 +32,10 @@
 #ifndef OGR_SPATIALREF_H_INCLUDED
 #define OGR_SPATIALREF_H_INCLUDED
 
+#include "cpl_string.h"
 #include "ogr_srs_api.h"
 
+#include <map>
 #include <vector>
 
 /**
@@ -159,7 +161,8 @@ class CPL_DLL OGRSpatialReference
                                         const char* pszSRSType);
 
     static const std::vector<OGRSpatialReference*>* GetSRSCache(
-                                                    const char* pszSRSType);
+                    const char* pszSRSType,
+                    const std::map<CPLString, int>*& poMapESRICSNameToCodeOut);
 
   public:
                 OGRSpatialReference(const OGRSpatialReference&);

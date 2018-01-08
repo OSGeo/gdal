@@ -34,6 +34,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
@@ -73,6 +74,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /* -------------------------------------------------------------------- */
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
+    CPLString osDictFile(pszDictFile);
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
     if( pszFilename == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
@@ -110,6 +112,10 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
 
             eErr = importFromWkt( &pszWKT );
+            if( eErr == OGRERR_NONE && osDictFile.find("esri_") == 0 )
+            {
+                morphFromESRI();
+            }
             break;
         }
     }
