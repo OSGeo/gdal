@@ -2454,12 +2454,13 @@ template <class MSetter> int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter
                                                       GIntBig& dm)
 {
     const int errorRetValue = FALSE;
+    const double dfMScale = SanitizeScale(poGeomField->GetMScale());
     for(GUInt32 i = 0; i < nPoints; i++ )
     {
         returnErrorIf(pabyCur >= pabyEnd);
         ReadVarIntAndAddNoCheck(pabyCur, dm);
 
-        double dfM = dm / poGeomField->GetMScale() + poGeomField->GetMOrigin();
+        double dfM = dm / dfMScale + poGeomField->GetMOrigin();
         setter.set(i, dfM);
     }
     return TRUE;
