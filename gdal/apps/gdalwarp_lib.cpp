@@ -1212,6 +1212,23 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         }
 
 /* -------------------------------------------------------------------- */
+/*      For RPC warping add a few extra source pixels by default        */
+/*      (probably mostly needed in the RPC DEM case)                    */
+/* -------------------------------------------------------------------- */
+
+        const char *pszMethod = CSLFetchNameValue(
+            psOptions->papszTO, "METHOD" );
+        if( iSrc == 0 &&
+            CSLFetchNameValue(psOptions->papszWarpOptions,
+                              "SOURCE_EXTRA") == nullptr &&
+            ( GDALGetMetadata( hSrcDS, "RPC" ) != nullptr &&
+             (pszMethod == nullptr || EQUAL(pszMethod,"RPC") ) ) )
+        {
+            psOptions->papszWarpOptions = CSLSetNameValue(
+                psOptions->papszWarpOptions, "SOURCE_EXTRA", "5");
+        }
+
+/* -------------------------------------------------------------------- */
 /*      Create a transformation object from the source to               */
 /*      destination coordinate system.                                  */
 /* -------------------------------------------------------------------- */
