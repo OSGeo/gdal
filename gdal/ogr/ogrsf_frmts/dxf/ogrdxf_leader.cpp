@@ -594,7 +594,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
 
               case 90:
                 nCurrentVertex = atoi(szLineBuf);
-                if( nCurrentVertex > oLeaderLine.size() )
+                if( nCurrentVertex >= oLeaderLine.size() )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                         "Wrong group code 90 in LEADER_LINE: %s", szLineBuf );
@@ -617,6 +617,14 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
                 break;
 
               case 22:
+                if( nCurrentVertex >= oLeaderLine.size() )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                        "Misplaced group code 22 in LEADER_LINE" );
+                    DXF_LAYER_READER_ERROR();
+                    delete poOverallFeature;
+                    return nullptr;
+                }
                 dfCurrentY2 = CPLAtof(szLineBuf);
                 oLeaderLine[nCurrentVertex].aoBreaks.push_back( std::make_pair(
                     DXFTriple( dfCurrentX, dfCurrentY, 0.0 ),
