@@ -797,7 +797,7 @@ VSILFILE *VSIFOpenExL( const char * pszFilename, const char * pszAccess,
 {
     // Too long filenames can cause excessive memory allocation due to
     // recursion in some filesystem handlers
-    const size_t knMaxPath = 8192;
+    constexpr size_t knMaxPath = 8192;
     if( CPLStrnlen(pszFilename, knMaxPath) == knMaxPath )
         return nullptr;
 
@@ -1849,7 +1849,7 @@ int VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
         vsi_l_offset nCurOffset = nOriginalPos;
         while( nCurOffset < nNewSize )
         {
-            const vsi_l_offset nMaxOffset = 4096;
+            constexpr vsi_l_offset nMaxOffset = 4096;
             const int nSize =
                 static_cast<int>(
                     std::min(nMaxOffset, nNewSize - nCurOffset));
