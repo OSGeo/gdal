@@ -40,7 +40,7 @@ public:
 /*                        JavaProgressProxy()                           */
 /************************************************************************/
 
-int CPL_STDCALL
+static int CPL_STDCALL
 JavaProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 {
     JavaProgressData* psProgressInfo = (JavaProgressData*)pData;

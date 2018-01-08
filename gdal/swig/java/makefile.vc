@@ -5,16 +5,14 @@ GDAL_ROOT	=	..\..
 !IFDEF DLLBUILD
 GDALLIB	=    $(GDAL_ROOT)\gdal_i.lib
 !ELSE
-GDALLIB	=    $(GDAL_ROOT)\gdal.lib
+GDALLIB	=    $(GDAL_ROOT)\gdal.lib $(EXTERNAL_LIBS)
 !ENDIF
 
 JAVA_RUN = $(JAVA) -Djava.library.path=. -cp gdal.jar;build\apps
 
-OBJ	=	gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj
-#gnm_wrap.obj
+OBJ = gdal_wrap.obj gdalconst_wrap.obj ogr_wrap.obj osr_wrap.obj gnm_wrap.obj
 
-# gnm_dir
-all:  ogr_dir gdal_dir const_dir osr_dir
+all:  jniall
 	set JAVA_HOME="$(JAVA_HOME)"
 	$(ANT_HOME)\bin\ant
 
@@ -29,40 +27,24 @@ install:
 	$(INSTALL) /e org    "$(GDAL_HOME)\java\src\org\"
 	$(INSTALL) /e apps   "$(GDAL_HOME)\java\src\apps\"
 
-ogr_dir:
+jniall:
 	cd ogr
 	$(MAKE) /f makefile.vc
-	cd ..
-	link ogr_wrap.obj $(GDALLIB) /out:ogrjni.dll /DLL
-	if exist ogrjni.dll.manifest mt -manifest ogrjni.dll.manifest -outputresource:ogrjni.dll;2
-
-#gnm_dir:
-#	cd gnm
-#	$(MAKE) /f makefile.vc
-#	cd ..
-#	link gnm_wrap.obj $(GDALLIB) /out:gnmjni.dll /DLL
-#	if exist gnmjni.dll.manifest mt -manifest gnmjni.dll.manifest -outputresource:gnmjni.dll;2
-
-gdal_dir:
+	cd ..	
+	cd gnm
+	$(MAKE) /f makefile.vc
+	cd ..	
 	cd gdal
 	$(MAKE) /f makefile.vc
-	cd ..
-	link gdal_wrap.obj $(GDALLIB) /out:gdaljni.dll /DLL
-	if exist gdaljni.dll.manifest mt -manifest gdaljni.dll.manifest -outputresource:gdaljni.dll;2
-
-const_dir:
+	cd ..	
 	cd const
 	$(MAKE) /f makefile.vc
-	cd ..
-	link gdalconst_wrap.obj $(GDALLIB) /out:gdalconstjni.dll /DLL
-	if exist gdalconstjni.dll.manifest mt -manifest gdalconstjni.dll.manifest -outputresource:gdalconstjni.dll;2
-
-osr_dir:
+	cd ..	
 	cd osr
 	$(MAKE) /f makefile.vc
-	cd ..
-	link osr_wrap.obj $(GDALLIB) /out:osrjni.dll /DLL
-	if exist osrjni.dll.manifest mt -manifest osrjni.dll.manifest -outputresource:osrjni.dll;2
+	cd ..	
+	link $(OBJ) $(GDALLIB) /out:gdalalljni.dll /DLL
+ 	if exist gdaljniall.dll.manifest mt -manifest gdaljniall.dll.manifest -outputresource:gdalalljni.dll;2       
 
 test:
 	if exist tmp_test rmdir /s /q tmp_test
@@ -80,12 +62,8 @@ test:
 	$(JAVA_RUN) ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 	$(JAVA_RUN) OSRTest
 
-#	cd gnm
-#	$(MAKE) /f makefile.vc clean
-#	cd ..
-
 clean:
-	if exist org\nul rmdir /s /q org
+	if exist org rmdir /s /q org
 	if exist build rmdir /s /q build
 	cd gdal
 	$(MAKE) /f makefile.vc clean
@@ -97,6 +75,9 @@ clean:
 	$(MAKE) /f makefile.vc clean
 	cd ..
 	cd osr
+	$(MAKE) /f makefile.vc clean
+	cd ..	
+	cd gnm
 	$(MAKE) /f makefile.vc clean
 	cd ..	
 	-del gdal.jar

@@ -6,7 +6,7 @@
 %{
 static int bUseExceptions=1;
 
-void CPL_STDCALL
+static void CPL_STDCALL
 VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg )
 {
   /* If the error class is CE_Fatal, we want to have a message issued
@@ -19,12 +19,12 @@ VeryQuietErrorHandler(CPLErr eclass, int code, const char *msg )
 %}
 
 %inline %{
-void UseExceptions() {
+static void UseExceptions() {
   bUseExceptions = 1;
   CPLSetErrorHandler( (CPLErrorHandler) VeryQuietErrorHandler );
 }
 
-void DontUseExceptions() {
+static void DontUseExceptions() {
   bUseExceptions = 0;
   CPLSetErrorHandler( CPLDefaultErrorHandler );
 }

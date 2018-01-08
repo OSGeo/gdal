@@ -62,7 +62,7 @@ default:	$(TARGET_LIB) $(PLUGIN_TARGET) apps_dir
 
 staticlib:      $(LIB_DEPENDS)
 	if exist gdal.lib del gdal.lib
-	lib /nologo /out:gdal.lib $(LIBOBJ)
+	lib /nologo /out:gdal.lib $(LIBOBJ) $(EXTERNAL_LIBS)
 
 appslib-target:
 	cd apps
