@@ -287,6 +287,7 @@ CPLErr SRPRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 {
                     iSrc++;
                     bHalfByteUsed = false;
+                    continue;
                 }
 
                 if( bHalfByteUsed )
