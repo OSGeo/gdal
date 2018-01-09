@@ -176,6 +176,7 @@ docs:
 	cp ogr/*.html html
 	cp ogr/ogrsf_frmts/gpkg/geopackage_aspatial.html html
 	cp ogr/*.gif html
+	cp ogr/*.png html
 
 .PHONY: man
 
