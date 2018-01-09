@@ -1,5 +1,6 @@
 include ../../GDALmake.opt
 include java.opt
+CFLAGS += -DSWIG_NOARRAYS  # use for Swig 2.0.4 and earlier
 
 all: build
 
@@ -33,7 +34,7 @@ makedir:
 	mkdir -p org/gdal/osr
 	mkdir -p org/gdal/gnm
 
-JAVA_MODULES = libgdaljni.$(SO_EXT) libogrjni.$(SO_EXT) libgdalconstjni.$(SO_EXT) libosrjni.$(SO_EXT) libgnmjni.$(SO_EXT)
+JAVA_MODULES = libgdalalljni.$(SO_EXT)
 JAVA_OBJECTS = gdalconst_wrap.$(OBJ_EXT) gdal_wrap.$(OBJ_EXT) osr_wrap.$(OBJ_EXT) ogr_wrap.$(OBJ_EXT) gnm_wrap.$(OBJ_EXT)
 
 clean:
@@ -69,11 +70,11 @@ endif # HAVE_LIBTOOL=yes
 	ant
 
 install: build
-	if [ -f "libgdaljni.so" ] ; then \
+	if [ -f "libgdalalljni.so" ] ; then \
 		for f in *.so; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done ; \
 	fi
 
-	if [ -f "libgdaljni.dylib" ] ; then \
+	if [ -f "libgdalalljni.dylib" ] ; then \
 		for f in *.dylib; do $(INSTALL_LIB) $$f $(DESTDIR)$(INST_LIB) ; done ; \
 	fi
 
@@ -99,8 +100,12 @@ test:
 	${JAVA_RUN} ogrtindex tmp_test/contour_index.shp tmp_test/contour.shp
 	${JAVA_RUN} OSRTest
 
-$(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
-	$(LINK) $(LDFLAGS) $< $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
+ifdef INCLUDE_GDAL_LIB
+    LIB_GDAL=$(GDAL_LIB)
+endif
+
+$(JAVA_MODULES): $(JAVA_OBJECTS) 
+	$(LINK) $(LDFLAGS) $^ $(LIB_GDAL) $(CONFIG_LIBS) -o $@ $(LINK_EXTRAFLAGS)
 
 # Do not remove -fno-strict-aliasing while SWIG generates weird code in upcast methods
 # See http://trac.osgeo.org/gdal/changeset/16006
@@ -112,3 +117,4 @@ $(JAVA_MODULES): lib%jni.$(SO_EXT): %_wrap.$(OBJ_EXT)
 
 %.$(OBJ_EXT): %.c
 	$(CC) -fno-strict-aliasing $(GDAL_INCLUDE) $(CFLAGS) $(CPPFLAGS) $(JAVA_INCLUDE) -c $<
+

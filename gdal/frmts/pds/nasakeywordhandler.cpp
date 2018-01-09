@@ -54,7 +54,6 @@
 
 #include "nasakeywordhandler.h"
 #include "ogrgeojsonreader.h"
-
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -128,20 +127,24 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
     pszHeaderNext = osHeaderText.c_str();
 
+
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
     oJSon = CPLJSONObject();
-    return ReadGroup( "", oJSon );
+    return ReadGroup( "", oJSon, 0 );
 }
 
 /************************************************************************/
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur )
+int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur,
+                                   int nRecLevel )
 
 {
+    if( nRecLevel == 100 )
+        return FALSE;
     for( ; true; )
     {
         CPLString osName, osValue;
@@ -153,11 +156,10 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCu
             CPLJSONObject oNewGroup;
             oNewGroup.Add( "_type", EQUAL(osName,"OBJECT") ? "object" : "group" );
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str(),
-                            oNewGroup ) )
+                            oNewGroup, nRecLevel + 1 ) )
             {
                 return FALSE;
             }
-
             CPLJSONObject oName = oNewGroup["Name"];
             if( (osValue == "Table" || osValue == "Field") &&
                 (oName.GetType() == CPLJSONObject::String) )
@@ -241,6 +243,7 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
     {
         std::vector<char> oStackArrayBeginChar;
         CPLString osWord;
+
 
         while( ReadWord( osWord, m_bStripSurroundingQuotes,
                          true, &bIsString ) )
@@ -393,7 +396,6 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
             newObject.Add( "value", CPLAtof(osValueNoUnit) );
         }
     }
-
     newObject.Add( "unit", osUnit );
 
     return TRUE;
@@ -605,7 +607,7 @@ char **NASAKeywordHandler::GetKeywordList()
 }
 
 /************************************************************************/
-/*                             GetJsonObject()                          */
+/*                               StealJSon()                            */
 /************************************************************************/
 
 CPLJSONObject NASAKeywordHandler::GetJsonObject() const

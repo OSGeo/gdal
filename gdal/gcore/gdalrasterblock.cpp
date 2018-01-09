@@ -674,6 +674,17 @@ GDALRasterBlock::~GDALRasterBlock()
 }
 
 /************************************************************************/
+/*                        GetEffectiveBlockSize()                       */
+/************************************************************************/
+
+static size_t GetEffectiveBlockSize(int nBlockSize)
+{
+    // The real cost of a block allocation is more than just nBlockSize
+    // We arbitrarily add 2 * sizeof(GDALRasterBlock) to account for that
+    return nBlockSize + 2 * sizeof(GDALRasterBlock);
+}
+
+/************************************************************************/
 /*                               Detach()                               */
 /************************************************************************/
 
@@ -717,7 +728,7 @@ void GDALRasterBlock::Detach_unlocked()
     bMustDetach = false;
 
     if( pData )
-        nCacheUsed -= GetBlockSize();
+        nCacheUsed -= GetEffectiveBlockSize(GetBlockSize());
 
 #ifdef ENABLE_DEBUG
     Verify();
@@ -867,7 +878,7 @@ void GDALRasterBlock::Touch_unlocked()
     if( !bMustDetach )
     {
         if( pData )
-            nCacheUsed += GetBlockSize();
+            nCacheUsed += GetEffectiveBlockSize(GetBlockSize());
 
         bMustDetach = true;
     }
@@ -944,7 +955,7 @@ CPLErr GDALRasterBlock::Internalize()
             TAKE_LOCK;
 
             if( bFirstIter )
-                nCacheUsed += nSizeInBytes;
+                nCacheUsed += GetEffectiveBlockSize(nSizeInBytes);
             GDALRasterBlock *poTarget = poOldest;
             while( nCacheUsed > nCurCacheMax )
             {

@@ -28,9 +28,9 @@
 #ifndef CPL_JSON_H_INCLUDED
 #define CPL_JSON_H_INCLUDED
 
-#include "cpl_string.h"
 #include "cpl_progress.h"
 
+#include <string>
 #include <vector>
 
 /**

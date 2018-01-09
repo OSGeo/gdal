@@ -3,6 +3,7 @@ OBJ	=	ogr_wrap.obj
 GDAL_ROOT	=	..\..\..
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
+CFLAGS=$(CFLAGS) -DSWIG_NOARRAYS        # needed for Swig 2.0.4 and earlier
 
 default:	$(OBJ)
 	xcopy /D  /Y *.obj ..

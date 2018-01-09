@@ -4471,7 +4471,9 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands( int nBlockXOff, int nBlockYOff )
 /*      enough to accommodate the size of all the blocks, don't enter   */
 /* -------------------------------------------------------------------- */
     CPLErr eErr = CE_None;
-    if( poGDS->nBands != 1 && !poGDS->bLoadingOtherBands &&
+    if( poGDS->nBands != 1 &&
+        poGDS->nBands < 128 && // avoid caching for datasets with too many bands
+        !poGDS->bLoadingOtherBands &&
         nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType) <
         GDALGetCacheMax64() / poGDS->nBands )
     {

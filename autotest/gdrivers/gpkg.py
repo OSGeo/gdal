@@ -2928,7 +2928,8 @@ def gpkg_35():
     ds.WriteRaster(256, 0, 256, height, white_data)
 
     oldSize = gdal.GetCacheMax()
-    gdal.SetCacheMax(256 * 256 * 4)
+    # + 2 * 128 > + 2 * sizeof(GDALRasterBlock). Cf gdalrasterblock.cpp:GetEffectiveBlockSize()
+    gdal.SetCacheMax((256 * 256 + 2 * 128) * 4)
 
     got_data = ds.ReadRaster(0, 0, 256, height)
 

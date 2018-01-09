@@ -35,6 +35,7 @@
 #define NASAKEYWORDHANDLER_H
 
 #include "cpl_json.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /* ==================================================================== */
@@ -61,7 +62,7 @@ class CPL_DLL NASAKeywordHandler
                       bool bParseList = false,
                       bool* pbIsString = nullptr);
     int     ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject &oCur );
-    int     ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur );
+    int     ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur, int nRecLevel );
 
 public:
     NASAKeywordHandler();
