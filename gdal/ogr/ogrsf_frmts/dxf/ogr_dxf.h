@@ -245,6 +245,8 @@ class OGRDXFFeature : public OGRFeature
     DXFTriple GetInsertOCSCoords() const { return oOriginalCoords; }
     CPLString GetAttributeTag() const { return osAttributeTag; }
 
+    void SetInsertOCSCoords( DXFTriple oTriple ) { oOriginalCoords = oTriple; }
+
     void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
     const CPLString   GetColor( OGRDXFDataSource* const poDS,
                                 OGRDXFFeature* const poBlockFeature = nullptr );

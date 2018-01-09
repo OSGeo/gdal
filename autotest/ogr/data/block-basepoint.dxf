@@ -1,0 +1,306 @@
+  0
+SECTION
+  2
+HEADER
+  9
+$ACADVER
+  1
+AC1009
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+VPORT
+ 70
+     1
+  0
+VPORT
+  2
+*ACTIVE
+ 70
+     0
+ 10
+0.0
+ 20
+0.0
+ 11
+1.0
+ 21
+1.0
+ 12
+300.0
+ 22
+150.0
+ 13
+0.0
+ 23
+0.0
+ 14
+0.5
+ 24
+0.5
+ 15
+0.5
+ 25
+0.5
+ 16
+0.0
+ 26
+0.0
+ 36
+1.0
+ 17
+0.0
+ 27
+0.0
+ 37
+0.0
+ 40
+25.402675667279428
+ 41
+2.0256081946222788
+ 42
+50.0
+ 43
+0.0
+ 44
+0.0
+ 50
+0.0
+ 51
+0.0
+ 71
+     0
+ 72
+  1000
+ 73
+     1
+ 74
+     3
+ 75
+     1
+ 76
+     1
+ 77
+     0
+ 78
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LTYPE
+ 70
+     3
+  0
+LTYPE
+  2
+CONTINUOUS
+ 70
+     0
+  3
+Solid line
+ 72
+    65
+ 73
+     0
+ 40
+0.0
+  0
+ENDTAB
+  0
+TABLE
+  2
+LAYER
+ 70
+     1
+  0
+LAYER
+  2
+0
+ 70
+     0
+ 62
+     7
+  6
+CONTINUOUS
+  0
+ENDTAB
+  0
+TABLE
+  2
+STYLE
+ 70
+     3
+  0
+STYLE
+  2
+STANDARD
+ 70
+     0
+ 40
+0.0
+ 41
+1.0
+ 50
+0.0
+ 71
+     0
+ 42
+0.2
+  3
+txt
+  4
+
+  0
+ENDTAB
+  0
+TABLE
+  2
+VIEW
+ 70
+     0
+  0
+ENDTAB
+  0
+TABLE
+  2
+UCS
+ 70
+     0
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  8
+0
+  2
+INNERBLOCK
+ 70
+     0
+ 10
+50.0
+ 20
+200.0
+ 30
+0.0
+  3
+INNERBLOCK
+  1
+
+  0
+LINE
+  5
+660
+  8
+0
+ 10
+40.0
+ 20
+210.0
+ 30
+0.0
+ 11
+60.0
+ 21
+190.0
+ 31
+0.0
+  0
+LINE
+  5
+661
+  8
+0
+ 10
+60.0
+ 20
+210.0
+ 30
+0.0
+ 11
+40.0
+ 21
+190.0
+ 31
+0.0
+  0
+ENDBLK
+  5
+62C
+  8
+0
+  0
+BLOCK
+  8
+0
+  2
+OUTERBLOCK
+ 70
+     0
+ 10
+60.0
+ 20
+250.0
+ 30
+0.0
+  3
+OUTERBLOCK
+  1
+
+  0
+INSERT
+  5
+A3B
+  8
+0
+  2
+INNERBLOCK
+ 10
+60.0
+ 20
+250.0
+ 30
+0.0
+  0
+ENDBLK
+  5
+A34
+  8
+0
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  5
+E06
+  8
+0
+  2
+OUTERBLOCK
+ 10
+300.0
+ 20
+150.0
+ 30
+0.0
+  0
+ENDSEC
+  0
+EOF

@@ -144,6 +144,17 @@ bool OGRDXFDataSource::ReadBlocksSection()
             if( poFeatureGeom )
                 poFeatureGeom->transform( &oBasePointTransformer );
 
+            // Also apply the base point translation to the original
+            // coordinates of block references
+            if( poFeature->IsBlockReference() )
+            {
+                DXFTriple oTriple = poFeature->GetInsertOCSCoords();
+                OGRPoint oPoint( oTriple.dfX, oTriple.dfY, oTriple.dfZ );
+                oPoint.transform( &oBasePointTransformer );
+                poFeature->SetInsertOCSCoords( DXFTriple(
+                    oPoint.getX(), oPoint.getY(), oPoint.getZ() ) );
+            }
+
             oBlockMap[osBlockName].apoFeatures.push_back( poFeature );
             nIters ++;
         }

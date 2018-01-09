@@ -3715,6 +3715,22 @@ def ogr_dxf_52():
     return 'success'
 
 ###############################################################################
+# Test block base points
+
+def ogr_dxf_53():
+
+    ds = ogr.Open('data/block-basepoint.dxf')
+    lyr = ds.GetLayer(0)
+
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING Z ((290 160 0,310 140 0),(310 160 0,290 140 0))') != 0:
+        gdaltest.post_reason( 'Wrong feature geometry' )
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_dxf_cleanup():
@@ -3779,6 +3795,7 @@ gdaltest_list = [
     ogr_dxf_50,
     ogr_dxf_51,
     ogr_dxf_52,
+    ogr_dxf_53,
     ogr_dxf_cleanup ]
 
 if __name__ == '__main__':
