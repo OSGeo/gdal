@@ -55,6 +55,11 @@ static GOA2Manager oStaticManager;
  */
 bool CPLIsMachineForSureGCEInstance()
 {
+    if( CPLTestBool(CPLGetConfigOption(
+                        "CPL_MACHINE_IS_GCE", "NO")) )
+    {
+        return true;
+    }
 #ifdef __linux
     // If /var/log/kern.log exists, it should contain a string like
     // DMI: Google Google Compute Engine/Google Compute Engine, BIOS Google 01/01/2011
