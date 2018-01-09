@@ -89,7 +89,7 @@ static const OGRStyleParamId asStyleSymbol[] =
     {OGRSTSymbolPerp, "dp", TRUE, OGRSTypeDouble},
     {OGRSTSymbolOffset, "di", TRUE, OGRSTypeDouble},
     {OGRSTSymbolPriority, "l", FALSE, OGRSTypeInteger},
-    {OGRSTSymbolFontName, "f", FALSE, OGRSTypeString},
+    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTSymbolFontName
     {OGRSTSymbolOColor, "o", FALSE, OGRSTypeString}
 };
 
@@ -112,8 +112,8 @@ static const OGRStyleParamId asStyleLabel[] =
     {OGRSTLabelPriority, "l", FALSE, OGRSTypeInteger},
     {OGRSTLabelStrikeout, "st", FALSE, OGRSTypeBoolean},
     {OGRSTLabelStretch, "w", FALSE, OGRSTypeDouble},
-    {OGRSTLabelAdjHor, "ah", FALSE, OGRSTypeString},
-    {OGRSTLabelAdjVert, "av", FALSE, OGRSTypeString},
+    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTLabelAdjHor
+    {-1, nullptr, FALSE, OGRSTypeUnused}, // was OGRSTLabelAdjVert
     {OGRSTLabelHColor, "h", FALSE, OGRSTypeString},
     {OGRSTLabelOColor, "o", FALSE, OGRSTypeString}
 };
@@ -1469,8 +1469,11 @@ const char *OGRStyleTool::GetStyleString( const OGRStyleParamId *pasStyleParam,
         bool bFound = false;
         for( int i = 0; i < nSize; i++ )
         {
-            if( !pasStyleValue[i].bValid )
+            if( !pasStyleValue[i].bValid ||
+                pasStyleParam[i].eType == OGRSTypeUnused )
+            {
                 continue;
+            }
 
             if( bFound )
                 osCurrent += ",";
@@ -1489,6 +1492,10 @@ const char *OGRStyleTool::GetStyleString( const OGRStyleParamId *pasStyleParam,
                 break;
               case OGRSTypeInteger:
                 osCurrent += CPLString().Printf(":%d", pasStyleValue[i].nValue);
+                break;
+              case OGRSTypeBoolean:
+                osCurrent += CPLString().Printf(":%d",
+                    pasStyleValue[i].nValue != 0);
                 break;
               default:
                 break;
@@ -1857,15 +1864,15 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
 
         for( int j = 0; j < nCount; j++ )
         {
-            if( EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
+            if( pasStyle[j].pszToken &&
+                EQUAL(pasStyle[j].pszToken, papszStylePair[0]) )
             {
                 if( papszStylePair[1] != nullptr && pasStyle[j].bGeoref == TRUE )
                     SetInternalInputUnitFromParam(papszStylePair[1]);
 
                 // Set either the actual value of style parameter or "1"
-                // for boolean parameters which do not have values.
-                // "1" means that boolean parameter is present in the style
-                // string.
+                // for boolean parameters which do not have values (legacy
+                // behavior).
                 OGRStyleTool::SetParamStr(
                     pasStyle[j], pasValue[j],
                     papszStylePair[1] != nullptr ? papszStylePair[1] : "1" );
@@ -2059,7 +2066,7 @@ const char *OGRStyleTool::GetParamStr( const OGRStyleParamId &sStyleParam ,
         else
           return CPLSPrintf("%d", sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return CPLSPrintf("%d", sStyleValue.nValue);
+        return CPLSPrintf("%d", sStyleValue.nValue != 0);
       default:
         bValueIsNull = TRUE;
         return nullptr;
@@ -2138,7 +2145,7 @@ double OGRStyleTool::GetParamDbl( const OGRStyleParamId &sStyleParam ,
         else
           return static_cast<double>(sStyleValue.nValue);
       case OGRSTypeBoolean:
-        return static_cast<double>(sStyleValue.nValue);
+        return static_cast<double>(sStyleValue.nValue != 0);
       default:
         bValueIsNull = TRUE;
         return 0.0;
@@ -2175,8 +2182,10 @@ void OGRStyleTool::SetParamStr( const OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = CPLAtof(pszParamString);
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = atoi(pszParamString);
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = atoi(pszParamString) != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;
@@ -2215,8 +2224,10 @@ void OGRStyleTool::SetParamNum( const OGRStyleParamId &sStyleParam ,
         sStyleValue.dfValue = static_cast<double>(nParam);
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = nParam;
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = nParam != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;
@@ -2254,8 +2265,10 @@ void OGRStyleTool::SetParamDbl( const OGRStyleParamId &sStyleParam,
         sStyleValue.dfValue = dfParam;
         break;
       case OGRSTypeInteger:
-      case OGRSTypeBoolean:
         sStyleValue.nValue = static_cast<int>(dfParam);
+        break;
+      case OGRSTypeBoolean:
+        sStyleValue.nValue = static_cast<int>(dfParam) != 0;
         break;
       default:
         sStyleValue.bValid = FALSE;

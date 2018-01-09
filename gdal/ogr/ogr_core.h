@@ -853,7 +853,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolPerp     = 7, /**< Perpendicular */
     OGRSTSymbolOffset   = 8, /**< Offset */
     OGRSTSymbolPriority = 9, /**< Priority */
-    OGRSTSymbolFontName = 10, /**< Font name */
+    OGRSTSymbolFontName = 10, /**< OBSOLETE; do not use */
     OGRSTSymbolOColor   = 11, /**< Outline color */
 #ifndef DOXYGEN_SKIP
     OGRSTSymbolLast     = 12
@@ -882,8 +882,8 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelPriority  = 14, /**< Priority */
     OGRSTLabelStrikeout = 15, /**< Strike out */
     OGRSTLabelStretch   = 16, /**< Stretch */
-    OGRSTLabelAdjHor    = 17, /**< Horizontal adjustment */
-    OGRSTLabelAdjVert   = 18, /**< Vectical adjustment */
+    OGRSTLabelAdjHor    = 17, /**< OBSOLETE; do not use */
+    OGRSTLabelAdjVert   = 18, /**< OBSOLETE; do not use */
     OGRSTLabelHColor    = 19, /**< Highlight color */
     OGRSTLabelOColor    = 20, /**< Outline color */
 #ifndef DOXYGEN_SKIP

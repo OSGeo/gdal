@@ -49,6 +49,7 @@ class OGRFeature;
 /** OGR Style type */
 typedef enum ogr_style_type
 {
+    OGRSTypeUnused = -1,
     OGRSTypeString,
     OGRSTypeDouble,
     OGRSTypeInteger,
@@ -386,10 +387,6 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     void SetPerp(double dfPerp){SetParamDbl(OGRSTSymbolPerp,dfPerp  );}
     int  Priority(GBool &bDefault){return GetParamNum(OGRSTSymbolPriority,bDefault);}
     void SetPriority(int nPriority){SetParamNum(OGRSTSymbolPriority,nPriority);}
-    const char *FontName(GBool &bDefault)
-        {return GetParamStr(OGRSTSymbolFontName,bDefault);}
-    void SetFontName(const char *pszFontName)
-        {SetParamStr(OGRSTSymbolFontName,pszFontName);}
     const char *OColor(GBool &bDefault){return GetParamStr(OGRSTSymbolOColor,bDefault);}
     void SetOColor(const char *pszColor){SetParamStr(OGRSTSymbolOColor,pszColor);}
 
@@ -458,10 +455,6 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     void SetStrikeout(GBool bStrikeout){SetParamNum(OGRSTLabelStrikeout,bStrikeout);}
     double Stretch(GBool &bDefault){return GetParamDbl(OGRSTLabelStretch,bDefault);}
     void SetStretch(double dfStretch){SetParamDbl(OGRSTLabelStretch,dfStretch);}
-    const char *AdjustmentHor(GBool &bDefault){return GetParamStr(OGRSTLabelAdjHor,bDefault);}
-    void SetAdjustmentHor(const char *pszAdjustmentHor){SetParamStr(OGRSTLabelAdjHor,pszAdjustmentHor);}
-    const char *AdjustmentVert(GBool &bDefault){return GetParamStr(OGRSTLabelAdjVert,bDefault);}
-    void SetAdjustmentVert(const char *pszAdjustmentVert){SetParamStr(OGRSTLabelAdjHor,pszAdjustmentVert);}
     const char *ShadowColor(GBool &bDefault){return GetParamStr(OGRSTLabelHColor,bDefault);}
     void SetShadowColor(const char *pszShadowColor){SetParamStr(OGRSTLabelHColor,pszShadowColor);}
     const char *OutlineColor(GBool &bDefault){return GetParamStr(OGRSTLabelOColor,bDefault);}
