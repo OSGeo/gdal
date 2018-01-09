@@ -454,7 +454,9 @@ for OAuth2 client authentication.</li>
  <li>(GDAL &gt;= 2.3) Finally if none of the above method succeeds, the code
 will check if the current machine is a Google Compute Engine instance, and
 if so will use the permissions associated to it (using the default service
-account associated with the VM)</li>
+account associated with the VM). To force a machine to be detected as a GCE instance
+(for example for code running in a container with no access to the boot logs), you
+can set CPL_MACHINE_IS_GCE to YES.</li>
 </ol>
 
 @since GDAL 2.2
