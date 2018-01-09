@@ -637,6 +637,12 @@ typedef enum
 /** Special value for a unset FID */
 #define OGRNullFID            -1
 
+/* Special value for an unknown field type. This should only be used
+ * while reading a file. At the end of file any unknown types should
+ * be set to OFTString.
+*/
+#define OGRUnknownType        static_cast<OGRFieldType>(-1)
+
 /** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
  *  a unset field.
  *  Direct use of this value is strongly discouraged.
