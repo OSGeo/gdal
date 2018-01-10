@@ -706,6 +706,26 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
+            /* Ensure that any fields still with an unknown type are set to String.
+             * This will only be the case if the field has no values */
+       
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
+            {
+                OGRFieldType eFieldType =
+                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
+
+                if (eFieldType == OGRUnknownType)
+                {
+                    OGRFieldDefn oNewFieldDefn(
+                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                    oNewFieldDefn.SetType(OFTString);
+                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                ALTER_TYPE_FLAG);
+
+                }
+            }
+
             ((OGRMemLayer*)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(true);
             ((OGRXLSXLayer*)poCurLayer)->SetUpdated(false);

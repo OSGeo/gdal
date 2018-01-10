@@ -466,6 +466,112 @@ def ogr_xlsx_12():
     ds = None
 
     return 'success'
+  
+###############################################################################
+# Test that data types are correctly picked up even if first row is missing data
+
+def ogr_xlsx_13():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
+    ds = ogr.Open('data/test_missing_row1_data.xlsx')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
+        gdaltest.post_reason('invalid field name')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldCount() != 18:
+        gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
+        return 'fail'
+
+    type_array = [ ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTDate,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTDate,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString ]
+
+    for i in range(len(type_array)):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+            gdaltest.post_reason('invalid type for field {}'.format(i+1))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that field names are picked up even if last field has no data
+
+def ogr_xlsx_14():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_XLSX_FIELD_TYPES', None)
+    ds = ogr.Open('data/test_empty_last_field.xlsx')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
+        gdaltest.post_reason('invalid field name')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
+        gdaltest.post_reason('invalid field name')
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldCount() != 18:
+        gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
+        return 'fail'
+
+    type_array = [ ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTDate,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTDate,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString ]
+
+    for i in range(len(type_array)):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+            gdaltest.post_reason('invalid type for field {}'.format(i+1))
+            return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     ogr_xlsx_1,
@@ -479,7 +585,10 @@ gdaltest_list = [
     ogr_xlsx_9,
     ogr_xlsx_10,
     ogr_xlsx_11,
-    ogr_xlsx_12
+    ogr_xlsx_12,
+    ogr_xlsx_13,
+    ogr_xlsx_14
+
 ]
 
 if __name__ == '__main__':
