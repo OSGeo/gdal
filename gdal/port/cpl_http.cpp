@@ -261,7 +261,7 @@ typedef struct
     const char* pszOptionName;
 } TupleEnvVarOptionName;
 
-static const TupleEnvVarOptionName asAssocEnvVarOptionName[] =
+constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
 {
     { "GDAL_HTTP_VERSION", "HTTP_VERSION" },
     { "GDAL_HTTP_CONNECTTIMEOUT", "CONNECTTIMEOUT" },

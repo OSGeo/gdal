@@ -57,7 +57,7 @@ static void *pErrorHandlerUserData = nullptr;
 static CPLErrorHandler pfnErrorHandler = CPLDefaultErrorHandler;
 static bool gbCatchDebug = true;
 
-static const int DEFAULT_LAST_ERR_MSG_SIZE =
+constexpr int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
     20000
 #else
@@ -85,7 +85,7 @@ typedef struct {
     // See CPLRealloc() below.
 } CPLErrorContext;
 
-static const CPLErrorContext sNoErrorContext =
+constexpr CPLErrorContext sNoErrorContext =
 {
     0,
     CE_None,
@@ -96,7 +96,7 @@ static const CPLErrorContext sNoErrorContext =
     ""
 };
 
-static const CPLErrorContext sWarningContext =
+constexpr CPLErrorContext sWarningContext =
 {
     0,
     CE_Warning,
@@ -107,7 +107,7 @@ static const CPLErrorContext sWarningContext =
     "A warning was emitted"
 };
 
-static const CPLErrorContext sFailureContext =
+constexpr CPLErrorContext sFailureContext =
 {
     0,
     CE_Warning,

@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 #define ICONV_CPP_CONST ICONV_CONST
 #endif
 
-static const size_t CPL_RECODE_DSTBUF_SIZE = 32768;
+constexpr size_t CPL_RECODE_DSTBUF_SIZE = 32768;
 
  /* used by cpl_recode.cpp */
 extern void CPLClearRecodeIconvWarningFlags();

@@ -126,7 +126,7 @@ static bool CPLHasLibXMLBug()
     if( bLibXMLBugChecked )
         return bHasLibXMLBug;
 
-    static const char szLibXMLBugTester[] =
+    constexpr char szLibXMLBugTester[] =
         "<schema targetNamespace=\"http://foo\" "
         "xmlns:foo=\"http://foo\" xmlns=\"http://www.w3.org/2001/XMLSchema\">"
         "<simpleType name=\"t1\">"
@@ -666,7 +666,7 @@ static CPLString CPLFindLocalXSD( const char* pszXSDFilename )
 /*                      CPLExternalEntityLoader()                       */
 /************************************************************************/
 
-static const char szXML_XSD[] =
+constexpr char szXML_XSD[] =
     "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" "
     "targetNamespace=\"http://www.w3.org/XML/1998/namespace\">"
     "<attribute name=\"lang\">"
@@ -700,7 +700,7 @@ static const char szXML_XSD[] =
 
 // Simplified (and truncated) version of http://www.w3.org/1999/xlink.xsd
 // (sufficient for GML schemas).
-static const char szXLINK_XSD[] =
+constexpr char szXLINK_XSD[] =
     "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" "
     "targetNamespace=\"http://www.w3.org/1999/xlink\" "
     "xmlns:xlink=\"http://www.w3.org/1999/xlink\">"

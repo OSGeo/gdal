@@ -41,8 +41,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int MAX_DEFAULT_TREE_DEPTH = 12;
-static const int MAX_SUBNODES = 4;
+constexpr int MAX_DEFAULT_TREE_DEPTH = 12;
+constexpr int MAX_SUBNODES = 4;
 
 typedef struct _QuadTreeNode QuadTreeNode;
 
@@ -82,7 +82,7 @@ static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
 /*      prevent small objects on a boundary from shifting too high      */
 /*      up the hQuadTree.                                               */
 /* -------------------------------------------------------------------- */
-static const double DEFAULT_SPLIT_RATIO = 0.55;
+constexpr double DEFAULT_SPLIT_RATIO = 0.55;
 
 /*
 ** Returns TRUE if rectangle a is contained in rectangle b
