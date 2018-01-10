@@ -33,6 +33,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_progress.h"
 #include "cpl_vsi.h"
 
 /**
@@ -86,12 +87,22 @@ typedef struct {
 
 } CPLHTTPResult;
 
+/*! @cond Doxygen_Suppress */
+typedef size_t (*CPLHTTPFetchWriteFunc)(void *pBuffer, size_t nSize, size_t nMemb, void *pWriteArg);
+/*! @endcond */
+
 int CPL_DLL   CPLHTTPEnabled( void );
 CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
+CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressArg,
+                                       CPLHTTPFetchWriteFunc pfnWrite,
+                                       void *pWriteArg);
 CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
                                            int nURLCount,
                                            int nMaxSimultaneous,
                                            char **papszOptions);
+
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );

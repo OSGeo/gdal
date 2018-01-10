@@ -7,6 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+// Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+// Copyright (c) 2017, NextGIS <info@nextgis.com>
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -33,6 +35,7 @@
 #include "cpl_string.h"
 #include "cpl_safemaths.hpp"
 #include "cpl_time.h"
+#include "cpl_json.h"
 #include "cpl_json_streaming_parser.h"
 #include "cpl_mem_cache.h"
 
@@ -1955,4 +1958,56 @@ namespace tut
         ensure_equals( cache.size(), 1U );
     }
 
+    // Test CPLJSONDocument
+    template<>
+    template<>
+    void object::test<31>()
+    {
+        {
+            // Test Json document LoadUrl
+            CPLJSONDocument oDocument;
+            const char *options[5] = {
+              "CONNECTTIMEOUT=15",
+              "TIMEOUT=20",
+              "MAX_RETRY=5",
+              "RETRY_DELAY=1",
+              nullptr
+            };
+
+            ensure( oDocument.LoadUrl("http://demo.nextgis.com/api/component/pyramid/pkg_version",
+                                      const_cast<char**>(options) ) );
+            CPLJSONObject oJsonRoot = oDocument.GetRoot();
+            ensure( oJsonRoot.IsValid() );
+
+            CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
+            ensure_not( EQUAL(soVersion, "0") );
+        }
+        {
+            // Test Json document LoadChunks
+            CPLJSONDocument oDocument;
+            ensure( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
+
+            CPLJSONObject oJsonRoot = oDocument.GetRoot();
+            ensure( oJsonRoot.IsValid() );
+            ensure_equals( oJsonRoot.GetInteger("resource/id", 10), 0 );
+
+            CPLJSONObject oJsonResource = oJsonRoot.GetObj("resource");
+            ensure( oJsonResource.IsValid() );
+            std::vector<CPLJSONObject> children = oJsonResource.GetChildren();
+            ensure(children.size() == 11);
+
+            CPLJSONArray oaScopes = oJsonRoot.GetArray("resource/scopes");
+            ensure( oaScopes.IsValid() );
+            ensure_equals( oaScopes.Size(), 2);
+
+            CPLJSONObject oHasChildren = oJsonRoot.GetObj("resource/children");
+            ensure( oHasChildren.IsValid() );
+            ensure_equals( oHasChildren.ToBool(), true );
+
+            ensure_equals( oJsonResource.GetBool( "children", false ), true );
+
+            CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
+            ensure( oJsonId.IsValid() );
+        }
+    }
 } // namespace tut

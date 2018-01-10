@@ -1,0 +1,114 @@
+{
+    "resource": {
+        "id": 0,
+        "cls": "resource_group",
+        "parent": null,
+        "owner_user": {
+            "id": 4
+        },
+        "permissions": [
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 5
+                },
+                "identity": "",
+                "scope": "",
+                "permission": "",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "resource",
+                "permission": "read",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "metadata",
+                "permission": "read",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "datastruct",
+                "permission": "read",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "data",
+                "permission": "read",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "connection",
+                "permission": "connect",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "service",
+                "permission": "connect",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 2
+                },
+                "identity": "",
+                "scope": "webmap",
+                "permission": "display",
+                "propagate": true
+            },
+            {
+                "action": "allow",
+                "principal": {
+                    "id": 7
+                },
+                "identity": "",
+                "scope": "data",
+                "permission": "write",
+                "propagate": true
+            }
+        ],
+        "keyname": null,
+        "display_name": "Main resources group",
+        "description": null,
+        "children": true,
+        "interfaces": [],
+        "scopes": [
+            "resource",
+            "metadata"
+        ]
+    },
+    "resmeta": {
+        "items": {}
+    }
+}

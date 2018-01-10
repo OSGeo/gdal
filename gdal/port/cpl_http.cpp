@@ -249,6 +249,34 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     return nmemb;
 }
 
+typedef struct {
+    GDALProgressFunc pfnProgress;
+    void *pProgressArg;
+} CurlProcessData, *CurlProcessDataL;
+
+static int NewProcessFunction(void *p,
+                              curl_off_t dltotal, curl_off_t dlnow,
+                              curl_off_t /*ultotal*/, curl_off_t /*ulnow*/)
+{
+    CurlProcessDataL pData = static_cast<CurlProcessDataL>(p);
+    if(pData->pfnProgress) {
+        double dfDone = double(dlnow) / dltotal;
+        return pData->pfnProgress(dfDone, "Downloading ...",
+                                  pData->pProgressArg) == TRUE ? 0 : 1;
+    }
+
+    return 0;
+}
+
+static int ProcessFunction(void *p, double dltotal, double dlnow,
+                                     double ultotal, double ulnow)
+{
+    return NewProcessFunction(p, static_cast<curl_off_t>(dltotal),
+                              static_cast<curl_off_t>(dlnow),
+                              static_cast<curl_off_t>(ultotal),
+                              static_cast<curl_off_t>(ulnow));
+}
+
 #endif /* def HAVE_CURL */
 
 /************************************************************************/
@@ -414,6 +442,24 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
 CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
+{
+    return CPLHTTPFetchEx( pszURL, papszOptions, nullptr, nullptr, nullptr, nullptr);
+}
+
+/**
+ * Fetch a document from an url and return in a string.
+ * @param  pszURL       Url to fetch document from web.
+ * @param  papszOptions Option list as a NULL-terminated array of strings. Available keys see in CPLHTTPFetch.
+ * @param  pfnProgress  Callback for reporting algorithm progress matching the GDALProgressFunc() semantics. May be NULL.
+ * @param  pProgressArg Callback argument passed to pfnProgress.
+ * @param  pfnWrite     Write function pointer matching the CPLHTTPWriteFunc() semantics. May be NULL.
+ * @param  pWriteArg    Argument which will pass to a write function.
+ * @return              A CPLHTTPResult* structure that must be freed by
+ * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled.
+ */
+CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+                             GDALProgressFunc pfnProgress, void *pProgressArg,
+                             CPLHTTPFetchWriteFunc pfnWrite, void *pWriteArg )
 
 {
     if( STARTS_WITH(pszURL, "/vsimem/") &&
@@ -483,6 +529,10 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
 #ifndef HAVE_CURL
     (void) papszOptions;
     (void) pszURL;
+    (void) pfnProgress;
+    (void) pProgressArg;
+    (void) pfnWrite;
+    (void) pWriteArg;
 
     CPLError( CE_Failure, CPLE_NotSupported,
               "GDAL/OGR not compiled with libcurl support, "
@@ -601,20 +651,39 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
     curl_easy_setopt(http_handle, CURLOPT_HEADERFUNCTION, CPLHdrWriteFct);
 
     CPLHTTPResultWithLimit sResultWithLimit;
-    sResultWithLimit.psResult = psResult;
-    sResultWithLimit.nMaxFileSize = 0;
-    const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
-                                                   "MAX_FILE_SIZE");
-    if( pszMaxFileSize != nullptr )
+    if( nullptr == pfnWrite )
     {
-        sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
-        // Only useful if size is returned by server before actual download.
-        curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
-                         sResultWithLimit.nMaxFileSize);
+        pfnWrite = CPLWriteFct;
+
+        sResultWithLimit.psResult = psResult;
+        sResultWithLimit.nMaxFileSize = 0;
+        const char* pszMaxFileSize = CSLFetchNameValue(papszOptions,
+                                                       "MAX_FILE_SIZE");
+        if( pszMaxFileSize != nullptr )
+        {
+            sResultWithLimit.nMaxFileSize = atoi(pszMaxFileSize);
+            // Only useful if size is returned by server before actual download.
+            curl_easy_setopt(http_handle, CURLOPT_MAXFILESIZE,
+                             sResultWithLimit.nMaxFileSize);
+        }
+        pWriteArg = &sResultWithLimit;
     }
 
-    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, &sResultWithLimit );
-    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, CPLWriteFct );
+    curl_easy_setopt(http_handle, CURLOPT_WRITEDATA, pWriteArg );
+    curl_easy_setopt(http_handle, CURLOPT_WRITEFUNCTION, pfnWrite );
+
+    if( nullptr != pfnProgress)
+    {
+        CurlProcessData stProcessData = { pfnProgress, pProgressArg };
+        curl_easy_setopt(http_handle, CURLOPT_PROGRESSFUNCTION, ProcessFunction);
+        curl_easy_setopt(http_handle, CURLOPT_PROGRESSDATA, &stProcessData);
+
+    #if LIBCURL_VERSION_NUM >= 0x072000
+        curl_easy_setopt(http_handle, CURLOPT_XFERINFOFUNCTION, NewProcessFunction);
+        curl_easy_setopt(http_handle, CURLOPT_XFERINFODATA, &stProcessData);
+    #endif
+        curl_easy_setopt(http_handle, CURLOPT_NOPROGRESS, 0L);
+    }
 
     szCurlErrBuf[0] = '\0';
 

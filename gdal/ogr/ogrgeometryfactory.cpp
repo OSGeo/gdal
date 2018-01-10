@@ -44,6 +44,7 @@
 #ifdef HAVE_GEOS
 #include "geos_c.h"
 #endif
+#include "ogrgeojsonreader.h"
 
 #include <climits>
 #include <cmath>
@@ -631,7 +632,7 @@ void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
  * Starting with GDAL 2.0, curve polygons or closed curves will be changed to
  * polygons.  The passed in geometry is consumed and a new one returned (or
  * potentially the same one).
- * 
+ *
  * Note: the resulting polygon may break the Simple Features rules for polygons,
  * for example when converting from a multi-part multipolygon.
  *
@@ -4537,7 +4538,7 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
  *
  * Angles are return in radians, with trigonometic convention (counter clock
  * wise)
- * 
+ *
  * @param x0 x of first point
  * @param y0 y of first point
  * @param x1 x of intermediate point
@@ -5692,4 +5693,48 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
     return poRet;
+}
+
+/************************************************************************/
+/*                   createFromGeoJson( const char* )                   */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param pszJsonString The GeoJSON fragment for the geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
+{
+    CPLJSONDocument oDocument;
+    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString)) )
+    {
+        return nullptr;
+    }
+
+    return createFromGeoJson( oDocument.GetRoot() );
+}
+
+/************************************************************************/
+/*              createFromGeoJson( const CPLJSONObject& )               */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param oJsonObject The JSONObject class describes the GeoJSON geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const CPLJSONObject &oJsonObject )
+{
+    if( !oJsonObject.IsValid() )
+    {
+        return nullptr;
+    }
+
+    // TODO: Move from GeoJSON driver functions create geometry here, and replace
+    // json-c specific json_object to CPLJSONObject
+    return OGRGeoJSONReadGeometry(static_cast<json_object*>(
+                                      oJsonObject.GetInternalHandle()));
 }
