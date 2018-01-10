@@ -793,10 +793,12 @@ HFAField::SetInstValue( const char *pszField, int nIndexValue,
                      iIndexCounter < nIndexValue && nExtraOffset < nDataSize;
                      iIndexCounter++ )
                 {
+                    std::set<HFAField*> oVisitedFields;
                     const int nInc =
                         poItemObjectType->
                             GetInstBytes(pabyData + nExtraOffset,
-                                         nDataSize - nExtraOffset);
+                                         nDataSize - nExtraOffset,
+                                         oVisitedFields);
                     if( nInc <= 0 || nExtraOffset > INT_MAX - nInc )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1290,10 +1292,12 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
                      iIndexCounter < nIndexValue && nExtraOffset < nDataSize;
                      iIndexCounter++ )
                 {
+                    std::set<HFAField*> oVisitedFields;
                     const int nInc =
                         poItemObjectType->GetInstBytes(
                             pabyData + nExtraOffset,
-                            nDataSize - nExtraOffset);
+                            nDataSize - nExtraOffset,
+                            oVisitedFields);
                     if( nInc <= 0 || nExtraOffset > INT_MAX - nInc )
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
@@ -1385,9 +1389,16 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
 /*      portion.                                                        */
 /************************************************************************/
 
-int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
+int HFAField::GetInstBytes( GByte *pabyData, int nDataSize,
+                            std::set<HFAField*>& oVisitedFields )
 
 {
+    if( oVisitedFields.find(this) != oVisitedFields.end() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Recursion detected");
+        return -1;
+    }
+
     if( nBytes > -1 )
         return nBytes;
 
@@ -1463,13 +1474,15 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
     }
     else
     {
+        oVisitedFields.insert(this);
         for( int i = 0;
              i < nCount && nInstBytes < nDataSize && nInstBytes >= 0;
              i++ )
         {
             const int nThisBytes =
                 poItemObjectType->GetInstBytes(pabyData,
-                                                nDataSize - nInstBytes);
+                                               nDataSize - nInstBytes,
+                                               oVisitedFields);
             if( nThisBytes <= 0 || nInstBytes > INT_MAX - nThisBytes )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
@@ -1479,6 +1492,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize )
             nInstBytes += nThisBytes;
             pabyData += nThisBytes;
         }
+        oVisitedFields.erase(this);
     }
 
     return nInstBytes;
