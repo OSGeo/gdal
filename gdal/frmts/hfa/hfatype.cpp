@@ -251,8 +251,9 @@ HFAType::SetInstValue( const char *pszFieldPath,
             break;
         }
 
+        std::set<HFAField*> oVisitedFields;
         const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+            pabyData + nByteOffset, nDataSize - nByteOffset, oVisitedFields);
 
         if( nInc <= 0 ||
             nByteOffset > INT_MAX - nInc )
@@ -327,8 +328,9 @@ HFAType::GetInstCount( const char *pszFieldPath,
             break;
         }
 
+        std::set<HFAField*> oVisitedFields;
         const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+            pabyData + nByteOffset, nDataSize - nByteOffset, oVisitedFields);
 
         if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
@@ -419,8 +421,10 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
             break;
         }
 
+        std::set<HFAField*> oVisitedFields;
         const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+            pabyData + nByteOffset, nDataSize - nByteOffset,
+            oVisitedFields);
 
         if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
@@ -460,7 +464,9 @@ void HFAType::DumpInstValue( FILE *fpOut,
         poField->DumpInstValue(fpOut, pabyData, nDataOffset,
                                nDataSize, pszPrefix);
 
-        const int nInstBytes = poField->GetInstBytes(pabyData, nDataSize);
+        std::set<HFAField*> oVisitedFields;
+        const int nInstBytes = poField->GetInstBytes(pabyData, nDataSize,
+                                                     oVisitedFields);
         if( nInstBytes <= 0 || nDataOffset > UINT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
@@ -479,7 +485,8 @@ void HFAType::DumpInstValue( FILE *fpOut,
 /*      How many bytes in this particular instance of this type?        */
 /************************************************************************/
 
-int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
+int HFAType::GetInstBytes( GByte *pabyData, int nDataSize,
+                           std::set<HFAField*>& oVisitedFields )
 
 {
     if( nBytes >= 0 )
@@ -492,7 +499,7 @@ int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
         HFAField *poField = papoFields[iField];
 
         const int nInstBytes =
-            poField->GetInstBytes(pabyData, nDataSize - nTotal);
+            poField->GetInstBytes(pabyData, nDataSize - nTotal, oVisitedFields);
         if( nInstBytes <= 0 || nTotal > INT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
