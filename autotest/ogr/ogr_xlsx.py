@@ -539,10 +539,6 @@ def ogr_xlsx_14():
         gdaltest.post_reason('invalid field name')
         return 'fail'
 
-    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
-        gdaltest.post_reason('invalid field name')
-        return 'fail'
-
     if lyr.GetLayerDefn().GetFieldCount() != 18:
         gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
         return 'fail'
