@@ -436,10 +436,10 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
 
     INGR_TileHeaderDiskToMem( pTileDir, abyBuf );
 
-    if (pTileDir->TileSize == 0)
+    if (pTileDir->TileSize == 0 || pTileDir->TileSize > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                    "Invalid tile size : %d", pTileDir->TileSize);
+                    "Invalid tile size : %u", pTileDir->TileSize);
         return 0;
     }
 
