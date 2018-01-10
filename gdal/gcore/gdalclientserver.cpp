@@ -392,11 +392,11 @@ static const char* const apszInstr[] =
 };
 #endif
 
-static const GByte abyEndOfJunkMarker[] = { 0xDE, 0xAD, 0xBE, 0xEF };
+constexpr GByte abyEndOfJunkMarker[] = { 0xDE, 0xAD, 0xBE, 0xEF };
 
 /* Recycling of connections to child processes */
-static const int MAX_RECYCLED = 128;
-static const int DEFAULT_RECYCLED = 4;
+constexpr int MAX_RECYCLED = 128;
+constexpr int DEFAULT_RECYCLED = 4;
 static bool bRecycleChild = false;
 static int nMaxRecycled = 0;
 static GDALServerSpawnedProcess* aspRecycled[MAX_RECYCLED];

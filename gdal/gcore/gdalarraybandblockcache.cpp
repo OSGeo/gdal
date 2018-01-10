@@ -41,7 +41,7 @@
 
 //! @cond Doxygen_Suppress
 
-static const int SUBBLOCK_SIZE = 64;
+constexpr int SUBBLOCK_SIZE = 64;
 #define TO_SUBBLOCK(x) ((x) >> 6)
 #define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
 

@@ -81,7 +81,7 @@ struct _GDALJP2GeoTIFFBox
     GByte  *pabyGeoTIFFData;
 };
 
-static const int MAX_JP2GEOTIFF_BOXES = 2;
+constexpr int MAX_JP2GEOTIFF_BOXES = 2;
 
 /************************************************************************/
 /*                          GDALJP2Metadata()                           */

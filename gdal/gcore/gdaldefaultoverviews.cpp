@@ -995,7 +995,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand( int nFlags, int nBand )
 /************************************************************************/
 
 // Secret code meaning we don't handle this band.
-static const int MISSING_FLAGS = 0x8000;
+constexpr int MISSING_FLAGS = 0x8000;
 
 GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
 

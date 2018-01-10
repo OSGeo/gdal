@@ -647,18 +647,18 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
     int nGaussMatrixDim = 3;
     const int *panGaussMatrix;
-    static const int anGaussMatrix3x3[] ={
+    constexpr int anGaussMatrix3x3[] ={
         1, 2, 1,
         2, 4, 2,
         1, 2, 1
     };
-    static const int anGaussMatrix5x5[] = {
+    constexpr int anGaussMatrix5x5[] = {
         1, 4, 6, 4, 1,
         4, 16, 24, 16, 4,
         6, 24, 36, 24, 6,
         4, 16, 24, 16, 4,
         1, 4, 6, 4, 1};
-    static const int anGaussMatrix7x7[] = {
+    constexpr int anGaussMatrix7x7[] = {
         1, 6, 15, 20, 15, 6, 1,
         6, 36, 90, 120, 90, 36, 6,
         15, 90, 225, 300, 225, 90, 15,
