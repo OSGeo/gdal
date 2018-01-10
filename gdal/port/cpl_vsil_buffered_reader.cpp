@@ -50,7 +50,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-static const int MAX_BUFFER_SIZE = 65536;
+constexpr int MAX_BUFFER_SIZE = 65536;
 
 CPL_CVSID("$Id$")
 

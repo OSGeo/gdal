@@ -245,10 +245,10 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 {
 #ifdef WIN32
     const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
-    static const char SEP_STRING[] = "\\";
+    constexpr char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", nullptr);
-    static const char SEP_STRING[] = "/";
+    constexpr char SEP_STRING[] = "/";
 #endif
 
     // GDAL specific config option (mostly for testing purpose, but also

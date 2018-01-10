@@ -203,7 +203,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 CPLString &CPLString::Trim()
 
 {
-    static const char szWhitespace[] = " \t\r\n";
+    constexpr char szWhitespace[] = " \t\r\n";
 
     const size_t iLeft = find_first_not_of( szWhitespace );
     const size_t iRight = find_last_not_of( szWhitespace );

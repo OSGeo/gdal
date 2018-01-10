@@ -61,10 +61,10 @@
 #endif
 #endif
 
-static const int PIPE_BUFFER_SIZE = 4096;
+constexpr int PIPE_BUFFER_SIZE = 4096;
 
-static const int IN_FOR_PARENT = 0;
-static const int OUT_FOR_PARENT = 1;
+constexpr int IN_FOR_PARENT = 0;
+constexpr int OUT_FOR_PARENT = 1;
 
 CPL_CVSID("$Id$")
 

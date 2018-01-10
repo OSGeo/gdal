@@ -745,7 +745,7 @@ static GIntBig VSICurlGetTimeStampFromRFC822DateTime( const char* pszDT )
     if( sscanf(pszDT, "%02d %03s %04d %02d:%02d:%02d GMT",
                 &nDay, szMonth, &nYear, &nHour, &nMinute, &nSecond) == 6 )
     {
-        static const char* const aszMonthStr[] = {
+        constexpr char* const aszMonthStr[] = {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun",
             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 

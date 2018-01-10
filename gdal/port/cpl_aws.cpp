@@ -60,12 +60,12 @@ static CPLString CPLGetLowerCaseHex( const GByte *pabyData, size_t nBytes )
     CPLString osRet;
     osRet.resize(nBytes * 2);
 
-    static const char achHex[] = "0123456789abcdef";
+    constexpr char achHex[] = "0123456789abcdef";
 
     for( size_t i = 0; i < nBytes; ++i )
     {
-        int nLow = pabyData[i] & 0x0f;
-        int nHigh = (pabyData[i] & 0xf0) >> 4;
+        const int nLow = pabyData[i] & 0x0f;
+        const int nHigh = (pabyData[i] & 0xf0) >> 4;
 
         osRet[i*2] = achHex[nHigh];
         osRet[i*2+1] = achHex[nLow];
@@ -712,10 +712,10 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 
 #ifdef WIN32
     const char* pszHome = CPLGetConfigOption("USERPROFILE", nullptr);
-    static const char SEP_STRING[] = "\\";
+    constexpr char SEP_STRING[] = "\\";
 #else
     const char* pszHome = CPLGetConfigOption("HOME", nullptr);
-    static const char SEP_STRING[] = "/";
+    constexpr char SEP_STRING[] = "/";
 #endif
 
     CPLString osDotAws( pszHome ? pszHome : "" );

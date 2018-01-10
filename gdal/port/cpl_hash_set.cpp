@@ -54,7 +54,7 @@ struct _CPLHashSet
 #endif
 };
 
-static const int anPrimes[] =
+constexpr int anPrimes[] =
 {
     53, 97, 193, 389, 769, 1543, 3079, 6151,
     12289, 24593, 49157, 98317, 196613, 393241,

@@ -52,13 +52,13 @@
 CPL_CVSID("$Id$")
 
 // Should be size of larged possible filename.
-static const int CPL_PATH_BUF_SIZE = 2048;
-static const int CPL_PATH_BUF_COUNT = 10;
+constexpr int CPL_PATH_BUF_SIZE = 2048;
+constexpr int CPL_PATH_BUF_COUNT = 10;
 
 #if defined(WIN32)
-static const char SEP_STRING[] = "\\";
+constexpr char SEP_STRING[] = "\\";
 #else
-static const char SEP_STRING[] = "/";
+constexpr char SEP_STRING[] = "/";
 #endif
 
 static const char* CPLStaticBufferTooSmall( char *pszStaticResult )

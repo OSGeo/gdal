@@ -366,7 +366,7 @@ static unsigned getUCSChar(const std::string& unicode4HexChar)
 
 void CPLJSonStreamingParser::DecodeUnicode()
 {
-    static const char szReplacementUTF8[] = "\xEF\xBF\xBD";
+    constexpr char szReplacementUTF8[] = "\xEF\xBF\xBD";
     unsigned nUCSChar;
     if( m_osUnicodeHex.size() == 8 )
     {
