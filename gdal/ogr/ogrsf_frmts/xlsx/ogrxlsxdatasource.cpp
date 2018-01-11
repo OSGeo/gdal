@@ -192,6 +192,8 @@ OGRXLSXDataSource::OGRXLSXDataSource() :
     bFirstLineIsHeaders(false),
     bAutodetectTypes(!EQUAL(CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", ""),
                             "STRING")),
+    bAllowEmptyRows(!EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_ROWS", ""),
+                            "DISABLE")),
     oParser(nullptr),
     bStopParsing(false),
     nWithoutEventCounter(0),
@@ -960,17 +962,31 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
 
             /* Add feature for current line */
-            OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+            OGRFeature* poFeature = nullptr;
+            bool        bRowHasData = false;
+
             for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
                 if (!apoCurLineValues[i].empty())
                 {
+                  if (!bRowHasData) {
+                    poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                    bRowHasData = true;
+                  }
+
                   SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
                           apoCurLineTypes[i].c_str());
                 }
             }
-            CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
-            delete poFeature;
+            if (bRowHasData || bAllowEmptyRows)
+            {
+                if (!bRowHasData) {
+                  poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                }
+
+                CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+                delete poFeature;
+            }
        }
 
         nCurLine++;

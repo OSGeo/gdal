@@ -176,6 +176,7 @@ class OGRXLSXDataSource : public GDALDataset
 
     XML_Parser          oParser;
     bool                bStopParsing;
+    int                 bAllowEmptyRows;
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
