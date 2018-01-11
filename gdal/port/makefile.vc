@@ -60,6 +60,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_azure.obj \
 		cpl_alibaba_oss.obj \
 		cpl_json_streaming_parser.obj \
+		cpl_json.obj \
 		cpl_md5.obj \
 		$(ODBC_OBJ)
 
@@ -75,7 +76,7 @@ EXTRAFLAGS = $(ZLIB_INC)
 EXTRAFLAGS = -I..\frmts\zlib
 !ENDIF
 
-EXTRAFLAGS	= 	 $(EXTRAFLAGS) -DHAVE_LIBZ
+EXTRAFLAGS	= 	 $(EXTRAFLAGS) -DHAVE_LIBZ -I..\ogr\ogrsf_frmts\geojson\libjson
 
 !IFDEF LIBICONV_INCLUDE
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_ICONV $(LIBICONV_CFLAGS) $(LIBICONV_INCLUDE)

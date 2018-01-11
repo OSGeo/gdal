@@ -32,6 +32,7 @@
 #ifndef OGR_GEOMETRY_H_INCLUDED
 #define OGR_GEOMETRY_H_INCLUDED
 
+#include "cpl_json.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
@@ -1795,6 +1796,8 @@ class CPL_DLL OGRGeometryFactory
     static OGRGeometry *createFromGML( const char * );
     static OGRGeometry *createFromGEOS( GEOSContextHandle_t hGEOSCtxt,
                                         GEOSGeom );
+    static OGRGeometry *createFromGeoJson( const char *);
+    static OGRGeometry *createFromGeoJson( const CPLJSONObject &oJSONObject );
 
     static void   destroyGeometry( OGRGeometry * );
     static OGRGeometry *createGeometry( OGRwkbGeometryType );

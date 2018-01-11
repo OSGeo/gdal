@@ -31,8 +31,7 @@
 
 #include <ogr_core.h>
 
-#include "ogr_json_header.h"
-
+#include "cpl_json_header.h"
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 

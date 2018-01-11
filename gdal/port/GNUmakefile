@@ -13,7 +13,7 @@ else
 XTRA_OPT =
 endif
 
-CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(XTRA_OPT) -DINST_DATA=\"$(INST_DATA)\"
+CPPFLAGS	:= $(CPPFLAGS)	$(CURL_INC) $(JSON_INCLUDE) $(XTRA_OPT) -DINST_DATA=\"$(INST_DATA)\"
 
 OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_strtod.o cpl_path.o cpl_csv.o cpl_findfile.o cpl_minixml.o \
@@ -29,7 +29,7 @@ OBJ =	cpl_conv.o cpl_error.o cpl_string.o cplgetsymbol.o cplstringlist.o \
 	cpl_google_oauth2.o cpl_progress.o cpl_virtualmem.o cpl_worker_thread_pool.o \
 	cpl_vsil_crypt.o cpl_sha1.o cpl_sha256.o cpl_aws.o cpl_vsi_error.o cpl_cpu_features.o \
 	cpl_google_cloud.o cpl_azure.o cpl_alibaba_oss.o cpl_json_streaming_parser.o \
-	cpl_md5.o
+	cpl_json.o cpl_md5.o
 
 ifeq ($(ODBC_SETTING),yes)
 OBJ	:= 	$(OBJ) cpl_odbc.o
