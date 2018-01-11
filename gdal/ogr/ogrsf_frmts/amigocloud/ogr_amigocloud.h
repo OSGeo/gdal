@@ -31,14 +31,14 @@
 #define OGR_AMIGOCLOUD_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+
+#include "cpl_json_header.h"
+#include "cpl_hash_set.h"
 #include "cpl_http.h"
 
 #include <vector>
 #include <string>
 
-#include "ogr_json_header.h"
-
-#include <cpl_hash_set.h>
 #include <cstdlib>
 
 json_object* OGRAMIGOCLOUDGetSingleRow(json_object* poObj);

@@ -31,11 +31,11 @@
 #define OGR_CARTO_H_INCLUDED
 
 #include "ogrsf_frmts.h"
+
 #include "cpl_http.h"
+#include "cpl_json_header.h"
 
 #include <vector>
-
-#include "ogr_json_header.h"
 
 
 json_object* OGRCARTOGetSingleRow(json_object* poObj);

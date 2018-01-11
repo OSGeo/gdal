@@ -31,11 +31,12 @@
 #define OGR_ELASTIC_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "ogr_p.h"
-#include "cpl_hash_set.h"
-#include <vector>
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
+#include "cpl_hash_set.h"
+#include "ogr_p.h"
+
+#include <vector>
 
 typedef enum
 {
