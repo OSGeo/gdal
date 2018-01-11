@@ -200,6 +200,7 @@ OGRXLSXDataSource::OGRXLSXDataSource() :
     nDataHandlerCounter(0),
     nCurLine(0),
     nCurCol(0),
+    nLastEmptyCol(-1),
     poCurLayer(nullptr),
     nStackDepth(0),
     nDepth(0),
@@ -588,13 +589,15 @@ void OGRXLSXDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = true;
     else if (EQUAL(pszXLSXHeaders, "DISABLE"))
         bFirstLineIsHeaders = false;
-    else if( bHeaderLineCandidate &&
+    else {
+      if( bHeaderLineCandidate &&
              !apoFirstLineTypes.empty() &&
              apoFirstLineTypes.size() >= apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
-    {
-        bFirstLineIsHeaders = true;
+      {
+          bFirstLineIsHeaders = true;
+      }
     }
     CPLDebug("XLSX", "%s %s",
              poCurLayer ? poCurLayer->GetName() : "NULL layer",
@@ -613,6 +616,7 @@ void OGRXLSXDataSource::startElementDefault(const char *pszNameIn,
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         nCurLine = 0;
+        nLastEmptyCol = -1;
         PushState(STATE_SHEETDATA);
     }
 }
@@ -819,6 +823,12 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
     {
         CPLAssert(strcmp(pszNameIn, "row") == 0);
 
+        if (nLastEmptyCol != -1) 
+        {
+          apoCurLineTypes.resize(nLastEmptyCol);
+          apoCurLineValues.resize(nLastEmptyCol);
+        }  
+        
         /* Backup first line values and types in special arrays */
         if (nCurLine == 0)
         {
@@ -835,6 +845,8 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
     #endif
         }
+
+        // printf("nCurLine (%d) nLastEmptyCol (%d)\n",nCurLine, nLastEmptyCol);
 
         if (nCurLine == 1)
         {
@@ -1028,6 +1040,15 @@ void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
             else
                 CPLDebug("XLSX", "Cannot find string %d", nIndex);
             osValueType = "string";
+        }
+
+        if (osValue.empty()) {
+          if (nLastEmptyCol == -1) {
+            nLastEmptyCol = (int)apoCurLineValues.size();
+          }
+        }
+        else {
+          nLastEmptyCol = -1;
         }
 
         apoCurLineValues.push_back(osValue);

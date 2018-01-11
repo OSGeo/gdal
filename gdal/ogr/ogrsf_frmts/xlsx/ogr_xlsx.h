@@ -196,6 +196,8 @@ class OGRXLSXDataSource : public GDALDataset
     std::vector<std::string>  apoCurLineValues;
     std::vector<std::string>  apoCurLineTypes;
 
+    int                 nLastEmptyCol;
+
     bool                bInCellXFS;
     std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;
     std::vector<XLSXFieldTypeExtended>  apoStyles;
