@@ -65,7 +65,7 @@ class OGRGeoRSSLayer : public OGRLayer
     OGRGeoRSSDataSource*  poDS;
     OGRGeoRSSFormat     eFormat;
 
-    int                bWriteMode;
+    bool               bWriteMode;
     int                nTotalFeatureCount;
 
     // TODO(schwehr): Remove eof?
@@ -121,17 +121,17 @@ class OGRGeoRSSLayer : public OGRLayer
 
   private:
 #ifdef HAVE_EXPAT
-    void               AddStrToSubElementValue(const char* pszStr);
+    void               AddStrToSubElementValue( const char* pszStr );
 #endif
     bool               IsStandardField( const char* pszName );
 
   public:
-                        OGRGeoRSSLayer(const char *pszFilename,
-                                    const char* layerName,
-                                    OGRGeoRSSDataSource* poDS,
-                                    OGRSpatialReference *poSRSIn,
-                                    int bWriteMode = FALSE);
-                        ~OGRGeoRSSLayer();
+                        OGRGeoRSSLayer( const char *pszFilename,
+                                        const char* layerName,
+                                        OGRGeoRSSDataSource* poDS,
+                                        OGRSpatialReference *poSRSIn,
+                                        bool bWriteMode = false );
+                        ~OGRGeoRSSLayer() override;
 
     void                ResetReading() override;
     OGRFeature *        GetNextFeature() override;
@@ -148,13 +148,13 @@ class OGRGeoRSSLayer : public OGRLayer
     void                LoadSchema();
 
 #ifdef HAVE_EXPAT
-    void                startElementCbk(const char *pszName, const char **ppszAttr);
-    void                endElementCbk(const char *pszName);
-    void                dataHandlerCbk(const char *data, int nLen);
+    void                startElementCbk( const char *pszName, const char **ppszAttr );
+    void                endElementCbk( const char *pszName );
+    void                dataHandlerCbk( const char *data, int nLen );
 
-    void                startElementLoadSchemaCbk(const char *pszName, const char **ppszAttr);
-    void                endElementLoadSchemaCbk(const char *pszName);
-    void                dataHandlerLoadSchemaCbk(const char *data, int nLen);
+    void                startElementLoadSchemaCbk( const char *pszName, const char **ppszAttr );
+    void                endElementLoadSchemaCbk( const char *pszName );
+    void                dataHandlerLoadSchemaCbk( const char *data, int nLen );
 #endif
 };
 
@@ -193,7 +193,7 @@ class OGRGeoRSSDataSource : public OGRDataSource
 
   public:
                         OGRGeoRSSDataSource();
-                        ~OGRGeoRSSDataSource();
+                        ~OGRGeoRSSDataSource() override;
 
     int                 Open( const char * pszFilename,
                               int bUpdate );
@@ -207,9 +207,9 @@ class OGRGeoRSSDataSource : public OGRDataSource
     OGRLayer*           GetLayer( int ) override;
 
     OGRLayer *          ICreateLayer( const char * pszLayerName,
-                                    OGRSpatialReference *poSRS,
-                                    OGRwkbGeometryType eType,
-                                    char ** papszOptions ) override;
+                                      OGRSpatialReference *poSRS,
+                                      OGRwkbGeometryType eType,
+                                      char ** papszOptions ) override;
 
     int                 TestCapability( const char * ) override;
 
