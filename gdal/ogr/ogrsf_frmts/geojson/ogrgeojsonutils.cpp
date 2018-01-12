@@ -35,6 +35,9 @@
 
 CPL_CVSID("$Id$")
 
+const char szESRIJSonPotentialStart1[] =
+    "{\"features\":[{\"geometry\":{\"rings\":[";
+
 /************************************************************************/
 /*                           IsJSONObject()                             */
 /************************************************************************/
@@ -94,6 +97,55 @@ static bool IsTypeSomething( const char* pszText, const char* pszTypeValue )
 }
 
 /************************************************************************/
+/*                           GetCompactJSon()                           */
+/************************************************************************/
+
+static CPLString GetCompactJSon( const char* pszText, size_t nMaxSize )
+{
+    /* Skip UTF-8 BOM (#5630) */
+    const GByte* pabyData = reinterpret_cast<const GByte *>(pszText);
+    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+        pszText += 3;
+
+    CPLString osWithoutSpace;
+    bool bInString = false;
+    for( int i = 0; pszText[i] != '\0' &&
+                    osWithoutSpace.size() < nMaxSize; i++ )
+    {
+        if( bInString )
+        {
+            if( pszText[i] == '\\' )
+            {
+                osWithoutSpace += pszText[i];
+                if( pszText[i+1] == '\0' )
+                    break;
+                osWithoutSpace += pszText[i+1];
+                i ++;
+            }
+            else if( pszText[i] == '"' )
+            {
+                bInString = false;
+                osWithoutSpace += '"';
+            }
+            else
+            {
+                osWithoutSpace += pszText[i];
+            }
+        }
+        else if( pszText[i] == '"' )
+        {
+            bInString = true;
+            osWithoutSpace += '"';
+        }
+        else if( !isspace(static_cast<int>(pszText[i])) )
+        {
+            osWithoutSpace += pszText[i];
+        }
+    }
+    return osWithoutSpace;
+}
+
+/************************************************************************/
 /*                           GeoJSONIsObject()                          */
 /************************************************************************/
 
@@ -102,7 +154,7 @@ bool GeoJSONIsObject( const char* pszText )
     if( !IsJSONObject(pszText) )
         return false;
 
-    return IsTypeSomething(pszText, "Feature") ||
+    if( IsTypeSomething(pszText, "Feature") ||
            IsTypeSomething(pszText, "FeatureCollection") ||
            IsTypeSomething(pszText, "Point") ||
            IsTypeSomething(pszText, "LineString") ||
@@ -110,7 +162,20 @@ bool GeoJSONIsObject( const char* pszText )
            IsTypeSomething(pszText, "MultiPoint") ||
            IsTypeSomething(pszText, "MultiLineString") ||
            IsTypeSomething(pszText, "MultiPolygon") ||
-           IsTypeSomething(pszText, "GeometryCollection");
+           IsTypeSomething(pszText, "GeometryCollection") )
+    {
+        return true;
+    }
+
+    CPLString osWithoutSpace = GetCompactJSon(pszText,
+                                            strlen(szESRIJSonPotentialStart1));
+    if( osWithoutSpace.find("{\"features\":[") == 0 &&
+        osWithoutSpace.find(szESRIJSonPotentialStart1) != 0 )
+    {
+        return true;
+    }
+
+    return false;
 }
 
 
@@ -123,7 +188,7 @@ bool ESRIJSONIsObject(const char *pszText)
     if( !IsJSONObject(pszText) )
         return false;
 
-    return  // ESRI Json geometry
+    if(  // ESRI Json geometry
             (strstr(pszText, "\"geometryType\"") != nullptr &&
              strstr(pszText, "\"esriGeometry") != nullptr)
 
@@ -132,7 +197,19 @@ bool ESRIJSONIsObject(const char *pszText)
 
             // ESRI Json "FeatureCollection"
             || (strstr(pszText, "\"fields\"") != nullptr &&
-                strstr(pszText, "\"esriFieldType") != nullptr);
+                strstr(pszText, "\"esriFieldType") != nullptr) )
+    {
+        return true;
+    }
+
+    CPLString osWithoutSpace = GetCompactJSon(pszText,
+                                            strlen(szESRIJSonPotentialStart1));
+    if( osWithoutSpace.find(szESRIJSonPotentialStart1) == 0 )
+    {
+        return true;
+    }
+
+    return false;
 }
 
 

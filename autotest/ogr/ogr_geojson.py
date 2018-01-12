@@ -3852,6 +3852,45 @@ def ogr_geojson_66():
 
     return 'success'
 
+
+###############################################################################
+# Test reading GeoJSON files starting with {"features":[{"geometry":.... (#7198)
+
+def ogr_geojson_67():
+
+    ds = ogr.Open('data/grenada.geojson')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetDriver().GetName() != 'GeoJSON':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+
+###############################################################################
+# Test reading ESRIJSON files starting with {"features":[{"geometry":.... (#7198)
+
+def ogr_geojson_68():
+
+    ds = ogr.Open('data/esrijsonstartingwithfeaturesgeometry.json')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetDriver().GetName() != 'ESRIJSON':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -3919,6 +3958,8 @@ gdaltest_list = [
     ogr_geojson_64,
     ogr_geojson_65,
     ogr_geojson_66,
+    ogr_geojson_67,
+    ogr_geojson_68,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
