@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$")
 
-static const size_t FIT_PAGE_SIZE = 128;
+constexpr size_t FIT_PAGE_SIZE = 128;
 
 using namespace gstEndian;
 
@@ -62,7 +62,7 @@ class FITDataset : public GDALPamDataset
     FITDataset();
     ~FITDataset();
     static GDALDataset *Open( GDALOpenInfo * );
-//     virtual CPLErr GetGeoTransform( double * );
+    // virtual CPLErr GetGeoTransform( double * );
 };
 
 static GDALDataset *FITCreateCopy(const char * pszFilename,
@@ -89,17 +89,16 @@ class FITRasterBand : public GDALPamRasterBand
     char *tmpImage;
 
 public:
-
     FITRasterBand( FITDataset *, int nBandIn, int nBandsIn );
-    virtual ~FITRasterBand();
+    ~FITRasterBand() override;
 
     // should override RasterIO eventually.
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-//     virtual CPLErr WriteBlock( int, int, void * );
-    virtual double GetMinimum( int *pbSuccess ) override;
-    virtual double GetMaximum( int *pbSuccess ) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr IReadBlock( int, int, void * ) override;
+    // virtual CPLErr WriteBlock( int, int, void * );
+    double GetMinimum( int *pbSuccess ) override;
+    double GetMaximum( int *pbSuccess ) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

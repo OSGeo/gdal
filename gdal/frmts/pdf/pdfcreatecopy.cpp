@@ -2176,7 +2176,7 @@ static void CalculateText( const CPLString& osText, CPLString& osFont,
     // Character widths of Helvetica, Win-1252 characters 32 to 255
     // Helvetica bold, oblique and bold oblique have their own widths,
     // but for now we will put up with these widths on all Helvetica variants
-    static const GUInt16 anHelveticaCharWidths[] = {
+    constexpr GUInt16 anHelveticaCharWidths[] = {
         569, 569, 727, 1139,1139,1821,1366,391, 682, 682, 797, 1196,569, 682, 569, 569,
         1139,1139,1139,1139,1139,1139,1139,1139,1139,1139,569, 569, 1196,1196,1196,1139,
         2079,1366,1366,1479,1479,1366,1251,1593,1479,569, 1024,1366,1139,1706,1479,1593,
@@ -2196,7 +2196,7 @@ static void CalculateText( const CPLString& osText, CPLString& osFont,
     // Character widths of Times-Roman, Win-1252 characters 32 to 255
     // Times bold, italic and bold italic have their own widths,
     // but for now we will put up with these widths on all Times variants
-    static const GUInt16 anTimesCharWidths[] = {
+    constexpr GUInt16 anTimesCharWidths[] = {
         512, 682, 836, 1024,1024,1706,1593,369, 682, 682, 1024,1155,512, 682, 512, 569,
         1024,1024,1024,1024,1024,1024,1024,1024,1024,1024,569, 569, 1155,1155,1155,909,
         1886,1479,1366,1366,1479,1251,1139,1479,1479,682, 797, 1479,1251,1821,1479,1479,

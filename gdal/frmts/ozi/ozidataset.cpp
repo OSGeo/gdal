@@ -98,7 +98,7 @@ class OZIRasterBand : public GDALPamRasterBand
 /*                             I/O functions                            */
 /************************************************************************/
 
-static const GByte abyKey[] =
+constexpr GByte abyKey[] =
 {
     0x2D, 0x4A, 0x43, 0xF1, 0x27, 0x9B, 0x69, 0x4F,
     0x36, 0x52, 0x87, 0xEC, 0x5F, 0x42, 0x53, 0x22,

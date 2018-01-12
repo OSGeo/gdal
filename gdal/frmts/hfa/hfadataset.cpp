@@ -64,11 +64,11 @@
 
 CPL_CVSID("$Id$")
 
-static const double R2D = 180.0 / M_PI;
-static const double D2R = M_PI / 180.0;
+constexpr double R2D = 180.0 / M_PI;
+constexpr double D2R = M_PI / 180.0;
 
-static const double ARCSEC2RAD = M_PI / 648000.0;
-static const double RAD2ARCSEC = 648000.0 / M_PI;
+constexpr double ARCSEC2RAD = M_PI / 648000.0;
+constexpr double RAD2ARCSEC = 648000.0 / M_PI;
 
 int WritePeStringIfNeeded( OGRSpatialReference *poSRS, HFAHandle hHFA );
 void ClearSR( HFAHandle hHFA );
@@ -124,7 +124,7 @@ static const char *const apszUnitMap[] = {
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
 /* ==================================================================== */
-static const int anUsgsEsriZones[] =
+constexpr int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,

@@ -1539,7 +1539,7 @@ GDALDataset *SRPDataset::Open( GDALOpenInfo * poOpenInfo )
 
             osIMGFileName = osFileName;
 
-            static const int nLeaderSize = 24;
+            constexpr int nLeaderSize = 24;
 
             int i = 0;  // Used after for.
             for( ; i < nLeaderSize; i++ )

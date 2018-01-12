@@ -71,7 +71,7 @@ CPL_CVSID("$Id$")
 
 class GS7BGRasterBand;
 
-static const double dfDefaultNoDataValue = 1.701410009187828e+38f;
+constexpr double dfDefaultNoDataValue = 1.701410009187828e+38f;
 
 class GS7BGDataset : public GDALPamDataset
 {
@@ -115,9 +115,9 @@ class GS7BGDataset : public GDALPamDataset
 
 const size_t GS7BGDataset::nHEADER_SIZE = 100;
 
-static const long  nHEADER_TAG = 0x42525344;
-static const long  nGRID_TAG = 0x44495247;
-static const long  nDATA_TAG = 0x41544144;
+constexpr long nHEADER_TAG = 0x42525344;
+constexpr long nGRID_TAG = 0x44495247;
+constexpr long nDATA_TAG = 0x41544144;
 #if 0 /* Unused */
 const long  nFAULT_TAG = 0x49544c46;
 #endif

@@ -5824,10 +5824,10 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
     }
     VSIFSeekL( fpSrc, 0, SEEK_SET );
     const char* pszLine;
-    static const int SECTION_NONE = 0;
-    static const int SECTION_DIMENSIONS = 1;
-    static const int SECTION_VARIABLES = 2;
-    static const int SECTION_DATA = 3;
+    constexpr int SECTION_NONE = 0;
+    constexpr int SECTION_DIMENSIONS = 1;
+    constexpr int SECTION_VARIABLES = 2;
+    constexpr int SECTION_DATA = 3;
     int nActiveSection = SECTION_NONE;
     std::map<CPLString, int> oMapDimToId;
     std::map<int, int> oMapDimIdToDimLen;

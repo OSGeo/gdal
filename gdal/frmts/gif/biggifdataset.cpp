@@ -55,11 +55,11 @@ class BIGGIFDataset : public GIFAbstractDataset
     CPLErr       ReOpen();
 
   protected:
-    virtual int         CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
-                 BIGGIFDataset();
-    virtual ~BIGGIFDataset();
+    BIGGIFDataset();
+    ~BIGGIFDataset() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -75,9 +75,9 @@ class BIGGifRasterBand : public GIFAbstractRasterBand
     friend class BIGGIFDataset;
 
   public:
-                   BIGGifRasterBand( BIGGIFDataset *, int );
+    BIGGifRasterBand( BIGGIFDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/

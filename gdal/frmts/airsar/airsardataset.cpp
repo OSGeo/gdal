@@ -86,16 +86,16 @@ class AirSARRasterBand : public GDALPamRasterBand
 /* locations of stokes matrix values within padfMatrix ... same order as they
    are computed in the document. */
 
-static const int M11 = 0;
-static const int M12 = 1;
-static const int M13 = 2;
-static const int M14 = 3;
-static const int M23 = 4;
-static const int M24 = 5;
-static const int M33 = 6;
-static const int M34 = 7;
-static const int M44 = 8;
-static const int M22 = 9;
+constexpr int M11 = 0;
+constexpr int M12 = 1;
+constexpr int M13 = 2;
+constexpr int M14 = 3;
+constexpr int M23 = 4;
+constexpr int M24 = 5;
+constexpr int M33 = 6;
+constexpr int M34 = 7;
+constexpr int M44 = 8;
+constexpr int M22 = 9;
 
 /************************************************************************/
 /*                          AirSARRasterBand()                          */

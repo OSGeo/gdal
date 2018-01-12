@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 
 /* NODATA Values */
 //#define SG_NODATA_GDT_Bit 0.0
-static const GByte SG_NODATA_GDT_Byte = 255;
+constexpr GByte SG_NODATA_GDT_Byte = 255;
 #define SG_NODATA_GDT_UInt16    65535
 #define SG_NODATA_GDT_Int16     -32767
 #define SG_NODATA_GDT_UInt32    4294967295U

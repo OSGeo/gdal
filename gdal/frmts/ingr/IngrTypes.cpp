@@ -121,49 +121,49 @@ static const GByte BitReverseTable[256] =
 //                                              Scanline Orientation Flip Matrix
 // -----------------------------------------------------------------------------
 
-static const double INGR_URV_Flip[16] =
+constexpr double INGR_URV_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LLV_Flip[16] =
+constexpr double INGR_LLV_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LRV_Flip[16] =
+constexpr double INGR_LRV_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_ULH_Flip[16] =
+constexpr double INGR_ULH_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_URH_Flip[16] =
+constexpr double INGR_URH_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LLH_Flip[16] =
+constexpr double INGR_LLH_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LRH_Flip[16] =
+constexpr double INGR_LRH_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,

@@ -50,7 +50,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int MAX_ENTRY_REPORT = 16;
+constexpr int MAX_ENTRY_REPORT = 16;
 
 namespace {
 

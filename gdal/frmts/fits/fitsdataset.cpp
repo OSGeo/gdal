@@ -79,13 +79,13 @@ class FITSRasterBand : public GDALPamRasterBand {
 
   friend class  FITSDataset;
 
-public:
+ public:
 
   FITSRasterBand(FITSDataset*, int);
-  virtual ~FITSRasterBand();
+  ~FITSRasterBand() override;
 
-  virtual CPLErr IReadBlock( int, int, void * ) override;
-  virtual CPLErr IWriteBlock( int, int, void * ) override;
+  CPLErr IReadBlock( int, int, void * ) override;
+  CPLErr IWriteBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -208,7 +208,7 @@ CPLErr FITSRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
 // Simple static function to determine if FITS header keyword should
 // be saved in meta data.
-static const int ignorableHeaderCount = 15;
+constexpr int ignorableHeaderCount = 15;
 static const char* const ignorableFITSHeaders[ignorableHeaderCount] = {
   "SIMPLE", "BITPIX", "NAXIS", "NAXIS1", "NAXIS2", "NAXIS3", "END",
   "XTENSION", "PCOUNT", "GCOUNT", "EXTEND", "CONTINUE",
