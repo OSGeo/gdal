@@ -1016,6 +1016,7 @@ void CPLJSONObject::Deinit()
 /*! @cond Doxygen_Suppress */
 CPLJSONArray::CPLJSONArray()
 {
+    json_object_put( TO_JSONOBJ(m_poJsonObject) );
     m_poJsonObject = json_object_new_array();
 }
 
