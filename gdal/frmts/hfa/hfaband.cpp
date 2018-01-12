@@ -2074,17 +2074,6 @@ CPLErr HFABand::SetPCT( int nColors,
 }
 
 /************************************************************************/
-/*                            IsPowerOfTwo()                            */
-/************************************************************************/
-
-static bool IsPowerOfTwo( unsigned int i )
-{
-    if( i == 0 )
-        return false;
-    return ( i & ( i - 1 ) ) == 0;
-}
-
-/************************************************************************/
 /*                     HFAGetOverviewBlockSize()                        */
 /************************************************************************/
 
@@ -2093,7 +2082,7 @@ static int HFAGetOverviewBlockSize()
     const char* pszVal = CPLGetConfigOption("GDAL_HFA_OVR_BLOCKSIZE", "64");
     int nOvrBlockSize = atoi(pszVal);
     if( nOvrBlockSize < 32 || nOvrBlockSize > 2048 ||
-        !IsPowerOfTwo(nOvrBlockSize) )
+        !CPLIsPowerOfTwo(nOvrBlockSize) )
     {
         static bool bHasWarned = false;
         if( !bHasWarned )

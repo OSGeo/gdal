@@ -281,6 +281,11 @@ char* CPLsetlocale (int category, const char* locale);
 void CPLCleanupSetlocaleMutex(void);
 /*! @endcond */
 
+/* -------------------------------------------------------------------- */
+/*                          CPLIsPowerOfTwo()                           */
+/* -------------------------------------------------------------------- */
+bool CPL_DLL CPLIsPowerOfTwo( unsigned int i );
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
