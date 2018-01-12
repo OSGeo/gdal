@@ -121,8 +121,6 @@ public:
 
     bool IsEmpty() const { return m_vertices.empty(); }
 
-    bool HasConstantZ(double&) const;
-
     void setCoordinateDimension( int n ) { m_dim = n; }
 
 private:
@@ -131,7 +129,7 @@ private:
                  OGRLineString*, double dfZ = 0.0);
 
     void EmitLine(const DXFSmoothPolylineVertex&, const DXFSmoothPolylineVertex&,
-                  OGRLineString*, bool bConstantZ, double dfZ) const;
+                  OGRLineString*) const;
 };
 
 #endif  /* OGRDXF_SMOOTH_POLYLINE_H_INCLUDED */
