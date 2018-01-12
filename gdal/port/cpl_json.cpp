@@ -402,7 +402,9 @@ void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_string( osValue.c_str() );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
@@ -425,7 +427,9 @@ void CPLJSONObject::Add(const std::string &osName, const char *pszValue)
     }
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_string( pszValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
@@ -444,7 +448,9 @@ void CPLJSONObject::Add(const std::string &osName, double dfValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_double( dfValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
@@ -463,7 +469,9 @@ void CPLJSONObject::Add(const std::string &osName, int nValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_int( nValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
@@ -482,7 +490,9 @@ void CPLJSONObject::Add(const std::string &osName, GInt64 nValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_int64( static_cast<int64_t>(nValue) );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
@@ -501,7 +511,9 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONArray &oValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
                                 objectName.c_str(),
@@ -520,7 +532,9 @@ void CPLJSONObject::Add(const std::string &osName, const CPLJSONObject &oValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
                                 objectName.c_str(),
@@ -539,7 +553,9 @@ void CPLJSONObject::Add(const std::string &osName, bool bValue)
 {
     std::string objectName;
     CPLJSONObject object = GetObjectByPath( osName, objectName );
-    if( object.IsValid() )
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
     {
         json_object *poVal = json_object_new_boolean( bValue );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
