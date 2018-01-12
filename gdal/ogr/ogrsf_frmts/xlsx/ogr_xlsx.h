@@ -173,14 +173,15 @@ class OGRXLSXDataSource : public GDALDataset
 
     bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
+    int                 bAllowEmptyRows;
 
     XML_Parser          oParser;
     bool                bStopParsing;
-    int                 bAllowEmptyRows;
     int                 nWithoutEventCounter;
     int                 nDataHandlerCounter;
     int                 nCurLine;
     int                 nCurCol;
+    int                 nLastEmptyCol;
 
     OGRXLSXLayer       *poCurLayer;
 
@@ -195,8 +196,6 @@ class OGRXLSXDataSource : public GDALDataset
     std::vector<std::string>  apoFirstLineTypes;
     std::vector<std::string>  apoCurLineValues;
     std::vector<std::string>  apoCurLineTypes;
-
-    int                 nLastEmptyCol;
 
     bool                bInCellXFS;
     std::map<int,XLSXFieldTypeExtended> apoMapStyleFormats;

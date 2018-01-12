@@ -589,16 +589,15 @@ void OGRXLSXDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = true;
     else if (EQUAL(pszXLSXHeaders, "DISABLE"))
         bFirstLineIsHeaders = false;
-    else {
-      if( bHeaderLineCandidate &&
+    else if( bHeaderLineCandidate &&
              !apoFirstLineTypes.empty() &&
              apoFirstLineTypes.size() >= apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
-      {
-          bFirstLineIsHeaders = true;
-      }
+    {
+        bFirstLineIsHeaders = true;
     }
+
     CPLDebug("XLSX", "%s %s",
              poCurLayer ? poCurLayer->GetName() : "NULL layer",
              bFirstLineIsHeaders ? "has header line" : "has no header line");
@@ -975,24 +974,22 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
             /* Add feature for current line */
             OGRFeature* poFeature = nullptr;
-            bool        bRowHasData = false;
 
             for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
                 if (!apoCurLineValues[i].empty())
                 {
-                  if (!bRowHasData) {
+                  if (!poFeature) {
                     poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                    bRowHasData = true;
                   }
 
                   SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
                           apoCurLineTypes[i].c_str());
                 }
             }
-            if (bRowHasData || bAllowEmptyRows)
+            if (poFeature || bAllowEmptyRows)
             {
-                if (!bRowHasData) {
+                if (!poFeature) {
                   poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                 }
 
