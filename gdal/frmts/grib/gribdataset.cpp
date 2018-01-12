@@ -1387,17 +1387,18 @@ static void GDALDeregister_GRIB( GDALDriver * )
 
 class GDALGRIBDriver: public GDALDriver
 {
-            bool bHasFullInitMetadata;
-            CPLStringList aosMetadata;
-        public:
-            GDALGRIBDriver();
+    bool bHasFullInitMetadata;
+    CPLStringList aosMetadata;
 
-            virtual char**      GetMetadata(const char* pszDomain) override;
-            virtual const char* GetMetadataItem(
-                const char* pszName, const char* pszDomain) override;
-            virtual CPLErr      SetMetadataItem(
-                const char* pszName, const char* pszValue,
-                const char* pszDomain) override;
+  public:
+    GDALGRIBDriver();
+
+    char** GetMetadata(const char* pszDomain) override;
+    const char* GetMetadataItem(
+        const char* pszName, const char* pszDomain) override;
+    CPLErr SetMetadataItem(
+        const char* pszName, const char* pszValue,
+        const char* pszDomain) override;
 };
 
 /************************************************************************/

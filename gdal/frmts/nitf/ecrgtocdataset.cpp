@@ -299,12 +299,12 @@ static GIntBig GetFromBase34(const char* pszVal, int nMaxSize)
 
 /* MIL-PRF-32283 - Table II. ECRG zone limits. */
 /* starting with a fake zone 0 for convenience. */
-static const int anZoneUpperLat[] = { 0, 32, 48, 56, 64, 68, 72, 76, 80 };
+constexpr int anZoneUpperLat[] = { 0, 32, 48, 56, 64, 68, 72, 76, 80 };
 
 /* APPENDIX 70, TABLE III of MIL-A-89007 */
-static const int anACst_ADRG[] =
+constexpr int anACst_ADRG[] =
     { 369664, 302592, 245760, 199168, 163328, 137216, 110080, 82432 };
-static const int nBCst_ADRG = 400384;
+constexpr int nBCst_ADRG = 400384;
 
 // TODO: Why are these two functions done this way?
 static int CEIL_ROUND(double a, double b)
@@ -317,7 +317,7 @@ static int NEAR_ROUND(double a, double b)
     return static_cast<int>( floor( ( a / b ) + 0.5 ) * b );
 }
 
-static const int ECRG_PIXELS = 2304;
+constexpr int ECRG_PIXELS = 2304;
 
 static
 int GetExtent(const char* pszFrameName, int nScale, int nZone,

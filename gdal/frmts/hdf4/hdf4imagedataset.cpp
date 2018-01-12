@@ -57,7 +57,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int HDF4_SDS_MAXNAMELEN = 65;
+constexpr int HDF4_SDS_MAXNAMELEN = 65;
 
 extern const char * const pszGDALSignature;
 
@@ -67,7 +67,7 @@ const char * const pszGDALSignature =
 
 extern CPLMutex *hHDF4Mutex;
 
-static const int N_BUF_SIZE = 8192;
+constexpr int N_BUF_SIZE = 8192;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -93,7 +93,7 @@ enum HDF4EOSProduct
 /* ==================================================================== */
 /************************************************************************/
 
-static const int N_COLOR_ENTRIES = 256;
+constexpr int N_COLOR_ENTRIES = 256;
 
 class HDF4ImageDataset : public HDF4Dataset
 {

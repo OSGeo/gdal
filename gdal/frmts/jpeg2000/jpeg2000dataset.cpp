@@ -568,8 +568,8 @@ static void JPEG2000Init()
 int JPEG2000Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    static const unsigned char jpc_header[] = {0xff,0x4f};
-    static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+    constexpr unsigned char jpc_header[] = {0xff,0x4f};
+    constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
     if( poOpenInfo->nHeaderBytes >= 16
         && (memcmp( poOpenInfo->pabyHeader, jpc_header,

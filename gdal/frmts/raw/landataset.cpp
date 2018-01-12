@@ -97,7 +97,7 @@ There is also some information on .STA and .TRL files at:
 
 **/
 
-static const int ERD_HEADER_SIZE = 128;
+constexpr int ERD_HEADER_SIZE = 128;
 
 /************************************************************************/
 /* ==================================================================== */

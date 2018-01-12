@@ -60,7 +60,7 @@
 
 CPL_CVSID("$Id$")
 
-static const size_t MAX_METADATA_LEN = 32768;
+constexpr size_t MAX_METADATA_LEN = 32768;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -231,7 +231,7 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
     // Is it an HDF5 file?
-    static const char achSignature[] = "\211HDF\r\n\032\n";
+    constexpr char achSignature[] = "\211HDF\r\n\032\n";
 
     if( !poOpenInfo->pabyHeader )
         return FALSE;
@@ -440,7 +440,7 @@ static void CreatePath( HDF5GroupObjects *poH5Object )
         }
 
         // -1 to give room for NUL in C strings.
-        static const size_t MAX_PATH = 8192 - 1;
+        constexpr size_t MAX_PATH = 8192 - 1;
         // TODO(schwehr): Is it an issue if the results are longer than 8192?
         // It appears that the output can never be longer than the source.
         if( osUnderscoreSpaceInName.size() > MAX_PATH )

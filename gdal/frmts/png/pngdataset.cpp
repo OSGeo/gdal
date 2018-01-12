@@ -535,7 +535,7 @@ CPLErr PNGDataset::LoadInterlacedChunk( int iLine )
         ( nBitDepth == 16 ) ? 2 * GetRasterCount() : GetRasterCount();
 
     // What is the biggest chunk we can safely operate on?
-    static const int MAX_PNG_CHUNK_BYTES = 100000000;
+    constexpr int MAX_PNG_CHUNK_BYTES = 100000000;
 
     int nMaxChunkLines =
         std::max(1, MAX_PNG_CHUNK_BYTES / (nPixelOffset * GetRasterXSize()));

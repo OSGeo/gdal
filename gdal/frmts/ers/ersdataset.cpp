@@ -80,29 +80,29 @@ class ERSDataset : public RawDataset
     CPLStringList oERSMetadataList;
 
   protected:
-    virtual int         CloseDependentDatasets() override;
+    int CloseDependentDatasets() override;
 
   public:
-                ERSDataset();
-    virtual    ~ERSDataset();
+    ERSDataset();
+    ~ERSDataset() override;
 
-    virtual void FlushCache(void) override;
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double *padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
-    virtual char **GetFileList(void) override;
+    void FlushCache(void) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    CPLErr SetGeoTransform( double *padfTransform ) override;
+    const char *GetProjectionRef(void) override;
+    CPLErr SetProjection( const char * ) override;
+    char **GetFileList(void) override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
+    CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+                    const char *pszGCPProjection ) override;
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual const char *GetMetadataItem( const char * pszName,
-                                     const char * pszDomain = "" ) override;
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
+    char **GetMetadataDomainList() override;
+    const char *GetMetadataItem( const char * pszName,
+                                 const char * pszDomain = "" ) override;
+    char **GetMetadata( const char * pszDomain = "" ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -722,16 +722,15 @@ void ERSDataset::ReadGCPs()
 
 class ERSRasterBand : public RawRasterBand
 {
-    public:
+  public:
+    ERSRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
+                   vsi_l_offset nImgOffset, int nPixelOffset,
+                   int nLineOffset,
+                   GDALDataType eDataType, int bNativeOrder,
+                   int bIsVSIL = FALSE, int bOwnsFP = FALSE );
 
-                 ERSRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
-
-    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    CPLErr SetNoDataValue( double ) override;
 };
 
 /************************************************************************/

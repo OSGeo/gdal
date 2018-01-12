@@ -130,7 +130,7 @@ static const char * const rstUTM          = "utm-%d%c";
 static const char * const rstSPC          = "spc%2d%2s%d";
 
 //----- palette file( .smp ) header size:
-static const int smpHEADERSIZE = 18;
+constexpr int smpHEADERSIZE = 18;
 
 //----- check if file exists:
 bool FileExists( const char *pszPath );
@@ -142,7 +142,7 @@ struct ReferenceTab {
 };
 
 //----- USA State's reference table to USGS PCS Code
-static const ReferenceTab aoUSStateTable[] = {
+constexpr ReferenceTab aoUSStateTable[] = {
     {101,     "al"},
     {201,     "az"},
     {301,     "ar"},
@@ -203,7 +203,7 @@ struct OriginTab83 {
     const char *spcs;
 };
 
-static const int ORIGIN_COUNT = 148;
+constexpr int ORIGIN_COUNT = 148;
 
 //---- USA State plane coordinate system in IDRISI
 static const OriginTab83 SPCS83Origin[] = {

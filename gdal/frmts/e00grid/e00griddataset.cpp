@@ -46,11 +46,11 @@ CPL_CVSID("$Id$")
 #include "e00read.c"
 #undef NULL
 
-static const int E00_INT_SIZE = 10;
-// #define E00_INT14_SIZE  14
-static const int E00_FLOAT_SIZE = 14;
-static const int E00_DOUBLE_SIZE = 21;
-static const int VALS_PER_LINE = 5;
+constexpr int E00_INT_SIZE = 10;
+// constexpr int E00_INT14_SIZE = 14;
+constexpr int E00_FLOAT_SIZE = 14;
+constexpr int E00_DOUBLE_SIZE = 21;
+constexpr int VALS_PER_LINE = 5;
 
 /* g++ -fPIC -Wall -g frmts/e00grid/e00griddataset.cpp -shared -o gdal_E00GRID.so -Iport -Igcore -Iogr -L. -lgdal */
 

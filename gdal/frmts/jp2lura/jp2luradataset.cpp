@@ -229,16 +229,16 @@ JP2LuraDataset::~JP2LuraDataset()
 /*                            Identify()                                */
 /************************************************************************/
 
-static const unsigned char jpc_header[] = {0xff,0x4f};
-static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+constexpr unsigned char jpc_header[] = {0xff,0x4f};
+constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 int JP2LuraDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes >= 16 
-        && (memcmp( poOpenInfo->pabyHeader, jpc_header, 
+    if( poOpenInfo->nHeaderBytes >= 16
+        && (memcmp( poOpenInfo->pabyHeader, jpc_header,
                     sizeof(jpc_header) ) == 0
-            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp, 
+            || memcmp( poOpenInfo->pabyHeader + 4, jp2_box_jp,
                     sizeof(jp2_box_jp) ) == 0
            ) )
         return TRUE;
@@ -376,7 +376,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
     bool TLM = CPLFetchBool(papszOptions, "TLM", false);
     int CODEBLOCK_WIDTH = atoi(CSLFetchNameValueDef(papszOptions,
                                                "CODEBLOCK_WIDTH", "64"));
-    int CODEBLOCK_HEIGHT = atoi(CSLFetchNameValueDef(papszOptions, 
+    int CODEBLOCK_HEIGHT = atoi(CSLFetchNameValueDef(papszOptions,
                                                 "CODEBLOCK_HEIGHT", "64"));
     bool ERROR_RESILIENCE = CPLFetchBool(papszOptions,
                                            "ERROR_RESILIENCE", false);
@@ -1047,7 +1047,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                     cdefBox.AppendUInt16(static_cast<GUInt16>(i));
                     if( i != nAlphaBandIndex )
                     {
-                        /* Signification: This channel is the colour image data 
+                        /* Signification: This channel is the colour image data
                            for the associated colour */
                         cdefBox.AppendUInt16(0);
                         if( enumcs == 17 && nComponents == 2)
@@ -1078,14 +1078,14 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                         {
                             /* Colour of the component: not associated with
                                any particular colour */
-                            cdefBox.AppendUInt16(65535); 
+                            cdefBox.AppendUInt16(65535);
                         }
                     }
                     else
                     {
                         /* Signification: Non pre-multiplied alpha */
                         cdefBox.AppendUInt16(1);
-                        /* Colour of the component: This channel is 
+                        /* Colour of the component: This channel is
                          *  associated as the image as a whole */
                         cdefBox.AppendUInt16(0);
                     }
@@ -1394,7 +1394,7 @@ GDALDataset * JP2LuraDataset::CreateCopy(const char * pszFilename,
                 SetPropPerChannel(cJP2_Prop_Bits_Per_Sample, pvBps[channel],
                                   channel);
 
-                SetPropPerChannel(cJP2_Prop_Signed_Samples, pvSpc[channel], 
+                SetPropPerChannel(cJP2_Prop_Signed_Samples, pvSpc[channel],
                                   channel);
 
                 if (REVERSIBLE == false)
@@ -2508,14 +2508,14 @@ void GDALRegister_JP2Lura()
         poDriver->SetDescription( "JP2Lura" );
         poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
         poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, 
+        poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                 "JPEG-2000 driver based on Lurawave library" );
-        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, 
+        poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                    "frmt_jp2lura.html" );
         poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "jp2" );
         poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "jp2 j2f j2k" );
-        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, 
+        poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                    "Byte Int16 UInt16 Int32 UInt32 Float32");
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,

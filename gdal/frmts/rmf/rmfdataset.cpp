@@ -36,8 +36,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int RMF_DEFAULT_BLOCKXSIZE = 256;
-static const int RMF_DEFAULT_BLOCKYSIZE = 256;
+constexpr int RMF_DEFAULT_BLOCKXSIZE = 256;
+constexpr int RMF_DEFAULT_BLOCKYSIZE = 256;
 
 static const char RMF_SigRSW[] = { 'R', 'S', 'W', '\0' };
 static const char RMF_SigRSW_BE[] = { '\0', 'W', 'S', 'R' };
@@ -49,8 +49,8 @@ static const char RMF_UnitsCM[] = "cm";
 static const char RMF_UnitsDM[] = "dm";
 static const char RMF_UnitsMM[] = "mm";
 
-static const double RMF_DEFAULT_SCALE = 10000.0;
-static const double RMF_DEFAULT_RESOLUTION = 100.0;
+constexpr double RMF_DEFAULT_SCALE = 10000.0;
+constexpr double RMF_DEFAULT_RESOLUTION = 100.0;
 
 /************************************************************************/
 /* ==================================================================== */

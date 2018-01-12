@@ -41,8 +41,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int TYPE_GENERIC = 0;
-static const int TYPE_GEOREF = 1;
+constexpr int TYPE_GENERIC = 0;
+constexpr int TYPE_GEOREF = 1;
 
 enum ePolarization {
     hh = 0,

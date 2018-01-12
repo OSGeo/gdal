@@ -734,8 +734,8 @@ CPLErr HDF5ImageDataset::CreateProjections()
     }
     case UNKNOWN_PRODUCT:
     {
-        static const int NBGCPLAT = 100;
-        static const int NBGCPLON = 30;
+        constexpr int NBGCPLAT = 100;
+        constexpr int NBGCPLON = 30;
 
         const int nDeltaLat = nRasterYSize / NBGCPLAT;
         const int nDeltaLon = nRasterXSize / NBGCPLON;

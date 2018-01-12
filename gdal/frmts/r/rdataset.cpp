@@ -55,12 +55,12 @@
 
 CPL_CVSID("$Id$")
 
-// static const int R_NILSXP = 0;
-static const int R_LISTSXP = 2;
-static const int R_CHARSXP = 9;
-static const int R_INTSXP = 13;
-static const int R_REALSXP = 14;
-static const int R_STRSXP = 16;
+// constexpr int R_NILSXP = 0;
+constexpr int R_LISTSXP = 2;
+constexpr int R_CHARSXP = 9;
+constexpr int R_INTSXP = 13;
+constexpr int R_REALSXP = 14;
+constexpr int R_STRSXP = 16;
 
 namespace {
 

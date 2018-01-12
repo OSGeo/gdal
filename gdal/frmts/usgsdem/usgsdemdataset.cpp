@@ -43,7 +43,7 @@ typedef struct {
     double      y;
 } DPoint2;
 
-static const int USGSDEM_NODATA = -32767;
+constexpr int USGSDEM_NODATA = -32767;
 
 GDALDataset *USGSDEMCreateCopy( const char *, GDALDataset *, int, char **,
                                 GDALProgressFunc pfnProgress,

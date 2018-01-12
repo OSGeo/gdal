@@ -59,11 +59,11 @@
 
 CPL_CVSID("$Id$")
 
-static const int HAS_MIN_FLAG = 0x1;
-static const int HAS_MAX_FLAG = 0x2;
-static const int HAS_MEAN_FLAG = 0x4;
-static const int HAS_STDDEV_FLAG = 0x8;
-static const int HAS_ALL_FLAGS =
+constexpr int HAS_MIN_FLAG = 0x1;
+constexpr int HAS_MAX_FLAG = 0x2;
+constexpr int HAS_MEAN_FLAG = 0x4;
+constexpr int HAS_STDDEV_FLAG = 0x8;
+constexpr int HAS_ALL_FLAGS =
     HAS_MIN_FLAG | HAS_MAX_FLAG | HAS_MEAN_FLAG | HAS_STDDEV_FLAG;
 
 /************************************************************************/

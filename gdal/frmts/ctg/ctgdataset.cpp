@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int HEADER_LINE_COUNT = 5;
+constexpr int HEADER_LINE_COUNT = 5;
 
 typedef struct
 {

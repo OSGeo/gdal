@@ -71,16 +71,16 @@ CPL_CVSID("$Id$")
 
 static bool kakadu_initialized = false;
 
-static const unsigned char jp2_header[] =
+constexpr unsigned char jp2_header[] =
     {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
 
-static const unsigned char jpc_header[] = {0xff, 0x4f};
+constexpr unsigned char jpc_header[] = {0xff, 0x4f};
 
 /* -------------------------------------------------------------------- */
 /*      The number of tiles at a time we will push through the          */
 /*      encoder per flush when writing jpeg2000 streams.                */
 /* -------------------------------------------------------------------- */
-static const int TILE_CHUNK_SIZE = 1024;
+constexpr int TILE_CHUNK_SIZE = 1024;
 
 /************************************************************************/
 /* ==================================================================== */

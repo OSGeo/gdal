@@ -33,12 +33,12 @@
  ****************************************************************************/
 
 // Set up PDS NULL values
-static const int NULL1 = 0;
-static const int NULL2 = -32768;
+constexpr int NULL1 = 0;
+constexpr int NULL2 = -32768;
 //#define NULL3 -0.3402822655089E+39
 //Same as ESRI_GRID_FLOAT_NO_DATA
 //#define NULL3 -340282346638528859811704183484516925440.0
-static const double NULL3 = -3.4028226550889044521e+38;
+constexpr double NULL3 = -3.4028226550889044521e+38;
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"

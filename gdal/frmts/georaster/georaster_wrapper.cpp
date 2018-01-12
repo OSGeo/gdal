@@ -2640,7 +2640,7 @@ void GeoRasterWrapper::FlushGCP()
 
 /* This is the order for storing 20 coefficients in GeoRaster Metadata */
 
-static const int anOrder[] = {
+constexpr int anOrder[] = {
     1, 2, 8, 12, 3, 5, 15, 9, 13, 16, 4, 6, 18, 7, 11, 19, 10, 14, 17, 20
 };
 
@@ -3970,12 +3970,12 @@ const static int K2Chrominance[64] =
     99, 99, 99, 99, 99, 99, 99, 99
 };
 
-static const int AC_BITS[16] =
+constexpr int AC_BITS[16] =
 {
     0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119
 };
 
-static const int AC_HUFFVAL[256] =
+constexpr int AC_HUFFVAL[256] =
 {
       0,   1,   2,   3,  17,   4,   5,  33,  49,   6,  18,
      65,  81,   7,  97, 113,  19,  34,  50, 129,   8,  20,
@@ -3994,12 +3994,12 @@ static const int AC_HUFFVAL[256] =
     243, 244, 245, 246, 247, 248, 249, 250
 };
 
-static const int DC_BITS[16] =
+constexpr int DC_BITS[16] =
 {
     0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
 };
 
-static const int DC_HUFFVAL[256] =
+constexpr int DC_HUFFVAL[256] =
 {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
 };

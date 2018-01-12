@@ -43,7 +43,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int nLeaderSize = 24;
+constexpr int nLeaderSize = 24;
 
 /************************************************************************/
 /*                             DDFRecord()                              */

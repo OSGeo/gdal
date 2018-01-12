@@ -791,7 +791,7 @@ void NITFRasterBand::Unpack( GByte* pData )
     }
     case 2:
     {
-      static const int s_Shift2[] = {6, 4, 2, 0};
+      constexpr int s_Shift2[] = {6, 4, 2, 0};
       // unpack 2-bit in-place in reverse
       // DANGER: Non-standard decrement of counter in the test section of for.
       for (int i = n; --i >= 0; )
@@ -801,7 +801,7 @@ void NITFRasterBand::Unpack( GByte* pData )
     }
     case 4:
     {
-      static const int s_Shift4[] = {4, 0};
+      constexpr int s_Shift4[] = {4, 0};
       // unpack 4-bit in-place in reverse
       // DANGER: Non-standard decrement of counter in the test section of for.
       for( int i = n; --i >= 0; )

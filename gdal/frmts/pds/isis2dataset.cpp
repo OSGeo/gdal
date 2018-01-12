@@ -34,11 +34,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-static const int NULL1 = 0;
-static const int NULL2 = -32768;
-static const double NULL3 = -3.4028226550889044521e+38;
+constexpr int NULL1 = 0;
+constexpr int NULL2 = -32768;
+constexpr double NULL3 = -3.4028226550889044521e+38;
 
-static const int RECORD_SIZE = 512;
+constexpr int RECORD_SIZE = 512;
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"

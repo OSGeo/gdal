@@ -62,7 +62,7 @@ extern TIFF CPL_DLL * XTIFFClientOpen( const char* name, const char* mode,
                                        TIFFMapFileProc, TIFFUnmapFileProc );
 CPL_C_END
 
-static const int BUFFER_SIZE = 65536;
+constexpr int BUFFER_SIZE = 65536;
 
 typedef struct
 {

@@ -2282,7 +2282,7 @@ void NITFDataset::InitializeNITFDESMetadata()
     static const char   * const pszDESsDomain              = "NITF_DES";
     static const char   * const pszMDXmlDataContentDESDATA = "NITF_DES_XML_DATA_CONTENT_DESDATA";
     static const char   * const pszXmlDataContent          = "XML_DATA_CONTENT";
-    static const int     idxXmlDataContentDESDATA   = 973;
+    constexpr int     idxXmlDataContentDESDATA   = 973;
     static const int     sizeXmlDataContent         =
         static_cast<int>( strlen( pszXmlDataContent ) );
 
@@ -5873,7 +5873,7 @@ NITFWriteJPEGImage( GDALDataset *poSrcDS, VSILFILE *fp, vsi_l_offset nStartOffse
 
     const char* pszIC = CSLFetchNameValue( papszOptions, "IC" );
     GUInt32 nIMDATOFF = 0;
-    static const GUInt32 BLOCKMAP_HEADER_SIZE = 4 + 2 + 2 + 2;
+    constexpr GUInt32 BLOCKMAP_HEADER_SIZE = 4 + 2 + 2 + 2;
     if (EQUAL(pszIC, "M3"))
     {
         /* Prepare the block map */
