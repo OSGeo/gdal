@@ -2951,11 +2951,11 @@ void CPLCleanupSetlocaleMutex(void)
 /*                            IsPowerOfTwo()                            */
 /************************************************************************/
 
-bool CPLIsPowerOfTwo( unsigned int i )
+int CPLIsPowerOfTwo( unsigned int i )
 {
     if( i == 0 )
-        return false;
-    return ( i & ( i - 1 ) ) == 0;
+        return FALSE;
+    return ( i & ( i - 1 ) ) == 0 ? TRUE : FALSE;
 }
 
 /************************************************************************/
