@@ -572,18 +572,20 @@ char *GTIFGetOGISDefn( GTIF *hGTIF, GTIFDefn * psDefn )
                 }
             }
 
-            if( bTryGTCitationGeoKey &&
-                GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
-                                     0, sizeof(szCTString) ) )
+            if( bTryGTCitationGeoKey )
             {
-                if( !SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
+                if( GDALGTIFKeyGetASCII( hGTIF, GTCitationGeoKey, szCTString,
+                                         0, sizeof(szCTString) ) &&
+                    !SetCitationToSRS( hGTIF, szCTString, sizeof(szCTString),
                                        GTCitationGeoKey, &oSRS,
                                        &linearUnitIsSet ) )
+                {
                     oSRS.SetNode( "PROJCS", szCTString );
-            }
-            else
-            {
-                oSRS.SetNode( "PROJCS", "unnamed" );
+                }
+                else
+                {
+                    oSRS.SetNode( "PROJCS", "unnamed" );
+                }
             }
         }
 

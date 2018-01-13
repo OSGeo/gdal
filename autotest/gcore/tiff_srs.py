@@ -472,6 +472,22 @@ def tiff_srs_towgs84_override():
 
     return 'success'
 
+###############################################################################
+# Test reading PCSCitationGeoKey (#7199)
+
+def tiff_srs_pcscitation():
+
+    ds = gdal.Open('data/pcscitation.tif')
+    wkt = ds.GetProjectionRef()
+    ds = None
+
+    if wkt.find('PROJCS["mycitation",') != 0:
+        gdaltest.post_reason('fail')
+        print(wkt)
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = []
 
 tiff_srs_list = [ 2758, #tmerc
@@ -547,6 +563,7 @@ gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
 gdaltest_list.append( tiff_srs_projection_3856 )
 gdaltest_list.append( tiff_srs_imagine_localcs_citation )
 gdaltest_list.append( tiff_srs_towgs84_override )
+gdaltest_list.append( tiff_srs_pcscitation )
 
 if __name__ == '__main__':
 
