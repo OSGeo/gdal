@@ -956,6 +956,11 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
         }
         else
         {
+            if( json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) !=
+                                                            json_type_object )
+            {
+                return CPLJSONObject( "", nullptr );
+            }
             object = CPLJSONObject( pathPortions[i], object );
         }
     }
