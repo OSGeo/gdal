@@ -277,6 +277,8 @@ void OGROpenFileGDBDataSource::AddLayer( const CPLString& osName,
         idx = oIter->second;
     if( idx > 0 && (nInterestTable <= 0 || nInterestTable == idx) )
     {
+        m_osMapNameToIdx.erase(osName);
+
         CPLString osFilename = CPLFormFilename(
             m_osDirName, CPLSPrintf("a%08x", idx), "gdbtable");
         if( FileExists(osFilename) )
