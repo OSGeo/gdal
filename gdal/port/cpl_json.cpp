@@ -56,8 +56,6 @@ CPLJSONDocument::~CPLJSONDocument()
 
 CPLJSONDocument::CPLJSONDocument(const CPLJSONDocument& other)
 {
-    if( m_poRootJsonObject )
-        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
     m_poRootJsonObject = json_object_get( TO_JSONOBJ(other.m_poRootJsonObject) );
 }
 
