@@ -565,25 +565,25 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char * pszName,
 
 static const int * GetBandMapForExpand( int nSourceBands, int nWmsBands )
 {
-    constexpr int  bandmap1to1[] = { 1 };
-    constexpr int  bandmap2to1[] = { 1 };
-    constexpr int  bandmap3to1[] = { 1 };
-    constexpr int  bandmap4to1[] = { 1 };
+    static const int  bandmap1to1[] = { 1 };
+    static const int  bandmap2to1[] = { 1 };
+    static const int  bandmap3to1[] = { 1 };
+    static const int  bandmap4to1[] = { 1 };
 
-    constexpr int  bandmap1to2[] = { 1, 0 }; // 0 == full opaque alpha band
-    constexpr int  bandmap2to2[] = { 1, 2 };
-    constexpr int  bandmap3to2[] = { 1, 0 };
-    constexpr int  bandmap4to2[] = { 1, 4 };
+    static const int  bandmap1to2[] = { 1, 0 }; // 0 == full opaque alpha band
+    static const int  bandmap2to2[] = { 1, 2 };
+    static const int  bandmap3to2[] = { 1, 0 };
+    static const int  bandmap4to2[] = { 1, 4 };
 
-    constexpr int  bandmap1to3[] = { 1, 1, 1 };
-    constexpr int  bandmap2to3[] = { 1, 1, 1 };
-    constexpr int  bandmap3to3[] = { 1, 2, 3 };
-    constexpr int  bandmap4to3[] = { 1, 2, 3 };
+    static const int  bandmap1to3[] = { 1, 1, 1 };
+    static const int  bandmap2to3[] = { 1, 1, 1 };
+    static const int  bandmap3to3[] = { 1, 2, 3 };
+    static const int  bandmap4to3[] = { 1, 2, 3 };
 
-    constexpr int  bandmap1to4[] = { 1, 1, 1, 0 };
-    constexpr int  bandmap2to4[] = { 1, 1, 1, 2 };
-    constexpr int  bandmap3to4[] = { 1, 2, 3, 0 };
-    constexpr int  bandmap4to4[] = { 1, 2, 3, 4 };
+    static const int  bandmap1to4[] = { 1, 1, 1, 0 };
+    static const int  bandmap2to4[] = { 1, 1, 1, 2 };
+    static const int  bandmap3to4[] = { 1, 2, 3, 0 };
+    static const int  bandmap4to4[] = { 1, 2, 3, 4 };
 
     static const int* const bandmap_selector[4][4] = {
         { bandmap1to1, bandmap2to1, bandmap3to1, bandmap4to1 },
