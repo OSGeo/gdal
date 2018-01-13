@@ -7532,6 +7532,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         char szTemp[NC_MAX_NAME + 1];
         status = nc_inq_dimname(cdfid, j, szTemp);
         NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            CPLFree(paDimIds);
+            CPLFree(panBandDimPos);
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
+            return nullptr;
+        }
         poDS->papszDimName.AddString(szTemp);
         int nDimID;
         status = nc_inq_varid(cdfid, poDS->papszDimName[j], &nDimID);
