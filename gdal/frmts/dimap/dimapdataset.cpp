@@ -1287,6 +1287,8 @@ int DIMAPDataset::ReadImageInformation2()
         // but make sure it is a real geotransform.
         if( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None &&
             !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 1.5 &&
+              adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) &&
+            !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 0.5 &&
               adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) )
         {
             bHaveGeoTransform = TRUE;
