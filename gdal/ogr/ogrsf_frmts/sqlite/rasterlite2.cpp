@@ -2314,22 +2314,6 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
 }
 
 /************************************************************************/
-/*                            IsPowerOfTwo()                            */
-/************************************************************************/
-
-static bool IsPowerOfTwo( unsigned int i )
-{
-    int nBitSet = 0;
-    while(i != 0)
-    {
-        if( i & 1 )
-            ++nBitSet;
-        i >>= 1;
-    }
-    return nBitSet == 1;
-}
-
-/************************************************************************/
 /*                          IBuildOverviews()                           */
 /************************************************************************/
 
@@ -2374,7 +2358,7 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
         }
         for( int i = 0; i < nOverviews; ++i )
         {
-            if( !IsPowerOfTwo(panOverviewList[i]) )
+            if( !CPLIsPowerOfTwo(panOverviewList[i]) )
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Only power-of-two overview factors are supported");

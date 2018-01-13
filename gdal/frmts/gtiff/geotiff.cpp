@@ -146,22 +146,6 @@ const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
 /************************************************************************/
-/*                            IsPowerOfTwo()                            */
-/************************************************************************/
-
-static bool IsPowerOfTwo( unsigned int i )
-{
-    int nBitSet = 0;
-    while(i != 0)
-    {
-        if( i & 1 )
-            ++nBitSet;
-        i >>= 1;
-    }
-    return nBitSet == 1;
-}
-
-/************************************************************************/
 /*                          GTIFFSetInExternalOvr()                     */
 /************************************************************************/
 
@@ -179,7 +163,7 @@ void GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize )
     const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
     int nOvrBlockSize = atoi(pszVal);
     if( nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
-        !IsPowerOfTwo(nOvrBlockSize) )
+        !CPLIsPowerOfTwo(nOvrBlockSize) )
     {
         static bool bHasWarned = false;
         if( !bHasWarned )
