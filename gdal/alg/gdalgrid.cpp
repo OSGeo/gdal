@@ -53,7 +53,7 @@
 
 CPL_CVSID("$Id$")
 
-static const double TO_RADIANS = M_PI / 180.0;
+constexpr double TO_RADIANS = M_PI / 180.0;
 
 #ifndef DBL_MAX
 # ifdef __DBL_MAX__
