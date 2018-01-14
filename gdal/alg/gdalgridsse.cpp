@@ -123,7 +123,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     // Find which i triggered r2 < fEpsilon.
     if( mask )
     {
-        for( int j = 0; j < LOOP_SIZE; j++ )
+        for( size_t j = 0; j < LOOP_SIZE; j++ )
         {
             if( mask & (1 << j) )
             {
