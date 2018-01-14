@@ -126,7 +126,7 @@ static CLIP_STATE EDGE_CHECK( double x0, double x, double x1 )
     return CLIP_MIDDLE;
 }
 
-static const int NUM_SCANLINES = 5;
+constexpr int NUM_SCANLINES = 5;
 
 int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
 {

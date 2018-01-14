@@ -41,7 +41,7 @@
 
 CPL_CVSID("$Id$")
 
-static const long aoVCS[] =
+constexpr long aoVCS[] =
 {
     0,
     5705,   //1
@@ -76,8 +76,8 @@ static const long aoVCS[] =
 #define NUMBER_OF_VERTICALCS    (sizeof(aoVCS)/sizeof(aoVCS[0]))
 
 // EPSG code range http://gis.stackexchange.com/a/18676/9904
-static const int MIN_EPSG = 1000;
-static const int MAX_EPSG = 3768;
+constexpr int MIN_EPSG = 1000;
+constexpr int MAX_EPSG = 3768;
 
 /************************************************************************/
 /*                         OGRSXFDataSource()                           */

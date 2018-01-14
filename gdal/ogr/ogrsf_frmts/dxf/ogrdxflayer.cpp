@@ -389,9 +389,9 @@ public:
     OCSTransformer( double adfNIn[3], bool bInverse = false ) :
         aadfInverse()
     {
-        static const double dSmall = 1.0 / 64.0;
-        static const double adfWZ[3] = { 0.0, 0.0, 1.0 };
-        static const double adfWY[3] = { 0.0, 1.0, 0.0 };
+        constexpr double dSmall = 1.0 / 64.0;
+        constexpr double adfWZ[3] = { 0.0, 0.0, 1.0 };
+        constexpr double adfWY[3] = { 0.0, 1.0, 0.0 };
 
         dfDeterminant = 0.0;
         Scale2Unit( adfNIn );

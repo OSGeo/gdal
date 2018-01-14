@@ -34,7 +34,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int MAX_LINK = 5000;
+constexpr int MAX_LINK = 5000;
 
 /************************************************************************/
 /*                         TranslateCodePoint()                         */

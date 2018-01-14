@@ -52,17 +52,17 @@ inline double round(double r) {
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
-static const GInt32 HDR_MAGIC_COOKIE = 42424242;
-static const GInt16 HDR_VERSION_NUMBER = 500;
+constexpr GInt32 HDR_MAGIC_COOKIE = 42424242;
+constexpr GInt16 HDR_VERSION_NUMBER = 500;
 
-static const GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
-static const GByte HDR_DEF_REFLECTXAXIS = 0;
+constexpr GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
+constexpr GByte HDR_DEF_REFLECTXAXIS = 0;
 
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
-static const GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
-static const GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
+constexpr GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
+constexpr GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
             0xa7,0xb5,0xd9,0x0f,0x17,0x23,0x13,0x1f,

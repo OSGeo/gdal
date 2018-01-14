@@ -57,7 +57,7 @@ typedef struct {
     pcre_extra *e;
 } cache_entry;
 
-static const int CACHE_SIZE = 16;
+constexpr int CACHE_SIZE = 16;
 
 /************************************************************************/
 /*                         OGRSQLiteREGEXPFunction()                    */

@@ -38,7 +38,7 @@
 
 CPL_CVSID("$Id$")
 
-static const double EPSILON = 1e-8;
+constexpr double EPSILON = 1e-8;
 
 /************************************************************************/
 /*                        MakeKMLCoordinate()                           */
