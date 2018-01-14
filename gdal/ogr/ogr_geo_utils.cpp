@@ -32,11 +32,11 @@
 
 CPL_CVSID("$Id$")
 
-static const double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
-static const double METER2RAD = 1.0 / RAD2METER;
+constexpr double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
+constexpr double METER2RAD = 1.0 / RAD2METER;
 
-static const double DEG2RAD = M_PI / 180.0;
-static const double RAD2DEG = 1.0 / DEG2RAD;
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 1.0 / DEG2RAD;
 
 static
 double OGR_Safe_acos( double x )

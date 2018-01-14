@@ -59,8 +59,8 @@
 
 CPL_CVSID("$Id$")
 
-static const double kdfD2R = M_PI / 180.0;
-static const double kdf2PI = 2.0 * M_PI;
+constexpr double kdfD2R = M_PI / 180.0;
+constexpr double kdf2PI = 2.0 * M_PI;
 
 /************************************************************************/
 /*                        GMLGetCoordTokenPos()                         */

@@ -54,13 +54,13 @@
 
 CPL_CVSID("$Id$")
 
-static const int SHPP_TRISTRIP  = 0;
-static const int SHPP_TRIFAN    = 1;
-static const int SHPP_OUTERRING = 2;
-static const int SHPP_INNERRING = 3;
-static const int SHPP_FIRSTRING = 4;
-static const int SHPP_RING      = 5;
-static const int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
+constexpr int SHPP_TRISTRIP  = 0;
+constexpr int SHPP_TRIFAN    = 1;
+constexpr int SHPP_OUTERRING = 2;
+constexpr int SHPP_INNERRING = 3;
+constexpr int SHPP_FIRSTRING = 4;
+constexpr int SHPP_RING      = 5;
+constexpr int SHPP_TRIANGLES = 6;  // Multipatch 9.0 specific.
 
 typedef enum
 {
@@ -115,31 +115,31 @@ typedef struct
 } CurveSegment;
 } /* namespace */
 
-static const int EXT_SHAPE_SEGMENT_ARC = 1;
-static const int EXT_SHAPE_SEGMENT_BEZIER = 4;
-static const int EXT_SHAPE_SEGMENT_ELLIPSE = 5;
+constexpr int EXT_SHAPE_SEGMENT_ARC = 1;
+constexpr int EXT_SHAPE_SEGMENT_BEZIER = 4;
+constexpr int EXT_SHAPE_SEGMENT_ELLIPSE = 5;
 
-static const int EXT_SHAPE_ARC_EMPTY = 0x1;
-static const int EXT_SHAPE_ARC_CCW   = 0x8;
+constexpr int EXT_SHAPE_ARC_EMPTY = 0x1;
+constexpr int EXT_SHAPE_ARC_CCW   = 0x8;
 #ifdef DEBUG_VERBOSE
-static const int EXT_SHAPE_ARC_MINOR = 0x10;
+constexpr int EXT_SHAPE_ARC_MINOR = 0x10;
 #endif
-static const int EXT_SHAPE_ARC_LINE  = 0x20;
-static const int EXT_SHAPE_ARC_POINT = 0x40;
-static const int EXT_SHAPE_ARC_IP    = 0x80;
+constexpr int EXT_SHAPE_ARC_LINE  = 0x20;
+constexpr int EXT_SHAPE_ARC_POINT = 0x40;
+constexpr int EXT_SHAPE_ARC_IP    = 0x80;
 
 #ifdef DEBUG_VERBOSE
-static const int EXT_SHAPE_ELLIPSE_EMPTY       = 0x1;
-static const int EXT_SHAPE_ELLIPSE_LINE        = 0x40;
-static const int EXT_SHAPE_ELLIPSE_POINT       = 0x80;
-static const int EXT_SHAPE_ELLIPSE_CIRCULAR    = 0x100;
-static const int EXT_SHAPE_ELLIPSE_CCW         = 0x800;
+constexpr int EXT_SHAPE_ELLIPSE_EMPTY       = 0x1;
+constexpr int EXT_SHAPE_ELLIPSE_LINE        = 0x40;
+constexpr int EXT_SHAPE_ELLIPSE_POINT       = 0x80;
+constexpr int EXT_SHAPE_ELLIPSE_CIRCULAR    = 0x100;
+constexpr int EXT_SHAPE_ELLIPSE_CCW         = 0x800;
 #endif
 
-static const int EXT_SHAPE_ELLIPSE_CENTER_TO   = 0x200;
-static const int EXT_SHAPE_ELLIPSE_CENTER_FROM = 0x400;
-static const int EXT_SHAPE_ELLIPSE_MINOR       = 0x1000;
-static const int EXT_SHAPE_ELLIPSE_COMPLETE    = 0x2000;
+constexpr int EXT_SHAPE_ELLIPSE_CENTER_TO   = 0x200;
+constexpr int EXT_SHAPE_ELLIPSE_CENTER_FROM = 0x400;
+constexpr int EXT_SHAPE_ELLIPSE_MINOR       = 0x1000;
+constexpr int EXT_SHAPE_ELLIPSE_COMPLETE    = 0x2000;
 
 /************************************************************************/
 /*                  OGRCreateFromMultiPatchPart()                       */

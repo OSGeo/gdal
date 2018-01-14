@@ -31,14 +31,14 @@
 
 CPL_CVSID("$Id$")
 
-static const int GEOMEDIA_POINT          = 0xC0;
-static const int GEOMEDIA_ORIENTED_POINT = 0xC8;
-static const int GEOMEDIA_POLYLINE       = 0xC2;
-static const int GEOMEDIA_POLYGON        = 0xC3;
-static const int GEOMEDIA_BOUNDARY       = 0xC5;
-static const int GEOMEDIA_COLLECTION     = 0xC6;
-static const int GEOMEDIA_MULTILINE      = 0xCB;
-static const int GEOMEDIA_MULTIPOLYGON   = 0xCC;
+constexpr int GEOMEDIA_POINT          = 0xC0;
+constexpr int GEOMEDIA_ORIENTED_POINT = 0xC8;
+constexpr int GEOMEDIA_POLYLINE       = 0xC2;
+constexpr int GEOMEDIA_POLYGON        = 0xC3;
+constexpr int GEOMEDIA_BOUNDARY       = 0xC5;
+constexpr int GEOMEDIA_COLLECTION     = 0xC6;
+constexpr int GEOMEDIA_MULTILINE      = 0xCB;
+constexpr int GEOMEDIA_MULTIPOLYGON   = 0xCC;
 
 /************************************************************************/
 /*                       OGRCreateFromGeomedia()                        */

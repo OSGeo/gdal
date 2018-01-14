@@ -39,7 +39,7 @@
 
 CPL_CVSID("$Id$")
 
-static const size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
+constexpr size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
 
 static void* OGRExpatMalloc( size_t size ) CPL_WARN_UNUSED_RESULT;
 static void* OGRExpatRealloc( void *ptr, size_t size ) CPL_WARN_UNUSED_RESULT;
