@@ -59,8 +59,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
-static const int SRSDIM_LOC_POSLIST = 1 << 1;
+constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
+constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
 
 typedef enum
 {

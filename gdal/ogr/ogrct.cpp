@@ -52,8 +52,8 @@ CPL_CVSID("$Id$")
 #ifndef PROJ_STATIC
 #define projPJ void *
 #define projCtx void *
-static const double RAD_TO_DEG = 57.29577951308232;
-static const double DEG_TO_RAD = 0.0174532925199432958;
+constexpr double RAD_TO_DEG = 57.29577951308232;
+constexpr double DEG_TO_RAD = 0.0174532925199432958;
 
 #else
 
@@ -1050,7 +1050,7 @@ int OGRProj4CT::TransformEx( int nCount, double *x, double *y, double *z,
     bool bTransformDone = false;
     if( bWebMercatorToWGS84 )
     {
-        static const double REVERSE_SPHERE_RADIUS = 1.0 / 6378137.0;
+        constexpr double REVERSE_SPHERE_RADIUS = 1.0 / 6378137.0;
 
         double y0 = y[0];
         for( int i = 0; i < nCount; i++ )

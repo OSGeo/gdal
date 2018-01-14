@@ -1338,7 +1338,7 @@ static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
         return 0;
 }
 
-static const int N_CRITICAL_PART_NUMBER = 100;
+constexpr int N_CRITICAL_PART_NUMBER = 100;
 
 typedef enum
 {
@@ -4710,18 +4710,18 @@ static void OGRGeometryFactoryStrokeArc( OGRLineString* poLine,
 /************************************************************************/
 
 // TODO(schwehr): Cleanup these static constants.
-static const int HIDDEN_ALPHA_WIDTH = 32;
-static const GUInt32 HIDDEN_ALPHA_SCALE =
+constexpr int HIDDEN_ALPHA_WIDTH = 32;
+constexpr GUInt32 HIDDEN_ALPHA_SCALE =
     static_cast<GUInt32>((static_cast<GUIntBig>(1) << HIDDEN_ALPHA_WIDTH) - 2);
-static const int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
-static const int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
+constexpr int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
+constexpr int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
 
 // Encode 16-bit nValue in the 8-lsb of dfX and dfY.
 
 #ifdef CPL_LSB
-static const int DOUBLE_LSB_OFFSET = 0;
+constexpr int DOUBLE_LSB_OFFSET = 0;
 #else
-static const int DOUBLE_LSB_OFFSET = 7;
+constexpr int DOUBLE_LSB_OFFSET = 7;
 #endif
 
 static void OGRGF_SetHiddenValue( GUInt16 nValue, double& dfX, double &dfY )
