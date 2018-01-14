@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int SPACE_FOR_METADATA = 160;
+constexpr int SPACE_FOR_METADATA = 160;
 
 /************************************************************************/
 /*                          OGRGPXDataSource()                          */

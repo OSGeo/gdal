@@ -868,7 +868,7 @@ OGRErr OGRDGNLayer::GetExtent( OGREnvelope *psExtent, int /* bForce */ )
 /*      complex shape group are always line strings.                    */
 /************************************************************************/
 
-static const int MAX_ELEM_POINTS = 38;
+constexpr int MAX_ELEM_POINTS = 38;
 
 DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
                                                      int nGroupType )

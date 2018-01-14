@@ -40,8 +40,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int DEFAULT_BASE_START_INDEX = 0;
-static const int DEFAULT_PAGE_SIZE = 100;
+constexpr int DEFAULT_BASE_START_INDEX = 0;
+constexpr int DEFAULT_PAGE_SIZE = 100;
 
 typedef struct
 {

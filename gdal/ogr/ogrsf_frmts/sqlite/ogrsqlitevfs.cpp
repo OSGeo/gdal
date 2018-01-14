@@ -413,8 +413,8 @@ static int OGRSQLiteVFSSleep (sqlite3_vfs* pVFS, int microseconds)
 static int OGRSQLiteVFSCurrentTimeInt64 (sqlite3_vfs* /*pVFS*/, sqlite3_int64 *piNow)
 {
     FILETIME ft;
-    static const sqlite3_int64 winFiletimeEpoch = 23058135*(sqlite3_int64)8640000;
-    static const sqlite3_int64 max32BitValue =
+    constexpr sqlite3_int64 winFiletimeEpoch = 23058135*(sqlite3_int64)8640000;
+    constexpr sqlite3_int64 max32BitValue =
       (sqlite3_int64)2000000000 + (sqlite3_int64)2000000000 +
       (sqlite3_int64)294967296;
 
@@ -438,7 +438,7 @@ static int OGRSQLiteVFSCurrentTimeInt64 (sqlite3_vfs* /*pVFS*/, sqlite3_int64 *p
 static int OGRSQLiteVFSCurrentTimeInt64 (sqlite3_vfs* /*pVFS*/, sqlite3_int64 *piNow)
 {
     struct timeval sNow;
-    static const sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
+    constexpr sqlite3_int64 unixEpoch = 24405875*(sqlite3_int64)8640000;
     (void)gettimeofday(&sNow, nullptr);  /* Cannot fail given valid arguments */
     *piNow = unixEpoch + 1000*(sqlite3_int64)sNow.tv_sec + sNow.tv_usec/1000;
 

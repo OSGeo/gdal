@@ -45,13 +45,13 @@ static const char * const ILI2_TID = "TID";
 static const XMLCh xmlch_ILI2_TID[] = {'T', 'I', 'D', '\0' };
 static const XMLCh ILI2_REF[] = {'R', 'E', 'F', '\0' };
 
-static const int ILI2_STRING_TYPE = 0;
-static const int ILI2_COORD_TYPE = 1;
-static const int ILI2_ARC_TYPE = 2;
-static const int ILI2_POLYLINE_TYPE = 4;
-static const int ILI2_BOUNDARY_TYPE = 8;
-static const int ILI2_AREA_TYPE = 16; // also SURFACE
-static const int ILI2_GEOMCOLL_TYPE = 32;
+constexpr int ILI2_STRING_TYPE = 0;
+constexpr int ILI2_COORD_TYPE = 1;
+constexpr int ILI2_ARC_TYPE = 2;
+constexpr int ILI2_POLYLINE_TYPE = 4;
+constexpr int ILI2_BOUNDARY_TYPE = 8;
+constexpr int ILI2_AREA_TYPE = 16; // also SURFACE
+constexpr int ILI2_GEOMCOLL_TYPE = 32;
 
 static const char * const ILI2_COORD = "COORD";
 static const char * const ILI2_ARC = "ARC";

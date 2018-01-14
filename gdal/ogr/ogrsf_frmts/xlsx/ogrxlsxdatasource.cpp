@@ -38,8 +38,8 @@ CPL_CVSID("$Id$")
 
 namespace OGRXLSX {
 
-static const int NUMBER_OF_DAYS_BETWEEN_1900_AND_1970 = 25569;
-static const int NUMBER_OF_SECONDS_PER_DAY = 86400;
+constexpr int NUMBER_OF_DAYS_BETWEEN_1900_AND_1970 = 25569;
+constexpr int NUMBER_OF_SECONDS_PER_DAY = 86400;
 
 /************************************************************************/
 /*                            OGRXLSXLayer()                            */

@@ -506,7 +506,7 @@ const unsigned char *ACGetColorTable()
 
 const int* ACGetKnownDimStyleCodes()
 {
-    static const int aiKnownCodes[] = {
+    constexpr int aiKnownCodes[] = {
         40, 41, 42, 44, 75, 76, 77, 140, 147, 176, 178, 271, 341, 0
     };
 
