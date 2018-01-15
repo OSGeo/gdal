@@ -317,7 +317,13 @@ int SDTSRasterReader::Open( SDTS_CATD * poCATD, SDTS_IREF * poIREF,
     if( poRecord->GetStringSubfield("DDSH",0,"FMT",0) != nullptr )
         snprintf( szFMT, sizeof(szFMT), "%s", poRecord->GetStringSubfield("DDSH",0,"FMT",0) );
     else
-        snprintf( szFMT, sizeof(szFMT), "%s", "BUI16" );
+        snprintf( szFMT, sizeof(szFMT), "%s", "BI16" );
+    if( !EQUAL(szFMT, "BI16") && !EQUAL(szFMT, "BFP32") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                  "Unhandled FMT=%s", szFMT );
+        return FALSE;
+    }
 
     if( poRecord->GetStringSubfield("DDSH",0,"UNIT",0) != nullptr )
         snprintf( szUNITS, sizeof(szUNITS), "%s", poRecord->GetStringSubfield("DDSH",0,"UNIT",0) );
@@ -529,9 +535,9 @@ int SDTSRasterReader::GetRasterType()
 
 {
     if( EQUAL(szFMT,"BFP32") )
-        return 6;
+        return SDTS_RT_FLOAT32;
 
-    return 1;
+    return SDTS_RT_INT16;
 }
 
 /************************************************************************/
