@@ -828,6 +828,17 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
             return;
         }
 
+        const size_t nCellMemSize =
+            (!osValue.empty()) ? osValue.size() : osFormula.size();
+        if( nCellMemSize > static_cast<size_t>(10 * 1024 * 1024) /
+                (std::max(nCellsRepeated, 1) * std::max(nRowsRepeated, 1)) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Too much memory for row/cell repetition");
+            bEndTableParsing = true;
+            nCellsRepeated = 0;
+            return;
+        }
     }
     else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {
