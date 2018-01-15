@@ -858,7 +858,16 @@ VFKFeatureSQLiteList VFKDataBlockSQLite::GetFeatures(const char **column, GUIntB
     sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
     while (poReader->ExecuteSQL(hStmt) == OGRERR_NONE) {
         const int iRowId = sqlite3_column_int(hStmt, 0);
-        fList.push_back((VFKFeatureSQLite *)GetFeatureByIndex(iRowId - 1));
+        VFKFeatureSQLite* poFeature = dynamic_cast<VFKFeatureSQLite*>(
+            GetFeatureByIndex(iRowId - 1));
+        if( poFeature == nullptr )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot retrieve feature %d", iRowId);
+            sqlite3_finalize(hStmt);
+            return VFKFeatureSQLiteList();
+        }
+        fList.push_back(poFeature);
     }
 
     return fList;
