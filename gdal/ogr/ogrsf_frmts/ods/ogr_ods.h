@@ -146,6 +146,9 @@ class OGRODSDataSource : public GDALDataset
 
     bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
+    int                 bAllowEmptyRows;
+    int                 bAllowEmptyCells;
+    int                 nMaxRepeatedRows;
 
     XML_Parser          oParser;
     bool                bStopParsing;
@@ -155,6 +158,7 @@ class OGRODSDataSource : public GDALDataset
     int                 nEmptyRowsAccumulated;
     int                 nRowsRepeated;
     int                 nCurCol;
+    int                 nLastEmptyCol;
     int                 nCellsRepeated;
     bool                bEndTableParsing;
 
@@ -166,11 +170,14 @@ class OGRODSDataSource : public GDALDataset
 
     CPLString           osValueType;
     CPLString           osValue;
+    CPLString           osDateValue;
     std::string         osFormula;
 
     std::vector<std::string>  apoFirstLineValues;
+    std::vector<std::string>  apoFirstLineDateValues;
     std::vector<std::string>  apoFirstLineTypes;
     std::vector<std::string>  apoCurLineValues;
+    std::vector<std::string>  apoCurLineDateValues;
     std::vector<std::string>  apoCurLineTypes;
 
     void                PushState(HandlerStateEnum eVal);
@@ -186,7 +193,8 @@ class OGRODSDataSource : public GDALDataset
     void                DetectHeaderLine();
 
     OGRFieldType        GetOGRFieldType(const char* pszValue,
-                                        const char* pszValueType);
+                                        const char* pszValueType,
+                                        const char* pszDateValue);
 
     void                DeleteLayer( const char *pszLayerName );
 

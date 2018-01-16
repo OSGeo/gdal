@@ -194,6 +194,8 @@ OGRXLSXDataSource::OGRXLSXDataSource() :
                             "STRING")),
     bAllowEmptyRows(!EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_ROWS", ""),
                             "DISABLE")),
+    bAllowEmptyCells(!EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_CELLS", ""),
+                            "DISABLE")),
     oParser(nullptr),
     bStopParsing(false),
     nWithoutEventCounter(0),
@@ -775,6 +777,10 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             }
             for(;nCurCol<nNewCurCol;nCurCol++)
             {
+                if (nLastEmptyCol == -1) {
+                  nLastEmptyCol = (int)apoCurLineValues.size();
+                }
+
                 apoCurLineValues.push_back("");
                 apoCurLineTypes.push_back("");
             }
@@ -845,8 +851,6 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
     #endif
         }
 
-        // printf("nCurLine (%d) nLastEmptyCol (%d)\n",nCurLine, nLastEmptyCol);
-
         if (nCurLine == 1)
         {
             DetectHeaderLine();
@@ -896,13 +900,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
         if (nCurLine >= 1)
         {
-            /* Add new fields found on following lines. */
+            /* Add new fields found on following lines if we are allowing the layer definition to change. */
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
                 for( size_t i = (size_t)poCurLayer->GetLayerDefn()->GetFieldCount();
-                     i < apoCurLineValues.size();
-                     i++ )
+                    i < apoCurLineValues.size();
+                    i++ )
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
@@ -1037,6 +1041,16 @@ void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
             else
                 CPLDebug("XLSX", "Cannot find string %d", nIndex);
             osValueType = "string";
+        }
+        
+        if (!bAllowEmptyCells)
+        {
+            /* If this cell only contains whitespace and the option OGR_XLSX_EMPTY_CELLS is set to disable
+             * then clear the osValue */
+            if (osValue.find_first_not_of( " \t\r\n" ) == std::string::npos)
+            {
+                osValue.clear();
+            }
         }
 
         if (osValue.empty()) {

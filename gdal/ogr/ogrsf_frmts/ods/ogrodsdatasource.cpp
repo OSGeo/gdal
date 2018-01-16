@@ -226,6 +226,11 @@ OGRODSDataSource::OGRODSDataSource() :
     bFirstLineIsHeaders(false),
     bAutodetectTypes(
         !EQUAL(CPLGetConfigOption("OGR_ODS_FIELD_TYPES", ""), "STRING")),
+    bAllowEmptyRows(!EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_ROWS", ""),
+                            "DISABLE")),
+    bAllowEmptyCells(!EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_CELLS", ""),
+                            "DISABLE")),
+    nMaxRepeatedRows(atoi(CPLGetConfigOption("OGR_ODS_MAX_REPEATED_ROWS", "10000"))),
     oParser(nullptr),
     bStopParsing(false),
     nWithoutEventCounter(0),
@@ -234,6 +239,7 @@ OGRODSDataSource::OGRODSDataSource() :
     nEmptyRowsAccumulated(0),
     nRowsRepeated(0),
     nCurCol(0),
+    nLastEmptyCol(-1),
     nCellsRepeated(0),
     bEndTableParsing(false),
     poCurLayer(nullptr),
@@ -480,7 +486,8 @@ static const char* GetAttributeValue(const char **ppszAttr,
 /************************************************************************/
 
 OGRFieldType OGRODSDataSource::GetOGRFieldType(const char* pszValue,
-                                               const char* pszValueType)
+                                               const char* pszValueType,
+                                               const char* pszDateValue)
 {
     if (!bAutodetectTypes || pszValueType == nullptr)
         return OFTString;
@@ -504,10 +511,10 @@ OGRFieldType OGRODSDataSource::GetOGRFieldType(const char* pszValue,
         return OFTReal;
     else if (strcmp(pszValueType, "date") == 0)
     {
-        if (strlen(pszValue) == 4 + 1 + 2 + 1 + 2)
-            return OFTDate;
-        else
+        if (strstr(pszDateValue, ":"))
             return OFTDateTime;
+        else
+            return OFTDate;
     }
     else if (strcmp(pszValueType, "time") == 0)
     {
@@ -610,7 +617,7 @@ void OGRODSDataSource::DetectHeaderLine()
     }
     else if( bHeaderLineCandidate &&
              !apoFirstLineTypes.empty() &&
-             apoFirstLineTypes.size() == apoCurLineTypes.size() &&
+             apoFirstLineTypes.size() >= apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
     {
@@ -638,9 +645,11 @@ void OGRODSDataSource::startElementDefault(const char *pszNameIn,
         papoLayers[nLayers++] = poCurLayer;
 
         nCurLine = 0;
+        nLastEmptyCol = -1;
         nEmptyRowsAccumulated = 0;
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
+        apoFirstLineDateValues.resize(0);
         PushState(STATE_TABLE);
         bEndTableParsing = false;
     }
@@ -657,29 +666,33 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (nRowsRepeated < 0 || nRowsRepeated > 10000)
+        
+        if (nRowsRepeated < 0)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid value for number-rows-repeated = %d",
-                     nRowsRepeated);
-            bEndTableParsing = true;
-            return;
+          nRowsRepeated = 1;
         }
-        const int nFields = std::max(
-            static_cast<int>(apoFirstLineValues.size()),
-            poCurLayer != nullptr ?
-                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
+        
+        nRowsRepeated = std::min(nRowsRepeated, nMaxRepeatedRows);
+
+        if (nRowsRepeated > 1)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Too big gap with previous valid row");
-            bEndTableParsing = true;
-            return;
+          const int nFields = std::max(
+              static_cast<int>(apoFirstLineValues.size()),
+              poCurLayer != nullptr ?
+                  poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+          if( nFields > 0 && nRowsRepeated > 100 * nMaxRepeatedRows / nFields )
+          {
+              CPLError(CE_Failure, CPLE_AppDefined,
+                      "Too big gap with previous valid row");
+              bEndTableParsing = true;
+              return;
+          }
         }
 
         nCurCol = 0;
 
         apoCurLineValues.resize(0);
+        apoCurLineDateValues.resize(0);
         apoCurLineTypes.resize(0);
 
         PushState(STATE_ROW);
@@ -713,7 +726,8 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
-                                                     apoFirstLineTypes[i].c_str());
+                                                     apoFirstLineTypes[i].c_str(),
+                                                     apoFirstLineDateValues[i].c_str());
                 OGRFieldDefn oFieldDefn(pszFieldName, eType);
                 poCurLayer->CreateField(&oFieldDefn);
             }
@@ -758,6 +772,27 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
             }
 
             poCurLayer->ResetReading();
+            
+             /* Ensure that any fields still with an unknown type are set to String.
+             * This will only be the case if the field has no values */
+       
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
+            {
+                OGRFieldType eFieldType =
+                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
+
+                if (eFieldType == OGRUnknownType)
+                {
+                    OGRFieldDefn oNewFieldDefn(
+                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                    oNewFieldDefn.SetType(OFTString);
+                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                ALTER_TYPE_FLAG);
+
+                }
+            }
+
 
             reinterpret_cast<OGRMemLayer*>(poCurLayer)->
                 SetUpdatable(bUpdatable);
@@ -781,6 +816,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         PushState(STATE_CELL);
 
         osValueType = GetAttributeValue(ppszAttr, "office:value-type", "");
+        osDateValue.Clear();
         const char* pszValue =
             GetAttributeValue(ppszAttr, "office:value", nullptr);
         if (pszValue)
@@ -790,7 +826,10 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
             const char* pszDateValue =
                 GetAttributeValue(ppszAttr, "office:date-value", nullptr);
             if (pszDateValue)
-                osValue = pszDateValue;
+            {
+                osDateValue = pszDateValue;
+                osValue.Clear();
+            }
             else
                 osValue = GetAttributeValue(ppszAttr, "office:time-value", "");
         }
@@ -810,29 +849,33 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         if (nCellsRepeated < 0 || nCellsRepeated > 10000)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid value for number-columns-repeated = %d",
-                     nCellsRepeated);
-            bEndTableParsing = true;
-            nCellsRepeated = 0;
-            return;
-        }
-        const int nFields = nCellsRepeated +
-            (poCurLayer != nullptr ?
-                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-        if( nFields > 0 && nRowsRepeated > 100000 / nFields )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Too big gap with previous valid row");
+                    "Invalid value for number-columns-repeated = %d",
+                    nCellsRepeated);
             bEndTableParsing = true;
             nCellsRepeated = 0;
             return;
         }
 
+        if (nRowsRepeated > 1)
+        {
+            const int nFields = (osValueType.empty() ? 0 : nCellsRepeated) +
+                (poCurLayer != nullptr ?
+                    poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
+            if( nFields > 0 && nRowsRepeated > 100 * nMaxRepeatedRows / nFields )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Too big gap with previous valid row");
+                bEndTableParsing = true;
+                nCellsRepeated = 0;
+                return;
+            }
+        }
     }
     else if (strcmp(pszNameIn, "table:covered-table-cell") == 0)
     {
         /* Merged cell */
         apoCurLineValues.push_back("");
+        apoCurLineDateValues.push_back("");
         apoCurLineTypes.push_back("");
 
         nCurCol += 1;
@@ -849,23 +892,12 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
     {
         CPLAssert(strcmp(pszNameIn, "table:table-row") == 0);
 
-        /* Remove blank columns at the right to defer type evaluation */
-        /* until necessary */
-        size_t i = apoCurLineTypes.size();
-        while(i > 0)
+        if (nLastEmptyCol != -1) 
         {
-            i --;
-            if (apoCurLineTypes[i] == "")
-            {
-                apoCurLineValues.resize(i);
-                apoCurLineTypes.resize(i);
-            }
-            else
-            {
-                break;
-            }
-        }
-
+          apoCurLineTypes.resize(nLastEmptyCol);
+          apoCurLineValues.resize(nLastEmptyCol);
+        }  
+        
         /* Do not add immediately empty rows. Wait until there is another non */
         /* empty row */
         OGRFeature* poFeature = nullptr;
@@ -877,7 +909,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
         }
         else if (nEmptyRowsAccumulated > 0)
         {
-            for(i = 0; i < (size_t)nEmptyRowsAccumulated; i++)
+            for(int i = 0; i < nEmptyRowsAccumulated; i++)
             {
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
                 CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
@@ -892,6 +924,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
         {
             apoFirstLineTypes = apoCurLineTypes;
             apoFirstLineValues = apoCurLineValues;
+            apoFirstLineDateValues = apoCurLineDateValues;
 
     #if skip_leading_empty_rows
             if (apoFirstLineTypes.empty())
@@ -899,6 +932,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 /* Skip leading empty rows */
                 apoFirstLineTypes.resize(0);
                 apoFirstLineValues.resize(0);
+                apoFirstLineDateValues.resize(0);
                 return;
             }
     #endif
@@ -912,16 +946,17 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
 
             if (bFirstLineIsHeaders)
             {
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for(size_t i = 0; i < apoFirstLineValues.size(); i++)
                 {
                     const char* pszFieldName = apoFirstLineValues[i].c_str();
                     if (pszFieldName[0] == '\0')
                         pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
-                    OGRFieldType eType = OFTString;
-                    if (i < apoCurLineValues.size())
+                    OGRFieldType eType = OGRUnknownType;
+                    if (i < apoCurLineValues.size() && !apoCurLineValues[i].empty())
                     {
                         eType = GetOGRFieldType(apoCurLineValues[i].c_str(),
-                                                apoCurLineTypes[i].c_str());
+                                                apoCurLineTypes[i].c_str(),
+                                                apoCurLineDateValues[i].c_str());
                     }
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     poCurLayer->CreateField(&oFieldDefn);
@@ -929,19 +964,20 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             }
             else
             {
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for(size_t i = 0; i < apoFirstLineValues.size(); i++)
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
                     OGRFieldType eType = GetOGRFieldType(
                                             apoFirstLineValues[i].c_str(),
-                                            apoFirstLineTypes[i].c_str());
+                                            apoFirstLineTypes[i].c_str(),
+                                            apoFirstLineDateValues[i].c_str());
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
 
                 poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                for(i = 0; i < apoFirstLineValues.size(); i++)
+                for(size_t i = 0; i < apoFirstLineValues.size(); i++)
                 {
                     SetField(poFeature, static_cast<int>(i), apoFirstLineValues[i].c_str());
                 }
@@ -956,7 +992,7 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
-                for( i = static_cast<size_t>(
+                for(size_t i = static_cast<size_t>(
                          poCurLayer->GetLayerDefn()->GetFieldCount());
                      i < apoCurLineValues.size();
                      i++ )
@@ -965,7 +1001,8 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                         CPLSPrintf("Field%d", static_cast<int>(i) + 1);
                     const OGRFieldType eType = GetOGRFieldType(
                         apoCurLineValues[i].c_str(),
-                        apoCurLineTypes[i].c_str() );
+                        apoCurLineTypes[i].c_str(),
+                        apoCurLineDateValues[i].c_str());
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
@@ -974,17 +1011,30 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
             /* Update field type if necessary */
             if (bAutodetectTypes)
             {
-                for(i = 0; i < apoCurLineValues.size(); i++)
+                for(size_t i = 0; i < apoCurLineValues.size(); i++)
                 {
                     if (!apoCurLineValues[i].empty() )
                     {
                         const OGRFieldType eValType = GetOGRFieldType(
                             apoCurLineValues[i].c_str(),
-                            apoCurLineTypes[i].c_str());
+                            apoCurLineTypes[i].c_str(),
+                            apoCurLineDateValues[i].c_str());
                         const OGRFieldType eFieldType =
                             poCurLayer->GetLayerDefn()->GetFieldDefn(
                                 static_cast<int>(i))->GetType();
-                        if (eFieldType == OFTDateTime &&
+                        if (eFieldType == OGRUnknownType)
+                        {
+                            /* If the field type is unknown we have not encountered a value in the field yet so
+                             * set the field type to this elements type */
+                            OGRFieldDefn oNewFieldDefn(
+                                poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                            oNewFieldDefn.SetType(eValType);
+                            poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                       ALTER_TYPE_FLAG);
+
+                        }
+                        else if (eFieldType == OFTDateTime &&
                             (eValType == OFTDate || eValType == OFTTime) )
                         {
                             /* ok */
@@ -1026,18 +1076,32 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                     }
                 }
             }
-
+            
             /* Add feature for current line */
             for(int j=0;j<nRowsRepeated;j++)
             {
-                poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
-                for(i = 0; i < apoCurLineValues.size(); i++)
+                poFeature = nullptr;
+
+                for( size_t i = 0; i < apoCurLineValues.size(); i++ )
                 {
-                    SetField( poFeature, static_cast<int>(i),
-                              apoCurLineValues[i].c_str() );
+                    if (!apoCurLineValues[i].empty())
+                    {
+                      if (!poFeature) {
+                        poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                      }
+
+                      SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str());
+                    }
                 }
-                CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
-                delete poFeature;
+                if (poFeature || bAllowEmptyRows)
+                {
+                    if (!poFeature) {
+                      poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                    }
+
+                    CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+                    delete poFeature;
+                }
             }
         }
 
@@ -1068,12 +1132,33 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
     {
         CPLAssert(strcmp(pszNameIn, "table:table-cell") == 0);
 
+        if (!bAllowEmptyCells)
+        {
+            /* If this cell only contains whitespace and the option OGR_ODS_EMPTY_CELLS is set to disable
+             * then clear the osValue */
+            if (osValue.find_first_not_of( " \t\r\n" ) == std::string::npos)
+            {
+                osValue.clear();
+            }
+        }
+
+        if (osValue.empty()) {
+          if (nLastEmptyCol == -1) {
+            nLastEmptyCol = (int)apoCurLineValues.size();
+          }
+        }
+        else {
+          nLastEmptyCol = -1;
+        }
+
         for(int i = 0; i < nCellsRepeated; i++)
         {
             if( !osValue.empty() )
                 apoCurLineValues.push_back(osValue);
             else
                 apoCurLineValues.push_back(osFormula);
+            
+            apoCurLineDateValues.push_back(osDateValue);
             apoCurLineTypes.push_back(osValueType);
         }
 
@@ -1087,7 +1172,15 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
 
 void OGRODSDataSource::dataHandlerTextP(const char *data, int nLen)
 {
-    osValue.append(data, nLen);
+    if (!osDateValue.empty() ) {
+      osValue = osDateValue;
+      osDateValue.Clear();
+      osDateValue.append(data, nLen);
+    }
+    else
+    {
+      osValue.append(data, nLen);
+    }
 }
 
 /************************************************************************/

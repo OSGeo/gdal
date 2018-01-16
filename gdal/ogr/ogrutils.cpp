@@ -1223,6 +1223,11 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
              (c == '+' || c == '-') )
     {
         TZ = 100 + ((c == '+') ? 1 : -1) * ((TZHour * 60 + TZMinute) / 15);
+        if( second >= 59.99)
+        {
+          second = 0.0;
+          minute++;
+        }
         bRet = true;
     }
     // Date is expressed into an unknown timezone.
@@ -1230,6 +1235,11 @@ int OGRParseXMLDateTime( const char* pszXMLDateTime,
                     &year, &month, &day, &hour, &minute, &second) == 6 )
     {
         TZ = 0;
+        if( second >= 59.99)
+        {
+          second = 0.0;
+          minute++;
+        }
         bRet = true;
     }
     // Date is expressed as a UTC date with only year:month:day.
