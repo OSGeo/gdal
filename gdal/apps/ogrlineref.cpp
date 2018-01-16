@@ -45,16 +45,18 @@
 
 CPL_CVSID("$Id$")
 
-#define FIELD_START "beg"
-#define FIELD_FINISH "end"
-#define FIELD_SCALE_FACTOR "scale"
-constexpr double DELTA = 0.00000001; // - delta
-constexpr double TOLERANCE = 0.00008983153;
-
 #if defined(HAVE_GEOS)
 #if GEOS_VERSION_MAJOR > 3 || (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR >= 2)
 #define HAVE_GEOS_PROJECT
 #endif
+#endif
+
+#define FIELD_START "beg"
+#define FIELD_FINISH "end"
+#define FIELD_SCALE_FACTOR "scale"
+constexpr double DELTA = 0.00000001; // - delta
+#ifdef HAVE_GEOS_PROJECT
+constexpr double TOLERANCE = 0.00008983153;
 #endif
 
 enum operation
