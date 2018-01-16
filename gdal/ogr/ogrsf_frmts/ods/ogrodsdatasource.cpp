@@ -227,9 +227,9 @@ OGRODSDataSource::OGRODSDataSource() :
     bAutodetectTypes(
         !EQUAL(CPLGetConfigOption("OGR_ODS_FIELD_TYPES", ""), "STRING")),
     bAllowEmptyRows(!EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_ROWS", ""),
-                            "DISABLE")),
+                            "IGNORE")),
     bAllowEmptyCells(!EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_CELLS", ""),
-                            "DISABLE")),
+                            "IGNORE")),
     nMaxRepeatedRows(atoi(CPLGetConfigOption("OGR_ODS_MAX_REPEATED_ROWS", "10000"))),
     oParser(nullptr),
     bStopParsing(false),
