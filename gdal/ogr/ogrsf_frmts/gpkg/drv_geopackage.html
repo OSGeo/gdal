@@ -142,6 +142,9 @@ are available:</p>
 (for application_id and user_version fields). In AUTO mode, this will be equivalent
 to 1.0, unless a tile gridded elevation dataset, or a non-spatial
 table (using the 'attributes' data type) is created, in which case 1.2 will be used.</li>
+<li><b>ADD_GPKG_OGR_CONTENTS</b>=YES/NO: (GDAL &gt;= 2.2) Defines whether to add
+a gpkg_ogr_contents table to keep feature count, and associated triggers.
+Defaults to YES.</li>
 </ul>
 
 <p>Other options are available for raster. See the
