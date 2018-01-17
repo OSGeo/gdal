@@ -3840,14 +3840,23 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
         dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
     }
 
+    // Is this a full circle?
+    const bool bIsFullCircle = fabs( dfEndAngle - dfStartAngle ) == 360.0;
+
     // Switch direction.
     dfStartAngle *= -1;
     dfEndAngle *= -1;
 
     // Figure out the number of slices to make this into.
-    const int nVertexCount = std::max(2, static_cast<int>(
+    int nVertexCount = std::max(2, static_cast<int>(
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1));
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+
+    // If it is a full circle we will work out the last point separately.
+    if( bIsFullCircle )
+    {
+        nVertexCount--;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute the interpolated points.                                */
@@ -3870,6 +3879,17 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
             + dfEllipseY * cos(dfRotationRadians);
 
         poLine->setPoint( iPoint, dfArcX, dfArcY, dfZ );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we're asked to make a full circle, ensure the start and      */
+/*      end points coincide exactly, in spite of any rounding error.    */
+/* -------------------------------------------------------------------- */
+    if( bIsFullCircle )
+    {
+        OGRPoint oPoint;
+        poLine->getPoint( 0, &oPoint );
+        poLine->setPoint( nVertexCount, &oPoint );
     }
 
     return poLine;
