@@ -1194,6 +1194,9 @@ void OGRODSDataSource::AnalyseFile()
 
     bAnalysedFile = true;
 
+    bAllowEmptyRows = !EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_ROWS", ""), "IGNORE");
+    bAllowEmptyCells = !EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_CELLS", ""), "IGNORE");
+
     AnalyseSettings();
 
     oParser = OGRCreateExpatXMLParser();

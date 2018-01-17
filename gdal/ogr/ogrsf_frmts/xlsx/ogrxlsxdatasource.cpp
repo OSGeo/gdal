@@ -634,6 +634,7 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
         PushState(STATE_ROW);
 
         nCurCol = 0;
+        nLastEmptyCol = 0;
         apoCurLineValues.clear();
         apoCurLineTypes.clear();
 
@@ -646,25 +647,13 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
             return;
         }
         nNewCurLine --;
-        const int nFields = std::max(
-            static_cast<int>(apoFirstLineValues.size()),
-            poCurLayer != nullptr ?
-                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-        if( nNewCurLine > nCurLine &&
-            (nNewCurLine - nCurLine > 10000 ||
-             (nFields > 0 && nNewCurLine - nCurLine > 100000 / nFields)) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid row: %d. Too big gap with previous valid row",
-                     nNewCurLine);
-            return;
-        }
         for(;nCurLine<nNewCurLine;)
         {
             const int nCurLineBefore = nCurLine;
             endElementRow("row");
 
             nCurCol = 0;
+            nLastEmptyCol = 0;
             apoCurLineValues.clear();
             apoCurLineTypes.clear();
             if( nCurLineBefore == nCurLine )
@@ -1085,6 +1074,9 @@ void OGRXLSXDataSource::dataHandlerTextV(const char *data, int nLen)
 void OGRXLSXDataSource::BuildLayer( OGRXLSXLayer* poLayer )
 {
     poCurLayer = poLayer;
+    
+    bAllowEmptyRows = !EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_ROWS", ""), "IGNORE");
+    bAllowEmptyCells = !EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_CELLS", ""), "IGNORE");
 
     const char* pszSheetFilename = poLayer->GetFilename().c_str();
     VSILFILE* fp = VSIFOpenL(pszSheetFilename, "rb");
