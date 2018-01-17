@@ -25,7 +25,7 @@ Features will all have the following generic fields:
 <li> SubClasses: Where available, a list of classes to which an entity belongs.
 <li> ExtendedEntity (GDAL <= 2.2.x): The values of extended entity attributes
 all appended to form a single text field, where available.
-<li> RawCodeValues (GDAL >= 2.3.x): Only available when the configuration option
+<li> RawCodeValues (GDAL >= 2.3.0): Only available when the configuration option
 DXF_INCLUDE_RAW_CODE_VALUES is set to TRUE. A string list containing all group
 codes and values that are not handled by the DXF reader.
 <li> Linetype: Where available, the line type used for this entity.
@@ -51,19 +51,22 @@ retrieve the raw text values, set the configuration option
 DXF_TRANSLATE_ESCAPE_SEQUENCES to FALSE.
 
 <li> LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
-polylines (those with their vertices' budge attributes set) will be tessellated.
-Single-vertex polylines are translated to POINT.
+polylines (those with their vertices' bulge attributes set) will be tessellated.
+Single-vertex polylines are translated to POINT. Polyface meshes are translated
+as POLYHEDRALSURFACE geometries.
 
 <li> MLINE: <p>
 <ul>
-<li>(GDAL &gt;= 2.3.x) Translated as a MULTILINESTRING. Only the geometry is
+<li>(GDAL &gt;= 2.3.0) Translated as a MULTILINESTRING. Only the geometry is
 reconstructed; styling applied to individual line elements within the MLINE is
 ignored. Fill colors and start/end caps are also omitted.
 <li>(GDAL &lt;= 2.2.x) No support.
 </ul>
 
-<li> CIRCLE, ELLIPSE, ARC, SPLINE, (GDAL &gt;= 2.3.x) HELIX: Translated as a
-LINESTRING, tessellating the curve into line segments.
+<li> CIRCLE, ELLIPSE, ARC, SPLINE, (GDAL &gt;= 2.3.0) HELIX: Translated as a
+LINESTRING, tessellating the curve into line segments.<p>
+(GDAL &gt;= 2.3.0) CIRCLEs with nonzero "thickness" (cylinders) are
+approximated as a POLYHEDRALSURFACE.
 
 <li> INSERT: By default, the block definition referenced by the INSERT will
 be inserted as a compound geometry (for example, a MULTILINESTRING for a block
@@ -82,7 +85,7 @@ individual linework entities within the block.
 
 <li> ATTDEF, ATTRIB:<p>
 <ul>
-<li>(GDAL &gt;= 2.3.x) Attributes (ATTRIB) are treated as TEXT entities, and
+<li>(GDAL &gt;= 2.3.0) Attributes (ATTRIB) are treated as TEXT entities, and
 attribute definitions (ATTDEF) inside blocks are ignored. The behavior is
 different when DXF_INLINE_BLOCKS is false (see below).
 <li>(GDAL &lt;= 2.2.x) ATTDEF entities are treated as TEXT. ATTRIB entities
@@ -91,18 +94,18 @@ are not supported.
 
 <li> HATCH: Line and arc boundaries are collected as a polygon geometry, but
 no effort is currently made to represent the fill style of HATCH entities.<p>
-(GDAL &gt;= 2.3.x) The DXF_HATCH_TOLERANCE config option determines the
+(GDAL &gt;= 2.3.0) The DXF_HATCH_TOLERANCE config option determines the
 tolerance used when looking for the next component to add to the hatch boundary.
 <p>(GDAL &lt;= 2.2.x) Only line and polyline boundary paths are translated
 correctly.
 
-<li> 3DFACE, SOLID, (GDAL &gt;= 2.3.x) TRACE: Translated as POLYGON, except for
+<li> 3DFACE, SOLID, (GDAL &gt;= 2.3.0) TRACE: Translated as POLYGON, except for
 SOLID and TRACE entities with only one distinct vertex (translated as POINT) or
 two distinct vertices (translated as LINESTRING).
 
 <li> DIMENSION:<p>
 <ul>
-<li>(GDAL &gt;= 2.3.x) The DXF format allows each DIMENSION entity to
+<li>(GDAL &gt;= 2.3.0) The DXF format allows each DIMENSION entity to
 reference an "anonymous" block (a block whose name starts with *D) that contains
 the geometry of the DIMENSION. If present, this anonymous block will be inlined
 at the required position. Otherwise, fallback will occur to a simple DIMENSION
@@ -115,7 +118,7 @@ a POINT for the text.
 
 <li> LEADER, MULTILEADER: <p>
 <ul>
-<li>(GDAL &gt;= 2.3.x) The leader line is translated as a LINESTRING (LEADER) or
+<li>(GDAL &gt;= 2.3.0) The leader line is translated as a LINESTRING (LEADER) or
 MULTILINESTRING (MULTILEADER). Arrowheads, if present, are translated as one or
 more additional features. Text for MULTILEADER entities is translated into a
 POINT feature with a label. Block content for MULTILEADERS is treated as for
@@ -154,18 +157,18 @@ as described here.
 more features for each BLOCK defined in the file.  In addition to the usual
 fields, they will also have a Block field indicating what block they are part
 of. (Note, in GDAL 2.2.x and earlier this field was called BlockName.)
-<li> (GDAL &gt;= 2.3.x) ATTDEF entities in the blocks layer will have an
+<li> (GDAL &gt;= 2.3.0) ATTDEF entities in the blocks layer will have an
 AttributeTag field, giving the tag of the ATTDEF entity.
 <li> The entities layer will have several new fields:
 <ul>
 <li> BlockName: The name of the referenced block.
 <li> BlockScale: The X, Y, and Z scale factors.
 <li> BlockAngle: The angle of the block in degrees.
-<li> BlockOCSNormal (GDAL &gt;= 2.3.x): The unit normal vector of the object
+<li> BlockOCSNormal (GDAL &gt;= 2.3.0): The unit normal vector of the object
 coordinate system (OCS) of the INSERT entity.
-<li> BlockOCSCoords (GDAL &gt;= 2.3.x): The OCS coordinates of the insertion
+<li> BlockOCSCoords (GDAL &gt;= 2.3.0): The OCS coordinates of the insertion
 point.
-<li> BlockAttributes (GDAL &gt;= 2.3.x): The text content of attributes
+<li> BlockAttributes (GDAL &gt;= 2.3.0): The text content of attributes
 associated with this block. Each entry in this string list contains an attribute
 tag, followed by a space, followed by the text for that attribute (which may be
 empty).

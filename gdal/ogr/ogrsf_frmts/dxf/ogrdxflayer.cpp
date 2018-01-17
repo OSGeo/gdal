@@ -1784,6 +1784,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
     double dfY1 = 0.0;
     double dfZ1 = 0.0;
     double dfRadius = 0.0;
+    double dfThickness = 0.0;
     bool bHaveZ = false;
 
 /* -------------------------------------------------------------------- */
@@ -1804,6 +1805,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
           case 30:
             dfZ1 = CPLAtof(szLineBuf);
             bHaveZ = true;
+            break;
+
+          case 39:
+            dfThickness = CPLAtof(szLineBuf);
             break;
 
           case 40:
@@ -1828,17 +1833,95 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    OGRGeometry *poCircle =
+    OGRLineString *poCircle = reinterpret_cast<OGRLineString *>(
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0,
-                                                  0.0 );
+                                                  0.0 ) );
 
-    if( !bHaveZ )
-        poCircle->flattenTo2D();
+    const int nPoints = poCircle->getNumPoints();
 
-    poFeature->ApplyOCSTransformer( poCircle );
-    poFeature->SetGeometryDirectly( poCircle );
+    // If dfThickness is nonzero, we need to extrude a cylinder of height
+    // dfThickness in the Z axis.
+    if( dfThickness != 0.0 && nPoints > 1 )
+    {
+        OGRPolyhedralSurface *poSurface = new OGRPolyhedralSurface();
+
+        // Add the bottom base as a polygon
+        OGRLinearRing *poRing1 = new OGRLinearRing();
+        poRing1->addSubLineString( poCircle );
+        delete poCircle;
+        poCircle = nullptr;
+
+        OGRPolygon *poBase1 = new OGRPolygon();
+        poBase1->addRingDirectly( poRing1 );
+        poSurface->addGeometryDirectly( poBase1 );
+
+        // Create and add the top base
+        OGRLinearRing *poRing2 = reinterpret_cast<OGRLinearRing *>(
+            poRing1->clone() );
+
+        OGRDXFInsertTransformer oTransformer;
+        oTransformer.dfZOffset = dfThickness;
+        poRing2->transform( &oTransformer );
+
+        OGRPolygon *poBase2 = new OGRPolygon();
+        poBase2->addRingDirectly( poRing2 );
+        poSurface->addGeometryDirectly( poBase2 );
+
+        // Add the side of the cylinder as two "semicylindrical" polygons
+        OGRLinearRing *poRect = new OGRLinearRing();
+        OGRPoint oPoint;
+
+        for( int iPoint = nPoints / 2; iPoint >= 0; iPoint-- )
+        {
+            poRing1->getPoint( iPoint, &oPoint );
+            poRect->addPoint( &oPoint );
+        }
+        for( int iPoint = 0; iPoint <= nPoints / 2; iPoint++ )
+        {
+            poRing2->getPoint( iPoint, &oPoint );
+            poRect->addPoint( &oPoint );
+        }
+
+        poRect->closeRings();
+
+        OGRPolygon *poRectPolygon = new OGRPolygon();
+        poRectPolygon->addRingDirectly( poRect );
+        poSurface->addGeometryDirectly( poRectPolygon );
+
+        poRect = new OGRLinearRing();
+
+        for( int iPoint = nPoints - 1; iPoint >= nPoints / 2; iPoint-- )
+        {
+            poRing1->getPoint( iPoint, &oPoint );
+            poRect->addPoint( &oPoint );
+        }
+        for( int iPoint = nPoints / 2; iPoint < nPoints; iPoint++ )
+        {
+            poRing2->getPoint( iPoint, &oPoint );
+            poRect->addPoint( &oPoint );
+        }
+
+        poRect->closeRings();
+
+        poRectPolygon = new OGRPolygon();
+        poRectPolygon->addRingDirectly( poRect );
+        poSurface->addGeometryDirectly( poRectPolygon );
+
+        // That's your cylinder, folks
+        poFeature->ApplyOCSTransformer( poSurface );
+        poFeature->SetGeometryDirectly( poSurface );
+    }
+    else
+    {
+        if( !bHaveZ )
+            poCircle->flattenTo2D();
+
+        poFeature->ApplyOCSTransformer( poCircle );
+        poFeature->SetGeometryDirectly( poCircle );
+    }
+
     PrepareLineStyle( poFeature );
 
     return poFeature;
