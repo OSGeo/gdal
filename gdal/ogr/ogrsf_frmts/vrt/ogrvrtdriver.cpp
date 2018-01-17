@@ -100,8 +100,8 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo *poOpenInfo )
     else
     {
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        if( poOpenInfo->fpL == NULL )
-            return NULL;
+        if( poOpenInfo->fpL == nullptr )
+            return nullptr;
 #endif
         VSIStatBufL sStatBuf;
         if( VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 ||

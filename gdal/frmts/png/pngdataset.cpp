@@ -970,8 +970,8 @@ GDALDataset *PNGDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !Identify( poOpenInfo ) )
         return nullptr;
 #else
-    if( poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->fpL == nullptr )
+        return nullptr;
 #endif
 
     if( poOpenInfo->eAccess == GA_Update )
