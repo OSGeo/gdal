@@ -75,7 +75,7 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
                             bool bMergeDelimiter )
 
 {
-    char **papszRetList = nullptr;
+    CPLStringList aosRetList;
 
     char *pszToken = static_cast<char *>(CPLCalloc(10, 1));
     int nTokenMax = 10;
@@ -126,22 +126,22 @@ static char **CSVSplitLine( const char *pszString, char chDelimiter,
         }
 
         pszToken[nTokenLen] = '\0';
-        papszRetList = CSLAddString(papszRetList, pszToken);
+        aosRetList.AddString(pszToken);
 
         // If the last token is an empty token, then we have to catch
         // it now, otherwise we won't reenter the loop and it will be lost.
         if( *pszString == '\0' && *(pszString - 1) == chDelimiter )
         {
-            papszRetList = CSLAddString(papszRetList, "");
+            aosRetList.AddString("");
         }
     }
 
-    if( papszRetList == nullptr )
-        papszRetList = static_cast<char **>(CPLCalloc(sizeof(char *), 1));
-
     CPLFree(pszToken);
 
-    return papszRetList;
+    if( aosRetList.Count() == 0 )
+        return static_cast<char **>(CPLCalloc(sizeof(char *), 1));
+    else
+        return aosRetList.StealList();
 }
 
 /************************************************************************/
@@ -729,11 +729,16 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             const char *pszEPSG = strstr(pszFieldName, "_EPSG_");
             if( pszEPSG != nullptr )
             {
-                const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
-                OGRSpatialReference *poSRS = new OGRSpatialReference();
-                poSRS->importFromEPSG(nEPSGCode);
-                oGeomFieldDefn.SetSpatialRef(poSRS);
-                poSRS->Release();
+                // We limit arbitrarily to 100 imports from EPSG for performance
+                // reason on oss-fuzz
+                if( poFeatureDefn->GetGeomFieldCount() < 100 )
+                {
+                    const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
+                    OGRSpatialReference *poSRS = new OGRSpatialReference();
+                    poSRS->importFromEPSG(nEPSGCode);
+                    oGeomFieldDefn.SetSpatialRef(poSRS);
+                    poSRS->Release();
+                }
             }
 
             if( strstr(pszFieldName, "_POINT") )
