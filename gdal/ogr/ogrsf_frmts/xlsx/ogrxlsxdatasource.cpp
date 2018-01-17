@@ -588,7 +588,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
         bFirstLineIsHeaders = false;
     else if( bHeaderLineCandidate &&
              !apoFirstLineTypes.empty() &&
-             apoFirstLineTypes.size() == apoCurLineTypes.size() &&
+             apoFirstLineTypes.size() >= apoCurLineTypes.size() &&
              nCountTextOnCurLine != apoFirstLineTypes.size() &&
              nCountNonEmptyOnCurLine != 0 )
     {
@@ -706,6 +706,26 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
 
         if (poCurLayer)
         {
+            /* Ensure that any fields still with an unknown type are set to String.
+             * This will only be the case if the field has no values */
+       
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
+            {
+                OGRFieldType eFieldType =
+                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
+
+                if (eFieldType == OGRUnknownType)
+                {
+                    OGRFieldDefn oNewFieldDefn(
+                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                    oNewFieldDefn.SetType(OFTString);
+                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                ALTER_TYPE_FLAG);
+
+                }
+            }
+
             ((OGRMemLayer*)poCurLayer)->SetUpdatable(CPL_TO_BOOL(bUpdatable));
             ((OGRMemLayer*)poCurLayer)->SetAdvertizeUTF8(true);
             ((OGRXLSXLayer*)poCurLayer)->SetUpdated(false);
@@ -827,8 +847,8 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                     const char* pszFieldName = apoFirstLineValues[i].c_str();
                     if (pszFieldName[0] == '\0')
                         pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
-                    OGRFieldType eType = OFTString;
-                    if (i < apoCurLineValues.size())
+                    OGRFieldType eType = OGRUnknownType;
+                    if (i < apoCurLineValues.size() && !apoCurLineValues[i].empty())
                     {
                         eType = GetOGRFieldType(apoCurLineValues[i].c_str(),
                                                 apoCurLineTypes[i].c_str());
@@ -893,7 +913,19 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                                                 apoCurLineTypes[i].c_str());
                         OGRFieldType eFieldType =
                             poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
-                        if (eFieldType == OFTDateTime &&
+                        if (eFieldType == OGRUnknownType)
+                        {
+                            /* If the field type is unknown we have not encountered a value in the field yet so
+                             * set the field type to this elements type */
+                            OGRFieldDefn oNewFieldDefn(
+                                poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                            oNewFieldDefn.SetType(eValType);
+                            poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                       ALTER_TYPE_FLAG);
+
+                        }
+                        else if (eFieldType == OFTDateTime &&
                             (eValType == OFTDate || eValType == OFTTime) )
                         {
                             /* ok */
@@ -931,8 +963,11 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
             for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
-                SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
-                         apoCurLineTypes[i].c_str());
+                if (!apoCurLineValues[i].empty())
+                {
+                  SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
+                          apoCurLineTypes[i].c_str());
+                }
             }
             CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
             delete poFeature;
