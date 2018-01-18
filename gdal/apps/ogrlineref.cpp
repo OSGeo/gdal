@@ -81,9 +81,9 @@ typedef struct _curve_data
 /*                               Usage()                                */
 /************************************************************************/
 static void Usage( const char* pszAdditionalMsg,
-                   int bShort = TRUE ) CPL_NO_RETURN;
+                   bool bShort = true ) CPL_NO_RETURN;
 
-static void Usage( const char* pszAdditionalMsg, int bShort )
+static void Usage( const char* pszAdditionalMsg, bool bShort )
 {
     OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
@@ -144,7 +144,7 @@ static void Usage( const char* pszAdditionalMsg, int bShort )
     exit(1);
 }
 
-static void Usage( int bShort = TRUE )
+static void Usage( bool bShort = true )
 {
     Usage(nullptr, bShort);
 }
@@ -394,7 +394,7 @@ void CheckDestDataSourceNameConsistency(const char* pszDestFilename,
 
 static OGRErr AddFeature( OGRLayer* const poOutLayer, OGRLineString* pPart,
                           double dfFrom, double dfTo, double dfScaleFactor,
-                          int bQuiet,
+                          bool bQuiet,
                           const char* pszOutputSepFieldName = nullptr,
                           const char* pszOutputSepFieldValue = nullptr )
 {
@@ -432,9 +432,9 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
                              double dfPosEnd,
                              OGRLayer* const poOutLayer,
                              CPL_UNUSED int bDisplayProgress,
-                             int bQuiet )
+                             bool bQuiet )
 {
-    // get step
+    // Get step
     poPkLayer->ResetReading();
     OGRFeature* pFeature = poPkLayer->GetNextFeature();
     if( nullptr != pFeature )
@@ -596,7 +596,7 @@ static double Project( OGRLineString* pLine, OGRPoint* pPoint )
 static OGRErr CreatePartsFromLineString(
     OGRLineString* pPathGeom, OGRLayer* const poPkLayer, int nMValField,
     double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
-    int bQuiet, const char* pszOutputSepFieldName = nullptr,
+    bool bQuiet, const char* pszOutputSepFieldName = nullptr,
     const char* pszOutputSepFieldValue = nullptr )
 {
     // TODO: What is a reper?
@@ -1024,7 +1024,8 @@ static OGRErr CreatePartsFromLineString(
 #ifdef HAVE_GEOS_PROJECT
 static OGRErr CreateParts(
     OGRLayer* const poLnLayer, OGRLayer* const poPkLayer, int nMValField,
-    double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress, int bQuiet,
+    double dfStep, OGRLayer* const poOutLayer, int bDisplayProgress,
+    bool bQuiet,
     const char* pszOutputSepFieldName = nullptr,
     const char* pszOutputSepFieldValue = nullptr )
 {
@@ -1106,7 +1107,7 @@ static OGRErr CreatePartsMultiple(
     OGRLayer* const poLnLayer, const char* pszLineSepFieldName,
     OGRLayer* const poPkLayer, const char* pszPicketsSepFieldName,
     int nMValField, double dfStep, OGRLayer* const poOutLayer,
-    const char* pszOutputSepFieldName, int bDisplayProgress, int bQuiet )
+    const char* pszOutputSepFieldName, int bDisplayProgress, bool bQuiet )
 {
     // Read all separate field values into array
     OGRFeatureDefn *pDefn = poLnLayer->GetLayerDefn();
@@ -1228,7 +1229,7 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
 static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
                               double dfPos,
                               /* CPL_UNUSED */ int /* bDisplayProgress */,
-                              int bQuiet )
+                              bool bQuiet )
 {
     CPLString szAttributeFilter;
     szAttributeFilter.Printf(
@@ -1289,7 +1290,7 @@ MAIN_START(nArgc, papszArgv)
 
 {
     OGRErr eErr = OGRERR_NONE;
-    int bQuiet = FALSE;
+    bool bQuiet = false;
     const char *pszFormat = "ESRI Shapefile";
 
     const char *pszOutputDataSource = nullptr;
@@ -1361,13 +1362,13 @@ MAIN_START(nArgc, papszArgv)
         }
         else if( EQUAL(papszArgv[iArg], "--long-usage") )
         {
-            Usage(FALSE);
+            Usage(false);
         }
 
         else if( EQUAL(papszArgv[iArg], "-q") ||
                  EQUAL(papszArgv[iArg], "-quiet") )
         {
-            bQuiet = TRUE;
+            bQuiet = true;
         }
         else if( (EQUAL(papszArgv[iArg], "-f") ||
                   EQUAL(papszArgv[iArg], "-of")) )
