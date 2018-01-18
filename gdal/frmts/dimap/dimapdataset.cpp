@@ -127,7 +127,7 @@ DIMAPDataset::DIMAPDataset() :
     adfGeoTransform[2] = 0.0;
     adfGeoTransform[3] = 0.0;
     adfGeoTransform[4] = 0.0;
-    adfGeoTransform[5] = 0.0;
+    adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -217,7 +217,7 @@ char **DIMAPDataset::GetMetadata( const char *pszDomain )
 const char *DIMAPDataset::GetProjectionRef()
 
 {
-    if( !osProjection.empty() )
+    if( !osProjection.empty() && bHaveGeoTransform )
         return osProjection;
 
     return GDALPamDataset::GetProjectionRef();
@@ -1286,10 +1286,7 @@ int DIMAPDataset::ReadImageInformation2()
         // Try to get geotransform from underlying raster,
         // but make sure it is a real geotransform.
         if( poImageDS->GetGeoTransform(adfGeoTransform) == CE_None &&
-            !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 1.5 &&
-              adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) &&
-            !(adfGeoTransform[0] == 0.5 && adfGeoTransform[3] == 0.5 &&
-              adfGeoTransform[1] == 1.0 && adfGeoTransform[5] == -1.0) )
+            !(adfGeoTransform[0] <= 1.5 && fabs(adfGeoTransform[3]) <= 1.5) )
         {
             bHaveGeoTransform = TRUE;
         }
