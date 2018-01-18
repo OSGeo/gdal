@@ -48,7 +48,7 @@ def open_for_read(uri):
 def vsis3_init():
 
     gdaltest.aws_vars = {}
-    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE'):
+    for var in ('AWS_SECRET_ACCESS_KEY', 'AWS_ACCESS_KEY_ID', 'AWS_TIMESTAMP', 'AWS_HTTPS', 'AWS_VIRTUAL_HOSTING', 'AWS_S3_ENDPOINT', 'AWS_REQUEST_PAYER', 'AWS_DEFAULT_REGION', 'AWS_DEFAULT_PROFILE', 'AWS_NO_SIGN_REQUEST'):
         gdaltest.aws_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.aws_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -58,6 +58,25 @@ def vsis3_init():
     gdal.SetConfigOption('CPL_AWS_CREDENTIALS_FILE', '')
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
+
+    return 'success'
+
+###############################################################################
+# Test AWS_NO_SIGN_REQUEST=YES
+
+def vsis3_no_sign_request():
+
+    if not gdaltest.built_against_curl():
+        return 'skip'
+
+    with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
+        f = open_for_read('/vsis3/landsat-pds/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF')
+    if f is None:
+        if gdaltest.gdalurlopen('https://landsat-pds.s3.amazonaws.com/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF') is None:
+            print('cannot open URL')
+            return 'skip'
+        return 'fail'
+    gdal.VSIFCloseL(f)
 
     return 'success'
 
@@ -2254,6 +2273,7 @@ def vsis3_cleanup():
     return 'success'
 
 gdaltest_list = [ vsis3_init,
+                  vsis3_no_sign_request,
                   vsis3_1,
                   vsis3_start_webserver,
                   vsis3_2,

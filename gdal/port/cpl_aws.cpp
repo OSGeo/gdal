@@ -869,11 +869,20 @@ bool VSIS3HandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
                                          CPLString& osSessionToken,
                                          CPLString& osRegion)
 {
-    osSecretAccessKey =
-        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
     // AWS_REGION is GDAL specific. Later overloaded by standard
     // AWS_DEFAULT_REGION
     osRegion = CPLGetConfigOption("AWS_REGION", "us-east-1");
+
+    if( CPLTestBool(CPLGetConfigOption("AWS_NO_SIGN_REQUEST", "NO")) )
+    {
+        osSecretAccessKey.clear();
+        osAccessKeyId.clear();
+        osSessionToken.clear();
+        return true;
+    }
+
+    osSecretAccessKey =
+        CPLGetConfigOption("AWS_SECRET_ACCESS_KEY", "");
     if( !osSecretAccessKey.empty() )
     {
         osAccessKeyId = CPLGetConfigOption("AWS_ACCESS_KEY_ID", "");
@@ -905,7 +914,8 @@ bool VSIS3HandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
     }
 
     VSIError(VSIE_AWSInvalidCredentials,
-                "AWS_SECRET_ACCESS_KEY configuration option and %s not defined",
+                "AWS_SECRET_ACCESS_KEY and AWS_NO_SIGN_REQUEST configuration "
+                "options not defined, and %s not filled",
                 osCredentials.c_str());
     return false;
 }
@@ -1065,7 +1075,8 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
 
     const CPLString osHost(m_bUseVirtualHosting && !m_osBucket.empty()
         ? CPLString(m_osBucket + "." + m_osEndpoint) : m_osEndpoint);
-    const CPLString osAuthorization = CPLGetAWS_SIGN4_Authorization(
+    const CPLString osAuthorization = m_osSecretAccessKey.empty() ? CPLString():
+      CPLGetAWS_SIGN4_Authorization(
         m_osSecretAccessKey,
         m_osAccessKeyId,
         m_osSessionToken,
@@ -1096,8 +1107,11 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
         headers = curl_slist_append(
             headers,
             CPLSPrintf("x-amz-request-payer: %s", m_osRequestPayer.c_str()));
-    headers = curl_slist_append(
-        headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    if( !osAuthorization.empty() )
+    {
+        headers = curl_slist_append(
+            headers, CPLSPrintf("Authorization: %s", osAuthorization.c_str()));
+    }
     return headers;
 }
 
