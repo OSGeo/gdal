@@ -829,7 +829,11 @@ Error""")
     gdal.SetConfigOption('CARTO_MAX_CHUNK_SIZE', None)
     ds = ogr.Open('CARTO:foo', update = 1)
     lyr = ds.GetLayer(0)
-    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq') AS nextid&api_key=foo""",
+
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT pg_catalog.pg_get_serial_sequence('table1', 'cartodb_id') AS seq_name&api_key=foo""",
+        """{"rows":[{"seq_name":"table1_cartodb_id_seq0"}],"fields":{"seq_name":{"type":"string"}}}""")
+
+    gdal.FileFromMemBuffer("""/vsimem/carto&POSTFIELDS=q=SELECT nextval('table1_cartodb_id_seq0') AS nextid&api_key=foo""",
         """{"rows":[{"nextid":11}],"fields":{"nextid":{"type":"number"}}}""")
 
     f = ogr.Feature(lyr.GetLayerDefn())

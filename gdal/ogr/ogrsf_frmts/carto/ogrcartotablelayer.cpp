@@ -593,23 +593,44 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
     bool bHasJustGotNextFID = false;
     if( !bHasUserFieldMatchingFID && bInDeferredInsert && nNextFID < 0 && !osFIDColName.empty() )
     {
-        osSQL.Printf("SELECT nextval('%s') AS nextid",
-                     OGRCARTOEscapeLiteral(CPLSPrintf("%s_%s_seq", osName.c_str(), osFIDColName.c_str())).c_str());
-
+        CPLString osSeqName;
+        osSQL.Printf("SELECT pg_catalog.pg_get_serial_sequence('%s', '%s') AS seq_name",
+                     OGRCARTOEscapeLiteral(osName).c_str(),
+                     OGRCARTOEscapeLiteral(osFIDColName).c_str());
         json_object* poObj = poDS->RunSQL(osSQL);
         json_object* poRowObj = OGRCARTOGetSingleRow(poObj);
         if( poRowObj != nullptr )
         {
-            json_object* poID = CPL_json_object_object_get(poRowObj, "nextid");
-            if( poID != nullptr && json_object_get_type(poID) == json_type_int )
+            json_object* poSeqName = CPL_json_object_object_get(poRowObj, "seq_name");
+            if( poSeqName != nullptr && json_object_get_type(poSeqName) == json_type_string )
             {
-                nNextFID = json_object_get_int64(poID);
-                bHasJustGotNextFID = true;
+                osSeqName = json_object_get_string(poSeqName);
             }
         }
 
         if( poObj != nullptr )
             json_object_put(poObj);
+
+        if( !osSeqName.empty() )
+        {
+            osSQL.Printf("SELECT nextval('%s') AS nextid",
+                        OGRCARTOEscapeLiteral(osSeqName).c_str());
+
+            poObj = poDS->RunSQL(osSQL);
+            poRowObj = OGRCARTOGetSingleRow(poObj);
+            if( poRowObj != nullptr )
+            {
+                json_object* poID = CPL_json_object_object_get(poRowObj, "nextid");
+                if( poID != nullptr && json_object_get_type(poID) == json_type_int )
+                {
+                    nNextFID = json_object_get_int64(poID);
+                    bHasJustGotNextFID = true;
+                }
+            }
+
+            if( poObj != nullptr )
+                json_object_put(poObj);
+        }
     }
 
     // Check if we can go on with multiple insertion mode
