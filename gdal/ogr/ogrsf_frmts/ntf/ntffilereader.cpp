@@ -987,7 +987,7 @@ int NTFFileReader::ProcessAttRec( NTFRecord * poRecord,
             iOffset = nEnd;
             if( iOffset >= poRecord->GetLength() )
             {
-                bError = true;
+                bError = (iOffset > poRecord->GetLength());
                 break;
             }
             if( pszData[iOffset] == '\\' )
