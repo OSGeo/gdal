@@ -314,7 +314,7 @@ MAIN_START( nArgc, papszArgv )
             psOptionsForBinary->papszOpenOptions, nullptr);
 
         GDALDriverH hDriver =
-            hODS != nullptr ? hDriver = GDALGetDatasetDriver(hODS) : nullptr;
+            hODS != nullptr ? GDALGetDatasetDriver(hODS) : nullptr;
 
         // Restrict to those 3 drivers. For example it is known to break with
         // the PG driver due to the way it manages transactions.
