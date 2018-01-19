@@ -174,22 +174,22 @@ class SIRC_QSLCRasterBand : public GDALRasterBand
     CPLErr IReadBlock( int, int, void * ) override;
 };
 
-static const int M11 = 0;
-//static const int M12 = 1;
-static const int M13 = 2;
-static const int M14 = 3;
-//static const int M21 = 4;
-static const int M22 = 5;
-static const int M23 = 6;
-static const int M24 = 7;
-static const int M31 = 8;
-static const int M32 = 9;
-static const int M33 = 10;
-static const int M34 = 11;
-static const int M41 = 12;
-static const int M42 = 13;
-static const int M43 = 14;
-static const int M44 = 15;
+constexpr int M11 = 0;
+//constexpr int M12 = 1;
+constexpr int M13 = 2;
+constexpr int M14 = 3;
+//constexpr int M21 = 4;
+constexpr int M22 = 5;
+constexpr int M23 = 6;
+constexpr int M24 = 7;
+constexpr int M31 = 8;
+constexpr int M32 = 9;
+constexpr int M33 = 10;
+constexpr int M34 = 11;
+constexpr int M41 = 12;
+constexpr int M42 = 13;
+constexpr int M43 = 14;
+constexpr int M44 = 15;
 
 /************************************************************************/
 /* ==================================================================== */

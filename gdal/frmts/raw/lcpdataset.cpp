@@ -36,11 +36,11 @@
 
 CPL_CVSID("$Id$")
 
-static const size_t LCP_HEADER_SIZE = 7316;
-static const int LCP_MAX_BANDS = 10;
-static const int LCP_MAX_PATH = 256;
-static const int LCP_MAX_DESC = 512;
-static const int LCP_MAX_CLASSES = 100;
+constexpr size_t LCP_HEADER_SIZE = 7316;
+constexpr int LCP_MAX_BANDS = 10;
+constexpr int LCP_MAX_PATH = 256;
+constexpr int LCP_MAX_DESC = 512;
+constexpr int LCP_MAX_CLASSES = 100;
 
 /************************************************************************/
 /* ==================================================================== */

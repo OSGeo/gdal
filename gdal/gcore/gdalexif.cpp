@@ -55,19 +55,19 @@ using std::vector;
 
 CPL_CVSID("$Id$")
 
-static const int MAXSTRINGLENGTH = 65535;
-static const int EXIFOFFSETTAG = 0x8769;
-static const int INTEROPERABILITYOFFSET = 0xA005;
-static const int GPSOFFSETTAG = 0x8825;
+constexpr int MAXSTRINGLENGTH = 65535;
+constexpr int EXIFOFFSETTAG = 0x8769;
+constexpr int INTEROPERABILITYOFFSET = 0xA005;
+constexpr int GPSOFFSETTAG = 0x8825;
 
-const GUInt16 TAG_SIZE = 12;
-const GUInt16 EXIF_HEADER_SIZE = 6;
+constexpr GUInt16 TAG_SIZE = 12;
+constexpr GUInt16 EXIF_HEADER_SIZE = 6;
 
-const char COND_MANDATORY = 'M';
-const char COND_RECOMMENDED = 'R';
-const char COND_OPTIONAL = 'O';
-const char COND_NOT_ALLOWED = 'N';
-const char COND_NOT_ALLOWED_EVEN_IN_JPEG_MARKER = 'J';
+constexpr char COND_MANDATORY = 'M';
+constexpr char COND_RECOMMENDED = 'R';
+constexpr char COND_OPTIONAL = 'O';
+constexpr char COND_NOT_ALLOWED = 'N';
+constexpr char COND_NOT_ALLOWED_EVEN_IN_JPEG_MARKER = 'J';
 
 typedef struct
 {

@@ -121,49 +121,49 @@ static const GByte BitReverseTable[256] =
 //                                              Scanline Orientation Flip Matrix
 // -----------------------------------------------------------------------------
 
-static const double INGR_URV_Flip[16] =
+constexpr double INGR_URV_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LLV_Flip[16] =
+constexpr double INGR_LLV_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LRV_Flip[16] =
+constexpr double INGR_LRV_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0,  1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_ULH_Flip[16] =
+constexpr double INGR_ULH_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_URH_Flip[16] =
+constexpr double INGR_URH_Flip[16] =
     {
         1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LLH_Flip[16] =
+constexpr double INGR_LLH_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0,  1.0,  0.0,  0.0,
         0.0,  0.0, -1.0,  0.0,
         0.0,  0.0,  0.0,  1.0
     };
-static const double INGR_LRH_Flip[16] =
+constexpr double INGR_LRH_Flip[16] =
     {
        -1.0,  0.0,  0.0,  0.0,
         0.0, -1.0,  0.0,  0.0,
@@ -436,10 +436,10 @@ uint32 CPL_STDCALL INGR_GetTileDirectory( VSILFILE *fp,
 
     INGR_TileHeaderDiskToMem( pTileDir, abyBuf );
 
-    if (pTileDir->TileSize == 0)
+    if (pTileDir->TileSize == 0 || pTileDir->TileSize > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                    "Invalid tile size : %d", pTileDir->TileSize);
+                    "Invalid tile size : %u", pTileDir->TileSize);
         return 0;
     }
 

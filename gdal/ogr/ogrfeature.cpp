@@ -53,7 +53,7 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
 
 CPL_CVSID("$Id$")
 
@@ -2027,7 +2027,7 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 /*                      OGRFeatureFormatDateTimeBuffer()                */
 /************************************************************************/
 
-static const int TEMP_BUFFER_SIZE = 80;
+constexpr int TEMP_BUFFER_SIZE = 80;
 static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                                             int nYear, int nMonth, int nDay,
                                             int nHour, int nMinute,

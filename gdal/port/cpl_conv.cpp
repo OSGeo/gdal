@@ -340,8 +340,8 @@ char *CPLStrlwr( char *pszString )
 /************************************************************************/
 
 // ASCII characters.
-static const char knLF = 10;
-static const char knCR = 13;
+constexpr char knLF = 10;
+constexpr char knCR = 13;
 
 /**
  * Reads in at most one less than nBufferSize characters from the fp
@@ -1985,7 +1985,7 @@ static double proj_strtod(char *nptr, char **endptr)
 /************************************************************************/
 
 static const char *sym = "NnEeSsWw";
-static const double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
+constexpr double vm[] = { 1.0, 0.0166666666667, 0.00027777778 };
 
 /** CPLDMSToDec */
 double CPLDMSToDec( const char *is )
@@ -2945,6 +2945,17 @@ void CPLCleanupSetlocaleMutex(void)
     if( hSetLocaleMutex != nullptr )
         CPLDestroyMutex(hSetLocaleMutex);
     hSetLocaleMutex = nullptr;
+}
+
+/************************************************************************/
+/*                            IsPowerOfTwo()                            */
+/************************************************************************/
+
+int CPLIsPowerOfTwo( unsigned int i )
+{
+    if( i == 0 )
+        return FALSE;
+    return ( i & ( i - 1 ) ) == 0 ? TRUE : FALSE;
 }
 
 /************************************************************************/

@@ -42,7 +42,7 @@ NAMESPACE_MRF_START
 // Could be a byte stream filter which needs very little local storage
 //
 
-static const int MAX_RUN = 768 + 0xffff;
+constexpr int MAX_RUN = 768 + 0xffff;
 typedef unsigned char Byte;
 
 #define UC(X) static_cast<Byte>(X)

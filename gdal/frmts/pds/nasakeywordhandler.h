@@ -9,6 +9,8 @@
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
  * Copyright (c) 2017 Hobu Inc
+ * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,9 +34,8 @@
 #ifndef NASAKEYWORDHANDLER_H
 #define NASAKEYWORDHANDLER_H
 
+#include "cpl_json.h"
 #include "cpl_string.h"
-
-typedef struct json_object json_object;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -51,7 +52,7 @@ class CPL_DLL NASAKeywordHandler
     CPLString osHeaderText;
     const char *pszHeaderNext;
 
-    json_object *poJSon;
+    CPLJSONObject oJSon;
 
     bool m_bStripSurroundingQuotes;
 
@@ -60,8 +61,8 @@ class CPL_DLL NASAKeywordHandler
                       bool bStripSurroundingQuotes = false,
                       bool bParseList = false,
                       bool* pbIsString = nullptr);
-    int     ReadPair( CPLString &osName, CPLString &osValue, json_object* poCur );
-    int     ReadGroup( const char *pszPathPrefix, json_object* poCur, int nRecLevel );
+    int     ReadPair( CPLString &osName, CPLString &osValue, CPLJSONObject &oCur );
+    int     ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur, int nRecLevel );
 
 public:
     NASAKeywordHandler();
@@ -74,7 +75,7 @@ public:
 
     const char *GetKeyword( const char *pszPath, const char *pszDefault );
     char **GetKeywordList();
-    json_object* StealJSon();
+    CPLJSONObject GetJsonObject() const;
 };
 
 #endif //  NASAKEYWORDHANDLER_H

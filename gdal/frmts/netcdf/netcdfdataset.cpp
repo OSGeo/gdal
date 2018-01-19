@@ -4984,7 +4984,7 @@ CPL_UNUSED
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // We don't necessarily want to catch bugs in libnetcdf ...
-    if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", NULL) )
+    if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", nullptr) )
     {
         return NCDF_FORMAT_NONE;
     }
@@ -5824,10 +5824,10 @@ static bool netCDFDatasetCreateTempFile( NetCDFFormatEnum eFormat,
     }
     VSIFSeekL( fpSrc, 0, SEEK_SET );
     const char* pszLine;
-    static const int SECTION_NONE = 0;
-    static const int SECTION_DIMENSIONS = 1;
-    static const int SECTION_VARIABLES = 2;
-    static const int SECTION_DATA = 3;
+    constexpr int SECTION_NONE = 0;
+    constexpr int SECTION_DIMENSIONS = 1;
+    constexpr int SECTION_VARIABLES = 2;
+    constexpr int SECTION_DATA = 3;
     int nActiveSection = SECTION_NONE;
     std::map<CPLString, int> oMapDimToId;
     std::map<int, int> oMapDimIdToDimLen;
@@ -6512,9 +6512,9 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
     {
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         // We don't necessarily want to catch bugs in libnetcdf ...
-        if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", NULL) )
+        if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", nullptr) )
         {
-            return NULL;
+            return nullptr;
         }
 #endif
     }
@@ -7532,6 +7532,16 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
         char szTemp[NC_MAX_NAME + 1];
         status = nc_inq_dimname(cdfid, j, szTemp);
         NCDF_ERR(status);
+        if( status != NC_NOERR )
+        {
+            CPLFree(paDimIds);
+            CPLFree(panBandDimPos);
+            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
+                                        // with GDALDataset own mutex.
+            delete poDS;
+            CPLAcquireMutex(hNCMutex, 1000.0);
+            return nullptr;
+        }
         poDS->papszDimName.AddString(szTemp);
         int nDimID;
         status = nc_inq_varid(cdfid, poDS->papszDimName[j], &nDimID);

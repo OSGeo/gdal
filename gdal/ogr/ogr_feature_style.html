@@ -10,13 +10,13 @@
 GDAL - Feature Style Specification</H1></CENTER>
 
 <CENTER>
-  <H2>Version 0.015 - 2018-01-xx</H2>
+  <H2>Version 0.015 - 2018-01-08</H2>
 </CENTER>
 
 <HR WIDTH=50%>
 <H2>REVISION HISTORY</H2>
 <UL>
-<LI><B>Version 0.015 - 2018-01-xx - Alan Thomas</B><BR>
+<LI><B>Version 0.015 - 2018-01-08 - Alan Thomas</B><BR>
     Update outdated material; minor changes to BRUSH 'id' and LABEL 't', 'bo', 'it', 'un', 'st'; clarify BRUSH 'fc', 'bc', SYMBOL 'o' and LABEL 's', 'w', 'p'
 <LI><B>Version 0.014 - 2011-07-24 - Even Rouault</B><BR>
     Mention the escaping of double-quote characters in the text string of a LABEL (ticket #3675)
@@ -92,12 +92,12 @@ more efficient way to share style information.
 <LI>
 A <B>dataset</B> can have a table of pre-defined styles that can then be referred
 to by the layers or by the individual features. The mechanism for that is defined
-further down in this document.</UL>
+further down in this document.
 
 <LI>
 A <B>feature (OGRFeature object)</B> can have its own complete style definition.
 Alternatively, a feature can be linked to a style in the dataset's table of styles.
-This can save lots of storage space when the same styles are reused often.</LI>
+This can save storage space when the same styles are reused often.
 
 </UL>
 It should be possible to have style information stored at one or more of

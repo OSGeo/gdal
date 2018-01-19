@@ -239,9 +239,9 @@ GDALDataset *GMTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     // We don't necessarily want to catch bugs in libnetcdf ...
-    if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", NULL) )
+    if( CPLGetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", nullptr) )
     {
-        return NULL;
+        return nullptr;
     }
 #endif
 

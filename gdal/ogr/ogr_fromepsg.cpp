@@ -779,35 +779,35 @@ OSRGetEllipsoidInfo( int nCode, char ** ppszName,
     return OGRERR_NONE;
 }
 
-static const int CoLatConeAxis =        1036;  // See #4223.
-static const int NatOriginLat =         8801;
-static const int NatOriginLong =        8802;
-static const int NatOriginScaleFactor = 8805;
-static const int FalseEasting =         8806;
-static const int FalseNorthing =        8807;
-static const int ProjCenterLat =        8811;
-static const int ProjCenterLong =       8812;
-static const int Azimuth =              8813;
-static const int AngleRectifiedToSkewedGrid = 8814;
-static const int InitialLineScaleFactor = 8815;
-static const int ProjCenterEasting =    8816;
-static const int ProjCenterNorthing =   8817;
-static const int PseudoStdParallelLat = 8818;
-static const int PseudoStdParallelScaleFactor = 8819;
-static const int FalseOriginLat =       8821;
-static const int FalseOriginLong =      8822;
-static const int StdParallel1Lat =      8823;
-static const int StdParallel2Lat =      8824;
-static const int FalseOriginEasting =   8826;
-static const int FalseOriginNorthing =  8827;
-static const int SphericalOriginLat =   8828;
-static const int SphericalOriginLong =  8829;
+constexpr int CoLatConeAxis =        1036;  // See #4223.
+constexpr int NatOriginLat =         8801;
+constexpr int NatOriginLong =        8802;
+constexpr int NatOriginScaleFactor = 8805;
+constexpr int FalseEasting =         8806;
+constexpr int FalseNorthing =        8807;
+constexpr int ProjCenterLat =        8811;
+constexpr int ProjCenterLong =       8812;
+constexpr int Azimuth =              8813;
+constexpr int AngleRectifiedToSkewedGrid = 8814;
+constexpr int InitialLineScaleFactor = 8815;
+constexpr int ProjCenterEasting =    8816;
+constexpr int ProjCenterNorthing =   8817;
+constexpr int PseudoStdParallelLat = 8818;
+constexpr int PseudoStdParallelScaleFactor = 8819;
+constexpr int FalseOriginLat =       8821;
+constexpr int FalseOriginLong =      8822;
+constexpr int StdParallel1Lat =      8823;
+constexpr int StdParallel2Lat =      8824;
+constexpr int FalseOriginEasting =   8826;
+constexpr int FalseOriginNorthing =  8827;
+constexpr int SphericalOriginLat =   8828;
+constexpr int SphericalOriginLong =  8829;
 #if 0
-static const int InitialLongitude =     8830;
-static const int ZoneWidth =            8831;
+constexpr int InitialLongitude =     8830;
+constexpr int ZoneWidth =            8831;
 #endif
-static const int PolarLatStdParallel =  8832;
-static const int PolarLongOrigin =      8833;
+constexpr int PolarLatStdParallel =  8832;
+constexpr int PolarLongOrigin =      8833;
 
 /************************************************************************/
 /*                         EPSGGetProjTRFInfo()                         */
@@ -1193,7 +1193,7 @@ static OGRErr SetEPSGAxisInfo( OGRSpatialReference *poSRS,
 /* -------------------------------------------------------------------- */
     OGRAxisOrientation eOAxis1 = OAO_Other;
     OGRAxisOrientation eOAxis2 = OAO_Other;
-    static const int anCodes[7] = { -1, 9907, 9909, 9906, 9908, -1, -1 };
+    constexpr int anCodes[7] = { -1, 9907, 9909, 9906, 9908, -1, -1 };
 
     for( int iAO = 0; iAO < 7; iAO++ )
     {

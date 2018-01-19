@@ -9,6 +9,8 @@
  * Copyright (c) 2006, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
  * Copyright (c) 2017 Hobu Inc
+ * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,10 +52,8 @@
  *
  ****************************************************************************/
 
-#include "cpl_string.h"
 #include "nasakeywordhandler.h"
 #include "ogrgeojsonreader.h"
-#include "ogr_json_header.h"
 #include <vector>
 
 CPL_CVSID("$Id$")
@@ -71,9 +71,10 @@ CPL_CVSID("$Id$")
 NASAKeywordHandler::NASAKeywordHandler() :
     papszKeywordList(nullptr),
     pszHeaderNext(nullptr),
-    poJSon(nullptr),
     m_bStripSurroundingQuotes(false)
-{}
+{
+    oJSon.Deinit();
+}
 
 /************************************************************************/
 /*                        ~NASAKeywordHandler()                         */
@@ -84,8 +85,6 @@ NASAKeywordHandler::~NASAKeywordHandler()
 {
     CSLDestroy( papszKeywordList );
     papszKeywordList = nullptr;
-    if( poJSon )
-        json_object_put(poJSon);
 }
 
 /************************************************************************/
@@ -128,72 +127,59 @@ int NASAKeywordHandler::Ingest( VSILFILE *fp, int nOffset )
 
     pszHeaderNext = osHeaderText.c_str();
 
-    poJSon = json_object_new_object();
 
 /* -------------------------------------------------------------------- */
 /*      Process name/value pairs, keeping track of a "path stack".      */
 /* -------------------------------------------------------------------- */
-    return ReadGroup( "", poJSon, 0 );
+    oJSon = CPLJSONObject();
+    return ReadGroup( "", oJSon, 0 );
 }
 
 /************************************************************************/
 /*                             ReadGroup()                              */
 /************************************************************************/
 
-int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur,
+int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, CPLJSONObject &oCur,
                                    int nRecLevel )
 
 {
-    // Arbitrary threshold to avoid stack overflow
     if( nRecLevel == 100 )
         return FALSE;
-
     for( ; true; )
     {
         CPLString osName, osValue;
-        if( !ReadPair( osName, osValue, poCur ) )
+        if( !ReadPair( osName, osValue, oCur ) )
             return FALSE;
 
         if( EQUAL(osName,"OBJECT") || EQUAL(osName,"GROUP") )
         {
-            json_object* poNewGroup = json_object_new_object();
-            json_object_object_add(poNewGroup, "_type",
-                json_object_new_string( EQUAL(osName,"OBJECT") ?
-                                                    "object" : "group" ) );
+            CPLJSONObject oNewGroup;
+            oNewGroup.Add( "_type", EQUAL(osName,"OBJECT") ? "object" : "group" );
             if( !ReadGroup( (CPLString(pszPathPrefix) + osValue + ".").c_str(),
-                            poNewGroup, nRecLevel + 1 ) )
+                            oNewGroup, nRecLevel + 1 ) )
             {
-                json_object_put(poNewGroup);
                 return FALSE;
             }
-            json_object* poName = nullptr;
+            CPLJSONObject oName = oNewGroup["Name"];
             if( (osValue == "Table" || osValue == "Field") &&
-                (poName = CPL_json_object_object_get(poNewGroup, "Name")) != nullptr &&
-                json_object_get_type(poName) == json_type_string )
+                (oName.GetType() == CPLJSONObject::String) )
             {
-                json_object_object_add(poCur,
-                    (osValue + "_" + json_object_get_string(poName)).c_str(),
-                    poNewGroup);
-                json_object_object_add(poNewGroup, "_container_name",
-                                       json_object_new_string(osValue));
+                oCur.Add( osValue + "_" + oName.ToString(), oNewGroup );
+                oNewGroup.Add( "_container_name", osValue );
             }
-            else if( CPL_json_object_object_get(poCur, osValue) != nullptr )
+            else if( oCur[osValue].IsValid() )
             {
                 int nIter = 2;
-                while( CPL_json_object_object_get(poCur,
-                        (osValue + CPLSPrintf("_%d", nIter)).c_str()) != nullptr )
+                while( oCur[osValue + CPLSPrintf("_%d", nIter)].IsValid() )
                 {
                     nIter ++;
                 }
-                json_object_object_add(poCur,
-                    (osValue + CPLSPrintf("_%d", nIter)).c_str(),
-                    poNewGroup);
-                json_object_object_add(poNewGroup, "_container_name",
-                                       json_object_new_string(osValue));
+                oCur.Add( osValue + CPLSPrintf("_%d", nIter), oNewGroup );
+                oNewGroup.Add( "_container_name", osValue );
             }
             else
             {
-                json_object_object_add(poCur, osValue.c_str(), poNewGroup);
+                oCur.Add( osValue, oNewGroup );
             }
         }
         else if( EQUAL(osName,"END")
@@ -220,7 +206,7 @@ int NASAKeywordHandler::ReadGroup( const char *pszPathPrefix, json_object* poCur
 /************************************************************************/
 
 int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
-                                  json_object* poCur )
+                                  CPLJSONObject &oCur )
 
 {
     osName = "";
@@ -252,13 +238,12 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
 
     // Handle value lists like:
     // Name   = (Red, Red) or  {Red, Red} or even ({Red, Red}, {Red, Red})
-    json_object* poArray = nullptr;
+    CPLJSONArray oArray;
     if( *pszHeaderNext == '(' || *pszHeaderNext == '{' )
     {
         std::vector<char> oStackArrayBeginChar;
         CPLString osWord;
 
-        poArray = json_object_new_array();
 
         while( ReadWord( osWord, m_bStripSurroundingQuotes,
                          true, &bIsString ) )
@@ -274,23 +259,20 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
             // instead of flattening when there are (( )) or ({ }) constructs
             if( bIsString )
             {
-                if( !(osWord.empty() && (*pszHeaderNext == '(' || 
+                if( !(osWord.empty() && (*pszHeaderNext == '(' ||
                       *pszHeaderNext == '{' || *pszHeaderNext == ')' ||
                       *pszHeaderNext == '}')) )
                 {
-                    json_object_array_add( poArray,
-                                    json_object_new_string( osWord.c_str() ) );
+                    oArray.Add(osWord);
                 }
             }
             else  if( CPLGetValueType(osWord) == CPL_VALUE_INTEGER )
             {
-                json_object_array_add( poArray,
-                    json_object_new_int(atoi(osWord.c_str())) );
+                oArray.Add( atoi(osWord) );
             }
             else
             {
-                json_object_array_add( poArray,
-                    json_object_new_double(CPLAtof(osWord.c_str())));
+                oArray.Add( CPLAtof(osWord) );
             }
 
             osValue += osWord;
@@ -302,7 +284,6 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '(' )
                 {
                     CPLDebug("PDS", "Unpaired ( ) for %s", osName.c_str());
-                    json_object_put(poArray);
                     return FALSE;
                 }
                 oStackArrayBeginChar.pop_back();
@@ -317,7 +298,6 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
                     oStackArrayBeginChar.back() != '{' )
                 {
                     CPLDebug("PDS", "Unpaired { } for %s", osName.c_str());
-                    json_object_put(poArray);
                     return FALSE;
                 }
                 oStackArrayBeginChar.pop_back();
@@ -348,32 +328,25 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
     {
         if( !EQUAL(osName, "OBJECT") && !EQUAL(osName, "GROUP") )
         {
-            if( poArray )
+            if( oArray.Size() > 0 )
             {
-                json_object_object_add( poCur, osName.c_str(), poArray );
+                oCur.Add(osName, oArray);
             }
             else
             {
                 if( bIsString )
                 {
-                    json_object_object_add( poCur, osName.c_str(),
-                        json_object_new_string(osValue.c_str()) );
+                    oCur.Add( osName, osValue );
                 }
                 else if( CPLGetValueType(osValue) == CPL_VALUE_INTEGER )
                 {
-                    json_object_object_add( poCur, osName.c_str(),
-                        json_object_new_int(atoi(osValue.c_str())) );
+                    oCur.Add( osName, atoi(osValue) );
                 }
                 else
                 {
-                    json_object_object_add( poCur, osName.c_str(),
-                        json_object_new_double(CPLAtof(osValue.c_str())));
+                    oCur.Add( osName, CPLAtof(osValue) );
                 }
             }
-        }
-        else if ( poArray )
-        {
-            json_object_put( poArray );
         }
         return TRUE;
     }
@@ -401,33 +374,29 @@ int NASAKeywordHandler::ReadPair( CPLString &osName, CPLString &osValue,
     if( !osUnit.empty() && osUnit.back() == '>' )
         osUnit = osUnit.substr(0, osUnit.size() - 1);
 
-    json_object* poNew = json_object_new_object();
-    json_object_object_add( poCur, osName.c_str(), poNew);
+    CPLJSONObject newObject;
+    oCur.Add( osName, newObject );
 
-    if( poArray )
+    if( oArray.Size() > 0 )
     {
-        json_object_object_add(poNew, "value", poArray);
+        newObject.Add( "value", oArray );
     }
     else
     {
         if( bIsString )
         {
-            json_object_object_add(poNew, "value",
-                               json_object_new_string(osValueNoUnit.c_str()) );
+            newObject.Add( "value", osValueNoUnit );
         }
         else if( CPLGetValueType(osValueNoUnit) == CPL_VALUE_INTEGER )
         {
-            json_object_object_add(poNew, "value",
-                            json_object_new_int(atoi(osValueNoUnit.c_str())) );
+            newObject.Add( "value", atoi(osValueNoUnit) );
         }
         else
         {
-            json_object_object_add(poNew, "value",
-                    json_object_new_double(CPLAtof(osValueNoUnit.c_str())) );
+            newObject.Add( "value", CPLAtof(osValueNoUnit) );
         }
     }
-    json_object_object_add(poNew, "unit",
-                               json_object_new_string(osUnit.c_str()) );
+    newObject.Add( "unit", osUnit );
 
     return TRUE;
 }
@@ -641,9 +610,7 @@ char **NASAKeywordHandler::GetKeywordList()
 /*                               StealJSon()                            */
 /************************************************************************/
 
-json_object* NASAKeywordHandler::StealJSon()
+CPLJSONObject NASAKeywordHandler::GetJsonObject() const
 {
-    json_object* poTmp = poJSon;
-    poJSon = nullptr;
-    return poTmp;
+    return oJSon;
 }

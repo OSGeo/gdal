@@ -71,16 +71,16 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
-static const int TIFF_VERSION = 42;
+constexpr int TIFF_VERSION = 42;
 
-static const int TIFF_BIGENDIAN = 0x4d4d;
-static const int TIFF_LITTLEENDIAN = 0x4949;
+constexpr int TIFF_BIGENDIAN = 0x4d4d;
+constexpr int TIFF_LITTLEENDIAN = 0x4949;
 
-static const int JPEG_TIFF_IMAGEWIDTH      = 0x100;
-static const int JPEG_TIFF_IMAGEHEIGHT     = 0x101;
-static const int JPEG_TIFF_COMPRESSION     = 0x103;
-static const int JPEG_EXIF_JPEGIFOFSET     = 0x201;
-static const int JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
+constexpr int JPEG_TIFF_IMAGEWIDTH      = 0x100;
+constexpr int JPEG_TIFF_IMAGEHEIGHT     = 0x101;
+constexpr int JPEG_TIFF_COMPRESSION     = 0x103;
+constexpr int JPEG_EXIF_JPEGIFOFSET     = 0x201;
+constexpr int JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
 
 // Ok to use setjmp().
 #ifdef _MSC_VER
@@ -1475,7 +1475,7 @@ CPLErr JPGDataset::LoadScanline( int iLine )
 #define DC_BITS GDALJPEG_DC_BITS
 #define DC_HUFFVAL GDALJPEG_DC_HUFFVAL
 
-static const GByte Q1table[64] =
+constexpr GByte Q1table[64] =
 {
     8,    72,  72,  72,  72,  72,  72,  72, // 0 - 7
     72,   72,  78,  74,  76,  74,  78,  89, // 8 - 15
@@ -1487,7 +1487,7 @@ static const GByte Q1table[64] =
     255, 255, 255, 255, 255, 255, 255, 255  // 56 - 63
 };
 
-static const GByte Q2table[64] =
+constexpr GByte Q2table[64] =
 {
     8, 36, 36, 36,
     36, 36, 36, 36, 36, 36, 39, 37, 38, 37, 39, 45, 41, 42, 42, 41, 45, 53,
@@ -1496,7 +1496,7 @@ static const GByte Q2table[64] =
     178,190,178,243,243,255
 };
 
-static const GByte Q3table[64] =
+constexpr GByte Q3table[64] =
 {
      8, 10, 10, 10,
     10, 10, 10, 10, 10, 10, 11, 10, 11, 10, 11, 13, 11, 12, 12, 11, 13, 15,
@@ -1505,7 +1505,7 @@ static const GByte Q3table[64] =
     50, 53, 50, 68, 68, 91
 };
 
-static const GByte Q4table[64] =
+constexpr GByte Q4table[64] =
 {
     8, 7, 7, 7,
     7, 7, 7, 7, 7, 7, 8, 7, 8, 7, 8, 9, 8, 8, 8, 8, 9, 11,
@@ -1514,7 +1514,7 @@ static const GByte Q4table[64] =
     36, 38, 36, 49, 49, 65
 };
 
-static const GByte Q5table[64] =
+constexpr GByte Q5table[64] =
 {
     4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6,
@@ -1523,10 +1523,10 @@ static const GByte Q5table[64] =
     20, 21, 20, 27, 27, 36
 };
 
-static const GByte AC_BITS[16] =
+constexpr GByte AC_BITS[16] =
 { 0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125 };
 
-static const GByte AC_HUFFVAL[256] = {
+constexpr GByte AC_HUFFVAL[256] = {
     0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
     0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
     0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xA1, 0x08,
@@ -1558,10 +1558,10 @@ static const GByte AC_HUFFVAL[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-static const GByte DC_BITS[16] =
+constexpr GByte DC_BITS[16] =
     { 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 };
 
-static const GByte DC_HUFFVAL[256] = {
+constexpr GByte DC_HUFFVAL[256] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0A, 0x0B };
 

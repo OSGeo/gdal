@@ -46,21 +46,21 @@ CPL_C_END
 
 CPL_CVSID("$Id$")
 
-static const char VSICRYPT_PREFIX[] = "/vsicrypt/";
+constexpr char VSICRYPT_PREFIX[] = "/vsicrypt/";
 
 #if defined(HAVE_CRYPTOPP) || defined(DOXYGEN_SKIP)
 
 //! @cond Doxygen_Suppress
 
 /* Increase Major in case of backward incompatible changes */
-static const int VSICRYPT_CURRENT_MAJOR = 1;
-static const int VSICRYPT_CURRENT_MINOR = 0;
-static const char VSICRYPT_SIGNATURE[] = "VSICRYPT";  // Must be 8 chars.
+constexpr int VSICRYPT_CURRENT_MAJOR = 1;
+constexpr int VSICRYPT_CURRENT_MINOR = 0;
+constexpr char VSICRYPT_SIGNATURE[] = "VSICRYPT";  // Must be 8 chars.
 
-static const char VSICRYPT_PREFIX_WITHOUT_SLASH[] = "/vsicrypt";
+constexpr char VSICRYPT_PREFIX_WITHOUT_SLASH[] = "/vsicrypt";
 
-static const unsigned int VSICRYPT_READ = 0x1;
-static const unsigned int VSICRYPT_WRITE = 0x2;
+constexpr unsigned int VSICRYPT_READ = 0x1;
+constexpr unsigned int VSICRYPT_WRITE = 0x2;
 
 #ifdef _MSC_VER
 #pragma warning( push )

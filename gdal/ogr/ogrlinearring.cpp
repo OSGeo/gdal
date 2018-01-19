@@ -427,11 +427,11 @@ OGRGeometry *OGRLinearRing::clone() const
 /*                            epsilonEqual()                            */
 /************************************************************************/
 
-static const double EPSILON = 1E-5;
+constexpr double EPSILON = 1.0E-5;
 
 static inline bool epsilonEqual(double a, double b, double eps)
 {
-    return (::fabs(a - b) < eps);
+    return ::fabs(a - b) < eps;
 }
 
 /************************************************************************/

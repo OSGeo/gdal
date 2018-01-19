@@ -130,7 +130,7 @@ static const char * const apszUnitMapping[] = {
 /* -------------------------------------------------------------------- */
 /*      Table relating USGS and ESRI state plane zones.                 */
 /* -------------------------------------------------------------------- */
-static const int anUsgsEsriZones[] =
+constexpr int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,

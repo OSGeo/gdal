@@ -48,9 +48,9 @@ CPL_CVSID("$Id$")
 // The buffer that are passed to GPB decoding are extended with 0's
 // to be sure that we will be able to read a single 64bit value without
 // doing checks for each byte.
-static const int EXTRA_BYTES = 1;
+constexpr int EXTRA_BYTES = 1;
 
-static const int XML_BUFSIZE = 64 * 1024;
+constexpr int XML_BUFSIZE = 64 * 1024;
 
 // Per OSM PBF spec
 const unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
@@ -176,9 +176,9 @@ struct _OSMContext
 /*                          ReadBlobHeader()                            */
 /************************************************************************/
 
-static const int BLOBHEADER_IDX_TYPE = 1;
-static const int BLOBHEADER_IDX_INDEXDATA = 2;
-static const int BLOBHEADER_IDX_DATASIZE = 3;
+constexpr int BLOBHEADER_IDX_TYPE = 1;
+constexpr int BLOBHEADER_IDX_INDEXDATA = 2;
+constexpr int BLOBHEADER_IDX_DATASIZE = 3;
 
 typedef enum
 {
@@ -245,10 +245,10 @@ end_error:
 /*                          ReadHeaderBBox()                            */
 /************************************************************************/
 
-static const int HEADERBBOX_IDX_LEFT = 1;
-static const int HEADERBBOX_IDX_RIGHT = 2;
-static const int HEADERBBOX_IDX_TOP = 3;
-static const int HEADERBBOX_IDX_BOTTOM = 4;
+constexpr int HEADERBBOX_IDX_LEFT = 1;
+constexpr int HEADERBBOX_IDX_RIGHT = 2;
+constexpr int HEADERBBOX_IDX_TOP = 3;
+constexpr int HEADERBBOX_IDX_BOTTOM = 4;
 
 static
 bool ReadHeaderBBox( GByte* pabyData, GByte* pabyDataLimit,
@@ -312,16 +312,16 @@ end_error:
 /*                          ReadOSMHeader()                             */
 /************************************************************************/
 
-static const int OSMHEADER_IDX_BBOX              = 1;
-static const int OSMHEADER_IDX_REQUIRED_FEATURES = 4;
-static const int OSMHEADER_IDX_OPTIONAL_FEATURES = 5;
-static const int OSMHEADER_IDX_WRITING_PROGRAM   = 16;
-static const int OSMHEADER_IDX_SOURCE            = 17;
+constexpr int OSMHEADER_IDX_BBOX              = 1;
+constexpr int OSMHEADER_IDX_REQUIRED_FEATURES = 4;
+constexpr int OSMHEADER_IDX_OPTIONAL_FEATURES = 5;
+constexpr int OSMHEADER_IDX_WRITING_PROGRAM   = 16;
+constexpr int OSMHEADER_IDX_SOURCE            = 17;
 
 /* Ignored */
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP  = 32;
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER = 33;
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   = 34;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP  = 32;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER = 33;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   = 34;
 
 static
 bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
@@ -412,7 +412,7 @@ end_error:
 /*                         ReadStringTable()                            */
 /************************************************************************/
 
-static const int READSTRINGTABLE_IDX_STRING = 1;
+constexpr int READSTRINGTABLE_IDX_STRING = 1;
 
 static
 bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
@@ -520,18 +520,18 @@ static unsigned AddWithOverflowAccepted(unsigned a, int b)
 /*                         ReadDenseNodes()                             */
 /************************************************************************/
 
-static const int DENSEINFO_IDX_VERSION   = 1;
-static const int DENSEINFO_IDX_TIMESTAMP = 2;
-static const int DENSEINFO_IDX_CHANGESET = 3;
-static const int DENSEINFO_IDX_UID       = 4;
-static const int DENSEINFO_IDX_USER_SID  = 5;
-static const int DENSEINFO_IDX_VISIBLE   = 6;
+constexpr int DENSEINFO_IDX_VERSION   = 1;
+constexpr int DENSEINFO_IDX_TIMESTAMP = 2;
+constexpr int DENSEINFO_IDX_CHANGESET = 3;
+constexpr int DENSEINFO_IDX_UID       = 4;
+constexpr int DENSEINFO_IDX_USER_SID  = 5;
+constexpr int DENSEINFO_IDX_VISIBLE   = 6;
 
-static const int DENSENODES_IDX_ID        = 1;
-static const int DENSENODES_IDX_DENSEINFO = 5;
-static const int DENSENODES_IDX_LAT       = 8;
-static const int DENSENODES_IDX_LON       = 9;
-static const int DENSENODES_IDX_KEYVALS   = 10;
+constexpr int DENSENODES_IDX_ID        = 1;
+constexpr int DENSENODES_IDX_DENSEINFO = 5;
+constexpr int DENSENODES_IDX_LAT       = 8;
+constexpr int DENSENODES_IDX_LON       = 9;
+constexpr int DENSENODES_IDX_KEYVALS   = 10;
 
 static
 bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
@@ -800,12 +800,12 @@ end_error:
 /*                           ReadOSMInfo()                              */
 /************************************************************************/
 
-static const int INFO_IDX_VERSION   = 1;
-static const int INFO_IDX_TIMESTAMP = 2;
-static const int INFO_IDX_CHANGESET = 3;
-static const int INFO_IDX_UID       = 4;
-static const int INFO_IDX_USER_SID  = 5;
-static const int INFO_IDX_VISIBLE   = 6;
+constexpr int INFO_IDX_VERSION   = 1;
+constexpr int INFO_IDX_TIMESTAMP = 2;
+constexpr int INFO_IDX_CHANGESET = 3;
+constexpr int INFO_IDX_UID       = 4;
+constexpr int INFO_IDX_USER_SID  = 5;
+constexpr int INFO_IDX_VISIBLE   = 6;
 
 static
 bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
@@ -874,12 +874,12 @@ end_error:
 /* The one advertized in http://wiki.openstreetmap.org/wiki/PBF_Format and */
 /* used previously seem wrong/old-dated */
 
-static const int NODE_IDX_ID   = 1;
-static const int NODE_IDX_LAT  = 8;
-static const int NODE_IDX_LON  = 9;
-static const int NODE_IDX_KEYS = 2;
-static const int NODE_IDX_VALS = 3;
-static const int NODE_IDX_INFO = 4;
+constexpr int NODE_IDX_ID   = 1;
+constexpr int NODE_IDX_LAT  = 8;
+constexpr int NODE_IDX_LON  = 9;
+constexpr int NODE_IDX_KEYS = 2;
+constexpr int NODE_IDX_VALS = 3;
+constexpr int NODE_IDX_INFO = 4;
 
 static
 bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
@@ -1022,11 +1022,11 @@ end_error:
 /*                              ReadWay()                               */
 /************************************************************************/
 
-static const int WAY_IDX_ID   = 1;
-static const int WAY_IDX_KEYS = 2;
-static const int WAY_IDX_VALS = 3;
-static const int WAY_IDX_INFO = 4;
-static const int WAY_IDX_REFS = 8;
+constexpr int WAY_IDX_ID   = 1;
+constexpr int WAY_IDX_KEYS = 2;
+constexpr int WAY_IDX_VALS = 3;
+constexpr int WAY_IDX_INFO = 4;
+constexpr int WAY_IDX_REFS = 8;
 
 static
 bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
@@ -1181,13 +1181,13 @@ end_error:
 /*                            ReadRelation()                            */
 /************************************************************************/
 
-static const int RELATION_IDX_ID        = 1;
-static const int RELATION_IDX_KEYS      = 2;
-static const int RELATION_IDX_VALS      = 3;
-static const int RELATION_IDX_INFO      = 4;
-static const int RELATION_IDX_ROLES_SID = 8;
-static const int RELATION_IDX_MEMIDS    = 9;
-static const int RELATION_IDX_TYPES     = 10;
+constexpr int RELATION_IDX_ID        = 1;
+constexpr int RELATION_IDX_KEYS      = 2;
+constexpr int RELATION_IDX_VALS      = 3;
+constexpr int RELATION_IDX_INFO      = 4;
+constexpr int RELATION_IDX_ROLES_SID = 8;
+constexpr int RELATION_IDX_MEMIDS    = 9;
+constexpr int RELATION_IDX_TYPES     = 10;
 
 static
 bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
@@ -1386,11 +1386,11 @@ end_error:
 /*                          ReadPrimitiveGroup()                        */
 /************************************************************************/
 
-static const int PRIMITIVEGROUP_IDX_NODES = 1;
-// static const int PRIMITIVEGROUP_IDX_DENSE = 2;
-// static const int PRIMITIVEGROUP_IDX_WAYS = 3;
-static const int PRIMITIVEGROUP_IDX_RELATIONS = 4;
-// static const int PRIMITIVEGROUP_IDX_CHANGESETS = 5;
+constexpr int PRIMITIVEGROUP_IDX_NODES = 1;
+// constexpr int PRIMITIVEGROUP_IDX_DENSE = 2;
+// constexpr int PRIMITIVEGROUP_IDX_WAYS = 3;
+constexpr int PRIMITIVEGROUP_IDX_RELATIONS = 4;
+// constexpr int PRIMITIVEGROUP_IDX_CHANGESETS = 5;
 
 typedef bool (*PrimitiveFuncType)( GByte* pabyData, GByte* pabyDataLimit,
                                    OSMContext* psCtxt );
@@ -1446,12 +1446,12 @@ end_error:
 /*                          ReadPrimitiveBlock()                        */
 /************************************************************************/
 
-static const int PRIMITIVEBLOCK_IDX_STRINGTABLE      = 1;
-static const int PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP   = 2;
-static const int PRIMITIVEBLOCK_IDX_GRANULARITY      = 17;
-static const int PRIMITIVEBLOCK_IDX_DATE_GRANULARITY = 18;
-static const int PRIMITIVEBLOCK_IDX_LAT_OFFSET       = 19;
-static const int PRIMITIVEBLOCK_IDX_LON_OFFSET       = 20;
+constexpr int PRIMITIVEBLOCK_IDX_STRINGTABLE      = 1;
+constexpr int PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP   = 2;
+constexpr int PRIMITIVEBLOCK_IDX_GRANULARITY      = 17;
+constexpr int PRIMITIVEBLOCK_IDX_DATE_GRANULARITY = 18;
+constexpr int PRIMITIVEBLOCK_IDX_LAT_OFFSET       = 19;
+constexpr int PRIMITIVEBLOCK_IDX_LON_OFFSET       = 20;
 
 static
 bool ReadPrimitiveBlock( GByte* pabyData, GByte* pabyDataLimit,
@@ -1662,9 +1662,9 @@ static bool RunDecompressionJobsAndProcessAll(OSMContext* psCtxt,
 /*                              ReadBlob()                              */
 /************************************************************************/
 
-static const int BLOB_IDX_RAW       = 1;
-static const int BLOB_IDX_RAW_SIZE  = 2;
-static const int BLOB_IDX_ZLIB_DATA = 3;
+constexpr int BLOB_IDX_RAW       = 1;
+constexpr int BLOB_IDX_RAW_SIZE  = 2;
+constexpr int BLOB_IDX_ZLIB_DATA = 3;
 
 static
 bool ReadBlob( OSMContext* psCtxt, BlobType eType )

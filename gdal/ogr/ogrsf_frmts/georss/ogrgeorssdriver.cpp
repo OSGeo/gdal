@@ -48,7 +48,8 @@ static GDALDataset *OGRGeoRSSDriverOpen( GDALOpenInfo* poOpenInfo )
 
     OGRGeoRSSDataSource   *poDS = new OGRGeoRSSDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
+    if( !poDS->Open( poOpenInfo->pszFilename,
+                     poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
         poDS = nullptr;
@@ -68,7 +69,7 @@ static GDALDataset *OGRGeoRSSDriverCreate( const char * pszName,
                                            CPL_UNUSED GDALDataType eDT,
                                            char **papszOptions )
 {
-    OGRGeoRSSDataSource   *poDS = new OGRGeoRSSDataSource();
+    OGRGeoRSSDataSource *poDS = new OGRGeoRSSDataSource();
 
     if( !poDS->Create( pszName, papszOptions ) )
     {
@@ -99,7 +100,7 @@ static CPLErr OGRGeoRSSDriverDelete( const char *pszFilename )
 void RegisterOGRGeoRSS()
 
 {
-    if (! GDAL_CHECK_VERSION("OGR/GeoRSS driver"))
+    if( ! GDAL_CHECK_VERSION("OGR/GeoRSS driver") )
         return;
 
     if( GDALGetDriverByName( "GeoRSS" ) != nullptr )
@@ -107,12 +108,12 @@ void RegisterOGRGeoRSS()
 
     GDALDriver  *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GeoRSS" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "GeoRSS" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_georss.html" );
+    poDriver->SetDescription("GeoRSS");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GeoRSS");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_georss.html");
 
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "  <Option name='FORMAT' type='string-select' description='whether the document must be in RSS 2.0 or Atom 1.0 format' default='RSS'>"
 "    <Value>RSS</Value>"
@@ -133,13 +134,13 @@ void RegisterOGRGeoRSS()
 "  <Option name='AUTHOR_NAME' type='string' description='(ATOM only) value put inside the <author><name> element in the header'/>"
 "  <Option name='ID' type='string' description='(ATOM only) value put inside the <id> element in the header.'/>"
 "</CreationOptionList>");
-    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST,
-                               "<LayerCreationOptionList/>");
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
+                              "<LayerCreationOptionList/>");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = OGRGeoRSSDriverOpen;
     poDriver->pfnCreate = OGRGeoRSSDriverCreate;
     poDriver->pfnDelete = OGRGeoRSSDriverDelete;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -484,10 +484,10 @@ template<class WorkDataType, class OutDataType>
 template<class T> static inline double ComputeFactor(T panValue,
                                                      double dfPseudoPanchro)
 {
-    if( dfPseudoPanchro != 0.0 )
-        return panValue / dfPseudoPanchro;
-    else
+    if( dfPseudoPanchro == 0.0 )
         return 0.0;
+
+    return panValue / dfPseudoPanchro;
 }
 
 /************************************************************************/

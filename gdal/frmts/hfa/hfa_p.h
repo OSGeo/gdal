@@ -37,6 +37,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <set>
 
 #include "cpl_error.h"
 #include "cpl_vsi.h"
@@ -378,7 +379,7 @@ class HFAField
                                GUInt32 nDataOffset, int nDataSize,
                                const char *pszPrefix = nullptr );
 
-    int         GetInstBytes( GByte *, int );
+    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields );
     int         GetInstCount( GByte * pabyData, int nDataSize );
 };
 
@@ -409,7 +410,7 @@ class HFAType
 
     void        Dump( FILE * );
 
-    int         GetInstBytes( GByte *, int );
+    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields );
     int         GetInstCount( const char *pszField, GByte *pabyData,
                               GUInt32 nDataOffset, int nDataSize );
     bool        ExtractInstValue( const char * pszField,

@@ -34,48 +34,48 @@
 
 CPL_CVSID("$Id$")
 
-// static const int ADM_STD_HEADER_SIZE = 4608;  // Format specification says it
-static const int ADM_HEADER_SIZE = 5000;  // Should be 4608, but some vendors
+// constexpr int ADM_STD_HEADER_SIZE = 4608;  // Format specification says it
+constexpr int ADM_HEADER_SIZE = 5000;  // Should be 4608, but some vendors
                                           // ship broken large datasets.
-static const size_t ADM_MIN_HEADER_SIZE = 1536;  // And sometimes it can be
+constexpr size_t ADM_MIN_HEADER_SIZE = 1536;  // And sometimes it can be
                                                  // even 1/3 of standard size.
 
 static const char ACQUISITION_DATE[] = "ACQUISITION DATE";
-static const int ACQUISITION_DATE_SIZE = 8;
+constexpr int ACQUISITION_DATE_SIZE = 8;
 
 static const char SATELLITE_NAME[] = "SATELLITE";
-static const int SATELLITE_NAME_SIZE = 10;
+constexpr int SATELLITE_NAME_SIZE = 10;
 
 static const char SENSOR_NAME[] = "SENSOR";
-static const int SENSOR_NAME_SIZE = 10;
+constexpr int SENSOR_NAME_SIZE = 10;
 
 static const char BANDS_PRESENT[] = "BANDS PRESENT";
-static const int BANDS_PRESENT_SIZE = 32;
+constexpr int BANDS_PRESENT_SIZE = 32;
 
 static const char FILENAME[] = "FILENAME";
-static const int FILENAME_SIZE = 29;
+constexpr int FILENAME_SIZE = 29;
 
 static const char PIXELS[] = "PIXELS PER LINE";
-static const int PIXELS_SIZE = 5;
+constexpr int PIXELS_SIZE = 5;
 
 static const char LINES1[] = "LINES PER BAND";
 static const char LINES2[] = "LINES PER IMAGE";
-static const int LINES_SIZE = 5;
+constexpr int LINES_SIZE = 5;
 
 static const char BITS_PER_PIXEL[] = "OUTPUT BITS PER PIXEL";
-static const int BITS_PER_PIXEL_SIZE = 2;
+constexpr int BITS_PER_PIXEL_SIZE = 2;
 
 static const char PROJECTION_NAME[] = "MAP PROJECTION";
-static const int PROJECTION_NAME_SIZE = 4;
+constexpr int PROJECTION_NAME_SIZE = 4;
 
 static const char ELLIPSOID_NAME[] = "ELLIPSOID";
-static const int ELLIPSOID_NAME_SIZE = 18;
+constexpr int ELLIPSOID_NAME_SIZE = 18;
 
 static const char DATUM_NAME[] = "DATUM";
-static const int DATUM_NAME_SIZE = 6;
+constexpr int DATUM_NAME_SIZE = 6;
 
 static const char ZONE_NUMBER[] = "USGS MAP ZONE";
-static const int ZONE_NUMBER_SIZE = 6;
+constexpr int ZONE_NUMBER_SIZE = 6;
 
 static const char USGS_PARAMETERS[] = "USGS PROJECTION PARAMETERS";
 
@@ -83,9 +83,9 @@ static const char CORNER_UPPER_LEFT[] = "UL ";
 static const char CORNER_UPPER_RIGHT[] = "UR ";
 static const char CORNER_LOWER_LEFT[] = "LL ";
 static const char CORNER_LOWER_RIGHT[] = "LR ";
-static const int CORNER_VALUE_SIZE = 13;
+constexpr int CORNER_VALUE_SIZE = 13;
 
-static const int VALUE_SIZE = 24;
+constexpr int VALUE_SIZE = 24;
 
 enum FASTSatellite  // Satellites:
 {

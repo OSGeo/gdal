@@ -44,6 +44,7 @@
 #ifdef HAVE_GEOS
 #include "geos_c.h"
 #endif
+#include "ogrgeojsonreader.h"
 
 #include <climits>
 #include <cmath>
@@ -631,7 +632,7 @@ void OGR_G_DestroyGeometry( OGRGeometryH hGeom )
  * Starting with GDAL 2.0, curve polygons or closed curves will be changed to
  * polygons.  The passed in geometry is consumed and a new one returned (or
  * potentially the same one).
- * 
+ *
  * Note: the resulting polygon may break the Simple Features rules for polygons,
  * for example when converting from a multi-part multipolygon.
  *
@@ -1337,7 +1338,7 @@ static int OGRGeometryFactoryCompareByIndex(const void* p1, const void* p2)
         return 0;
 }
 
-static const int N_CRITICAL_PART_NUMBER = 100;
+constexpr int N_CRITICAL_PART_NUMBER = 100;
 
 typedef enum
 {
@@ -3839,14 +3840,23 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
         dfMaxAngleStepSizeDegrees = OGRGF_GetDefaultStepSize();
     }
 
+    // Is this a full circle?
+    const bool bIsFullCircle = fabs( dfEndAngle - dfStartAngle ) == 360.0;
+
     // Switch direction.
     dfStartAngle *= -1;
     dfEndAngle *= -1;
 
     // Figure out the number of slices to make this into.
-    const int nVertexCount = std::max(2, static_cast<int>(
+    int nVertexCount = std::max(2, static_cast<int>(
         ceil(fabs(dfEndAngle - dfStartAngle)/dfMaxAngleStepSizeDegrees) + 1));
     const double dfSlice = (dfEndAngle-dfStartAngle)/(nVertexCount-1);
+
+    // If it is a full circle we will work out the last point separately.
+    if( bIsFullCircle )
+    {
+        nVertexCount--;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Compute the interpolated points.                                */
@@ -3869,6 +3879,17 @@ OGRGeometry* OGRGeometryFactory::approximateArcAngles(
             + dfEllipseY * cos(dfRotationRadians);
 
         poLine->setPoint( iPoint, dfArcX, dfArcY, dfZ );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      If we're asked to make a full circle, ensure the start and      */
+/*      end points coincide exactly, in spite of any rounding error.    */
+/* -------------------------------------------------------------------- */
+    if( bIsFullCircle )
+    {
+        OGRPoint oPoint;
+        poLine->getPoint( 0, &oPoint );
+        poLine->setPoint( nVertexCount, &oPoint );
     }
 
     return poLine;
@@ -4537,7 +4558,7 @@ static inline double DISTANCE(double x1, double y1, double x2, double y2)
  *
  * Angles are return in radians, with trigonometic convention (counter clock
  * wise)
- * 
+ *
  * @param x0 x of first point
  * @param y0 y of first point
  * @param x1 x of intermediate point
@@ -4709,18 +4730,18 @@ static void OGRGeometryFactoryStrokeArc( OGRLineString* poLine,
 /************************************************************************/
 
 // TODO(schwehr): Cleanup these static constants.
-static const int HIDDEN_ALPHA_WIDTH = 32;
-static const GUInt32 HIDDEN_ALPHA_SCALE =
+constexpr int HIDDEN_ALPHA_WIDTH = 32;
+constexpr GUInt32 HIDDEN_ALPHA_SCALE =
     static_cast<GUInt32>((static_cast<GUIntBig>(1) << HIDDEN_ALPHA_WIDTH) - 2);
-static const int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
-static const int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
+constexpr int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
+constexpr int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
 
 // Encode 16-bit nValue in the 8-lsb of dfX and dfY.
 
 #ifdef CPL_LSB
-static const int DOUBLE_LSB_OFFSET = 0;
+constexpr int DOUBLE_LSB_OFFSET = 0;
 #else
-static const int DOUBLE_LSB_OFFSET = 7;
+constexpr int DOUBLE_LSB_OFFSET = 7;
 #endif
 
 static void OGRGF_SetHiddenValue( GUInt16 nValue, double& dfX, double &dfY )
@@ -5692,4 +5713,48 @@ OGRCurve* OGRGeometryFactory::curveFromLineString(
     poRet->assignSpatialReference( poLS->getSpatialReference() );
 
     return poRet;
+}
+
+/************************************************************************/
+/*                   createFromGeoJson( const char* )                   */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param pszJsonString The GeoJSON fragment for the geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const char *pszJsonString )
+{
+    CPLJSONDocument oDocument;
+    if( !oDocument.LoadMemory( reinterpret_cast<const GByte*>(pszJsonString)) )
+    {
+        return nullptr;
+    }
+
+    return createFromGeoJson( oDocument.GetRoot() );
+}
+
+/************************************************************************/
+/*              createFromGeoJson( const CPLJSONObject& )               */
+/************************************************************************/
+
+/**
+ * @brief Create geometry from GeoJson fragment.
+ * @param oJsonObject The JSONObject class describes the GeoJSON geometry.
+ * @return a geometry on success, or NULL on error.
+ * @since GDAL 2.3
+ */
+OGRGeometry* OGRGeometryFactory::createFromGeoJson( const CPLJSONObject &oJsonObject )
+{
+    if( !oJsonObject.IsValid() )
+    {
+        return nullptr;
+    }
+
+    // TODO: Move from GeoJSON driver functions create geometry here, and replace
+    // json-c specific json_object to CPLJSONObject
+    return OGRGeoJSONReadGeometry(static_cast<json_object*>(
+                                      oJsonObject.GetInternalHandle()));
 }

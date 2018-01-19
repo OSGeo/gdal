@@ -28,9 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-static const int NULL1 = 0;
-static const int NULL2 = -32768;
-static const double NULL3 = -32768.0;
+constexpr int NULL1 = 0;
+constexpr int NULL2 = -32768;
+constexpr double NULL3 = -32768.0;
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"

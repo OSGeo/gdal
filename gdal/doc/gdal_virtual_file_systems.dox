@@ -336,6 +336,9 @@ The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
 Several authentication methods are possible. In order of priorities (first
 mentioned is the most prioritary)
 <ol>
+  <li>If AWS_NO_SIGN_REQUEST=YES configuration option is set, request signing
+is disabled. This option might be used for buckets with public access rights.
+Available since GDAL 2.3</li>
   <li>The AWS_SECRET_ACCESS_KEY and AWS_ACCESS_KEY_ID configuration options can
 be set.  The AWS_SESSION_TOKEN configuration option must be set when
 temporary credentials are used.</li>

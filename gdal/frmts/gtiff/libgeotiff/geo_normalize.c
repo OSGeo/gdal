@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2769 2017-06-08 12:32:59Z rouault $
+ * $Id: geo_normalize.c 2804 2018-01-09 17:41:09Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -260,10 +260,13 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
 {
     if( nUOMAngle == 9110 )		/* DDD.MMSSsss */
     {
-        char	szAngleString[32];
+        if( dfAngle > -999.9 && dfAngle < 999.9 )
+        {
+            char	szAngleString[32];
 
-        sprintf( szAngleString, "%12.7f", dfAngle );
-        dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
+            sprintf( szAngleString, "%12.7f", dfAngle );
+            dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
+        }
     }
     else if ( nUOMAngle != KvUserDefined )
     {

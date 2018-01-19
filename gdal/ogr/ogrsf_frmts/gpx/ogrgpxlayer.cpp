@@ -34,18 +34,18 @@
 
 CPL_CVSID("$Id$")
 
-static const int FLD_TRACK_FID = 0;
-static const int FLD_TRACK_SEG_ID = 1;
+constexpr int FLD_TRACK_FID = 0;
+constexpr int FLD_TRACK_SEG_ID = 1;
 #ifdef HAVE_EXPAT
-static const int FLD_TRACK_PT_ID = 2;
+constexpr int FLD_TRACK_PT_ID = 2;
 #endif
-static const int FLD_TRACK_NAME = 3;
+constexpr int FLD_TRACK_NAME = 3;
 
-static const int FLD_ROUTE_FID = 0;
+constexpr int FLD_ROUTE_FID = 0;
 #ifdef HAVE_EXPAT
-static const int FLD_ROUTE_PT_ID = 1;
+constexpr int FLD_ROUTE_PT_ID = 1;
 #endif
-static const int FLD_ROUTE_NAME = 2;
+constexpr int FLD_ROUTE_NAME = 2;
 
 /************************************************************************/
 /*                            OGRGPXLayer()                             */

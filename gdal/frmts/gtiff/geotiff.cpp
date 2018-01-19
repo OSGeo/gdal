@@ -146,22 +146,6 @@ const char szPROFILE_GeoTIFF[] = "GeoTIFF";
 const char szPROFILE_GDALGeoTIFF[] = "GDALGeoTIFF";
 
 /************************************************************************/
-/*                            IsPowerOfTwo()                            */
-/************************************************************************/
-
-static bool IsPowerOfTwo( unsigned int i )
-{
-    int nBitSet = 0;
-    while(i != 0)
-    {
-        if( i & 1 )
-            ++nBitSet;
-        i >>= 1;
-    }
-    return nBitSet == 1;
-}
-
-/************************************************************************/
 /*                          GTIFFSetInExternalOvr()                     */
 /************************************************************************/
 
@@ -179,7 +163,7 @@ void GTIFFGetOverviewBlockSize( int* pnBlockXSize, int* pnBlockYSize )
     const char* pszVal = CPLGetConfigOption("GDAL_TIFF_OVR_BLOCKSIZE", "128");
     int nOvrBlockSize = atoi(pszVal);
     if( nOvrBlockSize < 64 || nOvrBlockSize > 4096 ||
-        !IsPowerOfTwo(nOvrBlockSize) )
+        !CPLIsPowerOfTwo(nOvrBlockSize) )
     {
         static bool bHasWarned = false;
         if( !bHasWarned )
@@ -4548,7 +4532,7 @@ CPLErr GTiffRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 /* -------------------------------------------------------------------- */
     const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
      // Why 10 ? Somewhat arbitrary
-    static const int MAX_BANDS_FOR_DIRTY_CHECK = 10;
+    constexpr int MAX_BANDS_FOR_DIRTY_CHECK = 10;
     GDALRasterBlock* apoBlocks[MAX_BANDS_FOR_DIRTY_CHECK] = {};
     const int nBands = poGDS->nBands;
     bool bAllBlocksDirty = false;
@@ -5011,7 +4995,7 @@ GDALColorInterp GTiffRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 // Note: Was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10.
-static const uint16 DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
+constexpr uint16 DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
 
 static uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault)
 {
@@ -9178,7 +9162,7 @@ bool GTiffCacheOffsetOrCount( VSILFILE* fp,
                               uint64* panVals,
                               size_t sizeofval )
 {
-    static const vsi_l_offset IO_CACHE_PAGE_SIZE = 4096;
+    constexpr vsi_l_offset IO_CACHE_PAGE_SIZE = 4096;
 
     const int sizeofvalint = static_cast<int>(sizeofval);
     const vsi_l_offset nOffset = nBaseOffset + sizeofval * nBlockId;

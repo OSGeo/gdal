@@ -288,12 +288,15 @@ void rbspline2( int npts,int k,int p1,double b[],double h[],
 
 /*    calculate the points on the rational B-spline curve */
 
-    double t = 0.0;
-    const double step = ((double)knots[nplusc])/((double)(p1-1));
+    double t = knots[1];
+    const double step = (knots[nplusc]-knots[1])/((double)(p1-1));
+
+    const double eps = 5e-6 * (knots[nplusc]-knots[1]);
 
     for( int i1 = 1; i1<= p1; i1++ )
     {
-        if( (double)knots[nplusc] - t < 5e-6 )
+        /* avoid undershooting the final knot */
+        if( (double)knots[nplusc] - t < eps )
         {
             t = (double)knots[nplusc];
         }

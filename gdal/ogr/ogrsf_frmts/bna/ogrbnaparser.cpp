@@ -139,8 +139,8 @@ static const char *const NOT_ENOUGH_MEMORY
     = "not enough memory for request number of coordinates";
 static const char *const LINE_TOO_LONG             = "line too long";
 
-static const int TMP_BUFFER_SIZE = 256;
-static const int LINE_BUFFER_SIZE = 1024;
+constexpr int TMP_BUFFER_SIZE = 256;
+constexpr int LINE_BUFFER_SIZE = 1024;
 
 enum
 {

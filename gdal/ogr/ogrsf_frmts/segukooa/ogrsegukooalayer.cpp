@@ -97,19 +97,19 @@ static const FieldDesc UKOOAP190Fields[] =
     { "DATETIME", OFTDateTime }
 };
 
-static const int FIELD_LINENAME    = 0;
-static const int FIELD_VESSEL_ID   = 1;
-static const int FIELD_SOURCE_ID   = 2;
-static const int FIELD_OTHER_ID    = 3;
-// static const int FIELD_POINTNUMBER = 4;
-static const int FIELD_LONGITUDE   = 5;
-static const int FIELD_LATITUDE    = 6;
-static const int FIELD_EASTING     = 7;
-static const int FIELD_NORTHING    = 8;
-static const int FIELD_DEPTH       = 9;
-static const int FIELD_DAYOFYEAR   = 10;
-static const int FIELD_TIME        = 11;
-static const int FIELD_DATETIME    = 12;
+constexpr int FIELD_LINENAME    = 0;
+constexpr int FIELD_VESSEL_ID   = 1;
+constexpr int FIELD_SOURCE_ID   = 2;
+constexpr int FIELD_OTHER_ID    = 3;
+// constexpr int FIELD_POINTNUMBER = 4;
+constexpr int FIELD_LONGITUDE   = 5;
+constexpr int FIELD_LATITUDE    = 6;
+constexpr int FIELD_EASTING     = 7;
+constexpr int FIELD_NORTHING    = 8;
+constexpr int FIELD_DEPTH       = 9;
+constexpr int FIELD_DAYOFYEAR   = 10;
+constexpr int FIELD_TIME        = 11;
+constexpr int FIELD_DATETIME    = 12;
 
 OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
                                       VSILFILE* fpIn ) :
@@ -410,7 +410,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 
             if( nYear != 0 )
             {
-                static const int mon_lengths[2][12] = {
+                constexpr int mon_lengths[2][12] = {
                     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
                     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
                 } ;
@@ -465,17 +465,17 @@ static const FieldDesc SEGP1Fields[] =
 #endif
 };
 
-static const int SEGP1_FIELD_LINENAME    = 0;
-static const int SEGP1_FIELD_POINTNUMBER = 1;
-static const int SEGP1_FIELD_RESHOOTCODE = 2;
-static const int SEGP1_FIELD_LONGITUDE   = 3;
-static const int SEGP1_FIELD_LATITUDE    = 4;
-static const int SEGP1_FIELD_EASTING     = 5;
-static const int SEGP1_FIELD_NORTHING    = 6;
-static const int SEGP1_FIELD_DEPTH       = 7;
-// static const int SEGP1_FIELD_DAYOFYEAR   = 8;
-// static const int SEGP1_FIELD_TIME        = 9;
-// static const int SEGP1_FIELD_DATETIME    = 10;
+constexpr int SEGP1_FIELD_LINENAME    = 0;
+constexpr int SEGP1_FIELD_POINTNUMBER = 1;
+constexpr int SEGP1_FIELD_RESHOOTCODE = 2;
+constexpr int SEGP1_FIELD_LONGITUDE   = 3;
+constexpr int SEGP1_FIELD_LATITUDE    = 4;
+constexpr int SEGP1_FIELD_EASTING     = 5;
+constexpr int SEGP1_FIELD_NORTHING    = 6;
+constexpr int SEGP1_FIELD_DEPTH       = 7;
+// constexpr int SEGP1_FIELD_DAYOFYEAR   = 8;
+// constexpr int SEGP1_FIELD_TIME        = 9;
+// constexpr int SEGP1_FIELD_DATETIME    = 10;
 
 OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                               VSILFILE* fpIn,

@@ -58,10 +58,10 @@
 CPL_CVSID("$Id$")
 
 // TODO(schwehr): This really should be defined in port/somewhere.h.
-static const double kdfDegToRad = M_PI / 180.0;
-static const double kdfRadToDeg = 180.0 / M_PI;
+constexpr double kdfDegToRad = M_PI / 180.0;
+constexpr double kdfRadToDeg = 180.0 / M_PI;
 
-static const int anUsgsEsriZones[] =
+constexpr int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,

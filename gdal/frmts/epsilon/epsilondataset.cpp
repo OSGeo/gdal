@@ -103,8 +103,8 @@ class EpsilonDataset : public GDALPamDataset
     int      ScanBlocks(int *pnBands);
 
   public:
-                 EpsilonDataset();
-    virtual     ~EpsilonDataset();
+    EpsilonDataset();
+    ~EpsilonDataset() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -119,10 +119,10 @@ class EpsilonDataset : public GDALPamDataset
 class EpsilonRasterBand : public GDALPamRasterBand
 {
   public:
-                            EpsilonRasterBand(EpsilonDataset* poDS, int nBand);
+    EpsilonRasterBand( EpsilonDataset* poDS, int nBand );
 
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-    virtual GDALColorInterp GetColorInterpretation() override;
+    CPLErr          IReadBlock( int, int, void * ) override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 /************************************************************************/

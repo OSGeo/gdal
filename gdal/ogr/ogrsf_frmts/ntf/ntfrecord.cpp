@@ -35,7 +35,7 @@ CPL_CVSID("$Id$")
 static int nFieldBufSize = 0;
 static char *pszFieldBuf = nullptr;
 
-static const int MAX_RECORD_LEN = 160;
+constexpr int MAX_RECORD_LEN = 160;
 
 /************************************************************************/
 /*                             NTFRecord()                              */

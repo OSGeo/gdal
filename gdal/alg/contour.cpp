@@ -50,12 +50,12 @@ CPL_CVSID("$Id$")
 // The amount of a contour interval that pixels should be fudged by if they
 // match a contour level exactly.
 
-static const double FUDGE_EXACT = 0.001;
+constexpr double FUDGE_EXACT = 0.001;
 
 // The amount of a pixel that line ends need to be within to be considered to
 // match for joining purposes.
 
-static const double JOIN_DIST = 0.0001;
+constexpr double JOIN_DIST = 0.0001;
 
 /************************************************************************/
 /*                           GDALContourItem                            */

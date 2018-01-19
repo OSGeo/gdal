@@ -1558,8 +1558,8 @@ void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
 /*                        GDALGetJPEG2000Structure()                    */
 /************************************************************************/
 
-static const unsigned char jpc_header[] = {0xff,0x4f};
-static const unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
+constexpr unsigned char jpc_header[] = {0xff,0x4f};
+constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
 
 /** Dump the structure of a JPEG2000 file as a XML tree.
  *

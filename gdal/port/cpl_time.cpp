@@ -30,19 +30,19 @@
 
 CPL_CVSID("$Id$")
 
-static const int SECSPERMIN = 60;
-static const int MINSPERHOUR = 60;
-static const int HOURSPERDAY = 24;
-static const int SECSPERHOUR = SECSPERMIN * MINSPERHOUR;
-static const int SECSPERDAY = SECSPERHOUR * HOURSPERDAY;
-static const int DAYSPERWEEK = 7;
-static const int MONSPERYEAR = 12;
+constexpr int SECSPERMIN = 60;
+constexpr int MINSPERHOUR = 60;
+constexpr int HOURSPERDAY = 24;
+constexpr int SECSPERHOUR = SECSPERMIN * MINSPERHOUR;
+constexpr int SECSPERDAY = SECSPERHOUR * HOURSPERDAY;
+constexpr int DAYSPERWEEK = 7;
+constexpr int MONSPERYEAR = 12;
 
-static const int EPOCH_YEAR = 1970;
-static const int EPOCH_WDAY = 4;
-static const int TM_YEAR_BASE = 1900;
-static const int DAYSPERNYEAR = 365;
-static const int DAYSPERLYEAR = 366;
+constexpr int EPOCH_YEAR = 1970;
+constexpr int EPOCH_WDAY = 4;
+constexpr int TM_YEAR_BASE = 1900;
+constexpr int DAYSPERNYEAR = 365;
+constexpr int DAYSPERLYEAR = 366;
 
 static bool isleap( int y )
 {
@@ -54,12 +54,12 @@ static int LEAPS_THROUGH_END_OF( int y )
     return y / 4 - y / 100 + y / 400;
 }
 
-static const int mon_lengths[2][MONSPERYEAR] = {
+constexpr int mon_lengths[2][MONSPERYEAR] = {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
     { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
 
-static const int year_lengths[2] = { DAYSPERNYEAR, DAYSPERLYEAR };
+constexpr int year_lengths[2] = { DAYSPERNYEAR, DAYSPERLYEAR };
 
 /************************************************************************/
 /*                   CPLUnixTimeToYMDHMS()                              */

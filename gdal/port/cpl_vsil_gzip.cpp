@@ -110,8 +110,8 @@
 
 CPL_CVSID("$Id$")
 
-static const int Z_BUFSIZE = 65536;  // Original size is 16384
-static const int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
+constexpr int Z_BUFSIZE = 65536;  // Original size is 16384
+constexpr int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
 
 // gzip flag byte.
 #define ASCII_FLAG   0x01  // bit 0 set: file probably ascii text

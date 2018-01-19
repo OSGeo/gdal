@@ -58,8 +58,8 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     const float* pafZ = psExtraParams->pafZ;
 
     const float fEpsilon = 0.0000000000001f;
-    const float fXPoint = (float)dfXPoint;
-    const float fYPoint = (float)dfYPoint;
+    const float fXPoint = static_cast<float>(dfXPoint);
+    const float fYPoint = static_cast<float>(dfYPoint);
     const __m256 ymm_small = GDAL_mm256_load1_ps(fEpsilon);
     const __m256 ymm_x = GDAL_mm256_load1_ps(fXPoint);
     const __m256 ymm_y = GDAL_mm256_load1_ps(fYPoint);
@@ -73,7 +73,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     /* whereas we have 16 for 64bit */
 #define LOOP_SIZE   16
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
-    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
         __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps(pafX + i), ymm_x);            /* rx = pafX[i] - fXPoint */
         __m256 ymm_rx_8 = _mm256_sub_ps(_mm256_load_ps(pafX + i + 8), ymm_x);
@@ -99,7 +99,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 #else
 #define LOOP_SIZE   8
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
-    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
         __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps((float*)pafX + i), ymm_x);           /* rx = pafX[i] - fXPoint */
         __m256 ymm_ry = _mm256_sub_ps(_mm256_load_ps((float*)pafY + i), ymm_y);           /* ry = pafY[i] - fYPoint */
@@ -115,16 +115,16 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
 #endif
 
-    /* Find which i triggered r2 < fEpsilon */
+    // Find which i triggered r2 < fEpsilon.
     if( mask )
     {
-        for(int j = 0; j < LOOP_SIZE; j++ )
+        for( int j = 0; j < LOOP_SIZE; j++ )
         {
             if( mask & (1 << j) )
             {
                 (*pdfValue) = (pafZ)[i + j];
 
-                // GCC and MSVC need explicit zeroing
+                // GCC and MSVC need explicit zeroing.
 #if !defined(__clang__)
                 _mm256_zeroupper();
 #endif
@@ -134,13 +134,15 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
 #undef LOOP_SIZE
 
-    /* Get back nominator and denominator values for YMM registers */
-    float afNominator[8], afDenominator[8];
+    // Get back nominator and denominator values for YMM registers.
+    float afNominator[8];
+    float afDenominator[8];
     _mm256_storeu_ps(afNominator, ymm_nominator);
     _mm256_storeu_ps(afDenominator, ymm_denominator);
 
-    // MSVC doesn't emit AVX afterwards but may use SSE, so clear upper bits
-    // Other compilers will continue using AVX for the below floating points operations
+    // MSVC doesn't emit AVX afterwards but may use SSE, so clear
+    // upper bits.  Other compilers will continue using AVX for the
+    // below floating points operations.
 #if defined(_MSC_FULL_VER)
     _mm256_zeroupper();
 #endif
@@ -154,8 +156,8 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                          afDenominator[4] + afDenominator[5] +
                          afDenominator[6] + afDenominator[7];
 
-    /* Do the few remaining loop iterations */
-    for ( ; i < nPoints; i++ )
+    // Do the few remaining loop iterations.
+    for( ; i < nPoints; i++ )
     {
         const float fRX = pafX[i] - fXPoint;
         const float fRY = pafY[i] - fYPoint;
@@ -164,7 +166,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 
         // If the test point is close to the grid node, use the point
         // value directly as a node value to avoid singularity.
-        if ( fR2 < 0.0000000000001 )
+        if( fR2 < 0.0000000000001 )
         {
             break;
         }
@@ -181,7 +183,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
         (*pdfValue) = pafZ[i];
     }
     else
-    if ( fDenominator == 0.0 )
+    if( fDenominator == 0.0 )
     {
         (*pdfValue) =
             ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
@@ -189,7 +191,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     else
         (*pdfValue) = fNominator / fDenominator;
 
-    // GCC needs explicit zeroing
+    // GCC needs explicit zeroing.
 #if defined(__GNUC__) && !defined(__clang__)
     _mm256_zeroupper();
 #endif

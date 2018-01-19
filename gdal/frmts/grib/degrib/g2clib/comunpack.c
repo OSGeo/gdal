@@ -82,6 +82,14 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
          return(0);
       }
 
+      /* To avoid excessive memory allocations. Not completely sure */
+      /* if this test is appropriate (the 10 and 2 are arbitrary), */
+      /* but it doesn't seem to make sense to have ngroups much larger than */
+      /* ndpts */
+      if( ngroups < 0 || ngroups - 10 > ndpts / 2 ) {
+          return -1;
+      }
+
       /* Early test in particular case for more general test belows */
       /* "Test to see if the group widths and lengths are consistent with number of */
       /*  values, and length of section 7. */

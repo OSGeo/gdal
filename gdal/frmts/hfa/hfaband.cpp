@@ -2074,6 +2074,33 @@ CPLErr HFABand::SetPCT( int nColors,
 }
 
 /************************************************************************/
+/*                     HFAGetOverviewBlockSize()                        */
+/************************************************************************/
+
+static int HFAGetOverviewBlockSize()
+{
+    const char* pszVal = CPLGetConfigOption("GDAL_HFA_OVR_BLOCKSIZE", "64");
+    int nOvrBlockSize = atoi(pszVal);
+    if( nOvrBlockSize < 32 || nOvrBlockSize > 2048 ||
+        !CPLIsPowerOfTwo(nOvrBlockSize) )
+    {
+        static bool bHasWarned = false;
+        if( !bHasWarned )
+        {
+            CPLError( CE_Warning, CPLE_NotSupported,
+                      "Wrong value for GDAL_HFA_OVR_BLOCKSIZE : %s. "
+                      "Should be a power of 2 between 32 and 2048. "
+                      "Defaulting to 64",
+                      pszVal );
+            bHasWarned = true;
+        }
+        nOvrBlockSize = 64;
+    }
+
+    return nOvrBlockSize;
+}
+
+/************************************************************************/
 /*                           CreateOverview()                           */
 /************************************************************************/
 
@@ -2120,6 +2147,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
         CPLTestBool(CPLGetConfigOption("USE_SPILL", "NO"));
     GIntBig nValidFlagsOffset = 0;
     GIntBig nDataOffset = 0;
+    int nOverviewBlockSize = HFAGetOverviewBlockSize();
 
     if( (psRRDInfo->nEndOfFile
          + (nOXSize * static_cast<double>(nOYSize))
@@ -2129,7 +2157,7 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     if( bCreateLargeRaster )
     {
         if( !HFACreateSpillStack(psRRDInfo, nOXSize, nOYSize, 1,
-                                 64, eOverviewDataType,
+                                 nOverviewBlockSize, eOverviewDataType,
                                  &nValidFlagsOffset, &nDataOffset) )
         {
             return -1;
@@ -2157,9 +2185,9 @@ int HFABand::CreateOverview( int nOverviewLevel, const char *pszResampling )
     CPLString osLayerName;
     osLayerName.Printf("_ss_%d_", nOverviewLevel);
 
-    if( !HFACreateLayer(psRRDInfo, poParent, osLayerName,
-                        TRUE, 64, bCompressionType, bCreateLargeRaster, FALSE,
-                        nOXSize, nOYSize, eOverviewDataType, nullptr,
+    if( !HFACreateLayer(psRRDInfo, poParent, osLayerName, TRUE,
+                        nOverviewBlockSize, bCompressionType, bCreateLargeRaster,
+                        FALSE, nOXSize, nOYSize, eOverviewDataType, nullptr,
                         nValidFlagsOffset, nDataOffset, 1, 0) )
         return -1;
 

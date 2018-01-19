@@ -49,12 +49,12 @@
 
 CPL_CVSID("$Id$")
 
-static const int GEOTRSFRM_TOPLEFT_X = 0;
-static const int GEOTRSFRM_WE_RES = 1;
-static const int GEOTRSFRM_ROTATION_PARAM1 = 2;
-static const int GEOTRSFRM_TOPLEFT_Y = 3;
-static const int GEOTRSFRM_ROTATION_PARAM2 = 4;
-static const int GEOTRSFRM_NS_RES = 5;
+constexpr int GEOTRSFRM_TOPLEFT_X = 0;
+constexpr int GEOTRSFRM_WE_RES = 1;
+constexpr int GEOTRSFRM_ROTATION_PARAM1 = 2;
+constexpr int GEOTRSFRM_TOPLEFT_Y = 3;
+constexpr int GEOTRSFRM_ROTATION_PARAM2 = 4;
+constexpr int GEOTRSFRM_NS_RES = 5;
 
 /** Overview of used classes :
    - RPFTOCDataset : lists the different subdatasets, listed in the A.TOC,

@@ -33,7 +33,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int USE_COPY_UNSET = -1;
+constexpr int USE_COPY_UNSET = -1;
 
 static CPLString OGRPGDumpEscapeStringList(
     char** papszItems, bool bForInsertOrUpdate,

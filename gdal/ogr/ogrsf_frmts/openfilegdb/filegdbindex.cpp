@@ -165,11 +165,11 @@ class FileGDBOrIterator CPL_FINAL : public FileGDBIterator
 /*                        FileGDBIndexIterator                          */
 /************************************************************************/
 
-static const int MAX_DEPTH = 3;
-static const int UUID_LEN_AS_STRING = 38;
-static const int MAX_CAR_COUNT_STR = 80;
-static const int MAX_UTF8_LEN_STR = 4 * MAX_CAR_COUNT_STR;
-static const int FGDB_PAGE_SIZE = 4096;
+constexpr int MAX_DEPTH = 3;
+constexpr int UUID_LEN_AS_STRING = 38;
+constexpr int MAX_CAR_COUNT_STR = 80;
+constexpr int MAX_UTF8_LEN_STR = 4 * MAX_CAR_COUNT_STR;
+constexpr int FGDB_PAGE_SIZE = 4096;
 
 class FileGDBIndexIterator CPL_FINAL : public FileGDBIterator
 {

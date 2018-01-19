@@ -105,9 +105,6 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
     DXFSmoothPolylineVertex begin = *oIter;
 
-    double dfZ = 0.0;
-    const bool bConstantZ = HasConstantZ(dfZ);
-
     while(oIter != oEndIter)
     {
         ++oIter;
@@ -115,14 +112,15 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 
         const double len = GetLength(begin,end);
 
-        if((len == 0) || (begin.bulge == 0))
+        // Don't bother handling bulge for non-constant Z
+        if( len == 0 || begin.bulge == 0 || begin.z != end.z )
         {
-            EmitLine(begin, end, poLS, bConstantZ, dfZ);
+            EmitLine(begin, end, poLS);
         }
         else
         {
             const double radius = GetRadius(begin.bulge,len);
-            EmitArc(begin, end, radius, len, begin.bulge, poLS, dfZ);
+            EmitArc(begin, end, radius, len, begin.bulge, poLS, begin.z);
         }
 
         // Move to next vertex
@@ -133,7 +131,7 @@ OGRGeometry* DXFSmoothPolyline::Tesselate() const
 /*      Flatten to 2D if necessary                                      */
 /* -------------------------------------------------------------------- */
 
-    if(bConstantZ && dfZ == 0.0 && m_dim == 2)
+    if(m_dim == 2)
         poLS->flattenTo2D();
 
 /* -------------------------------------------------------------------- */
@@ -282,27 +280,23 @@ void DXFSmoothPolyline::EmitArc(
 }
 
 /************************************************************************/
-/*                DXFSmoothPolyline::EmitLine()                         */
+/*                   DXFSmoothPolyline::EmitLine()                      */
 /************************************************************************/
 
 void DXFSmoothPolyline::EmitLine(
     const DXFSmoothPolylineVertex& start,
     const DXFSmoothPolylineVertex& end,
-    OGRLineString* poLS,
-    bool bConstantZ,
-    double dfZ ) const
+    OGRLineString* poLS ) const
 {
     assert(poLS);
 
     if(!m_blinestringstarted)
     {
-        poLS->addPoint(start.x, start.y,
-            bConstantZ ? dfZ : start.z);
+        poLS->addPoint(start.x, start.y, start.z);
         m_blinestringstarted = true;
     }
 
-    poLS->addPoint(end.x, end.y,
-        bConstantZ ? dfZ : end.z);
+    poLS->addPoint(end.x, end.y, end.z);
 }
 
 /************************************************************************/
@@ -324,32 +318,4 @@ void DXFSmoothPolyline::Close()
         }
         m_bClosed = true;
     }
-}
-
-/************************************************************************/
-/*                DXFSmoothPolyline::HasConstantZ()                     */
-/************************************************************************/
-
-bool DXFSmoothPolyline::HasConstantZ( double& dfZ ) const
-{
-    // Treat the polyline as having constant Z if all Z members
-    // are equal or if any bulge attribute exists. In the latter case,
-    // set dfZ to zero. Leave dfZ unassigned if false is returned.
-
-    assert(!m_vertices.empty());
-
-    const double d = m_vertices[0].z;
-
-    for( size_t i = 1; i < m_vertices.size(); i++ )
-    {
-        if( m_vertices[i].bulge != 0.0 )
-        {
-            dfZ = 0.0;
-            return true;
-        }
-        if(m_vertices[i].z != d)
-            return false;
-    }
-    dfZ = d;
-    return true;
 }

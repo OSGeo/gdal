@@ -306,10 +306,10 @@ static const V2DF v2_const1023_mul_2pow20 =
 #define SET_HIGH_WORD(x,hx) memcpy(((char*)&x+4), &hx,4)
 
 #define MAKE_WIDE_CST(x) ((((long long)(x)) << 32) | (x))
-static const long long cst_expmask = MAKE_WIDE_CST(0xfff00000);
-static const long long cst_0x95f64 = MAKE_WIDE_CST(0x00095f64);
-static const long long cst_0x100000 = MAKE_WIDE_CST(0x00100000);
-static const long long cst_0x3ff00000 = MAKE_WIDE_CST(0x3ff00000);
+constexpr long long cst_expmask = MAKE_WIDE_CST(0xfff00000);
+constexpr long long cst_0x95f64 = MAKE_WIDE_CST(0x00095f64);
+constexpr long long cst_0x100000 = MAKE_WIDE_CST(0x00100000);
+constexpr long long cst_0x3ff00000 = MAKE_WIDE_CST(0x3ff00000);
 
 // Modified version of __ieee754_log(), less precise than log() but a bit
 // faster, and computing 4 log() at a time. Assumes that the values are > 0.

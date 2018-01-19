@@ -46,9 +46,9 @@
 #define DGNS_DASH_DOUBLE_DOT    6
 #define DGNS_LONG_DASH_SHORT_DASH 7
 
-static const double DEG_TO_RAD = M_PI / 180.0;
-static const double RAD_TO_DEG = 180.0 / M_PI;
-static const double CONTIGUITY_TOLERANCE = 1e10; // Arbitrary high value
+constexpr double DEG_TO_RAD = M_PI / 180.0;
+constexpr double RAD_TO_DEG = 180.0 / M_PI;
+constexpr double CONTIGUITY_TOLERANCE = 1e10; // Arbitrary high value
 
 CPL_CVSID("$Id$");
 

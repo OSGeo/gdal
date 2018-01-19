@@ -963,8 +963,8 @@ char ** CSLTokenizeString2( const char * pszString,
  **********************************************************************/
 
 // For now, assume that a 8000 chars buffer will be enough.
-static const int CPLSPrintf_BUF_SIZE = 8000;
-static const int CPLSPrintf_BUF_Count = 10;
+constexpr int CPLSPrintf_BUF_SIZE = 8000;
+constexpr int CPLSPrintf_BUF_Count = 10;
 
 /** CPLSPrintf() that works with 10 static buffer.
  *
@@ -2467,7 +2467,7 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
     char *pszHex = static_cast<char *>(CPLMalloc(nBytes * 2 + 1));
     pszHex[nBytes*2] = '\0';
 
-    static const char achHex[] = "0123456789ABCDEF";
+    constexpr char achHex[] = "0123456789ABCDEF";
 
     for( int i = 0; i < nBytes; ++i )
     {
@@ -2485,7 +2485,7 @@ char *CPLBinaryToHex( int nBytes, const GByte *pabyData )
 /*                           CPLHexToBinary()                           */
 /************************************************************************/
 
-static const unsigned char hex2char[256] = {
+constexpr unsigned char hex2char[256] = {
     // Not Hex characters.
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

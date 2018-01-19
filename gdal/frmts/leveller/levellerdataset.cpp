@@ -52,7 +52,7 @@ static bool str_equal(const char *_s1, const char *_s2) {
 /* ==================================================================== */
 /************************************************************************/
 
-static const size_t kMaxTagNameLen = 63;
+constexpr size_t kMaxTagNameLen = 63;
 
 enum
 {
@@ -147,13 +147,13 @@ typedef struct
         UNITLABEL   oemCode;
 } measurement_unit;
 
-static const double kdays_per_year = 365.25;
-static const double kdLStoM = 299792458.0;
-static const double kdLYtoM = kdLStoM * kdays_per_year * 24 * 60 * 60;
-static const double kdInch = 0.3048 / 12;
-static const double kPI = M_PI;
+constexpr double kdays_per_year = 365.25;
+constexpr double kdLStoM = 299792458.0;
+constexpr double kdLYtoM = kdLStoM * kdays_per_year * 24 * 60 * 60;
+constexpr double kdInch = 0.3048 / 12;
+constexpr double kPI = M_PI;
 
-static const int kFirstLinearMeasureIdx = 9;
+constexpr int kFirstLinearMeasureIdx = 9;
 
 static const measurement_unit kUnits[] =
 {

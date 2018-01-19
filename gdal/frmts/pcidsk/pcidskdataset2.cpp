@@ -191,7 +191,7 @@ char **PCIDSK2Band::GetCategoryNames()
     {
         std::vector<std::string> aosMDKeys = poChannel->GetMetadataKeys();
         int nClassCount = 0;
-        static const int nMaxClasses = 10000;
+        constexpr int nMaxClasses = 10000;
         papszCategoryNames = reinterpret_cast<char **>(
             CPLCalloc(nMaxClasses+1, sizeof(char*) ) );
 

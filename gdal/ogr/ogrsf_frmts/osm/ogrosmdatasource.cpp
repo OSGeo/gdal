@@ -47,15 +47,15 @@
 
 #include <algorithm>
 
-static const int LIMIT_IDS_PER_REQUEST = 200;
+constexpr int LIMIT_IDS_PER_REQUEST = 200;
 
-static const int MAX_NODES_PER_WAY = 2000;
+constexpr int MAX_NODES_PER_WAY = 2000;
 
-static const int IDX_LYR_POINTS = 0;
-static const int IDX_LYR_LINES = 1;
-static const int IDX_LYR_MULTILINESTRINGS = 2;
-static const int IDX_LYR_MULTIPOLYGONS = 3;
-static const int IDX_LYR_OTHER_RELATIONS = 4;
+constexpr int IDX_LYR_POINTS = 0;
+constexpr int IDX_LYR_LINES = 1;
+constexpr int IDX_LYR_MULTILINESTRINGS = 2;
+constexpr int IDX_LYR_MULTIPOLYGONS = 3;
+constexpr int IDX_LYR_OTHER_RELATIONS = 4;
 
 static int DBL_TO_INT( double x )
 {
@@ -63,14 +63,14 @@ static int DBL_TO_INT( double x )
 }
 static double INT_TO_DBL( int x ) { return x / 1.0e7; }
 
-static const int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
-static const int MAX_SIZE_FOR_TAGS_IN_WAY = 1024;
+constexpr int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
+constexpr int MAX_SIZE_FOR_TAGS_IN_WAY = 1024;
 
 // 5 bytes for encoding a int : really the worst case scenario!
-static const int WAY_BUFFER_SIZE =
+constexpr int WAY_BUFFER_SIZE =
     1 /*is_area*/ + 1 + MAX_NODES_PER_WAY * 2 * 5 + MAX_SIZE_FOR_TAGS_IN_WAY;
 
-static const int NODE_PER_BUCKET = 65536;
+constexpr int NODE_PER_BUCKET = 65536;
 
 static bool VALID_ID_FOR_CUSTOM_INDEXING( GIntBig _id )
 {
@@ -80,26 +80,26 @@ static bool VALID_ID_FOR_CUSTOM_INDEXING( GIntBig _id )
 }
 
 // Minimum size of data written on disk, in *uncompressed* case.
-static const int SECTOR_SIZE = 512;
+constexpr int SECTOR_SIZE = 512;
 // Which represents, 64 nodes
-// static const int NODE_PER_SECTOR = SECTOR_SIZE / (2 * 4);
-static const int NODE_PER_SECTOR = 64;
-static const int NODE_PER_SECTOR_SHIFT = 6;
+// constexpr int NODE_PER_SECTOR = SECTOR_SIZE / (2 * 4);
+constexpr int NODE_PER_SECTOR = 64;
+constexpr int NODE_PER_SECTOR_SHIFT = 6;
 
 // Per bucket, we keep track of the absence/presence of sectors
 // only, to reduce memory usage.
 // #define BUCKET_BITMAP_SIZE  NODE_PER_BUCKET / (8 * NODE_PER_SECTOR)
-static const int BUCKET_BITMAP_SIZE = 128;
+constexpr int BUCKET_BITMAP_SIZE = 128;
 
 // #define BUCKET_SECTOR_SIZE_ARRAY_SIZE  NODE_PER_BUCKET / NODE_PER_SECTOR
 // Per bucket, we keep track of the real size of the sector. Each sector
 // size is encoded in a single byte, whose value is:
 // (sector_size in bytes - 8 ) / 2, minus 8. 252 means uncompressed
-static const int BUCKET_SECTOR_SIZE_ARRAY_SIZE = 1024;
+constexpr int BUCKET_SECTOR_SIZE_ARRAY_SIZE = 1024;
 
 // Must be a multiple of both BUCKET_BITMAP_SIZE and
 // BUCKET_SECTOR_SIZE_ARRAY_SIZE
-static const int knPAGE_SIZE = 4096;
+constexpr int knPAGE_SIZE = 4096;
 
 // compressSize should not be greater than 512, so COMPRESS_SIZE_TO_BYTE() fits
 // on a byte.
@@ -118,22 +118,22 @@ static int COMPRESS_SIZE_FROM_BYTE( GByte byte_on_size )
 }
 
 // Max number of features that are accumulated in pasWayFeaturePairs.
-static const int MAX_DELAYED_FEATURES = 75000;
+constexpr int MAX_DELAYED_FEATURES = 75000;
 // Max number of tags that are accumulated in pasAccumulatedTags.
-static const int MAX_ACCUMULATED_TAGS  = MAX_DELAYED_FEATURES * 5;
+constexpr int MAX_ACCUMULATED_TAGS  = MAX_DELAYED_FEATURES * 5;
 // Max size of the string with tag values that are accumulated in
 // pabyNonRedundantValues.
-static const int MAX_NON_REDUNDANT_VALUES = MAX_DELAYED_FEATURES * 10;
+constexpr int MAX_NON_REDUNDANT_VALUES = MAX_DELAYED_FEATURES * 10;
 // Max number of features that are accumulated in panUnsortedReqIds
-static const int MAX_ACCUMULATED_NODES = 1000000;
+constexpr int MAX_ACCUMULATED_NODES = 1000000;
 
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
 // Size of panHashedIndexes array. Must be in the list at
 // http://planetmath.org/goodhashtableprimes , and greater than
 // MAX_ACCUMULATED_NODES.
-static const int HASHED_INDEXES_ARRAY_SIZE = 3145739;
+constexpr int HASHED_INDEXES_ARRAY_SIZE = 3145739;
 // #define HASHED_INDEXES_ARRAY_SIZE   1572869
-static const int COLLISION_BUCKET_ARRAY_SIZE =
+constexpr int COLLISION_BUCKET_ARRAY_SIZE =
     (MAX_ACCUMULATED_NODES / 100) * 40;
 
 // hash function = identity
@@ -449,7 +449,7 @@ void OGROSMDataSource::CloseDB()
 /*                             IndexPoint()                             */
 /************************************************************************/
 
-static const GByte abyBitsCount[] = {
+constexpr GByte abyBitsCount[] = {
 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
 1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
 1,2,2,3,2,3,3,4,2,3,3,4,3,4,4,5,
@@ -1144,7 +1144,7 @@ void OGROSMDataSource::LookupNodesCustom( )
 
 void OGROSMDataSource::LookupNodesCustomCompressedCase()
 {
-    static const int SECURITY_MARGIN = 8 + 8 + 2 * NODE_PER_SECTOR;
+    constexpr int SECURITY_MARGIN = 8 + 8 + 2 * NODE_PER_SECTOR;
     GByte abyRawSector[SECTOR_SIZE + SECURITY_MARGIN];
     memset(abyRawSector + SECTOR_SIZE, 0, SECURITY_MARGIN);
 

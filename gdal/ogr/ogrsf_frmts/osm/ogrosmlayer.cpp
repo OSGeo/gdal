@@ -34,10 +34,10 @@
 
 CPL_CVSID("$Id$")
 
-static const int SWITCH_THRESHOLD = 10000;
-static const int MAX_THRESHOLD = 100000;
+constexpr int SWITCH_THRESHOLD = 10000;
+constexpr int MAX_THRESHOLD = 100000;
 
-static const int ALLTAGS_LENGTH = 8192;
+constexpr int ALLTAGS_LENGTH = 8192;
 
 /************************************************************************/
 /*                          OGROSMLayer()                               */

@@ -1756,7 +1756,7 @@ OGRGeometry *OGRPGLayer::OIDToGeometry( Oid oid )
     if( fd < 0 )
         return nullptr;
 
-    static const int MAX_WKB = 500000;
+    constexpr int MAX_WKB = 500000;
     GByte *pabyWKB = (GByte *) CPLMalloc(MAX_WKB);
     const int nBytes = lo_read( hPGConn, fd, (char *) pabyWKB, MAX_WKB );
     lo_close( hPGConn, fd );

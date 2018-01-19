@@ -102,7 +102,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     if( hDS )
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
-        for( int i = 0; i < nLayers; i++ )
+        for( int i = 0; i < 10 && i < nLayers; i++ )
         {
             OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
             OGR_L_GetSpatialRef(hLayer);

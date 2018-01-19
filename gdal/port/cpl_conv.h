@@ -281,6 +281,13 @@ char* CPLsetlocale (int category, const char* locale);
 void CPLCleanupSetlocaleMutex(void);
 /*! @endcond */
 
+/*!
+    CPLIsPowerOfTwo()
+    @param i - tested number
+    @return TRUE if i is power of two otherwise return FALSE
+*/
+int CPL_DLL CPLIsPowerOfTwo( unsigned int i );
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */

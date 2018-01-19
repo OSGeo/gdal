@@ -38,17 +38,17 @@
 
 CPL_CVSID("$Id$")
 
-static const int neighbourhood_size_75[4] = { 23, 47, 74, 173 };
-static const int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {
+constexpr int neighbourhood_size_75[4] = { 23, 47, 74, 173 };
+constexpr int bits_per_level_by_busycode_75[4/*busy code*/][4/*level*/] = {
     { 8, 5, 0, 0 }, // BC = 00
     { 8, 5, 2, 0 }, // BC = 01
     { 8, 6, 4, 0 }, // BC = 10
     { 8, 7, 4, 2 }};// BC = 11
 
-static const int CR075 = 1;
+constexpr int CR075 = 1;
 
 // Level for each index value.
-static const int level_index_table[64] =
+constexpr int level_index_table[64] =
 { 0,
   1, 1, 1,
   2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -62,7 +62,7 @@ static const int level_index_table[64] =
 
 #define IND(i,j) (ij_index[i+j*8]-1)
 
-static const int ij_index[64] = {
+constexpr int ij_index[64] = {
 
      1, // 0, 0
     18, // 1, 0
@@ -136,19 +136,19 @@ static const int ij_index[64] = {
     62, // 6, 7
     64};// 7, 7
 
-static const int delta_075_level_2_bc_0[32] =
+constexpr int delta_075_level_2_bc_0[32] =
 {-71, -49, -38, -32, -27, -23, -20, -17, -14, -12, -10, -8, -6, -4, -3, -1,
  1, 2, 4, 6, 8, 12, 14, 16, 19, 22, 26, 31, 37, 46, 72 };
-static const int delta_075_level_2_bc_1[32] =
+constexpr int delta_075_level_2_bc_1[32] =
 {-71, -49, -38, -32, -27, -23, -20, -17, -14, -12, -10, -8, -6, -4, -3, -1,
  1, 2, 4, 6, 8, 12, 14, 16, 19, 22, 26, 31, 37, 46, 72 };
-static const int delta_075_level_2_bc_2[64] =
+constexpr int delta_075_level_2_bc_2[64] =
 { -109, -82, -68, -59, -52, -46, -41, -37, -33, -30, -27, -25, -22, -20,
   -18, -16, -15, -13, -11, -10, -9, -8, -7, -6, -5,
   -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,
   13,14,15,16,17,18,19,20,21,24,26,28,31,35,38,
   42,47,52,60,69,85,118};
-static const int delta_075_level_2_bc_3[128] =
+constexpr int delta_075_level_2_bc_3[128] =
 {-159,-134,-122,-113,-106,-100,-94,-88,-83,-79,-76,-72,-69,-66,-63,-61,
  -58,-56,-54,-52,-50,-48,-47,-45,-43,-42,-40,-39,-37,-36,-35,-33,-32,-31,
  -30,-29,-28,-27,-25,-24,-23,-22,-21,-20,-19,-18,-17,-16,-15,-14,
@@ -160,16 +160,16 @@ static const int * const delta_075_level_2[4] =
 { delta_075_level_2_bc_0, delta_075_level_2_bc_1,
   delta_075_level_2_bc_2, delta_075_level_2_bc_3 };
 
-static const int delta_075_level_3_bc_1[4] = { -24, -6, 6, 24 };
-static const int delta_075_level_3_bc_2[16] =
+constexpr int delta_075_level_3_bc_1[4] = { -24, -6, 6, 24 };
+constexpr int delta_075_level_3_bc_2[16] =
 {-68,-37,-23,-15, -9, -6, -3, -1, 1, 4, 7,10,16,24,37,70 };
-static const int delta_075_level_3_bc_3[16] =
+constexpr int delta_075_level_3_bc_3[16] =
 {-117,-72, -50, -36, -25, -17, -10, -5,-1, 3, 7,14,25,45,82,166};
 static const int *const delta_075_level_3[4] =
 { nullptr, delta_075_level_3_bc_1,
   delta_075_level_3_bc_2, delta_075_level_3_bc_3 };
 
-static const int delta_075_level_4_bc_3[4] = {-47,-8,4,43};
+constexpr int delta_075_level_4_bc_3[4] = {-47,-8,4,43};
 static const int *const delta_075_level_4[4] = { nullptr, nullptr, nullptr, delta_075_level_4_bc_3 };
 
 static const int *const * const delta_075_by_level_by_bc[4] =

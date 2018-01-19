@@ -63,8 +63,8 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg );
 void *GDALDeserializeRPCTransformer( CPLXMLNode *psTree );
 CPL_C_END
 
-static const int MAX_ABS_VALUE_WARNINGS = 20;
-static const double DEFAULT_PIX_ERR_THRESHOLD = 0.1;
+constexpr int MAX_ABS_VALUE_WARNINGS = 20;
+constexpr double DEFAULT_PIX_ERR_THRESHOLD = 0.1;
 
 /************************************************************************/
 /*                            RPCInfoToMD()                             */
