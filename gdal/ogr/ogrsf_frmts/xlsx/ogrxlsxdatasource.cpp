@@ -988,6 +988,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
                 CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
                 delete poFeature;
+
             }
        }
 
