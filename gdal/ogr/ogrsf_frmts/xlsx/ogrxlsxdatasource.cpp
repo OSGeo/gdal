@@ -966,18 +966,29 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
 
             /* Add feature for current line */
-            OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+            OGRFeature* poFeature = nullptr;
+
             for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
                 if (!apoCurLineValues[i].empty())
                 {
+                  if (!poFeature) {
+                    poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                  }
+
                   SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
                           apoCurLineTypes[i].c_str());
                 }
             }
-            CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
-            delete poFeature;
+            if (poFeature || bAllowEmptyRows)
+            {
+                if (!poFeature) {
+                  poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                }
 
+                CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+                delete poFeature;
+            }
         }
 
         nCurLine++;
