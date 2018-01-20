@@ -587,7 +587,8 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      this never having been considered to be a match. This isn't     */
 /*      an error!                                                       */
 /* -------------------------------------------------------------------- */
-    if( nRows < 1 || nCols < 1 || nBands < 1 )
+    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, false) )
     {
         delete poDS;
         return nullptr;
