@@ -36,22 +36,22 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = nullptr)
+static void Usage( const char* pszErrorMsg = nullptr )
 {
-    printf( "nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]\n"
-            "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n" );
+    printf("nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]\n"
+           "          [-setalpha] [-setmask] [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n");
 
     if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
-    exit( 1 );
+    exit(1);
 }
 
 /************************************************************************/
 /*                       GDALNearblackOptionsForBinaryNew()             */
 /************************************************************************/
 
-static GDALNearblackOptionsForBinary *GDALNearblackOptionsForBinaryNew(void)
+static GDALNearblackOptionsForBinary *GDALNearblackOptionsForBinaryNew()
 {
     return static_cast<GDALNearblackOptionsForBinary *>(
         CPLCalloc(1, sizeof(GDALNearblackOptionsForBinary)));
@@ -61,7 +61,8 @@ static GDALNearblackOptionsForBinary *GDALNearblackOptionsForBinaryNew(void)
 /*                       GDALNearblackOptionsForBinaryFree()            */
 /************************************************************************/
 
-static void GDALNearblackOptionsForBinaryFree( GDALNearblackOptionsForBinary* psOptionsForBinary )
+static void GDALNearblackOptionsForBinaryFree(
+    GDALNearblackOptionsForBinary* psOptionsForBinary )
 {
     if( psOptionsForBinary )
     {
@@ -77,7 +78,7 @@ static void GDALNearblackOptionsForBinaryFree( GDALNearblackOptionsForBinary* ps
 MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
-    if (! GDAL_CHECK_VERSION(argv[0]))
+    if( !GDAL_CHECK_VERSION(argv[0]) )
         exit(1);
 
     EarlySetConfigOptions(argc, argv);
@@ -86,9 +87,10 @@ MAIN_START(argc, argv)
 /*      Generic arg processing.                                         */
 /* -------------------------------------------------------------------- */
     GDALAllRegister();
+
     if( CPLGetConfigOption("GDAL_CACHEMAX", nullptr) == nullptr )
         GDALSetCacheMax( 100000000 );
-    argc = GDALGeneralCmdLineProcessor( argc, &argv, 0 );
+    argc = GDALGeneralCmdLineProcessor(argc, &argv, 0);
     if( argc < 1 )
         exit( -argc );
 
@@ -96,20 +98,23 @@ MAIN_START(argc, argv)
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
-            printf("%s was compiled against GDAL %s and is running against GDAL %s\n",
+            printf("%s was compiled against GDAL %s and "
+                   "is running against GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
-            CSLDestroy( argv );
+            CSLDestroy(argv);
             return 0;
         }
-        else if( EQUAL(argv[i],"--help") )
+        else if( EQUAL(argv[i], "--help") )
         {
             Usage();
         }
     }
 
-    GDALNearblackOptionsForBinary* psOptionsForBinary = GDALNearblackOptionsForBinaryNew();
-    GDALNearblackOptions *psOptions = GDALNearblackOptionsNew(argv + 1, psOptionsForBinary);
-    CSLDestroy( argv );
+    GDALNearblackOptionsForBinary* psOptionsForBinary =
+        GDALNearblackOptionsForBinaryNew();
+    GDALNearblackOptions *psOptions =
+        GDALNearblackOptionsNew(argv + 1, psOptionsForBinary);
+    CSLDestroy(argv);
 
     if( psOptions == nullptr )
     {
@@ -125,29 +130,32 @@ MAIN_START(argc, argv)
         Usage("No input file specified.");
 
     if( psOptionsForBinary->pszOutFile == nullptr )
-        psOptionsForBinary->pszOutFile = CPLStrdup(psOptionsForBinary->pszInFile);
+        psOptionsForBinary->pszOutFile =
+            CPLStrdup(psOptionsForBinary->pszInFile);
 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hInDS, hOutDS = nullptr;
+    GDALDatasetH hInDS = nullptr;
+    GDALDatasetH hOutDS = nullptr;
 
-    if( strcmp(psOptionsForBinary->pszOutFile, psOptionsForBinary->pszInFile) == 0 )
-        hInDS = hOutDS = GDALOpen( psOptionsForBinary->pszInFile, GA_Update );
+    if( strcmp(psOptionsForBinary->pszOutFile,
+               psOptionsForBinary->pszInFile) == 0 )
+        hInDS = hOutDS = GDALOpen(psOptionsForBinary->pszInFile, GA_Update);
     else
-        hInDS = GDALOpen( psOptionsForBinary->pszInFile, GA_ReadOnly );
+        hInDS = GDALOpen(psOptionsForBinary->pszInFile, GA_ReadOnly);
 
     if( hInDS == nullptr )
-        exit( 1 );
+        exit(1);
 
     int bUsageError = FALSE;
     GDALDatasetH hRetDS = GDALNearblack(psOptionsForBinary->pszOutFile,
                                         hOutDS,
                                         hInDS,
                                         psOptions, &bUsageError);
-    if(bUsageError == TRUE)
+    if( bUsageError )
         Usage();
-    int nRetCode = (hRetDS) ? 0 : 1;
+    const int nRetCode = hRetDS ? 0 : 1;
 
     GDALClose(hInDS);
     if( hRetDS != hInDS )
