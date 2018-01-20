@@ -256,8 +256,8 @@ static GDALDataset* OGRGeoPackageDriverCreate( const char * pszFilename,
     if( !bIsRecognizedExtension )
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "The '%s' extension is not allowed by the GPKG specification, "
-                 "which may cause compatibility problems",
+                 "The filename extension should be 'gpkg' instead of '%s' "
+                 "to conform to the GPKG specification.",
                  pszExt);
     }
 
