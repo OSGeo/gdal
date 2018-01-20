@@ -101,10 +101,10 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
     }
 
     m_poLayerDriver = m_pMetadataDS->GetDriver();
-    const char* pszExt = CPLGetExtension(soMetadatafile);
+    CPLString osExt = CPLGetExtension(soMetadatafile);
 
     CPLString soGraphfile = CPLFormFilename(m_soNetworkFullName,
-                                            GNM_SYSLAYER_GRAPH, pszExt);
+                                            GNM_SYSLAYER_GRAPH, osExt);
     m_pGraphDS = (GDALDataset*) GDALOpenEx( soGraphfile, GDAL_OF_VECTOR |
                                             GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
     if( nullptr == m_pGraphDS )
@@ -120,7 +120,7 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLString soFeaturesfile = CPLFormFilename(m_soNetworkFullName,
-                                            GNM_SYSLAYER_FEATURES, pszExt);
+                                            GNM_SYSLAYER_FEATURES, osExt);
     m_pFeaturesDS = (GDALDataset*) GDALOpenEx( soFeaturesfile, GDAL_OF_VECTOR |
                                                GDAL_OF_UPDATE, nullptr, nullptr, nullptr );
     if( nullptr == m_pFeaturesDS )
