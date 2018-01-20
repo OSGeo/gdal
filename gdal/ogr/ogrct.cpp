@@ -545,13 +545,13 @@ OGRProj4CT::~OGRProj4CT()
 
     if( pjctx != NULL )
     {
-        pfn_pj_ctx_free(pjctx);
-
         if( psPJSource != NULL )
             pfn_pj_free( psPJSource );
 
         if( psPJTarget != NULL )
             pfn_pj_free( psPJTarget );
+
+        pfn_pj_ctx_free(pjctx);
     }
     else
     {
