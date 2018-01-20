@@ -551,6 +551,13 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
 
         /* clear */
         ogrPolygon.empty();
+
+        /* free ring list */
+        for (PointListArray::iterator iRing = poRingList.begin(), eRing = poRingList.end();
+            iRing != eRing; ++iRing) {
+            delete (*iRing);
+            *iRing = nullptr;
+        }
         poRingList.clear();
 
         /* collect rings from lines */
