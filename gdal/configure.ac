@@ -1556,6 +1556,10 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
     AC_MSG_RESULT([using internal TIFF code.])
   fi
 
+elif test "x${with_libtiff}" = "xno" ; then
+
+  AC_MSG_ERROR([libtiff is a required dependency])
+
 elif test "x${with_libtiff}" = "xinternal" ; then
 
   TIFF_SETTING=internal
@@ -1639,6 +1643,10 @@ elif test "$with_geotiff" = "internal" ; then
   GEOTIFF_SETTING=internal
 
   echo "using internal GeoTIFF code."
+
+elif test "x${with_geotiff}" = "xno" ; then
+
+  AC_MSG_ERROR([libgeotiff is a required dependency])
 
 else
 
