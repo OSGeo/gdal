@@ -37,6 +37,8 @@ cd ..
 cd ogr
 python3 ogr_pgeo.py
 mv ogr_pgeo.* disabled
+# mongdb tests stall
+mv ogr_mongodb.* disabled
 cd ..
 # Run all the Python autotests
 GDAL_SKIP="JP2ECW ECW" python3 run_all.py
