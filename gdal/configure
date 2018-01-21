@@ -23620,6 +23620,10 @@ $as_echo "using pre-installed libtiff." >&6; }
 $as_echo "using internal TIFF code." >&6; }
   fi
 
+elif test "x${with_libtiff}" = "xno" ; then
+
+  as_fn_error $? "libtiff is a required dependency" "$LINENO" 5
+
 elif test "x${with_libtiff}" = "xinternal" ; then
 
   TIFF_SETTING=internal
@@ -23799,6 +23803,10 @@ elif test "$with_geotiff" = "internal" ; then
   GEOTIFF_SETTING=internal
 
   echo "using internal GeoTIFF code."
+
+elif test "x${with_geotiff}" = "xno" ; then
+
+  as_fn_error $? "libgeotiff is a required dependency" "$LINENO" 5
 
 else
 
