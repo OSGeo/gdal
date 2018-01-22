@@ -2634,6 +2634,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         const char* pszBandCount = CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "BAND_COUNT",
             CPLGetConfigOption("MBTILES_BAND_COUNT", "-1"));
+        bool bFoundRasterTile = false;
         nBands = atoi(pszBandCount);
 
         if( ! (nBands == 1 || nBands == 2 || nBands == 3 || nBands == 4) )
@@ -2645,6 +2646,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
             nBands = MBTilesGetBandCount(hDS, nMaxLevel,
                                          nMinTileRow, nMaxTileRow,
                                          nMinTileCol, nMaxTileCol);
+            bFoundRasterTile = nBands > 0;
             // Map RGB to RGBA since we can guess wrong (see #6836)
             if (nBands < 0 || nBands == 3)
                 nBands = 4;
@@ -2694,7 +2696,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                              false)
             );
         }
-        else if( pszFormat != nullptr && !EQUAL(pszFormat, "pbf") )
+        else if( (pszFormat != nullptr && !EQUAL(pszFormat, "pbf")) ||
+                 bFoundRasterTile )
         {
             if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
             {

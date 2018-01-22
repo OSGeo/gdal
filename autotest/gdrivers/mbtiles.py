@@ -496,6 +496,19 @@ def mbtiles_11():
     return 'success'
 
 ###############################################################################
+
+def mbtiles_raster_open_in_vector_mode():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/byte.mbtiles')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -517,6 +530,7 @@ gdaltest_list = [
     mbtiles_9,
     mbtiles_10,
     mbtiles_11,
+    mbtiles_raster_open_in_vector_mode,
     mbtiles_cleanup ]
 
 #gdaltest_list = [ mbtiles_1, mbtiles_9 ]
