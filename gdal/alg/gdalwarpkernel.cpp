@@ -6129,7 +6129,7 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Max )
                 // poWK->eResample == GRA_Max.
                 {
-                    dfTotal = -DBL_MAX;
+                    dfTotal = std::numeric_limits<double>::lowest();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
@@ -6170,7 +6170,7 @@ static void GWKAverageOrModeThread( void* pData)
                 else if( nAlgo == GWKAOM_Min )
                 // poWK->eResample == GRA_Min.
                 {
-                    dfTotal = DBL_MAX;
+                    dfTotal = std::numeric_limits<double>::max();
                     // This code adapted from nAlgo 1 method, GRA_Average.
                     for( int iSrcY = iSrcYMin; iSrcY < iSrcYMax; iSrcY++ )
                     {
