@@ -148,7 +148,6 @@ class OGRODSDataSource : public GDALDataset
     int                 bAutodetectTypes;
     int                 bAllowEmptyRows;
     int                 bAllowEmptyCells;
-    int                 nMaxRepeatedRows;
 
     XML_Parser          oParser;
     bool                bStopParsing;

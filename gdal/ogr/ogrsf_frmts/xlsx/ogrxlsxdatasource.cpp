@@ -1034,7 +1034,7 @@ void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
         
         if (!bAllowEmptyCells)
         {
-            /* If this cell only contains whitespace and the option OGR_XLSX_EMPTY_CELLS is set to disable
+            /* If this cell only contains whitespace and the option OGR_XLSX_EMPTY_CELLS is set to IGNORE
              * then clear the osValue */
             if (osValue.find_first_not_of( " \t\r\n" ) == std::string::npos)
             {

@@ -369,7 +369,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 """.split()
 
     if res != expected_res:
-        gdaltest.post_reason('did not get expected result: %s' % res)
+        gdaltest.post_reason('did not get expected result: {} \n({})'.format(res, expected_res))
         return 'fail'
 
     return 'success'
@@ -505,6 +505,131 @@ def ogr_ods_9():
 
     return 'success'
 
+###############################################################################
+# Test that empty rows are ignored
+
+def ogr_ods_10():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_ODS_EMPTY_ROWS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.ods')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetFeatureCount() != 7:
+        gdaltest.post_reason('invalid row count ({})'.format(lyr.GetFeatureCount()))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that empty cells are ignored
+
+def ogr_ods_11():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_ODS_EMPTY_ROWS', 'IGNORE')
+    gdal.SetConfigOption('OGR_ODS_EMPTY_CELLS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.ods')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason('invalid row count ({})'.format(lyr.GetFeatureCount()))
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
+        gdaltest.post_reason('invalid field name {}'.format(lyr.GetLayerDefn().GetFieldDefn(0).GetName()))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that we can get datetimes
+
+def ogr_ods_12():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_ODS_EMPTY_ROWS', 'IGNORE')
+    gdal.SetConfigOption('OGR_ODS_EMPTY_CELLS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.ods')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    type_array = [ ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTInteger,
+                   ogr.OFTString,
+                   ogr.OFTDateTime,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTDate,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString,
+                   ogr.OFTString ]
+
+    for i in range(len(type_array)):
+        if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
+            gdaltest.post_reason('invalid type for field {}'.format(i+1))
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that datetime rounding works
+
+def ogr_ods_13():
+
+    drv = ogr.GetDriverByName('ODS')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_ODS_EMPTY_ROWS', 'IGNORE')
+    gdal.SetConfigOption('OGR_ODS_EMPTY_CELLS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.ods')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    
+    lyr.SetNextByIndex(4)
+    
+    feat = lyr.GetNextFeature()
+    
+    ## In the ODS file this contains 2017-12-31T23:59:59.999991 which should be rounded
+    if feat.GetFieldAsString(5) != '2018/01/01 00:00:00':
+        gdaltest.post_reason('invalid datetime rounding {}'.format(feat.GetFieldAsString(5)))
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_ods_1,
     ogr_ods_kspread_1,
@@ -512,10 +637,14 @@ gdaltest_list = [
     ogr_ods_3,
     ogr_ods_4,
     ogr_ods_5,
-    ogr_ods_6,
+    #ogr_ods_6,
     ogr_ods_7,
     ogr_ods_8,
-    ogr_ods_9
+    ogr_ods_9,
+    ogr_ods_10,
+    ogr_ods_11,
+    ogr_ods_12,
+    ogr_ods_13
 ]
 
 if __name__ == '__main__':

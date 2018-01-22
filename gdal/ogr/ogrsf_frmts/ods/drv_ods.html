@@ -28,6 +28,10 @@ first line might be the name of columns. If set to FORCE, the driver will consid
 If set to DISABLE, it will be considered as the first feature. Otherwise auto-detection will occur.</li>
 <li>OGR_ODS_FIELD_TYPES = STRING / AUTO : By default, the driver will try to detect the data type of fields. If set to STRING,
 all fields will be of String type.</li>
+<li>OGR_ODS_EMPTY_ROWS = IGNORE / AUTO : By default, the driver will load empty rows containing no data. If set to IGNORE,
+only rows having data in at least one column will be retrieved. This can be useful when loading software or client generated spreadsheets which may contain spurious (and possibly large numbers of) empty rows.</li>
+<li>OGR_ODS_EMPTY_CELLS = IGNORE / AUTO : By default, the driver will treat cells containing only whitespace (space, tab, newline, carriage return) as valid cells. If set to IGNORE,
+those cells will be treated as empty. This can be useful when loading client generated spreadsheets which may contain spurious spaces in random cells beyond the header row.</li>
 </ul>
 
 </body>

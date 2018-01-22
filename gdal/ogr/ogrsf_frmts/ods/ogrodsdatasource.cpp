@@ -230,7 +230,6 @@ OGRODSDataSource::OGRODSDataSource() :
                             "IGNORE")),
     bAllowEmptyCells(!EQUAL(CPLGetConfigOption("OGR_ODS_EMPTY_CELLS", ""),
                             "IGNORE")),
-    nMaxRepeatedRows(atoi(CPLGetConfigOption("OGR_ODS_MAX_REPEATED_ROWS", "10000"))),
     oParser(nullptr),
     bStopParsing(false),
     nWithoutEventCounter(0),
@@ -672,7 +671,7 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
           nRowsRepeated = 1;
         }
         
-        nRowsRepeated = std::min(nRowsRepeated, nMaxRepeatedRows);
+        nRowsRepeated = std::min(nRowsRepeated, 10000);
 
         if (nRowsRepeated > 1)
         {
@@ -680,7 +679,7 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
               static_cast<int>(apoFirstLineValues.size()),
               poCurLayer != nullptr ?
                   poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-          if( nFields > 0 && nRowsRepeated > 100 * nMaxRepeatedRows / nFields )
+          if( nFields > 0 && nRowsRepeated > 100 * 10000 / nFields )
           {
               CPLError(CE_Failure, CPLE_AppDefined,
                       "Too big gap with previous valid row");
@@ -861,7 +860,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
             const int nFields = (osValueType.empty() ? 0 : nCellsRepeated) +
                 (poCurLayer != nullptr ?
                     poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-            if( nFields > 0 && nRowsRepeated > 100 * nMaxRepeatedRows / nFields )
+            if( nFields > 0 && nRowsRepeated > 100 * 10000 / nFields )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Too big gap with previous valid row");
@@ -1146,7 +1145,7 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
 
         if (!bAllowEmptyCells)
         {
-            /* If this cell only contains whitespace and the option OGR_ODS_EMPTY_CELLS is set to disable
+            /* If this cell only contains whitespace and the option OGR_ODS_EMPTY_CELLS is set to IGNORE
              * then clear the osValue */
             if (osValue.find_first_not_of( " \t\r\n" ) == std::string::npos)
             {
@@ -1694,7 +1693,7 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                             "table:style-name=\"stDateTimeMilliseconds\" "
                             "office:value-type=\"date\" "
                             "office:date-value="
-                            "\"%04d-%02d-%02dT%02d:%02d:%06.3f\">\n",
+                            "\"%04d-%02d-%02dT%02d:%02d:%02.6f\">\n",
                             nYear, nMonth, nDay, nHour, nMinute, fSecond );
                         VSIFPrintfL(
                             fp,
