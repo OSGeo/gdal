@@ -1,0 +1,12 @@
+{
+    "name": "out_datatypes",
+    "description": "out_datatypes",
+    "version": "2",
+    "minzoom": "0",
+    "maxzoom": "0",
+    "center": "2.000000,49.000000,0",
+    "bounds": "2.000000,49.000000,2.000000,49.000000",
+    "type": "overlay",
+    "format": "pbf",
+    "json": "{\"vector_layers\": [ { \"id\": \"datatypes\", \"description\": \"\", \"minzoom\": 0, \"maxzoom\": 0, \"fields\": {\"bool_false\": \"Boolean\", \"bool_true\": \"Boolean\", \"float_value\": \"Number\", \"pos_int_value\": \"Number\", \"pos_int64_value\": \"Number\", \"neg_int_value\": \"Number\", \"neg_int64_value\": \"Number\", \"pos_sint_value\": \"Number\", \"pos_sint64_value\": \"Number\", \"neg_sint_value\": \"Number\", \"neg_sint64_value\": \"Number\", \"real_value\": \"Number\", \"string_value\": \"String\", \"uint_value\": \"Number\", \"uint64_value\": \"Number\"} } ]}"
+}

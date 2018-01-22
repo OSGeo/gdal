@@ -7,7 +7,7 @@ ifeq ($(LIBZ_SETTING),internal)
   XTRA_OPT :=   $(XTRA_OPT) -I../zlib
 endif
 
-CPPFLAGS	:=	-I../../ogr/ogrsf_frmts/geojson $(JSON_INCLUDE) $(XTRA_OPT)  $(CPPFLAGS) -I../../ogr -I../../ogr/ogrsf_frmts/gpkg -I../../ogr/ogrsf_frmts/sqlite $(SQLITE_INC)
+CPPFLAGS	:=	-I../../ogr/ogrsf_frmts/geojson -I../../ogr/ogrsf_frmts/mvt $(JSON_INCLUDE) $(XTRA_OPT)  $(CPPFLAGS) -I../../ogr -I../../ogr/ogrsf_frmts/gpkg -I../../ogr/ogrsf_frmts/sqlite $(SQLITE_INC)
 
 default:	$(OBJ:.o=.$(OBJ_EXT))
 

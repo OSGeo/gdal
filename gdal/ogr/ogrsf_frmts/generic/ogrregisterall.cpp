@@ -298,6 +298,9 @@ void OGRRegisterAllInternal()
 #ifdef GMLAS_ENABLED
     RegisterOGRGMLAS();
 #endif
+#ifdef MVT_ENABLED
+    RegisterOGRMVT();
+#endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */
 #ifdef TIGER_ENABLED

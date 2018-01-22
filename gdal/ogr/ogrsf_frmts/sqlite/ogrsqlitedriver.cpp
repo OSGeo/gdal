@@ -46,8 +46,17 @@ CPL_CVSID("$Id$")
 static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "SQLITE:") )
+    {
+        return TRUE;
+    }
+
     CPLString osExt(CPLGetExtension(poOpenInfo->pszFilename));
     if( EQUAL(osExt, "gpkg") && GDALGetDriverByName("GPKG") != nullptr )
+    {
+        return FALSE;
+    }
+    if( EQUAL(osExt, "mbtiles") && GDALGetDriverByName("MBTILES") != nullptr )
     {
         return FALSE;
     }
@@ -102,6 +111,8 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     }
     if( STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
     {
+        if( poOpenInfo->eAccess == GA_Update )
+            return FALSE;
         return -1;
     }
 #endif

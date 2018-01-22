@@ -157,6 +157,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     vsi_l_offset      offsetEndCompressedData;
     uLong             m_expected_crc;
     char             *m_pszBaseFileName; /* optional */
+    bool              m_bWriteProperties;
     bool              m_bCanSaveInfo;
 
     /* Fields from gz_stream structure */
@@ -325,6 +326,8 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
 #endif
     m_expected_crc(expected_crc),
     m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : nullptr),
+    m_bWriteProperties(CPLTestBool(
+        CPLGetConfigOption("CPL_VSIL_GZIP_WRITE_PROPERTIES", "YES"))),
     m_bCanSaveInfo(true),
     z_err(Z_OK),
     z_eof(0),
@@ -836,7 +839,7 @@ int VSIGZipHandle::gzseek( vsi_l_offset offset, int whence )
 
         if( m_pszBaseFileName &&
             !STARTS_WITH_CI(m_pszBaseFileName, "/vsicurl/") &&
-            CPLTestBool(CPLGetConfigOption("CPL_VSIL_GZIP_WRITE_PROPERTIES", "YES")) )
+            m_bWriteProperties )
         {
             CPLString osCacheFilename (m_pszBaseFileName);
             osCacheFilename += ".properties";

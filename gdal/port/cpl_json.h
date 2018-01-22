@@ -101,6 +101,7 @@ public:
     void Add(const std::string &osName, const CPLJSONArray &oValue);
     void Add(const std::string &osName, const CPLJSONObject &oValue);
     void Add(const std::string &osName, bool bValue);
+    void AddNull(const std::string &osName);
 
     void Set(const std::string &osName, const std::string &osValue);
     void Set(const std::string &osName, const char *pszValue);
@@ -108,6 +109,7 @@ public:
     void Set(const std::string &osName, int nValue);
     void Set(const std::string &osName, GInt64 nValue);
     void Set(const std::string &osName, bool bValue);
+    void SetNull(const std::string &osName);
 
 /*! @cond Doxygen_Suppress */
     JSONObjectH GetInternalHandle() const { return m_poJsonObject; }

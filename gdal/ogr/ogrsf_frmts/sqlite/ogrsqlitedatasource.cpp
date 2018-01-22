@@ -1290,6 +1290,11 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
         }
         else
 #endif
+        if( STARTS_WITH_CI(pszNewName, "SQLITE:") )
+        {
+            m_pszFilename = CPLStrdup( pszNewName + strlen("SQLITE:") );
+        }
+        else
         {
             m_pszFilename = CPLStrdup( pszNewName );
         }
@@ -1333,11 +1338,12 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 #endif
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
-        if( poOpenInfo->pabyHeader &&
-            (STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL SQLITE") ||
-             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL RASTERLITE") ||
-             STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES")) &&
-            poOpenInfo->fpL != nullptr )
+        GDALOpenInfo oOpenInfo(m_pszFilename, GA_ReadOnly);
+        if( oOpenInfo.pabyHeader &&
+            (STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL SQLITE") ||
+             STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL RASTERLITE") ||
+             STARTS_WITH((const char*)oOpenInfo.pabyHeader, "-- SQL MBTILES")) &&
+            oOpenInfo.fpL != nullptr )
         {
             if( sqlite3_open_v2( ":memory:", &hDB, SQLITE_OPEN_READWRITE, nullptr )
                     != SQLITE_OK )
@@ -1351,9 +1357,9 @@ int OGRSQLiteDataSource::Open( GDALOpenInfo* poOpenInfo)
 #endif
 
             // Ingest the lines of the dump
-            VSIFSeekL( poOpenInfo->fpL, 0, SEEK_SET );
+            VSIFSeekL( oOpenInfo.fpL, 0, SEEK_SET );
             const char* pszLine;
-            while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr )
+            while( (pszLine = CPLReadLineL( oOpenInfo.fpL )) != nullptr )
             {
                 if( STARTS_WITH(pszLine, "--") )
                     continue;

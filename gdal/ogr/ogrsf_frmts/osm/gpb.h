@@ -253,14 +253,17 @@ static void SkipVarInt(GByte** ppabyData)
 
 #define READ_FIELD_KEY(nKey) READ_VARINT32(pabyData, pabyDataLimit, nKey)
 
-#define READ_TEXT(pabyData, pabyDataLimit, pszTxt) \
-        unsigned int nDataLength; \
-        READ_SIZE(pabyData, pabyDataLimit, nDataLength); \
-        pszTxt = (char*)VSI_MALLOC_VERBOSE(nDataLength + 1); \
+#define READ_TEXT_WITH_SIZE(pabyData, pabyDataLimit, pszTxt, l_nDataLength) do { \
+        READ_SIZE(pabyData, pabyDataLimit, l_nDataLength); \
+        pszTxt = (char*)VSI_MALLOC_VERBOSE(l_nDataLength + 1); \
         if( pszTxt == nullptr ) GOTO_END_ERROR; \
-        memcpy(pszTxt, pabyData, nDataLength); \
-        pszTxt[nDataLength] = 0; \
-        pabyData += nDataLength;
+        memcpy(pszTxt, pabyData, l_nDataLength); \
+        pszTxt[l_nDataLength] = 0; \
+        pabyData += l_nDataLength; } while(0)
+
+#define READ_TEXT(pabyData, pabyDataLimit, pszTxt) do { \
+        unsigned int l_nDataLength; \
+        READ_TEXT_WITH_SIZE(pabyData, pabyDataLimit, pszTxt, l_nDataLength); } while(0)
 
 /************************************************************************/
 /*                         SkipUnknownField()                           */

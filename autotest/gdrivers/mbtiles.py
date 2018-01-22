@@ -429,7 +429,7 @@ def mbtiles_9():
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
     src_ds = None
-    ds = ogr.Open('/vsimem/mbtiles_9.mbtiles', update = 1)
+    ds = ogr.Open('SQLITE:/vsimem/mbtiles_9.mbtiles', update = 1)
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
     ds = None
 

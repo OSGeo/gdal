@@ -1,0 +1,12 @@
+{
+    "name": "out_polygon2_point",
+    "description": "out_polygon2_point",
+    "version": "2",
+    "minzoom": "0",
+    "maxzoom": "1",
+    "center": "-1.000000,42.525564,1",
+    "bounds": "-1.000000,-4.000000,4.000000,49.000000",
+    "type": "overlay",
+    "format": "pbf",
+    "json": "{\"vector_layers\": [ { \"id\": \"point\", \"description\": \"\", \"minzoom\": 0, \"maxzoom\": 1, \"fields\": {} }, { \"id\": \"polygon2\", \"description\": \"\", \"minzoom\": 0, \"maxzoom\": 1, \"fields\": {\"\": \"String\"} } ],\"tilestats\": {\"layerCount\": 2,\"layers\": [{\"layer\": \"point\",\"count\": 1,\"geometry\": \"Point\",\"attributeCount\": 0,\"attributes\": []},{\"layer\": \"polygon2\",\"count\": 1,\"geometry\": \"Polygon\",\"attributeCount\": 1,\"attributes\": [{\"attribute\": \"\",\"count\": 1,\"type\": \"string\",\"values\": [\"\"]}]}]}}"
+}
