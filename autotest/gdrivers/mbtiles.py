@@ -509,6 +509,85 @@ def mbtiles_raster_open_in_vector_mode():
     return 'success'
 
 ###############################################################################
+
+def mbtiles_create():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/mbtiles_create.mbtiles'
+    gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
+    with gdaltest.error_handler():
+        if gdal.Open(filename) is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Nominal case
+    gdal.Unlink(filename)
+    src_ds = gdal.Open('data/byte.mbtiles')
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    ds.SetProjection(src_ds.GetProjectionRef())
+
+    # Cannot modify geotransform once set" 
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('data/byte.mbtiles')
+    # SetGeoTransform() not supported on read-only dataset"
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # SetProjection() not supported on read-only dataset
+    with gdaltest.error_handler():
+        ret = ds.SetProjection(src_ds.GetProjectionRef())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Only EPSG:3857 supported on MBTiles dataset
+    with gdaltest.error_handler():
+        ret = ds.SetProjection('LOCAL_CS["foo"]')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Only north-up non rotated geotransform supported
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([0,1,0,0,0,1])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Could not find an appropriate zoom level that matches raster pixel size
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([0,1,0,0,0,-1])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -531,9 +610,10 @@ gdaltest_list = [
     mbtiles_10,
     mbtiles_11,
     mbtiles_raster_open_in_vector_mode,
+    mbtiles_create,
     mbtiles_cleanup ]
 
-#gdaltest_list = [ mbtiles_1, mbtiles_9 ]
+# gdaltest_list = [ mbtiles_1, mbtiles_create ]
 
 if __name__ == '__main__':
 
