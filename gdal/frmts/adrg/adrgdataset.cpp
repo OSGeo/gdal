@@ -31,6 +31,9 @@
 #include "iso8211.h"
 #include "ogr_spatialref.h"
 
+#include <limits>
+#include <new>
+
 CPL_CVSID("$Id$")
 
 #define N_ELEMENTS(x)  (sizeof(x)/sizeof(x[0]))
@@ -1016,10 +1019,11 @@ ADRGDataset* ADRGDataset::OpenDataset(
     NFC = record->GetIntSubfield("SPR", 0, "NFC", 0);
     CPLDebug("ADRG", "NFC=%d", NFC);
 
+    const auto knIntMax = std::numeric_limits<int>::max();
     if( NFL <= 0 || NFC <= 0 ||
-        NFL > INT_MAX / 128 ||
-        NFC > INT_MAX / 128 ||
-        NFL > (INT_MAX - 1) / (NFC * 5) )
+        NFL > knIntMax / 128 ||
+        NFC > knIntMax / 128 ||
+        NFL > (knIntMax - 1) / (NFC * 5) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
         return nullptr;

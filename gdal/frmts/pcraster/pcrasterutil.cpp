@@ -29,6 +29,7 @@
 #include <cfloat>
 
 #include <algorithm>
+#include <limits>
 
 #include "pcrasterutil.h"
 #include "pcrtypes.h"
@@ -368,7 +369,7 @@ double missingValue(
       // using <limits> breaks on gcc 2.95
       // CPLAssert(std::numeric_limits<REAL4>::is_iec559);
       // missingValue = -std::numeric_limits<REAL4>::max();
-      missingValue = -FLT_MAX;
+      missingValue = std::numeric_limits<float>::lowest();
       break;
     }
     // CSF version 1. ----------------------------------------------------------

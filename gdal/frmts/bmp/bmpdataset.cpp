@@ -32,6 +32,8 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$")
 
 // Enable if you want to see lots of BMP debugging output.
@@ -300,7 +302,8 @@ BMPRasterBand::BMPRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    if (nBlockXSize < (INT_MAX - 31) / poDSIn->sInfoHeader.iBitCount)
+    const auto knIntMax = std::numeric_limits<int>::max();
+    if (nBlockXSize < (knIntMax - 31) / poDSIn->sInfoHeader.iBitCount)
     {
         nScanSize =
             ((poDS->GetRasterXSize() *
@@ -705,7 +708,8 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     /* TODO: it might be interesting to avoid uncompressing the whole data */
     /* in a single pass, especially if nXSize * nYSize is big */
     /* We could read incrementally one row at a time */
-    if (poDS->GetRasterXSize() > INT_MAX / poDS->GetRasterYSize())
+    const auto knIntMax = std::numeric_limits<int>::max();
+    if (poDS->GetRasterXSize() > knIntMax / poDS->GetRasterYSize())
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big dimensions : %d x %d",
                  poDS->GetRasterXSize(), poDS->GetRasterYSize());
@@ -713,7 +717,7 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
     }
 
     if( poDSIn->sFileHeader.iSize <= poDSIn->sFileHeader.iOffBits ||
-        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > INT_MAX )
+        poDSIn->sFileHeader.iSize - poDSIn->sFileHeader.iOffBits > knIntMax )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Invalid header");
         return;
@@ -793,8 +797,12 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                     i++;
                     if ( i < iComprSize - 1 )
                     {
-                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
-                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                        if( pabyComprBuf[i+1] >
+                                knIntMax / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) *
+                                poDS->GetRasterXSize() >
+                                knIntMax -
+                                static_cast<int>(j + pabyComprBuf[i]) )
                             break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();
@@ -856,8 +864,12 @@ BMPComprRasterBand::BMPComprRasterBand( BMPDataset *poDSIn, int nBandIn ) :
                     i++;
                     if ( i < iComprSize - 1 )
                     {
-                        if( pabyComprBuf[i+1] > INT_MAX / poDS->GetRasterXSize() ||
-                            static_cast<int>(pabyComprBuf[i+1]) * poDS->GetRasterXSize() > INT_MAX - static_cast<int>(j + pabyComprBuf[i]) )
+                        if( pabyComprBuf[i+1] >
+                                knIntMax / poDS->GetRasterXSize() ||
+                            static_cast<int>(pabyComprBuf[i+1]) *
+                                poDS->GetRasterXSize() >
+                                knIntMax -
+                                static_cast<int>(j + pabyComprBuf[i]) )
                             break;
                         j += pabyComprBuf[i] +
                              pabyComprBuf[i+1] * poDS->GetRasterXSize();

@@ -535,7 +535,8 @@ int AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         if( pszDataType == nullptr &&
             (strchr(pszNoData, '.') != nullptr ||
              strchr(pszNoData, ',') != nullptr ||
-             INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
+             std::numeric_limits<int>::min() > dfNoDataValue ||
+             dfNoDataValue > std::numeric_limits<int>::max()) )
         {
             eDataType = GDT_Float32;
             if( !CPLIsInf(dfNoDataValue) &&
@@ -649,7 +650,8 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
         if( pszDataType == nullptr &&
             (strchr(pszNoData, '.') != nullptr ||
              strchr(pszNoData, ',') != nullptr ||
-             INT_MIN > dfNoDataValue || dfNoDataValue > INT_MAX) )
+             std::numeric_limits<int>::min() > dfNoDataValue ||
+             dfNoDataValue > std::numeric_limits<int>::max()) )
         {
             eDataType = GDT_Float32;
         }
