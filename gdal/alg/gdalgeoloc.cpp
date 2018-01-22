@@ -36,6 +36,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -270,7 +271,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     const int nBMXSize = psTransform->nBackMapWidth =
         static_cast<int>((dfMaxX - dfMinX) / dfPixelSize + 1);
 
-    if( nBMXSize > INT_MAX / nBMYSize )
+    if( nBMXSize > std::numeric_limits<int>::max() / nBMYSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
                  nBMXSize, nBMYSize);
@@ -789,7 +790,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         return nullptr;
     }
 
-    if( nXSize_XBand > INT_MAX / nYSize_XBand )
+    if( nXSize_XBand > std::numeric_limits<int>::max() / nYSize_XBand )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
                  nXSize_XBand, nYSize_XBand);

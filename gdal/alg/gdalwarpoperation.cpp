@@ -37,6 +37,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_config.h"
 #include "cpl_conv.h"
@@ -591,8 +592,9 @@ void* GDALWarpOperation::CreateDestinationBuffer(
     const int nWordSize = GDALGetDataTypeSizeBytes(psOptions->eWorkingDataType);
     const int nBandSize = nWordSize * nDstXSize * nDstYSize;
 
-    if( nDstXSize > INT_MAX / nDstYSize ||
-        nDstXSize * nDstYSize > INT_MAX / (nWordSize * psOptions->nBandCount) )
+    const int knIntMax = std::numeric_limits<int>::max();
+    if( nDstXSize > knIntMax / nDstYSize ||
+        nDstXSize * nDstYSize > knIntMax / (nWordSize * psOptions->nBandCount) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nDstXSize=%d, nDstYSize=%d",
@@ -780,10 +782,12 @@ void GDALWarpOperation::CollectChunkList(
 /*      Find the global source window.                                  */
 /* -------------------------------------------------------------------- */
 
-    int nSrcXOff = INT_MAX;
-    int nSrcYOff = INT_MAX;
-    int nSrcX2Off = INT_MIN;
-    int nSrcY2Off = INT_MIN;
+    const int knIntMax = std::numeric_limits<int>::max();
+    const int knIntMin = std::numeric_limits<int>::min();
+    int nSrcXOff = knIntMax;
+    int nSrcYOff = knIntMax;
+    int nSrcX2Off = knIntMin;
+    int nSrcY2Off = knIntMin;
     double dfApproxAccArea = 0;
     for( int iChunk = 0;
          pasChunkList != nullptr && iChunk < nChunkListCount;
@@ -1754,10 +1758,11 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
+    const int knIntMax = std::numeric_limits<int>::max();
     if( nSrcXSize != 0 && nSrcYSize != 0 &&
-        (nSrcXSize > INT_MAX / nSrcYSize ||
+        (nSrcXSize > knIntMax / nSrcYSize ||
          nSrcXSize * nSrcYSize >
-         INT_MAX / (nWordSize * psOptions->nBandCount) - WARP_EXTRA_ELTS) )
+         knIntMax / (nWordSize * psOptions->nBandCount) - WARP_EXTRA_ELTS) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Integer overflow : nSrcXSize=%d, nSrcYSize=%d",
@@ -2385,7 +2390,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     nSamplePoints = 0;
     if( bUseGrid )
     {
-        if( nStepCount > INT_MAX / nStepCount )
+        const int knIntMax = std::numeric_limits<int>::max();
+        if( nStepCount > knIntMax / nStepCount )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Too many steps : %d", nStepCount);
@@ -2395,7 +2401,8 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
     }
     else
     {
-        if( nStepCount > INT_MAX / 4 )
+        const int knIntMax = std::numeric_limits<int>::max();
+        if( nStepCount > knIntMax / 4 )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Too many steps : %d", nStepCount);
@@ -2637,23 +2644,24 @@ CPLErr GDALWarpOperation::ComputeSourceWindow(
         nDstXOff, nDstYOff, nDstXSize, nDstYSize,
         dfMinXOut, dfMinYOut, dfMaxXOut, dfMaxYOut);
 #endif
+    const int knIntMax = std::numeric_limits<int>::max();
     const int nMinXOutClamped =
-        dfMinXOut > INT_MAX ? INT_MAX :
+        dfMinXOut > knIntMax ? knIntMax :
         dfMinXOut >= 0.0 ? static_cast<int>(dfMinXOut) : 0;
     *pnSrcXOff = nMinXOutClamped;
     const int nMinYOutClamped =
-        dfMinYOut > INT_MAX ? INT_MAX :
+        dfMinYOut > knIntMax ? knIntMax :
         dfMinYOut >= 0.0 ? static_cast<int>(dfMinYOut) : 0;
     *pnSrcYOff = nMinYOutClamped;
     *pnSrcXOff = std::min(*pnSrcXOff, nRasterXSize);
     *pnSrcYOff = std::min(*pnSrcYOff, nRasterYSize);
 
     double dfCeilMaxXOut = ceil(dfMaxXOut);
-    if( dfCeilMaxXOut > INT_MAX )
-        dfCeilMaxXOut = INT_MAX;
+    if( dfCeilMaxXOut > knIntMax )
+        dfCeilMaxXOut = knIntMax;
     double dfCeilMaxYOut = ceil(dfMaxYOut);
-    if( dfCeilMaxYOut > INT_MAX )
-        dfCeilMaxYOut = INT_MAX;
+    if( dfCeilMaxYOut > knIntMax )
+        dfCeilMaxYOut = knIntMax;
 
     double dfSrcXSizeRaw = dfMaxXOut - dfMinXOut;
     double dfSrcYSizeRaw = dfMaxYOut - dfMinYOut;

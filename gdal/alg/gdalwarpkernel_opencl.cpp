@@ -1275,8 +1275,8 @@ cl_kernel get_kernel(struct oclWarper *warper, char useVec,
     //Defines based on image format
     switch (warper->imageFormat) {
         case CL_FLOAT:
-            dstMinVal = -FLT_MAX;
-            dstMaxVal = FLT_MAX;
+            dstMinVal = std::numeric_limits<float>::lowest();
+            dstMaxVal = std::numeric_limits<float>::max();
             outType = "float";
             break;
         case CL_SNORM_INT8:

@@ -746,28 +746,29 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /* -------------------------------------------------------------------- */
         const GDALDataType eType =
             poBand->GetRasterDataType() == GDT_Byte ? GDT_Byte : GDT_Float64;
-    
+
         const int nScanlineBytes =
             nBandCount * poDS->GetRasterXSize() * GDALGetDataTypeSizeBytes(eType);
-    
+
         int nYChunkSize = 0;
         const char *pszYChunkSize = CSLFetchNameValue(papszOptions, "CHUNKYSIZE");
         if( pszYChunkSize == nullptr || ((nYChunkSize = atoi(pszYChunkSize))) == 0)
         {
             const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
-            nYChunkSize = (nYChunkSize64 > INT_MAX) ? INT_MAX 
+            const int knIntMax = std::numeric_limits<int>::max();
+            nYChunkSize = nYChunkSize64 > knIntMax ? knIntMax
                           : static_cast<int>(nYChunkSize64);
         }
-    
+
         if( nYChunkSize < 1 )
             nYChunkSize = 1;
         if( nYChunkSize > poDS->GetRasterYSize() )
             nYChunkSize = poDS->GetRasterYSize();
-    
+
         CPLDebug( "GDAL", "Rasterizer operating on %d swaths of %d scanlines.",
                   (poDS->GetRasterYSize() + nYChunkSize - 1) / nYChunkSize,
                   nYChunkSize );
-    
+
         pabyChunkBuf = static_cast<unsigned char *>(
             VSI_MALLOC2_VERBOSE(nYChunkSize, nScanlineBytes));
         if( pabyChunkBuf == nullptr )
@@ -781,7 +782,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 /*      Loop over image in designated chunks.                           */
 /* ==================================================================== */
         pfnProgress( 0.0, nullptr, pProgressArg );
-    
+
         for( int iY = 0;
              iY < poDS->GetRasterYSize() && eErr == CE_None;
              iY += nYChunkSize )
@@ -789,7 +790,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             int nThisYChunkSize = nYChunkSize;
             if( nThisYChunkSize + iY > poDS->GetRasterYSize() )
                 nThisYChunkSize = poDS->GetRasterYSize() - iY;
-    
+
             eErr =
                 poDS->RasterIO(GF_Read,
                                0, iY, poDS->GetRasterXSize(), nThisYChunkSize,
@@ -799,7 +800,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                                0, 0, 0, nullptr);
             if( eErr != CE_None )
                 break;
-    
+
             for( int iShape = 0; iShape < nGeomCount; iShape++ )
             {
                 gv_rasterize_one_shape( pabyChunkBuf, 0, iY,
@@ -811,14 +812,14 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                                         eBurnValueSource, eMergeAlg,
                                         pfnTransformer, pTransformArg );
             }
-    
+
             eErr =
                 poDS->RasterIO( GF_Write, 0, iY,
                                 poDS->GetRasterXSize(), nThisYChunkSize,
                                 pabyChunkBuf,
                                 poDS->GetRasterXSize(), nThisYChunkSize,
                                 eType, nBandCount, panBandList, 0, 0, 0, nullptr);
-    
+
             if( !pfnProgress((iY + nThisYChunkSize) /
                              static_cast<double>(poDS->GetRasterYSize()),
                              "", pProgressArg ) )
@@ -850,7 +851,10 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
 
         // rem: optimized for square blocks
         const GIntBig nbMaxBlocks64 = GDALGetCacheMax64() / nPixelSize / nYBlockSize / nXBlockSize;
-        const int nbMaxBlocks = (nbMaxBlocks64 > INT_MAX ) ? INT_MAX : static_cast<int>(nbMaxBlocks64);
+        const int knIntMax = std::numeric_limits<int>::max();
+        const int nbMaxBlocks =
+            nbMaxBlocks64 > knIntMax
+            ? knIntMax : static_cast<int>(nbMaxBlocks64);
         const int nbBlocsX = std::max(1, std::min(static_cast<int>(sqrt(static_cast<double>(nbMaxBlocks))), nXBlocks));
         const int nbBlocsY = std::max(1, std::min(nbMaxBlocks / nbBlocsX, nYBlocks));
 
@@ -866,7 +870,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
         }
 
         int * panSuccessTransform = (int *) CPLCalloc(sizeof(int), 2);
-        
+
 /* -------------------------------------------------------------------- */
 /*      loop over the vectorial geometries                              */
 /* -------------------------------------------------------------------- */
@@ -889,7 +893,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                 apCorners[1] = psGeomEnvelope.MaxX;
                 apCorners[2] = psGeomEnvelope.MinY;
                 apCorners[3] = psGeomEnvelope.MaxY;
-                // TODO: need to add all appropriate error checking 
+                // TODO: need to add all appropriate error checking
                 pfnTransformer( pTransformArg, FALSE, 2, &(apCorners[0]),
                                 &(apCorners[2]), nullptr, panSuccessTransform );
                 psGeomEnvelope.MinX = std::min(apCorners[0], apCorners[1]);
@@ -904,7 +908,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             int maxBlockX = std::min(nXBlocks-1, int(psGeomEnvelope.MaxX+1) / nXBlockSize );
             int maxBlockY = std::min(nYBlocks-1, int(psGeomEnvelope.MaxY+1) / nYBlockSize );
 
-            
+
 
 /* -------------------------------------------------------------------- */
 /*      loop over the blocks concerned by the geometry                  */
@@ -944,7 +948,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                                             padfGeomBurnValue + iShape*nBandCount,
                                             eBurnValueSource, eMergeAlg,
                                             pfnTransformer, pTransformArg );
-            
+
                     eErr = poDS->RasterIO(GF_Write, xB * nXBlockSize, yB * nYBlockSize, nThisXChunkSize, nThisYChunkSize,
                                        pabyChunkBuf, nThisXChunkSize, nThisYChunkSize, eType, nBandCount, panBandList,
                                        0, 0, 0, nullptr);
@@ -1106,10 +1110,11 @@ CPLErr GDALRasterizeLayers( GDALDatasetH hDS,
     if( !(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0) )
     {
         const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
-        if( nYChunkSize64 > INT_MAX )
-            nYChunkSize = INT_MAX;
+        const int knIntMax = std::numeric_limits<int>::max();
+        if( nYChunkSize64 > knIntMax )
+            nYChunkSize = knIntMax;
         else
-          nYChunkSize = static_cast<int>(nYChunkSize64);
+            nYChunkSize = static_cast<int>(nYChunkSize64);
     }
 
     if( nYChunkSize < 1 )

@@ -766,7 +766,8 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
     const double dfPixels = (dfMaxXOut - dfMinXOut) / dfPixelSize;
     const double dfLines = (dfMaxYOut - dfMinYOut) / dfPixelSize;
 
-    if( dfPixels > INT_MAX - 1 || dfLines > INT_MAX - 1 )
+    const int knIntMax = std::numeric_limits<int>::max();
+    if( dfPixels > knIntMax - 1 || dfLines > knIntMax - 1 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Computed dimensions are too big : %.0f x %.0f",
