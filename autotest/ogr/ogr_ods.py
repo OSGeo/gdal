@@ -637,7 +637,7 @@ gdaltest_list = [
     ogr_ods_3,
     ogr_ods_4,
     ogr_ods_5,
-    #ogr_ods_6,
+    ogr_ods_6,
     ogr_ods_7,
     ogr_ods_8,
     ogr_ods_9,

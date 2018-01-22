@@ -742,6 +742,26 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
 
         if (poCurLayer)
         {
+             /* Ensure that any fields still with an unknown type are set to String.
+             * This will only be the case if the field has no values */
+       
+            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
+            {
+                OGRFieldType eFieldType =
+                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
+
+                if (eFieldType == OGRUnknownType)
+                {
+                    OGRFieldDefn oNewFieldDefn(
+                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+
+                    oNewFieldDefn.SetType(OFTString);
+                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
+                                                ALTER_TYPE_FLAG);
+
+                }
+            }
+
             if( CPLTestBool(CPLGetConfigOption("ODS_RESOLVE_FORMULAS", "YES")) )
             {
                 poCurLayer->ResetReading();
@@ -772,27 +792,6 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
 
             poCurLayer->ResetReading();
             
-             /* Ensure that any fields still with an unknown type are set to String.
-             * This will only be the case if the field has no values */
-       
-            for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
-            {
-                OGRFieldType eFieldType =
-                    poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
-
-                if (eFieldType == OGRUnknownType)
-                {
-                    OGRFieldDefn oNewFieldDefn(
-                        poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
-
-                    oNewFieldDefn.SetType(OFTString);
-                    poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
-                                                ALTER_TYPE_FLAG);
-
-                }
-            }
-
-
             reinterpret_cast<OGRMemLayer*>(poCurLayer)->
                 SetUpdatable(bUpdatable);
             reinterpret_cast<OGRMemLayer*>(poCurLayer)->SetAdvertizeUTF8(true);
@@ -1154,7 +1153,7 @@ void OGRODSDataSource::endElementCell( CPL_UNUSED /*in non-DEBUG*/ const char * 
         }
 
         if (osValue.empty()) {
-          if (nLastEmptyCol == -1) {
+          if (nLastEmptyCol == -1 && osValueType != "formula") {
             nLastEmptyCol = (int)apoCurLineValues.size();
           }
         }
