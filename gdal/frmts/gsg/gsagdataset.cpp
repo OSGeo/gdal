@@ -30,27 +30,16 @@
 
 #include "cpl_conv.h"
 
-#include <sstream>
+#include <assert.h>
 #include <float.h>
 #include <limits.h>
-#include <assert.h>
+#include <limits>
+#include <sstream>
 
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$")
-
-#ifndef DBL_MAX
-# ifdef __DBL_MAX__
-#  define DBL_MAX __DBL_MAX__
-# else
-#  define DBL_MAX 1.7976931348623157E+308
-# endif /* __DBL_MAX__ */
-#endif /* DBL_MAX */
-
-#ifndef INT_MAX
-# define INT_MAX 2147483647
-#endif /* INT_MAX */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -229,8 +218,8 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
         return CE_Failure;
     }
 
-    double dfNewMinZ = DBL_MAX;
-    double dfNewMaxZ = -DBL_MAX;
+    double dfNewMinZ = std::numeric_limits<double>::max();
+    double dfNewMaxZ = std::numeric_limits<double>::lowest();
     int nNewMinZRow = 0;
     int nNewMaxZRow = 0;
 
@@ -247,8 +236,8 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
             return eErr;
         }
 
-        padfRowMinZ[iRow] = DBL_MAX;
-        padfRowMaxZ[iRow] = -DBL_MAX;
+        padfRowMinZ[iRow] = std::numeric_limits<double>::max();
+        padfRowMaxZ[iRow] = std::numeric_limits<double>::lowest();
         for( int iCell=0; iCell<nRasterXSize; iCell++ )
         {
             if( AlmostEqual(padfRowValues[iCell], GSAGDataset::dfNODATA_VALUE) )
@@ -625,8 +614,8 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     ssOutBuf.setf( std::ios::uppercase );
 
     double *pdfImage = (double *)pImage;
-    padfRowMinZ[nBlockYOff] = DBL_MAX;
-    padfRowMaxZ[nBlockYOff] = -DBL_MAX;
+    padfRowMinZ[nBlockYOff] = std::numeric_limits<double>::max();
+    padfRowMaxZ[nBlockYOff] = std::numeric_limits<double>::lowest();
     for( int iCell=0; iCell<nBlockXSize; )
     {
         for( int iCol=0; iCol<10 && iCell<nBlockXSize; iCol++, iCell++ )
@@ -686,7 +675,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     bool bHeaderNeedsUpdate = false;
     if( nMinZRow == nBlockYOff && padfRowMinZ[nBlockYOff] > dfMinZ )
     {
-        double dfNewMinZ = -DBL_MAX;
+        double dfNewMinZ = std::numeric_limits<double>::lowest();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( padfRowMinZ[iRow] < dfNewMinZ )
@@ -705,7 +694,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( nMaxZRow == nBlockYOff && padfRowMaxZ[nBlockYOff] < dfMaxZ )
     {
-        double dfNewMaxZ = -DBL_MAX;
+        double dfNewMaxZ = std::numeric_limits<double>::lowest();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( padfRowMaxZ[iRow] > dfNewMaxZ )
@@ -920,11 +909,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
         szErrorMsg = "Unable to parse the number of X axis grid columns.\n";
         goto error;
     }
-    else if( nTemp > INT_MAX )
+    else if( nTemp > std::numeric_limits<int>::max() )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Number of X axis grid columns not representable.\n" );
-        poDS->nRasterXSize = INT_MAX;
+        poDS->nRasterXSize = std::numeric_limits<int>::max();
     }
     else if ( nTemp == 0 )
     {
@@ -944,11 +933,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
         szErrorMsg = "Unable to parse the number of Y axis grid rows.\n";
         goto error;
     }
-    else if( nTemp > INT_MAX - 1 )
+    else if( nTemp > std::numeric_limits<int>::max() - 1 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Number of Y axis grid rows not representable.\n" );
-        poDS->nRasterYSize = INT_MAX - 1;
+        poDS->nRasterYSize = std::numeric_limits<int>::max() - 1;
     }
     else if ( nTemp == 0)
     {
@@ -1608,8 +1597,8 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
     int bSrcHasNDValue;
     double dfSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-    double dfMin = DBL_MAX;
-    double dfMax = -DBL_MAX;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = std::numeric_limits<double>::lowest();
     for( int iRow=0; iRow<nYSize; iRow++ )
     {
         CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, nYSize-iRow-1,

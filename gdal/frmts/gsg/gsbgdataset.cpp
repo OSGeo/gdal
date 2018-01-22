@@ -30,38 +30,15 @@
 
 #include "cpl_conv.h"
 
+#include <assert.h>
 #include <float.h>
 #include <limits.h>
-#include <assert.h>
+#include <limits>
 
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_CVSID("$Id$")
-
-#ifndef DBL_MAX
-# ifdef __DBL_MAX__
-#  define DBL_MAX __DBL_MAX__
-# else
-#  define DBL_MAX 1.7976931348623157E+308
-# endif /* __DBL_MAX__ */
-#endif /* DBL_MAX */
-
-#ifndef FLT_MAX
-# ifdef __FLT_MAX__
-#  define FLT_MAX __FLT_MAX__
-# else
-#  define FLT_MAX 3.40282347E+38F
-# endif /* __FLT_MAX__ */
-#endif /* FLT_MAX */
-
-#ifndef INT_MAX
-# define INT_MAX 2147483647
-#endif /* INT_MAX */
-
-#ifndef SHRT_MAX
-# define SHRT_MAX 32767
-#endif /* SHRT_MAX */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -200,8 +177,8 @@ CPLErr GSBGRasterBand::ScanForMinMaxZ()
         return CE_Failure;
     }
 
-    double dfNewMinZ = DBL_MAX;
-    double dfNewMaxZ = -DBL_MAX;
+    double dfNewMinZ = std::numeric_limits<double>::max();
+    double dfNewMaxZ = std::numeric_limits<double>::lowest();
     int nNewMinZRow = 0;
     int nNewMaxZRow = 0;
 
@@ -218,8 +195,8 @@ CPLErr GSBGRasterBand::ScanForMinMaxZ()
             return CE_Failure;
         }
 
-        pafRowMinZ[iRow] = FLT_MAX;
-        pafRowMaxZ[iRow] = -FLT_MAX;
+        pafRowMinZ[iRow] = std::numeric_limits<float>::max();
+        pafRowMaxZ[iRow] = std::numeric_limits<float>::lowest();
         for( int iCol=0; iCol<nRasterXSize; iCol++ )
         {
             if( pafRowVals[iCol] == GSBGDataset::fNODATA_VALUE )
@@ -366,8 +343,8 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
     float *pfImage = (float *)pImage;
-    pafRowMinZ[nBlockYOff] = FLT_MAX;
-    pafRowMaxZ[nBlockYOff] = -FLT_MAX;
+    pafRowMinZ[nBlockYOff] = std::numeric_limits<float>::max();
+    pafRowMaxZ[nBlockYOff] = std::numeric_limits<float>::lowest();
     for( int iPixel=0; iPixel<nBlockXSize; iPixel++ )
     {
         if( pfImage[iPixel] != GSBGDataset::fNODATA_VALUE )
@@ -394,7 +371,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     bool bHeaderNeedsUpdate = false;
     if( nMinZRow == nBlockYOff && pafRowMinZ[nBlockYOff] > dfMinZ )
     {
-        double dfNewMinZ = DBL_MAX;
+        double dfNewMinZ = std::numeric_limits<double>::max();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( pafRowMinZ[iRow] < dfNewMinZ )
@@ -413,7 +390,7 @@ CPLErr GSBGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( nMaxZRow == nBlockYOff && pafRowMaxZ[nBlockYOff] < dfMaxZ )
     {
-        double dfNewMaxZ = -DBL_MAX;
+        double dfNewMaxZ = std::numeric_limits<double>::lowest();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( pafRowMaxZ[iRow] > dfNewMaxZ )
@@ -901,13 +878,15 @@ GDALDataset *GSBGDataset::Create( const char * pszFilename,
 
         return nullptr;
     }
-    else if( nXSize > SHRT_MAX
-             || nYSize > SHRT_MAX )
+    else if( nXSize > std::numeric_limits<short>::max() ||
+             nYSize > std::numeric_limits<short>::max() )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Unable to create grid, Golden Software Binary Grid format "
-                  "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-                  SHRT_MAX, SHRT_MAX, nXSize, nYSize );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Unable to create grid, Golden Software Binary Grid format "
+                 "only supports sizes up to %dx%d.  %dx%d not supported.\n",
+                 std::numeric_limits<short>::max(),
+                 std::numeric_limits<short>::max(),
+                 nXSize, nYSize);
 
         return nullptr;
     }
@@ -998,15 +977,16 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
                       "raster band, first band will be copied.\n" );
     }
 
-    GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand( 1 );
-    if( poSrcBand->GetXSize() > SHRT_MAX
-        || poSrcBand->GetYSize() > SHRT_MAX )
+    GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
+    if( poSrcBand->GetXSize() > std::numeric_limits<short>::max() ||
+        poSrcBand->GetYSize() > std::numeric_limits<short>::max() )
     {
-        CPLError( CE_Failure, CPLE_IllegalArg,
-                  "Unable to create grid, Golden Software Binary Grid format "
-                  "only supports sizes up to %dx%d.  %dx%d not supported.\n",
-                  SHRT_MAX, SHRT_MAX,
-                  poSrcBand->GetXSize(), poSrcBand->GetYSize() );
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "Unable to create grid, Golden Software Binary Grid format "
+                 "only supports sizes up to %dx%d.  %dx%d not supported.\n",
+                 std::numeric_limits<short>::max(),
+                 std::numeric_limits<short>::max(),
+                 poSrcBand->GetXSize(), poSrcBand->GetYSize() );
 
         return nullptr;
     }
@@ -1058,8 +1038,8 @@ GDALDataset *GSBGDataset::CreateCopy( const char *pszFilename,
 
     int     bSrcHasNDValue;
     float   fSrcNoDataValue = (float) poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-    double  dfMinZ = DBL_MAX;
-    double  dfMaxZ = -DBL_MAX;
+    double  dfMinZ = std::numeric_limits<double>::max();
+    double  dfMaxZ = std::numeric_limits<double>::lowest();
     for( GInt16 iRow = nYSize - 1; iRow >= 0; iRow-- )
     {
         eErr = poSrcBand->RasterIO( GF_Read, 0, iRow,
