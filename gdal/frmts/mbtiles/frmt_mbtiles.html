@@ -14,7 +14,7 @@ which is a specification for storing tiled map data in SQLite databases.</p>
 <p>Starting with GDAL 2.1, the MBTiles driver has creation and write support for MBTiles
 raster datasets.</p>
 <p>Starting with GDAL 2.3, the MBTiles driver has read for MBTiles vector datasets.
-For standalone MapBox Vector Tile files or set of MVT files, see the
+For standalone Mapbox Vector Tile files or set of MVT files, see the
 <a href="drv_mvt.html">MVT</a> driver.</p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and PNG drivers.</p>
@@ -186,7 +186,7 @@ BuildOverviews() with nOverviews=0)</p>
 <h2>Vector tiles</h2>
 
 <p>Starting with GDAL 2.3, the MBTiles driver can read MBTiles files containing
-vector tiles conforming to the MapBox Vector Tile format (format=pbf).</p>
+vector tiles conforming to the Mapbox Vector Tile format (format=pbf).</p>
 
 <p>The driver requires the 'metadata' table to contain a name='json' entry,
 that has a 'vector_layers' array describing layers and their schema. See
@@ -310,7 +310,7 @@ Metadata:
 <ul>
 <li><a href="https://github.com/mapbox/mbtiles-spec">MBTiles specification</a></li>
 <li><a href="https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md">UTFGrid specification</a></li>
-<li><a href="drv_mvt.html">MapBox Vector tiles driver</a></li>
+<li><a href="drv_mvt.html">Mapbox Vector tiles driver</a></li>
 </ul>
 
 </body>

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MVT Translator
- * Purpose:  MapBox Vector Tile decoder
+ * Purpose:  Mapbox Vector Tile decoder
  * Author:   Even Rouault, Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
@@ -2771,7 +2771,7 @@ void RegisterOGRMVT()
     poDriver->SetDescription( "MVT" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "MapBox Vector Tiles" );
+                               "Mapbox Vector Tiles" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_mvt.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "mvt mvt.gz pbf" );
