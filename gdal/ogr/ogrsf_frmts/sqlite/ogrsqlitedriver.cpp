@@ -111,6 +111,8 @@ static int OGRSQLiteDriverIdentify( GDALOpenInfo* poOpenInfo )
     }
     if( STARTS_WITH((const char*)poOpenInfo->pabyHeader, "-- SQL MBTILES") )
     {
+        if( GDALGetDriverByName("MBTILES") != nullptr )
+            return FALSE;
         if( poOpenInfo->eAccess == GA_Update )
             return FALSE;
         return -1;

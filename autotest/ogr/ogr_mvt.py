@@ -554,6 +554,19 @@ def ogr_mvt_mbtiles_test_ogrsf():
 
 ###############################################################################
 
+def ogr_mvt_mbtiles_open_vector_in_raster_mode():
+
+    if ogr.GetDriverByName('MBTILES') is None:
+        return 'skip'
+
+    ds = gdal.OpenEx('data/mvt/datatypes.mbtiles', gdal.OF_RASTER)
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_x_y_z_filename_scheme():
 
     tmpfilename ='/vsimem/0-0-0.pbf'
@@ -605,6 +618,7 @@ gdaltest_list = [
     ogr_mvt_mbtiles,
     ogr_mvt_mbtiles_json_field,
     ogr_mvt_mbtiles_json_field_auto,
+    ogr_mvt_mbtiles_open_vector_in_raster_mode,
     ogr_mvt_mbtiles_test_ogrsf,
     ogr_mvt_x_y_z_filename_scheme,
     ogr_mvt_polygon_larger_than_header,
