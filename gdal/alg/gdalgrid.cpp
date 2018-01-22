@@ -37,6 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <limits>
 #include <map>
 #include <utility>
 
@@ -54,14 +55,6 @@
 CPL_CVSID("$Id$")
 
 constexpr double TO_RADIANS = M_PI / 180.0;
-
-#ifndef DBL_MAX
-# ifdef __DBL_MAX__
-#  define DBL_MAX __DBL_MAX__
-# else
-#  define DBL_MAX 1.7976931348623157E+308
-# endif /* __DBL_MAX__ */
-#endif /* DBL_MAX */
 
 /************************************************************************/
 /*                        GDALGridGetPointBounds()                      */
@@ -664,7 +657,7 @@ GDALGridNearestNeighbor( const void *poOptionsIn, GUInt32 nPoints,
     double dfNearestValue = poOptions->dfNoDataValue;
     // Nearest distance will be initialized with the distance to the first
     // point in array.
-    double dfNearestR = DBL_MAX;
+    double dfNearestR = std::numeric_limits<double>::max();
     GUInt32 i = 0;
 
     double dfSearchRadius = psExtraParams->dfInitialSearchRadius;
