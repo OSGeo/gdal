@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  MVT Translator
- * Purpose:  MapBox Vector Tile decoder
+ * Purpose:  Mapbox Vector Tile decoder
  * Author:   Even Rouault, Even Rouault <even dot rouault at spatialys dot com>
  *
  ******************************************************************************
