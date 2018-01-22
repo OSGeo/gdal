@@ -2343,7 +2343,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 
     CPLString osAttributeFilter;
-    if( strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;
@@ -2401,7 +2401,7 @@ static int TestAttributeFilter( CPL_UNUSED GDALDataset* poDS,
 /* -------------------------------------------------------------------- */
 /*      Construct exclusive filter.                                     */
 /* -------------------------------------------------------------------- */
-    if( strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
+    if( pszFieldName[0] == '\0' || strchr(pszFieldName, '_') || strchr(pszFieldName, ' ') )
     {
         osAttributeFilter = "\"";
         osAttributeFilter += pszFieldName;

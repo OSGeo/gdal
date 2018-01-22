@@ -79,6 +79,8 @@ GDALOpenInfo::GDALOpenInfo( const char * pszFilenameIn, int nOpenFlagsIn,
     pabyHeader(nullptr),
     papszAllowedDrivers(nullptr)
 {
+    if( STARTS_WITH(pszFilename, "MVT:/vsi") )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Ensure that C: is treated as C:\ so we can stat it on           */

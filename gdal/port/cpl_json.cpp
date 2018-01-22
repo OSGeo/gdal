@@ -562,6 +562,25 @@ void CPLJSONObject::Add(const std::string &osName, bool bValue)
 }
 
 /**
+ * Add new key - null pair to json object.
+ * @param osName  Key name.
+ *
+ * @since GDAL 2.3
+ */
+void CPLJSONObject::AddNull(const std::string &osName)
+{
+    std::string objectName;
+    CPLJSONObject object = GetObjectByPath( osName, objectName );
+    if( object.IsValid() &&
+        json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
+            json_type_object )
+    {
+        json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
+                                           objectName.c_str(), nullptr );
+    }
+}
+
+/**
  * Change value by key.
  * @param osName  Key name.
  * @param osValue String value.
@@ -639,6 +658,18 @@ void CPLJSONObject::Set(const std::string &osName, bool bValue)
 {
     Delete( osName );
     Add( osName, bValue );
+}
+
+/**
+ * Change value by key.
+ * @param osName  Key name.
+ *
+ * @since GDAL 2.3
+ */
+void CPLJSONObject::SetNull(const std::string &osName)
+{
+    Delete( osName );
+    AddNull( osName );
 }
 
 /**

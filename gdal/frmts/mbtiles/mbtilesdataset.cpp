@@ -20,7 +20,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
@@ -29,15 +29,19 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_api.h"
+#include "cpl_json.h"
 #include "cpl_vsil_curl_priv.h"
 #include "gpkgmbtilescommon.h"
 #include "gdalwarper.h"
+#include "mvtutils.h"
 
 #include "zlib.h"
 #include "ogrgeojsonreader.h"
 
 #include <math.h>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
 CPL_CVSID("$Id$")
 
@@ -68,7 +72,7 @@ static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
                                           GDALAccess eAccess)
 {
     const char* l_apszAllowedDrivers[] = { "SQLITE", nullptr };
-    return (OGRDataSourceH)GDALOpenEx(pszFilename,
+    return (OGRDataSourceH)GDALOpenEx( (CPLString("SQLITE:") + pszFilename).c_str(),
                                       GDAL_OF_VECTOR | GDAL_OF_INTERNAL |
                                       ((eAccess == GA_Update) ? GDAL_OF_UPDATE : 0),
                                       l_apszAllowedDrivers, nullptr, nullptr);
@@ -83,6 +87,7 @@ static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
 class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class MBTilesBand;
+    friend class MBTilesVectorLayer;
 
   public:
                  MBTilesDataset();
@@ -103,6 +108,10 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
                         int nOverviews, int * panOverviewList,
                         int nBandsIn, CPL_UNUSED int * panBandList,
                         GDALProgressFunc pfnProgress, void * pProgressData ) override;
+
+    virtual int                 GetLayerCount() override
+                        { return static_cast<int>(m_apoLayers.size()); }
+    virtual OGRLayer*           GetLayer( int ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -130,6 +139,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     MBTilesDataset* poMainDS;
     bool m_bGeoTransformValid;
     double m_adfGeoTransform[6];
+    int m_nMinZoomLevel = 0;
 
     int m_nOverviewCount;
     MBTilesDataset** m_papoOverviewDS;
@@ -145,6 +155,10 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     int nHasNonEmptyGrids;
 
     bool m_bInFlushCache;
+
+    CPLString m_osMetadataMemFilename;
+    CPLString m_osClip;
+    std::vector<std::unique_ptr<OGRLayer>>      m_apoLayers;
 
     void ParseCompressionOptions(char** papszOptions);
     CPLErr FinalizeRasterRegistration();
@@ -163,6 +177,9 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
                          int nBandsIn,
                          GDALDataType eDT,
                          char **papszOptions );
+    void InitVector(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
+                    bool bZoomLevelFromSpatialFilter,
+                    bool bJsonField);
 
     protected:
         // Coming from GDALGPKGMBTilesLikePseudoDataset
@@ -177,6 +194,67 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
         virtual OGRErr                  ICommitTransaction() override;
         virtual const char             *IGetFilename() override { return GetDescription(); }
         virtual int                     GetRowFromIntoTopConvention(int nRow) override;
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          MBTilesVectorLayer                          */
+/* ==================================================================== */
+/************************************************************************/
+
+class MBTilesVectorLayer: public OGRLayer
+{
+        MBTilesDataset* m_poDS = nullptr;
+        OGRFeatureDefn* m_poFeatureDefn = nullptr;
+        OGRLayerH       m_hTileIteratorLyr = nullptr;
+        bool            m_bEOF = false;
+        CPLString       m_osTmpFilename;
+        GDALDatasetH    m_hTileDS = nullptr;
+        GIntBig         m_nFeatureCount = -1;
+        int             m_nX = 0;
+        int             m_nY = 0;
+        OGREnvelope     m_sExtent;
+        int             m_nFilterMinX = 0;
+        int             m_nFilterMinY = 0;
+        int             m_nFilterMaxX = 0;
+        int             m_nFilterMaxY = 0;
+        int             m_nZoomLevel = 0;
+        bool            m_bZoomLevelAuto = false;
+        bool            m_bJsonField = false;
+
+        OGRFeature      *GetNextRawFeature();
+        OGRFeature      *GetNextSrcFeature();
+        OGRFeature      *CreateFeatureFrom(OGRFeature* poSrcFeature);
+
+    public:
+            MBTilesVectorLayer(MBTilesDataset* poDS,
+                               const char* pszLayerName,
+                               const CPLJSONObject& oFields,
+                               bool bJsonField,
+                               double dfMinX, double dfMinY,
+                               double dfMaxX, double dfMaxY,
+                               OGRwkbGeometryType eGeomType,
+                               bool bZoomLevelFromSpatialFilter);
+            ~MBTilesVectorLayer();
+
+        virtual void ResetReading() override;
+        virtual OGRFeature* GetNextFeature() override;
+        virtual OGRFeatureDefn* GetLayerDefn() override
+                            { return m_poFeatureDefn; }
+        virtual GIntBig GetFeatureCount( int bForce ) override;
+        virtual int TestCapability(const char*) override;
+
+        OGRErr              GetExtent( OGREnvelope *psExtent,
+                                       int bForce ) override;
+        virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
+                                   int bForce ) override
+                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+
+        virtual void        SetSpatialFilter( OGRGeometry * ) override;
+        virtual void        SetSpatialFilter( int iGeomField,
+                                            OGRGeometry *poGeom ) override
+                    { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+        virtual OGRFeature* GetFeature(GIntBig nFID) override;
 };
 
 /************************************************************************/
@@ -747,6 +825,9 @@ MBTilesDataset::MBTilesDataset()
 
 MBTilesDataset::~MBTilesDataset()
 {
+    // Need to explicitly clear it before close hDS
+    m_apoLayers.clear();
+
     FlushCache();
 
     if (poMainDS == nullptr)
@@ -774,6 +855,11 @@ MBTilesDataset::~MBTilesDataset()
                 CPLFree(pMyVFS);
             }
         }
+    }
+
+    if( !m_osMetadataMemFilename.empty() )
+    {
+        VSIUnlink(m_osMetadataMemFilename);
     }
 }
 
@@ -1179,7 +1265,7 @@ char** MBTilesDataset::GetMetadata( const char * pszDomain )
     aosList = CPLStringList(GDALPamDataset::GetMetadata(), FALSE);
 
     OGRLayerH hSQLLyr = OGR_DS_ExecuteSQL(hDS,
-            "SELECT name, value FROM metadata LIMIT 1000", nullptr, nullptr);
+            "SELECT name, value FROM metadata WHERE name != 'json' LIMIT 1000", nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return nullptr;
 
@@ -1226,6 +1312,601 @@ const char *MBTilesDataset::GetMetadataItem( const char* pszName, const char * p
             return pszValue;
     }
     return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
+}
+
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
+
+OGRLayer *MBTilesDataset::GetLayer( int iLayer )
+
+{
+    if( iLayer < 0 || iLayer >= GetLayerCount() )
+        return nullptr;
+    return m_apoLayers[iLayer].get();
+}
+
+/************************************************************************/
+/*                        MBTilesVectorLayer()                          */
+/************************************************************************/
+
+MBTilesVectorLayer::MBTilesVectorLayer(MBTilesDataset* poDS,
+                                       const char* pszLayerName,
+                                       const CPLJSONObject& oFields,
+                                       bool bJsonField,
+                                       double dfMinX, double dfMinY,
+                                       double dfMaxX, double dfMaxY,
+                                       OGRwkbGeometryType eGeomType,
+                                       bool bZoomLevelFromSpatialFilter):
+    m_poDS(poDS),
+    m_poFeatureDefn( new OGRFeatureDefn(pszLayerName) ),
+    m_bJsonField(bJsonField)
+{
+    SetDescription(pszLayerName);
+    m_poFeatureDefn->SetGeomType(eGeomType);
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
+    poSRS->SetFromUserInput(SRS_EPSG_3857);
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+    poSRS->Release();
+    m_poFeatureDefn->Reference();
+
+    if( m_bJsonField )
+    {
+        OGRFieldDefn oFieldDefnId("mvt_id", OFTInteger64);
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefnId);
+    }
+    else
+    {
+        OGRMVTInitFields(m_poFeatureDefn, oFields);
+    }
+
+    m_sExtent.MinX = dfMinX;
+    m_sExtent.MinY = dfMinY;
+    m_sExtent.MaxX = dfMaxX;
+    m_sExtent.MaxY = dfMaxY;
+
+    m_nZoomLevel = m_poDS->m_nZoomLevel;
+    m_bZoomLevelAuto = bZoomLevelFromSpatialFilter;
+    SetSpatialFilter(nullptr);
+
+    // If the metadata contains an empty fields object, this may be a sign
+    // that it doesn't know the schema. In that case check if a tile has
+    // attributes, and in that case create a json field.
+    if( !m_bJsonField && oFields.IsValid() && oFields.GetChildren().empty() )
+    {
+        m_bJsonField = true;
+        OGRFeature* poSrcFeature = GetNextSrcFeature();
+        m_bJsonField = false;
+
+        if( poSrcFeature )
+        {
+            // There is at least the mvt_id field
+            if( poSrcFeature->GetFieldCount() > 1 )
+            {
+                m_bJsonField = true;
+            }
+            delete poSrcFeature;
+        }
+        ResetReading();
+    }
+
+    if( m_bJsonField )
+    {
+        OGRFieldDefn oFieldDefn("json", OFTString);
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
+}
+
+/************************************************************************/
+/*                       ~MBTilesVectorLayer()                          */
+/************************************************************************/
+
+MBTilesVectorLayer::~MBTilesVectorLayer()
+{
+    m_poFeatureDefn->Release();
+    if( m_hTileIteratorLyr )
+        OGR_DS_ReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
+    if( !m_osTmpFilename.empty() )
+    {
+        VSIUnlink(m_osTmpFilename);
+    }
+    if( m_hTileDS )
+        GDALClose( m_hTileDS );
+}
+
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
+
+int MBTilesVectorLayer::TestCapability(const char* pszCap)
+{
+    if( EQUAL(pszCap, OLCStringsAsUTF8) ||
+        EQUAL(pszCap, OLCFastSpatialFilter) ||
+        EQUAL(pszCap, OLCFastGetExtent))
+    {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/************************************************************************/
+/*                             GetExtent()                              */
+/************************************************************************/
+
+OGRErr MBTilesVectorLayer::GetExtent( OGREnvelope *psExtent, int )
+{
+    *psExtent = m_sExtent;
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                          ResetReading()                              */
+/************************************************************************/
+
+void MBTilesVectorLayer::ResetReading()
+{
+    if( m_hTileDS )
+        GDALClose( m_hTileDS );
+    m_hTileDS = nullptr;
+    m_bEOF = false;
+    if( m_hTileIteratorLyr )
+        OGR_DS_ReleaseResultSet(m_poDS->hDS, m_hTileIteratorLyr);
+    CPLString osSQL;
+    osSQL.Printf("SELECT tile_column, tile_row, tile_data FROM tiles "
+                 "WHERE zoom_level = %d "
+                 "AND tile_column BETWEEN %d AND %d "
+                 "AND tile_row BETWEEN %d AND %d",
+                 m_nZoomLevel,
+                 m_nFilterMinX, m_nFilterMaxX,
+                 m_nFilterMinY, m_nFilterMaxY);
+    m_hTileIteratorLyr = OGR_DS_ExecuteSQL(m_poDS->hDS,
+        osSQL.c_str(), nullptr, nullptr);
+}
+
+/************************************************************************/
+/*                         SetSpatialFilter()                           */
+/************************************************************************/
+
+void MBTilesVectorLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
+{
+    OGRLayer::SetSpatialFilter(poGeomIn);
+
+    if( m_poFilterGeom != nullptr &&
+             m_sFilterEnvelope.MinX <= -MAX_GM &&
+             m_sFilterEnvelope.MinY <= -MAX_GM &&
+             m_sFilterEnvelope.MaxX >= MAX_GM &&
+             m_sFilterEnvelope.MaxY >= MAX_GM )
+    {
+        if( m_bZoomLevelAuto )
+        {
+            m_nZoomLevel = m_poDS->m_nMinZoomLevel;
+        }
+        m_nFilterMinX = 0;
+        m_nFilterMinY = 0;
+        m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
+        m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
+    }
+    else if( m_poFilterGeom != nullptr &&
+             m_sFilterEnvelope.MinX >= -10 * MAX_GM &&
+             m_sFilterEnvelope.MinY >= -10 * MAX_GM &&
+             m_sFilterEnvelope.MaxX <= 10 * MAX_GM &&
+             m_sFilterEnvelope.MaxY <= 10 * MAX_GM )
+    {
+        if( m_bZoomLevelAuto )
+        {
+            double dfExtent =
+                std::min(m_sFilterEnvelope.MaxX - m_sFilterEnvelope.MinX,
+                         m_sFilterEnvelope.MaxY - m_sFilterEnvelope.MinY);
+            m_nZoomLevel = std::max(m_poDS->m_nMinZoomLevel,
+                std::min(
+                    static_cast<int>(
+                        0.5 + log(2 * MAX_GM / dfExtent) / log(2.0)),
+                    m_poDS->m_nZoomLevel));
+            CPLDebug("MBTILES", "Zoom level = %d", m_nZoomLevel);
+        }
+        const double dfTileDim = 2 * MAX_GM / (1 << m_nZoomLevel);
+        m_nFilterMinX = std::max(0, static_cast<int>(
+            floor((m_sFilterEnvelope.MinX + MAX_GM) / dfTileDim)));
+        m_nFilterMinY = std::max(0, static_cast<int>(
+            floor((m_sFilterEnvelope.MinY + MAX_GM) / dfTileDim)));
+        m_nFilterMaxX = std::min(static_cast<int>(
+            ceil((m_sFilterEnvelope.MaxX + MAX_GM) / dfTileDim)),
+            (1 << m_nZoomLevel) - 1);
+        m_nFilterMaxY = std::min(static_cast<int>(
+            ceil((m_sFilterEnvelope.MaxY + MAX_GM) / dfTileDim)),
+            (1 << m_nZoomLevel) - 1);
+    }
+    else
+    {
+        if( m_bZoomLevelAuto )
+        {
+            m_nZoomLevel = m_poDS->m_nZoomLevel;
+        }
+        m_nFilterMinX = 0;
+        m_nFilterMinY = 0;
+        m_nFilterMaxX = (1 << m_nZoomLevel) - 1;
+        m_nFilterMaxY = (1 << m_nZoomLevel) - 1;
+    }
+}
+
+/************************************************************************/
+/*                          GetNextFeature()                            */
+/************************************************************************/
+
+OGRFeature* MBTilesVectorLayer::GetNextFeature()
+{
+    while( true )
+    {
+        OGRFeature *poFeature = GetNextRawFeature();
+        if (poFeature == nullptr)
+            return nullptr;
+
+        if((m_poFilterGeom == nullptr
+            || FilterGeometry( poFeature->GetGeometryRef() ) )
+        && (m_poAttrQuery == nullptr
+            || m_poAttrQuery->Evaluate( poFeature )) )
+        {
+            return poFeature;
+        }
+
+        delete poFeature;
+    }
+}
+
+/************************************************************************/
+/*                         GetFeatureCount()                            */
+/************************************************************************/
+
+GIntBig MBTilesVectorLayer::GetFeatureCount( int bForce )
+{
+    if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
+    {
+        if( m_nFeatureCount < 0 )
+        {
+            m_nFeatureCount = 0;
+            ResetReading();
+            while( m_hTileIteratorLyr != nullptr )
+            {
+                OGRFeatureH hFeat = OGR_L_GetNextFeature(m_hTileIteratorLyr);
+                if( hFeat == nullptr )
+                {
+                    break;
+                }
+                m_nX = OGR_F_GetFieldAsInteger(hFeat, 0);
+                // MBTiles y origin is bottom based, whereas MVT directory
+                // is top based
+                m_nY = (1 << m_nZoomLevel) - 1 -
+                            OGR_F_GetFieldAsInteger(hFeat, 1);
+                int nDataSize = 0;
+                GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 2, &nDataSize);
+                GByte* pabyDataDup = static_cast<GByte*>(CPLMalloc(nDataSize));
+                memcpy(pabyDataDup, pabyData, nDataSize);
+                OGR_F_Destroy(hFeat);
+
+                if( !m_osTmpFilename.empty() )
+                {
+                    VSIUnlink(m_osTmpFilename);
+                }
+                m_osTmpFilename = CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf",
+                                            this, m_nX, m_nY);
+                VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename,
+                                                pabyDataDup, nDataSize,
+                                                true));
+
+                const char* l_apszAllowedDrivers[] = { "MVT", nullptr };
+                if( m_hTileDS )
+                    GDALClose( m_hTileDS );
+                char** papszOpenOptions = nullptr;
+                papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                    "METADATA_FILE", m_poDS->m_osMetadataMemFilename.c_str());
+                m_hTileDS = GDALOpenEx( ("MVT:" + m_osTmpFilename).c_str(),
+                                    GDAL_OF_VECTOR | GDAL_OF_INTERNAL,
+                                    l_apszAllowedDrivers,
+                                    papszOpenOptions, nullptr);
+                CSLDestroy(papszOpenOptions);
+                if( m_hTileDS )
+                {
+                    OGRLayerH hLayer =
+                        GDALDatasetGetLayerByName(m_hTileDS, GetName());
+                    if( hLayer )
+                    {
+                        m_nFeatureCount += OGR_L_GetFeatureCount(hLayer, true);
+                    }
+                    GDALClose(m_hTileDS);
+                    m_hTileDS = nullptr;
+                }
+            }
+            ResetReading();
+        }
+        return m_nFeatureCount;
+    }
+    return OGRLayer::GetFeatureCount( bForce );
+}
+
+/************************************************************************/
+/*                        GetNextSrcFeature()                           */
+/************************************************************************/
+
+OGRFeature* MBTilesVectorLayer::GetNextSrcFeature()
+{
+    if( m_bEOF )
+    {
+        return nullptr;
+    }
+    if( m_hTileIteratorLyr == nullptr )
+    {
+        ResetReading();
+        if( m_hTileIteratorLyr == nullptr )
+        {
+            return nullptr;
+        }
+    }
+
+    OGRFeatureH hTileFeat = nullptr;
+    if( m_hTileDS == nullptr ||
+        (hTileFeat =
+            OGR_L_GetNextFeature(
+                GDALDatasetGetLayerByName(m_hTileDS, GetName()))) == nullptr )
+    {
+        while( true )
+        {
+            OGRFeatureH hFeat = OGR_L_GetNextFeature(m_hTileIteratorLyr);
+            if( hFeat == nullptr )
+            {
+                m_bEOF = true;
+                return nullptr;
+            }
+            m_nX = OGR_F_GetFieldAsInteger(hFeat, 0);
+            // MBTiles y origin is bottom based, whereas MVT directory
+            // is top based
+            m_nY = (1 << m_nZoomLevel) - 1 -
+                        OGR_F_GetFieldAsInteger(hFeat, 1);
+            CPLDebug("MBTiles", "X=%d, Y=%d", m_nX, m_nY);
+
+            int nDataSize = 0;
+            GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 2, &nDataSize);
+            GByte* pabyDataDup = static_cast<GByte*>(CPLMalloc(nDataSize));
+            memcpy(pabyDataDup, pabyData, nDataSize);
+            OGR_F_Destroy(hFeat);
+
+            if( !m_osTmpFilename.empty() )
+            {
+                VSIUnlink(m_osTmpFilename);
+            }
+            m_osTmpFilename = CPLSPrintf("/vsimem/mvt_%p_%d_%d.pbf",
+                                         this, m_nX, m_nY);
+            VSIFCloseL(VSIFileFromMemBuffer(m_osTmpFilename,
+                                            pabyDataDup, nDataSize,
+                                            true));
+
+            const char* l_apszAllowedDrivers[] = { "MVT", nullptr };
+            if( m_hTileDS )
+                GDALClose( m_hTileDS );
+            char** papszOpenOptions = nullptr;
+            papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                "X", CPLSPrintf("%d", m_nX));
+            papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                "Y", CPLSPrintf("%d", m_nY));
+            papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                "Z", CPLSPrintf("%d", m_nZoomLevel));
+            papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                "METADATA_FILE",
+                m_bJsonField ? "": m_poDS->m_osMetadataMemFilename.c_str());
+            if( !m_poDS->m_osClip.empty() )
+            {
+                papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+                    "CLIP", m_poDS->m_osClip);
+            }
+            m_hTileDS = GDALOpenEx( ("MVT:" + m_osTmpFilename).c_str(),
+                                GDAL_OF_VECTOR | GDAL_OF_INTERNAL,
+                                l_apszAllowedDrivers,
+                                papszOpenOptions, nullptr);
+            CSLDestroy(papszOpenOptions);
+            if( m_hTileDS )
+            {
+                if( GDALDatasetGetLayerByName(m_hTileDS, GetName()) )
+                {
+                    hTileFeat = OGR_L_GetNextFeature(
+                        GDALDatasetGetLayerByName(m_hTileDS, GetName()));
+                    if( hTileFeat )
+                        break;
+                }
+                GDALClose(m_hTileDS);
+                m_hTileDS = nullptr;
+            }
+        }
+    }
+
+    return reinterpret_cast<OGRFeature*>(hTileFeat);
+}
+
+/************************************************************************/
+/*                         CreateFeatureFrom()                          */
+/************************************************************************/
+
+OGRFeature* MBTilesVectorLayer::CreateFeatureFrom(OGRFeature* poSrcFeature)
+{
+
+    return OGRMVTCreateFeatureFrom(poSrcFeature, m_poFeatureDefn,
+                                   m_bJsonField, GetSpatialRef());
+}
+
+/************************************************************************/
+/*                        GetNextRawFeature()                           */
+/************************************************************************/
+
+OGRFeature* MBTilesVectorLayer::GetNextRawFeature()
+{
+    OGRFeature* poSrcFeat = GetNextSrcFeature();
+    if( poSrcFeat == nullptr )
+        return nullptr;
+
+    const GIntBig nFIDBase = (static_cast<GIntBig>(m_nY) <<
+                            m_nZoomLevel) | m_nX;
+    OGRFeature* poFeature = CreateFeatureFrom(poSrcFeat);
+    poFeature->SetFID(
+        (poSrcFeat->GetFID() << (2 * m_nZoomLevel)) | nFIDBase );
+    delete poSrcFeat;
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           GetFeature()                               */
+/************************************************************************/
+
+OGRFeature* MBTilesVectorLayer::GetFeature(GIntBig nFID)
+{
+    const int nZ = m_nZoomLevel;
+    const int nX = static_cast<int>(nFID & ((1 << nZ)-1));
+    const int nY = static_cast<int>((nFID >> nZ) & ((1 << nZ)-1));
+    const GIntBig nTileFID = nFID >> (2 * nZ);
+
+    CPLString osSQL;
+    osSQL.Printf("SELECT tile_data FROM tiles "
+                 "WHERE zoom_level = %d AND "
+                 "tile_column = %d AND tile_row = %d",
+                 m_nZoomLevel,
+                 nX,
+                 (1 << nZ) - 1 - nY);
+    auto hSQLLyr = OGR_DS_ExecuteSQL(m_poDS->hDS, osSQL.c_str(),
+                                     nullptr, nullptr);
+    if( hSQLLyr == nullptr )
+        return nullptr;
+    auto hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    if( hFeat == nullptr )
+    {
+        OGR_DS_ReleaseResultSet(m_poDS->hDS, hSQLLyr);
+        return nullptr;
+    }
+    int nDataSize = 0;
+    GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
+    GByte* pabyDataDup = static_cast<GByte*>(CPLMalloc(nDataSize));
+    memcpy(pabyDataDup, pabyData, nDataSize);
+    OGR_F_Destroy(hFeat);
+    OGR_DS_ReleaseResultSet(m_poDS->hDS, hSQLLyr);
+
+    CPLString osTmpFilename =
+        CPLSPrintf("/vsimem/mvt_getfeature_%p_%d_%d.pbf", this, nX, nY);
+    VSIFCloseL(VSIFileFromMemBuffer(osTmpFilename,
+                                    pabyDataDup, nDataSize,
+                                    true));
+
+    const char* l_apszAllowedDrivers[] = { "MVT", nullptr };
+    char** papszOpenOptions = nullptr;
+    papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+        "X", CPLSPrintf("%d", nX));
+    papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+        "Y", CPLSPrintf("%d", nY));
+    papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+        "Z", CPLSPrintf("%d", m_nZoomLevel));
+    papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+        "METADATA_FILE",
+        m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
+    if( !m_poDS->m_osClip.empty() )
+    {
+        papszOpenOptions = CSLSetNameValue(papszOpenOptions,
+            "CLIP", m_poDS->m_osClip);
+    }
+    auto hTileDS = GDALOpenEx(("MVT:" + osTmpFilename).c_str(),
+                        GDAL_OF_VECTOR | GDAL_OF_INTERNAL,
+                        l_apszAllowedDrivers,
+                        papszOpenOptions, nullptr);
+    CSLDestroy(papszOpenOptions);
+
+    OGRFeature* poFeature = nullptr;
+    if( hTileDS )
+    {
+        OGRLayerH hLayer = GDALDatasetGetLayerByName(hTileDS, GetName());
+        if( hLayer )
+        {
+            OGRFeature* poUnderlyingFeature = reinterpret_cast<OGRFeature*>(
+                OGR_L_GetFeature(hLayer, nTileFID));
+            if( poUnderlyingFeature )
+            {
+                poFeature = CreateFeatureFrom( poUnderlyingFeature );
+                poFeature->SetFID(nFID);
+            }
+            delete poUnderlyingFeature;
+        }
+    }
+    GDALClose(hTileDS);
+
+    VSIUnlink(osTmpFilename);
+
+    return poFeature;
+}
+
+/************************************************************************/
+/*                           InitVector()                               */
+/************************************************************************/
+
+void MBTilesDataset::InitVector(double dfMinX, double dfMinY,
+                                double dfMaxX, double dfMaxY,
+                                bool bZoomLevelFromSpatialFilter,
+                                bool bJsonField)
+{
+    const char* pszSQL =
+        "SELECT value FROM metadata WHERE name = 'json'";
+    CPLDebug("MBTILES", "%s", pszSQL);
+    CPLJSONDocument oJsonDoc;
+    CPLJSONDocument oDoc;
+    auto hSQLLyr = OGR_DS_ExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    if (hSQLLyr)
+    {
+        auto hFeat = OGR_L_GetNextFeature(hSQLLyr);
+        if (hFeat)
+        {
+            auto pszJson = OGR_F_GetFieldAsString(hFeat, 0);
+            oDoc.GetRoot().Add( "json", pszJson );
+            oJsonDoc.LoadMemory(
+                    reinterpret_cast<const GByte*>(pszJson));
+            OGR_F_Destroy(hFeat);
+        }
+        OGR_DS_ReleaseResultSet(hDS, hSQLLyr);
+    }
+
+    m_osMetadataMemFilename =
+        CPLSPrintf("/vsimem/%p_metadata.json", this);
+    oDoc.Save(m_osMetadataMemFilename);
+
+    CPLJSONArray oVectorLayers;
+    oVectorLayers.Deinit();
+
+    CPLJSONArray oTileStatLayers;
+    oTileStatLayers.Deinit();
+
+    oVectorLayers =
+        oJsonDoc.GetRoot().GetArray("vector_layers");
+
+    oTileStatLayers =
+        oJsonDoc.GetRoot().GetArray("tilestats/layers");
+
+    for( int i = 0; i < oVectorLayers.Size(); i++ )
+    {
+        CPLJSONObject oId = oVectorLayers[i].GetObj("id");
+        if( oId.IsValid() && oId.GetType() ==
+                CPLJSONObject::String )
+        {
+            OGRwkbGeometryType eGeomType = wkbUnknown;
+            if( oTileStatLayers.IsValid() )
+            {
+                eGeomType = OGRMVTFindGeomTypeFromTileStat(
+                    oTileStatLayers, oId.ToString().c_str());
+            }
+
+            CPLJSONObject oFields = oVectorLayers[i].GetObj("fields");
+            m_apoLayers.push_back( std::unique_ptr<OGRLayer>(
+                new MBTilesVectorLayer(this,
+                                       oId.ToString().c_str(),
+                                       oFields,
+                                       bJsonField,
+                                       dfMinX, dfMinY, dfMaxX, dfMaxY,
+                                       eGeomType,
+                                       bZoomLevelFromSpatialFilter))
+            );
+        }
+    }
 }
 
 /************************************************************************/
@@ -1806,6 +2487,13 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
     if (!Identify(poOpenInfo))
         return nullptr;
 
+    if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 &&
+        (poOpenInfo->nOpenFlags & GDAL_OF_UPDATE) != 0 )
+    {
+        return nullptr;
+    }
+
     if (OGRGetDriverCount() == 0)
         OGRRegisterAll();
 
@@ -1962,6 +2650,12 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                 nBands = 4;
         }
 
+        if( poOpenInfo->eAccess == GA_Update )
+        {
+            // So that we can edit all potential overviews
+            nMinLevel = 0;
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Set dataset attributes                                          */
 /* -------------------------------------------------------------------- */
@@ -1975,24 +2669,45 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         /* poDS will release it from now */
         hDS = nullptr;
 
+        poDS->m_osClip = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "CLIP", "");
+        poDS->m_nMinZoomLevel = nMinLevel;
         poDS->InitRaster ( nullptr, nMaxLevel, nBands,
                            dfMinX, dfMinY, dfMaxX, dfMaxY );
 
         const char* pszFormat = poDS->GetMetadataItem("format");
         if( pszFormat != nullptr && EQUAL(pszFormat, "pbf") )
         {
-            CPLDebug("MBTiles",
-                     "This files contain vector tiles, "
-                     "not supported by this driver");
-            delete poDS;
-            return nullptr;
+            if( (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) == 0 )
+            {
+                CPLDebug("MBTiles",
+                         "This files contain vector tiles, "
+                         "but driver open in raster-only mode");
+                delete poDS;
+                return nullptr;
+            }
+            poDS->InitVector(dfMinX, dfMinY, dfMaxX, dfMaxY,
+                CPLFetchBool(poOpenInfo->papszOpenOptions, "ZOOM_LEVEL_AUTO",
+                    CPLTestBool(CPLGetConfigOption(
+                        "MVT_ZOOM_LEVEL_AUTO", "NO"))),
+                CPLFetchBool(poOpenInfo->papszOpenOptions, "JSON_FIELD",
+                             false)
+            );
+        }
+        else if( pszFormat != nullptr && !EQUAL(pszFormat, "pbf") )
+        {
+            if( (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) == 0 )
+            {
+                CPLDebug("MBTiles",
+                         "This files contain raster tiles, "
+                         "but driver open in vector-only mode");
+                delete poDS;
+                return nullptr;
+            }
         }
 
         if( poDS->eAccess == GA_Update )
         {
-            // So that we can edit all potential overviews
-            nMinLevel = 0;
-
             if( pszFormat != nullptr && (EQUAL(pszFormat, "jpg") || EQUAL(pszFormat, "jpeg")) )
             {
                 poDS->m_eTF = GPKG_TF_JPEG;
@@ -2705,6 +3420,7 @@ void GDALRegister_MBTiles()
 
     poDriver->SetDescription( "MBTiles" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "MBTiles" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_mbtiles.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "mbtiles" );
@@ -2735,6 +3451,14 @@ void GDALRegister_MBTiles()
 "  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
 "  <Option name='USE_BOUNDS' type='boolean' description='Whether to use the bounds metadata, when available, to determine the AOI' default='YES'/>"
 COMPRESSION_OPTIONS
+"  <Option name='CLIP' type='boolean' "
+    "description='Whether to clip geometries to tile extent' default='YES'/>"
+"  <Option name='ZOOM_LEVEL_AUTO' type='booleean' "
+    "description='Whether to auto-select the zoom level for vector layers "
+    "according to spatial filter extent. Only for display purpose' "
+    "default='NO'/>"
+"  <Option name='JSON_FIELD' type='string' description='For vector layers, "
+        "whether to put all attributes as a serialized JSon dictionary'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"

@@ -1420,6 +1420,8 @@ static int utf8test( const char* src, unsigned srclen )
     const char* e = src + srclen;
     while( p < e )
     {
+        if( *p == 0 )
+            return 0;
         if( *p & 0x80 )
         {
             int len = 0;

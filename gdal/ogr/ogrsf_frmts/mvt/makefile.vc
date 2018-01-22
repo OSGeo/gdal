@@ -1,0 +1,15 @@
+
+OBJ	=	ogrmvtdataset.obj mvtutils.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\osm
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

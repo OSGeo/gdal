@@ -12,7 +12,10 @@
 <p>Starting with GDAL 1.10, the MBTiles driver allows reading rasters in the MBTiles format,
 which is a specification for storing tiled map data in SQLite databases.</p>
 <p>Starting with GDAL 2.1, the MBTiles driver has creation and write support for MBTiles
-datasets.</p>
+raster datasets.</p>
+<p>Starting with GDAL 2.3, the MBTiles driver has read for MBTiles vector datasets.
+For standalone MapBox Vector Tile files or set of MVT files, see the
+<a href="drv_mvt.html">MVT</a> driver.</p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and PNG drivers.</p>
 
@@ -38,26 +41,50 @@ with a GetMetadataItem("Pixel_iCol_iLine", "LocationInfo") call on a band object
 
 <h2>Opening options</h2>
 
-Starting with GDAL 2.1, the following open options are available:
+<p>Starting with GDAL 2.1, the following open options are available:</p>
+
+<ul>
+
+<li>Raster and vector:
 <ul>
 <li><b>ZOOM_LEVEL</b>=value: Integer value between 0 and the maximum filled in
 the <i>tiles</i> table. By default, the driver will select the maximum
-zoom level, such as at least one tile at that zoom level is found in the raster table.</li>
-<li><b>BAND_COUNT</b>=AUTO/1/2/3/4: Number of bands of the dataset exposed after opening.
-Some conversions will be done when possible and implemented, but this might fail
-in some cases, depending on the BAND_COUNT value and the number of bands of the tile.
-Defaults to AUTO.</li>
+zoom level, such as at least one tile at that zoom level is found in the 'tiles' table.</li>
+<li><b>USE_BOUNDS</b>=YES/NO: Whether to use the 'bounds' metadata, when available,
+to determine the AOI. Defaults to YES.</li>
 <li><b>MINX</b>=value: Minimum easting (in EPSG:3857) of the area of interest.</li>
 <li><b>MINY</b>=value: Minimum northing (in EPSG:3857) of the area of interest.</li>
 <li><b>MAXX</b>=value: Maximum easting (in EPSG:3857) of the area of interest.</li>
 <li><b>MAXY</b>=value: Maximum northing (in EPSG:3857) of the area of interest.</li>
-<li><b>USE_BOUNDS</b>=YES/NO: Whether to use the bounds metadata, when available, to determine the AOI. Defaults to YES.</li>
+</ul>
+</li>
+
+<li>Raster only:
+<ul>
+<li><b>BAND_COUNT</b>=AUTO/1/2/3/4: Number of bands of the dataset exposed after opening.
+Some conversions will be done when possible and implemented, but this might fail
+in some cases, depending on the BAND_COUNT value and the number of bands of the tile.
+Defaults to AUTO.</li>
 <li><b>TILE_FORMAT</b>=PNG/PNG8/JPEG: Format used to store tiles. See
 <a href="#tile_formats">Tile formats</a> section. Only used in update mode. Defaults to PNG.</li>
 <li><b>QUALITY</b>=1-100: Quality setting for JPEG compression. Only used in update mode. Default to 75.</li>
 <li><b>ZLEVEL</b>=1-9: DEFLATE compression level for PNG tiles. Only used in update mode. Default to 6.</li>
 <li><b>DITHER</b>=YES/NO: Whether to use Floyd-Steinberg dithering (for TILE_FORMAT=PNG8).
 Only used in update mode. Defaults to NO.</li>
+</ul>
+</li>
+
+<li>Vector only (GDAL &gt;= 2.3):
+<ul>
+<li><b>CLIP</b>=YES/NO: Whether to clip geometries of vector features to tile extent.
+Defaults to YES.</li>
+<li><b>ZOOM_LEVEL_AUTO</b>=YES/NO: Whether to auto-select the zoom level for vector
+layers according to the spatial filter extent. Only for display purpose.
+Defaults to NO.</li>
+<lib><b>JSON_FIELD</b>=YES/NO: Whether to put all attributes as a
+serialized JSon dictionary.</li>
+</ul>
+</li>
 </ul>
 
 <h2>Creation issues</h2>
@@ -156,6 +183,18 @@ ignored.</p>
 <p>Overviews can also be cleared with the -clean option of gdaladdo (or
 BuildOverviews() with nOverviews=0)</p>
 
+<h2>Vector tiles</h2>
+
+<p>Starting with GDAL 2.3, the MBTiles driver can read MBTiles files containing
+vector tiles conforming to the MapBox Vector Tile format (format=pbf).</p>
+
+<p>The driver requires the 'metadata' table to contain a name='json' entry,
+that has a 'vector_layers' array describing layers and their schema. See
+<a href="drv_mvt.html#metadata_json">metadata.json</a></p>
+
+<p>Note: The driver will make no effort of
+stiching together geometries for features that overlap several tiles.</p>
+
 <h2>Examples:</h2>
 
 <ul>
@@ -244,6 +283,26 @@ $ gdaladdo -r average my_dataset.mbtiles 2 4 8 16
 </pre>
 </li>
 
+<li>Opening a vector MBTiles:
+<pre>
+$ ogrinfo /home/even/gdal/data/mvt/out.mbtiles
+INFO: Open of `/home/even/gdal/data/mvt/out.mbtiles'
+      using driver `MBTiles' successful.
+Metadata:
+  ZOOM_LEVEL=5
+  name=out.mbtiles
+  description=out.mbtiles
+  version=2
+  minzoom=0
+  maxzoom=5
+  center=16.875000,44.951199,5
+  bounds=-180.000000,-85.051129,180.000000,83.634101
+  type=overlay
+  format=pbf
+1: ne_10m_admin_1_states_provinces_shpgeojson (Multi Polygon)
+</pre>
+</li>
+
 </ul>
 
 <p>See Also:</p>
@@ -251,6 +310,7 @@ $ gdaladdo -r average my_dataset.mbtiles 2 4 8 16
 <ul>
 <li><a href="https://github.com/mapbox/mbtiles-spec">MBTiles specification</a></li>
 <li><a href="https://github.com/mapbox/utfgrid-spec/blob/master/1.0/utfgrid.md">UTFGrid specification</a></li>
+<li><a href="drv_mvt.html">MapBox Vector tiles driver</a></li>
 </ul>
 
 </body>
