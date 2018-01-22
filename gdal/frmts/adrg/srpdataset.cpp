@@ -499,10 +499,11 @@ bool SRPDataset::GetFromRecord( const char* pszFileName, DDFRecord * record )
     NFC = record->GetIntSubfield( "SPR", 0, "NFC", 0, &bSuccess );
     CPLDebug("SRP", "NFC=%d", NFC);
 
+    const auto knIntMax = std::numeric_limits<int>::max();
     if( NFL <= 0 || NFC <= 0 ||
-        NFL > INT_MAX / 128 ||
-        NFC > INT_MAX / 128 ||
-        NFL > INT_MAX / NFC )
+        NFL > knIntMax / 128 ||
+        NFC > knIntMax / 128 ||
+        NFL > knIntMax / NFC )
     {
         CPLError( CE_Failure, CPLE_AppDefined,"Invalid NFL / NFC values");
         return false;

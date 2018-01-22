@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 using std::fill;
 
@@ -373,7 +374,8 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     int nStart = CPL_MSBWORD32( poDS->sHeader.IL );
     int nEnd = CPL_MSBWORD32( poDS->sHeader.LL );
     GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
-    if( nDiff <= 0 || nDiff > INT_MAX )
+
+    if( nDiff <= 0 || nDiff > std::numeric_limits<int>::max() )
     {
         delete poDS;
         return nullptr;
@@ -383,7 +385,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
     nStart = CPL_MSBWORD32( poDS->sHeader.IE );
     nEnd = CPL_MSBWORD32( poDS->sHeader.LE );
     nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
-    if( nDiff <= 0 || nDiff > INT_MAX )
+    if( nDiff <= 0 || nDiff > std::numeric_limits<int>::max() )
     {
         delete poDS;
         return nullptr;
@@ -424,7 +426,7 @@ GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      scanline of data.                                               */
 /* -------------------------------------------------------------------- */
     if( GDALGetDataTypeSizeBytes(poDS->eRasterDataType) >
-                                    (INT_MAX - 256) / poDS->nRasterXSize )
+        (std::numeric_limits<int>::max() - 256) / poDS->nRasterXSize )
     {
         delete poDS;
         return nullptr;

@@ -32,6 +32,7 @@
 #include <climits>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "gdal_frmts.h"
@@ -1348,7 +1349,9 @@ void ILWISRasterBand::ReadValueDomainProperties(const std::string& pszFileName)
         }
         else // Floating point values
         {
-            if ((rMin >= -FLT_MAX) && (rMax <= FLT_MAX) && (fabs(rStep) >= FLT_EPSILON)) // is "float" good enough?
+            if ((rMin >= std::numeric_limits<float>::lowest()) &&
+                (rMax <= std::numeric_limits<float>::max()) &&
+                (fabs(rStep) >= FLT_EPSILON)) // is "float" good enough?
               eDataType = GDT_Float32;
             else
               eDataType = GDT_Float64;

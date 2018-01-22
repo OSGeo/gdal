@@ -33,6 +33,8 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <limits>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -983,8 +985,9 @@ GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             int iWordSize = GDALGetDataTypeSizeBytes(eType);
 
-            if( nBands > INT_MAX / iWordSize ||
-                poDS->nRasterXSize > INT_MAX / (nBands * iWordSize) )
+            const auto knIntMax = std::numeric_limits<int>::max();
+            if( nBands > knIntMax / iWordSize ||
+                poDS->nRasterXSize > knIntMax / (nBands * iWordSize) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "int overflow");
                 delete poDS;

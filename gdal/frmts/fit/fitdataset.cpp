@@ -134,9 +134,11 @@ FITRasterBand::FITRasterBand( FITDataset *poDSIn, int nBandIn, int nBandsIn ) :
     if( bytesPerComponent == 0 )
         return;
     bytesPerPixel = nBandsIn * bytesPerComponent;
+    const auto knIntMax = std::numeric_limits<int>::max();
     if( nBlockXSize <= 0 || nBlockYSize <= 0 ||
-        nBlockXSize > INT_MAX / (int)bytesPerPixel ||
-        nBlockYSize > INT_MAX / (nBlockXSize * (int)bytesPerPixel) )
+        nBlockXSize > knIntMax / static_cast<int>(bytesPerPixel) ||
+        nBlockYSize > knIntMax /
+            (nBlockXSize * static_cast<int>(bytesPerPixel)) )
         return;
     recordSize = bytesPerPixel * nBlockXSize * nBlockYSize;
     numXBlocks =
