@@ -41,6 +41,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <utility>
 
 #include "cpl_error.h"
@@ -541,7 +542,8 @@ int VizGeorefSpline2D::solve()
 
     _nof_eqs = _nof_points + 3;
 
-    if( _nof_eqs > INT_MAX / _nof_eqs )
+
+    if( _nof_eqs > std::numeric_limits<int>::max() / _nof_eqs )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too many coefficients. Computation aborted.");

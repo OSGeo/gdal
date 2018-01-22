@@ -159,7 +159,7 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     const int nYSize = GDALGetRasterBandYSize( hRed );
     if( nYSize == 0 )
         return CE_Failure;
-    if( static_cast<GUInt32>(nXSize) < UINT_MAX / static_cast<GUInt32>(nYSize) )
+    if( static_cast<GUInt32>(nXSize) < std::numeric_limits<GUInt32>::max() / static_cast<GUInt32>(nYSize) )
     {
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
                                                nullptr, nullptr, nullptr,
