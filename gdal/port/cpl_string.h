@@ -417,6 +417,8 @@ public:
     size_t    ifind( const char * s, size_t pos = 0 ) const;
     CPLString &toupper( void );
     CPLString &tolower( void );
+
+    bool      endsWith( const std::string& osStr ) const;
 };
 
 CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... )

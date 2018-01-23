@@ -390,6 +390,23 @@ CPLString &CPLString::replaceAll( char chBefore,
     return replaceAll(std::string(&chBefore, 1), std::string(&chAfter, 1));
 }
 
+
+/************************************************************************/
+/*                             endsWith()                              */
+/************************************************************************/
+
+/**
+ * Returns whether the string ends with another string
+ * @param osStr other string.
+ * @return true if the string ends wit osStr.
+ */
+bool CPLString::endsWith( const std::string& osStr ) const
+{
+    if( size() < osStr.size() )
+        return false;
+    return substr(size() - osStr.size()) == osStr;
+}
+
 /************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
