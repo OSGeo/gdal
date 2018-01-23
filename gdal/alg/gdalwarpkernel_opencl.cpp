@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include <float.h>
+#include <limits>
 #include "cpl_string.h"
 #include "gdalwarpkernel_opencl.h"
 
