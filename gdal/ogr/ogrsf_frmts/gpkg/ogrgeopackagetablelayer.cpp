@@ -3092,6 +3092,8 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
+    m_poDS->RemoveTableFromSQLiteMasterCache(m_osRTreeName);
+
     pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_insert\"",
                              m_osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);

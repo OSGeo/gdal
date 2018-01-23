@@ -4572,6 +4572,31 @@ CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
     return 'success'
 
 ###############################################################################
+# Test overwriting a layer
+
+def ogr_gpkg_58():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    out_filename = '/vsimem/ogr_gpkg_58.gpkg'
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG', 
+                         accessMode = 'overwrite')
+
+    ds = ogr.Open(out_filename)
+    sql_lyr = ds.ExecuteSQL("SELECT HasSpatialIndex('poly', 'geom')")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(out_filename)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4653,6 +4678,7 @@ gdaltest_list = [
     ogr_gpkg_55,
     ogr_gpkg_56,
     ogr_gpkg_57,
+    ogr_gpkg_58,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]

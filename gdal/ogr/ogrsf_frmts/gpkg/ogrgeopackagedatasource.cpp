@@ -652,6 +652,16 @@ const std::map<CPLString, CPLString> &
 }
 
 /************************************************************************/
+/*                    RemoveTableFromSQLiteMasterCache()                */
+/************************************************************************/
+
+void GDALGeoPackageDataset::RemoveTableFromSQLiteMasterCache(
+                                                    const char* pszTableName)
+{
+    m_oMapNameToType.erase(CPLString(pszTableName).toupper());
+}
+
+/************************************************************************/
 /*                          GetExtensions()                             */
 /************************************************************************/
 
