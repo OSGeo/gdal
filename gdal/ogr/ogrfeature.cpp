@@ -2050,7 +2050,6 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
             t.tm_min = nMinute;
             t.tm_sec = static_cast<int>(fSecond) + 1;
             t.tm_isdst = 0;
-            t.tm_zone = 0;
             
             time_t when = mktime(&t);
             const struct tm *n = gmtime(&when);
@@ -2060,7 +2059,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
             nDay = n->tm_mday;
             nHour = n->tm_hour;
             nMinute = n->tm_min;
-            fSecond = n->tm_sec;
+            fSecond = static_cast<float>(n->tm_sec);
 
             snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                     "%04d/%02d/%02d %02d:%02d:%02d",
@@ -2327,7 +2326,6 @@ const char *OGRFeature::GetFieldAsString( int iField )
                 t.tm_min = pauFields[iField].Date.Minute;
                 t.tm_sec = static_cast<int>(pauFields[iField].Date.Second) + 1;
                 t.tm_isdst = 0;
-                t.tm_zone = 0;
                 
                 time_t when = mktime(&t);
                 const struct tm *n = gmtime(&when);
@@ -3055,7 +3053,6 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                     t.tm_min = pauFields[iField].Date.Minute;
                     t.tm_sec = static_cast<int>(pauFields[iField].Date.Second) + 1;
                     t.tm_isdst = 0;
-                    t.tm_zone = 0;
                     
                     time_t when = mktime(&t);
                     const struct tm *n = gmtime(&when);
@@ -3065,7 +3062,7 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                     *pnDay = n->tm_mday;
                     *pnHour = n->tm_hour;
                     *pnMinute = n->tm_min;
-                    *pfSecond = n->tm_sec;
+                    *pfSecond = static_cast<float>(n->tm_sec);
                 }
             }
         }
