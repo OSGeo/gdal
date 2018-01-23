@@ -847,10 +847,12 @@ void OGRMVTLayer::GetXY(int nX, int nY, double& dfX, double& dfY)
 OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                         GByte* pabyDataGeometryEnd)
 {
+    OGRMultiPoint* poMultiPoint = nullptr;
     OGRMultiLineString* poMultiLS = nullptr;
     OGRLineString* poLine = nullptr;
     OGRMultiPolygon* poMultiPoly = nullptr;
     OGRPolygon* poPoly = nullptr;
+    OGRLinearRing* poRing = nullptr;
 
     if( nGeomType == knGEOM_TYPE_POINT )
     {
@@ -874,9 +876,9 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
             OGRPoint* poPoint = new OGRPoint(dfX, dfY);
             if( m_poFeatureDefn->GetGeomType() == wkbMultiPoint )
             {
-                OGRMultiPoint* poMP = new OGRMultiPoint();
-                poMP->addGeometryDirectly(poPoint);
-                return poMP;
+                poMultiPoint = new OGRMultiPoint();
+                poMultiPoint->addGeometryDirectly(poPoint);
+                return poMultiPoint;
             }
             else
             {
@@ -888,7 +890,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
         {
             int nX = 0;
             int nY = 0;
-            OGRMultiPoint* poMP = new OGRMultiPoint();
+            poMultiPoint = new OGRMultiPoint();
             for( unsigned i = 0; i < nCount; i++ )
             {
                 int nDX = 0;
@@ -905,10 +907,10 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                     double dfY;
                     GetXY(nX, nY, dfX, dfY);
                     OGRPoint* poPoint = new OGRPoint(dfX, dfY);
-                    poMP->addGeometryDirectly(poPoint);
+                    poMultiPoint->addGeometryDirectly(poPoint);
                 }
             }
-            return poMP;
+            return poMultiPoint;
         }
     }
     else if( nGeomType == knGEOM_TYPE_LINESTRING )
@@ -999,7 +1001,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
             double dfX;
             double dfY;
             GetXY(nX, nY, dfX, dfY);
-            OGRLinearRing* poRing = new OGRLinearRing();
+            poRing = new OGRLinearRing();
             poRing->addPoint(dfX, dfY);
             READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
                         nCmdCountCombined);
@@ -1048,6 +1050,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                     poPoly->addRingDirectly(poRing);
                 }
             }
+            poRing = nullptr;
         }
         if( poMultiPoly == nullptr && poPoly != nullptr &&
             m_poFeatureDefn->GetGeomType() == wkbMultiPolygon )
@@ -1065,6 +1068,7 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
         }
     }
 end_error:
+    delete poMultiPoint;
     if( poMultiPoly )
         delete poMultiPoly;
     else if( poPoly )
@@ -1073,6 +1077,7 @@ end_error:
         delete poMultiLS;
     else if( poLine )
         delete poLine;
+    delete poRing;
     return nullptr;
 }
 
