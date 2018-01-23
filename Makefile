@@ -125,5 +125,7 @@ $(PROJ4)/configure: $(PROJ4)/autogen.sh
 clean:
 	cd $(PROJ4) && git clean -X -d --force .
 	cd $(GDAL) && git clean -X -d --force .
-	rm -f gdal.js.mem
+	rm -f gdal.wasm
 	rm -f gdal.js
+	rm -f gdal.js.mem
+	rm -f gdal.data

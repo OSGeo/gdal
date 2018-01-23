@@ -1,3 +1,6 @@
 gdal.js
 *.swp
-*.mem
+*js.mem
+*.data
+*.wasm
+dist
