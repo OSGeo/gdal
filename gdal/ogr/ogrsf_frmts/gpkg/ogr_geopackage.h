@@ -199,6 +199,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         std::map<CPLString, CPLString> m_oMapNameToType;
         const std::map<CPLString, CPLString>&
                                         GetNameTypeMapFromSQliteMaster();
+        void RemoveTableFromSQLiteMasterCache(const char* pszTableName);
 
         bool                    m_bMapTableToExtensionsBuilt;
         std::map< CPLString, std::vector<GPKGExtensionDesc> > m_oMapTableToExtensions;
