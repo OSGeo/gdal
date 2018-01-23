@@ -2332,9 +2332,9 @@ const char *OGRFeature::GetFieldAsString( int iField )
                 
                 snprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
-                t.tm_hour,
-                t.tm_min,
-                t.tm_sec );
+                n->tm_hour,
+                n->tm_min,
+                n->tm_sec );
                 
             }
             else
