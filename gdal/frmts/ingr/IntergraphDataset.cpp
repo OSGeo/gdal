@@ -480,7 +480,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 
         nBandOffset = poDS->hHeaderTwo.CatenatedFilePointer;
     }
-    while( nBandOffset != 0 );
+    while( nBandOffset != 0 && GDALCheckBandCount(nBands, false) );
 
     poDS->nBands = nBands;
 
