@@ -233,15 +233,15 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 
     for( int i = 0; i < 2; i++ )
     {
-        /* first collect linestrings related to HP, OB or DPM
+        /* first collect linestrings related to HP, OB, DPM and ZVB
            then collect rest of linestrings */
         if( i == 0 )
             osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,PARAMETRY_SPOJENI,_rowid_ FROM '%s' WHERE "
-                         "HP_ID IS NOT NULL OR OB_ID IS NOT NULL OR DPM_ID IS NOT NULL "
-                         "ORDER BY HP_ID,OB_ID,DPM_ID,PORADOVE_CISLO_BODU", m_pszName);
+                         "HP_ID IS NOT NULL OR OB_ID IS NOT NULL OR DPM_ID IS NOT NULL OR ZVB_ID IS NOT NULL "
+                         "ORDER BY HP_ID,OB_ID,DPM_ID,ZVB_ID,PORADOVE_CISLO_BODU", m_pszName);
         else
             osSQL.Printf("SELECT BP_ID,PORADOVE_CISLO_BODU,PARAMETRY_SPOJENI,_rowid_ FROM '%s' WHERE "
-                         "OB_ID IS NULL AND HP_ID IS NULL AND DPM_ID IS NULL "
+                         "OB_ID IS NULL AND HP_ID IS NULL AND DPM_ID IS NULL AND ZVB_ID IS NULL "
                          "ORDER BY ID,PORADOVE_CISLO_BODU", m_pszName);
 
         sqlite3_stmt *hStmt = poReader->PrepareStatement(osSQL.c_str());
