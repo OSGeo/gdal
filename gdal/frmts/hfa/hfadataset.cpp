@@ -1981,10 +1981,25 @@ HFARasterBand::HFARasterBand( HFADataset *poDSIn, int nBandIn, int iOverview ) :
             };
 
             if( padfBins != nullptr )
-                poCT->SetColorEntry(static_cast<int>(padfBins[iColor]),
-                                    &sEntry);
+            {
+                const double dfIdx = padfBins[iColor];
+                if( !(dfIdx >= 0.0 && dfIdx <= 65535.0) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Invalid index padfBins[%d] = %g",
+                             iColor, dfIdx);
+                    break;
+                }
+                else
+                {
+                    poCT->SetColorEntry(static_cast<int>(dfIdx),
+                                        &sEntry);
+                }
+            }
             else
+            {
                 poCT->SetColorEntry(iColor, &sEntry);
+            }
         }
     }
 }
