@@ -1969,6 +1969,16 @@ int JPGDatasetCommon::Identify( GDALOpenInfo *poOpenInfo )
     }
 #endif
 
+    // Some files like http://dionecanali.hd.free.fr/~mdione/mapzen/N65E039.hgt.gz
+    // could be mis-identfied as JPEG
+    CPLString osFilenameLower = CPLString(poOpenInfo->pszFilename).tolower();
+    if( osFilenameLower.endsWith(".hgt") ||
+        osFilenameLower.endsWith(".hgt.gz") ||
+        osFilenameLower.endsWith(".hgt.zip") )
+    {
+        return FALSE;
+    }
+
     return TRUE;
 }
 
