@@ -338,7 +338,7 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
 }
 
 /*!
-  \brief Load geometry (linestring HP/DPM layer)
+  \brief Load geometry (linestring HP/DPM/ZVB layer)
 
   \return number of invalid features
 */

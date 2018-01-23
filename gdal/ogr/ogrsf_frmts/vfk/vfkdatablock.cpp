@@ -360,7 +360,8 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType()
 
     else if (EQUAL (m_pszName, "SBP") ||
              EQUAL (m_pszName, "HP") ||
-             EQUAL (m_pszName, "DPM"))
+             EQUAL (m_pszName, "DPM") ||
+	     EQUAL (m_pszName, "ZVB"))
         m_nGeometryType = wkbLineString;
 
     else if (EQUAL (m_pszName, "PAR") ||
@@ -457,7 +458,8 @@ int IVFKDataBlock::LoadGeometry()
         nInvalid = LoadGeometryLineStringSBP();
     }
     else if (EQUAL (m_pszName, "HP") ||
-             EQUAL (m_pszName, "DPM")) {
+             EQUAL (m_pszName, "DPM") ||
+	     EQUAL (m_pszName, "ZVB")) {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringHP();
     }
@@ -833,7 +835,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
 }
 
 /*!
-  \brief Load geometry (linestring HP/DPM layer)
+  \brief Load geometry (linestring HP/DPM/ZVB layer)
 
   \return number of invalid features
 */
@@ -851,8 +853,9 @@ int VFKDataBlock::LoadGeometryLineStringHP()
 
     poDataBlockLines->LoadGeometry();
     const int idxId = GetPropertyIndex("ID");
-    const int idxMy_Id = poDataBlockLines->GetPropertyIndex(
-        EQUAL(m_pszName, "HP") ? "HP_ID" : "DPM_ID");
+    CPLString osColumn;
+    osColumn.Printf("%s_ID", m_pszName);
+    const int idxMy_Id = poDataBlockLines->GetPropertyIndex(osColumn);
     const int idxPCB = poDataBlockLines->GetPropertyIndex("PORADOVE_CISLO_BODU");
     if (idxId < 0 || idxMy_Id < 0 || idxPCB < 0) {
         CPLError(CE_Failure, CPLE_NotSupported,
