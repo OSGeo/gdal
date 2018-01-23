@@ -2052,7 +2052,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
             t.tm_isdst = 0;
             
             time_t when = mktime(&t);
-            const struct tm *n = gmtime(&when);
+            const struct tm *n = localtime(&when);
             
             nYear = n->tm_year + 1900;
             nMonth = n->tm_mon + 1;
@@ -2328,7 +2328,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                 t.tm_isdst = 0;
                 
                 time_t when = mktime(&t);
-                const struct tm *n = gmtime(&when);
+                const struct tm *n = localtime(&when);
                 
                 snprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
@@ -3055,7 +3055,7 @@ int OGRFeature::GetFieldAsDateTime( int iField,
                     t.tm_isdst = 0;
                     
                     time_t when = mktime(&t);
-                    const struct tm *n = gmtime(&when);
+                    const struct tm *n = localtime(&when);
 
                     *pnYear = n->tm_year + 1900;
                     *pnMonth = n->tm_mon + 1;
