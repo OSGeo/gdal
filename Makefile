@@ -53,12 +53,14 @@ export EMCONFIGURE_JS
 
 include gdal-configure.opt
 
-.PHONY: clean
+.PHONY: clean release gdal proj4
 
 ########
 # GDAL #
 ########
 gdal: gdal.js
+# Alias to easily remake PROJ.4
+proj4: $(PROJ4)/src/.libs/libproj.a
 
 gdal.js: $(GDAL)/libgdal.a
 	EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMCC) $(GDAL)/libgdal.a $(PROJ4)/src/.libs/libproj.a -o gdal.js \
@@ -82,10 +84,8 @@ gdal.js: $(GDAL)/libgdal.a
 		
 		
 
-$(GDAL)/libgdal.a: proj4 gdalconfig
+$(GDAL)/libgdal.a: $(PROJ4)/src/.libs/libproj.a $(GDAL)/config.status
 	cd $(GDAL) && EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMMAKE) make lib-target
-
-gdalconfig: $(GDAL)/config.status
 
 # TODO: Pass the configure params more elegantly so that this uses the
 # EMCONFIGURE variable
@@ -108,10 +108,8 @@ $(GDAL)/config.status: $(GDAL)/configure
 ##########
 proj4: $(PROJ4)/src/.libs/libproj.a
 
-$(PROJ4)/src/.libs/libproj.a: proj4config
+$(PROJ4)/src/.libs/libproj.a: $(PROJ4)/config.status
 	cd $(PROJ4) && EMCC_CFLAGS="$(PROJ_EMCC_CFLAGS)" $(EMMAKE) make
-
-proj4config: $(PROJ4)/config.status
 
 $(PROJ4)/config.status: $(PROJ4)/configure
 	cd $(PROJ4) && $(EMCONFIGURE) ./configure --enable-shared=no --enable-static --without-mutex
@@ -129,3 +127,15 @@ clean:
 	rm -f gdal.js
 	rm -f gdal.js.mem
 	rm -f gdal.data
+
+##############
+# Release    #
+##############
+release: $(VERSION).tar.gz $(VERSION).zip
+
+$(VERSION).tar.gz $(VERSION).zip: dist/README dist/LICENSE.TXT dist/gdal.js dist/gdal.wasm dist/gdal.data
+	tar czf $(VERSION).tar.gz dist
+	zip -r $(VERSION).zip dist
+
+dist/gdal.js dist/gdal.wasm dist/gdal.data: gdal.js
+	cp gdal.js gdal.wasm gdal.data dist

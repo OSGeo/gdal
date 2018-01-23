@@ -1,0 +1,6 @@
+To use these files, all three of 1) gdal.js 2) gdal.wasm and 3) gdal.data must be placed in the
+same folder on your web server. Include `gdal.js` in your application (preferably in a web worker).
+When `gdal.js` is run, `gdal.wasm` and `gdal.data` will be requested as needed.
+
+For examples of how to use this library, see https://github.com/ddohler/gdal-js/tree/develop-js/examples
+For more information about Emscripten, see http://kripken.github.io/emscripten-site/

@@ -10,7 +10,8 @@ RUN apt-get update && apt-get -y install \
     default-jre \
     libtool \
     curl \
-    git-core
+    git-core \
+    zip
 
 WORKDIR /tmp
 RUN curl -O https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz && \

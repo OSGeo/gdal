@@ -3,4 +3,3 @@ gdal.js
 *js.mem
 *.data
 *.wasm
-dist

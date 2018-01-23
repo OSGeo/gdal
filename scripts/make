@@ -2,4 +2,4 @@ PROJECT_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
 docker run -ti --rm \
     --volume "${PROJECT_ROOT_DIR}":/opt/gdaljs \
-    gdaljs-build make
+    gdaljs-build make ${@}
