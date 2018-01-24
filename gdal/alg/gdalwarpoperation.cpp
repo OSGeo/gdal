@@ -1793,7 +1793,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
         if( psOptions->nBandCount == 1 )
         {
             // Particular case to simplify the stack a bit.
-            eErr = poSrcDS->GetRasterBand(psOptions->panDstBands[0])->RasterIO(
+            eErr = poSrcDS->GetRasterBand(psOptions->panSrcBands[0])->RasterIO(
                                   GF_Read,
                                   nSrcXOff, nSrcYOff, nSrcXSize, nSrcYSize,
                                   oWK.papabySrcImage[0], nSrcXSize, nSrcYSize,
