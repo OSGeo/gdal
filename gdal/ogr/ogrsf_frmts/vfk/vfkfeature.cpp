@@ -334,7 +334,7 @@ bool IVFKFeature::LoadGeometry()
     }
     else if (EQUAL (pszName, "HP") ||
              EQUAL (pszName, "DPM") ||
-	     EQUAL (pszName, "ZVB")) {
+             EQUAL (pszName, "ZVB")) {
         /* -> wkbLineString */
         return LoadGeometryLineStringHP();
     }
