@@ -361,7 +361,7 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType()
     else if (EQUAL (m_pszName, "SBP") ||
              EQUAL (m_pszName, "HP") ||
              EQUAL (m_pszName, "DPM") ||
-	     EQUAL (m_pszName, "ZVB"))
+            EQUAL (m_pszName, "ZVB"))
         m_nGeometryType = wkbLineString;
 
     else if (EQUAL (m_pszName, "PAR") ||
@@ -459,7 +459,7 @@ int IVFKDataBlock::LoadGeometry()
     }
     else if (EQUAL (m_pszName, "HP") ||
              EQUAL (m_pszName, "DPM") ||
-	     EQUAL (m_pszName, "ZVB")) {
+             EQUAL (m_pszName, "ZVB")) {
         /* -> wkbLineString */
         nInvalid = LoadGeometryLineStringHP();
     }
