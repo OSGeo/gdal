@@ -173,13 +173,14 @@ zip -r $OUT/ogr_sdts_fuzzer_seed_corpus.zip ogr_sdts.tar >/dev/null
 rm ogr_sdts.tar
 
 echo "Building ogr_fuzzer_seed_corpus.zip"
+CUR_DIR=$PWD
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
 cd mvt
 zip $OUT/ogr_fuzzer_seed_corpus.zip * >/dev/null
 cd ..
-cd $OLDPWD
+cd $CUR_DIR
 
 echo "Building cad_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/cad
@@ -206,7 +207,7 @@ cd  $(dirname $0)/../../autotest/ogr/data
 for filename in *.xlsx; do
     mkdir tmpxlsx
     cd tmpxlsx
-    unzip ../$filename
+    unzip ../$filename >/dev/null
     printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/xlsx_$filename.tar
     for i in `find -type f`; do
         printf "***NEWFILE***:$i\n" >> $CUR_DIR/xlsx_$filename.tar
@@ -226,7 +227,7 @@ cd  $(dirname $0)/../../autotest/ogr/data
 for filename in *.ods; do
     mkdir tmpods
     cd tmpods
-    unzip ../$filename
+    unzip ../$filename >/dev/null
     printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ods_$filename.tar
     for i in `find -type f`; do
         printf "***NEWFILE***:$i\n" >> $CUR_DIR/ods_$filename.tar
