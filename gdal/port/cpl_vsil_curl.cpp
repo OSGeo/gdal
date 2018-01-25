@@ -2824,7 +2824,7 @@ void VSICurlFilesystemHandler::InvalidateCachedData( const char* pszURL )
             CPLFree(psRegion);
             if( i < nRegions - 1 )
             {
-                memmove(papsRegions, papsRegions + 1,
+                memmove(papsRegions + i, papsRegions + i + 1,
                         (nRegions - 1 - i) * sizeof(CachedRegion*));
             }
             nRegions --;
