@@ -1127,8 +1127,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                         CPLCalloc(1, nDataTypeSize * tag.nLength));
 
                 GUInt32 nOffset = 0;
-                for( GUInt32 j = 0; j < std::min(nTokens,
-                                            tagdescArray[i].length); j++ )
+                for( GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++ )
                 {
                     GUInt32 nVal = atoi(papszTokens[j]);
                     if( tag.datatype == TIFF_SHORT )
@@ -1172,8 +1171,7 @@ std::vector<TagValue> EXIFFormatTagValue(char** papszEXIFMetadata,
                         CPLCalloc(1, nDataTypeSize * tag.nLength));
 
                 GUInt32 nOffset = 0;
-                for( GUInt32 j = 0;
-                        j < std::min(nTokens, tagdescArray[i].length); j++ )
+                for( GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++ )
                 {
                     double dfVal = CPLAtof(papszTokens[j][0] == '(' ?
                                         papszTokens[j] + 1 : papszTokens[j]);
