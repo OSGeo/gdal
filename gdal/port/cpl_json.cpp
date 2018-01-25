@@ -435,6 +435,13 @@ void CPLJSONObject::Add(const std::string &osName, const char *pszValue)
     }
 }
 
+// defined in ogr/ogrsf_frmts/geojson/ogrgeojsonwriter.cpp
+CPL_C_START
+/* %.XXXg formatting */
+json_object CPL_DLL* json_object_new_double_with_significant_figures(double dfVal,
+                                                                     int nSignificantFigures);
+CPL_C_END
+
 /**
  * Add new key - value pair to json object.
  * @param osName  Key name.
@@ -450,7 +457,7 @@ void CPLJSONObject::Add(const std::string &osName, double dfValue)
         json_object_get_type(TO_JSONOBJ(object.m_poJsonObject)) ==
             json_type_object )
     {
-        json_object *poVal = json_object_new_double( dfValue );
+        json_object *poVal = json_object_new_double_with_significant_figures( dfValue, -1 );
         json_object_object_add( TO_JSONOBJ(object.GetInternalHandle()),
                                            objectName.c_str(), poVal );
     }

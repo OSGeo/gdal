@@ -351,7 +351,7 @@ def ogr_mvt_tileset_json_field():
         "uint_value":2000000000,
         "uint64_value":4000000000,
         "float_value":1.25,
-        "real_value":1.234568,
+        "real_value":1.23456789,
         "string_value":"str"
         }:
         gdaltest.post_reason('fail')
@@ -489,7 +489,7 @@ def ogr_mvt_mbtiles_json_field():
     d = json.loads(f.GetFieldAsString("json"))
     if d != {'int64_value': 123456789012345,
              'string_value': 'str',
-             'real_value': 1.234568,
+             'real_value': 1.23456789,
              'bool_false': False,
              'pos_int_value': 1,
              'neg_int_value': -1,
@@ -519,7 +519,7 @@ def ogr_mvt_mbtiles_json_field_auto():
     d = json.loads(f.GetFieldAsString("json"))
     if d != {'int64_value': 123456789012345,
              'string_value': 'str',
-             'real_value': 1.234568,
+             'real_value': 1.23456789,
              'bool_false': False,
              'pos_int_value': 1,
              'neg_int_value': -1,
