@@ -35,12 +35,14 @@ void user_read_data(png_structp png_ptr,png_bytep data, png_uint_32 length)
         if (psSetJmpContext)
             longjmp( *psSetJmpContext, 1 );
      }
-
-     ptr=(void *)mem->stream_ptr;
-     offset=mem->stream_len;
-/*     printf("SAGrd %ld %ld %x\n",offset,length,ptr);  */
-     memcpy(data,ptr+offset,length);
-     mem->stream_len += length;
+     else
+     {
+        ptr=(void *)mem->stream_ptr;
+        offset=mem->stream_len;
+    /*     printf("SAGrd %ld %ld %x\n",offset,length,ptr);  */
+        memcpy(data,ptr+offset,length);
+        mem->stream_len += length;
+     }
 }
 
 
