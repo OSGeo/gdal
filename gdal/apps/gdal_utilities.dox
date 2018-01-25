@@ -424,7 +424,7 @@ as <b>-epo</b>, except that the criterion for erroring out is when the request f
 outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.</dd>
 <dt> <b>-a_scale</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band scaling
 value(no modification of pixel values is done)</dd>
 <dt> <b>-a_offset</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band offset
@@ -893,7 +893,7 @@ will chose the algorithm based on input and output properties.
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (starting with GDAL 1.10)
 Override the projection for the output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.</dd>
 
 <dt> <b>-r</b>
 <i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
@@ -1963,7 +1963,8 @@ output file in pixels and lines.</dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
+No reprojection is done. </dd>
 
 <dt> <b>-zfield</b> <i>field_name</i>:</dt><dd> Identifies an attribute field
 on the features to be used to get a Z value from. This value overrides Z value
