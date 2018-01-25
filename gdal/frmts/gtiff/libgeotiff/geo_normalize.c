@@ -1605,6 +1605,10 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
     double dfStdParallel1 = 0.0, dfStdParallel2 = 0.0, dfAzimuth = 0.0;
     int iParm;
     int bHaveSP1, bHaveNOS;
+   
+    double dfDefaultNatOriginScale = psDefn->ProjParm[4];
+    if (dfDefaultNatOriginScale == 0)
+        dfDefaultNatOriginScale = 1;
 
 /* -------------------------------------------------------------------- */
 /*      Get the false easting, and northing if available.               */
@@ -1646,7 +1650,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
         if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
 
         /* notdef: should transform to decimal degrees at this point */
 
@@ -1694,7 +1698,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
         if( !bHaveNOS && !bHaveSP1)
         {
             bHaveNOS = TRUE;
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
         }
 
         /* notdef: should transform to decimal degrees at this point */
@@ -1745,7 +1749,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
 
         if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
 
         /* notdef: should transform to decimal degrees at this point */
 
@@ -1795,7 +1799,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                        &dfNatOriginScale, 0, 1 ) == 0
             && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
 
         /* notdef: should transform to decimal degrees at this point */
 
@@ -1841,7 +1845,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                        &dfNatOriginScale, 0, 1 ) == 0
             && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
 
         /* notdef: should transform to decimal degrees at this point */
 
@@ -1986,7 +1990,7 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
                        &dfNatOriginScale, 0, 1 ) == 0
             && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                           &dfNatOriginScale, 0, 1 ) == 0 )
-            dfNatOriginScale = 1.0;
+            dfNatOriginScale = dfDefaultNatOriginScale;
 
         /* notdef: should transform to decimal degrees at this point */
 
