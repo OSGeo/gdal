@@ -93,6 +93,7 @@ void GDALRegister_HDF5()
 
 #ifdef HDF5_PLUGIN
     GDALRegister_HDF5Image();
+    GDALRegister_BAG();
 #endif
 }
 
