@@ -979,6 +979,11 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
     CPLStringList pathPortions( CSLTokenizeString2( osPath.c_str(),
                                                     JSON_PATH_DELIMITER, 0 ) );
     int portionsCount = pathPortions.size();
+    if( portionsCount > 100 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Too many components in path");
+        return CPLJSONObject( "", nullptr );
+    }
     if( 0 == portionsCount )
         return CPLJSONObject( "", nullptr );
     CPLJSONObject object = *this;
