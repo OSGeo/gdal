@@ -1159,7 +1159,8 @@ static int TestLayerErrorConditions( OGRLayer* poLyr )
     }
 
     // This should detect int overflow
-    if (LOG_ACTION(poLyr->GetFeature((GIntBig)INT_MAX + 1)) != nullptr)
+    if( LOG_ACTION(poLyr->GetFeature(static_cast<GIntBig>(
+            std::numeric_limits<int>::max()) + 1)) != nullptr )
     {
         printf("ERROR: GetFeature((GIntBig)INT_MAX + 1) "
                "should have returned NULL\n");
