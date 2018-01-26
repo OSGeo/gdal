@@ -212,6 +212,8 @@ int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
 
 int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
 
+const char CPL_DLL *VSIGetActualURL( const char* pszFilename );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */

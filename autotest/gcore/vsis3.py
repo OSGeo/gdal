@@ -70,14 +70,26 @@ def vsis3_no_sign_request():
         return 'skip'
 
     with gdaltest.config_option('AWS_NO_SIGN_REQUEST', 'YES'):
+        actual_url = gdal.GetActualURL('/vsis3/landsat-pds/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF')
+        if actual_url != 'https://landsat-pds.s3.amazonaws.com/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF':
+            gdaltest.post_reason('fail')
+            print(actual_url)
+            return 'fail'
+
+        actual_url = gdal.GetActualURL('/vsis3_streaming/landsat-pds/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF')
+        if actual_url != 'https://landsat-pds.s3.amazonaws.com/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF':
+            gdaltest.post_reason('fail')
+            print(actual_url)
+            return 'fail'
+
         f = open_for_read('/vsis3/landsat-pds/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF')
+
     if f is None:
         if gdaltest.gdalurlopen('https://landsat-pds.s3.amazonaws.com/L8/001/002/LC80010022016230LGN00/LC80010022016230LGN00_B1.TIF') is None:
             print('cannot open URL')
             return 'skip'
         return 'fail'
     gdal.VSIFCloseL(f)
-
     return 'success'
 
 ###############################################################################

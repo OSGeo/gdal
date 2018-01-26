@@ -110,6 +110,7 @@ public:
     virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
     virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
     virtual int HasOptimizedReadMultiRange(const char* /* pszPath */) { return FALSE; }
+    virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

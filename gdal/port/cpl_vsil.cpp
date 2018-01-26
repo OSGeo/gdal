@@ -708,6 +708,36 @@ int VSIHasOptimizedReadMultiRange( const char* pszPath )
 }
 
 /************************************************************************/
+/*                        VSIGetActualURL()                             */
+/************************************************************************/
+
+/**
+ * \brief Returns the actual URL of a supplied filename.
+ *
+ * Currently only returns a non-NULL value for network-based virtual file systems.
+ * For example "/vsis3/bucket/filename" will be expanded as
+ * "https://bucket.s3.amazon.com/filename"
+ * 
+ * Note that the lifetime of the returned string, is short, and may be
+ * invalidated by any following GDAL functions.
+ *
+ * @param pszFilename the path of the filesystem object. UTF-8 encoded.
+ *
+ * @return the actual URL corresponding to the supplied filename, or NULL. Should not
+ * be freed.
+ *
+ * @since GDAL 2.3
+ */
+
+const char* VSIGetActualURL( const char* pszFilename )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+
+    return poFSHandler->GetActualURL( pszFilename );
+}
+
+/************************************************************************/
 /*                             VSIFOpenL()                              */
 /************************************************************************/
 
