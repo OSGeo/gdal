@@ -245,6 +245,20 @@ def vsiswift_fake_auth_storage_url_and_auth_token():
     gdal.SetConfigOption('SWIFT_STORAGE_URL', 'http://127.0.0.1:%d/v1/AUTH_something' % gdaltest.webserver_port)
     gdal.SetConfigOption('SWIFT_AUTH_TOKEN', 'my_auth_token')
 
+    # Failure
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/v1/AUTH_something/foo/bar', 501 )
+    with webserver.install_http_handler(handler):
+        f = open_for_read('/vsiswift/foo/bar')
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        gdal.VSIFReadL(1, 4, f).decode('ascii')
+        gdal.VSIFCloseL(f)
+
+    gdal.VSICurlClearCache()
+
+    # Success
     def method(request):
 
         request.protocol_version = 'HTTP/1.1'
