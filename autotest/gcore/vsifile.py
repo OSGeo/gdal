@@ -704,6 +704,35 @@ def vsifile_17():
         return 'fail'
     return 'success'
 
+###############################################################################
+# Test gdal.GetFileSystemsPrefixes()
+
+def vsifile_18():
+
+    prefixes = gdal.GetFileSystemsPrefixes()
+    if '/vsimem/' not in prefixes:
+        print(prefixes)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test gdal.GetFileSystemOptions()
+
+def vsifile_19():
+
+    for prefix in gdal.GetFileSystemsPrefixes():
+        options = gdal.GetFileSystemOptions(prefix)
+        # Check that the options is XML correct
+        if options is not None:
+            ret = gdal.ParseXMLString(options)
+            if ret is None:
+                gdaltest.post_reason('fail')
+                print(prefix, options)
+                return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -720,7 +749,9 @@ gdaltest_list = [ vsifile_1,
                   vsifile_14,
                   vsifile_15,
                   vsifile_16,
-                  vsifile_17 ]
+                  vsifile_17,
+                  vsifile_18,
+                  vsifile_19 ]
 
 if __name__ == '__main__':
 

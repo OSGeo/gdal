@@ -1798,6 +1798,67 @@ VSIFileManager *VSIFileManager::Get()
 }
 
 /************************************************************************/
+/*                    VSIGetFileSystemsPrefixes()                       */
+/************************************************************************/
+
+/**
+ * \brief Return the list of prefixes for virtual file system handlers
+ * currenly registered.
+ *
+ * Typically: "", "/vsimem/", "/vsicurl/", etc
+ *
+ * @return a NULL terminated list of prefixes. Must be freed with CSLDestroy()
+ * @since GDAL 2.3
+ */
+
+char **VSIGetFileSystemsPrefixes( void )
+{
+    return VSIFileManager::GetPrefixes();
+}
+
+/************************************************************************/
+/*                     VSIGetFileSystemOptions()                        */
+/************************************************************************/
+
+/**
+ * \brief Return the list of options associated with a virtual file system handler
+ * as a serialized XML string.
+ *
+ * Those options may be set as configuration options with CPLSetConfigOption().
+ *
+ * @param pszFilename a filename, or prefix of a virtual file system handler.
+ * @return a string, which must not be freed, or NULL if no options is declared.
+ * @since GDAL 2.3
+ */
+
+const char* VSIGetFileSystemOptions( const char* pszFilename )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+
+    return poFSHandler->GetOptions();
+}
+
+
+/************************************************************************/
+/*                           GetPrefixes()                              */
+/************************************************************************/
+
+char ** VSIFileManager::GetPrefixes()
+{
+    CPLMutexHolder oHolder( &hVSIFileManagerMutex );
+    CPLStringList aosList;
+    for( const auto& oIter: Get()->oHandlers )
+    {
+        if( oIter.first != "/vsicurl?" )
+        {
+            aosList.AddString( oIter.first.c_str() );
+        }
+    }
+    return aosList.StealList();
+}
+
+/************************************************************************/
 /*                             GetHandler()                             */
 /************************************************************************/
 

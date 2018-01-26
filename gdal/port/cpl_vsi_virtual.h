@@ -111,6 +111,7 @@ public:
     virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
     virtual int HasOptimizedReadMultiRange(const char* /* pszPath */) { return FALSE; }
     virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
+    virtual const char* GetOptions() { return nullptr; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -137,6 +138,8 @@ public:
                                 VSIFilesystemHandler * );
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
+
+    static char** GetPrefixes();
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

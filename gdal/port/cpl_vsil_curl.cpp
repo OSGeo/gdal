@@ -360,6 +360,8 @@ public:
 
     const char* GetActualURL(const char* pszFilename) override;
 
+    const char* GetOptions() override;
+
     char **ReadDirInternal( const char *pszDirname, int nMaxFiles,
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
@@ -2928,6 +2930,65 @@ const char* VSICurlFilesystemHandler::GetActualURL(const char* pszFilename)
 }
 
 /************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+#define VSICURL_OPTIONS \
+    "  <Option name='GDAL_HTTP_MAX_RETRY' type='int' " \
+        "description='Maximum number of retries' default='0'/>" \
+    "  <Option name='GDAL_HTTP_RETRY_DELAY' type='double' " \
+        "description='Retry delay in seconds' default='30'/>" \
+    "  <Option name='GDAL_HTTP_HEADER_FILE' type='string' " \
+        "description='Filename of a file that contains HTTP headers to " \
+        "forward to the server'/>" \
+    "  <Option name='CPL_VSIL_CURL_USE_HEAD' type='boolean' " \
+        "description='Whether to use HTTP HEAD verb to retrieve " \
+        "file information' default='YES'/>" \
+    "  <Option name='GDAL_HTTP_MULTIRANGE' type='string-select' " \
+        "description='Strategy to apply to run multi-range requests' " \
+        "default='PARALLEL'>" \
+    "       <Value>PARALLEL</Value>" \
+    "       <Value>SERIAL</Value>" \
+    "  </Option>" \
+    "  <Option name='GDAL_HTTP_MULTIPLEX' type='boolean' " \
+        "description='Whether to enable HTTP/2 multiplexing' default='YES'/>" \
+    "  <Option name='GDAL_HTTP_MERGE_CONSECUTIVE_RANGES' type='boolean' " \
+        "description='Whether to merge consecutive ranges in multirange " \
+        "requests' default='YES'/>" \
+    "  <Option name='CPL_VSIL_CURL_NON_CACHED' type='string' " \
+        "description='Colon-separated list of filenames whose content" \
+        "must not be cached accross open attempts'/>" \
+    "  <Option name='CPL_VSIL_CURL_ALLOWED_FILENAME' type='string' " \
+        "description='Single filename that is allowed to be opened'/>" \
+    "  <Option name='CPL_VSIL_CURL_ALLOWED_EXTENSIONS' type='string' " \
+        "description='Comma or space separated list of allowed file " \
+        "extensions'/>" \
+    "  <Option name='GDAL_DISABLE_READDIR_ON_OPEN' type='string-select' " \
+        "description='Whether to disable establishing the list of files in " \
+        "the directory of the current filename' default='NO'>" \
+    "       <Value>NO</Value>" \
+    "       <Value>YES</Value>" \
+    "       <Value>EMPTY_DIR</Value>" \
+    "  </Option>" \
+    "  <Option name='VSI_CACHE' type='boolean' " \
+        "description='Whether to cache in memory the contents of the opened " \
+        "file as soon as they are read' default='NO'/>" \
+    "  <Option name='CPL_VSIL_CURL_CHUNK_SIZE' type='integer' " \
+        "description='Size in bytes of the minimum amount of data read in a " \
+        "file' default='16384' min='1024' max='10485760'/>" \
+    "  <Option name='CPL_VSIL_CURL_CACHE_SIZE' type='integer' " \
+        "description='Size in bytes of the global /vsicurl/ cache' " \
+        "default='16384000'/>"
+
+const char* VSICurlFilesystemHandler::GetOptions()
+{
+    return
+    "<Options>"
+    VSICURL_OPTIONS
+    "</Options>";
+}
+
+/************************************************************************/
 /*                        IsAllowedFilename()                           */
 /************************************************************************/
 
@@ -4697,6 +4758,8 @@ class VSIS3FSHandler CPL_FINAL : public IVSIS3LikeFSHandler
         override;
     void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poS3HandleHelper )
         override;
+
+    const char* GetOptions() override;
 };
 
 /************************************************************************/
@@ -5738,6 +5801,50 @@ void VSIS3FSHandler::ClearCache()
 }
 
 /************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+const char* VSIS3FSHandler::GetOptions()
+{
+    return
+    "<Options>"
+    "  <Option name='AWS_SECRET_ACCESS_KEY' type='string' "
+        "description='Secret access key. To use with AWS_ACCESS_KEY_ID'/>"
+    "  <Option name='AWS_ACCESS_KEY_ID' type='string' "
+        "description='Access key id'/>"
+    "  <Option name='AWS_SESSION_TOKEN' type='string' "
+        "description='Session token'/>"
+    "  <Option name='AWS_REQUEST_PAYER' type='string' "
+        "description='Content of the x-amz-request-payer HTTP header. "
+        "Typically \"requester\" for requester-pays buckets'/>"
+    "  <Option name='AWS_VIRTUAL_HOSTING' type='boolean' "
+        "description='Whether to use virtual hosting server name when the "
+        "bucket name is compatible with it' default='YES'/>"
+    "  <Option name='AWS_NO_SIGN_REQUEST' type='boolean' "
+        "description='Whether to disable signing of requests' default='NO'/>"
+    "  <Option name='AWS_DEFAULT_REGION' type='string' "
+        "description='AWS S3 default region' default='us-east-1'/>"
+    "  <Option name='CPL_AWS_CHECK_HYPERVISOR_UUID' type='boolean' "
+        "description='Whether to check /sys/hypervisor/uuid to determine "
+        "if current machine is a AWS EC2 instance' default='YES'/>"
+    "  <Option name='AWS_DEFAULT_PROFILE' type='string' "
+        "description='Name of the profile to use for IAM credentials "
+        "retrieval on EC2 instances' default='default'/>"
+    "  <Option name='AWS_CONFIG_FILE' type='string' "
+        "description='Filename that contains AWS configuration' "
+        "default='~/.aws/config'/>"
+    "  <Option name='CPL_AWS_CREDENTIALS_FILE' type='string' "
+        "description='Filename that contains AWS credentials' "
+        "default='~/.aws/credentials'/>"
+    "  <Option name='VSIS3_CHUNK_SIZE' type='int' "
+        "description='Size in MB for chunks of files that are uploaded. The"
+        "default value of 50 MB allows for files up to 500 GB each' "
+        "default='50' min='1' max='1000'/>"
+    VSICURL_OPTIONS
+    "</Options>";
+}
+
+/************************************************************************/
 /*                               Mkdir()                                */
 /************************************************************************/
 
@@ -6298,6 +6405,8 @@ class VSIGSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
     VSIVirtualHandle *Open( const char *pszFilename,
                             const char *pszAccess,
                             bool bSetError ) override;
+
+    const char* GetOptions() override;
 };
 
 /************************************************************************/
@@ -6382,6 +6491,53 @@ VSIVirtualHandle* VSIGSFSHandler::Open( const char *pszFilename,
 
     return
         VSICurlFilesystemHandler::Open(pszFilename, pszAccess, bSetError);
+}
+
+/************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+const char* VSIGSFSHandler::GetOptions()
+{
+    return
+    "<Options>"
+    "  <Option name='GS_SECRET_ACCESS_KEY' type='string' "
+        "description='Secret access key. To use with GS_ACCESS_KEY_ID'/>"
+    "  <Option name='GS_ACCESS_KEY_ID' type='string' "
+        "description='Access key id'/>"
+    "  <Option name='GS_OAUTH2_REFRESH_TOKEN' type='string' "
+        "description='OAuth2 refresh token. For OAuth2 client authentication. "
+        "To use with GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET'/>"
+    "  <Option name='GS_OAUTH2_CLIENT_ID' type='string' "
+        "description='OAuth2 client id for OAuth2 client authentication'/>"
+    "  <Option name='GS_OAUTH2_CLIENT_SECRET' type='string' "
+        "description='OAuth2 client secret for OAuth2 client authentication'/>"
+    "  <Option name='GS_OAUTH2_PRIVATE_KEY' type='string' "
+        "description='Private key for OAuth2 service account authentication. "
+        "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
+    "  <Option name='GS_OAUTH2_PRIVATE_KEY_FILE' type='string' "
+        "description='Filename that contains private key for OAuth2 service "
+        "account authentication. "
+        "To use with GS_OAUTH2_CLIENT_EMAIL'/>"
+    "  <Option name='GS_OAUTH2_CLIENT_EMAIL' type='string' "
+        "description='Client email to use with OAuth2 service account "
+        "authentication'/>"
+    "  <Option name='GS_OAUTH2_SCOPE' type='string' "
+        "description='OAuth2 authorization scope' "
+        "default='https://www.googleapis.com/auth/devstorage.read_write'/>"
+    "  <Option name='CPL_MACHINE_IS_GCE' type='boolean' "
+        "description='Whether the current machine is a Google Compute Engine "
+        "instance' default='NO'/>"
+    "  <Option name='CPL_GCE_CHECK_LOCAL_FILES' type='boolean' "
+        "description='Whether to check system logs to determine "
+        "if current machine is a GCE instance' default='YES'/>"
+        "description='Filename that contains AWS configuration' "
+        "default='~/.aws/config'/>"
+    "  <Option name='CPL_GS_CREDENTIALS_FILE' type='string' "
+        "description='Filename that contains Google Storage credentials' "
+        "default='~/.boto'/>"
+    VSICURL_OPTIONS
+    "</Options>";
 }
 
 /************************************************************************/
@@ -6476,6 +6632,8 @@ class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
     int Unlink( const char *pszFilename ) override;
     int Mkdir( const char *, long  ) override;
     int Rmdir( const char * ) override;
+
+    const char* GetOptions() override;
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -7216,6 +7374,28 @@ char** VSIAzureFSHandler::GetFileList( const char *pszDirname,
 }
 
 /************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+const char* VSIAzureFSHandler::GetOptions()
+{
+    return
+    "<Options>"
+    "  <Option name='AZURE_STORAGE_CONNECTION_STRING' type='string' "
+        "description='Connection string that contains account name and "
+        "secret key'/>"
+    "  <Option name='AZURE_STORAGE_ACCOUNT' type='string' "
+        "description='Storage account. To use with AZURE_STORAGE_ACCESS_KEY'/>"
+    "  <Option name='AZURE_STORAGE_ACCESS_KEY' type='string' "
+        "description='Secret key'/>"
+    "  <Option name='VSIAZ_CHUNK_SIZE' type='int' "
+        "description='Size in MB for chunks of files that are uploaded' "
+        "default='4' min='1' max='4'/>"
+        VSICURL_OPTIONS
+    "</Options>";
+}
+
+/************************************************************************/
 /*                           VSIAzureHandle()                           */
 /************************************************************************/
 
@@ -7302,6 +7482,8 @@ public:
                                 const char *pszAccess,
                                 bool bSetError ) override;
 
+        const char* GetOptions() override;
+
         void UpdateMapFromHandle(
             IVSIS3LikeHandleHelper * poHandleHelper ) override;
         void UpdateHandleFromMap(
@@ -7385,6 +7567,28 @@ void VSIOSSFSHandler::ClearCache()
     VSICurlFilesystemHandler::ClearCache();
 
     oMapBucketsToOSSParams.clear();
+}
+
+/************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+const char* VSIOSSFSHandler::GetOptions()
+{
+    return
+    "<Options>"
+    "  <Option name='OSS_SECRET_ACCESS_KEY' type='string' "
+        "description='Secret access key. To use with OSS_ACCESS_KEY_ID'/>"
+    "  <Option name='OSS_ACCESS_KEY_ID' type='string' "
+        "description='Access key id'/>"
+    "  <Option name='OSS_ENDPOINT' type='string' "
+        "description='Default endpoint' default='oss-us-east-1.aliyuncs.com'/>"
+    "  <Option name='VSIOSS_CHUNK_SIZE' type='int' "
+        "description='Size in MB for chunks of files that are uploaded. The"
+        "default value of 50 MB allows for files up to 500 GB each' "
+        "default='50' min='1' max='1000'/>"
+    VSICURL_OPTIONS
+    "</Options>";
 }
 
 /************************************************************************/
@@ -7562,6 +7766,8 @@ public:
 
         int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                 int nFlags ) override;
+
+        const char* GetOptions() override;
 };
 
 /************************************************************************/
@@ -7641,6 +7847,29 @@ void VSISwiftFSHandler::ClearCache()
     VSICurlFilesystemHandler::ClearCache();
 
     VSISwiftHandleHelper::ClearCache();
+}
+
+/************************************************************************/
+/*                           GetOptions()                               */
+/************************************************************************/
+
+const char* VSISwiftFSHandler::GetOptions()
+{
+    return
+    "<Options>"
+    "  <Option name='SWIFT_STORAGE_URL' type='string' "
+        "description='Storage URL. To use with SWIFT_AUTH_TOKEN'/>"
+    "  <Option name='SWIFT_AUTH_TOKEN' type='string' "
+        "description='Authorization token'/>"
+    "  <Option name='SWIFT_AUTH_V1_URL' type='string' "
+        "description='Authentication V1 URL. To use with SWIFT_USER and "
+        "SWIFT_KEY'/>"
+    "  <Option name='SWIFT_USER' type='string' "
+        "description='User name to use with authentication V1'/>"
+    "  <Option name='SWIFT_KEY' type='string' "
+        "description='Key/password to use with authentication V1'/>"
+    VSICURL_OPTIONS
+    "</Options>";
 }
 
 /************************************************************************/
