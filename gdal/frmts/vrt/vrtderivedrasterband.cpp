@@ -464,24 +464,27 @@ static bool LoadPythonAPI()
     // First try in the current process in case the python symbols would
     // be already loaded
     HANDLE hProcess = GetCurrentProcess();
-    HMODULE ahModules[100];
+    const size_t nMaxModules = 10000;
+    HMODULE* pahModules = static_cast<HMODULE*>(
+        CPLMalloc(nMaxModules * sizeof(HMODULE)));
     DWORD nSizeNeeded = 0;
 
-    EnumProcessModules(hProcess, ahModules, sizeof(ahModules),
+    EnumProcessModules(hProcess, pahModules, nMaxModules * sizeof(HMODULE),
                         &nSizeNeeded);
 
     const size_t nModules =
-        std::min(size_t(100),
+        std::min(nMaxModules,
                  static_cast<size_t>(nSizeNeeded) / sizeof(HMODULE));
     for( size_t i = 0; i < nModules; i++ )
     {
-        if( GetProcAddress(ahModules[i], "Py_SetProgramName") )
+        if( GetProcAddress(pahModules[i], "Py_SetProgramName") )
         {
-            libHandle = ahModules[i];
+            libHandle = pahModules[i];
             CPLDebug("VRT", "Current process has python symbols loaded");
             break;
         }
     }
+    CPLFree(pahModules);
 
     // Then try the user provided shared object name
     if( libHandle == nullptr && pszPythonSO != nullptr )
