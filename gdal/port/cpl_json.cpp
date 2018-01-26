@@ -907,7 +907,8 @@ bool CPLJSONObject::GetBool(const std::string &osName, bool bDefault) const
 std::vector<CPLJSONObject> CPLJSONObject::GetChildren() const
 {
     std::vector<CPLJSONObject> aoChildren;
-    if(nullptr == m_poJsonObject)
+    if(nullptr == m_poJsonObject || json_object_get_type(
+                    TO_JSONOBJ(m_poJsonObject) ) != json_type_object )
     {
         return aoChildren;
     }
