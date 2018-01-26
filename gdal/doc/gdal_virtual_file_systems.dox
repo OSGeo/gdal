@@ -23,6 +23,8 @@
 <li> \ref gdal_virtual_file_systems_vsiaz_streaming
 <li> \ref gdal_virtual_file_systems_vsioss
 <li> \ref gdal_virtual_file_systems_vsioss_streaming
+<li> \ref gdal_virtual_file_systems_vsiswift
+<li> \ref gdal_virtual_file_systems_vsiswift_streaming
 </ol>
 <li> \ref gdal_virtual_file_systems_vsistdin
 <li> \ref gdal_virtual_file_systems_vsistdout
@@ -185,8 +187,9 @@ not require particular signed authentication schemes. It is specialized into
 sub-filesystems for commercial cloud storage services, such as
 \ref gdal_virtual_file_systems_vsis3 "/vsis3/",
 \ref gdal_virtual_file_systems_vsigs "/vsigs/",
-\ref gdal_virtual_file_systems_vsiaz "/vsiaz/" or
-\ref gdal_virtual_file_systems_vsioss "/vsioss/".
+\ref gdal_virtual_file_systems_vsiaz "/vsiaz/",
+\ref gdal_virtual_file_systems_vsioss "/vsioss/" or
+\ref gdal_virtual_file_systems_vsiswift "/vsiswift/".
 
 When reading of entire files in a streaming way is possible, prefer using the
 \ref gdal_virtual_file_systems_vsicurl_streaming "/vsicurl_streaming/",
@@ -590,6 +593,62 @@ a filename potentially containing subdirectories.
 
 Authentication options, and read-only features, are identical to
 \ref gdal_virtual_file_systems_vsioss "/vsioss/"
+
+@since GDAL 2.3
+
+\subsection gdal_virtual_file_systems_vsiswift /vsiswift/ (OpenStack Swift Object Storage: random reading)
+
+/vsiswift/ is a file system handler that allows on-the-fly random reading of
+(primarily non-public) files available in
+<a href="https://developer.openstack.org/api-ref/object-store/">OpenStack Swift Object Storage</a>
+(swift) buckets, without prior download of the entire file.
+It requires GDAL to be built against libcurl.
+
+It also allows sequential writing of files (no seeks or read operations are
+then allowed). Deletion of files with VSIUnlink() is also supported.
+Creation of directories with VSIMkdir() and deletion
+of (empty) directories with VSIRmdir() are also pswiftible.
+
+Recognized filenames are of the form /vsiswift/bucket/key where
+bucket is the name of the swift bucket and key the swift object "key", i.e.
+a filename potentially containing subdirectories.
+
+The generalities of \ref gdal_virtual_file_systems_vsicurl "/vsicurl/" apply.
+
+Two authentication methods are possible. In order of priorities (first
+mentioned is the most prioritary)
+<ol>
+ <li>The SWIFT_STORAGE_URL and SWIFT_AUTH_TOKEN configuration options are set
+respectively to the storage URL (e.g http://127.0.0.1:12345/v1/AUTH_something)
+and the value of the x-auth-token authorization token.
+ </li>
+ <li>The SWIFT_AUTH_V1_URL, SWIFT_USER and SWIFT_KEY configuration options are
+set respectively to the endpoint of the Auth V1 authentication
+(e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password.
+This authentication endpoint will be used to retrieve the storage URL and
+authorization token mentionned in the first authentication method.
+</li>
+</ol>
+
+This file system handler also allows sequential writing of files (no seeks
+or read operations are then allowed)
+
+@since GDAL 2.3
+
+\subsection gdal_virtual_file_systems_vsiswift_streaming /vsiswift_streaming/ (OpenStack Swift Object Storage: streaming)
+
+/vsiswift_streaming/ is a file system handler that allows on-the-fly sequential
+reading of files (primarily non-public) files available in
+<a href="https://developer.openstack.org/api-ref/object-store/">OpenStack Swift Object Storage</a>
+(swift) buckets, without prior download of the entire file.
+It requires GDAL to be built against libcurl.
+
+Recognized filenames are of the form /vsiswift_streaming/bucket/key where
+bucket is the name of the bucket and key the object "key", i.e.
+a filename potentially containing subdirectories.
+
+Authentication options, and read-only features, are identical to
+\ref gdal_virtual_file_systems_vsiswift "/vsiswift/"
 
 @since GDAL 2.3
 

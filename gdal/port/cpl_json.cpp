@@ -939,6 +939,20 @@ bool CPLJSONObject::ToBool(bool bDefault) const
 }
 
 /**
+ * Get value.
+ * @return            Array
+ *
+ * @since GDAL 2.3
+ */
+CPLJSONArray CPLJSONObject::ToArray() const
+{
+    if( m_poJsonObject && json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
+            json_type_array )
+        return CPLJSONArray("", TO_JSONOBJ(m_poJsonObject) );
+    return CPLJSONArray("", nullptr);
+}
+
+/**
  * Stringify object to json format.
  * @param  eFormat Format type,
  * @return         A string in JSON format.

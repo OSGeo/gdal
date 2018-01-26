@@ -371,7 +371,8 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             strstr(osHeaderFile, "/vsis3/") == nullptr &&
             strstr(osHeaderFile, "/vsigs/") == nullptr &&
             strstr(osHeaderFile, "/vsiaz/") == nullptr &&
-            strstr(osHeaderFile, "/vsioss/") == nullptr )
+            strstr(osHeaderFile, "/vsioss/") == nullptr &&
+            strstr(osHeaderFile, "/vsiswift/") == nullptr )
         {
             fp = VSIFOpenL( osHeaderFile, "rb" );
         }
