@@ -614,7 +614,7 @@ Functionality of this utility can be done from C with GDALBuildOverviews().
 Example:
 \endhtmlonly
 
-Create overviews,embedded in the supplied TIFF file, with automatic computatino
+Create overviews, embedded in the supplied TIFF file, with automatic computation
 of levels (GDAL 2.3 or later)
 
 \verbatim
