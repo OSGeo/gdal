@@ -1,0 +1,33 @@
+{
+  "name": "gdal-js",
+  "version": "1.0.0",
+  "description": "GDAL compiled into WebAssembly for use in a web browser.",
+  "main": "gdal.js",
+  "directories": {
+    "example": "examples"
+  },
+  "files": [
+    "gdal.js",
+    "gdal.wasm",
+    "gdal.data"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddohler/gdal-js.git"
+  },
+  "keywords": [
+    "gdal",
+    "geospatial",
+    "webassembly",
+    "emscripten",
+    "geotiff",
+    "mapping"
+  ],
+  "author": "Derek Dohler",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ddohler/gdal-js/issues"
+  },
+  "homepage": "https://github.com/ddohler/gdal-js#readme"
+}
+
