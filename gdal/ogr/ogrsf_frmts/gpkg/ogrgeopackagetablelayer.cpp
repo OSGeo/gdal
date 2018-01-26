@@ -2557,6 +2557,9 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char* pszTableName)
 {
     OGRErr err;
 
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
+
     if( !CheckUpdatableTable("CreateSpatialIndex") )
         return false;
 
@@ -3134,6 +3137,10 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 
 void OGRGeoPackageTableLayer::RenameTo(const char* pszDstTableName)
 {
+
+    if( !m_bFeatureDefnCompleted )
+        GetLayerDefn();
+
     ResetReading();
     SyncToDisk();
 
