@@ -225,6 +225,8 @@ public:
     virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
                            int nFlags ) override;
 
+    const char* GetActualURL(const char* pszFilename) override;
+
     void                AcquireMutex();
     void                ReleaseMutex();
 
@@ -326,6 +328,8 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
     vsi_l_offset         GetFileSize();
     int                  Exists();
     int                  IsDirectory() const { return bIsDirectory; }
+
+    const char          *GetURL() const { return m_pszURL; }
 };
 
 /************************************************************************/
@@ -1693,6 +1697,21 @@ int VSICurlStreamingFSHandler::Stat( const char *pszFilename,
 
     delete poHandle;
     return nRet;
+}
+
+/************************************************************************/
+/*                          GetActualURL()                              */
+/************************************************************************/
+
+const char* VSICurlStreamingFSHandler::GetActualURL(const char* pszFilename)
+{
+    VSICurlStreamingHandle* poHandle = dynamic_cast<VSICurlStreamingHandle*>(
+        Open(pszFilename, "rb", false));
+    if( poHandle == nullptr )
+        return pszFilename;
+    CPLString osURL(poHandle->GetURL());
+    delete poHandle;
+    return CPLSPrintf("%s", osURL.c_str());
 }
 
 /************************************************************************/

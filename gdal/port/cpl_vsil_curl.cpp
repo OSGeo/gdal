@@ -358,6 +358,8 @@ public:
     int HasOptimizedReadMultiRange( const char* /* pszPath */ )
         override { return true; }
 
+    const char* GetActualURL(const char* pszFilename) override;
+
     char **ReadDirInternal( const char *pszDirname, int nMaxFiles,
                             bool* pbGotFileList );
     void InvalidateDirContent( const char *pszDirname );
@@ -490,6 +492,8 @@ class VSICurlHandle : public VSIVirtualHandle
                                          void* pfnUserData,
                                          int bStopOnInterruptUntilUninstall );
     int                  UninstallReadCbk();
+
+    const char          *GetURL() const { return m_pszURL; }
 };
 
 
@@ -2907,6 +2911,20 @@ VSICurlHandle* VSICurlFilesystemHandler::CreateFileHandle(
                                                 const char* pszFilename )
 {
     return new VSICurlHandle(this, pszFilename);
+}
+
+/************************************************************************/
+/*                          GetActualURL()                              */
+/************************************************************************/
+
+const char* VSICurlFilesystemHandler::GetActualURL(const char* pszFilename)
+{
+    VSICurlHandle* poHandle = CreateFileHandle(pszFilename);
+    if( poHandle == nullptr )
+        return pszFilename;
+    CPLString osURL(poHandle->GetURL());
+    delete poHandle;
+    return CPLSPrintf("%s", osURL.c_str());
 }
 
 /************************************************************************/

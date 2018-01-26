@@ -1369,6 +1369,10 @@ def Rename(*args):
     """Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"""
     return _gdal.Rename(*args)
 
+def GetActualURL(*args):
+    """GetActualURL(char const * utf8_path) -> char const *"""
+    return _gdal.GetActualURL(*args)
+
 _gdal.VSI_STAT_EXISTS_FLAG_swigconstant(_gdal)
 VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
 

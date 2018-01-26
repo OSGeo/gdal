@@ -680,7 +680,7 @@ def vsifile_15():
     return 'success'
 
 ###############################################################################
-# Test failes gdal.Rename() with exceptions enabled
+# Test failed gdal.Rename() with exceptions enabled
 
 def vsifile_16():
 
@@ -695,6 +695,14 @@ def vsifile_16():
         gdal.DontUseExceptions()
     return ret
 
+###############################################################################
+# Test gdal.GetActualURL() on a non-network based filesystem
+
+def vsifile_17():
+
+    if gdal.GetActualURL('foo') is not None:
+        return 'fail'
+    return 'success'
 
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
@@ -711,7 +719,8 @@ gdaltest_list = [ vsifile_1,
                   vsifile_13,
                   vsifile_14,
                   vsifile_15,
-                  vsifile_16 ]
+                  vsifile_16,
+                  vsifile_17 ]
 
 if __name__ == '__main__':
 
