@@ -313,6 +313,17 @@ def vsiswift_stat():
                 print(stat_res)
             return 'fail'
 
+    # Test stat on container
+    handler = webserver.SequentialHandler()
+    # GET on the container URL returns something, but we must hack this back
+    # to a directory
+    handler.add('GET', '/v1/AUTH_something/foo', 200, {}, "blabla" )
+    with webserver.install_http_handler(handler):
+        stat_res = gdal.VSIStatL('/vsiswift/foo')
+        if stat_res is None or not stat.S_ISDIR(stat_res.mode):
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -404,7 +415,9 @@ def vsiswift_fake_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something', 200, { 'Content-type': 'application/json' },
-        """[ { "subdir": "mycontainer1/" }, { "subdir": "mycontainer2/"} ] """)
+        """[ { "name": "mycontainer1", "count": 0, "bytes": 0 },
+             { "name": "mycontainer2", "count": 0, "bytes": 0}
+           ] """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
     if dir_contents != [ 'mycontainer1', 'mycontainer2' ]:
