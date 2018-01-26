@@ -1373,6 +1373,14 @@ def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)
 
+def GetFileSystemsPrefixes(*args):
+    """GetFileSystemsPrefixes() -> char **"""
+    return _gdal.GetFileSystemsPrefixes(*args)
+
+def GetFileSystemOptions(*args):
+    """GetFileSystemOptions(char const * utf8_path) -> char const *"""
+    return _gdal.GetFileSystemOptions(*args)
+
 _gdal.VSI_STAT_EXISTS_FLAG_swigconstant(_gdal)
 VSI_STAT_EXISTS_FLAG = _gdal.VSI_STAT_EXISTS_FLAG
 

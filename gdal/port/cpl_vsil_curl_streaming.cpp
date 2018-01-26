@@ -227,6 +227,9 @@ public:
 
     const char* GetActualURL(const char* pszFilename) override;
 
+    const char* GetOptions() override
+                        { return VSIGetFileSystemOptions("/vsicurl/"); }
+
     void                AcquireMutex();
     void                ReleaseMutex();
 
@@ -1743,6 +1746,9 @@ public:
     VSIS3StreamingFSHandler() {}
     ~VSIS3StreamingFSHandler() override {}
 
+    const char* GetOptions() override
+                            { return VSIGetFileSystemOptions("/vsis3/"); }
+
     void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
     void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
 };
@@ -1897,6 +1903,9 @@ class VSIGSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
   public:
     VSIGSStreamingFSHandler() {}
     ~VSIGSStreamingFSHandler() override {}
+
+    const char* GetOptions() override
+                        { return VSIGetFileSystemOptions("/vsigs/"); }
 };
 
 /************************************************************************/
@@ -1929,6 +1938,9 @@ class VSIAzureStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
   public:
     VSIAzureStreamingFSHandler() {}
     ~VSIAzureStreamingFSHandler() override {}
+
+    const char* GetOptions() override
+                            { return VSIGetFileSystemOptions("/vsiaz/"); }
 };
 
 /************************************************************************/
@@ -1963,6 +1975,9 @@ class VSIOSSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
   public:
     VSIOSSStreamingFSHandler() {}
     ~VSIOSSStreamingFSHandler() override {}
+
+    const char* GetOptions() override
+                        { return VSIGetFileSystemOptions("/vsioss/"); }
 
     void UpdateMapFromHandle( IVSIS3LikeHandleHelper * poHandleHelper ) override;
     void UpdateHandleFromMap( IVSIS3LikeHandleHelper * poHandleHelper ) override;
@@ -2041,6 +2056,9 @@ class VSISwiftStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
   public:
     VSISwiftStreamingFSHandler() {}
     ~VSISwiftStreamingFSHandler() override {}
+
+    const char* GetOptions() override
+                        { return VSIGetFileSystemOptions("/vsiswift/"); }
 };
 
 /************************************************************************/

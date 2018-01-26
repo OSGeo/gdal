@@ -169,6 +169,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (rmdir_recursive) VSIRmdirRecursive;
 %rename (rename) VSIRename;
 %rename (get_actual_url) VSIGetActualURL;
+%rename (get_filesystems_prefixes) VSIGetFileSystemsPrefixes;
+%rename (get_filesystem_options) VSIGetFileSystemOptions;
 %rename (set_config_option) CPLSetConfigOption;
 %rename (get_config_option) wrapper_CPLGetConfigOption;
 %rename (binary_to_hex) CPLBinaryToHex;
@@ -196,6 +198,8 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (RmdirRecursive) VSIRmdirRecursive;
 %rename (Rename) VSIRename;
 %rename (GetActualURL) VSIGetActualURL;
+%rename (GetFileSystemsPrefixes) VSIGetFileSystemsPrefixes;
+%rename (GetFileSystemOptions) VSIGetFileSystemOptions;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
 %rename (CPLBinaryToHex) CPLBinaryToHex;
@@ -460,6 +464,13 @@ VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 %clear (const char* pszNew);
 
 const char* VSIGetActualURL(const char * utf8_path);
+
+%apply (char **CSL) {char **};
+char** VSIGetFileSystemsPrefixes();
+%clear char **;
+
+const char* VSIGetFileSystemOptions(const char * utf8_path);
+
 
 /* Added for GDAL 1.8
 

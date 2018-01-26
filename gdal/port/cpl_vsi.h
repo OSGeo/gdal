@@ -214,6 +214,10 @@ int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
 
 const char CPL_DLL *VSIGetActualURL( const char* pszFilename );
 
+const char CPL_DLL *VSIGetFileSystemOptions( const char* pszFilename );
+
+char CPL_DLL **VSIGetFileSystemsPrefixes( void );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */
