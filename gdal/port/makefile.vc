@@ -62,6 +62,7 @@ OBJ	=	cpl_conv.obj \
 		cpl_json_streaming_parser.obj \
 		cpl_json.obj \
 		cpl_md5.obj \
+		cpl_swift.obj \
 		$(ODBC_OBJ)
 
 LIB	=	cpl.lib

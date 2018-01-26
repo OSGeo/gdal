@@ -126,6 +126,7 @@ public:
     int ToInteger(int nDefault = 0) const;
     GInt64 ToLong(GInt64 nDefault = 0) const;
     bool ToBool(bool bDefault = false) const;
+    CPLJSONArray ToArray() const;
     std::string Format(enum PrettyFormat eFormat) const;
 
     //

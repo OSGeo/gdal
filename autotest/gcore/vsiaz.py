@@ -866,7 +866,7 @@ def vsiaz_extra_1():
     if not gdaltest.built_against_curl():
         return 'skip'
 
-    az_resource = gdal.GetConfigOption('/azure/blob/myaccount/az_RESOURCE')
+    az_resource = gdal.GetConfigOption('AZ_RESOURCE')
     if az_resource is None:
         print('Missing AZ_RESOURCE for running gdaltest_list_extra')
         return 'skip'

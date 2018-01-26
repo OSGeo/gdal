@@ -37,6 +37,7 @@
 #include "cpl_google_cloud.h"
 #include "cpl_azure.h"
 #include "cpl_alibaba_oss.h"
+#include "cpl_swift.h"
 #include "cpl_hash_set.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
@@ -68,6 +69,11 @@ void VSIInstallAzureStreamingFileHandler(void)
 }
 
 void VSIInstallOSSStreamingFileHandler(void)
+{
+    // Not supported
+}
+
+void VSIInstallSwiftStreamingFileHandler(void)
 {
     // Not supported
 }
@@ -2003,6 +2009,38 @@ VSIOSSStreamingFSHandler::CreateFileHandle( const char* pszURL )
     return nullptr;
 }
 
+/************************************************************************/
+/*                      VSISwiftStreamingFSHandler                      */
+/************************************************************************/
+
+class VSISwiftStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+{
+  protected:
+    CPLString GetFSPrefix() override { return "/vsiswift_streaming/"; }
+    VSICurlStreamingHandle* CreateFileHandle( const char* pszURL ) override;
+
+  public:
+    VSISwiftStreamingFSHandler() {}
+    ~VSISwiftStreamingFSHandler() override {}
+};
+
+/************************************************************************/
+/*                          CreateFileHandle()                          */
+/************************************************************************/
+
+VSICurlStreamingHandle *
+VSISwiftStreamingFSHandler::CreateFileHandle( const char* pszURL )
+{
+    VSISwiftHandleHelper* poHandleHelper =
+            VSISwiftHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str());
+    if( poHandleHelper )
+    {
+        return new VSIS3LikeStreamingHandle(this, poHandleHelper);
+    }
+    return nullptr;
+}
+
+
 
 //! @endcond
 
@@ -2100,6 +2138,24 @@ void VSIInstallOSSStreamingFileHandler( void )
                                     new VSIOSSStreamingFSHandler );
 }
 
+/************************************************************************/
+/*                  VSIInstallSwiftStreamingFileHandler()               */
+/************************************************************************/
+
+/**
+  * \brief Install /vsiswift_streamin/ OpenStack Swif Object Storage (Swift) file
+ * system handler (requires libcurl)
+ *
+ * @see <a href="gdal_virtual_file_systems.html#gdal_virtual_file_systems_vsiswift_streaming">/vsiswift_streaming/ documentation</a>
+ *
+ * @since GDAL 2.3
+ */
+
+void VSIInstallSwiftStreamingFileHandler( void )
+{
+    VSIFileManager::InstallHandler( "/vsiswift_streaming/",
+                                    new VSISwiftStreamingFSHandler );
+}
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -2113,7 +2169,7 @@ void VSICurlStreamingClearCache( void )
     // file size, etc.
     const char* const apszFS[] = { "/vsicurl_streaming/", "/vsis3_streaming/",
                                    "/vsigs_streaming/", "vsiaz_streaming/",
-                                   "/vsioss_streaming/" };
+                                   "/vsioss_streaming/", "/vsiswift_streaming/" };
     for( size_t i = 0; i < CPL_ARRAYSIZE(apszFS); ++i )
     {
         VSICurlStreamingFSHandler *poFSHandler =

@@ -1748,6 +1748,8 @@ VSIFileManager *VSIFileManager::Get()
         VSIInstallAzureStreamingFileHandler();
         VSIInstallOSSFileHandler();
         VSIInstallOSSStreamingFileHandler();
+        VSIInstallSwiftFileHandler();
+        VSIInstallSwiftStreamingFileHandler();
 #endif
         VSIInstallStdinHandler();
         VSIInstallStdoutHandler();

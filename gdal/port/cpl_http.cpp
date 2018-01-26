@@ -237,9 +237,16 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     CPLHTTPResult *psResult = static_cast<CPLHTTPResult *>(reqInfo);
     // Copy the buffer to a char* and initialize with zeros (zero
     // terminate as well).
-    char* pszHdr = static_cast<char *>(CPLCalloc(nmemb + 1, size));
-    CPLPrintString(pszHdr, static_cast<char *>(buffer),
-                   static_cast<int>(nmemb) * static_cast<int>(size));
+    size_t nBytes = size * nmemb;
+    char* pszHdr = static_cast<char *>(CPLCalloc(1, nBytes+1));
+    memcpy(pszHdr, buffer, nBytes);
+    size_t nIdx = nBytes - 1;
+    // Remove end of line characters
+    while( nIdx > 0 && (pszHdr[nIdx] == '\r' || pszHdr[nIdx] == '\n') )
+    {
+        pszHdr[nIdx] = 0;
+        nIdx --;
+    }
     char *pszKey = nullptr;
     const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
     psResult->papszHeaders =
@@ -1528,7 +1535,8 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
             strstr(pszHeaderFile, "/vsis3/") == nullptr &&
             strstr(pszHeaderFile, "/vsigs/") == nullptr &&
             strstr(pszHeaderFile, "/vsiaz/") == nullptr &&
-            strstr(pszHeaderFile, "/vsioss/") == nullptr )
+            strstr(pszHeaderFile, "/vsioss/") == nullptr &&
+            strstr(pszHeaderFile, "/vsiswift/") == nullptr )
         {
             fp = VSIFOpenL( pszHeaderFile, "rb" );
         }
