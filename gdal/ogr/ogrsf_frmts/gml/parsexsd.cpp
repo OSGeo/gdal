@@ -483,12 +483,15 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                                 eType = wkbMultiLineString;
                         }
 
-                        poClass->AddGeometryProperty(
+                        GMLGeometryPropertyDefn* poDefn =
                             new GMLGeometryPropertyDefn(
                                 pszElementName, pszElementName, eType,
-                                nAttributeIndex, bNullable));
+                                nAttributeIndex, bNullable);
 
-                        nAttributeIndex++;
+                        if( poClass->AddGeometryProperty(poDefn) < 0 )
+                            delete poDefn;
+                        else
+                            nAttributeIndex++;
 
                         break;
                     }
@@ -514,11 +517,16 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             else if (strcmp(pszType, "G:Point_MultiPointPropertyType") == 0 ||
                      strcmp(pszType, "gmgml:Point_MultiPointPropertyType") == 0)
             {
-                poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    pszElementName, pszElementName, wkbMultiPoint,
-                    nAttributeIndex, bNullable));
+                GMLGeometryPropertyDefn* poDefn =
+                    new GMLGeometryPropertyDefn(
+                        pszElementName, pszElementName, wkbMultiPoint,
+                        nAttributeIndex, bNullable);
 
-                nAttributeIndex++;
+                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                    delete poDefn;
+                else
+                    nAttributeIndex++;
+
                 continue;
             }
             else if (strcmp(pszType,
@@ -526,11 +534,16 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      strcmp(pszType,
                             "gmgml:LineString_MultiLineStringPropertyType") == 0)
             {
-                poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    pszElementName, pszElementName, wkbMultiLineString,
-                    nAttributeIndex, bNullable));
+                GMLGeometryPropertyDefn* poDefn =
+                    new GMLGeometryPropertyDefn(
+                        pszElementName, pszElementName, wkbMultiLineString,
+                        nAttributeIndex, bNullable);
 
-                nAttributeIndex++;
+                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                    delete poDefn;
+                else
+                    nAttributeIndex++;
+
                 continue;
             }
             else if (strcmp(pszType,
@@ -540,11 +553,16 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                      strcmp(pszType,
                             "gmgml:Polygon_Surface_MultiSurface_CompositeSurfacePropertyType") == 0)
             {
-                poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    pszElementName, pszElementName, wkbMultiPolygon,
-                    nAttributeIndex, bNullable));
+                GMLGeometryPropertyDefn* poDefn =
+                    new GMLGeometryPropertyDefn(
+                        pszElementName, pszElementName, wkbMultiPolygon,
+                        nAttributeIndex, bNullable);
 
-                nAttributeIndex++;
+                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                    delete poDefn;
+                else
+                    nAttributeIndex++;
+
                 continue;
             }
 
@@ -552,11 +570,16 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
             // http://apollo.erdas.com/erdas-apollo/vector/WORLDWIDE?SERVICE=WFS&VERSION=1.0.0&REQUEST=DescribeFeatureType&TYPENAME=wfs:cntry98)
             else if (strcmp(pszType, "wfs:MixedPolygonPropertyType") == 0)
             {
-                poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    pszElementName, pszElementName, wkbMultiPolygon,
-                    nAttributeIndex, bNullable));
+                GMLGeometryPropertyDefn* poDefn =
+                    new GMLGeometryPropertyDefn(
+                        pszElementName, pszElementName, wkbMultiPolygon,
+                        nAttributeIndex, bNullable);
 
-                nAttributeIndex++;
+                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                    delete poDefn;
+                else
+                    nAttributeIndex++;
+
                 continue;
             }
 
@@ -641,12 +664,15 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                         }
                         else
                         {
-                            poClass->AddGeometryProperty(
+                            GMLGeometryPropertyDefn* poDefn =
                                 new GMLGeometryPropertyDefn(
                                     pszElementName, pszElementName,
-                                    psIter->eType, nAttributeIndex, true));
+                                    psIter->eType, nAttributeIndex, true);
 
-                            nAttributeIndex++;
+                            if( poClass->AddGeometryProperty(poDefn) < 0 )
+                                delete poDefn;
+                            else
+                                nAttributeIndex++;
                         }
 
                         break;
@@ -692,11 +718,15 @@ GMLFeatureClass *GMLParseFeatureType(CPLXMLNode *psSchemaNode,
                 strcmp(CPLGetXMLValue(psComplexTypeSequenceElement, "ref", ""),
                        "gml:_Geometry") == 0 )
             {
-                poClass->AddGeometryProperty(new GMLGeometryPropertyDefn(
-                    pszElementName, pszElementName, wkbUnknown, nAttributeIndex,
-                    bNullable));
+                GMLGeometryPropertyDefn* poDefn =
+                    new GMLGeometryPropertyDefn(
+                        pszElementName, pszElementName, wkbUnknown, nAttributeIndex,
+                        bNullable);
 
-                nAttributeIndex++;
+                if( poClass->AddGeometryProperty(poDefn) < 0 )
+                    delete poDefn;
+                else
+                    nAttributeIndex++;
 
                 continue;
             }
