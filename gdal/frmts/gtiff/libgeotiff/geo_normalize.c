@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2804 2018-01-09 17:41:09Z rouault $
+ * $Id: geo_normalize.c 2807 2018-01-26 12:55:19Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -1747,6 +1747,9 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
             dfNatOriginLat = 0.0;
 
         if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
+                       &dfNatOriginScale, 0, 1 ) == 0
+            /* See https://github.com/OSGeo/gdal/files/1665718/lasinfo.txt */
+            && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
 
