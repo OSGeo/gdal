@@ -4597,6 +4597,30 @@ def ogr_gpkg_58():
     return 'success'
 
 ###############################################################################
+# Test CreateSpatialIndex()
+
+def ogr_gpkg_59():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    out_filename = '/vsimem/ogr_gpkg_59.gpkg'
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG',
+                         layerCreationOptions = ['SPATIAL_INDEX=NO'])
+
+    ds = ogr.Open(out_filename, update = 1)
+    sql_lyr = ds.ExecuteSQL("SELECT CreateSpatialIndex('poly', 'geom')")
+    f = sql_lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(out_filename)
+
+    return 'success'
+
+###############################################################################
 # Remove the test db from the tmp directory
 
 def ogr_gpkg_cleanup():
@@ -4679,6 +4703,7 @@ gdaltest_list = [
     ogr_gpkg_56,
     ogr_gpkg_57,
     ogr_gpkg_58,
+    ogr_gpkg_59,
     ogr_gpkg_test_ogrsf,
     ogr_gpkg_cleanup,
 ]
