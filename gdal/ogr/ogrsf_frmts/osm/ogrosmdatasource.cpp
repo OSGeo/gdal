@@ -2017,7 +2017,8 @@ void OGROSMDataSource::NotifyWay( OSMWay* psWay )
                 OGRField sField;
                 if( OGRParseXMLDateTime(psWay->sInfo.ts.pszTimeStamp, &sField) )
                 {
-                    struct tm brokendown = {};
+                    struct tm brokendown;
+                    memset(&brokendown, 0, sizeof(brokendown));
                     brokendown.tm_year = sField.Date.Year - 1900;
                     brokendown.tm_mon = sField.Date.Month - 1;
                     brokendown.tm_mday = sField.Date.Day;
