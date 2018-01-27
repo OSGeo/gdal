@@ -175,10 +175,11 @@ def ogr_mvt_limit_cases():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    f = lyr.GetFeature(6)
-    if f['b'] != 1:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    with gdaltest.error_handler():
+        f = lyr.GetFeature(6)
+        if f['b'] != 1:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     lyr = ds.GetLayerByName('layer2')
     if lyr.GetFeatureCount() != 0:

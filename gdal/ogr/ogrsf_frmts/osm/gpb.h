@@ -32,28 +32,27 @@
 
 #include "cpl_port.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
+
+#include <string>
+#include <exception>
 
 #ifndef CHECK_OOB
 #define CHECK_OOB 1
 #endif
 
-//#define DEBUG_GPB_ERRORS
-#ifdef DEBUG_GPB_ERRORS
-static void error_occurred(int nLine)
+class GPBException: public std::exception
 {
-    CPLError(CE_Failure, CPLE_AppDefined, "Parsing error occurred at line %d", nLine);
-}
+        std::string m_osMessage;
+    public:
+        explicit GPBException(int nLine): m_osMessage(
+            CPLSPrintf("Parsing error occured at line %d", nLine)) {}
 
-#define GOTO_END_ERROR do { error_occurred(__LINE__); goto end_error; } while(0)
-#else
-#define GOTO_END_ERROR goto end_error
-#endif
+        const char* what() const noexcept override
+                                        { return m_osMessage.c_str(); }
+};
 
-#if defined(__GNUC__)
-#define CPL_NO_INLINE __attribute__ ((noinline))
-#else
-#define CPL_NO_INLINE
-#endif
+#define THROW_GPB_EXCEPTION throw GPBException(__LINE__)
 
 /************************************************************************/
 /*                Google Protocol Buffer definitions                    */
@@ -74,8 +73,7 @@ static void error_occurred(int nLine)
 /*                          ReadVarUInt32()                             */
 /************************************************************************/
 
-#ifndef DO_NOT_DEFINE_READ_VARUINT32
-static unsigned int ReadVarUInt32(GByte** ppabyData)
+inline int ReadVarUInt32(GByte** ppabyData)
 {
     unsigned int nVal = 0;
     int nShift = 0;
@@ -109,22 +107,20 @@ static unsigned int ReadVarUInt32(GByte** ppabyData)
 #define READ_VARUINT32(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarUInt32(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
 #define READ_SIZE(pabyData, pabyDataLimit, nSize) \
     { \
         READ_VARUINT32(pabyData, pabyDataLimit, nSize); \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
+        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) THROW_GPB_EXCEPTION; \
     }
-
-#endif
 
 /************************************************************************/
 /*                          ReadVarUInt64()                             */
 /************************************************************************/
 
-static GUIntBig ReadVarUInt64(GByte** ppabyData)
+inline GUIntBig ReadVarUInt64(GByte** ppabyData)
 {
     GUIntBig nVal = 0;
     int nShift = 0;
@@ -158,20 +154,20 @@ static GUIntBig ReadVarUInt64(GByte** ppabyData)
 #define READ_VARUINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarUInt64(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
 #define READ_VARINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = (GIntBig)ReadVarUInt64(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
 #define READ_VARSINT64(pabyData, pabyDataLimit, nVal)  \
     { \
         GUIntBig l_nVal = ReadVarUInt64(&pabyData); \
         nVal = ((l_nVal & 1) == 0) ? (GIntBig)(l_nVal >> 1) : -(GIntBig)(l_nVal >> 1)-1; \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
 #define READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nVal)  \
@@ -183,52 +179,78 @@ static GUIntBig ReadVarUInt64(GByte** ppabyData)
 #define READ_SIZE64(pabyData, pabyDataLimit, nSize) \
     { \
         READ_VARUINT64(pabyData, pabyDataLimit, nSize); \
-        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) GOTO_END_ERROR; \
+        if (CHECK_OOB && nSize > (unsigned int)(pabyDataLimit - pabyData)) THROW_GPB_EXCEPTION; \
     }
 
 /************************************************************************/
 /*                           ReadVarInt64()                             */
 /************************************************************************/
 
-#ifndef DO_NOT_DEFINE_READ_VARINT64
-static GIntBig ReadVarInt64(GByte** ppabyData)
+inline GIntBig ReadVarInt64(GByte** ppabyData)
 {
-    return (GIntBig)ReadVarUInt64(ppabyData);
+    return static_cast<GIntBig>(ReadVarUInt64(ppabyData));
 }
-#endif
 
 /************************************************************************/
 /*                           ReadVarInt32()                             */
 /************************************************************************/
 
-static int ReadVarInt32(GByte** ppabyData)
+inline int ReadVarInt32(GByte** ppabyData)
 {
     /*  If you use int32 or int64 as the type for a negative number, */
     /* the resulting varint is always ten bytes long */
-    GIntBig nVal = (GIntBig)ReadVarUInt64(ppabyData);
-    return (int)nVal;
+    GIntBig nVal = static_cast<GIntBig>(ReadVarUInt64(ppabyData));
+    return static_cast<int>(nVal);
 }
 
 #define READ_VARINT32(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt32(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
 #define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
     { \
         nVal = ReadVarInt32(&pabyData); \
         nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
+
+/************************************************************************/
+/*                            ReadFloat32()                             */
+/************************************************************************/
+
+inline float ReadFloat32(GByte** ppabyData, GByte* pabyDataLimit)
+{
+    if( *ppabyData + sizeof(float) > pabyDataLimit )
+        THROW_GPB_EXCEPTION;
+    float fValue;
+    memcpy(&fValue, *ppabyData, sizeof(float));
+    CPL_LSBPTR32(&fValue);
+    *ppabyData += sizeof(float);
+    return fValue;
+}
+
+/************************************************************************/
+/*                            ReadFloat64()                             */
+/************************************************************************/
+
+inline double ReadFloat64(GByte** ppabyData, GByte* pabyDataLimit)
+{
+    if( *ppabyData + sizeof(double) > pabyDataLimit )
+        THROW_GPB_EXCEPTION;
+    double dfValue;
+    memcpy(&dfValue, *ppabyData, sizeof(double));
+    CPL_LSBPTR64(&dfValue);
+    *ppabyData += sizeof(double);
+    return dfValue;
+}
 
 /************************************************************************/
 /*                            SkipVarInt()                              */
 /************************************************************************/
 
-#ifndef DO_NOT_DEFINE_SKIP_VARINT
-
-static void SkipVarInt(GByte** ppabyData)
+inline void SkipVarInt(GByte** ppabyData)
 {
     GByte* pabyData = *ppabyData;
     while(true)
@@ -246,17 +268,15 @@ static void SkipVarInt(GByte** ppabyData)
 #define SKIP_VARINT(pabyData, pabyDataLimit) \
     { \
         SkipVarInt(&pabyData); \
-        if (CHECK_OOB && pabyData > pabyDataLimit) GOTO_END_ERROR; \
+        if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
-
-#endif /* DO_NOT_DEFINE_SKIP_VARINT */
 
 #define READ_FIELD_KEY(nKey) READ_VARINT32(pabyData, pabyDataLimit, nKey)
 
 #define READ_TEXT_WITH_SIZE(pabyData, pabyDataLimit, pszTxt, l_nDataLength) do { \
         READ_SIZE(pabyData, pabyDataLimit, l_nDataLength); \
         pszTxt = (char*)VSI_MALLOC_VERBOSE(l_nDataLength + 1); \
-        if( pszTxt == nullptr ) GOTO_END_ERROR; \
+        if( pszTxt == nullptr ) THROW_GPB_EXCEPTION; \
         memcpy(pszTxt, pabyData, l_nDataLength); \
         pszTxt[l_nDataLength] = 0; \
         pabyData += l_nDataLength; } while(0)
@@ -285,7 +305,7 @@ static void SkipVarInt(GByte** ppabyData)
             } \
             case WT_64BIT: \
             { \
-                if (CHECK_OOB && pabyDataLimit - pabyData < 8) GOTO_END_ERROR; \
+                if (CHECK_OOB && pabyDataLimit - pabyData < 8) THROW_GPB_EXCEPTION; \
                 pabyData += 8; \
                 break; \
             } \
@@ -298,39 +318,38 @@ static void SkipVarInt(GByte** ppabyData)
             } \
             case WT_32BIT: \
             { \
-                if (CHECK_OOB && pabyDataLimit - pabyData < 4) GOTO_END_ERROR; \
+                if (CHECK_OOB && pabyDataLimit - pabyData < 4) THROW_GPB_EXCEPTION; \
                 pabyData += 4; \
                 break; \
             } \
             default: \
-                GOTO_END_ERROR; \
+                THROW_GPB_EXCEPTION; \
         }
 
-#ifndef DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD
-
-static
-int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose) CPL_NO_INLINE;
-
-/* Putting statics in headers is trouble. */
-static
-CPL_UNUSED
-int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose)
+inline int SkipUnknownField(int nKey, GByte* pabyData, GByte* pabyDataLimit, int verbose)
 {
     GByte* pabyDataBefore = pabyData;
-    SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose);
-    return static_cast<int>(pabyData - pabyDataBefore);
-end_error:
-    return -1;
+    try
+    {
+        SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose);
+        return static_cast<int>(pabyData - pabyDataBefore);
+    }
+    catch( const GPBException& e )
+    {
+        if( verbose )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        }
+        return -1;
+    }
 }
 
 #define SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, verbose) \
     { \
         int _nOffset = SkipUnknownField(nKey, pabyData, pabyDataLimit, verbose); \
         if (_nOffset < 0) \
-            GOTO_END_ERROR; \
+            THROW_GPB_EXCEPTION; \
         pabyData += _nOffset; \
     }
-
-#endif /* DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD */
 
 #endif /* GPB_H_INCLUDED */

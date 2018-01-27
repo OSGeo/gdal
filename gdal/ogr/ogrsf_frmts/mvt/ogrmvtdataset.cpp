@@ -408,166 +408,160 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
     const bool bScanGeometries = m_poFeatureDefn->GetGeomType() == wkbUnknown;
     const bool bQuickScanFeature = bScanFields || bScanGeometries;
 
-    while( pabyData < pabyDataLimit )
+    try
     {
-        READ_FIELD_KEY(nKey);
-        if( nKey == MAKE_KEY(knLAYER_KEYS, WT_DATA) )
+        while( pabyData < pabyDataLimit )
         {
-            char* pszKey = nullptr;
-            READ_TEXT(pabyData, pabyDataLimit, pszKey);
-            m_aosKeys.push_back(pszKey);
-            CPLFree(pszKey);
-        }
-        else if( nKey == MAKE_KEY(knLAYER_VALUES, WT_DATA) )
-        {
-            unsigned int nValueLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nValueLength);
-            GByte* pabyDataValueEnd = pabyData + nValueLength;
-            READ_VARUINT32(pabyData, pabyDataLimit, nKey);
-            if( nKey == MAKE_KEY(knVALUE_STRING, WT_DATA) )
+            READ_FIELD_KEY(nKey);
+            if( nKey == MAKE_KEY(knLAYER_KEYS, WT_DATA) )
             {
-                char* pszValue = nullptr;
-                READ_TEXT(pabyData, pabyDataLimit, pszValue);
-                Value sValue;
-                sValue.eType = OFTString;
-                sValue.eSubType = OFSTNone;
-                sValue.sValue.String = pszValue;
-                m_asValues.push_back(sValue);
+                char* pszKey = nullptr;
+                READ_TEXT(pabyData, pabyDataLimit, pszKey);
+                m_aosKeys.push_back(pszKey);
+                CPLFree(pszKey);
             }
-            else if( nKey == MAKE_KEY(knVALUE_FLOAT, WT_32BIT) )
+            else if( nKey == MAKE_KEY(knLAYER_VALUES, WT_DATA) )
             {
-                if( pabyData + sizeof(float) > pabyDataLimit )
-                    goto end_error;
-                float fValue;
-                memcpy(&fValue, pabyData, sizeof(float));
-                CPL_LSBPTR32(&fValue);
-                Value sValue;
-                sValue.eType = OFTReal;
-                sValue.eSubType = OFSTFloat32;
-                sValue.sValue.Real = fValue;
-                m_asValues.push_back(sValue);
-            }
-            else if( nKey == MAKE_KEY(knVALUE_DOUBLE, WT_64BIT) )
-            {
-                if( pabyData + sizeof(double) > pabyDataLimit )
-                    goto end_error;
-                double dfValue;
-                memcpy(&dfValue, pabyData, sizeof(double));
-                CPL_LSBPTR64(&dfValue);
-                Value sValue;
-                sValue.eType = OFTReal;
-                sValue.eSubType = OFSTNone;
-                sValue.sValue.Real = dfValue;
-                m_asValues.push_back(sValue);
-            }
-            else if( nKey == MAKE_KEY(knVALUE_INT, WT_VARINT) )
-            {
-                GIntBig nVal = 0;
-                READ_VARINT64(pabyData, pabyDataLimit, nVal);
-                Value sValue;
-                sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX) ?
-                                                OFTInteger : OFTInteger64;
-                sValue.eSubType = OFSTNone;
-                if( sValue.eType == OFTInteger )
-                    sValue.sValue.Integer = static_cast<int>(nVal);
-                else
-                    sValue.sValue.Integer64 = nVal;
-                m_asValues.push_back(sValue);
-            }
-            else if( nKey == MAKE_KEY(knVALUE_UINT, WT_VARINT) )
-            {
-                GUIntBig nVal = 0;
-                READ_VARUINT64(pabyData, pabyDataLimit, nVal);
-                Value sValue;
-                sValue.eType = (nVal <= INT_MAX) ? OFTInteger : OFTInteger64;
-                sValue.eSubType = OFSTNone;
-                if( sValue.eType == OFTInteger )
-                    sValue.sValue.Integer = static_cast<int>(nVal);
-                else
-                    sValue.sValue.Integer64 = static_cast<GIntBig>(nVal);
-                m_asValues.push_back(sValue);
-            }
-            else if( nKey == MAKE_KEY(knVALUE_SINT, WT_VARINT) )
-            {
-                GIntBig nVal = 0;
-                READ_VARSINT64(pabyData, pabyDataLimit, nVal);
-                Value sValue;
-                sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX) ?
-                                                    OFTInteger : OFTInteger64;
-                sValue.eSubType = OFSTNone;
-                if( sValue.eType == OFTInteger )
-                    sValue.sValue.Integer = static_cast<int>(nVal);
-                else
-                    sValue.sValue.Integer64 = nVal;
-                m_asValues.push_back(sValue);
-            }
-            else if( nKey == MAKE_KEY(knVALUE_BOOL, WT_VARINT) )
-            {
-                unsigned nVal = 0;
-                READ_VARUINT32(pabyData, pabyDataLimit, nVal);
-                Value sValue;
-                sValue.eType = OFTInteger;
-                sValue.eSubType = OFSTBoolean;
-                sValue.sValue.Integer = static_cast<int>(nVal);
-                m_asValues.push_back(sValue);
-            }
-
-            pabyData = pabyDataValueEnd;
-        }
-        else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
-        {
-            READ_VARUINT32(pabyData, pabyDataLimit, m_nExtent);
-            m_nExtent = std::max(1U, m_nExtent); // to avoid divide by zero
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
-        }
-    }
-
-    InitFields(oFields);
-
-    m_nFeatureCount = 0;
-    pabyData = m_pabyDataStart;
-    // Second pass to iterate over features to figure out the geometry type
-    // and attribute schema
-    while( pabyData < pabyDataLimit )
-    {
-        GByte* pabyDataBefore = pabyData;
-        READ_FIELD_KEY(nKey);
-        if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
-        {
-            if( m_pabyDataFeatureStart == nullptr )
-            {
-                m_pabyDataFeatureStart = pabyDataBefore;
-                m_pabyDataCur = pabyDataBefore;
-            }
-
-            unsigned int nFeatureLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nFeatureLength);
-            GByte* pabyDataFeatureEnd = pabyData + nFeatureLength;
-            if( bQuickScanFeature )
-            {
-                if( !QuickScanFeature(pabyData, pabyDataFeatureEnd,
-                                      bScanFields,
-                                      bScanGeometries,
-                                      bGeomTypeSet) )
+                unsigned int nValueLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nValueLength);
+                GByte* pabyDataValueEnd = pabyData + nValueLength;
+                READ_VARUINT32(pabyData, pabyDataLimit, nKey);
+                if( nKey == MAKE_KEY(knVALUE_STRING, WT_DATA) )
                 {
-                    return;
+                    char* pszValue = nullptr;
+                    READ_TEXT(pabyData, pabyDataLimit, pszValue);
+                    Value sValue;
+                    sValue.eType = OFTString;
+                    sValue.eSubType = OFSTNone;
+                    sValue.sValue.String = pszValue;
+                    m_asValues.push_back(sValue);
                 }
-            }
-            pabyData = pabyDataFeatureEnd;
+                else if( nKey == MAKE_KEY(knVALUE_FLOAT, WT_32BIT) )
+                {
+                    Value sValue;
+                    sValue.eType = OFTReal;
+                    sValue.eSubType = OFSTFloat32;
+                    sValue.sValue.Real = ReadFloat32(&pabyData, pabyDataLimit);
+                    m_asValues.push_back(sValue);
+                }
+                else if( nKey == MAKE_KEY(knVALUE_DOUBLE, WT_64BIT) )
+                {
+                    Value sValue;
+                    sValue.eType = OFTReal;
+                    sValue.eSubType = OFSTNone;
+                    sValue.sValue.Real = ReadFloat64(&pabyData, pabyDataLimit);
+                    m_asValues.push_back(sValue);
+                }
+                else if( nKey == MAKE_KEY(knVALUE_INT, WT_VARINT) )
+                {
+                    GIntBig nVal = 0;
+                    READ_VARINT64(pabyData, pabyDataLimit, nVal);
+                    Value sValue;
+                    sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX) ?
+                                                    OFTInteger : OFTInteger64;
+                    sValue.eSubType = OFSTNone;
+                    if( sValue.eType == OFTInteger )
+                        sValue.sValue.Integer = static_cast<int>(nVal);
+                    else
+                        sValue.sValue.Integer64 = nVal;
+                    m_asValues.push_back(sValue);
+                }
+                else if( nKey == MAKE_KEY(knVALUE_UINT, WT_VARINT) )
+                {
+                    GUIntBig nVal = 0;
+                    READ_VARUINT64(pabyData, pabyDataLimit, nVal);
+                    Value sValue;
+                    sValue.eType = (nVal <= INT_MAX) ? OFTInteger : OFTInteger64;
+                    sValue.eSubType = OFSTNone;
+                    if( sValue.eType == OFTInteger )
+                        sValue.sValue.Integer = static_cast<int>(nVal);
+                    else
+                        sValue.sValue.Integer64 = static_cast<GIntBig>(nVal);
+                    m_asValues.push_back(sValue);
+                }
+                else if( nKey == MAKE_KEY(knVALUE_SINT, WT_VARINT) )
+                {
+                    GIntBig nVal = 0;
+                    READ_VARSINT64(pabyData, pabyDataLimit, nVal);
+                    Value sValue;
+                    sValue.eType = (nVal >= INT_MIN && nVal <= INT_MAX) ?
+                                                        OFTInteger : OFTInteger64;
+                    sValue.eSubType = OFSTNone;
+                    if( sValue.eType == OFTInteger )
+                        sValue.sValue.Integer = static_cast<int>(nVal);
+                    else
+                        sValue.sValue.Integer64 = nVal;
+                    m_asValues.push_back(sValue);
+                }
+                else if( nKey == MAKE_KEY(knVALUE_BOOL, WT_VARINT) )
+                {
+                    unsigned nVal = 0;
+                    READ_VARUINT32(pabyData, pabyDataLimit, nVal);
+                    Value sValue;
+                    sValue.eType = OFTInteger;
+                    sValue.eSubType = OFSTBoolean;
+                    sValue.sValue.Integer = static_cast<int>(nVal);
+                    m_asValues.push_back(sValue);
+                }
 
-            m_nFeatureCount ++;
+                pabyData = pabyDataValueEnd;
+            }
+            else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
+            {
+                READ_VARUINT32(pabyData, pabyDataLimit, m_nExtent);
+                m_nExtent = std::max(1U, m_nExtent); // to avoid divide by zero
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
+            }
         }
-        else
+
+        InitFields(oFields);
+
+        m_nFeatureCount = 0;
+        pabyData = m_pabyDataStart;
+        // Second pass to iterate over features to figure out the geometry type
+        // and attribute schema
+        while( pabyData < pabyDataLimit )
         {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
+            GByte* pabyDataBefore = pabyData;
+            READ_FIELD_KEY(nKey);
+            if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
+            {
+                if( m_pabyDataFeatureStart == nullptr )
+                {
+                    m_pabyDataFeatureStart = pabyDataBefore;
+                    m_pabyDataCur = pabyDataBefore;
+                }
+
+                unsigned int nFeatureLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nFeatureLength);
+                GByte* pabyDataFeatureEnd = pabyData + nFeatureLength;
+                if( bQuickScanFeature )
+                {
+                    if( !QuickScanFeature(pabyData, pabyDataFeatureEnd,
+                                        bScanFields,
+                                        bScanGeometries,
+                                        bGeomTypeSet) )
+                    {
+                        return;
+                    }
+                }
+                pabyData = pabyDataFeatureEnd;
+
+                m_nFeatureCount ++;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
+            }
         }
     }
-
-end_error:
-    return;
+    catch( const GPBException& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+    }
 }
 
 /************************************************************************/
@@ -624,179 +618,185 @@ bool OGRMVTLayer::QuickScanFeature(GByte* pabyData,
 {
     unsigned int nKey = 0;
     unsigned int nGeomType = 0;
-    while( pabyData < pabyDataFeatureEnd )
+    try
     {
-        READ_VARUINT32(pabyData, pabyDataFeatureEnd, nKey);
-        if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
+        while( pabyData < pabyDataFeatureEnd )
         {
-            READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeomType);
-        }
-        else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) &&
-                 bScanFields )
-        {
-            unsigned int nTagsSize = 0;
-            READ_SIZE(pabyData, pabyDataFeatureEnd, nTagsSize);
-            GByte* pabyDataTagsEnd = pabyData + nTagsSize;
-            while( pabyData < pabyDataTagsEnd )
+            READ_VARUINT32(pabyData, pabyDataFeatureEnd, nKey);
+            if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
             {
-                unsigned int nKeyIdx = 0;
-                unsigned int nValIdx = 0;
-                READ_VARUINT32(pabyData, pabyDataTagsEnd, nKeyIdx);
-                READ_VARUINT32(pabyData, pabyDataTagsEnd, nValIdx);
-                if( nKeyIdx >= m_aosKeys.size() )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                                "Invalid tag key index: %u", nKeyIdx);
-                    m_bError = true;
-                    return false;
-                }
-                if( nValIdx >= m_asValues.size() )
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                                "Invalid tag value index: %u", nValIdx);
-                    m_bError = true;
-                    return false;
-                }
-                const int nFieldIdx =
-                    m_poFeatureDefn->GetFieldIndex(m_aosKeys[nKeyIdx]);
-                if( nFieldIdx < 0 )
-                {
-                    OGRFieldDefn oFieldDefn(m_aosKeys[nKeyIdx],
-                                            m_asValues[nValIdx].eType);
-                    oFieldDefn.SetSubType(m_asValues[nValIdx].eSubType);
-                    m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
-                }
-                else if( m_poFeatureDefn->GetFieldDefn(nFieldIdx)->
-                            GetType() != m_asValues[nValIdx].eType ||
-                            m_poFeatureDefn->GetFieldDefn(nFieldIdx)->
-                            GetSubType() != m_asValues[nValIdx].eSubType )
-                {
-                    OGRFieldDefn* poFieldDefn =
-                        m_poFeatureDefn->GetFieldDefn(nFieldIdx);
-                    OGRFieldType eSrcType(m_asValues[nValIdx].eType);
-                    OGRFieldSubType eSrcSubType(m_asValues[nValIdx].eSubType);
-                    MergeFieldDefn(poFieldDefn, eSrcType, eSrcSubType);
-                }
+                READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeomType);
             }
-        }
-        else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
-                 bScanGeometries &&
-                 nGeomType >= 1 && nGeomType <= 3 )
-        {
-            unsigned int nGeometrySize = 0;
-            READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
-            GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
-            OGRwkbGeometryType eType = wkbUnknown;
-            if( nGeomType == knGEOM_TYPE_POINT )
+            else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) &&
+                    bScanFields )
             {
-                eType = wkbPoint;
-            }
-            else if( nGeomType == knGEOM_TYPE_LINESTRING )
-            {
-                eType = wkbLineString;
-            }
-            else if( nGeomType == knGEOM_TYPE_POLYGON )
-            {
-                eType = wkbPolygon;
-            }
-
-            if( eType == wkbPoint )
-            {
-                unsigned int nCmdCountCombined = 0;
-                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                nCmdCountCombined);
-                if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
-                    GetCmdCount(nCmdCountCombined) > 1 )
+                unsigned int nTagsSize = 0;
+                READ_SIZE(pabyData, pabyDataFeatureEnd, nTagsSize);
+                GByte* pabyDataTagsEnd = pabyData + nTagsSize;
+                while( pabyData < pabyDataTagsEnd )
                 {
-                    eType = wkbMultiPoint;
-                }
-            }
-            else if( eType == wkbLineString )
-            {
-                for( int iIter = 0;
-                        pabyData < pabyDataGeometryEnd; iIter++ )
-                {
-                    if( iIter == 1 )
+                    unsigned int nKeyIdx = 0;
+                    unsigned int nValIdx = 0;
+                    READ_VARUINT32(pabyData, pabyDataTagsEnd, nKeyIdx);
+                    READ_VARUINT32(pabyData, pabyDataTagsEnd, nValIdx);
+                    if( nKeyIdx >= m_aosKeys.size() )
                     {
-                        eType = wkbMultiLineString;
-                        break;
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Invalid tag key index: %u", nKeyIdx);
+                        m_bError = true;
+                        return false;
                     }
-                    unsigned int nCmdCountCombined = 0;
-                    unsigned int nLineToCount;
-                    // Should be a moveto
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                nCmdCountCombined);
-                    nLineToCount = GetCmdCount(nCmdCountCombined);
-                    for( unsigned i = 0; i < 2 * nLineToCount; i++ )
+                    if( nValIdx >= m_asValues.size() )
                     {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Invalid tag value index: %u", nValIdx);
+                        m_bError = true;
+                        return false;
+                    }
+                    const int nFieldIdx =
+                        m_poFeatureDefn->GetFieldIndex(m_aosKeys[nKeyIdx]);
+                    if( nFieldIdx < 0 )
+                    {
+                        OGRFieldDefn oFieldDefn(m_aosKeys[nKeyIdx],
+                                                m_asValues[nValIdx].eType);
+                        oFieldDefn.SetSubType(m_asValues[nValIdx].eSubType);
+                        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+                    }
+                    else if( m_poFeatureDefn->GetFieldDefn(nFieldIdx)->
+                                GetType() != m_asValues[nValIdx].eType ||
+                                m_poFeatureDefn->GetFieldDefn(nFieldIdx)->
+                                GetSubType() != m_asValues[nValIdx].eSubType )
+                    {
+                        OGRFieldDefn* poFieldDefn =
+                            m_poFeatureDefn->GetFieldDefn(nFieldIdx);
+                        OGRFieldType eSrcType(m_asValues[nValIdx].eType);
+                        OGRFieldSubType eSrcSubType(m_asValues[nValIdx].eSubType);
+                        MergeFieldDefn(poFieldDefn, eSrcType, eSrcSubType);
+                    }
+                }
+            }
+            else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
+                    bScanGeometries &&
+                    nGeomType >= 1 && nGeomType <= 3 )
+            {
+                unsigned int nGeometrySize = 0;
+                READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
+                GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
+                OGRwkbGeometryType eType = wkbUnknown;
+                if( nGeomType == knGEOM_TYPE_POINT )
+                {
+                    eType = wkbPoint;
+                }
+                else if( nGeomType == knGEOM_TYPE_LINESTRING )
+                {
+                    eType = wkbLineString;
+                }
+                else if( nGeomType == knGEOM_TYPE_POLYGON )
+                {
+                    eType = wkbPolygon;
+                }
+
+                if( eType == wkbPoint )
+                {
+                    unsigned int nCmdCountCombined = 0;
+                    READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                    nCmdCountCombined);
+                    if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
+                        GetCmdCount(nCmdCountCombined) > 1 )
+                    {
+                        eType = wkbMultiPoint;
+                    }
+                }
+                else if( eType == wkbLineString )
+                {
+                    for( int iIter = 0;
+                            pabyData < pabyDataGeometryEnd; iIter++ )
+                    {
+                        if( iIter == 1 )
+                        {
+                            eType = wkbMultiLineString;
+                            break;
+                        }
+                        unsigned int nCmdCountCombined = 0;
+                        unsigned int nLineToCount;
+                        // Should be a moveto
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                    nCmdCountCombined);
+                        nLineToCount = GetCmdCount(nCmdCountCombined);
+                        for( unsigned i = 0; i < 2 * nLineToCount; i++ )
+                        {
+                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        }
+                    }
+                }
+                else if( eType == wkbPolygon )
+                {
+                    for( int iIter = 0;
+                            pabyData < pabyDataGeometryEnd; iIter++ )
+                    {
+                        if( iIter == 1 )
+                        {
+                            eType = wkbMultiPolygon;
+                            break;
+                        }
+                        unsigned int nCmdCountCombined = 0;
+                        unsigned int nLineToCount;
+                        // Should be a moveto
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                    nCmdCountCombined);
+                        nLineToCount = GetCmdCount(nCmdCountCombined);
+                        for( unsigned i = 0; i < 2 * nLineToCount; i++ )
+                        {
+                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                        }
+                        // Should be a closepath
                         SKIP_VARINT(pabyData, pabyDataGeometryEnd);
                     }
                 }
-            }
-            else if( eType == wkbPolygon )
-            {
-                for( int iIter = 0;
-                        pabyData < pabyDataGeometryEnd; iIter++ )
-                {
-                    if( iIter == 1 )
-                    {
-                        eType = wkbMultiPolygon;
-                        break;
-                    }
-                    unsigned int nCmdCountCombined = 0;
-                    unsigned int nLineToCount;
-                    // Should be a moveto
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                nCmdCountCombined);
-                    nLineToCount = GetCmdCount(nCmdCountCombined);
-                    for( unsigned i = 0; i < 2 * nLineToCount; i++ )
-                    {
-                        SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                    }
-                    // Should be a closepath
-                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                }
-            }
 
-            if( bGeomTypeSet &&
-                m_poFeatureDefn->GetGeomType() ==
-                                        OGR_GT_GetCollection(eType) )
-            {
-                // do nothing
-            }
-            else if( bGeomTypeSet &&
-                        eType == OGR_GT_GetCollection(
-                                    m_poFeatureDefn->GetGeomType()) )
-            {
-                m_poFeatureDefn->SetGeomType(eType);
-            }
-            else if( bGeomTypeSet &&
-                        m_poFeatureDefn->GetGeomType() != eType )
-            {
-                m_poFeatureDefn->SetGeomType(wkbUnknown);
+                if( bGeomTypeSet &&
+                    m_poFeatureDefn->GetGeomType() ==
+                                            OGR_GT_GetCollection(eType) )
+                {
+                    // do nothing
+                }
+                else if( bGeomTypeSet &&
+                            eType == OGR_GT_GetCollection(
+                                        m_poFeatureDefn->GetGeomType()) )
+                {
+                    m_poFeatureDefn->SetGeomType(eType);
+                }
+                else if( bGeomTypeSet &&
+                            m_poFeatureDefn->GetGeomType() != eType )
+                {
+                    m_poFeatureDefn->SetGeomType(wkbUnknown);
+                }
+                else
+                {
+                    m_poFeatureDefn->SetGeomType(eType);
+                }
+                bGeomTypeSet = true;
+
+                pabyData = pabyDataGeometryEnd;
             }
             else
             {
-                m_poFeatureDefn->SetGeomType(eType);
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataFeatureEnd, FALSE);
             }
-            bGeomTypeSet = true;
-
-            pabyData = pabyDataGeometryEnd;
         }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataFeatureEnd, FALSE);
-        }
+        return true;
     }
-    return true;
-end_error:
-    return false;
+    catch( const GPBException& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
@@ -855,230 +855,236 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
     OGRPolygon* poPoly = nullptr;
     OGRLinearRing* poRing = nullptr;
 
-    if( nGeomType == knGEOM_TYPE_POINT )
+    try
     {
-        unsigned int nCmdCountCombined = 0;
-        unsigned int nCount;
-        READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
-                        nCmdCountCombined);
-        nCount = GetCmdCount(nCmdCountCombined);
-        if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
-            nCount == 1 )
+        if( nGeomType == knGEOM_TYPE_POINT )
         {
-            int nX = 0;
-            int nY = 0;
-            READ_VARSINT32(m_pabyDataCur, pabyDataGeometryEnd,
-                            nX);
-            READ_VARSINT32(m_pabyDataCur, pabyDataGeometryEnd,
-                            nY);
-            double dfX;
-            double dfY;
-            GetXY(nX, nY, dfX, dfY);
-            OGRPoint* poPoint = new OGRPoint(dfX, dfY);
-            if( m_poFeatureDefn->GetGeomType() == wkbMultiPoint )
+            unsigned int nCmdCountCombined = 0;
+            unsigned int nCount;
+            READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
+                            nCmdCountCombined);
+            nCount = GetCmdCount(nCmdCountCombined);
+            if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
+                nCount == 1 )
             {
+                int nX = 0;
+                int nY = 0;
+                READ_VARSINT32(m_pabyDataCur, pabyDataGeometryEnd,
+                                nX);
+                READ_VARSINT32(m_pabyDataCur, pabyDataGeometryEnd,
+                                nY);
+                double dfX;
+                double dfY;
+                GetXY(nX, nY, dfX, dfY);
+                OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                if( m_poFeatureDefn->GetGeomType() == wkbMultiPoint )
+                {
+                    poMultiPoint = new OGRMultiPoint();
+                    poMultiPoint->addGeometryDirectly(poPoint);
+                    return poMultiPoint;
+                }
+                else
+                {
+                    return poPoint;
+                }
+            }
+            else if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
+                        nCount > 1 )
+            {
+                int nX = 0;
+                int nY = 0;
                 poMultiPoint = new OGRMultiPoint();
-                poMultiPoint->addGeometryDirectly(poPoint);
+                for( unsigned i = 0; i < nCount; i++ )
+                {
+                    int nDX = 0;
+                    int nDY = 0;
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDX);
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDY);
+                    //if( nDX != 0 || nDY != 0 )
+                    {
+                        nX += nDX;
+                        nY += nDY;
+                        double dfX;
+                        double dfY;
+                        GetXY(nX, nY, dfX, dfY);
+                        OGRPoint* poPoint = new OGRPoint(dfX, dfY);
+                        poMultiPoint->addGeometryDirectly(poPoint);
+                    }
+                }
                 return poMultiPoint;
             }
-            else
-            {
-                return poPoint;
-            }
         }
-        else if( GetCmdId(nCmdCountCombined) == knCMD_MOVETO &&
-                    nCount > 1 )
+        else if( nGeomType == knGEOM_TYPE_LINESTRING )
         {
             int nX = 0;
             int nY = 0;
-            poMultiPoint = new OGRMultiPoint();
-            for( unsigned i = 0; i < nCount; i++ )
+            while( m_pabyDataCur < pabyDataGeometryEnd )
             {
+                unsigned int nCmdCountCombined = 0;
+                unsigned int nLineToCount;
+                // Should be a moveto
+                SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
                 int nDX = 0;
                 int nDY = 0;
                 READ_VARSINT32(m_pabyDataCur,
                                 pabyDataGeometryEnd, nDX);
                 READ_VARSINT32(m_pabyDataCur,
                                 pabyDataGeometryEnd, nDY);
-                //if( nDX != 0 || nDY != 0 )
+                nX += nDX;
+                nY += nDY;
+                double dfX;
+                double dfY;
+                GetXY(nX, nY, dfX, dfY);
+                if( poLine != nullptr )
                 {
-                    nX += nDX;
-                    nY += nDY;
-                    double dfX;
-                    double dfY;
-                    GetXY(nX, nY, dfX, dfY);
-                    OGRPoint* poPoint = new OGRPoint(dfX, dfY);
-                    poMultiPoint->addGeometryDirectly(poPoint);
-                }
-            }
-            return poMultiPoint;
-        }
-    }
-    else if( nGeomType == knGEOM_TYPE_LINESTRING )
-    {
-        int nX = 0;
-        int nY = 0;
-        while( m_pabyDataCur < pabyDataGeometryEnd )
-        {
-            unsigned int nCmdCountCombined = 0;
-            unsigned int nLineToCount;
-            // Should be a moveto
-            SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
-            int nDX = 0;
-            int nDY = 0;
-            READ_VARSINT32(m_pabyDataCur,
-                            pabyDataGeometryEnd, nDX);
-            READ_VARSINT32(m_pabyDataCur,
-                            pabyDataGeometryEnd, nDY);
-            nX += nDX;
-            nY += nDY;
-            double dfX;
-            double dfY;
-            GetXY(nX, nY, dfX, dfY);
-            if( poLine != nullptr )
-            {
-                poMultiLS = new OGRMultiLineString();
-                poMultiLS->addGeometryDirectly(poLine);
-                poLine = new OGRLineString();
-                poMultiLS->addGeometryDirectly(poLine);
-            }
-            else
-            {
-                poLine = new OGRLineString();
-            }
-            poLine->addPoint(dfX, dfY);
-            READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
-                        nCmdCountCombined);
-            nLineToCount = GetCmdCount(nCmdCountCombined);
-            for( unsigned i = 0; i < nLineToCount; i++ )
-            {
-                READ_VARSINT32(m_pabyDataCur,
-                                pabyDataGeometryEnd, nDX);
-                READ_VARSINT32(m_pabyDataCur,
-                                pabyDataGeometryEnd, nDY);
-                //if( nDX != 0 || nDY != 0 )
-                {
-                    nX += nDX;
-                    nY += nDY;
-                    GetXY(nX, nY, dfX, dfY);
-                    poLine->addPoint(dfX, dfY);
-                }
-            }
-        }
-        if( poMultiLS == nullptr && poLine != nullptr &&
-            m_poFeatureDefn->GetGeomType() == wkbMultiLineString )
-        {
-            poMultiLS = new OGRMultiLineString();
-            poMultiLS->addGeometryDirectly(poLine);
-        }
-        if( poMultiLS )
-        {
-            return poMultiLS;
-        }
-        else
-        {
-            return poLine;
-        }
-    }
-    else if( nGeomType == knGEOM_TYPE_POLYGON )
-    {
-        int externalIsClockwise = 0;
-        int nX = 0;
-        int nY = 0;
-        while( m_pabyDataCur < pabyDataGeometryEnd )
-        {
-            unsigned int nCmdCountCombined = 0;
-            unsigned int nLineToCount;
-            // Should be a moveto
-            SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
-            int nDX = 0;
-            int nDY = 0;
-            READ_VARSINT32(m_pabyDataCur,
-                            pabyDataGeometryEnd, nDX);
-            READ_VARSINT32(m_pabyDataCur,
-                            pabyDataGeometryEnd, nDY);
-            nX += nDX;
-            nY += nDY;
-            double dfX;
-            double dfY;
-            GetXY(nX, nY, dfX, dfY);
-            poRing = new OGRLinearRing();
-            poRing->addPoint(dfX, dfY);
-            READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
-                        nCmdCountCombined);
-            nLineToCount = GetCmdCount(nCmdCountCombined);
-            for( unsigned i = 0; i < nLineToCount; i++ )
-            {
-                READ_VARSINT32(m_pabyDataCur,
-                                pabyDataGeometryEnd, nDX);
-                READ_VARSINT32(m_pabyDataCur,
-                                pabyDataGeometryEnd, nDY);
-                //if( nDX != 0 || nDY != 0 )
-                {
-                    nX += nDX;
-                    nY += nDY;
-                    GetXY(nX, nY, dfX, dfY);
-                    poRing->addPoint(dfX, dfY);
-                }
-            }
-            // Should be a closepath
-            SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
-            poRing->closeRings();
-            if( poPoly == nullptr )
-            {
-                poPoly = new OGRPolygon();
-                poPoly->addRingDirectly(poRing);
-                externalIsClockwise = poRing->isClockwise();
-            }
-            else
-            {
-                // Detect change of winding order to figure out if this is
-                // an interior or exterior ring
-                if( externalIsClockwise != poRing->isClockwise() )
-                {
-                    poPoly->addRingDirectly(poRing);
+                    poMultiLS = new OGRMultiLineString();
+                    poMultiLS->addGeometryDirectly(poLine);
+                    poLine = new OGRLineString();
+                    poMultiLS->addGeometryDirectly(poLine);
                 }
                 else
                 {
-                    if( poMultiPoly == nullptr )
+                    poLine = new OGRLineString();
+                }
+                poLine->addPoint(dfX, dfY);
+                READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
+                            nCmdCountCombined);
+                nLineToCount = GetCmdCount(nCmdCountCombined);
+                for( unsigned i = 0; i < nLineToCount; i++ )
+                {
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDX);
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDY);
+                    //if( nDX != 0 || nDY != 0 )
                     {
-                        poMultiPoly = new OGRMultiPolygon();
-                        poMultiPoly->addGeometryDirectly(poPoly);
+                        nX += nDX;
+                        nY += nDY;
+                        GetXY(nX, nY, dfX, dfY);
+                        poLine->addPoint(dfX, dfY);
                     }
-
-                    poPoly = new OGRPolygon();
-                    poMultiPoly->addGeometryDirectly(poPoly);
-                    poPoly->addRingDirectly(poRing);
                 }
             }
-            poRing = nullptr;
+            if( poMultiLS == nullptr && poLine != nullptr &&
+                m_poFeatureDefn->GetGeomType() == wkbMultiLineString )
+            {
+                poMultiLS = new OGRMultiLineString();
+                poMultiLS->addGeometryDirectly(poLine);
+            }
+            if( poMultiLS )
+            {
+                return poMultiLS;
+            }
+            else
+            {
+                return poLine;
+            }
         }
-        if( poMultiPoly == nullptr && poPoly != nullptr &&
-            m_poFeatureDefn->GetGeomType() == wkbMultiPolygon )
+        else if( nGeomType == knGEOM_TYPE_POLYGON )
         {
-            poMultiPoly = new OGRMultiPolygon();
-            poMultiPoly->addGeometryDirectly(poPoly);
-        }
-        if( poMultiPoly )
-        {
-            return poMultiPoly;
-        }
-        else
-        {
-            return poPoly;
+            int externalIsClockwise = 0;
+            int nX = 0;
+            int nY = 0;
+            while( m_pabyDataCur < pabyDataGeometryEnd )
+            {
+                unsigned int nCmdCountCombined = 0;
+                unsigned int nLineToCount;
+                // Should be a moveto
+                SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
+                int nDX = 0;
+                int nDY = 0;
+                READ_VARSINT32(m_pabyDataCur,
+                                pabyDataGeometryEnd, nDX);
+                READ_VARSINT32(m_pabyDataCur,
+                                pabyDataGeometryEnd, nDY);
+                nX += nDX;
+                nY += nDY;
+                double dfX;
+                double dfY;
+                GetXY(nX, nY, dfX, dfY);
+                poRing = new OGRLinearRing();
+                poRing->addPoint(dfX, dfY);
+                READ_VARUINT32(m_pabyDataCur, pabyDataGeometryEnd,
+                            nCmdCountCombined);
+                nLineToCount = GetCmdCount(nCmdCountCombined);
+                for( unsigned i = 0; i < nLineToCount; i++ )
+                {
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDX);
+                    READ_VARSINT32(m_pabyDataCur,
+                                    pabyDataGeometryEnd, nDY);
+                    //if( nDX != 0 || nDY != 0 )
+                    {
+                        nX += nDX;
+                        nY += nDY;
+                        GetXY(nX, nY, dfX, dfY);
+                        poRing->addPoint(dfX, dfY);
+                    }
+                }
+                // Should be a closepath
+                SKIP_VARINT(m_pabyDataCur, pabyDataGeometryEnd);
+                poRing->closeRings();
+                if( poPoly == nullptr )
+                {
+                    poPoly = new OGRPolygon();
+                    poPoly->addRingDirectly(poRing);
+                    externalIsClockwise = poRing->isClockwise();
+                }
+                else
+                {
+                    // Detect change of winding order to figure out if this is
+                    // an interior or exterior ring
+                    if( externalIsClockwise != poRing->isClockwise() )
+                    {
+                        poPoly->addRingDirectly(poRing);
+                    }
+                    else
+                    {
+                        if( poMultiPoly == nullptr )
+                        {
+                            poMultiPoly = new OGRMultiPolygon();
+                            poMultiPoly->addGeometryDirectly(poPoly);
+                        }
+
+                        poPoly = new OGRPolygon();
+                        poMultiPoly->addGeometryDirectly(poPoly);
+                        poPoly->addRingDirectly(poRing);
+                    }
+                }
+                poRing = nullptr;
+            }
+            if( poMultiPoly == nullptr && poPoly != nullptr &&
+                m_poFeatureDefn->GetGeomType() == wkbMultiPolygon )
+            {
+                poMultiPoly = new OGRMultiPolygon();
+                poMultiPoly->addGeometryDirectly(poPoly);
+            }
+            if( poMultiPoly )
+            {
+                return poMultiPoly;
+            }
+            else
+            {
+                return poPoly;
+            }
         }
     }
-end_error:
-    delete poMultiPoint;
-    if( poMultiPoly )
-        delete poMultiPoly;
-    else if( poPoly )
-        delete poPoly;
-    if( poMultiLS )
-        delete poMultiLS;
-    else if( poLine )
-        delete poLine;
-    delete poRing;
+    catch( const GPBException& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        delete poMultiPoint;
+        if( poMultiPoly )
+            delete poMultiPoly;
+        else if( poPoly )
+            delete poPoly;
+        if( poMultiLS )
+            delete poMultiLS;
+        else if( poLine )
+            delete poLine;
+        delete poRing;
+    }
     return nullptr;
 }
 
@@ -1181,168 +1187,173 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
     unsigned int nFeatureLength = 0;
     unsigned int nGeomType = 0;
 
-    while(true )
+    try
     {
-        bool bOK = true;
-
-        while( m_pabyDataCur < pabyDataLimit )
+        while(true )
         {
-            READ_VARUINT32(m_pabyDataCur, pabyDataLimit, nKey);
-            if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
-            {
-                poFeature = new OGRFeature(m_poFeatureDefn);
-                break;
-            }
-            else
-            {
-                SKIP_UNKNOWN_FIELD(m_pabyDataCur, pabyDataLimit, FALSE);
-            }
-        }
+            bool bOK = true;
 
-        if( poFeature == nullptr )
-            return nullptr;
-
-        READ_SIZE(m_pabyDataCur, pabyDataLimit, nFeatureLength);
-        pabyDataFeatureEnd = m_pabyDataCur + nFeatureLength;
-        while( m_pabyDataCur < pabyDataFeatureEnd )
-        {
-            READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd, nKey);
-            if( nKey == MAKE_KEY(knFEATURE_ID, WT_VARINT) )
+            while( m_pabyDataCur < pabyDataLimit )
             {
-                GUIntBig nID = 0;
-                READ_VARUINT64(m_pabyDataCur, pabyDataFeatureEnd, nID);
-                poFeature->SetField("mvt_id", static_cast<GIntBig>(nID));
-            }
-            else if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
-            {
-                READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd,
-                                nGeomType);
-            }
-            else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) )
-            {
-                unsigned int nTagsSize = 0;
-                READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nTagsSize);
-                GByte* pabyDataTagsEnd = m_pabyDataCur + nTagsSize;
-                while( m_pabyDataCur < pabyDataTagsEnd )
+                READ_VARUINT32(m_pabyDataCur, pabyDataLimit, nKey);
+                if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
                 {
-                    unsigned int nKeyIdx = 0;
-                    unsigned int nValIdx = 0;
-                    READ_VARUINT32(m_pabyDataCur, pabyDataTagsEnd, nKeyIdx);
-                    READ_VARUINT32(m_pabyDataCur, pabyDataTagsEnd, nValIdx);
-                    if( nKeyIdx < m_aosKeys.size() &&
-                        nValIdx < m_asValues.size() )
+                    poFeature = new OGRFeature(m_poFeatureDefn);
+                    break;
+                }
+                else
+                {
+                    SKIP_UNKNOWN_FIELD(m_pabyDataCur, pabyDataLimit, FALSE);
+                }
+            }
+
+            if( poFeature == nullptr )
+                return nullptr;
+
+            READ_SIZE(m_pabyDataCur, pabyDataLimit, nFeatureLength);
+            pabyDataFeatureEnd = m_pabyDataCur + nFeatureLength;
+            while( m_pabyDataCur < pabyDataFeatureEnd )
+            {
+                READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd, nKey);
+                if( nKey == MAKE_KEY(knFEATURE_ID, WT_VARINT) )
+                {
+                    GUIntBig nID = 0;
+                    READ_VARUINT64(m_pabyDataCur, pabyDataFeatureEnd, nID);
+                    poFeature->SetField("mvt_id", static_cast<GIntBig>(nID));
+                }
+                else if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
+                {
+                    READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd,
+                                    nGeomType);
+                }
+                else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) )
+                {
+                    unsigned int nTagsSize = 0;
+                    READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nTagsSize);
+                    GByte* pabyDataTagsEnd = m_pabyDataCur + nTagsSize;
+                    while( m_pabyDataCur < pabyDataTagsEnd )
                     {
-                        const int nFieldIdx =
-                            m_poFeatureDefn->GetFieldIndex(
-                                m_aosKeys[nKeyIdx]);
-                        if( nFieldIdx >= 0 )
+                        unsigned int nKeyIdx = 0;
+                        unsigned int nValIdx = 0;
+                        READ_VARUINT32(m_pabyDataCur, pabyDataTagsEnd, nKeyIdx);
+                        READ_VARUINT32(m_pabyDataCur, pabyDataTagsEnd, nValIdx);
+                        if( nKeyIdx < m_aosKeys.size() &&
+                            nValIdx < m_asValues.size() )
                         {
-                            if( m_asValues[nValIdx].eType == OFTString )
+                            const int nFieldIdx =
+                                m_poFeatureDefn->GetFieldIndex(
+                                    m_aosKeys[nKeyIdx]);
+                            if( nFieldIdx >= 0 )
                             {
-                                poFeature->SetField(nFieldIdx,
-                                        m_asValues[nValIdx].sValue.String);
-                            }
-                            else if( m_asValues[nValIdx].eType ==
-                                                            OFTInteger )
-                            {
-                                poFeature->SetField(nFieldIdx,
-                                        m_asValues[nValIdx].sValue.Integer);
-                            }
-                            else if( m_asValues[nValIdx].eType ==
-                                                            OFTInteger64 )
-                            {
-                                poFeature->SetField(nFieldIdx,
-                                    m_asValues[nValIdx].sValue.Integer64);
-                            }
-                            else if( m_asValues[nValIdx].eType == OFTReal )
-                            {
-                                poFeature->SetField(nFieldIdx,
-                                        m_asValues[nValIdx].sValue.Real);
+                                if( m_asValues[nValIdx].eType == OFTString )
+                                {
+                                    poFeature->SetField(nFieldIdx,
+                                            m_asValues[nValIdx].sValue.String);
+                                }
+                                else if( m_asValues[nValIdx].eType ==
+                                                                OFTInteger )
+                                {
+                                    poFeature->SetField(nFieldIdx,
+                                            m_asValues[nValIdx].sValue.Integer);
+                                }
+                                else if( m_asValues[nValIdx].eType ==
+                                                                OFTInteger64 )
+                                {
+                                    poFeature->SetField(nFieldIdx,
+                                        m_asValues[nValIdx].sValue.Integer64);
+                                }
+                                else if( m_asValues[nValIdx].eType == OFTReal )
+                                {
+                                    poFeature->SetField(nFieldIdx,
+                                            m_asValues[nValIdx].sValue.Real);
+                                }
                             }
                         }
                     }
                 }
-            }
-            else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
-                        nGeomType >= 1 && nGeomType <= 3 )
-            {
-                unsigned int nGeometrySize = 0;
-                READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nGeometrySize);
-                GByte* pabyDataGeometryEnd = m_pabyDataCur + nGeometrySize;
-                OGRGeometry* poGeom =
-                    ParseGeometry(nGeomType, pabyDataGeometryEnd);
-                if( poGeom )
+                else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
+                            nGeomType >= 1 && nGeomType <= 3 )
                 {
-                    poGeom->assignSpatialReference(GetSpatialRef());
-                    poFeature->SetGeometryDirectly(poGeom);
-
-                    // Clip geometry to tile extent if requested
-                    if( m_poDS->m_bClip && OGRGeometryFactory::haveGEOS() )
+                    unsigned int nGeometrySize = 0;
+                    READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nGeometrySize);
+                    GByte* pabyDataGeometryEnd = m_pabyDataCur + nGeometrySize;
+                    OGRGeometry* poGeom =
+                        ParseGeometry(nGeomType, pabyDataGeometryEnd);
+                    if( poGeom )
                     {
-                        OGREnvelope sEnvelope;
-                        poGeom->getEnvelope(&sEnvelope);
-                        if( sEnvelope.MinX >= m_dfTileMinX &&
-                            sEnvelope.MinY >= m_dfTileMinY &&
-                            sEnvelope.MaxX <= m_dfTileMaxX &&
-                            sEnvelope.MaxY <= m_dfTileMaxY )
+                        poGeom->assignSpatialReference(GetSpatialRef());
+                        poFeature->SetGeometryDirectly(poGeom);
+
+                        // Clip geometry to tile extent if requested
+                        if( m_poDS->m_bClip && OGRGeometryFactory::haveGEOS() )
                         {
-                            // do nothing
-                        }
-                        else if( sEnvelope.MinX < m_dfTileMaxX &&
-                                 sEnvelope.MinY < m_dfTileMaxY &&
-                                 sEnvelope.MaxX > m_dfTileMinX &&
-                                 sEnvelope.MaxY > m_dfTileMinY )
-                        {
-                            OGRGeometry* poClipped =
-                                poGeom->Intersection(&m_oClipPoly);
-                            if( poClipped )
+                            OGREnvelope sEnvelope;
+                            poGeom->getEnvelope(&sEnvelope);
+                            if( sEnvelope.MinX >= m_dfTileMinX &&
+                                sEnvelope.MinY >= m_dfTileMinY &&
+                                sEnvelope.MaxX <= m_dfTileMaxX &&
+                                sEnvelope.MaxY <= m_dfTileMaxY )
                             {
-                                SanitizeClippedGeometry(poClipped);
-                                if( poClipped->IsEmpty() )
+                                // do nothing
+                            }
+                            else if( sEnvelope.MinX < m_dfTileMaxX &&
+                                    sEnvelope.MinY < m_dfTileMaxY &&
+                                    sEnvelope.MaxX > m_dfTileMinX &&
+                                    sEnvelope.MaxY > m_dfTileMinY )
+                            {
+                                OGRGeometry* poClipped =
+                                    poGeom->Intersection(&m_oClipPoly);
+                                if( poClipped )
                                 {
-                                    delete poClipped;
-                                    bOK = false;
-                                }
-                                else
-                                {
-                                    poClipped->assignSpatialReference(
-                                        GetSpatialRef());
-                                    poFeature->SetGeometryDirectly(poClipped);
+                                    SanitizeClippedGeometry(poClipped);
+                                    if( poClipped->IsEmpty() )
+                                    {
+                                        delete poClipped;
+                                        bOK = false;
+                                    }
+                                    else
+                                    {
+                                        poClipped->assignSpatialReference(
+                                            GetSpatialRef());
+                                        poFeature->SetGeometryDirectly(poClipped);
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            bOK = false;
+                            else
+                            {
+                                bOK = false;
+                            }
                         }
                     }
-                }
 
-                m_pabyDataCur = pabyDataGeometryEnd;
+                    m_pabyDataCur = pabyDataGeometryEnd;
+                }
+                else
+                {
+                    SKIP_UNKNOWN_FIELD(m_pabyDataCur, pabyDataFeatureEnd, FALSE);
+                }
+            }
+            m_pabyDataCur = pabyDataFeatureEnd;
+
+            if( bOK )
+            {
+                poFeature->SetFID(m_nFID);
+                m_nFID ++;
+                return poFeature;
             }
             else
             {
-                SKIP_UNKNOWN_FIELD(m_pabyDataCur, pabyDataFeatureEnd, FALSE);
+                delete poFeature;
+                poFeature = nullptr;
             }
-        }
-        m_pabyDataCur = pabyDataFeatureEnd;
-
-        if( bOK )
-        {
-            poFeature->SetFID(m_nFID);
-            m_nFID ++;
-            return poFeature;
-        }
-        else
-        {
-            delete poFeature;
-            poFeature = nullptr;
         }
     }
-
-end_error:
-    delete poFeature;
-    return nullptr;
+    catch( const GPBException& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        delete poFeature;
+        return nullptr;
+    }
 }
 
 /************************************************************************/
@@ -1923,279 +1934,285 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
     bool bKeyFound = false;
     bool bFeatureFound = false;
     bool bVersionFound = false;
-    READ_FIELD_KEY(nKey);
-    if( nKey != MAKE_KEY(knLAYER, WT_DATA) )
-        return FALSE;
-    READ_VARUINT32(pabyData, pabyDataLimit, nLayerLength);
-    pabyLayerStart = pabyData;
 
-    // Sanity check on layer length
-    if( nLayerLength < static_cast<unsigned>(
-                poOpenInfo->nHeaderBytes - (pabyData - pabyDataStart)) )
+    try
     {
-        if( pabyData[nLayerLength] != MAKE_KEY(knLAYER, WT_DATA) )
+        READ_FIELD_KEY(nKey);
+        if( nKey != MAKE_KEY(knLAYER, WT_DATA) )
             return FALSE;
-        pabyLayerEnd = pabyData + nLayerLength;
-    }
-    else if( nLayerLength > 10 * 1024 * 1024 )
-    {
-        return FALSE;
-    }
+        READ_VARUINT32(pabyData, pabyDataLimit, nLayerLength);
+        pabyLayerStart = pabyData;
 
-    // Quick scan on partial layer content to see if it seems to conform to
-    // the proto
-    while( pabyData < pabyLayerEnd )
-    {
-        READ_VARUINT32(pabyData, pabyLayerEnd, nKey);
-        if( nKey == MAKE_KEY(knLAYER_NAME, WT_DATA) )
+        // Sanity check on layer length
+        if( nLayerLength < static_cast<unsigned>(
+                    poOpenInfo->nHeaderBytes - (pabyData - pabyDataStart)) )
         {
-            char* pszLayerName = nullptr;
-            unsigned int nTextSize = 0;
-            READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszLayerName,
-                                nTextSize);
-            if( nTextSize == 0 ||
-                !CPLIsUTF8(pszLayerName, nTextSize) )
+            if( pabyData[nLayerLength] != MAKE_KEY(knLAYER, WT_DATA) )
+                return FALSE;
+            pabyLayerEnd = pabyData + nLayerLength;
+        }
+        else if( nLayerLength > 10 * 1024 * 1024 )
+        {
+            return FALSE;
+        }
+
+        // Quick scan on partial layer content to see if it seems to conform to
+        // the proto
+        while( pabyData < pabyLayerEnd )
+        {
+            READ_VARUINT32(pabyData, pabyLayerEnd, nKey);
+            if( nKey == MAKE_KEY(knLAYER_NAME, WT_DATA) )
             {
+                char* pszLayerName = nullptr;
+                unsigned int nTextSize = 0;
+                READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszLayerName,
+                                    nTextSize);
+                if( nTextSize == 0 ||
+                    !CPLIsUTF8(pszLayerName, nTextSize) )
+                {
+                    CPLFree(pszLayerName);
+                    CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
+                    return FALSE;
+                }
                 CPLFree(pszLayerName);
-                CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                return FALSE;
+                bLayerNameFound = true;
             }
-            CPLFree(pszLayerName);
-            bLayerNameFound = true;
-        }
-        else if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
-        {
-            unsigned int nFeatureLength = 0;
-            unsigned int nGeomType = 0;
-            READ_VARUINT32(pabyData, pabyLayerEnd, nFeatureLength);
-            if( nFeatureLength > nLayerLength - (pabyData - pabyLayerStart) )
+            else if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
             {
-                CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                return FALSE;
-            }
-            bFeatureFound = true;
-
-            GByte* const pabyDataFeatureStart = pabyData;
-            GByte* const pabyDataFeatureEnd = pabyDataStart + std::min(
-                static_cast<int>(pabyData + nFeatureLength - pabyDataStart),
-                poOpenInfo->nHeaderBytes);
-            while( pabyData < pabyDataFeatureEnd )
-            {
-                READ_VARUINT32(pabyData, pabyDataFeatureEnd, nKey);
-                if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
+                unsigned int nFeatureLength = 0;
+                unsigned int nGeomType = 0;
+                READ_VARUINT32(pabyData, pabyLayerEnd, nFeatureLength);
+                if( nFeatureLength > nLayerLength - (pabyData - pabyLayerStart) )
                 {
-                    READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeomType);
-                    if( nGeomType > knGEOM_TYPE_POLYGON )
-                    {
-                        CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                        return FALSE;
-                    }
+                    CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
+                    return FALSE;
                 }
-                else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) )
+                bFeatureFound = true;
+
+                GByte* const pabyDataFeatureStart = pabyData;
+                GByte* const pabyDataFeatureEnd = pabyDataStart + std::min(
+                    static_cast<int>(pabyData + nFeatureLength - pabyDataStart),
+                    poOpenInfo->nHeaderBytes);
+                while( pabyData < pabyDataFeatureEnd )
                 {
-                    unsigned int nTagsSize = 0;
-                    READ_VARUINT32(pabyData, pabyDataFeatureEnd, nTagsSize);
-                    if( nTagsSize == 0 || nTagsSize >
-                        nFeatureLength - (pabyData - pabyDataFeatureStart) )
+                    READ_VARUINT32(pabyData, pabyDataFeatureEnd, nKey);
+                    if( nKey == MAKE_KEY(knFEATURE_TYPE, WT_VARINT) )
                     {
-                        CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                        return FALSE;
-                    }
-                    GByte* const pabyDataTagsEnd = pabyDataStart + std::min(
-                        static_cast<int>(pabyData + nTagsSize - pabyDataStart),
-                        poOpenInfo->nHeaderBytes);
-                    while( pabyData < pabyDataTagsEnd )
-                    {
-                        unsigned int nKeyIdx = 0;
-                        unsigned int nValIdx = 0;
-                        READ_VARUINT32(pabyData, pabyDataTagsEnd, nKeyIdx);
-                        READ_VARUINT32(pabyData, pabyDataTagsEnd, nValIdx);
-                        if( nKeyIdx > 10 * 1024 * 1024 ||
-                            nValIdx > 10 * 1024 * 1024 )
+                        READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeomType);
+                        if( nGeomType > knGEOM_TYPE_POLYGON )
                         {
-                            CPLDebug("MVT", "Protobuf error: line %d",
-                                     __LINE__);
+                            CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
                             return FALSE;
                         }
                     }
-                }
-                else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
-                         nGeomType >= 1 && nGeomType <= 3 )
-                {
-                    unsigned int nGeometrySize = 0;
-                    READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeometrySize);
-                    if( nGeometrySize == 0 || nGeometrySize >
+                    else if( nKey == MAKE_KEY(knFEATURE_TAGS, WT_DATA) )
+                    {
+                        unsigned int nTagsSize = 0;
+                        READ_VARUINT32(pabyData, pabyDataFeatureEnd, nTagsSize);
+                        if( nTagsSize == 0 || nTagsSize >
                             nFeatureLength - (pabyData - pabyDataFeatureStart) )
-                    {
-                        CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                        return FALSE;
-                    }
-                    GByte* const pabyDataGeometryEnd = pabyDataStart +
-                        std::min(static_cast<int>(
-                                    pabyData + nGeometrySize - pabyDataStart),
-                        poOpenInfo->nHeaderBytes);
-
-                    if( nGeomType == knGEOM_TYPE_POINT )
-                    {
-                        unsigned int nCmdCountCombined = 0;
-                        unsigned int nCount;
-                        READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                        nCmdCountCombined);
-                        nCount = GetCmdCount(nCmdCountCombined);
-                        if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
-                            nCount == 0 ||
-                            nCount > 10 * 1024 * 1024 )
                         {
-                            CPLDebug("MVT", "Protobuf error: line %d",
-                                     __LINE__);
+                            CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
                             return FALSE;
                         }
-                        for( unsigned i = 0; i < 2 * nCount; i++ )
+                        GByte* const pabyDataTagsEnd = pabyDataStart + std::min(
+                            static_cast<int>(pabyData + nTagsSize - pabyDataStart),
+                            poOpenInfo->nHeaderBytes);
+                        while( pabyData < pabyDataTagsEnd )
                         {
-                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                            unsigned int nKeyIdx = 0;
+                            unsigned int nValIdx = 0;
+                            READ_VARUINT32(pabyData, pabyDataTagsEnd, nKeyIdx);
+                            READ_VARUINT32(pabyData, pabyDataTagsEnd, nValIdx);
+                            if( nKeyIdx > 10 * 1024 * 1024 ||
+                                nValIdx > 10 * 1024 * 1024 )
+                            {
+                                CPLDebug("MVT", "Protobuf error: line %d",
+                                        __LINE__);
+                                return FALSE;
+                            }
                         }
                     }
-                    else if( nGeomType == knGEOM_TYPE_LINESTRING )
+                    else if( nKey == MAKE_KEY(knFEATURE_GEOMETRY, WT_DATA) &&
+                            nGeomType >= 1 && nGeomType <= 3 )
                     {
-                        while( pabyData < pabyDataGeometryEnd )
+                        unsigned int nGeometrySize = 0;
+                        READ_VARUINT32(pabyData, pabyDataFeatureEnd, nGeometrySize);
+                        if( nGeometrySize == 0 || nGeometrySize >
+                                nFeatureLength - (pabyData - pabyDataFeatureStart) )
                         {
-                            unsigned int nCmdCountCombined = 0;
-                            unsigned int nLineToCount;
-                            // Should be a moveto
-                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                            nCmdCountCombined);
-                            if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
-                                GetCmdCount(nCmdCountCombined) != 1 )
-                            {
-                                CPLDebug("MVT", "Protobuf error: line %d",
-                                         __LINE__);
-                                return FALSE;
-                            }
-                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                        nCmdCountCombined);
-                            if( GetCmdId(nCmdCountCombined) != knCMD_LINETO )
-                            {
-                                CPLDebug("MVT", "Protobuf error: line %d",
-                                         __LINE__);
-                                return FALSE;
-                            }
-                            nLineToCount = GetCmdCount(nCmdCountCombined);
-                            for( unsigned i = 0; i < 2 * nLineToCount; i++ )
-                            {
-                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            }
+                            CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
+                            return FALSE;
                         }
-                    }
-                    else if( nGeomType == knGEOM_TYPE_POLYGON )
-                    {
-                        while( pabyData < pabyDataGeometryEnd )
-                        {
-                            unsigned int nCmdCountCombined = 0;
-                            unsigned int nLineToCount;
-                            // Should be a moveto
-                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                            nCmdCountCombined);
-                            if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
-                                GetCmdCount(nCmdCountCombined) != 1 )
-                            {
-                                CPLDebug("MVT", "Protobuf error: line %d",
-                                         __LINE__);
-                                return FALSE;
-                            }
-                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                        nCmdCountCombined);
-                            if( GetCmdId(nCmdCountCombined) != knCMD_LINETO )
-                            {
-                                CPLDebug("MVT", "Protobuf error: line %d",
-                                         __LINE__);
-                                return FALSE;
-                            }
-                            nLineToCount = GetCmdCount(nCmdCountCombined);
-                            for( unsigned i = 0; i < 2 * nLineToCount; i++ )
-                            {
-                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
-                            }
-                            // Should be a closepath
-                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
-                                            nCmdCountCombined);
-                            if( GetCmdId(nCmdCountCombined) != knCMD_CLOSEPATH ||
-                                GetCmdCount(nCmdCountCombined) != 1 )
-                            {
-                                CPLDebug("MVT", "Protobuf error: line %d",
-                                         __LINE__);
-                                return FALSE;
-                            }
-                        }
-                    }
+                        GByte* const pabyDataGeometryEnd = pabyDataStart +
+                            std::min(static_cast<int>(
+                                        pabyData + nGeometrySize - pabyDataStart),
+                            poOpenInfo->nHeaderBytes);
 
-                    pabyData = pabyDataGeometryEnd;
+                        if( nGeomType == knGEOM_TYPE_POINT )
+                        {
+                            unsigned int nCmdCountCombined = 0;
+                            unsigned int nCount;
+                            READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                            nCmdCountCombined);
+                            nCount = GetCmdCount(nCmdCountCombined);
+                            if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
+                                nCount == 0 ||
+                                nCount > 10 * 1024 * 1024 )
+                            {
+                                CPLDebug("MVT", "Protobuf error: line %d",
+                                        __LINE__);
+                                return FALSE;
+                            }
+                            for( unsigned i = 0; i < 2 * nCount; i++ )
+                            {
+                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                            }
+                        }
+                        else if( nGeomType == knGEOM_TYPE_LINESTRING )
+                        {
+                            while( pabyData < pabyDataGeometryEnd )
+                            {
+                                unsigned int nCmdCountCombined = 0;
+                                unsigned int nLineToCount;
+                                // Should be a moveto
+                                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                                nCmdCountCombined);
+                                if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
+                                    GetCmdCount(nCmdCountCombined) != 1 )
+                                {
+                                    CPLDebug("MVT", "Protobuf error: line %d",
+                                            __LINE__);
+                                    return FALSE;
+                                }
+                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                            nCmdCountCombined);
+                                if( GetCmdId(nCmdCountCombined) != knCMD_LINETO )
+                                {
+                                    CPLDebug("MVT", "Protobuf error: line %d",
+                                            __LINE__);
+                                    return FALSE;
+                                }
+                                nLineToCount = GetCmdCount(nCmdCountCombined);
+                                for( unsigned i = 0; i < 2 * nLineToCount; i++ )
+                                {
+                                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                }
+                            }
+                        }
+                        else if( nGeomType == knGEOM_TYPE_POLYGON )
+                        {
+                            while( pabyData < pabyDataGeometryEnd )
+                            {
+                                unsigned int nCmdCountCombined = 0;
+                                unsigned int nLineToCount;
+                                // Should be a moveto
+                                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                                nCmdCountCombined);
+                                if( GetCmdId(nCmdCountCombined) != knCMD_MOVETO ||
+                                    GetCmdCount(nCmdCountCombined) != 1 )
+                                {
+                                    CPLDebug("MVT", "Protobuf error: line %d",
+                                            __LINE__);
+                                    return FALSE;
+                                }
+                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                            nCmdCountCombined);
+                                if( GetCmdId(nCmdCountCombined) != knCMD_LINETO )
+                                {
+                                    CPLDebug("MVT", "Protobuf error: line %d",
+                                            __LINE__);
+                                    return FALSE;
+                                }
+                                nLineToCount = GetCmdCount(nCmdCountCombined);
+                                for( unsigned i = 0; i < 2 * nLineToCount; i++ )
+                                {
+                                    SKIP_VARINT(pabyData, pabyDataGeometryEnd);
+                                }
+                                // Should be a closepath
+                                READ_VARUINT32(pabyData, pabyDataGeometryEnd,
+                                                nCmdCountCombined);
+                                if( GetCmdId(nCmdCountCombined) != knCMD_CLOSEPATH ||
+                                    GetCmdCount(nCmdCountCombined) != 1 )
+                                {
+                                    CPLDebug("MVT", "Protobuf error: line %d",
+                                            __LINE__);
+                                    return FALSE;
+                                }
+                            }
+                        }
+
+                        pabyData = pabyDataGeometryEnd;
+                    }
+                    else
+                    {
+                        SKIP_UNKNOWN_FIELD(pabyData, pabyDataFeatureEnd, FALSE);
+                    }
                 }
-                else
+
+                pabyData = pabyDataFeatureEnd;
+            }
+            else if( nKey == MAKE_KEY(knLAYER_KEYS, WT_DATA) )
+            {
+                char* pszKey = nullptr;
+                unsigned int nTextSize = 0;
+                READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszKey, nTextSize);
+                if( !CPLIsUTF8(pszKey, nTextSize) )
                 {
-                    SKIP_UNKNOWN_FIELD(pabyData, pabyDataFeatureEnd, FALSE);
+                    CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
+                    CPLFree(pszKey);
+                    return FALSE;
+                }
+                CPLFree(pszKey);
+                bKeyFound = true;
+            }
+            else if( nKey == MAKE_KEY(knLAYER_VALUES, WT_DATA) )
+            {
+                unsigned int nValueLength = 0;
+                READ_VARUINT32(pabyData, pabyLayerEnd, nValueLength);
+                if( nValueLength == 0 ||
+                    nValueLength > nLayerLength - (pabyData - pabyLayerStart) )
+                {
+                    CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
+                    return FALSE;
+                }
+                pabyData += nValueLength;
+            }
+            else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
+            {
+                unsigned int nExtent = 0;
+                READ_VARUINT32(pabyData, pabyLayerEnd, nExtent);
+                if( nExtent < 256 || nExtent > 16384 )
+                {
+                    CPLDebug("MVT", "Invalid extent: %u", nExtent);
+                    return FALSE;
                 }
             }
-
-            pabyData = pabyDataFeatureEnd;
-        }
-        else if( nKey == MAKE_KEY(knLAYER_KEYS, WT_DATA) )
-        {
-            char* pszKey = nullptr;
-            unsigned int nTextSize = 0;
-            READ_TEXT_WITH_SIZE(pabyData, pabyLayerEnd, pszKey, nTextSize);
-            if( !CPLIsUTF8(pszKey, nTextSize) )
+            else if( nKey == MAKE_KEY(knLAYER_VERSION, WT_VARINT) )
             {
-                CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                CPLFree(pszKey);
-                return FALSE;
+                unsigned int nVersion = 0;
+                READ_VARUINT32(pabyData, pabyLayerEnd, nVersion);
+                if( nVersion != 1 && nVersion != 2 )
+                {
+                    CPLDebug("MVT", "Invalid version: %u", nVersion);
+                    return FALSE;
+                }
+                bVersionFound = true;
             }
-            CPLFree(pszKey);
-            bKeyFound = true;
-        }
-        else if( nKey == MAKE_KEY(knLAYER_VALUES, WT_DATA) )
-        {
-            unsigned int nValueLength = 0;
-            READ_VARUINT32(pabyData, pabyLayerEnd, nValueLength);
-            if( nValueLength == 0 ||
-                nValueLength > nLayerLength - (pabyData - pabyLayerStart) )
+            else
             {
-                CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
-                return FALSE;
+                SKIP_UNKNOWN_FIELD(pabyData, pabyLayerEnd, FALSE);
             }
-            pabyData += nValueLength;
-        }
-        else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
-        {
-            unsigned int nExtent = 0;
-            READ_VARUINT32(pabyData, pabyLayerEnd, nExtent);
-            if( nExtent < 256 || nExtent > 16384 )
-            {
-                CPLDebug("MVT", "Invalid extent: %u", nExtent);
-                return FALSE;
-            }
-        }
-        else if( nKey == MAKE_KEY(knLAYER_VERSION, WT_VARINT) )
-        {
-            unsigned int nVersion = 0;
-            READ_VARUINT32(pabyData, pabyLayerEnd, nVersion);
-            if( nVersion != 1 && nVersion != 2 )
-            {
-                CPLDebug("MVT", "Invalid version: %u", nVersion);
-                return FALSE;
-            }
-            bVersionFound = true;
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyLayerEnd, FALSE);
         }
     }
+    catch( const GPBException& )
+    {
+    }
 
-end_error:
     return bLayerNameFound && (bKeyFound || bFeatureFound || bVersionFound);
 }
 
@@ -2694,72 +2711,77 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
-    while( pabyData < pabyDataLimit )
+    try
     {
-        READ_FIELD_KEY(nKey);
-        if( nKey == MAKE_KEY(knLAYER, WT_DATA) )
+        while( pabyData < pabyDataLimit )
         {
-            unsigned int nLayerSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nLayerSize);
-            GByte* pabyDataLayer = pabyData;
-            GByte* pabyDataLimitLayer = pabyData + nLayerSize;
-            while( pabyData < pabyDataLimitLayer )
+            READ_FIELD_KEY(nKey);
+            if( nKey == MAKE_KEY(knLAYER, WT_DATA) )
             {
-                READ_VARINT32(pabyData, pabyDataLimitLayer, nKey);
-                if( nKey == MAKE_KEY(knLAYER_NAME, WT_DATA) )
+                unsigned int nLayerSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nLayerSize);
+                GByte* pabyDataLayer = pabyData;
+                GByte* pabyDataLimitLayer = pabyData + nLayerSize;
+                while( pabyData < pabyDataLimitLayer )
                 {
-                    char* pszLayerName = nullptr;
-                    READ_TEXT(pabyData, pabyDataLimitLayer, pszLayerName);
-
-                    CPLJSONObject oFields;
-                    oFields.Deinit();
-                    if( oVectorLayers.IsValid() )
+                    READ_VARINT32(pabyData, pabyDataLimitLayer, nKey);
+                    if( nKey == MAKE_KEY(knLAYER_NAME, WT_DATA) )
                     {
-                        for( int i = 0; i < oVectorLayers.Size(); i++ )
+                        char* pszLayerName = nullptr;
+                        READ_TEXT(pabyData, pabyDataLimitLayer, pszLayerName);
+
+                        CPLJSONObject oFields;
+                        oFields.Deinit();
+                        if( oVectorLayers.IsValid() )
                         {
-                            CPLJSONObject oId = oVectorLayers[i].GetObj("id");
-                            if( oId.IsValid() && oId.GetType() ==
-                                    CPLJSONObject::String )
+                            for( int i = 0; i < oVectorLayers.Size(); i++ )
                             {
-                                if( oId.ToString() == pszLayerName )
+                                CPLJSONObject oId = oVectorLayers[i].GetObj("id");
+                                if( oId.IsValid() && oId.GetType() ==
+                                        CPLJSONObject::String )
                                 {
-                                    oFields = oVectorLayers[i].GetObj("fields");
-                                    break;
+                                    if( oId.ToString() == pszLayerName )
+                                    {
+                                        oFields = oVectorLayers[i].GetObj("fields");
+                                        break;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    OGRwkbGeometryType eGeomType = wkbUnknown;
-                    if( oTileStatLayers.IsValid() )
+                        OGRwkbGeometryType eGeomType = wkbUnknown;
+                        if( oTileStatLayers.IsValid() )
+                        {
+                            eGeomType = OGRMVTFindGeomTypeFromTileStat(
+                                oTileStatLayers, pszLayerName);
+                        }
+
+                        poDS->m_apoLayers.push_back( std::unique_ptr<OGRLayer>(
+                            new OGRMVTLayer(poDS, pszLayerName, pabyDataLayer,
+                                            nLayerSize, oFields, eGeomType) ) );
+                        CPLFree(pszLayerName);
+                        break;
+                    }
+                    else
                     {
-                        eGeomType = OGRMVTFindGeomTypeFromTileStat(
-                            oTileStatLayers, pszLayerName);
+                        SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimitLayer, FALSE);
                     }
-
-                    poDS->m_apoLayers.push_back( std::unique_ptr<OGRLayer>(
-                        new OGRMVTLayer(poDS, pszLayerName, pabyDataLayer,
-                                        nLayerSize, oFields, eGeomType) ) );
-                    CPLFree(pszLayerName);
-                    break;
                 }
-                else
-                {
-                    SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimitLayer, FALSE);
-                }
+                pabyData = pabyDataLimitLayer;
             }
-            pabyData = pabyDataLimitLayer;
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
+            }
         }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
-        }
+        return poDS;
     }
-    return poDS;
-
-end_error:
-    delete poDS;
-    return nullptr;
+    catch( const GPBException& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        delete poDS;
+        return nullptr;
+    }
 }
 
 /************************************************************************/
