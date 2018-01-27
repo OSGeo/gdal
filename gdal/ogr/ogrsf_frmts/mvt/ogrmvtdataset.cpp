@@ -517,6 +517,7 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
         else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
         {
             READ_VARUINT32(pabyData, pabyDataLimit, m_nExtent);
+            m_nExtent = std::max(1U, m_nExtent); // to avoid divide by zero
         }
         else
         {
