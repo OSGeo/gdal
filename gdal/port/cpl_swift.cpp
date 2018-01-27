@@ -122,6 +122,7 @@ bool VSISwiftHandleHelper::GetConfiguration(CPLString& osStorageURL,
     // Re-use cached credentials if available
     {
         CPLMutexHolder oHolder( &g_hMutex );
+        // coverity[tainted_data]
         if( osAuthURL == g_osLastAuthURL &&
             osUser == g_osLastUser &&
             osKey == g_osLastKey )
