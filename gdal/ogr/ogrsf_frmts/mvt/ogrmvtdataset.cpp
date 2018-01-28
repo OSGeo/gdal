@@ -939,8 +939,11 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                 GetXY(nX, nY, dfX, dfY);
                 if( poLine != nullptr )
                 {
-                    poMultiLS = new OGRMultiLineString();
-                    poMultiLS->addGeometryDirectly(poLine);
+                    if( poMultiLS == nullptr )
+                    {
+                        poMultiLS = new OGRMultiLineString();
+                        poMultiLS->addGeometryDirectly(poLine);
+                    }
                     poLine = new OGRLineString();
                     poMultiLS->addGeometryDirectly(poLine);
                 }

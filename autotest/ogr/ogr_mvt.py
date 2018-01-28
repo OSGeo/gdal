@@ -237,6 +237,13 @@ def ogr_mvt_linestring():
         f.DumpReadable()
         return 'fail'
 
+    ds = gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)') != 0:
+        f.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -246,9 +253,39 @@ def ogr_mvt_multilinestring():
     ds = ogr.Open('data/mvt/multilinestring/0/0/0.pbf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978))') != 0:
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))') != 0:
         f.DumpReadable()
         return 'fail'
+
+    ds = gdal.OpenEx('data/mvt/multilinestring/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))') != 0:
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+
+###############################################################################
+
+def ogr_mvt_polygon():
+
+
+    ds = ogr.Open('data/mvt/polygon/0/0/0.pbf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'MULTIPOLYGON (((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119)))') != 0:
+        f.DumpReadable()
+        return 'fail'
+
+    ds = gdal.OpenEx('data/mvt/polygon/0/0/0.pbf', open_options = ['METADATA_FILE='])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'POLYGON ((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119))') != 0:
+        f.DumpReadable()
+        return 'fail'
+
 
     return 'success'
 
@@ -607,6 +644,7 @@ gdaltest_list = [
     ogr_mvt_mixed,
     ogr_mvt_linestring,
     ogr_mvt_multilinestring,
+    ogr_mvt_polygon,
     ogr_mvt_point_polygon,
     ogr_mvt_point_polygon_clip,
     ogr_mvt_tileset_without_readdir,
