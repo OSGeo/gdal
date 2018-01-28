@@ -192,6 +192,17 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    vsi_l_offset nExpectedSize = static_cast<vsi_l_offset>(poDS->nRasterXSize)
+        * poDS->nRasterYSize * nComp * nDataTypeSize + 20;
+    VSIFSeekL(poDS->fpImage, 0, SEEK_END);
+    if( VSIFTellL(poDS->fpImage) < nExpectedSize )
+    {
+        CPLError( CE_Failure, CPLE_FileIO,
+                  "File too short" );
+        delete poDS;
+        return nullptr;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Create bands.                                                   */
 /* -------------------------------------------------------------------- */
