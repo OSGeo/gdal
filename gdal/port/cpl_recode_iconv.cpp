@@ -104,10 +104,10 @@ char *CPLRecodeIconv( const char *pszSource,
 /* -------------------------------------------------------------------- */
     ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *)pszSource;
     size_t nSrcLen = strlen( pszSource );
-    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen);
     size_t nDstLen = nDstCurLen;
     char *pszDestination =
-        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
+        static_cast<char *>(CPLCalloc(nDstCurLen + 1, sizeof(char)));
     char *pszDstBuf = pszDestination;
 
     while( nSrcLen > 0 )
@@ -141,9 +141,9 @@ char *CPLRecodeIconv( const char *pszSource,
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
                 pszDestination =
-                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
+                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen + 1));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
-                nDstLen += nDstCurLen - nTmp;
+                nDstLen += nTmp;
                 continue;
             }
 
