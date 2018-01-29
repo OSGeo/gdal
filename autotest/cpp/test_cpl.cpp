@@ -2010,4 +2010,31 @@ namespace tut
             ensure( oJsonId.IsValid() );
         }
     }
+
+    // Test CPLRecodeIconv() with re-allocation
+    template<>
+    template<>
+    void object::test<32>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 32800;
+        char* pszIn = static_cast<char*>(CPLMalloc(N + 1));
+        for(int i=0;i<N;i++)
+            pszIn[i] = '\xE9';
+        pszIn[N] = 0;
+        char* pszExpected = static_cast<char*>(CPLMalloc(N * 2 + 1));
+        for(int i=0;i<N;i++)
+        {
+            pszExpected[2*i] = '\xC3';
+            pszExpected[2*i+1] = '\xA9';
+        }
+        pszExpected[N * 2] = 0;
+        char* pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
+        ensure_equals( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
 } // namespace tut
