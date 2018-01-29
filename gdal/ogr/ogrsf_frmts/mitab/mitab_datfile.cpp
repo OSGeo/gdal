@@ -213,6 +213,14 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
             m_poHeaderBlock = nullptr;
             return -1;
         }
+
+        // Limit number of records to avoid int overflow
+        if( m_numRecords > INT_MAX / m_nRecordSize ||
+            m_nFirstRecordPtr > INT_MAX - m_numRecords * m_nRecordSize )
+        {
+            m_numRecords = (INT_MAX - m_nFirstRecordPtr) / m_nRecordSize;
+        }
+
         m_numFields = m_nFirstRecordPtr / 32 - 1;
 
         // Read the field definitions.
@@ -240,8 +248,7 @@ int TABDATFile::Open(const char *pszFname, TABAccess eAccess,
         // then create m_poRecordBlock.
         // Record block size has to be a multiple of record size.
         m_nBlockSize = ((1024 / m_nRecordSize) + 1) * m_nRecordSize;
-        if( m_numRecords < INT_MAX / m_nRecordSize )
-            m_nBlockSize =
+        m_nBlockSize =
                 std::min(m_nBlockSize, (m_numRecords * m_nRecordSize));
 
         CPLAssert(m_poRecordBlock == nullptr);
