@@ -68,7 +68,7 @@ VFKReader::VFKReader( const char *pszFilename ) :
     m_bLatin2(true),  // Encoding ISO-8859-2 or WINDOWS-1250.
     m_poFD(nullptr),
     m_pszFilename(CPLStrdup(pszFilename)),
-    m_poFStat((VSIStatBuf*) CPLMalloc(sizeof(VSIStatBuf))),
+    m_poFStat((VSIStatBuf*) CPLCalloc(1, sizeof(VSIStatBuf))),
     // VFK are provided in two forms - stative and amendment data.
     m_bAmendment(false),
     m_nDataBlockCount(0),
