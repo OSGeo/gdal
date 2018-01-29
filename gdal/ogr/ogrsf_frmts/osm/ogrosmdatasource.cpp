@@ -34,9 +34,6 @@
 #include "ogr_p.h"
 #include "swq.h"
 
-#define DO_NOT_DEFINE_SKIP_UNKNOWN_FIELD
-#define DO_NOT_DEFINE_READ_VARUINT32
-#define DO_NOT_DEFINE_SKIP_VARINT
 #include "gpb.h"
 
 #include "ogrlayerdecorator.h"

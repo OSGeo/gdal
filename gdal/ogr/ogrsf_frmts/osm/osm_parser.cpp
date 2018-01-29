@@ -26,8 +26,6 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define DO_NOT_DEFINE_READ_VARINT64
-
 #include "osm_parser.h"
 #include "gpb.h"
 

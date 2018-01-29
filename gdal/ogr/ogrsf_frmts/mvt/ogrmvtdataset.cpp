@@ -33,7 +33,6 @@
 
 #include "mvtutils.h"
 
-#define DO_NOT_DEFINE_READ_VARINT64
 #include "gpb.h"
 
 #include <algorithm>
