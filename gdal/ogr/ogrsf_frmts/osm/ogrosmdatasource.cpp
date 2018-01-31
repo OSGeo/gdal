@@ -999,24 +999,13 @@ void OGROSMDataSource::LookupNodesSQLite( )
 }
 
 /************************************************************************/
-/*                            ReadVarSInt64()                           */
-/************************************************************************/
-
-static GIntBig ReadVarSInt64(GByte** ppabyPtr)
-{
-    GUIntBig nSVal64 = ReadVarUInt64(ppabyPtr);
-    GIntBig nDiff64 = ((nSVal64 & 1) == 0) ?
-        (GIntBig)(nSVal64 >> 1) : -(GIntBig)(nSVal64 >> 1)-1;
-    return nDiff64;
-}
-
-/************************************************************************/
 /*                           DecompressSector()                         */
 /************************************************************************/
 
-static bool DecompressSector( GByte* pabyIn, int nSectorSize, GByte* pabyOut )
+static bool DecompressSector( const GByte* pabyIn, int nSectorSize,
+                              GByte* pabyOut )
 {
-    GByte* pabyPtr = pabyIn;
+    const GByte* pabyPtr = pabyIn;
     LonLat* pasLonLatOut = (LonLat*) pabyOut;
     int nLastLon = 0;
     int nLastLat = 0;
@@ -1525,7 +1514,7 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
                                      unsigned int* pnTags, OSMTag* pasTags,
                                      OSMInfo* psInfo )
 {
-    GByte* pabyPtr = pabyCompressedWay;
+    const GByte* pabyPtr = pabyCompressedWay;
     if( pbIsArea )
         *pbIsArea = (*pabyPtr == 1) ? true : false;
     pabyPtr ++;
@@ -1540,7 +1529,7 @@ int OGROSMDataSource::UncompressWay( int nBytes, GByte* pabyCompressedWay,
     {
         int nK = ReadVarInt32(&pabyPtr);
         int nV = ReadVarInt32(&pabyPtr);
-        GByte* pszV = nullptr;
+        const GByte* pszV = nullptr;
         if( nV == 0 )
         {
             pszV = pabyPtr;
