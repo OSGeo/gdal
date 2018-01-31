@@ -137,10 +137,10 @@ class OGRMVTDataset;
 class OGRMVTLayer : public OGRMVTLayerBase
 {
     OGRMVTDataset       *m_poDS;
-    GByte               *m_pabyDataStart;
-    GByte               *m_pabyDataEnd;
-    GByte               *m_pabyDataCur = nullptr;
-    GByte               *m_pabyDataFeatureStart = nullptr;
+    const GByte               *m_pabyDataStart;
+    const GByte               *m_pabyDataEnd;
+    const GByte               *m_pabyDataCur = nullptr;
+    const GByte               *m_pabyDataFeatureStart = nullptr;
     bool                 m_bError = false;
     unsigned int         m_nExtent = 4096;
     std::vector<CPLString> m_aosKeys;
@@ -160,14 +160,14 @@ class OGRMVTLayer : public OGRMVTLayerBase
     double               m_dfTileMaxY = 0;
 
     void                Init(const CPLJSONObject& oFields);
-    bool                QuickScanFeature(GByte* pabyData,
-                                         GByte* pabyDataFeatureEnd,
+    bool                QuickScanFeature(const GByte* pabyData,
+                                         const GByte* pabyDataFeatureEnd,
                                          bool bScanFields,
                                          bool bScanGeometries,
                                          bool& bGeomTypeSet);
     void                GetXY(int nX, int nY, double& dfX, double& dfY);
     OGRGeometry        *ParseGeometry(unsigned int nGeomType,
-                                      GByte* pabyDataGeometryEnd);
+                                      const GByte* pabyDataGeometryEnd);
     void                SanitizeClippedGeometry(OGRGeometry*& poGeom);
 
     virtual OGRFeature         *GetNextRawFeature() override;
@@ -175,7 +175,7 @@ class OGRMVTLayer : public OGRMVTLayerBase
   public:
                         OGRMVTLayer(OGRMVTDataset* poDS,
                                     const char* pszLayerName,
-                                    GByte* pabyData,
+                                    const GByte* pabyData,
                                     int nLayerSize,
                                     const CPLJSONObject& oFields,
                                     OGRwkbGeometryType eGeomType);
@@ -344,7 +344,7 @@ int OGRMVTLayerBase::TestCapability(const char* pszCap)
 
 OGRMVTLayer::OGRMVTLayer(OGRMVTDataset* poDS,
                          const char* pszLayerName,
-                         GByte* pabyData,
+                         const GByte* pabyData,
                          int nLayerSize,
                          const CPLJSONObject& oFields,
                          OGRwkbGeometryType eGeomType):
@@ -400,8 +400,8 @@ OGRMVTLayer::~OGRMVTLayer()
 void OGRMVTLayer::Init(const CPLJSONObject& oFields)
 {
     // First pass to collect keys and values
-    GByte* pabyData = m_pabyDataStart;
-    GByte* pabyDataLimit = m_pabyDataEnd;
+    const GByte* pabyData = m_pabyDataStart;
+    const GByte* pabyDataLimit = m_pabyDataEnd;
     unsigned int nKey = 0;
     bool bGeomTypeSet = false;
     const bool bScanFields = !oFields.IsValid();
@@ -424,7 +424,7 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
             {
                 unsigned int nValueLength = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nValueLength);
-                GByte* pabyDataValueEnd = pabyData + nValueLength;
+                const GByte* pabyDataValueEnd = pabyData + nValueLength;
                 READ_VARUINT32(pabyData, pabyDataLimit, nKey);
                 if( nKey == MAKE_KEY(knVALUE_STRING, WT_DATA) )
                 {
@@ -525,7 +525,7 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
         // and attribute schema
         while( pabyData < pabyDataLimit )
         {
-            GByte* pabyDataBefore = pabyData;
+            const GByte* pabyDataBefore = pabyData;
             READ_FIELD_KEY(nKey);
             if( nKey == MAKE_KEY(knLAYER_FEATURES, WT_DATA) )
             {
@@ -537,7 +537,7 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
 
                 unsigned int nFeatureLength = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nFeatureLength);
-                GByte* pabyDataFeatureEnd = pabyData + nFeatureLength;
+                const GByte* pabyDataFeatureEnd = pabyData + nFeatureLength;
                 if( bQuickScanFeature )
                 {
                     if( !QuickScanFeature(pabyData, pabyDataFeatureEnd,
@@ -610,8 +610,8 @@ static void MergeFieldDefn(OGRFieldDefn* poFieldDefn,
 /*                         QuickScanFeature()                           */
 /************************************************************************/
 
-bool OGRMVTLayer::QuickScanFeature(GByte* pabyData,
-                                   GByte* pabyDataFeatureEnd,
+bool OGRMVTLayer::QuickScanFeature(const GByte* pabyData,
+                                   const GByte* pabyDataFeatureEnd,
                                    bool bScanFields,
                                    bool bScanGeometries,
                                    bool& bGeomTypeSet)
@@ -632,7 +632,7 @@ bool OGRMVTLayer::QuickScanFeature(GByte* pabyData,
             {
                 unsigned int nTagsSize = 0;
                 READ_SIZE(pabyData, pabyDataFeatureEnd, nTagsSize);
-                GByte* pabyDataTagsEnd = pabyData + nTagsSize;
+                const GByte* pabyDataTagsEnd = pabyData + nTagsSize;
                 while( pabyData < pabyDataTagsEnd )
                 {
                     unsigned int nKeyIdx = 0;
@@ -681,7 +681,7 @@ bool OGRMVTLayer::QuickScanFeature(GByte* pabyData,
             {
                 unsigned int nGeometrySize = 0;
                 READ_SIZE(pabyData, pabyDataFeatureEnd, nGeometrySize);
-                GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
+                const GByte* pabyDataGeometryEnd = pabyData + nGeometrySize;
                 OGRwkbGeometryType eType = wkbUnknown;
                 if( nGeomType == knGEOM_TYPE_POINT )
                 {
@@ -846,7 +846,7 @@ void OGRMVTLayer::GetXY(int nX, int nY, double& dfX, double& dfY)
 /************************************************************************/
 
 OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
-                                        GByte* pabyDataGeometryEnd)
+                                        const GByte* pabyDataGeometryEnd)
 {
     OGRMultiPoint* poMultiPoint = nullptr;
     OGRMultiLineString* poMultiLS = nullptr;
@@ -1184,9 +1184,8 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
     }
 
     unsigned int nKey = 0;
-    GByte* pabyDataLimit = m_pabyDataEnd;
+    const GByte* pabyDataLimit = m_pabyDataEnd;
     OGRFeature* poFeature = nullptr;
-    GByte* pabyDataFeatureEnd;
     unsigned int nFeatureLength = 0;
     unsigned int nGeomType = 0;
 
@@ -1214,7 +1213,7 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                 return nullptr;
 
             READ_SIZE(m_pabyDataCur, pabyDataLimit, nFeatureLength);
-            pabyDataFeatureEnd = m_pabyDataCur + nFeatureLength;
+            const GByte* pabyDataFeatureEnd = m_pabyDataCur + nFeatureLength;
             while( m_pabyDataCur < pabyDataFeatureEnd )
             {
                 READ_VARUINT32(m_pabyDataCur, pabyDataFeatureEnd, nKey);
@@ -1233,7 +1232,7 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                 {
                     unsigned int nTagsSize = 0;
                     READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nTagsSize);
-                    GByte* pabyDataTagsEnd = m_pabyDataCur + nTagsSize;
+                    const GByte* pabyDataTagsEnd = m_pabyDataCur + nTagsSize;
                     while( m_pabyDataCur < pabyDataTagsEnd )
                     {
                         unsigned int nKeyIdx = 0;
@@ -1279,7 +1278,7 @@ OGRFeature* OGRMVTLayer::GetNextRawFeature()
                 {
                     unsigned int nGeometrySize = 0;
                     READ_SIZE(m_pabyDataCur, pabyDataFeatureEnd, nGeometrySize);
-                    GByte* pabyDataGeometryEnd = m_pabyDataCur + nGeometrySize;
+                    const GByte* pabyDataGeometryEnd = m_pabyDataCur + nGeometrySize;
                     OGRGeometry* poGeom =
                         ParseGeometry(nGeomType, pabyDataGeometryEnd);
                     if( poGeom )
@@ -1930,11 +1929,11 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
 
     // The GPB macros assume that the buffer is nul terminated,
     // which is the case
-    GByte* pabyData = reinterpret_cast<GByte*>(poOpenInfo->pabyHeader);
-    GByte* const pabyDataStart = pabyData;
+    const GByte* pabyData = reinterpret_cast<GByte*>(poOpenInfo->pabyHeader);
+    const GByte* const pabyDataStart = pabyData;
     const GByte* pabyLayerStart;
-    GByte* const pabyDataLimit = pabyData + poOpenInfo->nHeaderBytes;
-    GByte* pabyLayerEnd = pabyDataLimit;
+    const GByte* const pabyDataLimit = pabyData + poOpenInfo->nHeaderBytes;
+    const GByte* pabyLayerEnd = pabyDataLimit;
     int nKey = 0;
     unsigned int nLayerLength = 0;
     bool bLayerNameFound = false;
@@ -1996,8 +1995,8 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 }
                 bFeatureFound = true;
 
-                GByte* const pabyDataFeatureStart = pabyData;
-                GByte* const pabyDataFeatureEnd = pabyDataStart + std::min(
+                const GByte* const pabyDataFeatureStart = pabyData;
+                const GByte* const pabyDataFeatureEnd = pabyDataStart + std::min(
                     static_cast<int>(pabyData + nFeatureLength - pabyDataStart),
                     poOpenInfo->nHeaderBytes);
                 while( pabyData < pabyDataFeatureEnd )
@@ -2022,7 +2021,7 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                             CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
                             return FALSE;
                         }
-                        GByte* const pabyDataTagsEnd = pabyDataStart + std::min(
+                        const GByte* const pabyDataTagsEnd = pabyDataStart + std::min(
                             static_cast<int>(pabyData + nTagsSize - pabyDataStart),
                             poOpenInfo->nHeaderBytes);
                         while( pabyData < pabyDataTagsEnd )
@@ -2051,7 +2050,7 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                             CPLDebug("MVT", "Protobuf error: line %d", __LINE__);
                             return FALSE;
                         }
-                        GByte* const pabyDataGeometryEnd = pabyDataStart +
+                        const GByte* const pabyDataGeometryEnd = pabyDataStart +
                             std::min(static_cast<int>(
                                         pabyData + nGeometrySize - pabyDataStart),
                             poOpenInfo->nHeaderBytes);
@@ -2760,12 +2759,12 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
         VSIFCloseL(fp);
     }
 
-    GByte* pabyData = pabyDataMod;
+    const GByte* pabyData = pabyDataMod;
 
     // First scan to browse through layers
-    GByte* pabyDataLimit = pabyData + nFileSize;
+    const GByte* pabyDataLimit = pabyData + nFileSize;
     int nKey = 0;
-    OGRMVTDataset   *poDS = new OGRMVTDataset(pabyData);
+    OGRMVTDataset   *poDS = new OGRMVTDataset(pabyDataMod);
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_bClip = CPLFetchBool(
         poOpenInfo->papszOpenOptions, "CLIP", poDS->m_bClip);
@@ -2828,8 +2827,8 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             {
                 unsigned int nLayerSize = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nLayerSize);
-                GByte* pabyDataLayer = pabyData;
-                GByte* pabyDataLimitLayer = pabyData + nLayerSize;
+                const GByte* pabyDataLayer = pabyData;
+                const GByte* pabyDataLimitLayer = pabyData + nLayerSize;
                 while( pabyData < pabyDataLimitLayer )
                 {
                     READ_VARINT32(pabyData, pabyDataLimitLayer, nKey);

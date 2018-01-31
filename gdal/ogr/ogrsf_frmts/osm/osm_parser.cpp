@@ -207,7 +207,7 @@ typedef enum
 } BlobType;
 
 static
-bool ReadBlobHeader( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadBlobHeader( const GByte* pabyData, const GByte* pabyDataLimit,
                      unsigned int* pnBlobSize, BlobType* peBlobType )
 {
     *pnBlobSize = 0;
@@ -275,7 +275,7 @@ constexpr int HEADERBBOX_IDX_TOP = 3;
 constexpr int HEADERBBOX_IDX_BOTTOM = 4;
 
 static
-bool ReadHeaderBBox( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadHeaderBBox( const GByte* pabyData, const GByte* pabyDataLimit,
                      OSMContext* psCtxt )
 {
     psCtxt->dfLeft = 0.0;
@@ -349,7 +349,7 @@ constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER = 33;
 constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   = 34;
 
 static
-bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMHeader( const GByte* pabyData, const GByte* pabyDataLimit,
                     OSMContext* psCtxt )
 {
     char* pszTxt = nullptr;
@@ -443,7 +443,7 @@ bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
 constexpr int READSTRINGTABLE_IDX_STRING = 1;
 
 static
-bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadStringTable( const GByte* pabyData, const GByte* pabyDataLimit,
                       OSMContext* psCtxt )
 {
     char* pszStrBuf = (char*)pabyData;
@@ -477,7 +477,7 @@ bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
                 READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
                 panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
-                GByte* pbSaved = &pabyData[nDataLength];
+                GByte* pbSaved = const_cast<GByte*>(&pabyData[nDataLength]);
 
                 pabyData += nDataLength;
 
@@ -565,16 +565,16 @@ constexpr int DENSENODES_IDX_LON       = 9;
 constexpr int DENSENODES_IDX_KEYVALS   = 10;
 
 static
-bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadDenseNodes( const GByte* pabyData, const GByte* pabyDataLimit,
                      OSMContext* psCtxt )
 {
-    GByte* pabyDataIDs = nullptr;
-    GByte* pabyDataIDsLimit = nullptr;
-    GByte* pabyDataLat = nullptr;
-    GByte* pabyDataLon = nullptr;
-    GByte* apabyData[DENSEINFO_IDX_VISIBLE] = {nullptr, nullptr, nullptr,
+    const GByte* pabyDataIDs = nullptr;
+    const GByte* pabyDataIDsLimit = nullptr;
+    const GByte* pabyDataLat = nullptr;
+    const GByte* pabyDataLon = nullptr;
+    const GByte* apabyData[DENSEINFO_IDX_VISIBLE] = {nullptr, nullptr, nullptr,
                                                nullptr, nullptr, nullptr};
-    GByte* pabyDataKeyVal = nullptr;
+    const GByte* pabyDataKeyVal = nullptr;
     unsigned int nMaxTags = 0;
 
     try
@@ -615,7 +615,7 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
 
                 /* Inline reading of DenseInfo structure */
 
-                GByte* pabyDataNewLimit = pabyData + nSize;
+                const GByte* pabyDataNewLimit = pabyData + nSize;
                 while(pabyData < pabyDataNewLimit)
                 {
                     READ_FIELD_KEY(nKey);
@@ -695,11 +695,11 @@ bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
         if( pabyDataIDs != nullptr && pabyDataLat != nullptr &&
             pabyDataLon != nullptr )
         {
-            GByte* pabyDataVersion = apabyData[DENSEINFO_IDX_VERSION - 1];
-            GByte* pabyDataTimeStamp = apabyData[DENSEINFO_IDX_TIMESTAMP - 1];
-            GByte* pabyDataChangeset = apabyData[DENSEINFO_IDX_CHANGESET - 1];
-            GByte* pabyDataUID = apabyData[DENSEINFO_IDX_UID - 1];
-            GByte* pabyDataUserSID = apabyData[DENSEINFO_IDX_USER_SID - 1];
+            const GByte* pabyDataVersion = apabyData[DENSEINFO_IDX_VERSION - 1];
+            const GByte* pabyDataTimeStamp = apabyData[DENSEINFO_IDX_TIMESTAMP - 1];
+            const GByte* pabyDataChangeset = apabyData[DENSEINFO_IDX_CHANGESET - 1];
+            const GByte* pabyDataUID = apabyData[DENSEINFO_IDX_UID - 1];
+            const GByte* pabyDataUserSID = apabyData[DENSEINFO_IDX_USER_SID - 1];
             /* GByte* pabyDataVisible = apabyData[DENSEINFO_IDX_VISIBLE - 1]; */
 
             GIntBig nID = 0;
@@ -841,11 +841,11 @@ constexpr int INFO_IDX_USER_SID  = 5;
 constexpr int INFO_IDX_VISIBLE   = 6;
 
 static
-bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMInfo( const GByte* pabyData, const GByte* pabyDataLimit,
                   OSMInfo* psInfo, OSMContext* psContext ) CPL_NO_INLINE;
 
 static
-bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMInfo( const GByte* pabyData, const GByte* pabyDataLimit,
                   OSMInfo* psInfo, OSMContext* psContext )
 {
     try
@@ -916,7 +916,7 @@ constexpr int NODE_IDX_VALS = 3;
 constexpr int NODE_IDX_INFO = 4;
 
 static
-bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadNode( const GByte* pabyData, const GByte* pabyDataLimit,
                OSMContext* psCtxt )
 {
     OSMNode sNode;
@@ -958,7 +958,7 @@ bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
             else if( nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA) )
             {
                 unsigned int nSize = 0;
-                GByte* pabyDataNewLimit = nullptr;
+                const GByte* pabyDataNewLimit = nullptr;
                 if( sNode.nTags != 0 )
                     THROW_OSM_PARSING_EXCEPTION;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
@@ -1063,7 +1063,7 @@ constexpr int WAY_IDX_INFO = 4;
 constexpr int WAY_IDX_REFS = 8;
 
 static
-bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadWay( const GByte* pabyData, const GByte* pabyDataLimit,
               OSMContext* psCtxt )
 {
     OSMWay sWay;
@@ -1086,7 +1086,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
             else if( nKey == MAKE_KEY(WAY_IDX_KEYS, WT_DATA) )
             {
                 unsigned int nSize = 0;
-                GByte* pabyDataNewLimit = nullptr;
+                const GByte* pabyDataNewLimit = nullptr;
                 if( sWay.nTags != 0 )
                     THROW_OSM_PARSING_EXCEPTION;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
@@ -1155,7 +1155,7 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
             {
                 GIntBig nRefVal = 0;
                 unsigned int nSize = 0;
-                GByte* pabyDataNewLimit = nullptr;
+                const GByte* pabyDataNewLimit = nullptr;
                 if( sWay.nRefs != 0 )
                     THROW_OSM_PARSING_EXCEPTION;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
@@ -1224,7 +1224,7 @@ constexpr int RELATION_IDX_MEMIDS    = 9;
 constexpr int RELATION_IDX_TYPES     = 10;
 
 static
-bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadRelation( const GByte* pabyData, const GByte* pabyDataLimit,
                    OSMContext* psCtxt )
 {
     OSMRelation sRelation;
@@ -1247,7 +1247,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
             else if( nKey == MAKE_KEY(RELATION_IDX_KEYS, WT_DATA) )
             {
                 unsigned int nSize = 0;
-                GByte* pabyDataNewLimit = nullptr;
+                const GByte* pabyDataNewLimit = nullptr;
                 if( sRelation.nTags != 0 )
                     THROW_OSM_PARSING_EXCEPTION;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
@@ -1316,7 +1316,7 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
             else if( nKey == MAKE_KEY(RELATION_IDX_ROLES_SID, WT_DATA) )
             {
                 unsigned int nSize = 0;
-                GByte* pabyDataNewLimit = nullptr;
+                const GByte* pabyDataNewLimit = nullptr;
                 if( sRelation.nMembers != 0 )
                     THROW_OSM_PARSING_EXCEPTION;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
@@ -1428,7 +1428,8 @@ constexpr int PRIMITIVEGROUP_IDX_NODES = 1;
 constexpr int PRIMITIVEGROUP_IDX_RELATIONS = 4;
 // constexpr int PRIMITIVEGROUP_IDX_CHANGESETS = 5;
 
-typedef bool (*PrimitiveFuncType)( GByte* pabyData, GByte* pabyDataLimit,
+typedef bool (*PrimitiveFuncType)( const GByte* pabyData,
+                                   const GByte* pabyDataLimit,
                                    OSMContext* psCtxt );
 
 static const PrimitiveFuncType apfnPrimitives[] =
@@ -1440,7 +1441,7 @@ static const PrimitiveFuncType apfnPrimitives[] =
 };
 
 static
-bool ReadPrimitiveGroup( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadPrimitiveGroup( const GByte* pabyData, const GByte* pabyDataLimit,
                          OSMContext* psCtxt )
 {
     try
@@ -1491,10 +1492,10 @@ constexpr int PRIMITIVEBLOCK_IDX_LAT_OFFSET       = 19;
 constexpr int PRIMITIVEBLOCK_IDX_LON_OFFSET       = 20;
 
 static
-bool ReadPrimitiveBlock( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadPrimitiveBlock( const GByte* pabyData, const GByte* pabyDataLimit,
                          OSMContext* psCtxt )
 {
-    GByte* pabyDataSave = pabyData;
+    const GByte* pabyDataSave = pabyData;
 
     psCtxt->pszStrBuf = nullptr;
     psCtxt->nStrCount = 0;
@@ -1561,7 +1562,7 @@ bool ReadPrimitiveBlock( GByte* pabyData, GByte* pabyDataLimit,
                 // NUL terminated strings.
                 // This trick enable us to keep the strings where there are
                 // in RAM.
-                pbSaveAfterByte = pabyData + nSize;
+                pbSaveAfterByte = const_cast<GByte*>(pabyData + nSize);
                 bSaveAfterByte = *pbSaveAfterByte;
 
                 if( !ReadStringTable(pabyData, pabyData + nSize, psCtxt) )
@@ -1712,9 +1713,9 @@ bool ReadBlob( OSMContext* psCtxt, BlobType eType )
 {
     unsigned int nUncompressedSize = 0;
     bool bRet = true;
-    GByte* pabyData = psCtxt->pabyBlob + psCtxt->nBlobOffset;
-    GByte* pabyLastCheckpointData = pabyData;
-    GByte* pabyDataLimit = psCtxt->pabyBlob + psCtxt->nBlobSize;
+    const GByte* pabyData = psCtxt->pabyBlob + psCtxt->nBlobOffset;
+    const GByte* pabyLastCheckpointData = pabyData;
+    const GByte* pabyDataLimit = psCtxt->pabyBlob + psCtxt->nBlobSize;
 
     try
     {
