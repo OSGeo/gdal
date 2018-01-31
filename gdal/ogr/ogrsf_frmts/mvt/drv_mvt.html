@@ -52,9 +52,11 @@ stiching together geometries for features that overlap several tiles.</p>
 
 <ul>
 <li><i>/path/to/some.pbf</i></li>
+<li><i>MVT:http[s]://path/to/some.pbf</i></li>
 <li><i>/path/to/{Z}</i>: where {Z} is a zoom level between 0 and 30,
 tiles are in /path/to/{Z}/{X}/{Y}.pbf files, and /path/to/metadata.json
 should typically exist.</li>
+<li><i>MVT:http[s]://path/to/{Z]</i></li>
 </ul>
 
 <p>The MVT: prefix may be added before the filename or directory name to help
@@ -148,6 +150,10 @@ Defaults to 1000.</li>
 <lib><b>JSON_FIELD</b>=YES/NO: For tilesets, whether to put all attributes as a
 serialized JSon dictionary.</li>
 </ul>
+
+<pre>
+ogrinfo MVT:https://free.tilehosting.com/data/v3/1 -oo tile_extension="pbf.pict?key=${YOUR_KEY}" --debug on -oo metadata_file="https://free.tilehosting.com/data/v3.json?key=${YOUR_KEY}"
+</pre>
 
 <p>See Also:</p>
 

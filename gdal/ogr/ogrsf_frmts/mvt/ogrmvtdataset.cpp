@@ -29,6 +29,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_json.h"
+#include "cpl_http.h"
 #include "ogr_p.h"
 
 #include "mvtutils.h"
@@ -1417,7 +1418,9 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     SetMetadataItem("ZOOM_LEVEL", CPLSPrintf("%d", m_nZ));
     m_bUseReadDir = CPLTestBool(
         CPLGetConfigOption("MVT_USE_READDIR",
-                    !STARTS_WITH(m_osDirName, "/vsicurl") ? "YES": "NO"));
+                    (!STARTS_WITH(m_osDirName, "/vsicurl") &&
+                     !STARTS_WITH(m_osDirName, "http://") &&
+                     !STARTS_WITH(m_osDirName, "https://")) ? "YES": "NO"));
     if( m_bUseReadDir )
     {
         m_aosDirContent = VSIReadDirEx(m_osDirName, knMAX_FILES_PER_DIR);
@@ -1871,7 +1874,9 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
                 osMetadataFile = pszMetadataFile;
             }
             if( !osMetadataFile.empty() &&
-                VSIStatL(osMetadataFile, &sStat) == 0 )
+                (STARTS_WITH(osMetadataFile, "http://") ||
+                 STARTS_WITH(osMetadataFile, "https://") ||
+                 VSIStatL(osMetadataFile, &sStat) == 0) )
             {
                 return TRUE;
             }
@@ -2232,6 +2237,67 @@ static void LongLatToSphericalMercator(double* x, double* y)
 }
 
 /************************************************************************/
+/*                          LoadMetadata()                              */
+/************************************************************************/
+
+static bool LoadMetadata(const CPLString& osMetadataFile,
+                         CPLJSONArray& oVectorLayers,
+                         CPLJSONArray& oTileStatLayers,
+                         CPLJSONObject& oBounds,
+                         const CPLString& osMetadataMemFilename)
+
+{
+    CPLJSONDocument oDoc;
+
+    bool bLoadOK;
+    if( STARTS_WITH(osMetadataFile, "http://") ||
+        STARTS_WITH(osMetadataFile, "https://") )
+    {
+        bLoadOK = oDoc.LoadUrl(osMetadataFile, nullptr);
+    }
+    else
+    {
+        bLoadOK = oDoc.Load(osMetadataFile);
+    }
+    if( !bLoadOK )
+        return false;
+
+    oVectorLayers.Deinit();
+    oTileStatLayers.Deinit();
+
+    CPLJSONObject oJson = oDoc.GetRoot().GetObj("json");
+    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::String) )
+    {
+        oVectorLayers =
+            oDoc.GetRoot().GetArray("vector_layers");
+    }
+    else
+    {
+        CPLJSONDocument oJsonDoc;
+        if( !oJsonDoc.LoadMemory(
+                reinterpret_cast<const GByte*>(oJson.ToString().c_str())) )
+        {
+            return false;
+        }
+
+        oVectorLayers =
+            oJsonDoc.GetRoot().GetArray("vector_layers");
+
+        oTileStatLayers =
+            oJsonDoc.GetRoot().GetArray("tilestats/layers");
+    }
+
+    oBounds = oDoc.GetRoot().GetObj("bounds");
+
+    if( !osMetadataMemFilename.empty() )
+    {
+        oDoc.Save(osMetadataMemFilename);
+    }
+
+    return oVectorLayers.IsValid();
+}
+
+/************************************************************************/
 /*                         OpenDirectory()                              */
 /************************************************************************/
 
@@ -2261,7 +2327,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
     bool bJsonField = CPLFetchBool(
         poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
-    if( osMetadataFile.empty() || VSIStatL(osMetadataFile, &sStat) != 0 )
+    if( (osMetadataFile.empty() || VSIStatL(osMetadataFile, &sStat) != 0) &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
+        !STARTS_WITH(poOpenInfo->pszFilename, "https://") )
     {
         // If we don't have a metadata file, iterate through all tiles to
         // establish the layer definitions.
@@ -2414,39 +2482,23 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
         return poDS;
     }
 
-    CPLJSONDocument oDoc;
-    if( !oDoc.Load(osMetadataFile) )
-        return nullptr;
+    CPLJSONArray oVectorLayers;
+    CPLJSONArray oTileStatLayers;
+    CPLJSONObject oBounds;
 
-    CPLJSONObject oJson = oDoc.GetRoot().GetObj("json");
-    if( !(oJson.IsValid() && oJson.GetType() == CPLJSONObject::String) )
-        return nullptr;
+    OGRMVTDataset   *poDS = new OGRMVTDataset(nullptr);
 
-    CPLJSONDocument oJsonDoc;
-    if( !oJsonDoc.LoadMemory(
-            reinterpret_cast<const GByte*>(oJson.ToString().c_str())) )
+    CPLString osMetadataMemFilename =
+        CPLSPrintf("/vsimem/%p_metadata.json", poDS);
+    if( !LoadMetadata(osMetadataFile, oVectorLayers, oTileStatLayers, oBounds,
+                      osMetadataMemFilename) )
     {
+        delete poDS;
         return nullptr;
     }
 
-    CPLJSONArray oVectorLayers;
-    oVectorLayers.Deinit();
-
-    CPLJSONArray oTileStatLayers;
-    oTileStatLayers.Deinit();
-
-    oVectorLayers =
-        oJsonDoc.GetRoot().GetArray("vector_layers");
-
-    oTileStatLayers =
-        oJsonDoc.GetRoot().GetArray("tilestats/layers");
-
-    if( !oVectorLayers.IsValid() )
-        return nullptr;
-
     OGREnvelope sExtent;
     bool bExtentValid = false;
-    CPLJSONObject oBounds = oDoc.GetRoot().GetObj("bounds");
     if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::String )
     {
         CPLStringList aosTokens(
@@ -2466,15 +2518,25 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MaxY = dfY1;
         }
     }
+    else if( oBounds.IsValid() && oBounds.GetType() == CPLJSONObject::Array )
+    {
+        // Cf https://free.tilehosting.com/data/v3.json?key=THE_KEY
+        CPLJSONArray oBoundArray = oBounds.ToArray();
+        if( oBoundArray.Size() == 4 )
+        {
+            bExtentValid = true;
+            sExtent.MinX = oBoundArray[0].ToDouble();
+            sExtent.MinY = oBoundArray[1].ToDouble();
+            sExtent.MaxX = oBoundArray[2].ToDouble();
+            sExtent.MaxY = oBoundArray[3].ToDouble();
+        }
+    }
 
-    OGRMVTDataset   *poDS = new OGRMVTDataset(nullptr);
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->m_bClip = CPLFetchBool(
         poOpenInfo->papszOpenOptions, "CLIP", poDS->m_bClip);
     poDS->m_osTileExtension = osTileExtension;
-    poDS->m_osMetadataMemFilename =
-        CPLSPrintf("/vsimem/%p_metadata.json", poDS);
-    oDoc.Save(poDS->m_osMetadataMemFilename);
+    poDS->m_osMetadataMemFilename = osMetadataMemFilename;
     for( int i = 0; i < oVectorLayers.Size(); i++ )
     {
         CPLJSONObject oId = oVectorLayers[i].GetObj("id");
@@ -2519,10 +2581,17 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
     if( STARTS_WITH_CI(poOpenInfo->pszFilename, "MVT:") )
     {
         osFilename = poOpenInfo->pszFilename + strlen("MVT:");
+        if( STARTS_WITH(osFilename, "/vsigzip/http://") ||
+            STARTS_WITH(osFilename, "/vsigzip/https://") )
+        {
+            osFilename = osFilename.substr(strlen("/vsigzip/"));
+        }
 
+        // If the filename has no extension and is a directory, consider
+        // we open a directory
         VSIStatBufL sStat;
         if( !STARTS_WITH(osFilename, "/vsigzip/") &&
-            EQUAL( CPLGetExtension(CPLGetFilename(osFilename)), "") &&
+            strchr((CPLGetFilename(osFilename)), '.') == nullptr &&
             VSIStatL(osFilename, &sStat) == 0 &&
             VSI_ISDIR(sStat.st_mode) )
         {
@@ -2534,7 +2603,11 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             return poDS;
         }
 
-        if( STARTS_WITH(osFilename, "/vsicurl")  &&
+        // For a network resource, if the filename is an integer, consider it
+        // is a directory and open as such
+        if( (STARTS_WITH(osFilename, "/vsicurl") ||
+             STARTS_WITH(osFilename, "http://") ||
+             STARTS_WITH(osFilename, "https://")) &&
              CPLGetValueType(CPLGetFilename(osFilename)) ==
                 CPL_VALUE_INTEGER )
         {
@@ -2546,18 +2619,22 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             return poDS;
         }
 
-        CPLConfigOptionSetter oSetter(
-            "CPL_VSIL_GZIP_WRITE_PROPERTIES", "NO", false);
-        fp = VSIFOpenL(osFilename, "rb");
-        // Is it a gzipped file ?
-        if( fp && !STARTS_WITH(osFilename, "/vsigzip/") )
+        if( !STARTS_WITH(osFilename, "http://") &&
+            !STARTS_WITH(osFilename, "https://") )
         {
-            GByte abyHeaderBytes[2] = {0, 0 };
-            VSIFReadL( abyHeaderBytes, 2, 1, fp );
-            if( abyHeaderBytes[0] == 0x1F && abyHeaderBytes[1] == 0x8B )
+            CPLConfigOptionSetter oSetter(
+                "CPL_VSIL_GZIP_WRITE_PROPERTIES", "NO", false);
+            fp = VSIFOpenL(osFilename, "rb");
+            // Is it a gzipped file ?
+            if( fp && !STARTS_WITH(osFilename, "/vsigzip/") )
             {
-                VSIFCloseL(fp);
-                fp = VSIFOpenL( ("/vsigzip/" + osFilename).c_str(), "rb");
+                GByte abyHeaderBytes[2] = {0, 0 };
+                VSIFReadL( abyHeaderBytes, 2, 1, fp );
+                if( abyHeaderBytes[0] == 0x1F && abyHeaderBytes[1] == 0x8B )
+                {
+                    VSIFCloseL(fp);
+                    fp = VSIFOpenL( ("/vsigzip/" + osFilename).c_str(), "rb");
+                }
             }
         }
     }
@@ -2581,8 +2658,12 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
     {
         poOpenInfo->fpL = nullptr;
     }
-    if( fp == nullptr )
+    if( fp == nullptr &&
+        !STARTS_WITH(osFilename, "http://") &&
+        !STARTS_WITH(osFilename, "https://") )
+    {
         return nullptr;
+    }
 
     CPLString osY = CPLGetBasename(osFilename);
     CPLString osX = CPLGetBasename(CPLGetPath(osFilename));
@@ -2621,25 +2702,65 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
         osZ = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "Z");
     }
 
-    // Check file size and ingest into memory
-    VSIFSeekL(fp, 0, SEEK_END);
-    vsi_l_offset nFileSizeL = VSIFTellL(fp);
-    if( nFileSizeL > 10 * 1024 * 1024 )
+    GByte* pabyDataMod;
+    size_t nFileSize;
+
+    if( fp == nullptr )
     {
-        VSIFCloseL(fp);
-        return nullptr;
+        CPLHTTPResult* psResult = CPLHTTPFetch( osFilename, nullptr );
+        if( psResult == nullptr )
+            return nullptr;
+        pabyDataMod = psResult->pabyData;
+        if( pabyDataMod == nullptr )
+        {
+            CPLHTTPDestroyResult(psResult);
+            return nullptr;
+        }
+        nFileSize = psResult->nDataLen;
+        psResult->pabyData = nullptr;
+        CPLHTTPDestroyResult(psResult);
+
+        // zlib decompress if needed
+        if( nFileSize > 2 && pabyDataMod[0] == 0x1F &&
+            pabyDataMod[1] == 0x8B )
+        {
+            size_t nOutBytes = 0;
+            void* pUncompressed = CPLZLibInflate( pabyDataMod, nFileSize,
+                                                  nullptr, 0,
+                                                  &nOutBytes );
+            CPLFree(pabyDataMod);
+            if( pUncompressed == nullptr )
+            {
+                return nullptr;
+            }
+            pabyDataMod = static_cast<GByte*>(pUncompressed);
+            nFileSize = nOutBytes;
+        }
     }
-    size_t nFileSize = static_cast<size_t>(nFileSizeL);
-    GByte* pabyData = static_cast<GByte*>(VSI_MALLOC_VERBOSE(nFileSize+1));
-    if( pabyData == nullptr )
+    else
     {
+        // Check file size and ingest into memory
+        VSIFSeekL(fp, 0, SEEK_END);
+        vsi_l_offset nFileSizeL = VSIFTellL(fp);
+        if( nFileSizeL > 10 * 1024 * 1024 )
+        {
+            VSIFCloseL(fp);
+            return nullptr;
+        }
+        nFileSize = static_cast<size_t>(nFileSizeL);
+        pabyDataMod = static_cast<GByte*>(VSI_MALLOC_VERBOSE(nFileSize+1));
+        if( pabyDataMod == nullptr )
+        {
+            VSIFCloseL(fp);
+            return nullptr;
+        }
+        VSIFSeekL(fp, 0, SEEK_SET);
+        VSIFReadL(pabyDataMod, 1, nFileSize, fp);
+        pabyDataMod[nFileSize] = 0;
         VSIFCloseL(fp);
-        return nullptr;
     }
-    VSIFSeekL(fp, 0, SEEK_SET);
-    VSIFReadL(pabyData, 1, nFileSize, fp);
-    pabyData[nFileSize] = 0;
-    VSIFCloseL(fp);
+
+    GByte* pabyData = pabyDataMod;
 
     // First scan to browse through layers
     GByte* pabyDataLimit = pabyData + nFileSize;
@@ -2693,24 +2814,9 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( !osMetadataFile.empty() )
     {
-        CPLJSONDocument oDoc;
-        if( oDoc.Load(osMetadataFile) )
-        {
-            CPLJSONObject oJson = oDoc.GetRoot().GetObj("json");
-            if( oJson.IsValid() && oJson.GetType() == CPLJSONObject::String )
-            {
-                CPLJSONDocument oJsonDoc;
-                if( oJsonDoc.LoadMemory(
-                    reinterpret_cast<const GByte*>(oJson.ToString().c_str())) )
-                {
-                    oVectorLayers =
-                        oJsonDoc.GetRoot().GetArray("vector_layers");
-
-                    oTileStatLayers =
-                        oJsonDoc.GetRoot().GetArray("tilestats/layers");
-                }
-            }
-        }
+        CPLJSONObject oBounds;
+        LoadMetadata(osMetadataFile, oVectorLayers, oTileStatLayers, oBounds,
+                     CPLString());
     }
 
     try
