@@ -1574,7 +1574,7 @@ void OGRMVTDirectoryLayer::OpenTile()
                 CPLSPrintf("%d.%s",
                            m_nYIndex, m_poDS->m_osTileExtension.c_str()),
             nullptr);
-        GDALOpenInfo oOpenInfo(("MVT:/vsigzip/" + osFilename).c_str(),
+        GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(),
                                GA_ReadOnly);
         oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
                 "METADATA_FILE",
@@ -1778,7 +1778,7 @@ OGRFeature* OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     const CPLString osFilename = CPLFormFilename(
         CPLFormFilename( m_osDirName, CPLSPrintf("%d", nX), nullptr),
         CPLSPrintf("%d.%s", nY, m_poDS->m_osTileExtension.c_str()), nullptr);
-    GDALOpenInfo oOpenInfo(("MVT:/vsigzip/" + osFilename).c_str(), GA_ReadOnly);
+    GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(), GA_ReadOnly);
     oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
             "METADATA_FILE",
             m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
@@ -2381,7 +2381,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
                     bTryToListDir ? aosSubDirContent[j] :
                         CPLSPrintf("%d.%s", j, osTileExtension.c_str()),
                     nullptr) );
-                GDALOpenInfo oOpenInfo(("MVT:/vsigzip/" + osFilename).c_str(),
+                GDALOpenInfo oOpenInfo(("MVT:" + osFilename).c_str(),
                                GA_ReadOnly);
                 oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
                     "METADATA_FILE", "");
