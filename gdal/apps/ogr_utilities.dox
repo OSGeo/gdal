@@ -458,7 +458,9 @@ This setting should be used along with the -append setting.</dd>
 -append. Contrary to -append, -addfields has the effect of adding, to existing target layers,
 the new fields found in source layers. This option is useful when merging files that have non-strictly
 identical structures.
-This might not work for output formats that don't support adding fields to existing non-empty layers.</dd>
+This might not work for output formats that don't support adding fields to existing non-empty layers.
+Note that if you plan to use -addfields, you may need to combine it with -forceNullable,
+including for the initial import.</dd>
 <dt> <b>-relaxedFieldNameMatch</b>:</dt><dd>(starting with GDAL 1.11) Do field name matching between
 source and existing target layer in a more relaxed way if the target driver has an implementation for it.</dd>
 [-relaxedFieldNameMatch] [-forceNullable]
