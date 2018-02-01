@@ -929,6 +929,33 @@ def ogr_kml_read_duplicate_folder_name():
     return 'success'
 
 ###############################################################################
+# Test reading KML with a placemark in root document, and a subfolder (#7221)
+
+def ogr_kml_read_placemark_in_root_and_subfolder():
+
+    if not ogrtest.have_read_kml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
+    lyr = ds.GetLayerByName('TopLevel')
+    if lyr is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('SubFolder1')
+    if lyr is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Build tests runner
 
 gdaltest_list = [
@@ -958,6 +985,7 @@ gdaltest_list = [
     ogr_kml_read_junk_content_after_valid_doc,
     ogr_kml_read_placemark_with_kml_prefix,
     ogr_kml_read_duplicate_folder_name,
+    ogr_kml_read_placemark_in_root_and_subfolder,
     ogr_kml_cleanup ]
 
 if __name__ == '__main__':

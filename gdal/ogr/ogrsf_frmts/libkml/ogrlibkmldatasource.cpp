@@ -726,7 +726,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
  and add it to the layer array.
 
  Args:          pszLayerName    the name of the layer
-                poSpatialRef    the spacial Refrance for the layer
                 eGType          the layers geometry type
                 poOgrDS         pointer to the datasource the layer is in
                 poKmlRoot       pointer to the root kml element of the layer
@@ -741,7 +740,6 @@ SchemaPtr OGRLIBKMLDataSource::FindSchema( const char *pszSchemaUrl )
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     const char *pszLayerName,
-    OGRSpatialReference * poSpatialRef,
     OGRwkbGeometryType eGType,
     OGRLIBKMLDataSource * poOgrDS,
     ElementPtr poKmlRoot,
@@ -785,9 +783,6 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
     const int iLayer = nLayers++;
     papoLayers[iLayer] = poOgrLayer;
 
-    /***** check if any features are another layer *****/
-    ParseLayers( poKmlContainer, poSpatialRef );
-
     return poOgrLayer;
 }
 
@@ -804,7 +799,8 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
 
 int OGRLIBKMLDataSource::ParseLayers(
     ContainerPtr poKmlContainer,
-    OGRSpatialReference * poOgrSRS )
+    OGRSpatialReference * poOgrSRS,
+    bool bRecurse)
 {
     /***** if container is null just bail now *****/
     if( !poKmlContainer )
@@ -824,6 +820,8 @@ int OGRLIBKMLDataSource::ParseLayers(
 
         if( poKmlFeat->IsA( kmldom::Type_Container ) )
         {
+          if( bRecurse )
+          {
             /***** see if the container has a name *****/
 
             std::string oKmlFeatName;
@@ -859,9 +857,13 @@ int OGRLIBKMLDataSource::ParseLayers(
             /***** create the layer *****/
 
             AddLayer( oKmlFeatName.c_str(),
-                      poOgrSRS, wkbUnknown, this,
+                      wkbUnknown, this,
                       nullptr, AsContainer( poKmlFeat ), "", FALSE, bUpdate,
                       static_cast<int>(nKmlFeatures) );
+
+            /***** check if any features are another layer *****/
+            ParseLayers( AsContainer(poKmlFeat), poOgrSRS, true );
+          }
         }
         else
         {
@@ -1033,10 +1035,10 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
     ParseStyles( AsDocument( m_poKmlDSContainer ), &m_poStyleTable );
 
     /***** parse for layers *****/
-    int nPlacemarks = ParseLayers( m_poKmlDSContainer, poOgrSRS );
+    int nPlacemarks = ParseLayers( m_poKmlDSContainer, poOgrSRS, false );
 
     /***** if there is placemarks in the root its a layer *****/
-    if( nPlacemarks && !nLayers )
+    if( nPlacemarks )
     {
       std::string layername_default( CPLGetBasename( pszFilename ) );
 
@@ -1046,10 +1048,12 @@ int OGRLIBKMLDataSource::OpenKml( const char *pszFilename, int bUpdateIn )
       }
 
       AddLayer( layername_default.c_str(),
-                poOgrSRS, wkbUnknown,
+                wkbUnknown,
                 this, poKmlRoot, m_poKmlDSContainer, pszFilename, FALSE,
                 bUpdateIn, 1 );
     }
+
+    ParseLayers( m_poKmlDSContainer, poOgrSRS, true );
 
     delete poOgrSRS;
 
@@ -1216,11 +1220,14 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
 
                 /***** create the layer *****/
                 AddLayer( CPLGetBasename
-                          ( poKmlHref->get_path().c_str() ), poOgrSRS,
+                          ( poKmlHref->get_path().c_str() ),
                            wkbUnknown, this, poKmlLyrRoot, poKmlLyrContainer,
                            poKmlHref->get_path().c_str(), FALSE, bUpdateIn,
                            static_cast<int>(nKmlFeatures) );
-            }
+
+                /***** check if any features are another layer *****/
+                ParseLayers( poKmlLyrContainer, poOgrSRS, true );
+           }
         }
 
         /***** cleanup *****/
@@ -1245,10 +1252,10 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
         ParseStyles( AsDocument( poKmlContainer ), &m_poStyleTable );
 
         /***** parse for layers *****/
-       const int nPlacemarks = ParseLayers( poKmlContainer, poOgrSRS );
+       const int nPlacemarks = ParseLayers( poKmlContainer, poOgrSRS, false );
 
         /***** if there is placemarks in the root its a layer *****/
-        if( nPlacemarks && !nLayers )
+        if( nPlacemarks )
         {
             std::string layername_default( CPLGetBasename( pszFilename ) );
 
@@ -1258,10 +1265,12 @@ int OGRLIBKMLDataSource::OpenKmz( const char *pszFilename, int bUpdateIn )
             }
 
             AddLayer( layername_default.c_str(),
-                      poOgrSRS, wkbUnknown,
+                      wkbUnknown,
                       this, poKmlDocKmlRoot, poKmlContainer,
                       pszFilename, FALSE, bUpdateIn, 1 );
         }
+
+        ParseLayers( poKmlContainer, poOgrSRS, true );
     }
 
     /***** read the style table if it has one *****/
@@ -1378,9 +1387,12 @@ int OGRLIBKMLDataSource::OpenDir( const char *pszFilename, int bUpdateIn )
 
         /***** create the layer *****/
         AddLayer( CPLGetBasename( osFilePath.c_str() ),
-                  poOgrSRS, wkbUnknown,
+                  wkbUnknown,
                   this, poKmlRoot, poKmlContainer, osFilePath.c_str(), FALSE,
                   bUpdateIn, nFiles );
+
+        /***** check if any features are another layer *****/
+        ParseLayers( poKmlContainer, poOgrSRS, true );
     }
 
     delete poOgrSRS;
@@ -2092,7 +2104,7 @@ OGRErr OGRLIBKMLDataSource::DeleteLayer( int iLayer )
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
     const char *pszLayerName,
-    OGRSpatialReference * poOgrSRS,
+    OGRSpatialReference *,
     OGRwkbGeometryType eGType,
     char **papszOptions )
 {
@@ -2111,7 +2123,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
     /***** create the layer *****/
     OGRLIBKMLLayer *poOgrLayer =
-        AddLayer( pszLayerName, poOgrSRS, eGType, this,
+        AddLayer( pszLayerName, eGType, this,
                   nullptr, poKmlLayerContainer, "", TRUE, bUpdate, 1 );
 
     /***** add the layer name as a <Name> *****/
@@ -2139,7 +2151,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKml(
 
 OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     const char *pszLayerName,
-    OGRSpatialReference * poOgrSRS,
+    OGRSpatialReference *,
     OGRwkbGeometryType eGType,
     char ** /* papszOptions */ )
 {
@@ -2176,7 +2188,7 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::CreateLayerKmz(
     }
 
     OGRLIBKMLLayer *poOgrLayer =
-        AddLayer( pszLayerName, poOgrSRS, eGType, this,
+        AddLayer( pszLayerName, eGType, this,
                   nullptr, poKmlDocument,
                   CPLFormFilename( nullptr, pszLayerName, ".kml" ),
                   TRUE, bUpdate, 1 );
