@@ -581,6 +581,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
          SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
+         addFields = False,
+         forceNullable = False,
          spatFilter = None, spatSRS = None,
          datasetCreationOptions = None,
          layerCreationOptions = None,
@@ -605,6 +607,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
           where --- WHERE clause to apply to source layer(s)
           selectFields --- list of fields to select
+          addFields --- whether to add new fields found in source layers (to be used with accessMode == 'append')
+          forceNullable --- whether to drop NOT NULL constraints on newly created fields
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
           spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
@@ -649,6 +653,10 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
                 new_options += ['-overwrite']
             else:
                 raise Exception('unhandled accessMode')
+        if addFields:
+            new_options += ['-addfields']
+        if forceNullable:
+            new_options += ['-forceNullable']
         if selectFields is not None:
             val = ''
             for item in selectFields:
