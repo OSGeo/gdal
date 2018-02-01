@@ -238,7 +238,7 @@ CPLErr AirSARRasterBand::IReadBlock( int /* nBlockXOff */,
             pafLine[iPixel*2 + 0] = (float)(SQRT_2 * (m[M13] - m[M23]));
 
             // imaginary
-            pafLine[iPixel*2 + 1] = (float)(SQRT_2 * (m[M23] - m[M14]));
+            pafLine[iPixel*2 + 1] = (float)(SQRT_2 * (m[M24] - m[M14]));
         }
     }
     else if( nBand == 6 ) /* C33 */
