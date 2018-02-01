@@ -408,6 +408,37 @@ def test_ogr2ogr_lib_18():
 
     return 'success'
 
+###############################################################################
+# Test -addFields + -select
+
+def test_ogr2ogr_lib_19():
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    lyr = src_ds.CreateLayer('layer')
+    lyr.CreateField(ogr.FieldDefn('foo'))
+    lyr.CreateField(ogr.FieldDefn('bar'))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    f['bar'] = 'foo'
+    lyr.CreateFeature(f)
+
+    ds = gdal.VectorTranslate('', src_ds, format = 'Memory', selectFields = ['foo'])
+    gdal.VectorTranslate(ds, src_ds, accessMode = 'append', addFields = True, selectFields = ['bar'])
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f['foo'] != 'bar' or f.IsFieldSet('bar'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f['bar'] != 'foo' or f.IsFieldSet('foo'):
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds = None
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -426,7 +457,8 @@ gdaltest_list = [
     test_ogr2ogr_lib_15,
     test_ogr2ogr_lib_16,
     test_ogr2ogr_lib_17,
-    test_ogr2ogr_lib_18
+    test_ogr2ogr_lib_18,
+    test_ogr2ogr_lib_19,
     ]
 
 if __name__ == '__main__':
