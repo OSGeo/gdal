@@ -2046,12 +2046,12 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                   fSecond );
     else  // Default format.
     {
-        if( CPLIsNan(fSecond) )
+        if( CPLIsNan(fSecond) || fSecond < 0.0  || fSecond > 62.0 )
         {
             fSecond = 0.0;
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "OGRFeatureFormatDateTimeBuffer: fSecond is NaN.  "
-                     "Forcing to 0.0.");
+                     "OGRFeatureFormatDateTimeBuffer: fSecond is invalid.  "
+                     "Forcing '%f' to 0.0.", fSecond);
         }
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%04d/%02d/%02d %02d:%02d:%02d",
