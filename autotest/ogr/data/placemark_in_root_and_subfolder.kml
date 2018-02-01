@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>TopLevel</name>
+    <Placemark>
+      <name></name>
+      <LineString>
+        <altitudeMode>clampToGround</altitudeMode>
+        <coordinates>2,49 3,50</coordinates>
+      </LineString>
+    </Placemark>
+    <Folder>
+      <name>SubFolder1</name>
+      <Placemark>
+        <name></name>
+        <LineString>
+          <altitudeMode>clampToGround</altitudeMode>
+          <coordinates>3,50 4,51</coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+  </Document>
+</kml>

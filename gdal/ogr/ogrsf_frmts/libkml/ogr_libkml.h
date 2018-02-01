@@ -262,7 +262,8 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      Updated() { bUpdated = true; }
 
     int                       ParseLayers( kmldom::ContainerPtr poKmlContainer,
-                                           OGRSpatialReference *poOgrSRS );
+                                           OGRSpatialReference *poOgrSRS,
+                                           bool bRecurse );
     kmldom::SchemaPtr         FindSchema( const char *pszSchemaUrl);
 
   private:
@@ -306,7 +307,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      SetStyleTable2Kmz( OGRStyleTable * poStyleTable );
 
     OGRLIBKMLLayer           *AddLayer( const char *pszLayerName,
-                                        OGRSpatialReference * poSpatialRef,
                                         OGRwkbGeometryType eGType,
                                         OGRLIBKMLDataSource * poOgrDS,
                                         kmldom::ElementPtr poKmlRoot,
