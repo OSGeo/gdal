@@ -38,6 +38,7 @@ cd ..
 cd ogr
 python ogr_pgeo.py
 mv ogr_pgeo.* disabled
+mv ogr_mongodb.* disabled
 cd ..
 # Run all the Python autotests
 GDAL_SKIP="JP2ECW ECW" python run_all.py
@@ -51,6 +52,7 @@ cd ..
 
 git checkout ogr/ogr_fgdb.py
 git checkout ogr/ogr_pgeo.py
+git checkout ogr/ogr_mongodb.py
 if test `git diff | wc -l` != "0"; then
     echo "Files have been modified duing testsuite run:"
     git diff
