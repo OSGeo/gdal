@@ -1588,30 +1588,32 @@ GDALRDADataset::GetTiles(
                 if( poTileDS == nullptr )
                 {
                     VSIUnlink(osTmpMemFile);
-                    continue;
                 }
-                poTileDS->MarkSuppressOnClose();
-                if( poTileDS->GetRasterCount() != GetRasterCount() ||
-                    poTileDS->GetRasterXSize() != m_nTileXSize ||
-                    poTileDS->GetRasterYSize() != m_nTileYSize )
+                else
                 {
-                    continue;
-                }
-                oResult[nOutIdx] = ds;
-                const auto nKey = MakeKeyCache(nTileX, nTileY);
-                GetTileCache()->insert(nKey, ds);
+                    poTileDS->MarkSuppressOnClose();
+                    if( poTileDS->GetRasterCount() == GetRasterCount() &&
+                        poTileDS->GetRasterXSize() == m_nTileXSize &&
+                        poTileDS->GetRasterYSize() == m_nTileYSize )
+                    {
+                        oResult[nOutIdx] = ds;
+                        const auto nKey = MakeKeyCache(nTileX, nTileY);
+                        GetTileCache()->insert(nKey, ds);
 
-                CPLString osSubPath;
-                osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                        static_cast<GIntBig>(nTileX));
-                osSubPath += "/";
-                osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                        static_cast<GIntBig>(nTileY));
-                osSubPath += ".";
-                osSubPath += m_osNativeTileFileFormat;
-                CPLString osCachedFilename(
-                    GetDatasetCacheDir() + "/" + osSubPath);
-                CacheFile( osCachedFilename, pabyData, pasResults[i]->nDataLen);
+                        CPLString osSubPath;
+                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                static_cast<GIntBig>(nTileX));
+                        osSubPath += "/";
+                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                static_cast<GIntBig>(nTileY));
+                        osSubPath += ".";
+                        osSubPath += m_osNativeTileFileFormat;
+                        CPLString osCachedFilename(
+                            GetDatasetCacheDir() + "/" + osSubPath);
+                        CacheFile( osCachedFilename, pabyData,
+                                   pasResults[i]->nDataLen);
+                    }
+                }
             }
             CPLHTTPDestroyResult(pasResults[i]);
         }
