@@ -1135,9 +1135,12 @@ AC_ARG_WITH(liblzma,[  --with-liblzma[=ARG]       Include liblzma support (ARG=y
 
 if test "$with_liblzma" = "yes" ; then
   AC_CHECK_LIB(lzma,lzma_code,LIBLZMA_SETTING=yes,LIBLZMA_SETTING=no,)
+  AC_CHECK_HEADERS(lzma.h)
 
-  if test "$LIBLZMA_SETTING" = "yes" ; then
+  if test "$LIBLZMA_SETTING" = "yes" -a "$ac_cv_header_lzma_h" = "yes" ; then
     LIBS="-llzma $LIBS"
+  else
+    LIBLZMA_SETTING=no
   fi
 else
     LIBLZMA_SETTING=no

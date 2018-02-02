@@ -22643,9 +22643,23 @@ else
   LIBLZMA_SETTING=no
 fi
 
+  for ac_header in lzma.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "lzma.h" "ac_cv_header_lzma_h" "$ac_includes_default"
+if test "x$ac_cv_header_lzma_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LZMA_H 1
+_ACEOF
 
-  if test "$LIBLZMA_SETTING" = "yes" ; then
+fi
+
+done
+
+
+  if test "$LIBLZMA_SETTING" = "yes" -a "$ac_cv_header_lzma_h" = "yes" ; then
     LIBS="-llzma $LIBS"
+  else
+    LIBLZMA_SETTING=no
   fi
 else
     LIBLZMA_SETTING=no
