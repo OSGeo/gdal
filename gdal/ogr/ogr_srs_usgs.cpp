@@ -466,6 +466,9 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                     }
                 }
 
+                if( iZone < -60 || iZone > 60 )
+                    return OGRERR_CORRUPT_DATA;
+
                 if( iZone < 0 )
                 {
                     iZone = -iZone;
