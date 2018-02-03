@@ -91,6 +91,7 @@ class OGRJMLLayer : public OGRLayer
     bool               bSchemaFinished;
     int                nJCSGMLInputTemplateDepth;
     int                nCollectionElementDepth;
+    int                nFeatureCollectionDepth;
     CPLString          osCollectionElement;
     int                nFeatureElementDepth;
     CPLString          osFeatureElement;
@@ -102,6 +103,7 @@ class OGRJMLLayer : public OGRLayer
     int                nAttributeElementDepth;
     int                iAttr;
     int                iRGBField;
+    CPLString          osSRSName;
 
     OGRJMLColumn  oCurColumn;
     std::vector<OGRJMLColumn> aoColumns;
