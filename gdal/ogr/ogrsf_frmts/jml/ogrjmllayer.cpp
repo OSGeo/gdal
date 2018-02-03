@@ -699,7 +699,7 @@ void OGRJMLLayer::startElementLoadSchemaCbk( const char *pszName,
         bSchemaFinished = true;
     }
     else if( nFeatureCollectionDepth >= 0 &&
-             currentDepth == nFeatureCollectionDepth + 1 &&
+             currentDepth >= nFeatureCollectionDepth + 1 &&
              osFeatureElement.compare(pszName) == 0 )
     {
         bSchemaFinished = true;

@@ -179,7 +179,7 @@ GDALDataset* OGRJMLDataset::Create( const char *pszFilename,
 /************************************************************************/
 
 OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
-                                        OGRSpatialReference * /* poSRS */,
+                                        OGRSpatialReference * poSRS,
                                         OGRwkbGeometryType /* eType */,
                                         char ** papszOptions )
 {
@@ -192,7 +192,7 @@ OGRLayer * OGRJMLDataset::ICreateLayer( const char * pszLayerName,
         CSLFetchNameValueDef(papszOptions, "CREATE_OGR_STYLE_FIELD", "NO"));
     bool bClassicGML = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "CLASSIC_GML", "NO"));
-    poLayer = new OGRJMLWriterLayer( pszLayerName, this, fp,
+    poLayer = new OGRJMLWriterLayer( pszLayerName, poSRS, this, fp,
                                      bAddRGBField, bAddOGRStyleField,
                                      bClassicGML);
 
