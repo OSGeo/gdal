@@ -184,6 +184,8 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
                 TextRecode( pszValue ).c_str() ).c_str() );
 
             poFeature->SetField( "RawCodeValues", papszRawCodeValues );
+
+            CSLDestroy(papszRawCodeValues);
         }
         break;
     }
@@ -3204,7 +3206,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
     if( !poDS->InlineBlocks() && bHasAttribs &&
         poFeatureDefn->GetFieldIndex( "BlockAttributes" ) != -1 )
     {
-        papszAttribs = new char*[apoAttribs.size() + 1];
+        papszAttribs = static_cast<char**>(
+            CPLCalloc(apoAttribs.size() + 1, sizeof(char**)));
         int iIndex = 0;
 
         for( auto oIt = apoAttribs.begin(); oIt != apoAttribs.end(); ++oIt )
@@ -3213,13 +3216,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             osAttribString += " ";
             osAttribString += (*oIt)->GetFieldAsString( "Text" );
 
-            papszAttribs[iIndex] = new char[osAttribString.length() + 1];
-            CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
-                osAttribString.length() + 1 );
+            papszAttribs[iIndex] = VSIStrdup(osAttribString);
 
             iIndex++;
         }
-        papszAttribs[iIndex] = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3249,6 +3249,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         if( apoPendingFeatures.size() > 100000 )
             break;
     }
+
+    CSLDestroy(papszAttribs);
 
     // The block geometries were appended to apoPendingFeatures
     delete poTemplateFeature;
