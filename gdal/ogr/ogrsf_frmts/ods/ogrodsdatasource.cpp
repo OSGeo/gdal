@@ -480,8 +480,10 @@ static const char* GetAttributeValue(const char **ppszAttr,
 /************************************************************************/
 
 OGRFieldType OGRODSDataSource::GetOGRFieldType(const char* pszValue,
-                                               const char* pszValueType)
+                                               const char* pszValueType,
+                                               OGRFieldSubType& eSubType)
 {
+    eSubType = OFSTNone;
     if (!bAutodetectTypes || pszValueType == nullptr)
         return OFTString;
     else if (strcmp(pszValueType, "string") == 0)
@@ -512,6 +514,11 @@ OGRFieldType OGRODSDataSource::GetOGRFieldType(const char* pszValue,
     else if (strcmp(pszValueType, "time") == 0)
     {
         return OFTTime;
+    }
+    else if (strcmp(pszValueType, "bool") == 0)
+    {
+        eSubType = OFSTBoolean;
+        return OFTInteger;
     }
     else
         return OFTString;
@@ -718,9 +725,12 @@ void OGRODSDataSource::endElementTable( CPL_UNUSED /* in non-DEBUG*/ const char 
             for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
+                OGRFieldSubType eSubType = OFSTNone;
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
-                                                     apoFirstLineTypes[i].c_str());
+                                                     apoFirstLineTypes[i].c_str(),
+                                                     eSubType);
                 OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                oFieldDefn.SetSubType(eSubType);
                 poCurLayer->CreateField(&oFieldDefn);
             }
 
@@ -805,8 +815,22 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         if (pszFormula && STARTS_WITH(pszFormula, "of:="))
         {
             osFormula = pszFormula;
-            if (osValueType.empty())
+            if( osFormula == "of:=TRUE()" )
+            {
+                osValue = "1";
+                osValueType = "bool";
+                osFormula.clear();
+            }
+            else if( osFormula == "of:=FALSE()" )
+            {
+                osValue = "0";
+                osValueType = "bool";
+                osFormula.clear();
+            }
+            else if (osValueType.empty())
+            {
                 osValueType = "formula";
+            }
         }
         else
             osFormula = "";
@@ -935,12 +959,15 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                     if (pszFieldName[0] == '\0')
                         pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                     OGRFieldType eType = OFTString;
+                    OGRFieldSubType eSubType = OFSTNone;
                     if (i < apoCurLineValues.size())
                     {
                         eType = GetOGRFieldType(apoCurLineValues[i].c_str(),
-                                                apoCurLineTypes[i].c_str());
+                                                apoCurLineTypes[i].c_str(),
+                                                eSubType);
                     }
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
             }
@@ -950,10 +977,13 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
+                    OGRFieldSubType eSubType = OFSTNone;
                     OGRFieldType eType = GetOGRFieldType(
                                             apoFirstLineValues[i].c_str(),
-                                            apoFirstLineTypes[i].c_str());
+                                            apoFirstLineTypes[i].c_str(),
+                                            eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
 
@@ -980,10 +1010,13 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", static_cast<int>(i) + 1);
+                    OGRFieldSubType eSubType = OFSTNone;
                     const OGRFieldType eType = GetOGRFieldType(
                         apoCurLineValues[i].c_str(),
-                        apoCurLineTypes[i].c_str() );
+                        apoCurLineTypes[i].c_str(),
+                        eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
             }
@@ -995,12 +1028,15 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                 {
                     if (!apoCurLineValues[i].empty() )
                     {
+                        OGRFieldSubType eValSubType = OFSTNone;
                         const OGRFieldType eValType = GetOGRFieldType(
                             apoCurLineValues[i].c_str(),
-                            apoCurLineTypes[i].c_str());
-                        const OGRFieldType eFieldType =
+                            apoCurLineTypes[i].c_str(),
+                            eValSubType);
+                        OGRFieldDefn* poFieldDefn =
                             poCurLayer->GetLayerDefn()->GetFieldDefn(
-                                static_cast<int>(i))->GetType();
+                                static_cast<int>(i));
+                        const OGRFieldType eFieldType = poFieldDefn->GetType();
                         if (eFieldType == OFTDateTime &&
                             (eValType == OFTDate || eValType == OFTTime) )
                         {
@@ -1039,6 +1075,13 @@ void OGRODSDataSource::endElementRow( CPL_UNUSED /*in non-DEBUG*/ const char * p
                             poCurLayer->AlterFieldDefn(
                                 static_cast<int>(i), &oNewFieldDefn,
                                 ALTER_TYPE_FLAG);
+                        }
+                        else if( eFieldType == OFTInteger &&
+                                 poFieldDefn->GetSubType() == OFSTBoolean &&
+                                 eValType == OFTInteger && 
+                                 eValSubType != OFSTBoolean )
+                        {
+                            poFieldDefn->SetSubType(OFSTNone);
                         }
                     }
                 }
@@ -1559,7 +1602,8 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
         {
             if (poFeature->IsFieldSetAndNotNull(j))
             {
-                const OGRFieldType eType = poFDefn->GetFieldDefn(j)->GetType();
+                OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(j);
+                const OGRFieldType eType = poFieldDefn->GetType();
 
                 if (eType == OFTReal)
                 {
@@ -1571,10 +1615,24 @@ static void WriteLayer(VSILFILE* fp, OGRLayer* poLayer)
                 }
                 else if (eType == OFTInteger)
                 {
-                    VSIFPrintfL(
-                         fp, "<table:table-cell office:value-type=\"float\" "
-                         "office:value=\"%d\"/>\n",
-                         poFeature->GetFieldAsInteger(j));
+                    const int nVal = poFeature->GetFieldAsInteger(j);
+                    if( poFieldDefn->GetSubType() == OFSTBoolean )
+                    {
+                        VSIFPrintfL(
+                            fp, "<table:table-cell "
+                            "table:formula=\"of:=%s()\" "
+                            "office:value-type=\"float\" "
+                            "office:value=\"%d\"/>\n",
+                            nVal ? "TRUE" : "FALSE",
+                            nVal);
+                    }
+                    else
+                    {
+                        VSIFPrintfL(
+                            fp, "<table:table-cell office:value-type=\"float\" "
+                            "office:value=\"%d\"/>\n",
+                            nVal);
+                    }
                 }
                 else if (eType == OFTInteger64)
                 {
