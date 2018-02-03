@@ -636,6 +636,27 @@ def ogr_jml_4():
     ds = None
 
     return 'success'
+
+###############################################################################
+# Test reading SRS
+
+def ogr_jml_read_srs():
+
+    if not gdaltest.jml_read_support:
+        return 'skip'
+
+    ds = ogr.Open( 'data/one_point_srid_4326.jml' )
+    lyr = ds.GetLayer(0)
+    if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -651,6 +672,7 @@ gdaltest_list = [
     ogr_jml_2,
     ogr_jml_3,
     ogr_jml_4,
+    ogr_jml_read_srs,
     ogr_jml_cleanup ]
 
 if __name__ == '__main__':

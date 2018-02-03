@@ -60,6 +60,7 @@ OGRJMLLayer::OGRJMLLayer( const char* pszLayerName,
     bSchemaFinished(false),
     nJCSGMLInputTemplateDepth(0),
     nCollectionElementDepth(0),
+    nFeatureCollectionDepth(0),
     nFeatureElementDepth(0),
     nGeometryElementDepth(0),
     nColumnDepth(0),
@@ -249,17 +250,17 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 
         AddStringToElementValue(">", 1);
     }
-    else if( nCollectionElementDepth > 0 &&
+    else if( nFeatureCollectionDepth > 0 &&
              nFeatureElementDepth == 0 &&
              osFeatureElement.compare(pszName) == 0 )
     {
         nFeatureElementDepth = currentDepth;
         poFeature = new OGRFeature(poFeatureDefn);
     }
-    else if( nCollectionElementDepth == 0 &&
+    else if( nFeatureCollectionDepth == 0 &&
              osCollectionElement.compare(pszName) == 0 )
     {
-        nCollectionElementDepth = currentDepth;
+        nFeatureCollectionDepth = currentDepth;
     }
 
     currentDepth++;
@@ -372,9 +373,9 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
 
         nFeatureElementDepth = 0;
     }
-    else if( nCollectionElementDepth == currentDepth )
+    else if( nFeatureCollectionDepth == currentDepth )
     {
-        nCollectionElementDepth = 0;
+        nFeatureCollectionDepth = 0;
     }
 }
 
@@ -570,6 +571,28 @@ void OGRJMLLayer::LoadSchema()
         bStopParsing = true;
     }
 
+    if( !osSRSName.empty() )
+    {
+        if( osSRSName.find("http://www.opengis.net/gml/srs/epsg.xml#") == 0 )
+        {
+            OGRSpatialReference* poSRS = new OGRSpatialReference();
+            poSRS->importFromEPSG(atoi(osSRSName.substr(
+                strlen("http://www.opengis.net/gml/srs/epsg.xml#")).c_str()));
+            poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
+            poSRS->Release();
+        }
+    }
+
+    nJCSGMLInputTemplateDepth = 0;
+    nCollectionElementDepth = 0;
+    nFeatureCollectionDepth = 0;
+    nFeatureElementDepth = 0;
+    nGeometryElementDepth = 0;
+    nColumnDepth = 0;
+    nNameDepth = 0;
+    nTypeDepth = 0;
+    nAttributeElementDepth = 0;
+
     ResetReading();
 }
 
@@ -657,6 +680,31 @@ void OGRJMLLayer::startElementLoadSchemaCbk( const char *pszName,
             }
         }
     }
+    else if( nFeatureCollectionDepth == 0 &&
+             osCollectionElement.compare(pszName) == 0 )
+    {
+        nFeatureCollectionDepth = currentDepth;
+    }
+    else if( nFeatureCollectionDepth > 0 &&
+             currentDepth == nFeatureCollectionDepth + 2 &&
+             strcmp(pszName, "gml:Box") == 0 )
+    {
+        const char** papszIter = ppszAttr;
+        while( papszIter && *papszIter != nullptr )
+        {
+            if( strcmp(*papszIter, "srsName") == 0 )
+                osSRSName = papszIter[1];
+            papszIter += 2;
+        }
+        bSchemaFinished = true;
+    }
+    else if( nFeatureCollectionDepth >= 0 &&
+             currentDepth == nFeatureCollectionDepth + 1 &&
+             osFeatureElement.compare(pszName) == 0 )
+    {
+        bSchemaFinished = true;
+    }
+
 
     currentDepth++;
 }
@@ -676,7 +724,6 @@ void OGRJMLLayer::endElementLoadSchemaCbk( const char * /* pszName */ )
     if( nJCSGMLInputTemplateDepth == currentDepth )
     {
         nJCSGMLInputTemplateDepth = 0;
-        bSchemaFinished = true;
     }
     else if( nCollectionElementDepth == currentDepth )
     {
