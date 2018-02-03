@@ -1,6 +1,7 @@
+#include <float.h>
+#include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
 #include <string.h>
 #include "grib2.h"
 
@@ -8,7 +9,11 @@
   g2int pngunpack(unsigned char *,g2int,g2int *,g2int, g2float *);
 #endif  /* USE_PNG */
 
-
+static float DoubleToFloatClamp(double val) {
+   if (val >= FLT_MAX) return FLT_MAX;
+   if (val <= -FLT_MAX) return -FLT_MAX;
+   return (float)val;
+}
 
 g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igdsnum,g2int *igdstmpl,
                g2int idrsnum,g2int *idrstmpl,g2int ndpts,g2float **fld)
@@ -162,7 +167,7 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
                       temp[j] = src[i * 8 + 7 - j];
                   }
                   memcpy(&d, temp, 8);
-                  lfld[i] = (float)d;
+                  lfld[i] = DoubleToFloatClamp(d);
               }
           }
           else
@@ -171,7 +176,7 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
               {
                   double d;
                   memcpy(&d, src + i * 8, 8);
-                  lfld[i] = (float)d;
+                  lfld[i] = DoubleToFloatClamp(d);
               }
           }
         }
