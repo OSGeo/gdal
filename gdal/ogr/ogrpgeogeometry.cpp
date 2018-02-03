@@ -1956,7 +1956,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                              padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0);
             poLine->set3D( padfZ != nullptr );
             poLine->setMeasured( padfM != nullptr );
-            poCC->addCurveDirectly(poLine);
+            if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+                delete poLine;
         }
 
         else if( pasCurves[i].eType == CURVE_ELLIPSE_BY_CENTER &&
