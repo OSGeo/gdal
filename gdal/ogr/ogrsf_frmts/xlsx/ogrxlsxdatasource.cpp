@@ -2185,6 +2185,12 @@ void OGRXLSXDataSource::FlushCache()
     if( !bUpdated )
         return;
 
+    /* Cause all layers to be loaded */
+    for(int i = 0; i<nLayers; i++)
+    {
+        ((OGRXLSXLayer*)papoLayers[i])->GetLayerDefn();
+    }
+
     VSIStatBufL sStat;
     if (VSIStatL(pszName, &sStat) == 0)
     {
@@ -2194,12 +2200,6 @@ void OGRXLSXDataSource::FlushCache()
                     "Cannot delete %s", pszName);
             return;
         }
-    }
-
-    /* Cause all layers to be initialized */
-    for(int i = 0; i<nLayers; i++)
-    {
-        ((OGRXLSXLayer*)papoLayers[i])->GetLayerDefn();
     }
 
     /* Maintain new ZIP files opened */
