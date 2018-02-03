@@ -521,7 +521,10 @@ def ogr_ods_boolean():
     fld_defn.SetSubType(ogr.OFSTBoolean)
     lyr.CreateField(fld_defn)
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetField(0, 1)
+    f.SetField(0, True)
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, False)
     lyr.CreateFeature(f)
     f = None
     ds = None
@@ -535,7 +538,11 @@ def ogr_ods_boolean():
         gdaltest.post_reason('failure')
         return 'fail'
     f = lyr.GetNextFeature()
-    if f.GetField(0) != 1:
+    if f.GetField(0) != True:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != False:
         gdaltest.post_reason('failure')
         return 'fail'
     ds = None
