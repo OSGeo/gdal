@@ -449,8 +449,10 @@ static const char* GetAttributeValue(const char **ppszAttr,
 /************************************************************************/
 
 OGRFieldType OGRXLSXDataSource::GetOGRFieldType(const char* pszValue,
-                                                const char* pszValueType)
+                                                const char* pszValueType,
+                                                OGRFieldSubType& eSubType)
 {
+    eSubType = OFSTNone;
     if (!bAutodetectTypes || pszValueType == nullptr)
         return OFTString;
     else if (strcmp(pszValueType, "string") == 0)
@@ -483,6 +485,11 @@ OGRFieldType OGRXLSXDataSource::GetOGRFieldType(const char* pszValue,
     else if (strcmp(pszValueType, "time") == 0)
     {
         return OFTTime;
+    }
+    else if( strcmp(pszValueType, "bool") == 0 )
+    {
+        eSubType = OFSTBoolean;
+        return OFTInteger;
     }
     else
         return OFTString;
@@ -688,9 +695,12 @@ void OGRXLSXDataSource::endElementTable(CPL_UNUSED const char *pszNameIn)
             for( size_t i = 0; i < apoFirstLineValues.size(); i++ )
             {
                 const char* pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
+                OGRFieldSubType eSubType = OFSTNone;
                 OGRFieldType eType = GetOGRFieldType(apoFirstLineValues[i].c_str(),
-                                                     apoFirstLineTypes[i].c_str());
+                                                     apoFirstLineTypes[i].c_str(),
+                                                     eSubType);
                 OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                oFieldDefn.SetSubType(eSubType);
                 poCurLayer->CreateField(&oFieldDefn);
             }
 
@@ -802,6 +812,8 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             osValueType = "stringLookup";
         else if( EQUAL(pszT,"inlineStr") )
             osValueType = "string";
+        else if ( EQUAL(pszT,"b"))
+            osValueType = "bool";
 
         osValue = "";
     }
@@ -848,12 +860,15 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                     if (pszFieldName[0] == '\0')
                         pszFieldName = CPLSPrintf("Field%d", (int)i + 1);
                     OGRFieldType eType = OGRUnknownType;
+                    OGRFieldSubType eSubType = OFSTNone;
                     if (i < apoCurLineValues.size() && !apoCurLineValues[i].empty())
                     {
                         eType = GetOGRFieldType(apoCurLineValues[i].c_str(),
-                                                apoCurLineTypes[i].c_str());
+                                                apoCurLineTypes[i].c_str(),
+                                                eSubType);
                     }
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
             }
@@ -863,10 +878,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
+                    OGRFieldSubType eSubType = OFSTNone;
                     OGRFieldType eType = GetOGRFieldType(
                                             apoFirstLineValues[i].c_str(),
-                                            apoFirstLineTypes[i].c_str());
+                                            apoFirstLineTypes[i].c_str(),
+                                            eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
 
@@ -893,10 +911,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
+                    OGRFieldSubType eSubType = OFSTNone;
                     OGRFieldType eType = GetOGRFieldType(
                                                 apoCurLineValues[i].c_str(),
-                                                apoCurLineTypes[i].c_str());
+                                                apoCurLineTypes[i].c_str(),
+                                                eSubType);
                     OGRFieldDefn oFieldDefn(pszFieldName, eType);
+                    oFieldDefn.SetSubType(eSubType);
                     poCurLayer->CreateField(&oFieldDefn);
                 }
             }
@@ -908,19 +929,22 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                 {
                     if (!apoCurLineValues[i].empty() )
                     {
+                        OGRFieldSubType eValSubType = OFSTNone;
                         OGRFieldType eValType = GetOGRFieldType(
                                                 apoCurLineValues[i].c_str(),
-                                                apoCurLineTypes[i].c_str());
-                        OGRFieldType eFieldType =
-                            poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i))->GetType();
+                                                apoCurLineTypes[i].c_str(),
+                                                eValSubType);
+                        OGRFieldDefn* poFieldDefn =
+                            poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i));
+                        const OGRFieldType eFieldType = poFieldDefn->GetType();
                         if (eFieldType == OGRUnknownType)
                         {
                             /* If the field type is unknown we have not encountered a value in the field yet so
                              * set the field type to this elements type */
-                            OGRFieldDefn oNewFieldDefn(
-                                poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+                            OGRFieldDefn oNewFieldDefn(poFieldDefn);
 
                             oNewFieldDefn.SetType(eValType);
+                            oNewFieldDefn.SetSubType(eValSubType);
                             poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
                                                        ALTER_TYPE_FLAG);
 
@@ -940,8 +964,7 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                         }
                         else if (eFieldType != OFTString && eValType != eFieldType)
                         {
-                            OGRFieldDefn oNewFieldDefn(
-                                poCurLayer->GetLayerDefn()->GetFieldDefn(static_cast<int>(i)));
+                            OGRFieldDefn oNewFieldDefn(poFieldDefn);
                             if ((eFieldType == OFTDate || eFieldType == OFTTime) &&
                                    eValType == OFTDateTime)
                                 oNewFieldDefn.SetType(OFTDateTime);
@@ -954,6 +977,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
                                 oNewFieldDefn.SetType(OFTString);
                             poCurLayer->AlterFieldDefn(static_cast<int>(i), &oNewFieldDefn,
                                                        ALTER_TYPE_FLAG);
+                        }
+                        else if( eFieldType == OFTInteger &&
+                                 poFieldDefn->GetSubType() == OFSTBoolean &&
+                                 eValType == OFTInteger && 
+                                 eValSubType != OFSTBoolean )
+                        {
+                            poFieldDefn->SetSubType(OFSTNone);
                         }
                     }
                 }
@@ -1969,7 +1999,8 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 char szCol[5];
                 BuildColString(szCol, j);
 
-                OGRFieldType eType = poFDefn->GetFieldDefn(j)->GetType();
+                OGRFieldDefn* poFieldDefn = poFDefn->GetFieldDefn(j);
+                OGRFieldType eType = poFieldDefn->GetType();
 
                 if (eType == OFTReal)
                 {
@@ -1979,7 +2010,11 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 }
                 else if (eType == OFTInteger)
                 {
-                    VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
+                    OGRFieldSubType eSubType = poFieldDefn->GetSubType();
+                    if( eSubType == OFSTBoolean )
+                        VSIFPrintfL(fp, "<c r=\"%s%d\" t=\"b\" s=\"5\">\n", szCol, iRow);
+                    else
+                        VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
                     VSIFPrintfL(fp, "<v>%d</v>\n", poFeature->GetFieldAsInteger(j));
                     VSIFPrintfL(fp, "</c>\n");
                 }
@@ -2096,6 +2131,7 @@ static void WriteStyles(const char* pszName)
     VSIFPrintfL(fp, "<numFmt formatCode=\"DD/MM/YYYY\\ HH:MM:SS\" numFmtId=\"166\"/>\n");
     VSIFPrintfL(fp, "<numFmt formatCode=\"HH:MM:SS\" numFmtId=\"167\"/>\n");
     VSIFPrintfL(fp, "<numFmt formatCode=\"DD/MM/YYYY\\ HH:MM:SS.000\" numFmtId=\"168\"/>\n");
+    VSIFPrintfL(fp, "<numFmt formatCode=\"&quot;TRUE&quot;;&quot;TRUE&quot;;&quot;FALSE&quot;\" numFmtId=\"169\"/>\n");
     VSIFPrintfL(fp, "</numFmts>\n");
     VSIFPrintfL(fp, "<fonts count=\"1\">\n");
     VSIFPrintfL(fp, "<font>\n");
@@ -2122,12 +2158,13 @@ static void WriteStyles(const char* pszName)
     VSIFPrintfL(fp, "<xf numFmtId=\"164\">\n");
     VSIFPrintfL(fp, "</xf>\n");
     VSIFPrintfL(fp, "</cellStyleXfs>\n");
-    VSIFPrintfL(fp, "<cellXfs count=\"5\">\n");
+    VSIFPrintfL(fp, "<cellXfs count=\"6\">\n");
     VSIFPrintfL(fp, "<xf numFmtId=\"164\" xfId=\"0\"/>\n");
     VSIFPrintfL(fp, "<xf numFmtId=\"165\" xfId=\"0\"/>\n");
     VSIFPrintfL(fp, "<xf numFmtId=\"166\" xfId=\"0\"/>\n");
     VSIFPrintfL(fp, "<xf numFmtId=\"167\" xfId=\"0\"/>\n");
     VSIFPrintfL(fp, "<xf numFmtId=\"168\" xfId=\"0\"/>\n");
+    VSIFPrintfL(fp, "<xf numFmtId=\"169\" xfId=\"0\"/>\n");
     VSIFPrintfL(fp, "</cellXfs>\n");
     VSIFPrintfL(fp, "<cellStyles count=\"1\">\n");
     VSIFPrintfL(fp, "<cellStyle builtinId=\"0\" customBuiltin=\"false\" name=\"Normal\" xfId=\"0\"/>\n");
