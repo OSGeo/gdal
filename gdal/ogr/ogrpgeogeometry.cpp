@@ -1735,6 +1735,8 @@ static double GetAngleOnEllipse( double dfPointOnArcX,
     //   dfPointOnArcX-dfCenterX = cosA*M*cosRot + sinA*m*sinRot
     //   dfPointOnArcY-dfCenterY = -cosA*M*sinRot + sinA*m*cosRot
 
+    if( dfSemiMajor == 0.0 || dfSemiMinor == 0.0 )
+        return 0.0;
     const double dfRotationRadians = dfRotationDeg * M_PI / 180.0;
     const double dfCosRot = cos(dfRotationRadians);
     const double dfSinRot = sin(dfRotationRadians);
