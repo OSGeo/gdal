@@ -325,6 +325,8 @@ gdal_translate [--help-general]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
        [-a_scale value] [-a_offset value]
        [-gcp pixel line easting northing [elevation]]*
+       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
+       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
        [-co "NAME=VALUE"]* [-stats] [-norat]
        [-oo NAME=VALUE]*
@@ -439,6 +441,14 @@ be set to <i>none</i> to avoid setting a nodata value to the output file if
 one exists for the source file. Note that, if the input dataset has a
 nodata value, this does not cause pixel values that are equal to that nodata
 value to be changed to the value specified with this option.</dd>
+<dt> <b>-colorinterp_X</b> <i>red|green|blue|alpha|gray|undefined</i>:</dt><dd>
+(GDAL >= 2.3) Override the color interpretation of band X (where X is a valid
+band number, starting at 1)
+</dd>
+<dt> <b>-colorinterp</b> <i>red|green|blue|alpha|gray|undefined[,red|green|blue|alpha|gray|undefined]*</i>:</dt><dd>
+(GDAL >= 2.3) Override the color interpretation of all specified bands. For
+example -colorinterp red,green,blue,alpha for a 4 band output dataset.
+</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the

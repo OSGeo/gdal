@@ -515,6 +515,61 @@ def test_gdal_translate_lib_geolocation_vrt_path():
     return 'success'
 
 ###############################################################################
+# Test -colorinterp and -colorinterp_X
+
+def test_gdal_translate_lib_colorinterp():
+
+    src_ds = gdal.Open( '../gcore/data/rgbsmall.tif' )
+
+    # Less bands specified than available
+    ds = gdal.Translate('', src_ds, options = '-f MEM -colorinterp blue,gray')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GrayIndex:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # More bands specified than available and a unknown color interpretation
+    with gdaltest.error_handler():
+        ds = gdal.Translate('', src_ds, options = '-f MEM -colorinterp alpha,red,undefined,foo')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test colorinterp_
+    ds = gdal.Translate('', src_ds, options = '-f MEM -colorinterp_2 alpha')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test invalid colorinterp_
+    try:
+        with gdaltest.error_handler():
+            gdal.Translate('', src_ds, options = '-f MEM -colorinterp_0 alpha')
+        gdaltest.post_reason('fail')
+        return 'fail'
+    except:
+        pass
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdal_translate_lib_cleanup():
@@ -553,6 +608,7 @@ gdaltest_list = [
     test_gdal_translate_lib_gcp_vrt_path,
     test_gdal_translate_lib_rcp_vrt_path,
     test_gdal_translate_lib_geolocation_vrt_path,
+    test_gdal_translate_lib_colorinterp,
     test_gdal_translate_lib_cleanup
     ]
 

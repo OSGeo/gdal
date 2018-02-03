@@ -270,6 +270,11 @@ struct GDALTranslateOptions
     char *pszProjSRS;
 
     int nLimitOutSize;
+
+    // Array of color interpretations per band. Should be a GDALColorInterp
+    // value, or -1 if no override.
+    int nColorInterpSize;
+    int* panColorInterp;
 };
 
 /************************************************************************/
@@ -467,6 +472,13 @@ GDALTranslateOptions* GDALTranslateOptionsClone(const GDALTranslateOptions *psOp
         psOptions->pasGCPs = GDALDuplicateGCPs( psOptionsIn->nGCPCount, psOptionsIn->pasGCPs );
     if( psOptionsIn->pszResampling ) psOptions->pszResampling = CPLStrdup(psOptionsIn->pszResampling);
     if( psOptionsIn->pszProjSRS ) psOptions->pszProjSRS = CPLStrdup(psOptionsIn->pszProjSRS);
+    if( psOptionsIn->panColorInterp )
+    {
+        psOptions->panColorInterp =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psOptions->nColorInterpSize));
+        memcpy(psOptions->panColorInterp, psOptionsIn->panColorInterp,
+               sizeof(int) * psOptions->nColorInterpSize);
+    }
     return psOptions;
 }
 
@@ -910,7 +922,8 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         && bSpatialArrangementPreserved
         && psOptions->nGCPCount == 0 && !bGotBounds
         && psOptions->pszOutputSRS == nullptr && !psOptions->bSetNoData && !psOptions->bUnsetNoData
-        && psOptions->nRGBExpand == 0 && !psOptions->bStats && !psOptions->bNoRAT )
+        && psOptions->nRGBExpand == 0 && !psOptions->bStats && !psOptions->bNoRAT
+        && psOptions->panColorInterp == nullptr )
     {
 
         // For gdal_translate_fuzzer
@@ -1382,6 +1395,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->nScaleRepeat > 0 || psOptions->bUnscale ||
         !bSpatialArrangementPreserved || psOptions->nRGBExpand != 0;
 
+    if( psOptions->nColorInterpSize > psOptions->nBandCount )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "More bands defined in -colorinterp than output bands");
+    }
+
 /* ==================================================================== */
 /*      Process all bands.                                              */
 /* ==================================================================== */
@@ -1693,6 +1712,17 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             }
         }
 
+        // Color interpretation override
+        if( psOptions->panColorInterp )
+        {
+            if( i < psOptions->nColorInterpSize && 
+                psOptions->panColorInterp[i] >= 0 )
+            {
+                poVRTBand->SetColorInterpretation(
+                    static_cast<GDALColorInterp>(psOptions->panColorInterp[i]));
+            }
+        }
+
 /* -------------------------------------------------------------------- */
 /*      Set a forcible nodata value?                                    */
 /* -------------------------------------------------------------------- */
@@ -1939,6 +1969,29 @@ int ArgIsNumeric( const char *pszArg )
 
 {
     return CPLGetValueType(pszArg) != CPL_VALUE_STRING;
+}
+
+/************************************************************************/
+/*                             GetColorInterp()                         */
+/************************************************************************/
+
+static int GetColorInterp( const char* pszStr )
+{
+    if( EQUAL(pszStr, "red") )
+        return GCI_RedBand;
+    if( EQUAL(pszStr, "green") )
+        return GCI_GreenBand;
+    if( EQUAL(pszStr, "blue") )
+        return GCI_BlueBand;
+    if( EQUAL(pszStr, "alpha") )
+        return GCI_AlphaBand;
+    if( EQUAL(pszStr, "gray") || EQUAL(pszStr, "grey") )
+        return GCI_GrayIndex;
+    if( EQUAL(pszStr, "undefined") )
+        return GCI_Undefined;
+    CPLError(CE_Warning, CPLE_NotSupported,
+             "Unsupported color interpretation: %s", pszStr);
+    return -1;
 }
 
 /************************************************************************/
@@ -2460,6 +2513,51 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             psOptions->pszResampling = CPLStrdup(papszArgv[++i]);
         }
 
+        else if( EQUAL(papszArgv[i],"-colorinterp") && papszArgv[i+1] )
+        {
+            ++i;
+            CPLStringList aosList(CSLTokenizeString2(papszArgv[i], ",", 0));
+            psOptions->nColorInterpSize = aosList.size();
+            psOptions->panColorInterp = static_cast<int *>(
+                  CPLRealloc(psOptions->panColorInterp,
+                             psOptions->nColorInterpSize * sizeof(int)));
+            for( int j = 0; j < aosList.size(); j++ )
+            {
+                psOptions->panColorInterp[j] = GetColorInterp(aosList[j]);
+            }
+        }
+
+        else if( STARTS_WITH_CI(papszArgv[i], "-colorinterp_") )
+        {
+            int nIndex = atoi(papszArgv[i] + strlen("-colorinterp_"));
+            if( nIndex <= 0 || nIndex > 65535 )
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Invalid parameter name: %s", papszArgv[i]);
+                GDALTranslateOptionsFree(psOptions);
+                return nullptr;
+            }
+            nIndex --;
+
+            if( nIndex >= psOptions->nColorInterpSize )
+            {
+                psOptions->panColorInterp = static_cast<int *>(
+                    CPLRealloc(psOptions->panColorInterp,
+                                (nIndex + 1) * sizeof(int)));
+                if( nIndex > psOptions->nColorInterpSize )
+                {
+                    memset(psOptions->panColorInterp +
+                                psOptions->nColorInterpSize,
+                           0xFF, // -1
+                           sizeof(int) * (nIndex - psOptions->nColorInterpSize));
+                }
+                psOptions->nColorInterpSize = nIndex + 1;
+            }
+            ++i;
+            psOptions->panColorInterp[nIndex] = GetColorInterp(papszArgv[i]);
+        }
+
+
         // Undocumented option used by gdal_translate_fuzzer
         else if( i+1 < argc && EQUAL(papszArgv[i],"-limit_outsize") )
         {
@@ -2542,6 +2640,7 @@ void GDALTranslateOptionsFree(GDALTranslateOptions *psOptions)
     CPLFree(psOptions->pasGCPs);
     CPLFree(psOptions->pszResampling);
     CPLFree(psOptions->pszProjSRS);
+    CPLFree(psOptions->panColorInterp);
 
     CPLFree(psOptions);
 }
