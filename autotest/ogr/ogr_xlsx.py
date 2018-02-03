@@ -519,7 +519,7 @@ def ogr_xlsx_13():
     return 'success'
 
 ###############################################################################
-# Test that field names are picked up even if last field has no data
+# Test that empty rows are eliminated
 
 def ogr_xlsx_14():
 
@@ -569,6 +569,57 @@ def ogr_xlsx_14():
 
     return 'success'
 
+###############################################################################
+# Test that empty rows are ignored
+
+def ogr_xlsx_15():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_XLSX_EMPTY_ROWS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.xlsx')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetFeatureCount() != 7:
+        gdaltest.post_reason('invalid row count ({})'.format(lyr.GetFeatureCount()))
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test that empty cells are ignored
+
+def ogr_xlsx_16():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    gdal.SetConfigOption('OGR_XLSX_EMPTY_ROWS', 'IGNORE')
+    gdal.SetConfigOption('OGR_XLSX_EMPTY_CELLS', 'IGNORE')
+    ds = ogr.Open('data/test_empty_rows_and_cells.xlsx')
+
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'Sheet1':
+        gdaltest.post_reason('bad layer name')
+        return 'fail'
+      
+    if lyr.GetFeatureCount() != 5:
+        gdaltest.post_reason('invalid row count ({})'.format(lyr.GetFeatureCount()))
+        return 'fail'
+
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
+        gdaltest.post_reason('invalid field name {}'.format(lyr.GetLayerDefn().GetFieldDefn(0).GetName()))
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -583,8 +634,9 @@ gdaltest_list = [
     ogr_xlsx_11,
     ogr_xlsx_12,
     ogr_xlsx_13,
-    ogr_xlsx_14
-
+    ogr_xlsx_14,
+    ogr_xlsx_15,
+    ogr_xlsx_16
 ]
 
 if __name__ == '__main__':

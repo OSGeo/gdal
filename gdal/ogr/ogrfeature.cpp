@@ -2036,14 +2036,54 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
 {
     const int ms = OGR_GET_MS(fSecond);
     if( ms != 0 )
-        CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
-                  "%04d/%02d/%02d %02d:%02d:%06.3f",
-                  nYear,
-                  nMonth,
-                  nDay,
-                  nHour,
-                  nMinute,
-                  fSecond );
+    {
+        if ( ms == 1000 ) 
+        {
+            /* If the milliseconds are 1000 then we need to round the second up, but to get the correct date and time
+             * we need to normalize the date */
+            
+            struct tm t;
+            t.tm_year = nYear - 1900;
+            t.tm_mon = nMonth - 1;
+            t.tm_mday = nDay;
+            t.tm_hour = nHour;
+            t.tm_min = nMinute;
+            t.tm_sec = static_cast<int>(fSecond) + 1;
+            t.tm_isdst = 0;
+            
+            time_t when = mktime(&t);
+            const struct tm *n = localtime(&when);
+            
+            nYear = n->tm_year + 1900;
+            nMonth = n->tm_mon + 1;
+            nDay = n->tm_mday;
+            nHour = n->tm_hour;
+            nMinute = n->tm_min;
+            fSecond = static_cast<float>(n->tm_sec);
+
+            snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                    "%04d/%02d/%02d %02d:%02d:%02d",
+                    nYear,
+                    nMonth,
+                    nDay,
+                    nHour,
+                    nMinute,
+                    static_cast<int>(fSecond) );
+
+        }
+        else
+        {
+
+            CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
+                    "%04d/%02d/%02d %02d:%02d:%06.3f",
+                    nYear,
+                    nMonth,
+                    nDay,
+                    nHour,
+                    nMinute,
+                    fSecond );
+        }
+    }
     else  // Default format.
     {
         if( CPLIsNan(fSecond) || fSecond < 0.0  || fSecond > 62.0 )
@@ -2272,17 +2312,48 @@ const char *OGRFeature::GetFieldAsString( int iField )
     {
         const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
         if( ms != 0 )
-            snprintf(
+        {
+            if ( ms == 1000 ) 
+            {
+                /* If the milliseconds are 1000 then we need to round the second up, but to get the correct time
+                * lets normalize the date */
+                
+                struct tm t;
+                t.tm_year = 1900;
+                t.tm_mon = 1;
+                t.tm_mday = 1;
+                t.tm_hour = pauFields[iField].Date.Hour;
+                t.tm_min = pauFields[iField].Date.Minute;
+                t.tm_sec = static_cast<int>(pauFields[iField].Date.Second) + 1;
+                t.tm_isdst = 0;
+                
+                time_t when = mktime(&t);
+                const struct tm *n = localtime(&when);
+                
+                snprintf(
+                szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
+                n->tm_hour,
+                n->tm_min,
+                n->tm_sec );
+                
+            }
+            else
+            {
+                snprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%06.3f",
                 pauFields[iField].Date.Hour,
                 pauFields[iField].Date.Minute,
                 pauFields[iField].Date.Second );
+            }
+        }
         else
+        {
             snprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%02d:%02d:%02d",
                 pauFields[iField].Date.Hour,
                 pauFields[iField].Date.Minute,
                 static_cast<int>(pauFields[iField].Date.Second) );
+        }
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
         if( m_pszTmpFieldValue == nullptr )
@@ -2952,6 +3023,50 @@ int OGRFeature::GetFieldAsDateTime( int iField,
             *pfSecond = pauFields[iField].Date.Second;
         if( pnTZFlag )
             *pnTZFlag = pauFields[iField].Date.TZFlag;
+        
+        if (poFDefn->GetType() == OFTDateTime || poFDefn->GetType() == OFTTime)
+        {
+            const int ms = OGR_GET_MS(pauFields[iField].Date.Second);
+            if( ms != 0 )
+            {
+                if ( ms == 1000 ) 
+                {
+                    /* If the milliseconds are 1000 then we need to round the second up, but to get the correct date and time
+                    * we need to normalize the date */
+                    
+                    struct tm t;
+                    
+                    if (poFDefn->GetType() == OFTDateTime)
+                    {
+                        t.tm_year = pauFields[iField].Date.Year - 1900;
+                        t.tm_mon = pauFields[iField].Date.Month - 1;
+                        t.tm_mday = pauFields[iField].Date.Day;
+                    }
+                    else
+                    {
+                        t.tm_year = 1900;
+                        t.tm_mon = 1;
+                        t.tm_mday = 1;
+                    }
+
+                    t.tm_hour = pauFields[iField].Date.Hour;
+                    t.tm_min = pauFields[iField].Date.Minute;
+                    t.tm_sec = static_cast<int>(pauFields[iField].Date.Second) + 1;
+                    t.tm_isdst = 0;
+                    
+                    time_t when = mktime(&t);
+                    const struct tm *n = localtime(&when);
+
+                    *pnYear = n->tm_year + 1900;
+                    *pnMonth = n->tm_mon + 1;
+                    *pnDay = n->tm_mday;
+                    *pnHour = n->tm_hour;
+                    *pnMinute = n->tm_min;
+                    *pfSecond = static_cast<float>(n->tm_sec);
+                }
+            }
+        }
+        
 
         return TRUE;
     }

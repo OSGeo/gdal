@@ -173,6 +173,8 @@ class OGRXLSXDataSource : public GDALDataset
 
     bool                bFirstLineIsHeaders;
     int                 bAutodetectTypes;
+    int                 bAllowEmptyRows;
+    int                 bAllowEmptyCells;
 
     XML_Parser          oParser;
     bool                bStopParsing;
@@ -180,6 +182,7 @@ class OGRXLSXDataSource : public GDALDataset
     int                 nDataHandlerCounter;
     int                 nCurLine;
     int                 nCurCol;
+    int                 nLastEmptyCol;
 
     OGRXLSXLayer       *poCurLayer;
 

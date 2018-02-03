@@ -192,12 +192,17 @@ OGRXLSXDataSource::OGRXLSXDataSource() :
     bFirstLineIsHeaders(false),
     bAutodetectTypes(!EQUAL(CPLGetConfigOption("OGR_XLSX_FIELD_TYPES", ""),
                             "STRING")),
+    bAllowEmptyRows(!EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_ROWS", ""),
+                            "IGNORE")),
+    bAllowEmptyCells(!EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_CELLS", ""),
+                            "IGNORE")),
     oParser(nullptr),
     bStopParsing(false),
     nWithoutEventCounter(0),
     nDataHandlerCounter(0),
     nCurLine(0),
     nCurCol(0),
+    nLastEmptyCol(-1),
     poCurLayer(nullptr),
     nStackDepth(0),
     nDepth(0),
@@ -594,6 +599,7 @@ void OGRXLSXDataSource::DetectHeaderLine()
     {
         bFirstLineIsHeaders = true;
     }
+
     CPLDebug("XLSX", "%s %s",
              poCurLayer ? poCurLayer->GetName() : "NULL layer",
              bFirstLineIsHeaders ? "has header line" : "has no header line");
@@ -611,6 +617,7 @@ void OGRXLSXDataSource::startElementDefault(const char *pszNameIn,
         apoFirstLineValues.resize(0);
         apoFirstLineTypes.resize(0);
         nCurLine = 0;
+        nLastEmptyCol = -1;
         PushState(STATE_SHEETDATA);
     }
 }
@@ -627,6 +634,7 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
         PushState(STATE_ROW);
 
         nCurCol = 0;
+        nLastEmptyCol = 0;
         apoCurLineValues.clear();
         apoCurLineTypes.clear();
 
@@ -639,25 +647,13 @@ void OGRXLSXDataSource::startElementTable(const char *pszNameIn,
             return;
         }
         nNewCurLine --;
-        const int nFields = std::max(
-            static_cast<int>(apoFirstLineValues.size()),
-            poCurLayer != nullptr ?
-                poCurLayer->GetLayerDefn()->GetFieldCount() : 0);
-        if( nNewCurLine > nCurLine &&
-            (nNewCurLine - nCurLine > 10000 ||
-             (nFields > 0 && nNewCurLine - nCurLine > 100000 / nFields)) )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid row: %d. Too big gap with previous valid row",
-                     nNewCurLine);
-            return;
-        }
         for(;nCurLine<nNewCurLine;)
         {
             const int nCurLineBefore = nCurLine;
             endElementRow("row");
 
             nCurCol = 0;
+            nLastEmptyCol = 0;
             apoCurLineValues.clear();
             apoCurLineTypes.clear();
             if( nCurLineBefore == nCurLine )
@@ -770,6 +766,10 @@ void OGRXLSXDataSource::startElementRow(const char *pszNameIn,
             }
             for(;nCurCol<nNewCurCol;nCurCol++)
             {
+                if (nLastEmptyCol == -1) {
+                  nLastEmptyCol = (int)apoCurLineValues.size();
+                }
+
                 apoCurLineValues.push_back("");
                 apoCurLineTypes.push_back("");
             }
@@ -817,6 +817,12 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
     {
         CPLAssert(strcmp(pszNameIn, "row") == 0);
 
+        if (nLastEmptyCol != -1) 
+        {
+          apoCurLineTypes.resize(nLastEmptyCol);
+          apoCurLineValues.resize(nLastEmptyCol);
+        }  
+        
         /* Backup first line values and types in special arrays */
         if (nCurLine == 0)
         {
@@ -883,13 +889,13 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
 
         if (nCurLine >= 1)
         {
-            /* Add new fields found on following lines. */
+            /* Add new fields found on following lines if we are allowing the layer definition to change. */
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
                 for( size_t i = (size_t)poCurLayer->GetLayerDefn()->GetFieldCount();
-                     i < apoCurLineValues.size();
-                     i++ )
+                    i < apoCurLineValues.size();
+                    i++ )
                 {
                     const char* pszFieldName =
                         CPLSPrintf("Field%d", (int)i + 1);
@@ -960,18 +966,30 @@ void OGRXLSXDataSource::endElementRow(CPL_UNUSED const char *pszNameIn)
             }
 
             /* Add feature for current line */
-            OGRFeature* poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+            OGRFeature* poFeature = nullptr;
+
             for( size_t i = 0; i < apoCurLineValues.size(); i++ )
             {
                 if (!apoCurLineValues[i].empty())
                 {
+                  if (!poFeature) {
+                    poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                  }
+
                   SetField(poFeature, static_cast<int>(i), apoCurLineValues[i].c_str(),
                           apoCurLineTypes[i].c_str());
                 }
             }
-            CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
-            delete poFeature;
-       }
+            if (poFeature || bAllowEmptyRows)
+            {
+                if (!poFeature) {
+                  poFeature = new OGRFeature(poCurLayer->GetLayerDefn());
+                }
+
+                CPL_IGNORE_RET_VAL(poCurLayer->CreateFeature(poFeature));
+                delete poFeature;
+            }
+        }
 
         nCurLine++;
     }
@@ -1013,6 +1031,25 @@ void OGRXLSXDataSource::endElementCell(CPL_UNUSED const char *pszNameIn)
                 CPLDebug("XLSX", "Cannot find string %d", nIndex);
             osValueType = "string";
         }
+        
+        if (!bAllowEmptyCells)
+        {
+            /* If this cell only contains whitespace and the option OGR_XLSX_EMPTY_CELLS is set to IGNORE
+             * then clear the osValue */
+            if (osValue.find_first_not_of( " \t\r\n" ) == std::string::npos)
+            {
+                osValue.clear();
+            }
+        }
+
+        if (osValue.empty()) {
+          if (nLastEmptyCol == -1) {
+            nLastEmptyCol = (int)apoCurLineValues.size();
+          }
+        }
+        else {
+          nLastEmptyCol = -1;
+        }
 
         apoCurLineValues.push_back(osValue);
         apoCurLineTypes.push_back(osValueType);
@@ -1037,6 +1074,9 @@ void OGRXLSXDataSource::dataHandlerTextV(const char *data, int nLen)
 void OGRXLSXDataSource::BuildLayer( OGRXLSXLayer* poLayer )
 {
     poCurLayer = poLayer;
+    
+    bAllowEmptyRows = !EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_ROWS", ""), "IGNORE");
+    bAllowEmptyCells = !EQUAL(CPLGetConfigOption("OGR_XLSX_EMPTY_CELLS", ""), "IGNORE");
 
     const char* pszSheetFilename = poLayer->GetFilename().c_str();
     VSILFILE* fp = VSIFOpenL(pszSheetFilename, "rb");
