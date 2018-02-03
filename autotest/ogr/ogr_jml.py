@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 from osgeo import ogr
+from osgeo import osr
 from osgeo import gdal
 
 def ogr_jml_init():
@@ -157,10 +158,16 @@ def ogr_jml_2():
 <CollectionElement>featureCollection</CollectionElement>
 <FeatureElement>feature</FeatureElement>
 <GeometryElement>geometry</GeometryElement>
+<CRSElement>boundedBy</CRSElement>
 <ColumnDefinitions>
 </ColumnDefinitions>
 </JCSGMLInputTemplate>
 <featureCollection>
+  <gml:boundedBy>
+    <gml:Box>
+      <gml:coordinates decimal="." cs="," ts=" ">0.00,0.00 -1.00,-1.00</gml:coordinates>
+    </gml:Box>
+  </gml:boundedBy>
 </featureCollection>
 </JCSDataFile>
 """:
@@ -172,7 +179,9 @@ def ogr_jml_2():
 
     # Test all data types
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo')
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    lyr = ds.CreateLayer('foo', srs = srs)
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('int', ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn('double', ogr.OFTReal))
@@ -236,6 +245,7 @@ def ogr_jml_2():
 <CollectionElement>featureCollection</CollectionElement>
 <FeatureElement>feature</FeatureElement>
 <GeometryElement>geometry</GeometryElement>
+<CRSElement>boundedBy</CRSElement>
 <ColumnDefinitions>
      <column>
           <name>str</name>
@@ -288,6 +298,11 @@ def ogr_jml_2():
 </ColumnDefinitions>
 </JCSGMLInputTemplate>
 <featureCollection>
+  <gml:boundedBy>
+    <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#32632">
+      <gml:coordinates decimal="." cs="," ts=" ">0.0000000000,0.0000000000 10.0000000000,10.0000000000                                               </gml:coordinates>
+    </gml:Box>
+  </gml:boundedBy>
      <feature>
           <geometry>
                 <gml:MultiGeometry></gml:MultiGeometry>

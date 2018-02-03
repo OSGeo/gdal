@@ -144,6 +144,7 @@ class OGRJMLLayer : public OGRLayer
 
 class OGRJMLWriterLayer : public OGRLayer
 {
+    OGRJMLDataset      *poDS;
     OGRFeatureDefn     *poFeatureDefn;
     VSILFILE           *fp;
     bool                bFeaturesWritten;
@@ -151,13 +152,17 @@ class OGRJMLWriterLayer : public OGRLayer
     bool                bAddOGRStyleField;
     bool                bClassicGML;
     int                 nNextFID;
+    CPLString           osSRSAttr;
+    OGREnvelope         sLayerExtent;
+    vsi_l_offset        nBBoxOffset;
 
     void                WriteColumnDeclaration( const char* pszName,
                                                 const char* pszType );
 
   public:
                         OGRJMLWriterLayer( const char* pszLayerName,
-                                           OGRJMLDataset* poDS,
+                                           OGRSpatialReference * poSRS,
+                                           OGRJMLDataset* poDSIn,
                                            VSILFILE* fp,
                                            bool bAddRGBField,
                                            bool bAddOGRStyleField,
