@@ -1684,21 +1684,21 @@ void OGRMVTDirectoryLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     }
 
     if( sEnvelope.IsInit() &&
-        m_sExtent.MinX >= -10 * kmMAX_GM &&
-        m_sExtent.MinY >= -10 * kmMAX_GM &&
-        m_sExtent.MaxX <= 10 * kmMAX_GM &&
-        m_sExtent.MaxY <= 10 * kmMAX_GM )
+        sEnvelope.MinX >= -10 * kmMAX_GM &&
+        sEnvelope.MinY >= -10 * kmMAX_GM &&
+        sEnvelope.MaxX <= 10 * kmMAX_GM &&
+        sEnvelope.MaxY <= 10 * kmMAX_GM )
     {
         const double dfTileDim = 2 * kmMAX_GM / (1 << m_nZ);
         m_nFilterMinX = std::max(0, static_cast<int>(
-            floor((m_sExtent.MinX + kmMAX_GM) / dfTileDim)));
+            floor((sEnvelope.MinX + kmMAX_GM) / dfTileDim)));
         m_nFilterMinY = std::max(0, static_cast<int>(
-            floor((kmMAX_GM - m_sExtent.MaxY) / dfTileDim)));
+            floor((kmMAX_GM - sEnvelope.MaxY) / dfTileDim)));
         m_nFilterMaxX = std::min(static_cast<int>(
-            ceil((m_sExtent.MaxX + kmMAX_GM) / dfTileDim)),
+            ceil((sEnvelope.MaxX + kmMAX_GM) / dfTileDim)),
             (1 << m_nZ)-1);
         m_nFilterMaxY = std::min(static_cast<int>(
-            ceil((kmMAX_GM - m_sExtent.MinY) / dfTileDim)),
+            ceil((kmMAX_GM - sEnvelope.MinY) / dfTileDim)),
             (1 << m_nZ)-1);
     }
     else
