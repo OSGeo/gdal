@@ -637,6 +637,76 @@ def ogr_mvt_polygon_larger_than_header():
 
 ###############################################################################
 
+def ogr_mvt_errors():
+
+    if ogr.Open('MVT:/i_do_not/exist') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Cannot detect Z in directory name
+    if ogr.Open('MVT:data') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid Z
+    gdal.Mkdir('/vsimem/33', 0)
+
+    if ogr.Open('MVT:/vsimem/33') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Rmdir('/vsimem/33')
+
+    # Inexisting metadata
+    with gdaltest.error_handler():
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+                        open_options = ['METADATA_FILE=/i_do_not/exist']) is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Invalid metadata
+    with gdaltest.error_handler():
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+                        open_options = ['METADATA_FILE=ogr_mvt.py']) is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Invalid metadata
+    gdal.FileFromMemBuffer('/vsimem/my.json', '{}')
+    with gdaltest.error_handler():
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+                        open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.Unlink('/vsimem/my.json')
+
+    # Invalid metadata
+    gdal.FileFromMemBuffer('/vsimem/my.json', '{ "json": "x y" }')
+    with gdaltest.error_handler():
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+                        open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    gdal.Unlink('/vsimem/my.json')
+
+    # Too big file
+    tmpfilename = '/vsimem/foo.pbf'
+    gdal.FileFromMemBuffer(tmpfilename,
+                           open('data/mvt/polygon_larger_than_header.pbf', 'rb').read())
+    f = gdal.VSIFOpenL(tmpfilename, 'rb+')
+    gdal.VSIFSeekL(f, 20 * 1024 * 1024, 0)
+    gdal.VSIFWriteL(' ', 1, 1, f)
+    gdal.VSIFCloseL(f)
+    ds = ogr.Open(tmpfilename)
+    gdal.Unlink(tmpfilename)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_http_start():
 
     gdaltest.webserver_process = None
@@ -765,6 +835,7 @@ gdaltest_list = [
     ogr_mvt_mbtiles_test_ogrsf,
     ogr_mvt_x_y_z_filename_scheme,
     ogr_mvt_polygon_larger_than_header,
+    ogr_mvt_errors,
     ogr_mvt_http_start,
     ogr_mvt_http,
     ogr_mvt_http_stop,
