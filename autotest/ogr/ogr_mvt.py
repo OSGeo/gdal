@@ -345,6 +345,22 @@ def ogr_mvt_tileset_without_readdir():
 
 ###############################################################################
 
+def ogr_mvt_tileset_tilegl():
+
+    ds = ogr.Open('data/mvt/linestring_tilejson_gl/0')
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldCount() != 2:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_tileset_without_metadata_file():
 
     ds = gdal.OpenEx('data/mvt/point_polygon/1',
@@ -746,6 +762,7 @@ def ogr_mvt_http():
     # No metadata file nor tile
     handler = webserver.SequentialHandler()
     handler.add('GET', '/linestring/metadata.json', 404, {})
+    handler.add('GET', '/linestring.json', 404, {})
     handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -757,6 +774,7 @@ def ogr_mvt_http():
     # No metadata file, but tiles
     handler = webserver.SequentialHandler()
     handler.add('GET', '/linestring/metadata.json', 404, {})
+    handler.add('GET', '/linestring.json', 404, {})
     handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
                 open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
     handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
@@ -769,9 +787,24 @@ def ogr_mvt_http():
             gdaltest.post_reason('fail')
             return 'fail'
 
-    # Metadata file, but no tiles
+    # metadata.json file, but no tiles
     handler = webserver.SequentialHandler()
     handler.add('GET', '/linestring/metadata.json', 200, {},
+                open('data/mvt/linestring/metadata.json', 'rb').read())
+    handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
+    handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0' % gdaltest.webserver_port)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # No metadata.json file, but a linestring.json and no tiles
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/metadata.json', 404, {})
+    handler.add('GET', '/linestring.json', 200, {},
                 open('data/mvt/linestring/metadata.json', 'rb').read())
     handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
     handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
@@ -824,6 +857,7 @@ gdaltest_list = [
     ogr_mvt_tileset_without_readdir,
     ogr_mvt_tileset_without_metadata_file,
     ogr_mvt_tileset_json_field,
+    ogr_mvt_tileset_tilegl,
     ogr_mvt_open_variants,
     ogr_mvt_xyz_options,
     ogr_mvt_test_ogrsf_pbf,

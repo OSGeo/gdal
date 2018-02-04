@@ -1884,6 +1884,20 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
             {
                 return TRUE;
             }
+            if( pszMetadataFile == nullptr )
+            {
+                // tileserver-gl metadata file:
+                // If opening /path/to/foo/0, try looking for /path/to/foo.json
+                CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                osMetadataFile = CPLFormFilename(
+                                CPLGetPath(osParentDir),
+                                CPLGetFilename(osParentDir),
+                                "json");
+                if( VSIStatL(osMetadataFile, &sStat) == 0 )
+                {
+                    return TRUE;
+                }
+            }
 
             // At least 3 files, to include the dummy . and ..
             CPLStringList aosDirContent(
@@ -2279,6 +2293,9 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     {
         oVectorLayers =
             oDoc.GetRoot().GetArray("vector_layers");
+
+        oTileStatLayers =
+            oDoc.GetRoot().GetArray("tilestats/layers");
     }
     else
     {
@@ -2337,37 +2354,67 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
         poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
 
+    bool bMetadataFileExists = false;
     CPLString osMetadataContent;
     if( STARTS_WITH(osMetadataFile, "http://") ||
         STARTS_WITH(osMetadataFile, "https://") )
     {
-        if( pszMetadataFile == nullptr )
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-        CPLHTTPResult* psResult = CPLHTTPFetch( osMetadataFile, nullptr );
-        if( pszMetadataFile == nullptr )
-            CPLPopErrorHandler();
-        if( psResult == nullptr )
+        for( int i = 0; i < 2; i++ )
         {
-            osMetadataFile.clear();
+            if( pszMetadataFile == nullptr )
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+            CPLHTTPResult* psResult = CPLHTTPFetch( osMetadataFile, nullptr );
+            if( pszMetadataFile == nullptr )
+                CPLPopErrorHandler();
+            if( psResult == nullptr )
+            {
+                osMetadataFile.clear();
+            }
+            else if( psResult->pszErrBuf != nullptr ||
+                    psResult->pabyData == nullptr )
+            {
+                CPLHTTPDestroyResult(psResult);
+                osMetadataFile.clear();
+
+                if( i == 0 && pszMetadataFile == nullptr )
+                {
+                    // tileserver-gl metadata file:
+                    // If opening /path/to/foo/0, try looking for /path/to/foo.json
+                    CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+                    osMetadataFile = CPLFormFilename(
+                                    CPLGetPath(osParentDir),
+                                    CPLGetFilename(osParentDir),
+                                    "json");
+                    continue;
+                }
+            }
+            else
+            {
+                bMetadataFileExists = true;
+                osMetadataContent =
+                    reinterpret_cast<const char*>(psResult->pabyData);
+                CPLHTTPDestroyResult(psResult);
+            }
+            break;
         }
-        else if( psResult->pszErrBuf != nullptr ||
-                 psResult->pabyData == nullptr )
+    }
+    else if( !osMetadataFile.empty() )
+    {
+        bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
+        if( !bMetadataFileExists && pszMetadataFile == nullptr )
         {
-            CPLHTTPDestroyResult(psResult);
-            osMetadataFile.clear();
-        }
-        else
-        {
-            osMetadataContent =
-                reinterpret_cast<const char*>(psResult->pabyData);
-            CPLHTTPDestroyResult(psResult);
+            // tileserver-gl metadata file:
+            // If opening /path/to/foo/0, try looking for /path/to/foo.json
+            CPLString osParentDir(CPLGetPath(poOpenInfo->pszFilename));
+            osMetadataFile = CPLFormFilename(
+                            CPLGetPath(osParentDir),
+                            CPLGetFilename(osParentDir),
+                            "json");
+            bMetadataFileExists = (VSIStatL(osMetadataFile, &sStat) == 0);
         }
     }
 
-    if( osMetadataFile.empty() ||
-        (VSIStatL(osMetadataFile, &sStat) != 0 &&
-         !STARTS_WITH(osMetadataFile, "http://") &&
-         !STARTS_WITH(osMetadataFile, "https://")) )
+    if( !bMetadataFileExists )
     {
         // If we don't have a metadata file, iterate through all tiles to
         // establish the layer definitions.
