@@ -157,6 +157,10 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
     {
         return false;
     }
+
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+
     json_tokener *jstok = json_tokener_new();
     m_poRootJsonObject = json_tokener_parse_ex( jstok,
                                                 reinterpret_cast<const char*>(pabyData),
@@ -216,7 +220,6 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
         return false;
     }
 
-
     void *pBuffer = CPLMalloc( nChunkSize );
     json_tokener *tok = json_tokener_new();
     bool bSuccess = true;
@@ -227,6 +230,9 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
     {
         size_t nRead = VSIFReadL( pBuffer, 1, nChunkSize, fp );
         dfTotalRead += nRead;
+
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
 
         m_poRootJsonObject = json_tokener_parse_ex(tok,
                                                    static_cast<const char*>(pBuffer),
@@ -341,6 +347,9 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOpti
         bResult = false;
     }
     else {
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+
         m_poRootJsonObject = ctx.pObject;
     }
     json_tokener_free(ctx.pTokener);
