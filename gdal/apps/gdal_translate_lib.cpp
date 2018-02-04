@@ -2527,7 +2527,7 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
             }
         }
 
-        else if( STARTS_WITH_CI(papszArgv[i], "-colorinterp_") )
+        else if( STARTS_WITH_CI(papszArgv[i], "-colorinterp_") && papszArgv[i+1] )
         {
             int nIndex = atoi(papszArgv[i] + strlen("-colorinterp_"));
             if( nIndex <= 0 || nIndex > 65535 )
