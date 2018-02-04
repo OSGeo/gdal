@@ -1579,6 +1579,9 @@ void OGRMVTDirectoryLayer::OpenTile()
         oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
                 "METADATA_FILE",
                 m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
+        oOpenInfo.papszOpenOptions = CSLSetNameValue(
+            oOpenInfo.papszOpenOptions,
+            "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
         m_poCurrentTile = OGRMVTDataset::Open(&oOpenInfo);
         CSLDestroy(oOpenInfo.papszOpenOptions);
 
@@ -1782,6 +1785,8 @@ OGRFeature* OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
     oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
             "METADATA_FILE",
             m_bJsonField ? "" : m_poDS->m_osMetadataMemFilename.c_str());
+    oOpenInfo.papszOpenOptions = CSLSetNameValue(oOpenInfo.papszOpenOptions,
+            "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
     GDALDataset* poTile = OGRMVTDataset::Open(&oOpenInfo);
     CSLDestroy(oOpenInfo.papszOpenOptions);
     OGRFeature* poFeature = nullptr;
@@ -2385,6 +2390,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
                                GA_ReadOnly);
                 oOpenInfo.papszOpenOptions = CSLSetNameValue(nullptr,
                     "METADATA_FILE", "");
+                oOpenInfo.papszOpenOptions = CSLSetNameValue(
+                    oOpenInfo.papszOpenOptions,
+                    "DO_NOT_ERROR_ON_MISSING_TILE", "YES");
                 auto poTileDS = OGRMVTDataset::Open(&oOpenInfo);
                 if( poTileDS )
                 {
@@ -2667,6 +2675,9 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
     CPLString osY = CPLGetBasename(osFilename);
     CPLString osX = CPLGetBasename(CPLGetPath(osFilename));
     CPLString osZ = CPLGetBasename(CPLGetPath(CPLGetPath(osFilename)));
+    size_t nPos = osY.find('.');
+    if( nPos != std::string::npos )
+        osY.resize(nPos);
 
     CPLString osMetadataFile;
     if( CSLFetchNameValue(poOpenInfo->papszOpenOptions, "METADATA_FILE") )
@@ -2706,9 +2717,20 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
 
     if( fp == nullptr )
     {
+        bool bSilenceErrors = CPLFetchBool(poOpenInfo->papszOpenOptions,
+                                    "DO_NOT_ERROR_ON_MISSING_TILE",false);
+        if( bSilenceErrors )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
         CPLHTTPResult* psResult = CPLHTTPFetch( osFilename, nullptr );
+        if( bSilenceErrors )
+            CPLPopErrorHandler();
         if( psResult == nullptr )
             return nullptr;
+        if( psResult->pszErrBuf != nullptr )
+        {
+            CPLHTTPDestroyResult(psResult);
+            return nullptr;
+        }
         pabyDataMod = psResult->pabyData;
         if( pabyDataMod == nullptr )
         {
