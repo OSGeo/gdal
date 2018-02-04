@@ -174,6 +174,21 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 }
 
 /**
+ * Load json document from memory buffer.
+ * @param  osStr    String
+ * @return          true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ *
+ * @since GDAL 2.3
+ */
+bool CPLJSONDocument::LoadMemory(const std::string &osStr)
+{
+    if( osStr.empty() )
+        return false;
+    return LoadMemory( reinterpret_cast<const GByte*>(osStr.data()),
+                       static_cast<int>(osStr.size()) );
+}
+
+/**
  * Load json document from file using small chunks of data.
  * @param  osPath      Path to json document file.
  * @param  nChunkSize   Chunk size.

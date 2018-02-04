@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 import ogrtest
+import webserver
 from osgeo import gdal
 from osgeo import ogr
 
@@ -635,6 +636,109 @@ def ogr_mvt_polygon_larger_than_header():
     return 'success'
 
 ###############################################################################
+
+def ogr_mvt_http_start():
+
+    gdaltest.webserver_process = None
+    gdaltest.webserver_port = 0
+
+    if not gdaltest.built_against_curl():
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_http():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/metadata.json', 200, {},
+                open('data/mvt/linestring/metadata.json', 'rb').read())
+    handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
+                open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
+    handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
+                open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0' % gdaltest.webserver_port)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # No metadata file nor tile
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/metadata.json', 404, {})
+    handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
+    with webserver.install_http_handler(handler):
+        with gdaltest.error_handler():
+            ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0' % gdaltest.webserver_port)
+        if ds is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # No metadata file, but tiles
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/metadata.json', 404, {})
+    handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
+                open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
+    handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
+                open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0' % gdaltest.webserver_port)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Metadata file, but no tiles
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/metadata.json', 200, {},
+                open('data/mvt/linestring/metadata.json', 'rb').read())
+    handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
+    handler.add('GET', '/linestring/0/0/0.pbf', 404, {})
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0' % gdaltest.webserver_port)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Open pbf file
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/linestring/0/0/0.pbf', 200, {},
+                open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
+    with webserver.install_http_handler(handler):
+        ds = ogr.Open('MVT:http://127.0.0.1:%d/linestring/0/0/0.pbf' % gdaltest.webserver_port)
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        if f is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_http_stop():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -661,7 +765,12 @@ gdaltest_list = [
     ogr_mvt_mbtiles_test_ogrsf,
     ogr_mvt_x_y_z_filename_scheme,
     ogr_mvt_polygon_larger_than_header,
+    ogr_mvt_http_start,
+    ogr_mvt_http,
+    ogr_mvt_http_stop,
 ]
+
+# gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
 
 if __name__ == '__main__':
 
