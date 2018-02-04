@@ -1676,7 +1676,12 @@ void OGRMVTDirectoryLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     if( m_poFilterGeom != nullptr )
         sEnvelope = m_sFilterEnvelope;
     if( m_sExtent.IsInit() )
-        sEnvelope.Merge( m_sExtent );
+    {
+        if( sEnvelope.IsInit() )
+            sEnvelope.Intersect( m_sExtent );
+        else
+            sEnvelope = m_sExtent;
+    }
 
     if( sEnvelope.IsInit() &&
         m_sExtent.MinX >= -10 * kmMAX_GM &&
