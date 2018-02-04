@@ -205,7 +205,6 @@ class OGRMVTDirectoryLayer: public OGRMVTLayerBase
     GDALDataset                *m_poCurrentTile = nullptr;
     bool                        m_bJsonField = false;
     GIntBig                     m_nFIDBase = 0;
-    bool                        m_bExtentValid = false;
     OGREnvelope                 m_sExtent;
     int                         m_nFilterMinX = 0;
     int                         m_nFilterMinY = 0;
@@ -1435,7 +1434,6 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
 
     if( psExtent )
     {
-        m_bExtentValid = true;
         m_sExtent = *psExtent;
     }
 
@@ -1548,8 +1546,8 @@ void OGRMVTDirectoryLayer::ReadNewSubDir()
             }
             m_aosSubDirContent = StripDummyEntries(m_aosSubDirContent);
         }
-        m_nYIndex = 0;
-        OpenTile();
+        m_nYIndex = -1;
+        OpenTileIfNeeded();
     }
     else
     {
@@ -1674,22 +1672,28 @@ void OGRMVTDirectoryLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 {
     OGRLayer::SetSpatialFilter(poGeomIn);
 
-    if( m_poFilterGeom != nullptr &&
-        m_sFilterEnvelope.MinX >= -10 * kmMAX_GM &&
-        m_sFilterEnvelope.MinY >= -10 * kmMAX_GM &&
-        m_sFilterEnvelope.MaxX <= 10 * kmMAX_GM &&
-        m_sFilterEnvelope.MaxY <= 10 * kmMAX_GM )
+    OGREnvelope sEnvelope;
+    if( m_poFilterGeom != nullptr )
+        sEnvelope = m_sFilterEnvelope;
+    if( m_sExtent.IsInit() )
+        sEnvelope.Merge( m_sExtent );
+
+    if( sEnvelope.IsInit() &&
+        m_sExtent.MinX >= -10 * kmMAX_GM &&
+        m_sExtent.MinY >= -10 * kmMAX_GM &&
+        m_sExtent.MaxX <= 10 * kmMAX_GM &&
+        m_sExtent.MaxY <= 10 * kmMAX_GM )
     {
         const double dfTileDim = 2 * kmMAX_GM / (1 << m_nZ);
         m_nFilterMinX = std::max(0, static_cast<int>(
-            floor((m_sFilterEnvelope.MinX + kmMAX_GM) / dfTileDim)));
+            floor((m_sExtent.MinX + kmMAX_GM) / dfTileDim)));
         m_nFilterMinY = std::max(0, static_cast<int>(
-            floor((kmMAX_GM - m_sFilterEnvelope.MaxY) / dfTileDim)));
+            floor((kmMAX_GM - m_sExtent.MaxY) / dfTileDim)));
         m_nFilterMaxX = std::min(static_cast<int>(
-            ceil((m_sFilterEnvelope.MaxX + kmMAX_GM) / dfTileDim)),
+            ceil((m_sExtent.MaxX + kmMAX_GM) / dfTileDim)),
             (1 << m_nZ)-1);
         m_nFilterMaxY = std::min(static_cast<int>(
-            ceil((kmMAX_GM - m_sFilterEnvelope.MinY) / dfTileDim)),
+            ceil((kmMAX_GM - m_sExtent.MinY) / dfTileDim)),
             (1 << m_nZ)-1);
     }
     else
@@ -1720,7 +1724,7 @@ int OGRMVTDirectoryLayer::TestCapability(const char* pszCap)
 
 OGRErr OGRMVTDirectoryLayer::GetExtent( OGREnvelope *psExtent, int bForce )
 {
-    if( m_bExtentValid )
+    if( m_sExtent.IsInit() )
     {
         *psExtent = m_sExtent;
         return OGRERR_NONE;
@@ -2620,6 +2624,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MinY = oBoundArray[1].ToDouble();
             sExtent.MaxX = oBoundArray[2].ToDouble();
             sExtent.MaxY = oBoundArray[3].ToDouble();
+            LongLatToSphericalMercator(&sExtent.MinX, &sExtent.MinY);
+            LongLatToSphericalMercator(&sExtent.MaxX, &sExtent.MaxY);
         }
     }
 
