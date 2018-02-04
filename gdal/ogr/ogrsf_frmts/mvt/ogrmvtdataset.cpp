@@ -837,7 +837,7 @@ void OGRMVTLayer::GetXY(int nX, int nY, double& dfX, double& dfY)
     else
     {
         dfX = nX;
-        dfY = static_cast<int>(m_nExtent) - nY;
+        dfY = static_cast<double>(m_nExtent) - nY;
     }
 }
 
