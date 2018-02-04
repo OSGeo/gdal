@@ -2245,6 +2245,7 @@ static void LongLatToSphericalMercator(double* x, double* y)
 /************************************************************************/
 
 static bool LoadMetadata(const CPLString& osMetadataFile,
+                         const CPLString& osMetadataContent,
                          CPLJSONArray& oVectorLayers,
                          CPLJSONArray& oTileStatLayers,
                          CPLJSONObject& oBounds,
@@ -2254,8 +2255,12 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     CPLJSONDocument oDoc;
 
     bool bLoadOK;
-    if( STARTS_WITH(osMetadataFile, "http://") ||
-        STARTS_WITH(osMetadataFile, "https://") )
+    if( !osMetadataContent.empty() )
+    {
+        bLoadOK = oDoc.LoadMemory(osMetadataContent);
+    }
+    else if( STARTS_WITH(osMetadataFile, "http://") ||
+             STARTS_WITH(osMetadataFile, "https://") )
     {
         bLoadOK = oDoc.LoadUrl(osMetadataFile, nullptr);
     }
@@ -2331,15 +2336,46 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
     bool bJsonField = CPLFetchBool(
         poOpenInfo->papszOpenOptions, "JSON_FIELD", false);
     VSIStatBufL sStat;
-    if( (osMetadataFile.empty() || VSIStatL(osMetadataFile, &sStat) != 0) &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
-        !STARTS_WITH(poOpenInfo->pszFilename, "https://") )
+
+    CPLString osMetadataContent;
+    if( STARTS_WITH(osMetadataFile, "http://") ||
+        STARTS_WITH(osMetadataFile, "https://") )
+    {
+        if( pszMetadataFile == nullptr )
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLHTTPResult* psResult = CPLHTTPFetch( osMetadataFile, nullptr );
+        if( pszMetadataFile == nullptr )
+            CPLPopErrorHandler();
+        if( psResult == nullptr )
+        {
+            osMetadataFile.clear();
+        }
+        else if( psResult->pszErrBuf != nullptr ||
+                 psResult->pabyData == nullptr )
+        {
+            CPLHTTPDestroyResult(psResult);
+            osMetadataFile.clear();
+        }
+        else
+        {
+            osMetadataContent =
+                reinterpret_cast<const char*>(psResult->pabyData);
+            CPLHTTPDestroyResult(psResult);
+        }
+    }
+
+    if( osMetadataFile.empty() ||
+        (VSIStatL(osMetadataFile, &sStat) != 0 &&
+         !STARTS_WITH(osMetadataFile, "http://") &&
+         !STARTS_WITH(osMetadataFile, "https://")) )
     {
         // If we don't have a metadata file, iterate through all tiles to
         // establish the layer definitions.
         OGRMVTDataset   *poDS = nullptr;
         bool bTryToListDir =
-            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl");
+            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
+            !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
+            !STARTS_WITH(poOpenInfo->pszFilename, "https://");
         CPLStringList aosDirContent;
         if( bTryToListDir )
         {
@@ -2497,7 +2533,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
 
     CPLString osMetadataMemFilename =
         CPLSPrintf("/vsimem/%p_metadata.json", poDS);
-    if( !LoadMetadata(osMetadataFile, oVectorLayers, oTileStatLayers, oBounds,
+    if( !LoadMetadata(osMetadataFile, osMetadataContent,
+                      oVectorLayers, oTileStatLayers, oBounds,
                       osMetadataMemFilename) )
     {
         delete poDS;
@@ -2836,7 +2873,8 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
     if( !osMetadataFile.empty() )
     {
         CPLJSONObject oBounds;
-        LoadMetadata(osMetadataFile, oVectorLayers, oTileStatLayers, oBounds,
+        LoadMetadata(osMetadataFile, CPLString(),
+                     oVectorLayers, oTileStatLayers, oBounds,
                      CPLString());
     }
 

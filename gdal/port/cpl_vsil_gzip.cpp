@@ -2773,7 +2773,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = (Bytef*) ptr;
-    int ret = inflateInit(&strm);
+    int ret = inflateInit2(&strm, MAX_WBITS + 32);
     if( ret != Z_OK )
     {
         if( pnOutBytes != nullptr )
