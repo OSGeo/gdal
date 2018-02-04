@@ -664,7 +664,7 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if( nCurLine + nRowsRepeated + 2 >= 1048576 )
+        if( static_cast<GIntBig>(nCurLine) + nRowsRepeated + 2 >= 1048576 )
         {
             // Typical of a XLSX converted to ODS
             bEndTableParsing = true;
