@@ -1880,7 +1880,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                 if (eType == OFTReal)
                 {
                     VSIFPrintfL(fp, "<c r=\"%s%d\">\n", szCol, iRow);
-                    VSIFPrintfL(fp, "<v>%.16f</v>\n", poFeature->GetFieldAsDouble(j));
+                    VSIFPrintfL(fp, "<v>%.16g</v>\n", poFeature->GetFieldAsDouble(j));
                     VSIFPrintfL(fp, "</c>\n");
                 }
                 else if (eType == OFTInteger)
@@ -1926,7 +1926,7 @@ static void WriteLayer(const char* pszName, OGRLayer* poLayer, int iLayer,
                     if (eType == OFTDate)
                         VSIFPrintfL(fp, "<v>%d</v>\n", (int)(dfNumberOfDaysSince1900 + 0.1));
                     else
-                        VSIFPrintfL(fp, "<v>%.16f</v>\n", dfNumberOfDaysSince1900);
+                        VSIFPrintfL(fp, "<v>%.16g</v>\n", dfNumberOfDaysSince1900);
                     VSIFPrintfL(fp, "</c>\n");
                 }
                 else
