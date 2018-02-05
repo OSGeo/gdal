@@ -1,9 +1,10 @@
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <math.h>
-#include <ctype.h>
 #include "clock.h"
 #include "myutil.h"
 #include "myassert.h"
@@ -2504,6 +2505,10 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    }
    /* Add the year. */
    if (incrYear != 0) {
+      if (INT_MAX - incrYear < year) {
+         fprintf(stderr, "overflow. year: %d incrYear: %d\n", year, incrYear);
+         return 0;
+      }
       year += incrYear;
    }
 
