@@ -1091,7 +1091,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, void* pUserData )
 
         pfnOldHandler = pfnErrorHandler;
 
-        if( pfnErrorHandler == nullptr )
+        if( pfnErrorHandlerNew == nullptr )
             pfnErrorHandler = CPLDefaultErrorHandler;
         else
             pfnErrorHandler = pfnErrorHandlerNew;
