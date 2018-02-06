@@ -2077,7 +2077,10 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                             padfY + nLastPointIdx,
                             padfZ != nullptr ? padfZ + nLastPointIdx : nullptr,
                             padfM != nullptr ? padfM + nLastPointIdx : nullptr );
-        poCC->addCurveDirectly(poLine);
+        if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+        {
+            delete poLine;
+        }
     }
 
     if( !bHasCircularArcs )
@@ -2699,12 +2702,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             ? nPoints - panPartStart[i]
                             : panPartStart[i+1] - panPartStart[i];
 
-                        poMulti->addGeometryDirectly(
+                        OGRCurve* poCurve =
                             OGRShapeCreateCompoundCurve(
                                 panPartStart[i], nVerticesInThisPart,
                                 pasCurves, nCurves, iCurveIdx,
                                 padfX, padfY, bHasZ ? padfZ : nullptr, padfM,
-                                &iCurveIdx));
+                                &iCurveIdx);
+                        if( poMulti->addGeometryDirectly(poCurve) !=
+                                                                OGRERR_NONE )
+                        {
+                            delete poCurve;
+                        }
                     }
                 }
                 else
