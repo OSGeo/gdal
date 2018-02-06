@@ -3207,7 +3207,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         poFeatureDefn->GetFieldIndex( "BlockAttributes" ) != -1 )
     {
         papszAttribs = static_cast<char**>(
-            CPLCalloc(apoAttribs.size() + 1, sizeof(char**)));
+            CPLCalloc(apoAttribs.size() + 1, sizeof(char*)));
         int iIndex = 0;
 
         for( auto oIt = apoAttribs.begin(); oIt != apoAttribs.end(); ++oIt )
