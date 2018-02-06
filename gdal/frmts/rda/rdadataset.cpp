@@ -689,7 +689,7 @@ GByte* GDALRDADataset::Download(const CPLString& osURL, bool bErrorOn404)
     CPLHTTPResult* psResult = pasResult[0];
     if( psResult->pszErrBuf != nullptr )
     {
-        if( bErrorOn404 || strstr(psResult->pszErrBuf, "404") == NULL )
+        if( bErrorOn404 || strstr(psResult->pszErrBuf, "404") == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                     "Get request %s failed: %s",
