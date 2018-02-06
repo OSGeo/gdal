@@ -1136,6 +1136,19 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
     {
         if( asErrorBuffers[i].szBuffer[0] != '\0' )
             papsResults[i]->pszErrBuf = CPLStrdup(asErrorBuffers[i].szBuffer);
+        else
+        {
+            long response_code = 0;
+            curl_easy_getinfo(asHandles[i], CURLINFO_RESPONSE_CODE,
+                              &response_code);
+
+            if( response_code >= 400 && response_code < 600 )
+            {
+                papsResults[i]->pszErrBuf =
+                        CPLStrdup(CPLSPrintf("HTTP error code : %d",
+                                             static_cast<int>(response_code)));
+            }
+        }
 
         curl_easy_getinfo( asHandles[i], CURLINFO_CONTENT_TYPE,
                            &(papsResults[i]->pszContentType) );
