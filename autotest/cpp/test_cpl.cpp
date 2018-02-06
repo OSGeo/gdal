@@ -38,6 +38,7 @@
 #include "cpl_json.h"
 #include "cpl_json_streaming_parser.h"
 #include "cpl_mem_cache.h"
+#include "cpl_http.h"
 
 #include <fstream>
 #include <string>
@@ -1976,13 +1977,17 @@ namespace tut
 
             oDocument.GetRoot().Add("foo", "bar");
 
-            ensure( oDocument.LoadUrl("http://demo.nextgis.com/api/component/pyramid/pkg_version",
-                                      const_cast<char**>(options) ) );
-            CPLJSONObject oJsonRoot = oDocument.GetRoot();
-            ensure( oJsonRoot.IsValid() );
+            if( CPLHTTPEnabled() )
+            {
+                ensure( oDocument.LoadUrl(
+                    "http://demo.nextgis.com/api/component/pyramid/pkg_version",
+                    const_cast<char**>(options) ) );
+                CPLJSONObject oJsonRoot = oDocument.GetRoot();
+                ensure( oJsonRoot.IsValid() );
 
-            CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
-            ensure_not( EQUAL(soVersion, "0") );
+                CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
+                ensure_not( EQUAL(soVersion, "0") );
+            }
         }
         {
             // Test Json document LoadChunks
