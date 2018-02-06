@@ -3173,6 +3173,10 @@ def tiff_read_huge_number_strips():
 
 def tiff_read_many_blocks():
 
+    # Runs super slow on some Windows configs
+    if sys.platform == 'win32':
+        return 'skip'
+
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] != 'INTERNAL':
         return 'skip'
