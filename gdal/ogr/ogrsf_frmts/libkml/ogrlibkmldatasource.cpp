@@ -137,6 +137,31 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
         }
         oKml[nPos+2] = 'S';
     }
+
+    // Workaround Windows specific issue with libkml (at least the version
+    // used by OSGeo4W at time of writing), where tabulations as
+    // coordinate separators aren't properly handled
+    //(see https://trac.osgeo.org/gdal/ticket/7231)
+    nPos = 0;
+    while( true )
+    {
+        nPos = oKml.find("<coordinates>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        size_t nPosEnd = oKml.find("</coordinates>", nPos);
+        if( nPosEnd == std::string::npos )
+        {
+            break;
+        }
+        nPos += strlen("<coordinates>");
+        for( ; nPos < nPosEnd; nPos++ )
+        {
+            if( oKml[nPos] == '\t' )
+                oKml[nPos] = ' ';
+        }
+    }
 }
 
 /************************************************************************/
