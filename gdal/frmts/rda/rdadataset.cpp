@@ -135,7 +135,7 @@ class GDALRDADataset: public GDALDataset
         bool      GetAuthorization();
         bool      ParseAuthorizationResponse(const CPLString& osAuth);
         bool      ParseConnectionString( GDALOpenInfo* poOpenInfo );
-        json_object* ReadJSonFile(const char* pszFilename);
+        json_object* ReadJSonFile(const char* pszFilename, bool bErrorOn404);
         bool      ReadImageMetadata();
         bool      ReadRPCs();
         bool      ReadGeoreferencing();
@@ -147,7 +147,7 @@ class GDALRDADataset: public GDALDataset
                              const void* pData, size_t nDataLen );
 
         char**    GetHTTPOptions();
-        GByte*    Download(const CPLString& osURL);
+        GByte*    Download(const CPLString& osURL, bool bErrorOn404);
         bool      Open( GDALOpenInfo* poOpenInfo );
 
         std::string MakeKeyCache(int64_t nTileX, int64_t nTileY);
@@ -677,7 +677,7 @@ char** GDALRDADataset::GetHTTPOptions()
 /*                            Download()                                */
 /************************************************************************/
 
-GByte* GDALRDADataset::Download(const CPLString& osURL)
+GByte* GDALRDADataset::Download(const CPLString& osURL, bool bErrorOn404)
 {
     char** papszOptions = GetHTTPOptions();
     const char* pszURL = osURL.c_str();
@@ -689,12 +689,16 @@ GByte* GDALRDADataset::Download(const CPLString& osURL)
     CPLHTTPResult* psResult = pasResult[0];
     if( psResult->pszErrBuf != nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Get request %s failed: %s",
-                   osURL.c_str(),
-                    psResult->pabyData ? reinterpret_cast<const char*>(
-                        psResult->pabyData ) :
+        if( bErrorOn404 || strstr(psResult->pszErrBuf, "404") == NULL )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Get request %s failed: %s",
+                    osURL.c_str(),
+                    psResult->pabyData ? CPLSPrintf("%s: %s",
+                        psResult->pszErrBuf,
+                        reinterpret_cast<const char*>(psResult->pabyData )) :
                     psResult->pszErrBuf );
+        }
         CPLHTTPDestroyResult(psResult);
         CPLFree(pasResult);
         return nullptr;
@@ -787,7 +791,8 @@ static double GetJsonDouble(json_object* poObj, const char* pszPath,
 /*                           ReadJSonFile()                             */
 /************************************************************************/
 
-json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
+json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
+                                          bool bErrorOn404)
 {
     CPLString osCachedFilename(
         CPLFormFilename(GetDatasetCacheDir(), pszFilename, nullptr));
@@ -815,7 +820,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
         CPLString osURL(m_osRDAAPIURL);
         osURL += "/metadata/" + m_osGraphId + "/" +
                  m_osNodeId + "/" + pszFilename;
-        pszRes = reinterpret_cast<char*>(Download(osURL));
+        pszRes = reinterpret_cast<char*>(Download(osURL, bErrorOn404));
         bToCache = true;
     }
     if( pszRes == nullptr )
@@ -850,7 +855,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
 
 bool GDALRDADataset::ReadImageMetadata()
 {
-    json_object* poObj = ReadJSonFile("image.json");
+    json_object* poObj = ReadJSonFile("image.json", true);
     if( poObj == nullptr )
         return false;
 
@@ -1018,7 +1023,7 @@ bool GDALRDADataset::ReadGeoreferencing()
 {
     m_bTriedReadGeoreferencing = true;
 
-    json_object* poObj = ReadJSonFile("georeferencing.json");
+    json_object* poObj = ReadJSonFile("georeferencing.json", false);
     if( poObj == nullptr )
         return false;
 
@@ -1104,7 +1109,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
 
 bool GDALRDADataset::ReadRPCs()
 {
-    json_object* poObj = ReadJSonFile("rpcs.json");
+    json_object* poObj = ReadJSonFile("rpcs.json", false);
     if( poObj == nullptr )
         return false;
 
