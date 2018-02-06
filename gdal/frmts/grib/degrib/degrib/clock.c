@@ -2505,7 +2505,11 @@ double Clock_AddMonthYear (double refTime, int incrMonth, int incrYear)
    }
    /* Add the year. */
    if (incrYear != 0) {
-      if (INT_MAX - incrYear < year) {
+      if (incrYear > 0 && year > INT_MAX - incrYear) {
+         fprintf(stderr, "overflow. year: %d incrYear: %d\n", year, incrYear);
+         return 0;
+      }
+      if (incrYear < 0 && year < INT_MIN - incrYear) {
          fprintf(stderr, "overflow. year: %d incrYear: %d\n", year, incrYear);
          return 0;
       }
