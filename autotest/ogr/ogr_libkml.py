@@ -2123,6 +2123,25 @@ def ogr_libkml_read_tab_separated_coord_triplet():
     return 'success'
 
 ###############################################################################
+# Test reading KML with coordinate with space only content (#7232)
+
+def ogr_libkml_read_kml_with_space_content_in_coordinates():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/kml_with_space_content_in_coordinates.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    wkt = 'LINESTRING EMPTY'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -2226,6 +2245,7 @@ gdaltest_list = [
     ogr_libkml_read_duplicate_folder_name,
     ogr_libkml_read_placemark_in_root_and_subfolder,
     ogr_libkml_read_tab_separated_coord_triplet,
+    ogr_libkml_read_kml_with_space_content_in_coordinates,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':
