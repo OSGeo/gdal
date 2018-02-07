@@ -634,25 +634,12 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures, int bRequestHi
 
 static const char* OGRWFSFetchContentDispositionFilename(char** papszHeaders)
 {
-    char** papszIter = papszHeaders;
-    while(papszIter && *papszIter)
+    const char* pszContentDisposition =
+        CSLFetchNameValue(papszHeaders, "Content-Disposition");
+    if( pszContentDisposition &&
+        STARTS_WITH(pszContentDisposition, "attachment; filename=") )
     {
-        /* For multipart, we have in raw format, but without end-of-line characters */
-        if (STARTS_WITH(*papszIter, "Content-Disposition: attachment; filename="))
-        {
-            return *papszIter + 42;
-        }
-        /* For single part, the headers are in KEY=VAL format, but with e-o-l ... */
-        else if (STARTS_WITH(*papszIter, "Content-Disposition=attachment; filename="))
-        {
-            char* pszVal = (char*)(*papszIter + 41);
-            char* pszEOL = strchr(pszVal, '\r');
-            if (pszEOL) *pszEOL = 0;
-            pszEOL = strchr(pszVal, '\n');
-            if (pszEOL) *pszEOL = 0;
-            return pszVal;
-        }
-        papszIter ++;
+        return pszContentDisposition + strlen("attachment; filename=");
     }
     return nullptr;
 }

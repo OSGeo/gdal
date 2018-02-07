@@ -249,8 +249,11 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     }
     char *pszKey = nullptr;
     const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
-    psResult->papszHeaders =
-        CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    if( pszKey && pszValue )
+    {
+        psResult->papszHeaders =
+            CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    }
     CPLFree(pszHdr);
     CPLFree(pszKey);
     return nmemb;
@@ -1855,8 +1858,14 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
                 bRestoreAntislashR = true;
                 pszEOL[-1] = '\0';
             }
-            psPart->papszHeaders =
-                CSLAddString( psPart->papszHeaders, pszNext );
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(pszNext, &pszKey );
+            if( pszKey && pszValue )
+            {
+                psPart->papszHeaders =
+                    CSLSetNameValue(psPart->papszHeaders, pszKey, pszValue);
+            }
+            CPLFree(pszKey);
             if( bRestoreAntislashR )
                 pszEOL[-1] = '\r';
             *pszEOL = '\n';
