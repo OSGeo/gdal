@@ -174,6 +174,7 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
                          nPosEnd + strlen("</coordinates>") -
                                 nPosAfterCoordinates,
                          "</coordinates>");
+            nPos = nPosAfterCoordinates + strlen("</coordinates>");
         }
     }
 }
