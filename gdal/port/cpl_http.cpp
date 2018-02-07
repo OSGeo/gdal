@@ -1802,8 +1802,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
     char *pszNext =
-        strstr(reinterpret_cast<char *>(psResult->pabyData),
-               osBoundary.c_str());
+        psResult->pabyData ?
+            strstr(reinterpret_cast<char *>(psResult->pabyData),
+               osBoundary.c_str()) : nullptr;
 
     if( pszNext == nullptr )
     {
@@ -1907,6 +1908,13 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         psPart->nDataLen =
             static_cast<int>(
                 pszNext - reinterpret_cast<char *>(psPart->pabyData));
+        // Normally the part should end with "\r\n--boundary_marker"
+        if( psPart->nDataLen >= 2 && pszNext[-2] == '\r' &&
+            pszNext[-1] == '\n' )
+        {
+            psPart->nDataLen -= 2;
+        }
+
         pszNext += osBoundary.size();
 
         if( STARTS_WITH(pszNext, "--") )

@@ -2148,4 +2148,201 @@ namespace tut
 #endif
     }
 
+    // Test CPLHTTPParseMultipartMime()
+    template<>
+    template<>
+    void object::test<33>()
+    {
+        CPLHTTPResult* psResult;
+
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing boundary value
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No content
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No part
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Truncated header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "Content-Type: foo";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, no header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+                       static_cast<char**>(nullptr) );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, with header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Single part, but with header without extra terminating \r\n
+        // (invalid normally, but apparently necessary for some ArcGIS WCS implementations)
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+    }
 } // namespace tut
