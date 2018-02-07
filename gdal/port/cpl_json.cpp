@@ -1124,7 +1124,7 @@ CPLJSONArray::CPLJSONArray()
 CPLJSONArray::CPLJSONArray(const std::string &osName) :
     CPLJSONObject( osName, json_object_new_array() )
 {
-
+    json_object_put( TO_JSONOBJ(m_poJsonObject) );
 }
 
 CPLJSONArray::CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject) :
