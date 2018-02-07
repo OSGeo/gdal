@@ -1545,6 +1545,7 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
         // memory after free
         if( strstr(pszHeaderFile, "/vsicurl/") == nullptr &&
+            strstr(pszHeaderFile, "/vsicurl?") == nullptr &&
             strstr(pszHeaderFile, "/vsis3/") == nullptr &&
             strstr(pszHeaderFile, "/vsigs/") == nullptr &&
             strstr(pszHeaderFile, "/vsiaz/") == nullptr &&

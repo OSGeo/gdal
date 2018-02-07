@@ -368,6 +368,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
         // memory after free
         if( strstr(osHeaderFile, "/vsicurl/") == nullptr &&
+            strstr(osHeaderFile, "/vsicurl?") == nullptr &&
             strstr(osHeaderFile, "/vsis3/") == nullptr &&
             strstr(osHeaderFile, "/vsigs/") == nullptr &&
             strstr(osHeaderFile, "/vsiaz/") == nullptr &&
