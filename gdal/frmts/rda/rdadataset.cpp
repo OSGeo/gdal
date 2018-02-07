@@ -699,8 +699,7 @@ GByte* GDALRDADataset::Download(const CPLString& osURL, bool bErrorOn404)
                         reinterpret_cast<const char*>(psResult->pabyData )) :
                     psResult->pszErrBuf );
         }
-        CPLHTTPDestroyResult(psResult);
-        CPLFree(pasResult);
+        CPLHTTPDestroyMultiResult(pasResult, 1);
         return nullptr;
     }
 
@@ -710,15 +709,13 @@ GByte* GDALRDADataset::Download(const CPLString& osURL, bool bErrorOn404)
                  "Get request %s failed: "
                  "Empty content returned by server",
                  osURL.c_str());
-        CPLHTTPDestroyResult(psResult);
-        CPLFree(pasResult);
+        CPLHTTPDestroyMultiResult(pasResult, 1);
         return nullptr;
     }
     CPLDebug("RDA", "%s", psResult->pabyData);
     GByte* pabyRes = psResult->pabyData;
     psResult->pabyData = nullptr;
-    CPLHTTPDestroyResult(psResult);
-    CPLFree(pasResult);
+    CPLHTTPDestroyMultiResult(pasResult, 1);
     return pabyRes;
 }
 
@@ -1486,9 +1483,8 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
                         pasResults[j]->pabyData, pasResults[j]->nDataLen);
             }
             CPLFree(apszURLLists[i+j]);
-            CPLHTTPDestroyResult(pasResults[j]);
         }
-        CPLFree(pasResults);
+        CPLHTTPDestroyMultiResult(pasResults, nToDownload);
     }
 }
 
@@ -1620,9 +1616,9 @@ GDALRDADataset::GetTiles(
                     }
                 }
             }
-            CPLHTTPDestroyResult(pasResults[i]);
         }
-        CPLFree(pasResults);
+        CPLHTTPDestroyMultiResult(pasResults,
+                                  static_cast<int>(apszURLLists.size()));
     }
 
     return oResult;

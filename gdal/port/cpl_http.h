@@ -105,6 +105,7 @@ CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
 
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
+void CPL_DLL  CPLHTTPDestroyMultiResult( CPLHTTPResult **papsResults, int nCount );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
 
 /* -------------------------------------------------------------------- */
