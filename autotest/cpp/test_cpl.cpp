@@ -924,6 +924,15 @@ namespace tut
         CPLPopErrorHandler();
 
         CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : nullptr);
+
+        oldHandler = CPLSetErrorHandler(nullptr);
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLErrorHandler newOldHandler = CPLSetErrorHandler(nullptr);
+        ensure_equals(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLSetErrorHandler(oldHandler);
     }
 
 /************************************************************************/
