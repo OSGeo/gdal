@@ -840,6 +840,25 @@ void OGRMVTLayer::GetXY(int nX, int nY, double& dfX, double& dfY)
     }
 }
 
+
+/************************************************************************/
+/*                     AddWithOverflowAccepted()                        */
+/************************************************************************/
+
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+static int AddWithOverflowAccepted(int a, int b)
+{
+    // In fact in normal situations a+b should not overflow. That can only
+    // happen with corrupted datasets. But we don't really want to add code
+    // to detect that situation, so basically this is just a trick to perform
+    // the addition without the various sanitizers to yell about the overflow.
+    //
+    // Assumes complement-to-two signed integer representation and that
+    // the compiler will safely cast a big unsigned to negative integer.
+    return static_cast<int>(
+                        static_cast<unsigned>(a) + static_cast<unsigned>(b));
+}
+
 /************************************************************************/
 /*                           ParseGeometry()                            */
 /************************************************************************/
@@ -903,8 +922,8 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                     pabyDataGeometryEnd, nDY);
                     //if( nDX != 0 || nDY != 0 )
                     {
-                        nX += nDX;
-                        nY += nDY;
+                        nX = AddWithOverflowAccepted(nX, nDX);
+                        nY = AddWithOverflowAccepted(nY, nDY);
                         double dfX;
                         double dfY;
                         GetXY(nX, nY, dfX, dfY);
@@ -931,8 +950,8 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                 pabyDataGeometryEnd, nDX);
                 READ_VARSINT32(m_pabyDataCur,
                                 pabyDataGeometryEnd, nDY);
-                nX += nDX;
-                nY += nDY;
+                nX = AddWithOverflowAccepted(nX, nDX);
+                nY = AddWithOverflowAccepted(nY, nDY);
                 double dfX;
                 double dfY;
                 GetXY(nX, nY, dfX, dfY);
@@ -962,8 +981,8 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                     pabyDataGeometryEnd, nDY);
                     //if( nDX != 0 || nDY != 0 )
                     {
-                        nX += nDX;
-                        nY += nDY;
+                        nX = AddWithOverflowAccepted(nX, nDX);
+                        nY = AddWithOverflowAccepted(nY, nDY);
                         GetXY(nX, nY, dfX, dfY);
                         poLine->addPoint(dfX, dfY);
                     }
@@ -1001,8 +1020,8 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                 pabyDataGeometryEnd, nDX);
                 READ_VARSINT32(m_pabyDataCur,
                                 pabyDataGeometryEnd, nDY);
-                nX += nDX;
-                nY += nDY;
+                nX = AddWithOverflowAccepted(nX, nDX);
+                nY = AddWithOverflowAccepted(nY, nDY);
                 double dfX;
                 double dfY;
                 GetXY(nX, nY, dfX, dfY);
@@ -1019,8 +1038,8 @@ OGRGeometry* OGRMVTLayer::ParseGeometry(unsigned int nGeomType,
                                     pabyDataGeometryEnd, nDY);
                     //if( nDX != 0 || nDY != 0 )
                     {
-                        nX += nDX;
-                        nY += nDY;
+                        nX = AddWithOverflowAccepted(nX, nDX);
+                        nY = AddWithOverflowAccepted(nY, nDY);
                         GetXY(nX, nY, dfX, dfY);
                         poRing->addPoint(dfX, dfY);
                     }
