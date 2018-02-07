@@ -926,8 +926,7 @@ class CPLHTTPErrorBuffer
  * @param papszOptions option list as a NULL-terminated array of strings. May be NULL.
  *                     Refer to CPLHTTPFetch() for valid options.
  * @return an array of CPLHTTPResult* structures that must be freed by
- * CPLHTTPDestroyResult(), the array itself with CPLFree(),
- * or NULL if libcurl support is disabled
+ * CPLHTTPDestroyMultiResult() or NULL if libcurl support is disabled
  *
  * @since GDAL 2.3
  */
@@ -1169,6 +1168,27 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
 #endif /* def HAVE_CURL */
 }
 
+/************************************************************************/
+/*                      CPLHTTPDestroyMultiResult()                     */
+/************************************************************************/
+/**
+ * \brief Clean the memory associated with the return value of CPLHTTPMultiFetch()
+ *
+ * @param papsResults pointer to the return value of CPLHTTPMultiFetch()
+ * @param nCount value of the nURLCount parameter passed to CPLHTTPMultiFetch()
+ * @since GDAL 2.3
+ */
+void CPLHTTPDestroyMultiResult( CPLHTTPResult **papsResults, int nCount )
+{
+    if( papsResults )
+    {
+        for(int i=0;i<nCount;i++)
+        {
+            CPLHTTPDestroyResult(papsResults[i]);
+        }
+        CPLFree(papsResults);
+    }
+}
 
 #ifdef HAVE_CURL
 
