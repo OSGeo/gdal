@@ -594,10 +594,12 @@ void CPLDebug( const char * pszCategory,
 /* -------------------------------------------------------------------- */
 /*      Invoke the current error handler.                               */
 /* -------------------------------------------------------------------- */
+    bool bDebugProcessed = false;
     if( psCtx->psHandlerStack != NULL )
     {
         if( psCtx->psHandlerStack->bCatchDebug )
         {
+            bDebugProcessed = true;
             psCtx->psHandlerStack->pfnHandler( CE_Debug, CPLE_None,
                                                pszMessage );
         }
@@ -608,30 +610,28 @@ void CPLDebug( const char * pszCategory,
             {
                 if( psNode->bCatchDebug )
                 {
+                    bDebugProcessed = true;
                     psNode->pfnHandler( CE_Debug, CPLE_None, pszMessage );
                     break;
                 }
                 psNode = psNode->psNext;
             }
-            if( psNode == NULL )
-            {
-                CPLMutexHolderD( &hErrorMutex );
-                if( gbCatchDebug )
-                    pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
-                else
-                    CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
-            }
         }
     }
-    else
+
+    if( !bDebugProcessed )
     {
         CPLMutexHolderD( &hErrorMutex );
-        if( pfnErrorHandler != NULL )
+        if( gbCatchDebug )
         {
-            if( gbCatchDebug )
+            if( pfnErrorHandler != NULL )
+            {
                 pfnErrorHandler( CE_Debug, CPLE_None, pszMessage );
-            else
-                CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
+            }
+        }
+        else
+        {
+            CPLDefaultErrorHandler( CE_Debug, CPLE_None, pszMessage );
         }
     }
 
@@ -1009,10 +1009,7 @@ CPLSetErrorHandlerEx( CPLErrorHandler pfnErrorHandlerNew, void* pUserData )
 
         pfnOldHandler = pfnErrorHandler;
 
-        if( pfnErrorHandler == NULL )
-            pfnErrorHandler = CPLDefaultErrorHandler;
-        else
-            pfnErrorHandler = pfnErrorHandlerNew;
+        pfnErrorHandler = pfnErrorHandlerNew;
 
         pErrorHandlerUserData = pUserData;
     }
@@ -1173,7 +1170,7 @@ void CPL_STDCALL CPLPopErrorHandler()
  * debug messages. In some cases, this might not be desirable and the user
  * would prefer that the previous installed handler (or the default one if no
  * previous installed handler exists in the stack) deal with it. In which
- * case, this function should be called with bCatchDebug.
+ * case, this function should be called with bCatchDebug = FALSE.
  *
  * @param bCatchDebug FALSE if the current error handler should not intercept
  * debug messages
