@@ -1769,7 +1769,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
         }
     }
 
-    poFeature->ApplyOCSTransformer( poMLS );
+    // Apparently extrusions are ignored for MLINE entities.
+    //poFeature->ApplyOCSTransformer( poMLS );
     poFeature->SetGeometryDirectly( poMLS );
 
     PrepareLineStyle( poFeature );
