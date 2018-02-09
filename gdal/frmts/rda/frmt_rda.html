@@ -30,7 +30,7 @@ The minimal syntax to open a datasource is :
 So a JSon serialized document with 2 attributes graph-id and node-id.<p>
 
 <p>Those values can for example be retrieved from graphs built by
-<a href="https://graphstudio.geobigdata.io/">GraphStudio</a>.</p>
+<a href="https://rda.geobigdata.io/">GraphStudio</a>.</p>
 
 An optional <pre>"options": {"delete-on-close": false}</pre> can be added to
 the JSon document to request that cached tiles and metadata are not destroyed
@@ -54,7 +54,7 @@ The following configuration options are available :
 Defaults to https://geobigdata.io/auth/v1/oauth/token/. If not specified, the
 auth_url parameter from ~/.gbdx-config will be used if it exists.</li>
 <li><b>GBDX_RDA_API_URL</b>=value: To specify the RDA API endpoint.
-Defaults to https://idahoapi.geobigdata.io/v1. If not specified, the
+Defaults to https://rda.geobigdata.io/v1. If not specified, the
 rda_api_url parameter from ~/.gbdx-config will be used if it exists.</li>
 <li><b>GBDX_CLIENT_ID</b>=value: To specify the OAuth client id needed to get
 to an authentication token. If not specified, the
@@ -79,7 +79,7 @@ values from the above configuration options.</p>
 <pre>
 [gbdx]
 auth_url = https://geobigdata.io/auth/v1/oauth/token/ (optional)
-rda_api_url = https://idahoapi.geobigdata.io/v1 (optional)
+rda_api_url = https://rda.geobigdata.io/v1 (optional)
 client_id = value (required)
 client_secret = value (required)
 user_name = value (required)
@@ -95,16 +95,22 @@ option. By default, dataset metadata and tiles are temporarily cached in
 unless <pre>"options": {"delete-on-close": false}</pre> is found in the
 dataset name.</p>
 
-<h3>Examples</h3>
 
+<h2>Open Options</h2>
+
+<p>By default, the number of concurrent downloads will be 8*number of CPUs up to a maximum of 64. The maximum number of
+concurrent connections can be configured by the <em>MAXCONNECT</em> option</p>
+
+<h3>Examples</h3>
+<ul>
 <li> Display metadata, and keep it cached:
 
-<pre>gdalinfo '{"graph-id":"006c45299483320d4f227ddb6eeb17aff0411f03e301add6500b9c68904980fa", "node-id":"Threshold_to0l28", "options": {"delete-on-close": false}}'</pre>
+<pre>gdalinfo '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y", "options": {"delete-on-close": false}}'</pre>
 
 <pre>
 Driver: RDA/DigitalGlobe Raster Data Access driver
 Files: none associated
-Size is 8691, 6050
+Size is 9911, 7084
 Coordinate System is:
 GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -116,33 +122,45 @@ GEOGCS["WGS 84",
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
     AUTHORITY["EPSG","4326"]]
-Origin = (-105.065847344240026,39.702734639151991)
-Pixel Size = (0.000024838303989,-0.000024838303989)
+Origin = (-84.183163638386631,33.835018117204456)
+Pixel Size = (0.000020885734819,-0.000020885734819)
 Metadata:
-  ACQUISITION_DATE=2011-06-07T17:23:33.127Z
+  ACQUISITION_DATE=2017-04-07T16:25:29.156Z
   CLOUD_COVER=0.0
-  GSD=2.765 m
-  SAT_AZIMUTH=179.2
-  SAT_ELEVATION=72.6
-  SENSOR_NAME=4-band (Blue, Green, Red, NIR) Multispectral
-  SENSOR_PLATFORM_NAME=QB02
-  SUN_AZIMUTH=122.5
-  SUN_ELEVATION=63.8
+  GSD=2.325 m
+  SAT_AZIMUTH=163.7
+  SAT_ELEVATION=58.3
+  SENSOR_NAME=8-band (Coastal, Blue, Green, Yellow, Red, Red-edge, NIR1, NIR2) Multispectral
+  SENSOR_PLATFORM_NAME=WV02
+  SUN_AZIMUTH=143.5
+  SUN_ELEVATION=58.6
 Image Structure Metadata:
   INTERLEAVE=PIXEL
 Corner Coordinates:
-Upper Left  (-105.0658473,  39.7027346) (105d 3'57.05"W, 39d42' 9.84"N)
-Lower Left  (-105.0658473,  39.5524629) (105d 3'57.05"W, 39d33' 8.87"N)
-Upper Right (-104.8499776,  39.7027346) (104d50'59.92"W, 39d42' 9.84"N)
-Lower Right (-104.8499776,  39.5524629) (104d50'59.92"W, 39d33' 8.87"N)
-Center      (-104.9579125,  39.6275988) (104d57'28.48"W, 39d37'39.36"N)
-Band 1 Block=256x256 Type=Byte, ColorInterp=Blue
+Upper Left  ( -84.1831636,  33.8350181)
+Lower Left  ( -84.1831636,  33.6870636)
+Upper Right ( -83.9761651,  33.8350181)
+Lower Right ( -83.9761651,  33.6870636)
+Center      ( -84.0796644,  33.7610408)
+Band 1 Block=256x256 Type=UInt16, ColorInterp=Undefined
+Band 2 Block=256x256 Type=UInt16, ColorInterp=Blue
+Band 3 Block=256x256 Type=UInt16, ColorInterp=Green
+Band 4 Block=256x256 Type=UInt16, ColorInterp=Yellow
+Band 5 Block=256x256 Type=UInt16, ColorInterp=Red
+Band 6 Block=256x256 Type=UInt16, ColorInterp=Undefined
+Band 7 Block=256x256 Type=UInt16, ColorInterp=Undefined
+Band 8 Block=256x256 Type=UInt16, ColorInterp=Undefined
 </pre>
+</li>
 
 <li> Extract a subwindow from a dataset:
 
-<pre>gdal_translate -srcwin 1000 2000 500 500 '{"graph-id":"006c45299483320d4f227ddb6eeb17aff0411f03e301add6500b9c68904980fa", "node-id":"Threshold_to0l28", "options": {"delete-on-close": false}}' out.tif</pre>
+<pre>gdal_translate -srcwin 1000 2000 500 500 '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y"}' out.tif</pre>
+</li>
 
-
+<li> Materialize a dataset specifying a custom number of concurrent connections:
+<pre>gdal_translate -oo MAXCONNECT=96 '{"graph-id":"832050eb7d271d8704c8889369ee0a8a1da82acdee1b20e1700b6d053e94d1fe","node-id":"Orthorectify_hko89y"}' out.tif</pre>
+</li>
+</ul>
 </body>
 </html>
