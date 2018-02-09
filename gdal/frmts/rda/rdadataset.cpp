@@ -1291,7 +1291,7 @@ GDALDataset* GDALRDADataset::OpenStatic( GDALOpenInfo* poOpenInfo )
 
     if (pszMaxConnect != nullptr) {
         poDS->m_nMaxCurlConnections =
-            std::max(1, std::min(64, atoi(pszMaxConnect)));
+            std::max(1, std::min(1024, atoi(pszMaxConnect)));
     }
     else
     {
@@ -1923,7 +1923,7 @@ void GDALRegister_RDA()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='MAXCONNECT' type='int' min='1' max='64' "
+"  <Option name='MAXCONNECT' type='int' min='1' max='1024' "
                         "description='Maximum number of connections'/>"
 "</OpenOptionList>" );
 
