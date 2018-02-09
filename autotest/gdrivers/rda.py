@@ -754,16 +754,6 @@ def rda_download_queue():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    # For some reason fails on Mac
-    # with
-    # TEST: rda_download_queue ... 127.0.0.1 - - [21/Dec/2017 18:43:32] code 500, message Unexpected GET request for /rda_api/tile/foo/bar/3/1.tif, req_count = 8
-    #                              127.0.0.1 - - [21/Dec/2017 18:43:32] code 500, message Unexpected GET request for /rda_api/tile/foo/bar/0/2.tif, req_count = 9
-    #                              127.0.0.1 - - [21/Dec/2017 18:43:32] code 500, message Unexpected GET request for /rda_api/tile/foo/bar/1/2.tif, req_count = 9
-    # Different cache behaviour due to std::unordered_map different implementation in cpl_mem_cache.h ?
-
-    if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
-        return 'skip'
-
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     image_json = """{
@@ -813,10 +803,11 @@ def rda_download_queue():
     handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
     for y in range(5):
         for x in range(4):
-            handler.add('GET', '/rda_api/tile/foo/bar/%d/%d.tif' % (x,y), 200, {}, tile_data)
+            handler.add_unordered('GET', '/rda_api/tile/foo/bar/%d/%d.tif' % (x,y), 200, {}, tile_data)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
-            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+            # We need at least (width=5) <= 2 * MAXCONNECT so that AdviseRead(all_raster) is honoured
+            ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options = ['MAXCONNECT=4'])
         ds.AdviseRead(0,0,4,5)
         ds.ReadRaster(0,0,4,3)
         ref_data = ds.ReadRaster(0,1,4,2)

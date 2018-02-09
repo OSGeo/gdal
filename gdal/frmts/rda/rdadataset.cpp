@@ -39,6 +39,7 @@
 #include <array>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -130,6 +131,8 @@ class GDALRDADataset: public GDALDataset
         int       m_nYOffFetched = 0;
         int       m_nXSizeFetched = 0;
         int       m_nYSizeFetched = 0;
+
+        int       m_nMaxCurlConnections = 8;
 
         bool      ReadConfiguration();
         bool      GetAuthorization();
@@ -241,7 +244,7 @@ GDALRDADataset::GDALRDADataset() :
     m_osAuthURL(CPLGetConfigOption("GBDX_AUTH_URL",
                         "https://geobigdata.io/auth/v1/oauth/token/")),
     m_osRDAAPIURL(CPLGetConfigOption("GBDX_RDA_API_URL",
-                        "https://idahoapi.geobigdata.io/v1")),
+                        "https://rda.geobigdata.io/v1")),
     m_osClientId(CPLGetConfigOption("GBDX_CLIENT_ID", "")),
     m_osClientSecret(CPLGetConfigOption("GBDX_CLIENT_SECRET", "")),
     m_osUserName(CPLGetConfigOption("GBDX_USERNAME", "")),
@@ -1279,8 +1282,23 @@ GDALDataset* GDALRDADataset::OpenStatic( GDALOpenInfo* poOpenInfo )
 
     std::unique_ptr<GDALRDADataset> poDS =
         std::unique_ptr<GDALRDADataset>(new GDALRDADataset());
+
     if( !poDS->Open(poOpenInfo) )
         return nullptr;
+
+    const char* pszMaxConnect =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXCONNECT");
+
+    if (pszMaxConnect != nullptr) {
+        poDS->m_nMaxCurlConnections =
+            std::max(1, std::min(64, atoi(pszMaxConnect)));
+    }
+    else
+    {
+        unsigned int n = std::thread::hardware_concurrency();
+        poDS->m_nMaxCurlConnections = std::max(static_cast<int>(8*n), 64);
+    }
+
     return poDS.release();
 }
 
@@ -1380,7 +1398,28 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
     m_nXSizeFetched = nXSize;
     m_nYSizeFetched = nYSize;
 
-    if( m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0 )
+
+    int nBlockXSize, nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    int nFullXSize = GetRasterBand(1)->GetXSize();
+    int nFullYSize = GetRasterBand(1)->GetYSize();
+    bool fetchAllAdvised = false;
+    if(m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0)
+    {
+        fetchAllAdvised = true;
+        int advisedXBlocks = static_cast<int>(
+            std::ceil(static_cast<double>(m_nXSizeAdvise)/nBlockXSize));
+        int advisedYBlocks = static_cast<int>(
+            std::ceil(static_cast<double>(m_nYSizeAdvise)/nBlockYSize));
+        if(m_nXSizeAdvise == nFullXSize &&
+            advisedXBlocks>2*m_nMaxCurlConnections)
+            fetchAllAdvised = false;
+        else if(m_nYSizeAdvise == nFullYSize &&
+            advisedYBlocks>2*m_nMaxCurlConnections)
+            fetchAllAdvised = false;
+    }
+
+    if( fetchAllAdvised )
     {
         nXOff = m_nXOffAdvise;
         nYOff = m_nYOffAdvise;
@@ -1391,9 +1430,6 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         m_nXSizeAdvise = 0;
         m_nYSizeAdvise = 0;
     }
-
-    int nBlockXSize, nBlockYSize;
-    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
     int nXBlock1 = nXOff / nBlockXSize;
     int nXBlock2 = (nXOff + nXSize - 1) / nBlockXSize;
@@ -1449,16 +1485,16 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         }
     }
 
-    const int nMaxDownloads = 8;
-    for(size_t i=0;i<apszURLLists.size();i+=nMaxDownloads)
+
+    for(size_t i=0;i<apszURLLists.size();i+=m_nMaxCurlConnections)
     {
         char** papszOptions = GetHTTPOptions();
-        int nToDownload = std::min(nMaxDownloads,
+        int nToDownload = std::min(m_nMaxCurlConnections,
                                 static_cast<int>(apszURLLists.size() - i));
         CPLHTTPResult ** pasResults =
             CPLHTTPMultiFetch( &apszURLLists[i],
                                 nToDownload,
-                                nMaxDownloads,
+                               m_nMaxCurlConnections,
                                 papszOptions);
         CSLDestroy(papszOptions);
 
@@ -1884,6 +1920,12 @@ void GDALRegister_RDA()
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_rda.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='MAXCONNECT' type='int' min='1' max='64' "
+                        "description='Maximum number of connections'/>"
+"</OpenOptionList>" );
 
     poDriver->pfnIdentify = GDALRDADataset::Identify;
     poDriver->pfnOpen = GDALRDADataset::OpenStatic;
