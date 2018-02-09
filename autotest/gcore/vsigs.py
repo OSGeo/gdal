@@ -182,23 +182,10 @@ def vsigs_2():
     # header file 
     gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
 
-
-    def method(request):
-        if 'foo' not in request.headers or request.headers['foo'] != 'bar':
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            request.send_header('Content-Length', 0)
-            request.end_headers()
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 1)
-        request.end_headers()
-        request.wfile.write("""Y""".encode('ascii'))
-
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket_http_header_file/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket_http_header_file/resource', 200,
+                {'Content-type': 'text/plain'}, 'Y',
+                expected_headers = { 'foo': 'bar'} )
     with webserver.install_http_handler(handler):
         with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt'):
             f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
@@ -217,29 +204,10 @@ def vsigs_2():
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
     gdal.SetConfigOption('CPL_GS_TIMESTAMP', 'my_timestamp')
 
-
-    def method(request):
-
-        request.protocol_version = 'HTTP/1.1'
-        if 'Authorization' not in request.headers:
-            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
-            request.send_response(403)
-            return
-        expected_authorization = 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='
-        if request.headers['Authorization'] != expected_authorization :
-            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
-            request.send_response(403)
-            return
-
-        request.send_response(200)
-        request.send_header('Content-type', 'text/plain')
-        request.send_header('Content-Length', 3)
-        request.send_header('Connection', 'close')
-        request.end_headers()
-        request.wfile.write("""foo""".encode('ascii'))
-
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', 200,
+                {'Content-type': 'text/plain'}, 'foo',
+                expected_headers = { 'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='} )
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -254,7 +222,9 @@ def vsigs_2():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    handler.add('GET', '/gs_fake_bucket/resource', 200,
+                {'Content-type': 'text/plain'}, 'foo',
+                expected_headers = { 'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='} )
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
         if f is None:

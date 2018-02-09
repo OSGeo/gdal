@@ -54,13 +54,15 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 class RequestResponse:
-    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None):
+    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
         self.method = method
         self.path = path
         self.code = code
         self.headers = headers
         self.body = body
         self.custom_method = custom_method
+        self.expected_headers = expected_headers
+        self.expected_body = expected_body
 
 class SequentialHandler:
     def __init__(self):
@@ -72,18 +74,37 @@ class SequentialHandler:
         assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
         assert len(self.req_resp_map) == 0
 
-    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None):
+    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
         assert len(self.req_resp_map) == 0
-        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method) )
+        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body) )
 
-    def add_unordered(self, method, path, code = None, headers = {}, body = None, custom_method = None):
-        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method)
+    def add_unordered(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body)
 
     @staticmethod
     def _process_req_resp(req_resp, request):
         if req_resp.custom_method:
             req_resp.custom_method(request)
         else:
+
+            if req_resp.expected_headers:
+                for k in req_resp.expected_headers:
+                    if k not in request.headers or request.headers[k] != req_resp.expected_headers[k]:
+                        sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                        request.send_response(400)
+                        request.send_header('Content-Length', 0)
+                        request.end_headers()
+                        return
+
+            if req_resp.expected_body:
+                content = request.rfile.read(int(request.headers['Content-Length']))
+                if content != req_resp.expected_body:
+                    sys.stderr.write('Did not get expected content: %s\n' % content)
+                    request.send_response(400)
+                    request.send_header('Content-Length', 0)
+                    request.end_headers()
+                    return
+
             request.send_response(req_resp.code)
             for k in req_resp.headers:
                 request.send_header(k, req_resp.headers[k])
