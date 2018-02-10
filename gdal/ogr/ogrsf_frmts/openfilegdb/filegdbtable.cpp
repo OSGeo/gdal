@@ -33,6 +33,7 @@
 #include "ogr_api.h" // for OGR_RawField_xxxxx()
 #include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
 #include <limits>
+#include <string>
 
 CPL_CVSID("$Id$")
 
@@ -1355,10 +1356,18 @@ int FileGDBTable::SelectRow(int iRow)
 
 int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField)
 {
-    struct tm brokendowntime;
+    // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
+    double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
+    if( dfSeconds < std::numeric_limits<GIntBig>::min() ||
+        dfSeconds > std::numeric_limits<GIntBig>::max() )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "FileGDBDoubleDateToOGRDate: Invalid days: %lf", dfVal);
+        dfSeconds = 0.0;
+    }
 
-    /* 25569 = Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00 */
-    CPLUnixTimeToYMDHMS((GIntBig)((dfVal - 25569) * 3600 * 24), &brokendowntime);
+    struct tm brokendowntime;
+    CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfSeconds), &brokendowntime);
 
     psField->Date.Year = (GInt16)(brokendowntime.tm_year + 1900);
     psField->Date.Month = (GByte)brokendowntime.tm_mon + 1;
