@@ -62,6 +62,8 @@ static const char * const apszAllowedDrivers[] = {"JPEG", "PNG", nullptr};
 #define ENABLE_SQL_SQLITE_FORMAT
 #endif
 
+constexpr int knDEFAULT_BLOCK_SIZE = 256;
+
 class MBTilesBand;
 
 /************************************************************************/
@@ -166,6 +168,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     int InitRaster ( MBTilesDataset* poParentDS,
                      int nZoomLevel,
                      int nBandCount,
+                     int nTileSize,
                      double dfGDALMinX,
                      double dfGDALMinY,
                      double dfGDALMaxX,
@@ -270,7 +273,7 @@ class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
     CPLString               osLocationInfo;
 
   public:
-    explicit                MBTilesBand( MBTilesDataset* poDS );
+    explicit                MBTilesBand( MBTilesDataset* poDS, int nTileSize );
 
     virtual int             GetOverviewCount() override;
     virtual GDALRasterBand* GetOverview(int nLevel) override;
@@ -284,8 +287,8 @@ class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
 /*                            MBTilesBand()                             */
 /************************************************************************/
 
-MBTilesBand::MBTilesBand(MBTilesDataset* poDSIn) :
-      GDALGPKGMBTilesLikeRasterBand(poDSIn, 256, 256)
+MBTilesBand::MBTilesBand(MBTilesDataset* poDSIn, int nTileSize) :
+      GDALGPKGMBTilesLikeRasterBand(poDSIn, nTileSize, nTileSize)
 {
 }
 
@@ -427,8 +430,9 @@ bool MBTilesDataset::HasNonEmptyGrids()
 
 char* MBTilesDataset::FindKey(int iPixel, int iLine)
 {
-    const int nBlockXSize = 256;
-    const int nBlockYSize = 256;
+    int nBlockXSize;
+    int nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
     // Compute shift between GDAL origin and TileMatrixSet origin
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left corner
@@ -473,7 +477,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
     int nDataSize = 0;
     GByte* pabyData = OGR_F_GetFieldAsBinary(hFeat, 0, &nDataSize);
 
-    int nUncompressedSize = 256*256;
+    int nUncompressedSize = nBlockXSize*nBlockYSize;
     GByte* pabyUncompressed = (GByte*)VSIMalloc(nUncompressedSize + 1);
     if( pabyUncompressed == nullptr )
     {
@@ -532,7 +536,7 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
         if (nLines == 0)
             goto end;
 
-        nFactor = 256 / nLines;
+        nFactor = nBlockXSize / nLines;
         nRowInTile /= nFactor;
         nColInTile /= nFactor;
 
@@ -1045,8 +1049,11 @@ CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
         sqlite3_free(pszSQL);
     }
 
-    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / 256;
-    const double dfPixelYSizeZoomLevel0 = 2 * MAX_GM / 256;
+    int nBlockXSize;
+    int nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / nBlockXSize;
+    const double dfPixelYSizeZoomLevel0 = 2 * MAX_GM / nBlockYSize;
     for( m_nZoomLevel = 0; m_nZoomLevel < 25; m_nZoomLevel++ )
     {
         double dfExpectedPixelXSize = dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
@@ -1125,7 +1132,10 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
     for(int i=0; i<m_nOverviewCount; i++)
     {
         MBTilesDataset* poOvrDS = new MBTilesDataset();
+        int nBlockSize;
+        GetRasterBand(1)->GetBlockSize(&nBlockSize, &nBlockSize);
         poOvrDS->InitRaster ( this, i, nBands,
+                              nBlockSize,
                               dfGDALMinX, dfGDALMinY,
                               dfGDALMaxX, dfGDALMaxY );
 
@@ -1142,6 +1152,7 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
 int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
                                  int nZoomLevel,
                                  int nBandCount,
+                                 int nTileSize,
                                  double dfGDALMinX,
                                  double dfGDALMinY,
                                  double dfGDALMaxX,
@@ -1151,10 +1162,10 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
     m_nTileMatrixWidth = 1 << nZoomLevel;
     m_nTileMatrixHeight = 1 << nZoomLevel;
 
-    const int nTileWidth = 256;
-    const int nTileHeight = 256;
-    const double dfPixelXSize = 2 * MAX_GM / 256 / (1 << nZoomLevel);
-    const double dfPixelYSize = dfPixelXSize;
+    const int nTileWidth = nTileSize;
+    const int nTileHeight = nTileSize;
+    const double dfPixelXSize = 2 * MAX_GM / nTileWidth / (1 << nZoomLevel);
+    const double dfPixelYSize = 2 * MAX_GM / nTileHeight / (1 << nZoomLevel);
 
     m_bGeoTransformValid = true;
     m_adfGeoTransform[0] = dfGDALMinX;
@@ -1175,7 +1186,7 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
     }
 
     for(int i = 1; i <= nBandCount; i ++)
-        SetBand( i, new MBTilesBand(this) );
+        SetBand( i, new MBTilesBand(this, nTileSize) );
 
     ComputeTileAndPixelShifts();
 
@@ -2191,6 +2202,12 @@ bool MBTilesGetBounds(OGRDataSourceH hDS, bool bUseBounds,
 /*                        MBTilesCurlReadCbk()                          */
 /************************************************************************/
 
+typedef struct
+{
+    int nBands;
+    int nSize;
+} TileProperties;
+
 /* We spy the data received by CURL for the initial request where we try */
 /* to get a first tile to see its characteristics. We just need the header */
 /* to determine that, so let's make VSICurl stop reading after we have found it */
@@ -2199,6 +2216,8 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
                               void *pabyBuffer, size_t nBufferSize,
                               void* pfnUserData)
 {
+    TileProperties* psTP = static_cast<TileProperties*>(pfnUserData);
+
     const GByte abyPNGSig[] = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, /* PNG signature */
                                 0x00, 0x00, 0x00, 0x0D, /* IHDR length */
                                 0x49, 0x48, 0x44, 0x52  /* IHDR chunk */ };
@@ -2206,18 +2225,10 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
     /* JPEG SOF0 (Start Of Frame 0) marker */
     const GByte abyJPEG1CompSig[] = { 0xFF, 0xC0, /* marker */
                                       0x00, 0x0B, /* data length = 8 + 1 * 3 */
-                                      0x08,       /* depth : 8 bit */
-                                      0x01, 0x00, /* width : 256 */
-                                      0x01, 0x00, /* height : 256 */
-                                      0x01        /* components : 1 */
-                                    };
+                                      0x08,       /* depth : 8 bit */ };
     const GByte abyJPEG3CompSig[] = { 0xFF, 0xC0, /* marker */
                                       0x00, 0x11, /* data length = 8 + 3 * 3 */
-                                      0x08,       /* depth : 8 bit */
-                                      0x01, 0x00, /* width : 256 */
-                                      0x01, 0x00, /* width : 256 */
-                                      0x03        /* components : 3 */
-                                     };
+                                      0x08,       /* depth : 8 bit */ };
 
     int i;
     for(i = 0; i < (int)nBufferSize - (int)sizeof(abyPNGSig); i++)
@@ -2244,50 +2255,74 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
             CPLDebug("MBTILES", "PNG: nWidth=%d nHeight=%d depth=%d nColorType=%d",
                         nWidth, nHeight, nDepth, nColorType);
 
-            int* pnBands = (int*) pfnUserData;
-            *pnBands = -2;
-            if (nWidth == 256 && nHeight == 256 && nDepth == 8)
+            psTP->nBands = -2;
+            psTP->nSize = nWidth;
+            if (nWidth == nHeight && nDepth == 8)
             {
                 if (nColorType == 0)
-                    *pnBands = 1; /* Gray */
+                    psTP->nBands = 1; /* Gray */
                 else if (nColorType == 2)
-                    *pnBands = 3; /* RGB */
+                    psTP->nBands = 3; /* RGB */
                 else if (nColorType == 3)
                 {
                     /* This might also be a color table with transparency */
                     /* but we cannot tell ! */
-                    *pnBands = -1;
+                    psTP->nBands = -1;
                     return TRUE;
                 }
                 else if (nColorType == 4)
-                    *pnBands = 2; /* Gray + alpha */
+                    psTP->nBands = 2; /* Gray + alpha */
                 else if (nColorType == 6)
-                    *pnBands = 4; /* RGB + alpha */
+                    psTP->nBands = 4; /* RGB + alpha */
             }
 
             return FALSE;
         }
     }
 
-    for(i = 0; i < (int)nBufferSize - (int)sizeof(abyJPEG1CompSig); i++)
+    for(i = 0; i < (int)nBufferSize - ((int)sizeof(abyJPEG1CompSig) + 5); i++)
     {
-        if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG1CompSig, sizeof(abyJPEG1CompSig)) == 0)
+        if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG1CompSig, sizeof(abyJPEG1CompSig)) == 0 &&
+            ((GByte*)pabyBuffer)[sizeof(abyJPEG1CompSig) + 4] == 1)
         {
-            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
-                        256, 256, 8, 1);
+            GUInt16 nWidth;
+            memcpy(&nWidth, &(((GByte*)pabyBuffer)[sizeof(abyJPEG1CompSig)]), 2);
+            CPL_MSBPTR16(&nWidth);
+            GUInt16 nHeight;
+            memcpy(&nHeight, &(((GByte*)pabyBuffer)[sizeof(abyJPEG1CompSig) + 2]), 2);
+            CPL_MSBPTR16(&nHeight);
 
-            int* pnBands = (int*) pfnUserData;
-            *pnBands = 1;
+            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
+                      nWidth, nHeight, 8, 1);
+
+            psTP->nBands = -2;
+            if( nWidth == nHeight )
+            {
+                psTP->nSize = nWidth;
+                psTP->nBands = 1;
+            }
 
             return FALSE;
         }
-        else if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG3CompSig, sizeof(abyJPEG3CompSig)) == 0)
+        else if (memcmp(((GByte*)pabyBuffer) + i, abyJPEG3CompSig, sizeof(abyJPEG3CompSig)) == 0 &&
+            ((GByte*)pabyBuffer)[sizeof(abyJPEG3CompSig) + 4] == 3)
         {
-            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
-                        256, 256, 8, 3);
+            GUInt16 nWidth;
+            memcpy(&nWidth, &(((GByte*)pabyBuffer)[sizeof(abyJPEG3CompSig)]), 2);
+            CPL_MSBPTR16(&nWidth);
+            GUInt16 nHeight;
+            memcpy(&nHeight, &(((GByte*)pabyBuffer)[sizeof(abyJPEG3CompSig) + 2]), 2);
+            CPL_MSBPTR16(&nHeight);
 
-            int* pnBands = (int*) pfnUserData;
-            *pnBands = 3;
+            CPLDebug("MBTILES", "JPEG: nWidth=%d nHeight=%d depth=%d nBands=%d",
+                      nWidth, nHeight, 8, 3);
+
+            psTP->nBands = -2;
+            if( nWidth == nHeight )
+            {
+                psTP->nSize = nWidth;
+                psTP->nBands = 3;
+            }
 
             return FALSE;
         }
@@ -2297,14 +2332,15 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
 }
 
 /************************************************************************/
-/*                        MBTilesGetBandCount()                         */
+/*                  MBTilesGetBandCountAndTileSize()                    */
 /************************************************************************/
 
 static
-int MBTilesGetBandCount(OGRDataSourceH &hDS,
+int MBTilesGetBandCountAndTileSize(OGRDataSourceH &hDS,
                         int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
-                        int nMinTileCol, int nMaxTileCol)
+                        int nMinTileCol, int nMaxTileCol,
+                        int &nTileSize)
 {
     OGRLayerH hSQLLyr;
     OGRFeatureH hFeat;
@@ -2312,6 +2348,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     int bFirstSelect = TRUE;
 
     int nBands = -1;
+    nTileSize = 0;
 
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
@@ -2353,7 +2390,12 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         /* PNG or JPEG headers, to interrupt their downloading */
         /* once the header is found. Speeds up dataset opening. */
         CPLErrorReset();
-        VSICurlInstallReadCbk(fpCURLOGR, MBTilesCurlReadCbk, &nBands, TRUE);
+        TileProperties tp;
+        tp.nBands = -1;
+        tp.nSize = 0;
+        VSICurlInstallReadCbk(fpCURLOGR, MBTilesCurlReadCbk, &tp, TRUE);
+        nBands = tp.nBands;
+        nTileSize = tp.nSize;
 
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -2442,8 +2484,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
     nBands = GDALGetRasterCount(hDSTile);
 
     if ((nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4) ||
-        GDALGetRasterXSize(hDSTile) != 256 ||
-        GDALGetRasterYSize(hDSTile) != 256 ||
+        GDALGetRasterXSize(hDSTile) != GDALGetRasterYSize(hDSTile) ||
         GDALGetRasterDataType(GDALGetRasterBand(hDSTile, 1)) != GDT_Byte)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported tile characteristics");
@@ -2454,6 +2495,7 @@ int MBTilesGetBandCount(OGRDataSourceH &hDS,
         return -1;
     }
 
+    nTileSize = GDALGetRasterXSize(hDSTile);
     GDALColorTableH hCT = GDALGetRasterColorTable(GDALGetRasterBand(hDSTile, 1));
     if (nBands == 1 && hCT != nullptr)
     {
@@ -2633,24 +2675,25 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
         const char* pszBandCount = CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "BAND_COUNT",
-            CPLGetConfigOption("MBTILES_BAND_COUNT", "-1"));
+            CPLGetConfigOption("MBTILES_BAND_COUNT", nullptr));
         bool bFoundRasterTile = false;
-        nBands = atoi(pszBandCount);
 
-        if( ! (nBands == 1 || nBands == 2 || nBands == 3 || nBands == 4) )
-        {
-            int nMinTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinX, nMaxLevel ));
-            int nMinTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinY, nMaxLevel ));
-            int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
-            int nMaxTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxY, nMaxLevel ));
-            nBands = MBTilesGetBandCount(hDS, nMaxLevel,
-                                         nMinTileRow, nMaxTileRow,
-                                         nMinTileCol, nMaxTileCol);
-            bFoundRasterTile = nBands > 0;
-            // Map RGB to RGBA since we can guess wrong (see #6836)
-            if (nBands < 0 || nBands == 3)
-                nBands = 4;
-        }
+        int nMinTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinX, nMaxLevel ));
+        int nMinTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinY, nMaxLevel ));
+        int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
+        int nMaxTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxY, nMaxLevel ));
+        int nTileSize = 0;
+        nBands = MBTilesGetBandCountAndTileSize(hDS, nMaxLevel,
+                                     nMinTileRow, nMaxTileRow,
+                                     nMinTileCol, nMaxTileCol,
+                                     nTileSize);
+        bFoundRasterTile = nBands > 0;
+        // Map RGB to RGBA since we can guess wrong (see #6836)
+        if (nBands < 0 || nBands == 3)
+            nBands = 4;
+
+        if( pszBandCount && atoi(pszBandCount) >= 1 && atoi(pszBandCount) <= 4 )
+            nBands = atoi(pszBandCount);
 
         if( poOpenInfo->eAccess == GA_Update )
         {
@@ -2674,7 +2717,7 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->m_osClip = CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "CLIP", "");
         poDS->m_nMinZoomLevel = nMinLevel;
-        poDS->InitRaster ( nullptr, nMaxLevel, nBands,
+        poDS->InitRaster ( nullptr, nMaxLevel, nBands, nTileSize,
                            dfMinX, dfMinY, dfMaxX, dfMaxY );
 
         const char* pszFormat = poDS->GetMetadataItem("format");
@@ -2739,7 +2782,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         for( int iLevel = nMaxLevel - 1; iLevel >= nMinLevel; iLevel-- )
         {
             MBTilesDataset* poOvrDS = new MBTilesDataset();
-            poOvrDS->InitRaster ( poDS, iLevel, nBands, dfMinX, dfMinY, dfMaxX, dfMaxY );
+            poOvrDS->InitRaster ( poDS, iLevel, nBands, nTileSize,
+                                  dfMinX, dfMinY, dfMaxX, dfMaxY );
 
             poDS->m_papoOverviewDS = (MBTilesDataset**) CPLRealloc(poDS->m_papoOverviewDS,
                             sizeof(MBTilesDataset*) * (poDS->m_nOverviewCount+1));
@@ -2820,6 +2864,9 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     m_bPNGSupportsCT = CPLTestBool(CPLGetConfigOption("MBTILES_PNG_SUPPORTS_CT", "TRUE"));
     m_bWriteBounds = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_BOUNDS", true);
     m_bWriteMinMaxZoom = CPLFetchBool(const_cast<const char**>(papszOptions), "WRITE_MINMAXZOOM", true);
+    int nBlockSize = std::max(64,
+        std::min(8192,atoi(CSLFetchNameValueDef(papszOptions,
+                    "BLOCKSIZE", CPLSPrintf("%d", knDEFAULT_BLOCK_SIZE)))));
 
     VSIUnlink( pszFilename );
     SetDescription( pszFilename );
@@ -2906,14 +2953,14 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
 
-    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, 256, 256);
+    m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nBlockSize, nBlockSize);
     if( m_pabyCachedTiles == nullptr )
     {
         return false;
     }
 
     for(int i = 1; i <= nBandsIn; i ++)
-        SetBand( i, new MBTilesBand(this) );
+        SetBand( i, new MBTilesBand(this, nBlockSize) );
 
     ParseCompressionOptions(papszOptions);
 
@@ -3035,7 +3082,10 @@ GDALDataset* MBTilesDataset::CreateCopy( const char *pszFilename,
     double dfComputedRes = adfGeoTransform[1];
     double dfPrevRes = 0.0;
     double dfRes = 0.0;
-    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / 256;
+    int nBlockSize = std::max(64,
+        std::min(8192,atoi(CSLFetchNameValueDef(papszOptions,
+                    "BLOCKSIZE", CPLSPrintf("%d", knDEFAULT_BLOCK_SIZE)))));
+    const double dfPixelXSizeZoomLevel0 = 2 * MAX_GM / nBlockSize;
     for(nZoomLevel = 0; nZoomLevel < 25; nZoomLevel++)
     {
         dfRes = dfPixelXSizeZoomLevel0 / (1 << nZoomLevel);
@@ -3472,6 +3522,7 @@ COMPRESSION_OPTIONS
 "    <Value>baselayer</Value>"
 "  </Option>"
 "  <Option name='VERSION' type='string' description='The version of the tileset, as a plain number' default='1.1'/>"
+"  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' min='64' max='8192'/>"
 COMPRESSION_OPTIONS
 "  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' description='Strategy to determine zoom level.' default='AUTO'>"
 "    <Value>AUTO</Value>"
