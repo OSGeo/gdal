@@ -64,6 +64,46 @@ class RequestResponse:
         self.expected_headers = expected_headers
         self.expected_body = expected_body
 
+class FileHandler:
+    def __init__(self, dict):
+        self.dict = dict
+
+    def final_check(self):
+        pass
+
+    def do_HEAD(self, request):
+        if request.path not in self.dict:
+            request.send_response(404)
+            request.end_headers()
+        else:
+            request.send_response(200)
+            request.send_header('Content-Length', len(self.dict[request.path]))
+            request.end_headers()
+
+    def do_GET(self, request):
+        if request.path not in self.dict:
+            request.send_response(404)
+            request.end_headers()
+        else:
+            filedata = self.dict[request.path]
+            start = 0
+            end = len(filedata)
+            if 'Range' in request.headers:
+                import re
+                res = re.search('bytes=(\d+)\-(\d+)', request.headers['Range'])
+                if res:
+                    res = res.groups()
+                    start = int(res[0])
+                    end = int(res[1]) + 1
+                    if end > len(filedata):
+                        end = len(filedata)
+            request.send_response(200)
+            if 'Range' in request.headers:
+                request.send_header('Content-Range', '%d-%d' % (start, end-1))
+            request.send_header('Content-Length', len(filedata))
+            request.end_headers()
+            request.wfile.write(filedata[start:end])
+
 class SequentialHandler:
     def __init__(self):
         self.req_count = 0
