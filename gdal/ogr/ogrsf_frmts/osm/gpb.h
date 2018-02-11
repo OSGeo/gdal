@@ -46,7 +46,7 @@ class GPBException: public std::exception
         std::string m_osMessage;
     public:
         explicit GPBException(int nLine): m_osMessage(
-            CPLSPrintf("Parsing error occured at line %d", nLine)) {}
+            CPLSPrintf("Parsing error occurred at line %d", nLine)) {}
 
         const char* what() const noexcept override
                                         { return m_osMessage.c_str(); }

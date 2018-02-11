@@ -2410,7 +2410,7 @@ CPLErr RMFDataset::CleanOverviews()
     if( poParentDS != nullptr )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
-                  "Overviews cleanup for non-root dataset is not posible." );
+                  "Overviews cleanup for non-root dataset is not possible." );
         return CE_Failure;
     }
 

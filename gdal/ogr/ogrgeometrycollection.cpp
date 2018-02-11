@@ -494,7 +494,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
     nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
     int nDataOffset = 0;
-    OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
+    OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
                                                       eByteOrder,
@@ -719,7 +719,7 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     if( eErr != OGRERR_NONE )
         return eErr;
     if( bHasZ ) flags |= OGR_G_3D;

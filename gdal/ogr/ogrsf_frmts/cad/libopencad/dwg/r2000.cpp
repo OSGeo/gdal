@@ -3578,7 +3578,7 @@ void DWGFileR2000::fillCommonEntityHandleData(CADEntityObject * pEnt,
     // TODO: Need some reasonable nNumReactors limits.
     if(pEnt->stCed.nNumReactors < 0 || pEnt->stCed.nNumReactors > 5000)
     {
-        // Something wrong occured
+        // Something wrong occurred
         return;
     }
     for( long i = 0; i < pEnt->stCed.nNumReactors; ++i )

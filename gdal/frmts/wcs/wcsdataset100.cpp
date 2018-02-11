@@ -582,7 +582,7 @@ CPLErr WCSDataset100::ParseCapabilities( CPLXMLNode * Capabilities, CPL_UNUSED C
             CPLString name = path + "keywords";
             metadata = CSLSetNameValue(metadata, name, kw);
         }
-        CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3, "resposibleParty", keys3);
+        CPLXMLNode *party = AddSimpleMetaData(&metadata, service, path3, "responsibleParty", keys3);
         CPLXMLNode *info = CPLGetXMLNode(party, "contactInfo");
         if (party && info) {
             CPLString path4 = path3 + "contactInfo.";

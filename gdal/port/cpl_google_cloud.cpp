@@ -128,7 +128,7 @@ bool CPLIsMachinePotentiallyGCEInstance()
 #elif defined(WIN32)
     // We might add later a way of detecting if we run on GCE using WMI
     // See https://cloud.google.com/compute/docs/instances/managing-instances
-    // For now, unconditionnaly try
+    // For now, unconditionally try
     return true;
 #else
     // At time of writing GCE instances can be only Linux or Windows

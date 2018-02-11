@@ -156,7 +156,7 @@ OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
     OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
     // coverity[tainted_data]
-    OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
+    OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
     if( eErr != OGRERR_NONE )
         return eErr;

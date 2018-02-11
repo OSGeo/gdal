@@ -1808,7 +1808,7 @@ CPLErr GDALRDARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 poBlock->DropLock();
                 continue;
             }
-            // Instanciate the block
+            // Instantiate the block
             poBlock = poGDS->GetRasterBand(i)->GetLockedBlockRef(
                         nBlockXOff, nBlockYOff, TRUE);
             if (poBlock == nullptr)

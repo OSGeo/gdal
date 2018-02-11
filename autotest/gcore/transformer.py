@@ -914,7 +914,7 @@ def transformer_17():
 
     ds = gdal.Open('data/rpc.vrt')
     with gdaltest.error_handler():
-        tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/i/dont/exist/dem.tif' ] )
+        tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif' ] )
     if tr is not None:
         return 'fail'
     return 'success'

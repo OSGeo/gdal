@@ -125,7 +125,7 @@ HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=no
 AX_CHECK_COMPILE_FLAG([-Wzero-as-null-pointer-constant], [CXX_WFLAGS="$CXX_WFLAGS -Wzero-as-null-pointer-constant" HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=yes],,[$ERROR_ON_UNKNOWN_OPTIONS])
 if test "$HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT" = "yes"; then
 AC_DEFINE_UNQUOTED(HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT, 1,
-          [Define to 1 if the compiler suports -Wzero-as-null-pointer-constant])
+          [Define to 1 if the compiler supports -Wzero-as-null-pointer-constant])
 fi
 
 AC_LANG_POP([C++])
