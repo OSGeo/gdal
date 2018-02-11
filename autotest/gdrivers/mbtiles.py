@@ -36,6 +36,7 @@ from osgeo import ogr
 sys.path.append( '../pymod' )
 
 import gdaltest
+import webserver
 
 ###############################################################################
 # Get the mbtiles driver
@@ -123,12 +124,7 @@ def mbtiles_3():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if gdal.GetDriverByName( 'HTTP' ) is None:
         return 'skip'
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
@@ -166,6 +162,91 @@ def mbtiles_3():
             return 'skip'
         return 'fail'
 
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_start_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_png():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte.mbtiles' : open('data/byte.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_stop_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port != 0:
+        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
 
@@ -628,6 +709,10 @@ gdaltest_list = [
     mbtiles_1,
     mbtiles_2,
     mbtiles_3,
+    mbtiles_start_webserver,
+    mbtiles_http_jpeg,
+    mbtiles_http_png,
+    mbtiles_stop_webserver,
     mbtiles_4,
     mbtiles_5,
     mbtiles_6,
