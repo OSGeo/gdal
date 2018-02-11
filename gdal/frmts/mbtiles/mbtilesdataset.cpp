@@ -165,7 +165,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
     void ParseCompressionOptions(char** papszOptions);
     CPLErr FinalizeRasterRegistration();
     void ComputeTileAndPixelShifts();
-    int InitRaster ( MBTilesDataset* poParentDS,
+    bool InitRaster ( MBTilesDataset* poParentDS,
                      int nZoomLevel,
                      int nBandCount,
                      int nTileSize,
@@ -1149,7 +1149,7 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
 /*                         InitRaster()                                 */
 /************************************************************************/
 
-int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
+bool MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
                                  int nZoomLevel,
                                  int nBandCount,
                                  int nTileSize,
@@ -1175,14 +1175,14 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
     double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
     double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
     if( dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX )
-        return FALSE;
+        return false;
     nRasterXSize = (int)dfRasterXSize;
     nRasterYSize = (int)dfRasterYSize;
 
     m_pabyCachedTiles = (GByte*) VSI_MALLOC3_VERBOSE(4 * 4, nTileWidth, nTileHeight);
     if( m_pabyCachedTiles == nullptr )
     {
-        return FALSE;
+        return false;
     }
 
     for(int i = 1; i <= nBandCount; i ++)
@@ -1209,7 +1209,7 @@ int MBTilesDataset::InitRaster ( MBTilesDataset* poParentDS,
                                   poParentDS->GetDescription(), m_nZoomLevel));
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -2687,6 +2687,8 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                                      nMinTileCol, nMaxTileCol,
                                      nTileSize);
         bool bFoundRasterTile = nBands > 0;
+        if( !bFoundRasterTile )
+            nTileSize = knDEFAULT_BLOCK_SIZE;
         // Map RGB to RGBA since we can guess wrong (see #6836)
         if (nBands < 0 || nBands == 3)
             nBands = 4;
@@ -2716,8 +2718,9 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         poDS->m_osClip = CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "CLIP", "");
         poDS->m_nMinZoomLevel = nMinLevel;
-        poDS->InitRaster ( nullptr, nMaxLevel, nBands, nTileSize,
-                           dfMinX, dfMinY, dfMaxX, dfMaxY );
+        bool bRasterOK =
+            poDS->InitRaster ( nullptr, nMaxLevel, nBands, nTileSize,
+                               dfMinX, dfMinY, dfMaxX, dfMaxY );
 
         const char* pszFormat = poDS->GetMetadataItem("format");
         if( pszFormat != nullptr && EQUAL(pszFormat, "pbf") )
@@ -2749,6 +2752,13 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
                 delete poDS;
                 return nullptr;
             }
+        }
+
+        if( (pszFormat == nullptr || !EQUAL(pszFormat, "pbf")) &&
+            !bRasterOK )
+        {
+            delete poDS;
+            return nullptr;
         }
 
         if( poDS->eAccess == GA_Update )
