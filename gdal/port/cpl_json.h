@@ -76,7 +76,7 @@ public:
     enum PrettyFormat {
         Plain,  ///< No extra whitespace or formatting applied
         Spaced, ///< Minimal whitespace inserted
-        Pretty  ///< Formated output
+        Pretty  ///< Formatted output
     };
 
 public:

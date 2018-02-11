@@ -127,7 +127,7 @@ class CPL_DLL OGRGeometry
 
     unsigned int flags;
 
-    OGRErr       importPreambuleFromWkt( char ** ppszInput,
+    OGRErr       importPreambleFromWkt( char ** ppszInput,
                                          int* pbHasZ, int* pbHasM,
                                          bool* pbIsEmpty );
     OGRErr       importCurveCollectionFromWkt(
@@ -138,11 +138,11 @@ class CPL_DLL OGRGeometry
                      int bAllowCompoundCurve,
                      OGRErr (*pfnAddCurveDirectly)(OGRGeometry* poSelf,
                                                    OGRCurve* poCurve) );
-    OGRErr       importPreambuleFromWkb( const unsigned char * pabyData,
+    OGRErr       importPreambleFromWkb( const unsigned char * pabyData,
                                          int nSize,
                                          OGRwkbByteOrder& eByteOrder,
                                          OGRwkbVariant eWkbVariant );
-    OGRErr       importPreambuleOfCollectionFromWkb(
+    OGRErr       importPreambleOfCollectionFromWkb(
                      const unsigned char * pabyData,
                      int& nSize,
                      int& nDataOffset,
@@ -870,7 +870,7 @@ class CPL_DLL OGRCurveCollection
     OGRErr          addCurveDirectly( OGRGeometry* poGeom, OGRCurve* poCurve,
                                       int bNeedRealloc );
     int             WkbSize() const;
-    OGRErr          importPreambuleFromWkb( OGRGeometry* poGeom,
+    OGRErr          importPreambleFromWkb( OGRGeometry* poGeom,
                                             const unsigned char * pabyData,
                                             int& nSize,
                                             int& nDataOffset,

@@ -2957,7 +2957,7 @@ const char* VSICurlFilesystemHandler::GetActualURL(const char* pszFilename)
         "requests' default='YES'/>" \
     "  <Option name='CPL_VSIL_CURL_NON_CACHED' type='string' " \
         "description='Colon-separated list of filenames whose content" \
-        "must not be cached accross open attempts'/>" \
+        "must not be cached across open attempts'/>" \
     "  <Option name='CPL_VSIL_CURL_ALLOWED_FILENAME' type='string' " \
         "description='Single filename that is allowed to be opened'/>" \
     "  <Option name='CPL_VSIL_CURL_ALLOWED_EXTENSIONS' type='string' " \

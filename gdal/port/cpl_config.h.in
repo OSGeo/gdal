@@ -265,5 +265,5 @@
 /* Define to 1 if you have the `std::isnan' function. */
 #undef HAVE_STD_IS_NAN
 
-/* Define to 1 if the compiler suports -Wzero-as-null-pointer-constant */
+/* Define to 1 if the compiler supports -Wzero-as-null-pointer-constant */
 #undef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT

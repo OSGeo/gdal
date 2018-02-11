@@ -75,7 +75,7 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 /**
  * Save json document at specified path
  * @param  osPath Path to save json document
- * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -124,7 +124,7 @@ CPLJSONObject CPLJSONDocument::GetRoot()
 /**
  * Load json document from file by provided path
  * @param  osPath Path to json file.
- * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -147,7 +147,7 @@ bool CPLJSONDocument::Load(const std::string &osPath)
  * Load json document from memory buffer.
  * @param  pabyData Buffer.data.
  * @param  nLength  Buffer size.
- * @return          true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return          true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -180,7 +180,7 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 /**
  * Load json document from memory buffer.
  * @param  osStr    String
- * @return          true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return          true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -198,7 +198,7 @@ bool CPLJSONDocument::LoadMemory(const std::string &osStr)
  * @param  nChunkSize   Chunk size.
  * @param  pfnProgress  a function to report progress of the json data loading.
  * @param  pProgressArg application data passed into progress function.
- * @return              true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return              true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -304,11 +304,11 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  * Load json document from web.
  * @param  osUrl       Url to json document.
  * @param  papszOptions Option list as a NULL-terminated array of strings. May be NULL.
- * The available keys are same for CPLHTTPFetch method. Addtional key JSON_DEPTH
+ * The available keys are same for CPLHTTPFetch method. Additional key JSON_DEPTH
  * define json parse depth. Default is 10.
  * @param  pfnProgress  a function to report progress of the json data loading.
  * @param  pProgressArg application data passed into progress function.
- * @return              true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return              true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */

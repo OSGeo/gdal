@@ -573,7 +573,7 @@ static bool IsMachinePotentiallyEC2Instance()
 #elif defined(WIN32)
     // We might add later a way of detecting if we run on EC2 using WMI
     // See http://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/identify_ec2_instances.html
-    // For now, unconditionnaly try
+    // For now, unconditionally try
     return true;
 #else
     // At time of writing EC2 instances can be only Linux or Windows

@@ -317,7 +317,7 @@ int OGRKMLDataSource::Create( const char* pszName, char** papszOptions )
             CPLFree( pszAltitudeMode_ );
             pszAltitudeMode_ = nullptr;
             CPLError( CE_Warning, CPLE_AppDefined,
-                      "Invalide AltitideMode specified, ignoring" );
+                      "Invalid AltitudeMode specified, ignoring" );
         }
     }
     else

@@ -1680,7 +1680,7 @@ GIntBig VSIGetDiskFreeSpace( const char *pszDirname )
 
 /**
  * \brief Return the list of prefixes for virtual file system handlers
- * currenly registered.
+ * currently registered.
  *
  * Typically: "", "/vsimem/", "/vsicurl/", etc
  *

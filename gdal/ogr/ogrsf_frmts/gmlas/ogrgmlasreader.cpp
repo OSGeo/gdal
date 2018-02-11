@@ -2073,15 +2073,15 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
         }
         else if( m_oXLinkResolver.GetConf().m_bResolveInternalXLinks )
         {
-            const CPLString osReferingField(
+            const CPLString osReferringField(
                 m_oCurCtxt.m_poLayer->GetLayerDefn()->
                     GetFieldDefn(nAttrIdx)->GetNameRef());
             const CPLString osId(osAttrValue.substr(1));
             if( m_bInitialPass )
             {
-                std::pair<OGRGMLASLayer*, CPLString> oReferingPair(
-                    m_oCurCtxt.m_poLayer, osReferingField);
-                m_oMapFieldXPathToLinkValue[oReferingPair].push_back(osId);
+                std::pair<OGRGMLASLayer*, CPLString> oReferringPair(
+                    m_oCurCtxt.m_poLayer, osReferringField);
+                m_oMapFieldXPathToLinkValue[oReferringPair].push_back(osId);
             }
             else
             {
@@ -2091,7 +2091,7 @@ void GMLASReader::ProcessXLinkHref( int nAttrIdx,
                     OGRGMLASLayer* poTargetLayer = oIter->second;
                     const CPLString osLinkFieldXPath =
                         m_oCurCtxt.m_poLayer->GetXPathOfFieldLinkForAttrToOtherLayer(
-                            osReferingField,
+                            osReferringField,
                             poTargetLayer->GetFeatureClass().GetXPath());
                     const int nLinkFieldOGRId =
                         m_oCurCtxt.m_poLayer->GetOGRFieldIndexFromXPath(
@@ -3357,8 +3357,8 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
 {
     for( const auto& oIter: m_oMapFieldXPathToLinkValue )
     {
-        OGRGMLASLayer* poReferingLayer = oIter.first.first;
-        const CPLString& osReferingField = oIter.first.second;
+        OGRGMLASLayer* poReferringLayer = oIter.first.first;
+        const CPLString& osReferringField = oIter.first.second;
         const std::vector<CPLString>& aosLinks = oIter.second;
         std::set<OGRGMLASLayer*> oSetTargetLayers;
         for( size_t i = 0; i < aosLinks.size(); i++ )
@@ -3369,8 +3369,8 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "%s:%s = '#%s' has no corresponding target "
                          "element in this document",
-                         poReferingLayer->GetName(),
-                         osReferingField.c_str(),
+                         poReferringLayer->GetName(),
+                         osReferringField.c_str(),
                          aosLinks[i].c_str());
             }
             else if( oSetTargetLayers.find(oIter2->second) ==
@@ -3379,12 +3379,12 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
                 OGRGMLASLayer* poTargetLayer = oIter2->second;
                 oSetTargetLayers.insert(poTargetLayer);
                 CPLString osLinkFieldName =
-                    poReferingLayer->CreateLinkForAttrToOtherLayer(
-                        osReferingField,
+                    poReferringLayer->CreateLinkForAttrToOtherLayer(
+                        osReferringField,
                         poTargetLayer->GetFeatureClass().GetXPath());
                 if( bRemoveUnusedFields )
                 {
-                    oMapUnusedFields[poReferingLayer].erase(osLinkFieldName);
+                    oMapUnusedFields[poReferringLayer].erase(osLinkFieldName);
                 }
             }
         }
