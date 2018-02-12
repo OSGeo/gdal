@@ -4050,6 +4050,12 @@ int wrapper_HasThreadSupport()
 }
 
 
+retStringAndCPLFree* wrapper_VSIGetSignedURL(const char * utf8_path, char** options = NULL )
+{
+    return VSIGetSignedURL( utf8_path, options );
+}
+
+
 typedef struct
 {
   int     mode;
@@ -8870,7 +8876,7 @@ SWIGINTERN PyObject *_wrap_GetSignedURL(PyObject *SWIGUNUSEDPARM(self), PyObject
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
-      result = (retStringAndCPLFree *)VSIGetSignedURL((char const *)arg1,arg2);
+      result = (retStringAndCPLFree *)wrapper_VSIGetSignedURL((char const *)arg1,arg2);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
