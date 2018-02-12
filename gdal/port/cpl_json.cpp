@@ -99,6 +99,18 @@ bool CPLJSONDocument::Save(const std::string &osPath)
 }
 
 /**
+ * Return the json document as a serialized string.
+ * @return         serialized document.
+ *
+ * @since GDAL 2.3
+ */
+std::string CPLJSONDocument::SaveAsString()
+{
+    return json_object_to_json_string_ext(
+                TO_JSONOBJ(m_poRootJsonObject), JSON_C_TO_STRING_PRETTY );
+}
+
+/**
  * Get json document root object
  * @return CPLJSONObject class instance
  *

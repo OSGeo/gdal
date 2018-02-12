@@ -196,6 +196,8 @@ public:
 /*! @endcond */
 
     bool Save(const std::string &osPath);
+    std::string SaveAsString();
+
     CPLJSONObject GetRoot();
     bool Load(const std::string &osPath);
     bool LoadMemory(const std::string &osStr);

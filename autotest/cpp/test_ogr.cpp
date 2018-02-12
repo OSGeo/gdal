@@ -26,6 +26,7 @@
 #include "gdal_unit_test.h"
 
 #include <ogrsf_frmts.h>
+#include "../../gdal/ogr/ogrsf_frmts/osm/gpb.h"
 
 #include <string>
 
@@ -609,6 +610,163 @@ namespace tut
         oPoint.setX(5);
         oPoint.setY(5);
         ensure( !oPoly.IsPointOnSurface(&oPoint) );
+    }
+
+    // Test gpb.h
+    template<>
+    template<>
+    void object::test<10>()
+    {
+        ensure_equals( GetVarUIntSize(0), 1 );
+        ensure_equals( GetVarUIntSize(127), 1 );
+        ensure_equals( GetVarUIntSize(128), 2 );
+        ensure_equals( GetVarUIntSize((1 << 14) - 1), 2 );
+        ensure_equals( GetVarUIntSize(1 << 14), 3 );
+        ensure_equals( GetVarUIntSize(GUINT64_MAX), 10 );
+
+        ensure_equals( GetVarIntSize(0), 1 );
+        ensure_equals( GetVarIntSize(127), 1 );
+        ensure_equals( GetVarIntSize(128), 2 );
+        ensure_equals( GetVarIntSize((1 << 14) - 1), 2 );
+        ensure_equals( GetVarIntSize(1 << 14), 3 );
+        ensure_equals( GetVarIntSize(GINT64_MAX), 9 );
+        ensure_equals( GetVarIntSize(-1), 10 );
+        ensure_equals( GetVarIntSize(GINT64_MIN), 10 );
+
+        ensure_equals( GetVarSIntSize(0), 1 );
+        ensure_equals( GetVarSIntSize(63), 1 );
+        ensure_equals( GetVarSIntSize(64), 2 ); 
+        ensure_equals( GetVarSIntSize(-1), 1 );
+        ensure_equals( GetVarSIntSize(-64), 1 );
+        ensure_equals( GetVarSIntSize(-65), 2 );
+        ensure_equals( GetVarSIntSize(GINT64_MIN), 10 );
+        ensure_equals( GetVarSIntSize(GINT64_MAX), 10 );
+
+        ensure_equals( GetTextSize(""), 1 );
+        ensure_equals( GetTextSize(" "), 2 );
+        ensure_equals( GetTextSize(std::string(" ")), 2 );
+
+        GByte abyBuffer[11] = { 0 };
+        GByte* pabyBuffer;
+        const GByte* pabyBufferRO;
+
+        pabyBuffer = abyBuffer;
+        WriteVarUInt(&pabyBuffer, 0);
+        ensure_equals(pabyBuffer - abyBuffer, 1);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarUInt64(&pabyBufferRO), 0U);
+
+        pabyBuffer = abyBuffer;
+        WriteVarUInt(&pabyBuffer, 127);
+        ensure_equals(pabyBuffer - abyBuffer, 1);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarUInt64(&pabyBufferRO), 127U);
+
+        pabyBuffer = abyBuffer;
+        WriteVarUInt(&pabyBuffer, 0xDEADBEEFU);
+        ensure_equals(pabyBuffer - abyBuffer, 5);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarUInt64(&pabyBufferRO), 0xDEADBEEFU);
+
+        pabyBuffer = abyBuffer;
+        WriteVarUInt(&pabyBuffer, GUINT64_MAX);
+        ensure_equals(pabyBuffer - abyBuffer, 10);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarUInt64(&pabyBufferRO), GUINT64_MAX);
+
+
+        pabyBuffer = abyBuffer;
+        WriteVarInt(&pabyBuffer, GINT64_MAX);
+        ensure_equals(pabyBuffer - abyBuffer, 9);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarInt64(&pabyBufferRO), GINT64_MAX);
+
+        pabyBuffer = abyBuffer;
+        WriteVarInt(&pabyBuffer, -1);
+        ensure_equals(pabyBuffer - abyBuffer, 10);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarInt64(&pabyBufferRO), -1);
+
+        pabyBuffer = abyBuffer;
+        WriteVarInt(&pabyBuffer, GINT64_MIN);
+        ensure_equals(pabyBuffer - abyBuffer, 10);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadVarInt64(&pabyBufferRO), GINT64_MIN);
+
+
+        pabyBuffer = abyBuffer;
+        WriteVarSInt(&pabyBuffer, 0);
+        ensure_equals(pabyBuffer - abyBuffer, 1);
+        {
+            GIntBig nVal;
+            pabyBufferRO = abyBuffer;
+            READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
+            ensure_equals(nVal, 0);
+        }
+
+        pabyBuffer = abyBuffer;
+        WriteVarSInt(&pabyBuffer, 1);
+        ensure_equals(pabyBuffer - abyBuffer, 1);
+        {
+            GIntBig nVal;
+            pabyBufferRO = abyBuffer;
+            READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
+            ensure_equals(nVal, 1);
+        }
+
+        pabyBuffer = abyBuffer;
+        WriteVarSInt(&pabyBuffer, -1);
+        ensure_equals(pabyBuffer - abyBuffer, 1);
+        {
+            GIntBig nVal;
+            pabyBufferRO = abyBuffer;
+            READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
+            ensure_equals(nVal, -1);
+        }
+
+        pabyBuffer = abyBuffer;
+        WriteVarSInt(&pabyBuffer, GINT64_MAX);
+        ensure_equals(pabyBuffer - abyBuffer, 10);
+        {
+            GIntBig nVal;
+            pabyBufferRO = abyBuffer;
+            READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
+            ensure_equals(nVal, GINT64_MAX);
+        }
+
+        pabyBuffer = abyBuffer;
+        WriteVarSInt(&pabyBuffer, GINT64_MIN);
+        ensure_equals(pabyBuffer - abyBuffer, 10);
+        {
+            GIntBig nVal;
+            pabyBufferRO = abyBuffer;
+            READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
+            ensure_equals(nVal, GINT64_MIN);
+        }
+
+        pabyBuffer = abyBuffer;
+        WriteText(&pabyBuffer, "x");
+        ensure_equals(pabyBuffer - abyBuffer, 2);
+        ensure_equals(abyBuffer[0], 1);
+        ensure_equals(abyBuffer[1], 'x');
+
+        pabyBuffer = abyBuffer;
+        WriteText(&pabyBuffer, std::string("x"));
+        ensure_equals(pabyBuffer - abyBuffer, 2);
+        ensure_equals(abyBuffer[0], 1);
+        ensure_equals(abyBuffer[1], 'x');
+
+        pabyBuffer = abyBuffer;
+        WriteFloat32(&pabyBuffer, 1.25f);
+        ensure_equals(pabyBuffer - abyBuffer, 4);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadFloat32(&pabyBufferRO, abyBuffer + 4), 1.25f);
+
+        pabyBuffer = abyBuffer;
+        WriteFloat64(&pabyBuffer, 1.25);
+        ensure_equals(pabyBuffer - abyBuffer, 8);
+        pabyBufferRO = abyBuffer;
+        ensure_equals(ReadFloat64(&pabyBufferRO, abyBuffer + 8), 1.25);
     }
 
 } // namespace tut
