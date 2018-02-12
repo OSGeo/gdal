@@ -701,7 +701,13 @@ def vsifile_16():
 def vsifile_17():
 
     if gdal.GetActualURL('foo') is not None:
+        gdaltest.post_reason('fail')
         return 'fail'
+
+    if gdal.GetSignedURL('foo') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

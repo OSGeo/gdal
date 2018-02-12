@@ -1381,6 +1381,10 @@ def GetActualURL(*args):
     """GetActualURL(char const * utf8_path) -> char const *"""
     return _gdal.GetActualURL(*args)
 
+def GetSignedURL(*args):
+    """GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"""
+    return _gdal.GetSignedURL(*args)
+
 def GetFileSystemsPrefixes(*args):
     """GetFileSystemsPrefixes() -> char **"""
     return _gdal.GetFileSystemsPrefixes(*args)

@@ -6554,10 +6554,16 @@ SWIGINTERN PyObject *_wrap_SpatialReference___str__(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }

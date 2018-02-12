@@ -52,6 +52,21 @@ CPLString CPLAWSURLEncode(const CPLString& osURL, bool bEncodeSlash = true);
 CPLString CPLAWSGetHeaderVal(const struct curl_slist* psExistingHeaders,
                              const char* pszKey);
 
+CPLString
+CPLGetAWS_SIGN4_Signature( const CPLString& osSecretAccessKey,
+                               const CPLString& osAccessToken,
+                               const CPLString& osRegion,
+                               const CPLString& osRequestPayer,
+                               const CPLString& osService,
+                               const CPLString& osVerb,
+                               const struct curl_slist* psExistingHeaders,
+                               const CPLString& osHost,
+                               const CPLString& osCanonicalURI,
+                               const CPLString& osCanonicalQueryString,
+                               const CPLString& osXAMZContentSHA256,
+                               const CPLString& osTimestamp,
+                               CPLString& osSignedHeaders );
+
 CPLString CPLGetAWS_SIGN4_Authorization(const CPLString& osSecretAccessKey,
                                         const CPLString& osAccessKeyId,
                                         const CPLString& osAccessToken,
@@ -130,6 +145,12 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                                      CPLString& osSessionToken,
                                      CPLString& osRegion,
                                      CPLString& osCredentials);
+
+        static bool GetConfiguration(char** papszOptions,
+                                     CPLString& osSecretAccessKey,
+                                     CPLString& osAccessKeyId,
+                                     CPLString& osSessionToken,
+                                     CPLString& osRegion);
   protected:
 
     public:
@@ -144,8 +165,10 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                     bool bUseHTTPS, bool bUseVirtualHosting);
        ~VSIS3HandleHelper();
 
-        static VSIS3HandleHelper* BuildFromURI(const char* pszURI, const char* pszFSPrefix,
-                                               bool bAllowNoObject);
+        static VSIS3HandleHelper* BuildFromURI(const char* pszURI,
+                                               const char* pszFSPrefix,
+                                               bool bAllowNoObject,
+                                               char** papszOptions = nullptr);
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
@@ -174,10 +197,8 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
 
-        static bool GetConfiguration(CPLString& osSecretAccessKey,
-                                     CPLString& osAccessKeyId,
-                                     CPLString& osSessionToken,
-                                     CPLString& osRegion);
+        CPLString GetSignedURL(char** papszOptions);
+
         static void CleanMutex();
         static void ClearCache();
 };

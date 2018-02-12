@@ -7060,10 +7060,16 @@ SWIGINTERN PyObject *_wrap_GOA2GetAuthorizationURL(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -7120,10 +7126,16 @@ SWIGINTERN PyObject *_wrap_GOA2GetRefreshToken(PyObject *SWIGUNUSEDPARM(self), P
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -7182,10 +7194,16 @@ SWIGINTERN PyObject *_wrap_GOA2GetAccessToken(PyObject *SWIGUNUSEDPARM(self), Py
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -7320,10 +7338,16 @@ SWIGINTERN PyObject *_wrap_EscapeString(PyObject *SWIGUNUSEDPARM(self), PyObject
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   {
@@ -8023,10 +8047,16 @@ SWIGINTERN PyObject *_wrap_CPLBinaryToHex(PyObject *SWIGUNUSEDPARM(self), PyObje
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   {
@@ -8755,6 +8785,135 @@ fail:
   {
     /* %typemap(freearg) (const char *utf8_path) */
     GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_GetSignedURL(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  char *arg1 = (char *) 0 ;
+  char **arg2 = (char **) NULL ;
+  int bToFree1 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  retStringAndCPLFree *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O|O:GetSignedURL",&obj0,&obj1)) SWIG_fail;
+  {
+    /* %typemap(in) (const char *utf8_path) */
+    arg1 = GDALPythonObjectToCStr( obj0, &bToFree1 );
+    if (arg1 == NULL)
+    {
+      PyErr_SetString( PyExc_RuntimeError, "not a string" );
+      SWIG_fail;
+    }
+  }
+  if (obj1) {
+    {
+      /* %typemap(in) char **options */
+      /* Check if is a list (and reject strings, that are seen as sequence of characters)  */
+      if ( ! PySequence_Check(obj1) || PyUnicode_Check(obj1)
+  #if PY_VERSION_HEX < 0x03000000
+        || PyString_Check(obj1)
+  #endif
+        ) {
+        PyErr_SetString(PyExc_TypeError,"not a sequence");
+        SWIG_fail;
+      }
+      
+      Py_ssize_t size = PySequence_Size(obj1);
+      if( size != (int)size ) {
+        PyErr_SetString(PyExc_TypeError, "too big sequence");
+        SWIG_fail;
+      }
+      for (int i = 0; i < (int)size; i++) {
+        PyObject* pyObj = PySequence_GetItem(obj1,i);
+        if (PyUnicode_Check(pyObj))
+        {
+          char *pszStr;
+          Py_ssize_t nLen;
+          PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+#if PY_VERSION_HEX >= 0x03000000
+          PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#else
+          PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
+#endif
+          arg2 = CSLAddString( arg2, pszStr );
+          Py_XDECREF(pyUTF8Str);
+        }
+#if PY_VERSION_HEX >= 0x03000000
+        else if (PyBytes_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyBytes_AsString(pyObj) );
+#else
+        else if (PyString_Check(pyObj))
+        arg2 = CSLAddString( arg2, PyString_AsString(pyObj) );
+#endif
+        else
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
+          SWIG_fail;
+        }
+        Py_DECREF(pyObj);
+      }
+    }
+  }
+  {
+    if (!arg1) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (retStringAndCPLFree *)VSIGetSignedURL((char const *)arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
+    if(result)
+    {
+      resultobj = GDALPythonObjectFromCStr( (const char *)result);
+      CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
+    }
+  }
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) (const char *utf8_path) */
+    GDALPythonFreeCStr(arg1, bToFree1);
+  }
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
   }
   return NULL;
 }
@@ -28559,10 +28718,16 @@ SWIGINTERN PyObject *_wrap_SerializeXMLTree(PyObject *SWIGUNUSEDPARM(self), PyOb
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   {
@@ -28807,10 +28972,16 @@ SWIGINTERN PyObject *_wrap_GetJPEG2000StructureAsString(PyObject *SWIGUNUSEDPARM
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if (alloc1 == SWIG_NEWOBJ) delete[] buf1;
@@ -29951,10 +30122,16 @@ SWIGINTERN PyObject *_wrap_InfoInternal(PyObject *SWIGUNUSEDPARM(self), PyObject
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
@@ -33049,6 +33226,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"RmdirRecursive", _wrap_RmdirRecursive, METH_VARARGS, (char *)"RmdirRecursive(char const * utf8_path) -> VSI_RETVAL"},
 	 { (char *)"Rename", _wrap_Rename, METH_VARARGS, (char *)"Rename(char const * pszOld, char const * pszNew) -> VSI_RETVAL"},
 	 { (char *)"GetActualURL", _wrap_GetActualURL, METH_VARARGS, (char *)"GetActualURL(char const * utf8_path) -> char const *"},
+	 { (char *)"GetSignedURL", _wrap_GetSignedURL, METH_VARARGS, (char *)"GetSignedURL(char const * utf8_path, char ** options=None) -> retStringAndCPLFree *"},
 	 { (char *)"GetFileSystemsPrefixes", _wrap_GetFileSystemsPrefixes, METH_VARARGS, (char *)"GetFileSystemsPrefixes() -> char **"},
 	 { (char *)"GetFileSystemOptions", _wrap_GetFileSystemOptions, METH_VARARGS, (char *)"GetFileSystemOptions(char const * utf8_path) -> char const *"},
 	 { (char *)"VSI_STAT_EXISTS_FLAG_swigconstant", VSI_STAT_EXISTS_FLAG_swigconstant, METH_VARARGS, NULL},
