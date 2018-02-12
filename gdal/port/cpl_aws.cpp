@@ -1360,7 +1360,7 @@ void VSIS3HandleHelper::SetVirtualHosting( bool b )
 
 CPLString VSIS3HandleHelper::GetSignedURL(char** papszOptions)
 {
-    CPLString osXAMZDate = CSLFetchNameValueDef(papszOptions, "X-Amz-Date",
+    CPLString osXAMZDate = CSLFetchNameValueDef(papszOptions, "START_DATE",
                                     CPLGetConfigOption("AWS_TIMESTAMP", ""));
     if( osXAMZDate.empty() )
         osXAMZDate = CPLGetAWS_SIGN4_Timestamp();
@@ -1368,7 +1368,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(char** papszOptions)
     osDate.resize(8);
 
     CPLString osXAMZExpires =
-        CSLFetchNameValueDef(papszOptions, "X-Amz-Expires", "3600");
+        CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600");
 
     CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
 
