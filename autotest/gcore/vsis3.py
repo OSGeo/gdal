@@ -204,6 +204,14 @@ def vsis3_2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
+    signed_url = gdal.GetSignedURL('/vsis3/s3_fake_bucket/resource')
+    expected_url_8080 = 'http://127.0.0.1:8080/s3_fake_bucket/resource?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=dca239dd95f72ff8c37c15c840afc54cd19bdb07f7aaee2223108b5b0ad35da8&X-Amz-SignedHeaders=host'
+    expected_url_8081 = 'http://127.0.0.1:8081/s3_fake_bucket/resource?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%2F20150101%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=ef5216bc5971863414c69f6ca095276c0d62c0da97fa4f6ab80c30bd7fc146ac&X-Amz-SignedHeaders=host'
+    if signed_url not in (expected_url_8080, expected_url_8081):
+        gdaltest.post_reason('fail')
+        print(signed_url)
+        return 'fail'
+
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/resource', custom_method = get_s3_fake_bucket_resource_method)
 
@@ -2251,16 +2259,17 @@ def vsis3_extra_1():
         print(ret)
         return 'fail'
 
-    # Invalid bucket : "The specified bucket does not exist"
-    gdal.ErrorReset()
-    f = open_for_read('/vsis3/not_existing_bucket/foo')
-    with gdaltest.error_handler():
-        gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-    if gdal.VSIGetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    if False:  # we actually try to read at read() time and bSetError = false
+        # Invalid bucket : "The specified bucket does not exist"
+        gdal.ErrorReset()
+        f = open_for_read('/vsis3/not_existing_bucket/foo')
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1, 1, f)
+        gdal.VSIFCloseL(f)
+        if gdal.VSIGetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            print(gdal.VSIGetLastErrorMsg())
+            return 'fail'
 
     # Invalid resource
     gdal.ErrorReset()
@@ -2268,6 +2277,20 @@ def vsis3_extra_1():
     if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
+        return 'fail'
+
+    # Test GetSignedURL()
+    signed_url = gdal.GetSignedURL('/vsis3/' + s3_resource)
+    f = open_for_read('/vsicurl_streaming/' + signed_url)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    if len(ret) != 1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'

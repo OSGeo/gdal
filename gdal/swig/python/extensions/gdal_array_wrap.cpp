@@ -4899,10 +4899,16 @@ SWIGINTERN PyObject *_wrap_GetArrayFilename(PyObject *SWIGUNUSEDPARM(self), PyOb
   result = (retStringAndCPLFree *)GetArrayFilename(arg1);
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   return resultobj;
