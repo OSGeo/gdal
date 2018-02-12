@@ -682,17 +682,18 @@ vsi_l_offset GTM::findFirstWaypointOffset()
     for (int i = 0; i < n_maps; ++i)
     {
         /* Read image name string size */
-        unsigned short stringSize = readUShort(pGTMFile);
+        bool bSuccess = false;
+        unsigned short stringSize = readUShort(pGTMFile, &bSuccess);
 
         /* skip image name string */
-        if ( VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
+        if ( !bSuccess ||  VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
             return 0;
 
         /* read image comment string size */
-        stringSize = readUShort(pGTMFile);
+        stringSize = readUShort(pGTMFile, &bSuccess);
 
         /* skip image comment string */
-        if ( VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
+        if ( !bSuccess || VSIFSeekL(pGTMFile, stringSize, SEEK_CUR) != 0)
             return 0;
 
         /* skip the others image parameters */
