@@ -439,6 +439,8 @@ inline void GDALCopy4Words(const float* pValueIn, GUInt16* const &pValueOut)
 
 #ifdef __AVX2__
 
+#include <immintrin.h>
+
 inline void GDALCopy8Words(const float* pValueIn, GByte* const &pValueOut)
 {
     __m256 ymm = _mm256_loadu_ps(pValueIn);
