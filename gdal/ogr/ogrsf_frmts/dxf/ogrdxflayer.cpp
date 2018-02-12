@@ -35,6 +35,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 #include <memory>
 
@@ -1304,6 +1305,17 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 }
 
 /************************************************************************/
+/*                             SafeAbs()                                */
+/************************************************************************/
+
+static inline int SafeAbs(int x)
+{
+    if( x == std::numeric_limits<int>::min() )
+        return std::numeric_limits<int>::max();
+    return abs(x);
+}
+
+/************************************************************************/
 /*                         TranslatePOLYLINE()                          */
 /*                                                                      */
 /*      We also capture the following VERTEXes.                         */
@@ -1416,19 +1428,19 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
 
               case 71:
                 // See comment below about negative values for 71, 72, 73, 74
-                vertexIndex71 = abs(atoi(szLineBuf));
+                vertexIndex71 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 72:
-                vertexIndex72 = abs(atoi(szLineBuf));
+                vertexIndex72 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 73:
-                vertexIndex73 = abs(atoi(szLineBuf));
+                vertexIndex73 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 74:
-                vertexIndex74 = abs(atoi(szLineBuf));
+                vertexIndex74 = SafeAbs(atoi(szLineBuf));
                 break;
 
               default:
