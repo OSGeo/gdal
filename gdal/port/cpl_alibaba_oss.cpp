@@ -187,15 +187,19 @@ void VSIOSSHandleHelper::RebuildURL()
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIOSSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
+bool VSIOSSHandleHelper::GetConfiguration(char **papszOptions,
+                                          CPLString& osSecretAccessKey,
                                           CPLString& osAccessKeyId)
 {
-    osSecretAccessKey =
-        CPLGetConfigOption("OSS_SECRET_ACCESS_KEY", "");
+    osSecretAccessKey = CSLFetchNameValueDef(papszOptions,
+        "OSS_SECRET_ACCESS_KEY",
+        CPLGetConfigOption("OSS_SECRET_ACCESS_KEY", ""));
 
     if( !osSecretAccessKey.empty() )
     {
-        osAccessKeyId = CPLGetConfigOption("OSS_ACCESS_KEY_ID", "");
+        osAccessKeyId = CSLFetchNameValueDef(papszOptions,
+            "OSS_ACCESS_KEY_ID",
+            CPLGetConfigOption("OSS_ACCESS_KEY_ID", ""));
         if( osAccessKeyId.empty() )
         {
             VSIError(VSIE_AWSInvalidCredentials,
@@ -216,18 +220,20 @@ bool VSIOSSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
 /************************************************************************/
 
 VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
-                                                    const char* pszFSPrefix,
-                                                    bool bAllowNoObject )
+                                                      const char* pszFSPrefix,
+                                                      bool bAllowNoObject,
+                                                      char** papszOptions )
 {
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
-    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId) )
+    if( !GetConfiguration(papszOptions, osSecretAccessKey, osAccessKeyId) )
     {
         return nullptr;
     }
 
-    const CPLString osEndpoint =
-        CPLGetConfigOption("OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com");
+    const CPLString osEndpoint = CSLFetchNameValueDef(papszOptions,
+        "OSS_ENDPOINT",
+        CPLGetConfigOption("OSS_ENDPOINT", "oss-us-east-1.aliyuncs.com"));
     CPLString osBucket;
     CPLString osObjectKey;
     if( pszURI != nullptr && pszURI[0] != '\0' &&
@@ -370,6 +376,67 @@ void VSIOSSHandleHelper::SetEndpoint( const CPLString &osStr )
 {
     m_osEndpoint = osStr;
     RebuildURL();
+}
+
+/************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+CPLString VSIOSSHandleHelper::GetSignedURL(char** papszOptions)
+{
+    GIntBig nStartDate = static_cast<GIntBig>(time(nullptr));
+    const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
+    if( pszStartDate )
+    {
+        int nYear, nMonth, nDay, nHour, nMin, nSec;
+        if( sscanf(pszStartDate, "%04d%02d%02dT%02d%02d%02dZ",
+                   &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) == 6 )
+        {
+            struct tm brokendowntime;
+            brokendowntime.tm_year = nYear - 1900;
+            brokendowntime.tm_mon = nMonth - 1;
+            brokendowntime.tm_mday = nDay;
+            brokendowntime.tm_hour = nHour;
+            brokendowntime.tm_min = nMin;
+            brokendowntime.tm_sec = nSec;
+            nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+        }
+    }
+    GIntBig nExpiresIn = nStartDate + atoi(
+        CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
+    CPLString osExpires(CSLFetchNameValueDef(papszOptions, "EXPIRES",
+                                    CPLSPrintf(CPL_FRMT_GIB, nExpiresIn)));
+
+    CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
+
+    CPLString osCanonicalizedResource( m_osBucket.empty() ? CPLString("/") :
+        "/" + m_osBucket +  "/" + CPLAWSURLEncode(m_osObjectKey, false));
+
+    CPLString osStringToSign;
+    osStringToSign += osVerb + "\n";
+    osStringToSign += "\n";
+    osStringToSign += "\n";
+    osStringToSign += osExpires + "\n";
+    // osStringToSign += ; // osCanonicalizedHeaders;
+    osStringToSign += osCanonicalizedResource;
+#ifdef DEBUG_VERBOSE
+    CPLDebug("OSS", "osStringToSign = %s", osStringToSign.c_str());
+#endif
+
+    GByte abySignature[CPL_SHA1_HASH_SIZE] = {};
+    CPL_HMAC_SHA1( m_osSecretAccessKey.c_str(), m_osSecretAccessKey.size(),
+                   osStringToSign, osStringToSign.size(),
+                   abySignature);
+    char* pszBase64 = CPLBase64Encode( sizeof(abySignature), abySignature );
+    CPLString osSignature(pszBase64);
+    CPLFree(pszBase64);
+
+    ResetQueryParameters();
+    //  Note: https://www.alibabacloud.com/help/doc-detail/31952.htm?spm=a3c0i.o32002en.b99.294.6d70a0fc7cRJfJ is wrong on the name of the OSSAccessKeyId parameter !
+    AddQueryParameter("OSSAccessKeyId", m_osAccessKeyId);
+    AddQueryParameter("Expires", osExpires);
+    AddQueryParameter("Signature", osSignature);
+    return m_osURL;
 }
 
 #endif // HAVE_CURL
