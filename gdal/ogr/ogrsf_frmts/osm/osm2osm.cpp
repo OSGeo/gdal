@@ -359,7 +359,7 @@ int main(int argc, char* argv[])
 
     if( argc != 3 )
     {
-        fprintf(stderr, "Usage: osm2osm input.pbf output.osm\n");
+        fprintf(stderr, "Usage: osm2osm input.pbf output.osm\n");  /*ok*/
         exit(1);
     }
 
@@ -369,7 +369,7 @@ int main(int argc, char* argv[])
     fp = VSIFOpenL(pszDstFilename, "wt");
     if( fp == NULL )
     {
-        fprintf(stderr, "Cannot create %s.\n", pszDstFilename);
+        fprintf(stderr, "Cannot create %s.\n", pszDstFilename);  /*ok*/
         exit(1);
     }
 
@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
                           fp );
     if( psContext == NULL )
     {
-        fprintf(stderr, "Cannot process %s.\n", pszSrcFilename);
+        fprintf(stderr, "Cannot process %s.\n", pszSrcFilename);  /*ok*/
         exit(1);
     }
 
