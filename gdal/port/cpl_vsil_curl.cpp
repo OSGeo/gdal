@@ -7514,6 +7514,8 @@ public:
             IVSIS3LikeHandleHelper * poHandleHelper ) override;
         void UpdateHandleFromMap(
             IVSIS3LikeHandleHelper * poHandleHelper ) override;
+
+    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
 };
 
 /************************************************************************/
@@ -7615,6 +7617,30 @@ const char* VSIOSSFSHandler::GetOptions()
         "default='50' min='1' max='1000'/>"
     VSICURL_OPTIONS
     "</Options>";
+}
+
+/************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+char* VSIOSSFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return nullptr;
+
+    VSIOSSHandleHelper* poHandleHelper =
+        VSIOSSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                        GetFSPrefix().c_str(), false,
+                                        papszOptions);
+    if( poHandleHelper == nullptr )
+    {
+        return nullptr;
+    }
+
+    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+
+    delete poHandleHelper;
+    return CPLStrdup(osRet);
 }
 
 /************************************************************************/

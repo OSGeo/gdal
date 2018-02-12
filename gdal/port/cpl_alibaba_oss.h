@@ -56,6 +56,10 @@ class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
 
         void RebuildURL() override;
 
+        static bool GetConfiguration(char **papszOptions,
+                                     CPLString& osSecretAccessKey,
+                                     CPLString& osAccessKeyId);
+
   protected:
 
     public:
@@ -69,7 +73,8 @@ class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
 
         static VSIOSSHandleHelper* BuildFromURI(const char* pszURI,
                                                 const char* pszFSPrefix,
-                                               bool bAllowNoObject);
+                                                bool bAllowNoObject,
+                                                char** papszOptions = nullptr);
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
@@ -93,8 +98,7 @@ class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
         void SetEndpoint(const CPLString &osStr);
         void SetVirtualHosting(bool b);
 
-        static bool GetConfiguration(CPLString& osSecretAccessKey,
-                                     CPLString& osAccessKeyId);
+        CPLString GetSignedURL(char** papszOptions);
 };
 
 class VSIOSSUpdateParams
