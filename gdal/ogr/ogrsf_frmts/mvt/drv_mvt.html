@@ -9,9 +9,10 @@
 
 <h1>MVT: Mapbox Vector Tiles</h1>
 
-<p>Starting with GDAL 2.3, the MVT driver can read Mapbox Vector Tile files,
+<p>Starting with GDAL 2.3, the MVT driver can read and write Mapbox Vector Tile files,
 as standalone files, uncompressed or gzip-compressed (typical extensions are
-.pbf, .mvt, .mvt.gz), or a tileset at a given zoom level of such files.</p>
+.pbf, .mvt, .mvt.gz), or a tileset at a given zoom level of such files.
+Write support requires GDAL to be built with libsqlite3 and GEOS support.</p>
 
 <p>Mapbox Vector Tiles stored within a SQLite container conforming to the
 MBTiles format are handled by the <a href="frmt_mbtiles.html">MBTiles</a> driver.</p>
@@ -152,10 +153,114 @@ Defaults to 1000.</li>
 serialized JSon dictionary.</li>
 </ul>
 
+<h2>Creation issues</h2>
+
+<p>Tiles are generated with WebMercator (EPSG:3857) projection. Several layers
+can be written. It is possible to decide at which zoom level ranges a given
+layer is written.</p>
+
+<h2>Dataset creation options</h2>
+
+<ul>
+<li><b>NAME</b>=string: Tileset name. Defaults to the basename of the output
+file/directory. Used to fill metadata records.</li>
+<li><b>DESCRIPTION</b>=string: A description of the tileset. Used to fill
+metadata records.</li>
+<li><b>TYPE</b>=overlay/baselayer: Layer type. Used to fill metadata records.</li>
+<li><b>FORMAT</b>=DIRECTORY/MBTILES: Format into which tiles are written.
+DIRECTORY means that tiles are written in a hierarchy like out_dir/{z}/{x}/{y}.pbf.
+MBTILES is for a MBTILES container. Defaults to DIRECTORY, unless the output
+filename has a .mbtiles extension</li>
+<li><b>TILE_EXTENSION</b>=string: For tilesets as directories of files,
+extension of tiles. Defaults to pbf.</li>
+<li><b>MINZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to 0.</li>
+<li><b>MAXZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to 5. Maximum supported value is 22</li>
+<li><b>CONF</b>=string: Layer configuration as a JSon serialized string.</li>
+<li><b>SIMPLIFICATION</b>=float: Simplification factor for linear or polygonal
+geometries. The unit is the integer unit of tiles after quantification of
+geometry coordinates to tile coordinates. Applies to all zoom levels,
+unless SIMPLIFICATION_MAX_ZOOM is also defined.</li>
+<li><b>SIMPLIFICATION_MAX_ZOOM</b>=float: Simplification factor for linear or polygonal
+geometries, that applies only for the maximum zoom level.</li>
+<li><b>EXTENT</b>=positive_integer. Number of units in a tile. The greater, the
+more accurate geometry coordinates (at the expense of tile byte size).
+Defaults to 4096</li>
+<li><b>BUFFER</b>=positive_integer. Number of units for geometry buffering. This
+value corresponds to a buffer around each side of a tile into which geometries are
+fetched and clipped. This is used for proper rendering of geometries that spread
+over tile boundaries by some rendering clients. Defaults to 80 if EXTENT=4096.</li>
+<li><b>COMPRESS</b>=YES/NO. Whether to compress tiles with the Deflate/GZip
+algorithm. Defaults to YES. Should be left to YES for FORMAT=MBTILES.</li>
+<li><b>TEMPORARY_DB</b>=string. Filename with path for the temporary database used
+for tile generation. By default, this will be a file in the same directory as
+the output file/directory.</li>
+<li><b>MAX_SIZE</b>=integer. Maximum size of a tile in bytes (after compression).
+Defaults to 500 000. If a tile is greater than this treshold, features will be
+written with reduced precision, or discarded.</li>
+<li><b>MAX_FEATURES</b>=integer. Maximum number of features per tile. Defaults
+to 200 000.</li>
+<li><b>BOUNDS</b>=min_long,min_lat,max_long,max_lat. Override default value for
+bounds metadata item which is computed from the extent of features written.</li>
+<li><b>CENTER</b>=long,lat,zoom_level. Override default value for center
+metadata item, which is the center of BOUNDS at minimum zoom level.</li>
+</ul>
+
+<h2>Layer configuration</h2>
+
+<p>
+The above mentionned CONF dataset creation option can be set to a string whose
+value is a JSon serialized document such as the below one:
+</p>
+
+<pre>
+        {
+            "boundaries_lod0": {
+                "target_name": "boundaries",
+                "description": "Country boundaries",
+                "minzoom": 0,
+                "maxzoom": 2
+            },
+            "boundaries_lod1": {
+                "target_name": "boundaries",
+                "minzoom": 3,
+                "maxzoom": 5
+            }
+        }
+</pre>
+
+<p>
+<i>boundaries_lod0</i> and <i>boundaries_lod1</i> are the name of the OGR
+layers that are created into the target MVT dataset. They are mapped to
+the MVT target layer <i>boundaries</i>.
+</p>
+
+<p>It is also possible to get the same behaviour with the below layer creation
+options, although that is not convenient in the ogr2ogr use case.</p>
+
+<h2>Layer creation options</h2>
+
+<ul>
+<li><b>MINZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to the dataset cration option MINZOOM value.</li>
+<li><b>MAXZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to the dataset cration option MAXZOOM value. Maximum supported value is 22</li>
+<li><b>NAME</b>=string: Target layer name. Defaults to the layer name, but can
+be overriden so that several OGR layers map to a single target MVT layer.
+The typical use case is to have different OGR layers for mutually exclusive
+zoom level ranges.</li>
+<li><b>DESCRIPTION</b>=string: A description of the layer.</li>
+</ul>
+  
 <h2>Examples</h2>
 
 <pre>
 ogrinfo MVT:https://free.tilehosting.com/data/v3/1 -oo tile_extension="pbf.pict?key=${YOUR_KEY}" --debug on -oo metadata_file="https://free.tilehosting.com/data/v3.json?key=${YOUR_KEY}"
+</pre>
+
+<pre>
+ogr2ogr -f MVT mytileset source.gpkg -dsco MAXZOOM=10
 </pre>
 
 <p>See Also:</p>

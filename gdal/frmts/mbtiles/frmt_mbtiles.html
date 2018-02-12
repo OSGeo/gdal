@@ -13,9 +13,10 @@
 which is a specification for storing tiled map data in SQLite databases.</p>
 <p>Starting with GDAL 2.1, the MBTiles driver has creation and write support for MBTiles
 raster datasets.</p>
-<p>Starting with GDAL 2.3, the MBTiles driver has read for MBTiles vector datasets.
+<p>Starting with GDAL 2.3, the MBTiles driver has read and write support for MBTiles vector datasets.
 For standalone Mapbox Vector Tile files or set of MVT files, see the
-<a href="drv_mvt.html">MVT</a> driver.</p>
+<a href="drv_mvt.html">MVT</a> driver. Note: vector write support requires GDAL
+to be built with GEOS.</p>
 
 <p>GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and PNG drivers.</p>
 
@@ -87,7 +88,7 @@ serialized JSon dictionary.</li>
 </li>
 </ul>
 
-<h2>Creation issues</h2>
+<h2>Raster creation issues</h2>
 
 <p>Depending of the number of bands of the input dataset and the tile format
 selected, the driver will do the necessary conversions to be compatible with the
@@ -141,10 +142,19 @@ table does not support alpha channel (even if PNG8 format would potentially allo
 color table with transparency). So when selecting PNG8, non fully opaque tiles
 will be stored as 32-bit PNG.</p>
 
-<h3>Creation options</h3>
+<h2>Vector creation issues</h2>
+
+<p>Tiles are generated with WebMercator (EPSG:3857) projection. Several layers
+can be written. It is possible to decide at which zoom level ranges a given
+layer is written.</p>
+
+<h2>Creation options</h2>
 
 <p>The following creation options are available:</p>
 
+<ul>
+
+<li>Raster and vector:
 <ul>
 <li><b>NAME</b>=string. Tileset name, used to set the 'name' metadata item.
 If not specified, the basename of the filename will be used.</li>
@@ -152,6 +162,10 @@ If not specified, the basename of the filename will be used.</li>
 If not specified, the basename of the filename will be used.</li>
 <li><b>TYPE</b>=overlay/baselayer. The layer type, used to set the 'type' metadata
 item. Default to 'overlay'.</li>
+</ul>
+
+<li>Raster only:
+<ul>
 <li><b>VERSION</b>=string. The version of the tileset, as a plain number, used
 to set the 'version' metadata item. Default to '1.1'.</li>
 <li><b>BLOCKSIZE</b>=integer. (GDAL &gt;= 2.3) Block/tile size in width and height in pixels.
@@ -173,8 +187,96 @@ Resampling algorithm. Defaults to BILINEAR.</li>
 <li><b>WRITE_BOUNDS</b>=YES/NO: Whether to write the bounds 'metadata' item.
 Defaults to YES.</li>
 </ul>
+</li>
 
-<h2>Overviews</h2>
+<li>Vector only (GDAL &gt;= 2.3):
+<ul>
+<li><b>MINZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to 0.</li>
+<li><b>MAXZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to 5. Maximum supported value is 22</li>
+<li><b>CONF</b>=string: Layer configuration as a JSon serialized string.</li>
+<li><b>SIMPLIFICATION</b>=float: Simplification factor for linear or polygonal
+geometries. The unit is the integer unit of tiles after quantification of
+geometry coordinates to tile coordinates. Applies to all zoom levels,
+unless SIMPLIFICATION_MAX_ZOOM is also defined.</li>
+<li><b>SIMPLIFICATION_MAX_ZOOM</b>=float: Simplification factor for linear or polygonal
+geometries, that applies only for the maximum zoom level.</li>
+<li><b>EXTENT</b>=positive_integer. Number of units in a tile. The greater, the
+more accurate geometry coordinates (at the expense of tile byte size).
+Defaults to 4096</li>
+<li><b>BUFFER</b>=positive_integer. Number of units for geometry buffering. This
+value corresponds to a buffer around each side of a tile into which geometries are
+fetched and clipped. This is used for proper rendering of geometries that spread
+over tile boundaries by some rendering clients. Defaults to 80 if EXTENT=4096.</li>
+<li><b>COMPRESS</b>=YES/NO. Whether to compress tiles with the Deflate/GZip
+algorithm. Defaults to YES. Should be left to YES for FORMAT=MBTILES.</li>
+<li><b>TEMPORARY_DB</b>=string. Filename with path for the temporary database used
+for tile generation. By default, this will be a file in the same directory as
+the output file/directory.</li>
+<li><b>MAX_SIZE</b>=integer. Maximum size of a tile in bytes (after compression).
+Defaults to 500 000. If a tile is greater than this threshold, features will be
+written with reduced precision, or discarded.</li>
+<li><b>MAX_FEATURES</b>=integer. Maximum number of features per tile. Defaults
+to 200 000.</li>
+<li><b>BOUNDS</b>=min_long,min_lat,max_long,max_lat. Override default value for
+bounds metadata item which is computed from the extent of features written.</li>
+<li><b>CENTER</b>=long,lat,zoom_level. Override default value for center
+metadata item, which is the center of BOUNDS at minimum zoom level.</li>
+</ul>
+</li>
+
+</li>
+
+</ul>
+
+<h2>Layer configuration (vector)</h2>
+
+<p>
+The above mentioned CONF dataset creation option can be set to a string whose
+value is a JSon serialized document such as the below one:
+</p>
+
+<pre>
+        {
+            "boundaries_lod0": {
+                "target_name": "boundaries",
+                "description": "Country boundaries",
+                "minzoom": 0,
+                "maxzoom": 2
+            },
+            "boundaries_lod1": {
+                "target_name": "boundaries",
+                "minzoom": 3,
+                "maxzoom": 5
+            }
+        }
+</pre>
+
+<p>
+<i>boundaries_lod0</i> and <i>boundaries_lod1</i> are the name of the OGR
+layers that are created into the target MVT dataset. They are mapped to
+the MVT target layer <i>boundaries</i>.
+</p>
+
+<p>It is also possible to get the same behaviour with the below layer creation
+options, although that is not convenient in the ogr2ogr use case.</p>
+
+<h2>Layer creation options (vector)</h2>
+
+<ul>
+<li><b>MINZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to the dataset cration option MINZOOM value.</li>
+<li><b>MAXZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
+to the dataset cration option MAXZOOM value. Maximum supported value is 22</li>
+<li><b>NAME</b>=string: Target layer name. Defaults to the layer name, but can
+be overridden so that several OGR layers map to a single target MVT layer.
+The typical use case is to have different OGR layers for mutually exclusive
+zoom level ranges.</li>
+<li><b>DESCRIPTION</b>=string: A description of the layer.</li>
+</ul>
+
+<h2>Overviews (raster)</h2>
 
 <p>gdaladdo / BuildOverviews() can be used to compute overviews. Only power-of-two
 overview factors (2,4,8,16,...) are supported.</p>
@@ -304,6 +406,11 @@ Metadata:
 1: ne_10m_admin_1_states_provinces_shpgeojson (Multi Polygon)
 </pre>
 </li>
+
+<li>Converting a GeoPackage to a Vector tile MBTILES:
+<pre>
+$ ogr2ogr -f MBTILES target.mbtiles source.gpkg -dsco MAXZOOM=10
+</pre>
 
 </ul>
 

@@ -26,6 +26,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#if defined(HAVE_SQLITE) && defined(HAVE_GEOS)
+// Needed by mvtutils.h
+#define HAVE_MVT_WRITE_SUPPORT
+#endif
+
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "ogr_api.h"
@@ -137,6 +142,8 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
   private:
 
     bool m_bWriteBounds;
+    CPLString m_osBounds;
+    CPLString m_osCenter;
     bool m_bWriteMinMaxZoom;
     MBTilesDataset* poMainDS;
     bool m_bGeoTransformValid;
@@ -1019,34 +1026,52 @@ CPLErr MBTilesDataset::SetGeoTransform( double* padfGeoTransform )
 
     if( m_bWriteBounds )
     {
-        double minx = padfGeoTransform[0];
-        double miny = padfGeoTransform[3] + nRasterYSize * padfGeoTransform[5];
-        double maxx = padfGeoTransform[0] + nRasterXSize * padfGeoTransform[1];
-        double maxy = padfGeoTransform[3];
-
-        SphericalMercatorToLongLat(&minx, &miny);
-        SphericalMercatorToLongLat(&maxx, &maxy);
-        if( fabs(minx + 180) < 1e-7 && fabs(maxx - 180) < 1e-7 )
+        CPLString osBounds(m_osBounds);
+        if( osBounds.empty() )
         {
-            minx = -180.0;
-            maxx = 180.0;
+            double minx = padfGeoTransform[0];
+            double miny = padfGeoTransform[3] + nRasterYSize * padfGeoTransform[5];
+            double maxx = padfGeoTransform[0] + nRasterXSize * padfGeoTransform[1];
+            double maxy = padfGeoTransform[3];
+
+            SphericalMercatorToLongLat(&minx, &miny);
+            SphericalMercatorToLongLat(&maxx, &maxy);
+            if( fabs(minx + 180) < 1e-7 )
+            {
+                minx = -180.0;
+            }
+            if(  fabs(maxx - 180) < 1e-7 )
+            {
+                maxx = 180.0;
+            }
+
+            // Clamp latitude so that when transformed back to EPSG:3857, we don't
+            // have too big northings
+            double tmpx = 0.0;
+            double ok_maxy = MAX_GM;
+            SphericalMercatorToLongLat(&tmpx, &ok_maxy);
+            if( maxy > ok_maxy)
+                maxy = ok_maxy;
+            if( miny < -ok_maxy)
+                miny = -ok_maxy;
+
+            osBounds.Printf("%.18g,%.18g,%.18g,%.18g",minx, miny, maxx, maxy );
         }
 
-        // Clamp latitude so that when transformed back to EPSG:3857, we don't
-        // have too big northings
-        double tmpx = 0.0;
-        double ok_maxy = MAX_GM;
-        SphericalMercatorToLongLat(&tmpx, &ok_maxy);
-        if( maxy > ok_maxy)
-            maxy = ok_maxy;
-        if( miny < -ok_maxy)
-            miny = -ok_maxy;
-
         char* pszSQL = sqlite3_mprintf(
-            "INSERT INTO metadata (name, value) VALUES ('bounds', '%.18g,%.18g,%.18g,%.18g')",
-            minx, miny, maxx, maxy );
+            "INSERT INTO metadata (name, value) VALUES ('bounds', '%q')",
+            osBounds.c_str() );
         sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr );
         sqlite3_free(pszSQL);
+
+        if( !m_osCenter.empty() )
+        {
+            pszSQL = sqlite3_mprintf(
+                "INSERT INTO metadata (name, value) VALUES ('center', '%q')",
+                m_osCenter.c_str() );
+            sqlite3_exec( hDB, pszSQL, nullptr, nullptr, nullptr );
+            sqlite3_free(pszSQL);
+        }
     }
 
     int nBlockXSize;
@@ -2836,6 +2861,20 @@ GDALDataset* MBTilesDataset::Create( const char * pszFilename,
                                    GDALDataType eDT,
                                    char **papszOptions )
 {
+#ifdef HAVE_MVT_WRITE_SUPPORT
+    if( nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown )
+    {
+        char** papszOptionsMod = CSLDuplicate(papszOptions);
+        papszOptionsMod = CSLSetNameValue(papszOptionsMod,
+                                          "FORMAT", "MBTILES");
+        GDALDataset* poRet = OGRMVTWriterDatasetCreate(
+                                         pszFilename, nXSize, nYSize,
+                                         nBandsIn, eDT, papszOptionsMod);
+        CSLDestroy(papszOptionsMod);
+        return poRet;
+    }
+#endif
+
     MBTilesDataset* poDS = new MBTilesDataset();
     if( !poDS->CreateInternal(pszFilename, nXSize, nYSize, nBandsIn, eDT, papszOptions) )
     {
@@ -2876,6 +2915,8 @@ bool MBTilesDataset::CreateInternal( const char * pszFilename,
     int nBlockSize = std::max(64,
         std::min(8192,atoi(CSLFetchNameValueDef(papszOptions,
                     "BLOCKSIZE", CPLSPrintf("%d", knDEFAULT_BLOCK_SIZE)))));
+    m_osBounds = CSLFetchNameValueDef(papszOptions, "BOUNDS", "");
+    m_osCenter = CSLFetchNameValueDef(papszOptions, "CENTER", "");
 
     VSIUnlink( pszFilename );
     SetDescription( pszFilename );
@@ -3489,56 +3530,56 @@ void GDALRegister_MBTiles()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte" );
 
 #define COMPRESSION_OPTIONS \
-"  <Option name='TILE_FORMAT' type='string-select' description='Format to use to create tiles' default='PNG'>" \
+"  <Option name='TILE_FORMAT' scope='raster' type='string-select' description='Format to use to create tiles' default='PNG'>" \
 "    <Value>PNG</Value>" \
 "    <Value>PNG8</Value>" \
 "    <Value>JPEG</Value>" \
 "  </Option>" \
-"  <Option name='QUALITY' type='int' min='1' max='100' description='Quality for JPEG tiles' default='75'/>" \
-"  <Option name='ZLEVEL' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
-"  <Option name='DITHER' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>" \
+"  <Option name='QUALITY' scope='raster' type='int' min='1' max='100' description='Quality for JPEG tiles' default='75'/>" \
+"  <Option name='ZLEVEL' scope='raster' type='int' min='1' max='9' description='DEFLATE compression level for PNG tiles' default='6'/>" \
+"  <Option name='DITHER' scope='raster' type='boolean' description='Whether to apply Floyd-Steinberg dithering (for TILE_FORMAT=PNG8)' default='NO'/>" \
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
-"  <Option name='ZOOM_LEVEL' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
-"  <Option name='BAND_COUNT' type='string-select' description='Number of raster bands' default='AUTO'>"
+"  <Option name='ZOOM_LEVEL' scope='raster,vector' type='integer' description='Zoom level of full resolution. If not specified, maximum non-empty zoom level'/>"
+"  <Option name='BAND_COUNT' scope='raster' type='string-select' description='Number of raster bands' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>1</Value>"
 "    <Value>2</Value>"
 "    <Value>3</Value>"
 "    <Value>4</Value>"
 "  </Option>"
-"  <Option name='MINX' type='float' description='Minimum X of area of interest'/>"
-"  <Option name='MINY' type='float' description='Minimum Y of area of interest'/>"
-"  <Option name='MAXX' type='float' description='Maximum X of area of interest'/>"
-"  <Option name='MAXY' type='float' description='Maximum Y of area of interest'/>"
-"  <Option name='USE_BOUNDS' type='boolean' description='Whether to use the bounds metadata, when available, to determine the AOI' default='YES'/>"
+"  <Option name='MINX' scope='raster,vector' type='float' description='Minimum X of area of interest'/>"
+"  <Option name='MINY' scope='raster,vector' type='float' description='Minimum Y of area of interest'/>"
+"  <Option name='MAXX' scope='raster,vector' type='float' description='Maximum X of area of interest'/>"
+"  <Option name='MAXY' scope='raster,vector' type='float' description='Maximum Y of area of interest'/>"
+"  <Option name='USE_BOUNDS' scope='raster,vector' type='boolean' description='Whether to use the bounds metadata, when available, to determine the AOI' default='YES'/>"
 COMPRESSION_OPTIONS
-"  <Option name='CLIP' type='boolean' "
+"  <Option name='CLIP' scope='vector' type='boolean' "
     "description='Whether to clip geometries to tile extent' default='YES'/>"
-"  <Option name='ZOOM_LEVEL_AUTO' type='booleean' "
+"  <Option name='ZOOM_LEVEL_AUTO' scope='vector' type='booleean' "
     "description='Whether to auto-select the zoom level for vector layers "
     "according to spatial filter extent. Only for display purpose' "
     "default='NO'/>"
-"  <Option name='JSON_FIELD' type='string' description='For vector layers, "
+"  <Option name='JSON_FIELD' scope='vector' type='string' description='For vector layers, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
 "</OpenOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, "<CreationOptionList>"
-"  <Option name='NAME' type='string' description='Tileset name'/>"
-"  <Option name='DESCRIPTION' type='string' description='A description of the layer'/>"
-"  <Option name='TYPE' type='string-select' description='Layer type' default='overlay'>"
+"  <Option name='NAME' scope='raster,vector' type='string' description='Tileset name'/>"
+"  <Option name='DESCRIPTION' scope='raster,vector' type='string' description='A description of the layer'/>"
+"  <Option name='TYPE' scope='raster,vector' type='string-select' description='Layer type' default='overlay'>"
 "    <Value>overlay</Value>"
 "    <Value>baselayer</Value>"
 "  </Option>"
-"  <Option name='VERSION' type='string' description='The version of the tileset, as a plain number' default='1.1'/>"
-"  <Option name='BLOCKSIZE' type='int' description='Block size in pixels' default='256' min='64' max='8192'/>"
+"  <Option name='VERSION' scope='raster' type='string' description='The version of the tileset, as a plain number' default='1.1'/>"
+"  <Option name='BLOCKSIZE' scope='raster' type='int' description='Block size in pixels' default='256' min='64' max='8192'/>"
 COMPRESSION_OPTIONS
-"  <Option name='ZOOM_LEVEL_STRATEGY' type='string-select' description='Strategy to determine zoom level.' default='AUTO'>"
+"  <Option name='ZOOM_LEVEL_STRATEGY' scope='raster' type='string-select' description='Strategy to determine zoom level.' default='AUTO'>"
 "    <Value>AUTO</Value>"
 "    <Value>LOWER</Value>"
 "    <Value>UPPER</Value>"
 "  </Option>"
-"  <Option name='RESAMPLING' type='string-select' description='Resampling algorithm.' default='BILINEAR'>"
+"  <Option name='RESAMPLING' scope='raster' type='string-select' description='Resampling algorithm.' default='BILINEAR'>"
 "    <Value>NEAREST</Value>"
 "    <Value>BILINEAR</Value>"
 "    <Value>CUBIC</Value>"
@@ -3547,10 +3588,26 @@ COMPRESSION_OPTIONS
 "    <Value>MODE</Value>"
 "    <Value>AVERAGE</Value>"
 "  </Option>"
-"  <Option name='WRITE_BOUNDS' type='boolean' description='Whether to write the bounds metadata' default='YES'/>"
-"  <Option name='WRITE_MINMAXZOOM' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
+"  <Option name='WRITE_BOUNDS' scope='raster' type='boolean' description='Whether to write the bounds metadata' default='YES'/>"
+"  <Option name='WRITE_MINMAXZOOM' scope='raster' type='boolean' description='Whether to write the minzoom and maxzoom metadata' default='YES'/>"
+"  <Option name='BOUNDS' scope='raster,vector' type='string' "
+        "description='Override default value for bounds metadata item'/>"
+"  <Option name='CENTER' scope='raster,vector' type='string' "
+        "description='Override default value for center metadata item'/>"
+#ifdef HAVE_MVT_WRITE_SUPPORT
+MVT_MBTILES_COMMON_DSCO
+#endif
 "</CreationOptionList>");
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+
+#ifdef HAVE_MVT_WRITE_SUPPORT
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
+                               "Integer Integer64 Real String" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES,
+                               "Boolean Float32" );
+
+    poDriver->SetMetadataItem( GDAL_DS_LAYER_CREATIONOPTIONLIST, MVT_LCO);
+#endif
 
 #ifdef ENABLE_SQL_SQLITE_FORMAT
     poDriver->SetMetadataItem("ENABLE_SQL_SQLITE_FORMAT", "YES");

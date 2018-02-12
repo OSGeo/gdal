@@ -179,15 +179,28 @@ inline GIntBig ReadVarInt64(const GByte** ppabyData)
     }
 
 /************************************************************************/
+/*                            DecodeSInt()                              */
+/************************************************************************/
+
+inline GIntBig DecodeSInt(GUIntBig nVal)
+{
+    return ((nVal & 1) == 0) ?
+        static_cast<GIntBig>(nVal >> 1) : -static_cast<GIntBig>(nVal >> 1)-1;
+}
+
+inline GInt32 DecodeSInt(GUInt32 nVal)
+{
+    return ((nVal & 1) == 0) ?
+        static_cast<GInt32>(nVal >> 1) : -static_cast<GInt32>(nVal >> 1)-1;
+}
+
+/************************************************************************/
 /*                            ReadVarSInt64()                           */
 /************************************************************************/
 
 inline GIntBig ReadVarSInt64(const GByte** ppabyPtr)
 {
-    GUIntBig nSVal64 = ReadVarUInt64(ppabyPtr);
-    GIntBig nDiff64 = ((nSVal64 & 1) == 0) ?
-        (GIntBig)(nSVal64 >> 1) : -(GIntBig)(nSVal64 >> 1)-1;
-    return nDiff64;
+    return DecodeSInt(ReadVarUInt64(ppabyPtr));
 }
 
 #define READ_VARSINT64(pabyData, pabyDataLimit, nVal)  \
@@ -221,8 +234,7 @@ inline int ReadVarInt32(const GByte** ppabyData)
 
 #define READ_VARSINT32(pabyData, pabyDataLimit, nVal)  \
     { \
-        nVal = ReadVarInt32(&pabyData); \
-        nVal = ((nVal & 1) == 0) ? (int)(((unsigned int)nVal) >> 1) : -(int)(((unsigned int)nVal) >> 1)-1; \
+        nVal = DecodeSInt(static_cast<GUInt32>(ReadVarUInt64(&pabyData))); \
         if (CHECK_OOB && pabyData > pabyDataLimit) THROW_GPB_EXCEPTION; \
     }
 
@@ -361,5 +373,167 @@ inline int SkipUnknownField(int nKey, const GByte* pabyData, const GByte* pabyDa
             THROW_GPB_EXCEPTION; \
         pabyData += _nOffset; \
     }
+
+
+/************************************************************************/
+/*                          GetVarUIntSize()                            */
+/************************************************************************/
+
+inline int GetVarUIntSize(GUIntBig nVal)
+{
+    int nBytes = 1;
+    while( nVal > 127 )
+    {
+        nBytes ++;
+        nVal >>= 7;
+    }
+    return nBytes;
+}
+
+/************************************************************************/
+/*                            EncodeSInt()                              */
+/************************************************************************/
+
+inline GUIntBig EncodeSInt(GIntBig nVal)
+{
+    if( nVal < 0 )
+        return (static_cast<GUIntBig>(-(nVal + 1)) << 1) | 1;
+    else
+        return static_cast<GUIntBig>(nVal) << 1;
+}
+
+inline GUInt32 EncodeSInt(GInt32 nVal)
+{
+    if( nVal < 0 )
+        return (static_cast<GUInt32>(-(nVal + 1)) << 1) | 1;
+    else
+        return static_cast<GUInt32>(nVal) << 1;
+}
+
+/************************************************************************/
+/*                          GetVarIntSize()                             */
+/************************************************************************/
+
+inline int GetVarIntSize(GIntBig nVal)
+{
+    return GetVarUIntSize(static_cast<GUIntBig>(nVal));
+}
+
+/************************************************************************/
+/*                          GetVarSIntSize()                            */
+/************************************************************************/
+
+inline int GetVarSIntSize(GIntBig nVal)
+{
+    return GetVarUIntSize(EncodeSInt(nVal));
+}
+
+/************************************************************************/
+/*                           WriteVarUInt()                             */
+/************************************************************************/
+
+inline void WriteVarUInt(GByte** ppabyData, GUIntBig nVal)
+{
+    GByte* pabyData = *ppabyData;
+    while( nVal > 127 )
+    {
+        *pabyData = static_cast<GByte>((nVal & 0x7f) | 0x80);
+        pabyData ++;
+        nVal >>= 7;
+    }
+    *pabyData = static_cast<GByte>(nVal);
+    pabyData ++;
+    *ppabyData = pabyData;
+}
+
+/************************************************************************/
+/*                        WriteVarUIntSingleByte()                      */
+/************************************************************************/
+
+inline void WriteVarUIntSingleByte(GByte** ppabyData, GUIntBig nVal)
+{
+    GByte* pabyData = *ppabyData;
+    CPLAssert( nVal < 128 );
+    *pabyData = static_cast<GByte>(nVal);
+    pabyData ++;
+    *ppabyData = pabyData;
+}
+
+/************************************************************************/
+/*                           WriteVarInt()                              */
+/************************************************************************/
+
+inline void WriteVarInt(GByte** ppabyData, GIntBig nVal)
+{
+    WriteVarUInt(ppabyData, static_cast<GUIntBig>(nVal));
+}
+
+/************************************************************************/
+/*                           WriteVarSInt()                             */
+/************************************************************************/
+
+inline void WriteVarSInt(GByte** ppabyData, GIntBig nVal)
+{
+    WriteVarUInt(ppabyData, EncodeSInt(nVal) );
+}
+
+/************************************************************************/
+/*                           WriteFloat32()                             */
+/************************************************************************/
+
+inline void WriteFloat32(GByte** ppabyData, float fVal)
+{
+    CPL_LSBPTR32(&fVal);
+    memcpy(*ppabyData, &fVal, sizeof(float));
+    *ppabyData += sizeof(float);
+}
+
+/************************************************************************/
+/*                           WriteFloat64()                             */
+/************************************************************************/
+
+inline void WriteFloat64(GByte** ppabyData, double dfVal)
+{
+    CPL_LSBPTR64(&dfVal);
+    memcpy(*ppabyData, &dfVal, sizeof(double));
+    *ppabyData += sizeof(double);
+}
+
+/************************************************************************/
+/*                           GetTextSize()                              */
+/************************************************************************/
+
+inline int GetTextSize(const char* pszText)
+{
+    size_t nTextSize = strlen(pszText);
+    return GetVarUIntSize(nTextSize) + static_cast<int>(nTextSize);
+}
+
+inline int GetTextSize(const std::string& osText)
+{
+    size_t nTextSize = osText.size();
+    return GetVarUIntSize(nTextSize) + static_cast<int>(nTextSize);
+}
+
+/************************************************************************/
+/*                            WriteText()                               */
+/************************************************************************/
+
+inline void WriteText(GByte** ppabyData, const char* pszText)
+{
+    size_t nTextSize = strlen(pszText);
+    WriteVarUInt(ppabyData, nTextSize);
+    memcpy(*ppabyData, pszText, nTextSize);
+    *ppabyData += nTextSize;
+}
+
+inline void WriteText(GByte** ppabyData, const std::string& osText)
+{
+    size_t nTextSize = osText.size();
+    WriteVarUInt(ppabyData, nTextSize);
+    memcpy(*ppabyData, osText.c_str(), nTextSize);
+    *ppabyData += nTextSize;
+}
+
 
 #endif /* GPB_H_INCLUDED */
