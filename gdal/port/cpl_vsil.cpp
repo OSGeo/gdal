@@ -755,10 +755,10 @@ const char* VSIGetActualURL( const char* pszFilename )
  * @param papszOptions list of options, or NULL. Depend on file system handler.
  * For /vsis3/, the following options are supported:
  * <ul>
- * <li>X-Amz-Date=YYMMDDTHHMMSSZ: date and time in UTC following ISO 8601
+ * <li>START_DATE=YYMMDDTHHMMSSZ: date and time in UTC following ISO 8601
  *     standard, corresponding to the start of validity of the URL.
  *     If not specified, current date time.</li>
- * <li>A-Amz-Expires=number_of_seconds: number between 1 and 604800 (seven days)
+ * <li>EXPIRATION_DELAY=number_of_seconds: number between 1 and 604800 (seven days)
  * for the validity of the signed URL. Defaults to 3600 (one hour)</li>
  * <li>VERB=GET/HEAD/DELETE/PUT/POST: HTTP VERB for which the request will be
  * used. Default to GET.</li>
