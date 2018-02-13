@@ -32,6 +32,7 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_aws.h"
+#include "cpl_json.h"
 
 CPL_CVSID("$Id$")
 
@@ -456,6 +457,30 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             osRefreshToken, osClientId, osClientSecret, nullptr);
     }
 
+    CPLString osServiceAccountJson(
+        CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", ""));
+    if( !osServiceAccountJson.empty() )
+    {
+        CPLJSONDocument oDoc;
+        if( !oDoc.Load(osServiceAccountJson) )
+        {
+            return false;
+        }
+        CPLString osPrivateKey = oDoc.GetRoot().GetString("private_key");
+        osPrivateKey.replaceAll("\\n", "\n");
+        CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
+        const char* pszScope =
+            CPLGetConfigOption("GS_OAUTH2_SCOPE",
+                "https://www.googleapis.com/auth/devstorage.read_write");
+
+        return oManager.SetAuthFromServiceAccount(
+                osPrivateKey,
+                osClientEmail,
+                pszScope,
+                nullptr,
+                nullptr);
+    }
+
     CPLString osPrivateKey =
         CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY", "");
     CPLString osPrivateKeyFile =
@@ -646,6 +671,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
     CPLString osMsg;
     osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
                  "GS_OAUTH2_REFRESH_TOKEN or "
+                 "GOOGLE_APPLICATION_CREDENTIALS or "
                  "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL configuration "
                  "options and %s not defined",
                  osCredentials.c_str());

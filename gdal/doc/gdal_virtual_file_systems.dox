@@ -436,7 +436,18 @@ Note: instead of using the default GDAL application credentials, you may
 define the GS_OAUTH2_CLIENT_ID and GS_OAUTH2_CLIENT_SECRET configuration
 options (need to be defined both for gdal_auth.py and later execution of /vsigs)
 </li>
- <li>(GDAL &gt;= 2.3) The GS_OAUTH2_PRIVATE_KEY (or GS_OAUTH2_PRIVATE_KEY_FILE)
+ <li>(GDAL &gt;= 2.3) The GOOGLE_APPLICATION_CREDENTIALS configuration option
+ an be set to point to a JSon file containing OAuth2 service account credentials,
+in particular a private key and a client email.
+See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
+for more details on this authentication method.
+The bucket must grant the "Storage Legacy Bucket Owner" or "Storage Legacy Bucket Reader"
+permissions to the service account. The GS_OAUTH2_SCOPE configuration option
+can be set to change the default permission scope from
+"https://www.googleapis.com/auth/devstorage.read_write"
+to "https://www.googleapis.com/auth/devstorage.read_only" if needed.
+ <li>(GDAL &gt;= 2.3) Variant of the previous method.
+ The GS_OAUTH2_PRIVATE_KEY (or GS_OAUTH2_PRIVATE_KEY_FILE)
 and GS_OAUTH2_CLIENT_EMAIL can be set to use OAuth2 service account authentication.
 See https://developers.google.com/identity/protocols/OAuth2ServiceAccount
 for more details on this authentication method.
