@@ -3366,7 +3366,7 @@ def tiff_read_stripoffset_types():
 
 def tiff_read_progressive_jpeg_denial_of_service():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_greater(4,0,9):
         return 'skip'
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
@@ -3464,7 +3464,7 @@ def tiff_read_mmap_interface():
 
 def tiff_read_jpeg_too_big_last_stripe():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_greater(4,0,9):
         return 'skip'
 
     ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
