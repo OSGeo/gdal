@@ -7568,6 +7568,20 @@ def tiff_write_164():
         print(gt)
         return 'fail'
 
+    # Test [0,1,0,0,0,-1] as well
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1)
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    gt = ds.GetGeoTransform(can_return_null = True)
+    ds = None
+
+    if gt != (0,1,0,0,0,-1):
+        gdaltest.post_reason('fail')
+        print(gt)
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
