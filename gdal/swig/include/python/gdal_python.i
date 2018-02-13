@@ -921,6 +921,8 @@ def Info(ds, **kwargs):
         ret = json.loads(ret)
     return ret
 
+def _strHighPrec(x):
+    return '%.18g' % x
 
 def TranslateOptions(options = [], format = None,
               outputType = GDT_Unknown, bandList = None, maskBand = None,
@@ -989,7 +991,7 @@ def TranslateOptions(options = [], format = None,
             for opt in creationOptions:
                 new_options += ['-co', opt ]
         if srcWin is not None:
-            new_options += ['-srcwin', str(srcWin[0]), str(srcWin[1]), str(srcWin[2]), str(srcWin[3])]
+            new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
             new_options += ['-strict']
         if unscale:
@@ -1001,9 +1003,9 @@ def TranslateOptions(options = [], format = None,
                     new_options += [ str(v) ]
         if exponents:
             for exponent in exponents:
-                new_options += ['-exponent', str(exponent)]
+                new_options += ['-exponent', _strHighPrec(exponent)]
         if outputBounds is not None:
-            new_options += ['-a_ullr', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if metadataOptions is not None:
             for opt in metadataOptions:
                 new_options += ['-mo', opt ]
@@ -1011,13 +1013,13 @@ def TranslateOptions(options = [], format = None,
             new_options += ['-a_srs', str(outputSRS) ]
         if GCPs is not None:
             for gcp in GCPs:
-                new_options += ['-gcp', str(gcp.GCPPixel), str(gcp.GCPLine), str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ) ]
+                new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ) ]
         if projWin is not None:
-            new_options += ['-projwin', str(projWin[0]), str(projWin[1]), str(projWin[2]), str(projWin[3])]
+            new_options += ['-projwin', _strHighPrec(projWin[0]), _strHighPrec(projWin[1]), _strHighPrec(projWin[2]), _strHighPrec(projWin[3])]
         if projWinSRS is not None:
             new_options += ['-projwin_srs', str(projWinSRS) ]
         if noData is not None:
-            new_options += ['-a_nodata', str(noData) ]
+            new_options += ['-a_nodata', _strHighPrec(noData) ]
         if rgbExpand is not None:
             new_options += ['-expand', str(rgbExpand) ]
         if stats:
@@ -1042,7 +1044,7 @@ def TranslateOptions(options = [], format = None,
             else:
                 new_options += ['-r', str(resampleAlg) ]
         if xRes != 0 and yRes != 0:
-            new_options += ['-tr', str(xRes), str(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
 
     return (GDALTranslateOptions(new_options), callback, callback_data)
 
@@ -1136,11 +1138,11 @@ def WarpOptions(options = [], format = None,
         if workingType != GDT_Unknown:
             new_options += ['-wt', GetDataTypeName(workingType) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3]) ]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3]) ]
         if outputBoundsSRS is not None:
             new_options += ['-te_srs', str(outputBoundsSRS) ]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
         if width != 0 or height != 0:
             new_options += ['-ts', str(width), str(height)]
         if srcSRS is not None:
@@ -1157,7 +1159,7 @@ def WarpOptions(options = [], format = None,
             for opt in warpOptions:
                 new_options += ['-wo', str(opt)]
         if errorThreshold is not None:
-            new_options += ['-et', str(errorThreshold)]
+            new_options += ['-et', _strHighPrec(errorThreshold)]
         if resampleAlg is not None:
             if resampleAlg == GRIORA_NearestNeighbour:
                 new_options += ['-r', 'near']
@@ -1613,7 +1615,7 @@ def GridOptions(options = [], format = None,
             for opt in creationOptions:
                 new_options += ['-co', opt ]
         if outputBounds is not None:
-            new_options += ['-txe', str(outputBounds[0]), str(outputBounds[2]), '-tye', str(outputBounds[1]), str(outputBounds[3])]
+            new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS) ]
         if algorithm is not None:
@@ -1722,7 +1724,7 @@ def RasterizeOptions(options = [], format = None,
             else:
                 new_options += ['-init', str(initValues) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS) ]
         if transformerOptions is not None:
@@ -1731,7 +1733,7 @@ def RasterizeOptions(options = [], format = None,
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes)]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         if targetAlignedPixels:
             new_options += ['-tap']
         if inverse:
@@ -1833,9 +1835,9 @@ def BuildVRTOptions(options = [],
         if resolution is not None:
             new_options += ['-resolution', str(resolution) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes)]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         if targetAlignedPixels:
             new_options += ['-tap']
         if separate:
