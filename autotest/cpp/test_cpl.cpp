@@ -2190,7 +2190,7 @@ namespace tut
         {
             const char* pszText = "--myboundary  some junk\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
         ensure( !CPLHTTPParseMultipartMime(psResult) );
@@ -2207,7 +2207,7 @@ namespace tut
                 "\r\n"
                 "Bla";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
         ensure( !CPLHTTPParseMultipartMime(psResult) );
@@ -2223,7 +2223,7 @@ namespace tut
             const char* pszText = "--myboundary  some junk\r\n"
                 "Content-Type: foo";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
         ensure( !CPLHTTPParseMultipartMime(psResult) );
@@ -2242,7 +2242,7 @@ namespace tut
                 "\r\n"
                 "--myboundary";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
         ensure( !CPLHTTPParseMultipartMime(psResult) );
@@ -2261,7 +2261,7 @@ namespace tut
                 "\r\n"
                 "--myboundary";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         CPLPushErrorHandler(CPLQuietErrorHandler);
         ensure( !CPLHTTPParseMultipartMime(psResult) );
@@ -2281,7 +2281,7 @@ namespace tut
                 "\r\n"
                 "--myboundary--\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         ensure( CPLHTTPParseMultipartMime(psResult) );
         ensure_equals( psResult->nMimePartCount, 1 );
@@ -2307,7 +2307,7 @@ namespace tut
                 "\r\n"
                 "--myboundary--\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         ensure( CPLHTTPParseMultipartMime(psResult) );
         ensure_equals( psResult->nMimePartCount, 1 );
@@ -2335,7 +2335,7 @@ namespace tut
                 "\r\n"
                 "--myboundary--\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         ensure( CPLHTTPParseMultipartMime(psResult) );
         ensure_equals( psResult->nMimePartCount, 1 );
@@ -2364,7 +2364,7 @@ namespace tut
                 "\r\n"
                 "--myboundary--\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         ensure( CPLHTTPParseMultipartMime(psResult) );
         ensure_equals( psResult->nMimePartCount, 1 );
@@ -2393,7 +2393,7 @@ namespace tut
                 "\r\n"
                 "--myboundary--\r\n";
             psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
-            psResult->nDataLen = strlen(pszText);
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
         }
         ensure( CPLHTTPParseMultipartMime(psResult) );
         ensure_equals( psResult->nMimePartCount, 2 );
