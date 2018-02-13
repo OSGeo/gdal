@@ -2698,10 +2698,6 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get number of bands                                             */
 /* -------------------------------------------------------------------- */
-        const char* pszBandCount = CSLFetchNameValueDef(
-            poOpenInfo->papszOpenOptions, "BAND_COUNT",
-            CPLGetConfigOption("MBTILES_BAND_COUNT", nullptr));
-
         int nMinTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinX, nMaxLevel ));
         int nMinTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinY, nMaxLevel ));
         int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
@@ -2718,8 +2714,15 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if (nBands < 0 || nBands == 3)
             nBands = 4;
 
-        if( pszBandCount && atoi(pszBandCount) >= 1 && atoi(pszBandCount) <= 4 )
-            nBands = atoi(pszBandCount);
+        const char* pszBandCount = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "BAND_COUNT",
+            CPLGetConfigOption("MBTILES_BAND_COUNT", nullptr));
+        if( pszBandCount )
+        {
+            int nTmpBands = atoi(pszBandCount);
+            if( nTmpBands >= 1 && nTmpBands <= 4 )
+                nBands = nTmpBands;
+        }
 
         if( poOpenInfo->eAccess == GA_Update )
         {
