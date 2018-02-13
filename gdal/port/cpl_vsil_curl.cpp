@@ -6661,6 +6661,8 @@ class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 
     const char* GetOptions() override;
 
+    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
+
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
                         bool bCacheResults,
@@ -7419,6 +7421,30 @@ const char* VSIAzureFSHandler::GetOptions()
         "default='4' min='1' max='4'/>"
         VSICURL_OPTIONS
     "</Options>";
+}
+
+/************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+char* VSIAzureFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return nullptr;
+
+    VSIAzureBlobHandleHelper* poHandleHelper =
+        VSIAzureBlobHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                               GetFSPrefix().c_str(),
+                                               papszOptions);
+    if( poHandleHelper == nullptr )
+    {
+        return nullptr;
+    }
+
+    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+
+    delete poHandleHelper;
+    return CPLStrdup(osRet);
 }
 
 /************************************************************************/
