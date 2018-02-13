@@ -437,7 +437,7 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(char** papszOptions)
     osStringToSign += osSignedPermissions + "\n";
     osStringToSign += osStartDate + "\n";
     osStringToSign += osEndDate + "\n";
-    osStringToSign += "/" + m_osStorageAccount + "/" + m_osBucket + "\n",
+    osStringToSign += "/" + m_osStorageAccount + "/" + m_osBucket + "\n";
     osStringToSign += osSignedIdentifier + "\n";
     osStringToSign += "2012-02-12";
 
