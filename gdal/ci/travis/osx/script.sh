@@ -3,6 +3,8 @@
 set -e
 
 cd gdal
+export PYTHONPATH=$PWD/swig/python/build/lib.macosx-10.12-intel-2.7
+
 # CPP unit tests
 cd ../autotest
 cd cpp
