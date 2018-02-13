@@ -169,6 +169,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (rmdir_recursive) VSIRmdirRecursive;
 %rename (rename) VSIRename;
 %rename (get_actual_url) VSIGetActualURL;
+%rename (get_signed_url) wrapper_VSIGetSignedURL;
 %rename (get_filesystems_prefixes) VSIGetFileSystemsPrefixes;
 %rename (get_filesystem_options) VSIGetFileSystemOptions;
 %rename (set_config_option) CPLSetConfigOption;
@@ -198,6 +199,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (RmdirRecursive) VSIRmdirRecursive;
 %rename (Rename) VSIRename;
 %rename (GetActualURL) VSIGetActualURL;
+%rename (GetSignedURL) wrapper_VSIGetSignedURL;
 %rename (GetFileSystemsPrefixes) VSIGetFileSystemsPrefixes;
 %rename (GetFileSystemOptions) VSIGetFileSystemOptions;
 %rename (SetConfigOption) CPLSetConfigOption;
@@ -464,6 +466,13 @@ VSI_RETVAL VSIRename(const char * pszOld, const char *pszNew );
 %clear (const char* pszNew);
 
 const char* VSIGetActualURL(const char * utf8_path);
+
+%inline {
+retStringAndCPLFree* wrapper_VSIGetSignedURL(const char * utf8_path, char** options = NULL )
+{
+    return VSIGetSignedURL( utf8_path, options );
+}
+}
 
 %apply (char **CSL) {char **};
 char** VSIGetFileSystemsPrefixes();

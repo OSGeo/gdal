@@ -38,6 +38,7 @@
 #include "cpl_json.h"
 #include "cpl_json_streaming_parser.h"
 #include "cpl_mem_cache.h"
+#include "cpl_http.h"
 
 #include <fstream>
 #include <string>
@@ -923,6 +924,15 @@ namespace tut
         CPLPopErrorHandler();
 
         CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : nullptr);
+
+        oldHandler = CPLSetErrorHandler(nullptr);
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLErrorHandler newOldHandler = CPLSetErrorHandler(nullptr);
+        ensure_equals(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLSetErrorHandler(oldHandler);
     }
 
 /************************************************************************/
@@ -1974,17 +1984,34 @@ namespace tut
               nullptr
             };
 
-            ensure( oDocument.LoadUrl("http://demo.nextgis.com/api/component/pyramid/pkg_version",
-                                      const_cast<char**>(options) ) );
-            CPLJSONObject oJsonRoot = oDocument.GetRoot();
-            ensure( oJsonRoot.IsValid() );
+            oDocument.GetRoot().Add("foo", "bar");
 
-            CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
-            ensure_not( EQUAL(soVersion, "0") );
+            if( CPLHTTPEnabled() )
+            {
+                ensure( oDocument.LoadUrl(
+                    "http://demo.nextgis.com/api/component/pyramid/pkg_version",
+                    const_cast<char**>(options) ) );
+                CPLJSONObject oJsonRoot = oDocument.GetRoot();
+                ensure( oJsonRoot.IsValid() );
+
+                CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
+                ensure_not( EQUAL(soVersion, "0") );
+            }
         }
         {
             // Test Json document LoadChunks
             CPLJSONDocument oDocument;
+
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.LoadChunks("/i_do/not/exist", 512) );
+            CPLPopErrorHandler();
+
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.LoadChunks("test_cpl.cpp", 512) );
+            CPLPopErrorHandler();
+
+            oDocument.GetRoot().Add("foo", "bar");
+
             ensure( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
 
             CPLJSONObject oJsonRoot = oDocument.GetRoot();
@@ -2008,6 +2035,90 @@ namespace tut
 
             CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
             ensure( oJsonId.IsValid() );
+        }
+        {
+            CPLJSONDocument oDocument;
+            ensure( !oDocument.LoadMemory(nullptr, 0) );
+            ensure( !oDocument.LoadMemory(CPLString()) );
+        }
+        {
+            // Copy constructor
+            CPLJSONDocument oDocument;
+            CPLJSONDocument oDocument2(oDocument);
+            CPLJSONObject oObj;
+            CPLJSONObject oObj2(oObj);
+            // Assignment operator
+            oDocument2 = oDocument;
+            oDocument2 = oDocument2;
+            oObj2 = oObj;
+            oObj2 = oObj2;
+        }
+        {
+            // Save
+            CPLJSONDocument oDocument;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.Save("/i_do/not/exist") );
+            CPLPopErrorHandler();
+        }
+        {
+            CPLJSONObject oObj;
+            oObj.Add("string", std::string("my_string"));
+            ensure_equals( oObj.GetString("string"), std::string("my_string"));
+            ensure_equals( oObj.GetString("inexisting_string", "default"),
+                           std::string("default"));
+            oObj.Add("const_char_star", nullptr);
+            oObj.Add("const_char_star", "my_const_char_star");
+            ensure_equals( oObj.GetObj("const_char_star").GetType(), CPLJSONObject::String );
+            oObj.Add("int", 1);
+            ensure_equals( oObj.GetInteger("int"), 1 );
+            ensure_equals( oObj.GetInteger("inexisting_int", -987), -987 );
+            ensure_equals( oObj.GetObj("int").GetType(), CPLJSONObject::Integer );
+            oObj.Add("int64", GINT64_MAX);
+            ensure_equals( oObj.GetLong("int64"), GINT64_MAX );
+            ensure_equals( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
+            ensure_equals( oObj.GetObj("int64").GetType(), CPLJSONObject::Integer );
+            oObj.Add("double", 1.25);
+            ensure_equals( oObj.GetDouble("double"), 1.25 );
+            ensure_equals( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
+            ensure_equals( oObj.GetObj("double").GetType(), CPLJSONObject::Double );
+            oObj.Add("array", CPLJSONArray());
+            ensure_equals( oObj.GetObj("array").GetType(), CPLJSONObject::Array );
+            oObj.Add("obj", CPLJSONObject());
+            ensure_equals( oObj.GetObj("obj").GetType(), CPLJSONObject::Object );
+            oObj.Add("bool", true);
+            ensure_equals( oObj.GetBool("bool"), true );
+            ensure_equals( oObj.GetBool("inexisting_bool", false), false );
+            ensure_equals( oObj.GetObj("bool").GetType(), CPLJSONObject::Boolean );
+            oObj.AddNull("null_field");
+            //ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
+            ensure_equals( oObj.GetObj("inexisting").GetType(), CPLJSONObject::Unknown );
+            oObj.Set("string", std::string("my_string"));
+            oObj.Set("const_char_star", nullptr);
+            oObj.Set("const_char_star", "my_const_char_star");
+            oObj.Set("int", 1);
+            oObj.Set("int64", GINT64_MAX);
+            oObj.Set("double", 1.25);
+            //oObj.Set("array", CPLJSONArray());
+            //oObj.Set("obj", CPLJSONObject());
+            oObj.Set("bool", true);
+            oObj.SetNull("null_field");
+            ensure( CPLJSONArray().GetChildren().empty() );
+            oObj.ToArray();
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Spaced), std::string("{ }") );
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Pretty), std::string("{\n}") );
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Plain), std::string("{}") );
+        }
+        {
+            CPLJSONArray oArrayConstructorString(std::string("foo"));
+            CPLJSONArray oArray;
+            oArray.Add(CPLJSONObject());
+            oArray.Add(std::string("str"));
+            oArray.Add("const_char_star");
+            oArray.Add(1.25);
+            oArray.Add(1);
+            oArray.Add(GINT64_MAX);
+            oArray.Add(true);
+            ensure_equals(oArray.Size(), 7);
         }
     }
 
@@ -2037,4 +2148,265 @@ namespace tut
 #endif
     }
 
+    // Test CPLHTTPParseMultipartMime()
+    template<>
+    template<>
+    void object::test<33>()
+    {
+        CPLHTTPResult* psResult;
+
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing boundary value
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No content
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No part
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Truncated header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "Content-Type: foo";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPLHTTPParseMultipartMime(psResult) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, no header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+                       static_cast<char**>(nullptr) );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, with header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, 2 headers
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "Content-Disposition: bar\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[1]),
+                       CPLString("Content-Disposition=bar") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Single part, but with header without extra terminating \r\n
+        // (invalid normally, but apparently necessary for some ArcGIS WCS implementations)
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid 2 parts, no header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary\r\n"
+                "\r\n"
+                "second part"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = strlen(pszText);
+        }
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        ensure_equals( psResult->nMimePartCount, 2 );
+        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+                       static_cast<char**>(nullptr) );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure_equals( psResult->pasMimePart[1].nDataLen, 11 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
+                       "second part", 11) == 0 );
+        ensure( CPLHTTPParseMultipartMime(psResult) );
+        CPLHTTPDestroyResult(psResult);
+
+    }
 } // namespace tut

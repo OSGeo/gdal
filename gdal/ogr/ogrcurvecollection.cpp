@@ -209,10 +209,10 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
 }
 
 /************************************************************************/
-/*                        importPreambuleFromWkb()                      */
+/*                        importPreambleFromWkb()                      */
 /************************************************************************/
 
-OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
+OGRErr OGRCurveCollection::importPreambleFromWkb( OGRGeometry* poGeom,
                                                    const unsigned char * pabyData,
                                                    int& nSize,
                                                    int& nDataOffset,
@@ -220,7 +220,7 @@ OGRErr OGRCurveCollection::importPreambuleFromWkb( OGRGeometry* poGeom,
                                                    int nMinSubGeomSize,
                                                    OGRwkbVariant eWkbVariant )
 {
-    OGRErr eErr = poGeom->importPreambuleOfCollectionFromWkb(
+    OGRErr eErr = poGeom->importPreambleOfCollectionFromWkb(
                                                         pabyData,
                                                         nSize,
                                                         nDataOffset,

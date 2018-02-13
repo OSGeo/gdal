@@ -1735,6 +1735,8 @@ static double GetAngleOnEllipse( double dfPointOnArcX,
     //   dfPointOnArcX-dfCenterX = cosA*M*cosRot + sinA*m*sinRot
     //   dfPointOnArcY-dfCenterY = -cosA*M*sinRot + sinA*m*cosRot
 
+    if( dfSemiMajor == 0.0 || dfSemiMinor == 0.0 )
+        return 0.0;
     const double dfRotationRadians = dfRotationDeg * M_PI / 180.0;
     const double dfCosRot = cos(dfRotationRadians);
     const double dfSinRot = sin(dfRotationRadians);
@@ -1932,9 +1934,11 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
             // angular difference between the start and end tangent. And we
             // also take into account the relative length of the tangent vs
             // the length of the straight segment
-            const int nSteps = static_cast<int>(ceil(
+            const int nSteps = (dfLength < 1e-9) ? 0 :
+                static_cast<int>(std::min(1000.0, ceil(
                 std::max(2.0, fabs(dfEndAngle - dfStartAngle) / dfStepSizeRad) *
-                std::max(1.0, 5.0 * (dfLengthTangentStart + dfLengthTangentEnd) / dfLength) ));
+                std::max(1.0, 5.0 * (dfLengthTangentStart +
+                                     dfLengthTangentEnd) / dfLength) )));
             poLine->setNumPoints(nSteps + 1);
             poLine->setPoint(0, dfX0, dfY0,
                              padfZ != nullptr ? padfZ[nStartPointIdx] : 0.0,
@@ -1954,7 +1958,8 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                              padfM != nullptr ? padfM[nStartPointIdx+1] : 0.0);
             poLine->set3D( padfZ != nullptr );
             poLine->setMeasured( padfM != nullptr );
-            poCC->addCurveDirectly(poLine);
+            if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+                delete poLine;
         }
 
         else if( pasCurves[i].eType == CURVE_ELLIPSE_BY_CENTER &&
@@ -2072,7 +2077,10 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                             padfY + nLastPointIdx,
                             padfZ != nullptr ? padfZ + nLastPointIdx : nullptr,
                             padfM != nullptr ? padfM + nLastPointIdx : nullptr );
-        poCC->addCurveDirectly(poLine);
+        if( poCC->addCurveDirectly(poLine) != OGRERR_NONE )
+        {
+            delete poLine;
+        }
     }
 
     if( !bHasCircularArcs )
@@ -2694,12 +2702,17 @@ OGRErr OGRCreateFromShapeBin( GByte *pabyShape,
                             ? nPoints - panPartStart[i]
                             : panPartStart[i+1] - panPartStart[i];
 
-                        poMulti->addGeometryDirectly(
+                        OGRCurve* poCurve =
                             OGRShapeCreateCompoundCurve(
                                 panPartStart[i], nVerticesInThisPart,
                                 pasCurves, nCurves, iCurveIdx,
                                 padfX, padfY, bHasZ ? padfZ : nullptr, padfM,
-                                &iCurveIdx));
+                                &iCurveIdx);
+                        if( poMulti->addGeometryDirectly(poCurve) !=
+                                                                OGRERR_NONE )
+                        {
+                            delete poCurve;
+                        }
                     }
                 }
                 else

@@ -688,8 +688,11 @@ GDALDataset *WCSDataset::GDALOpenResult( CPLHTTPResult *psResult )
             pabyData = psResult->pasMimePart[1].pabyData;
             nDataLen = psResult->pasMimePart[1].nDataLen;
 
-            if (CSLFindString(psResult->pasMimePart[1].papszHeaders,
-                              "Content-Transfer-Encoding: base64") != -1)
+            const char* pszContentTransferEncoding = CSLFetchNameValue(
+                psResult->pasMimePart[1].papszHeaders,
+                "Content-Transfer-Encoding");
+            if( pszContentTransferEncoding &&
+                EQUAL(pszContentTransferEncoding, "base64") )
             {
                 nDataLen = CPLBase64DecodeInPlace(pabyData);
             }

@@ -5,7 +5,7 @@ MIGRATION GUIDE FROM GDAL 2.2 to GDAL 2.3
 
 Link: https://trac.osgeo.org/gdal/wiki/rfc70_output_format_guess
 
-Before GDAL 2.3, if not specifiying the output format to utilities, GeoTIFF or
+Before GDAL 2.3, if not specifying the output format to utilities, GeoTIFF or
 Shapefile were assumed for most utilities. Now, the output format will be
 guessed from the output filename extension. This might break usages where
 non-standard extensions are used for GeoTIFF or Shapefile output when -f/-of is

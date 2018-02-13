@@ -1628,12 +1628,12 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 }
 
 /************************************************************************/
-/*                        importPreambuleFromWkt()                      */
+/*                        importPreambleFromWkt()                      */
 /************************************************************************/
 
 // Returns -1 if processing must continue.
 //! @cond Doxygen_Suppress
-OGRErr OGRGeometry::importPreambuleFromWkt( char ** ppszInput,
+OGRErr OGRGeometry::importPreambleFromWkt( char ** ppszInput,
                                             int* pbHasZ, int* pbHasM,
                                             bool* pbIsEmpty )
 {
@@ -6096,11 +6096,11 @@ char* OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
  */
 
 /************************************************************************/
-/*                       importPreambuleFromWkb()                       */
+/*                       importPreambleFromWkb()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-OGRErr OGRGeometry::importPreambuleFromWkb( const unsigned char * pabyData,
+OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
                                             int nSize,
                                             OGRwkbByteOrder& eByteOrder,
                                             OGRwkbVariant eWkbVariant )
@@ -6134,13 +6134,13 @@ OGRErr OGRGeometry::importPreambuleFromWkb( const unsigned char * pabyData,
 }
 
 /************************************************************************/
-/*                    importPreambuleOfCollectionFromWkb()              */
+/*                    importPreambleOfCollectionFromWkb()              */
 /*                                                                      */
 /*      Utility method for OGRSimpleCurve, OGRCompoundCurve,            */
 /*      OGRCurvePolygon and OGRGeometryCollection.                      */
 /************************************************************************/
 
-OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( const unsigned char * pabyData,
+OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pabyData,
                                                         int& nSize,
                                                         int& nDataOffset,
                                                         OGRwkbByteOrder& eByteOrder,
@@ -6150,14 +6150,14 @@ OGRErr OGRGeometry::importPreambuleOfCollectionFromWkb( const unsigned char * pa
 {
     nGeomCount = 0;
 
-    OGRErr eErr = importPreambuleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
+    OGRErr eErr = importPreambleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
     if( eErr != OGRERR_NONE )
         return eErr;
 
 /* -------------------------------------------------------------------- */
 /*      Clear existing Geoms.                                           */
 /* -------------------------------------------------------------------- */
-    int _flags = flags; // flags set in importPreambuleFromWkb
+    int _flags = flags; // flags set in importPreambleFromWkb
     empty(); // may reset flags etc.
 
     // restore
@@ -6218,7 +6218,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;

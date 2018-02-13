@@ -137,6 +137,46 @@ static void OGRLIBKMLPreProcessInput( std::string& oKml )
         }
         oKml[nPos+2] = 'S';
     }
+
+    // Workaround Windows specific issue with libkml (at least the version
+    // used by OSGeo4W at time of writing), where tabulations as
+    // coordinate separators aren't properly handled
+    //(see https://trac.osgeo.org/gdal/ticket/7231)
+    // Another Windows specific issue is that if the content of
+    // <coordinates> is non-empty and does not contain any digit,
+    // libkml hangs (see https://trac.osgeo.org/gdal/ticket/7232)
+    nPos = 0;
+    while( true )
+    {
+        nPos = oKml.find("<coordinates>", nPos);
+        if( nPos == std::string::npos )
+        {
+            break;
+        }
+        size_t nPosEnd = oKml.find("</coordinates>", nPos);
+        if( nPosEnd == std::string::npos )
+        {
+            break;
+        }
+        nPos += strlen("<coordinates>");
+        size_t nPosAfterCoordinates = nPos;
+        bool bDigitFound = false;
+        for( ; nPos < nPosEnd; nPos++ )
+        {
+            if( oKml[nPos] >= '0' && oKml[nPos] <= '9' )
+                bDigitFound = true;
+            else if( oKml[nPos] == '\t' )
+                oKml[nPos] = ' ';
+        }
+        if( !bDigitFound )
+        {
+            oKml.replace(nPosAfterCoordinates,
+                         nPosEnd + strlen("</coordinates>") -
+                                nPosAfterCoordinates,
+                         "</coordinates>");
+            nPos = nPosAfterCoordinates + strlen("</coordinates>");
+        }
+    }
 }
 
 /************************************************************************/

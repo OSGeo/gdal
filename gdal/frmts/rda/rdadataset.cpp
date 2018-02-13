@@ -39,6 +39,7 @@
 #include <array>
 #include <memory>
 #include <mutex>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -131,11 +132,13 @@ class GDALRDADataset: public GDALDataset
         int       m_nXSizeFetched = 0;
         int       m_nYSizeFetched = 0;
 
+        int       m_nMaxCurlConnections = 8;
+
         bool      ReadConfiguration();
         bool      GetAuthorization();
         bool      ParseAuthorizationResponse(const CPLString& osAuth);
         bool      ParseConnectionString( GDALOpenInfo* poOpenInfo );
-        json_object* ReadJSonFile(const char* pszFilename);
+        json_object* ReadJSonFile(const char* pszFilename, bool bErrorOn404);
         bool      ReadImageMetadata();
         bool      ReadRPCs();
         bool      ReadGeoreferencing();
@@ -147,7 +150,7 @@ class GDALRDADataset: public GDALDataset
                              const void* pData, size_t nDataLen );
 
         char**    GetHTTPOptions();
-        GByte*    Download(const CPLString& osURL);
+        GByte*    Download(const CPLString& osURL, bool bErrorOn404);
         bool      Open( GDALOpenInfo* poOpenInfo );
 
         std::string MakeKeyCache(int64_t nTileX, int64_t nTileY);
@@ -241,7 +244,7 @@ GDALRDADataset::GDALRDADataset() :
     m_osAuthURL(CPLGetConfigOption("GBDX_AUTH_URL",
                         "https://geobigdata.io/auth/v1/oauth/token/")),
     m_osRDAAPIURL(CPLGetConfigOption("GBDX_RDA_API_URL",
-                        "https://idahoapi.geobigdata.io/v1")),
+                        "https://rda.geobigdata.io/v1")),
     m_osClientId(CPLGetConfigOption("GBDX_CLIENT_ID", "")),
     m_osClientSecret(CPLGetConfigOption("GBDX_CLIENT_SECRET", "")),
     m_osUserName(CPLGetConfigOption("GBDX_USERNAME", "")),
@@ -677,7 +680,7 @@ char** GDALRDADataset::GetHTTPOptions()
 /*                            Download()                                */
 /************************************************************************/
 
-GByte* GDALRDADataset::Download(const CPLString& osURL)
+GByte* GDALRDADataset::Download(const CPLString& osURL, bool bErrorOn404)
 {
     char** papszOptions = GetHTTPOptions();
     const char* pszURL = osURL.c_str();
@@ -689,14 +692,17 @@ GByte* GDALRDADataset::Download(const CPLString& osURL)
     CPLHTTPResult* psResult = pasResult[0];
     if( psResult->pszErrBuf != nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Get request %s failed: %s",
-                   osURL.c_str(),
-                    psResult->pabyData ? reinterpret_cast<const char*>(
-                        psResult->pabyData ) :
+        if( bErrorOn404 || strstr(psResult->pszErrBuf, "404") == nullptr )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Get request %s failed: %s",
+                    osURL.c_str(),
+                    psResult->pabyData ? CPLSPrintf("%s: %s",
+                        psResult->pszErrBuf,
+                        reinterpret_cast<const char*>(psResult->pabyData )) :
                     psResult->pszErrBuf );
-        CPLHTTPDestroyResult(psResult);
-        CPLFree(pasResult);
+        }
+        CPLHTTPDestroyMultiResult(pasResult, 1);
         return nullptr;
     }
 
@@ -706,15 +712,13 @@ GByte* GDALRDADataset::Download(const CPLString& osURL)
                  "Get request %s failed: "
                  "Empty content returned by server",
                  osURL.c_str());
-        CPLHTTPDestroyResult(psResult);
-        CPLFree(pasResult);
+        CPLHTTPDestroyMultiResult(pasResult, 1);
         return nullptr;
     }
     CPLDebug("RDA", "%s", psResult->pabyData);
     GByte* pabyRes = psResult->pabyData;
     psResult->pabyData = nullptr;
-    CPLHTTPDestroyResult(psResult);
-    CPLFree(pasResult);
+    CPLHTTPDestroyMultiResult(pasResult, 1);
     return pabyRes;
 }
 
@@ -787,7 +791,8 @@ static double GetJsonDouble(json_object* poObj, const char* pszPath,
 /*                           ReadJSonFile()                             */
 /************************************************************************/
 
-json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
+json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
+                                          bool bErrorOn404)
 {
     CPLString osCachedFilename(
         CPLFormFilename(GetDatasetCacheDir(), pszFilename, nullptr));
@@ -815,7 +820,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
         CPLString osURL(m_osRDAAPIURL);
         osURL += "/metadata/" + m_osGraphId + "/" +
                  m_osNodeId + "/" + pszFilename;
-        pszRes = reinterpret_cast<char*>(Download(osURL));
+        pszRes = reinterpret_cast<char*>(Download(osURL, bErrorOn404));
         bToCache = true;
     }
     if( pszRes == nullptr )
@@ -850,7 +855,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename)
 
 bool GDALRDADataset::ReadImageMetadata()
 {
-    json_object* poObj = ReadJSonFile("image.json");
+    json_object* poObj = ReadJSonFile("image.json", true);
     if( poObj == nullptr )
         return false;
 
@@ -1018,7 +1023,7 @@ bool GDALRDADataset::ReadGeoreferencing()
 {
     m_bTriedReadGeoreferencing = true;
 
-    json_object* poObj = ReadJSonFile("georeferencing.json");
+    json_object* poObj = ReadJSonFile("georeferencing.json", false);
     if( poObj == nullptr )
         return false;
 
@@ -1104,7 +1109,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
 
 bool GDALRDADataset::ReadRPCs()
 {
-    json_object* poObj = ReadJSonFile("rpcs.json");
+    json_object* poObj = ReadJSonFile("rpcs.json", false);
     if( poObj == nullptr )
         return false;
 
@@ -1277,8 +1282,23 @@ GDALDataset* GDALRDADataset::OpenStatic( GDALOpenInfo* poOpenInfo )
 
     std::unique_ptr<GDALRDADataset> poDS =
         std::unique_ptr<GDALRDADataset>(new GDALRDADataset());
+
     if( !poDS->Open(poOpenInfo) )
         return nullptr;
+
+    const char* pszMaxConnect =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXCONNECT");
+
+    if (pszMaxConnect != nullptr) {
+        poDS->m_nMaxCurlConnections =
+            std::max(1, std::min(1024, atoi(pszMaxConnect)));
+    }
+    else
+    {
+        unsigned int n = std::thread::hardware_concurrency();
+        poDS->m_nMaxCurlConnections = std::max(static_cast<int>(8*n), 64);
+    }
+
     return poDS.release();
 }
 
@@ -1378,7 +1398,28 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
     m_nXSizeFetched = nXSize;
     m_nYSizeFetched = nYSize;
 
-    if( m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0 )
+
+    int nBlockXSize, nBlockYSize;
+    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    int nFullXSize = GetRasterBand(1)->GetXSize();
+    int nFullYSize = GetRasterBand(1)->GetYSize();
+    bool fetchAllAdvised = false;
+    if(m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0)
+    {
+        fetchAllAdvised = true;
+        int advisedXBlocks = static_cast<int>(
+            std::ceil(static_cast<double>(m_nXSizeAdvise)/nBlockXSize));
+        int advisedYBlocks = static_cast<int>(
+            std::ceil(static_cast<double>(m_nYSizeAdvise)/nBlockYSize));
+        if(m_nXSizeAdvise == nFullXSize &&
+            advisedXBlocks>2*m_nMaxCurlConnections)
+            fetchAllAdvised = false;
+        else if(m_nYSizeAdvise == nFullYSize &&
+            advisedYBlocks>2*m_nMaxCurlConnections)
+            fetchAllAdvised = false;
+    }
+
+    if( fetchAllAdvised )
     {
         nXOff = m_nXOffAdvise;
         nYOff = m_nYOffAdvise;
@@ -1389,9 +1430,6 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         m_nXSizeAdvise = 0;
         m_nYSizeAdvise = 0;
     }
-
-    int nBlockXSize, nBlockYSize;
-    GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
     int nXBlock1 = nXOff / nBlockXSize;
     int nXBlock2 = (nXOff + nXSize - 1) / nBlockXSize;
@@ -1447,16 +1485,16 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         }
     }
 
-    const int nMaxDownloads = 8;
-    for(size_t i=0;i<apszURLLists.size();i+=nMaxDownloads)
+
+    for(size_t i=0;i<apszURLLists.size();i+=m_nMaxCurlConnections)
     {
         char** papszOptions = GetHTTPOptions();
-        int nToDownload = std::min(nMaxDownloads,
+        int nToDownload = std::min(m_nMaxCurlConnections,
                                 static_cast<int>(apszURLLists.size() - i));
         CPLHTTPResult ** pasResults =
             CPLHTTPMultiFetch( &apszURLLists[i],
                                 nToDownload,
-                                nMaxDownloads,
+                               m_nMaxCurlConnections,
                                 papszOptions);
         CSLDestroy(papszOptions);
 
@@ -1481,9 +1519,8 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
                         pasResults[j]->pabyData, pasResults[j]->nDataLen);
             }
             CPLFree(apszURLLists[i+j]);
-            CPLHTTPDestroyResult(pasResults[j]);
         }
-        CPLFree(pasResults);
+        CPLHTTPDestroyMultiResult(pasResults, nToDownload);
     }
 }
 
@@ -1588,34 +1625,36 @@ GDALRDADataset::GetTiles(
                 if( poTileDS == nullptr )
                 {
                     VSIUnlink(osTmpMemFile);
-                    continue;
                 }
-                poTileDS->MarkSuppressOnClose();
-                if( poTileDS->GetRasterCount() != GetRasterCount() ||
-                    poTileDS->GetRasterXSize() != m_nTileXSize ||
-                    poTileDS->GetRasterYSize() != m_nTileYSize )
+                else
                 {
-                    continue;
-                }
-                oResult[nOutIdx] = ds;
-                const auto nKey = MakeKeyCache(nTileX, nTileY);
-                GetTileCache()->insert(nKey, ds);
+                    poTileDS->MarkSuppressOnClose();
+                    if( poTileDS->GetRasterCount() == GetRasterCount() &&
+                        poTileDS->GetRasterXSize() == m_nTileXSize &&
+                        poTileDS->GetRasterYSize() == m_nTileYSize )
+                    {
+                        oResult[nOutIdx] = ds;
+                        const auto nKey = MakeKeyCache(nTileX, nTileY);
+                        GetTileCache()->insert(nKey, ds);
 
-                CPLString osSubPath;
-                osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                        static_cast<GIntBig>(nTileX));
-                osSubPath += "/";
-                osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                        static_cast<GIntBig>(nTileY));
-                osSubPath += ".";
-                osSubPath += m_osNativeTileFileFormat;
-                CPLString osCachedFilename(
-                    GetDatasetCacheDir() + "/" + osSubPath);
-                CacheFile( osCachedFilename, pabyData, pasResults[i]->nDataLen);
+                        CPLString osSubPath;
+                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                static_cast<GIntBig>(nTileX));
+                        osSubPath += "/";
+                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                static_cast<GIntBig>(nTileY));
+                        osSubPath += ".";
+                        osSubPath += m_osNativeTileFileFormat;
+                        CPLString osCachedFilename(
+                            GetDatasetCacheDir() + "/" + osSubPath);
+                        CacheFile( osCachedFilename, pabyData,
+                                   pasResults[i]->nDataLen);
+                    }
+                }
             }
-            CPLHTTPDestroyResult(pasResults[i]);
         }
-        CPLFree(pasResults);
+        CPLHTTPDestroyMultiResult(pasResults,
+                                  static_cast<int>(apszURLLists.size()));
     }
 
     return oResult;
@@ -1769,7 +1808,7 @@ CPLErr GDALRDARasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 poBlock->DropLock();
                 continue;
             }
-            // Instanciate the block
+            // Instantiate the block
             poBlock = poGDS->GetRasterBand(i)->GetLockedBlockRef(
                         nBlockXOff, nBlockYOff, TRUE);
             if (poBlock == nullptr)
@@ -1881,6 +1920,12 @@ void GDALRegister_RDA()
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_rda.html" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='MAXCONNECT' type='int' min='1' max='1024' "
+                        "description='Maximum number of connections'/>"
+"</OpenOptionList>" );
 
     poDriver->pfnIdentify = GDALRDADataset::Identify;
     poDriver->pfnOpen = GDALRDADataset::OpenStatic;

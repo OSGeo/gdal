@@ -168,6 +168,14 @@ def visoss_2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
+    signed_url = gdal.GetSignedURL('/vsioss/oss_fake_bucket/resource',
+                                   ['START_DATE=20180212T123456Z'])
+    if signed_url not in ('http://127.0.0.1:8080/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D',
+                          'http://127.0.0.1:8081/oss_fake_bucket/resource?Expires=1518442496&OSSAccessKeyId=OSS_ACCESS_KEY_ID&Signature=bpFqur6tQMNN7Xe7UHVFFrugmgs%3D'):
+        gdaltest.post_reason('fail')
+        print(signed_url)
+        return 'fail'
+
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_fake_bucket/resource', custom_method = get_oss_fake_bucket_resource_method)
 

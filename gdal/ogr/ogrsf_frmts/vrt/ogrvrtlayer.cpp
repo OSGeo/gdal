@@ -2108,6 +2108,9 @@ OGRErr OGRVRTLayer::GetExtent( int iGeomField, OGREnvelope *psExtent, int bForce
     if( iGeomField < 0 || iGeomField >= GetLayerDefn()->GetGeomFieldCount() )
         return OGRERR_FAILURE;
 
+    if( static_cast<size_t>(iGeomField) >= apoGeomFieldProps.size() )
+        return OGRERR_FAILURE;
+
     if( apoGeomFieldProps[iGeomField]->sStaticEnvelope.IsInit() )
     {
         *psExtent = apoGeomFieldProps[iGeomField]->sStaticEnvelope;

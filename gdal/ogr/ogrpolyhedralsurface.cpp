@@ -222,7 +222,7 @@ OGRErr OGRPolyhedralSurface::importFromWkb ( const unsigned char * pabyData,
     oMP.nGeomCount = 0;
     OGRwkbByteOrder eByteOrder = wkbXDR;
     int nDataOffset = 0;
-    OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
+    OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
                                                       eByteOrder,
@@ -359,7 +359,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
 {
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr      eErr = importPreambuleFromWkt(
+    OGRErr      eErr = importPreambleFromWkt(
                                         ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )

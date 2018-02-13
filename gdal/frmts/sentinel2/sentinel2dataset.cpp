@@ -2238,6 +2238,10 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2A( const char* pszFilename,
     {
         return nullptr;
     }
+    if( oSetResolutions.empty() )
+    {
+        return nullptr;
+    }
 
     std::set<int> oSetEPSGCodes;
     for(size_t i=0;i<aosGranuleList.size();i++)

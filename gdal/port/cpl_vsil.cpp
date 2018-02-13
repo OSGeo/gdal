@@ -738,6 +738,45 @@ const char* VSIGetActualURL( const char* pszFilename )
 }
 
 /************************************************************************/
+/*                        VSIGetSignedURL()                             */
+/************************************************************************/
+
+/**
+ * \brief Returns a signed URL of a supplied filename.
+ *
+ * Currently only returns a non-NULL value for /vsis3/ and /vsioss/
+ * For example "/vsis3/bucket/filename" will be expanded as
+ * "https://bucket.s3.amazon.com/filename?X-Amz-Algorithm=AWS4-HMAC-SHA256..."
+ * Configuration options that apply for file opening (typically to provide
+ * credentials), and are returned by VSIGetFileSystemOptions(), are also valid
+ * in that context.
+ *
+ * @param pszFilename the path of the filesystem object. UTF-8 encoded.
+ * @param papszOptions list of options, or NULL. Depend on file system handler.
+ * For /vsis3/ and /vsioss/, the following options are supported:
+ * <ul>
+ * <li>START_DATE=YYMMDDTHHMMSSZ: date and time in UTC following ISO 8601
+ *     standard, corresponding to the start of validity of the URL.
+ *     If not specified, current date time.</li>
+ * <li>EXPIRATION_DELAY=number_of_seconds: number between 1 and 604800 (seven days)
+ * for the validity of the signed URL. Defaults to 3600 (one hour)</li>
+ * <li>VERB=GET/HEAD/DELETE/PUT/POST: HTTP VERB for which the request will be
+ * used. Default to GET.</li>
+ * </ul>
+ *
+ * @return a signed URL, or NULL. Should be freed with CPLFree().
+ * @since GDAL 2.3
+ */
+
+char* VSIGetSignedURL( const char* pszFilename, char** papszOptions )
+{
+    VSIFilesystemHandler *poFSHandler =
+        VSIFileManager::GetHandler( pszFilename );
+
+    return poFSHandler->GetSignedURL( pszFilename, papszOptions );
+}
+
+/************************************************************************/
 /*                             VSIFOpenL()                              */
 /************************************************************************/
 
@@ -1680,7 +1719,7 @@ GIntBig VSIGetDiskFreeSpace( const char *pszDirname )
 
 /**
  * \brief Return the list of prefixes for virtual file system handlers
- * currenly registered.
+ * currently registered.
  *
  * Typically: "", "/vsimem/", "/vsicurl/", etc
  *

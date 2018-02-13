@@ -33,7 +33,7 @@
 %module gdal_array
 
 %{
-// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// Define this unconditionally of whether DEBUG_BOOL is defined or not,
 // since we do not pass -DDEBUG_BOOL when building the bindings
 #define DO_NOT_USE_DEBUG_BOOL
 

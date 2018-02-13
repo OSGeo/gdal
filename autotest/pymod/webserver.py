@@ -54,48 +54,123 @@ def install_http_handler(handler_instance):
         custom_handler = None
 
 class RequestResponse:
-    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None):
+    def __init__(self, method, path, code, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
         self.method = method
         self.path = path
         self.code = code
         self.headers = headers
         self.body = body
         self.custom_method = custom_method
+        self.expected_headers = expected_headers
+        self.expected_body = expected_body
+
+class FileHandler:
+    def __init__(self, dict):
+        self.dict = dict
+
+    def final_check(self):
+        pass
+
+    def do_HEAD(self, request):
+        if request.path not in self.dict:
+            request.send_response(404)
+            request.end_headers()
+        else:
+            request.send_response(200)
+            request.send_header('Content-Length', len(self.dict[request.path]))
+            request.end_headers()
+
+    def do_GET(self, request):
+        if request.path not in self.dict:
+            request.send_response(404)
+            request.end_headers()
+        else:
+            filedata = self.dict[request.path]
+            start = 0
+            end = len(filedata)
+            if 'Range' in request.headers:
+                import re
+                res = re.search('bytes=(\d+)\-(\d+)', request.headers['Range'])
+                if res:
+                    res = res.groups()
+                    start = int(res[0])
+                    end = int(res[1]) + 1
+                    if end > len(filedata):
+                        end = len(filedata)
+            request.send_response(200)
+            if 'Range' in request.headers:
+                request.send_header('Content-Range', '%d-%d' % (start, end-1))
+            request.send_header('Content-Length', len(filedata))
+            request.end_headers()
+            request.wfile.write(filedata[start:end])
 
 class SequentialHandler:
     def __init__(self):
         self.req_count = 0
         self.req_resp = []
+        self.req_resp_map = {}
 
     def final_check(self):
         assert self.req_count == len(self.req_resp), (self.req_count, len(self.req_resp))
+        assert len(self.req_resp_map) == 0
 
-    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None):
-        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method) )
+    def add(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+        assert len(self.req_resp_map) == 0
+        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body) )
+
+    def add_unordered(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
+        self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body)
+
+    @staticmethod
+    def _process_req_resp(req_resp, request):
+        if req_resp.custom_method:
+            req_resp.custom_method(request)
+        else:
+
+            if req_resp.expected_headers:
+                for k in req_resp.expected_headers:
+                    if k not in request.headers or request.headers[k] != req_resp.expected_headers[k]:
+                        sys.stderr.write('Did not get expected headers: %s\n' % str(request.headers))
+                        request.send_response(400)
+                        request.send_header('Content-Length', 0)
+                        request.end_headers()
+                        return
+
+            if req_resp.expected_body:
+                content = request.rfile.read(int(request.headers['Content-Length']))
+                if content != req_resp.expected_body:
+                    sys.stderr.write('Did not get expected content: %s\n' % content)
+                    request.send_response(400)
+                    request.send_header('Content-Length', 0)
+                    request.end_headers()
+                    return
+
+            request.send_response(req_resp.code)
+            for k in req_resp.headers:
+                request.send_header(k, req_resp.headers[k])
+            if req_resp.body:
+                request.send_header('Content-Length', len(req_resp.body))
+            elif not 'Content-Length' in req_resp.headers:
+                request.send_header('Content-Length', '0')
+            request.end_headers()
+            if req_resp.body:
+                try:
+                    request.wfile.write(req_resp.body)
+                except:
+                    request.wfile.write(req_resp.body.encode('ascii'))
 
     def process(self, method, request):
         if self.req_count < len(self.req_resp):
             req_resp = self.req_resp[self.req_count]
             if method == req_resp.method and request.path == req_resp.path:
                 self.req_count += 1
-
-                if req_resp.custom_method:
-                    req_resp.custom_method(request)
-                else:
-                    request.send_response(req_resp.code)
-                    for k in req_resp.headers:
-                        request.send_header(k, req_resp.headers[k])
-                    if req_resp.body:
-                        request.send_header('Content-Length', len(req_resp.body))
-                    elif not 'Content-Length' in req_resp.headers:
-                        request.send_header('Content-Length', '0')
-                    request.end_headers()
-                    if req_resp.body:
-                        try:
-                            request.wfile.write(req_resp.body)
-                        except:
-                            request.wfile.write(req_resp.body.encode('ascii'))
-
+                SequentialHandler._process_req_resp(req_resp, request)
+                return
+        else:
+            if (method, request.path) in self.req_resp_map:
+                req_resp = self.req_resp_map[(method, request.path)]
+                del self.req_resp_map[(method, request.path)]
+                SequentialHandler._process_req_resp(req_resp, request)
                 return
 
         request.send_error(500,'Unexpected %s request for %s, req_count = %d' % (method, request.path, self.req_count))

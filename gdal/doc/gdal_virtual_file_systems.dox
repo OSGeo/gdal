@@ -626,7 +626,7 @@ and the value of the x-auth-token authorization token.
 set respectively to the endpoint of the Auth V1 authentication
 (e.g http://127.0.0.1:12345/auth/v1.0), the user name and the key/password.
 This authentication endpoint will be used to retrieve the storage URL and
-authorization token mentionned in the first authentication method.
+authorization token mentioned in the first authentication method.
 </li>
 </ol>
 

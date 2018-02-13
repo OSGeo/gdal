@@ -1582,10 +1582,16 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
 %typemap(out) (retStringAndCPLFree*)
 {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF($result);
     if(result)
     {
         $result = GDALPythonObjectFromCStr( (const char *)result);
         CPLFree(result);
+    }
+    else
+    {
+        $result = Py_None;
+        Py_INCREF($result);
     }
 }
 

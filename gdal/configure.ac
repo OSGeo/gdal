@@ -125,7 +125,7 @@ HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=no
 AX_CHECK_COMPILE_FLAG([-Wzero-as-null-pointer-constant], [CXX_WFLAGS="$CXX_WFLAGS -Wzero-as-null-pointer-constant" HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=yes],,[$ERROR_ON_UNKNOWN_OPTIONS])
 if test "$HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT" = "yes"; then
 AC_DEFINE_UNQUOTED(HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT, 1,
-          [Define to 1 if the compiler suports -Wzero-as-null-pointer-constant])
+          [Define to 1 if the compiler supports -Wzero-as-null-pointer-constant])
 fi
 
 AC_LANG_POP([C++])
@@ -1135,9 +1135,12 @@ AC_ARG_WITH(liblzma,[  --with-liblzma[=ARG]       Include liblzma support (ARG=y
 
 if test "$with_liblzma" = "yes" ; then
   AC_CHECK_LIB(lzma,lzma_code,LIBLZMA_SETTING=yes,LIBLZMA_SETTING=no,)
+  AC_CHECK_HEADERS(lzma.h)
 
-  if test "$LIBLZMA_SETTING" = "yes" ; then
+  if test "$LIBLZMA_SETTING" = "yes" -a "$ac_cv_header_lzma_h" = "yes" ; then
     LIBS="-llzma $LIBS"
+  else
+    LIBLZMA_SETTING=no
   fi
 else
     LIBLZMA_SETTING=no

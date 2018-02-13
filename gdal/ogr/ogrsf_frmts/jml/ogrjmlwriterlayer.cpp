@@ -38,21 +38,37 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
-                                      OGRJMLDataset * /* poDSIn */,
+                                      OGRSpatialReference * poSRS,
+                                      OGRJMLDataset * poDSIn,
                                       VSILFILE* fpIn,
                                       bool bAddRGBFieldIn,
                                       bool bAddOGRStyleFieldIn,
                                       bool bClassicGMLIn ) :
+    poDS(poDSIn),
     poFeatureDefn(new OGRFeatureDefn( pszLayerName )),
     fp(fpIn),
     bFeaturesWritten(false),
     bAddRGBField(bAddRGBFieldIn),
     bAddOGRStyleField(bAddOGRStyleFieldIn),
     bClassicGML(bClassicGMLIn),
-    nNextFID(0)
+    nNextFID(0),
+    nBBoxOffset(0)
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
+
+    if( poSRS )
+    {
+        const char* pszAuthName = poSRS->GetAuthorityName(nullptr);
+        const char* pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        if( pszAuthName != nullptr && EQUAL(pszAuthName, "EPSG") &&
+            pszAuthCode != nullptr )
+        {
+            osSRSAttr = " srsName=\"http://www.opengis.net/gml/srs/epsg.xml#";
+            osSRSAttr += pszAuthCode;
+            osSRSAttr += "\"";
+        }
+    }
 
     VSIFPrintfL(fp, "<?xml version='1.0' encoding='UTF-8'?>\n"
                     "<JCSDataFile xmlns:gml=\"http://www.opengis.net/gml\" "
@@ -61,6 +77,7 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
                     "<CollectionElement>featureCollection</CollectionElement>\n"
                     "<FeatureElement>feature</FeatureElement>\n"
                     "<GeometryElement>geometry</GeometryElement>\n"
+                    "<CRSElement>boundedBy</CRSElement>\n"
                     "<ColumnDefinitions>\n");
 }
 
@@ -71,9 +88,33 @@ OGRJMLWriterLayer::OGRJMLWriterLayer( const char* pszLayerName,
 OGRJMLWriterLayer::~OGRJMLWriterLayer()
 {
     if( !bFeaturesWritten )
+    {
         VSIFPrintfL(
             fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n"
-            "<featureCollection>\n" );
+            "<featureCollection>\n"
+            "  <gml:boundedBy>\n"
+            "    <gml:Box%s>\n"
+            "      <gml:coordinates decimal=\".\" cs=\",\" ts=\" \">0.00,0.00 -1.00,-1.00</gml:coordinates>\n"
+            "    </gml:Box>\n"
+            "  </gml:boundedBy>\n", osSRSAttr.c_str() );
+    }
+    else if( nBBoxOffset > 0 )
+    {
+        VSIFSeekL(fp, nBBoxOffset, SEEK_SET );
+        if( sLayerExtent.IsInit() )
+        {
+            char szBuffer[101];
+            CPLsnprintf(szBuffer, sizeof(szBuffer), "%.10f,%.10f %.10f,%.10f",
+                        sLayerExtent.MinX, sLayerExtent.MinY,
+                        sLayerExtent.MaxX, sLayerExtent.MaxY);
+            VSIFPrintfL(fp, "%s", szBuffer);
+        }
+        else
+        {
+            VSIFPrintfL(fp, "0.00,0.00 -1.00,-1.00");
+        }
+        VSIFSeekL(fp, 0, SEEK_END );
+    }
     VSIFPrintfL(fp, "</featureCollection>\n</JCSDataFile>\n");
     poFeatureDefn->Release();
 }
@@ -128,7 +169,26 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
             WriteColumnDeclaration( "R_G_B", "STRING" );
         }
         VSIFPrintfL( fp, "</ColumnDefinitions>\n</JCSGMLInputTemplate>\n"
-                     "<featureCollection>\n" );
+                     "<featureCollection>\n"
+                     "  <gml:boundedBy>\n"
+                     "    <gml:Box%s>\n"
+                     "      <gml:coordinates decimal=\".\" cs=\",\" ts=\" \">",
+                     osSRSAttr.c_str() );
+        if( EQUAL(poDS->GetDescription(), "/vsistdout/") )
+        {
+            VSIFPrintfL( fp, "0.00,0.00 -1.00,-1.00" );
+        }
+        else
+        {
+            nBBoxOffset = VSIFTellL(fp);
+            VSIFPrintfL( fp,
+                         // 100 characters reserved
+                         "                                                  "
+                         "                                                  ");
+        }
+        VSIFPrintfL( fp, "</gml:coordinates>\n"
+                         "    </gml:Box>\n"
+                         "  </gml:boundedBy>\n" );
         bFeaturesWritten = true;
     }
 
@@ -141,6 +201,12 @@ OGRErr OGRJMLWriterLayer::ICreateFeature( OGRFeature *poFeature )
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
     if( poGeom != nullptr )
     {
+        if( !poGeom->IsEmpty() )
+        {
+            OGREnvelope sExtent;
+            poGeom->getEnvelope(&sExtent);
+            sLayerExtent.Merge(sExtent);
+        }
         char* pszGML = poGeom->exportToGML();
         VSIFPrintfL(fp, "                %s\n", pszGML);
         CPLFree(pszGML);

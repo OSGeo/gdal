@@ -215,6 +215,7 @@ void RegisterOGRODS()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date DateTime "
                                "Time Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean" );
     poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
     poDriver->pfnIdentify = OGRODSDriverIdentify;

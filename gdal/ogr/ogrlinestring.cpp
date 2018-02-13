@@ -1504,7 +1504,7 @@ OGRErr OGRSimpleCurve::importFromWkb( const unsigned char *pabyData,
     int                 nNewNumPoints = 0;
 
     nBytesConsumedOut = -1;
-    OGRErr eErr = importPreambuleOfCollectionFromWkb( pabyData,
+    OGRErr eErr = importPreambleOfCollectionFromWkb( pabyData,
                                                       nSize,
                                                       nDataOffset,
                                                       eByteOrder,
@@ -1714,7 +1714,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
     int bHasM = FALSE;
     bool bIsEmpty = false;
     const OGRErr eErr =
-        importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+        importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;

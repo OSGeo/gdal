@@ -482,6 +482,8 @@ const char *CPLResetExtension( const char *pszPath, const char *pszExt )
 static bool RequiresUnixPathSeparator(const char* pszPath)
 {
     return strcmp(pszPath, "/vsimem") == 0 ||
+            STARTS_WITH(pszPath, "http://") ||
+            STARTS_WITH(pszPath, "https://") ||
             STARTS_WITH(pszPath, "/vsimem/") ||
             STARTS_WITH(pszPath, "/vsicurl/") ||
             STARTS_WITH(pszPath, "/vsicurl_streaming/") ||

@@ -75,7 +75,7 @@ CPLJSONDocument& CPLJSONDocument::operator=(const CPLJSONDocument& other)
 /**
  * Save json document at specified path
  * @param  osPath Path to save json document
- * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -96,6 +96,18 @@ bool CPLJSONDocument::Save(const std::string &osPath)
     VSIFCloseL(fp);
 
     return true;
+}
+
+/**
+ * Return the json document as a serialized string.
+ * @return         serialized document.
+ *
+ * @since GDAL 2.3
+ */
+std::string CPLJSONDocument::SaveAsString()
+{
+    return json_object_to_json_string_ext(
+                TO_JSONOBJ(m_poRootJsonObject), JSON_C_TO_STRING_PRETTY );
 }
 
 /**
@@ -124,7 +136,7 @@ CPLJSONObject CPLJSONDocument::GetRoot()
 /**
  * Load json document from file by provided path
  * @param  osPath Path to json file.
- * @return         true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return         true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -147,7 +159,7 @@ bool CPLJSONDocument::Load(const std::string &osPath)
  * Load json document from memory buffer.
  * @param  pabyData Buffer.data.
  * @param  nLength  Buffer size.
- * @return          true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return          true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -157,6 +169,10 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
     {
         return false;
     }
+
+    if( m_poRootJsonObject )
+        json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+
     json_tokener *jstok = json_tokener_new();
     m_poRootJsonObject = json_tokener_parse_ex( jstok,
                                                 reinterpret_cast<const char*>(pabyData),
@@ -174,12 +190,27 @@ bool CPLJSONDocument::LoadMemory(const GByte *pabyData, int nLength)
 }
 
 /**
+ * Load json document from memory buffer.
+ * @param  osStr    String
+ * @return          true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
+ *
+ * @since GDAL 2.3
+ */
+bool CPLJSONDocument::LoadMemory(const std::string &osStr)
+{
+    if( osStr.empty() )
+        return false;
+    return LoadMemory( reinterpret_cast<const GByte*>(osStr.data()),
+                       static_cast<int>(osStr.size()) );
+}
+
+/**
  * Load json document from file using small chunks of data.
  * @param  osPath      Path to json document file.
  * @param  nChunkSize   Chunk size.
  * @param  pfnProgress  a function to report progress of the json data loading.
  * @param  pProgressArg application data passed into progress function.
- * @return              true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return              true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -201,7 +232,6 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
         return false;
     }
 
-
     void *pBuffer = CPLMalloc( nChunkSize );
     json_tokener *tok = json_tokener_new();
     bool bSuccess = true;
@@ -212,6 +242,9 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
     {
         size_t nRead = VSIFReadL( pBuffer, 1, nChunkSize, fp );
         dfTotalRead += nRead;
+
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
 
         m_poRootJsonObject = json_tokener_parse_ex(tok,
                                                    static_cast<const char*>(pBuffer),
@@ -283,11 +316,11 @@ static size_t CPLJSONWriteFunction(void *pBuffer, size_t nSize, size_t nMemb,
  * Load json document from web.
  * @param  osUrl       Url to json document.
  * @param  papszOptions Option list as a NULL-terminated array of strings. May be NULL.
- * The available keys are same for CPLHTTPFetch method. Addtional key JSON_DEPTH
+ * The available keys are same for CPLHTTPFetch method. Additional key JSON_DEPTH
  * define json parse depth. Default is 10.
  * @param  pfnProgress  a function to report progress of the json data loading.
  * @param  pProgressArg application data passed into progress function.
- * @return              true on success. If error occured it can be received using CPLGetLastErrorMsg method.
+ * @return              true on success. If error occurred it can be received using CPLGetLastErrorMsg method.
  *
  * @since GDAL 2.3
  */
@@ -326,6 +359,9 @@ bool CPLJSONDocument::LoadUrl(const std::string & /*osUrl*/, char ** /*papszOpti
         bResult = false;
     }
     else {
+        if( m_poRootJsonObject )
+            json_object_put( TO_JSONOBJ(m_poRootJsonObject) );
+
         m_poRootJsonObject = ctx.pObject;
     }
     json_tokener_free(ctx.pTokener);
@@ -1100,7 +1136,7 @@ CPLJSONArray::CPLJSONArray()
 CPLJSONArray::CPLJSONArray(const std::string &osName) :
     CPLJSONObject( osName, json_object_new_array() )
 {
-
+    json_object_put( TO_JSONOBJ(m_poJsonObject) );
 }
 
 CPLJSONArray::CPLJSONArray(const std::string &osName, JSONObjectH poJsonObject) :

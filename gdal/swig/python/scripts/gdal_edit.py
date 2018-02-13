@@ -38,7 +38,7 @@ def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
     print('                 [-offset value] [-scale value]')
-    print('                 [-colorinterp_X red|green|blue|alpha|undefined]*')
+    print('                 [-colorinterp_X red|green|blue|alpha|gray|undefined]*')
     print('                 [-unsetstats] [-stats] [-approx_stats]')
     print('                 [-gcp pixel line easting northing [elevation]]*')
     print('                 [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname')
@@ -163,11 +163,13 @@ def gdal_edit(argv):
                 val = gdal.GCI_BlueBand
             elif val.lower() == 'alpha':
                 val = gdal.GCI_AlphaBand
+            elif val.lower() == 'gray' or val.lower() == 'grey':
+                val = gdal.GCI_GrayIndex
             elif val.lower() == 'undefined':
                 val = gdal.GCI_Undefined
             else:
                 sys.stderr.write('Unsupported color interpretation %s.\n' % val + \
-                    'Only red, green, blue, alpha, undefined are supported.\n' )
+                    'Only red, green, blue, alpha, gray, undefined are supported.\n' )
                 return Usage()
             colorinterp[band] = val
             i = i + 1

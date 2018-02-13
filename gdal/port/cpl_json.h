@@ -76,7 +76,7 @@ public:
     enum PrettyFormat {
         Plain,  ///< No extra whitespace or formatting applied
         Spaced, ///< Minimal whitespace inserted
-        Pretty  ///< Formated output
+        Pretty  ///< Formatted output
     };
 
 public:
@@ -196,8 +196,11 @@ public:
 /*! @endcond */
 
     bool Save(const std::string &osPath);
+    std::string SaveAsString();
+
     CPLJSONObject GetRoot();
     bool Load(const std::string &osPath);
+    bool LoadMemory(const std::string &osStr);
     bool LoadMemory(const GByte *pabyData, int nLength = -1);
     bool LoadChunks(const std::string &osPath, size_t nChunkSize = 16384,
                     GDALProgressFunc pfnProgress = nullptr,

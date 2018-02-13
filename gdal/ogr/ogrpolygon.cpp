@@ -327,7 +327,7 @@ OGRErr OGRPolygon::importFromWkb( const unsigned char * pabyData,
     OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
     // coverity[tainted_data]
-    OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
+    OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 4, eWkbVariant);
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -451,7 +451,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;

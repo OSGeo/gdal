@@ -24422,10 +24422,16 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToGML(PyObject *SWIGUNUSEDPARM(self), 
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   {
@@ -24489,10 +24495,16 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToKML(PyObject *SWIGUNUSEDPARM(self), 
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   if (alloc2 == SWIG_NEWOBJ) delete[] buf2;
@@ -24593,10 +24605,16 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToJson(PyObject *SWIGUNUSEDPARM(self),
   }
   {
     /* %typemap(out) (retStringAndCPLFree*) */
+    Py_XDECREF(resultobj);
     if(result)
     {
       resultobj = GDALPythonObjectFromCStr( (const char *)result);
       CPLFree(result);
+    }
+    else
+    {
+      resultobj = Py_None;
+      Py_INCREF(resultobj);
     }
   }
   {

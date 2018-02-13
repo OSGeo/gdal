@@ -186,7 +186,8 @@ class OGRODSDataSource : public GDALDataset
     void                DetectHeaderLine();
 
     OGRFieldType        GetOGRFieldType(const char* pszValue,
-                                        const char* pszValueType);
+                                        const char* pszValueType,
+                                        OGRFieldSubType& eSubType);
 
     void                DeleteLayer( const char *pszLayerName );
 

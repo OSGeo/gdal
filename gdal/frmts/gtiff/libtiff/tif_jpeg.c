@@ -74,7 +74,7 @@ int TIFFJPEGIsFullStripRequired_12(TIFF* tif);
    "JPEGLib: JPEG parameter struct mismatch: library thinks size is 432,
    caller expects 464"
 
-   For such users we wil fix the problem here. See install.doc file from
+   For such users we will fix the problem here. See install.doc file from
    the JPEG library distribution for details.
 */
 

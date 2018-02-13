@@ -249,8 +249,11 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     }
     char *pszKey = nullptr;
     const char *pszValue = CPLParseNameValue(pszHdr, &pszKey );
-    psResult->papszHeaders =
-        CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    if( pszKey && pszValue )
+    {
+        psResult->papszHeaders =
+            CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+    }
     CPLFree(pszHdr);
     CPLFree(pszKey);
     return nmemb;
@@ -926,8 +929,7 @@ class CPLHTTPErrorBuffer
  * @param papszOptions option list as a NULL-terminated array of strings. May be NULL.
  *                     Refer to CPLHTTPFetch() for valid options.
  * @return an array of CPLHTTPResult* structures that must be freed by
- * CPLHTTPDestroyResult(), the array itself with CPLFree(),
- * or NULL if libcurl support is disabled
+ * CPLHTTPDestroyMultiResult() or NULL if libcurl support is disabled
  *
  * @since GDAL 2.3
  */
@@ -1136,6 +1138,19 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
     {
         if( asErrorBuffers[i].szBuffer[0] != '\0' )
             papsResults[i]->pszErrBuf = CPLStrdup(asErrorBuffers[i].szBuffer);
+        else
+        {
+            long response_code = 0;
+            curl_easy_getinfo(asHandles[i], CURLINFO_RESPONSE_CODE,
+                              &response_code);
+
+            if( response_code >= 400 && response_code < 600 )
+            {
+                papsResults[i]->pszErrBuf =
+                        CPLStrdup(CPLSPrintf("HTTP error code : %d",
+                                             static_cast<int>(response_code)));
+            }
+        }
 
         curl_easy_getinfo( asHandles[i], CURLINFO_CONTENT_TYPE,
                            &(papsResults[i]->pszContentType) );
@@ -1156,6 +1171,27 @@ CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
 #endif /* def HAVE_CURL */
 }
 
+/************************************************************************/
+/*                      CPLHTTPDestroyMultiResult()                     */
+/************************************************************************/
+/**
+ * \brief Clean the memory associated with the return value of CPLHTTPMultiFetch()
+ *
+ * @param papsResults pointer to the return value of CPLHTTPMultiFetch()
+ * @param nCount value of the nURLCount parameter passed to CPLHTTPMultiFetch()
+ * @since GDAL 2.3
+ */
+void CPLHTTPDestroyMultiResult( CPLHTTPResult **papsResults, int nCount )
+{
+    if( papsResults )
+    {
+        for(int i=0;i<nCount;i++)
+        {
+            CPLHTTPDestroyResult(papsResults[i]);
+        }
+        CPLFree(papsResults);
+    }
+}
 
 #ifdef HAVE_CURL
 
@@ -1532,6 +1568,7 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         // e.g. "/vsicurl/,HEADER_FILE=/vsicurl/,url= " would cause use of
         // memory after free
         if( strstr(pszHeaderFile, "/vsicurl/") == nullptr &&
+            strstr(pszHeaderFile, "/vsicurl?") == nullptr &&
             strstr(pszHeaderFile, "/vsis3/") == nullptr &&
             strstr(pszHeaderFile, "/vsigs/") == nullptr &&
             strstr(pszHeaderFile, "/vsiaz/") == nullptr &&
@@ -1765,8 +1802,9 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
 /*      Find the start of the first chunk.                              */
 /* -------------------------------------------------------------------- */
     char *pszNext =
-        strstr(reinterpret_cast<char *>(psResult->pabyData),
-               osBoundary.c_str());
+        psResult->pabyData ?
+            strstr(reinterpret_cast<char *>(psResult->pabyData),
+               osBoundary.c_str()) : nullptr;
 
     if( pszNext == nullptr )
     {
@@ -1821,8 +1859,14 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
                 bRestoreAntislashR = true;
                 pszEOL[-1] = '\0';
             }
-            psPart->papszHeaders =
-                CSLAddString( psPart->papszHeaders, pszNext );
+            char *pszKey = nullptr;
+            const char *pszValue = CPLParseNameValue(pszNext, &pszKey );
+            if( pszKey && pszValue )
+            {
+                psPart->papszHeaders =
+                    CSLSetNameValue(psPart->papszHeaders, pszKey, pszValue);
+            }
+            CPLFree(pszKey);
             if( bRestoreAntislashR )
                 pszEOL[-1] = '\r';
             *pszEOL = '\n';
@@ -1864,6 +1908,13 @@ int CPLHTTPParseMultipartMime( CPLHTTPResult *psResult )
         psPart->nDataLen =
             static_cast<int>(
                 pszNext - reinterpret_cast<char *>(psPart->pabyData));
+        // Normally the part should end with "\r\n--boundary_marker"
+        if( psPart->nDataLen >= 2 && pszNext[-2] == '\r' &&
+            pszNext[-1] == '\n' )
+        {
+            psPart->nDataLen -= 2;
+        }
+
         pszNext += osBoundary.size();
 
         if( STARTS_WITH(pszNext, "--") )

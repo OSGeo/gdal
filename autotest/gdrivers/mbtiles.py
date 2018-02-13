@@ -36,6 +36,7 @@ from osgeo import ogr
 sys.path.append( '../pymod' )
 
 import gdaltest
+import webserver
 
 ###############################################################################
 # Get the mbtiles driver
@@ -123,12 +124,7 @@ def mbtiles_3():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if gdal.GetDriverByName( 'HTTP' ) is None:
         return 'skip'
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
@@ -166,6 +162,91 @@ def mbtiles_3():
             return 'skip'
         return 'fail'
 
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_start_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_png():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte.mbtiles' : open('data/byte.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_stop_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port != 0:
+        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
 
@@ -410,6 +491,33 @@ def mbtiles_8():
     if got_ct is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if out_ds.GetRasterBand(1).GetBlockSize() != [256,256]:
+        gdaltest.post_reason('fail')
+        print(out_ds.GetRasterBand(1).GetBlockSize())
+        return 'fail'
+    out_ds = None
+
+
+    # 512 pixel tiles
+    src_ds = gdal.Open('data/small_world_pct.tif')
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512']  )
+    out_ds = None
+    src_ds = None
+
+    expected_cs = [ 60844, 7388, 53813 ]
+    out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    got_ct = out_ds.GetRasterBand(1).GetColorTable()
+    if got_ct is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetRasterBand(1).GetBlockSize() != [512,512]:
+        gdaltest.post_reason('fail')
+        return 'fail'
     out_ds = None
 
     gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
@@ -601,6 +709,10 @@ gdaltest_list = [
     mbtiles_1,
     mbtiles_2,
     mbtiles_3,
+    mbtiles_start_webserver,
+    mbtiles_http_jpeg,
+    mbtiles_http_png,
+    mbtiles_stop_webserver,
     mbtiles_4,
     mbtiles_5,
     mbtiles_6,

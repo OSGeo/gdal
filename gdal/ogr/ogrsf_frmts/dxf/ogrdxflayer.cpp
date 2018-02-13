@@ -35,6 +35,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 #include <memory>
 
@@ -184,6 +185,8 @@ void OGRDXFLayer::TranslateGenericProperty( OGRDXFFeature *poFeature,
                 TextRecode( pszValue ).c_str() ).c_str() );
 
             poFeature->SetField( "RawCodeValues", papszRawCodeValues );
+
+            CSLDestroy(papszRawCodeValues);
         }
         break;
     }
@@ -1302,6 +1305,17 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 }
 
 /************************************************************************/
+/*                             SafeAbs()                                */
+/************************************************************************/
+
+static inline int SafeAbs(int x)
+{
+    if( x == std::numeric_limits<int>::min() )
+        return std::numeric_limits<int>::max();
+    return abs(x);
+}
+
+/************************************************************************/
 /*                         TranslatePOLYLINE()                          */
 /*                                                                      */
 /*      We also capture the following VERTEXes.                         */
@@ -1413,19 +1427,20 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
                 break;
 
               case 71:
-                vertexIndex71 = atoi(szLineBuf);
+                // See comment below about negative values for 71, 72, 73, 74
+                vertexIndex71 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 72:
-                vertexIndex72 = atoi(szLineBuf);
+                vertexIndex72 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 73:
-                vertexIndex73 = atoi(szLineBuf);
+                vertexIndex73 = SafeAbs(atoi(szLineBuf));
                 break;
 
               case 74:
-                vertexIndex74 = atoi(szLineBuf);
+                vertexIndex74 = SafeAbs(atoi(szLineBuf));
                 break;
 
               default:
@@ -1446,7 +1461,10 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
         }
 
         // Note - If any index out of vertexIndex71, vertexIndex72, vertexIndex73 or vertexIndex74
-        // is negative, it means that the line starting from that vertex is invisible
+        // is negative, it means that the line starting from that vertex is invisible.
+        // However, it still needs to be constructed as part of the resultant
+        // polyhedral surface; there is no way to specify the visibility of individual edges
+        // in a polyhedral surface at present
 
         if (nVertexFlag == 128 && papoPoints != nullptr)
         {
@@ -1455,7 +1473,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
             int iPoint = 0;
             int startPoint = -1;
             poLR->set3D(TRUE);
-            if (vertexIndex71 > 0 && vertexIndex71 <= nPoints)
+            if (vertexIndex71 != 0 && vertexIndex71 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex71-1;
@@ -1463,7 +1481,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex71 = 0;
             }
-            if (vertexIndex72 > 0 && vertexIndex72 <= nPoints)
+            if (vertexIndex72 != 0 && vertexIndex72 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex72-1;
@@ -1471,7 +1489,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex72 = 0;
             }
-            if (vertexIndex73 > 0 && vertexIndex73 <= nPoints)
+            if (vertexIndex73 != 0 && vertexIndex73 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex73-1;
@@ -1479,7 +1497,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
                 iPoint++;
                 vertexIndex73 = 0;
             }
-            if (vertexIndex74 > 0 && vertexIndex74 <= nPoints)
+            if (vertexIndex74 != 0 && vertexIndex74 <= nPoints)
             {
                 if (startPoint == -1)
                     startPoint = vertexIndex74-1;
@@ -1535,6 +1553,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
     if (poPS->getNumGeometries() > 0)
     {
         poFeature->SetGeometryDirectly((OGRGeometry *)poPS);
+        PrepareBrushStyle( poFeature );
         return poFeature;
     }
 
@@ -1762,7 +1781,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLINE()
         }
     }
 
-    poFeature->ApplyOCSTransformer( poMLS );
+    // Apparently extrusions are ignored for MLINE entities.
+    //poFeature->ApplyOCSTransformer( poMLS );
     poFeature->SetGeometryDirectly( poMLS );
 
     PrepareLineStyle( poFeature );
@@ -3204,7 +3224,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
     if( !poDS->InlineBlocks() && bHasAttribs &&
         poFeatureDefn->GetFieldIndex( "BlockAttributes" ) != -1 )
     {
-        papszAttribs = new char*[apoAttribs.size() + 1];
+        papszAttribs = static_cast<char**>(
+            CPLCalloc(apoAttribs.size() + 1, sizeof(char*)));
         int iIndex = 0;
 
         for( auto oIt = apoAttribs.begin(); oIt != apoAttribs.end(); ++oIt )
@@ -3213,13 +3234,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
             osAttribString += " ";
             osAttribString += (*oIt)->GetFieldAsString( "Text" );
 
-            papszAttribs[iIndex] = new char[osAttribString.length() + 1];
-            CPLStrlcpy( papszAttribs[iIndex], osAttribString.c_str(),
-                osAttribString.length() + 1 );
+            papszAttribs[iIndex] = VSIStrdup(osAttribString);
 
             iIndex++;
         }
-        papszAttribs[iIndex] = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3249,6 +3267,8 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
         if( apoPendingFeatures.size() > 100000 )
             break;
     }
+
+    CSLDestroy(papszAttribs);
 
     // The block geometries were appended to apoPendingFeatures
     delete poTemplateFeature;

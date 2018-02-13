@@ -569,6 +569,70 @@ def ogr_xlsx_14():
 
     return 'success'
 
+###############################################################################
+# Test appending a layer to an existing document
+
+def ogr_xlsx_15():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    out_filename = '/vsimem/ogr_xlsx_15.xlsx'
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', options = '-f XLSX -nln first')
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', options = '-update -nln second')
+
+    ds = ogr.Open(out_filename)
+    if ds.GetLayerByName('first').GetFeatureCount() == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerByName('second').GetFeatureCount() == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(out_filename)
+    return 'success'
+
+###############################################################################
+# Test Boolean
+
+def ogr_xlsx_boolean():
+
+    drv = ogr.GetDriverByName('XLSX')
+    if drv is None:
+        return 'skip'
+
+    out_filename = '/vsimem/ogr_xlsx_boolean.xlsx'
+    ds = drv.CreateDataSource(out_filename)
+    lyr = ds.CreateLayer('foo')
+    fld_defn = ogr.FieldDefn('Field1', ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    lyr.CreateField(fld_defn)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField(0, 1)
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ds = ogr.Open(out_filename)
+    lyr = ds.GetLayer(0)
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetType() != ogr.OFTInteger:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetLayerDefn().GetFieldDefn(0).GetSubType() != ogr.OFSTBoolean:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(out_filename)
+
+    return 'success'
+
 gdaltest_list = [
     ogr_xlsx_1,
     ogr_xlsx_2,
@@ -583,8 +647,9 @@ gdaltest_list = [
     ogr_xlsx_11,
     ogr_xlsx_12,
     ogr_xlsx_13,
-    ogr_xlsx_14
-
+    ogr_xlsx_14,
+    ogr_xlsx_15,
+    ogr_xlsx_boolean,
 ]
 
 if __name__ == '__main__':

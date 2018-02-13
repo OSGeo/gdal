@@ -328,7 +328,8 @@ VSIGZipHandle::VSIGZipHandle( VSIVirtualHandle* poBaseHandle,
     m_pszBaseFileName(pszBaseFileName ? CPLStrdup(pszBaseFileName) : nullptr),
     m_bWriteProperties(CPLTestBool(
         CPLGetConfigOption("CPL_VSIL_GZIP_WRITE_PROPERTIES", "YES"))),
-    m_bCanSaveInfo(true),
+    m_bCanSaveInfo(CPLTestBool(
+        CPLGetConfigOption("CPL_VSIL_GZIP_SAVE_INFO", "YES"))),
     z_err(Z_OK),
     z_eof(0),
     outbuf(nullptr),
@@ -2773,7 +2774,7 @@ void* CPLZLibInflate( const void* ptr, size_t nBytes,
     strm.opaque = nullptr;
     strm.avail_in = static_cast<uInt>(nBytes);
     strm.next_in = (Bytef*) ptr;
-    int ret = inflateInit(&strm);
+    int ret = inflateInit2(&strm, MAX_WBITS + 32);
     if( ret != Z_OK )
     {
         if( pnOutBytes != nullptr )

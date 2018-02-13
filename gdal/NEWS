@@ -44,7 +44,7 @@ Build(Windows):
 Port:
  * /vsicurl/: fix occasional inappropriate failures in Read() with some combinations of initial offset, file size and read request size (#6901)
  * /vsicurl/: add a CPL_VSIL_CURL_NON_CACHED configuration option, so as to be able to specify filenames whose content must not be cached after dataset closing
- * /vsicurl/: honour GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY config options. Add extented filename syntax to pass options use_head, max_retry, retry_delay and list_dir.
+ * /vsicurl/: honour GDAL_HTTP_MAX_RETRY and GDAL_HTTP_RETRY_DELAY config options. Add extended filename syntax to pass options use_head, max_retry, retry_delay and list_dir.
  * /vsicurl/: enable redirection optimization on signed URLs of Google Cloud Storage. Helps for the PLScenes driver (fixes #7067)
  * /vsicurl/ and derived filesystems: redirect ReadDir() to ReadDirEx() (#7045)
  * /vsicurl/ and related file systems: add compatibility with HTTP/2 (requires recent enough curl, buit against nghttp2). Can be controlled with the GDAL_HTTP_VERSION=1.0/1.1/2/2TLS
@@ -64,7 +64,7 @@ Port:
  * /vsis3/ and /vsigs/: take into account user provided x-amz- / x-goog- HTTP headers with GDAL_HTTP_HEADER_FILE
  * Fix CPLReadDirRecursive() to behave properly on /vsis3/ buckets that have foo (file) and foo/ (sub-directory) entries (#7136)
  * /vsis3, /vsigs, /vsioss, /vsiaz: fix support of non-ASCII characters in keys (#7143)
- * Add a CPLGetErrorCounter() function that can be used to test if new errors have been emited
+ * Add a CPLGetErrorCounter() function that can be used to test if new errors have been emitted
  * Add cpl_safemaths.hpp to detect integer overflows (#6229)
  * /vsigzip/: avoid trying to write a .gz.properties file on a /vsicurl/ file (#7016)
  * CPLStrtod(): parse string like '-1.#IND0000000' as NaN instead of -1 (seen when looking at refs #7031, but does not fix it)
@@ -85,7 +85,7 @@ Core:
  * GDALDatasetCopyWholeRaster(), GDALRasterBandCopyWholeRaster(), GDALCreateCopy(): always call AdviseRead() on the full extent of the source dataset (#7082)
 
 Algorithms:
- * Warper: revise/improver how working data type is infered from other parameters
+ * Warper: revise/improver how working data type is inferred from other parameters
  * Warper: when operating on single-band, skip target pixels whose source center pixel is nodata (2.2 regression, #7001)
  * Warper: avoid blocking when number of rows is 1 and NUM_THREADS > 1 (#7041). Also limit the number of threads so that each one processes at least 65536 pixels
  * Warper: use AdviseRead() when source chunks are sufficiently compact (#7082)
@@ -150,7 +150,7 @@ DTED driver:
 
 ECW driver:
  * fix Windows compilation against old ECW SDK and VS < 2015 (#6943)
- * make AdviseRead() to store its call parameters, and only do the actual work in RunDeferedAdviseRead() if TryWinRasterIO() determines that the IRasterIO() parameters are compatible of the AdviseRead() ones (#7082)
+ * make AdviseRead() to store its call parameters, and only do the actual work in RunDeferredAdviseRead() if TryWinRasterIO() determines that the IRasterIO() parameters are compatible of the AdviseRead() ones (#7082)
 
 ENVI driver:
  * support 'major frame offsets' keyword (#7114)
@@ -250,7 +250,7 @@ JP2KAK driver:
 JP2OpenJPEG driver:
  * add support for OpenJPEG 2.2 (#7002) and 2.3 (#7074). Drop support for openjpeg 2.0
  * fix performance issues with small images with very small tile size, such as some Sentinel2 quicklooks (#7012)
- * emit warning if GMLJP2v2 explictly requested but georeferencing implemented
+ * emit warning if GMLJP2v2 explicitly requested but georeferencing implemented
 
 JPEG driver:
  * Add compatibility with libjpeg-turbo 1.5.2 that honours max_memory_to_use
@@ -599,7 +599,7 @@ PDF driver:
 PGeo driver:
 
 PG driver:
- * do not be confused by a 'geometry' table in a non-PostGIS enabled detabase (#6896)
+ * do not be confused by a 'geometry' table in a non-PostGIS enabled database (#6896)
  * PG/PGDump: make sure serial sequence is updated at layer closing/end-of-copy if we inserted features with fixed ids (#7032)
 
 PGDump driver:
@@ -1999,7 +1999,7 @@ Core:
    Use prepared geometry containment as pretest in layer Intersection method if requested.
  * Bail out from layer algebra methods if GEOS calls fail and not SKIP_FAILURES.
  * OGR_G_SetPoints(): error out if padfX or padfY == NULL, do not change coordinate dimension to 3D when pabyZ == NULL, fix optimization on linestring to call setPoints() only if the strides are the ones of a double, not 0 as incorrectly done before (#6344)
- * OGRParseDate(): more strict validation to reject invalide dates (#6452)
+ * OGRParseDate(): more strict validation to reject invalid dates (#6452)
 
 OGRSpatialReference:
  * Upgrade to EPSG database v8.8
