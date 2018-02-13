@@ -38,6 +38,7 @@ import ogrtest
 import webserver
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 
@@ -1378,6 +1379,48 @@ def ogr_mvt_write_limitations_max_features():
     return 'success'
 
 ###############################################################################
+
+def ogr_mvt_write_custom_tiling_scheme():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84");
+    lyr = src_ds.CreateLayer('mylayer', srs = srs)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(12 71,13 72)'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT',
+                                  datasetCreationOptions = ['TILING_SCHEME=EPSG:3067,-548576,8388608,2097152'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out/1')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    if out_lyr.GetSpatialRef().ExportToWkt().find('3067') < 0 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((-40160 7944704,21024 8044800))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.RmdirRecursive('/vsimem/out')
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1414,6 +1457,7 @@ gdaltest_list = [
     ogr_mvt_write_mbtiles,
     ogr_mvt_write_limitations_max_size,
     ogr_mvt_write_limitations_max_features,
+    ogr_mvt_write_custom_tiling_scheme,
 ]
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]

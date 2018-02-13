@@ -49,11 +49,10 @@
 
 CPL_CVSID("$Id$")
 
+const char* SRS_EPSG_3857 = "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
+
 // WebMercator related constants
 constexpr double kmSPHERICAL_RADIUS = 6378137.0;
-constexpr double kmMAX_GM =  kmSPHERICAL_RADIUS * M_PI;  // 20037508.342789244
-
-const char* SRS_EPSG_3857 = "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
 
 constexpr int knMAX_FILES_PER_DIR = 10000;
 
@@ -84,6 +83,22 @@ constexpr size_t knMAX_FIELD_NAME_LENGTH = 256;
 #define SQLITE_STATIC      ((sqlite3_destructor_type)nullptr)
 
 #endif
+
+/************************************************************************/
+/*                    InitWebMercatorTilingScheme()                     */
+/************************************************************************/
+
+static void InitWebMercatorTilingScheme(OGRSpatialReference* poSRS,
+                                        double& dfTopX,
+                                        double& dfTopY,
+                                        double& dfTileDim0)
+{
+    constexpr double kmMAX_GM =  kmSPHERICAL_RADIUS * M_PI;  // 20037508.342789244
+    poSRS->SetFromUserInput(SRS_EPSG_3857);
+    dfTopX = -kmMAX_GM;
+    dfTopY = kmMAX_GM;
+    dfTileDim0 = 2 * kmMAX_GM;
+}
 
 /************************************************************************/
 /*                           GetCmdId()                                 */
@@ -267,6 +282,10 @@ class OGRMVTDataset : public GDALDataset
     CPLString                                   m_osMetadataMemFilename;
     bool                                        m_bClip = true;
     CPLString                                   m_osTileExtension{"pbf"};
+    OGRSpatialReference*                        m_poSRS = nullptr;
+    double                                      m_dfTileDim0 = 0.0;
+    double                                      m_dfTopXOrigin = 0.0;
+    double                                      m_dfTopYOrigin = 0.0;
 
     static GDALDataset* OpenDirectory(GDALOpenInfo*);
 
@@ -282,6 +301,11 @@ class OGRMVTDataset : public GDALDataset
                         { return FALSE; }
 
     static GDALDataset* Open(GDALOpenInfo*);
+
+    OGRSpatialReference* GetSRS() { return m_poSRS; }
+    double GetTileDim0() const { return m_dfTileDim0; }
+    double GetTopXOrigin() const { return m_dfTopXOrigin; }
+    double GetTopYOrigin() const { return m_dfTopYOrigin; }
 };
 
 /************************************************************************/
@@ -361,10 +385,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset* poDS,
 
     if( m_poDS->m_bGeoreferenced )
     {
-        OGRSpatialReference* poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_EPSG_3857);
-        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poSRS->Release();
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poDS->GetSRS());
     }
 
     Init(oFields);
@@ -1419,10 +1440,7 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     m_poFeatureDefn->SetGeomType(eGeomType);
     m_poFeatureDefn->Reference();
 
-    OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_EPSG_3857);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    poSRS->Release();
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
 
     if( m_bJsonField )
     {
@@ -1706,21 +1724,21 @@ void OGRMVTDirectoryLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     }
 
     if( sEnvelope.IsInit() &&
-        sEnvelope.MinX >= -10 * kmMAX_GM &&
-        sEnvelope.MinY >= -10 * kmMAX_GM &&
-        sEnvelope.MaxX <= 10 * kmMAX_GM &&
-        sEnvelope.MaxY <= 10 * kmMAX_GM )
+        sEnvelope.MinX >= -10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MinY >= -10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MaxX <= 10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MaxY <= 10 * m_poDS->GetTileDim0() )
     {
-        const double dfTileDim = 2 * kmMAX_GM / (1 << m_nZ);
+        const double dfTileDim = m_poDS->GetTileDim0() / (1 << m_nZ);
         m_nFilterMinX = std::max(0, static_cast<int>(
-            floor((sEnvelope.MinX + kmMAX_GM) / dfTileDim)));
+            floor((sEnvelope.MinX - m_poDS->GetTopXOrigin()) / dfTileDim)));
         m_nFilterMinY = std::max(0, static_cast<int>(
-            floor((kmMAX_GM - sEnvelope.MaxY) / dfTileDim)));
+            floor((m_poDS->GetTopYOrigin() - sEnvelope.MaxY) / dfTileDim)));
         m_nFilterMaxX = std::min(static_cast<int>(
-            ceil((sEnvelope.MaxX + kmMAX_GM) / dfTileDim)),
+            ceil((sEnvelope.MaxX - m_poDS->GetTopXOrigin()) / dfTileDim)),
             (1 << m_nZ)-1);
         m_nFilterMaxY = std::min(static_cast<int>(
-            ceil((kmMAX_GM - sEnvelope.MinY) / dfTileDim)),
+            ceil((m_poDS->GetTopYOrigin() - sEnvelope.MinY) / dfTileDim)),
             (1 << m_nZ)-1);
     }
     else
@@ -1845,9 +1863,16 @@ OGRFeature* OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
 /************************************************************************/
 
 OGRMVTDataset::OGRMVTDataset(GByte* pabyData):
-    m_pabyData(pabyData)
+    m_pabyData(pabyData),
+    m_poSRS(new OGRSpatialReference())
 {
     m_bClip = CPLTestBool(CPLGetConfigOption("OGR_MVT_CLIP", "YES"));
+
+    // Default WebMercator tiling scheme
+    InitWebMercatorTilingScheme(m_poSRS,
+                                m_dfTopXOrigin,
+                                m_dfTopYOrigin,
+                                m_dfTileDim0);
 }
 
 /************************************************************************/
@@ -1859,6 +1884,7 @@ OGRMVTDataset::~OGRMVTDataset()
     VSIFree(m_pabyData);
     if( !m_osMetadataMemFilename.empty() )
         VSIUnlink(m_osMetadataMemFilename);
+    m_poSRS->Release();
 }
 
 /************************************************************************/
@@ -2294,6 +2320,10 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
                          CPLJSONArray& oVectorLayers,
                          CPLJSONArray& oTileStatLayers,
                          CPLJSONObject& oBounds,
+                         OGRSpatialReference* poSRS,
+                         double& dfTopX,
+                         double& dfTopY,
+                         double& dfTileDim0,
                          const CPLString& osMetadataMemFilename)
 
 {
@@ -2315,6 +2345,19 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     }
     if( !bLoadOK )
         return false;
+
+    CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
+    CPLJSONObject oTopX(oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
+    CPLJSONObject oTopY(oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
+    CPLJSONObject oTileDim0(oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    if( oCrs.IsValid() && oTopX.IsValid() && oTopY.IsValid() &&
+        oTileDim0.IsValid() )
+    {
+        poSRS->SetFromUserInput( oCrs.ToString().c_str() );
+        dfTopX = oTopX.ToDouble();
+        dfTopY = oTopY.ToDouble();
+        dfTileDim0 = oTileDim0.ToDouble();
+    }
 
     oVectorLayers.Deinit();
     oTileStatLayers.Deinit();
@@ -2351,6 +2394,37 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     }
 
     return oVectorLayers.IsValid();
+}
+
+/************************************************************************/
+/*                       ConvertFromWGS84()                             */
+/************************************************************************/
+
+static void ConvertFromWGS84(OGRSpatialReference* poTargetSRS,
+                             double& dfX0, double& dfY0,
+                             double& dfX1, double& dfY1)
+{
+    OGRSpatialReference oSRS_EPSG3857;
+    oSRS_EPSG3857.SetFromUserInput(SRS_EPSG_3857);
+
+    if( poTargetSRS->IsSame(&oSRS_EPSG3857) )
+    {
+        LongLatToSphericalMercator(&dfX0, &dfY0);
+        LongLatToSphericalMercator(&dfX1, &dfY1);
+    }
+    else
+    {
+        OGRSpatialReference oSRS_EPSG4326;
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        OGRCoordinateTransformation* poCT = 
+            OGRCreateCoordinateTransformation(&oSRS_EPSG4326, poTargetSRS);
+        if( poCT )
+        {
+            poCT->Transform(1, &dfX0, &dfY0);
+            poCT->Transform(1, &dfX1, &dfY1);
+            delete poCT;
+        }
+    }
 }
 
 /************************************************************************/
@@ -2612,6 +2686,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
         CPLSPrintf("/vsimem/%p_metadata.json", poDS);
     if( !LoadMetadata(osMetadataFile, osMetadataContent,
                       oVectorLayers, oTileStatLayers, oBounds,
+                      poDS->m_poSRS,
+                      poDS->m_dfTopXOrigin,
+                      poDS->m_dfTopYOrigin,
+                      poDS->m_dfTileDim0,
                       osMetadataMemFilename) )
     {
         delete poDS;
@@ -2630,8 +2708,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             double dfY0 = CPLAtof(aosTokens[1]);
             double dfX1 = CPLAtof(aosTokens[2]);
             double dfY1 = CPLAtof(aosTokens[3]);
-            LongLatToSphericalMercator(&dfX0, &dfY0);
-            LongLatToSphericalMercator(&dfX1, &dfY1);
+            ConvertFromWGS84(poDS->m_poSRS,
+                             dfX0, dfY0, dfX1, dfY1);
             bExtentValid = true;
             sExtent.MinX = dfX0;
             sExtent.MinY = dfY0;
@@ -2650,8 +2728,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MinY = oBoundArray[1].ToDouble();
             sExtent.MaxX = oBoundArray[2].ToDouble();
             sExtent.MaxY = oBoundArray[3].ToDouble();
-            LongLatToSphericalMercator(&sExtent.MinX, &sExtent.MinY);
-            LongLatToSphericalMercator(&sExtent.MaxX, &sExtent.MaxY);
+            ConvertFromWGS84(poDS->m_poSRS,
+                             sExtent.MinX, sExtent.MinY,
+                             sExtent.MaxX, sExtent.MaxY);
         }
     }
 
@@ -2927,6 +3006,24 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    CPLJSONArray oVectorLayers;
+    oVectorLayers.Deinit();
+
+    CPLJSONArray oTileStatLayers;
+    oTileStatLayers.Deinit();
+
+    if( !osMetadataFile.empty() )
+    {
+        CPLJSONObject oBounds;
+        LoadMetadata(osMetadataFile, CPLString(),
+                     oVectorLayers, oTileStatLayers, oBounds,
+                     poDS->m_poSRS,
+                     poDS->m_dfTopXOrigin,
+                     poDS->m_dfTopYOrigin,
+                     poDS->m_dfTileDim0,
+                     CPLString());
+    }
+
     if( CPLGetValueType(osX) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osZ) == CPL_VALUE_INTEGER )
@@ -2939,24 +3036,10 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             nY >= 0 && nY < (1 << nZ) )
         {
             poDS->m_bGeoreferenced = true;
-            poDS->m_dfTileDim = 2 * kmMAX_GM / (1 << nZ);
-            poDS->m_dfTopX = -kmMAX_GM + nX * poDS->m_dfTileDim;
-            poDS->m_dfTopY = kmMAX_GM - nY * poDS->m_dfTileDim;
+            poDS->m_dfTileDim = poDS->m_dfTileDim0 / (1 << nZ);
+            poDS->m_dfTopX = poDS->m_dfTopXOrigin + nX * poDS->m_dfTileDim;
+            poDS->m_dfTopY = poDS->m_dfTopYOrigin - nY * poDS->m_dfTileDim;
         }
-    }
-
-    CPLJSONArray oVectorLayers;
-    oVectorLayers.Deinit();
-
-    CPLJSONArray oTileStatLayers;
-    oTileStatLayers.Deinit();
-
-    if( !osMetadataFile.empty() )
-    {
-        CPLJSONObject oBounds;
-        LoadMetadata(osMetadataFile, CPLString(),
-                     oVectorLayers, oTileStatLayers, oBounds,
-                     CPLString());
     }
 
     try
@@ -3022,6 +3105,7 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
                 SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
             }
         }
+
         return poDS;
     }
     catch( const GPBException& e )
@@ -3098,6 +3182,10 @@ class OGRMVTWriterDataset: public GDALDataset
         CPLString                              m_osBounds;
         CPLString                              m_osCenter;
         CPLString                              m_osExtension{"pbf"};
+        OGRSpatialReference*                   m_poSRS = nullptr;
+        double                                 m_dfTopX = 0.0;
+        double                                 m_dfTopY = 0.0;
+        double                                 m_dfTileDim0 = 0.0;
 
         OGRErr              PreGenerateForTile(int nZ, int nX, int nY,
                                                const CPLString& osTargetName,
@@ -3115,7 +3203,7 @@ class OGRMVTWriterDataset: public GDALDataset
                                                GIntBig nSerial,
                                                OGRGeometry* poGeom) const;
 
-        void                WebMercatorToTileCoords(double dfX,
+        void                ConvertToTileCoords(double dfX,
                                                   double dfY,
                                                   int& nX,
                                                   int& nY,
@@ -3208,6 +3296,8 @@ class OGRMVTWriterDataset: public GDALDataset
                                    int nBandsIn,
                                    GDALDataType eDT,
                                    char **papszOptions );
+
+        OGRSpatialReference* GetSRS() { return m_poSRS; }
 };
 
 /************************************************************************/
@@ -3254,14 +3344,11 @@ OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset* poDS,
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->Reference();
 
-    OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_EPSG_3857);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    poSRS->Release();
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
 
-    if( poSRSIn != nullptr && !poSRS->IsSame(poSRSIn) )
+    if( poSRSIn != nullptr && !poDS->GetSRS()->IsSame(poSRSIn) )
     {
-        m_poCT = OGRCreateCoordinateTransformation( poSRSIn, poSRS );
+        m_poCT = OGRCreateCoordinateTransformation( poSRSIn, poDS->GetSRS() );
         if( m_poCT == nullptr  )
         {
             // If we can't create a transformation, issue a warning - but
@@ -3273,7 +3360,7 @@ OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset* poDS,
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Failed to create coordinate transformation between the "
-                "input coordinate system and WGS84.  This may be because "
+                "input and target coordinate systems.  This may be because "
                 "they are not transformable, or because projection "
                 "services (PROJ.4 DLL/.so) could not be loaded.  "
                 "MVT geometries may not render correctly.  "
@@ -3341,6 +3428,12 @@ OGRErr OGRMVTWriterLayer::ICreateFeature( OGRFeature* poFeature )
 
 OGRMVTWriterDataset::OGRMVTWriterDataset()
 {
+    // Default WebMercator tiling scheme
+    m_poSRS = new OGRSpatialReference();
+    InitWebMercatorTilingScheme(m_poSRS,
+                                m_dfTopX,
+                                m_dfTopY,
+                                m_dfTileDim0);
 }
 
 /************************************************************************/
@@ -3374,13 +3467,14 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         CPLFree(m_pMyVFS->pAppData);
         CPLFree(m_pMyVFS);
     }
+    m_poSRS->Release();
 }
 
 /************************************************************************/
-/*                        WebMercatorToTileCoords()                     */
+/*                        ConvertToTileCoords()                     */
 /************************************************************************/
 
-void OGRMVTWriterDataset::WebMercatorToTileCoords(double dfX,
+void OGRMVTWriterDataset::ConvertToTileCoords(double dfX,
                                                   double dfY,
                                                   int& nX,
                                                   int& nY,
@@ -3431,7 +3525,7 @@ bool OGRMVTWriterDataset::EncodeLineString(MVTTileLayerFeature *poGPBFeature,
         int nSrcIdx = bReverseOrder ? poLS->getNumPoints() - 1 - i : i;
         double dfX = poLS->getX(nSrcIdx);
         double dfY = poLS->getY(nSrcIdx);
-        WebMercatorToTileCoords(dfX, dfY, nX, nY,
+        ConvertToTileCoords(dfX, dfY, nX, nY,
                                 dfTopX, dfTopY, dfTileDim);
         int nDiffX = nX - nLastX;
         int nDiffY = nY - nLastY;
@@ -3753,10 +3847,10 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                                                GIntBig nSerial,
                                                OGRGeometry* poGeom) const
 {
-    double dfTileDim = 2 * kmMAX_GM / (1 << nZ);
+    double dfTileDim = m_dfTileDim0 / (1 << nZ);
     double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-    double dfTopX = -kmMAX_GM + nTileX * dfTileDim;
-    double dfTopY = kmMAX_GM - nTileY * dfTileDim;
+    double dfTopX = m_dfTopX + nTileX * dfTileDim;
+    double dfTopY = m_dfTopY - nTileY * dfTileDim;
     double dfBottomRightX = dfTopX + dfTileDim;
     double dfBottomRightY = dfTopY - dfTileDim;
     double dfIntersectTopX = dfTopX - dfBuffer;
@@ -3837,7 +3931,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
             double dfX = poPoint->getX();
             double dfY = poPoint->getY();
             bGeomOK = true;
-            WebMercatorToTileCoords(dfX, dfY, nX, nY,
+            ConvertToTileCoords(dfX, dfY, nX, nY,
                                     dfTopX, dfTopY, dfTileDim);
             poGPBFeature->addGeometry( GetCmdCountCombined(knCMD_MOVETO, 1) );
             poGPBFeature->addGeometry( EncodeSInt(nX) );
@@ -3862,7 +3956,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     int nX, nY;
                     double dfX = poPoint->getX();
                     double dfY = poPoint->getY();
-                    WebMercatorToTileCoords(dfX, dfY, nX, nY,
+                    ConvertToTileCoords(dfX, dfY, nX, nY,
                                             dfTopX, dfTopY, dfTileDim);
                     if( oSetUniqueCoords.find(std::pair<int,int>(nX,nY)) ==
                             oSetUniqueCoords.end() )
@@ -4950,26 +5044,39 @@ static void SphericalMercatorToLongLat(double* x, double* y)
 /*                          WriteMetadataItem()                         */
 /************************************************************************/
 
-static
-bool WriteMetadataItem(const char* pszKey, const char* pszValue,
-                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+template<class T> static
+bool WriteMetadataItemT(const char* pszKey, T value, const char* pszValueFormat,
+                        sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
 {
     if( hDBMBTILES )
     {
         char* pszSQL;
 
         pszSQL = sqlite3_mprintf(
-            "INSERT INTO metadata(name, value) VALUES('%q', '%q')",
-            pszKey, pszValue);
+            CPLSPrintf("INSERT INTO metadata(name, value) VALUES('%%q', '%s')",
+                       pszValueFormat),
+            pszKey, value);
         OGRErr eErr = SQLCommand( hDBMBTILES, pszSQL);
         sqlite3_free(pszSQL);
         return eErr == OGRERR_NONE;
     }
     else
     {
-        oRoot.Add(pszKey, pszValue);
+        oRoot.Add(pszKey, value);
         return true;
     }
+}
+
+
+/************************************************************************/
+/*                          WriteMetadataItem()                         */
+/************************************************************************/
+
+static
+bool WriteMetadataItem(const char* pszKey, const char* pszValue,
+                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+{
+    return WriteMetadataItemT(pszKey, pszValue, "%q", hDBMBTILES, oRoot);
 }
 
 /************************************************************************/
@@ -4980,22 +5087,18 @@ static
 bool WriteMetadataItem(const char* pszKey, int nValue,
                        sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
 {
-    if( hDBMBTILES )
-    {
-        char* pszSQL;
+    return WriteMetadataItemT(pszKey, nValue, "%d", hDBMBTILES, oRoot);
+}
 
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO metadata(name, value) VALUES('%q', '%d')",
-            pszKey, nValue);
-        OGRErr eErr = SQLCommand( hDBMBTILES, pszSQL);
-        sqlite3_free(pszSQL);
-        return eErr == OGRERR_NONE;
-    }
-    else
-    {
-        oRoot.Add(pszKey, nValue);
-        return true;
-    }
+/************************************************************************/
+/*                          WriteMetadataItem()                         */
+/************************************************************************/
+
+static
+bool WriteMetadataItem(const char* pszKey, double dfValue,
+                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+{
+    return WriteMetadataItemT(pszKey, dfValue, "%.18g", hDBMBTILES, oRoot);
 }
 
 /************************************************************************/
@@ -5008,10 +5111,57 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
 
-    SphericalMercatorToLongLat(&(m_oEnvelope.MinX),&(m_oEnvelope.MinY));
-    SphericalMercatorToLongLat(&(m_oEnvelope.MaxX),&(m_oEnvelope.MaxY));
-    m_oEnvelope.MinY = std::max(-85.0, m_oEnvelope.MinY);
-    m_oEnvelope.MaxY = std::min(85.0, m_oEnvelope.MaxY);
+    OGRSpatialReference oSRS_EPSG3857;
+    double dfTopXWebMercator;
+    double dfTopYWebMercator;
+    double dfTileDim0WebMercator;
+    InitWebMercatorTilingScheme(&oSRS_EPSG3857,
+                                dfTopXWebMercator,
+                                dfTopYWebMercator,
+                                dfTileDim0WebMercator);
+    const bool bIsStandardTilingScheme =
+        m_poSRS->IsSame(&oSRS_EPSG3857) &&
+        m_dfTopX == dfTopXWebMercator &&
+        m_dfTopY == dfTopYWebMercator &&
+        m_dfTileDim0 == dfTileDim0WebMercator;
+    if( bIsStandardTilingScheme )
+    {
+        SphericalMercatorToLongLat(&(m_oEnvelope.MinX),&(m_oEnvelope.MinY));
+        SphericalMercatorToLongLat(&(m_oEnvelope.MaxX),&(m_oEnvelope.MaxY));
+        m_oEnvelope.MinY = std::max(-85.0, m_oEnvelope.MinY);
+        m_oEnvelope.MaxY = std::min(85.0, m_oEnvelope.MaxY);
+    }
+    else
+    {
+        OGRSpatialReference oSRS_EPSG4326;
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        OGRCoordinateTransformation* poCT = 
+            OGRCreateCoordinateTransformation(m_poSRS, &oSRS_EPSG4326);
+        if( poCT )
+        {
+            OGRPoint oPoint1(m_oEnvelope.MinX, m_oEnvelope.MinY);
+            oPoint1.transform(poCT);
+            OGRPoint oPoint2(m_oEnvelope.MinX, m_oEnvelope.MaxY);
+            oPoint2.transform(poCT);
+            OGRPoint oPoint3(m_oEnvelope.MaxX, m_oEnvelope.MaxY);
+            oPoint3.transform(poCT);
+            OGRPoint oPoint4(m_oEnvelope.MaxX, m_oEnvelope.MinY);
+            oPoint4.transform(poCT);
+            m_oEnvelope.MinX =
+                std::min(std::min(oPoint1.getX(), oPoint2.getX()),
+                         std::min(oPoint3.getX(), oPoint4.getX()));
+            m_oEnvelope.MinY =
+                std::min(std::min(oPoint1.getY(), oPoint2.getY()),
+                         std::min(oPoint3.getY(), oPoint4.getY()));
+            m_oEnvelope.MaxX =
+                std::max(std::max(oPoint1.getX(), oPoint2.getX()),
+                         std::max(oPoint3.getX(), oPoint4.getX()));
+            m_oEnvelope.MaxY =
+                std::max(std::max(oPoint1.getY(), oPoint2.getY()),
+                         std::max(oPoint3.getY(), oPoint4.getY()));
+            delete poCT;
+        }
+    }
     const double dfCenterX = (m_oEnvelope.MinX + m_oEnvelope.MaxX) / 2;
     const double dfCenterY = (m_oEnvelope.MinY + m_oEnvelope.MaxY) / 2;
     CPLString osCenter(CPLSPrintf("%.7f,%.7f,%d", dfCenterX, dfCenterY,
@@ -5035,6 +5185,33 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     {
         WriteMetadataItem("scheme", "tms", m_hDBMBTILES, oRoot);
     }
+
+    // GDAL extension for custom tiling schemes
+    if( !bIsStandardTilingScheme )
+    {
+        const char* pszAuthName = m_poSRS->GetAuthorityName(nullptr);
+        const char* pszAuthCode = m_poSRS->GetAuthorityCode(nullptr);
+        if( pszAuthName && pszAuthCode )
+        {
+            WriteMetadataItem("crs",
+                              CPLSPrintf("%s:%s", pszAuthName, pszAuthCode),
+                              m_hDBMBTILES, oRoot);
+        }
+        else
+        {
+            char* pszWKT = nullptr;
+            m_poSRS->exportToWkt(&pszWKT);
+            WriteMetadataItem("crs", pszWKT, m_hDBMBTILES, oRoot);
+            CPLFree(pszWKT);
+        }
+        WriteMetadataItem("tile_origin_upper_left_x",
+                          m_dfTopX, m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_origin_upper_left_y",
+                          m_dfTopY, m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_dimension_zoom_0",
+                          m_dfTileDim0, m_hDBMBTILES, oRoot);
+    }
+
 
     CPLJSONDocument oJsonDoc;
     CPLJSONObject oJsonRoot = oJsonDoc.GetRoot();
@@ -5262,16 +5439,16 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
 
     for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
     {
-        double dfTileDim = 2 * kmMAX_GM / (1 << nZ);
+        double dfTileDim = m_dfTileDim0 / (1 << nZ);
         double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
         int nTileMinX =
-            static_cast<int>((sExtent.MinX + kmMAX_GM - dfBuffer) / dfTileDim);
+            static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
         int nTileMinY =
-            static_cast<int>((kmMAX_GM - sExtent.MaxY - dfBuffer) / dfTileDim);
+            static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
         int nTileMaxX =
-            static_cast<int>((sExtent.MaxX + kmMAX_GM + dfBuffer) / dfTileDim);
+            static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
         int nTileMaxY =
-            static_cast<int>((kmMAX_GM - sExtent.MinY + dfBuffer) / dfTileDim);
+            static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
         for( int iX = nTileMinX; iX <= nTileMaxX; iX++ )
         {
             for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
@@ -5543,6 +5720,37 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     poDS->m_osExtension = CSLFetchNameValueDef(papszOptions, "TILE_EXTENSION",
                                                poDS->m_osExtension);
 
+    const char* pszTilingScheme = CSLFetchNameValue(papszOptions,
+                                                    "TILING_SCHEME");
+    if( pszTilingScheme )
+    {
+        if( bMBTILES )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Custom TILING_SCHEME not supported with MBTILES output");
+            delete poDS;
+            return nullptr;
+        }
+
+        CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
+        if( aoList.Count() == 4 )
+        {
+            poDS->m_poSRS->SetFromUserInput( aoList[0] );
+            poDS->m_dfTopX = CPLAtof( aoList[1] );
+            poDS->m_dfTopY = CPLAtof( aoList[2] );
+            poDS->m_dfTileDim0 = CPLAtof( aoList[3] );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Wrong format for TILING_SCHEME. "
+                     "Expecting EPSG:XXXX,tile_origin_upper_left_x,"
+                     "tile_origin_upper_left_y,tile_dimension_zoom_0");
+            delete poDS;
+            return nullptr;
+        }
+    }
+
     if( bMBTILES )
     {
         sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
@@ -5662,6 +5870,10 @@ MVT_MBTILES_COMMON_DSCO
         "description='Override default value for bounds metadata item'/>"
 "  <Option name='CENTER' type='string' "
         "description='Override default value for center metadata item'/>"
+"  <Option name='TILING_SCHEME' type='string' "
+        "description='Custom tiling scheme with following format "
+        "\"EPSG:XXXX,tile_origin_upper_left_x,tile_origin_upper_left_y,"
+        "tile_dimension_zoom_0\"'/>"
 "</CreationOptionList>");
 #endif // HAVE_MVT_WRITE_SUPPORT
 
