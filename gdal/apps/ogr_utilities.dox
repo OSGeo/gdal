@@ -581,7 +581,7 @@ to layers using the OGR connection type.
 <p>Extent of input files will be transformed to the desired target
 coordinate reference system. Using this option generates files that are not
 compatible with MapServer &lt; 7.2. Default creates simple rectangular polygons
-in the same coordinate reference system as the input rasters.</p>
+in the same coordinate reference system as the input vector layers.</p>
 </dd>
 <dt><b>-src_srs_name</b> field_name:</dt><dd> (GDAL &gt;= 2.2)
 <p>The name of the field to store the SRS of each tile. This field name can be
