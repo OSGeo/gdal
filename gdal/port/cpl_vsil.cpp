@@ -744,7 +744,7 @@ const char* VSIGetActualURL( const char* pszFilename )
 /**
  * \brief Returns a signed URL of a supplied filename.
  *
- * Currently only returns a non-NULL value for /vsis3/ and /vsioss/
+ * Currently only returns a non-NULL value for /vsis3/, /vsiaz/ and /vsioss/
  * For example "/vsis3/bucket/filename" will be expanded as
  * "https://bucket.s3.amazon.com/filename?X-Amz-Algorithm=AWS4-HMAC-SHA256..."
  * Configuration options that apply for file opening (typically to provide
@@ -753,7 +753,7 @@ const char* VSIGetActualURL( const char* pszFilename )
  *
  * @param pszFilename the path of the filesystem object. UTF-8 encoded.
  * @param papszOptions list of options, or NULL. Depend on file system handler.
- * For /vsis3/ and /vsioss/, the following options are supported:
+ * For /vsis3/, /vsiaz/ and /vsioss/, the following options are supported:
  * <ul>
  * <li>START_DATE=YYMMDDTHHMMSSZ: date and time in UTC following ISO 8601
  *     standard, corresponding to the start of validity of the URL.
@@ -762,6 +762,14 @@ const char* VSIGetActualURL( const char* pszFilename )
  * for the validity of the signed URL. Defaults to 3600 (one hour)</li>
  * <li>VERB=GET/HEAD/DELETE/PUT/POST: HTTP VERB for which the request will be
  * used. Default to GET.</li>
+ * </ul>
+ *
+ * /vsiaz/ supports additional options:
+ * <ul>
+ * <li>SIGNEDIDENTIFIER=value: to relate the given shared access signature
+ * to a corresponding stored access policy.</li>
+ * <li>SIGNEDPERMISSIONS=r|w: permissions associated with the shared access
+ * signature. Normally deduced from VERB.</li>
  * </ul>
  *
  * @return a signed URL, or NULL. Should be freed with CPLFree().

@@ -39,6 +39,37 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_CURL
 
 /************************************************************************/
+/*                            GetSignature()                            */
+/************************************************************************/
+
+static CPLString GetSignature(const CPLString& osStringToSign,
+                              const CPLString& osStorageKeyB64 )
+{
+
+/* -------------------------------------------------------------------- */
+/*      Compute signature.                                              */
+/* -------------------------------------------------------------------- */
+
+    CPLString osStorageKeyUnbase64(osStorageKeyB64);
+    int nB64Length =
+        CPLBase64DecodeInPlace(reinterpret_cast<GByte*>(&osStorageKeyUnbase64[0]));
+    osStorageKeyUnbase64.resize(nB64Length);
+#ifdef DEBUG_VERBOSE
+    CPLDebug("AZURE", "signing key size: %d", nB64Length);
+#endif
+
+    GByte abySignature[CPL_SHA256_HASH_SIZE] = {};
+    CPL_HMAC_SHA256( osStorageKeyUnbase64, nB64Length,
+                     osStringToSign, osStringToSign.size(),
+                     abySignature);
+
+    char* pszB64Signature = CPLBase64Encode(CPL_SHA256_HASH_SIZE, abySignature);
+    CPLString osSignature(pszB64Signature);
+    CPLFree(pszB64Signature);
+    return osSignature;
+}
+
+/************************************************************************/
 /*                          GetAzureBlobHeaders()                       */
 /************************************************************************/
 
@@ -115,22 +146,8 @@ struct curl_slist* GetAzureBlobHeaders( const CPLString& osVerb,
 /*      Compute signature.                                              */
 /* -------------------------------------------------------------------- */
 
-    CPLString osStorageKeyUnbase64(osStorageKeyB64);
-    int nB64Length =
-        CPLBase64DecodeInPlace(reinterpret_cast<GByte*>(&osStorageKeyUnbase64[0]));
-    osStorageKeyUnbase64.resize(nB64Length);
-#ifdef DEBUG_VERBOSE
-    CPLDebug("AZURE", "signing key size: %d", nB64Length);
-#endif
-
-    GByte abySignature[CPL_SHA256_HASH_SIZE] = {};
-    CPL_HMAC_SHA256( osStorageKeyUnbase64, nB64Length,
-                     osStringToSign, osStringToSign.size(),
-                     abySignature);
-
-    char* pszB64Signature = CPLBase64Encode(CPL_SHA256_HASH_SIZE, abySignature);
-    CPLString osAuthorization("SharedKey " + osStorageAccount + ":" + pszB64Signature);
-    CPLFree(pszB64Signature);
+    CPLString osAuthorization("SharedKey " + osStorageAccount + ":" +
+                              GetSignature(osStringToSign, osStorageKeyB64));
 
     struct curl_slist *headers=nullptr;
     headers = curl_slist_append(
@@ -203,7 +220,8 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
+bool VSIAzureBlobHandleHelper::GetConfiguration(char** papszOptions,
+                                                bool& bUseHTTPS,
                                                 CPLString& osEndpoint,
                                                 CPLString& osStorageAccount,
                                                 CPLString& osStorageKey)
@@ -214,7 +232,8 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
                                     "blob.core.windows.net");
 
     const CPLString osStorageConnectionString(
-        CPLGetConfigOption("AZURE_STORAGE_CONNECTION_STRING", ""));
+        CSLFetchNameValueDef(papszOptions, "AZURE_STORAGE_CONNECTION_STRING",
+        CPLGetConfigOption("AZURE_STORAGE_CONNECTION_STRING", "")));
     if( !osStorageConnectionString.empty() )
     {
         osStorageAccount = AzureCSGetParameter(osStorageConnectionString,
@@ -239,12 +258,14 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
     }
     else
     {
-        osStorageAccount =
-            CPLGetConfigOption("AZURE_STORAGE_ACCOUNT", "");
+        osStorageAccount = CSLFetchNameValueDef(papszOptions,
+            "AZURE_STORAGE_ACCOUNT",
+            CPLGetConfigOption("AZURE_STORAGE_ACCOUNT", ""));
         if( !osStorageAccount.empty() )
         {
-            osStorageKey =
-                CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", "");
+            osStorageKey = CSLFetchNameValueDef(papszOptions,
+                "AZURE_STORAGE_ACCESS_KEY",
+                CPLGetConfigOption("AZURE_STORAGE_ACCESS_KEY", ""));
             if( osStorageKey.empty() )
             {
                 const char* pszMsg =
@@ -272,14 +293,16 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(bool& bUseHTTPS,
 /************************************************************************/
 
 VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* pszURI,
-                                                    const char* /*pszFSPrefix*/ )
+                                                    const char* /*pszFSPrefix*/,
+                                                    char** papszOptions )
 {
     bool bUseHTTPS = true;
     CPLString osStorageAccount;
     CPLString osStorageKey;
     CPLString osEndpoint;
 
-    if( !GetConfiguration(bUseHTTPS, osEndpoint, osStorageAccount, osStorageKey) )
+    if( !GetConfiguration(papszOptions,
+                    bUseHTTPS, osEndpoint, osStorageAccount, osStorageKey) )
     {
         return nullptr;
     }
@@ -361,6 +384,82 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
                                 m_oMapQueryParameters,
                                 m_osStorageAccount,
                                 m_osStorageKey );
+}
+
+/************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+CPLString VSIAzureBlobHandleHelper::GetSignedURL(char** papszOptions)
+{
+    CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp());
+    const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
+    if( pszStartDate )
+        osStartDate = pszStartDate;
+    int nYear, nMonth, nDay, nHour = 0, nMin = 0, nSec = 0;
+    if( sscanf(osStartDate, "%04d%02d%02dT%02d%02d%02dZ",
+                &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) < 3 )
+    {
+        return CPLString();
+    }
+    osStartDate = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                nYear, nMonth, nDay, nHour, nMin, nSec);
+
+    struct tm brokendowntime;
+    brokendowntime.tm_year = nYear - 1900;
+    brokendowntime.tm_mon = nMonth - 1;
+    brokendowntime.tm_mday = nDay;
+    brokendowntime.tm_hour = nHour;
+    brokendowntime.tm_min = nMin;
+    brokendowntime.tm_sec = nSec;
+    GIntBig nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+    GIntBig nEndDate = nStartDate + atoi(
+        CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
+    CPLUnixTimeToYMDHMS(nEndDate, &brokendowntime);
+    nYear = brokendowntime.tm_year + 1900;
+    nMonth = brokendowntime.tm_mon + 1;
+    nDay = brokendowntime.tm_mday;
+    nHour = brokendowntime.tm_hour;
+    nMin = brokendowntime.tm_min;
+    nSec = brokendowntime.tm_sec;
+    CPLString osEndDate = CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
+                                nYear, nMonth, nDay, nHour, nMin, nSec);
+
+    CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
+    CPLString osSignedPermissions(CSLFetchNameValueDef(papszOptions,
+        "SIGNEDPERMISSIONS", 
+        (EQUAL(osVerb, "GET") || EQUAL(osVerb, "HEAD")) ? "r" : "w"  ));
+
+    CPLString osSignedIdentifier(CSLFetchNameValueDef(papszOptions,
+                                                     "SIGNEDIDENTIFIER", ""));
+
+    CPLString osStringToSign;
+    osStringToSign += osSignedPermissions + "\n";
+    osStringToSign += osStartDate + "\n";
+    osStringToSign += osEndDate + "\n";
+    osStringToSign += "/" + m_osStorageAccount + "/" + m_osBucket + "\n",
+    osStringToSign += osSignedIdentifier + "\n";
+    osStringToSign += "2012-02-12";
+
+#ifdef DEBUG_VERBOSE
+    CPLDebug("AZURE", "osStringToSign = %s", osStringToSign.c_str());
+#endif
+
+/* -------------------------------------------------------------------- */
+/*      Compute signature.                                              */
+/* -------------------------------------------------------------------- */
+    CPLString osSignature(GetSignature(osStringToSign, m_osStorageKey));
+
+    ResetQueryParameters();
+    AddQueryParameter("sv", "2012-02-12");
+    AddQueryParameter("st", osStartDate);
+    AddQueryParameter("se", osEndDate);
+    AddQueryParameter("sr", "c");
+    AddQueryParameter("sp", osSignedPermissions);
+    AddQueryParameter("sig", osSignature);
+    if( !osSignedIdentifier.empty() )
+        AddQueryParameter("si", osSignedIdentifier);
+    return m_osURL;
 }
 
 
