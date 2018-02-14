@@ -345,9 +345,10 @@ class MVTTile
         void write(GByte** ppabyData) const;
         void write(GByte* pabyData) const;
         std::string write() const;
+#ifdef ADD_MVT_TILE_READ
         bool read(const GByte** ppabyData, const GByte* pabyEnd);
         bool read(const GByte* pabyData, const GByte* pabyEnd);
-
+#endif
         void invalidateCachedSize() { m_bCachedSize = false; m_nCachedSize = 0; }
 };
 
