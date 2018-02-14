@@ -26,10 +26,24 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_georss.h"
+
+#include <cstdio>
+#include <cstring>
+
 #include "cpl_conv.h"
-#include "cpl_string.h"
 #include "cpl_csv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#ifdef HAVE_EXPAT
+#  include "expat.h"
+#endif
+#include "ogr_core.h"
+#include "ogr_expat.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 
@@ -82,8 +96,8 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
-    CPLFree( papoLayers );
-    CPLFree( pszName );
+    CPLFree(papoLayers);
+    CPLFree(pszName);
 }
 
 /************************************************************************/
@@ -93,7 +107,7 @@ OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
 int OGRGeoRSSDataSource::TestCapability( const char * pszCap )
 
 {
-    if( EQUAL(pszCap,ODsCCreateLayer) )
+    if( EQUAL(pszCap, ODsCCreateLayer) )
         return TRUE;
     // else if( EQUAL(pszCap,ODsCDeleteLayer) )
     //    return FALSE;
@@ -110,8 +124,8 @@ OGRLayer *OGRGeoRSSDataSource::GetLayer( int iLayer )
 {
     if( iLayer < 0 || iLayer >= nLayers )
         return nullptr;
-    else
-        return papoLayers[iLayer];
+
+    return papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -238,9 +252,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
 #ifdef HAVE_EXPAT
     pszName = CPLStrdup(pszFilename);
 
-/* -------------------------------------------------------------------- */
-/*      Try to open the file.                                           */
-/* -------------------------------------------------------------------- */
+    // Try to open the file.
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
     if( fp == nullptr )
         return FALSE;
@@ -269,7 +281,7 @@ int OGRGeoRSSDataSource::Open( const char * pszFilename, int bUpdateIn)
         nDone = VSIFEofL(fp);
         if( XML_Parse(oParser, aBuf, nLen, nDone) == XML_STATUS_ERROR )
         {
-            if( nLen <= BUFSIZ-1 )
+            if( nLen <= BUFSIZ - 1 )
                 aBuf[nLen] = 0;
             else
                 aBuf[BUFSIZ-1] = 0;
