@@ -407,6 +407,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     int           nZLevel;
     int           nLZMAPreset;
+    int           nZSTDLevel;
     int           nJpegQuality;
     int           nJpegTablesMode;
 
@@ -7286,6 +7287,7 @@ GTiffDataset::GTiffDataset() :
     bDontReloadFirstBlock(false),
     nZLevel(-1),
     nLZMAPreset(-1),
+    nZSTDLevel(-1),
     nJpegQuality(-1),
     nJpegTablesMode(-1),
     bPromoteTo8Bits(false),
@@ -8493,6 +8495,8 @@ void GTiffDataset::ThreadCompressionFunc( void* pData )
         TIFFSetField(hTIFFTmp, TIFFTAG_ZIPQUALITY, poDS->nZLevel);
     if( poDS->nLZMAPreset > 0 && poDS->nCompression == COMPRESSION_LZMA)
         TIFFSetField(hTIFFTmp, TIFFTAG_LZMAPRESET, poDS->nLZMAPreset);
+    if( poDS->nZSTDLevel > 0 && poDS->nCompression == COMPRESSION_ZSTD)
+        TIFFSetField(hTIFFTmp, TIFFTAG_ZSTD_LEVEL, poDS->nZSTDLevel);
     TIFFSetField(hTIFFTmp, TIFFTAG_PHOTOMETRIC, poDS->nPhotometric);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLEFORMAT, poDS->nSampleFormat);
     TIFFSetField(hTIFFTmp, TIFFTAG_SAMPLESPERPIXEL, poDS->nSamplesPerPixel);
@@ -8640,7 +8644,8 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
            (nCompression == COMPRESSION_ADOBE_DEFLATE ||
             nCompression == COMPRESSION_LZW ||
             nCompression == COMPRESSION_PACKBITS ||
-            nCompression == COMPRESSION_LZMA) ) )
+            nCompression == COMPRESSION_LZMA ||
+            nCompression == COMPRESSION_ZSTD) ) )
         return false;
 
     int nNextCompressionJobAvail = -1;
@@ -9879,6 +9884,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
     poODS->nJpegQuality = l_nJpegQuality;
     poODS->nZLevel = nZLevel;
     poODS->nLZMAPreset = nLZMAPreset;
+    poODS->nZSTDLevel = nZSTDLevel;
     poODS->nJpegTablesMode = nJpegTablesMode;
 
     if( poODS->OpenOffset( hTIFF, ppoActiveDSRef, nOverviewOffset, false,
@@ -11793,6 +11799,8 @@ bool GTiffDataset::SetDirectory( toff_t nNewOffset )
             TIFFSetField(hTIFF, TIFFTAG_ZIPQUALITY, nZLevel);
         if(nLZMAPreset > 0 && nCompression == COMPRESSION_LZMA)
             TIFFSetField(hTIFF, TIFFTAG_LZMAPRESET, nLZMAPreset);
+        if( nZSTDLevel > 0 && nCompression == COMPRESSION_ZSTD)
+            TIFFSetField(hTIFF, TIFFTAG_ZSTD_LEVEL, nZSTDLevel);
     }
 
     return true;
@@ -14061,6 +14069,10 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
     {
         oGTiffMDMD.SetMetadataItem( "COMPRESSION", "LZMA", "IMAGE_STRUCTURE" );
     }
+    else if( nCompression == COMPRESSION_ZSTD )
+    {
+        oGTiffMDMD.SetMetadataItem( "COMPRESSION", "ZSTD", "IMAGE_STRUCTURE" );
+    }
     else
     {
         CPLString oComp;
@@ -14917,6 +14929,24 @@ static int GTiffGetLZMAPreset(char** papszOptions)
     return nLZMAPreset;
 }
 
+static int GTiffGetZSTDPreset(char** papszOptions)
+{
+    int nZSTDLevel = -1;
+    const char* pszValue = CSLFetchNameValue( papszOptions, "ZSTD_LEVEL" );
+    if( pszValue != nullptr )
+    {
+        nZSTDLevel = atoi( pszValue );
+        if( !(nZSTDLevel >= 1 && nZSTDLevel <= 22) )
+        {
+            CPLError( CE_Warning, CPLE_IllegalArg,
+                      "ZSTD_LEVEL=%s value not recognised, ignoring.",
+                      pszValue );
+            nZSTDLevel = -1;
+        }
+    }
+    return nZSTDLevel;
+}
+
 static int GTiffGetZLevel(char** papszOptions)
 {
     int nZLevel = -1;
@@ -15120,6 +15150,7 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
 
     const int l_nZLevel = GTiffGetZLevel(papszParmList);
     const int l_nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
+    const int l_nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
     const int l_nJpegQuality = GTiffGetJpegQuality(papszParmList);
     const int l_nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
 
@@ -15653,6 +15684,8 @@ TIFF *GTiffDataset::CreateLL( const char * pszFilename,
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGQUALITY, l_nJpegQuality );
     else if( l_nCompression == COMPRESSION_LZMA && l_nLZMAPreset != -1)
         TIFFSetField( l_hTIFF, TIFFTAG_LZMAPRESET, l_nLZMAPreset );
+    else if( l_nCompression == COMPRESSION_ZSTD && l_nZSTDLevel != -1)
+        TIFFSetField( l_hTIFF, TIFFTAG_ZSTD_LEVEL, l_nZSTDLevel);
 
     if( l_nCompression == COMPRESSION_JPEG )
         TIFFSetField( l_hTIFF, TIFFTAG_JPEGTABLESMODE, l_nJpegTablesMode );
@@ -16271,6 +16304,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
     poDS->nZLevel = GTiffGetZLevel(papszParmList);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszParmList);
+    poDS->nZSTDLevel = GTiffGetZSTDPreset(papszParmList);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszParmList);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszParmList);
     poDS->InitCreationOrOpenOptions(papszParmList);
@@ -17258,6 +17292,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poDS->nZLevel = GTiffGetZLevel(papszOptions);
     poDS->nLZMAPreset = GTiffGetLZMAPreset(papszOptions);
+    poDS->nZSTDLevel = GTiffGetZSTDPreset(papszOptions);
     poDS->nJpegQuality = GTiffGetJpegQuality(papszOptions);
     poDS->nJpegTablesMode = GTiffGetJpegTablesMode(papszOptions);
     poDS->GetDiscardLsbOption(papszOptions);
@@ -17283,6 +17318,13 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         if( poDS->nLZMAPreset != -1 )
         {
             TIFFSetField( l_hTIFF, TIFFTAG_LZMAPRESET, poDS->nLZMAPreset );
+        }
+    }
+    else if( l_nCompression == COMPRESSION_ZSTD )
+    {
+        if( poDS->nZSTDLevel != -1 )
+        {
+            TIFFSetField( l_hTIFF, TIFFTAG_ZSTD_LEVEL, poDS->nZSTDLevel );
         }
     }
 
@@ -18639,6 +18681,8 @@ int GTIFFGetCompressionMethod(const char* pszValue, const char* pszVariableName)
         nCompression = COMPRESSION_CCITTRLE;
     else if( EQUAL( pszValue, "LZMA" ) )
         nCompression = COMPRESSION_LZMA;
+    else if( EQUAL( pszValue, "ZSTD" ) )
+        nCompression = COMPRESSION_ZSTD;
     else
         CPLError( CE_Warning, CPLE_IllegalArg,
                   "%s=%s value not recognised, ignoring.",
@@ -18668,10 +18712,11 @@ void GDALRegister_GTiff()
     if( GDALGetDriverByName( "GTiff" ) != nullptr )
         return;
 
-    char szCreateOptions[5000] = { '\0' };
-    char szOptionalCompressItems[500] = { '\0' };
+    CPLString osOptions;
+    CPLString osCompressValues;
     bool bHasJPEG = false;
     bool bHasLZMA = false;
+    bool bHasZSTD = false;
 
     GDALDriver *poDriver = new GDALDriver();
 
@@ -18680,14 +18725,14 @@ void GDALRegister_GTiff()
 /*      want to advertise.  If we are using an old libtiff we won't     */
 /*      be able to find out so we just assume all are available.        */
 /* -------------------------------------------------------------------- */
-    strcpy( szOptionalCompressItems, "       <Value>NONE</Value>" );
+    osCompressValues = "       <Value>NONE</Value>";
 
 #if TIFFLIB_VERSION <= 20040919
-    strcat( szOptionalCompressItems,
+    osCompressValues +=
             "       <Value>PACKBITS</Value>"
             "       <Value>JPEG</Value>"
             "       <Value>LZW</Value>"
-            "       <Value>DEFLATE</Value>" );
+            "       <Value>DEFLATE</Value>";
     bool bHasLZW = true;
     bool bHasDEFLATE = true;
 #else
@@ -18699,47 +18744,53 @@ void GDALRegister_GTiff()
     {
         if( c->scheme == COMPRESSION_PACKBITS )
         {
-            strcat( szOptionalCompressItems,
-                    "       <Value>PACKBITS</Value>" );
+            osCompressValues +=
+                    "       <Value>PACKBITS</Value>";
         }
         else if( c->scheme == COMPRESSION_JPEG )
         {
             bHasJPEG = true;
-            strcat( szOptionalCompressItems,
-                    "       <Value>JPEG</Value>" );
+            osCompressValues +=
+                    "       <Value>JPEG</Value>";
         }
         else if( c->scheme == COMPRESSION_LZW )
         {
             bHasLZW = true;
-            strcat( szOptionalCompressItems,
-                    "       <Value>LZW</Value>" );
+            osCompressValues +=
+                    "       <Value>LZW</Value>";
         }
         else if( c->scheme == COMPRESSION_ADOBE_DEFLATE )
         {
             bHasDEFLATE = true;
-            strcat( szOptionalCompressItems,
-                    "       <Value>DEFLATE</Value>" );
+            osCompressValues +=
+                    "       <Value>DEFLATE</Value>";
         }
         else if( c->scheme == COMPRESSION_CCITTRLE )
         {
-            strcat( szOptionalCompressItems,
-                    "       <Value>CCITTRLE</Value>" );
+            osCompressValues +=
+                    "       <Value>CCITTRLE</Value>";
         }
         else if( c->scheme == COMPRESSION_CCITTFAX3 )
         {
-            strcat( szOptionalCompressItems,
-                    "       <Value>CCITTFAX3</Value>" );
+            osCompressValues +=
+                    "       <Value>CCITTFAX3</Value>";
         }
         else if( c->scheme == COMPRESSION_CCITTFAX4 )
         {
-            strcat( szOptionalCompressItems,
-                    "       <Value>CCITTFAX4</Value>" );
+            osCompressValues +=
+                    "       <Value>CCITTFAX4</Value>";
         }
         else if( c->scheme == COMPRESSION_LZMA )
         {
             bHasLZMA = true;
-            strcat( szOptionalCompressItems,
-                    "       <Value>LZMA</Value>" );
+            osCompressValues +=
+                    "       <Value>LZMA</Value>";
+        }
+        else if( c->scheme == COMPRESSION_ZSTD )
+        {
+            bHasZSTD = true;
+            osCompressValues +=
+                    "       <Value>ZSTD</Value>";
         }
     }
     _TIFFfree( codecs );
@@ -18748,33 +18799,35 @@ void GDALRegister_GTiff()
 /* -------------------------------------------------------------------- */
 /*      Build full creation option list.                                */
 /* -------------------------------------------------------------------- */
-    snprintf( szCreateOptions, sizeof(szCreateOptions), "%s%s%s",
-              "<CreationOptionList>"
-              "   <Option name='COMPRESS' type='string-select'>",
-              szOptionalCompressItems,
-              "   </Option>");
+    osOptions = "<CreationOptionList>"
+              "   <Option name='COMPRESS' type='string-select'>";
+    osOptions += osCompressValues;
+    osOptions += "   </Option>";
     if( bHasLZW || bHasDEFLATE )
-        strcat( szCreateOptions, ""
-"   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>");
-    strcat( szCreateOptions, ""
-"   <Option name='DISCARD_LSB' type='string' description='Number of least-significant bits to set to clear as a single value or comma-separated list of values for per-band values'/>" );
+        osOptions += ""
+"   <Option name='PREDICTOR' type='int' description='Predictor Type (1=default, 2=horizontal differencing, 3=floating point prediction)'/>";
+    osOptions += ""
+"   <Option name='DISCARD_LSB' type='string' description='Number of least-significant bits to set to clear as a single value or comma-separated list of values for per-band values'/>";
     if( bHasJPEG )
     {
-        strcat( szCreateOptions, ""
+        osOptions += ""
 "   <Option name='JPEG_QUALITY' type='int' description='JPEG quality 1-100' default='75'/>"
-"   <Option name='JPEGTABLESMODE' type='int' description='Content of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables only, 2=Huffman tables only, 3=Both' default='1'/>" );
+"   <Option name='JPEGTABLESMODE' type='int' description='Content of JPEGTABLES tag. 0=no JPEGTABLES tag, 1=Quantization tables only, 2=Huffman tables only, 3=Both' default='1'/>";
 #ifdef JPEG_DIRECT_COPY
-        strcat( szCreateOptions, ""
-"   <Option name='JPEG_DIRECT_COPY' type='boolean' description='To copy without any decompression/recompression a JPEG source file' default='NO'/>");
+        osOptions += ""
+"   <Option name='JPEG_DIRECT_COPY' type='boolean' description='To copy without any decompression/recompression a JPEG source file' default='NO'/>";
 #endif
     }
     if( bHasDEFLATE )
-        strcat( szCreateOptions, ""
-"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>");
+        osOptions += ""
+"   <Option name='ZLEVEL' type='int' description='DEFLATE compression level 1-9' default='6'/>";
     if( bHasLZMA )
-        strcat( szCreateOptions, ""
-"   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>");
-    strcat( szCreateOptions, ""
+        osOptions += ""
+"   <Option name='LZMA_PRESET' type='int' description='LZMA compression level 0(fast)-9(slow)' default='6'/>";
+    if( bHasZSTD )
+        osOptions += ""
+"   <Option name='ZSTD_LEVEL' type='int' description='ZSTD compression level 1(fast)-22(slow)' default='9'/>";
+    osOptions += ""
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"
 "   <Option name='NBITS' type='int' description='BITS for sub-byte files (1-7), sub-uint16 (9-15), sub-uint32 (17-31), or float32 (16)'/>"
 "   <Option name='INTERLEAVE' type='string-select' default='PIXEL'>"
@@ -18845,7 +18898,7 @@ void GDALRegister_GTiff()
 "       <Value>STANDARD</Value>"
 "       <Value>ESRI_PE</Value>"
 "   </Option>"
-"</CreationOptionList>" );
+"</CreationOptionList>";
 
 /* -------------------------------------------------------------------- */
 /*      Set the driver details.                                         */
@@ -18860,7 +18913,7 @@ void GDALRegister_GTiff()
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte UInt16 Int16 UInt32 Int32 Float32 "
                                "Float64 CInt16 CInt32 CFloat32 CFloat64" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, szCreateOptions );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST, osOptions );
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "   <Option name='NUM_THREADS' type='string' description='Number of worker threads for compression. Can be set to ALL_CPUS' default='1'/>"

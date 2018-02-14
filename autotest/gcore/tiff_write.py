@@ -7832,6 +7832,19 @@ def tiff_write_170_invalid_compresion():
     return 'success'
 
 ###############################################################################
+# Test ZSTD compression
+
+def tiff_write_171_zstd():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte.tif', 1, 4672,
+                            options = [ 'COMPRESS=ZSTD', 'ZSTD_LEVEL=1' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -8031,6 +8044,7 @@ gdaltest_list = [
     tiff_write_168_ccitfax3,
     tiff_write_169_ccitrle,
     tiff_write_170_invalid_compresion,
+    tiff_write_171_zstd,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 

@@ -85,4 +85,12 @@ const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 #define TIFFTAG_LZMAPRESET      65562   /* LZMA2 preset (compression level) */
 #endif
 
+#if !defined(COMPRESSION_ZSTD)
+#define	    COMPRESSION_ZSTD		34926	/* ZSTD */
+#endif
+
+#if !defined(TIFFTAG_ZSTD_LEVEL)
+#define TIFFTAG_ZSTD_LEVEL      65534    /* ZSTD compression level */
+#endif
+
 #endif // GTIFF_H_INCLUDED

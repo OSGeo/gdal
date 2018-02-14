@@ -188,6 +188,7 @@ typedef enum {
 #define     COMPRESSION_SGILOG24	34677	/* SGI Log 24-bit packed */
 #define     COMPRESSION_JP2000          34712   /* Leadtools JPEG2000 */
 #define	    COMPRESSION_LZMA		34925	/* LZMA2 */
+#define	    COMPRESSION_ZSTD		34926	/* ZSTD: WARNING not registerd in Adobe-maintained registry */
 #define	TIFFTAG_PHOTOMETRIC		262	/* photometric interpretation */
 #define	    PHOTOMETRIC_MINISWHITE	0	/* min value is white */
 #define	    PHOTOMETRIC_MINISBLACK	1	/* min value is black */
@@ -601,6 +602,7 @@ typedef enum {
 #define TIFFTAG_PERSAMPLE       65563	/* interface for per sample tags */
 #define     PERSAMPLE_MERGED        0	/* present as a single value */
 #define     PERSAMPLE_MULTI         1	/* present as multiple values */
+#define TIFFTAG_ZSTD_LEVEL      65534    /* ZSTD compression level */
 
 /*
  * EXIF tags

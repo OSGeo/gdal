@@ -39,7 +39,8 @@ OBJ	= \
 	tif_warning.o \
 	tif_write.o \
 	tif_zip.o \
-	tif_lzma.o
+	tif_lzma.o \
+	tif_zstd.o
 
 O_OBJ	=	$(foreach file,$(OBJ),../../o/$(file))
 
@@ -75,6 +76,10 @@ endif
 
 ifeq ($(LIBLZMA_SETTING),yes)
 ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DLZMA_SUPPORT
+endif
+
+ifeq ($(ZSTD_SETTING),yes)
+ALL_C_FLAGS 	:=	$(ALL_C_FLAGS) -DZSTD_SUPPORT
 endif
 
 default:	$(EXTRA_DEP) $(OBJ:.o=.$(OBJ_EXT))

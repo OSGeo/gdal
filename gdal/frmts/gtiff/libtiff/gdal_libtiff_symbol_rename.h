@@ -497,6 +497,7 @@
 #define TIFFReadDirEntryCheckRangeSshortSlong gdal_TIFFReadDirEntryCheckRangeSshortSlong
 #define TIFFReadDirEntryCheckRangeSshortSlong8 gdal_TIFFReadDirEntryCheckRangeSshortSlong8
 #define TIFFReadDirEntryData gdal_TIFFReadDirEntryData
+#define TIFFReadDirEntryDataAndRealloc gdal_TIFFReadDirEntryDataAndRealloc
 #define TIFFReadDirEntryDouble gdal_TIFFReadDirEntryDouble
 #define TIFFReadDirEntryDoubleArray gdal_TIFFReadDirEntryDoubleArray
 #define TIFFReadDirEntryFloat gdal_TIFFReadDirEntryFloat
@@ -550,6 +551,7 @@
 #define TIFFScanlineSize gdal_TIFFScanlineSize
 #define TIFFScanlineSize64 gdal_TIFFScanlineSize64
 #define TIFFSeek gdal_TIFFSeek
+#define _TIFFSeekOK gdal__TIFFSeekOK
 #define _tiffSeekProc gdal__tiffSeekProc
 #define _TIFFsetByteArray gdal__TIFFsetByteArray
 #define TIFFSetClientdata gdal_TIFFSetClientdata
@@ -698,6 +700,17 @@
 #define ZIPSetupEncode gdal_ZIPSetupEncode
 #define ZIPVGetField gdal_ZIPVGetField
 #define ZIPVSetField gdal_ZIPVSetField
+#define ZSTDCleanup gdal_ZSTDCleanup
+#define ZSTDDecode gdal_ZSTDDecode
+#define ZSTDEncode gdal_ZSTDEncode
+#define ZSTDFixupTags gdal_ZSTDFixupTags
+#define ZSTDPostEncode gdal_ZSTDPostEncode
+#define ZSTDPreDecode gdal_ZSTDPreDecode
+#define ZSTDPreEncode gdal_ZSTDPreEncode
+#define ZSTDSetupDecode gdal_ZSTDSetupDecode
+#define ZSTDSetupEncode gdal_ZSTDSetupEncode
+#define ZSTDVGetField gdal_ZSTDVGetField
+#define ZSTDVSetField gdal_ZSTDVSetField
 #define _msbmask gdal__msbmask
 #define zeroruns gdal_zeroruns
 #define oneruns gdal_oneruns
@@ -732,6 +745,7 @@
 #define photoNames gdal_photoNames
 #define orientNames gdal_orientNames
 #define zipFields gdal_zipFields
+#define ZSTDFields gdal_ZSTDFields
 #define _TIFFBuiltinCODECS gdal__TIFFBuiltinCODECS
 #define _TIFFerrorHandler gdal__TIFFerrorHandler
 #define _TIFFwarningHandler gdal__TIFFwarningHandler

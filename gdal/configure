@@ -826,6 +826,7 @@ PG_LIB
 PG_INC
 HAVE_PG
 PG_CONFIG
+ZSTD_SETTING
 LIBLZMA_SETTING
 LTLIBICONV
 LIBICONV
@@ -967,6 +968,7 @@ with_libz
 enable_rpath
 with_libiconv_prefix
 with_liblzma
+with_zstd
 with_pg
 with_grass
 with_libgrass
@@ -1748,6 +1750,7 @@ Optional Packages:
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
   --with-liblzma=ARG       Include liblzma support (ARG=yes/no)
+  --with-zstd=ARG       Include zstd support (ARG=yes/no/installation_prefix)
   --with-pg=ARG           Include PostgreSQL GDAL/OGR Support (ARG=path to
                           pg_config)
   --with-grass=ARG      Include GRASS support (GRASS 5.7+, ARG=GRASS install tree dir)
@@ -22669,6 +22672,121 @@ LIBLZMA_SETTING=$LIBLZMA_SETTING
 
 
 
+
+
+# Check whether --with-zstd was given.
+if test "${with_zstd+set}" = set; then :
+  withval=$with_zstd;
+fi
+
+
+if test "$with_zstd" = "yes" ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_decompressStream in -lzstd" >&5
+$as_echo_n "checking for ZSTD_decompressStream in -lzstd... " >&6; }
+if ${ac_cv_lib_zstd_ZSTD_decompressStream+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzstd  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ZSTD_decompressStream ();
+int
+main ()
+{
+return ZSTD_decompressStream ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_zstd_ZSTD_decompressStream=yes
+else
+  ac_cv_lib_zstd_ZSTD_decompressStream=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_decompressStream" >&5
+$as_echo "$ac_cv_lib_zstd_ZSTD_decompressStream" >&6; }
+if test "x$ac_cv_lib_zstd_ZSTD_decompressStream" = xyes; then :
+  ZSTD_SETTING=yes
+else
+  ZSTD_SETTING=no
+fi
+
+
+  if test "$zstd_SETTING" = "yes" ; then
+    LIBS="-lzstd $LIBS"
+  fi
+elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_decompressStream in -lzstd" >&5
+$as_echo_n "checking for ZSTD_decompressStream in -lzstd... " >&6; }
+if ${ac_cv_lib_zstd_ZSTD_decompressStream+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzstd -L$with_zstd/lib $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ZSTD_decompressStream ();
+int
+main ()
+{
+return ZSTD_decompressStream ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_zstd_ZSTD_decompressStream=yes
+else
+  ac_cv_lib_zstd_ZSTD_decompressStream=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_decompressStream" >&5
+$as_echo "$ac_cv_lib_zstd_ZSTD_decompressStream" >&6; }
+if test "x$ac_cv_lib_zstd_ZSTD_decompressStream" = xyes; then :
+  ZSTD_SETTING=yes
+else
+  ZSTD_SETTING=no
+fi
+
+
+  if test "$ZSTD_SETTING" = "yes" -a -f "$with_zstd/include/zstd.h" ; then
+    LIBS="-L$with_zstd/lib -lzstd $LIBS"
+    EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
+  else
+    echo "libzstd not found - ZSTD support disabled"
+  fi
+
+else
+    ZSTD_SETTING=no
+fi
+
+ZSTD_SETTING=$ZSTD_SETTING
+
+
+
 PG_CONFIG=no
 
 
@@ -37826,6 +37944,9 @@ echo "  LIBZ support:              ${LIBZ_SETTING}"
 
 
 echo "  LIBLZMA support:           ${LIBLZMA_SETTING}"
+
+
+echo "  ZSTD support:              ${ZSTD_SETTING}"
 
 
 echo "  cryptopp support:          ${HAVE_CRYPTOPP}"

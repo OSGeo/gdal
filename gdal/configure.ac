@@ -1148,6 +1148,36 @@ fi
 
 AC_SUBST(LIBLZMA_SETTING,$LIBLZMA_SETTING)
 
+
+dnl ---------------------------------------------------------------------------
+dnl Check if zstd is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(zstd,[  --with-zstd[=ARG]       Include zstd support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_zstd" = "yes" ; then
+  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,)
+
+  if test "$zstd_SETTING" = "yes" ; then
+    LIBS="-lzstd $LIBS"
+  fi
+elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
+
+  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,-L$with_zstd/lib)
+
+  if test "$ZSTD_SETTING" = "yes" -a -f "$with_zstd/include/zstd.h" ; then
+    LIBS="-L$with_zstd/lib -lzstd $LIBS"
+    EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
+  else
+    echo "libzstd not found - ZSTD support disabled"
+  fi
+
+else
+    ZSTD_SETTING=no
+fi
+
+AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
+
 dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
@@ -5594,6 +5624,7 @@ LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
+LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
 LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
