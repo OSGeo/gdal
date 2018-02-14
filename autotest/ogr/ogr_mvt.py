@@ -1519,6 +1519,21 @@ def ogr_mvt_write_errors():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # Test failure in creating tile
+    gdal.RmdirRecursive('tmp/tmpmvt')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('tmp/tmpmvt')
+    gdal.RmdirRecursive('tmp/tmpmvt')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.RmdirRecursive('tmp/tmpmvt')
+
     return 'success'
 
 ###############################################################################
