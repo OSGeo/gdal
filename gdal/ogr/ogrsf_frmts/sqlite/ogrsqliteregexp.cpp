@@ -46,6 +46,7 @@
  */
 
 #include "ogrsqliteregexp.h"
+#include "sqlite3.h"
 
 #ifdef HAVE_PCRE
 

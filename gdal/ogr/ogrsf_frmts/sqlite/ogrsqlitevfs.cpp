@@ -26,8 +26,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_atomic_ops.h"
+#include "cpl_port.h"
 #include "ogr_sqlite.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+#include "cpl_atomic_ops.h"
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "sqlite3.h"
 
 CPL_CVSID("$Id$")
 

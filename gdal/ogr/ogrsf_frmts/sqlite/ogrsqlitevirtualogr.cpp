@@ -26,13 +26,34 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogrsqlitevirtualogr.h"
-#include "ogr_api.h"
-#include "swq.h"
-#include "ogr_p.h"
-#include "ogrsqliteutility.h"
+
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <map>
+#include <string>
+#include <utility>
 #include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
+#include "ogrsqlite3ext.h"
+#include "ogrsqlitesqlfunctions.h"
+#include "ogrsqliteutility.h"
+#include "swq.h"
+#include "sqlite3.h"
 
 /************************************************************************/
 /*                           OGR2SQLITE_Register()                      */
