@@ -86,7 +86,7 @@ const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 #endif
 
 #if !defined(COMPRESSION_ZSTD)
-#define	    COMPRESSION_ZSTD		34926	/* ZSTD */
+#define     COMPRESSION_ZSTD        34926   /* ZSTD */
 #endif
 
 #if !defined(TIFFTAG_ZSTD_LEVEL)
