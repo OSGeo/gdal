@@ -26,7 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#define ADD_MVT_TILE_READ
 #include "mvt_tile.h"
+#include "mvt_tile.cpp"
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
