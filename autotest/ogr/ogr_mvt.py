@@ -1544,6 +1544,16 @@ def ogr_mvt_write_errors():
         return 'fail'
     gdal.RmdirRecursive('tmp/tmpmvt')
 
+    # Test reprojection failure
+    gdal.RmdirRecursive('/vsimem/foo')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test', srs = osr.SpatialReference())
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    ds = None
+
     gdal.RmdirRecursive('/vsimem/foo')
 
     return 'success'

@@ -3353,22 +3353,12 @@ OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset* poDS,
         {
             // If we can't create a transformation, issue a warning - but
             // continue the transformation.
-            char *pszWKT = nullptr;
-
-            poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
-
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Failed to create coordinate transformation between the "
                 "input and target coordinate systems.  This may be because "
                 "they are not transformable, or because projection "
-                "services (PROJ.4 DLL/.so) could not be loaded.  "
-                "MVT geometries may not render correctly.  "
-                "This message will not be issued any more."
-                "\nSource:\n%s\n",
-                pszWKT );
-
-            CPLFree( pszWKT );
+                "services (PROJ.4 DLL/.so) could not be loaded.");
         }
     }
 }
