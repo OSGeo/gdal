@@ -1455,10 +1455,12 @@ def ogr_mvt_write_errors():
 
     # cannot create mbtiles file
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/i/do_not/exist.mbtiles')
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/i/do_not/exist.mbtiles',
+                                options = ['TEMPORARY_DB=/vsimem/temp.db'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.Unlink('/vsimem/temp.db')
 
     # invalid MINZOOM
     gdal.RmdirRecursive('/vsimem/foo')
