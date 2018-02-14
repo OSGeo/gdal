@@ -52,6 +52,9 @@ def visoss_init():
         if gdaltest.oss_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
+    if gdal.GetSignedURL('/vsioss/foo/bar') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     return 'success'
 
@@ -1363,23 +1366,38 @@ def visoss_extra_1():
         print(ret)
         return 'fail'
 
-    # Invalid bucket : "The specified bucket does not exist"
+    if False:  # we actually try to read at read() time and bSetError = false:
+        # Invalid bucket : "The specified bucket does not exist"
+        gdal.ErrorReset()
+        f = open_for_read('/vsioss/not_existing_bucket/foo')
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1, 1, f)
+        gdal.VSIFCloseL(f)
+        if gdal.VSIGetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            print(gdal.VSIGetLastErrorMsg())
+            return 'fail'
+
+    # Invalid resource
     gdal.ErrorReset()
-    f = open_for_read('/vsioss/not_existing_bucket/foo')
-    with gdaltest.error_handler():
-        gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-    if gdal.VSIGetLastErrorMsg() == '':
+    f = open_for_read('/vsioss_streaming/' + OSS_RESOURCE + '/invalid_resource.baz')
+    if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-    # Invalid resource
-    gdal.ErrorReset()
-    f = open_for_read('/vsioss_streaming/' + gdal.GetConfigOption('OSS_RESOURCE') + '/invalid_resource.baz')
-    if f is not None:
+    # Test GetSignedURL()
+    signed_url = gdal.GetSignedURL('/vsioss/' + OSS_RESOURCE)
+    f = open_for_read('/vsicurl_streaming/' + signed_url)
+    if f is None:
         gdaltest.post_reason('fail')
-        print(gdal.VSIGetLastErrorMsg())
+        return 'fail'
+    ret = gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    if len(ret) != 1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'

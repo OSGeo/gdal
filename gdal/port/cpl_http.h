@@ -185,6 +185,12 @@ class GOA2Manager
 
         const char* GetBearer() const;
 
+        /** Returns private key for SERVICE_ACCOUNT method */
+        const CPLString& GetPrivateKey() const { return m_osPrivateKey; }
+
+        /** Returns client email for SERVICE_ACCOUNT method */
+        const CPLString& GetClientEmail() const { return m_osClientEmail; }
+
     private:
 
         mutable CPLString       m_osCurrentBearer;

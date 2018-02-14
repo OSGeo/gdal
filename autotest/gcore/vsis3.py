@@ -59,6 +59,10 @@ def vsis3_init():
     gdal.SetConfigOption('AWS_CONFIG_FILE', '')
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
 
+    if gdal.GetSignedURL('/vsis3/foo/bar') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

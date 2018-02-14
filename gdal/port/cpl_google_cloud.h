@@ -51,7 +51,8 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
         bool      m_bUseHeaderFile;
         GOA2Manager m_oManager;
 
-        static bool     GetConfiguration(CPLString& osSecretAccessKey,
+        static bool     GetConfiguration(char** papszOptions,
+                                         CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
                                          CPLString& osHeaderFile,
                                          GOA2Manager& oManager);
@@ -76,7 +77,8 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
        ~VSIGSHandleHelper();
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
-                                               const char* pszFSPrefix);
+                                               const char* pszFSPrefix,
+                                               char** papszOptions = nullptr);
 
         struct curl_slist* GetCurlHeaders(
             const CPLString& osVerbosVerb,
@@ -85,6 +87,8 @@ class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
             size_t nBytesContent = 0) const override;
 
         const CPLString& GetURL() const override { return m_osURL; }
+
+        CPLString GetSignedURL(char** papszOptions);
 
         static void CleanMutex();
         static void ClearCache();
