@@ -3512,6 +3512,44 @@ def tiff_read_negative_scaley():
     return 'success'
 
 ###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd.tif', 1, 4672)
+    return ut.testOpen()
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd_corrupted():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd_corrupted.tif', 1, 0)
+    with gdaltest.error_handler():
+        return ut.testOpen()
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd_corrupted2():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd_corrupted2.tif', 1, 0)
+    with gdaltest.error_handler():
+        return ut.testOpen()
+
+###############################################################################
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
@@ -3632,6 +3670,9 @@ gdaltest_list.append( (tiff_read_old_style_lzw) )
 gdaltest_list.append( (tiff_read_mmap_interface) )
 gdaltest_list.append( (tiff_read_jpeg_too_big_last_stripe) )
 gdaltest_list.append( (tiff_read_negative_scaley) )
+gdaltest_list.append( (tiff_read_zstd) )
+gdaltest_list.append( (tiff_read_zstd_corrupted) )
+gdaltest_list.append( (tiff_read_zstd_corrupted2) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )
