@@ -27,11 +27,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "ogr_vrt.h"
-#include "cpl_string.h"
-#include "ogrpgeogeometry.h"
+
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogrpgeogeometry.h"
+#include "ogrsf_frmts/ogrsf_frmts.h"
+#include "ogrsf_frmts/vrt/ogr_vrt.h"
 
 CPL_CVSID("$Id$")
 
