@@ -31,12 +31,18 @@
 #ifndef OGR_SQLITE_H_INCLUDED
 #define OGR_SQLITE_H_INCLUDED
 
-#include "ogrsf_frmts.h"
-#include "gdal_pam.h"
-#include "cpl_error.h"
+#include <cstddef>
 #include <map>
 #include <set>
+#include <utility>
 #include <vector>
+
+#include "cpl_error.h"
+#include "gdal_pam.h"
+#include "ogrsf_frmts.h"
+#include "ogrsf_frmts.h"
+#include "rasterlite2_header.h"
+#include "sqlite3.h"
 
 #ifdef HAVE_SPATIALITE
   #ifdef SPATIALITE_AMALGAMATION
@@ -60,8 +66,6 @@
 #else
 #include "sqlite3.h"
 #endif
-
-#include "rasterlite2_header.h"
 
 #ifndef DO_NOT_INCLUDE_SQLITE_CLASSES
 

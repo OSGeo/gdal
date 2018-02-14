@@ -27,11 +27,27 @@
  ****************************************************************************/
 
 #include "ogr_sqlite.h"
-#include "ogr_api.h"
-#include "ogrsqlitevirtualogr.h"
 #include "ogrsqliteexecutesql.h"
+#include "ogrsqlitevirtualogr.h"
 #include "ogrsqliteutility.h"
+
+#include <cctype>
+#include <cstdio>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "sqlite3.h"
 
 CPL_CVSID("$Id$")
 

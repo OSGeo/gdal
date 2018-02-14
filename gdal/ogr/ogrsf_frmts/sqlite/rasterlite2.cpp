@@ -33,11 +33,16 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_sqlite.h"
 #include "ogrsqliteutility.h"
 #include "rasterlite2_header.h"
 
+#include <cstring>
 #include <algorithm>
+
+#include "cpl_error.h"
+#include "cpl_string.h"
 
 #ifdef HAVE_RASTERLITE2
 
