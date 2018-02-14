@@ -63,4 +63,14 @@ cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX
 make -j4
 sudo make install
 cd ../..
+
+# Build zstd
+wget https://github.com/facebook/zstd/archive/v1.3.3.tar.gz
+tar xvzf v1.3.3.tar.gz
+cd zstd-1.3.3/lib
+# Faster build
+make -j3 PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
+sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
+cd ..
+
 sudo ldconfig
