@@ -64,9 +64,10 @@ def vsigs_init():
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
     gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
-    if gdal.GetSignedURL('/vsigs/foo/bar') is not None:
-        gdaltest.post_reason('fail')
-        return 'fail'
+    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+        if gdal.GetSignedURL('/vsigs/foo/bar') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -785,14 +786,6 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
                         'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
     gdal.SetConfigOption('GOA2_NOW', '123456')
 
-    signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
-                                   ['START_DATE=20180212T123456Z'])
-    if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
-                          'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
-        gdaltest.post_reason('fail')
-        print(signed_url)
-        return 'fail'
-
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -845,6 +838,15 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
                 return 'fail'
             data = gdal.VSIFReadL(1, 4, f).decode('ascii')
             gdal.VSIFCloseL(f)
+
+            signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
+                                        ['START_DATE=20180212T123456Z'])
+            if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
+                                'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
+                gdaltest.post_reason('fail')
+                print(signed_url)
+                return 'fail'
+
     except:
         if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
             return 'skip'
