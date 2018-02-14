@@ -5765,14 +5765,18 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
             return nullptr;
         }
 
-        CPL_IGNORE_RET_VAL(SQLCommand(poDS->m_hDBMBTILES,
+        if( SQLCommand(poDS->m_hDBMBTILES,
             "PRAGMA synchronous = OFF;"
             "PRAGMA journal_mode = OFF;"
             "PRAGMA temp_store = MEMORY;"
             "CREATE TABLE metadata (name text, value text);"
             "CREATE TABLE tiles (zoom_level integer, tile_column integer, "
                 "tile_row integer, tile_data blob, "
-                "UNIQUE (zoom_level, tile_column, tile_row))"));
+                "UNIQUE (zoom_level, tile_column, tile_row))") != OGRERR_NONE )
+        {
+            delete poDS;
+            return nullptr;
+        }
     }
 
     int nCPUs = CPLGetNumCPUs();

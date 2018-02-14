@@ -1428,6 +1428,7 @@ def ogr_mvt_write_errors():
         return 'skip'
 
     # Raster creation attempt
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('MVT').Create('/vsimem/foo', 1, 1)
     if ds is not None:
@@ -1435,6 +1436,7 @@ def ogr_mvt_write_errors():
         return 'fail'
 
     # should have mbtiles extension
+    gdal.RmdirRecursive('/vsimem/foo.bar')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
                                                 options = ['FORMAT=MBTILES'])
@@ -1443,6 +1445,7 @@ def ogr_mvt_write_errors():
         return 'fail'
 
     # Cannot create temporary database
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                 options = ['TEMPORARY_DB=/i/do_not/exist.db'])
@@ -1458,45 +1461,49 @@ def ogr_mvt_write_errors():
         return 'fail'
 
     # invalid MINZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                                 options = ['MINZOOM=-1'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                                 options = ['MINZOOM=30'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # invalid MAXZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                                 options = ['MAXZOOM=-1'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                                 options = ['MAXZOOM=30'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # invalid MINZOOM vs MAXZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                         options = ['MINZOOM=1', 'MAXZOOM=0'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # invalid CONF
+    gdal.RmdirRecursive('/vsimem/foo')
     gdal.FileFromMemBuffer('/vsimem/invalid.json', 'foo bar')
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                                         options = ['CONF=/vsimem/invalid.json'])
     gdal.Unlink('/vsimem/invalid.json')
     if ds is not None:
@@ -1512,8 +1519,9 @@ def ogr_mvt_write_errors():
         return 'fail'
 
     # Invalid TILING_SCHEME
+    gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.error_handler():
-        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.db',
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
                             options = ['TILING_SCHEME=EPSG:4326'])
     if ds is not None:
         gdaltest.post_reason('fail')
@@ -1533,6 +1541,8 @@ def ogr_mvt_write_errors():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.RmdirRecursive('tmp/tmpmvt')
+
+    gdal.RmdirRecursive('/vsimem/foo')
 
     return 'success'
 
