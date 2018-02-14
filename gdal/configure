@@ -22724,7 +22724,7 @@ else
 fi
 
 
-  if test "$zstd_SETTING" = "yes" ; then
+  if test "$ZSTD_SETTING" = "yes" ; then
     LIBS="-lzstd $LIBS"
   else
     if test "$with_zstd" = "yes" ; then
