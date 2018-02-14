@@ -71,6 +71,6 @@ cd zstd-1.3.3/lib
 # Faster build
 make -j3 PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
 sudo make install PREFIX=/usr ZSTD_LEGACY_SUPPORT=0 CFLAGS=-O1
-cd ..
+cd ../..
 
 sudo ldconfig
