@@ -1158,7 +1158,7 @@ AC_ARG_WITH(zstd,[  --with-zstd[=ARG]       Include zstd support (ARG=yes/no/ins
 if test "$with_zstd" = "" -o "$with_zstd" = "yes" ; then
   AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,)
 
-  if test "$zstd_SETTING" = "yes" ; then
+  if test "$ZSTD_SETTING" = "yes" ; then
     LIBS="-lzstd $LIBS"
   else
     if test "$with_zstd" = "yes" ; then
