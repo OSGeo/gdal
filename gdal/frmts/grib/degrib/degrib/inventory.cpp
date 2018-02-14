@@ -271,7 +271,7 @@ static int GRIB2SectToBuffer (DataSource &fp,
       }
       return -1;
    }
-   if( *secLen < sizeof(sInt4) || *secLen > gribLen )
+   if( *secLen <= sizeof(sInt4) || *secLen > gribLen )
    {
        errSprintf ("ERROR: Wrong secLen in GRIB2SectToBuffer\n");
        return -1;
