@@ -58,12 +58,13 @@ class GPBException: public std::exception
 /*                Google Protocol Buffer definitions                    */
 /************************************************************************/
 
-#define WT_VARINT       0
-#define WT_64BIT        1
-#define WT_DATA         2
-#define WT_STARTGROUP   3 // unused
-#define WT_ENDGROUP     4 // unused
-#define WT_32BIT        5
+// TODO(schwehr): This should be an enum.
+constexpr int WT_VARINT = 0;
+constexpr int WT_64BIT = 1;
+constexpr int WT_DATA = 2;
+// constexpr WT_STARTGROUP = 3; // unused
+// constexpr WT_ENDGROUP = 4; // unused
+constexpr int WT_32BIT = 5;
 
 #define MAKE_KEY(nFieldNumber, nWireType) ((nFieldNumber << 3) | nWireType)
 #define GET_WIRETYPE(nKey) (nKey & 0x7)

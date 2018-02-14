@@ -27,11 +27,17 @@
  ****************************************************************************/
 
 #include "ogr_osm.h"
+
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_port.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+
 
 /* g++ -DHAVE_EXPAT -fPIC -g -Wall ogr/ogrsf_frmts/osm/ogrosmdriver.cpp ogr/ogrsf_frmts/osm/ogrosmdatasource.cpp ogr/ogrsf_frmts/osm/ogrosmlayer.cpp -Iport -Igcore -Iogr -Iogr/ogrsf_frmts/osm -Iogr/ogrsf_frmts/mitab -Iogr/ogrsf_frmts -shared -o ogr_OSM.so -L. -lgdal */
-
-extern "C" void CPL_DLL RegisterOGROSM();
 
 CPL_CVSID("$Id$")
 
