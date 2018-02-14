@@ -1350,7 +1350,7 @@ def ogr_mvt_write_limitations_max_features():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((500000 1000000,510000 1000000,510000 1100000,500000 1000000))'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, format = 'MVT',
                                   datasetCreationOptions = ['MAX_FEATURES=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
@@ -1421,6 +1421,107 @@ def ogr_mvt_write_custom_tiling_scheme():
     return 'success'
 
 ###############################################################################
+
+def ogr_mvt_write_errors():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    # Raster creation attempt
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MVT').Create('/vsimem/foo', 1, 1)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # should have mbtiles extension
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['FORMAT=MBTILES'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Cannot create temporary database
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                options = ['TEMPORARY_DB=/i/do_not/exist.db'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # cannot create mbtiles file
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/i/do_not/exist.mbtiles')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MINZOOM
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['MINZOOM=-1'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['MINZOOM=30'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MAXZOOM
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['MAXZOOM=-1'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['MAXZOOM=30'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MINZOOM vs MAXZOOM
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                        options = ['MINZOOM=1', 'MAXZOOM=0'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid CONF
+    gdal.FileFromMemBuffer('/vsimem/invalid.json', 'foo bar')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                        options = ['CONF=/vsimem/invalid.json'])
+    gdal.Unlink('/vsimem/invalid.json')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # TILING_SCHEME not allowed with MBTILES
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.mbtiles',
+                            options = ['TILING_SCHEME=EPSG:4326,-180,180,360'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid TILING_SCHEME
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.db',
+                            options = ['TILING_SCHEME=EPSG:4326'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -1458,6 +1559,7 @@ gdaltest_list = [
     ogr_mvt_write_limitations_max_size,
     ogr_mvt_write_limitations_max_features,
     ogr_mvt_write_custom_tiling_scheme,
+    ogr_mvt_write_errors,
 ]
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
