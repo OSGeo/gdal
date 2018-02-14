@@ -22680,7 +22680,7 @@ if test "${with_zstd+set}" = set; then :
 fi
 
 
-if test "$with_zstd" = "yes" ; then
+if test "$with_zstd" = "" -o "$with_zstd" = "yes" ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_decompressStream in -lzstd" >&5
 $as_echo_n "checking for ZSTD_decompressStream in -lzstd... " >&6; }
 if ${ac_cv_lib_zstd_ZSTD_decompressStream+:} false; then :
@@ -22726,6 +22726,12 @@ fi
 
   if test "$zstd_SETTING" = "yes" ; then
     LIBS="-lzstd $LIBS"
+  else
+    if test "$with_zstd" = "yes" ; then
+      as_fn_error $? "libzstd not found" "$LINENO" 5
+    else
+      echo "libzstd not found - ZSTD support disabled"
+    fi
   fi
 elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
 
@@ -22776,7 +22782,7 @@ fi
     LIBS="-L$with_zstd/lib -lzstd $LIBS"
     EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
   else
-    echo "libzstd not found - ZSTD support disabled"
+    as_fn_error $? "libzstd not found" "$LINENO" 5
   fi
 
 else

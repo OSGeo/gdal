@@ -1155,11 +1155,17 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(zstd,[  --with-zstd[=ARG]       Include zstd support (ARG=yes/no/installation_prefix)],,)
 
-if test "$with_zstd" = "yes" ; then
+if test "$with_zstd" = "" -o "$with_zstd" = "yes" ; then
   AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,)
 
   if test "$zstd_SETTING" = "yes" ; then
     LIBS="-lzstd $LIBS"
+  else
+    if test "$with_zstd" = "yes" ; then
+      AC_MSG_ERROR([libzstd not found])
+    else
+      echo "libzstd not found - ZSTD support disabled"
+    fi
   fi
 elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
 
@@ -1169,7 +1175,7 @@ elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
     LIBS="-L$with_zstd/lib -lzstd $LIBS"
     EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
   else
-    echo "libzstd not found - ZSTD support disabled"
+    AC_MSG_ERROR([libzstd not found])
   fi
 
 else
