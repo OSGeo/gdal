@@ -28,8 +28,15 @@
 
 #include "ogrshape.h"
 
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_port.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
