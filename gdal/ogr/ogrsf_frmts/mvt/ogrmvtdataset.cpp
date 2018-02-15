@@ -4756,7 +4756,7 @@ void OGRMVTWriterDataset::EncodeFeature(
                         if( osKey == "tunnus" &&
                             oValue.getUIntValue() == 28799760 )
                         {
-                            printf("foo\n");
+                            printf("foo\n"); /* ok */
                             break;
                         }
                     }
