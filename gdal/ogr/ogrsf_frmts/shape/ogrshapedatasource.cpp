@@ -27,10 +27,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogrshape.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
+
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
 #include <set>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogr_spatialref.h"
+#include "ogrlayerpool.h"
+#include "ogrsf_frmts.h"
+#include "shapefil.h"
+#include "shp_vsi.h"
 
 // #define IMMEDIATE_OPENING 1
 
