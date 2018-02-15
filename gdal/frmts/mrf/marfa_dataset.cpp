@@ -606,11 +606,16 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     ds->level = level;
     ds->zslice = zslice;
 
+    // OpenOptions can override file name arguments
+    if (ret == CE_None)
+        ds->ProcessOpenOptions(poOpenInfo->papszOpenOptions);
+
     if (level != -1) {
         // Open the whole dataset, then pick one level
         ds->cds = new GDALMRFDataset();
         ds->cds->fname = pszFileName;
         ds->cds->eAccess = ds->eAccess;
+        ds->zslice = zslice;
         ret = ds->cds->Initialize(config);
         if (ret == CE_None)
             ret = ds->LevelInit(level);
@@ -619,9 +624,6 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         ret = ds->Initialize(config);
     }
-
-    if (ret == CE_None)
-        ds->ProcessOpenOptions(poOpenInfo->papszOpenOptions);
 
     CPLDestroyXMLNode(config);
 
@@ -1280,14 +1282,18 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
     Quality = 85;
 
     CPLErr ret = Init_Raster(full, this, CPLGetXMLNode(config, "Raster"));
+    if (CE_None != ret)
+        return ret;
 
     hasVersions = on(CPLGetXMLValue(config, "Raster.versioned", "no"));
     mp_safe = on(CPLGetXMLValue(config, "Raster.mp_safe", "no"));
     spacing = atoi(CPLGetXMLValue(config, "Raster.Spacing", "0"));
 
+    // The zslice defined in the file wins over the oo or the file argument
+    if (CPLGetXMLNode(config, "Raster.zslice"))
+        zslice = atoi(CPLGetXMLValue(config, "Raster.zslice", "0"));
+
     Quality = full.quality;
-    if (CE_None != ret)
-        return ret;
 
     // Bounding box
     CPLXMLNode *bbox = CPLGetXMLNode(config, "GeoTags.BoundingBox");
@@ -1323,7 +1329,12 @@ CPLErr GDALMRFDataset::Initialize(CPLXMLNode *config)
             CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Invalid Raster.z value");
             return CE_Failure;
         }
-        current.idxoffset += sizeof(ILIdx) * current.pagecount.l / full.size.z * zslice;
+        if (zslice >= full.size.z) {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDAL MRF: Invalid z slice");
+            return CE_Failure;
+        }
+
+        current.idxoffset += (current.pagecount.l / full.size.z) * zslice * sizeof(ILIdx);
     }
 
     // Dataset metadata setup
@@ -1833,11 +1844,15 @@ CPLErr GDALMRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
     return eErr;
 }
 
-// Apply create options to the current dataset, only valid during creation
+// Apply open options to the current dataset
+// Called before the configuration is read
 void GDALMRFDataset::ProcessOpenOptions(char **papszOptions)
 {
     CPLStringList opt(papszOptions, FALSE);
     no_errors = opt.FetchBoolean("NOERRORS", FALSE);
+    const char *val = opt.FetchNameValue("ZSLICE");
+    if (val)
+        zslice = atoi(val);
 }
 
 // Apply create options to the current dataset, only valid during creation

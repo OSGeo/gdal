@@ -368,6 +368,8 @@ protected:
 
     // Apply create options to the current dataset
     void ProcessCreateOptions(char **papszOptions);
+
+    // Called once before the parsing of the XML, should just capture the options in dataset variables
     void ProcessOpenOptions(char **papszOptions);
 
     // Writes the XML tree as MRF.  It does not check the content
