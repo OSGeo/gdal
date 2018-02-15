@@ -2269,7 +2269,7 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
             {
                 unsigned int nExtent = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nExtent);
-                if( nExtent < 256 || nExtent > 16384 )
+                if( nExtent < 128 || nExtent > 16384 )
                 {
                     CPLDebug("MVT", "Invalid extent: %u", nExtent);
                     return FALSE;
@@ -3187,6 +3187,7 @@ class OGRMVTWriterDataset: public GDALDataset
         double                                 m_dfTopX = 0.0;
         double                                 m_dfTopY = 0.0;
         double                                 m_dfTileDim0 = 0.0;
+        bool                                   m_bReuseTempFile = false; // debug only
 
         OGRErr              PreGenerateForTile(int nZ, int nX, int nY,
                                                const CPLString& osTargetName,
@@ -3447,6 +3448,7 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         sqlite3_close(m_hDBMBTILES);
     }
     if( !m_osTempDB.empty() &&
+        !m_bReuseTempFile &&
         CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
     {
         VSIUnlink(m_osTempDB);
@@ -3510,6 +3512,10 @@ bool OGRMVTWriterDataset::EncodeLineString(MVTTileLayerFeature *poGPBFeature,
     const int nPoints = poLS->getNumPoints() - (bWriteLastPoint ? 0 : 1);
     if( poOutLS )
         poOutLS->setNumPoints(nPoints);
+    int nFirstX = 0;
+    int nFirstY = 0;
+    int nLastXValid = nLastX;
+    int nLastYValid = nLastY;
     for( int i = 0; i < nPoints; i++ )
     {
         int nX, nY;
@@ -3546,10 +3552,29 @@ bool OGRMVTWriterDataset::EncodeLineString(MVTTileLayerFeature *poGPBFeature,
                 if( poOutLS )
                     poOutLS->setPoint(nLineToCount, nX, nY );
             }
+            else
+            {
+                nFirstX = nX;
+                nFirstY = nY;
+            }
+            nLastXValid = nLastX;
+            nLastYValid = nLastY;
             nLastX = nX;
             nLastY = nY;
         }
     }
+
+    // If last point of ring is identical to first one, discard it
+    if( nMinLineTo == 2 && nLineToCount > 0 &&
+        nFirstX == nLastX && nFirstY == nLastY )
+    {
+        poGPBFeature->resizeGeometryArray(
+                            poGPBFeature->getGeometryCount() - 2);
+        nLineToCount --;
+        nLastX = nLastXValid;
+        nLastY = nLastYValid;
+    }
+
     if( nLineToCount >= nMinLineTo )
     {
         if( poOutLS )
@@ -3691,6 +3716,8 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 {
     dfArea = 0;
     std::unique_ptr<OGRLinearRing> poOutOuterRing(new OGRLinearRing());
+    OGRPolygon oOutPolyAllRings;
+
     for( int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++ )
     {
         OGRLinearRing* poRing = (i == 0) ? poPoly->getExteriorRing():
@@ -3734,6 +3761,15 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         oOutPoly.addRing( poOutOuterRing.get() );
         if( i > 0 )
         {
+            // If the inner ring turns to be a outer ring once reduced,
+            // discard it
+            if( !poOutInnerRing->isClockwise() )
+            {
+                poGPBFeature->resizeGeometryArray( nInitialSize );
+                nLastX = nLastXOri;
+                nLastY = nLastYOri;
+                continue;
+            }
             dfArea -= poOutInnerRing->get_Area();
             oOutPoly.addRingDirectly( poOutInnerRing.release() );
         }
@@ -3748,9 +3784,36 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
             CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             bIsValid = oOutPoly.IsValid();
         }
+
+        if( i > 0 && bIsValid )
+        {
+            // Adding the current inner ring to the outer ring might be valid
+            // but it might also conflict with a previously added inner ring
+            if( oOutPolyAllRings.getExteriorRing() == nullptr )
+                oOutPolyAllRings.addRing(poOutOuterRing.get());
+            oOutPolyAllRings.addRing(poOutRing);
+            if( i > 1 )
+            {
+                {
+                    CPLErrorStateBackuper oErrorStateBackuper;
+                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                    bIsValid = oOutPolyAllRings.IsValid();
+                }
+                if( !bIsValid )
+                {
+                    oOutPolyAllRings.removeRing(
+                        oOutPolyAllRings.getNumInteriorRings() );
+                    poGPBFeature->resizeGeometryArray( nInitialSize );
+                    nLastX = nLastXOri;
+                    nLastY = nLastYOri;
+                    continue;
+                }
+            }
+        }
+
         // Do not emit invalid polygons, except if it is an outer ring
         // and we tried hard to fix it.
-        if( !bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
+        else if ( !bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
                            poOutRing->getNumPoints() >= 4) )
         {
             poGPBFeature->resizeGeometryArray( nInitialSize );
@@ -4384,27 +4447,91 @@ static void GZIPCompress(std::string& oTileBuffer)
 /************************************************************************/
 
 static std::vector<GUInt32> GetReducedPrecisionGeometry(
+                                    MVTTileLayerFeature::GeomType eGeomType,
                                     const std::vector<GUInt32>& anSrcGeometry,
                                     GUInt32 nSrcExtent,
                                     GUInt32 nDstExtent)
 {
     std::vector<GUInt32> anDstGeometry;
+    size_t nLastMoveToIdx = 0;
+    int nX = 0;
+    int nY = 0;
+    int nFirstReducedX = 0;
+    int nFirstReducedY = 0;
+    int nLastReducedX = 0;
+    int nLastReducedY = 0;
+    int nLastReducedXValid = 0;
+    int nLastReducedYValid = 0;
+    std::unique_ptr<OGRLinearRing> poInRing;
+    std::unique_ptr<OGRLinearRing> poOutRing;
+    std::unique_ptr<OGRLinearRing> poOutOuterRing;
+    bool bDiscardInnerRings = false;
+    const bool bIsPoly = eGeomType == MVTTileLayerFeature::GeomType::POLYGON;
     for( size_t iSrc = 0; iSrc < anSrcGeometry.size(); )
     {
         const unsigned nCount = GetCmdCount(anSrcGeometry[iSrc]);
-        int nX = 0;
-        int nY = 0;
-        int nLastReducedX = 0;
-        int nLastReducedY = 0;
         switch( GetCmdId(anSrcGeometry[iSrc]) )
         {
             case knCMD_MOVETO:
+            {
+                nLastMoveToIdx = anDstGeometry.size();
+
+                anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                iSrc ++;
+
+                unsigned nDstPoints = 0;
+                for( unsigned j = 0; iSrc + 1 < anSrcGeometry.size() &&
+                            j < nCount; j++, iSrc += 2 )
+                {
+                    nX += DecodeSInt(anSrcGeometry[iSrc]);
+                    nY += DecodeSInt(anSrcGeometry[iSrc+1]);
+
+                    int nReducedX = static_cast<int>(
+                        static_cast<GIntBig>(nX) * nDstExtent / nSrcExtent);
+                    int nReducedY = static_cast<int>(
+                        static_cast<GIntBig>(nY) * nDstExtent / nSrcExtent);
+                    int nDiffX = nReducedX - nLastReducedX;
+                    int nDiffY = nReducedY - nLastReducedY;
+                    if( j == 0 )
+                    {
+                        if( bIsPoly )
+                        {
+                            poInRing = std::unique_ptr<OGRLinearRing>(
+                                                        new OGRLinearRing());
+                            poOutRing = std::unique_ptr<OGRLinearRing>(
+                                                        new OGRLinearRing());
+                        }
+                        nFirstReducedX = nReducedX;
+                        nFirstReducedY = nReducedY;
+                    }
+                    if( j == 0 || nDiffX != 0 || nDiffY != 0 )
+                    {
+                        if( bIsPoly )
+                        {
+                            poInRing->addPoint( nX, nY );
+                            poOutRing->addPoint( nReducedX, nReducedY );
+                        }
+                        nDstPoints ++;
+                        anDstGeometry.push_back(EncodeSInt(nDiffX));
+                        anDstGeometry.push_back(EncodeSInt(nDiffY));
+                        nLastReducedX = nReducedX;
+                        nLastReducedY = nReducedY;
+                    }
+                }
+                // Patch count of MOVETO
+                anDstGeometry[nLastMoveToIdx] = GetCmdCountCombined(
+                    GetCmdId(anDstGeometry[nLastMoveToIdx]),
+                    nDstPoints);
+                break;
+            }
             case knCMD_LINETO:
             {
                 size_t nIdxToPatch = anDstGeometry.size();
                 anDstGeometry.push_back( anSrcGeometry[iSrc] );
                 iSrc ++;
                 unsigned nDstPoints = 0;
+                int nLastReducedXBefore = nLastReducedX;
+                int nLastReducedYBefore = nLastReducedY;
                 for( unsigned j = 0; iSrc + 1 < anSrcGeometry.size() &&
                                 j < nCount; j++, iSrc += 2 )
                 {
@@ -4417,23 +4544,145 @@ static std::vector<GUInt32> GetReducedPrecisionGeometry(
                         static_cast<GIntBig>(nY) * nDstExtent / nSrcExtent);
                     int nDiffX = nReducedX - nLastReducedX;
                     int nDiffY = nReducedY - nLastReducedY;
-                    if( j == 0 || nDiffX != 0 || nDiffY != 0 )
+                    if( nDiffX != 0 || nDiffY != 0 )
                     {
+                        if( bIsPoly )
+                        {
+                            poInRing->addPoint( nX, nY );
+                            poOutRing->addPoint( nReducedX, nReducedY );
+                        }
                         nDstPoints ++;
                         anDstGeometry.push_back(EncodeSInt(nDiffX));
                         anDstGeometry.push_back(EncodeSInt(nDiffY));
+                        nLastReducedXBefore = nLastReducedX;
+                        nLastReducedYBefore = nLastReducedY;
                         nLastReducedX = nReducedX;
                         nLastReducedY = nReducedY;
                     }
                 }
+
+                // If last point of ring is identical to first one, discard it
+                if( nDstPoints > 0 &&
+                    bIsPoly &&
+                    nLastReducedX == nFirstReducedX &&
+                    nLastReducedY == nFirstReducedY )
+                {
+                    nLastReducedX = nLastReducedXBefore;
+                    nLastReducedY = nLastReducedYBefore;
+                    nDstPoints -= 1;
+                    anDstGeometry.resize( anDstGeometry.size() - 2 );
+                    poOutRing->setNumPoints( poOutRing->getNumPoints() - 1 );
+                }
+
+                // Patch count of LINETO
                 anDstGeometry[nIdxToPatch] = GetCmdCountCombined(
                     GetCmdId(anDstGeometry[nIdxToPatch]),
                     nDstPoints);
+
+                // A valid linestring should have at least one MOVETO + 
+                // one coord pair + one LINETO + one coord pair
+                if( eGeomType == MVTTileLayerFeature::GeomType::LINESTRING )
+                {
+                    if( anDstGeometry.size() < nLastMoveToIdx + 1 + 2 + 1 + 2 )
+                    {
+                        // Remove last linestring
+                        nLastReducedX = nLastReducedXValid;
+                        nLastReducedY = nLastReducedYValid;
+                        anDstGeometry.resize( nLastMoveToIdx );
+                    }
+                    else
+                    {
+                        nLastReducedXValid = nLastReducedX;
+                        nLastReducedYValid = nLastReducedY;
+                    }
+                }
+
                 break;
             }
             case knCMD_CLOSEPATH:
             {
-                anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                CPLAssert( bIsPoly );
+                CPLAssert( poInRing );
+                CPLAssert( poOutRing );
+                int bIsValid = true;
+
+                // A valid ring should have at least one MOVETO + one
+                // coord pair + one LINETO + two coord pairs
+                if( anDstGeometry.size() < nLastMoveToIdx + 1 + 2 + 1 + 2 * 2 )
+                {
+                    // Remove ring. Normally if we remove an outer ring,
+                    // its inner rings should also be removed, given they are
+                    // smaller than the outer ring.
+                    bIsValid = false;
+                }
+                else
+                {
+                    poInRing->closeRings();
+                    poOutRing->closeRings();
+                    bool bIsOuterRing = !poInRing->isClockwise();
+                    // Normally the first ring of a polygon geometry should
+                    // be a outer ring, except when it is degenerate enough
+                    // in which case poOutOuterRing might be null.
+                    if( bIsOuterRing )
+                    {
+                        // if the outer ring turned out to be a inner ring
+                        // once reduced
+                        if( poOutRing->isClockwise() )
+                        {
+                            bIsValid = false;
+                            bDiscardInnerRings = true;
+                        }
+                        else
+                        {
+                            OGRPolygon oPoly;
+                            oPoly.addRing( poOutRing.get() );
+                            poOutOuterRing = std::unique_ptr<OGRLinearRing>(
+                                                            poOutRing.release());
+                            {
+                                CPLErrorStateBackuper oErrorStateBackuper;
+                                CPLErrorHandlerPusher
+                                                oErrorHandler(CPLQuietErrorHandler);
+                                bIsValid = oPoly.IsValid();
+                            }
+                            bDiscardInnerRings = !bIsValid;
+                        }
+                    }
+                    else if( bDiscardInnerRings ||
+                             poOutOuterRing.get() == nullptr ||
+                             // if the inner ring turned out to be a outer ring
+                             // once reduced
+                             !poOutRing->isClockwise()  )
+                    {
+                        bIsValid = false;
+                    }
+                    else
+                    {
+                        OGRPolygon oPoly;
+                        oPoly.addRing( poOutOuterRing.get() );
+                        oPoly.addRingDirectly( poOutRing.release() );
+                        {
+                            CPLErrorStateBackuper oErrorStateBackuper;
+                            CPLErrorHandlerPusher
+                                            oErrorHandler(CPLQuietErrorHandler);
+                            bIsValid = oPoly.IsValid();
+                        }
+                    }
+                }
+
+                if( bIsValid )
+                {
+                    nLastReducedXValid = nLastReducedX;
+                    nLastReducedYValid = nLastReducedY;
+                    anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                }
+                else
+                {
+                    // Remove this ring
+                    nLastReducedX = nLastReducedXValid;
+                    nLastReducedY = nLastReducedYValid;
+                    anDstGeometry.resize( nLastMoveToIdx );
+                }
+
                 iSrc ++;
                 break;
             }
@@ -4473,37 +4722,12 @@ void OGRMVTWriterDataset::EncodeFeature(
         oSrcTileLayer.read(pabyUncompressed,
                             pabyUncompressed + nUncompressedSize) )
     {
-
-        const auto& srcKeys = oSrcTileLayer.getKeys();
-        for( const auto& osKey: srcKeys )
-        {
-            auto oIter = oMapKeyToIdx.find(osKey);
-            if( oIter == oMapKeyToIdx.end() )
-            {
-                oMapKeyToIdx[osKey] = poTargetLayer->addKey(osKey);
-            }
-        }
-
-        const auto& srcValues = oSrcTileLayer.getValues();
-        for( const auto& oValue: srcValues )
-        {
-            auto oIter = oMapValueToIdx.find(oValue);
-            if( oIter == oMapValueToIdx.end() )
-            {
-                oMapValueToIdx[oValue] =
-                    poTargetLayer->addValue(oValue);
-            }
-        }
-
-        // There should be only one feature !
         const auto& srcFeatures = oSrcTileLayer.getFeatures();
-        for( const auto& poSrcFeature: srcFeatures )
+        if( srcFeatures.size() == 1 ) // should always be true !
         {
-            nFeaturesInTile ++;
-
+            const auto& poSrcFeature = srcFeatures[0];
             std::shared_ptr<MVTTileLayerFeature> poFeature(
                 new MVTTileLayerFeature());
-            poTargetLayer->addFeature(poFeature);
 
             if( poSrcFeature->hasId() )
                 poFeature->setId(poSrcFeature->getId());
@@ -4513,38 +4737,93 @@ void OGRMVTWriterDataset::EncodeFeature(
                 poLayerProperties->
                     m_oCountGeomType[poSrcFeature->getType()] ++;
             }
+            bool bOK = true;
             if( nExtent < m_nExtent )
             {
+#ifdef for_debugging
+                const auto& srcKeys = oSrcTileLayer.getKeys();
+                const auto& srcValues = oSrcTileLayer.getValues();
+                const auto& anSrcTags = poSrcFeature->getTags();
+                for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+                {
+                    GUInt32 nSrcIdxKey = anSrcTags[i];
+                    GUInt32 nSrcIdxValue = anSrcTags[i+1];
+                    if( nSrcIdxKey < srcKeys.size() &&
+                        nSrcIdxValue < srcValues.size() )
+                    {
+                        auto& osKey = srcKeys[nSrcIdxKey];
+                        auto& oValue = srcValues[nSrcIdxValue];
+                        if( osKey == "tunnus" &&
+                            oValue.getUIntValue() == 28799760 )
+                        {
+                            printf("foo\n");
+                            break;
+                        }
+                    }
+                }
+#endif
+
                 poFeature->setGeometry(
-                    GetReducedPrecisionGeometry(poSrcFeature->getGeometry(),
+                    GetReducedPrecisionGeometry(poSrcFeature->getType(),
+                                                poSrcFeature->getGeometry(),
                                                 m_nExtent, nExtent));
+                if( poFeature->getGeometry().empty() )
+                {
+                    bOK = false;
+                }
             }
             else
             {
                 poFeature->setGeometry(poSrcFeature->getGeometry());
             }
-
-            const auto& anSrcTags = poSrcFeature->getTags();
-            for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+            if( bOK )
             {
-                GUInt32 nSrcIdxKey = anSrcTags[i];
-                GUInt32 nSrcIdxValue = anSrcTags[i+1];
-                if( nSrcIdxKey < srcKeys.size() &&
-                    nSrcIdxValue < srcValues.size() )
+                const auto& srcKeys = oSrcTileLayer.getKeys();
+                for( const auto& osKey: srcKeys )
                 {
-                    auto& osKey = srcKeys[nSrcIdxKey];
-                    auto& oValue = srcValues[nSrcIdxValue];
-
-                    if( poLayerProperties )
+                    auto oIter = oMapKeyToIdx.find(osKey);
+                    if( oIter == oMapKeyToIdx.end() )
                     {
-                        UpdateLayerProperties(poLayerProperties,
-                                                osKey,
-                                                oValue);
+                        oMapKeyToIdx[osKey] = poTargetLayer->addKey(osKey);
                     }
-
-                    poFeature->addTag(oMapKeyToIdx[osKey]);
-                    poFeature->addTag(oMapValueToIdx[oValue]);
                 }
+
+                const auto& srcValues = oSrcTileLayer.getValues();
+                for( const auto& oValue: srcValues )
+                {
+                    auto oIter = oMapValueToIdx.find(oValue);
+                    if( oIter == oMapValueToIdx.end() )
+                    {
+                        oMapValueToIdx[oValue] =
+                            poTargetLayer->addValue(oValue);
+                    }
+                }
+
+                const auto& anSrcTags = poSrcFeature->getTags();
+                for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+                {
+                    GUInt32 nSrcIdxKey = anSrcTags[i];
+                    GUInt32 nSrcIdxValue = anSrcTags[i+1];
+                    if( nSrcIdxKey < srcKeys.size() &&
+                        nSrcIdxValue < srcValues.size() )
+                    {
+                        auto& osKey = srcKeys[nSrcIdxKey];
+                        auto& oValue = srcValues[nSrcIdxValue];
+
+                        if( poLayerProperties )
+                        {
+                            UpdateLayerProperties(poLayerProperties,
+                                                    osKey,
+                                                    oValue);
+                        }
+
+                        poFeature->addTag(oMapKeyToIdx[osKey]);
+                        poFeature->addTag(oMapValueToIdx[oValue]);
+                    }
+                }
+
+                nFeaturesInTile ++;
+                poTargetLayer->addFeature(poFeature);
             }
         }
     }
@@ -4670,19 +4949,15 @@ std::string OGRMVTWriterDataset::EncodeTile(
     while( bTooBigTile && !bTooManyFeatures && nExtent >= 256 )
     {
         nExtent /= 2;
-#ifdef DEBUG_VERBOSE
         nSizeBefore = oTileBuffer.size();
-#endif
         oTileBuffer = RecodeTileLowerResolution(nZ, nX, nY, nExtent,
                                                 hStmtLayer, hStmtRows);
         bTooBigTile = oTileBuffer.size() > m_nMaxTileSize;
-#ifdef DEBUG_VERBOSE
         CPLDebug("MVT", "Recoding tile %d/%d/%d with extent = %u. "
                  "From %u to %u bytes",
                  nZ, nX, nY, nExtent,
                  static_cast<unsigned>(nSizeBefore),
                  static_cast<unsigned>(oTileBuffer.size()));
-#endif
     }
 
     if( bTooBigTile || bTooManyFeatures )
@@ -5428,25 +5703,28 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
 
     m_oEnvelope.Merge(sExtent);
 
-    for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
+    if( !m_bReuseTempFile )
     {
-        double dfTileDim = m_dfTileDim0 / (1 << nZ);
-        double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-        int nTileMinX =
-            static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
-        int nTileMinY =
-            static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
-        int nTileMaxX =
-            static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
-        int nTileMaxY =
-            static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
-        for( int iX = nTileMinX; iX <= nTileMaxX; iX++ )
+        for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
         {
-            for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
+            double dfTileDim = m_dfTileDim0 / (1 << nZ);
+            double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
+            int nTileMinX =
+                static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
+            int nTileMinY =
+                static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
+            int nTileMaxX =
+                static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
+            int nTileMaxY =
+                static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
+            for( int iX = nTileMinX; iX <= nTileMaxX; iX++ )
             {
-                PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
-                                   (nZ == poLayer->m_nMaxZoom),
-                                   poFeature, nSerial, poGeom);
+                for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
+                {
+                    PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
+                                    (nZ == poLayer->m_nMaxZoom),
+                                    poFeature, nSerial, poGeom);
+                }
             }
         }
     }
@@ -5579,6 +5857,11 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         pszFormat = "MBTILES";
     }
     const bool bMBTILES = pszFormat != nullptr && EQUAL(pszFormat, "MBTILES");
+
+    // For debug only
+    bool bReuseTempFile = 
+        CPLTestBool(CPLGetConfigOption("OGR_MVT_REUSE_TEMP_FILE", "NO"));
+
     if( bMBTILES )
     {
         if( !bMBTILESExt )
@@ -5603,7 +5886,7 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         if( VSIMkdir(pszFilename, 0755) != 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s",
-                     pszFilename);
+                    pszFilename);
             return nullptr;
         }
     }
@@ -5615,11 +5898,13 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     CPLString osTempDB =
         CSLFetchNameValueDef(papszOptions, "TEMPORARY_DB",
             (CPLString(pszFilename) + ".temp.db").c_str());
-    VSIUnlink(osTempDB);
+    if( !bReuseTempFile )
+        VSIUnlink(osTempDB);
 
     sqlite3* hDB = nullptr;
     sqlite3_open_v2(osTempDB, &hDB,
-                    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                    SQLITE_OPEN_READWRITE |
+                    (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
                     SQLITE_OPEN_NOMUTEX,
                     poDS->m_pMyVFS->zName);
     if( hDB == nullptr )
@@ -5631,20 +5916,30 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     }
     poDS->m_osTempDB = osTempDB;
     poDS->m_hDB = hDB;
+    poDS->m_bReuseTempFile = bReuseTempFile;
 
     // For Unix
-    if( CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
+    if( !poDS->m_bReuseTempFile &&
+        CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
     {
         VSIUnlink(osTempDB);
     }
 
-    CPL_IGNORE_RET_VAL(SQLCommand(hDB,
-        "PRAGMA synchronous = OFF;"
-        "PRAGMA journal_mode = OFF;"
-        "PRAGMA temp_store = MEMORY;"
-        "CREATE TABLE temp(z INTEGER, x INTEGER, y INTEGER, layer TEXT, "
-        "idx INTEGER, feature BLOB, geomtype INTEGER, area_or_length DOUBLE);"
-        "CREATE INDEX temp_index ON temp (z, x, y, layer, idx);"));
+    if( poDS->m_bReuseTempFile )
+    {
+        poDS->m_nTempTiles = SQLGetInteger64(
+            hDB, "SELECT COUNT(*) FROM temp", nullptr );
+    }
+    else
+    {
+        CPL_IGNORE_RET_VAL(SQLCommand(hDB,
+            "PRAGMA synchronous = OFF;"
+            "PRAGMA journal_mode = OFF;"
+            "PRAGMA temp_store = MEMORY;"
+            "CREATE TABLE temp(z INTEGER, x INTEGER, y INTEGER, layer TEXT, "
+            "idx INTEGER, feature BLOB, geomtype INTEGER, area_or_length DOUBLE);"
+            "CREATE INDEX temp_index ON temp (z, x, y, layer, idx);"));
+    }
 
     sqlite3_stmt* hInsertStmt = nullptr;
     CPL_IGNORE_RET_VAL(sqlite3_prepare_v2( hDB,
@@ -5770,11 +6065,17 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         }
     }
 
-    int nCPUs = CPLGetNumCPUs();
-    if( nCPUs > 1 )
+    int nThreads = CPLGetNumCPUs();
+    const char* pszNumThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    if( pszNumThreads && CPLGetValueType(pszNumThreads) == CPL_VALUE_INTEGER )
+    {
+        nThreads = atoi(pszNumThreads);
+    }
+    if( nThreads > 1 )
     {
         poDS->m_bThreadPoolOK =
-            poDS->m_oThreadPool.Setup(nCPUs, nullptr, nullptr);
+            poDS->m_oThreadPool.Setup(nThreads, nullptr, nullptr);
     }
 
     poDS->SetDescription(pszFilename);
