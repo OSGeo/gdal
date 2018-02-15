@@ -607,8 +607,7 @@ GDALDataset *GDALMRFDataset::Open(GDALOpenInfo *poOpenInfo)
     ds->zslice = zslice;
 
     // OpenOptions can override file name arguments
-    if (ret == CE_None)
-        ds->ProcessOpenOptions(poOpenInfo->papszOpenOptions);
+    ds->ProcessOpenOptions(poOpenInfo->papszOpenOptions);
 
     if (level != -1) {
         // Open the whole dataset, then pick one level
