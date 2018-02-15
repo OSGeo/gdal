@@ -1348,6 +1348,83 @@ def ogr_mvt_write_limitations_max_size():
 
 ###############################################################################
 
+def ogr_mvt_write_conflicting_innner_ring():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    # the second inner ring conflicts with the first one once transformed to integer coordinates
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((-500000 1000000,-510000 1000000,-510000 1010000,-500000 1000000),(-502000 1001000,-509000 1001000,-509000 1008500,-502000 1001000),(-502000 1000900,-509000 1000900,-509000 1000800,-502000 1000900))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds)
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_write_limitations_max_size_polygon():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field', '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((500000 1000000,510000 1000000,510000 1010000,500000 1000000),(503000 1003000,507000 1003000,507000 1005000,503000 1003000))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
+                                  datasetCreationOptions = ['MAX_SIZE=100'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((498980.920645631 1007745.78091176,508764.860266133 1017529.72053227,508764.860266133 1007745.78091176,498980.920645631 1007745.78091176)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_write_limitations_max_features():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
@@ -1608,7 +1685,9 @@ gdaltest_list = [
     ogr_mvt_write_one_layer,
     ogr_mvt_write_conf,
     ogr_mvt_write_mbtiles,
+    ogr_mvt_write_conflicting_innner_ring,
     ogr_mvt_write_limitations_max_size,
+    ogr_mvt_write_limitations_max_size_polygon,
     ogr_mvt_write_limitations_max_features,
     ogr_mvt_write_custom_tiling_scheme,
     ogr_mvt_write_errors,

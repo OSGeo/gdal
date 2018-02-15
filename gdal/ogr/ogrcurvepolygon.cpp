@@ -318,6 +318,34 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
 }
 
 /************************************************************************/
+/*                            removeRing()                              */
+/************************************************************************/
+
+/**
+ * \brief Remove a geometry from the container.
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * special flag meaning that all geometries should be removed.
+ *
+ * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
+ * not.  The default is TRUE as the container is considered to own the
+ * geometries in it.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
+ * out of range.
+ */
+
+OGRErr  OGRCurvePolygon::removeRing(int iIndex, int bDelete)
+{
+    return oCC.removeCurve(iIndex, bDelete);
+}
+
+/************************************************************************/
 /*                              addRing()                               */
 /************************************************************************/
 
