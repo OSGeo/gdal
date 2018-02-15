@@ -362,8 +362,13 @@ int DDFRecord::ReadHeader()
                 nFieldOffset = -1;
                 return FALSE;
             }
-            CPLDebug( "ISO8211",
+            static bool bFirstTime = true;
+            if( bFirstTime )
+            {
+                bFirstTime = false;
+                CPLDebug( "ISO8211",
                       "Didn't find field terminator, read one more byte." );
+            }
         }
 
         if( nFieldOffset >= nDataSize )
