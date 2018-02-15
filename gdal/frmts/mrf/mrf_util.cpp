@@ -638,6 +638,7 @@ void GDALRegister_mrf()
       GDAL_DMD_OPENOPTIONLIST,
       "<OpenOptionList>"
       "    <Option name='NOERRORS' type='boolean' description='Ignore decompression errors' default='FALSE'/>"
+      "    <Option name='ZSLICE' type='int' description='For a third dimension MRF, pick a slice' default='0'/>"
       "</OpenOptionList>"
       );
 
