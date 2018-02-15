@@ -2361,7 +2361,9 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
 /************************************************************************/
 
 static
-int MBTilesGetBandCountAndTileSize(OGRDataSourceH &hDS,
+int MBTilesGetBandCountAndTileSize(
+                        bool bIsVSICURL,
+                        OGRDataSourceH &hDS,
                         int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol,
@@ -2378,7 +2380,7 @@ int MBTilesGetBandCountAndTileSize(OGRDataSourceH &hDS,
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
-    if (STARTS_WITH(osDSName.c_str(), "/vsicurl/"))
+    if (bIsVSICURL)
     {
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -2703,10 +2705,12 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
         int nMaxTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxY, nMaxLevel ));
         int nTileSize = 0;
-        nBands = MBTilesGetBandCountAndTileSize(hDS, nMaxLevel,
-                                     nMinTileRow, nMaxTileRow,
-                                     nMinTileCol, nMaxTileCol,
-                                     nTileSize);
+        nBands = MBTilesGetBandCountAndTileSize(
+            STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl/"),
+            hDS, nMaxLevel,
+            nMinTileRow, nMaxTileRow,
+            nMinTileCol, nMaxTileCol,
+            nTileSize);
         bool bFoundRasterTile = nBands > 0;
         if( !bFoundRasterTile )
             nTileSize = knDEFAULT_BLOCK_SIZE;

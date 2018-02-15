@@ -187,7 +187,7 @@ def mbtiles_start_webserver():
 ###############################################################################
 #
 
-def mbtiles_http_jpeg():
+def mbtiles_http_jpeg_three_bands():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -205,6 +205,32 @@ def mbtiles_http_jpeg():
         {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg_single_band():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
     if ds is None:
         return 'fail'
 
@@ -712,7 +738,8 @@ gdaltest_list = [
     mbtiles_2,
     mbtiles_3,
     mbtiles_start_webserver,
-    mbtiles_http_jpeg,
+    mbtiles_http_jpeg_three_bands,
+    mbtiles_http_jpeg_single_band,
     mbtiles_http_png,
     mbtiles_stop_webserver,
     mbtiles_4,
