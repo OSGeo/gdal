@@ -27,11 +27,26 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
+#include "cpl_port.h"
 #include "ogr_mem.h"
-#include "ogr_p.h"
 
+#include <cstddef>
+#include <cstring>
 #include <algorithm>
+#include <map>
+#include <new>
+#include <utility>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_vsi.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 
@@ -742,9 +757,9 @@ OGRErr OGRMemLayer::AlterFieldDefn( int iField, OGRFieldDefn *poNewFieldDefn,
             {
                 if( poNewFieldDefn->GetType() != OFTString )
                 {
-                    CPLError( CE_Failure, CPLE_NotSupported,
-                              "Can only convert from OFTInteger to OFTReal, "
-                              "or from anything to OFTString" );
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "Can only convert from OFTInteger to OFTReal, "
+                             "or from anything to OFTString");
                     return OGRERR_FAILURE;
                 }
             }
