@@ -3195,7 +3195,8 @@ class OGRMVTWriterDataset: public GDALDataset
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const;
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const;
 
         static void         WriterTaskFunc(void* pParam);
 
@@ -3204,7 +3205,8 @@ class OGRMVTWriterDataset: public GDALDataset
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const;
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const;
 
         void                ConvertToTileCoords(double dfX,
                                                   double dfY,
@@ -3900,7 +3902,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const
 {
     double dfTileDim = m_dfTileDim0 / (1 << nZ);
     double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
@@ -3913,25 +3916,34 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     double dfIntersectBottomRightX = dfBottomRightX + dfBuffer;
     double dfIntersectBottomRightY = dfBottomRightY - dfBuffer;
 
-    OGRLinearRing* poLR = new OGRLinearRing();
-    poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
-    poLR->addPoint( dfIntersectTopX, dfIntersectBottomRightY );
-    poLR->addPoint( dfIntersectBottomRightX, dfIntersectBottomRightY );
-    poLR->addPoint( dfIntersectBottomRightX, dfIntersectTopY );
-    poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
-    OGRPolygon oPoly;
-    oPoly.addRingDirectly(poLR);
-
-    std::unique_ptr<OGRGeometry> poIntersection;
+    OGRGeometry* poIntersection;
+    std::unique_ptr<OGRGeometry> poIntersectionHolder;
+    if( sEnvelope.MinX >= dfIntersectTopX &&
+        sEnvelope.MinY >= dfIntersectBottomRightY &&
+        sEnvelope.MaxX <= dfIntersectBottomRightX &&
+        sEnvelope.MaxY <= dfIntersectTopY )
     {
+        poIntersection = poGeom;
+    }
+    else
+    {
+        OGRLinearRing* poLR = new OGRLinearRing();
+        poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
+        poLR->addPoint( dfIntersectTopX, dfIntersectBottomRightY );
+        poLR->addPoint( dfIntersectBottomRightX, dfIntersectBottomRightY );
+        poLR->addPoint( dfIntersectBottomRightX, dfIntersectTopY );
+        poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
+        OGRPolygon oPoly;
+        oPoly.addRingDirectly(poLR);
+
         CPLErrorStateBackuper oErrorStateBackuper;
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        poIntersection =
-            std::unique_ptr<OGRGeometry>(poGeom->Intersection(&oPoly));
-        if( poIntersection.get() == nullptr || poIntersection->IsEmpty() )
+        poIntersection = poGeom->Intersection(&oPoly);
+        if( poIntersection == nullptr || poIntersection->IsEmpty() )
         {
             return OGRERR_NONE;
         }
+        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poIntersection);
     }
 
     // Create a layer with a single feature in it
@@ -3957,7 +3969,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     OGRwkbGeometryType eGeomToEncodeType = poIntersection->getGeometryType();
 
     // Simplify contour if requested by user
-    OGRGeometry* poGeomToEncode = poIntersection.get();
+    OGRGeometry* poGeomToEncode = poIntersection;
     std::unique_ptr<OGRGeometry> poGeomSimplified;
     const double dfSimplification = bIsMaxZoomForLayer ?
                                 m_dfSimplificationMaxZoom : m_dfSimplification;
@@ -3981,7 +3993,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     {
         if( eGeomToEncodeType == wkbPoint )
         {
-            OGRPoint* poPoint = static_cast<OGRPoint*>(poIntersection.get());
+            OGRPoint* poPoint = static_cast<OGRPoint*>(poIntersection);
             int nX, nY;
             double dfX = poPoint->getX();
             double dfY = poPoint->getY();
@@ -3996,7 +4008,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                  eGeomToEncodeType == wkbGeometryCollection )
         {
             OGRGeometryCollection* poGC =
-                dynamic_cast<OGRGeometryCollection*>(poIntersection.get());
+                dynamic_cast<OGRGeometryCollection*>(poIntersection);
             std::set<std::pair<int,int>> oSetUniqueCoords;
             poGPBFeature->addGeometry(
                 GetCmdCountCombined(knCMD_MOVETO, 0) ); // To be modified later
@@ -4254,6 +4266,7 @@ class MVTWriterTask
         OGRFeature* poFeature;
         GIntBig nSerial;
         OGRGeometry* poGeom;
+        OGREnvelope sEnvelope;
 };
 
 /************************************************************************/
@@ -4271,7 +4284,8 @@ void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
                            poTask->bIsMaxZoomForLayer,
                            poTask->poFeature,
                            poTask->nSerial,
-                           poTask->poGeom);
+                           poTask->poGeom,
+                           poTask->sEnvelope);
     if( eErr != OGRERR_NONE )
     {
         poTask->poDS->m_oDBMutex.lock();
@@ -4292,7 +4306,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const
 {
     if( !m_bThreadPoolOK )
     {
@@ -4300,7 +4315,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
                                       osTargetName,
                                       bIsMaxZoomForLayer,
                                       poFeature, nSerial,
-                                      poGeom);
+                                      poGeom, sEnvelope);
     }
     else
     {
@@ -4318,6 +4333,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
         poFeature->SetGeometryDirectly(poGeomBak);
         poTask->nSerial = nSerial;
         poTask->poGeom = poGeom->clone();
+        poTask->sEnvelope = sEnvelope;
         m_oThreadPool.SubmitJob(OGRMVTWriterDataset::WriterTaskFunc, poTask);
         // Do not queue more than 1000 jobs to avoid memory exhaustion
         m_oThreadPool.WaitCompletion(1000);
@@ -5729,8 +5745,8 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
                 for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
                 {
                     if( PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
-                                    (nZ == poLayer->m_nMaxZoom),
-                                    poFeature, nSerial, poGeom) != OGRERR_NONE )
+                            (nZ == poLayer->m_nMaxZoom),
+                            poFeature, nSerial, poGeom, sExtent) != OGRERR_NONE )
                     {
                         return OGRERR_FAILURE;
                     }
