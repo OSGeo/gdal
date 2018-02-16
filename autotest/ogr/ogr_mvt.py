@@ -1647,7 +1647,7 @@ def ogr_mvt_write_errors():
     gdal.Unlink('/vsimem/foo.temp.db')
     lyr = ds.CreateLayer('test')
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
     with gdaltest.error_handler():
         lyr.CreateFeature(f)
         ds = None
@@ -1662,7 +1662,7 @@ def ogr_mvt_write_errors():
     with gdaltest.error_handler():
         lyr = ds.CreateLayer('test', srs = osr.SpatialReference())
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
     lyr.CreateFeature(f)
     ds = None
 
