@@ -5805,20 +5805,19 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
 */
 
     CPLJSONObject oObj = m_oConf.GetRoot().GetObj(pszLayerName);
+    CPLString osDescription;
     if( oObj.IsValid() )
     {
         CPLString osTargetName = oObj.GetString("target_name");
         if( !osTargetName.empty() )
             poLayer->m_osTargetName = osTargetName;
         int nMinZoom = oObj.GetInteger("minzoom", -1);
-        if( nMinZoom > 0 )
+        if( nMinZoom >= 0 )
             poLayer->m_nMinZoom = nMinZoom;
         int nMaxZoom = oObj.GetInteger("maxzoom", -1);
-        if( nMaxZoom > 0 )
+        if( nMaxZoom >= 0 )
             poLayer->m_nMaxZoom = nMaxZoom;
-        CPLString osDescription = oObj.GetString("description");
-        if( !osDescription.empty() )
-            m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
+        osDescription = oObj.GetString("description");
     }
 
     poLayer->m_nMinZoom = atoi(CSLFetchNameValueDef(papszOptions, "MINZOOM",
@@ -5833,8 +5832,8 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
     poLayer->m_osTargetName =
         CSLFetchNameValueDef(papszOptions, "NAME",
                              poLayer->m_osTargetName.c_str());
-    CPLString osDescription(
-                CSLFetchNameValueDef(papszOptions, "DESCRIPTION", ""));
+    osDescription =
+        CSLFetchNameValueDef(papszOptions, "DESCRIPTION", osDescription);
     if( !osDescription.empty() )
         m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
 
