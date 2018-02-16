@@ -1421,6 +1421,43 @@ def osr_basic_25():
     return 'success'
 
 ###############################################################################
+# Test corner cases of osr.SetGeocCS()
+
+def osr_basic_setgeogcs():
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
+    if sr.ExportToWkt() != 'GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.SetGeogCS('a', 'b', 'c', 1, 2, 'd', 3, 'e', 4)
+    if sr.ExportToWkt() != 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.SetUTM(31)
+    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
+    if sr.ExportToWkt() != 'PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0.01308996938995747],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.ImportFromWkt('FOO["bar",GEOGCS[]]')
+    if sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0) == 0:
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+    if sr.ExportToWkt() != 'FOO["bar",GEOGCS[]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_basic_1,
@@ -1448,6 +1485,7 @@ gdaltest_list = [
     osr_basic_23,
     osr_basic_24,
     osr_basic_25,
+    osr_basic_setgeogcs,
     None ]
 
 if __name__ == '__main__':
