@@ -3155,6 +3155,7 @@ class OGRMVTWriterDataset: public GDALDataset
         std::vector<std::unique_ptr<OGRMVTWriterLayer>> m_apoLayers;
         CPLString                              m_osTempDB;
         mutable std::mutex                     m_oDBMutex;
+        mutable bool                           m_bWriteFeatureError = false;
         sqlite3_vfs                           *m_pMyVFS = nullptr;
         sqlite3                               *m_hDB = nullptr;
         sqlite3_stmt                          *m_hInsertStmt = nullptr;
@@ -4262,7 +4263,7 @@ class MVTWriterTask
 void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
 {
     MVTWriterTask* poTask = static_cast<MVTWriterTask*>(pParam);
-    poTask->poDS->PreGenerateForTileReal(
+    OGRErr eErr = poTask->poDS->PreGenerateForTileReal(
                            poTask->nZ,
                            poTask->nTileX,
                            poTask->nTileY,
@@ -4271,6 +4272,12 @@ void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
                            poTask->poFeature,
                            poTask->nSerial,
                            poTask->poGeom);
+    if( eErr != OGRERR_NONE )
+    {
+        poTask->poDS->m_oDBMutex.lock();
+        poTask->poDS->m_bWriteFeatureError = true;
+        poTask->poDS->m_oDBMutex.unlock();
+    }
     delete poTask->poFeature;
     delete poTask->poGeom;
     delete poTask;
@@ -4315,7 +4322,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
         // Do not queue more than 1000 jobs to avoid memory exhaustion
         m_oThreadPool.WaitCompletion(1000);
 
-        return OGRERR_NONE;
+        return m_bWriteFeatureError ? OGRERR_FAILURE : OGRERR_NONE;
     }
 }
 
@@ -5721,9 +5728,12 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
             {
                 for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
                 {
-                    PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
+                    if( PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
                                     (nZ == poLayer->m_nMaxZoom),
-                                    poFeature, nSerial, poGeom);
+                                    poFeature, nSerial, poGeom) != OGRERR_NONE )
+                    {
+                        return OGRERR_FAILURE;
+                    }
                 }
             }
         }
