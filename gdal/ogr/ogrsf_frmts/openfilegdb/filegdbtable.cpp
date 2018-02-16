@@ -26,14 +26,29 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "filegdbtable_priv.h"
 #include "cpl_port.h"
-#include "cpl_string.h"
-#include "cpl_time.h"
-#include "ogr_api.h" // for OGR_RawField_xxxxx()
-#include "ogrpgeogeometry.h" /* SHPT_ constants and OGRCreateFromMultiPatchPart() */
+#include "filegdbtable.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 #include <limits>
 #include <string>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi.h"
+#include "filegdbtable_priv.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_geometry.h"
+#include "ogrpgeogeometry.h"
 
 CPL_CVSID("$Id$")
 

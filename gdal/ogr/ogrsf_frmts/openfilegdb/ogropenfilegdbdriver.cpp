@@ -26,7 +26,17 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_openfilegdb.h"
+
+#include <cstddef>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
 
 CPL_CVSID("$Id$")
 
