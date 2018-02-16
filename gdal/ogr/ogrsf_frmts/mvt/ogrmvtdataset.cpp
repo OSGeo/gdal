@@ -3861,6 +3861,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                             false,
                                             nLastX, nLastY, dfArea);
                     }
+#ifdef likely_not_possible
                     else if( poSimplified->getGeometryType() == wkbMultiPolygon )
                     {
                         OGRMultiPolygon* poMP =
@@ -3879,6 +3880,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                         }
                         return bRet;
                     }
+#endif
 
                     return false;
                 }
@@ -5958,6 +5960,7 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     else
     {
         CPL_IGNORE_RET_VAL(SQLCommand(hDB,
+            "PRAGMA page_size = 4096;" // 4096: default since sqlite 3.12
             "PRAGMA synchronous = OFF;"
             "PRAGMA journal_mode = OFF;"
             "PRAGMA temp_store = MEMORY;"
@@ -6077,6 +6080,7 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         }
 
         if( SQLCommand(poDS->m_hDBMBTILES,
+            "PRAGMA page_size = 4096;" // 4096: default since sqlite 3.12
             "PRAGMA synchronous = OFF;"
             "PRAGMA journal_mode = OFF;"
             "PRAGMA temp_store = MEMORY;"
