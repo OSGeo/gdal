@@ -70,7 +70,7 @@ build: extensions/gdal_wrap.cpp
 egg:
 	$(PYTHON) setup.py bdist_egg 
 
-site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(prefix)\"))")
+site_package_dir=$(shell $(PYTHON) -c "from __future__ import print_function;from distutils.sysconfig import get_python_lib;print(get_python_lib(prefix=\"$(PREFIX)\"))")
 
 ifeq ($(PY_HAVE_SETUPTOOLS),1)
     setup_opts=--single-version-externally-managed --record=record.txt
@@ -80,18 +80,18 @@ ifdef DESTDIR
     setup_opts+=--root=$(DESTDIR)
 endif
 
-ifdef prefix
+ifdef PREFIX
     ifeq ($(shell uname),Darwin)
         STD_UNIX_LAYOUT=$(shell $(PYTHON) -c "from __future__ import print_function;import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")")
         ifeq ($(STD_UNIX_LAYOUT),"TRUE")
-            setup_opts+=--prefix=$(prefix)
+            setup_opts+=--prefix=$(PREFIX)
         else
             ifdef PYTHON_INSTALL_LIB
                 setup_opts+=--install-lib=$(PYTHON_INSTALL_LIB)
             endif
         endif
     else
-        setup_opts+=--prefix=$(prefix)
+        setup_opts+=--prefix=$(PREFIX)
     endif
 endif
 
