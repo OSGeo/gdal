@@ -1350,6 +1350,62 @@ def ogr_mvt_write_limitations_max_size():
 
 ###############################################################################
 
+def ogr_mvt_write_polygon_repaired():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 500000,100000 500000,100000 200000,100500 200000,100500 500000,500000 500000,500000 0,0 0))'))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 500000,100000 500000,100000 200000,100500 200000,100500 500000,500000 500000,500000 0,0 0)),((1000000 0,1000000 1000000,2000000 1000000,1000000 0)))'))
+    lyr.CreateFeature(f)
+
+    # Cannot be repaired
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, datasetCreationOptions = ['MAXZOOM=0'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if out_f is not None:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_write_conflicting_innner_ring():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
@@ -1735,6 +1791,7 @@ gdaltest_list = [
     ogr_mvt_write_one_layer,
     ogr_mvt_write_conf,
     ogr_mvt_write_mbtiles,
+    ogr_mvt_write_polygon_repaired,
     ogr_mvt_write_conflicting_innner_ring,
     ogr_mvt_write_limitations_max_size,
     ogr_mvt_write_limitations_max_size_polygon,
