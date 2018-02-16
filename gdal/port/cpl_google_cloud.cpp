@@ -882,6 +882,7 @@ CPLString VSIGSHandleHelper::GetSignedURL(char** papszOptions)
         if( pabySignature == nullptr )
             return CPLString();
         char* pszBase64 = CPLBase64Encode( nSignatureLen, pabySignature );
+        CPLFree(pabySignature);
         CPLString osSignature(pszBase64);
         CPLFree(pszBase64);
 
