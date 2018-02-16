@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 static void Usage()
 
 {
-    printf( "Usage: gdalmanage identify [-r] [-u] files*\n"
+    printf( "Usage: gdalmanage identify [-r|-fr] [-u] files*\n"
             "    or gdalmanage copy [-f driver] oldname newname\n"
             "    or gdalmanage rename [-f driver] oldname newname\n"
             "    or gdalmanage delete [-f driver] datasetname\n" );
@@ -55,7 +55,9 @@ static void Usage()
 
 static void ProcessIdentifyTarget( const char *pszTarget,
                                    char **papszSiblingList,
-                                   int bRecursive, int bReportFailures )
+                                   bool bRecursive,
+                                   bool bReportFailures,
+                                   bool bForceRecurse )
 
 {
     GDALDriverH hDriver;
@@ -69,7 +71,7 @@ static void ProcessIdentifyTarget( const char *pszTarget,
     else if( bReportFailures )
         printf( "%s: unrecognized\n", pszTarget );
 
-    if( !bRecursive || hDriver != nullptr )
+    if( !bForceRecurse && (!bRecursive || hDriver != nullptr) )
         return;
 
     if( VSIStatL( pszTarget, &sStatBuf ) != 0
@@ -87,7 +89,7 @@ static void ProcessIdentifyTarget( const char *pszTarget,
             CPLFormFilename( pszTarget, papszSiblingList[i], nullptr );
 
         ProcessIdentifyTarget( osSubTarget, papszSiblingList,
-                               bRecursive, bReportFailures );
+                               bRecursive, bReportFailures, bForceRecurse );
     }
     CSLDestroy(papszSiblingList);
 }
@@ -102,14 +104,21 @@ static void Identify( int nArgc, char **papszArgv )
 /* -------------------------------------------------------------------- */
 /*      Scan for command line switches                                   */
 /* -------------------------------------------------------------------- */
-    int bRecursive = FALSE, bReportFailures = FALSE;
+    bool bRecursive = false;
+    bool bForceRecurse = false;
+    bool bReportFailures = false;
 
     while( nArgc > 0 && papszArgv[0][0] == '-' )
     {
         if( EQUAL(papszArgv[0],"-r") )
-            bRecursive = TRUE;
+            bRecursive = true;
+        else if( EQUAL(papszArgv[0],"-fr") )
+        {
+            bForceRecurse = true;
+            bRecursive = true;
+        }
         else if( EQUAL(papszArgv[0],"-u") )
-            bReportFailures = TRUE;
+            bReportFailures = true;
         else
             Usage();
 
@@ -123,7 +132,7 @@ static void Identify( int nArgc, char **papszArgv )
     while( nArgc > 0 )
     {
         ProcessIdentifyTarget( papszArgv[0], nullptr,
-                               bRecursive, bReportFailures );
+                               bRecursive, bReportFailures, bForceRecurse );
         nArgc--;
         papszArgv++;
     }
