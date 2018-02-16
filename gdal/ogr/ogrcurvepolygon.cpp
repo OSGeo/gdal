@@ -329,7 +329,7 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
  *
  * There is no SFCOM analog to this method.
  *
- * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * @param iIndex the index of the geometry to delete.  A value of -1 is a
  * special flag meaning that all geometries should be removed.
  *
  * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
