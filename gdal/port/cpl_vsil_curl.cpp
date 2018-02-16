@@ -6256,6 +6256,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         {
             delete poS3HandleHelper;
             curl_easy_cleanup(hCurlHandle);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
             return nullptr;
         }
 
@@ -8188,6 +8189,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
         {
             delete poS3HandleHelper;
             curl_easy_cleanup(hCurlHandle);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
             return nullptr;
         }
 
