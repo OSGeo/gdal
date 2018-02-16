@@ -1321,7 +1321,7 @@ def ogr_mvt_write_limitations_max_size():
     # Also test single threaded execution
     with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
         out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
-                                  datasetCreationOptions = ['MAX_SIZE=100'])
+                                  datasetCreationOptions = ['MAX_SIZE=100', 'SIMPLIFICATION=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1594,6 +1594,15 @@ def ogr_mvt_write_errors():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    # invalid MINZOOM for layer
+    gdal.RmdirRecursive('/vsimem/foo')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('foo', options = ['MINZOOM=-1'])
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     # invalid CONF
     gdal.RmdirRecursive('/vsimem/foo')
     gdal.FileFromMemBuffer('/vsimem/invalid.json', 'foo bar')
@@ -1637,10 +1646,30 @@ def ogr_mvt_write_errors():
         return 'fail'
     gdal.RmdirRecursive('tmp/tmpmvt')
 
-    # Test failure in writing in temp db
+    # Test failure in writing in temp db (multi-threaded)
     gdal.RmdirRecursive('/vsimem/foo')
     with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
         ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
+    temp_ds.ExecuteSQL('DROP TABLE temp')
+    temp_ds = None
+    gdal.Unlink('/vsimem/foo.temp.db')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.RmdirRecursive('tmp/tmpmvt')
+
+    # Test failure in writing in temp db (single-threaded)
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
+        with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
+            ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
     temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
     temp_ds.ExecuteSQL('DROP TABLE temp')
     temp_ds = None
