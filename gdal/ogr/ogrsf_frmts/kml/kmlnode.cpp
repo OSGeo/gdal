@@ -26,11 +26,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
-#include "kmlnode.h"
-#include "cpl_conv.h"
 
+#include "cpl_port.h"
+#include "kmlnode.h"
+
+#include <cstring>
+#include <memory>
 #include <string>
 #include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "ogr_geometry.h"
 
 CPL_CVSID("$Id$")
 
