@@ -3563,7 +3563,7 @@ void GDALRegister_MBTiles()
 COMPRESSION_OPTIONS
 "  <Option name='CLIP' scope='vector' type='boolean' "
     "description='Whether to clip geometries to tile extent' default='YES'/>"
-"  <Option name='ZOOM_LEVEL_AUTO' scope='vector' type='booleean' "
+"  <Option name='ZOOM_LEVEL_AUTO' scope='vector' type='boolean' "
     "description='Whether to auto-select the zoom level for vector layers "
     "according to spatial filter extent. Only for display purpose' "
     "default='NO'/>"
