@@ -1757,6 +1757,49 @@ def ogr_mvt_write_errors():
 
 ###############################################################################
 #
+def ogr_mvt_write_reuse_temp_db():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,100000 100000,200000 0)'))
+    lyr.CreateFeature(f)
+
+    with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
+        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+
+    if gdal.VSIStatL('/vsimem/out.temp.db') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/out')
+
+    with gdaltest.config_option('OGR_MVT_REUSE_TEMP_FILE', 'YES'):
+        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+
+    out_ds = ogr.Open('/vsimem/out/5')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if out_f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    gdal.RmdirRecursive('/vsimem/out')
+    gdal.Unlink('/vsimem/out.temp.db')
+
+    return 'success'
+
+
+###############################################################################
+#
 
 gdaltest_list = [
     ogr_mvt_datatypes,
@@ -1798,6 +1841,7 @@ gdaltest_list = [
     ogr_mvt_write_limitations_max_features,
     ogr_mvt_write_custom_tiling_scheme,
     ogr_mvt_write_errors,
+    ogr_mvt_write_reuse_temp_db,
 ]
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]
