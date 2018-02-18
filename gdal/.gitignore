@@ -57,6 +57,8 @@ apps/gdalsrsinfo
 apps/gdaltindex
 apps/gdaltransform
 apps/gdalwarp
+apps/gnmanalyse
+apps/gnmmanage
 apps/nearblack
 apps/ogr2ogr
 apps/ogrinfo
