@@ -81,17 +81,19 @@ ifdef DESTDIR
 endif
 
 ifdef PREFIX
+    setup_opts+=--prefix=$(PREFIX)
+else ifdef prefix
     ifeq ($(shell uname),Darwin)
         STD_UNIX_LAYOUT=$(shell $(PYTHON) -c "from __future__ import print_function;import sys;print(\"FALSE\" if \"framework\" in sys.prefix.lower() else \"TRUE\")")
         ifeq ($(STD_UNIX_LAYOUT),"TRUE")
-            setup_opts+=--prefix=$(PREFIX)
+            setup_opts+=--prefix=$(prefix)
         else
             ifdef PYTHON_INSTALL_LIB
                 setup_opts+=--install-lib=$(PYTHON_INSTALL_LIB)
             endif
         endif
     else
-        setup_opts+=--prefix=$(PREFIX)
+        setup_opts+=--prefix=$(prefix)
     endif
 endif
 
