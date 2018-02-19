@@ -29,6 +29,8 @@
 #ifndef OGR_KMLVECTOR_H_INCLUDED
 #define OGR_KMLVECTOR_H_INCLUDED
 
+#ifdef HAVE_EXPAT
+
 #include "kml.h"
 #include "kmlnode.h"
 // std
@@ -47,6 +49,8 @@ public:
     bool isRest(std::string const& sIn) const override;
     void findLayers(KMLNode* poNode, int bKeepEmptyContainers) override;
 };
+
+#endif // HAVE_EXPAT
 
 #endif /* OGR_KMLVECTOR_H_INCLUDED */
 
