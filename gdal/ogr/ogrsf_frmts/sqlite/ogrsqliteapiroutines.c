@@ -29,6 +29,8 @@
 
 #include "cpl_port.h"
 
+#include <stddef.h>
+
 #ifndef WIN32
 
 #ifdef HAVE_SPATIALITE

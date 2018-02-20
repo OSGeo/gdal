@@ -75,22 +75,24 @@ def mbtiles_2():
 
     expected_cs_tab = [6324, 19386, 45258]
     expected_cs_tab_jpeg8 = [6016, 13996, 45168]
+    expected_cs_tab_jpeg9b = [6016, 14034, 45168]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('bad color interpretation')
             return 'fail'
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
             gdaltest.post_reason('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
     expected_cs_tab = [16642, 15772, 10029]
     expected_cs_tab_jpeg8 = [16621, 14725, 8988]
+    expected_cs_tab_jpeg9b = [16621, 14723, 8988]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
             gdaltest.post_reason('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
@@ -185,7 +187,7 @@ def mbtiles_start_webserver():
 ###############################################################################
 #
 
-def mbtiles_http_jpeg():
+def mbtiles_http_jpeg_three_bands():
 
     if gdaltest.mbtiles_drv is None:
         return 'skip'
@@ -203,6 +205,32 @@ def mbtiles_http_jpeg():
         {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
     with webserver.install_http_handler(handler):
         ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg_single_band():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
     if ds is None:
         return 'fail'
 
@@ -710,7 +738,8 @@ gdaltest_list = [
     mbtiles_2,
     mbtiles_3,
     mbtiles_start_webserver,
-    mbtiles_http_jpeg,
+    mbtiles_http_jpeg_three_bands,
+    mbtiles_http_jpeg_single_band,
     mbtiles_http_png,
     mbtiles_stop_webserver,
     mbtiles_4,

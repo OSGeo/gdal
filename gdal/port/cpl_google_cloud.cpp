@@ -28,10 +28,12 @@
 #include "cpl_google_cloud.h"
 #include "cpl_vsi_error.h"
 #include "cpl_sha1.h"
+#include "cpl_sha256.h"
 #include "cpl_time.h"
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_aws.h"
+#include "cpl_json.h"
 
 CPL_CVSID("$Id$")
 
@@ -324,7 +326,8 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
+bool VSIGSHandleHelper::GetConfiguration(char** papszOptions,
+                                         CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
                                          CPLString& osHeaderFile,
                                          GOA2Manager& oManager)
@@ -456,10 +459,38 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             osRefreshToken, osClientId, osClientSecret, nullptr);
     }
 
-    CPLString osPrivateKey =
-        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY", "");
-    CPLString osPrivateKeyFile =
-        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", "");
+    CPLString osServiceAccountJson( CSLFetchNameValueDef(papszOptions,
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        CPLGetConfigOption("GOOGLE_APPLICATION_CREDENTIALS", "")));
+    if( !osServiceAccountJson.empty() )
+    {
+        CPLJSONDocument oDoc;
+        if( !oDoc.Load(osServiceAccountJson) )
+        {
+            return false;
+        }
+        CPLString osPrivateKey = oDoc.GetRoot().GetString("private_key");
+        osPrivateKey.replaceAll("\\n", "\n");
+        CPLString osClientEmail = oDoc.GetRoot().GetString("client_email");
+        const char* pszScope =
+            CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
+            CPLGetConfigOption("GS_OAUTH2_SCOPE",
+                "https://www.googleapis.com/auth/devstorage.read_write"));
+
+        return oManager.SetAuthFromServiceAccount(
+                osPrivateKey,
+                osClientEmail,
+                pszScope,
+                nullptr,
+                nullptr);
+    }
+
+    CPLString osPrivateKey = CSLFetchNameValueDef(papszOptions,
+        "GS_OAUTH2_PRIVATE_KEY",
+        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY", ""));
+    CPLString osPrivateKeyFile = CSLFetchNameValueDef(papszOptions,
+        "GS_OAUTH2_PRIVATE_KEY_FILE",
+        CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", ""));
     if( !osPrivateKey.empty() || !osPrivateKeyFile.empty() )
     {
         if( !osPrivateKeyFile.empty() )
@@ -483,8 +514,9 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
         }
         osPrivateKey.replaceAll("\\n", "\n");
 
-        CPLString osClientEmail =
-            CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", "");
+        CPLString osClientEmail = CSLFetchNameValueDef(papszOptions,
+            "GS_OAUTH2_CLIENT_EMAIL",
+            CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", ""));
         if( osClientEmail.empty() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -493,8 +525,9 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
             return false;
         }
         const char* pszScope =
+            CSLFetchNameValueDef( papszOptions, "GS_OAUTH2_SCOPE",
             CPLGetConfigOption("GS_OAUTH2_SCOPE",
-                "https://www.googleapis.com/auth/devstorage.read_write");
+                "https://www.googleapis.com/auth/devstorage.read_write"));
 
         if( bFirstTimeForDebugMessage )
         {
@@ -646,6 +679,7 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
     CPLString osMsg;
     osMsg.Printf("GS_SECRET_ACCESS_KEY+GS_ACCESS_KEY_ID, "
                  "GS_OAUTH2_REFRESH_TOKEN or "
+                 "GOOGLE_APPLICATION_CREDENTIALS or "
                  "GS_OAUTH2_PRIVATE_KEY+GS_OAUTH2_CLIENT_EMAIL configuration "
                  "options and %s not defined",
                  osCredentials.c_str());
@@ -661,7 +695,8 @@ bool VSIGSHandleHelper::GetConfiguration(CPLString& osSecretAccessKey,
 /************************************************************************/
 
 VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
-                                                    const char* /*pszFSPrefix*/ )
+                                                    const char* /*pszFSPrefix*/,
+                                                    char** papszOptions )
 {
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
@@ -673,7 +708,8 @@ VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
     CPLString osHeaderFile;
     GOA2Manager oManager;
 
-    if( !GetConfiguration(osSecretAccessKey, osAccessKeyId, osHeaderFile,
+    if( !GetConfiguration(papszOptions,
+                          osSecretAccessKey, osAccessKeyId, osHeaderFile,
                           oManager) )
     {
         return nullptr;
@@ -762,6 +798,100 @@ void VSIGSHandleHelper::ClearCache()
 
     oStaticManager = GOA2Manager();
     bFirstTimeForDebugMessage = true;
+}
+
+/************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+CPLString VSIGSHandleHelper::GetSignedURL(char** papszOptions)
+{
+    if( !((!m_osAccessKeyId.empty() && !m_osSecretAccessKey.empty()) ||
+          m_oManager.GetAuthMethod() == GOA2Manager::SERVICE_ACCOUNT) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Signed URL for Google Cloud Storage is only available with "
+                 "AWS style authentication with GS_ACCESS_KEY_ID+GS_SECRET_ACCESS_KEY, "
+                 "or with service account authentication");
+        return CPLString();
+    }
+
+    GIntBig nStartDate = static_cast<GIntBig>(time(nullptr));
+    const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");
+    if( pszStartDate )
+    {
+        int nYear, nMonth, nDay, nHour, nMin, nSec;
+        if( sscanf(pszStartDate, "%04d%02d%02dT%02d%02d%02dZ",
+                   &nYear, &nMonth, &nDay, &nHour, &nMin, &nSec) == 6 )
+        {
+            struct tm brokendowntime;
+            brokendowntime.tm_year = nYear - 1900;
+            brokendowntime.tm_mon = nMonth - 1;
+            brokendowntime.tm_mday = nDay;
+            brokendowntime.tm_hour = nHour;
+            brokendowntime.tm_min = nMin;
+            brokendowntime.tm_sec = nSec;
+            nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+        }
+    }
+    GIntBig nExpiresIn = nStartDate + atoi(
+        CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
+    CPLString osExpires(CSLFetchNameValueDef(papszOptions, "EXPIRES",
+                                    CPLSPrintf(CPL_FRMT_GIB, nExpiresIn)));
+
+    CPLString osVerb(CSLFetchNameValueDef(papszOptions, "VERB", "GET"));
+
+    CPLString osCanonicalizedResource("/" + CPLAWSURLEncode(m_osBucketObjectKey, false));
+
+    CPLString osStringToSign;
+    osStringToSign += osVerb + "\n";
+    osStringToSign += "\n"; // Content_MD5
+    osStringToSign += "\n"; // Content_Type
+    osStringToSign += osExpires + "\n";
+    // osStringToSign += // Canonicalized_Extension_Headers
+    osStringToSign += osCanonicalizedResource;
+#ifdef DEBUG_VERBOSE
+    CPLDebug("GS", "osStringToSign = %s", osStringToSign.c_str());
+#endif
+
+    if( !m_osAccessKeyId.empty() )
+    {
+        // No longer documented but actually works !
+        GByte abySignature[CPL_SHA1_HASH_SIZE] = {};
+        CPL_HMAC_SHA1( m_osSecretAccessKey.c_str(), m_osSecretAccessKey.size(),
+                    osStringToSign, osStringToSign.size(),
+                    abySignature);
+
+        char* pszBase64 = CPLBase64Encode( sizeof(abySignature), abySignature );
+        CPLString osSignature(pszBase64);
+        CPLFree(pszBase64);
+
+        ResetQueryParameters();
+        AddQueryParameter("GoogleAccessId", m_osAccessKeyId);
+        AddQueryParameter("Expires", osExpires);
+        AddQueryParameter("Signature", osSignature);
+    }
+    else
+    {
+        unsigned nSignatureLen = 0;
+        GByte* pabySignature = CPL_RSA_SHA256_Sign(
+            m_oManager.GetPrivateKey().c_str(),
+            osStringToSign.data(),
+            static_cast<unsigned>(osStringToSign.size()),
+            &nSignatureLen);
+        if( pabySignature == nullptr )
+            return CPLString();
+        char* pszBase64 = CPLBase64Encode( nSignatureLen, pabySignature );
+        CPLFree(pabySignature);
+        CPLString osSignature(pszBase64);
+        CPLFree(pszBase64);
+
+        ResetQueryParameters();
+        AddQueryParameter("GoogleAccessId", m_oManager.GetClientEmail());
+        AddQueryParameter("Expires", osExpires);
+        AddQueryParameter("Signature", osSignature);
+    }
+    return m_osURL;
 }
 
 #endif

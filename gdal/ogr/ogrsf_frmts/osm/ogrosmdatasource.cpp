@@ -26,23 +26,49 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_multiproc.h"
-#include "cpl_time.h"
-#include "ogr_api.h"
-#include "ogr_osm.h"
-#include "ogr_p.h"
-#include "swq.h"
-
 #include "gpb.h"
+#include "ogr_osm.h"
 
+#include <cerrno>
+#include <climits>
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
+#include "cpl_port.h"
+#include "cpl_progress.h"
+#include "cpl_string.h"
+#include "cpl_time.h"
+#include "cpl_vsi.h"
+#include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_p.h"
+#include "ogr_sqlite.h"
 #include "ogrlayerdecorator.h"
+#include "ogrsf_frmts.h"
 #include "ogrsqliteexecutesql.h"
+#include "osm_parser.h"
+#include "swq.h"
+#include "sqlite3.h"
 
 #undef SQLITE_STATIC
 #define SQLITE_STATIC      ((sqlite3_destructor_type)nullptr)
-
-#include <algorithm>
 
 constexpr int LIMIT_IDS_PER_REQUEST = 200;
 

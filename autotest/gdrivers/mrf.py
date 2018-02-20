@@ -724,6 +724,13 @@ class myTestCreateCopyWrapper:
 
 for item in init_list:
     src_filename = item[0]
+
+    if src_filename == '12bit_rose_extract.jpg':
+        import jpeg
+        jpeg.jpeg_1()
+        if gdaltest.jpeg_version == '9b':
+            continue
+
     with gdaltest.error_handler():
         ds = gdal.Open('data/' + src_filename)
     if ds is None:

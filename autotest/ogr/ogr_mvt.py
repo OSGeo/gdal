@@ -38,6 +38,7 @@ import ogrtest
 import webserver
 from osgeo import gdal
 from osgeo import ogr
+from osgeo import osr
 
 ###############################################################################
 
@@ -204,6 +205,20 @@ def ogr_mvt_limit_cases():
     f = lyr.GetNextFeature()
     if f.GetGeometryRef().ExportToWkt() != 'POINT (2070 2690)':
         gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_with_extension_fields():
+
+    ds = ogr.Open('data/mvt/with_extension_fields.pbf')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(f, 'LINESTRING (2070 2690,2082 2707)') != 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
         return 'fail'
 
     return 'success'
@@ -1303,8 +1318,10 @@ def ogr_mvt_write_limitations_max_size():
     f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(500000 1000000,510000 1000000)'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
-                                  datasetCreationOptions = ['MAX_SIZE=100'])
+    # Also test single threaded execution
+    with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
+        out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
+                                  datasetCreationOptions = ['MAX_SIZE=100', 'SIMPLIFICATION=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1333,6 +1350,139 @@ def ogr_mvt_write_limitations_max_size():
 
 ###############################################################################
 
+def ogr_mvt_write_polygon_repaired():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 500000,100000 500000,100000 200000,100500 200000,100500 500000,500000 500000,500000 0,0 0))'))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((0 0,0 500000,100000 500000,100000 200000,100500 200000,100500 500000,500000 500000,500000 0,0 0)),((1000000 0,1000000 1000000,2000000 1000000,1000000 0)))'))
+    lyr.CreateFeature(f)
+
+    # Cannot be repaired
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, datasetCreationOptions = ['MAXZOOM=0'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if out_f is not None:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_write_conflicting_innner_ring():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    # the second inner ring conflicts with the first one once transformed to integer coordinates
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((-500000 1000000,-510000 1000000,-510000 1010000,-500000 1000000),(-502000 1001000,-509000 1001000,-509000 1008500,-502000 1001000),(-502000 1000900,-509000 1000900,-509000 1000800,-502000 1000900))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds)
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_write_limitations_max_size_polygon():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+    lyr.CreateField(ogr.FieldDefn('field'))
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField('field', '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((500000 1000000,510000 1000000,510000 1010000,500000 1000000),(503000 1003000,507000 1003000,507000 1005000,503000 1003000))'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
+                                  datasetCreationOptions = ['MAX_SIZE=100'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out.mbtiles')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTIPOLYGON (((498980.920645631 1007745.78091176,508764.860266133 1017529.72053227,508764.860266133 1007745.78091176,498980.920645631 1007745.78091176)))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.Unlink('/vsimem/out.mbtiles')
+
+    return 'success'
+
+###############################################################################
+
 def ogr_mvt_write_limitations_max_features():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
@@ -1349,7 +1499,7 @@ def ogr_mvt_write_limitations_max_features():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON((500000 1000000,510000 1000000,510000 1100000,500000 1000000))'))
     lyr.CreateFeature(f)
 
-    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds,
+    out_ds = gdal.VectorTranslate('/vsimem/out.mbtiles', src_ds, format = 'MVT',
                                   datasetCreationOptions = ['MAX_FEATURES=1'])
     if out_ds is None:
         gdaltest.post_reason('fail')
@@ -1378,12 +1528,284 @@ def ogr_mvt_write_limitations_max_features():
     return 'success'
 
 ###############################################################################
+
+def ogr_mvt_write_custom_tiling_scheme():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("WGS84");
+    lyr = src_ds.CreateLayer('mylayer', srs = srs)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(12 71,13 72)'))
+    lyr.CreateFeature(f)
+
+    out_ds = gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT',
+                                  datasetCreationOptions = ['TILING_SCHEME=EPSG:3067,-548576,8388608,2097152'])
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    out_ds = ogr.Open('/vsimem/out/1')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    if out_lyr.GetSpatialRef().ExportToWkt().find('3067') < 0 :
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_f = out_lyr.GetNextFeature()
+    if ogrtest.check_feature_geometry(out_f, 'MULTILINESTRING ((-40160 7944704,21024 8044800))') != 0:
+        gdaltest.post_reason('fail')
+        out_f.DumpReadable()
+        return 'fail'
+    out_ds = None
+
+    gdal.RmdirRecursive('/vsimem/out')
+
+    return 'success'
+
+###############################################################################
+
+def ogr_mvt_write_errors():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    # Raster creation attempt
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = gdal.GetDriverByName('MVT').Create('/vsimem/foo', 1, 1)
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # should have mbtiles extension
+    gdal.RmdirRecursive('/vsimem/foo.bar')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.bar',
+                                                options = ['FORMAT=MBTILES'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Cannot create temporary database
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                options = ['TEMPORARY_DB=/i/do_not/exist.db'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # cannot create mbtiles file
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/i/do_not/exist.mbtiles',
+                                options = ['TEMPORARY_DB=/vsimem/temp.db'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.Unlink('/vsimem/temp.db')
+
+    # invalid MINZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                                options = ['MINZOOM=-1'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                                options = ['MINZOOM=30'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MAXZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                                options = ['MAXZOOM=-1'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                                options = ['MAXZOOM=30'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MINZOOM vs MAXZOOM
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                        options = ['MINZOOM=1', 'MAXZOOM=0'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid MINZOOM for layer
+    gdal.RmdirRecursive('/vsimem/foo')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('foo', options = ['MINZOOM=-1'])
+    if lyr is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # invalid CONF
+    gdal.RmdirRecursive('/vsimem/foo')
+    gdal.FileFromMemBuffer('/vsimem/invalid.json', 'foo bar')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                                        options = ['CONF=/vsimem/invalid.json'])
+    gdal.Unlink('/vsimem/invalid.json')
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # TILING_SCHEME not allowed with MBTILES
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo.mbtiles',
+                            options = ['TILING_SCHEME=EPSG:4326,-180,180,360'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Invalid TILING_SCHEME
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo',
+                            options = ['TILING_SCHEME=EPSG:4326'])
+    if ds is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # Test failure in creating tile
+    gdal.RmdirRecursive('tmp/tmpmvt')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('tmp/tmpmvt')
+    gdal.RmdirRecursive('tmp/tmpmvt')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    with gdaltest.error_handler():
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.RmdirRecursive('tmp/tmpmvt')
+
+    # Test failure in writing in temp db (multi-threaded)
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
+        ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
+    temp_ds.ExecuteSQL('DROP TABLE temp')
+    temp_ds = None
+    gdal.Unlink('/vsimem/foo.temp.db')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.RmdirRecursive('tmp/tmpmvt')
+
+    # Test failure in writing in temp db (single-threaded)
+    gdal.RmdirRecursive('/vsimem/foo')
+    with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
+        with gdaltest.config_option('GDAL_NUM_THREADS', '1'):
+            ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    temp_ds = ogr.Open('/vsimem/foo.temp.db', update = 1)
+    temp_ds.ExecuteSQL('DROP TABLE temp')
+    temp_ds = None
+    gdal.Unlink('/vsimem/foo.temp.db')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
+        ds = None
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    gdal.RmdirRecursive('tmp/tmpmvt')
+
+    # Test reprojection failure
+    gdal.RmdirRecursive('/vsimem/foo')
+    ds = ogr.GetDriverByName('MVT').CreateDataSource('/vsimem/foo')
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer('test', srs = osr.SpatialReference())
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    gdal.RmdirRecursive('/vsimem/foo')
+
+    return 'success'
+
+###############################################################################
+#
+def ogr_mvt_write_reuse_temp_db():
+
+    if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
+    lyr = src_ds.CreateLayer('mylayer')
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(0 0,100000 100000,200000 0)'))
+    lyr.CreateFeature(f)
+
+    with gdaltest.config_option('OGR_MVT_REMOVE_TEMP_FILE', 'NO'):
+        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+
+    if gdal.VSIStatL('/vsimem/out.temp.db') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/out')
+
+    with gdaltest.config_option('OGR_MVT_REUSE_TEMP_FILE', 'YES'):
+        gdal.VectorTranslate('/vsimem/out', src_ds, format = 'MVT')
+
+    out_ds = ogr.Open('/vsimem/out/5')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_lyr = out_ds.GetLayerByName('mylayer')
+    out_f = out_lyr.GetNextFeature()
+    if out_f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds = None
+
+    gdal.RmdirRecursive('/vsimem/out')
+    gdal.Unlink('/vsimem/out.temp.db')
+
+    return 'success'
+
+
+###############################################################################
 #
 
 gdaltest_list = [
     ogr_mvt_datatypes,
     ogr_mvt_datatype_promotion,
     ogr_mvt_limit_cases,
+    ogr_mvt_with_extension_fields,
     ogr_mvt_mixed,
     ogr_mvt_linestring,
     ogr_mvt_multilinestring,
@@ -1412,8 +1834,14 @@ gdaltest_list = [
     ogr_mvt_write_one_layer,
     ogr_mvt_write_conf,
     ogr_mvt_write_mbtiles,
+    ogr_mvt_write_polygon_repaired,
+    ogr_mvt_write_conflicting_innner_ring,
     ogr_mvt_write_limitations_max_size,
+    ogr_mvt_write_limitations_max_size_polygon,
     ogr_mvt_write_limitations_max_features,
+    ogr_mvt_write_custom_tiling_scheme,
+    ogr_mvt_write_errors,
+    ogr_mvt_write_reuse_temp_db,
 ]
 
 # gdaltest_list = [ ogr_mvt_http_start, ogr_mvt_http, ogr_mvt_http_stop ]

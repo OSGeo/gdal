@@ -3366,7 +3366,7 @@ def tiff_read_stripoffset_types():
 
 def tiff_read_progressive_jpeg_denial_of_service():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_greater(4,0,9):
         return 'skip'
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
@@ -3464,7 +3464,7 @@ def tiff_read_mmap_interface():
 
 def tiff_read_jpeg_too_big_last_stripe():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_greater(4,0,9):
         return 'skip'
 
     ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
@@ -3510,6 +3510,44 @@ def tiff_read_negative_scaley():
             return 'fail'
 
     return 'success'
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd.tif', 1, 4672)
+    return ut.testOpen()
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd_corrupted():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd_corrupted.tif', 1, 0)
+    with gdaltest.error_handler():
+        return ut.testOpen()
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_read_zstd_corrupted2():
+
+    md = gdal.GetDriverByName('GTiff').GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte_zstd_corrupted2.tif', 1, 0)
+    with gdaltest.error_handler():
+        return ut.testOpen()
 
 ###############################################################################
 
@@ -3632,6 +3670,9 @@ gdaltest_list.append( (tiff_read_old_style_lzw) )
 gdaltest_list.append( (tiff_read_mmap_interface) )
 gdaltest_list.append( (tiff_read_jpeg_too_big_last_stripe) )
 gdaltest_list.append( (tiff_read_negative_scaley) )
+gdaltest_list.append( (tiff_read_zstd) )
+gdaltest_list.append( (tiff_read_zstd_corrupted) )
+gdaltest_list.append( (tiff_read_zstd_corrupted2) )
 
 gdaltest_list.append( (tiff_read_online_1) )
 gdaltest_list.append( (tiff_read_online_2) )

@@ -29,18 +29,28 @@
 #include "osm_parser.h"
 #include "gpb.h"
 
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <exception>
+#include <string>
+#include <vector>
+
+#include "cpl_config.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "cpl_multiproc.h"
 #include "cpl_worker_thread_pool.h"
+
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
 #endif
-
-#include <algorithm>
-#include <exception>
 
 CPL_CVSID("$Id$")
 
@@ -52,15 +62,15 @@ constexpr int EXTRA_BYTES = 1;
 constexpr int XML_BUFSIZE = 64 * 1024;
 
 // Per OSM PBF spec
-const unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
+constexpr unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
 
 // Per OSM PBF spec (usually much smaller !)
-const unsigned int MAX_BLOB_SIZE = 64 * 1024 * 1024;
+constexpr unsigned int MAX_BLOB_SIZE = 64 * 1024 * 1024;
 
 // GDAL implementation limits
-const unsigned int MAX_ACC_BLOB_SIZE = 50 * 1024 * 1024;
-const unsigned int MAX_ACC_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
-const int N_MAX_JOBS = 1024;
+constexpr unsigned int MAX_ACC_BLOB_SIZE = 50 * 1024 * 1024;
+constexpr unsigned int MAX_ACC_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
+constexpr int N_MAX_JOBS = 1024;
 
 #if defined(__GNUC__)
 #define CPL_NO_INLINE __attribute__ ((noinline))

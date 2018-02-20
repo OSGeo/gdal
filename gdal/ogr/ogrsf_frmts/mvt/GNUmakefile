@@ -19,6 +19,6 @@ default:	$(O_OBJ:.o=.$(OBJ_EXT))
 clean:
 	rm -f *.o $(O_OBJ) mvt_tile_test$(EXE)
 
-mvt_tile_test$(EXE): mvt_tile_test.$(OBJ_EXT) mvt_tile.$(OBJ_EXT)
-	$(LD) $(LDFLAGS) mvt_tile_test.$(OBJ_EXT) mvt_tile.$(OBJ_EXT) $(CONFIG_LIBS) -o mvt_tile_test$(EXE)
+mvt_tile_test$(EXE): mvt_tile_test.$(OBJ_EXT)
+	$(LD) $(LDFLAGS) mvt_tile_test.$(OBJ_EXT) $(CONFIG_LIBS) -o mvt_tile_test$(EXE)
 

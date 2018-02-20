@@ -26,9 +26,30 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_openfilegdb.h"
-#include "ogr_mem.h"
+
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "filegdbtable.h"
+#include "gdal.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogr_mem.h"
+#include "ogrsf_frmts.h"
+#include "swq.h"
 
 CPL_CVSID("$Id$")
 

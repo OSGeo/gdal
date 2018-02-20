@@ -53,6 +53,10 @@ def vsiaz_init():
         if gdaltest.az_vars[var] is not None:
             gdal.SetConfigOption(var, "")
 
+    if gdal.GetSignedURL('/vsiaz/foo/bar') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     return 'success'
 
 ###############################################################################
@@ -155,6 +159,13 @@ def vsiaz_fake_basic():
 
     if gdaltest.webserver_port == 0:
         return 'skip'
+
+    signed_url = gdal.GetSignedURL('/vsiaz/az_fake_bucket/resource', ['START_DATE=20180213T123456'])
+    if signed_url not in ('http://127.0.0.1:8080/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12',
+                          'http://127.0.0.1:8081/azure/blob/myaccount/az_fake_bucket/resource?se=2018-02-13T13%3A34%3A56Z&sig=9Jc4yBFlSRZSSxf059OohN6pYRrjuHWJWSEuryczN%2FM%3D&sp=r&sr=c&st=2018-02-13T12%3A34%3A56Z&sv=2012-02-12'):
+        gdaltest.post_reason('fail')
+        print(signed_url)
+        return 'fail'
 
     def method(request):
 
@@ -1003,16 +1014,17 @@ def vsiaz_extra_1():
         print(ret)
         return 'fail'
 
-    # Invalid bucket : "The specified bucket does not exist"
-    gdal.ErrorReset()
-    f = open_for_read('/vsiaz/not_existing_bucket/foo')
-    with gdaltest.error_handler():
-        gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-    if gdal.VSIGetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    if False:  # we actually try to read at read() time and bSetError = false
+        # Invalid bucket : "The specified bucket does not exist"
+        gdal.ErrorReset()
+        f = open_for_read('/vsiaz/not_existing_bucket/foo')
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1, 1, f)
+        gdal.VSIFCloseL(f)
+        if gdal.VSIGetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            print(gdal.VSIGetLastErrorMsg())
+            return 'fail'
 
     # Invalid resource
     gdal.ErrorReset()
@@ -1020,6 +1032,20 @@ def vsiaz_extra_1():
     if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
+        return 'fail'
+
+    # Test GetSignedURL()
+    signed_url = gdal.GetSignedURL('/vsiaz/' + az_resource)
+    f = open_for_read('/vsicurl_streaming/' + signed_url)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    if len(ret) != 1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'

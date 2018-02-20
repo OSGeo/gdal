@@ -49,11 +49,10 @@
 
 CPL_CVSID("$Id$")
 
+const char* SRS_EPSG_3857 = "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
+
 // WebMercator related constants
 constexpr double kmSPHERICAL_RADIUS = 6378137.0;
-constexpr double kmMAX_GM =  kmSPHERICAL_RADIUS * M_PI;  // 20037508.342789244
-
-const char* SRS_EPSG_3857 = "PROJCS[\"WGS 84 / Pseudo-Mercator\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Mercator_1SP\"],PARAMETER[\"central_meridian\",0],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"X\",EAST],AXIS[\"Y\",NORTH],EXTENSION[\"PROJ4\",\"+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs\"],AUTHORITY[\"EPSG\",\"3857\"]]";
 
 constexpr int knMAX_FILES_PER_DIR = 10000;
 
@@ -84,6 +83,22 @@ constexpr size_t knMAX_FIELD_NAME_LENGTH = 256;
 #define SQLITE_STATIC      ((sqlite3_destructor_type)nullptr)
 
 #endif
+
+/************************************************************************/
+/*                    InitWebMercatorTilingScheme()                     */
+/************************************************************************/
+
+static void InitWebMercatorTilingScheme(OGRSpatialReference* poSRS,
+                                        double& dfTopX,
+                                        double& dfTopY,
+                                        double& dfTileDim0)
+{
+    constexpr double kmMAX_GM =  kmSPHERICAL_RADIUS * M_PI;  // 20037508.342789244
+    poSRS->SetFromUserInput(SRS_EPSG_3857);
+    dfTopX = -kmMAX_GM;
+    dfTopY = kmMAX_GM;
+    dfTileDim0 = 2 * kmMAX_GM;
+}
 
 /************************************************************************/
 /*                           GetCmdId()                                 */
@@ -267,6 +282,10 @@ class OGRMVTDataset : public GDALDataset
     CPLString                                   m_osMetadataMemFilename;
     bool                                        m_bClip = true;
     CPLString                                   m_osTileExtension{"pbf"};
+    OGRSpatialReference*                        m_poSRS = nullptr;
+    double                                      m_dfTileDim0 = 0.0;
+    double                                      m_dfTopXOrigin = 0.0;
+    double                                      m_dfTopYOrigin = 0.0;
 
     static GDALDataset* OpenDirectory(GDALOpenInfo*);
 
@@ -282,6 +301,11 @@ class OGRMVTDataset : public GDALDataset
                         { return FALSE; }
 
     static GDALDataset* Open(GDALOpenInfo*);
+
+    OGRSpatialReference* GetSRS() { return m_poSRS; }
+    double GetTileDim0() const { return m_dfTileDim0; }
+    double GetTopXOrigin() const { return m_dfTopXOrigin; }
+    double GetTopYOrigin() const { return m_dfTopYOrigin; }
 };
 
 /************************************************************************/
@@ -361,10 +385,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset* poDS,
 
     if( m_poDS->m_bGeoreferenced )
     {
-        OGRSpatialReference* poSRS = new OGRSpatialReference();
-        poSRS->SetFromUserInput(SRS_EPSG_3857);
-        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-        poSRS->Release();
+        m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poDS->GetSRS());
     }
 
     Init(oFields);
@@ -510,8 +531,9 @@ void OGRMVTLayer::Init(const CPLJSONObject& oFields)
             }
             else if( nKey == MAKE_KEY(knLAYER_EXTENT, WT_VARINT) )
             {
-                READ_VARUINT32(pabyData, pabyDataLimit, m_nExtent);
-                m_nExtent = std::max(1U, m_nExtent); // to avoid divide by zero
+                GUInt32 nExtent = 0;
+                READ_VARUINT32(pabyData, pabyDataLimit, nExtent);
+                m_nExtent = std::max(1U, nExtent); // to avoid divide by zero
             }
             else
             {
@@ -1419,10 +1441,7 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     m_poFeatureDefn->SetGeomType(eGeomType);
     m_poFeatureDefn->Reference();
 
-    OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_EPSG_3857);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    poSRS->Release();
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
 
     if( m_bJsonField )
     {
@@ -1706,21 +1725,21 @@ void OGRMVTDirectoryLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
     }
 
     if( sEnvelope.IsInit() &&
-        sEnvelope.MinX >= -10 * kmMAX_GM &&
-        sEnvelope.MinY >= -10 * kmMAX_GM &&
-        sEnvelope.MaxX <= 10 * kmMAX_GM &&
-        sEnvelope.MaxY <= 10 * kmMAX_GM )
+        sEnvelope.MinX >= -10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MinY >= -10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MaxX <= 10 * m_poDS->GetTileDim0() &&
+        sEnvelope.MaxY <= 10 * m_poDS->GetTileDim0() )
     {
-        const double dfTileDim = 2 * kmMAX_GM / (1 << m_nZ);
+        const double dfTileDim = m_poDS->GetTileDim0() / (1 << m_nZ);
         m_nFilterMinX = std::max(0, static_cast<int>(
-            floor((sEnvelope.MinX + kmMAX_GM) / dfTileDim)));
+            floor((sEnvelope.MinX - m_poDS->GetTopXOrigin()) / dfTileDim)));
         m_nFilterMinY = std::max(0, static_cast<int>(
-            floor((kmMAX_GM - sEnvelope.MaxY) / dfTileDim)));
+            floor((m_poDS->GetTopYOrigin() - sEnvelope.MaxY) / dfTileDim)));
         m_nFilterMaxX = std::min(static_cast<int>(
-            ceil((sEnvelope.MaxX + kmMAX_GM) / dfTileDim)),
+            ceil((sEnvelope.MaxX - m_poDS->GetTopXOrigin()) / dfTileDim)),
             (1 << m_nZ)-1);
         m_nFilterMaxY = std::min(static_cast<int>(
-            ceil((kmMAX_GM - sEnvelope.MinY) / dfTileDim)),
+            ceil((m_poDS->GetTopYOrigin() - sEnvelope.MinY) / dfTileDim)),
             (1 << m_nZ)-1);
     }
     else
@@ -1845,9 +1864,16 @@ OGRFeature* OGRMVTDirectoryLayer::GetFeature(GIntBig nFID)
 /************************************************************************/
 
 OGRMVTDataset::OGRMVTDataset(GByte* pabyData):
-    m_pabyData(pabyData)
+    m_pabyData(pabyData),
+    m_poSRS(new OGRSpatialReference())
 {
     m_bClip = CPLTestBool(CPLGetConfigOption("OGR_MVT_CLIP", "YES"));
+
+    // Default WebMercator tiling scheme
+    InitWebMercatorTilingScheme(m_poSRS,
+                                m_dfTopXOrigin,
+                                m_dfTopYOrigin,
+                                m_dfTileDim0);
 }
 
 /************************************************************************/
@@ -1859,6 +1885,7 @@ OGRMVTDataset::~OGRMVTDataset()
     VSIFree(m_pabyData);
     if( !m_osMetadataMemFilename.empty() )
         VSIUnlink(m_osMetadataMemFilename);
+    m_poSRS->Release();
 }
 
 /************************************************************************/
@@ -2242,7 +2269,7 @@ static int OGRMVTDriverIdentify( GDALOpenInfo* poOpenInfo )
             {
                 unsigned int nExtent = 0;
                 READ_VARUINT32(pabyData, pabyLayerEnd, nExtent);
-                if( nExtent < 256 || nExtent > 16384 )
+                if( nExtent < 128 || nExtent > 16384 )
                 {
                     CPLDebug("MVT", "Invalid extent: %u", nExtent);
                     return FALSE;
@@ -2294,6 +2321,10 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
                          CPLJSONArray& oVectorLayers,
                          CPLJSONArray& oTileStatLayers,
                          CPLJSONObject& oBounds,
+                         OGRSpatialReference* poSRS,
+                         double& dfTopX,
+                         double& dfTopY,
+                         double& dfTileDim0,
                          const CPLString& osMetadataMemFilename)
 
 {
@@ -2315,6 +2346,19 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     }
     if( !bLoadOK )
         return false;
+
+    CPLJSONObject oCrs(oDoc.GetRoot().GetObj("crs"));
+    CPLJSONObject oTopX(oDoc.GetRoot().GetObj("tile_origin_upper_left_x"));
+    CPLJSONObject oTopY(oDoc.GetRoot().GetObj("tile_origin_upper_left_y"));
+    CPLJSONObject oTileDim0(oDoc.GetRoot().GetObj("tile_dimension_zoom_0"));
+    if( oCrs.IsValid() && oTopX.IsValid() && oTopY.IsValid() &&
+        oTileDim0.IsValid() )
+    {
+        poSRS->SetFromUserInput( oCrs.ToString().c_str() );
+        dfTopX = oTopX.ToDouble();
+        dfTopY = oTopY.ToDouble();
+        dfTileDim0 = oTileDim0.ToDouble();
+    }
 
     oVectorLayers.Deinit();
     oTileStatLayers.Deinit();
@@ -2351,6 +2395,37 @@ static bool LoadMetadata(const CPLString& osMetadataFile,
     }
 
     return oVectorLayers.IsValid();
+}
+
+/************************************************************************/
+/*                       ConvertFromWGS84()                             */
+/************************************************************************/
+
+static void ConvertFromWGS84(OGRSpatialReference* poTargetSRS,
+                             double& dfX0, double& dfY0,
+                             double& dfX1, double& dfY1)
+{
+    OGRSpatialReference oSRS_EPSG3857;
+    oSRS_EPSG3857.SetFromUserInput(SRS_EPSG_3857);
+
+    if( poTargetSRS->IsSame(&oSRS_EPSG3857) )
+    {
+        LongLatToSphericalMercator(&dfX0, &dfY0);
+        LongLatToSphericalMercator(&dfX1, &dfY1);
+    }
+    else
+    {
+        OGRSpatialReference oSRS_EPSG4326;
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        OGRCoordinateTransformation* poCT = 
+            OGRCreateCoordinateTransformation(&oSRS_EPSG4326, poTargetSRS);
+        if( poCT )
+        {
+            poCT->Transform(1, &dfX0, &dfY0);
+            poCT->Transform(1, &dfX1, &dfY1);
+            delete poCT;
+        }
+    }
 }
 
 /************************************************************************/
@@ -2612,6 +2687,10 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
         CPLSPrintf("/vsimem/%p_metadata.json", poDS);
     if( !LoadMetadata(osMetadataFile, osMetadataContent,
                       oVectorLayers, oTileStatLayers, oBounds,
+                      poDS->m_poSRS,
+                      poDS->m_dfTopXOrigin,
+                      poDS->m_dfTopYOrigin,
+                      poDS->m_dfTileDim0,
                       osMetadataMemFilename) )
     {
         delete poDS;
@@ -2630,8 +2709,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             double dfY0 = CPLAtof(aosTokens[1]);
             double dfX1 = CPLAtof(aosTokens[2]);
             double dfY1 = CPLAtof(aosTokens[3]);
-            LongLatToSphericalMercator(&dfX0, &dfY0);
-            LongLatToSphericalMercator(&dfX1, &dfY1);
+            ConvertFromWGS84(poDS->m_poSRS,
+                             dfX0, dfY0, dfX1, dfY1);
             bExtentValid = true;
             sExtent.MinX = dfX0;
             sExtent.MinY = dfY0;
@@ -2650,8 +2729,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             sExtent.MinY = oBoundArray[1].ToDouble();
             sExtent.MaxX = oBoundArray[2].ToDouble();
             sExtent.MaxY = oBoundArray[3].ToDouble();
-            LongLatToSphericalMercator(&sExtent.MinX, &sExtent.MinY);
-            LongLatToSphericalMercator(&sExtent.MaxX, &sExtent.MaxY);
+            ConvertFromWGS84(poDS->m_poSRS,
+                             sExtent.MinX, sExtent.MinY,
+                             sExtent.MaxX, sExtent.MaxY);
         }
     }
 
@@ -2927,6 +3007,24 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
         }
     }
 
+    CPLJSONArray oVectorLayers;
+    oVectorLayers.Deinit();
+
+    CPLJSONArray oTileStatLayers;
+    oTileStatLayers.Deinit();
+
+    if( !osMetadataFile.empty() )
+    {
+        CPLJSONObject oBounds;
+        LoadMetadata(osMetadataFile, CPLString(),
+                     oVectorLayers, oTileStatLayers, oBounds,
+                     poDS->m_poSRS,
+                     poDS->m_dfTopXOrigin,
+                     poDS->m_dfTopYOrigin,
+                     poDS->m_dfTileDim0,
+                     CPLString());
+    }
+
     if( CPLGetValueType(osX) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osY) == CPL_VALUE_INTEGER &&
         CPLGetValueType(osZ) == CPL_VALUE_INTEGER )
@@ -2939,24 +3037,10 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
             nY >= 0 && nY < (1 << nZ) )
         {
             poDS->m_bGeoreferenced = true;
-            poDS->m_dfTileDim = 2 * kmMAX_GM / (1 << nZ);
-            poDS->m_dfTopX = -kmMAX_GM + nX * poDS->m_dfTileDim;
-            poDS->m_dfTopY = kmMAX_GM - nY * poDS->m_dfTileDim;
+            poDS->m_dfTileDim = poDS->m_dfTileDim0 / (1 << nZ);
+            poDS->m_dfTopX = poDS->m_dfTopXOrigin + nX * poDS->m_dfTileDim;
+            poDS->m_dfTopY = poDS->m_dfTopYOrigin - nY * poDS->m_dfTileDim;
         }
-    }
-
-    CPLJSONArray oVectorLayers;
-    oVectorLayers.Deinit();
-
-    CPLJSONArray oTileStatLayers;
-    oTileStatLayers.Deinit();
-
-    if( !osMetadataFile.empty() )
-    {
-        CPLJSONObject oBounds;
-        LoadMetadata(osMetadataFile, CPLString(),
-                     oVectorLayers, oTileStatLayers, oBounds,
-                     CPLString());
     }
 
     try
@@ -3022,6 +3106,7 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
                 SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, FALSE);
             }
         }
+
         return poDS;
     }
     catch( const GPBException& e )
@@ -3070,6 +3155,7 @@ class OGRMVTWriterDataset: public GDALDataset
         std::vector<std::unique_ptr<OGRMVTWriterLayer>> m_apoLayers;
         CPLString                              m_osTempDB;
         mutable std::mutex                     m_oDBMutex;
+        mutable bool                           m_bWriteFeatureError = false;
         sqlite3_vfs                           *m_pMyVFS = nullptr;
         sqlite3                               *m_hDB = nullptr;
         sqlite3_stmt                          *m_hInsertStmt = nullptr;
@@ -3098,13 +3184,19 @@ class OGRMVTWriterDataset: public GDALDataset
         CPLString                              m_osBounds;
         CPLString                              m_osCenter;
         CPLString                              m_osExtension{"pbf"};
+        OGRSpatialReference*                   m_poSRS = nullptr;
+        double                                 m_dfTopX = 0.0;
+        double                                 m_dfTopY = 0.0;
+        double                                 m_dfTileDim0 = 0.0;
+        bool                                   m_bReuseTempFile = false; // debug only
 
         OGRErr              PreGenerateForTile(int nZ, int nX, int nY,
                                                const CPLString& osTargetName,
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const;
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const;
 
         static void         WriterTaskFunc(void* pParam);
 
@@ -3113,9 +3205,10 @@ class OGRMVTWriterDataset: public GDALDataset
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const;
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const;
 
-        void                WebMercatorToTileCoords(double dfX,
+        void                ConvertToTileCoords(double dfX,
                                                   double dfY,
                                                   int& nX,
                                                   int& nY,
@@ -3208,6 +3301,8 @@ class OGRMVTWriterDataset: public GDALDataset
                                    int nBandsIn,
                                    GDALDataType eDT,
                                    char **papszOptions );
+
+        OGRSpatialReference* GetSRS() { return m_poSRS; }
 };
 
 /************************************************************************/
@@ -3254,34 +3349,21 @@ OGRMVTWriterLayer::OGRMVTWriterLayer(OGRMVTWriterDataset* poDS,
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->Reference();
 
-    OGRSpatialReference* poSRS = new OGRSpatialReference();
-    poSRS->SetFromUserInput(SRS_EPSG_3857);
-    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    poSRS->Release();
+    m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSRS());
 
-    if( poSRSIn != nullptr && !poSRS->IsSame(poSRSIn) )
+    if( poSRSIn != nullptr && !poDS->GetSRS()->IsSame(poSRSIn) )
     {
-        m_poCT = OGRCreateCoordinateTransformation( poSRSIn, poSRS );
+        m_poCT = OGRCreateCoordinateTransformation( poSRSIn, poDS->GetSRS() );
         if( m_poCT == nullptr  )
         {
             // If we can't create a transformation, issue a warning - but
             // continue the transformation.
-            char *pszWKT = nullptr;
-
-            poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
-
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Failed to create coordinate transformation between the "
-                "input coordinate system and WGS84.  This may be because "
+                "input and target coordinate systems.  This may be because "
                 "they are not transformable, or because projection "
-                "services (PROJ.4 DLL/.so) could not be loaded.  "
-                "MVT geometries may not render correctly.  "
-                "This message will not be issued any more."
-                "\nSource:\n%s\n",
-                pszWKT );
-
-            CPLFree( pszWKT );
+                "services (PROJ.4 DLL/.so) could not be loaded.");
         }
     }
 }
@@ -3341,6 +3423,12 @@ OGRErr OGRMVTWriterLayer::ICreateFeature( OGRFeature* poFeature )
 
 OGRMVTWriterDataset::OGRMVTWriterDataset()
 {
+    // Default WebMercator tiling scheme
+    m_poSRS = new OGRSpatialReference();
+    InitWebMercatorTilingScheme(m_poSRS,
+                                m_dfTopX,
+                                m_dfTopY,
+                                m_dfTileDim0);
 }
 
 /************************************************************************/
@@ -3363,6 +3451,7 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         sqlite3_close(m_hDBMBTILES);
     }
     if( !m_osTempDB.empty() &&
+        !m_bReuseTempFile &&
         CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
     {
         VSIUnlink(m_osTempDB);
@@ -3374,13 +3463,14 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         CPLFree(m_pMyVFS->pAppData);
         CPLFree(m_pMyVFS);
     }
+    m_poSRS->Release();
 }
 
 /************************************************************************/
-/*                        WebMercatorToTileCoords()                     */
+/*                        ConvertToTileCoords()                     */
 /************************************************************************/
 
-void OGRMVTWriterDataset::WebMercatorToTileCoords(double dfX,
+void OGRMVTWriterDataset::ConvertToTileCoords(double dfX,
                                                   double dfY,
                                                   int& nX,
                                                   int& nY,
@@ -3425,13 +3515,17 @@ bool OGRMVTWriterDataset::EncodeLineString(MVTTileLayerFeature *poGPBFeature,
     const int nPoints = poLS->getNumPoints() - (bWriteLastPoint ? 0 : 1);
     if( poOutLS )
         poOutLS->setNumPoints(nPoints);
+    int nFirstX = 0;
+    int nFirstY = 0;
+    int nLastXValid = nLastX;
+    int nLastYValid = nLastY;
     for( int i = 0; i < nPoints; i++ )
     {
         int nX, nY;
         int nSrcIdx = bReverseOrder ? poLS->getNumPoints() - 1 - i : i;
         double dfX = poLS->getX(nSrcIdx);
         double dfY = poLS->getY(nSrcIdx);
-        WebMercatorToTileCoords(dfX, dfY, nX, nY,
+        ConvertToTileCoords(dfX, dfY, nX, nY,
                                 dfTopX, dfTopY, dfTileDim);
         int nDiffX = nX - nLastX;
         int nDiffY = nY - nLastY;
@@ -3461,10 +3555,29 @@ bool OGRMVTWriterDataset::EncodeLineString(MVTTileLayerFeature *poGPBFeature,
                 if( poOutLS )
                     poOutLS->setPoint(nLineToCount, nX, nY );
             }
+            else
+            {
+                nFirstX = nX;
+                nFirstY = nY;
+            }
+            nLastXValid = nLastX;
+            nLastYValid = nLastY;
             nLastX = nX;
             nLastY = nY;
         }
     }
+
+    // If last point of ring is identical to first one, discard it
+    if( nMinLineTo == 2 && nLineToCount > 0 &&
+        nFirstX == nLastX && nFirstY == nLastY )
+    {
+        poGPBFeature->resizeGeometryArray(
+                            poGPBFeature->getGeometryCount() - 2);
+        nLineToCount --;
+        nLastX = nLastXValid;
+        nLastY = nLastYValid;
+    }
+
     if( nLineToCount >= nMinLineTo )
     {
         if( poOutLS )
@@ -3606,6 +3719,8 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 {
     dfArea = 0;
     std::unique_ptr<OGRLinearRing> poOutOuterRing(new OGRLinearRing());
+    OGRPolygon oOutPolyAllRings;
+
     for( int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++ )
     {
         OGRLinearRing* poRing = (i == 0) ? poPoly->getExteriorRing():
@@ -3649,6 +3764,15 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         oOutPoly.addRing( poOutOuterRing.get() );
         if( i > 0 )
         {
+            // If the inner ring turns to be a outer ring once reduced,
+            // discard it
+            if( !poOutInnerRing->isClockwise() )
+            {
+                poGPBFeature->resizeGeometryArray( nInitialSize );
+                nLastX = nLastXOri;
+                nLastY = nLastYOri;
+                continue;
+            }
             dfArea -= poOutInnerRing->get_Area();
             oOutPoly.addRingDirectly( poOutInnerRing.release() );
         }
@@ -3663,9 +3787,36 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
             CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
             bIsValid = oOutPoly.IsValid();
         }
+
+        if( i > 0 && bIsValid )
+        {
+            // Adding the current inner ring to the outer ring might be valid
+            // but it might also conflict with a previously added inner ring
+            if( oOutPolyAllRings.getExteriorRing() == nullptr )
+                oOutPolyAllRings.addRing(poOutOuterRing.get());
+            oOutPolyAllRings.addRing(poOutRing);
+            if( i > 1 )
+            {
+                {
+                    CPLErrorStateBackuper oErrorStateBackuper;
+                    CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+                    bIsValid = oOutPolyAllRings.IsValid();
+                }
+                if( !bIsValid )
+                {
+                    oOutPolyAllRings.removeRing(
+                        oOutPolyAllRings.getNumInteriorRings() );
+                    poGPBFeature->resizeGeometryArray( nInitialSize );
+                    nLastX = nLastXOri;
+                    nLastY = nLastYOri;
+                    continue;
+                }
+            }
+        }
+
         // Do not emit invalid polygons, except if it is an outer ring
         // and we tried hard to fix it.
-        if( !bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
+        else if ( !bIsValid && !(i == 0 && !bCanRecurse && dfArea > 0 &&
                            poOutRing->getNumPoints() >= 4) )
         {
             poGPBFeature->resizeGeometryArray( nInitialSize );
@@ -3710,6 +3861,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                             false,
                                             nLastX, nLastY, dfArea);
                     }
+#ifdef likely_not_possible
                     else if( poSimplified->getGeometryType() == wkbMultiPolygon )
                     {
                         OGRMultiPolygon* poMP =
@@ -3728,6 +3880,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                         }
                         return bRet;
                     }
+#endif
 
                     return false;
                 }
@@ -3751,12 +3904,13 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const
 {
-    double dfTileDim = 2 * kmMAX_GM / (1 << nZ);
+    double dfTileDim = m_dfTileDim0 / (1 << nZ);
     double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-    double dfTopX = -kmMAX_GM + nTileX * dfTileDim;
-    double dfTopY = kmMAX_GM - nTileY * dfTileDim;
+    double dfTopX = m_dfTopX + nTileX * dfTileDim;
+    double dfTopY = m_dfTopY - nTileY * dfTileDim;
     double dfBottomRightX = dfTopX + dfTileDim;
     double dfBottomRightY = dfTopY - dfTileDim;
     double dfIntersectTopX = dfTopX - dfBuffer;
@@ -3764,25 +3918,34 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     double dfIntersectBottomRightX = dfBottomRightX + dfBuffer;
     double dfIntersectBottomRightY = dfBottomRightY - dfBuffer;
 
-    OGRLinearRing* poLR = new OGRLinearRing();
-    poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
-    poLR->addPoint( dfIntersectTopX, dfIntersectBottomRightY );
-    poLR->addPoint( dfIntersectBottomRightX, dfIntersectBottomRightY );
-    poLR->addPoint( dfIntersectBottomRightX, dfIntersectTopY );
-    poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
-    OGRPolygon oPoly;
-    oPoly.addRingDirectly(poLR);
-
-    std::unique_ptr<OGRGeometry> poIntersection;
+    OGRGeometry* poIntersection;
+    std::unique_ptr<OGRGeometry> poIntersectionHolder;
+    if( sEnvelope.MinX >= dfIntersectTopX &&
+        sEnvelope.MinY >= dfIntersectBottomRightY &&
+        sEnvelope.MaxX <= dfIntersectBottomRightX &&
+        sEnvelope.MaxY <= dfIntersectTopY )
     {
+        poIntersection = poGeom;
+    }
+    else
+    {
+        OGRLinearRing* poLR = new OGRLinearRing();
+        poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
+        poLR->addPoint( dfIntersectTopX, dfIntersectBottomRightY );
+        poLR->addPoint( dfIntersectBottomRightX, dfIntersectBottomRightY );
+        poLR->addPoint( dfIntersectBottomRightX, dfIntersectTopY );
+        poLR->addPoint( dfIntersectTopX, dfIntersectTopY );
+        OGRPolygon oPoly;
+        oPoly.addRingDirectly(poLR);
+
         CPLErrorStateBackuper oErrorStateBackuper;
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        poIntersection =
-            std::unique_ptr<OGRGeometry>(poGeom->Intersection(&oPoly));
-        if( poIntersection.get() == nullptr || poIntersection->IsEmpty() )
+        poIntersection = poGeom->Intersection(&oPoly);
+        if( poIntersection == nullptr || poIntersection->IsEmpty() )
         {
             return OGRERR_NONE;
         }
+        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poIntersection);
     }
 
     // Create a layer with a single feature in it
@@ -3808,7 +3971,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     OGRwkbGeometryType eGeomToEncodeType = poIntersection->getGeometryType();
 
     // Simplify contour if requested by user
-    OGRGeometry* poGeomToEncode = poIntersection.get();
+    OGRGeometry* poGeomToEncode = poIntersection;
     std::unique_ptr<OGRGeometry> poGeomSimplified;
     const double dfSimplification = bIsMaxZoomForLayer ?
                                 m_dfSimplificationMaxZoom : m_dfSimplification;
@@ -3832,12 +3995,12 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     {
         if( eGeomToEncodeType == wkbPoint )
         {
-            OGRPoint* poPoint = static_cast<OGRPoint*>(poIntersection.get());
+            OGRPoint* poPoint = static_cast<OGRPoint*>(poIntersection);
             int nX, nY;
             double dfX = poPoint->getX();
             double dfY = poPoint->getY();
             bGeomOK = true;
-            WebMercatorToTileCoords(dfX, dfY, nX, nY,
+            ConvertToTileCoords(dfX, dfY, nX, nY,
                                     dfTopX, dfTopY, dfTileDim);
             poGPBFeature->addGeometry( GetCmdCountCombined(knCMD_MOVETO, 1) );
             poGPBFeature->addGeometry( EncodeSInt(nX) );
@@ -3847,7 +4010,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                  eGeomToEncodeType == wkbGeometryCollection )
         {
             OGRGeometryCollection* poGC =
-                dynamic_cast<OGRGeometryCollection*>(poIntersection.get());
+                dynamic_cast<OGRGeometryCollection*>(poIntersection);
             std::set<std::pair<int,int>> oSetUniqueCoords;
             poGPBFeature->addGeometry(
                 GetCmdCountCombined(knCMD_MOVETO, 0) ); // To be modified later
@@ -3862,7 +4025,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
                     int nX, nY;
                     double dfX = poPoint->getX();
                     double dfY = poPoint->getY();
-                    WebMercatorToTileCoords(dfX, dfY, nX, nY,
+                    ConvertToTileCoords(dfX, dfY, nX, nY,
                                             dfTopX, dfTopY, dfTileDim);
                     if( oSetUniqueCoords.find(std::pair<int,int>(nX,nY)) ==
                             oSetUniqueCoords.end() )
@@ -4105,6 +4268,7 @@ class MVTWriterTask
         OGRFeature* poFeature;
         GIntBig nSerial;
         OGRGeometry* poGeom;
+        OGREnvelope sEnvelope;
 };
 
 /************************************************************************/
@@ -4114,7 +4278,7 @@ class MVTWriterTask
 void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
 {
     MVTWriterTask* poTask = static_cast<MVTWriterTask*>(pParam);
-    poTask->poDS->PreGenerateForTileReal(
+    OGRErr eErr = poTask->poDS->PreGenerateForTileReal(
                            poTask->nZ,
                            poTask->nTileX,
                            poTask->nTileY,
@@ -4122,7 +4286,14 @@ void OGRMVTWriterDataset::WriterTaskFunc(void* pParam)
                            poTask->bIsMaxZoomForLayer,
                            poTask->poFeature,
                            poTask->nSerial,
-                           poTask->poGeom);
+                           poTask->poGeom,
+                           poTask->sEnvelope);
+    if( eErr != OGRERR_NONE )
+    {
+        poTask->poDS->m_oDBMutex.lock();
+        poTask->poDS->m_bWriteFeatureError = true;
+        poTask->poDS->m_oDBMutex.unlock();
+    }
     delete poTask->poFeature;
     delete poTask->poGeom;
     delete poTask;
@@ -4137,7 +4308,8 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
                                                bool bIsMaxZoomForLayer,
                                                OGRFeature* poFeature,
                                                GIntBig nSerial,
-                                               OGRGeometry* poGeom) const
+                                               OGRGeometry* poGeom,
+                                               const OGREnvelope& sEnvelope) const
 {
     if( !m_bThreadPoolOK )
     {
@@ -4145,7 +4317,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
                                       osTargetName,
                                       bIsMaxZoomForLayer,
                                       poFeature, nSerial,
-                                      poGeom);
+                                      poGeom, sEnvelope);
     }
     else
     {
@@ -4163,11 +4335,12 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTile(int nZ, int nTileX, int nTileY,
         poFeature->SetGeometryDirectly(poGeomBak);
         poTask->nSerial = nSerial;
         poTask->poGeom = poGeom->clone();
+        poTask->sEnvelope = sEnvelope;
         m_oThreadPool.SubmitJob(OGRMVTWriterDataset::WriterTaskFunc, poTask);
         // Do not queue more than 1000 jobs to avoid memory exhaustion
         m_oThreadPool.WaitCompletion(1000);
 
-        return OGRERR_NONE;
+        return m_bWriteFeatureError ? OGRERR_FAILURE : OGRERR_NONE;
     }
 }
 
@@ -4299,27 +4472,91 @@ static void GZIPCompress(std::string& oTileBuffer)
 /************************************************************************/
 
 static std::vector<GUInt32> GetReducedPrecisionGeometry(
+                                    MVTTileLayerFeature::GeomType eGeomType,
                                     const std::vector<GUInt32>& anSrcGeometry,
                                     GUInt32 nSrcExtent,
                                     GUInt32 nDstExtent)
 {
     std::vector<GUInt32> anDstGeometry;
+    size_t nLastMoveToIdx = 0;
+    int nX = 0;
+    int nY = 0;
+    int nFirstReducedX = 0;
+    int nFirstReducedY = 0;
+    int nLastReducedX = 0;
+    int nLastReducedY = 0;
+    int nLastReducedXValid = 0;
+    int nLastReducedYValid = 0;
+    std::unique_ptr<OGRLinearRing> poInRing;
+    std::unique_ptr<OGRLinearRing> poOutRing;
+    std::unique_ptr<OGRLinearRing> poOutOuterRing;
+    bool bDiscardInnerRings = false;
+    const bool bIsPoly = eGeomType == MVTTileLayerFeature::GeomType::POLYGON;
     for( size_t iSrc = 0; iSrc < anSrcGeometry.size(); )
     {
         const unsigned nCount = GetCmdCount(anSrcGeometry[iSrc]);
-        int nX = 0;
-        int nY = 0;
-        int nLastReducedX = 0;
-        int nLastReducedY = 0;
         switch( GetCmdId(anSrcGeometry[iSrc]) )
         {
             case knCMD_MOVETO:
+            {
+                nLastMoveToIdx = anDstGeometry.size();
+
+                anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                iSrc ++;
+
+                unsigned nDstPoints = 0;
+                for( unsigned j = 0; iSrc + 1 < anSrcGeometry.size() &&
+                            j < nCount; j++, iSrc += 2 )
+                {
+                    nX += DecodeSInt(anSrcGeometry[iSrc]);
+                    nY += DecodeSInt(anSrcGeometry[iSrc+1]);
+
+                    int nReducedX = static_cast<int>(
+                        static_cast<GIntBig>(nX) * nDstExtent / nSrcExtent);
+                    int nReducedY = static_cast<int>(
+                        static_cast<GIntBig>(nY) * nDstExtent / nSrcExtent);
+                    int nDiffX = nReducedX - nLastReducedX;
+                    int nDiffY = nReducedY - nLastReducedY;
+                    if( j == 0 )
+                    {
+                        if( bIsPoly )
+                        {
+                            poInRing = std::unique_ptr<OGRLinearRing>(
+                                                        new OGRLinearRing());
+                            poOutRing = std::unique_ptr<OGRLinearRing>(
+                                                        new OGRLinearRing());
+                        }
+                        nFirstReducedX = nReducedX;
+                        nFirstReducedY = nReducedY;
+                    }
+                    if( j == 0 || nDiffX != 0 || nDiffY != 0 )
+                    {
+                        if( bIsPoly )
+                        {
+                            poInRing->addPoint( nX, nY );
+                            poOutRing->addPoint( nReducedX, nReducedY );
+                        }
+                        nDstPoints ++;
+                        anDstGeometry.push_back(EncodeSInt(nDiffX));
+                        anDstGeometry.push_back(EncodeSInt(nDiffY));
+                        nLastReducedX = nReducedX;
+                        nLastReducedY = nReducedY;
+                    }
+                }
+                // Patch count of MOVETO
+                anDstGeometry[nLastMoveToIdx] = GetCmdCountCombined(
+                    GetCmdId(anDstGeometry[nLastMoveToIdx]),
+                    nDstPoints);
+                break;
+            }
             case knCMD_LINETO:
             {
                 size_t nIdxToPatch = anDstGeometry.size();
                 anDstGeometry.push_back( anSrcGeometry[iSrc] );
                 iSrc ++;
                 unsigned nDstPoints = 0;
+                int nLastReducedXBefore = nLastReducedX;
+                int nLastReducedYBefore = nLastReducedY;
                 for( unsigned j = 0; iSrc + 1 < anSrcGeometry.size() &&
                                 j < nCount; j++, iSrc += 2 )
                 {
@@ -4332,23 +4569,145 @@ static std::vector<GUInt32> GetReducedPrecisionGeometry(
                         static_cast<GIntBig>(nY) * nDstExtent / nSrcExtent);
                     int nDiffX = nReducedX - nLastReducedX;
                     int nDiffY = nReducedY - nLastReducedY;
-                    if( j == 0 || nDiffX != 0 || nDiffY != 0 )
+                    if( nDiffX != 0 || nDiffY != 0 )
                     {
+                        if( bIsPoly )
+                        {
+                            poInRing->addPoint( nX, nY );
+                            poOutRing->addPoint( nReducedX, nReducedY );
+                        }
                         nDstPoints ++;
                         anDstGeometry.push_back(EncodeSInt(nDiffX));
                         anDstGeometry.push_back(EncodeSInt(nDiffY));
+                        nLastReducedXBefore = nLastReducedX;
+                        nLastReducedYBefore = nLastReducedY;
                         nLastReducedX = nReducedX;
                         nLastReducedY = nReducedY;
                     }
                 }
+
+                // If last point of ring is identical to first one, discard it
+                if( nDstPoints > 0 &&
+                    bIsPoly &&
+                    nLastReducedX == nFirstReducedX &&
+                    nLastReducedY == nFirstReducedY )
+                {
+                    nLastReducedX = nLastReducedXBefore;
+                    nLastReducedY = nLastReducedYBefore;
+                    nDstPoints -= 1;
+                    anDstGeometry.resize( anDstGeometry.size() - 2 );
+                    poOutRing->setNumPoints( poOutRing->getNumPoints() - 1 );
+                }
+
+                // Patch count of LINETO
                 anDstGeometry[nIdxToPatch] = GetCmdCountCombined(
                     GetCmdId(anDstGeometry[nIdxToPatch]),
                     nDstPoints);
+
+                // A valid linestring should have at least one MOVETO + 
+                // one coord pair + one LINETO + one coord pair
+                if( eGeomType == MVTTileLayerFeature::GeomType::LINESTRING )
+                {
+                    if( anDstGeometry.size() < nLastMoveToIdx + 1 + 2 + 1 + 2 )
+                    {
+                        // Remove last linestring
+                        nLastReducedX = nLastReducedXValid;
+                        nLastReducedY = nLastReducedYValid;
+                        anDstGeometry.resize( nLastMoveToIdx );
+                    }
+                    else
+                    {
+                        nLastReducedXValid = nLastReducedX;
+                        nLastReducedYValid = nLastReducedY;
+                    }
+                }
+
                 break;
             }
             case knCMD_CLOSEPATH:
             {
-                anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                CPLAssert( bIsPoly );
+                CPLAssert( poInRing );
+                CPLAssert( poOutRing );
+                int bIsValid = true;
+
+                // A valid ring should have at least one MOVETO + one
+                // coord pair + one LINETO + two coord pairs
+                if( anDstGeometry.size() < nLastMoveToIdx + 1 + 2 + 1 + 2 * 2 )
+                {
+                    // Remove ring. Normally if we remove an outer ring,
+                    // its inner rings should also be removed, given they are
+                    // smaller than the outer ring.
+                    bIsValid = false;
+                }
+                else
+                {
+                    poInRing->closeRings();
+                    poOutRing->closeRings();
+                    bool bIsOuterRing = !poInRing->isClockwise();
+                    // Normally the first ring of a polygon geometry should
+                    // be a outer ring, except when it is degenerate enough
+                    // in which case poOutOuterRing might be null.
+                    if( bIsOuterRing )
+                    {
+                        // if the outer ring turned out to be a inner ring
+                        // once reduced
+                        if( poOutRing->isClockwise() )
+                        {
+                            bIsValid = false;
+                            bDiscardInnerRings = true;
+                        }
+                        else
+                        {
+                            OGRPolygon oPoly;
+                            oPoly.addRing( poOutRing.get() );
+                            poOutOuterRing = std::unique_ptr<OGRLinearRing>(
+                                                            poOutRing.release());
+                            {
+                                CPLErrorStateBackuper oErrorStateBackuper;
+                                CPLErrorHandlerPusher
+                                                oErrorHandler(CPLQuietErrorHandler);
+                                bIsValid = oPoly.IsValid();
+                            }
+                            bDiscardInnerRings = !bIsValid;
+                        }
+                    }
+                    else if( bDiscardInnerRings ||
+                             poOutOuterRing.get() == nullptr ||
+                             // if the inner ring turned out to be a outer ring
+                             // once reduced
+                             !poOutRing->isClockwise()  )
+                    {
+                        bIsValid = false;
+                    }
+                    else
+                    {
+                        OGRPolygon oPoly;
+                        oPoly.addRing( poOutOuterRing.get() );
+                        oPoly.addRingDirectly( poOutRing.release() );
+                        {
+                            CPLErrorStateBackuper oErrorStateBackuper;
+                            CPLErrorHandlerPusher
+                                            oErrorHandler(CPLQuietErrorHandler);
+                            bIsValid = oPoly.IsValid();
+                        }
+                    }
+                }
+
+                if( bIsValid )
+                {
+                    nLastReducedXValid = nLastReducedX;
+                    nLastReducedYValid = nLastReducedY;
+                    anDstGeometry.push_back( anSrcGeometry[iSrc] );
+                }
+                else
+                {
+                    // Remove this ring
+                    nLastReducedX = nLastReducedXValid;
+                    nLastReducedY = nLastReducedYValid;
+                    anDstGeometry.resize( nLastMoveToIdx );
+                }
+
                 iSrc ++;
                 break;
             }
@@ -4388,37 +4747,12 @@ void OGRMVTWriterDataset::EncodeFeature(
         oSrcTileLayer.read(pabyUncompressed,
                             pabyUncompressed + nUncompressedSize) )
     {
-
-        const auto& srcKeys = oSrcTileLayer.getKeys();
-        for( const auto& osKey: srcKeys )
-        {
-            auto oIter = oMapKeyToIdx.find(osKey);
-            if( oIter == oMapKeyToIdx.end() )
-            {
-                oMapKeyToIdx[osKey] = poTargetLayer->addKey(osKey);
-            }
-        }
-
-        const auto& srcValues = oSrcTileLayer.getValues();
-        for( const auto& oValue: srcValues )
-        {
-            auto oIter = oMapValueToIdx.find(oValue);
-            if( oIter == oMapValueToIdx.end() )
-            {
-                oMapValueToIdx[oValue] =
-                    poTargetLayer->addValue(oValue);
-            }
-        }
-
-        // There should be only one feature !
         const auto& srcFeatures = oSrcTileLayer.getFeatures();
-        for( const auto& poSrcFeature: srcFeatures )
+        if( srcFeatures.size() == 1 ) // should always be true !
         {
-            nFeaturesInTile ++;
-
+            const auto& poSrcFeature = srcFeatures[0];
             std::shared_ptr<MVTTileLayerFeature> poFeature(
                 new MVTTileLayerFeature());
-            poTargetLayer->addFeature(poFeature);
 
             if( poSrcFeature->hasId() )
                 poFeature->setId(poSrcFeature->getId());
@@ -4428,38 +4762,93 @@ void OGRMVTWriterDataset::EncodeFeature(
                 poLayerProperties->
                     m_oCountGeomType[poSrcFeature->getType()] ++;
             }
+            bool bOK = true;
             if( nExtent < m_nExtent )
             {
+#ifdef for_debugging
+                const auto& srcKeys = oSrcTileLayer.getKeys();
+                const auto& srcValues = oSrcTileLayer.getValues();
+                const auto& anSrcTags = poSrcFeature->getTags();
+                for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+                {
+                    GUInt32 nSrcIdxKey = anSrcTags[i];
+                    GUInt32 nSrcIdxValue = anSrcTags[i+1];
+                    if( nSrcIdxKey < srcKeys.size() &&
+                        nSrcIdxValue < srcValues.size() )
+                    {
+                        auto& osKey = srcKeys[nSrcIdxKey];
+                        auto& oValue = srcValues[nSrcIdxValue];
+                        if( osKey == "tunnus" &&
+                            oValue.getUIntValue() == 28799760 )
+                        {
+                            printf("foo\n"); /* ok */
+                            break;
+                        }
+                    }
+                }
+#endif
+
                 poFeature->setGeometry(
-                    GetReducedPrecisionGeometry(poSrcFeature->getGeometry(),
+                    GetReducedPrecisionGeometry(poSrcFeature->getType(),
+                                                poSrcFeature->getGeometry(),
                                                 m_nExtent, nExtent));
+                if( poFeature->getGeometry().empty() )
+                {
+                    bOK = false;
+                }
             }
             else
             {
                 poFeature->setGeometry(poSrcFeature->getGeometry());
             }
-
-            const auto& anSrcTags = poSrcFeature->getTags();
-            for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+            if( bOK )
             {
-                GUInt32 nSrcIdxKey = anSrcTags[i];
-                GUInt32 nSrcIdxValue = anSrcTags[i+1];
-                if( nSrcIdxKey < srcKeys.size() &&
-                    nSrcIdxValue < srcValues.size() )
+                const auto& srcKeys = oSrcTileLayer.getKeys();
+                for( const auto& osKey: srcKeys )
                 {
-                    auto& osKey = srcKeys[nSrcIdxKey];
-                    auto& oValue = srcValues[nSrcIdxValue];
-
-                    if( poLayerProperties )
+                    auto oIter = oMapKeyToIdx.find(osKey);
+                    if( oIter == oMapKeyToIdx.end() )
                     {
-                        UpdateLayerProperties(poLayerProperties,
-                                                osKey,
-                                                oValue);
+                        oMapKeyToIdx[osKey] = poTargetLayer->addKey(osKey);
                     }
-
-                    poFeature->addTag(oMapKeyToIdx[osKey]);
-                    poFeature->addTag(oMapValueToIdx[oValue]);
                 }
+
+                const auto& srcValues = oSrcTileLayer.getValues();
+                for( const auto& oValue: srcValues )
+                {
+                    auto oIter = oMapValueToIdx.find(oValue);
+                    if( oIter == oMapValueToIdx.end() )
+                    {
+                        oMapValueToIdx[oValue] =
+                            poTargetLayer->addValue(oValue);
+                    }
+                }
+
+                const auto& anSrcTags = poSrcFeature->getTags();
+                for( size_t i = 0; i + 1 < anSrcTags.size(); i += 2 )
+                {
+                    GUInt32 nSrcIdxKey = anSrcTags[i];
+                    GUInt32 nSrcIdxValue = anSrcTags[i+1];
+                    if( nSrcIdxKey < srcKeys.size() &&
+                        nSrcIdxValue < srcValues.size() )
+                    {
+                        auto& osKey = srcKeys[nSrcIdxKey];
+                        auto& oValue = srcValues[nSrcIdxValue];
+
+                        if( poLayerProperties )
+                        {
+                            UpdateLayerProperties(poLayerProperties,
+                                                    osKey,
+                                                    oValue);
+                        }
+
+                        poFeature->addTag(oMapKeyToIdx[osKey]);
+                        poFeature->addTag(oMapValueToIdx[oValue]);
+                    }
+                }
+
+                nFeaturesInTile ++;
+                poTargetLayer->addFeature(poFeature);
             }
         }
     }
@@ -4585,19 +4974,15 @@ std::string OGRMVTWriterDataset::EncodeTile(
     while( bTooBigTile && !bTooManyFeatures && nExtent >= 256 )
     {
         nExtent /= 2;
-#ifdef DEBUG_VERBOSE
         nSizeBefore = oTileBuffer.size();
-#endif
         oTileBuffer = RecodeTileLowerResolution(nZ, nX, nY, nExtent,
                                                 hStmtLayer, hStmtRows);
         bTooBigTile = oTileBuffer.size() > m_nMaxTileSize;
-#ifdef DEBUG_VERBOSE
         CPLDebug("MVT", "Recoding tile %d/%d/%d with extent = %u. "
                  "From %u to %u bytes",
                  nZ, nX, nY, nExtent,
                  static_cast<unsigned>(nSizeBefore),
                  static_cast<unsigned>(oTileBuffer.size()));
-#endif
     }
 
     if( bTooBigTile || bTooManyFeatures )
@@ -4950,26 +5335,39 @@ static void SphericalMercatorToLongLat(double* x, double* y)
 /*                          WriteMetadataItem()                         */
 /************************************************************************/
 
-static
-bool WriteMetadataItem(const char* pszKey, const char* pszValue,
-                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+template<class T> static
+bool WriteMetadataItemT(const char* pszKey, T value, const char* pszValueFormat,
+                        sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
 {
     if( hDBMBTILES )
     {
         char* pszSQL;
 
         pszSQL = sqlite3_mprintf(
-            "INSERT INTO metadata(name, value) VALUES('%q', '%q')",
-            pszKey, pszValue);
+            CPLSPrintf("INSERT INTO metadata(name, value) VALUES('%%q', '%s')",
+                       pszValueFormat),
+            pszKey, value);
         OGRErr eErr = SQLCommand( hDBMBTILES, pszSQL);
         sqlite3_free(pszSQL);
         return eErr == OGRERR_NONE;
     }
     else
     {
-        oRoot.Add(pszKey, pszValue);
+        oRoot.Add(pszKey, value);
         return true;
     }
+}
+
+
+/************************************************************************/
+/*                          WriteMetadataItem()                         */
+/************************************************************************/
+
+static
+bool WriteMetadataItem(const char* pszKey, const char* pszValue,
+                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+{
+    return WriteMetadataItemT(pszKey, pszValue, "%q", hDBMBTILES, oRoot);
 }
 
 /************************************************************************/
@@ -4980,22 +5378,18 @@ static
 bool WriteMetadataItem(const char* pszKey, int nValue,
                        sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
 {
-    if( hDBMBTILES )
-    {
-        char* pszSQL;
+    return WriteMetadataItemT(pszKey, nValue, "%d", hDBMBTILES, oRoot);
+}
 
-        pszSQL = sqlite3_mprintf(
-            "INSERT INTO metadata(name, value) VALUES('%q', '%d')",
-            pszKey, nValue);
-        OGRErr eErr = SQLCommand( hDBMBTILES, pszSQL);
-        sqlite3_free(pszSQL);
-        return eErr == OGRERR_NONE;
-    }
-    else
-    {
-        oRoot.Add(pszKey, nValue);
-        return true;
-    }
+/************************************************************************/
+/*                          WriteMetadataItem()                         */
+/************************************************************************/
+
+static
+bool WriteMetadataItem(const char* pszKey, double dfValue,
+                       sqlite3* hDBMBTILES, CPLJSONObject& oRoot)
+{
+    return WriteMetadataItemT(pszKey, dfValue, "%.18g", hDBMBTILES, oRoot);
 }
 
 /************************************************************************/
@@ -5008,10 +5402,57 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
 
-    SphericalMercatorToLongLat(&(m_oEnvelope.MinX),&(m_oEnvelope.MinY));
-    SphericalMercatorToLongLat(&(m_oEnvelope.MaxX),&(m_oEnvelope.MaxY));
-    m_oEnvelope.MinY = std::max(-85.0, m_oEnvelope.MinY);
-    m_oEnvelope.MaxY = std::min(85.0, m_oEnvelope.MaxY);
+    OGRSpatialReference oSRS_EPSG3857;
+    double dfTopXWebMercator;
+    double dfTopYWebMercator;
+    double dfTileDim0WebMercator;
+    InitWebMercatorTilingScheme(&oSRS_EPSG3857,
+                                dfTopXWebMercator,
+                                dfTopYWebMercator,
+                                dfTileDim0WebMercator);
+    const bool bIsStandardTilingScheme =
+        m_poSRS->IsSame(&oSRS_EPSG3857) &&
+        m_dfTopX == dfTopXWebMercator &&
+        m_dfTopY == dfTopYWebMercator &&
+        m_dfTileDim0 == dfTileDim0WebMercator;
+    if( bIsStandardTilingScheme )
+    {
+        SphericalMercatorToLongLat(&(m_oEnvelope.MinX),&(m_oEnvelope.MinY));
+        SphericalMercatorToLongLat(&(m_oEnvelope.MaxX),&(m_oEnvelope.MaxY));
+        m_oEnvelope.MinY = std::max(-85.0, m_oEnvelope.MinY);
+        m_oEnvelope.MaxY = std::min(85.0, m_oEnvelope.MaxY);
+    }
+    else
+    {
+        OGRSpatialReference oSRS_EPSG4326;
+        oSRS_EPSG4326.SetFromUserInput(SRS_WKT_WGS84);
+        OGRCoordinateTransformation* poCT = 
+            OGRCreateCoordinateTransformation(m_poSRS, &oSRS_EPSG4326);
+        if( poCT )
+        {
+            OGRPoint oPoint1(m_oEnvelope.MinX, m_oEnvelope.MinY);
+            oPoint1.transform(poCT);
+            OGRPoint oPoint2(m_oEnvelope.MinX, m_oEnvelope.MaxY);
+            oPoint2.transform(poCT);
+            OGRPoint oPoint3(m_oEnvelope.MaxX, m_oEnvelope.MaxY);
+            oPoint3.transform(poCT);
+            OGRPoint oPoint4(m_oEnvelope.MaxX, m_oEnvelope.MinY);
+            oPoint4.transform(poCT);
+            m_oEnvelope.MinX =
+                std::min(std::min(oPoint1.getX(), oPoint2.getX()),
+                         std::min(oPoint3.getX(), oPoint4.getX()));
+            m_oEnvelope.MinY =
+                std::min(std::min(oPoint1.getY(), oPoint2.getY()),
+                         std::min(oPoint3.getY(), oPoint4.getY()));
+            m_oEnvelope.MaxX =
+                std::max(std::max(oPoint1.getX(), oPoint2.getX()),
+                         std::max(oPoint3.getX(), oPoint4.getX()));
+            m_oEnvelope.MaxY =
+                std::max(std::max(oPoint1.getY(), oPoint2.getY()),
+                         std::max(oPoint3.getY(), oPoint4.getY()));
+            delete poCT;
+        }
+    }
     const double dfCenterX = (m_oEnvelope.MinX + m_oEnvelope.MaxX) / 2;
     const double dfCenterY = (m_oEnvelope.MinY + m_oEnvelope.MaxY) / 2;
     CPLString osCenter(CPLSPrintf("%.7f,%.7f,%d", dfCenterX, dfCenterY,
@@ -5035,6 +5476,33 @@ bool OGRMVTWriterDataset::GenerateMetadata(
     {
         WriteMetadataItem("scheme", "tms", m_hDBMBTILES, oRoot);
     }
+
+    // GDAL extension for custom tiling schemes
+    if( !bIsStandardTilingScheme )
+    {
+        const char* pszAuthName = m_poSRS->GetAuthorityName(nullptr);
+        const char* pszAuthCode = m_poSRS->GetAuthorityCode(nullptr);
+        if( pszAuthName && pszAuthCode )
+        {
+            WriteMetadataItem("crs",
+                              CPLSPrintf("%s:%s", pszAuthName, pszAuthCode),
+                              m_hDBMBTILES, oRoot);
+        }
+        else
+        {
+            char* pszWKT = nullptr;
+            m_poSRS->exportToWkt(&pszWKT);
+            WriteMetadataItem("crs", pszWKT, m_hDBMBTILES, oRoot);
+            CPLFree(pszWKT);
+        }
+        WriteMetadataItem("tile_origin_upper_left_x",
+                          m_dfTopX, m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_origin_upper_left_y",
+                          m_dfTopY, m_hDBMBTILES, oRoot);
+        WriteMetadataItem("tile_dimension_zoom_0",
+                          m_dfTileDim0, m_hDBMBTILES, oRoot);
+    }
+
 
     CPLJSONDocument oJsonDoc;
     CPLJSONObject oJsonRoot = oJsonDoc.GetRoot();
@@ -5260,25 +5728,31 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer* poLayer,
 
     m_oEnvelope.Merge(sExtent);
 
-    for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
+    if( !m_bReuseTempFile )
     {
-        double dfTileDim = 2 * kmMAX_GM / (1 << nZ);
-        double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-        int nTileMinX =
-            static_cast<int>((sExtent.MinX + kmMAX_GM - dfBuffer) / dfTileDim);
-        int nTileMinY =
-            static_cast<int>((kmMAX_GM - sExtent.MaxY - dfBuffer) / dfTileDim);
-        int nTileMaxX =
-            static_cast<int>((sExtent.MaxX + kmMAX_GM + dfBuffer) / dfTileDim);
-        int nTileMaxY =
-            static_cast<int>((kmMAX_GM - sExtent.MinY + dfBuffer) / dfTileDim);
-        for( int iX = nTileMinX; iX <= nTileMaxX; iX++ )
+        for( int nZ = poLayer->m_nMinZoom; nZ <= poLayer->m_nMaxZoom; nZ++ )
         {
-            for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
+            double dfTileDim = m_dfTileDim0 / (1 << nZ);
+            double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
+            int nTileMinX =
+                static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
+            int nTileMinY =
+                static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
+            int nTileMaxX =
+                static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
+            int nTileMaxY =
+                static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
+            for( int iX = nTileMinX; iX <= nTileMaxX; iX++ )
             {
-                PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
-                                   (nZ == poLayer->m_nMaxZoom),
-                                   poFeature, nSerial, poGeom);
+                for( int iY = nTileMinY; iY <= nTileMaxY; iY++ )
+                {
+                    if( PreGenerateForTile(nZ, iX, iY, poLayer->m_osTargetName,
+                            (nZ == poLayer->m_nMaxZoom),
+                            poFeature, nSerial, poGeom, sExtent) != OGRERR_NONE )
+                    {
+                        return OGRERR_FAILURE;
+                    }
+                }
             }
         }
     }
@@ -5349,20 +5823,19 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
 */
 
     CPLJSONObject oObj = m_oConf.GetRoot().GetObj(pszLayerName);
+    CPLString osDescription;
     if( oObj.IsValid() )
     {
         CPLString osTargetName = oObj.GetString("target_name");
         if( !osTargetName.empty() )
             poLayer->m_osTargetName = osTargetName;
         int nMinZoom = oObj.GetInteger("minzoom", -1);
-        if( nMinZoom > 0 )
+        if( nMinZoom >= 0 )
             poLayer->m_nMinZoom = nMinZoom;
         int nMaxZoom = oObj.GetInteger("maxzoom", -1);
-        if( nMaxZoom > 0 )
+        if( nMaxZoom >= 0 )
             poLayer->m_nMaxZoom = nMaxZoom;
-        CPLString osDescription = oObj.GetString("description");
-        if( !osDescription.empty() )
-            m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
+        osDescription = oObj.GetString("description");
     }
 
     poLayer->m_nMinZoom = atoi(CSLFetchNameValueDef(papszOptions, "MINZOOM",
@@ -5377,8 +5850,8 @@ OGRLayer* OGRMVTWriterDataset::ICreateLayer( const char* pszLayerName,
     poLayer->m_osTargetName =
         CSLFetchNameValueDef(papszOptions, "NAME",
                              poLayer->m_osTargetName.c_str());
-    CPLString osDescription(
-                CSLFetchNameValueDef(papszOptions, "DESCRIPTION", ""));
+    osDescription =
+        CSLFetchNameValueDef(papszOptions, "DESCRIPTION", osDescription);
     if( !osDescription.empty() )
         m_oMapLayerNameToDesc[poLayer->m_osTargetName] = osDescription;
 
@@ -5411,6 +5884,11 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         pszFormat = "MBTILES";
     }
     const bool bMBTILES = pszFormat != nullptr && EQUAL(pszFormat, "MBTILES");
+
+    // For debug only
+    bool bReuseTempFile = 
+        CPLTestBool(CPLGetConfigOption("OGR_MVT_REUSE_TEMP_FILE", "NO"));
+
     if( bMBTILES )
     {
         if( !bMBTILESExt )
@@ -5435,7 +5913,7 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
         if( VSIMkdir(pszFilename, 0755) != 0 )
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create directory %s",
-                     pszFilename);
+                    pszFilename);
             return nullptr;
         }
     }
@@ -5447,11 +5925,13 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     CPLString osTempDB =
         CSLFetchNameValueDef(papszOptions, "TEMPORARY_DB",
             (CPLString(pszFilename) + ".temp.db").c_str());
-    VSIUnlink(osTempDB);
+    if( !bReuseTempFile )
+        VSIUnlink(osTempDB);
 
     sqlite3* hDB = nullptr;
     sqlite3_open_v2(osTempDB, &hDB,
-                    SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                    SQLITE_OPEN_READWRITE |
+                    (bReuseTempFile ? 0 : SQLITE_OPEN_CREATE) |
                     SQLITE_OPEN_NOMUTEX,
                     poDS->m_pMyVFS->zName);
     if( hDB == nullptr )
@@ -5463,20 +5943,31 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     }
     poDS->m_osTempDB = osTempDB;
     poDS->m_hDB = hDB;
+    poDS->m_bReuseTempFile = bReuseTempFile;
 
     // For Unix
-    if( CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
+    if( !poDS->m_bReuseTempFile &&
+        CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")) )
     {
         VSIUnlink(osTempDB);
     }
 
-    CPL_IGNORE_RET_VAL(SQLCommand(hDB,
-        "PRAGMA synchronous = OFF;"
-        "PRAGMA journal_mode = OFF;"
-        "PRAGMA temp_store = MEMORY;"
-        "CREATE TABLE temp(z INTEGER, x INTEGER, y INTEGER, layer TEXT, "
-        "idx INTEGER, feature BLOB, geomtype INTEGER, area_or_length DOUBLE);"
-        "CREATE INDEX temp_index ON temp (z, x, y, layer, idx);"));
+    if( poDS->m_bReuseTempFile )
+    {
+        poDS->m_nTempTiles = SQLGetInteger64(
+            hDB, "SELECT COUNT(*) FROM temp", nullptr );
+    }
+    else
+    {
+        CPL_IGNORE_RET_VAL(SQLCommand(hDB,
+            "PRAGMA page_size = 4096;" // 4096: default since sqlite 3.12
+            "PRAGMA synchronous = OFF;"
+            "PRAGMA journal_mode = OFF;"
+            "PRAGMA temp_store = MEMORY;"
+            "CREATE TABLE temp(z INTEGER, x INTEGER, y INTEGER, layer TEXT, "
+            "idx INTEGER, feature BLOB, geomtype INTEGER, area_or_length DOUBLE);"
+            "CREATE INDEX temp_index ON temp (z, x, y, layer, idx);"));
+    }
 
     sqlite3_stmt* hInsertStmt = nullptr;
     CPL_IGNORE_RET_VAL(sqlite3_prepare_v2( hDB,
@@ -5543,6 +6034,37 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
     poDS->m_osExtension = CSLFetchNameValueDef(papszOptions, "TILE_EXTENSION",
                                                poDS->m_osExtension);
 
+    const char* pszTilingScheme = CSLFetchNameValue(papszOptions,
+                                                    "TILING_SCHEME");
+    if( pszTilingScheme )
+    {
+        if( bMBTILES )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Custom TILING_SCHEME not supported with MBTILES output");
+            delete poDS;
+            return nullptr;
+        }
+
+        CPLStringList aoList(CSLTokenizeString2(pszTilingScheme, ",", 0));
+        if( aoList.Count() == 4 )
+        {
+            poDS->m_poSRS->SetFromUserInput( aoList[0] );
+            poDS->m_dfTopX = CPLAtof( aoList[1] );
+            poDS->m_dfTopY = CPLAtof( aoList[2] );
+            poDS->m_dfTileDim0 = CPLAtof( aoList[3] );
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Wrong format for TILING_SCHEME. "
+                     "Expecting EPSG:XXXX,tile_origin_upper_left_x,"
+                     "tile_origin_upper_left_y,tile_dimension_zoom_0");
+            delete poDS;
+            return nullptr;
+        }
+    }
+
     if( bMBTILES )
     {
         sqlite3_open_v2(pszFilename, &poDS->m_hDBMBTILES,
@@ -5557,21 +6079,32 @@ GDALDataset* OGRMVTWriterDataset::Create( const char * pszFilename,
             return nullptr;
         }
 
-        CPL_IGNORE_RET_VAL(SQLCommand(poDS->m_hDBMBTILES,
+        if( SQLCommand(poDS->m_hDBMBTILES,
+            "PRAGMA page_size = 4096;" // 4096: default since sqlite 3.12
             "PRAGMA synchronous = OFF;"
             "PRAGMA journal_mode = OFF;"
             "PRAGMA temp_store = MEMORY;"
             "CREATE TABLE metadata (name text, value text);"
             "CREATE TABLE tiles (zoom_level integer, tile_column integer, "
                 "tile_row integer, tile_data blob, "
-                "UNIQUE (zoom_level, tile_column, tile_row))"));
+                "UNIQUE (zoom_level, tile_column, tile_row))") != OGRERR_NONE )
+        {
+            delete poDS;
+            return nullptr;
+        }
     }
 
-    int nCPUs = CPLGetNumCPUs();
-    if( nCPUs > 1 )
+    int nThreads = CPLGetNumCPUs();
+    const char* pszNumThreads =
+            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+    if( pszNumThreads && CPLGetValueType(pszNumThreads) == CPL_VALUE_INTEGER )
+    {
+        nThreads = atoi(pszNumThreads);
+    }
+    if( nThreads > 1 )
     {
         poDS->m_bThreadPoolOK =
-            poDS->m_oThreadPool.Setup(nCPUs, nullptr, nullptr);
+            poDS->m_oThreadPool.Setup(nThreads, nullptr, nullptr);
     }
 
     poDS->SetDescription(pszFilename);
@@ -5662,6 +6195,10 @@ MVT_MBTILES_COMMON_DSCO
         "description='Override default value for bounds metadata item'/>"
 "  <Option name='CENTER' type='string' "
         "description='Override default value for center metadata item'/>"
+"  <Option name='TILING_SCHEME' type='string' "
+        "description='Custom tiling scheme with following format "
+        "\"EPSG:XXXX,tile_origin_upper_left_x,tile_origin_upper_left_y,"
+        "tile_dimension_zoom_0\"'/>"
 "</CreationOptionList>");
 #endif // HAVE_MVT_WRITE_SUPPORT
 

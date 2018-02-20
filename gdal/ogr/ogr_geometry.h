@@ -901,6 +901,9 @@ class CPL_DLL OGRCurveCollection
     OGRCurve       *getCurve( int );
     const OGRCurve *getCurve( int ) const;
     OGRCurve       *stealCurve( int );
+
+    OGRErr          removeCurve( int iIndex, int bDelete = TRUE );
+
     OGRErr          transform( OGRGeometry* poGeom,
                                OGRCoordinateTransformation *poCT );
     void            flattenTo2D( OGRGeometry* poGeom );
@@ -1173,6 +1176,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     const OGRCurve *getInteriorRingCurve( int ) const;
 
     OGRCurve *stealExteriorRingCurve();
+
+    OGRErr removeRing( int iIndex, int bDelete = TRUE );
 
     virtual void        swapXY() override;
 };

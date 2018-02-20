@@ -6256,6 +6256,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
         {
             delete poS3HandleHelper;
             curl_easy_cleanup(hCurlHandle);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
             return nullptr;
         }
 
@@ -6433,6 +6434,8 @@ class VSIGSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
                             bool bSetError ) override;
 
     const char* GetOptions() override;
+
+    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
 };
 
 /************************************************************************/
@@ -6567,6 +6570,30 @@ const char* VSIGSFSHandler::GetOptions()
 }
 
 /************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+char* VSIGSFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return nullptr;
+
+    VSIGSHandleHelper* poHandleHelper =
+        VSIGSHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                        GetFSPrefix().c_str(),
+                                        papszOptions);
+    if( poHandleHelper == nullptr )
+    {
+        return nullptr;
+    }
+
+    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+
+    delete poHandleHelper;
+    return osRet.empty() ? nullptr : CPLStrdup(osRet);
+}
+
+/************************************************************************/
 /*                          GetURLFromDirname()                         */
 /************************************************************************/
 
@@ -6660,6 +6687,8 @@ class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
     int Rmdir( const char * ) override;
 
     const char* GetOptions() override;
+
+    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -7422,6 +7451,30 @@ const char* VSIAzureFSHandler::GetOptions()
 }
 
 /************************************************************************/
+/*                           GetSignedURL()                             */
+/************************************************************************/
+
+char* VSIAzureFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+{
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+        return nullptr;
+
+    VSIAzureBlobHandleHelper* poHandleHelper =
+        VSIAzureBlobHandleHelper::BuildFromURI(pszFilename + GetFSPrefix().size(),
+                                               GetFSPrefix().c_str(),
+                                               papszOptions);
+    if( poHandleHelper == nullptr )
+    {
+        return nullptr;
+    }
+
+    CPLString osRet(poHandleHelper->GetSignedURL(papszOptions));
+
+    delete poHandleHelper;
+    return CPLStrdup(osRet);
+}
+
+/************************************************************************/
 /*                           VSIAzureHandle()                           */
 /************************************************************************/
 
@@ -8136,6 +8189,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
         {
             delete poS3HandleHelper;
             curl_easy_cleanup(hCurlHandle);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
             return nullptr;
         }
 

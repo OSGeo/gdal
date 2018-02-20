@@ -2361,7 +2361,9 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE* fp,
 /************************************************************************/
 
 static
-int MBTilesGetBandCountAndTileSize(OGRDataSourceH &hDS,
+int MBTilesGetBandCountAndTileSize(
+                        bool bIsVSICURL,
+                        OGRDataSourceH &hDS,
                         int nMaxLevel,
                         int nMinTileRow, int nMaxTileRow,
                         int nMinTileCol, int nMaxTileCol,
@@ -2378,7 +2380,7 @@ int MBTilesGetBandCountAndTileSize(OGRDataSourceH &hDS,
     /* Small trick to get the VSILFILE associated with the OGR SQLite */
     /* DB */
     CPLString osDSName(OGR_DS_GetName(hDS));
-    if (STARTS_WITH(osDSName.c_str(), "/vsicurl/"))
+    if (bIsVSICURL)
     {
         CPLErrorReset();
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -2698,19 +2700,17 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Get number of bands                                             */
 /* -------------------------------------------------------------------- */
-        const char* pszBandCount = CSLFetchNameValueDef(
-            poOpenInfo->papszOpenOptions, "BAND_COUNT",
-            CPLGetConfigOption("MBTILES_BAND_COUNT", nullptr));
-
         int nMinTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinX, nMaxLevel ));
         int nMinTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMinY, nMaxLevel ));
         int nMaxTileCol = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxX, nMaxLevel ));
         int nMaxTileRow = static_cast<int>(MBTilesWorldCoordToTileCoord( dfMaxY, nMaxLevel ));
         int nTileSize = 0;
-        nBands = MBTilesGetBandCountAndTileSize(hDS, nMaxLevel,
-                                     nMinTileRow, nMaxTileRow,
-                                     nMinTileCol, nMaxTileCol,
-                                     nTileSize);
+        nBands = MBTilesGetBandCountAndTileSize(
+            STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsicurl/"),
+            hDS, nMaxLevel,
+            nMinTileRow, nMaxTileRow,
+            nMinTileCol, nMaxTileCol,
+            nTileSize);
         bool bFoundRasterTile = nBands > 0;
         if( !bFoundRasterTile )
             nTileSize = knDEFAULT_BLOCK_SIZE;
@@ -2718,8 +2718,15 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         if (nBands < 0 || nBands == 3)
             nBands = 4;
 
-        if( pszBandCount && atoi(pszBandCount) >= 1 && atoi(pszBandCount) <= 4 )
-            nBands = atoi(pszBandCount);
+        const char* pszBandCount = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "BAND_COUNT",
+            CPLGetConfigOption("MBTILES_BAND_COUNT", nullptr));
+        if( pszBandCount )
+        {
+            int nTmpBands = atoi(pszBandCount);
+            if( nTmpBands >= 1 && nTmpBands <= 4 )
+                nBands = nTmpBands;
+        }
 
         if( poOpenInfo->eAccess == GA_Update )
         {
@@ -3556,7 +3563,7 @@ void GDALRegister_MBTiles()
 COMPRESSION_OPTIONS
 "  <Option name='CLIP' scope='vector' type='boolean' "
     "description='Whether to clip geometries to tile extent' default='YES'/>"
-"  <Option name='ZOOM_LEVEL_AUTO' scope='vector' type='booleean' "
+"  <Option name='ZOOM_LEVEL_AUTO' scope='vector' type='boolean' "
     "description='Whether to auto-select the zoom level for vector layers "
     "according to spatial filter extent. Only for display purpose' "
     "default='NO'/>"

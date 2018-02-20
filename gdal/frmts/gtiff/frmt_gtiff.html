@@ -298,13 +298,15 @@ a value from 1 to 7.  The apparent pixel type should be Byte.
 From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
 From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
 See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.
 The CCITT compression should only be used with 1bit (NBITS=1) data.
 LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
+ZSTD is available since GDAL 2.3 when using internal libtiff and if GDAL built
+against libzstd &gt;=1.0, or if built against external libtiff with zstd support.
 None is the default.</p></li>
 
 <li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
@@ -343,6 +345,8 @@ This is generally the optimal choice for smallest file size, and consequently is
 </li>
 
 <li><p><b>ZLEVEL=[1-9]</b>:  Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 6.</p></li>
+
+<li><p><b>ZSTD_LEVEL=[1-22]</b>:  Set the level of compression when using ZSTD compression. A value of 22 is best (very slow), and 1 is least compression. The default is 9.</p></li>
 
 <li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
 Set the photometric interpretation tag. Default is MINISBLACK, but if the

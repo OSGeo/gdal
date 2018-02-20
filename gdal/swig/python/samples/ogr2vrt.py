@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import os.path
 import sys
 
 from osgeo import ogr, gdal
@@ -206,6 +207,9 @@ for name in layer_list:
                     vrt += '      <MDI key="%s">%s</MDI>\n' % (Esc(key), Esc(md[key]))
             vrt += '    </Metadata>\n'
 
+    if not os.path.isabs(outfile) and not os.path.isabs(infile) and \
+       os.path.dirname(outfile) == '' and os.path.dirname(infile) == '':
+        relative = 1
 
     vrt += '    <SrcDataSource relativeToVRT="%s" shared="%d">%s</SrcDataSource>\n' \
            % (relative,not schema,Esc(infile))

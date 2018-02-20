@@ -27,13 +27,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_vrt.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
-#include "ogrwarpedlayer.h"
-#include "ogrunionlayer.h"
 
+#include <stdlib.h>
+#include <string.h>
 #include <algorithm>
+#include <set>
+#include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_minixml.h"
+#include "cpl_string.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_spatialref.h"
+#include "ogrlayerpool.h"
+#include "ogrunionlayer.h"
+#include "ogrwarpedlayer.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 

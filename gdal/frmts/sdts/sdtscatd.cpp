@@ -165,7 +165,9 @@ int SDTS_CATD::Read( const char * pszFilename )
             CPLStrdup(poRecord->GetStringSubfield( "CATD", 0, "TYPE", 0 ));
 
         if( poEntry->pszModule[0] == '\0' ||
-            poEntry->pszFile[0] == '\0' )
+            poEntry->pszFile[0] == '\0' ||
+            // Exclude following one for performance reasons in oss-fuzz
+            (poEntry->pszFile[0] == '/' && poEntry->pszFile[1] == '\0') )
         {
             CPLFree(poEntry->pszModule);
             CPLFree(poEntry->pszFile);

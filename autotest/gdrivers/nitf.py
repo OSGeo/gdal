@@ -1220,6 +1220,11 @@ def nitf_40():
 
 def nitf_41():
 
+    import jpeg
+    jpeg.jpeg_1()
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
+
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
@@ -1252,6 +1257,9 @@ def nitf_41():
 # Check creating a 12-bit JPEG compressed NITF
 
 def nitf_42():
+
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
@@ -3290,6 +3298,9 @@ def nitf_online_14():
         os.remove('tmp/cache/U_4020h.ntf.aux.xml')
     except:
         pass
+
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')

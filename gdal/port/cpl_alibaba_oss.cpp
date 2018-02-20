@@ -45,6 +45,28 @@ CPL_CVSID("$Id$")
 #ifdef HAVE_CURL
 
 /************************************************************************/
+/*                            GetSignature()                            */
+/************************************************************************/
+
+static CPLString GetSignature(const CPLString& osStringToSign,
+                              const CPLString& osSecretAccessKey )
+{
+
+/* -------------------------------------------------------------------- */
+/*      Compute signature.                                              */
+/* -------------------------------------------------------------------- */
+    GByte abySignature[CPL_SHA1_HASH_SIZE] = {};
+    CPL_HMAC_SHA1( osSecretAccessKey.c_str(), osSecretAccessKey.size(),
+                   osStringToSign, osStringToSign.size(),
+                   abySignature);
+    char* pszBase64 = CPLBase64Encode( sizeof(abySignature), abySignature );
+    CPLString osSignature(pszBase64);
+    CPLFree(pszBase64);
+
+    return osSignature;
+}
+
+/************************************************************************/
 /*                         CPLGetOSSHeaders()                           */
 /************************************************************************/
 
@@ -86,21 +108,14 @@ CPLGetOSSHeaders( const CPLString& osSecretAccessKey,
     CPLDebug("OSS", "osStringToSign = %s", osStringToSign.c_str());
 #endif
 
-    GByte abySignature[CPL_SHA1_HASH_SIZE] = {};
-    CPL_HMAC_SHA1( osSecretAccessKey.c_str(), osSecretAccessKey.size(),
-                   osStringToSign, osStringToSign.size(),
-                   abySignature);
-
 /* -------------------------------------------------------------------- */
 /*      Build authorization header.                                     */
 /* -------------------------------------------------------------------- */
 
-    char* pszBase64 = CPLBase64Encode( sizeof(abySignature), abySignature );
     CPLString osAuthorization("OSS ");
     osAuthorization += osAccessKeyId;
     osAuthorization += ":";
-    osAuthorization += pszBase64;
-    CPLFree(pszBase64);
+    osAuthorization += GetSignature(osStringToSign, osSecretAccessKey);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("OSS", "osAuthorization='%s'", osAuthorization.c_str());
@@ -423,13 +438,7 @@ CPLString VSIOSSHandleHelper::GetSignedURL(char** papszOptions)
     CPLDebug("OSS", "osStringToSign = %s", osStringToSign.c_str());
 #endif
 
-    GByte abySignature[CPL_SHA1_HASH_SIZE] = {};
-    CPL_HMAC_SHA1( m_osSecretAccessKey.c_str(), m_osSecretAccessKey.size(),
-                   osStringToSign, osStringToSign.size(),
-                   abySignature);
-    char* pszBase64 = CPLBase64Encode( sizeof(abySignature), abySignature );
-    CPLString osSignature(pszBase64);
-    CPLFree(pszBase64);
+    CPLString osSignature(GetSignature(osStringToSign, m_osSecretAccessKey));
 
     ResetQueryParameters();
     //  Note: https://www.alibabacloud.com/help/doc-detail/31952.htm?spm=a3c0i.o32002en.b99.294.6d70a0fc7cRJfJ is wrong on the name of the OSSAccessKeyId parameter !

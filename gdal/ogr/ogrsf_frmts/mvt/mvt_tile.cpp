@@ -872,6 +872,8 @@ std::string MVTTile::write() const
     return buffer;
 }
 
+#ifdef ADD_MVT_TILE_READ
+
 /************************************************************************/
 /*                             read()                                   */
 /************************************************************************/
@@ -919,3 +921,5 @@ bool MVTTile::read(const GByte* pabyData, const GByte* pabyEnd)
 {
     return read(&pabyData, pabyEnd);
 }
+
+#endif

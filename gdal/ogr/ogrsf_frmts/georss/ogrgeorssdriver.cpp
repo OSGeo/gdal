@@ -27,7 +27,16 @@
  ****************************************************************************/
 
 #include "ogr_georss.h"
+
+#include <cstring>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_port.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
 
 CPL_CVSID("$Id$")
 
@@ -71,7 +80,7 @@ static GDALDataset *OGRGeoRSSDriverCreate( const char * pszName,
 {
     OGRGeoRSSDataSource *poDS = new OGRGeoRSSDataSource();
 
-    if( !poDS->Create( pszName, papszOptions ) )
+    if( !poDS->Create(pszName, papszOptions) )
     {
         delete poDS;
         poDS = nullptr;

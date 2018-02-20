@@ -26,9 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_sqlite.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "ogr_sqlite.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
 
 CPL_CVSID("$Id$")
 

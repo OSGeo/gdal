@@ -26,7 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogrsqliteutility.h"
+
+#include <cstdlib>
+#include <string>
+
+#include "cpl_error.h"
 #include "ogr_p.h"
 
 CPL_CVSID("$Id$")

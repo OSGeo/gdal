@@ -48,6 +48,7 @@ def vsigs_init():
 
     gdaltest.gs_vars = {}
     for var in ('GS_SECRET_ACCESS_KEY', 'GS_ACCESS_KEY_ID',
+                'GOOGLE_APPLICATION_CREDENTIALS',
                 'CPL_GS_TIMESTAMP', 'CPL_GS_ENDPOINT',
                 'GDAL_HTTP_HEADER_FILE'):
         gdaltest.gs_vars[var] = gdal.GetConfigOption(var)
@@ -61,6 +62,12 @@ def vsigs_init():
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_EMAIL', '')
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_SECRET', '')
     gdal.SetConfigOption('GS_OAUTH2_CLIENT_ID', '')
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
+
+    with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
+        if gdal.GetSignedURL('/vsigs/foo/bar') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     return 'success'
 
@@ -203,6 +210,14 @@ def vsigs_2():
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
     gdal.SetConfigOption('CPL_GS_TIMESTAMP', 'my_timestamp')
+
+    signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
+                                   ['START_DATE=20180212T123456Z'])
+    if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D',
+                          'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=GS_ACCESS_KEY_ID&Signature=xTphUyMqtKA6UmAX3PEr5VL3EOg%3D'):
+        gdaltest.post_reason('fail')
+        print(signed_url)
+        return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket/resource', 200,
@@ -487,6 +502,11 @@ def vsigs_read_credentials_refresh_token_default_gdal_app():
 
     gdal.SetConfigOption('GS_OAUTH2_REFRESH_TOKEN', 'REFRESH_TOKEN')
 
+    with gdaltest.error_handler():
+        if gdal.GetSignedURL('/vsigs/foo/bar') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
@@ -745,6 +765,106 @@ gwE6fxOLyJDxuWRf
     return 'success'
 
 ###############################################################################
+# Read credentials with OAuth2 service account through a json configuration file
+
+def vsigs_read_credentials_oauth2_service_account_json_file():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', '')
+    gdal.SetConfigOption('GS_ACCESS_KEY_ID', '')
+
+    gdal.FileFromMemBuffer('/vsimem/service_account.json',"""{
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIICeAIBADANBgkqhkiG9w0BAQEFAASCAmIwggJeAgEAAoGBAOlwJQLLDG1HeLrk\nVNcFR5Qptto/rJE5emRuy0YmkVINT4uHb1be7OOo44C2Ev8QPVtNHHS2XwCY5gTm\ni2RfIBLv+VDMoVQPqqE0LHb0WeqGmM5V1tHbmVnIkCcKMn3HpK30grccuBc472LQ\nDVkkGqIiGu0qLAQ89JP/r0LWWySRAgMBAAECgYAWjsS00WRBByAOh1P/dz4kfidy\nTabiXbiLDf3MqJtwX2Lpa8wBjAc+NKrPXEjXpv0W3ou6Z4kkqKHJpXGg4GRb4N5I\n2FA+7T1lA0FCXa7dT2jvgJLgpBepJu5b//tqFqORb4A4gMZw0CiPN3sUsWsSw5Hd\nDrRXwp6sarzG77kvZQJBAPgysAmmXIIp9j1hrFSkctk4GPkOzZ3bxKt2Nl4GFrb+\nbpKSon6OIhP1edrxTz1SMD1k5FiAAVUrMDKSarbh5osCQQDwxq4Tvf/HiYz79JBg\nWz5D51ySkbg01dOVgFW3eaYAdB6ta/o4vpHhnbrfl6VO9oUb3QR4hcrruwnDHsw3\n4mDTAkEA9FPZjbZSTOSH/cbgAXbdhE4/7zWOXj7Q7UVyob52r+/p46osAk9i5qj5\nKvnv2lrFGDrwutpP9YqNaMtP9/aLnwJBALLWf9n+GAv3qRZD0zEe1KLPKD1dqvrj\nj+LNjd1Xp+tSVK7vMs4PDoAMDg+hrZF3HetSQM3cYpqxNFEPgRRJOy0CQQDQlZHI\nyzpSgEiyx8O3EK1iTidvnLXbtWabvjZFfIE/0OhfBmN225MtKG3YLV2HoUvpajLq\ngwE6fxOLyJDxuWRf\n-----END PRIVATE KEY-----\n",
+  "client_email": "CLIENT_EMAIL"
+                           }""")
+
+    gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '/vsimem/service_account.json')
+
+    gdal.SetConfigOption('GO2A_AUD',
+                        'http://localhost:%d/oauth2/v4/token' % gdaltest.webserver_port)
+    gdal.SetConfigOption('GOA2_NOW', '123456')
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
+        content_8080 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D'
+        content_8081 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODEvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.0abOEg4%2FRApWTSeAs6YTHaNzdwOgZLm8DTMO2MKlOA%2Fiagyb4cBJxDpkD5gECPvi7qhkg7LsyFuj0a%2BK48Bsuj%2FgLHOU4MpB0dHwYnDO2UXzH%2FUPdgFCVak1P1V%2ByiDA%2B%2Ft4aDI5fD9qefKQiu3wsMDHzP71MNLzayrjqaqKKS4%3D'
+        if content not in [ content_8080, content_8081 ] :
+            sys.stderr.write('Bad POST content: %s\n' % content)
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        content = """{
+                "access_token" : "ACCESS_TOKEN",
+                "token_type" : "Bearer",
+                "expires_in" : 3600,
+                }"""
+        request.send_header('Content-Length', len(content))
+        request.end_headers()
+        request.wfile.write(content.encode('ascii'))
+
+    handler.add('POST', '/oauth2/v4/token', custom_method = method)
+
+    def method(request):
+        if 'Authorization' not in request.headers:
+            sys.stderr.write('Bad headers: %s\n' % str(request.headers))
+            request.send_response(403)
+            return
+        expected_authorization = 'Bearer ACCESS_TOKEN'
+        if request.headers['Authorization'] != expected_authorization :
+            sys.stderr.write("Bad Authorization: '%s'\n" % str(request.headers['Authorization']))
+            request.send_response(403)
+            return
+
+        request.send_response(200)
+        request.send_header('Content-type', 'text/plain')
+        request.send_header('Content-Length', 3)
+        request.end_headers()
+        request.wfile.write("""foo""".encode('ascii'))
+
+    handler.add('GET', '/gs_fake_bucket/resource', custom_method = method)
+    try:
+        with webserver.install_http_handler(handler):
+            f = open_for_read('/vsigs/gs_fake_bucket/resource')
+            if f is None:
+                gdaltest.post_reason('fail')
+                return 'fail'
+            data = gdal.VSIFReadL(1, 4, f).decode('ascii')
+            gdal.VSIFCloseL(f)
+
+            signed_url = gdal.GetSignedURL('/vsigs/gs_fake_bucket/resource',
+                                        ['START_DATE=20180212T123456Z'])
+            if signed_url not in ('http://127.0.0.1:8080/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D',
+                                'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
+                gdaltest.post_reason('fail')
+                print(signed_url)
+                return 'fail'
+
+    except:
+        if gdal.GetLastErrorMsg().find('CPLRSASHA256Sign() not implemented') >= 0:
+            return 'skip'
+    finally:
+        gdal.SetConfigOption('GO2A_AUD', None)
+        gdal.SetConfigOption('GO2A_NOW', None)
+        gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
+
+    if data != 'foo':
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/service_account.json')
+
+    return 'success'
+
+###############################################################################
 # Read credentials from simulated ~/.boto
 
 def vsigs_read_credentials_file():
@@ -969,6 +1089,11 @@ def vsigs_read_credentials_gce():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
+
+    with gdaltest.error_handler():
+        if gdal.GetSignedURL('/vsigs/foo/bar') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
 
     gdal.SetConfigOption('CPL_GCE_CREDENTIALS_URL','')
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', None)
@@ -1216,16 +1341,17 @@ def vsigs_extra_1():
         print(ret)
         return 'fail'
 
-    # Invalid bucket : "The specified bucket does not exist"
-    gdal.ErrorReset()
-    f = open_for_read('/vsigs/not_existing_bucket/foo')
-    with gdaltest.error_handler():
-        gdal.VSIFReadL(1, 1, f)
-    gdal.VSIFCloseL(f)
-    if gdal.VSIGetLastErrorMsg() == '':
-        gdaltest.post_reason('fail')
-        print(gdal.VSIGetLastErrorMsg())
-        return 'fail'
+    if False:  # we actually try to read at read() time and bSetError = false
+        # Invalid bucket : "The specified bucket does not exist"
+        gdal.ErrorReset()
+        f = open_for_read('/vsigs/not_existing_bucket/foo')
+        with gdaltest.error_handler():
+            gdal.VSIFReadL(1, 1, f)
+        gdal.VSIFCloseL(f)
+        if gdal.VSIGetLastErrorMsg() == '':
+            gdaltest.post_reason('fail')
+            print(gdal.VSIGetLastErrorMsg())
+            return 'fail'
 
     # Invalid resource
     gdal.ErrorReset()
@@ -1233,6 +1359,20 @@ def vsigs_extra_1():
     if f is not None:
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
+        return 'fail'
+
+    # Test GetSignedURL()
+    signed_url = gdal.GetSignedURL('/vsigs/' + gs_resource)
+    f = open_for_read('/vsicurl_streaming/' + signed_url)
+    if f is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ret = gdal.VSIFReadL(1, 1, f)
+    gdal.VSIFCloseL(f)
+
+    if len(ret) != 1:
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'
@@ -1254,6 +1394,7 @@ gdaltest_list = [ vsigs_init,
                   vsigs_read_credentials_refresh_token_default_gdal_app,
                   vsigs_read_credentials_refresh_token_custom_app,
                   vsigs_read_credentials_oauth2_service_account,
+                  vsigs_read_credentials_oauth2_service_account_json_file,
                   vsigs_read_credentials_file,
                   vsigs_read_credentials_file_refresh_token,
                   vsigs_read_credentials_gce,

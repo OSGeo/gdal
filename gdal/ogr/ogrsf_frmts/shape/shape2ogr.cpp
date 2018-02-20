@@ -28,13 +28,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogrshape.h"
 
-#include "cpl_conv.h"
-#include "ogrpgeogeometry.h"
-
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <limits>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogrpgeogeometry.h"
+#include "ogrshape.h"
+#include "shapefil.h"
 
 CPL_CVSID("$Id$")
 
