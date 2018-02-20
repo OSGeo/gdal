@@ -6273,6 +6273,11 @@ class Geometry(_object):
         return _ogr.Geometry_AddGeometry(self, *args)
 
 
+    def RemoveGeometry(self, *args):
+        """RemoveGeometry(Geometry self, int iSubGeom) -> OGRErr"""
+        return _ogr.Geometry_RemoveGeometry(self, *args)
+
+
     def Clone(self, *args):
         """
         Clone(Geometry self) -> Geometry

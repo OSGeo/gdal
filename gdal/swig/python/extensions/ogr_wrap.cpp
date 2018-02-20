@@ -5065,6 +5065,9 @@ SWIGINTERN OGRErr OGRGeometryShadow_AddGeometryDirectly(OGRGeometryShadow *self,
 SWIGINTERN OGRErr OGRGeometryShadow_AddGeometry(OGRGeometryShadow *self,OGRGeometryShadow *other){
     return OGR_G_AddGeometry( self, other );
   }
+SWIGINTERN OGRErr OGRGeometryShadow_RemoveGeometry(OGRGeometryShadow *self,int iSubGeom){
+    return OGR_G_RemoveGeometry( self, iSubGeom, TRUE );
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Clone(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_Clone(self);
   }
@@ -25045,6 +25048,71 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_RemoveGeometry(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  int arg2 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  OGRErr result;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:Geometry_RemoveGeometry",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_RemoveGeometry" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_RemoveGeometry" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRGeometryShadow_RemoveGeometry(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Clone(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -34791,6 +34859,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"Geometry_AddPoint_2D", _wrap_Geometry_AddPoint_2D, METH_VARARGS, (char *)"Geometry_AddPoint_2D(Geometry self, double x, double y)"},
 	 { (char *)"Geometry_AddGeometryDirectly", _wrap_Geometry_AddGeometryDirectly, METH_VARARGS, (char *)"Geometry_AddGeometryDirectly(Geometry self, Geometry other_disown) -> OGRErr"},
 	 { (char *)"Geometry_AddGeometry", _wrap_Geometry_AddGeometry, METH_VARARGS, (char *)"Geometry_AddGeometry(Geometry self, Geometry other) -> OGRErr"},
+	 { (char *)"Geometry_RemoveGeometry", _wrap_Geometry_RemoveGeometry, METH_VARARGS, (char *)"Geometry_RemoveGeometry(Geometry self, int iSubGeom) -> OGRErr"},
 	 { (char *)"Geometry_Clone", _wrap_Geometry_Clone, METH_VARARGS, (char *)"\n"
 		"Geometry_Clone(Geometry self) -> Geometry\n"
 		"\n"
