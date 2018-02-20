@@ -332,15 +332,15 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
  * @param iIndex the index of the geometry to delete.  A value of -1 is a
  * special flag meaning that all geometries should be removed.
  *
- * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
- * not.  The default is TRUE as the container is considered to own the
+ * @param bDelete if true the geometry will be deallocated, otherwise it will
+ * not.  The default is true as the container is considered to own the
  * geometries in it.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
  */
 
-OGRErr  OGRCurvePolygon::removeRing(int iIndex, int bDelete)
+OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
 {
     return oCC.removeCurve(iIndex, bDelete);
 }
