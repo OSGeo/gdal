@@ -1567,7 +1567,9 @@ OGRErr OGR_G_AddGeometryDirectly( OGRGeometryH hGeom,
  * There is no SFCOM analog to this method.
  *
  * This function is the same as the CPP method
- * OGRGeometryCollection::removeGeometry().
+ * OGRGeometryCollection::removeGeometry() for geometry collections,
+ * OGRCurvePolygon::removeRing() for polygons / curve polygons and
+ * OGRPolyhedralSurface::removeGeometry() for polyhedral surfaces and TINs.
  *
  * @param hGeom the existing geometry to delete from.
  * @param iGeom the index of the geometry to delete.  A value of -1 is a
@@ -1590,9 +1592,8 @@ OGRErr OGR_G_RemoveGeometry( OGRGeometryH hGeom, int iGeom, int bDelete )
         wkbFlatten(reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType());
     if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                "OGR_G_RemoveGeometry() not supported on polygons yet." );
-        return OGRERR_UNSUPPORTED_OPERATION;
+        return reinterpret_cast<OGRCurvePolygon *>(hGeom)->
+            removeRing(iGeom, CPL_TO_BOOL(bDelete));
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
