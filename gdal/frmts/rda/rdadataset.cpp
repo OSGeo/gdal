@@ -2109,13 +2109,14 @@ void GDALRegister_RDA()
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_rda.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MAXCONNECT' type='int' min='1' max='256' "
                         "description='Maximum number of connections'/>"
 "</OpenOptionList>" );
-
+    
     poDriver->pfnIdentify = GDALRDADataset::Identify;
     poDriver->pfnOpen = GDALRDADataset::OpenStatic;
     poDriver->pfnUnloadDriver = GDALRDADriverUnload;
