@@ -32,6 +32,7 @@
 import os
 import struct
 import sys
+import json
 
 sys.path.append( '../pymod' )
 
@@ -198,7 +199,7 @@ def rda_error_metadata():
     handler = webserver.SequentialHandler()
     # caching of access_token not possible since no expires_in
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 404)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -216,7 +217,7 @@ def rda_error_metadata():
     handler = webserver.SequentialHandler()
     # caching of access_token not possible since no expires_in
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 404, {}, '{"error": "some error"}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 404, {}, '{"error": "some error"}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -234,7 +235,7 @@ def rda_error_metadata():
     handler = webserver.SequentialHandler()
     # caching possible now
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, 'invalid json')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, 'invalid json')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -250,7 +251,7 @@ def rda_error_metadata():
 
     # a lot of missing elements
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, '{}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -266,7 +267,7 @@ def rda_error_metadata():
 
     # Bad dataType
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, """{
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -289,7 +290,7 @@ def rda_error_metadata():
         "maxTileX": 1,
         "maxTileY": 1,
         "colorInterpretation": "FOO"
-    }""")
+    }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -305,7 +306,7 @@ def rda_error_metadata():
 
     # Huge numBands
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, """{
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -328,7 +329,7 @@ def rda_error_metadata():
         "maxTileX": 1,
         "maxTileY": 1,
         "colorInterpretation": "FOO"
-    }""")
+    }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -344,7 +345,7 @@ def rda_error_metadata():
 
     # Invalid dataset dimensions
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, """{
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -367,7 +368,7 @@ def rda_error_metadata():
         "maxTileX": 1,
         "maxTileY": 1,
         "colorInterpretation": "FOO"
-    }""")
+    }}""")
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
@@ -385,7 +386,7 @@ def rda_error_metadata():
 
 ###############################################################################
 
-def rda_nominal():
+def rda_graph_nominal():
 
     if gdaltest.rda_drv is None:
         return 'skip'
@@ -393,7 +394,7 @@ def rda_nominal():
         return 'skip'
 
     handler = webserver.SequentialHandler()
-    image_json = """{
+    metadata_json = {"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -424,9 +425,9 @@ def rda_nominal():
         "sunAzimuth": 2.2,
         "sunElevation": 3.2,
         "satAzimuth": 4.2,
-        "satElevation": 5.2,
-    }"""
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+        "satElevation": 5.2
+    }}
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
@@ -471,13 +472,10 @@ def rda_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/georeferencing.json', 404)
-    with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
-            if ds.GetProjectionRef() != '':
-                gdaltest.post_reason('fail')
-                return 'fail'
+    if ds.GetProjectionRef() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
     ds = None
 
     # Retry without any network setup to test caching
@@ -490,31 +488,28 @@ def rda_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    metadata_json["imageGeoreferencing"] = {"spatialReferenceSystemCode": "EPSG:32631", "scaleX": 1.0, "scaleY": 2.0,
+                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0 }
+
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/georeferencing.json', 200, {}, """{
-        "spatialReferenceSystemCode": "EPSG:32631",
-        "scaleX": 1.0,
-        "scaleY": 2.0,
-        "translateX": 123.0,
-        "translateY": 456.0,
-        "shearX": 0.0,
-        "shearY": 0.0
-    }""")
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+        if ds is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
         if ds.GetProjectionRef().find('32631') < 0:
             gdaltest.post_reason('fail')
             return 'fail'
+
     got_gt = ds.GetGeoTransform()
     if got_gt != (125.0, 1.0, 0.0, 462.0, 0.0, 2.0):
         gdaltest.post_reason('fail')
         print(got_gt)
-        return 'fail'
-
-    # RPC should be ignored since there is a valid geotransform
-    handler = webserver.SequentialHandler()
-    handler.add('GET', '/rda_api/metadata/foo/bar/rpcs.json', 200, {}, """{"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}""")
-    if ds.GetMetadata('RPC') != {}:
-        gdaltest.post_reason('fail')
         return 'fail'
 
     ds = None
@@ -527,6 +522,45 @@ def rda_nominal():
         gdaltest.post_reason('fail')
         print(got_gt)
         return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    # RPC should be ignored since there is a valid geotransform
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+        if ds is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ds.GetMetadata('RPC') != {}:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    # RPC should be ignored regardless if the profile is georectified_image
+    temp_metadata = json.loads(json.dumps(metadata_json))
+    del temp_metadata["imageGeoreferencing"]
+    temp_metadata["imageMetadata"]["profileName"] = "georectified_image"
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(temp_metadata))
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+        if ds is None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        if ds.GetMetadata('RPC') != {}:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
 
     tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
     tile_ds.GetRasterBand(1).Fill(255)
@@ -621,7 +655,7 @@ def rda_nominal():
     # Test Dataset::AdviseRead
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile00_data)
     handler.add('GET', '/rda_api/tile/foo/bar/1/0.tif', 200, {}, tile01_data)
     handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
@@ -638,7 +672,7 @@ def rda_nominal():
     # Test RasterBand::AdviseRead
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile00_data)
     handler.add('GET', '/rda_api/tile/foo/bar/1/0.tif', 200, {}, tile01_data)
     handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
@@ -655,7 +689,7 @@ def rda_nominal():
     # Test ReadBlock directly
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile00_data)
     handler.add('GET', '/rda_api/tile/foo/bar/1/0.tif', 200, {}, tile01_data)
     handler.add('GET', '/rda_api/tile/foo/bar/0/1.tif', 200, {}, tile10_data)
@@ -696,7 +730,7 @@ def rda_read_gbdx_config():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
+    metadata_json = """{"imageMetadata":{
         "imageId": "imageId",
         "tileXOffset": 0,
         "tileYOffset": 0,
@@ -717,7 +751,7 @@ def rda_read_gbdx_config():
         "maxTileX": 1,
         "maxTileY": 1,
         "colorInterpretation": "RGB",
-    }"""
+    }}"""
 
     gdal.FileFromMemBuffer('/vsimem/.gbdx-config', """
 [gbdx]
@@ -734,7 +768,7 @@ idaho_api_url = 127.0.0.1:%d/rda_api
     }
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
@@ -756,7 +790,7 @@ def rda_download_queue():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
+    metadata_json = """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -779,7 +813,7 @@ def rda_download_queue():
         "maxTileX": 4,
         "maxTileY": 3,
         "colorInterpretation": "PAN",
-    }"""
+    }}"""
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
@@ -800,14 +834,14 @@ def rda_download_queue():
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     for y in range(5):
         for x in range(4):
             handler.add_unordered('GET', '/rda_api/tile/foo/bar/%d/%d.tif' % (x,y), 200, {}, tile_data)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
-            # We need at least (width=5) <= 2 * MAXCONNECT so that AdviseRead(all_raster) is honoured
-            ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options = ['MAXCONNECT=4'])
+            # We need at least (width=5) <= MAXCONNECT so that AdviseRead(all_raster) is honoured
+            ds = gdal.OpenEx('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}', open_options = ['MAXCONNECT=8'])
         ds.AdviseRead(0,0,4,5)
         ds.ReadRaster(0,0,4,3)
         ref_data = ds.ReadRaster(0,1,4,2)
@@ -836,30 +870,33 @@ def rda_rpc():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
-        "imageId": "imageId",
-        "profileName": "profileName",
-        "nativeTileFileFormat": "TIF",
-        "tileXOffset": 0,
-        "tileYOffset": 0,
-        "numXTiles": 5,
-        "numYTiles": 4,
-        "tileXSize": 1,
-        "tileYSize": 1,
-        "numBands": 1,
-        "dataType": "BYTE",
-        "imageHeight": 5,
-        "imageWidth": 4,
-        "minX": 0,
-        "minY": 0,
-        "maxX": 4,
-        "maxY": 3,
-        "minTileX": 0,
-        "minTileY": 0,
-        "maxTileX": 4,
-        "maxTileY": 3,
-        "colorInterpretation": "PAN",
-    }"""
+    # No RPC
+    metadata_json = {
+        "imageMetadata": {
+            "imageId": "imageId",
+            "profileName": "profileName",
+            "nativeTileFileFormat": "TIF",
+            "tileXOffset": 0,
+            "tileYOffset": 0,
+            "numXTiles": 5,
+            "numYTiles": 4,
+            "tileXSize": 1,
+            "tileYSize": 1,
+            "numBands": 1,
+            "dataType": "BYTE",
+            "imageHeight": 5,
+            "imageWidth": 4,
+            "minX": 0,
+            "minY": 0,
+            "maxX": 4,
+            "maxY": 3,
+            "minTileX": 0,
+            "minTileY": 0,
+            "maxTileX": 4,
+            "maxTileY": 3,
+            "colorInterpretation": "PAN"
+        }
+    }
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
@@ -870,10 +907,10 @@ def rda_rpc():
         'GBDX_PASSWORD': 'password'
     }
 
+
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
-    handler.add('GET', '/rda_api/metadata/foo/bar/rpcs.json', 404, {}, '{ "error": "an error" }')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
@@ -884,10 +921,28 @@ def rda_rpc():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
+    # Invalid RPC
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":2.0,"postScaleFactorY":2.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[],"lineDenCoefs":[],"sampleNumCoefs":[],"sampleDenCoefs":[]}
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
-    handler.add('GET', '/rda_api/metadata/foo/bar/rpcs.json', 200, {}, """{"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}""")
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+        with gdaltest.error_handler():
+            md = ds.GetMetadata('RPC')
+    if md != {}:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.RmdirRecursive('/vsimem/cache_dir')
+
+    # Good RPC
+    metadata_json["rpcSensorModel"] = {"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":1.0,"postScaleFactorY":1.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[0.003462388,-0.003319885,-1.004173,-5.694582E-4,0.00138283,1.973615E-6,3.606842E-4,-8.287262E-4,-0.001348337,3.399036E-7,-1.431479E-6,1.058794E-6,2.705906E-5,-9.732266E-8,-2.988015E-5,-1.20553E-4,-2.956054E-5,2.817489E-7,0.0,-1.663039E-8],"lineDenCoefs":[1.0,0.001393466,0.002175939,3.615903E-4,1.188453E-5,-5.55041E-7,-2.20758E-6,1.688344E-5,-6.33621E-5,2.911688E-5,-2.333141E-8,1.367653E-7,1.006995E-6,8.290656E-8,-7.302754E-7,-1.959288E-4,2.555922E-8,2.074273E-8,6.766787E-7,2.106776E-8],"sampleNumCoefs":[-0.003627584,1.015469,-0.001694738,-0.0107359,-0.001958667,5.325142E-4,-4.003552E-4,0.003666871,2.035126E-4,-5.427884E-6,-1.176796E-6,-1.536131E-5,-6.907792E-5,-1.670626E-5,7.908289E-5,-4.442762E-6,1.143467E-7,3.322555E-6,8.624531E-7,1.741671E-7],"sampleDenCoefs":[1.0,-3.707032E-5,0.001978281,-5.804113E-4,-4.497994E-5,-2.659572E-6,9.73096E-7,-1.250655E-5,4.714011E-5,-1.697617E-5,-6.041848E-8,0.0,2.173017E-7,5.608078E-8,-2.660194E-7,-2.020556E-7,-6.347383E-8,1.321956E-8,-8.626535E-8,1.908747E-8]}
+    handler = webserver.SequentialHandler()
+    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
@@ -908,22 +963,7 @@ def rda_rpc():
                     print(key, md)
                     return 'fail'
     ds = None
-
-    # Invalid RPC
     gdal.RmdirRecursive('/vsimem/cache_dir')
-
-    handler = webserver.SequentialHandler()
-    handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
-    handler.add('GET', '/rda_api/metadata/foo/bar/rpcs.json', 200, {}, """{"spatialReferenceSystem":"EPSG:4326","upperLeftCorner":{"x":2.07724378,"y":48.84065078},"upperRightCorner":{"x":2.31489579,"y":48.84057427},"lowerRightCorner":{"x":2.31360304,"y":48.69084146},"lowerLeftCorner":{"x":2.07783336,"y":48.69170554},"gsd":5.641394178943586E-6,"postScaleFactorX":2.0,"postScaleFactorY":2.0,"lineOffset":13313.0,"sampleOffset":13775.0,"latOffset":48.7657,"lonOffset":2.1959,"heightOffset":151.0,"lineScale":13314.0,"sampleScale":13776.0,"latScale":0.075,"lonScale":0.1203,"heightScale":500.0,"lineNumCoefs":[],"lineDenCoefs":[],"sampleNumCoefs":[],"sampleDenCoefs":[]}""")
-    with webserver.install_http_handler(handler):
-        with gdaltest.config_options(config_options):
-            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-        with gdaltest.error_handler():
-            md = ds.GetMetadata('RPC')
-    if md != {}:
-        gdaltest.post_reason('fail')
-        return 'fail'
 
     return 'success'
 
@@ -942,7 +982,7 @@ def rda_real_cache_dir():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
+    metadata_json = """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -965,7 +1005,7 @@ def rda_real_cache_dir():
         "maxTileX": 4,
         "maxTileY": 3,
         "colorInterpretation": "PAN",
-    }"""
+    }}"""
 
     config_options = {
         'RDA_CACHE_DIR': '',
@@ -977,14 +1017,14 @@ def rda_real_cache_dir():
         'GBDX_PASSWORD': 'password'
     }
 
-    cached_file = os.path.join(home, '.gdal', 'rda_cache', 'foo', 'bar', 'image.json')
+    cached_file = os.path.join(home, '.gdal', 'rda_cache', 'foo', 'bar', 'metadata.json')
     if os.path.exists(cached_file):
         gdal.RmdirRecursive(os.path.join(home, '.gdal', 'rda_cache', 'foo'))
 
     handler = webserver.SequentialHandler()
     if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'authorization.json')):
         handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
@@ -996,7 +1036,7 @@ def rda_real_cache_dir():
     handler = webserver.SequentialHandler()
     if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'authorization.json')):
         handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
@@ -1010,7 +1050,7 @@ def rda_real_cache_dir():
     handler = webserver.SequentialHandler()
     if not os.path.exists(os.path.join(home, '.gdal', 'rda_cache', 'authorization.json')):
         handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
@@ -1033,7 +1073,7 @@ def rda_real_expired_authentication():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
+    metadata_json = """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -1056,7 +1096,7 @@ def rda_real_expired_authentication():
         "maxTileX": 4,
         "maxTileY": 3,
         "colorInterpretation": "PAN",
-    }"""
+    }}"""
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
@@ -1070,14 +1110,14 @@ def rda_real_expired_authentication():
     handler = webserver.SequentialHandler()
     # As we have a 60 second security margin, expires_in=1 will already have expired
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 1 }')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token" }')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
             gdal.Open('{"graph-id":"foo","node-id":"bar"}')
@@ -1095,7 +1135,7 @@ def rda_bad_tile():
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
-    image_json = """{
+    metadata_json = """{"imageMetadata":{
         "imageId": "imageId",
         "profileName": "profileName",
         "nativeTileFileFormat": "TIF",
@@ -1118,7 +1158,7 @@ def rda_bad_tile():
         "maxTileX": 1,
         "maxTileY": 1,
         "colorInterpretation": "PAN",
-    }"""
+    }}"""
 
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
@@ -1139,7 +1179,7 @@ def rda_bad_tile():
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile_data)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile_data)
     with webserver.install_http_handler(handler):
@@ -1156,7 +1196,7 @@ def rda_bad_tile():
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, tile_data)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
@@ -1171,7 +1211,7 @@ def rda_bad_tile():
     gdal.RmdirRecursive('/vsimem/cache_dir')
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
@@ -1188,7 +1228,7 @@ def rda_bad_tile():
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token"}')
-    handler.add('GET', '/rda_api/metadata/foo/bar/image.json', 200, {}, image_json)
+    handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, metadata_json)
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(config_options):
@@ -1224,7 +1264,7 @@ gdaltest_list = [
     rda_missing_credentials,
     rda_failed_authentication,
     rda_error_metadata,
-    rda_nominal,
+    rda_graph_nominal,
     rda_read_gbdx_config,
     rda_download_queue,
     rda_rpc,
