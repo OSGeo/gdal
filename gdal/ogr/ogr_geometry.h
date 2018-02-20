@@ -876,7 +876,7 @@ class CPL_DLL OGRCurveCollection
                                             int& nDataOffset,
                                             OGRwkbByteOrder& eByteOrder,
                                             int nMinSubGeomSize,
-                                            OGRwkbVariant eWkVariant );
+                                            OGRwkbVariant eWkbVariant );
     OGRErr      importBodyFromWkb(
                     OGRGeometry* poGeom,
                     const unsigned char * pabyData,
@@ -884,7 +884,7 @@ class CPL_DLL OGRCurveCollection
                     int bAcceptCompoundCurve,
                     OGRErr (*pfnAddCurveDirectlyFromWkb)( OGRGeometry* poGeom,
                                                           OGRCurve* poCurve ),
-                    OGRwkbVariant eWkVariant,
+                    OGRwkbVariant eWkbVariant,
                     int& nBytesConsumedOut );
     OGRErr          exportToWkt( const OGRGeometry* poGeom,
                                  char ** ppszDstText ) const;
