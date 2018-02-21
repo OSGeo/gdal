@@ -1240,7 +1240,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
 bool GDALRDADataset::ReadRPCs()
 {
     // No RPCs for a georectified image
-    if(m_osProfileName.tolower().compare("georectified_image") == 0)
+    if(m_osProfileName.tolower().compare("georectified_image") == 0 || m_bGotGeoTransform)
         return false;
 
     json_object* poObj = ReadJSonFile("metadata.json", "rpcSensorModel", false);
@@ -1256,14 +1256,14 @@ bool GDALRDADataset::ReadRPCs()
     if( poScale != nullptr && json_object_get_double(poScale) != 1.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "postScaleFactorX != 1 in metadata.json|rpcSensorModel  not supported");
+                 "postScaleFactorX != 1.0 in metadata.json|rpcSensorModel  not supported");
         bError = true;
     }
     poScale = CPL_json_object_object_get(poObj, "postScaleFactorY");
     if( poScale != nullptr && json_object_get_double(poScale) != 1.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "postScaleFactorY != 1 in metadata.json|rpcSensorModel not supported");
+                 "postScaleFactorY != 1.0 in metadata.json|rpcSensorModel not supported");
         bError = true;
     }
 
@@ -1362,7 +1362,7 @@ char** GDALRDADataset::GetMetadata( const char* pszDomain )
     if( pszDomain != nullptr && EQUAL(pszDomain, "RPC") && !m_bTriedReadRPC )
     {
         m_bTriedReadRPC = true;
-        if( m_bTriedReadGeoreferencing )
+        if( !m_bTriedReadGeoreferencing )
             ReadGeoreferencing();
         // RPCs are only valid if there's no valid geotransform
         if( !m_bGotGeoTransform )
@@ -2109,14 +2109,13 @@ void GDALRegister_RDA()
                                "DigitalGlobe Raster Data Access driver" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_rda.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rda" );
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
 "  <Option name='MAXCONNECT' type='int' min='1' max='256' "
                         "description='Maximum number of connections'/>"
 "</OpenOptionList>" );
-    
+
     poDriver->pfnIdentify = GDALRDADataset::Identify;
     poDriver->pfnOpen = GDALRDADataset::OpenStatic;
     poDriver->pfnUnloadDriver = GDALRDADriverUnload;
