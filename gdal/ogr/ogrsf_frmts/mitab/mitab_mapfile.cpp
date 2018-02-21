@@ -2690,7 +2690,7 @@ int TABMAPFile::CommitDrawingTools()
      *------------------------------------------------------------*/
     nStatus = m_poToolDefTable->WriteAllToolDefs(poBlock);
 
-    m_poHeader->m_numMapToolBlocks = (GInt16)poBlock->GetNumBlocksInChain();
+    m_poHeader->m_numMapToolBlocks = (GByte)poBlock->GetNumBlocksInChain();
 
     delete poBlock;
 

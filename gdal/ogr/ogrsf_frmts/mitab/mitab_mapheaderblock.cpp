@@ -265,7 +265,9 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     m_numBrushDefs = ReadByte();
     m_numSymbolDefs = ReadByte();
     m_numFontDefs = ReadByte();
-    m_numMapToolBlocks = ReadInt16();
+    m_numMapToolBlocks = ReadByte();
+
+    ReadByte(); // skip unused byte
 
     /* DatumId was never set (always 0) until MapInfo 7.8. See bug 910
      * MAP Version Number is 500 in this case.
@@ -795,10 +797,12 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteByte(m_numBrushDefs);
     WriteByte(m_numSymbolDefs);
     WriteByte(m_numFontDefs);
-    WriteInt16(m_numMapToolBlocks);
+    CPLAssert(m_numMapToolBlocks >= 0 && m_numMapToolBlocks <= 255);
+    WriteByte(static_cast<GByte>(m_numMapToolBlocks));
 
+    WriteZeros(1);      // unused byte
     WriteInt16(m_sProj.nDatumId);
-    WriteZeros(1);      // ???
+    WriteZeros(1);      // unused byte
 
     WriteByte(m_sProj.nProjId);
     WriteByte(m_sProj.nEllipsoidId);

@@ -322,6 +322,9 @@ int     TABMAPToolBlock::ReadBytes(int numBytes, GByte *pabyDstBuf)
         }
 
         GotoByteInBlock(MAP_TOOL_HEADER_SIZE);  // Move pointer past header
+
+        // FIXME ? what about a corrupted tab file that would have more than
+        // 255 blocks
         m_numBlocksInChain++;
     }
 
@@ -350,6 +353,13 @@ int  TABMAPToolBlock::WriteBytes(int nBytesToWrite, const GByte *pabySrcBuf)
     if (m_eAccess == TABWrite && m_poBlockManagerRef &&
         (m_nBlockSize - m_nCurPos) < nBytesToWrite)
     {
+        if( m_numBlocksInChain >= 255 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Maximum number of 255 tool blocks reached");
+            return -1;
+        }
+
         int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock("TOOL");
         SetNextToolBlock(nNewBlockOffset);
 
@@ -400,6 +410,12 @@ int  TABMAPToolBlock::CheckAvailableSpace(int nToolType)
 
     if (GetNumUnusedBytes() < nBytesToWrite)
     {
+        if( m_numBlocksInChain >= 255 )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Maximum number of 255 tool blocks reached");
+            return -1;
+        }
         int nNewBlockOffset = m_poBlockManagerRef->AllocNewBlock("TOOL");
         SetNextToolBlock(nNewBlockOffset);
 
