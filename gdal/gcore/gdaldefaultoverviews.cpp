@@ -1071,6 +1071,7 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
         const int nOverviewCount = poBaseMask != nullptr ?
             poBaseMask->GetOverviewCount() : 0;
 
+        GDALDataset* poMaskDSTemp = nullptr;
         for( int iOver = 0; iOver < nOverviewCount; iOver++ )
         {
             GDALRasterBand * const poOverBand =
@@ -1081,17 +1082,19 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
             if( poOverBand->GetXSize() == poDS->GetRasterXSize()
                 && poOverBand->GetYSize() == poDS->GetRasterYSize() )
             {
-                poMaskDS = poOverBand->GetDataset();
+                poMaskDSTemp = poOverBand->GetDataset();
                 break;
             }
         }
 
-        bCheckedForMask = true;
-        bOwnMaskDS = false;
+        if( poMaskDSTemp != poDS )
+        {
+            poMaskDS = poMaskDSTemp;
+            bCheckedForMask = true;
+            bOwnMaskDS = false;
 
-        CPLAssert( poMaskDS != poDS );
-
-        return poMaskDS != nullptr;
+            return poMaskDS != nullptr;
+        }
     }
 
 /* -------------------------------------------------------------------- */
