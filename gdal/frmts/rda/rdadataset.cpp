@@ -341,15 +341,28 @@ void GDALRDADataset::CacheFile( const CPLString& osCachedFilename,
 
 int GDALRDADataset::Identify( GDALOpenInfo* poOpenInfo )
 {
+    int retval = false;
     // if connection string is JSON
     if((strstr(poOpenInfo->pszFilename, "graph-id") != nullptr &&
        strstr(poOpenInfo->pszFilename, "node-id") != nullptr) ||
     strstr(poOpenInfo->pszFilename, "template-id") != nullptr)
-        return true;
-    else if (CPLString(CPLGetExtension(poOpenInfo->pszFilename)).toupper().compare("RDA") == 0)
-        return true;
+    {
+        retval = true;
+    }
+    else if( poOpenInfo->fpL != nullptr )
+    {
+        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
+        {
+            if( STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "{") &&
+                (strstr((const char*)poOpenInfo->pabyHeader,"graph-id") != nullptr ||
+                 strstr((const char*)poOpenInfo->pabyHeader,"template-id") != nullptr))
+            {
+                retval = true;
+            }
+        }
+    }
 
-    return false;
+    return retval;
 
 }
 
@@ -634,10 +647,11 @@ bool GDALRDADataset::ParseAuthorizationResponse(const CPLString& osAuth)
 bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 {
     CPLString osConnectionString;
-    if(CPLString(CPLGetExtension(poOpenInfo->pszFilename)).toupper().compare("RDA") == 0)
+    if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
     {
         CSLUniquePtr papszContent(CSLLoad2( poOpenInfo->pszFilename, -1, -1, nullptr));
-        osConnectionString = *(papszContent.get());
+        char** papszIter = papszContent.get();
+        if(papszIter != nullptr) osConnectionString = *(papszIter);
     }
     else
     {
@@ -653,7 +667,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     JsonObjectUniquePtr oObj(poObj);
 
     json_object* poGraphId =
-        json_object_object_get(poObj, "graph-id");
+        CPL_json_object_object_get(poObj, "graph-id");
 
     if( poGraphId != nullptr &&
          json_object_get_type(poGraphId) == json_type_string)
@@ -665,7 +679,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
 
     json_object* poTemplateId =
-            json_object_object_get(poObj, "template-id");
+            CPL_json_object_object_get(poObj, "template-id");
 
     if( poTemplateId != nullptr &&
         json_object_get_type(poTemplateId) == json_type_string)
@@ -683,7 +697,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
 
     json_object* poNodeId =
-        json_object_object_get(poObj, "node-id");
+        CPL_json_object_object_get(poObj, "node-id");
     if( (poNodeId == nullptr ||
         json_object_get_type(poNodeId) != json_type_string) && m_osType == RDADatasetType::GRAPH )
     {
@@ -723,7 +737,7 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
     if(m_osType == RDADatasetType::TEMPLATE)
     {
-        json_object *poParams = json_object_object_get(poObj, "params");
+        json_object *poParams = CPL_json_object_object_get(poObj, "params");
 
         if(poParams != nullptr) {
             array_list *res = json_object_get_array(poParams);
@@ -737,9 +751,16 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
                         it.entry = nullptr;
                         json_object_object_foreachC( ds, it )
                         {
-                            CPLString tkey = it.key;
-                            CPLString tval = json_object_get_string(it.val);
-                            m_osParams.push_back(std::make_tuple(tkey, tval));
+                            if(it.key != nullptr && it.val != nullptr)
+                            {
+                                CPLString tkey = it.key;
+                                const char* tval = json_object_get_string(it.val);
+                                if(tval != nullptr)
+                                {
+                                    m_osParams.push_back(std::make_tuple(tkey, CPLString(tval)));
+                                }
+                            }
+
                         }
                     }
                 }
@@ -964,7 +985,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename, const char* p
 
     if(pszKey != nullptr)
     {
-        poRetval = json_object_object_get(poObj, pszKey);
+        poRetval = CPL_json_object_object_get(poObj, pszKey);
     }
     else
     {
@@ -1240,7 +1261,7 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
 bool GDALRDADataset::ReadRPCs()
 {
     // No RPCs for a georectified image
-    if(m_osProfileName.tolower().compare("georectified_image") == 0 || m_bGotGeoTransform)
+    if(EQUAL(m_osProfileName, "georectified_image") || m_bGotGeoTransform)
         return false;
 
     json_object* poObj = ReadJSonFile("metadata.json", "rpcSensorModel", false);
