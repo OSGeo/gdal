@@ -265,9 +265,9 @@ size_t WMSMiniDriver_MRF::GetIndexAddress(const GDALWMSTiledImageRequestInfo &ti
     // Bottom level is 0
     int l = - tiri.m_level;
     if (l < 0 || l >= static_cast<int>(offsets.size()))
-        return ~static_cast<size_t>(0); // Indexing error
+        return ~0; // Indexing error
     if (tiri.m_x >= pages[l].x || tiri.m_y >= pages[l].y)
-        return ~static_cast<size_t>(0);
+        return ~0;
     return static_cast<size_t>(offsets[l] + (pages[l].x * tiri.m_y + tiri.m_x) * ir_size[m_type]);
 }
 

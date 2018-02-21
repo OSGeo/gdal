@@ -2517,7 +2517,7 @@ inline void GDALCopyWordsComplexOutT( const Tin* const CPL_RESTRICT pSrcData,
 {
     std::ptrdiff_t nDstOffset = 0;
 
-    const Tout tOutZero = static_cast<Tout>(0);
+    const Tout tOutZero = 0;
 
     const char* const pSrcDataPtr = reinterpret_cast<const char*>(pSrcData);
     char* const pDstDataPtr = reinterpret_cast<char*>(pDstData);
