@@ -951,8 +951,7 @@ int PNGDataset::Identify( GDALOpenInfo * poOpenInfo )
     if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 4 )
         return FALSE;
 
-    if( png_sig_cmp(poOpenInfo->pabyHeader, static_cast<png_size_t>( 0 ),
-                    poOpenInfo->nHeaderBytes) != 0 )
+    if( png_sig_cmp(poOpenInfo->pabyHeader, 0, poOpenInfo->nHeaderBytes) != 0 )
         return FALSE;
 
     return TRUE;
