@@ -2738,6 +2738,10 @@ public:
   }
 %clear OGRGeometryShadow* other;
 
+  OGRErr RemoveGeometry( int iSubGeom ) {
+    return OGR_G_RemoveGeometry( self, iSubGeom, TRUE );
+  }
+
   %newobject Clone;
   OGRGeometryShadow* Clone() {
     return (OGRGeometryShadow*) OGR_G_Clone(self);

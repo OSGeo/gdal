@@ -876,7 +876,7 @@ class CPL_DLL OGRCurveCollection
                                             int& nDataOffset,
                                             OGRwkbByteOrder& eByteOrder,
                                             int nMinSubGeomSize,
-                                            OGRwkbVariant eWkVariant );
+                                            OGRwkbVariant eWkbVariant );
     OGRErr      importBodyFromWkb(
                     OGRGeometry* poGeom,
                     const unsigned char * pabyData,
@@ -884,7 +884,7 @@ class CPL_DLL OGRCurveCollection
                     int bAcceptCompoundCurve,
                     OGRErr (*pfnAddCurveDirectlyFromWkb)( OGRGeometry* poGeom,
                                                           OGRCurve* poCurve ),
-                    OGRwkbVariant eWkVariant,
+                    OGRwkbVariant eWkbVariant,
                     int& nBytesConsumedOut );
     OGRErr          exportToWkt( const OGRGeometry* poGeom,
                                  char ** ppszDstText ) const;
@@ -902,7 +902,7 @@ class CPL_DLL OGRCurveCollection
     const OGRCurve *getCurve( int ) const;
     OGRCurve       *stealCurve( int );
 
-    OGRErr          removeCurve( int iIndex, int bDelete = TRUE );
+    OGRErr          removeCurve( int iIndex, bool bDelete = true );
 
     OGRErr          transform( OGRGeometry* poGeom,
                                OGRCoordinateTransformation *poCT );
@@ -1177,7 +1177,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     OGRCurve *stealExteriorRingCurve();
 
-    OGRErr removeRing( int iIndex, int bDelete = TRUE );
+    OGRErr removeRing( int iIndex, bool bDelete = true );
 
     virtual void        swapXY() override;
 };

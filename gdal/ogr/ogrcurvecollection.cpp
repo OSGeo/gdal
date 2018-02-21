@@ -794,25 +794,25 @@ OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
  * Removing a geometry will cause the geometry count to drop by one, and all
  * "higher" geometries will shuffle down one in index.
  *
- * @param iGeom the index of the geometry to delete.  A value of -1 is a
+ * @param iIndex the index of the geometry to delete.  A value of -1 is a
  * special flag meaning that all geometries should be removed.
  *
- * @param bDelete if TRUE the geometry will be deallocated, otherwise it will
- * not.  The default is TRUE as the container is considered to own the
+ * @param bDelete if true the geometry will be deallocated, otherwise it will
+ * not.  The default is true as the container is considered to own the
  * geometries in it.
  *
  * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
  * out of range.
  */
 
-OGRErr OGRCurveCollection::removeCurve( int iGeom, int bDelete )
+OGRErr OGRCurveCollection::removeCurve( int iIndex, bool bDelete )
 
 {
-    if( iGeom < -1 || iGeom >= nCurveCount )
+    if( iIndex < -1 || iIndex >= nCurveCount )
         return OGRERR_FAILURE;
 
     // Special case.
-    if( iGeom == -1 )
+    if( iIndex == -1 )
     {
         while( nCurveCount > 0 )
             removeCurve( nCurveCount-1, bDelete );
@@ -820,10 +820,10 @@ OGRErr OGRCurveCollection::removeCurve( int iGeom, int bDelete )
     }
 
     if( bDelete )
-        delete papoCurves[iGeom];
+        delete papoCurves[iIndex];
 
-    memmove( papoCurves + iGeom, papoCurves + iGeom + 1,
-             sizeof(void*) * (nCurveCount-iGeom-1) );
+    memmove( papoCurves + iIndex, papoCurves + iIndex + 1,
+             sizeof(void*) * (nCurveCount-iIndex-1) );
 
     nCurveCount--;
 

@@ -1009,7 +1009,6 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           // TODO(schwehr): What is 4?
           memcpy(&fNumber, pabyData + nIndexValue * 4, 4);
           HFAStandard(4, &fNumber);
-          dfDoubleRet = fNumber;
           if( fNumber > static_cast<int>(std::numeric_limits<int>::max()) ||
               fNumber < static_cast<int>(std::numeric_limits<int>::min()) ||
               CPLIsNan(fNumber) )
@@ -1018,6 +1017,7 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
                        "Too large for int: %f", fNumber);
               return false;
           }
+          dfDoubleRet = fNumber;
           nIntRet = static_cast<int>(fNumber);
       }
       break;

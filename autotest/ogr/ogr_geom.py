@@ -4319,6 +4319,119 @@ def ogr_geom_swapxy():
     return 'success'
 
 ###############################################################################
+
+def ogr_geom_remove_geometry():
+
+    # With GEOMETRYCOLLECTION
+    g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,2 3),POINT (3 4))')
+    if g.RemoveGeometry(3) == 0 or g.RemoveGeometry(-2) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if g.RemoveGeometry(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (1 2),POINT (3 4))':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    if g.RemoveGeometry(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION (POINT (1 2))':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    if g.RemoveGeometry(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT (1 2),LINESTRING (1 2,2 3),POINT (3 4))')
+    if g.RemoveGeometry(-1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'GEOMETRYCOLLECTION EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    # With POLYHEDRALSURFACE/TIN
+    g = ogr.CreateGeometryFromWkt('TIN (((0 0,0 1,1 1,0 0)),((0 0,1 0,1 1,0 0)))')
+    if g.RemoveGeometry(2) == 0 or g.RemoveGeometry(-2) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if g.RemoveGeometry(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'TIN (((0 0,0 1,1 1,0 0)))':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    if g.RemoveGeometry(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'TIN EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('TIN (((0 0,0 1,1 1,0 0)),((0 0,1 0,1 1,0 0)))')
+    if g.RemoveGeometry(-1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'TIN EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    # With POLYGON
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,1 1))')
+    if g.RemoveGeometry(2) == 0 or g.RemoveGeometry(-2) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if g.RemoveGeometry(1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'POLYGON ((0 0,0 10,10 10,10 0,0 0))':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    if g.RemoveGeometry(0) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'POLYGON EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,0 10,10 10,10 0,0 0),(1 1,1 9,9 9,1 1))')
+    if g.RemoveGeometry(-1) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if g.ExportToWkt() != 'POLYGON EMPTY':
+        gdaltest.post_reason('fail')
+        print(g)
+        return 'fail'
+
+    # Unsupported type
+    g = ogr.CreateGeometryFromWkt('POINT (0 0)')
+    if g.RemoveGeometry(0) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -4389,6 +4502,7 @@ gdaltest_list = [
     ogr_geom_geometrycollection,
     ogr_geom_assignspatialref,
     ogr_geom_swapxy,
+    ogr_geom_remove_geometry,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]
