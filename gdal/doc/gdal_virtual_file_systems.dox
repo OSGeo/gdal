@@ -46,7 +46,7 @@ stored on network (either publicly accessible, or in private buckets of commerci
 cloud storage services), etc.
 
 Each special file system has a prefix, and the general syntax to name a file is
-/vsitheprefix/...
+/vsiPREFIX/...
 
 Example:
 <pre>
