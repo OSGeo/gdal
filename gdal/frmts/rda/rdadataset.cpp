@@ -75,6 +75,7 @@ static void GDALRDADriverUnload(GDALDriver*)
 /************************************************************************/
 /*                          GDALRDADataset                              */
 /************************************************************************/
+enum class RDADatasetType : std::int8_t { UNDEFINED = -1, GRAPH = 1, TEMPLATE = 2 };
 
 class GDALRDADataset: public GDALDataset
 {
@@ -90,10 +91,14 @@ class GDALRDADataset: public GDALDataset
         CPLString m_osAccessToken;
         int       m_nExpiresIn = 0;
 
+        RDADatasetType m_osType = RDADatasetType::UNDEFINED;
+
         CPLString m_osGraphId;
         CPLString m_osNodeId;
+        CPLString m_osTemplateId;
+        std::vector<std::tuple<CPLString, CPLString>> m_osParams;
         bool      m_bDeleteOnClose = true;
-
+        bool      m_bAdviseRead = true;
         CPLString m_osImageId;
         CPLString m_osProfileName;
         CPLString m_osNativeTileFileFormat;
@@ -133,12 +138,16 @@ class GDALRDADataset: public GDALDataset
         int       m_nYSizeFetched = 0;
 
         int       m_nMaxCurlConnections = 8;
+        bool      m_bIsMaxCurlConnectionsExplicitlySet = false;
 
         bool      ReadConfiguration();
         bool      GetAuthorization();
         bool      ParseAuthorizationResponse(const CPLString& osAuth);
         bool      ParseConnectionString( GDALOpenInfo* poOpenInfo );
-        json_object* ReadJSonFile(const char* pszFilename, bool bErrorOn404);
+        json_object* ReadJSonFile(const char* pszFilename, const char* pszKey,
+                                  bool bErrorOn404);
+        CPLString ConstructTileFetchURL(const CPLString& baseUrl,
+                                        const CPLString& subPath);
         bool      ReadImageMetadata();
         bool      ReadRPCs();
         bool      ReadGeoreferencing();
@@ -184,6 +193,8 @@ class GDALRDADataset: public GDALDataset
                                         int /*nBands*/, int* /*panBands*/,
                                         char ** /* papszOptions */) override;
         char**          GetMetadata( const char* pszDomain = "" ) override;
+        bool            IsMaxCurlConnectionsSet();
+        void            MaxCurlConnectionsSet(unsigned int nMaxCurlConnections);
 };
 
 
@@ -332,8 +343,31 @@ void GDALRDADataset::CacheFile( const CPLString& osCachedFilename,
 
 int GDALRDADataset::Identify( GDALOpenInfo* poOpenInfo )
 {
-    return strstr(poOpenInfo->pszFilename, "graph-id") != nullptr &&
-           strstr(poOpenInfo->pszFilename, "node-id") != nullptr;
+    bool retval = false;
+    // if connection string is JSON
+    if((strstr(poOpenInfo->pszFilename, "graph-id") != nullptr &&
+        strstr(poOpenInfo->pszFilename, "node-id") != nullptr) ||
+       strstr(poOpenInfo->pszFilename, "template-id") != nullptr)
+    {
+        retval = true;
+    }
+    else if( poOpenInfo->fpL != nullptr )
+    {
+        if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
+        {
+            const char* pszHeader = reinterpret_cast<const char*>(
+                poOpenInfo->pabyHeader);
+            if( pszHeader != nullptr && STARTS_WITH_CI(pszHeader, "{") &&
+                (strstr(pszHeader,"graph-id") != nullptr ||
+                 strstr(pszHeader,"template-id") != nullptr))
+            {
+                retval = true;
+            }
+        }
+    }
+
+    return retval;
+
 }
 
 /************************************************************************/
@@ -616,8 +650,21 @@ bool GDALRDADataset::ParseAuthorizationResponse(const CPLString& osAuth)
 
 bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 {
+    CPLString osConnectionString;
+    if(EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "RDA"))
+    {
+        CSLUniquePtr papszContent(CSLLoad2( poOpenInfo->pszFilename,
+                                            -1, -1, nullptr));
+        char** papszIter = papszContent.get();
+        if(papszIter != nullptr)
+            osConnectionString = *(papszIter);
+    }
+    else
+    {
+        osConnectionString = poOpenInfo->pszFilename;
+    }
     json_object* poObj = nullptr;
-    if( !OGRJSonParse(poOpenInfo->pszFilename, &poObj, true) )
+    if( !OGRJSonParse(osConnectionString, &poObj, true) )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid JSon document as dataset name");
@@ -627,25 +674,48 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
 
     json_object* poGraphId =
         CPL_json_object_object_get(poObj, "graph-id");
-    if( poGraphId == nullptr ||
-        json_object_get_type(poGraphId) != json_type_string )
+
+    if( poGraphId != nullptr &&
+         json_object_get_type(poGraphId) == json_type_string)
+    {
+        m_osType = RDADatasetType::GRAPH;
+        m_osGraphId = json_object_get_string(poGraphId);
+    }
+
+
+
+    json_object* poTemplateId =
+            CPL_json_object_object_get(poObj, "template-id");
+
+    if( poTemplateId != nullptr &&
+        json_object_get_type(poTemplateId) == json_type_string)
+    {
+        m_osType = RDADatasetType::TEMPLATE;
+        m_osTemplateId = json_object_get_string(poTemplateId);
+    }
+
+    if(m_osType == RDADatasetType::UNDEFINED)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing graph-id");
+                 "Missing graph-id or template-id");
         return false;
     }
-    m_osGraphId = json_object_get_string(poGraphId);
+
 
     json_object* poNodeId =
         CPL_json_object_object_get(poObj, "node-id");
-    if( poNodeId == nullptr ||
-        json_object_get_type(poNodeId) != json_type_string )
+    if( (poNodeId == nullptr ||
+         json_object_get_type(poNodeId) != json_type_string) &&
+        m_osType == RDADatasetType::GRAPH )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Missing node-id");
         return false;
     }
-    m_osNodeId = json_object_get_string(poNodeId);
+
+    m_osNodeId = (poNodeId != nullptr &&
+                  json_object_get_type(poNodeId) == json_type_string)
+                 ?  json_object_get_string(poNodeId) :"";
 
     json_object* poDeleteOnClose = json_ex_get_object_by_path(poObj,
                                                 "options.delete-on-close");
@@ -654,6 +724,59 @@ bool GDALRDADataset::ParseConnectionString( GDALOpenInfo* poOpenInfo )
     {
         m_bDeleteOnClose = CPL_TO_BOOL(
             json_object_get_boolean(poDeleteOnClose));
+    }
+
+    json_object* poMaxConnections = json_ex_get_object_by_path(poObj,
+                                                    "options.max-connections");
+    if( poMaxConnections &&
+        json_object_get_type(poMaxConnections) == json_type_int )
+    {
+        MaxCurlConnectionsSet(json_object_get_int(poMaxConnections));
+    }
+
+    json_object* poEnforceAdviseRead = json_ex_get_object_by_path(poObj,
+                                                        "options.advise-read");
+    if( poEnforceAdviseRead &&
+        json_object_get_type(poEnforceAdviseRead) == json_type_boolean )
+    {
+        m_bAdviseRead = CPL_TO_BOOL(
+                json_object_get_boolean(poEnforceAdviseRead));
+    }
+
+    if(m_osType == RDADatasetType::TEMPLATE)
+    {
+        json_object *poParams = CPL_json_object_object_get(poObj, "params");
+
+        if(poParams != nullptr) {
+            array_list *res = json_object_get_array(poParams);
+            if(res != nullptr) {
+                for (decltype(res->length) i = 0; i < res->length; i++) {
+                    json_object *ds = (json_object *) array_list_get_idx(res, i);
+                    if (ds != nullptr) {
+                        json_object_iter it;
+                        it.key = nullptr;
+                        it.val = nullptr;
+                        it.entry = nullptr;
+                        json_object_object_foreachC( ds, it )
+                        {
+                            if(it.key != nullptr && it.val != nullptr)
+                            {
+                                CPLString tkey = it.key;
+                                const char* tval =
+                                    json_object_get_string(it.val);
+                                if(tval != nullptr)
+                                {
+                                    m_osParams.push_back(std::make_tuple(tkey,
+                                                            CPLString(tval)));
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     return true;
@@ -792,6 +915,7 @@ static double GetJsonDouble(json_object* poObj, const char* pszPath,
 /************************************************************************/
 
 json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
+                                          const char* pszKey,
                                           bool bErrorOn404)
 {
     CPLString osCachedFilename(
@@ -818,14 +942,42 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
     if( pszRes == nullptr )
     {
         CPLString osURL(m_osRDAAPIURL);
-        osURL += "/metadata/" + m_osGraphId + "/" +
-                 m_osNodeId + "/" + pszFilename;
+        if(m_osType == RDADatasetType::GRAPH)
+        {
+            osURL += "/metadata/" + m_osGraphId + "/" +
+                     m_osNodeId + "/" + pszFilename;
+        }
+        else if(m_osType == RDADatasetType::TEMPLATE)
+        {
+            osURL += "/template/" + m_osTemplateId + "/metadata";
+            osURL += m_osParams.size()>0 ? "?": "";
+            if(!m_osNodeId.empty())
+            {
+                osURL += "nodeId="+m_osNodeId+"&";
+            }
+            for (auto tup : m_osParams)
+            {
+                osURL += std::get<0>(tup)+"="+std::get<1>(tup)+"&";
+            }
+            //remove trailing &
+            if(osURL.endsWith("&") ==0 )
+            {
+                osURL.erase((osURL.begin() + osURL.size()-1), osURL.end());
+            }
+        }
+        else
+        {
+            //this shouldn't happen
+            return nullptr;
+        }
+
         pszRes = reinterpret_cast<char*>(Download(osURL, bErrorOn404));
         bToCache = true;
     }
     if( pszRes == nullptr )
         return nullptr;
     json_object* poObj = nullptr;
+    json_object* poRetval = nullptr;
     if( !OGRJSonParse(pszRes, &poObj, true) )
     {
         CPLFree(pszRes);
@@ -837,16 +989,26 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
     {
         json_object_put(poObj);
         poObj = nullptr;
-        // In case we don't get image.json, don't cache anything
-        if( strcmp(pszFilename, "image.json") == 0 )
+        // In case we don't get metadata.json, don't cache anything
+        if( strcmp(pszFilename, "metadata.json") == 0 )
             bToCache = false;
     }
+
+    if(pszKey != nullptr)
+    {
+        poRetval = CPL_json_object_object_get(poObj, pszKey);
+    }
+    else
+    {
+        poRetval = poObj;
+    }
+
     if( bToCache )
     {
         CacheFile( osCachedFilename, pszRes, strlen(pszRes) );
     }
     CPLFree(pszRes);
-    return poObj;
+    return poRetval;
 }
 
 /************************************************************************/
@@ -855,7 +1017,7 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
 
 bool GDALRDADataset::ReadImageMetadata()
 {
-    json_object* poObj = ReadJSonFile("image.json", true);
+    json_object* poObj = ReadJSonFile("metadata.json", "imageMetadata", true);
     if( poObj == nullptr )
         return false;
 
@@ -1023,7 +1185,8 @@ bool GDALRDADataset::ReadGeoreferencing()
 {
     m_bTriedReadGeoreferencing = true;
 
-    json_object* poObj = ReadJSonFile("georeferencing.json", false);
+    json_object* poObj = ReadJSonFile("metadata.json", "imageGeoreferencing",
+                                      false);
     if( poObj == nullptr )
         return false;
 
@@ -1109,7 +1272,11 @@ static CPLString Get20Coeffs(json_object* poObj, const char* pszPath,
 
 bool GDALRDADataset::ReadRPCs()
 {
-    json_object* poObj = ReadJSonFile("rpcs.json", false);
+    // No RPCs for a georectified image
+    if(EQUAL(m_osProfileName, "georectified_image") || m_bGotGeoTransform)
+        return false;
+
+    json_object* poObj = ReadJSonFile("metadata.json", "rpcSensorModel", false);
     if( poObj == nullptr )
         return false;
 
@@ -1118,18 +1285,21 @@ bool GDALRDADataset::ReadRPCs()
     bool bError = false;
 
     // Not sure how to deal with those, so error out if they are != 1
-    json_object* poScale = CPL_json_object_object_get(poObj, "postScaleFactorX");
+    json_object* poScale = CPL_json_object_object_get(poObj,
+                                                      "postScaleFactorX");
     if( poScale != nullptr && json_object_get_double(poScale) != 1.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "postScaleFactorX != 1 in rpcs.json not supported");
+                 "postScaleFactorX != 1.0 in metadata.json|rpcSensorModel "
+                 "not supported");
         bError = true;
     }
     poScale = CPL_json_object_object_get(poObj, "postScaleFactorY");
     if( poScale != nullptr && json_object_get_double(poScale) != 1.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "postScaleFactorY != 1 in rpcs.json not supported");
+                 "postScaleFactorY != 1.0 in metadata.json|rpcSensorModel "
+                 "not supported");
         bError = true;
     }
 
@@ -1203,6 +1373,24 @@ bool GDALRDADataset::ReadRPCs()
 }
 
 /************************************************************************/
+/*                      IsMaxCurlConnectionsSet()                       */
+/************************************************************************/
+bool GDALRDADataset::IsMaxCurlConnectionsSet()
+{
+    return m_bIsMaxCurlConnectionsExplicitlySet;
+}
+
+/************************************************************************/
+/*                      MaxCurlConnectionsSet()                         */
+/************************************************************************/
+void GDALRDADataset::MaxCurlConnectionsSet(unsigned int nMaxCurlConnections)
+{
+    m_nMaxCurlConnections = std::max(1, std::min(256,
+                                    static_cast<int>(nMaxCurlConnections)));
+    m_bIsMaxCurlConnectionsExplicitlySet = true;
+}
+
+/************************************************************************/
 /*                          GetMetadata()                               */
 /************************************************************************/
 
@@ -1211,7 +1399,7 @@ char** GDALRDADataset::GetMetadata( const char* pszDomain )
     if( pszDomain != nullptr && EQUAL(pszDomain, "RPC") && !m_bTriedReadRPC )
     {
         m_bTriedReadRPC = true;
-        if( m_bTriedReadGeoreferencing )
+        if( !m_bTriedReadGeoreferencing )
             ReadGeoreferencing();
         // RPCs are only valid if there's no valid geotransform
         if( !m_bGotGeoTransform )
@@ -1286,18 +1474,21 @@ GDALDataset* GDALRDADataset::OpenStatic( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open(poOpenInfo) )
         return nullptr;
 
-    const char* pszMaxConnect =
-            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXCONNECT");
-
-    if (pszMaxConnect != nullptr) {
-        poDS->m_nMaxCurlConnections =
-            std::max(1, std::min(1024, atoi(pszMaxConnect)));
-    }
-    else
+    if(!poDS->IsMaxCurlConnectionsSet())
     {
-        unsigned int n = std::thread::hardware_concurrency();
-        poDS->m_nMaxCurlConnections = std::max(static_cast<int>(8*n), 64);
+        const char* pszMaxConnect =
+                CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MAXCONNECT");
+
+        if (pszMaxConnect != nullptr) {
+            poDS->MaxCurlConnectionsSet(atoi(pszMaxConnect));
+        }
+        else
+        {
+            unsigned int n = std::thread::hardware_concurrency();
+            poDS->MaxCurlConnectionsSet(std::max(static_cast<int>(8 * n), 64));
+        }
     }
+
 
     return poDS.release();
 }
@@ -1379,7 +1570,48 @@ std::string GDALRDADataset::MakeKeyCache(int64_t nTileX, int64_t nTileY)
                                   this, static_cast<GIntBig>(nTileX),
                                   static_cast<GIntBig>(nTileY)));
 }
-
+/************************************************************************/
+/*                        ConstructTileFetchURL()                       */
+/************************************************************************/
+CPLString GDALRDADataset::ConstructTileFetchURL(const CPLString& baseUrl,
+                                                const CPLString& subPath)
+{
+    CPLString retVal = baseUrl;
+    if(m_osType == RDADatasetType::GRAPH)
+    {
+        retVal += "/tile/" + m_osGraphId + "/" + m_osNodeId + "/";
+        retVal += subPath;
+    }
+    else if(m_osType == RDADatasetType::TEMPLATE)
+    {
+        retVal += "/template/" + m_osTemplateId + "/tile/";
+        CPLString tosDiscardPath= "." + m_osNativeTileFileFormat;
+        CPLString tosSubPath = subPath ;
+        tosSubPath.erase((tosSubPath.begin()+tosSubPath.find(tosDiscardPath)),
+                         tosSubPath.end());
+        retVal += tosSubPath;
+        retVal += m_osParams.size()>0 || m_osNodeId ? "?": "";
+        if(!m_osNodeId.empty())
+        {
+            retVal += "nodeId="+m_osNodeId+"&";
+        }
+        for (auto tup : m_osParams)
+        {
+            retVal += std::get<0>(tup)+"="+std::get<1>(tup)+"&";
+        }
+        //remove trailing &
+        if(retVal.endsWith("&"))
+        {
+            retVal.erase((retVal.begin() + retVal.size()-1), retVal.end());
+        }
+    }
+    else
+    {
+        //this shouldn't happen
+        throw new std::runtime_error("Udefined RDADatasetType");
+    }
+    return retVal;
+}
 /************************************************************************/
 /*                          BatchFetch()                                */
 /************************************************************************/
@@ -1404,7 +1636,7 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
     int nFullXSize = GetRasterBand(1)->GetXSize();
     int nFullYSize = GetRasterBand(1)->GetYSize();
     bool fetchAllAdvised = false;
-    if(m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0)
+    if(m_nXSizeAdvise != 0 && m_nYSizeAdvise != 0 && m_bAdviseRead)
     {
         fetchAllAdvised = true;
         int advisedXBlocks = static_cast<int>(
@@ -1412,10 +1644,10 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         int advisedYBlocks = static_cast<int>(
             std::ceil(static_cast<double>(m_nYSizeAdvise)/nBlockYSize));
         if(m_nXSizeAdvise == nFullXSize &&
-            advisedXBlocks>2*m_nMaxCurlConnections)
+            advisedXBlocks > m_nMaxCurlConnections)
             fetchAllAdvised = false;
         else if(m_nYSizeAdvise == nFullYSize &&
-            advisedYBlocks>2*m_nMaxCurlConnections)
+            advisedYBlocks > m_nMaxCurlConnections)
             fetchAllAdvised = false;
     }
 
@@ -1477,9 +1709,7 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
                 continue;
             }
 
-            CPLString osURL(m_osRDAAPIURL);
-            osURL += "/tile/" + m_osGraphId + "/" + m_osNodeId + "/";
-            osURL += osSubPath;
+            CPLString osURL = ConstructTileFetchURL(m_osRDAAPIURL, osSubPath);
             apszURLLists.push_back(CPLStrdup(osURL));
             aTileIdx.push_back(std::pair<int64_t,int64_t>(nTileX, nTileY));
         }
@@ -1577,9 +1807,7 @@ GDALRDADataset::GetTiles(
             }
         }
 
-        CPLString osURL(m_osRDAAPIURL);
-        osURL += "/tile/" + m_osGraphId + "/" + m_osNodeId + "/";
-        osURL += osSubPath;
+        CPLString osURL = ConstructTileFetchURL(m_osRDAAPIURL, osSubPath);
         apszURLLists.push_back(CPLStrdup(osURL));
         anOutIndex.push_back(i);
         oResult.push_back( nullptr );
@@ -1923,7 +2151,7 @@ void GDALRegister_RDA()
 
     poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST,
 "<OpenOptionList>"
-"  <Option name='MAXCONNECT' type='int' min='1' max='1024' "
+"  <Option name='MAXCONNECT' type='int' min='1' max='256' "
                         "description='Maximum number of connections'/>"
 "</OpenOptionList>" );
 
