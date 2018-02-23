@@ -211,6 +211,27 @@ CPLODBCStatement *OGRODBCTableLayer::GetStatement()
 }
 
 /************************************************************************/
+/*                      EscapeAndQuoteIdentifier()                      */
+/************************************************************************/
+
+static CPLString EscapeAndQuoteIdentifier(const CPLString& osStr)
+{
+    CPLString osRet;
+    for( size_t i = 0; i < osStr.size(); i++ )
+    {
+        if( osStr[i] == '"' )
+        {
+            osRet += "\\\"";
+        }
+        else
+        {
+            osRet += osStr[i];
+        }
+    }
+    return '"' + osRet + '"';
+}
+
+/************************************************************************/
 /*                           ResetStatement()                           */
 /************************************************************************/
 
@@ -223,7 +244,7 @@ OGRErr OGRODBCTableLayer::ResetStatement()
 
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
-    poStmt->Append( poFeatureDefn->GetName() );
+    poStmt->Append( EscapeAndQuoteIdentifier(poFeatureDefn->GetName()) );
 
     /* Append attribute query if we have it */
     if( pszQuery != nullptr )
@@ -281,8 +302,10 @@ OGRFeature *OGRODBCTableLayer::GetFeature( GIntBig nFeatureId )
 
     poStmt = new CPLODBCStatement( poDS->GetSession() );
     poStmt->Append( "SELECT * FROM " );
-    poStmt->Append( poFeatureDefn->GetName() );
-    poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId );
+    poStmt->Append( EscapeAndQuoteIdentifier(poFeatureDefn->GetName()) );
+    poStmt->Appendf( " WHERE %s = " CPL_FRMT_GIB,
+                     EscapeAndQuoteIdentifier(pszFIDColumn).c_str(),
+                     nFeatureId );
 
     if( !poStmt->ExecuteSQL() )
     {
@@ -348,7 +371,7 @@ GIntBig OGRODBCTableLayer::GetFeatureCount( int bForce )
 
     CPLODBCStatement oStmt( poDS->GetSession() );
     oStmt.Append( "SELECT COUNT(*) FROM " );
-    oStmt.Append( poFeatureDefn->GetName() );
+    oStmt.Append( EscapeAndQuoteIdentifier(poFeatureDefn->GetName()) );
 
     if( pszQuery != nullptr )
         oStmt.Appendf( " WHERE %s", pszQuery );
