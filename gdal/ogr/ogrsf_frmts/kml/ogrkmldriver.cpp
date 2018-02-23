@@ -28,10 +28,15 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_kml.h"
+
+#include <cstring>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "gdal.h"
+#include "gdal_priv.h"
 
 CPL_CVSID("$Id$")
 
