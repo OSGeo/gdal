@@ -29,13 +29,17 @@
 #include "kmlnode.h"
 #include "kml.h"
 
-#include "cpl_conv.h"
-#include "cpl_error.h"
-
-#include <cerrno>
+#include <cstring>
 #include <cstdio>
+#include <exception>
 #include <iostream>
 #include <string>
+
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#ifdef HAVE_EXPAT
+#  include "expat.h"
+#endif
 
 CPL_CVSID("$Id$")
 
