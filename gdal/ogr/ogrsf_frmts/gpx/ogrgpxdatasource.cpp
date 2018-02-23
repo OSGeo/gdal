@@ -26,10 +26,27 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_gpx.h"
+
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
-#include "ogr_gpx.h"
+#include "cpl_vsi.h"
+#ifdef HAVE_EXPAT
+#  include "expat.h"
+#endif
+#include "gdal_version.h"
+#include "ogr_core.h"
+#include "ogr_expat.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
+
 
 CPL_CVSID("$Id$")
 
