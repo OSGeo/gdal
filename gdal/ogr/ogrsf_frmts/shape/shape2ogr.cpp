@@ -1035,19 +1035,13 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         oField.SetWidth( nWidth );
         oField.SetPrecision( nPrecision );
 
-        const char chNativeType = DBFGetNativeFieldType( hDBF, iField );
-        if( chNativeType == 'D' )
+        if( eDBFType == FTDate )
         {
-            // TODO(mloskot): Shapefile date has following 8-chars long format:
+            // Shapefile date has following 8-chars long format:
             //
             //     20060101.
             //
             // Split as YYYY/MM/DD, so 2 additional characters are required.
-            //
-            // Is this a correct assumption? What about time part of date?
-            // Should this format look as datetime: YYYY/MM/DD HH:MM:SS with 4
-            // additional characters?
-
             oField.SetWidth( nWidth + 2 );
             oField.SetType( OFTDate );
         }
