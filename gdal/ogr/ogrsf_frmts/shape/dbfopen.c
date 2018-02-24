@@ -899,7 +899,7 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
     if( eType == FTLogical )
         chNativeType = 'L';
     else if( eType == FTDate )
-	chNativeType = 'D'
+	chNativeType = 'D';
     else if( eType == FTString )
         chNativeType = 'C';
     else
