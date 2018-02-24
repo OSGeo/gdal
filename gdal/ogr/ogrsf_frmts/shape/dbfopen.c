@@ -898,6 +898,8 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
 
     if( eType == FTLogical )
         chNativeType = 'L';
+    else if( eType == FTDate )
+	chNativeType = 'D';
     else if( eType == FTString )
         chNativeType = 'C';
     else
@@ -1390,7 +1392,10 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
     }
 
     if ( psDBF->pachFieldType[iField] == 'L' )
-	return( FTLogical);
+	return( FTLogical );
+
+    else if( psDBF->pachFieldType[iField] == 'D' )
+	return( FTDate );
 
     else if( psDBF->pachFieldType[iField] == 'N'
              || psDBF->pachFieldType[iField] == 'F' )
@@ -2289,7 +2294,7 @@ DBFAlterFieldDefn( DBFHandle psDBF, int iField, const char * pszFieldName,
 
             if (nWidth != nOldWidth)
             {
-                if ((chOldType == 'N' || chOldType == 'F') && pszOldField[0] == ' ')
+                if ((chOldType == 'N' || chOldType == 'F' || chOldType == 'D') && pszOldField[0] == ' ')
                 {
                     /* Strip leading spaces when truncating a numeric field */
                     memmove( pszRecord + nOffset,
