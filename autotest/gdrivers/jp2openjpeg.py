@@ -37,6 +37,7 @@ from osgeo import ogr
 from osgeo import osr
 
 sys.path.append( '../pymod' )
+sys.path.append( '../ogr' )
 sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest
@@ -2304,7 +2305,10 @@ def jp2openjpeg_45():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
-    if gdal.GetDriverByName('GML') is None:
+
+    import ogr_gml_read
+    ogr_gml_read.ogr_gml_1()
+    if not gdaltest.have_gml_reader:
         return 'skip'
     if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
         return 'skip'
