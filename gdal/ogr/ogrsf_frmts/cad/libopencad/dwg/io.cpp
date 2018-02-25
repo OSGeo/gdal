@@ -417,7 +417,7 @@ bool CADBuffer::ReadBIT()
     size_t nBitOffsetInByte = m_nBitOffsetFromStart % 8;
 
     const char * pBoolByte = m_pBuffer + nByteOffset;
-    if(pBoolByte > m_guard)
+    if(pBoolByte >= m_guard)
         return false;
 
     unsigned char resultVal = ( pBoolByte[0] >> ( 7 - nBitOffsetInByte ) ) & binary( 00000001 );
