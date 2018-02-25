@@ -57,6 +57,7 @@ typedef struct {
     AIGTileInfo *pasTileInfo;
 
     int         bHasWarned;
+    int         nFailedOpenings;
 
     /* public information */
 
