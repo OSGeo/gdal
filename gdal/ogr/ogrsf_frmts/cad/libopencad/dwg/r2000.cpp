@@ -2652,15 +2652,36 @@ CADDictionaryObject * DWGFileR2000::getDictionary(unsigned int dObjectSize,
     dictionary->dHardOwnerFlag = buffer.ReadCHAR();
 
     for( long i = 0; i < dictionary->nNumItems; ++i )
+    {
         dictionary->sItemNames.push_back( buffer.ReadTV() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
 
     dictionary->hParentHandle = buffer.ReadHANDLE();
 
     for( long i = 0; i < dictionary->nNumReactors; ++i )
+    {
         dictionary->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
     dictionary->hXDictionary = buffer.ReadHANDLE();
     for( long i = 0; i < dictionary->nNumItems; ++i )
+    {
         dictionary->hItemHandles.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     dictionary->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DICT" ) );
