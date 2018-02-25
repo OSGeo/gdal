@@ -151,7 +151,7 @@ void RegisterOGRCAD()
 
 CPLString CADRecode( const CPLString& sString, int CADEncoding )
 {
-    const char* pszSource[] = {
+    const char* const apszSource[] = {
         /* 0 UNDEFINED */ "",
         /* 1 ASCII */ "US-ASCII",
         /* 2 8859_1 */ "ISO-8859-1",
@@ -200,10 +200,10 @@ CPLString CADRecode( const CPLString& sString, int CADEncoding )
     };
 
     if( CADEncoding > 0 &&
-        CADEncoding < static_cast<int>(sizeof(pszSource) / sizeof(pszSource[0])) &&
+        CADEncoding < static_cast<int>(CPL_ARRAYSIZE(apszSource)) &&
         CADEncoding != 4 )
     {
-        char* pszRecoded = CPLRecode( sString, pszSource[CADEncoding], CPL_ENC_UTF8 );
+        char* pszRecoded = CPLRecode( sString, apszSource[CADEncoding], CPL_ENC_UTF8 );
         CPLString soRecoded(pszRecoded);
         CPLFree(pszRecoded);
         return soRecoded;
