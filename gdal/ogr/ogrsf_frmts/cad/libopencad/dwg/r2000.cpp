@@ -1620,7 +1620,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 if(nChunkSize > 0)
                 {
                     for( size_t i = 0; i < nChunkSize &&
-                         citer->acData.size() - 2; ++i )
+                         i < citer->acData.size() - 2; ++i )
                     {
                         sEED += citer->acData[i + 2];
                     }
@@ -1635,7 +1635,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 // FIXME: Get CADHandle and return getAsLong() result.
                 sEED += "Entity handle ref (handle):";
-                for( size_t i = 0; i < 8 && citer->acData.size() - 1; ++i )
+                for( size_t i = 0; i < 8 && i < citer->acData.size() - 1; ++i )
                 {
                     sEED += citer->acData[i + 1];
                 }
