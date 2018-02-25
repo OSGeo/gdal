@@ -808,12 +808,20 @@ int DWGFileR2000::CreateFileMap()
             }
             else
             {
-                if(tmpOffset.first < 0 ||
-                   std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first)
+                if( (tmpOffset.first >= 0 &&
+                     std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first) ||
+                    (tmpOffset.first < 0 && 
+                     std::numeric_limits<long>::min() - tmpOffset.first <= previousObjHandleOffset.first) )
+                {
                     previousObjHandleOffset.first += tmpOffset.first;
-                if(tmpOffset.second < 0 ||
-                   std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second)
+                }
+                if( (tmpOffset.second >= 0 &&
+                     std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second) ||
+                    (tmpOffset.second < 0 &&
+                     std::numeric_limits<long>::min() - tmpOffset.second <= previousObjHandleOffset.second) )
+                {
                     previousObjHandleOffset.second += tmpOffset.second;
+                }
             }
 #ifdef _DEBUG
             assert( mapObjects.find( previousObjHandleOffset.first ) ==
