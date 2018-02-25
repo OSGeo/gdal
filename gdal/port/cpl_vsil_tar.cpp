@@ -52,6 +52,8 @@ CPL_CVSID("$Id$")
 /* but supports random insertions or deletions, since it doesn't record */
 /* explicit file size or rely on files starting on a particular boundary */
 #define HAVE_FUZZER_FRIENDLY_ARCHIVE 1
+constexpr int HALF_BUFFER_SIZE = 1024;
+constexpr int BUFFER_SIZE = 2 * HALF_BUFFER_SIZE;
 #endif
 
 /************************************************************************/
@@ -103,7 +105,7 @@ class VSITarReader CPL_FINAL : public VSIArchiveReader
         GIntBig nModifiedTime;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
         bool m_bIsFuzzerFriendly;
-        GByte m_abyBuffer[2048];
+        GByte m_abyBuffer[BUFFER_SIZE+1] = {};
         int m_abyBufferIdx;
         int m_abyBufferSize;
         GUIntBig m_nCurOffsetOld;
@@ -152,7 +154,6 @@ VSITarReader::VSITarReader(const char* pszTarFileName) :
     fp = VSIFOpenL(pszTarFileName, "rb");
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     m_bIsFuzzerFriendly = false;
-    m_abyBuffer[0] = '\0';
     m_abyBufferIdx = 0;
     m_abyBufferSize = 0;
     m_nCurOffsetOld = 0;
@@ -195,6 +196,38 @@ VSIArchiveEntryFileOffset* VSITarReader::GetFileOffset()
     return new VSITarEntryFileOffset(nCurOffset);
 }
 
+#ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
+
+/************************************************************************/
+/*                           CPLmemmem()                                */
+/************************************************************************/
+
+static void* CPLmemmem(const void *haystack, size_t haystacklen,
+                       const void *needle, size_t needlelen)
+{
+    const char* pachHaystack = reinterpret_cast<const char*>(haystack);
+    if( haystacklen < needlelen )
+        return nullptr;
+    while( true )
+    {
+        const char* pachSubstrStart = reinterpret_cast<const char*>(
+            memchr( pachHaystack,
+                reinterpret_cast<const char*>(needle)[0], haystacklen ));
+        if( pachSubstrStart == nullptr )
+            return nullptr;
+        if( static_cast<size_t>(pachSubstrStart - pachHaystack)
+                                                + needlelen > haystacklen )
+            return nullptr;
+        if( memcmp( pachSubstrStart, needle, needlelen ) == 0 )
+        {
+            return const_cast<void*>(static_cast<const void*>(pachSubstrStart));
+        }
+        haystacklen -= pachSubstrStart - pachHaystack + 1;
+        pachHaystack = pachSubstrStart + 1;
+    }
+}
+#endif
+
 /************************************************************************/
 /*                           GotoNextFile()                             */
 /************************************************************************/
@@ -213,19 +246,18 @@ int VSITarReader::GotoNextFile()
                 if( m_abyBufferSize == 0 )
                 {
                     m_abyBufferSize = static_cast<int>(
-                        VSIFReadL(m_abyBuffer, 1, 2048, fp));
+                        VSIFReadL(m_abyBuffer, 1, BUFFER_SIZE, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
+                    m_abyBuffer[m_abyBufferSize] = '\0';
                 }
                 else
                 {
-                    if( m_abyBufferSize < 2048 )
+                    if( m_abyBufferSize < BUFFER_SIZE )
                     {
                         if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
                         {
                             nNextFileSize = VSIFTellL(fp);
-                            nNextFileSize -= m_abyBufferSize;
-                            nNextFileSize += m_abyBufferIdx;
                             if( nNextFileSize >= nCurOffset )
                             {
                                 nNextFileSize -= nCurOffset;
@@ -235,58 +267,68 @@ int VSITarReader::GotoNextFile()
                         }
                         return FALSE;
                     }
-                    memcpy(m_abyBuffer, m_abyBuffer + 1024, 1024);
+                    memcpy(m_abyBuffer, m_abyBuffer + HALF_BUFFER_SIZE,
+                           HALF_BUFFER_SIZE);
                     m_abyBufferSize = static_cast<int>(
-                         VSIFReadL(m_abyBuffer + 1024, 1, 1024, fp));
+                         VSIFReadL(m_abyBuffer + HALF_BUFFER_SIZE,
+                                   1, HALF_BUFFER_SIZE, fp));
                     if( m_abyBufferSize == 0 )
                         return FALSE;
                     m_abyBufferIdx = 0;
-                    m_abyBufferSize += 1024;
+                    m_abyBufferSize += HALF_BUFFER_SIZE;
+                    m_abyBuffer[m_abyBufferSize] = '\0';
                 }
             }
-            if( ((m_abyBufferSize == 2048 &&
-                  m_abyBufferIdx < m_abyBufferSize -(nNewFileMarkerSize+64)) ||
-                 (m_abyBufferSize < 2048 &&
-                  m_abyBufferIdx < m_abyBufferSize -(nNewFileMarkerSize+2))) &&
-                m_abyBufferIdx >= 0 &&  // Make CSA happy, but useless.
-                m_abyBufferIdx < 2048 - nNewFileMarkerSize &&
-                memcmp(m_abyBuffer + m_abyBufferIdx,
-                       "***NEWFILE***:",
-                       strlen("***NEWFILE***:")) == 0 )
+
+            void* pNewFileMarker =
+                CPLmemmem( m_abyBuffer + m_abyBufferIdx,
+                        m_abyBufferSize - m_abyBufferIdx,
+                        "***NEWFILE***:", nNewFileMarkerSize );
+            if( pNewFileMarker == nullptr )
             {
-                if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
-                {
-                    nNextFileSize = VSIFTellL(fp);
-                    nNextFileSize -= m_abyBufferSize;
-                    nNextFileSize += m_abyBufferIdx;
-                    if( nNextFileSize >= nCurOffset )
-                    {
-                        nNextFileSize -= nCurOffset;
-                        m_nCurOffsetOld = nCurOffset;
-                        return TRUE;
-                    }
-                }
-                m_abyBufferIdx += nNewFileMarkerSize;
-                const int nFilenameStartIdx = m_abyBufferIdx;
-                for( ; m_abyBufferIdx < m_abyBufferSize &&
-                       m_abyBuffer[m_abyBufferIdx] != '\n';
-                     ++m_abyBufferIdx)
-                {
-                    // Do nothing.
-                }
-                if( m_abyBufferIdx < m_abyBufferSize )
-                {
-                    osNextFileName.assign(
-                        (const char*)(m_abyBuffer + nFilenameStartIdx),
-                        m_abyBufferIdx - nFilenameStartIdx);
-                    nCurOffset = VSIFTellL(fp);
-                    nCurOffset -= m_abyBufferSize;
-                    nCurOffset += m_abyBufferIdx + 1;
-                }
+                m_abyBufferIdx = m_abyBufferSize;
             }
             else
             {
-                m_abyBufferIdx++;
+                m_abyBufferIdx = static_cast<int>(
+                    static_cast<const GByte*>(pNewFileMarker) - m_abyBuffer);
+                // 2: space for at least one-char filename and '\n'
+                if( m_abyBufferIdx < m_abyBufferSize -(nNewFileMarkerSize+2) )
+                {
+                    if( nCurOffset > 0 && nCurOffset != m_nCurOffsetOld )
+                    {
+                        nNextFileSize = VSIFTellL(fp);
+                        nNextFileSize -= m_abyBufferSize;
+                        nNextFileSize += m_abyBufferIdx;
+                        if( nNextFileSize >= nCurOffset )
+                        {
+                            nNextFileSize -= nCurOffset;
+                            m_nCurOffsetOld = nCurOffset;
+                            return TRUE;
+                        }
+                    }
+                    m_abyBufferIdx += nNewFileMarkerSize;
+                    const int nFilenameStartIdx = m_abyBufferIdx;
+                    for( ; m_abyBufferIdx < m_abyBufferSize &&
+                        m_abyBuffer[m_abyBufferIdx] != '\n';
+                        ++m_abyBufferIdx)
+                    {
+                        // Do nothing.
+                    }
+                    if( m_abyBufferIdx < m_abyBufferSize )
+                    {
+                        osNextFileName.assign(
+                            (const char*)(m_abyBuffer + nFilenameStartIdx),
+                            m_abyBufferIdx - nFilenameStartIdx);
+                        nCurOffset = VSIFTellL(fp);
+                        nCurOffset -= m_abyBufferSize;
+                        nCurOffset += m_abyBufferIdx + 1;
+                    }
+                }
+                else
+                {
+                    m_abyBufferIdx = m_abyBufferSize;
+                }
             }
         }
     }
