@@ -112,7 +112,10 @@ unsigned char CADBuffer::Read2B()
 
     const char * p2BByte = m_pBuffer + nByteOffset;
     if(p2BByte + 2 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
 
     unsigned char a2BBytes[2];
     memcpy( a2BBytes, p2BByte, 2 );
@@ -142,7 +145,10 @@ unsigned char CADBuffer::Read3B()
 
     const char * p3BByte = m_pBuffer + nByteOffset;
     if(p3BByte + 2 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
 
     unsigned char a3BBytes[2];
     memcpy( a3BBytes, p3BByte, 2 );
@@ -178,7 +184,10 @@ unsigned char CADBuffer::Read4B()
 
     const char * p4BByte = m_pBuffer + nByteOffset;
     if(p4BByte + 2 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
 
     unsigned char a4BBytes[2];
     memcpy( a4BBytes, p4BByte, 2 );
@@ -220,7 +229,10 @@ double CADBuffer::ReadBITDOUBLE()
 
     const char * pDoubleFirstByte = m_pBuffer + nByteOffset;
     if(pDoubleFirstByte + 9 > m_guard)
+    {
+        m_bEOB = true;
         return 0.0;
+    }
 
     unsigned char aDoubleBytes[9]; // maximum bytes a single double can take.
     memcpy( aDoubleBytes, pDoubleFirstByte, 9 );
@@ -304,7 +316,10 @@ short CADBuffer::ReadRAWSHORT()
 
     const char * pShortFirstByte = m_pBuffer + nByteOffset;
     if(pShortFirstByte + 3 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
     unsigned char aShortBytes[3];
     memcpy( aShortBytes, pShortFirstByte, 3 );
 
@@ -336,7 +351,10 @@ double CADBuffer::ReadRAWDOUBLE()
 
     const char * pDoubleFirstByte = m_pBuffer + nByteOffset;
     if(pDoubleFirstByte + 9 > m_guard)
+    {
+        m_bEOB = true;
         return 0.0;
+    }
 
     unsigned char aDoubleBytes[9];
     memcpy( aDoubleBytes, pDoubleFirstByte, 9 );
@@ -381,7 +399,10 @@ int CADBuffer::ReadRAWLONG()
 
     const char * pLongFirstByte = m_pBuffer + nByteOffset;
     if(pLongFirstByte + 5 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
 
     unsigned char aLongBytes[5];
     memcpy( aLongBytes, pLongFirstByte, 5 );
@@ -418,7 +439,10 @@ bool CADBuffer::ReadBIT()
 
     const char * pBoolByte = m_pBuffer + nByteOffset;
     if(pBoolByte >= m_guard)
+    {
+        m_bEOB = true;
         return false;
+    }
 
     unsigned char resultVal = ( pBoolByte[0] >> ( 7 - nBitOffsetInByte ) ) & binary( 00000001 );
     ++m_nBitOffsetFromStart;
@@ -435,7 +459,10 @@ short CADBuffer::ReadBITSHORT()
 
     const char * pShortFirstByte = m_pBuffer + nByteOffset;
     if(pShortFirstByte + 4 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
 
     unsigned char aShortBytes[4]; // maximum bytes a single short can take.
     memcpy( aShortBytes, pShortFirstByte, 4 );
@@ -491,7 +518,10 @@ unsigned char CADBuffer::ReadCHAR()
 
     const char * pCharFirstByte = m_pBuffer + nByteOffset;
     if(pCharFirstByte + 2 > m_guard)
+    {
+        m_bEOB = true;
         return result;
+    }
 
     unsigned char aCharBytes[2]; // maximum bytes a single char can take.
     memcpy( aCharBytes, pCharFirstByte, 2 );
@@ -528,7 +558,10 @@ long CADBuffer::ReadUMCHAR()
 
     const char * pMCharFirstByte = m_pBuffer + nByteOffset;
     if(pMCharFirstByte + 8 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
     unsigned char aMCharBytes[8]; // 8 bytes is maximum.
     //memcpy( aMCharBytes, pMCharFirstByte, 8 );
 
@@ -607,7 +640,10 @@ long CADBuffer::ReadMCHAR()
 
     const char * pMCharFirstByte = m_pBuffer + nByteOffset;
     if(pMCharFirstByte + 8 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
     unsigned char aMCharBytes[8]; // 8 bytes is maximum.
     //memcpy( aMCharBytes, pMCharFirstByte, 8 );
 
@@ -829,7 +865,10 @@ int CADBuffer::ReadBITLONG()
 
     const char * pLongFirstByte = m_pBuffer + nByteOffset;
     if(pLongFirstByte + 5 > m_guard)
+    {
+        m_bEOB = true;
         return 0;
+    }
     unsigned char aLongBytes[5]; // maximum bytes a single short can take.
     memcpy( aLongBytes, pLongFirstByte, 5 );
 
