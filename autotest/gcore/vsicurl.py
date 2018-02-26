@@ -438,6 +438,27 @@ def vsicurl_test_retry():
     return 'success'
 
 ###############################################################################
+
+def vsicurl_test_fallback_from_head_to_get():
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add('HEAD', '/test_fallback_from_head_to_get', 405)
+    handler.add('GET', '/test_fallback_from_head_to_get', 200, {}, 'foo' )
+    with webserver.install_http_handler(handler):
+        statres = gdal.VSIStatL('/vsicurl/http://localhost:%d/test_fallback_from_head_to_get' % gdaltest.webserver_port)
+    if statres.size != 3:
+        return 'fail'
+
+    gdal.VSICurlClearCache()
+
+    return 'success'
+
+###############################################################################
 def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -466,11 +487,12 @@ gdaltest_list = [ vsicurl_1,
                   vsicurl_test_redirect,
                   vsicurl_test_clear_cache,
                   vsicurl_test_retry,
+                  vsicurl_test_fallback_from_head_to_get,
                   vsicurl_stop_webserver ]
 
 if __name__ == '__main__':
 
-    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS') is None:
+    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS', '').upper() != 'NO':
         print('Enabling slow tests as GDAL_RUN_SLOW_TESTS is not defined')
         gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 

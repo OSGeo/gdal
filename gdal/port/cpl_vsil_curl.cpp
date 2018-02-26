@@ -1065,7 +1065,8 @@ retry:
     // HEAD, as it is a redirect to AWS S3 signed URL, but those are only valid
     // for a given type of HTTP request, and thus GET. This is valid for any
     // signed URL for AWS S3.
-    else if( strstr(osURL, ".tiles.mapbox.com/") != nullptr ||
+    else if( bRetryWithGet ||
+             strstr(osURL, ".tiles.mapbox.com/") != nullptr ||
              VSICurlIsS3LikeSignedURL(osURL) ||
              !m_bUseHead )
     {
@@ -1262,6 +1263,16 @@ retry:
             eExists = EXIST_YES;
             fileSize = 0;
             bIsDirectory = true;
+        }
+        // 405 = Method not allowed
+        else if (response_code == 405 && !bRetryWithGet && osVerb == "HEAD" )
+        {
+            CPLDebug("VSICURL", "HEAD not allowed. Retrying with GET");
+            bRetryWithGet = true;
+            CPLFree(sWriteFuncData.pBuffer);
+            CPLFree(sWriteFuncHeaderData.pBuffer);
+            curl_easy_cleanup(hCurlHandle);
+            goto retry;
         }
         else if( response_code == 416 )
         {
