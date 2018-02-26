@@ -448,8 +448,10 @@ void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
     delete poGeom;
 
     int nLastIdx = m_poLyrTable->GetTotalRecordCount()-1;
+    const GUInt32 nErrorCount = CPLGetErrorCounter();
     while( nLastIdx > nFirstIdx && 
-           m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 )
+           m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 &&
+           nErrorCount == CPLGetErrorCounter() )
     {
         nLastIdx --;
     }

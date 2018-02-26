@@ -808,12 +808,20 @@ int DWGFileR2000::CreateFileMap()
             }
             else
             {
-                if(tmpOffset.first < 0 ||
-                   std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first)
+                if( (tmpOffset.first >= 0 &&
+                     std::numeric_limits<long>::max() - tmpOffset.first > previousObjHandleOffset.first) ||
+                    (tmpOffset.first < 0 && 
+                     std::numeric_limits<long>::min() - tmpOffset.first <= previousObjHandleOffset.first) )
+                {
                     previousObjHandleOffset.first += tmpOffset.first;
-                if(tmpOffset.second < 0 ||
-                   std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second)
+                }
+                if( (tmpOffset.second >= 0 &&
+                     std::numeric_limits<long>::max() - tmpOffset.second > previousObjHandleOffset.second) ||
+                    (tmpOffset.second < 0 &&
+                     std::numeric_limits<long>::min() - tmpOffset.second <= previousObjHandleOffset.second) )
+                {
                     previousObjHandleOffset.second += tmpOffset.second;
+                }
             }
 #ifdef _DEBUG
             assert( mapObjects.find( previousObjHandleOffset.first ) ==
@@ -1612,7 +1620,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 if(nChunkSize > 0)
                 {
                     for( size_t i = 0; i < nChunkSize &&
-                         citer->acData.size() - 2; ++i )
+                         i < citer->acData.size() - 2; ++i )
                     {
                         sEED += citer->acData[i + 2];
                     }
@@ -1627,7 +1635,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 // FIXME: Get CADHandle and return getAsLong() result.
                 sEED += "Entity handle ref (handle):";
-                for( size_t i = 0; i < 8 && citer->acData.size() - 1; ++i )
+                for( size_t i = 0; i < 8 && i < citer->acData.size() - 1; ++i )
                 {
                     sEED += citer->acData[i + 1];
                 }
@@ -2644,15 +2652,36 @@ CADDictionaryObject * DWGFileR2000::getDictionary(unsigned int dObjectSize,
     dictionary->dHardOwnerFlag = buffer.ReadCHAR();
 
     for( long i = 0; i < dictionary->nNumItems; ++i )
+    {
         dictionary->sItemNames.push_back( buffer.ReadTV() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
 
     dictionary->hParentHandle = buffer.ReadHANDLE();
 
     for( long i = 0; i < dictionary->nNumReactors; ++i )
+    {
         dictionary->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
     dictionary->hXDictionary = buffer.ReadHANDLE();
     for( long i = 0; i < dictionary->nNumItems; ++i )
+    {
         dictionary->hItemHandles.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete dictionary;
+            return nullptr;
+        }
+    }
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     dictionary->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "DICT" ) );

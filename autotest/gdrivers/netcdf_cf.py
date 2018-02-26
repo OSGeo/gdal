@@ -635,6 +635,9 @@ def netcdf_cf_3():
 #test support for various CF projections
 def netcdf_cf_4():
 
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
     result = netcdf_cfproj_testcopy(netcdf_cfproj_tuples, 'melb-small.tif',
                                     netcdf_cfproj_int_fmt_maps,
                                     'data', 'tmp', 'translate_results.txt')
