@@ -4480,7 +4480,8 @@ int VSICurlFilesystemHandler::Stat( const char *pszFilename,
                                     VSIStatBufL *pStatBuf,
                                     int nFlags )
 {
-    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
+    if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) &&
+        !STARTS_WITH_CI(pszFilename, "/vsicurl?") )
         return -1;
 
     const CPLString osFilename(pszFilename);
