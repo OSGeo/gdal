@@ -412,11 +412,11 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
                 CPLAssert(false);
                 break;
         }
+        if( nRowBlobLength < nRequiredLength )
+            return FALSE;
     }
     if( !bExactSizeKnown )
     {
-        if( nRowBlobLength < nRequiredLength )
-            return FALSE;
         if( VSIFReadL(pabyBuffer + nNullableFieldsSizeInBytes,
                 nRowBlobLength - nNullableFieldsSizeInBytes, 1, fpTable) != 1 )
             return FALSE;
