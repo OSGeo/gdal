@@ -105,7 +105,7 @@ class PLMosaicDataset : public GDALPamDataset
         int                     OpenMosaic();
         int                     ListSubdatasets();
 
-        CPLString               formatTileName(int tile_x, int tile_y);
+        static CPLString        formatTileName(int tile_x, int tile_y);
         void                    InsertNewDataset(CPLString osKey, GDALDataset* poDS);
         GDALDataset*            OpenAndInsertNewDataset(CPLString osTmpFilename,
                                                         CPLString osTilename);
