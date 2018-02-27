@@ -476,7 +476,7 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         else
         {
             // Fix for https://trac.osgeo.org/gdal/ticket/7243
-            // where echo "-2050000.000 2050000.000" | \
+            // where echo "-2050000.000 2050000.000" |
             //              gdaltransform -s_srs EPSG:3411 -t_srs EPSG:4326
             // gives "-180 63.691332898492"
             // but we would rather like 180
