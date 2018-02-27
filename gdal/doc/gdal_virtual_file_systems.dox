@@ -256,10 +256,11 @@ request retries are done in case of HTTP errors 429, 502, 503 or 504.
 More generally options of CPLHTTPFetch() available through configuration
 options are available.
 
-The file can be cached in RAM by setting the
-configuration option VSI_CACHE to TRUE. The cache size defaults to 25 MB, but
-can be modified by setting the configuration option VSI_CACHE_SIZE (in
-bytes). Content in that cache is discarded when the file handle is closed.
+The file can be cached in RAM by setting the configuration option
+VSI_CACHE to TRUE. The cache size defaults to 25 MB, but can be
+modified by setting the configuration option VSI_CACHE_SIZE (in
+bytes). Content in that cache is discarded when the file handle is
+closed.
 
 In addition, a global least-recently-used cache of 16 MB shared among all
 downloaded content is enabled by default, and content in it may be reused

@@ -2408,6 +2408,11 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
         prev = size_t( i - 1 );
         x = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getX() );
         y = buffer.ReadBITDOUBLEWD( polyline->avertVertexes[prev].getY() );
+        if( buffer.IsEOB() )
+        {
+            delete polyline;
+            return nullptr;
+        }
         vertex.setX( x );
         vertex.setY( y );
         polyline->avertVertexes.push_back( vertex );
@@ -2417,12 +2422,22 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
     {
         double dfBulgeValue = buffer.ReadBITDOUBLE();
         polyline->adfBulges.push_back( dfBulgeValue );
+        if( buffer.IsEOB() )
+        {
+            delete polyline;
+            return nullptr;
+        }
     }
 
     for( int i = 0; i < nNumWidths; ++i )
     {
         double dfStartWidth = buffer.ReadBITDOUBLE();
         double dfEndWidth   = buffer.ReadBITDOUBLE();
+        if( buffer.IsEOB() )
+        {
+            delete polyline;
+            return nullptr;
+        }
         polyline->astWidths.push_back( make_pair( dfStartWidth, dfEndWidth ) );
     }
 
@@ -2486,7 +2501,7 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->vectEndTangDir = vectEndTangDir;
 
         spline->nNumFitPts = buffer.ReadBITLONG();
-        if(spline->nNumFitPts < 0)
+        if(spline->nNumFitPts < 0 || spline->nNumFitPts > 10 * 1024 * 1024)
         {
             delete spline;
             return nullptr;
@@ -2527,7 +2542,14 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
     }
 #endif
     for( long i = 0; i < spline->nNumKnots; ++i )
+    {
         spline->adfKnots.push_back( buffer.ReadBITDOUBLE() );
+        if( buffer.IsEOB() )
+        {
+            delete spline;
+            return nullptr;
+        }
+    }
 
     for( long i = 0; i < spline->nNumCtrlPts; ++i )
     {
@@ -2535,11 +2557,21 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->avertCtrlPoints.push_back( vertex );
         if( spline->bWeight )
             spline->adfCtrlPointsWeight.push_back( buffer.ReadBITDOUBLE() );
+        if( buffer.IsEOB() )
+        {
+            delete spline;
+            return nullptr;
+        }
     }
 
     for( long i = 0; i < spline->nNumFitPts; ++i )
     {
         CADVector vertex = buffer.ReadVector();
+        if( buffer.IsEOB() )
+        {
+            delete spline;
+            return nullptr;
+        }
         spline->averFitPoints.push_back( vertex );
     }
 
@@ -2715,7 +2747,14 @@ CADLayerObject * DWGFileR2000::getLayerObject(unsigned int dObjectSize,
     layer->dCMColor          = buffer.ReadBITSHORT();
     layer->hLayerControl     = buffer.ReadHANDLE();
     for( long i = 0; i < layer->nNumReactors; ++i )
+    {
         layer->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete layer;
+            return nullptr;
+        }
+    }
     layer->hXDictionary            = buffer.ReadHANDLE();
     layer->hExternalRefBlockHandle = buffer.ReadHANDLE();
     layer->hPlotStyle              = buffer.ReadHANDLE();
@@ -2754,7 +2793,14 @@ CADLayerControlObject * DWGFileR2000::getLayerControl(unsigned int dObjectSize,
     layerControl->hNull        = buffer.ReadHANDLE();
     layerControl->hXDictionary = buffer.ReadHANDLE();
     for( long i = 0; i < layerControl->nNumEntries; ++i )
+    {
         layerControl->hLayers.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete layerControl;
+            return nullptr;
+        }
+    }
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     layerControl->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LAYERCONTROL" ) );
@@ -2785,6 +2831,11 @@ CADBlockControlObject * DWGFileR2000::getBlockControl(unsigned int dObjectSize,
     for( long i = 0; i < blockControl->nNumEntries + 2; ++i )
     {
         blockControl->hBlocks.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete blockControl;
+            return nullptr;
+        }
     }
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
@@ -2831,11 +2882,25 @@ CADBlockHeaderObject * DWGFileR2000::getBlockHeader(unsigned int dObjectSize,
         return nullptr;
     }
     for( long i = 0; i < blockHeader->nSizeOfPreviewData; ++i )
+    {
         blockHeader->abyBinaryPreviewData.push_back( buffer.ReadCHAR() );
+        if( buffer.IsEOB() )
+        {
+            delete blockHeader;
+            return nullptr;
+        }
+    }
 
     blockHeader->hBlockControl = buffer.ReadHANDLE();
     for( long i = 0; i < blockHeader->nNumReactors; ++i )
+    {
         blockHeader->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete blockHeader;
+            return nullptr;
+        }
+    }
     blockHeader->hXDictionary = buffer.ReadHANDLE();
     blockHeader->hNull        = buffer.ReadHANDLE();
     blockHeader->hBlockEntity = buffer.ReadHANDLE();
@@ -2878,7 +2943,14 @@ CADLineTypeControlObject * DWGFileR2000::getLineTypeControl(unsigned int dObject
 
     // hLTypes ends with BYLAYER and BYBLOCK
     for( long i = 0; i < ltypeControl->nNumEntries + 2; ++i )
+    {
         ltypeControl->hLTypes.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete ltypeControl;
+            return nullptr;
+        }
+    }
 
     buffer.Seek((dObjectSize - 2) * 8, CADBuffer::BEG);
     ltypeControl->setCRC( validateEntityCRC( buffer, dObjectSize - 2, "LINETYPECTRL" ) );
@@ -2924,7 +2996,14 @@ CADLineTypeObject * DWGFileR2000::getLineType1(unsigned int dObjectSize, CADBuff
     ltype->hLTControl = buffer.ReadHANDLE();
 
     for( long i = 0; i < ltype->nNumReactors; ++i )
+    {
         ltype->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete ltype;
+            return nullptr;
+        }
+    }
 
     ltype->hXDictionary = buffer.ReadHANDLE();
     ltype->hXRefBlock   = buffer.ReadHANDLE();
@@ -3496,7 +3575,14 @@ CADImageDefObject * DWGFileR2000::getImageDef(unsigned int dObjectSize,
     imagedef->hParentHandle = buffer.ReadHANDLE();
 
     for( long i = 0; i < imagedef->nNumReactors; ++i )
+    {
         imagedef->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete imagedef;
+            return nullptr;
+        }
+    }
 
     imagedef->hXDictionary = buffer.ReadHANDLE();
 
@@ -3521,7 +3607,14 @@ CADImageDefReactorObject * DWGFileR2000::getImageDefReactor(unsigned int dObject
     imagedefreactor->hParentHandle =buffer.ReadHANDLE();
 
     for( long i = 0; i < imagedefreactor->nNumReactors; ++i )
+    {
         imagedefreactor->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete imagedefreactor;
+            return nullptr;
+        }
+    }
 
     imagedefreactor->hXDictionary = buffer.ReadHANDLE();
 
@@ -3550,6 +3643,11 @@ CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, CADBuffer 
     for( long i = 0; i < xrecord->nNumDataBytes; ++i )
     {
         xrecord->abyDataBytes.push_back( buffer.ReadCHAR() );
+        if( buffer.IsEOB() )
+        {
+            delete xrecord;
+            return nullptr;
+        }
     }
 
     xrecord->dCloningFlag = buffer.ReadBITSHORT();
@@ -3582,7 +3680,14 @@ CADXRecordObject * DWGFileR2000::getXRecord(unsigned int dObjectSize, CADBuffer 
     xrecord->hParentHandle = buffer.ReadHANDLE();
 
     for( long i = 0; i < xrecord->nNumReactors; ++i )
+    {
         xrecord->hReactors.push_back( buffer.ReadHANDLE() );
+        if( buffer.IsEOB() )
+        {
+            delete xrecord;
+            return nullptr;
+        }
+    }
 
     xrecord->hXDictionary = buffer.ReadHANDLE();
 
