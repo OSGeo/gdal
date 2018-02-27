@@ -466,10 +466,71 @@ GDALSuggestedWarpOutput2( GDALDatasetH hSrcDS,
         return CE_Failure;
     }
 
+    constexpr int SIGN_FINAL_UNINIT = -2;
+    constexpr int SIGN_FINAL_INVALID = 0;
+    int iSignDiscontinuity = SIGN_FINAL_UNINIT;
     for( int i = 0; i < nSamplePoints; i++ )
     {
         if( !pabSuccess[i] )
             nFailedCount++;
+        else
+        {
+            // Fix for https://trac.osgeo.org/gdal/ticket/7243
+            // where echo "-2050000.000 2050000.000" | \
+            //              gdaltransform -s_srs EPSG:3411 -t_srs EPSG:4326
+            // gives "-180 63.691332898492"
+            // but we would rather like 180
+            if( iSignDiscontinuity == 1 || iSignDiscontinuity == -1 )
+            {
+                if( !((iSignDiscontinuity * padfX[i] > 0 &&
+                       iSignDiscontinuity * padfX[i] <= 180.0) ||
+                      (fabs(padfX[i] - iSignDiscontinuity * -180.0) < 1e-8) ) )
+                {
+                    iSignDiscontinuity = SIGN_FINAL_INVALID;
+                }
+            }
+            else if( iSignDiscontinuity == SIGN_FINAL_UNINIT )
+            {
+                for( int iSign = -1; iSign <= 1; iSign += 2 )
+                {
+                    if( (iSign * padfX[i] > 0 && iSign * padfX[i] <= 180.0) ||
+                        (fabs(padfX[i] - iSign * -180.0) < 1e-8) )
+                    {
+                        iSignDiscontinuity = iSign;
+                        break;
+                    }
+                }
+                if( iSignDiscontinuity == SIGN_FINAL_UNINIT )
+                {
+                    iSignDiscontinuity = SIGN_FINAL_INVALID;
+                }
+            }
+        }
+    }
+
+    if( iSignDiscontinuity == 1 || iSignDiscontinuity == -1 )
+    {
+        for( int i = 0; i < nSamplePoints; i++ )
+        {
+            if( pabSuccess[i] )
+            {
+                if( fabs(padfX[i] - iSignDiscontinuity * -180.0) < 1e-8 )
+                {
+                    double axTemp[2] = { iSignDiscontinuity * -180.0,
+                                         iSignDiscontinuity * 180.0 };
+                    double ayTemp[2] = { padfY[i], padfY[i] };
+                    double azTemp[2] = { padfZ[i], padfZ[i] };
+                    int abSuccess[2] = {FALSE, FALSE};
+                    if( pfnTransformer(pTransformArg, TRUE, 2,
+                                       axTemp, ayTemp, azTemp, abSuccess) &&
+                        fabs(axTemp[0] - axTemp[1]) < 1e-8 &&
+                        fabs(ayTemp[0] - ayTemp[1]) < 1e-8 )
+                    {
+                        padfX[i] = iSignDiscontinuity * 180.0;
+                    }
+                }
+            }
+        }
     }
 
 /* -------------------------------------------------------------------- */

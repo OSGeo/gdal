@@ -1696,6 +1696,24 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
     return 'success'
 
 ###############################################################################
+# Test fix for https://trac.osgeo.org/gdal/ticket/7243
+
+def test_gdalwarp_lib_touching_dateline():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100,100)
+    src_ds.SetGeoTransform([-2050000,500,0,2100000,0,-500])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3411)
+    src_ds.SetProjection(sr.ExportToWkt())
+    out_ds = gdal.Warp('', src_ds, dstSRS = 'EPSG:4326', format = 'MEM')
+    if out_ds.RasterXSize != 319:
+        gdaltest.post_reason('fail')
+        print(out_ds.RasterXSize)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1781,6 +1799,7 @@ gdaltest_list = [
     test_gdalwarp_lib_135,
     test_gdalwarp_lib_136,
     test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
+    test_gdalwarp_lib_touching_dateline,
     test_gdalwarp_lib_cleanup,
     ]
 
