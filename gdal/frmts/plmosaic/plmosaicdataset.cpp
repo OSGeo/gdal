@@ -36,6 +36,8 @@
 
 #include "ogrgeojsonreader.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 #define SPHERICAL_RADIUS        6378137.0
