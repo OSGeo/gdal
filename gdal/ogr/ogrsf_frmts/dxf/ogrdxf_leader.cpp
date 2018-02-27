@@ -873,7 +873,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()
         else
         {
             // Insert the block inline.
-            std::queue<OGRDXFFeature *> apoExtraFeatures;
+            OGRDXFFeatureQueue apoExtraFeatures;
             try
             {
                 poBlockFeature = InsertBlockInline( osBlockName,
@@ -1127,7 +1127,7 @@ void OGRDXFLayer::InsertArrowhead( OGRDXFFeature* const poFeature,
     if( osBlockHandle != "" )
         osBlockName = poDS->GetBlockNameByRecordHandle( osBlockHandle );
 
-    std::queue<OGRDXFFeature *> apoExtraFeatures;
+    OGRDXFFeatureQueue apoExtraFeatures;
 
     // If the block doesn't exist, we need to fall back to the
     // default arrowhead.

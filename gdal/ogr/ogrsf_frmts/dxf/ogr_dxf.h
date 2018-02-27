@@ -60,6 +60,33 @@ public:
 };
 
 /************************************************************************/
+/*                         OGRDXFFeatureQueue                           */
+/************************************************************************/
+
+class OGRDXFFeatureQueue
+{
+        std::queue<OGRDXFFeature *> apoFeatures;
+        size_t                      nFeaturesSize = 0;
+
+        static size_t GetFeatureSize(OGRFeature* poFeature);
+
+    public:
+        OGRDXFFeatureQueue() {}
+
+        void                push( OGRDXFFeature* poFeature );
+
+        OGRDXFFeature*      front() const { return apoFeatures.front(); }
+
+        void                pop();
+
+        bool empty() const { return apoFeatures.empty(); }
+
+        size_t size() const { return apoFeatures.size(); }
+
+        size_t GetFeaturesSize() const { return nFeaturesSize; }
+};
+
+/************************************************************************/
 /*                          OGRDXFBlocksLayer                           */
 /************************************************************************/
 
@@ -74,7 +101,7 @@ class OGRDXFBlocksLayer : public OGRLayer
     std::map<CPLString,DXFBlockDefinition>::iterator oIt;
     CPLString           osBlockName;
 
-    std::queue<OGRDXFFeature *> apoPendingFeatures;
+    OGRDXFFeatureQueue apoPendingFeatures;
 
   public:
     explicit OGRDXFBlocksLayer( OGRDXFDataSource *poDS );
@@ -266,7 +293,7 @@ class OGRDXFLayer : public OGRLayer
 
     std::set<CPLString> oIgnoredEntities;
 
-    std::queue<OGRDXFFeature*> apoPendingFeatures;
+    OGRDXFFeatureQueue  apoPendingFeatures;
     void                ClearPendingFeatures();
 
     void                TranslateGenericProperty( OGRDXFFeature *poFeature,
@@ -315,7 +342,7 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     InsertBlockInline( const CPLString& osBlockName,
                                            OGRDXFInsertTransformer oTransformer,
                                            OGRDXFFeature* const poFeature,
-                                           std::queue<OGRDXFFeature *>& apoExtraFeatures,
+                                           OGRDXFFeatureQueue& apoExtraFeatures,
                                            const bool bInlineNestedBlocks,
                                            const bool bMergeGeometry );
     OGRDXFFeature *     InsertBlockReference( const CPLString& osBlockName,
