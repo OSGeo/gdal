@@ -959,6 +959,12 @@ int PLMosaicDataset::OpenMosaic()
             for( int nZoomLevel = nZoomLevelMax; nZoomLevel >= 0;
                      nZoomLevel -- )
             {
+                const int nZShift = nZoomLevelMax - nZoomLevel;
+                int nOvrXSize = nRasterXSize >> nZShift;
+                int nOvrYSize = nRasterYSize >> nZShift;
+                if( nOvrXSize == 0 || nOvrYSize == 0 )
+                    break;
+
                 CPLString osTMS = CPLSPrintf(
     "<GDAL_WMS>\n"
     "    <Service name=\"TMS\">\n"
@@ -996,9 +1002,6 @@ int PLMosaicDataset::OpenMosaic()
                                 nullptr, nullptr, nullptr ) );
                 if( poTMSDS )
                 {
-                    const int nZShift = nZoomLevelMax - nZoomLevel;
-                    int nOvrXSize = nRasterXSize >> nZShift;
-                    int nOvrYSize = nRasterYSize >> nZShift;
                     double dfThisResolution = dfResolution * (1 << nZShift);
 
                     VRTDatasetH hVRTDS = VRTCreate(nOvrXSize, nOvrYSize);
@@ -1032,6 +1035,9 @@ int PLMosaicDataset::OpenMosaic()
 
                     apoTMSDS.push_back( reinterpret_cast<GDALDataset*>(hVRTDS) );
                 }
+
+                if( nOvrXSize < 256 && nOvrYSize < 256 )
+                    break;
             }
         }
     }
