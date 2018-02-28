@@ -3485,19 +3485,19 @@ def gpkg_40():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    # Should default to 1.0
+    # Should default to 1.2
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG')
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
     f = sql_lyr.GetNextFeature()
-    if f['application_id'] != 1196437808:
+    if f['application_id'] != 1196444487:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
-    if f['user_version'] != 0:
+    if f['user_version'] != 10200:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
