@@ -772,6 +772,16 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     psOptions->papszTO = CSLSetNameValue(psOptions->papszTO,
                                          "STRIP_VERT_CS", "YES");
 
+    if( hDstDS )
+    {
+        if( psOptions->bCreateOutput == true )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "All options related to creation ignored in update mode");
+            psOptions->bCreateOutput = false;
+        }
+    }
+
     if( (psOptions->pszFormat == nullptr && EQUAL(CPLGetExtension(pszDest), "VRT")) ||
         (psOptions->pszFormat != nullptr && EQUAL(psOptions->pszFormat,"VRT")) )
     {
@@ -1635,9 +1645,54 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             }
         }
 
+        // If creating a new file that has default nodata value,
+        // try to override the default output nodata values with the source ones.
+        if( psOptions->pszDstNodata == nullptr &&
+            psWO->padfSrcNoDataReal != nullptr &&
+            psWO->padfDstNoDataReal != nullptr &&
+            psOptions->bCreateOutput && iSrc == 0 && !bEnableDstAlpha )
+        {
+            for( int i = 0; i < psWO->nBandCount; i++ )
+            {
+                GDALRasterBandH hBand = GDALGetRasterBand( hDstDS, i+1 );
+                int bHaveNodata = FALSE;
+                CPLPushErrorHandler(CPLQuietErrorHandler);
+                bool bRedefinedOK =
+                  ( GDALSetRasterNoDataValue(hBand,
+                            psWO->padfSrcNoDataReal[i]) == CE_None &&
+                    GDALGetRasterNoDataValue(hBand,
+                            &bHaveNodata) == psWO->padfSrcNoDataReal[i] &&
+                    bHaveNodata );
+                CPLPopErrorHandler();
+                if( bRedefinedOK )
+                {
+                    if( i == 0 && !psOptions->bQuiet )
+                        printf( "Copying nodata values from source %s "
+                                "to destination %s.\n",
+                                GDALGetDescription(hSrcDS), pszDest );
+                    psWO->padfDstNoDataReal[i] = 
+                        psWO->padfSrcNoDataReal[i];
+
+                    if( i == 0 && psOptions->bCreateOutput &&
+                        !bInitDestSetByUser && iSrc == 0 )
+                    {
+                        /* As we didn't know at the beginning if there was source nodata */
+                        /* we have initialized INIT_DEST=0. Override this with NO_DATA now */
+                        psWO->papszWarpOptions = CSLSetNameValue(
+                            psWO->papszWarpOptions, "INIT_DEST", "NO_DATA" );
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
         /* else try to fill dstNoData from source bands, unless -dstalpha is specified */
-        if ( psOptions->pszDstNodata == nullptr && psWO->padfSrcNoDataReal != nullptr &&
-             psWO->padfDstNoDataReal == nullptr && !bEnableDstAlpha )
+        else if ( psOptions->pszDstNodata == nullptr &&
+                  psWO->padfSrcNoDataReal != nullptr &&
+                  psWO->padfDstNoDataReal == nullptr && !bEnableDstAlpha )
         {
             psWO->padfDstNoDataReal = static_cast<double *>(
                 CPLMalloc(psWO->nBandCount*sizeof(double)));
