@@ -490,8 +490,8 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference& oSRS)
 /************************************************************************/
 
 GDALGeoPackageDataset::GDALGeoPackageDataset() :
-    m_nApplicationId(GP10_APPLICATION_ID),
-    m_nUserVersion(0),
+    m_nApplicationId(GPKG_APPLICATION_ID),
+    m_nUserVersion(GPKG_1_2_VERSION),
     m_papoLayers(nullptr),
     m_nLayers(0),
     m_bUtf8(false),
@@ -3373,12 +3373,6 @@ int GDALGeoPackageDataset::Create( const char * pszFilename,
                         m_nUserVersion % 100);
             }
         }
-    }
-
-    if( nBandsIn > 0 && eDT != GDT_Byte )
-    {
-        m_nApplicationId = GPKG_APPLICATION_ID;
-        m_nUserVersion = GPKG_1_2_VERSION;
     }
 
     const char* pszVersion = CSLFetchNameValue(papszOptions, "VERSION");

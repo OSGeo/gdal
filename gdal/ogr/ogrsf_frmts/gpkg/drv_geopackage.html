@@ -26,8 +26,10 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 <h2>Specification version</h2>
 
 <p>Starting with GDAL 2.2, the driver is able to create GeoPackage databases
-following the 1.0/1.0.1, 1.1 or 1.2 versions. By default, it will automatically
+following the 1.0/1.0.1, 1.1 or 1.2 versions.
+For GDAL 2.2, it will automatically
 adjust to the minimum version required for the features of GeoPackage used.
+For GDAL 2.3 or later, it will default to 1.2.
 Explicit version choice can be done by specifying the VERSION dataset creation
 option.</p>
 
@@ -140,8 +142,7 @@ are available:</p>
 <ul>
 <li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
 (for application_id and user_version fields). In AUTO mode, this will be equivalent
-to 1.0, unless a tile gridded elevation dataset, or a non-spatial
-table (using the 'attributes' data type) is created, in which case 1.2 will be used.</li>
+to 1.2 starting with GDAL 2.3.</li>
 <li><b>ADD_GPKG_OGR_CONTENTS</b>=YES/NO: (GDAL &gt;= 2.2) Defines whether to add
 a gpkg_ogr_contents table to keep feature count, and associated triggers.
 Defaults to YES.</li>
