@@ -794,7 +794,8 @@ class netCDFDataset : public GDALPamDataset
     bool         bDefineMode;
     bool         bSetProjection;
     bool         bSetGeoTransform;
-    bool         bAddedProjectionVars;
+    bool         bAddedProjectionVarsDefs;
+    bool         bAddedProjectionVarsData;
     bool         bAddedGridMappingRef;
 
     /* create vars */
@@ -821,8 +822,9 @@ class netCDFDataset : public GDALPamDataset
 
     void ProcessCreationOptions( );
     int DefVarDeflate( int nVarId, bool bChunkingArg=true );
-    CPLErr AddProjectionVars( GDALProgressFunc pfnProgress=GDALDummyProgress,
-                              void * pProgressData=nullptr );
+    CPLErr AddProjectionVars( bool bDefsOnly,
+                              GDALProgressFunc pfnProgress,
+                              void * pProgressData );
     void AddGridMappingRef();
 
     bool GetDefineMode() { return bDefineMode; }

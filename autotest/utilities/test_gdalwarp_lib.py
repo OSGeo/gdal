@@ -890,7 +890,7 @@ def test_gdalwarp_lib_124():
     out_ds.GetRasterBand(1).Fill(21)
     expected_cs = out_ds.GetRasterBand(1).Checksum()
 
-    gdal.Warp(out_ds, src_ds, format = 'MEM')
+    gdal.Warp(out_ds, src_ds)
 
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != expected_cs:
@@ -1714,6 +1714,40 @@ def test_gdalwarp_lib_touching_dateline():
     return 'success'
 
 ###############################################################################
+# Test fix for https://trac.osgeo.org/gdal/ticket/7245
+
+def test_gdalwarp_lib_override_default_output_nodata():
+
+    drv = gdal.GetDriverByName('netCDF')
+    if drv is None:
+        return 'skip'
+
+    creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
+    formats = [ 'NC' ]
+    if creationoptionlist.find('<Value>NC2</Value>') >= 0:
+        formats += [ 'NC2' ]
+    if creationoptionlist.find('<Value>NC4</Value>') >= 0:
+        formats += [ 'NC4', 'NC4C' ]
+
+    for format in formats:
+        gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata = 255,
+                format = 'netCDF', creationOptions = ['FORMAT=' + format])
+        ds = gdal.Open('tmp/out.nc')
+        if ds.GetRasterBand(1).GetNoDataValue() != 255:
+            gdaltest.post_reason('fail')
+            print(format)
+            print(ds.GetRasterBand(1).GetNoDataValue())
+            return 'fail'
+        if ds.GetProjection() == '':
+            gdaltest.post_reason('fail')
+            print(format)
+            return 'fail'
+        ds = None
+        os.unlink('tmp/out.nc')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1800,6 +1834,7 @@ gdaltest_list = [
     test_gdalwarp_lib_136,
     test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
     test_gdalwarp_lib_touching_dateline,
+    test_gdalwarp_lib_override_default_output_nodata,
     test_gdalwarp_lib_cleanup,
     ]
 
