@@ -829,7 +829,7 @@ int PLMosaicDataset::OpenMosaic()
 
     json_object* poQuadDownload = CPL_json_object_object_get(
                                         poMosaic, "quad_download");
-    bQuadDownload = json_object_get_boolean(poQuadDownload);
+    bQuadDownload = CPL_TO_BOOL(json_object_get_boolean(poQuadDownload));
 
     GDALDataType eDT = GDT_Unknown;
     const char* pszDataType = json_object_get_string(poDataType);
@@ -1140,7 +1140,8 @@ std::vector<CPLString> PLMosaicDataset::ListSubdatasets()
                 {
                     json_object* poQuadDownload = CPL_json_object_object_get(
                                                     poMosaic, "quad_download");
-                    bAccessible = json_object_get_boolean(poQuadDownload);
+                    bAccessible = CPL_TO_BOOL(
+                        json_object_get_boolean(poQuadDownload));
                 }
             }
 
