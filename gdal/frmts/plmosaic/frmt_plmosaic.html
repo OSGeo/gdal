@@ -31,7 +31,7 @@ Currently the following one is supported :<p>
 <ul>
 <li> <b>api_key</b>=value: To specify the Planet API key. It is mandatory, unless
 it is supplied through the open option API_KEY, or the configuration option PL_API_KEY.</li>
-<li> <b>mosaic</b>=mosaic_id: To specify the mosaic id.</li>
+<li> <b>mosaic</b>=mosaic_name: To specify the mosaic name.</li>
 <li><b>cache_path</b>=path: To specify the path to a directory where cached
 quads (and tiles) are stored. A plmosaic_cache/{mosaic_name} subdirectory will be created
 under that path. The empty string can be used to disable any disk caching.</li>
@@ -117,8 +117,8 @@ Coordinate System is `'
 Image Structure Metadata:
   INTERLEAVE=PIXEL
 Subdatasets:
-  SUBDATASET_1_NAME=PLMOSAIC:mosaic=color_balance_mosaic
-  SUBDATASET_1_DESC=Color-Balanced Mosaic
+  SUBDATASET_1_NAME=PLMOSAIC:mosaic=global_quarterly_2017q1_mosaic
+  SUBDATASET_1_DESC=Mosaic global_quarterly_2017q1_mosaic
   ...
 Corner Coordinates:
 Upper Left  (    0.0,    0.0)
@@ -131,14 +131,14 @@ Center      (  256.0,  256.0)
 
 <li> Open a particular mosaic :
 <pre>
-gdalinfo "PLMosaic:mosaic=color_balance_mosaic" -oo API_KEY=some_value
+gdalinfo "PLMosaic:mosaic=global_quarterly_2017q1_mosaic" -oo API_KEY=some_value
 </pre>
 
 returns:
 <pre>
 Driver: PLMOSAIC/Planet Labs Mosaics API
 Files: none associated
-Size is 8388608, 8388608
+Size is 8388608, 4427776
 Coordinate System is:
 PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
@@ -160,22 +160,22 @@ PROJCS["WGS 84 / Pseudo-Mercator",
         AUTHORITY["EPSG","9001"]],
     AXIS["X",EAST],
     AXIS["Y",NORTH],
-    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"],
+    EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs"],
     AUTHORITY["EPSG","3857"]]
-Origin = (-20037508.339999999850988,20037508.339999999850988)
-Pixel Size = (4.777314267160000,-4.777314267160000)
+Origin = (-20037508.342789243906736,13384429.400847502052784)
+Pixel Size = (4.777314267823516,-4.777314267823516)
 Metadata:
-  FIRST_ACQUIRED=2014-03-20T15:57:11+00:00
-  LAST_ACQUIRED=2015-04-06T11:38:16.570663+00:00
-  TITLE=Color-Balanced Mosaic
+  FIRST_ACQUIRED=2017-01-01T00:00:00.000Z
+  LAST_ACQUIRED=2017-04-01T00:00:00.000Z
+  NAME=global_quarterly_2017q1_mosaic
 Image Structure Metadata:
   INTERLEAVE=PIXEL
 Corner Coordinates:
-Upper Left  (-20037508.340,20037508.340) (180d 0' 0.00"W, 85d 3' 4.06"N)
-Lower Left  (-20037508.340,-20037508.340) (180d 0' 0.00"W, 85d 3' 4.06"S)
-Upper Right (20037508.340,20037508.340) (180d 0' 0.00"E, 85d 3' 4.06"N)
-Lower Right (20037508.340,-20037508.340) (180d 0' 0.00"E, 85d 3' 4.06"S)
-Center      (   0.0000063,  -0.0000063) (  0d 0' 0.00"E,  0d 0' 0.00"S)
+Upper Left  (-20037508.343,13384429.401) (180d 0' 0.00"W, 76d 0'57.94"N)
+Lower Left  (-20037508.343,-7768448.059) (180d 0' 0.00"W, 57d 2'26.63"S)
+Upper Right (20037508.343,13384429.401) (180d 0' 0.00"E, 76d 0'57.94"N)
+Lower Right (20037508.343,-7768448.059) (180d 0' 0.00"E, 57d 2'26.63"S)
+Center      (       0.000, 2807990.671) (  0d 0' 0.01"E, 24d26'49.74"N)
 Band 1 Block=256x256 Type=Byte, ColorInterp=Red
   Overviews: 4194304x4194304, ..., 256x256
   Mask Flags: PER_DATASET ALPHA

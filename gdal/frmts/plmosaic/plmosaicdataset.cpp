@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "ogrsf_frmts.h"
+#include "../vrt/gdal_vrt.h"
 
 #include "ogrgeojsonreader.h"
 
@@ -79,11 +80,12 @@ class PLMosaicDataset : public GDALPamDataset
         CPLString               osQuadsURL;
         int                     bHasGeoTransform;
         double                  adfGeoTransform[6];
-        int                     nZoomLevel;
+        int                     nZoomLevelMax;
         int                     bUseTMSForMain;
-        GDALDataset            *poTMSDS;
+        std::vector<GDALDataset*> apoTMSDS;
         int                     nMetaTileXShift = 0;
         int                     nMetaTileYShift = 0;
+        bool                    bQuadDownload = false;
 
         int                     nCacheMaxSize;
         std::map<CPLString, PLLinkedDataset*> oMapLinkedDatasets;
@@ -105,7 +107,7 @@ class PLMosaicDataset : public GDALPamDataset
         json_object            *RunRequest(const char* pszURL,
                                            int bQuiet404Error = FALSE);
         int                     OpenMosaic();
-        int                     ListSubdatasets();
+        std::vector<CPLString>  ListSubdatasets();
 
         static CPLString        formatTileName(int tile_x, int tile_y);
         void                    InsertNewDataset(CPLString osKey, GDALDataset* poDS);
@@ -204,8 +206,8 @@ CPLErr PLMosaicRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
              nBand, nBlockYOff, nBlockYOff);
 #endif
 
-    if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
-        return poMOSDS->poTMSDS->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff,
+    if( poMOSDS->bUseTMSForMain && !poMOSDS->apoTMSDS.empty() )
+        return poMOSDS->apoTMSDS[0]->GetRasterBand(nBand)->ReadBlock(nBlockXOff, nBlockYOff,
                                                                 pImage);
 
     const int bottom_yblock = (nRasterYSize - nBlockYOff * nBlockYSize) / nBlockYSize - 1;
@@ -247,8 +249,8 @@ CPLErr PLMosaicRasterBand::IRasterIO( GDALRWFlag eRWFlag,
                                          GDALRasterIOExtraArg* psExtraArg )
 {
     PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
-    if( poMOSDS->bUseTMSForMain && poMOSDS->poTMSDS )
-        return poMOSDS->poTMSDS->GetRasterBand(nBand)->RasterIO(
+    if( poMOSDS->bUseTMSForMain && !poMOSDS->apoTMSDS.empty() )
+        return poMOSDS->apoTMSDS[0]->GetRasterBand(nBand)->RasterIO(
                                          eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                          pData, nBufXSize, nBufYSize, eBufType,
                                          nPixelSpace, nLineSpace, psExtraArg );
@@ -265,11 +267,13 @@ CPLErr PLMosaicRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 const char* PLMosaicRasterBand::GetMetadataItem( const char* pszName,
                                                  const char* pszDomain )
 {
+    PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
     int nPixel, nLine;
-    if( pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "LocationInfo") &&
+    if( poMOSDS->bQuadDownload &&
+        pszName != nullptr && pszDomain != nullptr &&
+        EQUAL(pszDomain, "LocationInfo") &&
         sscanf(pszName, "Pixel_%d_%d", &nPixel, &nLine) == 2 )
     {
-        PLMosaicDataset* poMOSDS = reinterpret_cast<PLMosaicDataset *>( poDS );
         return poMOSDS->GetLocationInfo(nPixel, nLine);
     }
 
@@ -283,10 +287,7 @@ const char* PLMosaicRasterBand::GetMetadataItem( const char* pszName,
 int PLMosaicRasterBand::GetOverviewCount()
 {
     PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>( poDS );
-    if( !poGDS->poTMSDS )
-        return 0;
-
-    return poGDS->poTMSDS->GetRasterBand(1)->GetOverviewCount();
+    return std::max(0, static_cast<int>(poGDS->apoTMSDS.size()) - 1);
 }
 
 /************************************************************************/
@@ -296,12 +297,13 @@ int PLMosaicRasterBand::GetOverviewCount()
 GDALRasterBand* PLMosaicRasterBand::GetOverview(int iOvrLevel)
 {
     PLMosaicDataset *poGDS = reinterpret_cast<PLMosaicDataset *>( poDS );
-    if (iOvrLevel < 0 || iOvrLevel >= GetOverviewCount())
+    if (iOvrLevel < 0 ||
+        iOvrLevel >= static_cast<int>(poGDS->apoTMSDS.size()) - 1)
         return nullptr;
 
     poGDS->CreateMosaicCachePathIfNecessary();
 
-    return poGDS->poTMSDS->GetRasterBand(nBand)->GetOverview(iOvrLevel);
+    return poGDS->apoTMSDS[iOvrLevel+1]->GetRasterBand(nBand);
 }
 
 /************************************************************************/
@@ -342,9 +344,8 @@ PLMosaicDataset::PLMosaicDataset() :
     pszWKT(nullptr),
     nQuadSize(0),
     bHasGeoTransform(FALSE),
-    nZoomLevel(0),
+    nZoomLevelMax(0),
     bUseTMSForMain(FALSE),
-    poTMSDS(nullptr),
     nCacheMaxSize(10),
     psHead(nullptr),
     psTail(nullptr),
@@ -371,7 +372,8 @@ PLMosaicDataset::~PLMosaicDataset()
 {
     FlushCache();
     CPLFree(pszWKT);
-    delete poTMSDS;
+    for( auto& poDS: apoTMSDS )
+        delete poDS;
     if( poLastItemsInformation )
         json_object_put(poLastItemsInformation);
     if (bMustCleanPersistent)
@@ -638,26 +640,38 @@ GDALDataset *PLMosaicDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        if( !poDS->ListSubdatasets() )
+        auto aosNameList = poDS->ListSubdatasets();
+        if( aosNameList.empty() )
         {
             delete poDS;
             poDS = nullptr;
         }
+        else if( aosNameList.size() == 1 )
+        {
+            const CPLString osOldFilename(poOpenInfo->pszFilename);
+            const CPLString osMosaicConnectionString
+                = CPLSPrintf("PLMOSAIC:mosaic=%s", aosNameList[0].c_str());
+            delete poDS;
+            GDALOpenInfo oOpenInfo(osMosaicConnectionString.c_str(), GA_ReadOnly);
+            oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
+            poDS = reinterpret_cast<PLMosaicDataset *>( Open(&oOpenInfo) );
+            if( poDS )
+                poDS->SetDescription(osOldFilename);
+        }
         else
         {
-            char** papszMD = poDS->GetMetadata("SUBDATASETS");
-            if( CSLCount(papszMD) == 2 )
+            CPLStringList aosSubdatasets;
+            for( const auto& osName: aosNameList )
             {
-                const CPLString osOldFilename(poOpenInfo->pszFilename);
-                const CPLString osMosaicConnectionString
-                    = CSLFetchNameValue(papszMD, "SUBDATASET_1_NAME");
-                delete poDS;
-                GDALOpenInfo oOpenInfo(osMosaicConnectionString.c_str(), GA_ReadOnly);
-                oOpenInfo.papszOpenOptions = poOpenInfo->papszOpenOptions;
-                poDS = reinterpret_cast<PLMosaicDataset *>( Open(&oOpenInfo) );
-                if( poDS )
-                    poDS->SetDescription(osOldFilename);
+                const int nDatasetIdx = aosSubdatasets.Count() / 2 + 1;
+                aosSubdatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_NAME", nDatasetIdx),
+                    CPLSPrintf("PLMOSAIC:mosaic=%s", osName.c_str()));
+                aosSubdatasets.AddNameValue(
+                    CPLSPrintf("SUBDATASET_%d_DESC", nDatasetIdx),
+                    CPLSPrintf("Mosaic %s", osName.c_str()));
             }
+            poDS->SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
         }
     }
 
@@ -745,28 +759,49 @@ static void LongLatToSphericalMercator(double* x, double* y)
 
 int PLMosaicDataset::OpenMosaic()
 {
-    CPLString osURL(osBaseURL);
+    CPLString osURL;
+
+    osURL = osBaseURL;
     if( osURL.back() != '/' )
         osURL += '/';
-    osURL += osMosaic;
+    char* pszEscaped = CPLEscapeString(osMosaic, -1, CPLES_URL);
+    osURL += "?name__is=" + CPLString(pszEscaped);
+    CPLFree(pszEscaped);
+
     json_object* poObj = RunRequest(osURL);
     if( poObj == nullptr )
     {
         return FALSE;
     }
 
-    json_object* poCoordinateSystem = CPL_json_object_object_get(poObj, "coordinate_system");
-    json_object* poDataType = CPL_json_object_object_get(poObj, "datatype");
-    json_object* poQuadSize = json_ex_get_object_by_path(poObj, "grid.quad_size");
-    json_object* poResolution = json_ex_get_object_by_path(poObj, "grid.resolution");
-    json_object* poLinks = CPL_json_object_object_get(poObj, "_links");
+    json_object* poMosaics = CPL_json_object_object_get(poObj, "mosaics");
+    json_object* poMosaic = nullptr;
+    if( poMosaics == nullptr ||
+        json_object_get_type(poMosaics) != json_type_array ||
+        json_object_array_length(poMosaics) != 1 ||
+        (poMosaic = json_object_array_get_idx(poMosaics, 0)) == nullptr ||
+        json_object_get_type(poMosaic) != json_type_object )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "No mosaic %s", osMosaic.c_str());
+        json_object_put(poObj);
+        return FALSE;
+    }
+
+    json_object* poId = CPL_json_object_object_get(poMosaic, "id");
+    json_object* poCoordinateSystem = CPL_json_object_object_get(poMosaic, "coordinate_system");
+    json_object* poDataType = CPL_json_object_object_get(poMosaic, "datatype");
+    json_object* poQuadSize = json_ex_get_object_by_path(poMosaic, "grid.quad_size");
+    json_object* poResolution = json_ex_get_object_by_path(poMosaic, "grid.resolution");
+    json_object* poLinks = CPL_json_object_object_get(poMosaic, "_links");
     json_object* poLinksTiles = nullptr;
-    json_object* poBBox = CPL_json_object_object_get(poObj, "bbox");
+    json_object* poBBox = CPL_json_object_object_get(poMosaic, "bbox");
     if( poLinks != nullptr && json_object_get_type(poLinks) == json_type_object )
     {
         poLinksTiles = CPL_json_object_object_get(poLinks, "tiles");
     }
-    if( poCoordinateSystem == nullptr || json_object_get_type(poCoordinateSystem) != json_type_string ||
+    if( poId == nullptr || json_object_get_type(poId) != json_type_string ||
+        poCoordinateSystem == nullptr || json_object_get_type(poCoordinateSystem) != json_type_string ||
         poDataType == nullptr || json_object_get_type(poDataType) != json_type_string ||
         poQuadSize == nullptr || json_object_get_type(poQuadSize) != json_type_int ||
         poResolution == nullptr || (json_object_get_type(poResolution) != json_type_int &&
@@ -776,6 +811,8 @@ int PLMosaicDataset::OpenMosaic()
         json_object_put(poObj);
         return FALSE;
     }
+
+    CPLString osId(json_object_get_string(poId));
 
     const char* pszSRS = json_object_get_string(poCoordinateSystem);
     if( !EQUAL(pszSRS, "EPSG:3857") )
@@ -789,6 +826,10 @@ int PLMosaicDataset::OpenMosaic()
     OGRSpatialReference oSRS;
     oSRS.SetFromUserInput(pszSRS);
     oSRS.exportToWkt(&pszWKT);
+
+    json_object* poQuadDownload = CPL_json_object_object_get(
+                                        poMosaic, "quad_download");
+    bQuadDownload = json_object_get_boolean(poQuadDownload);
 
     GDALDataType eDT = GDT_Unknown;
     const char* pszDataType = json_object_get_string(poDataType);
@@ -805,6 +846,9 @@ int PLMosaicDataset::OpenMosaic()
         json_object_put(poObj);
         return FALSE;
     }
+
+    if( eDT == GDT_Byte && !bQuadDownload )
+        bUseTMSForMain = true;
 
     if( bUseTMSForMain && eDT != GDT_Byte )
     {
@@ -826,8 +870,8 @@ int PLMosaicDataset::OpenMosaic()
     if( EQUAL(pszSRS, "EPSG:3857") )
     {
         double dfZoomLevel = log(GM_ZOOM_0 / dfResolution)/log(2.0);
-        nZoomLevel = static_cast<int>( dfZoomLevel + 0.1 );
-        if( fabs(dfZoomLevel - nZoomLevel) > 1e-5 )
+        nZoomLevelMax = static_cast<int>( dfZoomLevel + 0.1 );
+        if( fabs(dfZoomLevel - nZoomLevelMax) > 1e-5 )
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unsupported resolution = %.12g",
                     dfResolution);
@@ -878,7 +922,10 @@ int PLMosaicDataset::OpenMosaic()
         }
     }
 
-    osQuadsURL = osURL + "/quads/";
+    osQuadsURL = osBaseURL;
+    if( osQuadsURL.back() != '/' )
+        osQuadsURL += '/';
+    osQuadsURL += osId + "/quads/";
 
     // Use WMS/TMS driver for overviews (only for byte)
     if( eDT == GDT_Byte && EQUAL(pszSRS, "EPSG:3857") &&
@@ -890,7 +937,7 @@ int PLMosaicDataset::OpenMosaic()
             strstr(pszLinksTiles, "{y}") == nullptr ||
             strstr(pszLinksTiles, "{z}") == nullptr )
         {
-            CPLError(CE_Warning, CPLE_NotSupported, "Invalid links.tiles = %s",
+            CPLError(CE_Warning, CPLE_NotSupported, "Invalid _links.tiles = %s",
                      pszLinksTiles);
         }
         else
@@ -909,50 +956,87 @@ int PLMosaicDataset::OpenMosaic()
             ReplaceSubString(osTMSURL, "{z}", "${z}");
             ReplaceSubString(osTMSURL, "{0-3}", "0");
 
-            CPLString osTMS = CPLSPrintf(
-"<GDAL_WMS>\n"
-"    <Service name=\"TMS\">\n"
-"        <ServerUrl>%s</ServerUrl>\n"
-"    </Service>\n"
-"    <DataWindow>\n"
-"        <UpperLeftX>%.16g</UpperLeftX>\n"
-"        <UpperLeftY>%.16g</UpperLeftY>\n"
-"        <LowerRightX>%.16g</LowerRightX>\n"
-"        <LowerRightY>%.16g</LowerRightY>\n"
-"        <SizeX>%d</SizeX>\n"
-"        <SizeY>%d</SizeY>\n"
-"        <TileX>%d</TileX>\n"
-"        <TileY>%d</TileY>\n"
-"        <TileLevel>%d</TileLevel>\n"
-"        <YOrigin>top</YOrigin>\n"
-"    </DataWindow>\n"
-"    <Projection>%s</Projection>\n"
-"    <BlockSizeX>256</BlockSizeX>\n"
-"    <BlockSizeY>256</BlockSizeY>\n"
-"    <BandsCount>4</BandsCount>\n"
-"%s"
-"</GDAL_WMS>",
-                osTMSURL.c_str(),
-                adfGeoTransform[0],
-                adfGeoTransform[3],
-                adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1],
-                adfGeoTransform[3] + nRasterYSize * adfGeoTransform[5],
-                nRasterXSize,
-                nRasterYSize,
-                static_cast<int>((adfGeoTransform[0] - GM_ORIGIN) / (dfResolution * 256) + 0.5),
-                static_cast<int>((-GM_ORIGIN - adfGeoTransform[3]) / (dfResolution * 256) + 0.5),
-                nZoomLevel,
-                pszSRS,
-                osCacheStr.c_str());
-            //CPLDebug("PLMosaic", "TMS : %s", osTMS.c_str());
+            for( int nZoomLevel = nZoomLevelMax; nZoomLevel >= 0;
+                     nZoomLevel -- )
+            {
+                CPLString osTMS = CPLSPrintf(
+    "<GDAL_WMS>\n"
+    "    <Service name=\"TMS\">\n"
+    "        <ServerUrl>%s</ServerUrl>\n"
+    "    </Service>\n"
+    "    <DataWindow>\n"
+    "        <UpperLeftX>%.16g</UpperLeftX>\n"
+    "        <UpperLeftY>%.16g</UpperLeftY>\n"
+    "        <LowerRightX>%.16g</LowerRightX>\n"
+    "        <LowerRightY>%.16g</LowerRightY>\n"
+    "        <SizeX>%d</SizeX>\n"
+    "        <SizeY>%d</SizeY>\n"
+    "        <TileLevel>%d</TileLevel>\n"
+    "        <YOrigin>top</YOrigin>\n"
+    "    </DataWindow>\n"
+    "    <Projection>%s</Projection>\n"
+    "    <BlockSizeX>256</BlockSizeX>\n"
+    "    <BlockSizeY>256</BlockSizeY>\n"
+    "    <BandsCount>4</BandsCount>\n"
+    "%s"
+    "</GDAL_WMS>",
+                    osTMSURL.c_str(),
+                    GM_ORIGIN,
+                    -GM_ORIGIN,
+                    -GM_ORIGIN,
+                    GM_ORIGIN,
+                    256 << nZoomLevel,
+                    256 << nZoomLevel,
+                    nZoomLevel,
+                    pszSRS,
+                    osCacheStr.c_str());
 
-            poTMSDS = reinterpret_cast<GDALDataset *>(
-                GDALOpenEx( osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                           nullptr, nullptr, nullptr ) );
+                GDALDataset* poTMSDS = reinterpret_cast<GDALDataset *>(
+                        GDALOpenEx( osTMS, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                nullptr, nullptr, nullptr ) );
+                if( poTMSDS )
+                {
+                    const int nZShift = nZoomLevelMax - nZoomLevel;
+                    int nOvrXSize = nRasterXSize >> nZShift;
+                    int nOvrYSize = nRasterYSize >> nZShift;
+                    double dfThisResolution = dfResolution * (1 << nZShift);
+
+                    VRTDatasetH hVRTDS = VRTCreate(nOvrXSize, nOvrYSize);
+                    for(int iBand=1;iBand<=4;iBand++)
+                    {
+                        VRTAddBand( hVRTDS, GDT_Byte, nullptr );
+                    }
+
+                    int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
+
+                    nSrcXOff = static_cast<int>(0.5 +
+                        (adfGeoTransform[0] - GM_ORIGIN) / dfThisResolution);
+                    nDstXOff = 0;
+
+                    nSrcYOff = static_cast<int>(0.5 +
+                        (-GM_ORIGIN - adfGeoTransform[3]) / dfThisResolution);
+                    nDstYOff = 0;
+
+                    for(int iBand=1;iBand<=4;iBand++)
+                    {
+                        VRTSourcedRasterBandH hVRTBand =
+                            reinterpret_cast<VRTSourcedRasterBandH>(
+                                GDALGetRasterBand(hVRTDS, iBand));
+                        VRTAddSimpleSource(
+                            hVRTBand, GDALGetRasterBand(poTMSDS, iBand),
+                            nSrcXOff, nSrcYOff, nOvrXSize, nOvrYSize,
+                            nDstXOff, nDstYOff, nOvrXSize, nOvrYSize,
+                            "NEAR", VRT_NODATA_UNSET);
+                    }
+                    poTMSDS->Dereference();
+
+                    apoTMSDS.push_back( reinterpret_cast<GDALDataset*>(hVRTDS) );
+                }
+            }
         }
     }
 
-    if( bUseTMSForMain && poTMSDS == nullptr )
+    if( bUseTMSForMain && apoTMSDS.empty() )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Cannot find tile definition, so use_tiles will be ignored");
@@ -962,19 +1046,19 @@ int PLMosaicDataset::OpenMosaic()
     for(int i=0;i<4;i++)
         SetBand(i + 1, new PLMosaicRasterBand(this, i + 1, eDT));
 
-    json_object* poFirstAcquired = CPL_json_object_object_get(poObj, "first_acquired");
+    json_object* poFirstAcquired = CPL_json_object_object_get(poMosaic, "first_acquired");
     if( poFirstAcquired != nullptr && json_object_get_type(poFirstAcquired) == json_type_string )
     {
         SetMetadataItem("FIRST_ACQUIRED",
                                  json_object_get_string(poFirstAcquired));
     }
-    json_object* poLastAcquired = CPL_json_object_object_get(poObj, "last_acquired");
+    json_object* poLastAcquired = CPL_json_object_object_get(poMosaic, "last_acquired");
     if( poLastAcquired != nullptr && json_object_get_type(poLastAcquired) == json_type_string )
     {
         SetMetadataItem("LAST_ACQUIRED",
                                  json_object_get_string(poLastAcquired));
     }
-    json_object* poName = CPL_json_object_object_get(poObj, "name");
+    json_object* poName = CPL_json_object_object_get(poMosaic, "name");
     if( poName != nullptr && json_object_get_type(poName) == json_type_string )
     {
         SetMetadataItem("NAME", json_object_get_string(poName));
@@ -988,16 +1072,16 @@ int PLMosaicDataset::OpenMosaic()
 /*                          ListSubdatasets()                           */
 /************************************************************************/
 
-int PLMosaicDataset::ListSubdatasets()
+std::vector<CPLString> PLMosaicDataset::ListSubdatasets()
 {
+    std::vector<CPLString> aosNameList;
     CPLString osURL(osBaseURL);
-    CPLStringList aosSubdatasets;
     while(osURL.size())
     {
         json_object* poObj = RunRequest(osURL);
         if( poObj == nullptr )
         {
-            return FALSE;
+            return aosNameList;
         }
 
         osURL = "";
@@ -1015,62 +1099,55 @@ int PLMosaicDataset::ListSubdatasets()
         if( poMosaics == nullptr || json_object_get_type(poMosaics) != json_type_array )
         {
             json_object_put(poObj);
-            return FALSE;
+            return aosNameList;
         }
 
         const int nMosaics = json_object_array_length(poMosaics);
         for(int i=0;i< nMosaics;i++)
         {
-            const char* pszId = nullptr;
             const char* pszName = nullptr;
-            const char* pszSelf = nullptr;
             const char* pszCoordinateSystem = nullptr;
             json_object* poMosaic = json_object_array_get_idx(poMosaics, i);
+            bool bAccessible = false;
             if( poMosaic && json_object_get_type(poMosaic) == json_type_object )
             {
-                json_object* poId = CPL_json_object_object_get(poMosaic, "id");
-                if( poId != nullptr && json_object_get_type(poId) == json_type_string )
-                {
-                    pszId = json_object_get_string(poId);
-                }
                 json_object* poName = CPL_json_object_object_get(poMosaic, "name");
                 if( poName != nullptr && json_object_get_type(poName) == json_type_string )
                 {
                     pszName = json_object_get_string(poName);
                 }
-                poLinks = CPL_json_object_object_get(poMosaic, "_links");
-                if( poLinks != nullptr && json_object_get_type(poLinks) == json_type_object )
-                {
-                    json_object* poSelf = CPL_json_object_object_get(poLinks, "_self");
-                    if( poSelf != nullptr && json_object_get_type(poSelf) == json_type_string )
-                    {
-                        pszSelf = json_object_get_string(poSelf);
-                    }
-                }
+
                 json_object* poCoordinateSystem = CPL_json_object_object_get(poMosaic, "coordinate_system");
                 if( poCoordinateSystem && json_object_get_type(poCoordinateSystem) == json_type_string )
                 {
                     pszCoordinateSystem = json_object_get_string(poCoordinateSystem);
                 }
+
+                json_object* poDataType = CPL_json_object_object_get(poMosaic, "datatype");
+                if( poDataType && json_object_get_type(poDataType) == json_type_string &&
+                    EQUAL(json_object_get_string(poDataType), "byte") &&
+                    !CSLTestBoolean(CPLGetConfigOption("PL_MOSAIC_LIST_QUAD_DOWNLOAD_ONLY", "NO")) )
+                {
+                    bAccessible = true; // through tile API
+                }
+                else
+                {
+                    json_object* poQuadDownload = CPL_json_object_object_get(
+                                                    poMosaic, "quad_download");
+                    bAccessible = json_object_get_boolean(poQuadDownload);
+                }
             }
 
-            if( pszId && pszSelf && pszCoordinateSystem &&
+            if( bAccessible && pszName && pszCoordinateSystem &&
                 EQUAL(pszCoordinateSystem, "EPSG:3857") )
             {
-                const int nDatasetIdx = aosSubdatasets.Count() / 2 + 1;
-                aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_NAME", nDatasetIdx),
-                    CPLSPrintf("PLMOSAIC:mosaic=%s", pszId));
-                aosSubdatasets.AddNameValue(
-                    CPLSPrintf("SUBDATASET_%d_DESC", nDatasetIdx),
-                    CPLSPrintf("Mosaic %s", pszName ? pszName : pszId));
+                aosNameList.push_back(pszName);
             }
         }
 
         json_object_put(poObj);
     }
-    SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
-    return TRUE;
+    return aosNameList;
 }
 
 /************************************************************************/
@@ -1290,7 +1367,7 @@ GDALDataset* PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 }
 
 /************************************************************************/
-/*                       GetLocationInfo()                          */
+/*                         GetLocationInfo()                            */
 /************************************************************************/
 
 const char* PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
@@ -1371,8 +1448,8 @@ CPLErr  PLMosaicDataset::IRasterIO( GDALRWFlag eRWFlag,
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg)
 {
-    if( bUseTMSForMain && poTMSDS )
-        return poTMSDS->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
+    if( bUseTMSForMain && !apoTMSDS.empty() )
+        return apoTMSDS[0]->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                   pData, nBufXSize, nBufYSize,
                                   eBufType, nBandCount, panBandMap,
                                   nPixelSpace, nLineSpace, nBandSpace,
