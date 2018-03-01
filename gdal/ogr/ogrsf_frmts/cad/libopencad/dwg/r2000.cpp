@@ -2362,7 +2362,12 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
         delete polyline;
         return nullptr;
     }
-    polyline->avertVertexes.reserve( static_cast<size_t>(vertixesCount) );
+    if( vertixesCount < 100000 )
+    {
+        // For some reason reserving huge amounts cause later segfaults
+        // whereas an exception would have been expected
+        polyline->avertVertexes.reserve( static_cast<size_t>(vertixesCount) );
+    }
 
     if( dataFlag & 16 )
     {
@@ -2372,7 +2377,10 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
             delete polyline;
             return nullptr;
         }
-        polyline->adfBulges.reserve( static_cast<size_t>(nBulges) );
+        if( nBulges < 100000 )
+        {
+            polyline->adfBulges.reserve( static_cast<size_t>(nBulges) );
+        }
     }
 
     // TODO: tell ODA that R2000 contains nNumWidths flag
@@ -2384,7 +2392,10 @@ CADLWPolylineObject * DWGFileR2000::getLWPolyLine(unsigned int dObjectSize,
             delete polyline;
             return nullptr;
         }
-        polyline->astWidths.reserve( static_cast<size_t>(nNumWidths) );
+        if( nNumWidths < 100000 )
+        {
+            polyline->astWidths.reserve( static_cast<size_t>(nNumWidths) );
+        }
     }
 
     if( dataFlag & 512 )
@@ -2517,7 +2528,7 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->dfCtrlTol = buffer.ReadBITDOUBLE();
 
         spline->nNumKnots = buffer.ReadBITLONG();
-        if(spline->nNumKnots < 0)
+        if(spline->nNumKnots < 0 || spline->nNumKnots > 10 * 1024 * 1024)
         {
             delete spline;
             return nullptr;
@@ -2525,7 +2536,7 @@ CADSplineObject * DWGFileR2000::getSpline(unsigned int dObjectSize,
         spline->adfKnots.reserve( static_cast<size_t>(spline->nNumKnots) );
 
         spline->nNumCtrlPts = buffer.ReadBITLONG();
-        if(spline->nNumCtrlPts < 0)
+        if(spline->nNumCtrlPts < 0 || spline->nNumCtrlPts > 10 * 1024 * 1024)
         {
             delete spline;
             return nullptr;
