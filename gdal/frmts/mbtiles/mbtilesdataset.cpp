@@ -443,8 +443,8 @@ char* MBTilesDataset::FindKey(int iPixel, int iLine)
 
     // Compute shift between GDAL origin and TileMatrixSet origin
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left corner
-    const int nShiftXPixels = (int)floor(0.5 + (m_adfGeoTransform[0] - TMS_ORIGIN_X) /  m_adfGeoTransform[1]);
-    const int nShiftYPixelsFromGPKGOrigin = (int)floor(0.5 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
+    const int nShiftXPixels = (int)floor(1 + (m_adfGeoTransform[0] - TMS_ORIGIN_X) /  m_adfGeoTransform[1]);
+    const int nShiftYPixelsFromGPKGOrigin = (int)floor(1 + (m_adfGeoTransform[3] - TMS_ORIGIN_Y) /  m_adfGeoTransform[5]);
 
     const int iLineFromGPKGOrigin = iLine + nShiftYPixelsFromGPKGOrigin;
     const int iLineFromMBTilesOrigin = m_nTileMatrixHeight * nBlockYSize - 1 - iLineFromGPKGOrigin;
