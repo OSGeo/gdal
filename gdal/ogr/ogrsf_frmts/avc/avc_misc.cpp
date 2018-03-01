@@ -176,8 +176,8 @@ AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef)
 {
     AVCTableDef *psNewDef;
 
-    if (psSrcDef == NULL)
-        return NULL;
+    if (psSrcDef == nullptr)
+        return nullptr;
 
     psNewDef = (AVCTableDef*)CPLMalloc(1*sizeof(AVCTableDef));
 
@@ -206,7 +206,7 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
 {
     char        *pszBuf;
     GBool       bFileExists = FALSE;
-    FILE        *fp;
+    VSILFILE    *fp;
 
     pszBuf = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
     snprintf(pszBuf,
@@ -214,10 +214,10 @@ GBool AVCFileExists(const char *pszPath, const char *pszName)
 
     AVCAdjustCaseSensitiveFilename(pszBuf);
 
-    if ((fp = VSIFOpen(pszBuf, "rb")) != NULL)
+    if ((fp = VSIFOpenL(pszBuf, "rb")) != nullptr)
     {
         bFileExists = TRUE;
-        VSIFClose(fp);
+        VSIFCloseL(fp);
     }
 
     CPLFree(pszBuf);
@@ -254,8 +254,8 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * Unix case.
      *----------------------------------------------------------------*/
-    VSIStatBuf  sStatBuf;
-    char        *pszTmpPath = NULL;
+    VSIStatBufL  sStatBuf;
+    char        *pszTmpPath = nullptr;
     int         nTotalLen, iTmpPtr;
     GBool       bValidPath;
 
@@ -271,7 +271,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
     /*-----------------------------------------------------------------
      * First check if the filename is OK as is.
      *----------------------------------------------------------------*/
-    if (VSIStat(pszFname, &sStatBuf) == 0)
+    if (VSIStatL(pszFname, &sStatBuf) == 0)
     {
         return pszFname;
     }
@@ -288,7 +288,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
             pszTmpPath[iTmpPtr] += 32;
     }
 
-    if (VSIStat(pszTmpPath, &sStatBuf) == 0)
+    if (VSIStatL(pszTmpPath, &sStatBuf) == 0)
     {
         strcpy(pszFname, pszTmpPath);
         CPLFree(pszTmpPath);
@@ -304,7 +304,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
             pszTmpPath[iTmpPtr] -= 32;
     }
 
-    if (VSIStat(pszTmpPath, &sStatBuf) == 0)
+    if (VSIStatL(pszTmpPath, &sStatBuf) == 0)
     {
         strcpy(pszFname, pszTmpPath);
         CPLFree(pszTmpPath);
@@ -329,7 +329,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
             pszTmpPath[--iTmpPtr] = '\0';
         }
 
-        if (iTmpPtr > 0 && VSIStat(pszTmpPath, &sStatBuf) == 0)
+        if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) == 0)
             bValidPath = TRUE;
     }
 
@@ -349,7 +349,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      *----------------------------------------------------------------*/
     while(bValidPath && strlen(pszTmpPath) < (size_t)nTotalLen)
     {
-        char    **papszDir=NULL;
+        char    **papszDir=nullptr;
         int     iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
@@ -381,7 +381,7 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
             }
         }
 
-        if (iTmpPtr > 0 && VSIStat(pszTmpPath, &sStatBuf) != 0)
+        if (iTmpPtr > 0 && VSIStatL(pszTmpPath, &sStatBuf) != 0)
             bValidPath = FALSE;
 
         CSLDestroy(papszDir);

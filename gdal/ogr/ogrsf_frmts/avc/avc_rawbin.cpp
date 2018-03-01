@@ -101,7 +101,7 @@ static AVCByteOrder geSystemByteOrder = AVCLittleEndian;
  *
  * Open a binary file for reading with buffering, or writing.
  *
- * Returns a valid AVCRawBinFile structure, or NULL if the file could
+ * Returns a valid AVCRawBinFile structure, or nullptr if the file could
  * not be opened or created.
  *
  * AVCRawBinClose() will eventually have to be called to release the
@@ -126,40 +126,40 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
     if (STARTS_WITH_CI(pszAccess, "r+"))
     {
         psFile->eAccess = AVCReadWrite;
-        psFile->fp = VSIFOpen(pszFname, "r+b");
+        psFile->fp = VSIFOpenL(pszFname, "r+b");
     }
     else if (STARTS_WITH_CI(pszAccess, "r"))
     {
         psFile->eAccess = AVCRead;
-        psFile->fp = VSIFOpen(pszFname, "rb");
+        psFile->fp = VSIFOpenL(pszFname, "rb");
     }
     else if (STARTS_WITH_CI(pszAccess, "w"))
     {
         psFile->eAccess = AVCWrite;
-        psFile->fp = VSIFOpen(pszFname, "wb");
+        psFile->fp = VSIFOpenL(pszFname, "wb");
     }
     else if (STARTS_WITH_CI(pszAccess, "a"))
     {
         psFile->eAccess = AVCWrite;
-        psFile->fp = VSIFOpen(pszFname, "ab");
+        psFile->fp = VSIFOpenL(pszFname, "ab");
     }
     else
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "Access mode \"%s\" not supported.", pszAccess);
         CPLFree(psFile);
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * Check that file was opened successfully, and init struct.
      *----------------------------------------------------------------*/
-    if (psFile->fp == NULL)
+    if (psFile->fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to open file %s", pszFname);
         CPLFree(psFile);
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -192,7 +192,7 @@ void AVCRawBinClose(AVCRawBinFile *psFile)
     if (psFile)
     {
         if (psFile->fp)
-            VSIFClose(psFile->fp);
+            VSIFCloseL(psFile->fp);
         CPLFree(psFile->pszFname);
         CPLFree(psFile);
     }
@@ -230,7 +230,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 
     /* Make sure file is opened with Read access
      */
-    if (psFile == NULL ||
+    if (psFile == nullptr ||
         (psFile->eAccess != AVCRead && psFile->eAccess != AVCReadWrite))
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -260,7 +260,7 @@ void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
         if (psFile->nCurPos == psFile->nCurSize)
         {
             psFile->nOffset += psFile->nCurSize;
-            psFile->nCurSize = (int)VSIFRead(psFile->abyBuf, sizeof(GByte),
+            psFile->nCurSize = (int)VSIFReadL(psFile->abyBuf, sizeof(GByte),
                                         AVCRAWBIN_READBUFSIZE, psFile->fp);
             psFile->nCurPos = 0;
         }
@@ -355,7 +355,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
     /* Supported only with read access for now
      */
     CPLAssert(psFile && psFile->eAccess != AVCWrite);
-    if (psFile == NULL || psFile->eAccess == AVCWrite)
+    if (psFile == nullptr || psFile->eAccess == AVCWrite)
         return;
 
     /* Compute destination relative to current memory buffer
@@ -383,7 +383,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
         psFile->nCurPos = 0;
         psFile->nCurSize = 0;
         psFile->nOffset = psFile->nOffset+nTarget;
-        if( VSIFSeek(psFile->fp, psFile->nOffset, SEEK_SET) < 0 )
+        if( VSIFSeekL(psFile->fp, psFile->nOffset, SEEK_SET) < 0 )
             return;
     }
 
@@ -397,7 +397,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
  **********************************************************************/
 GBool AVCRawBinEOF(AVCRawBinFile *psFile)
 {
-    if (psFile == NULL || psFile->fp == NULL)
+    if (psFile == nullptr || psFile->fp == nullptr)
         return TRUE;
 
     /* In write access mode, always return TRUE, since we always write
@@ -442,7 +442,7 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
     }
 
     return (psFile->nCurPos == psFile->nCurSize &&
-            VSIFEof(psFile->fp));
+            VSIFEofL(psFile->fp));
 }
 
 
@@ -527,7 +527,7 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
     /*----------------------------------------------------------------
      * Make sure file is opened with Write access
      *---------------------------------------------------------------*/
-    if (psFile == NULL ||
+    if (psFile == nullptr ||
         (psFile->eAccess != AVCWrite && psFile->eAccess != AVCReadWrite))
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -535,7 +535,7 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
         return;
     }
 
-    if (VSIFWrite((void*)pBuf, nBytesToWrite, 1, psFile->fp) != 1)
+    if (VSIFWriteL((void*)pBuf, nBytesToWrite, 1, psFile->fp) != 1)
         CPLError(CE_Failure, CPLE_FileIO,
                  "Writing to %s failed.", psFile->pszFname);
 

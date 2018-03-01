@@ -62,7 +62,7 @@ AVCDBCSInfo *AVCAllocDBCSInfo(void)
 
     psInfo->nDBCSCodePage = AVCGetDBCSCodePage();
     psInfo->nDBCSEncoding = AVC_CODE_UNKNOWN;
-    psInfo->pszDBCSBuf    = NULL;
+    psInfo->pszDBCSBuf    = nullptr;
     psInfo->nDBCSBufSize  = 0;
 
     return psInfo;
@@ -115,7 +115,7 @@ int AVCGetDBCSCodePage(void)
  **********************************************************************/
 GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine)
 {
-    if (psDBCSInfo == NULL || psDBCSInfo->nDBCSCodePage == 0 ||
+    if (psDBCSInfo == nullptr || psDBCSInfo->nDBCSCodePage == 0 ||
         psDBCSInfo->nDBCSEncoding != AVC_CODE_UNKNOWN)
     {
         /* Either single byte codepage, or encoding has already been detected
@@ -156,12 +156,12 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                        const GByte *pszLine,
                                        int nMaxOutputLen)
 {
-    const GByte *pszOutBuf = NULL;
-    GByte *pszTmp = NULL;
+    const GByte *pszOutBuf = nullptr;
+    GByte *pszTmp = nullptr;
     GBool bAllAscii;
 
-    if (psDBCSInfo == NULL ||
-        psDBCSInfo->nDBCSCodePage == 0 || pszLine == NULL)
+    if (psDBCSInfo == nullptr ||
+        psDBCSInfo->nDBCSCodePage == 0 || pszLine == nullptr)
     {
         /* Single byte codepage... nothing to do
          */
@@ -183,7 +183,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
      * We add 2 chars to buffer size to simplify processing... no need to
      * check if second byte of a pair would overflow buffer.
      */
-    if (psDBCSInfo->pszDBCSBuf == NULL ||
+    if (psDBCSInfo->pszDBCSBuf == nullptr ||
         psDBCSInfo->nDBCSBufSize < nMaxOutputLen+2)
     {
         psDBCSInfo->nDBCSBufSize = nMaxOutputLen+2;
@@ -225,12 +225,12 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
                                       const GByte *pszLine,
                                       int nMaxOutputLen)
 {
-    const GByte *pszOutBuf = NULL;
+    const GByte *pszOutBuf = nullptr;
     GByte *pszTmp;
     GBool bAllAscii;
 
-    if (psDBCSInfo == NULL ||
-        psDBCSInfo->nDBCSCodePage == 0 || pszLine == NULL)
+    if (psDBCSInfo == nullptr ||
+        psDBCSInfo->nDBCSCodePage == 0 || pszLine == nullptr)
     {
         /* Single byte codepage... nothing to do
          */
@@ -252,7 +252,7 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
      * We add 2 chars to buffer size to simplify processing... no need to
      * check if second byte of a pair would overflow buffer.
      */
-    if (psDBCSInfo->pszDBCSBuf == NULL ||
+    if (psDBCSInfo->pszDBCSBuf == nullptr ||
         psDBCSInfo->nDBCSBufSize < nMaxOutputLen+2)
     {
         psDBCSInfo->nDBCSBufSize = nMaxOutputLen+2;

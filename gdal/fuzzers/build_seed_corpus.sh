@@ -325,5 +325,25 @@ rm testopenfilegdb.gdb.tar
 rm -r testopenfilegdb92.gdb
 rm testopenfilegdb92.gdb.tar
 
+echo "Building avcbin_fuzzer_seed_corpus.zip"
+rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data/testavc
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/avcbin.tar
+for f in `find . -type f`; do
+    printf "***NEWFILE***:$f\n" >> $CUR_DIR/avcbin.tar
+    cat $f >> $CUR_DIR/avcbin.tar
+done
+cd $CUR_DIR
+zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
+rm avcbin.tar
+
+echo "Building avce00_fuzzer_seed_corpus.zip"
+rm -f $OUT/avce00_fuzzer_seed_corpus.zip
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/avce00_fuzzer_seed_corpus.zip
+zip -r $OUT/avce00_fuzzer_seed_corpus.zip *.e00 >/dev/null
+cd $OLDPWD
+
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT
