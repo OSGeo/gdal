@@ -997,6 +997,8 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
     if(pszKey != nullptr)
     {
         poRetval = CPL_json_object_object_get(poObj, pszKey);
+        json_object_get(poRetval);
+        json_object_put(poObj);
     }
     else
     {
