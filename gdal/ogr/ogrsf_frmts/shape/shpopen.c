@@ -652,9 +652,9 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     {
         size_t nMessageLen = strlen(pszBasename)*2+256;
         char *pszMessage = (char *) malloc(nMessageLen);
-        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX."
-                  "Try --config SHAPE_RESTORE_SHX true to restore or create it",
-                  pszBasename, pszBasename );
+        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX. "
+                  "Set SHAPE_RESTORE_SHX config option to YES to restore or "
+                  "create it.", pszBasename, pszBasename );
         psHooks->Error( pszMessage );
         free( pszMessage );
 
