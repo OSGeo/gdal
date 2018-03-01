@@ -130,9 +130,13 @@ environment variable to a power-of-two value between 64 and 4096. The default va
 <li>TIFFTAG_RESOLUTIONUNIT</li>
 <li>TIFFTAG_MINSAMPLEVALUE (read only)</li>
 <li>TIFFTAG_MAXSAMPLEVALUE (read only)</li>
+<li><a href="https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html">GEO_METADATA</a>: This tag may be used for embedding XML-encoded instance documents prepared using 19139-based schema (GeoTIFF DGIWG) (GDAL &gt;= 2.3)</li>
+<li><a href="https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html">TIFF_RSID</a>: This tag specifies a File Universal Unique Identifier, or RSID, according to DMF definition (GeoTIFF DGIWG) (GDAL &gt;= 2.3)</li>
 </ul>
 
-<p>The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).</p>
+<p>The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).
+On creation, those tags can for example be set with <pre>gdal_translate in.tif out.tif -mo {TAGNAME}=VALUE</pre>
+</p>
 
 <p>Other non standard metadata items can be stored in a TIFF file created with the profile GDALGeoTIFF
 (the default, see below in the Creation issues section). Those metadata items are grouped together

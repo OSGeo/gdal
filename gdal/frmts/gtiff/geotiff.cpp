@@ -113,7 +113,8 @@ typedef enum
 {
     GTIFFTAGTYPE_STRING,
     GTIFFTAGTYPE_SHORT,
-    GTIFFTAGTYPE_FLOAT
+    GTIFFTAGTYPE_FLOAT,
+    GTIFFTAGTYPE_BYTE_STRING
 } GTIFFTagTypes;
 
 typedef struct
@@ -139,6 +140,10 @@ static const GTIFFTags asTIFFTags[] =
     { "TIFFTAG_RESOLUTIONUNIT", TIFFTAG_RESOLUTIONUNIT, GTIFFTAGTYPE_SHORT },
     { "TIFFTAG_MINSAMPLEVALUE", TIFFTAG_MINSAMPLEVALUE, GTIFFTAGTYPE_SHORT },
     { "TIFFTAG_MAXSAMPLEVALUE", TIFFTAG_MAXSAMPLEVALUE, GTIFFTAGTYPE_SHORT },
+
+    // GeoTIFF DGIWG tags
+    { "GEO_METADATA", TIFFTAG_GEO_METADATA, GTIFFTAGTYPE_BYTE_STRING },
+    { "TIFF_RSID", TIFFTAG_TIFF_RSID, GTIFFTAGTYPE_STRING },
 };
 
 const char szPROFILE_BASELINE[] = "BASELINE";
@@ -10992,7 +10997,7 @@ static void AppendMetadataItem( CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 
 static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                              CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
-                             int nBand, const char * /* pszProfile */ )
+                             int nBand, const char * pszProfile )
 
 {
 
@@ -11048,7 +11053,12 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 /*      Convert into XML item or handle as a special TIFF tag.          */
 /* -------------------------------------------------------------------- */
             if( strlen(papszDomainList[iDomain]) == 0
-                && nBand == 0 && STARTS_WITH_CI(pszItemName, "TIFFTAG_") )
+                && nBand == 0 &&
+                (STARTS_WITH_CI(pszItemName, "TIFFTAG_") ||
+                 (EQUAL(pszItemName, "GEO_METADATA") &&
+                  EQUAL(pszProfile, szPROFILE_GDALGeoTIFF)) ||
+                 (EQUAL(pszItemName, "TIFF_RSID") &&
+                  EQUAL(pszProfile, szPROFILE_GDALGeoTIFF))) )
             {
                 if( EQUAL(pszItemName, "TIFFTAG_RESOLUTIONUNIT") )
                 {
@@ -11085,6 +11095,17 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                              asTIFFTags[iTag].eType == GTIFFTAGTYPE_SHORT )
                         TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal,
                                       atoi(pszItemValue) );
+                    else if( bFoundTag &&
+                             asTIFFTags[iTag].eType == GTIFFTAGTYPE_BYTE_STRING )
+                    {
+                        int nLen = static_cast<int>(strlen(pszItemValue));
+                        if( nLen )
+                        {
+                            TIFFSetField( hTIFF, asTIFFTags[iTag].nTagVal,
+                                          nLen,
+                                          pszItemValue );
+                        }
+                    }
                     else
                         CPLError(
                             CE_Warning, CPLE_NotSupported,
@@ -11117,6 +11138,7 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                  iTag < sizeof(asTIFFTags) / sizeof(asTIFFTags[0]);
                  ++iTag )
             {
+                uint32 nCount = 0;
                 char* pszText = nullptr;
                 int16 nVal = 0;
                 float fVal = 0.0f;
@@ -11129,7 +11151,9 @@ static void WriteMDMetadata( GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
                      (asTIFFTags[iTag].eType == GTIFFTAGTYPE_SHORT &&
                       TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nVal )) ||
                      (asTIFFTags[iTag].eType == GTIFFTAGTYPE_FLOAT &&
-                      TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal ))) )
+                      TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &fVal )) ||
+                     (asTIFFTags[iTag].eType == GTIFFTAGTYPE_BYTE_STRING &&
+                      TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal, &nCount, &pszText ))) )
                 {
 #ifdef HAVE_UNSETFIELD
                     TIFFUnsetField( hTIFF, asTIFFTags[iTag].nTagVal );
@@ -13933,6 +13957,18 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
                 snprintf( szWorkMDI, sizeof(szWorkMDI), "%d", nShort );
                 oGTiffMDMD.SetMetadataItem( asTIFFTags[iTag].pszTagName,
                                             szWorkMDI );
+            }
+        }
+        else if( asTIFFTags[iTag].eType == GTIFFTAGTYPE_BYTE_STRING )
+        {
+            uint32 nCount = 0;
+            if( TIFFGetField( hTIFF, asTIFFTags[iTag].nTagVal,
+                              &nCount, &pszText ) )
+            {
+                std::string osStr;
+                osStr.assign(pszText, nCount);
+                oGTiffMDMD.SetMetadataItem( asTIFFTags[iTag].pszTagName,
+                                            osStr.c_str() );
             }
         }
     }
@@ -18561,7 +18597,11 @@ static void GTiffTagExtender(TIFF *tif)
         { TIFFTAG_GDAL_NODATA, -1, -1, TIFF_ASCII, FIELD_CUSTOM,
           TRUE, FALSE, const_cast<char*>( "GDALNoDataValue" ) },
         { TIFFTAG_RPCCOEFFICIENT, -1, -1, TIFF_DOUBLE, FIELD_CUSTOM,
-          TRUE, TRUE, const_cast<char *>( "RPCCoefficient" ) }
+          TRUE, TRUE, const_cast<char *>( "RPCCoefficient" ) },
+        { TIFFTAG_TIFF_RSID, -1, -1, TIFF_ASCII, FIELD_CUSTOM,
+          TRUE, FALSE, const_cast<char *>( "TIFF_RSID" ) },
+        { TIFFTAG_GEO_METADATA, -1, -1, TIFF_BYTE, FIELD_CUSTOM,
+          TRUE, TRUE, const_cast<char *>( "GEO_METADATA" ) }
     };
 
     if( _ParentExtender )

@@ -64,6 +64,12 @@ const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
 
+/* GeoTIFF DGIWG */
+/* https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html */
+#define TIFFTAG_TIFF_RSID      50908
+/* https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html */
+#define TIFFTAG_GEO_METADATA   50909
+
 #if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
 #  define HAVE_UNSETFIELD
 #endif

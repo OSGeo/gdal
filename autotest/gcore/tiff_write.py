@@ -7845,6 +7845,43 @@ def tiff_write_171_zstd():
     return ut.testCreateCopy()
 
 ###############################################################################
+# GeoTIFF DGIWG tags
+
+def tiff_write_172_geometadata_tiff_rsid():
+
+    tmpfilename = '/vsimem/tiff_write_172_geometadata_tiff_rsid.tiff'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfilename, 1, 1)
+    ds.SetMetadataItem('GEO_METADATA', 'foo')
+    ds.SetMetadataItem('TIFF_RSID', 'bar')
+    ds = None
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    if ds.GetMetadataItem('GEO_METADATA') != 'foo':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadataItem('TIFF_RSID') != 'bar':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds.SetMetadata({})
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    if ds.GetMetadataItem('GEO_METADATA') is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadataItem('TIFF_RSID') is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -8045,6 +8082,7 @@ gdaltest_list = [
     tiff_write_169_ccitrle,
     tiff_write_170_invalid_compresion,
     tiff_write_171_zstd,
+    tiff_write_172_geometadata_tiff_rsid,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
