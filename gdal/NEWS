@@ -618,6 +618,7 @@ Shapefile driver:
  * fix regression affecting GDAL 2.1.3 or later, 2.2.0 and 2.2.1, when editing the last shape of a file and growing it, and then appending a new shape, which resulted in corruption of both shapes (#7031)
  * hide shapelib symbols on Unix
  * improvements auto-identification of EPSG codes from input SRS, using OSRFindMatches()
+ * Improve guidance on use of SHAPE_RESTORE_SHX in SHPOpenLL() (#7246)
 
 S57 driver:
 
