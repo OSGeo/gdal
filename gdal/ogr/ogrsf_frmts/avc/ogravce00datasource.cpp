@@ -152,7 +152,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                                     psE00->eCoverType,
                                     psSec->eType,
                                     psE00->psDBCSInfo);
-              if( hFile && poSRS == NULL )
+              if( hFile && poSRS == nullptr )
               {
                   char **papszPRJ = AVCE00ReadNextPrj( hFile );
 
@@ -162,7 +162,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                       CPLError( CE_Warning, CPLE_AppDefined,
                                 "Failed to parse PRJ section, ignoring." );
                       delete poSRS;
-                      poSRS = NULL;
+                      poSRS = nullptr;
                   }
                   AVCE00ReadClose( hFile );
               }

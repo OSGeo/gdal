@@ -229,7 +229,7 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
     }
 
     psInfo->eFileType = AVCFileUnknown;
-    psInfo->cur.psArc = NULL;
+    psInfo->cur.psArc = nullptr;
 }
 
 /**********************************************************************
@@ -242,7 +242,7 @@ void    AVCE00ParseInfoFree(AVCE00ParseInfo  *psInfo)
     if (psInfo)
     {
         CPLFree(psInfo->pszSectionHdrLine);
-        psInfo->pszSectionHdrLine = NULL;
+        psInfo->pszSectionHdrLine = nullptr;
         CPLFree(psInfo->pszBuf);
         _AVCE00ParseDestroyCurObject(psInfo);
     }
@@ -286,7 +286,7 @@ AVCFileType  AVCE00ParseSuperSectionHeader(AVCE00ParseInfo  *psInfo,
      * If we're already inside a supersection or a section, then
      * return AVCFileUnknown right away.
      *----------------------------------------------------------------*/
-    if (psInfo == NULL ||
+    if (psInfo == nullptr ||
         psInfo->eSuperSectionType != AVCFileUnknown ||
         psInfo->eFileType != AVCFileUnknown )
     {
@@ -375,7 +375,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
 {
     AVCFileType  eNewType = AVCFileUnknown;
 
-    if (psInfo == NULL ||
+    if (psInfo == nullptr ||
         psInfo->eFileType != AVCFileUnknown)
     {
         return AVCFileUnknown;
@@ -476,7 +476,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     /*-----------------------------------------------------------------
      * Allocate a temp. structure to use to store the objects we read
      * (Using Calloc() will automatically initialize the struct contents
-     *  to NULL... this is very important for ARCs and PALs)
+     *  to nullptr... this is very important for ARCs and PALs)
      *----------------------------------------------------------------*/
     _AVCE00ParseDestroyCurObject(psInfo);
 
@@ -503,7 +503,7 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     }
     else if (eNewType == AVCFilePRJ)
     {
-        psInfo->cur.papszPrj = NULL;
+        psInfo->cur.papszPrj = nullptr;
     }
     else if (eNewType == AVCFileTXT ||
              eNewType == AVCFileTX6)
@@ -516,8 +516,8 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
     }
     else if (eNewType == AVCFileTABLE)
     {
-        psInfo->cur.pasFields = NULL;
-        psInfo->hdr.psTableDef = NULL;
+        psInfo->cur.pasFields = nullptr;
+        psInfo->hdr.psTableDef = nullptr;
         psInfo->bTableHdrComplete = FALSE;
     }
     else
@@ -584,7 +584,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
             psInfo->eFileType = AVCFileUnknown;
 
             CPLFree(psInfo->pszSectionHdrLine);
-            psInfo->pszSectionHdrLine = NULL;
+            psInfo->pszSectionHdrLine = nullptr;
 
             psInfo->bForceEndOfSection = FALSE;
         }
@@ -600,7 +600,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
  *
  * Take the next line of E00 input and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -620,7 +620,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
  **********************************************************************/
 void   *AVCE00ParseNextLine(AVCE00ParseInfo  *psInfo, const char *pszLine)
 {
-    void *psObj = NULL;
+    void *psObj = nullptr;
 
     CPLAssert(psInfo);
     switch(psInfo->eFileType)
@@ -673,7 +673,7 @@ void   *AVCE00ParseNextLine(AVCE00ParseInfo  *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an ARC object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -705,7 +705,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 ARC line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -762,13 +762,13 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 ARC line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this ARC, then reset the ParseInfo,
      * and return a reference to the ARC structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -777,7 +777,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psArc;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -785,7 +785,7 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an PAL object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -819,7 +819,7 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 PAL line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -905,13 +905,13 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 PAL line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this PAL, then reset the ParseInfo,
      * and return a reference to the PAL structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -920,7 +920,7 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psPal;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -929,7 +929,7 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an CNT object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -961,7 +961,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 CNT line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1020,13 +1020,13 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 CNT line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this CNT, then reset the ParseInfo,
      * and return a reference to the CNT structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1035,7 +1035,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psCnt;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -1043,7 +1043,7 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an LAB object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1075,7 +1075,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 LAB line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1130,13 +1130,13 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 LAB line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this LAB, then reset the ParseInfo,
      * and return a reference to the LAB structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1145,7 +1145,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psLab;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1155,7 +1155,7 @@ AVCLab   *AVCE00ParseNextLabLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an TOL object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1193,13 +1193,13 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TOL line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this TOL, then reset the ParseInfo,
      * and return a reference to the TOL structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1208,7 +1208,7 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psTol;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -1216,12 +1216,12 @@ AVCTol   *AVCE00ParseNextTolLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for a PRJ object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
  * Since a PRJ section contains only ONE projection, the function will
- * always return NULL, until it reaches the end-of-section (EOP) line.
+ * always return nullptr, until it reaches the end-of-section (EOP) line.
  * This is behavior is a bit different from the other section types that
  * will usually return a valid object immediately before the last line
  * of the section (the end-of-section line).
@@ -1239,7 +1239,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
     /*-------------------------------------------------------------
      * Since a PRJ section contains only ONE projection, this function will
-     * always return NULL until it reaches the end-of-section (EOP) line.
+     * always return nullptr until it reaches the end-of-section (EOP) line.
      * This is behavior is a bit different from the other section types that
      * will usually return a valid object immediately before the last line
      * of the section (the end-of-section line).
@@ -1281,7 +1281,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1290,7 +1290,7 @@ char  **AVCE00ParseNextPrjLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an TXT object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1330,7 +1330,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 TXT line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1499,13 +1499,13 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TXT line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this TXT, then reset the ParseInfo,
      * and return a reference to the TXT structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1514,7 +1514,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psTxt;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1523,7 +1523,7 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an TX6/TX7 object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1555,7 +1555,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1698,13 +1698,13 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this TX6/TX7, then reset the ParseInfo,
      * and return a reference to the TXT structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1713,7 +1713,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psTxt;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1723,7 +1723,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an RXP object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1759,13 +1759,13 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 RXP line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
      * If we're done parsing this RXP, then reset the ParseInfo,
      * and return a reference to the RXP structure
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1774,7 +1774,7 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         return psRxp;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 
@@ -1787,7 +1787,7 @@ AVCRxp   *AVCE00ParseNextRxpLine(AVCE00ParseInfo *psInfo, const char *pszLine)
  *
  * Take the next line of E00 input for an TableDef object and parse it.
  *
- * Returns NULL if the current object is not complete yet (expecting
+ * Returns nullptr if the current object is not complete yet (expecting
  * more lines of input) or a reference to a complete object if it
  * is complete.
  *
@@ -1806,7 +1806,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
 
     CPLAssert(psInfo->eFileType == AVCFileTABLE);
 
-    psTableDef = psInfo->hdr.psTableDef;  /* May be NULL on first call */
+    psTableDef = psInfo->hdr.psTableDef;  /* May be nullptr on first call */
 
     nLen = strlen(pszLine);
 
@@ -1821,7 +1821,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 Table Definition line: \"%s\"",
                      pszLine);
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1877,7 +1877,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
                      "(expected %d, got at least %d)",
                      psTableDef->numFields, psInfo->nCurObjectId+1);
             psInfo->numItems = psInfo->iCurItem = psInfo->nCurObjectId;
-            return NULL;
+            return nullptr;
         }
 
         if (nIndex > 0)
@@ -1918,7 +1918,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error parsing E00 Table Definition line: \"%s\"", pszLine);
         psInfo->numItems = psInfo->iCurItem = 0;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -1926,7 +1926,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
      * and return a reference to the TableDef structure.
      * Next calls should go to AVCE00ParseNextTableRecLine() to
      * read data records.
-     * Otherwise return NULL, which means that we are expecting more
+     * Otherwise return nullptr, which means that we are expecting more
      * more lines of input.
      *----------------------------------------------------------------*/
     if (psInfo->iCurItem >= psInfo->numItems)
@@ -1946,7 +1946,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
         return psTableDef;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -2007,7 +2007,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
             if (!strchr(szTmp, 'E') && !strchr(szTmp, 'e'))
             {
                 char *pszTmp;
-                if ( (pszTmp=strchr(szTmp, '.')) != NULL && pszTmp != szTmp )
+                if ( (pszTmp=strchr(szTmp, '.')) != nullptr && pszTmp != szTmp )
                 {
                     *pszTmp = *(pszTmp-1);
                     *(pszTmp-1) = '.';
@@ -2070,7 +2070,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
                      "_AVCE00ParseTableRecord(): Unsupported field type "
                      "(type=%d, size=%d)",
                      nType, pasDef[i].nSize);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -2084,7 +2084,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
  *
  * Take the next line of E00 input for an Table data record and parse it.
  *
- * Returns NULL if the current record is not complete yet (expecting
+ * Returns nullptr if the current record is not complete yet (expecting
  * more lines of input) or a reference to a complete record if it
  * is complete.
  *
@@ -2098,7 +2098,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
 AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
                                         const char *pszLine)
 {
-    AVCField    *pasFields = NULL;
+    AVCField    *pasFields = nullptr;
     AVCTableDef *psTableDef;
     int         i;
 
@@ -2110,7 +2110,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
         psTableDef->numRecords == 0)
     {
         psInfo->bForceEndOfSection = TRUE;
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -2131,7 +2131,7 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
                                   psTableDef->pasFieldDef, FALSE);
         if( psInfo->nTableE00RecLength < 0 )
         {
-            return NULL;
+            return nullptr;
         }
 
         if (psInfo->nBufSize < psInfo->nTableE00RecLength + 1)
@@ -2215,12 +2215,12 @@ AVCField   *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
          *------------------------------------------------------------*/
         pasFields = _AVCE00ParseTableRecord(psInfo);
 
-        if (pasFields == NULL)
+        if (pasFields == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 Table Record: \"%s\"",
                      psInfo->pszBuf);
-            return NULL;
+            return nullptr;
         }
 
         psInfo->numItems = psInfo->iCurItem = 0;

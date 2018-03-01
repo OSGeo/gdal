@@ -397,7 +397,7 @@ typedef struct AVCField_t
 
 typedef struct AVCRawBinFile_t
 {
-    FILE        *fp;
+    VSILFILE    *fp;
     char        *pszFname;
     AVCAccess   eAccess;
     AVCByteOrder eByteOrder;
@@ -606,7 +606,7 @@ typedef struct AVCE00ReadInfoE00_t
 
     /* File handle of the E00 file currently being processed
      */
-    FILE          *hFile;
+    VSILFILE     *hFile;
 
 } *AVCE00ReadE00Ptr;
 

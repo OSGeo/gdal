@@ -87,6 +87,8 @@
  *
  **********************************************************************/
 
+#include "cpl_port.h"
+#include "cpl_vsi.h"
 #include "avc.h"
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
@@ -119,7 +121,7 @@ static AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
  * Note: For most file types except tables, passing pszPath="" and
  * including the coverage path as part of pszName instead would work.
  *
- * Returns a valid AVCBinFile handle, or NULL if the file could
+ * Returns a valid AVCBinFile handle, or nullptr if the file could
  * not be created.
  *
  * AVCBinClose() will eventually have to be called to release the
@@ -131,7 +133,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
                               AVCDBCSInfo *psDBCSInfo)
 {
     AVCBinFile   *psFile;
-    char         *pszFname = NULL, *pszExt;
+    char         *pszFname = nullptr, *pszExt;
     GBool        bCreateIndex = FALSE;
     int          nLen;
 
@@ -143,7 +145,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "AVCBinWriteCreate(): Invalid precision parameter "
                  "(value must be AVC_SINGLE_PREC or AVC_DOUBLE_PREC)");
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -155,7 +157,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "AVCBinWriteCreate(): TABLEs must be created using "
                  "AVCBinWriteCreateTable()");
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -188,14 +190,14 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
                                  AVC_COVER_BYTE_ORDER(psFile->eCoverType),
                                          psDBCSInfo);
 
-    if (psFile->psRawBinFile == NULL)
+    if (psFile->psRawBinFile == nullptr)
     {
-        /* Failed to open file... just return NULL since an error message
+        /* Failed to open file... just return nullptr since an error message
          * has already been issued by AVCRawBinOpen()
          */
         CPLFree(psFile->pszFilename);
         CPLFree(psFile);
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -250,9 +252,9 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
      *----------------------------------------------------------------*/
     if (AVCBinWriteHeader(psFile) == -1)
     {
-        /* Failed!  Return NULL */
+        /* Failed!  Return nullptr */
         AVCBinWriteClose(psFile);
-        psFile = NULL;
+        psFile = nullptr;
     }
 
     return psFile;
@@ -442,22 +444,22 @@ void    AVCBinWriteClose(AVCBinFile *psFile)
                 AVCRawBinWriteZeros(psFile->psRawBinFile,
                                     512 - psFile->psRawBinFile->nCurPos%512);
 
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 2, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psRawBinFile->fp, 2, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
 
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 256+24, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psRawBinFile->fp, 256+24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
         }
         else
         {
             /* V7 Cover ... only 1 header */
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psRawBinFile->fp, 24, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psRawBinFile->fp, 24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psRawBinFile, n32Size);
         }
     }
 
     AVCRawBinClose(psFile->psRawBinFile);
-    psFile->psRawBinFile = NULL;
+    psFile->psRawBinFile = nullptr;
 
     /*-----------------------------------------------------------------
      * Same for the index file if it exists.
@@ -479,21 +481,21 @@ void    AVCBinWriteClose(AVCBinFile *psFile)
                 AVCRawBinWriteZeros(psFile->psIndexFile,
                                     512 - psFile->psIndexFile->nCurPos%512);
 
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 2, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psIndexFile->fp, 2, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
 
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 256+24, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psIndexFile->fp, 256+24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
         }
         else
         {
             /* V7 Cover ... only 1 header */
-            CPL_IGNORE_RET_VAL_INT(VSIFSeek(psFile->psIndexFile->fp, 24, SEEK_SET));
+            CPL_IGNORE_RET_VAL_INT(VSIFSeekL(psFile->psIndexFile->fp, 24, SEEK_SET));
             AVCRawBinWriteInt32(psFile->psIndexFile, n32Size);
         }
 
         AVCRawBinClose(psFile->psIndexFile);
-        psFile->psIndexFile = NULL;
+        psFile->psIndexFile = nullptr;
     }
 
     CPLFree(psFile->pszFilename);
@@ -1492,7 +1494,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
                                   AVCDBCSInfo *psDBCSInfo)
 {
     int          iEntry, numDirEntries=0, nTableIndex = 0;
-    VSIStatBuf   sStatBuf;
+    VSIStatBufL   sStatBuf;
     AVCRawBinFile *hRawBinFile;
     GBool        bFound;
     AVCTableDef  sEntry;
@@ -1515,15 +1517,15 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
      * added it below.
      *----------------------------------------------------------------*/
     FILE *fp;
-    if ((fp = VSIFOpen(pszArcDirFile, "r")) != NULL)
+    if ((fp = VSIFOpenL(pszArcDirFile, "r")) != nullptr)
     {
         char buf[380];
-        while (!VSIFEof(fp))
+        while (!VSIFEofL(fp))
         {
-            if (VSIFRead(buf, 380, 1, fp) == 1)
+            if (VSIFReadL(buf, 380, 1, fp) == 1)
                 numDirEntries++;
         }
-        VSIFClose(fp);
+        VSIFCloseL(fp);
         hRawBinFile = AVCRawBinOpen(pszArcDirFile, "r+",
                                     AVC_COVER_BYTE_ORDER(AVCCoverV7),
                                     psDBCSInfo);
@@ -1531,7 +1533,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     else
 #endif
     /* On Unix we can still use fstat() */
-    if ( VSIStat(pszArcDirFile, &sStatBuf) != -1 )
+    if ( VSIStatL(pszArcDirFile, &sStatBuf) != -1 )
     {
         numDirEntries = (int)(sStatBuf.st_size/380);
         hRawBinFile = AVCRawBinOpen(pszArcDirFile, "r+",
@@ -1546,7 +1548,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
                                     psDBCSInfo);
     }
 
-    if (hRawBinFile == NULL)
+    if (hRawBinFile == nullptr)
     {
         /* Failed to open file... just return -1 since an error message
          * has already been issued by AVCRawBinOpen()
@@ -1580,7 +1582,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
      * ARC.DIR does not have a header and we will close it right away.
      *----------------------------------------------------------------*/
     if (bFound)
-        CPL_IGNORE_RET_VAL_INT(VSIFSeek(hRawBinFile->fp, iEntry*380, SEEK_SET));
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL(hRawBinFile->fp, iEntry*380, SEEK_SET));
     else
     {
         /* Not found... Use the next logical table index */
@@ -1591,7 +1593,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
          * between read and writes... this had never been a problem before
          * on any system except with NT4 network drives.
          */
-        CPL_IGNORE_RET_VAL_INT(VSIFSeek(hRawBinFile->fp, numDirEntries*380, SEEK_SET));
+        CPL_IGNORE_RET_VAL_INT(VSIFSeekL(hRawBinFile->fp, numDirEntries*380, SEEK_SET));
     }
 
     snprintf(psTableDef->szInfoFile, sizeof(psTableDef->szInfoFile), "ARC%4.4d", nTableIndex);
@@ -1664,7 +1666,7 @@ int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
  * will be named "tic.adf" and "bnd.adf" but in double precision coverages,
  * they will be named "dbltic.adf" and "dblbnd.adf".
  *
- * Returns a valid AVCBinFile handle, or NULL if the table could
+ * Returns a valid AVCBinFile handle, or nullptr if the table could
  * not be created.
  *
  * AVCBinClose() will eventually have to be called to release the
@@ -1678,8 +1680,8 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
 {
     AVCBinFile   *psFile;
     AVCRawBinFile *hRawBinFile;
-    AVCTableDef  *psTableDef = NULL;
-    char         *pszFname = NULL, szInfoFile[8]="";
+    AVCTableDef  *psTableDef = nullptr;
+    char         *pszFname = nullptr, szInfoFile[8]="";
     int          i, nTableIndex = 0;
     size_t       nFnameLen;
 
@@ -1696,7 +1698,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "AVCBinWriteCreateTable(): Invalid precision parameter "
                  "(value must be AVC_SINGLE_PREC or AVC_DOUBLE_PREC)");
-        return NULL;
+        return nullptr;
     }
 
     /* Alloc a buffer big enough for the longest possible filename...
@@ -1729,13 +1731,13 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
 
     if (nTableIndex < 0)
     {
-        /* Failed to add arc.dir entry... just return NULL since an error
+        /* Failed to add arc.dir entry... just return nullptr since an error
          * message has already been issued by _AVCBinWriteCreateArcDirEntry()
          */
         _AVCDestroyTableDef(psTableDef);
         CPLFree(psFile);
         CPLFree(pszFname);
-        return NULL;
+        return nullptr;
     }
 
     snprintf(szInfoFile, sizeof(szInfoFile), "arc%4.4d", nTableIndex);
@@ -1749,15 +1751,15 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
                                 AVC_COVER_BYTE_ORDER(AVCCoverV7),
                                 psDBCSInfo);
 
-    if (hRawBinFile == NULL)
+    if (hRawBinFile == nullptr)
     {
-        /* Failed to open file... just return NULL since an error message
+        /* Failed to open file... just return nullptr since an error message
          * has already been issued by AVCRawBinOpen()
          */
         _AVCDestroyTableDef(psTableDef);
         CPLFree(psFile);
         CPLFree(pszFname);
-        return NULL;
+        return nullptr;
     }
 
     for(i=0; i<psTableDef->numFields; i++)
@@ -1766,7 +1768,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
     }
 
     AVCRawBinClose(hRawBinFile);
-    hRawBinFile = NULL;
+    hRawBinFile = nullptr;
 
     /*-----------------------------------------------------------------
      * The location of the data file depends on the external flag.
@@ -1789,11 +1791,11 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
          *------------------------------------------------------------*/
         char szCoverName[40]="", szExt[4]="", szSubclass[40]="", *pszPtr;
         int nLen;
-        FILE *fpOut;
+        VSILFILE *fpOut;
 
         nLen = (int)strlen(psTableDef->szTableName);
         CPLAssert(nLen <= 32);
-        if (nLen > 32) return NULL;
+        if (nLen > 32) return nullptr;
         pszPtr = psTableDef->szTableName;
 
         for(i=0; *pszPtr!='\0' && *pszPtr!='.' && *pszPtr!=' ';  i++, pszPtr++)
@@ -1849,11 +1851,11 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
          * '/' as a directory delimiter, even on Windows systems.
          *------------------------------------------------------------*/
         snprintf(pszFname, nFnameLen, "%s%s.dat", pszInfoPath, szInfoFile);
-        fpOut = VSIFOpen(pszFname, "wt");
+        fpOut = VSIFOpenL(pszFname, "wt");
         if (fpOut)
         {
-            CPL_IGNORE_RET_VAL_INT(VSIFPrintf(fpOut, "%-80.80s", psTableDef->szDataFile));
-            VSIFClose(fpOut);
+            CPL_IGNORE_RET_VAL_INT(VSIFPrintfL(fpOut, "%-80.80s", psTableDef->szDataFile));
+            VSIFCloseL(fpOut);
         }
         else
         {
@@ -1862,7 +1864,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
             CPLFree(pszFname);
             _AVCDestroyTableDef(psTableDef);
             CPLFree(psFile);
-            return NULL;
+            return nullptr;
         }
 
         snprintf(pszFname, nFnameLen, "%s%s",
@@ -1889,16 +1891,16 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
                                          AVC_COVER_BYTE_ORDER(AVCCoverV7),
                                          psDBCSInfo);
 
-    if (psFile->psRawBinFile == NULL)
+    if (psFile->psRawBinFile == nullptr)
     {
-        /* Failed to open file... just return NULL since an error message
+        /* Failed to open file... just return nullptr since an error message
          * has already been issued by AVCRawBinOpen()
          */
         CPLFree(pszFname);
         CPLFree(psFile->pszFilename);
         _AVCDestroyTableDef(psTableDef);
         CPLFree(psFile);
-        return NULL;
+        return nullptr;
     }
 
     CPLFree(pszFname);
@@ -1924,7 +1926,7 @@ AVCBinFile *AVCBinWriteCreateTable(const char *pszInfoPath,
  * e.g. TEST.PATCOUNTY would be written as PATCOUNTY.DBF even if PC Arc/Info
  * would probably not recognize that name.
  *
- * Returns a valid AVCBinFile handle, or NULL if the table could
+ * Returns a valid AVCBinFile handle, or nullptr if the table could
  * not be created.
  *
  * AVCBinClose() will eventually have to be called to release the
@@ -1938,7 +1940,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
                                        CPL_UNUSED AVCDBCSInfo *psDBCSInfo)
 {
     AVCBinFile    *psFile;
-    AVCTableDef   *psTableDef = NULL;
+    AVCTableDef   *psTableDef = nullptr;
     AVCFieldInfo  *pasDef;
     char          *pszDBFBasename, szFieldName[12];
     int           i, j, nType;
@@ -1994,14 +1996,14 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
     AVCAdjustCaseSensitiveFilename(psFile->pszFilename);
     psFile->hDBFFile = DBFCreate(psFile->pszFilename);
 
-    if (psFile->hDBFFile == NULL)
+    if (psFile->hDBFFile == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed creating file %s.", psFile->pszFilename);
         CPLFree(psFile->pszFilename);
         _AVCDestroyTableDef(psTableDef);
         CPLFree(psFile);
-        return NULL;
+        return nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -2065,7 +2067,7 @@ AVCBinFile *_AVCBinWriteCreateDBFTable(const char *pszPath,
                      "Unsupported field type: (field=%s, type=%d, size=%d)",
                      szFieldName, nType, pasDef[i].nSize);
             _AVCBinWriteCloseTable(psFile);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -2096,7 +2098,7 @@ static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)
          * The case of DBF files is simple!
          *------------------------------------------------------------*/
         DBFClose(psFile->hDBFFile);
-        psFile->hDBFFile = NULL;
+        psFile->hDBFFile = nullptr;
     }
     else if (psFile->psRawBinFile)
     {
@@ -2105,7 +2107,7 @@ static void    _AVCBinWriteCloseTable(AVCBinFile *psFile)
          * number of records written, etc.
          *------------------------------------------------------------*/
         AVCRawBinClose(psFile->psRawBinFile);
-        psFile->psRawBinFile = NULL;
+        psFile->psRawBinFile = nullptr;
     }
 
     /*-----------------------------------------------------------------
@@ -2140,7 +2142,7 @@ int _AVCBinWriteTableRec(AVCRawBinFile *psFile, int nFields,
 {
     int i, nType, nBytesWritten=0;
 
-    if (psFile == NULL)
+    if (psFile == nullptr)
         return -1;
 
     for(i=0; i<nFields; i++)
@@ -2237,7 +2239,7 @@ int _AVCBinWriteDBFTableRec(DBFHandle hDBFFile, int nFields,
 {
     int i, nType, nStatus = FALSE;
 
-    if (hDBFFile == NULL)
+    if (hDBFFile == nullptr)
         return -1;
 
     (*nCurDBFRecord)++;
