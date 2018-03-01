@@ -272,10 +272,10 @@ AVCE00WritePtr  AVCE00WriteOpen(const char *pszCoverPath,
      *----------------------------------------------------------------*/
     nLen = 0;
     for( i = (int)strlen(psInfo->pszCoverPath)-1;
-	 i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
-	          psInfo->pszCoverPath[i-1] != '\\'&&
-	          psInfo->pszCoverPath[i-1] != ':';
-	 i-- )
+        i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
+                psInfo->pszCoverPath[i-1] != '\\'&&
+                psInfo->pszCoverPath[i-1] != ':';
+        i-- )
     {
         nLen++;
     }
