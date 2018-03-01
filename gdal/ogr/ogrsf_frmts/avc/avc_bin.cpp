@@ -568,7 +568,7 @@ int AVCBinReadRewind(AVCBinFile *psFile)
  **********************************************************************/
 void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
 {
-    int	 bIndexed = FALSE;
+    int  bIndexed = FALSE;
     int  nObjectOffset, nRecordSize=0, nRecordStart = 0, nLen;
     /* cppcheck-suppress unreadVariable */
     char szExt[4] = {0,0,0,0};

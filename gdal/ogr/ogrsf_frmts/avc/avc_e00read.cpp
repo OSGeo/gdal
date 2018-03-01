@@ -244,10 +244,10 @@ AVCE00ReadPtr  AVCE00ReadOpen(const char *pszCoverPath)
      *----------------------------------------------------------------*/
     nLen = 0;
     for( i = (int)strlen(psInfo->pszCoverPath)-1;
-	 i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
-	          psInfo->pszCoverPath[i-1] != '\\'&&
-	          psInfo->pszCoverPath[i-1] != ':';
-	 i-- )
+        i > 0 && psInfo->pszCoverPath[i-1] != '/' &&
+                psInfo->pszCoverPath[i-1] != '\\'&&
+                psInfo->pszCoverPath[i-1] != ':';
+        i-- )
     {
         nLen++;
     }
@@ -912,7 +912,7 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
         psObj = AVCE00ParseNextLine(psInfo, pszLine);
         if (psObj)
         {
-			/* got table header */
+            /* got table header */
             /* TODO: Enable return of table definition? */
             psObj = nullptr;
         }
@@ -941,7 +941,7 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
 
             if (psObj)
             {
-				/* got object */
+                /* got object */
             }
         }
     }

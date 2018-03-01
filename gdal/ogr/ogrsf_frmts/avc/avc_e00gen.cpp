@@ -1402,17 +1402,17 @@ const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
 
         *pszBuf2 = '\0';
 
-	/* Make sure that we remove any embedded NUL characters from the
-	 * data line before returning it, otherwise we may be accidentally
-	 * truncating results.
-	 */
-	while ( --pszBuf2 >= psInfo->pszBuf+81 )
-	{
+        /* Make sure that we remove any embedded NUL characters from the
+        * data line before returning it, otherwise we may be accidentally
+        * truncating results.
+        */
+        while ( --pszBuf2 >= psInfo->pszBuf+81 )
+        {
             if ( *pszBuf2 == '\0' )
             {
                 *pszBuf2 = ' ';
             }
-	}
+        }
     }
 
     if (psInfo->iCurItem < psInfo->numItems)
