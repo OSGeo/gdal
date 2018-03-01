@@ -3941,11 +3941,11 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         CPLErrorStateBackuper oErrorStateBackuper;
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         poIntersection = poGeom->Intersection(&oPoly);
+        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poIntersection);
         if( poIntersection == nullptr || poIntersection->IsEmpty() )
         {
             return OGRERR_NONE;
         }
-        poIntersectionHolder = std::unique_ptr<OGRGeometry>(poIntersection);
     }
 
     // Create a layer with a single feature in it
