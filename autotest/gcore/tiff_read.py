@@ -79,11 +79,19 @@ def tiff_read_off():
     # Test absolute/offset directory access.
     ds = gdal.Open('GTIFF_DIR:off:408:data/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    # Same with GTIFF_RAW: prefix
+    ds = gdal.Open('GTIFF_RAW:GTIFF_DIR:off:408:data/byte.tif')
+    if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
 
     # Test index directory access
     ds = gdal.Open('GTIFF_DIR:1:data/byte.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
 
     # Check that georeferencing is read properly when accessing
@@ -92,6 +100,46 @@ def tiff_read_off():
     if gt != (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0):
         gdaltest.post_reason('did not get expected geotransform')
         print(gt)
+        return 'fail'
+
+    # Error cases
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:')
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:1')
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:1:')
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:1:/vsimem/i_dont_exist.tif')
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    # Requested directory not found
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:2:data/byte.tif')
+    if ds is not None:
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
+    # Opening a specific TIFF directory is not supported in update mode.
+    # Switching to read-only
+    with gdaltest.error_handler():
+        ds = gdal.Open('GTIFF_DIR:1:data/byte.tif', gdal.GA_Update)
+    if ds is None:
+        gdaltest.post_reason( 'fail' )
         return 'fail'
 
     return 'success'
@@ -3055,6 +3103,17 @@ def check_libtiff_internal_or_greater(expected_maj,expected_min,expected_micro):
 
 ###############################################################################
 
+def tiff_read_unknown_compression():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/unknown_compression.tif')
+    if ds is not None:
+        return 'fail'
+
+    return 'success' 
+
+###############################################################################
+
 def tiff_read_leak_ZIPSetupDecode():
 
     if not check_libtiff_internal_or_greater(4,0,8):
@@ -3154,6 +3213,17 @@ def tiff_read_big_tile():
     gdal.Unlink('/vsimem/test.tif')
 
     return 'success'
+
+###############################################################################
+
+def tiff_read_huge_tile():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/hugeblocksize.tif')
+    if ds is not None:
+        return 'fail'
+
+    return 'success' 
 
 ###############################################################################
 
@@ -3648,6 +3718,7 @@ gdaltest_list.append( (tiff_read_image_width_above_32bit) )
 gdaltest_list.append( (tiff_read_second_image_width_above_32bit) )
 gdaltest_list.append( (tiff_read_minimum_tiff_tags_no_warning) )
 gdaltest_list.append( (tiff_read_minimum_tiff_tags_with_warning) )
+gdaltest_list.append( (tiff_read_unknown_compression) )
 gdaltest_list.append( (tiff_read_leak_ZIPSetupDecode) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip) )
 gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillStrip2) )
@@ -3655,6 +3726,7 @@ gdaltest_list.append( (tiff_read_excessive_memory_TIFFFillTile) )
 gdaltest_list.append( (tiff_read_big_strip) )
 gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
 gdaltest_list.append( (tiff_read_big_tile) )
+gdaltest_list.append( (tiff_read_huge_tile) )
 gdaltest_list.append( (tiff_read_huge_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
 gdaltest_list.append( (tiff_read_many_blocks_truncated) )
