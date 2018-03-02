@@ -793,7 +793,10 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nRecordSize    = AVCRawBinReadInt32(psFile);
+    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+        return -1;
+    nRecordSize *= 2;
     nStartPos      = psFile->nCurPos+psFile->nOffset;
     psArc->nUserId = AVCRawBinReadInt32(psFile);
     psArc->nFNode  = AVCRawBinReadInt32(psFile);
@@ -801,6 +804,8 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
     psArc->nLPoly  = AVCRawBinReadInt32(psFile);
     psArc->nRPoly  = AVCRawBinReadInt32(psFile);
     numVertices    = AVCRawBinReadInt32(psFile);
+    if( numVertices < 0 || numVertices > 100 * 1024 * 1024 )
+        return -1;
 
     /* Realloc the vertices array only if it needs to grow...
      * do not realloc to a smaller size.
@@ -898,7 +903,10 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
     int nRecordSize, nStartPos, nBytesRead;
 
     psPal->nPolyId = AVCRawBinReadInt32(psFile);
-    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nRecordSize    = AVCRawBinReadInt32(psFile);
+    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+        return -1;
+    nRecordSize *= 2;
     nStartPos      = psFile->nCurPos+psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
@@ -920,6 +928,8 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
     }
 
     numArcs            = AVCRawBinReadInt32(psFile);
+    if( numArcs < 0 || numArcs > 100 * 1024 * 1024 )
+        return -1;
 
     /* Realloc the arc list array only if it needs to grow...
      * do not realloc to a smaller size.
@@ -999,7 +1009,10 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
     int nRecordSize, nStartPos, nBytesRead;
 
     psCnt->nPolyId = AVCRawBinReadInt32(psFile);
-    nRecordSize    = AVCRawBinReadInt32(psFile) * 2;
+    nRecordSize    = AVCRawBinReadInt32(psFile);
+    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+        return -1;
+    nRecordSize *= 2;
     nStartPos      = psFile->nCurPos+psFile->nOffset;
 
     if (AVCRawBinEOF(psFile))
@@ -1017,6 +1030,8 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
     }
 
     numLabels      = AVCRawBinReadInt32(psFile);
+    if( numLabels < 0 || numLabels > 100 * 1024 * 1024 )
+        return -1;
 
     /* Realloc the LabelIds array only if it needs to grow...
      * do not realloc to a smaller size.
