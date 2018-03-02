@@ -1703,7 +1703,8 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < (8 + ABS(psTxt->numVerticesLine) +
+    else if (psInfo->iCurItem >= 8 &&
+             psInfo->iCurItem < (8 + ABS(psTxt->numVerticesLine) +
                                    ABS(psTxt->numVerticesArrow)) && nLen >= 28)
     {
         /*-------------------------------------------------------------
@@ -1718,7 +1719,9 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems &&
+    else if (psInfo->iCurItem >= (8 + ABS(psTxt->numVerticesLine) +
+                                   ABS(psTxt->numVerticesArrow)) &&
+             psInfo->iCurItem < psInfo->numItems &&
              (psTxt->numChars-1)/80 + 1 - (psInfo->numItems - psInfo->iCurItem) >= 0 )
     {
         /*-------------------------------------------------------------
