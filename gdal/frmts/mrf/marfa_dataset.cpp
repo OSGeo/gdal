@@ -529,13 +529,16 @@ const string &theString,
 size_t start = 0,
 const  char theDelimiter = ' ')
 {
-    size_t end = theString.find(theDelimiter, start);
-    if (string::npos == end) {
-        theStringVector.push_back(theString.substr(start));
-        return;
+    while( true )
+    {
+        size_t end = theString.find(theDelimiter, start);
+        if (string::npos == end) {
+            theStringVector.push_back(theString.substr(start));
+            return;
+        }
+        theStringVector.push_back(theString.substr(start, end - start));
+        start = end + 1;
     }
-    theStringVector.push_back(theString.substr(start, end - start));
-    stringSplit(theStringVector, theString, end + 1, theDelimiter);
 }
 
 // Returns the number following the prefix if it exists in one of the vector strings
