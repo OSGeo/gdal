@@ -1670,7 +1670,8 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem < psInfo->numItems)
+    else if (psInfo->iCurItem < psInfo->numItems &&
+             (psTxt->numChars-1)/80 + 1 - (psInfo->numItems - psInfo->iCurItem) >= 0 )
     {
         /*-------------------------------------------------------------
          * Last line, contains the text string
