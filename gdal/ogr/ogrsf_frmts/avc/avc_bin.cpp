@@ -831,20 +831,22 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
 
     if (nPrecision == AVC_SINGLE_PREC)
     {
-        /* coverity[tainted_data] */
         for(i=0; i<numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psArc->pasVertices[i].y = AVCRawBinReadFloat(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
     }
     else
     {
-        /* coverity[tainted_data] */
         for(i=0; i<numVertices; i++)
         {
             psArc->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psArc->pasVertices[i].y = AVCRawBinReadDouble(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
 
     }
@@ -951,12 +953,13 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
 
     psPal->numArcs = numArcs;
 
-    /* coverity[tainted_data] */
     for(i=0; i<numArcs; i++)
     {
         psPal->pasArcs[i].nArcId = AVCRawBinReadInt32(psFile);
         psPal->pasArcs[i].nFNode = AVCRawBinReadInt32(psFile);
         psPal->pasArcs[i].nAdjPoly = AVCRawBinReadInt32(psFile);
+        if( psFile->nCurSize == 0 )
+            return -1;
     }
 
     /*-----------------------------------------------------------------
@@ -1053,10 +1056,11 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
 
     psCnt->numLabels = numLabels;
 
-    /* coverity[tainted_data] */
     for(i=0; i<numLabels; i++)
     {
         psCnt->panLabelIds[i] = AVCRawBinReadInt32(psFile);
+        if( psFile->nCurSize == 0 )
+            return -1;
     }
 
     /*-----------------------------------------------------------------
@@ -1323,7 +1327,10 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = 8 + 2*AVCRawBinReadInt32(psFile);
+    nRecordSize    = AVCRawBinReadInt32(psFile);
+    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+        return -1;
+    nRecordSize = nRecordSize*2+8;
 
     psTxt->nUserId = AVCRawBinReadInt32(psFile);
     psTxt->nLevel  = AVCRawBinReadInt32(psFile);
@@ -1333,6 +1340,8 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     psTxt->numVerticesLine  = AVCRawBinReadInt32(psFile);
     psTxt->n28      = AVCRawBinReadInt32(psFile);
     psTxt->numChars = AVCRawBinReadInt32(psFile);
+    if( psTxt->numChars < 0 || psTxt->numChars > 10 * 1024 * 1024 )
+        return -1;
     psTxt->numVerticesArrow = AVCRawBinReadInt32(psFile);
 
     for(i=0; i<20; i++)
@@ -1369,12 +1378,14 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     }
 
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
-    /* coverity[tainted_data] */
     psTxt->pszText[psTxt->numChars] = '\0';
 
     /* Realloc the vertices array only if it needs to grow...
      * do not realloc to a smaller size.
      */
+    if( ABS(psTxt->numVerticesLine) >
+                100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
+        return -1;
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
@@ -1439,7 +1450,10 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     if (AVCRawBinEOF(psFile))
         return -1;
 
-    nRecordSize    = 8 + 2*AVCRawBinReadInt32(psFile);
+    nRecordSize    = AVCRawBinReadInt32(psFile);
+    if( nRecordSize < 0 || nRecordSize > 100 * 1024 * 1024 )
+        return -1;
+    nRecordSize = nRecordSize*2+8;
 
     psTxt->nUserId = 0;
     psTxt->nLevel  = AVCRawBinReadInt32(psFile);
@@ -1459,6 +1473,9 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      */
     psTxt->numVerticesLine += 1;
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+    if( ABS(psTxt->numVerticesLine) >
+                100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
+        return -1;
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
         psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
@@ -1513,6 +1530,8 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     {
         numCharsToRead = nRecordSize - (28 + 16*8);
     }
+    if( numCharsToRead < 0 )
+        return -1;
 
     /* Do a quick check in case file is corrupt! */
     psTxt->numChars = MIN(psTxt->numChars, numCharsToRead);
@@ -1524,7 +1543,6 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
                                             (numCharsToRead+5)*sizeof(char));
     }
 
-    /* coverity[tainted_data] */
     AVCRawBinReadString(psFile, numCharsToRead, psTxt->pszText);
     psTxt->pszText[psTxt->numChars] = '\0';
 
