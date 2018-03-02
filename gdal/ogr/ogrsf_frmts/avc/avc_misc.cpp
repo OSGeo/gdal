@@ -349,11 +349,10 @@ char *AVCAdjustCaseSensitiveFilename(char *pszFname)
      *----------------------------------------------------------------*/
     while(bValidPath && strlen(pszTmpPath) < (size_t)nTotalLen)
     {
-        char    **papszDir=nullptr;
+        char    **papszDir=VSIReadDir(pszTmpPath);
         int     iEntry, iLastPartStart;
 
         iLastPartStart = iTmpPtr;
-        papszDir = VSIReadDir(pszTmpPath);
 
         /*-------------------------------------------------------------
          * Add one component to the current path
