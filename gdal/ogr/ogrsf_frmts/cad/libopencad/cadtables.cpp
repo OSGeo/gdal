@@ -34,6 +34,7 @@
 #include <memory>
 #include <cassert>
 #include <iostream>
+#include <set>
 
 using namespace std;
 
@@ -148,8 +149,13 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 
     auto dCurrentEntHandle = spModelSpace->hEntities[0].getAsLong();
     auto dLastEntHandle    = spModelSpace->hEntities[1].getAsLong();
-    while( dCurrentEntHandle != 0 )
+    // To avoid infinite loops
+    std::set<long> oVisitedHandles;
+    while( dCurrentEntHandle != 0 &&
+           oVisitedHandles.find(dCurrentEntHandle) == oVisitedHandles.end() )
     {
+        oVisitedHandles.insert(dCurrentEntHandle);
+
         CADObject* pCADEntityObject = pCADFile->GetObject( dCurrentEntHandle, true );
         unique_ptr<CADEntityObject> spEntityObj(
                     dynamic_cast<CADEntityObject *>( pCADEntityObject ) );
