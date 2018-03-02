@@ -323,6 +323,7 @@ bool MVTTileLayerValue::read(const GByte** ppabyData, const GByte* pabyDataLimit
             {
                 char* pszValue = nullptr;
                 READ_TEXT(pabyData, pabyDataLimit, pszValue);
+                // cppcheck-suppress nullPointer
                 setStringValue(pszValue);
                 CPLFree(pszValue);
             }
@@ -723,6 +724,7 @@ bool MVTTileLayer::read(const GByte** ppabyData, const GByte* pabyDataLimit)
             {
                 char* pszLayerName = nullptr;
                 READ_TEXT(pabyData, pabyDataLimit, pszLayerName);
+                // cppcheck-suppress nullPointer
                 setName(pszLayerName);
                 CPLFree(pszLayerName);
             }
@@ -742,6 +744,7 @@ bool MVTTileLayer::read(const GByte** ppabyData, const GByte* pabyDataLimit)
             {
                 char* pszKey = nullptr;
                 READ_TEXT(pabyData, pabyDataLimit, pszKey);
+                // cppcheck-suppress nullPointer
                 addKey(pszKey);
                 CPLFree(pszKey);
             }
