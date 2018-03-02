@@ -1663,9 +1663,9 @@ bool ods_formula_node::EvaluateMID( IODSCellEvaluator* poEvaluator )
     const size_t nLen = osVal.size();
     const int nStart = papoSubExpr[1]->int_value;
     const int nExtractLen = papoSubExpr[2]->int_value;
-    if (nStart <= 0)
+    if (nStart <= 0 || nStart > 10*1024*1024)
         return false;
-    if (nExtractLen < 0)
+    if (nExtractLen < 0 || nExtractLen > 10*1024*1024)
         return false;
 
     if ((size_t)nStart <= nLen)
