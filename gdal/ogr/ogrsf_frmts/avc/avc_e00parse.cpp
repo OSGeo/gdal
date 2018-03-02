@@ -716,6 +716,13 @@ AVCArc   *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psArc->nLPoly = AVCE00Str2Int(pszLine+40, 10);
             psArc->nRPoly = AVCE00Str2Int(pszLine+50, 10);
             psArc->numVertices = AVCE00Str2Int(pszLine+60, 10);
+            if( psArc->numVertices <  0 || psArc->numVertices > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 ARC line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             /* Realloc the array of vertices
              */
@@ -830,6 +837,13 @@ AVCPal   *AVCE00ParseNextPalLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psPal->nPolyId = ++psInfo->nCurObjectId;
 
             psPal->numArcs = AVCE00Str2Int(pszLine, 10);
+            if( psPal->numArcs <  0 || psPal->numArcs > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 PAL line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             /* If a PAL record has 0 arcs, it really has a single "0 0 0"
              * triplet as its data.
@@ -972,6 +986,13 @@ AVCCnt   *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psCnt->nPolyId = ++psInfo->nCurObjectId;
 
             psCnt->numLabels = AVCE00Str2Int(pszLine, 10);
+            if( psCnt->numLabels <  0 || psCnt->numLabels > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 CNT line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             /* Realloc the array of Labels Ids
              * Avoid allocating a 0-length segment since centroids can have
@@ -1362,7 +1383,13 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->numVerticesArrow= AVCE00Str2Int(pszLine+20, 10);
             psTxt->nSymbol         = AVCE00Str2Int(pszLine+30, 10);
             psTxt->numChars        = AVCE00Str2Int(pszLine+40, 10);
-
+            if( psTxt->numChars <  0 || psTxt->numChars > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TXT line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             /*---------------------------------------------------------
              * Realloc the string buffer and array of vertices
@@ -1372,6 +1399,13 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
                                                      sizeof(GByte));
             numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
+            if( numVertices > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TXT line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
                                               numVertices*sizeof(AVCVertex));
@@ -1574,6 +1608,13 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->nSymbol         = AVCE00Str2Int(pszLine+40, 10);
             psTxt->n28             = AVCE00Str2Int(pszLine+50, 10);
             psTxt->numChars        = AVCE00Str2Int(pszLine+60, 10);
+            if( psTxt->numChars <  0 || psTxt->numChars > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             /*---------------------------------------------------------
              * Realloc the string buffer and array of vertices
@@ -1584,6 +1625,13 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
             numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
+            if( numVertices > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
                                               numVertices*sizeof(AVCVertex));
