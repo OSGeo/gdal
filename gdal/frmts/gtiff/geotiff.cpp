@@ -107,6 +107,11 @@ static bool bGlobalStripIntegerOverflow = false;
 #endif
 static bool bGlobalInExternalOvr = false;
 
+// Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
+#if TIFFLIB_VERSION >= 20120922
+#define SUPPORTS_MORE_THAN_32768_DIRECTORIES
+#endif
+
 const char* const szJPEGGTiffDatasetTmpPrefix = "/vsimem/gtiffdataset_jpg_tmp_";
 
 typedef enum
@@ -12344,7 +12349,10 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
         bCandidateForStripChopReopening )
     {
         bool bReopenWithStripChop = true;
+
+#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
         int iDirIndex = 1;
+#endif
         // Inspect all directories to decide if we can safely re-open in
         // strip chop mode
 
@@ -12364,8 +12372,7 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
             if( !bOk )
                 break;
 
-            // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
-#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION < 20120922))
+#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
             if( iDirIndex == 32768 )
                 break;
 #endif
@@ -12375,7 +12382,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
                 bReopenWithStripChop = false;
                 break;
             }
+#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
             iDirIndex ++;
+#endif
         }
 
         if( bReopenWithStripChop )
@@ -14731,7 +14740,7 @@ void GTiffDataset::ScanDirectories()
            && (iDirIndex == 0 || TIFFReadDirectory( hTIFF ) != 0) )
     {
         // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
-#if !defined(INTERNAL_LIBTIFF) && (!defined(TIFFLIB_VERSION) || (TIFFLIB_VERSION < 20120922))
+#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
         if( iDirIndex == 32768 )
             break;
 #endif
