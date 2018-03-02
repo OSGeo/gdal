@@ -456,11 +456,6 @@ AVCFileType  AVCE00ParseSectionHeader(AVCE00ParseInfo  *psInfo,
         {
             eNewType = psInfo->eSuperSectionType;
         }
-        else if (strlen(pszLine) == 0 &&
-            psInfo->eSuperSectionType == AVCFileTX6)
-        {
-            eNewType = psInfo->eSuperSectionType;
-        }
         else
         {
             return AVCFileUnknown;
