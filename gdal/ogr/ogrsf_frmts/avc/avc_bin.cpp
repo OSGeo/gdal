@@ -241,6 +241,7 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
      *----------------------------------------------------------------*/
     if (AVCBinReadRewind(psFile) != 0)
     {
+        AVCRawBinClose(psFile->psRawBinFile);
         CPLFree(psFile->pszFilename);
         CPLFree(psFile);
         return nullptr;
@@ -286,6 +287,7 @@ AVCBinFile *AVCBinReadOpen(const char *pszPath, const char *pszName,
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "%s: Unsupported file type or corrupted file.",
                  psFile->pszFilename);
+        AVCRawBinClose(psFile->psRawBinFile);
         CPLFree(psFile->pszFilename);
         CPLFree(psFile);
         psFile = nullptr;
@@ -413,6 +415,10 @@ int _AVCBinReadHeader(AVCRawBinFile *psFile, AVCBinHeader *psHeader,
     /* Jump to 24th byte in header */
     AVCRawBinFSeek(psFile, 12, SEEK_CUR);
     psHeader->nLength    = AVCRawBinReadInt32(psFile);
+    if( psHeader->nLength < 0 || psHeader->nLength > (INT_MAX - 256) / 2 )
+    {
+        return -1;
+    }
 
     /*-----------------------------------------------------------------
      * File length, in words (16 bits)... pass the info to the RawBinFile
