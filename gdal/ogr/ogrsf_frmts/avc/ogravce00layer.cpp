@@ -434,6 +434,13 @@ bool OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
 /* -------------------------------------------------------------------- */
 /*      Setup attributes.                                               */
 /* -------------------------------------------------------------------- */
+    if( psTableRead->hParseInfo->hdr.psTableDef == nullptr )
+    {
+        AVCE00ReadCloseE00(psTableRead);
+        psTableRead = nullptr;
+        return false;
+    }
+
     AppendTableDefinition( psTableRead->hParseInfo->hdr.psTableDef );
 
 /* -------------------------------------------------------------------- */

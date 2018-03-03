@@ -181,29 +181,35 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
     {
         CPLFree(psInfo->cur.psArc->pasVertices);
         CPLFree(psInfo->cur.psArc);
+        psInfo->cur.psArc = nullptr;
     }
     else if (psInfo->eFileType == AVCFilePAL ||
              psInfo->eFileType == AVCFileRPL )
     {
         CPLFree(psInfo->cur.psPal->pasArcs);
         CPLFree(psInfo->cur.psPal);
+        psInfo->cur.psPal = nullptr;
     }
     else if (psInfo->eFileType == AVCFileCNT)
     {
         CPLFree(psInfo->cur.psCnt->panLabelIds);
         CPLFree(psInfo->cur.psCnt);
+        psInfo->cur.psCnt = nullptr;
     }
     else if (psInfo->eFileType == AVCFileLAB)
     {
         CPLFree(psInfo->cur.psLab);
+        psInfo->cur.psLab = nullptr;
     }
     else if (psInfo->eFileType == AVCFileTOL)
     {
         CPLFree(psInfo->cur.psTol);
+        psInfo->cur.psTol = nullptr;
     }
     else if (psInfo->eFileType == AVCFilePRJ)
     {
         CSLDestroy(psInfo->cur.papszPrj);
+        psInfo->cur.papszPrj = nullptr;
     }
     else if (psInfo->eFileType == AVCFileTXT ||
              psInfo->eFileType == AVCFileTX6)
@@ -211,15 +217,19 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
         CPLFree(psInfo->cur.psTxt->pasVertices);
         CPLFree(psInfo->cur.psTxt->pszText);
         CPLFree(psInfo->cur.psTxt);
+        psInfo->cur.psTxt = nullptr;
     }
     else if (psInfo->eFileType == AVCFileRXP)
     {
         CPLFree(psInfo->cur.psRxp);
+        psInfo->cur.psRxp = nullptr;
     }
     else if (psInfo->eFileType == AVCFileTABLE)
     {
         _AVCDestroyTableFields(psInfo->hdr.psTableDef, psInfo->cur.pasFields);
         _AVCDestroyTableDef(psInfo->hdr.psTableDef);
+        psInfo->hdr.psTableDef = nullptr;
+        psInfo->cur.pasFields = nullptr;
         psInfo->bTableHdrComplete = FALSE;
     }
     else
@@ -229,7 +239,6 @@ void    _AVCE00ParseDestroyCurObject(AVCE00ParseInfo  *psInfo)
     }
 
     psInfo->eFileType = AVCFileUnknown;
-    psInfo->cur.psArc = nullptr;
 }
 
 /**********************************************************************
