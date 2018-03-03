@@ -439,6 +439,45 @@ def test_ogr2ogr_lib_19():
 
     return 'success'
 
+
+###############################################################################
+# Test preservation of source geometry field name
+
+def test_ogr2ogr_lib_20():
+
+    if ogr.GetDriverByName('GPKG') is None:
+        return 'skip'
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    lyr = src_ds.CreateLayer('layer', geom_type = ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn('foo'))
+
+    ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format = 'GPKG')
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeometryColumn() != 'foo':
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeometryColumn())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/out.gpkg')
+
+
+    src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    lyr = src_ds.CreateLayer('layer', geom_type = ogr.wkbNone)
+    lyr.CreateGeomField(ogr.GeomFieldDefn('foo'))
+    lyr.CreateGeomField(ogr.GeomFieldDefn('bar'))
+
+    ds = gdal.VectorTranslate('/vsimem/out.gpkg', src_ds, format = 'GPKG', selectFields = ['bar'])
+    lyr = ds.GetLayer(0)
+    if lyr.GetGeometryColumn() != 'bar':
+        gdaltest.post_reason('fail')
+        print(lyr.GetGeometryColumn())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/out.gpkg')
+
+    return 'success'
+
 gdaltest_list = [
     test_ogr2ogr_lib_1,
     test_ogr2ogr_lib_2,
@@ -459,6 +498,7 @@ gdaltest_list = [
     test_ogr2ogr_lib_17,
     test_ogr2ogr_lib_18,
     test_ogr2ogr_lib_19,
+    test_ogr2ogr_lib_20,
     ]
 
 if __name__ == '__main__':

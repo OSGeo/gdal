@@ -3562,50 +3562,79 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         {
             eGCreateLayerType = wkbNone;
         }
+        // If the source layer has a single geometry column that is not nullable
+        // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
+        // so as to be able to set the not null constraint (if the driver supports it)
+        // Same if the source geometry column has a non empty name that is not
+        // overriden
+        else if( anRequestedGeomFields.empty() &&
+                 nSrcGeomFieldCount == 1 &&
+                 m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
+                 ((!poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
+                   CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
+                   !m_bForceNullable) ||
+                  (poSrcLayer->GetGeometryColumn() != nullptr &&
+                   CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr &&
+                   !EQUAL(poSrcLayer->GetGeometryColumn(), "") &&
+                   poSrcFDefn->GetFieldIndex(poSrcLayer->GetGeometryColumn()) < 0)) )
+        {
+            anRequestedGeomFields.push_back(0);
+            eGCreateLayerType = wkbNone;
+        }
         else if( anRequestedGeomFields.size() == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) )
         {
             eGCreateLayerType = wkbNone;
         }
-        // If the source feature has a single geometry column that is not nullable
-        // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
-        // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.empty() &&
-                 nSrcGeomFieldCount == 1 &&
-                 m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
-                 !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-                 !m_bForceNullable)
-        {
-            anRequestedGeomFields.push_back(0);
-            eGCreateLayerType = wkbNone;
-        }
+
         // If the source feature first geometry column is not nullable
         // and that GEOMETRY_NULLABLE creation option is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
-        else if( anRequestedGeomFields.empty() &&
-                 nSrcGeomFieldCount >= 1 &&
-                 !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
-                 m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
-                 strstr(m_poDstDS->GetDriver()->GetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NULLABLE") != nullptr &&
-                 CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
-                 !m_bForceNullable )
+        if( anRequestedGeomFields.empty() &&
+            nSrcGeomFieldCount >= 1 &&
+            !poSrcFDefn->GetGeomFieldDefn(0)->IsNullable() &&
+            m_poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
+            strstr(m_poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NULLABLE") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NULLABLE") == nullptr &&
+            !m_bForceNullable )
         {
             papszLCOTemp = CSLSetNameValue(papszLCOTemp, "GEOMETRY_NULLABLE", "NO");
             CPLDebug("GDALVectorTranslate", "Using GEOMETRY_NULLABLE=NO");
         }
-        // Special case for conversion from GMLAS driver to ensure that
-        // source geometry field name will be used as much as possible
-        // FIXME: why not make this general behaviour ?
-        else if( anRequestedGeomFields.empty() &&
-                 nSrcGeomFieldCount == 1 &&
-                 m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
-                 m_poSrcDS != nullptr &&
-                 m_poSrcDS->GetDriver() != nullptr &&
-                 ( EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "GMLAS") ||
-                   EQUAL(m_poSrcDS->GetDriver()->GetDescription(), "NAS") ) )
+
+        // Use source geometry field name as much as possible
+        if( m_poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST) != nullptr &&
+            strstr(m_poDstDS->GetDriver()->GetMetadataItem(
+                GDAL_DS_LAYER_CREATIONOPTIONLIST), "GEOMETRY_NAME") != nullptr &&
+            CSLFetchNameValue(m_papszLCO, "GEOMETRY_NAME") == nullptr )
         {
-            anRequestedGeomFields.push_back(0);
-            eGCreateLayerType = wkbNone;
+            int iSrcGeomField = -1;
+            if( anRequestedGeomFields.empty() &&
+                (nSrcGeomFieldCount == 1 ||
+                 (!m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&
+                  nSrcGeomFieldCount > 1) ) )
+            {
+                iSrcGeomField = 0;
+            }
+            else if( anRequestedGeomFields.size() == 1 )
+            {
+                iSrcGeomField = anRequestedGeomFields[0];
+            }
+
+            if( iSrcGeomField >= 0 )
+            {
+                const char* pszGFldName = poSrcFDefn->GetGeomFieldDefn(
+                                                iSrcGeomField)->GetNameRef();
+                if( pszGFldName != nullptr && !EQUAL(pszGFldName, "") &&
+                    poSrcFDefn->GetFieldIndex(pszGFldName) < 0 )
+                {
+                    papszLCOTemp = CSLSetNameValue(papszLCOTemp,
+                                                "GEOMETRY_NAME", pszGFldName);
+                }
+            }
         }
 
         // Force FID column as 64 bit if the source feature has a 64 bit FID,
