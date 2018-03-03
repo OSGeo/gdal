@@ -1960,9 +1960,16 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             psDef->v11      = (GInt16)AVCE00Str2Int(pszLine + 39, 4);
             psDef->v12      = (GInt16)AVCE00Str2Int(pszLine + 43, 4);
             psDef->v13      = (GInt16)AVCE00Str2Int(pszLine + 47, 2);
-
             strncpy(psDef->szAltName, pszLine+49, 16);
             psDef->szAltName[16] = '\0';
+
+            if( psDef->nSize < 0 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                 "Error parsing E00 Table Definition line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
 
             psInfo->nCurObjectId++;
         }
