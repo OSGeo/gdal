@@ -2191,7 +2191,7 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    if content.find('<xs:element name="geometryProperty" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
+    if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
        content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') < 0 or \
        content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
         gdaltest.post_reason('fail')
@@ -2341,8 +2341,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( "id" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
@@ -2356,8 +2356,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( "ogc_fid" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'

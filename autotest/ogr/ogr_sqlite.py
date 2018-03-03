@@ -3442,7 +3442,7 @@ def ogr_sqlite_44():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT\n')
+    gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csvt', 'JsonStringList,JsonIntegerList,JsonInteger64List,JsonRealList,WKT')
     gdal.FileFromMemBuffer('/vsimem/ogr_sqlite_44.csv',
 """stringlist,intlist,int64list,reallist,WKT
 "[""a"",null]","[1]","[1234567890123]","[0.125]",
