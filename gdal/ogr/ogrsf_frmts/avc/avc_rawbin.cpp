@@ -323,6 +323,7 @@ void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 {
     const GByte *pszConvBuf;
 
+    memset(pBuf, 0, nBytesToRead);
     AVCRawBinReadBytes(psFile, nBytesToRead, pBuf);
 
     pBuf[nBytesToRead] = '\0';
