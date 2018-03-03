@@ -317,7 +317,10 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,
                                   0.0, &eErr ) );
     if( poPolygon != nullptr )
+    {
+        poPolygon->assignSpatialReference( GetSpatialRef() );
         poFeature->SetGeometryDirectly( poPolygon );
+    }
 
     return eErr == OGRERR_NONE;
 }
