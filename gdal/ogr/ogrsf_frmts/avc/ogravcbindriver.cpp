@@ -43,27 +43,20 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
         return nullptr;
     if( poOpenInfo->fpL != nullptr )
     {
-        if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "E00") )
+        char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
+        if( papszSiblingFiles != nullptr )
         {
-            /* ok */
-        }
-        else
-        {
-            char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-            if( papszSiblingFiles != nullptr )
+            bool bFoundCandidateFile = false;
+            for( int i = 0; papszSiblingFiles[i] != nullptr; i++ )
             {
-                bool bFoundCandidateFile = false;
-                for( int i = 0; papszSiblingFiles[i] != nullptr; i++ )
+                if( EQUAL(CPLGetExtension(papszSiblingFiles[i]), "ADF") )
                 {
-                    if( EQUAL(CPLGetExtension(papszSiblingFiles[i]), "ADF") )
-                    {
-                        bFoundCandidateFile = true;
-                        break;
-                    }
+                    bFoundCandidateFile = true;
+                    break;
                 }
-                if( !bFoundCandidateFile )
-                    return nullptr;
             }
+            if( !bFoundCandidateFile )
+                return nullptr;
         }
     }
 
@@ -75,15 +68,6 @@ static GDALDataset *OGRAVCBinDriverOpen( GDALOpenInfo* poOpenInfo )
         return poDS;
     }
     delete poDS;
-
-    OGRAVCE00DataSource *poDSE00 = new OGRAVCE00DataSource();
-
-    if( poDSE00->Open( poOpenInfo->pszFilename, TRUE )
-        && poDSE00->GetLayerCount() > 0 )
-    {
-        return poDSE00;
-    }
-    delete poDSE00;
 
     return nullptr;
 }
