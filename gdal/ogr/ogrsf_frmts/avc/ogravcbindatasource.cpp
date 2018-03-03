@@ -94,30 +94,13 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
     pszName = CPLStrdup( pszNewName );
     pszCoverageName = CPLStrdup( psAVC->pszCoverName );
 
-/* -------------------------------------------------------------------- */
-/*      Create layers for the "interesting" sections of the coverage.   */
-/* -------------------------------------------------------------------- */
-
-    papoLayers = static_cast<OGRLayer **>(
-        CPLCalloc( sizeof(OGRLayer *), psAVC->numSections ) );
-    nLayers = 0;
-
+    // Read SRS first
     for( int iSection = 0; iSection < psAVC->numSections; iSection++ )
     {
         AVCE00Section *psSec = psAVC->pasSections + iSection;
 
         switch( psSec->eType )
         {
-          case AVCFileARC:
-          case AVCFilePAL:
-          case AVCFileCNT:
-          case AVCFileLAB:
-          case AVCFileRPL:
-          case AVCFileTXT:
-          case AVCFileTX6:
-            papoLayers[nLayers++] = new OGRAVCBinLayer( this, psSec );
-            break;
-
           case AVCFilePRJ:
           {
               AVCBinFile *hFile = AVCBinReadOpen(psAVC->pszCoverPath,
@@ -146,7 +129,36 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
           break;
 
           default:
-            ;
+            break;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Create layers for the "interesting" sections of the coverage.   */
+/* -------------------------------------------------------------------- */
+
+    papoLayers = static_cast<OGRLayer **>(
+        CPLCalloc( sizeof(OGRLayer *), psAVC->numSections ) );
+    nLayers = 0;
+
+    for( int iSection = 0; iSection < psAVC->numSections; iSection++ )
+    {
+        AVCE00Section *psSec = psAVC->pasSections + iSection;
+
+        switch( psSec->eType )
+        {
+          case AVCFileARC:
+          case AVCFilePAL:
+          case AVCFileCNT:
+          case AVCFileLAB:
+          case AVCFileRPL:
+          case AVCFileTXT:
+          case AVCFileTX6:
+            papoLayers[nLayers++] = new OGRAVCBinLayer( this, psSec );
+            break;
+
+          default:
+            break;
         }
     }
 

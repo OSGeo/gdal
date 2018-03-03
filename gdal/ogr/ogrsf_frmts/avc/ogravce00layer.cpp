@@ -37,6 +37,8 @@
 
 CPL_CVSID("$Id$")
 
+constexpr int SERIAL_ACCESS_FID = INT_MIN;
+
 /************************************************************************/
 /*                           OGRAVCE00Layer()                           */
 /************************************************************************/
@@ -139,6 +141,9 @@ void OGRAVCE00Layer::ResetReading()
 OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 
 {
+    if( nFID < 0 && nFID != SERIAL_ACCESS_FID )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      If we haven't started yet, open the file now.                   */
 /* -------------------------------------------------------------------- */
@@ -154,12 +159,12 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the raw feature - the -3 fid is a special flag             */
+/*      Read the raw feature - the SERIAL_ACCESS_FID fid is a special flag  */
 /*      indicating serial access.                                       */
 /* -------------------------------------------------------------------- */
     void *pFeature = nullptr;
 
-    if( nFID == -3 )
+    if( nFID == SERIAL_ACCESS_FID )
     {
         while( (pFeature = AVCE00ReadNextObjectE00(psRead)) != nullptr
                && psRead->hParseInfo->eFileType != AVCFileUnknown
@@ -203,7 +208,7 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     if( psSection->eType == AVCFileLAB )
     {
-        if( nFID == -3 )
+        if( nFID == SERIAL_ACCESS_FID )
             poFeature->SetFID( nNextFID++ );
         else
             poFeature->SetFID( nFID );
@@ -237,14 +242,14 @@ OGRFeature *OGRAVCE00Layer::GetNextFeature()
     if( bNeedReset )
         ResetReading();
 
-    OGRFeature *poFeature = GetFeature( -3 );
+    OGRFeature *poFeature = GetFeature( SERIAL_ACCESS_FID );
 
     // Skip universe polygon.
     if( poFeature != nullptr && poFeature->GetFID() == 1
         && psSection->eType == AVCFilePAL )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
     while( poFeature != nullptr
@@ -253,7 +258,7 @@ OGRFeature *OGRAVCE00Layer::GetNextFeature()
                || !FilterGeometry( poFeature->GetGeometryRef() ) ) )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
     if( poFeature == nullptr )
@@ -343,7 +348,10 @@ bool OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
         OGRBuildPolygonFromEdges( reinterpret_cast<OGRGeometryH>( &oArcs ),
                                   TRUE, FALSE, 0.0, &eErr ) );
     if( poPolygon != nullptr )
+    {
+        poPolygon->assignSpatialReference( GetSpatialRef() );
         poFeature->SetGeometryDirectly( poPolygon );
+    }
 
     return eErr == OGRERR_NONE;
 }
