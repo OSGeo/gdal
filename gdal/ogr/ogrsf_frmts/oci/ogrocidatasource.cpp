@@ -494,7 +494,6 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                                char ** papszOptions )
 
 {
-    char                szCommand[1024];
     char               *pszSafeLayerName = CPLStrdup(pszLayerName);
 
     poSession->CleanName( pszSafeLayerName );
@@ -588,18 +587,19 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /*      If geometry type is wkbNone, do not create a geometry column.   */
 /* -------------------------------------------------------------------- */
 
+    CPLString osCommand;
     if ( CSLFetchNameValue( papszOptions, "TRUNCATE" ) == nullptr  )
     {
         if (eType == wkbNone)
         {
-            snprintf( szCommand, sizeof(szCommand),
+            osCommand.Printf(
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY)",
                      pszSafeLayerName, pszExpectedFIDName);
         }
         else
         {
-            snprintf( szCommand, sizeof(szCommand),
+            osCommand.Printf(
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY, "
                      "%s %s%s )",
@@ -610,17 +610,13 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 
         if (bNoLogging)
         {
-            char     szCommand2[1024];
-
-            snprintf( szCommand2, sizeof(szCommand2), "%s", szCommand );
-
-            snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
+            osCommand += CPLSPrintf(" NOLOGGING "
               "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
               "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
-              szCommand2, pszGeometryName, pszGeometryName);
+              pszGeometryName, pszGeometryName);
         }
 
-        if( oStatement.Execute( szCommand ) != CE_None )
+        if( oStatement.Execute( osCommand ) != CE_None )
         {
             CPLFree( pszSafeLayerName );
             return nullptr;

@@ -1215,7 +1215,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion( int nXOff, int nYOff,
 
         for( int i = 0; i < psOptions->nInputSpectralBands; i++ )
         {
-            char szBuffer[64] = {};
+            char szBuffer[32] = {};
             int nRet = CPLPrintPointer(
                 szBuffer,
                 pSpectralBuffer +

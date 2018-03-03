@@ -2326,7 +2326,7 @@ static int NITFFormatRPC00BCoefficient( char* pszBuffer, double dfVal,
         szTemp[11] = szTemp[12];
     }
     szTemp[12] = '\0';
-    snprintf(pszBuffer, 12 + 1, "%s", szTemp);
+    memcpy(pszBuffer, szTemp, strlen(szTemp)+1);
     return TRUE;
 }
 

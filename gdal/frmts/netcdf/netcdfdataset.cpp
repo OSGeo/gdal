@@ -2220,13 +2220,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
         int status = nc_inq_varname(cdfid, nVarId, szVarName);
         NCDF_ERR(status);
     }
-    char szTemp[NC_MAX_NAME + 1];
-    snprintf(szTemp, sizeof(szTemp), "%s#%s", szVarName, CF_GRD_MAPPING);
 
-    const char *pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+    CPLString osTemp(szVarName);
+    osTemp += "#";
+    osTemp += CF_GRD_MAPPING;
+
+    const char *pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
     if( pszValue )
     {
-        snprintf(szGridMappingName, sizeof(szGridMappingName), "%s", szTemp);
+        snprintf(szGridMappingName, sizeof(szGridMappingName), "%s", osTemp.c_str());
         snprintf(szGridMappingValue, sizeof(szGridMappingValue),
                  "%s", pszValue);
     }
@@ -2240,16 +2242,18 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
         // Look for GDAL spatial_ref and GeoTransform within grid_mapping.
         CPLDebug("GDAL_netCDF", "got grid_mapping %s", szGridMappingValue);
-        snprintf(szTemp, sizeof(szTemp),
-                 "%s#%s", szGridMappingValue, NCDF_SPATIAL_REF);
+        osTemp = szGridMappingValue;
+        osTemp += "#";
+        osTemp += NCDF_SPATIAL_REF;
 
-        pszWKT = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+        pszWKT = CSLFetchNameValue(poDS->papszMetadata, osTemp);
 
         if( pszWKT != nullptr )
         {
-            snprintf(szTemp, sizeof(szTemp),
-                     "%s#%s", szGridMappingValue, NCDF_GEOTRANSFORM);
-            pszGeoTransform = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+            osTemp = szGridMappingValue;
+            osTemp += "#";
+            osTemp += NCDF_GEOTRANSFORM;
+            pszGeoTransform = CSLFetchNameValue(poDS->papszMetadata, osTemp);
         }
     }
 
@@ -2316,18 +2320,19 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
     if( !EQUAL(szGridMappingName, "") )
     {
-
-        snprintf(szTemp, sizeof(szTemp),
-                 "%s#%s", szGridMappingValue, CF_GRD_MAPPING_NAME);
-        pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+        osTemp = szGridMappingValue;
+        osTemp += "#";
+        osTemp += CF_GRD_MAPPING_NAME;
+        pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
 
         // Some files such as http://www.ecad.eu/download/ensembles/data/Grid_0.44deg_rot/tg_0.44deg_rot_v16.0.nc.gz
         // lack an explicit projection_var:grid_mapping_name attribute
         if( pszValue == nullptr )
         {
-            snprintf(szTemp, sizeof(szTemp),
-                     "%s#%s", szGridMappingValue, CF_PP_GRID_NORTH_POLE_LONGITUDE);
-            if( CSLFetchNameValue(poDS->papszMetadata, szTemp) != nullptr )
+            osTemp = szGridMappingValue;
+            osTemp += "#";
+            osTemp += CF_PP_GRID_NORTH_POLE_LONGITUDE;
+            if( CSLFetchNameValue(poDS->papszMetadata, osTemp) != nullptr )
             {
                 pszValue = "rotated_latitude_longitude";
             }
@@ -2910,10 +2915,11 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                     poDS->FetchCopyParm(szGridMappingValue,
                                         CF_PP_PERSPECTIVE_POINT_HEIGHT, 35785831.0);
 
-                snprintf(szTemp, sizeof(szTemp), "%s#%s", szGridMappingValue,
-                         CF_PP_SWEEP_ANGLE_AXIS);
+                osTemp = szGridMappingValue;
+                osTemp += "#";
+                osTemp += CF_PP_SWEEP_ANGLE_AXIS;
                 const char *pszSweepAxisAngle =
-                    CSLFetchNameValue(papszMetadata, szTemp);
+                    CSLFetchNameValue(papszMetadata, osTemp);
 
                 dfFalseEasting = poDS->FetchCopyParm(szGridMappingValue,
                                                      CF_PP_FALSE_EASTING, 0.0);
@@ -3050,15 +3056,15 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             // Check units for x and y.
             if( oSRS.IsProjected() )
             {
-                snprintf(szTemp, sizeof(szTemp),
-                         "%s#units", poDS->papszDimName[nXDimID]);
+                osTemp = poDS->papszDimName[nXDimID];
+                osTemp += "#units";
                 const char *pszUnitsX =
-                    CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    CSLFetchNameValue(poDS->papszMetadata, osTemp);
 
-                snprintf(szTemp, sizeof(szTemp),
-                         "%s#units", poDS->papszDimName[nYDimID]);
+                osTemp = poDS->papszDimName[nYDimID];
+                osTemp += "#units";
                 const char *pszUnitsY =
-                    CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    CSLFetchNameValue(poDS->papszMetadata, osTemp);
 
                 const char *pszUnits = nullptr;
 
@@ -3452,10 +3458,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                 {
                     // CPLDebug("GDAL_netCDF",
                     //           "looking for geotransform corners");
-
-                    snprintf(szTemp, sizeof(szTemp),
-                             "%s#Northernmost_Northing", szGridMappingValue);
-                    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    osTemp = szGridMappingValue;
+                    osTemp += "#Northernmost_Northing";
+                    pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
                     bool bGotNN = false;
                     double dfNN = 0.0;
                     if( pszValue != nullptr )
@@ -3464,9 +3469,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                         bGotNN = true;
                     }
 
-                    snprintf(szTemp, sizeof(szTemp),
-                             "%s#Southernmost_Northing", szGridMappingValue);
-                    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    osTemp = szGridMappingValue;
+                    osTemp += "#Southernmost_Northing";
+                    pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
                     bool bGotSN = false;
                     double dfSN = 0.0;
                     if( pszValue != nullptr )
@@ -3475,9 +3480,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                         bGotSN = true;
                     }
 
-                    snprintf(szTemp, sizeof(szTemp), "%s#Easternmost_Easting",
-                             szGridMappingValue);
-                    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    osTemp = szGridMappingValue;
+                    osTemp += "#Easternmost_Easting";
+                    pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
                     bool bGotEE = false;
                     double dfEE = 0.0;
                     if( pszValue != nullptr )
@@ -3486,9 +3491,9 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
                         bGotEE = true;
                     }
 
-                    snprintf(szTemp, sizeof(szTemp), "%s#Westernmost_Easting",
-                             szGridMappingValue);
-                    pszValue = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+                    osTemp = szGridMappingValue;
+                    osTemp += "#Westernmost_Easting";
+                    pszValue = CSLFetchNameValue(poDS->papszMetadata, osTemp);
                     bool bGotWE = false;
                     double dfWE = 0.0;
                     if( pszValue != nullptr )
@@ -3527,15 +3532,16 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
 
     // Some netCDF files have a srid attribute (#6613) like
     // urn:ogc:def:crs:EPSG::6931
-    snprintf(szTemp, sizeof(szTemp), "%s#%s", szGridMappingValue, "srid");
-    const char *pszSRID = CSLFetchNameValue(poDS->papszMetadata, szTemp);
+    osTemp = szGridMappingValue;
+    osTemp += "#srid";
+    const char *pszSRID = CSLFetchNameValue(poDS->papszMetadata, osTemp);
     if( pszSRID != nullptr )
     {
         oSRS.Clear();
         if( oSRS.SetFromUserInput(pszSRID) == OGRERR_NONE )
         {
             char *pszWKTExport = nullptr;
-            CPLDebug("GDAL_netCDF", "Got SRS from %s", szTemp);
+            CPLDebug("GDAL_netCDF", "Got SRS from %s", osTemp.c_str());
             oSRS.exportToWkt(&pszWKTExport);
             SetProjection(pszWKTExport);
             CPLFree(pszWKTExport);
@@ -7248,11 +7254,13 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 szVarName[0] = '\0';
                 CPL_IGNORE_RET_VAL(
                     nc_inq_varname(poDS->cdfid, nFirstVarId, szVarName));
-                char szTemp[NC_MAX_NAME + 1];
-                snprintf(szTemp, sizeof(szTemp),
-                         "%s#%s", szVarName, CF_GRD_MAPPING);
+
+                CPLString osTemp;
+                osTemp = szVarName;
+                osTemp += "#";
+                osTemp += CF_GRD_MAPPING;
                 CPLString osGridMapping =
-                    CSLFetchNameValueDef(poDS->papszMetadata, szTemp, "");
+                    CSLFetchNameValueDef(poDS->papszMetadata, osTemp, "");
 
                 CSLDestroy(poDS->papszMetadata);
                 poDS->papszMetadata = papszMetadataBackup;

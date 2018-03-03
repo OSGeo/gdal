@@ -290,7 +290,7 @@ char *GXFGetMapProjectionAsOGCWKT( GXFHandle hGXF )
 {
     GXFInfo_t	*psGXF = (GXFInfo_t *) hGXF;
     char	**papszMethods = NULL;
-    char	szWKT[1024];
+    char	szWKT[1024+32];
     char	szGCS[512];
     char	szProjection[512];
 

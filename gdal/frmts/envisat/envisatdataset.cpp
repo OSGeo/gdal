@@ -773,7 +773,7 @@ void EnvisatDataset::CollectADSMetadata()
                     if ( CE_None == EnvisatFile_GetFieldAsString(pszRecord, nDSRSize,
                                                                  pField, szValue, sizeof(szValue)) )
                     {
-                        char szKey[128];
+                        char szKey[256];
                         if (nNumDsr == 1)
                             snprintf( szKey, sizeof(szKey), "%s_%s", szPrefix, pField->szName);
                         else
