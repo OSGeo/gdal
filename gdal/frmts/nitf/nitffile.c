@@ -1252,7 +1252,8 @@ static int NITFWriteTRE( VSILFILE* fp,
         *pnOffset += 3;
     }
 
-    if (nOldOffset + 11 + nTREDataSize > 99999 || nTREDataSize > 99999)
+    if (nOldOffset + 11 + nTREDataSize > 99999 ||
+        nTREDataSize < 0 || nTREDataSize > 99999)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too big TRE to be written");
         return FALSE;
@@ -1265,7 +1266,8 @@ static int NITFWriteTRE( VSILFILE* fp,
 /*      Create TRE prefix.                                              */
 /* -------------------------------------------------------------------- */
     snprintf( szTemp, sizeof(szTemp), "%-6s%05d",
-             pszTREName, nTREDataSize );
+              pszTREName,
+              nTREDataSize );
     bOK &= VSIFSeekL(fp, nOffsetUDIDL + 10 + nOldOffset, SEEK_SET) == 0;
     bOK &= VSIFWriteL(szTemp, 11, 1, fp) == 1;
     bOK &= (int)VSIFWriteL(pabyTREData, 1, nTREDataSize, fp) == nTREDataSize;
@@ -1399,7 +1401,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
             if( pszValue == NULL )
                 pszValue = "";
 
-            if (strlen(pszValue) > (size_t)iSize)
+            if( iSize - (int)strlen(pszValue) < 0 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Too much data for %s. Got %d bytes, max allowed is %d",
@@ -1411,7 +1413,7 @@ static int NITFWriteBLOCKA( VSILFILE* fp, vsi_l_offset nOffsetUDIDL,
             memset( szBLOCKA + iStart, ' ', iSize );
             /* unsigned is always >= 0 */
             /* memcpy( szBLOCKA + iStart + MAX((size_t)0,iSize-strlen(pszValue)), */
-            memcpy( szBLOCKA + iStart + iSize-strlen(pszValue),
+            memcpy( szBLOCKA + iStart + (iSize - (int)strlen(pszValue)),
                     pszValue, strlen(pszValue) );
         }
 

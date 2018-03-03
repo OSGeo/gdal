@@ -1523,12 +1523,12 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         if (iLine == numLines-1)
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine,
+            memcpy((char*)psTxt->pszText+(iLine*80), pszLine,
                     MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine, MIN(nLen, 80));
+            memcpy((char*)psTxt->pszText+(iLine*80), pszLine, MIN(nLen, 80));
         }
 
         psInfo->iCurItem++;
@@ -1741,12 +1741,12 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         if (iLine == numLines-1)
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine,
+            memcpy((char*)psTxt->pszText+(iLine*80), pszLine,
                     MIN( (int)nLen, (psTxt->numChars - (iLine*80)) ) );
         }
         else
         {
-            strncpy((char*)psTxt->pszText+(iLine*80), pszLine, MIN(nLen, 80));
+            memcpy((char*)psTxt->pszText+(iLine*80), pszLine, MIN(nLen, 80));
         }
 
         psInfo->iCurItem++;

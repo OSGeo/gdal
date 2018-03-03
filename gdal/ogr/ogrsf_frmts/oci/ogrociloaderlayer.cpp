@@ -493,11 +493,11 @@ OGRErr OGROCILoaderLayer::WriteFeatureVariableMode( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Update the line's length, and write to disk.                    */
 /* -------------------------------------------------------------------- */
-    char szLength[9];
+    char szLength[9] = {};
     size_t  nStringLen = strlen(oLine.GetString());
 
     snprintf( szLength, sizeof(szLength), "%08d", (int) (nStringLen-8) );
-    strncpy( oLine.GetString(), szLength, 8 );
+    memcpy( oLine.GetString(), szLength, 8 );
 
     if( VSIFWrite( oLine.GetString(), 1, nStringLen, fpData ) != nStringLen )
     {

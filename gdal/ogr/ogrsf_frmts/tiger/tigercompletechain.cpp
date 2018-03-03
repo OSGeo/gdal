@@ -786,7 +786,7 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
             WriteField( poFeature, "TLID", szRecord, 6, 15, 'R', 'N' );
 
             CPLsnprintf( szTemp, sizeof(szTemp), "%3d", nRTSQ );
-            strncpy( ((char *)szRecord) + 15, szTemp, 4 );
+            memcpy( ((char *)szRecord) + 15, szTemp, 4 );
 
             for( int i = 0; i < 10; i++ )
             {

@@ -2669,7 +2669,7 @@ OGRErr OGRSpatialReference::ImportFromESRIStatePlaneWKT(
     }
     if( searchCode > 0 )
     {
-        char codeS[10] = {};
+        char codeS[20] = {};
         snprintf(codeS, sizeof(codeS), "%d", (int)searchCode);
         return importFromDict( "esri_StatePlane_extra.wkt", codeS);
     }
