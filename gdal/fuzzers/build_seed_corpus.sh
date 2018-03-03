@@ -117,6 +117,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat >> aea_compres
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea_compressed.tar >/dev/null
 rm aea_compressed.tar
 
+echo "Building ehdr_fuzzer_seed_corpus.zip"
+rm -f $OUT/ehdr_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > ehdr11.tar
+printf "***NEWFILE***:my.hdr\n" >> ehdr11.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr >> ehdr11.tar
+printf "***NEWFILE***:my.dat\n" >> ehdr11.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt >> ehdr11.tar
+zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
+rm ehdr11.tar
+
 echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
