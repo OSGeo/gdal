@@ -152,7 +152,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                                     psE00->eCoverType,
                                     psSec->eType,
                                     psE00->psDBCSInfo);
-              if( hFile && poSRS == nullptr )
+              if( hFile && poSRS == NULL )
               {
                   char **papszPRJ = AVCE00ReadNextPrj( hFile );
 
@@ -162,7 +162,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                       CPLError( CE_Warning, CPLE_AppDefined,
                                 "Failed to parse PRJ section, ignoring." );
                       delete poSRS;
-                      poSRS = nullptr;
+                      poSRS = NULL;
                   }
                   AVCE00ReadClose( hFile );
               }
@@ -224,18 +224,24 @@ OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
     for( int iSection = 0; iSection < psE00->numSections; iSection++ )
     {
         AVCE00Section *psSec = psE00->pasSections + iSection;
-        if (psSec->eType == AVCFilePRJ)
+        if (psSec->eType == AVCFilePRJ )
         {
             AVCE00ReadGotoSectionE00(psE00, psSec, 0);
-            char **pszPRJ
-                = static_cast<char **>( AVCE00ReadNextObjectE00(psE00) );
-            poSRS = new OGRSpatialReference();
-            if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
+            void* obj = AVCE00ReadNextObjectE00(psE00);
+            if( psE00->hParseInfo->eFileType == AVCFilePRJ )
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to parse PRJ section, ignoring." );
-                delete poSRS;
-                poSRS = nullptr;
+                char **pszPRJ = static_cast<char **>(obj);
+                if( pszPRJ )
+                {
+                    poSRS = new OGRSpatialReference();
+                    if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
+                    {
+                        CPLError( CE_Warning, CPLE_AppDefined,
+                                "Failed to parse PRJ section, ignoring." );
+                        delete poSRS;
+                        poSRS = nullptr;
+                    }
+                }
             }
             break;
         }
