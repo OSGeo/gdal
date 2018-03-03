@@ -194,6 +194,8 @@ OGRFeature *OGRAVCE00Layer::GetFeature( GIntBig nFID )
 
     if( pFeature == nullptr )
         return nullptr;
+    if( eSectionType != psRead->hParseInfo->eFileType )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Translate the feature.                                          */
