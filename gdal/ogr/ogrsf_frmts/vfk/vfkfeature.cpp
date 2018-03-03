@@ -559,8 +559,12 @@ bool VFKFeature::LoadGeometryPoint()
     if (i_idxY < 0 || i_idxX < 0)
         return false;
 
-    const double x = -1.0 * GetProperty(i_idxY)->GetValueD();
-    const double y = -1.0 * GetProperty(i_idxX)->GetValueD();
+    auto propertyY = GetProperty(i_idxY);
+    auto propertyX = GetProperty(i_idxX);
+    if( !propertyY || !propertyX )
+        return false;
+    const double x = -1.0 * propertyY->GetValueD();
+    const double y = -1.0 * propertyX->GetValueD();
     OGRPoint pt(x, y);
     SetGeometry(&pt);
 
@@ -591,8 +595,15 @@ bool VFKFeature::LoadGeometryLineStringSBP()
     OGRLineString OGRLine;
     while( true )
     {
-        const int id = poLine->GetProperty(idxBp_Id)->GetValueI();
-        const int ipcb = poLine->GetProperty(idxPCB)->GetValueI();
+        auto property_idxBp_Id = poLine->GetProperty(idxBp_Id);
+        if( !property_idxBp_Id )
+            break;
+        auto property_idxPCB = poLine->GetProperty(idxPCB);
+        if( !property_idxPCB )
+            break;
+
+        const int id = property_idxBp_Id->GetValueI();
+        const int ipcb = property_idxPCB->GetValueI();
         if (OGRLine.getNumPoints() > 0 && ipcb == 1)
         {
             m_poDataBlock->GetPreviousFeature(); /* push back */
@@ -640,7 +651,10 @@ bool VFKFeature::LoadGeometryLineStringHP()
     if (idxId < 0 || idxHp_Id < 0)
         return false;
 
-    const int id = GetProperty(idxId)->GetValueI();
+    auto property = GetProperty(idxId);
+    if( !property )
+        return false;
+    const int id = property->GetValueI();
     VFKFeature *poLine = poDataBlockLines->GetFeature(idxHp_Id, id);
     if (!poLine || !poLine->GetGeometry())
         return false;
@@ -667,19 +681,20 @@ OGRErr VFKFeature::LoadProperties( OGRFeature *poFeature )
 {
     for( int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++ )
     {
-        if( GetProperty(iField)->IsNull() )
+        auto property = GetProperty(iField);
+        if( !property || property->IsNull() )
             continue;
 
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         if (fType == OFTInteger)
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueI());
+                                property->GetValueI());
         else if (fType == OFTReal)
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueD());
+                                property->GetValueD());
         else
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueS());
+                                property->GetValueS());
     }
 
     return OGRERR_NONE;

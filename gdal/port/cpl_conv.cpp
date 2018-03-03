@@ -250,7 +250,7 @@ void * CPLRealloc( void * pData, size_t nNewSize )
     {
         if( nNewSize > 0 && nNewSize < 2000 )
         {
-            char szSmallMsg[60] = {};
+            char szSmallMsg[80] = {};
 
             snprintf(szSmallMsg, sizeof(szSmallMsg),
                      "CPLRealloc(): Out of memory allocating %ld bytes.",

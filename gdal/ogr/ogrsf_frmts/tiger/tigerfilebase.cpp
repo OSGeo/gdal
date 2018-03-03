@@ -321,7 +321,7 @@ bool TigerFileBase::WriteField( OGRFeature *poFeature, const char *pszField,
         return false;
     }
 
-    strncpy( pachRecord + nStart - 1, szValue, nEnd - nStart + 1 );
+    memcpy( pachRecord + nStart - 1, szValue, nEnd - nStart + 1 );
 
     return true;
 }
@@ -340,11 +340,11 @@ bool TigerFileBase::WritePoint( char *pachRecord, int nStart,
     }
     else
     {
-        char szTemp[20];
+        char szTemp[20] = { 0 };
         snprintf( szTemp, sizeof(szTemp), "%+10d%+9d",
                  (int) floor(dfX * 1000000 + 0.5),
                  (int) floor(dfY * 1000000 + 0.5) );
-        strncpy( pachRecord + nStart - 1, szTemp, 19 );
+        memcpy( pachRecord + nStart - 1, szTemp, 19 );
     }
 
     return true;
@@ -371,9 +371,9 @@ bool TigerFileBase::WriteRecord( char *pachRecord, int nRecLen,
     if ( (poDS->GetVersion() >= TIGER_2002) ||
          (!EQUAL(pszType, "5")) )
     {
-        char szVersion[5];
+        char szVersion[5] = { 0 };
         snprintf( szVersion, sizeof(szVersion), "%04d", poDS->GetVersionCode() );
-        strncpy( pachRecord + 1, szVersion, 4 );
+        memcpy( pachRecord + 1, szVersion, 4 );
     }
 
     VSIFWriteL( pachRecord, nRecLen, 1, fp );

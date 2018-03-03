@@ -110,7 +110,7 @@ GTMWaypointLayer::~GTMWaypointLayer() {}
 /************************************************************************/
 void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float altitude )
 {
-    char psNameField[] = "          ";
+    char psNameField[] = "          "; // 10 spaces
     char* pszcomment = nullptr;
     int icon = 48;
     int date = 0;
@@ -180,7 +180,7 @@ void GTMWaypointLayer::WriteFeatureAttributes( OGRFeature *poFeature, float alti
     void* pBuffer = CPLMalloc(bufferSize);
     void* pBufferAux = pBuffer;
     /* Write waypoint name to buffer */
-    strncpy((char*)pBufferAux, psNameField, 10);
+    memcpy((char*)pBufferAux, psNameField, 10);
 
     /* Write waypoint string comment size to buffer */
     pBufferAux = (char*)pBuffer+10;
