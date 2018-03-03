@@ -1260,7 +1260,7 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
     }
 
     int iChar = 1;
-    char **papszReturn = nullptr;
+    CPLStringList aosList;
     while( pszInput[iChar] != '}' && pszInput[iChar] != '\0' )
     {
         // Find start of token.
@@ -1284,12 +1284,12 @@ char **ENVIDataset::SplitList( const char *pszCleanInput )
             iFEnd--;
 
         pszInput[iFEnd + 1] = '\0';
-        papszReturn = CSLAddString(papszReturn, pszInput + iFStart);
+        aosList.AddString(pszInput + iFStart);
     }
 
     CPLFree(pszInput);
 
-    return papszReturn;
+    return aosList.StealList();
 }
 
 /************************************************************************/
@@ -1858,67 +1858,64 @@ double ENVIDataset::byteSwapDouble(double swapMe)
 bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
 
 {
-    CPLReadLineL(fpHdr);
+    CPLReadLine2L(fpHdr, 10000, nullptr);
 
     // Start forming sets of name/value pairs.
     while( true )
     {
-        const char *pszNewLine = CPLReadLineL(fpHdr);
+        const char *pszNewLine = CPLReadLine2L(fpHdr, 10000, nullptr);
         if( pszNewLine == nullptr )
             break;
 
         if( strstr(pszNewLine, "=") == nullptr )
             continue;
 
-        char *pszWorkingLine = CPLStrdup(pszNewLine);
+        CPLString osWorkingLine(pszNewLine);
 
         // Collect additional lines if we have open sqiggly bracket.
-        if( strstr(pszWorkingLine, "{") != nullptr &&
-            strstr(pszWorkingLine, "}") == nullptr )
+        if( osWorkingLine.find("{") != std::string::npos &&
+            osWorkingLine.find("}") == std::string::npos )
         {
             do {
-                pszNewLine = CPLReadLineL(fpHdr);
+                pszNewLine = CPLReadLine2L(fpHdr, 10000, nullptr);
                 if( pszNewLine )
                 {
-                    pszWorkingLine = static_cast<char *>(
-                        CPLRealloc(pszWorkingLine, strlen(pszWorkingLine) +
-                                                       strlen(pszNewLine) + 1));
-                    strcat(pszWorkingLine, pszNewLine);
+                    osWorkingLine += pszNewLine;
                 }
+                if( osWorkingLine.size() > 10 * 1024 * 1024 )
+                    return false;
             } while( pszNewLine != nullptr && strstr(pszNewLine, "}") == nullptr );
         }
 
         // Try to break input into name and value portions.  Trim whitespace.
-        int iEqual = 0;
+        size_t iEqual = osWorkingLine.find("=");
 
-        for( ;
-             pszWorkingLine[iEqual] != '\0' && pszWorkingLine[iEqual] != '=';
-             iEqual++ ) {}
-
-        if( pszWorkingLine[iEqual] == '=' )
+        if( iEqual != std::string::npos )
         {
-            const char *pszValue = pszWorkingLine + iEqual + 1;
+            const char *pszValue = osWorkingLine + iEqual + 1;
             while( *pszValue == ' ' || *pszValue == '\t' )
                 pszValue++;
 
-            pszWorkingLine[iEqual--] = '\0';
+            osWorkingLine.resize(iEqual);
+            iEqual --;
             while( iEqual > 0
-                   && (pszWorkingLine[iEqual] == ' ' ||
-                       pszWorkingLine[iEqual] == '\t') )
-                pszWorkingLine[iEqual--] = '\0';
+                   && (osWorkingLine[iEqual] == ' ' ||
+                       osWorkingLine[iEqual] == '\t') )
+            {
+                osWorkingLine.resize(iEqual);
+                iEqual --;
+            }
 
             // Convert spaces in the name to underscores.
-            for( int i = 0; pszWorkingLine[i] != '\0'; i++ )
+            for( int i = 0; osWorkingLine[i] != '\0'; i++ )
             {
-                if( pszWorkingLine[i] == ' ' )
-                    pszWorkingLine[i] = '_';
+                if( osWorkingLine[i] == ' ' )
+                    osWorkingLine[i] = '_';
             }
 
             papszHeader =
-                CSLSetNameValue(papszHeader, pszWorkingLine, pszValue);
+                CSLSetNameValue(papszHeader, osWorkingLine, pszValue);
         }
-
-        CPLFree(pszWorkingLine);
     }
 
     return true;
