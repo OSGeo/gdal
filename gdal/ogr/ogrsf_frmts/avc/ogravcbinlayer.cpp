@@ -139,6 +139,8 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
                                psInfo->eCoverType,
                                m_psSection->eType,
                                psInfo->psDBCSInfo);
+        if( hFile == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
