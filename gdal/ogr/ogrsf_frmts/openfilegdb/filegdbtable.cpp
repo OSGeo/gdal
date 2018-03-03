@@ -1373,8 +1373,8 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField)
 {
     // 25569: Number of days between 1899/12/30 00:00:00 and 1970/01/01 00:00:00
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
-    if( dfSeconds < std::numeric_limits<GIntBig>::min() ||
-        dfSeconds > std::numeric_limits<GIntBig>::max() )
+    if( dfSeconds < static_cast<double>(std::numeric_limits<GIntBig>::min())+1000 ||
+        dfSeconds > static_cast<double>(std::numeric_limits<GIntBig>::max())-1000 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FileGDBDoubleDateToOGRDate: Invalid days: %lf", dfVal);

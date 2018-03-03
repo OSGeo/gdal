@@ -884,7 +884,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
     poMEMDS = MEMDataset::Create( "", nDestXOffVirtual + nBufXSize,
                                   nDestYOffVirtual + nBufYSize, 0,
                                   eDTMem, nullptr );
-    char szBuffer[64] = { '\0' };
+    char szBuffer[32] = { '\0' };
     int nRet =
         CPLPrintPointer(
             szBuffer, static_cast<GByte*>(pDataMem)
@@ -1348,7 +1348,7 @@ CPLErr GDALDataset::RasterIOResampled(
             CPLMalloc( nBandCount * sizeof(GDALRasterBand*)) );
     for(int i=0;i<nBandCount;i++)
     {
-        char szBuffer[64] = { '\0' };
+        char szBuffer[32] = { '\0' };
         int nRet = CPLPrintPointer(
             szBuffer,
             static_cast<GByte*>(pData) - nPixelSpace * nDestXOffVirtual

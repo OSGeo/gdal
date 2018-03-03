@@ -1009,8 +1009,8 @@ HFAField::ExtractInstValue( const char *pszField, int nIndexValue,
           // TODO(schwehr): What is 4?
           memcpy(&fNumber, pabyData + nIndexValue * 4, 4);
           HFAStandard(4, &fNumber);
-          if( fNumber > static_cast<int>(std::numeric_limits<int>::max()) ||
-              fNumber < static_cast<int>(std::numeric_limits<int>::min()) ||
+          if( static_cast<double>(fNumber) > std::numeric_limits<int>::max() ||
+              static_cast<double>(fNumber) < std::numeric_limits<int>::min() ||
               CPLIsNan(fNumber) )
           {
               CPLError(CE_Failure, CPLE_AppDefined,

@@ -312,7 +312,7 @@ typedef size_t TIFFIOSize_t;
 #define _TIFF_off_t off_t
 #endif
 
-#if defined(__has_attribute)
+#if defined(__has_attribute) && defined(__clang__)
 #if __has_attribute(no_sanitize)
 #define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
 #else

@@ -4570,7 +4570,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 
 		/* Search for Merged field name */
 		/* ---------------------------- */
-		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "MergedFieldName=\"",
+		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%.480s%s", "MergedFieldName=\"",
 			name, "\"\n");
 		metaptrs[0] = strstr(metaptrs[0], utlstr);
 
@@ -4579,7 +4579,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		/* ----------------------------------- */
 		if (metaptrs[0] == NULL)
 		{
-		    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "OBJECT=\"", name, "\"\n");
+		    snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%.480s%s", "OBJECT=\"", name, "\"\n");
 		    metaptrs[0] = strstr(oldmetaptr, utlstr);
 		}
 

@@ -37,12 +37,12 @@
 #define FMT_DOUBLE  "%-17.15g"
 #define FMT_SHORT   "%-11hu"
 
-static void DefaultPrint(char *string, void *aux);
+static int DefaultPrint(char *string, void *aux);
 static void PrintKey(GeoKey *key, GTIFPrintMethod print,void *aux);
 static void PrintGeoTags(GTIF *gtif,GTIFReadMethod scan,void *aux);
 static void PrintTag(int tag, int nrows, double *data, int ncols,
 					GTIFPrintMethod print,void *aux);
-static void DefaultRead(char *string, void *aux);
+static int DefaultRead(char *string, void *aux);
 static int  ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux);
 static int  ReadTag(GTIF *gt,GTIFReadMethod scan,void *aux);
 
@@ -62,7 +62,7 @@ void GTIFPrint(GTIF *gtif, GTIFPrintMethod print,void *aux)
     GeoKey *key = gtif->gt_keys;
     char message[1024];
 
-    if (!print) print = (GTIFPrintMethod) &DefaultPrint;
+    if (!print) print = &DefaultPrint;
     if (!aux) aux=stdout;
 
     sprintf(message,FMT_GEOTIFF "\n");
@@ -238,10 +238,11 @@ static void PrintKey(GeoKey *key, GTIFPrintMethod print, void *aux)
     }
 }
 
-static void DefaultPrint(char *string, void *aux)
+static int DefaultPrint(char *string, void *aux)
 {
     /* Pretty boring */
     fprintf((FILE *)aux,"%s",string);
+    return 1;
 }
 
 
@@ -264,7 +265,7 @@ int GTIFImport(GTIF *gtif, GTIFReadMethod scan,void *aux)
     /* Caution: if you change this size, also change it in DefaultRead */
     char message[1024];
 
-    if (!scan) scan = (GTIFReadMethod) &DefaultRead;
+    if (!scan) scan = &DefaultRead;
     if (!aux) aux=stdin;
 
     scan(message,aux);
@@ -503,7 +504,7 @@ static int ReadKey(GTIF *gt, GTIFReadMethod scan, void *aux)
 }
 
 
-static void DefaultRead(char *string, void *aux)
+static int DefaultRead(char *string, void *aux)
 {
     /* Pretty boring */
     int num_read;
@@ -512,4 +513,5 @@ static void DefaultRead(char *string, void *aux)
     if (num_read != 0) {
       fprintf(stderr, "geo_print.c DefaultRead failed to read anything.\n");
     }
+    return 1;
 }
