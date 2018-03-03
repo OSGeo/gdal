@@ -356,5 +356,16 @@ rm -f $OUT/avce00_fuzzer_seed_corpus.zip
 zip -r $OUT/avce00_fuzzer_seed_corpus.zip *.e00 >/dev/null
 cd $OLDPWD
 
+echo "Building gml_fuzzer_seed_corpus.zip"
+rm -f $OUT/gml_fuzzer_seed_corpus.zip
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/archsites_gml.tar
+printf "***NEWFILE***:test.gml\n" >> $CUR_DIR/archsites_gml.tar
+cat $(dirname $0)/../../autotest/ogr/data/archsites.gml >> $CUR_DIR/archsites_gml.tar
+printf "***NEWFILE***:test.xsd\n" >> $CUR_DIR/archsites_gml.tar
+cat $(dirname $0)/../../autotest/ogr/data/archsites.xsd >> $CUR_DIR/archsites_gml.tar
+zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
+rm archsites_gml.tar
+
+
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT
