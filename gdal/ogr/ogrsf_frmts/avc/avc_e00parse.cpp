@@ -1926,14 +1926,13 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
     {
         /*-------------------------------------------------------------
          * Read an attribute field definition
-         * If field index is -1, then we ignore this line... we do not
-         * even count it in psInfo->iCurItem.
+         * If field index is -1, then we ignore this line...
          *------------------------------------------------------------*/
         int nIndex;
 
         nIndex = AVCE00Str2Int(pszLine + 65, 4);
 
-        if (nIndex > 0 && psInfo->nCurObjectId >= psTableDef->numFields)
+        if (nIndex > 0 &&psInfo->nCurObjectId >= psTableDef->numFields)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Error parsing E00 INFO Table Header: "
@@ -1947,7 +1946,7 @@ AVCTableDef   *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
         if (nIndex > 0)
         {
             AVCFieldInfo *psDef;
-            psDef = &(psTableDef->pasFieldDef[psInfo->iCurItem]);
+            psDef = &(psTableDef->pasFieldDef[psInfo->nCurObjectId]);
 
             psDef->nIndex   = (GInt16)nIndex;
 
