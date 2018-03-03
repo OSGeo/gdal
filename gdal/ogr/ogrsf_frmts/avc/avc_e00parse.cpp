@@ -1675,7 +1675,7 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         if (psInfo->iCurItem == 2 || psInfo->iCurItem == 5)
             numValPerLine = 6;
 
-        for(i=0; i<numValPerLine; i++)
+        for(i=0; i<numValPerLine && nLen >= static_cast<size_t>(i)*10+10; i++)
             pValue[i] = (GInt16)AVCE00Str2Int(pszLine + i*10, 10);
 
         psInfo->iCurItem++;
