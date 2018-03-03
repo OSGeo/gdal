@@ -35,6 +35,8 @@
 
 CPL_CVSID("$Id$")
 
+constexpr int SERIAL_ACCESS_FID = INT_MIN;
+
 /************************************************************************/
 /*                           OGRAVCBinLayer()                           */
 /************************************************************************/
@@ -140,12 +142,12 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the raw feature - the -3 fid is a special flag             */
+/*      Read the raw feature - the SERIAL_ACCESS_FID fid is a special flag */
 /*      indicating serial access.                                       */
 /* -------------------------------------------------------------------- */
     void *pFeature = nullptr;
 
-    if( nFID == -3 )
+    if( nFID == SERIAL_ACCESS_FID )
     {
         while( (pFeature = AVCBinReadNextObject( hFile )) != nullptr
                && !MatchesSpatialFilter( pFeature ) )
@@ -175,7 +177,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     if( m_psSection->eType == AVCFileLAB )
     {
-        if( nFID == -3 )
+        if( nFID == SERIAL_ACCESS_FID )
             poFeature->SetFID( nNextFID++ );
         else
             poFeature->SetFID( nFID );
@@ -207,14 +209,14 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
     if( bNeedReset )
         ResetReading();
 
-    OGRFeature *poFeature = GetFeature( -3 );
+    OGRFeature *poFeature = GetFeature( SERIAL_ACCESS_FID );
 
     // Skip universe polygon.
     if( poFeature != nullptr && poFeature->GetFID() == 1
         && m_psSection->eType == AVCFilePAL )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
     while( poFeature != nullptr
@@ -223,7 +225,7 @@ OGRFeature *OGRAVCBinLayer::GetNextFeature()
                || !FilterGeometry( poFeature->GetGeometryRef() ) ) )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
     if( poFeature == nullptr )

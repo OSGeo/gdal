@@ -637,25 +637,36 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex )
      *----------------------------------------------------------------*/
     if( bIndexed )
     {
-        int nIndexOffset;
+        GIntBig nIndexOffsetBig;
 
         if (psFile->eCoverType == AVCCoverPC)
-            nIndexOffset = 356 + (iObjIndex-1)*8;
+            nIndexOffsetBig = 356 + static_cast<GIntBig>(iObjIndex-1)*8;
         else
-            nIndexOffset = 100 + (iObjIndex-1)*8;
+            nIndexOffsetBig = 100 + static_cast<GIntBig>(iObjIndex-1)*8;
+        if( nIndexOffsetBig < INT_MIN || nIndexOffsetBig > INT_MAX )
+            return nullptr;
 
+        const int nIndexOffset = static_cast<int>(nIndexOffsetBig);
         AVCRawBinFSeek( psFile->psIndexFile, nIndexOffset, SEEK_SET );
         if( AVCRawBinEOF( psFile->psIndexFile ) )
             return nullptr;
 
         nObjectOffset = AVCRawBinReadInt32( psFile->psIndexFile );
+        if( nObjectOffset < INT_MIN / 2 || nObjectOffset > (INT_MAX - 256)/ 2 )
+            return nullptr;
         nObjectOffset *= 2;
 
         if (psFile->eCoverType == AVCCoverPC)
             nObjectOffset += 256;
     }
     else
-        nObjectOffset = nRecordStart + nRecordSize * (iObjIndex-1);
+    {
+        GIntBig nObjectOffsetBig = nRecordStart +
+            nRecordSize * static_cast<GIntBig>(iObjIndex-1);
+        if( nObjectOffsetBig < INT_MIN || nObjectOffsetBig > INT_MAX )
+            return nullptr;
+        nObjectOffset = static_cast<int>(nObjectOffsetBig);
+    }
 
     /*-----------------------------------------------------------------
      * Seek to the start of the object in the data file.

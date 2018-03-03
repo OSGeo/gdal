@@ -66,8 +66,6 @@ class OGRAVCLayer : public OGRLayer
 
     OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
 
-    virtual OGRSpatialReference *GetSpatialRef() override;
-
     virtual int         TestCapability( const char * ) override;
 };
 
