@@ -1394,7 +1394,9 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     /* Realloc the vertices array only if it needs to grow...
      * do not realloc to a smaller size.
      */
-    if( ABS(psTxt->numVerticesLine) >
+    if( psTxt->numVerticesLine == INT_MIN ||
+        psTxt->numVerticesArrow == INT_MIN ||
+        ABS(psTxt->numVerticesLine) >
                 100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
         return -1;
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
@@ -1409,6 +1411,8 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
         {
             psTxt->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadFloat(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
     }
     else
@@ -1417,6 +1421,8 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
         {
             psTxt->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadDouble(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
     }
 
@@ -1483,9 +1489,11 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
      * we have to include an additional vertex for that.
      */
     psTxt->numVerticesLine += 1;
-    numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
-    if( ABS(psTxt->numVerticesLine) >
-                100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
+    if( psTxt->numVerticesLine == INT_MIN ||
+        ABS(psTxt->numVerticesLine) > 100 * 1024 * 1024 )
+        return -1;
+    numVertices = ABS(psTxt->numVerticesLine);
+    if( numVertices < 2 )
         return -1;
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
@@ -1498,11 +1506,15 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
         {
             psTxt->pasVertices[i].x = AVCRawBinReadFloat(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadFloat(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
         else
         {
             psTxt->pasVertices[i].x = AVCRawBinReadDouble(psFile);
             psTxt->pasVertices[i].y = AVCRawBinReadDouble(psFile);
+            if( psFile->nCurSize == 0 )
+                return -1;
         }
     }
     /* Duplicate the first vertex because that's the way the other binary TXT
