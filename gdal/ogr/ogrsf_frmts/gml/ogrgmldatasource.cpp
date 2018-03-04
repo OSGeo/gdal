@@ -1172,8 +1172,11 @@ bool OGRGMLDataSource::Open( GDALOpenInfo *poOpenInfo )
                         }
                     }
 
-                    if (bAddClass)
+                    if (bAddClass &&
+                        poReader->GetClass( poClass->GetName() ) == nullptr )
+                    {
                         poReader->AddClass(poClass);
+                    }
                     else
                         delete poClass;
                 }
