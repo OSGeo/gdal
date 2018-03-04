@@ -1766,6 +1766,8 @@ int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
         return -1;
 
     psField->nSize     = AVCRawBinReadInt16(psFile);
+    if( psField->nSize < 0 )
+        return -1;
     psField->v2        = AVCRawBinReadInt16(psFile);  /* Always -1 ? */
     psField->nOffset   = AVCRawBinReadInt16(psFile);
     psField->v4        = AVCRawBinReadInt16(psFile);  /* Always 4 ?  */
