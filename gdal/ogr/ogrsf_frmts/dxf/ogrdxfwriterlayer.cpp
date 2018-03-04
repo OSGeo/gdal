@@ -52,7 +52,8 @@ OGRDXFWriterLayer::OGRDXFWriterLayer( OGRDXFWriterDS *poDSIn, VSILFILE *fpIn ) :
     poFeatureDefn = new OGRFeatureDefn( "entities" );
     poFeatureDefn->Reference();
 
-    OGRDXFDataSource::AddStandardFields( poFeatureDefn, true, false );
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
+        ODFM_IncludeBlockFields );
 }
 
 /************************************************************************/

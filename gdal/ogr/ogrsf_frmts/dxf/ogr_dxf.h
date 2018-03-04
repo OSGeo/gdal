@@ -193,6 +193,104 @@ public:
 };
 
 /************************************************************************/
+/*                         OGRDXFAffineTransform                        */
+/*                                                                      */
+/*    A simple 3D affine transform used to keep track of the            */
+/*    transformation to be applied to an ASM entity.                    */
+/************************************************************************/
+
+class OGRDXFAffineTransform
+{
+public:
+    OGRDXFAffineTransform() :
+        adfMatrix{{1.0,0.0,0.0},{0.0,1.0,0.0},{0.0,0.0,1.0}}, adfVector{0.0} {}
+
+    double adfMatrix[3][3]; // adfMatrix[1][2] is row 2, column 3
+    double adfVector[3];
+
+    // Left composition (composes oOther o this), modifying this
+    void ComposeWith( const OGRDXFInsertTransformer& oCT )
+    {
+        double adfNew[3][3];
+
+        adfNew[0][0] = oCT.dfXScale * cos(oCT.dfAngle) * adfMatrix[0][0] -
+            oCT.dfYScale * sin(oCT.dfAngle) * adfMatrix[1][0];
+        adfNew[0][1] = oCT.dfXScale * cos(oCT.dfAngle) * adfMatrix[0][1] -
+            oCT.dfYScale * sin(oCT.dfAngle) * adfMatrix[1][1];
+        adfNew[0][2] = 0.0;
+
+        adfNew[1][0] = oCT.dfXScale * sin(oCT.dfAngle) * adfMatrix[0][0] +
+            oCT.dfYScale * cos(oCT.dfAngle) * adfMatrix[1][0];
+        adfNew[1][1] = oCT.dfXScale * sin(oCT.dfAngle) * adfMatrix[0][1] +
+            oCT.dfYScale * cos(oCT.dfAngle) * adfMatrix[1][1];
+        adfNew[1][2] = 0.0;
+
+        adfNew[2][0] = 0.0;
+        adfNew[2][1] = 0.0;
+        adfNew[2][2] = oCT.dfZScale * adfMatrix[2][2];
+
+        memcpy( adfMatrix, adfNew, sizeof(adfNew) );
+
+        double adfNewVector[3];
+
+        adfNewVector[0] = oCT.dfXScale * cos(oCT.dfAngle) * adfVector[0] -
+            oCT.dfYScale * sin(oCT.dfAngle) * adfVector[1];
+        adfNewVector[1] = oCT.dfXScale * sin(oCT.dfAngle) * adfVector[0] +
+            oCT.dfYScale * cos(oCT.dfAngle) * adfVector[1];
+        adfNewVector[2] = oCT.dfZScale * adfVector[2];
+
+        adfVector[0] = adfNewVector[0] + oCT.dfXOffset;
+        adfVector[1] = adfNewVector[1] + oCT.dfYOffset;
+        adfVector[2] = adfNewVector[2] + oCT.dfZOffset;
+    }
+
+    OGRField ToField() const
+    {
+        OGRField oField;
+        oField.RealList.nCount = 12;
+
+        oField.RealList.paList = new double[12];
+        memcpy( oField.RealList.paList, adfMatrix, sizeof(adfMatrix) );
+        memcpy( oField.RealList.paList + 9, adfVector, sizeof(adfVector) );
+
+        return oField;
+    }
+};
+
+/************************************************************************/
+/*                         OGRDXFOCSTransformer                         */
+/************************************************************************/
+
+class OGRDXFOCSTransformer : public OGRCoordinateTransformation
+{
+private:
+    double adfN[3];
+    double adfAX[3];
+    double adfAY[3];
+
+    double dfDeterminant;
+    double aadfInverse[4][4];
+
+public:
+    OGRDXFOCSTransformer( double adfNIn[3], bool bInverse = false );
+
+    OGRSpatialReference *GetSourceCS() override { return nullptr; }
+    OGRSpatialReference *GetTargetCS() override { return nullptr; }
+    int Transform( int nCount,
+        double *x, double *y, double *z ) override
+    { return TransformEx( nCount, x, y, z, nullptr ); }
+
+    int TransformEx( int nCount,
+        double *adfX, double *adfY, double *adfZ,
+        int *pabSuccess = nullptr ) override;
+
+    int InverseTransform( int nCount,
+        double *adfX, double *adfY, double *adfZ );
+
+    void ComposeOnto( OGRDXFAffineTransform& poCT ) const;
+};
+
+/************************************************************************/
 /*                              DXFTriple                               */
 /*                                                                      */
 /*     Represents a triple (X, Y, Z) used for various purposes in       */
@@ -228,6 +326,11 @@ struct DXFTriple
         dfZ /= dfValue;
         return *this;
     }
+
+    bool operator==( const DXFTriple& oOther ) const
+    {
+        return dfX == oOther.dfX && dfY == oOther.dfY && dfZ == oOther.dfZ;
+    }
 };
 
 /************************************************************************/
@@ -256,6 +359,9 @@ class OGRDXFFeature : public OGRFeature
     // the OCS insertion point
     DXFTriple         oOriginalCoords;
 
+    // Used in 3D mode to store transformation parameters for ASM entities
+    std::unique_ptr<OGRDXFAffineTransform> poASMTransform;
+
     // Additional data for ATTRIB and ATTDEF entities
     CPLString         osAttributeTag;
 
@@ -275,6 +381,7 @@ class OGRDXFFeature : public OGRFeature
     void SetInsertOCSCoords( const DXFTriple& oTriple ) { oOriginalCoords = oTriple; }
 
     void              ApplyOCSTransformer( OGRGeometry* const poGeometry ) const;
+    void              ApplyOCSTransformer( OGRDXFAffineTransform* const poCT ) const;
     const CPLString   GetColor( OGRDXFDataSource* const poDS,
                                 OGRDXFFeature* const poBlockFeature = nullptr );
 };
@@ -324,6 +431,7 @@ class OGRDXFLayer : public OGRLayer
     OGRDXFFeature *     TranslateSOLID();
     OGRDXFFeature *     TranslateLEADER();
     OGRDXFFeature *     TranslateMLEADER();
+    OGRDXFFeature *     TranslateASMEntity();
 
     void                TranslateINSERTCore( OGRDXFFeature* const poTemplateFeature,
                                              const CPLString& osBlockName,
@@ -375,9 +483,6 @@ class OGRDXFLayer : public OGRLayer
     int                 TestCapability( const char * ) override;
 
     OGRDXFFeature *     GetNextUnfilteredFeature();
-
-    // General DXF utility function
-    static void         ApplyOCSTransformer( OGRGeometry *, const DXFTriple& );
 };
 
 /************************************************************************/
@@ -419,6 +524,20 @@ public:
 };
 
 /************************************************************************/
+/*                           OGRDXFFieldModes                           */
+/*                                                                      */
+/*    Represents which fields should be included in the data source.    */
+/************************************************************************/
+
+enum OGRDXFFieldModes
+{
+    ODFM_None = 0,
+    ODFM_IncludeRawCodeValues = 0x1,
+    ODFM_IncludeBlockFields = 0x2,
+    ODFM_Include3DModeFields = 0x4
+};
+
+/************************************************************************/
 /*                           OGRDXFDataSource                           */
 /************************************************************************/
 
@@ -457,6 +576,10 @@ class OGRDXFDataSource : public OGRDataSource
     bool                bTranslateEscapeSequences;
     bool                bIncludeRawCodeValues;
 
+    bool                b3DExtensibleMode;
+    bool                bHaveReadSolidData;
+    std::map<CPLString, std::vector<GByte>> oSolidBinaryData;
+
     OGRDXFReader        oReader;
 
     std::vector<CPLString> aosBlockInsertionStack;
@@ -480,9 +603,9 @@ class OGRDXFDataSource : public OGRDataSource
     bool                ShouldMergeBlockGeometries() const { return bMergeBlockGeometries; }
     bool                ShouldTranslateEscapes() const { return bTranslateEscapeSequences; }
     bool                ShouldIncludeRawCodeValues() const { return bIncludeRawCodeValues; }
+    bool                In3DExtensibleMode() const { return b3DExtensibleMode; }
     static void         AddStandardFields( OGRFeatureDefn *poDef,
-                                           const bool bIncludeExtraBlockFields,
-                                           const bool bIncludeRawCodeField );
+                                           const int nFieldModes );
 
     // Implemented in ogrdxf_blockmap.cpp
     bool                ReadBlocksSection();
@@ -513,9 +636,11 @@ class OGRDXFDataSource : public OGRDataSource
     CPLString           GetTextStyleNameByHandle( const char *pszID );
     static void         PopulateDefaultDimStyleProperties(
                          std::map<CPLString, CPLString>& oDimStyleProperties );
+    size_t              GetEntryFromAcDsDataSection( const char* pszEntityHandle,
+                                                     const GByte** pabyBuffer );
 
     // Header variables.
-    bool               ReadHeaderSection();
+    bool                ReadHeaderSection();
     const char         *GetVariable(const char *pszName,
                                     const char *pszDefault=nullptr );
 
