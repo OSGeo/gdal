@@ -43,8 +43,9 @@ OGRDXFBlocksWriterLayer::OGRDXFBlocksWriterLayer(
     poFeatureDefn(new OGRFeatureDefn( "blocks" ))
 {
     poFeatureDefn->Reference();
-
-    OGRDXFDataSource::AddStandardFields( poFeatureDefn, true, false );
+    
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
+        ODFM_IncludeBlockFields );
 }
 
 /************************************************************************/

@@ -44,8 +44,14 @@ OGRDXFBlocksLayer::OGRDXFBlocksLayer( OGRDXFDataSource *poDSIn ) :
 
     poFeatureDefn->Reference();
 
-    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
-        !poDS->InlineBlocks(), poDS->ShouldIncludeRawCodeValues() );
+    int nModes = ODFM_None;
+    if( !poDS->InlineBlocks() )
+        nModes |= ODFM_IncludeBlockFields;
+    if( poDS->ShouldIncludeRawCodeValues() )
+        nModes |= ODFM_IncludeRawCodeValues;
+    if( poDS->In3DExtensibleMode() )
+        nModes |= ODFM_Include3DModeFields;
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn, nModes );
 }
 
 /************************************************************************/

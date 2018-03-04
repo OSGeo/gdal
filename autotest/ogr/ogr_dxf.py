@@ -2435,23 +2435,25 @@ def ogr_dxf_32():
     return 'success'
 
 ###############################################################################
-# Test 3D entities (polyface mesh, cylinder)
+# Test 3D entities (polyface mesh, cylinder, 3D solid)
 
 def ogr_dxf_33():
 
+    gdal.SetConfigOption('DXF_3D_EXTENSIBLE_MODE', 'TRUE')
     ds = ogr.Open('data/3d.dxf')
+    gdal.SetConfigOption('DXF_3D_EXTENSIBLE_MODE', None)
 
     layer = ds.GetLayer(0)
 
     # Polyface mesh (POLYLINE)
     feat = layer.GetNextFeature()
     if feat.Layer != '0':
-        return 'fail #1'
+        return 'fail'
 
     geom = feat.GetGeometryRef()
     if geom.GetGeometryType() != ogr.wkbPolyhedralSurfaceZ:
         gdaltest.post_reason( 'did not get expected geometry type; got %s instead of wkbPolyhedralSurface', geom.GetGeometryType() )
-        return 'fail #2'
+        return 'fail'
 
     wkt_string = geom.ExportToIsoWkt()
     wkt_string_expected = 'POLYHEDRALSURFACE Z (((0 0 0,1 0 0,1 1 0,0 1 0,0 0 0)),((0 0 0,1 0 0,1 0 1,0 0 1,0 0 0)),((1 0 0,1 1 0,1 1 1,1 0 1,1 0 0)),((1 1 0,1 1 1,0 1 1,0 1 0,1 1 0)),((0 0 0,0 1 0,0 1 1,0 0 1,0 0 0)),((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
@@ -2476,6 +2478,52 @@ def ogr_dxf_33():
     '((2.8 -0.0 1e-31,2.79902562010393 -0.0 0.0279025894976499,2.79610722749663 -0.0 0.0556692403840264,2.79125904029352 -0.0 0.0831646763271039,2.78450467837533 -0.0 0.1102549423268,2.77587704831436 -0.0 0.136808057330267,2.76541818305704 -0.0 0.16269465723032,2.75317903714357 -0.0 0.187788625114356,2.73921923846257 -0.0 0.211967705693282,2.72360679774998 -0.0 0.235114100916989,2.70641777724759 -0.0 0.257115043874616,2.68773592013546 -0.0 0.277863348183599,2.66765224254354 -0.0 0.297257930190958,2.64626459013026 -0.0 0.315204301442689,2.6236771613883 -0.0 0.331615029022017,2.6 -0.0 0.346410161513775,2.57534845871563 -0.0 0.359517618519667,2.54984263736636 -0.0 0.370873541826715,2.52360679774998 -0.0 0.380422606518061,2.49676875823987 -0.0 0.388118290510399,2.46945927106677 -0.0 0.393923101204883,2.44181138530706 -0.0 0.397808758147309,2.413959798681 -0.0 0.399756330807638,2.386040201319 -0.0 0.399756330807638,2.35818861469294 -0.0 0.397808758147309,2.33054072893323 -0.0 0.393923101204883,2.30323124176013 -0.0 0.388118290510399,2.27639320225002 -0.0 0.380422606518061,2.25015736263363 -0.0 0.370873541826715,2.22465154128437 -0.0 0.359517618519667,2.2 -0.0 0.346410161513775,2.1763228386117 -0.0 0.331615029022017,2.15373540986974 0.0 0.315204301442689,2.13234775745646 0.0 0.297257930190958,2.11226407986454 0.0 0.277863348183599,2.09358222275241 0.0 0.257115043874616,2.07639320225002 0.0 0.235114100916989,2.06078076153743 0.0 0.211967705693282,2.04682096285643 0.0 0.187788625114356,2.03458181694296 0.0 0.16269465723032,2.02412295168564 0.0 0.136808057330267,2.01549532162467 0.0 0.1102549423268,2.00874095970648 0.0 0.0831646763271036,2.00389277250337 0.0 0.0556692403840262,2.00097437989607 0.0 0.0279025894976499,' +
     '2.0 0.0 -4.8985871965894e-17,2.0 1.8 3.11014128034106e-16,2.00097437989607 1.8 0.0279025894976503,2.00389277250337 1.8 0.0556692403840266,2.00874095970648 1.8 0.083164676327104,2.01549532162467 1.8 0.1102549423268,2.02412295168564 1.8 0.136808057330268,2.03458181694296 1.8 0.16269465723032,2.04682096285643 1.8 0.187788625114357,2.06078076153743 1.8 0.211967705693282,2.07639320225002 1.8 0.23511410091699,2.09358222275241 1.8 0.257115043874616,2.11226407986454 1.8 0.277863348183599,2.13234775745646 1.8 0.297257930190958,2.15373540986974 1.8 0.315204301442689,2.1763228386117 1.8 0.331615029022017,2.2 1.8 0.346410161513776,2.22465154128437 1.8 0.359517618519667,2.25015736263363 1.8 0.370873541826715,2.27639320225002 1.8 0.380422606518062,2.30323124176013 1.8 0.388118290510399,2.33054072893323 1.8 0.393923101204884,2.35818861469294 1.8 0.39780875814731,2.386040201319 1.8 0.399756330807639,2.413959798681 1.8 0.399756330807639,2.44181138530706 1.8 0.39780875814731,2.46945927106677 1.8 0.393923101204884,2.49676875823987 1.8 0.388118290510399,2.52360679774998 1.8 0.380422606518062,2.54984263736636 1.8 0.370873541826715,2.57534845871563 1.8 0.359517618519667,2.6 1.8 0.346410161513776,2.6236771613883 1.8 0.331615029022017,2.64626459013026 1.8 0.315204301442689,2.66765224254354 1.8 0.297257930190958,2.68773592013546 1.8 0.277863348183599,2.70641777724759 1.8 0.257115043874616,2.72360679774998 1.8 0.23511410091699,2.73921923846257 1.8 0.211967705693283,2.75317903714357 1.8 0.187788625114357,2.76541818305704 1.8 0.16269465723032,2.77587704831436 1.8 0.136808057330268,2.78450467837533 1.8 0.1102549423268,2.79125904029352 1.8 0.0831646763271043,2.79610722749663 1.8 0.0556692403840267,2.79902562010393 1.8 0.0279025894976503,2.8 1.8 3.6e-16,2.8 -0.0 1e-31)))' ):
         gdaltest.post_reason( 'wrong geometry for cylinder' )
+        return 'fail'
+
+    # 3DSOLID, plain
+    feat = layer.GetNextFeature()
+
+    if feat.GetGeometryRef() != None:
+        feat.DumpReadable()
+        gdaltest.post_reason( 'geometry on first 3DSOLID was not empty' )
+        return 'fail'
+
+    if feat.GetFieldAsBinary('ASMData') != b'ACIS BinaryFile(U\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x0c\x00\x00\x00\x07\x10Autodesk AutoCAD\x07\x13ASM 221.0.0.1871 NT\x07\x18Sun Mar 04 15:10:20 2018\x06ffffff9@\x06\x8d\xed\xb5\xa0\xf7\xc6\xb0>\x06\xbb\xbd\xd7\xd9\xdf|\xdb=\r\tasmheader\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x07\x0c221.0.0.1871\x11\r\x04body\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x02\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x03\x00\x00\x00\x11\r\x04lump\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x04\x00\x00\x00\x0c\x01\x00\x00\x00\x11\r\ttransform\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x14\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x14\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\xf0?\x0b\x0b\x0b\x11\r\x05shell\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x05\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x02\x00\x00\x00\x11\r\x04face\x0c\x06\x00\x00\x00\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x04\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x07\x00\x00\x00\x0b\x0b\x11\x0e\tpersubent\x0e\x10acadSolidHistory\r\x06attrib\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x05\x00\x00\x00\x04\x01\x00\x00\x00\x04\x02\x00\x00\x00\x04\x01\x00\x00\x00\x04\x00\x00\x00\x00\x11\x0e\x06sphere\r\x07surface\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\xcd;\x7ff\x9e\xa0\xe6?\x14\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x0b\x0b\x0b\x0b\x0b\x11\x0e\x03End\x0e\x02of\x0e\x03ASM\r\x04data':
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong ASMData on first 3DSOLID' )
+        return 'fail'
+
+    if feat.GetField('ASMTransform') != [1,0,0,0,1,0,0,0,1,0,0,0]:
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong ASMTransform on first 3DSOLID' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'BRUSH(fc:#000000)':
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong style string on first 3DSOLID' )
+        return 'fail'
+
+    # 3DSOLID inside a block
+    feat = layer.GetNextFeature()
+
+    if feat.GetGeometryRef() != None:
+        feat.DumpReadable()
+        gdaltest.post_reason( 'geometry on second 3DSOLID was not empty' )
+        return 'fail'
+
+    if feat.GetFieldAsBinary('ASMData') != b'ACIS BinaryFile(U\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x0c\x00\x00\x00\x07\x10Autodesk AutoCAD\x07\x13ASM 221.0.0.1871 NT\x07\x18Sun Mar 04 15:10:20 2018\x06ffffff9@\x06\x8d\xed\xb5\xa0\xf7\xc6\xb0>\x06\xbb\xbd\xd7\xd9\xdf|\xdb=\r\tasmheader\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x07\x0c221.0.0.1871\x11\r\x04body\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x02\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x03\x00\x00\x00\x11\r\x04lump\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x04\x00\x00\x00\x0c\x01\x00\x00\x00\x11\r\ttransform\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x14\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\xf0?\x0b\x0b\x0b\x11\r\x05shell\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x05\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x02\x00\x00\x00\x11\r\x04face\x0c\x06\x00\x00\x00\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x04\x00\x00\x00\x0c\xff\xff\xff\xff\x0c\x07\x00\x00\x00\x0b\x0b\x11\x0e\tpersubent\x0e\x10acadSolidHistory\r\x06attrib\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x0c\x05\x00\x00\x00\x04\x01\x00\x00\x00\x04\x04\x00\x00\x00\x04\x01\x00\x00\x00\x04\x00\x00\x00\x00\x11\x0e\x06sphere\r\x07surface\x0c\xff\xff\xff\xff\x04\xff\xff\xff\xff\x0c\xff\xff\xff\xff\x13\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00\x00\x00\x00@\x14\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x0b\x0b\x0b\x0b\x0b\x11\x0e\x03End\x0e\x02of\x0e\x03ASM\r\x04data':
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong ASMData on second 3DSOLID' )
+        return 'fail'
+
+    if feat.GetField('ASMTransform') != [-0.18750000000000006, 0.08660254037844387, 0.0, 0.3247595264191645, 0.05000000000000002, 0.0, 0.0, 0.0, -1.0, 5.75, 1.125, 0.0]:
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong ASMTransform on second 3DSOLID' )
+        return 'fail'
+
+    if feat.GetStyleString() != 'BRUSH(fc:#ff0000)':
+        feat.DumpReadable()
+        gdaltest.post_reason( 'wrong style string on second 3DSOLID' )
         return 'fail'
 
     return 'success'

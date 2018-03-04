@@ -7,7 +7,7 @@ OBJ	=	ogrdxfdriver.o ogrdxfdatasource.o ogrdxflayer.o \
 		ogrdxf_polyline_smooth.o ogrdxfblockslayer.o \
 		ogrdxfblockswriterlayer.o ogrdxf_hatch.o \
 		ogr_autocad_services.o ogrdxf_feature.o \
-		ogrdxf_leader.o
+		ogrdxf_leader.o ogrdxf_ocstransformer.o
 
 CPPFLAGS	:=	-I.. -I../..  $(CPPFLAGS)
 

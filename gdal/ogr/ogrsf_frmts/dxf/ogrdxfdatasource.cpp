@@ -45,7 +45,9 @@ OGRDXFDataSource::OGRDXFDataSource() :
     bInlineBlocks(false),
     bMergeBlockGeometries(false),
     bTranslateEscapeSequences(false),
-    bIncludeRawCodeValues(false)
+    bIncludeRawCodeValues(false),
+    b3DExtensibleMode(false),
+    bHaveReadSolidData(false)
 {}
 
 /************************************************************************/
@@ -115,6 +117,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         CPLGetConfigOption( "DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE" ) );
     bIncludeRawCodeValues = CPLTestBool(
         CPLGetConfigOption( "DXF_INCLUDE_RAW_CODE_VALUES", "FALSE" ) );
+    b3DExtensibleMode = CPLTestBool(
+        CPLGetConfigOption( "DXF_3D_EXTENSIBLE_MODE", "FALSE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
@@ -897,8 +901,7 @@ const char *OGRDXFDataSource::GetVariable( const char *pszName,
 /************************************************************************/
 
 void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
-    const bool bIncludeExtraBlockFields, const bool bIncludeRawCodeField )
-
+    const int nFieldModes )
 {
     OGRFieldDefn  oLayerField( "Layer", OFTString );
     poFeatureDefn->AddFieldDefn( &oLayerField );
@@ -906,7 +909,7 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
     OGRFieldDefn  oClassField( "SubClasses", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
 
-    if( bIncludeRawCodeField )
+    if( nFieldModes & ODFM_IncludeRawCodeValues )
     {
         OGRFieldDefn  oRawCodeField( "RawCodeValues", OFTStringList );
         poFeatureDefn->AddFieldDefn( &oRawCodeField );
@@ -921,7 +924,16 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    if( bIncludeExtraBlockFields )
+    if( nFieldModes & ODFM_Include3DModeFields )
+    {
+        OGRFieldDefn  oASMBinaryField( "ASMData", OFTBinary );
+        poFeatureDefn->AddFieldDefn( &oASMBinaryField );
+
+        OGRFieldDefn  oASMTransformField( "ASMTransform", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oASMTransformField );
+    }
+
+    if( nFieldModes & ODFM_IncludeBlockFields )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
@@ -952,4 +964,139 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
         OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
         poFeatureDefn->AddFieldDefn( &oAttributeTagField );
     }
+}
+
+/************************************************************************/
+/*                    GetEntryFromAcDsDataSection()                     */
+/************************************************************************/
+
+size_t OGRDXFDataSource::GetEntryFromAcDsDataSection(
+    const char* pszEntityHandle, const GByte** pabyBuffer )
+
+{
+    if( !pszEntityHandle || !pabyBuffer )
+        return 0;
+
+    if( bHaveReadSolidData )
+    {
+        if( oSolidBinaryData.count( pszEntityHandle ) > 0 )
+        {
+            *pabyBuffer = oSolidBinaryData[pszEntityHandle].data();
+            return oSolidBinaryData[pszEntityHandle].size();
+        }
+        return 0;
+    }
+
+    // Keep track of our current position in the file so we can
+    // return here later
+    int iPrevOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+
+    char szLineBuf[270]; // TODO figure out what to do with this re character escapes
+    int nCode = 0;
+    bool bFound = false;
+
+    // Search for the ACDSDATA section
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) >= 0 )
+    {
+        // Check whether the ACDSDATA section starts here
+        if( nCode == 0 && EQUAL(szLineBuf, "SECTION") )
+        {
+            if( ( nCode = ReadValue( szLineBuf, sizeof(szLineBuf) ) ) < 0 )
+            {
+                break;
+            }
+
+            if( nCode == 2 && EQUAL(szLineBuf, "ACDSDATA") )
+            {
+                bFound = true;
+                break;
+            }
+        }
+    }
+
+    if( !bFound )
+    {
+        oReader.ResetReadPointer( iPrevOffset );
+        return 0;
+    }
+
+    bool bInAcDsRecord = false;
+    bool bGotAsmData = false;
+    CPLString osThisHandle;
+
+    // Search for the relevant ACDSRECORD and extract its binary data
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) >= 0 )
+    {
+        if( nCode == 0 && EQUAL(szLineBuf, "ENDSEC") )
+        {
+            // We've reached the end of the ACDSDATA section
+            break;
+        }
+        else if( nCode == 0 )
+        {
+            bInAcDsRecord = EQUAL(szLineBuf, "ACDSRECORD");
+            bGotAsmData = false;
+            osThisHandle.clear();
+        }
+        else if( bInAcDsRecord && nCode == 320 )
+        {
+            osThisHandle = szLineBuf;
+        }
+        else if( bInAcDsRecord && nCode == 2 )
+        {
+            bGotAsmData = EQUAL(szLineBuf, "ASM_Data");
+        }
+        else if( bInAcDsRecord && bGotAsmData && nCode == 94 )
+        {
+            // Group code 94 gives the length of the binary data that follows
+            int nLen = atoi( szLineBuf );
+            
+            // Enforce some limits (the upper limit is arbitrary)
+            if( nLen <= 0 || nLen > 1048576 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                    "ACDSRECORD data for entity %s is too long (more than "
+                    "1MB in size) and was skipped.", pszEntityHandle );
+                continue;
+            }
+
+            oSolidBinaryData[osThisHandle].resize( nLen );
+
+            // Read the binary data into the buffer
+            int nPos = 0;
+            while( ReadValue( szLineBuf, sizeof(szLineBuf) ) == 310 )
+            {
+                int nBytesRead;
+                GByte* pabyHex = CPLHexToBinary( szLineBuf, &nBytesRead );
+
+                if( nPos + nBytesRead > nLen )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                        "Too many bytes in ACDSRECORD data for entity %s. "
+                        "Is the length (group code 94) correct?",
+                        pszEntityHandle );
+                    break;
+                }
+                else
+                {
+                    std::copy_n( pabyHex, nBytesRead,
+                        oSolidBinaryData[osThisHandle].begin() + nPos );
+                    nPos += nBytesRead;
+                }
+
+                CPLFree( pabyHex );
+            }
+        }
+    }
+
+    ResetReadPointer( iPrevOffset );
+
+    bHaveReadSolidData = true;
+
+    if( oSolidBinaryData.count( pszEntityHandle ) > 0 )
+    {
+        *pabyBuffer = oSolidBinaryData[pszEntityHandle].data();
+        return oSolidBinaryData[pszEntityHandle].size();
+    }
+    return 0;
 }

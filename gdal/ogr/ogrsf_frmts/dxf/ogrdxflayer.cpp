@@ -88,8 +88,14 @@ OGRDXFLayer::OGRDXFLayer( OGRDXFDataSource *poDSIn ) :
 {
     poFeatureDefn->Reference();
 
-    OGRDXFDataSource::AddStandardFields( poFeatureDefn,
-        !poDS->InlineBlocks(), poDS->ShouldIncludeRawCodeValues() );
+    int nModes = ODFM_None;
+    if( !poDS->InlineBlocks() )
+        nModes |= ODFM_IncludeBlockFields;
+    if( poDS->ShouldIncludeRawCodeValues() )
+        nModes |= ODFM_IncludeRawCodeValues;
+    if( poDS->In3DExtensibleMode() )
+        nModes |= ODFM_Include3DModeFields;
+    OGRDXFDataSource::AddStandardFields( poFeatureDefn, nModes );
 
     SetDescription( poFeatureDefn->GetName() );
 }
@@ -404,184 +410,6 @@ void OGRDXFLayer::PrepareLineStyle( OGRDXFFeature* const poFeature,
     osStyle += ")";
 
     poFeature->SetStyleString( osStyle );
-}
-
-/************************************************************************/
-/*                            OCSTransformer                            */
-/************************************************************************/
-
-class OCSTransformer : public OGRCoordinateTransformation
-{
-private:
-    double adfN[3];
-    double adfAX[3];
-    double adfAY[3];
-
-    double dfDeterminant;
-    double aadfInverse[4][4];
-
-    static double Det2x2( double a, double b, double c, double d )
-    {
-        return a*d - b*c;
-    }
-
-public:
-    OCSTransformer( double adfNIn[3], bool bInverse = false ) :
-        aadfInverse()
-    {
-        constexpr double dSmall = 1.0 / 64.0;
-        constexpr double adfWZ[3] = { 0.0, 0.0, 1.0 };
-        constexpr double adfWY[3] = { 0.0, 1.0, 0.0 };
-
-        dfDeterminant = 0.0;
-        Scale2Unit( adfNIn );
-        memcpy( adfN, adfNIn, sizeof(double)*3 );
-
-    if ((std::abs(adfN[0]) < dSmall) && (std::abs(adfN[1]) < dSmall))
-            CrossProduct(adfWY, adfN, adfAX);
-    else
-            CrossProduct(adfWZ, adfN, adfAX);
-
-    Scale2Unit( adfAX );
-    CrossProduct(adfN, adfAX, adfAY);
-    Scale2Unit( adfAY );
-
-    if( bInverse == true ) {
-        const double a[4] = { 0.0, adfAX[0], adfAY[0], adfN[0] };
-        const double b[4] = { 0.0, adfAX[1], adfAY[1], adfN[1] };
-        const double c[4] = { 0.0, adfAX[2], adfAY[2], adfN[2] };
-
-        dfDeterminant = a[1]*b[2]*c[3] - a[1]*b[3]*c[2]
-                      + a[2]*b[3]*c[1] - a[2]*b[1]*c[3]
-                      + a[3]*b[1]*c[2] - a[3]*b[2]*c[1];
-
-        if( dfDeterminant != 0.0 ) {
-            const double k = 1.0 / dfDeterminant;
-            const double a11 = adfAX[0];
-            const double a12 = adfAY[0];
-            const double a13 = adfN[0];
-            const double a21 = adfAX[1];
-            const double a22 = adfAY[1];
-            const double a23 = adfN[1];
-            const double a31 = adfAX[2];
-            const double a32 = adfAY[2];
-            const double a33 = adfN[2];
-
-            aadfInverse[1][1] = k * Det2x2( a22,a23,a32,a33 );
-            aadfInverse[1][2] = k * Det2x2( a13,a12,a33,a32 );
-            aadfInverse[1][3] = k * Det2x2( a12,a13,a22,a23 );
-
-            aadfInverse[2][1] = k * Det2x2( a23,a21,a33,a31 );
-            aadfInverse[2][2] = k * Det2x2( a11,a13,a31,a33 );
-            aadfInverse[2][3] = k * Det2x2( a13,a11,a23,a21 );
-
-            aadfInverse[3][1] = k * Det2x2( a21,a22,a31,a32 );
-            aadfInverse[3][2] = k * Det2x2( a12,a11,a32,a31 );
-            aadfInverse[3][3] = k * Det2x2( a11,a12,a21,a22 );
-        }
-    }
-    }
-
-    static void CrossProduct(const double *a, const double *b, double *vResult) {
-        vResult[0] = a[1] * b[2] - a[2] * b[1];
-        vResult[1] = a[2] * b[0] - a[0] * b[2];
-        vResult[2] = a[0] * b[1] - a[1] * b[0];
-    }
-
-    static void Scale2Unit(double* adfV) {
-        double dfLen=sqrt(adfV[0]*adfV[0] + adfV[1]*adfV[1] + adfV[2]*adfV[2]);
-        if (dfLen != 0)
-        {
-                adfV[0] /= dfLen;
-                adfV[1] /= dfLen;
-                adfV[2] /= dfLen;
-        }
-    }
-    OGRSpatialReference *GetSourceCS() override { return nullptr; }
-    OGRSpatialReference *GetTargetCS() override { return nullptr; }
-    int Transform( int nCount,
-                   double *x, double *y, double *z ) override
-        { return TransformEx( nCount, x, y, z, nullptr ); }
-
-    int TransformEx( int nCount,
-                     double *adfX, double *adfY, double *adfZ,
-                     int *pabSuccess = nullptr ) override
-        {
-            for( int i = 0; i < nCount; i++ )
-            {
-                const double x = adfX[i];
-                const double y = adfY[i];
-                const double z = adfZ[i];
-
-                adfX[i] = x * adfAX[0] + y * adfAY[0] + z * adfN[0];
-                adfY[i] = x * adfAX[1] + y * adfAY[1] + z * adfN[1];
-                adfZ[i] = x * adfAX[2] + y * adfAY[2] + z * adfN[2];
-
-                if( pabSuccess )
-                    pabSuccess[i] = TRUE;
-            }
-            return TRUE;
-        }
-
-    int InverseTransform( int nCount,
-                          double *adfX, double *adfY, double *adfZ )
-    {
-        if( dfDeterminant == 0.0 )
-            return FALSE;
-
-        for( int i = 0; i < nCount; i++ )
-        {
-            const double x = adfX[i];
-            const double y = adfY[i];
-            const double z = adfZ[i];
-
-            adfX[i] = x * aadfInverse[1][1] + y * aadfInverse[1][2]
-                    + z * aadfInverse[1][3];
-            adfY[i] = x * aadfInverse[2][1] + y * aadfInverse[2][2]
-                    + z * aadfInverse[2][3];
-            adfZ[i] = x * aadfInverse[3][1] + y * aadfInverse[3][2]
-                    + z * aadfInverse[3][3];
-        }
-        return TRUE;
-    }
-};
-
-/************************************************************************/
-/*                         ApplyOCSTransformer()                        */
-/*                                                                      */
-/*      Apply a transformation from the given OCS to world              */
-/*      coordinates.                                                    */
-/************************************************************************/
-
-void OGRDXFLayer::ApplyOCSTransformer( OGRGeometry *poGeometry,
-    const DXFTriple& oOCS )
-
-{
-    if( poGeometry == nullptr )
-        return;
-
-    double adfN[3];
-    oOCS.ToArray( adfN );
-
-    OCSTransformer oTransformer( adfN );
-
-    // Promote to 3D, in case the OCS transformation introduces a
-    // third dimension to the geometry.
-    const bool bInitially2D = !poGeometry->Is3D();
-    if( bInitially2D )
-        poGeometry->set3D( TRUE );
-
-    poGeometry->transform( &oTransformer );
-
-    // If the geometry was 2D to begin with, and is still 2D after the
-    // OCS transformation, flatten it back to 2D.
-    if( bInitially2D )
-    {
-        OGREnvelope3D oEnvelope;
-        poGeometry->getEnvelope( &oEnvelope );
-        if( oEnvelope.MaxZ == 0.0 && oEnvelope.MinZ == 0.0 )
-            poGeometry->flattenTo2D();
-    }
 }
 
 /************************************************************************/
@@ -2075,7 +1903,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateELLIPSE()
 
     if( (adfN[0] == 0.0 && adfN[1] == 0.0 && adfN[2] == 1.0) == false )
     {
-        OCSTransformer oTransformer( adfN, true );
+        OGRDXFOCSTransformer oTransformer( adfN, true );
 
         bApplyOCSTransform = true;
 
@@ -2773,6 +2601,84 @@ OGRDXFFeature *OGRDXFLayer::TranslateSOLID()
 }
 
 /************************************************************************/
+/*                         TranslateASMEntity()                         */
+/*                                                                      */
+/*     Translate Autodesk ShapeManager entities (3DSOLID, REGION,       */
+/*     SURFACE), also known as ACIS entities.                           */
+/************************************************************************/
+
+OGRDXFFeature *OGRDXFLayer::TranslateASMEntity()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+    OGRDXFFeature *poFeature = new OGRDXFFeature(poFeatureDefn);
+
+    while ((nCode = poDS->ReadValue(szLineBuf, sizeof(szLineBuf))) > 0)
+    {
+        TranslateGenericProperty(poFeature, nCode, szLineBuf);
+    }
+
+    if( nCode < 0 )
+    {
+        DXF_LAYER_READER_ERROR();
+        delete poFeature;
+        return nullptr;
+    }
+    if (nCode == 0)
+        poDS->UnreadValue();
+
+    const char* pszEntityHandle =
+        poFeature->GetFieldAsString( "EntityHandle" );
+
+    // The actual data is located at the end of the DXF file (sigh).
+    const GByte* pabyBinaryData;
+    size_t nDataLength =
+        poDS->GetEntryFromAcDsDataSection( pszEntityHandle, &pabyBinaryData );
+    if( !pabyBinaryData )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+            "ACDSRECORD data for entity %s was not found.", pszEntityHandle );
+        return poFeature;
+    }
+
+    // Return a feature with no geometry but with one very interesting field.
+    // Seems like we have to make a copy of this data, which is then
+    // freed by the feature
+    GByte* abyData = new GByte[nDataLength];
+    memcpy( abyData, pabyBinaryData, nDataLength );
+    poFeature->SetField( poFeatureDefn->GetFieldIndex( "ASMData" ), 
+        static_cast<int>( nDataLength ), abyData );
+
+    // Set up an affine transformation matrix so the user will be able to
+    // transform the resulting 3D geometry
+    poFeature->poASMTransform = 
+        std::unique_ptr<OGRDXFAffineTransform>( new OGRDXFAffineTransform() );
+
+    OGRField oField = poFeature->poASMTransform->ToField();
+    poFeature->SetField( "ASMTransform", &oField );
+
+#ifdef notdef
+    FILE *fp;
+    fopen_s( &fp, CPLString().Printf( "C:\\Projects\\output.sab",
+        pszEntityHandle ), "wb" );
+
+    if( fp != nullptr ) {
+        fprintf( fp, "Entity handle:  %s\r\n\r\n", pszEntityHandle );
+        fwrite( pabyBinaryData, sizeof( GByte ), nDataLength, fp );
+        if( ferror( fp ) != 0 ) {
+            fputs( "Error writing .sab file", stderr );
+        }
+        fclose( fp );
+    }
+#endif
+
+    PrepareBrushStyle( poFeature );
+
+    return poFeature;
+}
+
+/************************************************************************/
 /*                       SimplifyBlockGeometry()                        */
 /************************************************************************/
 
@@ -3034,6 +2940,24 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 // Offset translation last
                 oInnerTrans = oTransformer.GetOffsetTransformer();
                 poSubFeatGeom->transform( &oInnerTrans );
+            }
+            // Transform the specially-stored data for ASM entities
+            else if( poSubFeature->poASMTransform )
+            {
+                // Rotation and scaling first
+                OGRDXFInsertTransformer oInnerTrans =
+                    oTransformer.GetRotateScaleTransformer();
+                poSubFeature->poASMTransform->ComposeWith( oInnerTrans );
+
+                // Then the OCS to WCS transformation
+                poFeature->ApplyOCSTransformer( poSubFeature->poASMTransform.get() );
+
+                // Offset translation last
+                oInnerTrans = oTransformer.GetOffsetTransformer();
+                poSubFeature->poASMTransform->ComposeWith( oInnerTrans );
+
+                OGRField oField = poSubFeature->poASMTransform->ToField();
+                poSubFeature->SetField( "ASMTransform", &oField );
             }
 
             // If we are merging features, and this is not text or a block
@@ -3518,10 +3442,26 @@ OGRDXFFeature *OGRDXFLayer::GetNextUnfilteredFeature()
         {
             poFeature = TranslateLEADER();
         }
-        else if( EQUAL(szLineBuf,"MLEADER")
-            || EQUAL(szLineBuf,"MULTILEADER") )
+        else if( EQUAL(szLineBuf,"MLEADER") ||
+            EQUAL(szLineBuf,"MULTILEADER") )
         {
             poFeature = TranslateMLEADER();
+        }
+        else if( EQUAL(szLineBuf,"3DSOLID") ||
+            EQUAL(szLineBuf,"BODY") ||
+            EQUAL(szLineBuf,"REGION") ||
+            EQUAL(szLineBuf,"SURFACE") )
+        {
+            if( poDS->In3DExtensibleMode() )
+            {
+                poFeature = TranslateASMEntity();
+            }
+            else if( oIgnoredEntities.count(szLineBuf) == 0 )
+            {
+                oIgnoredEntities.insert( szLineBuf );
+                CPLDebug( "DXF", "3D mode is off; ignoring all '%s' entities.",
+                    szLineBuf );
+            }
         }
         else
         {

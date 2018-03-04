@@ -72,6 +72,12 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
     poNew->osAttributeTag = osAttributeTag;
     poNew->oStyleProperties = oStyleProperties;
 
+    if( poASMTransform )
+    {
+        poNew->poASMTransform = std::unique_ptr<OGRDXFAffineTransform>(
+            new OGRDXFAffineTransform( *poASMTransform ) );
+    }
+
     return poNew;
 }
 
@@ -83,9 +89,49 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
 /************************************************************************/
 
 void OGRDXFFeature::ApplyOCSTransformer( OGRGeometry* const poGeometry ) const
-
 {
-    OGRDXFLayer::ApplyOCSTransformer( poGeometry, oOCS );
+    if( poGeometry == nullptr )
+        return;
+
+    double adfN[3];
+    oOCS.ToArray( adfN );
+
+    OGRDXFOCSTransformer oTransformer( adfN );
+
+    // Promote to 3D, in case the OCS transformation introduces a
+    // third dimension to the geometry.
+    const bool bInitially2D = !poGeometry->Is3D();
+    if( bInitially2D )
+        poGeometry->set3D( TRUE );
+
+    poGeometry->transform( &oTransformer );
+
+    // If the geometry was 2D to begin with, and is still 2D after the
+    // OCS transformation, flatten it back to 2D.
+    if( bInitially2D )
+    {
+        OGREnvelope3D oEnvelope;
+        poGeometry->getEnvelope( &oEnvelope );
+        if( oEnvelope.MaxZ == 0.0 && oEnvelope.MinZ == 0.0 )
+            poGeometry->flattenTo2D();
+    }
+}
+
+/************************************************************************/
+/*                        ApplyOCSTransformer()                         */
+/************************************************************************/
+
+void OGRDXFFeature::ApplyOCSTransformer( OGRDXFAffineTransform* const poCT ) const
+{
+    if( !poCT )
+        return;
+
+    double adfN[3];
+    oOCS.ToArray( adfN );
+
+    OGRDXFOCSTransformer oTransformer( adfN );
+
+    oTransformer.ComposeOnto( *poCT );
 }
 
 /************************************************************************/

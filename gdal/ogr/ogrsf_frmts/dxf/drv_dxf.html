@@ -126,6 +126,8 @@ INSERT. Spline leaders are tessellated into line segments.
 <li>(GDAL &lt;= 2.2.x) No support.
 </ul>
 
+<li> 3DSOLID, REGION, SURFACE: See below.
+
 </ul>
 
 A reasonable attempt is made to preserve color, line width (lineweight), line
@@ -183,6 +185,26 @@ The intention is that with DXF_INLINE_BLOCKS disabled, the block references
 will remain as references and the original block definitions will be
 available via the blocks layer.  On export this configuration will result in the
 creation of similar blocks. <p>
+
+<h2>3D Extensibility</h2>
+
+DXF files may contain 3DSOLID, REGION and SURFACE entities, which contain 3D
+modelling data in the undocumented Autodesk ShapeModeler (ASM) format. GDAL
+cannot transform these entities into OGR geometries, so they are skipped by
+default.<p>
+
+Starting from GDAL 2.3.0, the DXF_3D_EXTENSIBLE_MODE configuration option may be
+set to TRUE to include these entities with the raw ASM data stored in a field.
+This option will add two new fields:
+
+<ul>
+<li>ASMData: A binary field that contains the ASM data.
+<li>ASMTransform: A list of 12 real values indicating the affine transformation
+	to be applied to the entity.
+</ul>
+
+This feature only works for DXF files in AutoCAD 2013 (AC1027) format and
+later.<p>
 
 <h2>Character Encodings</h2>
 
