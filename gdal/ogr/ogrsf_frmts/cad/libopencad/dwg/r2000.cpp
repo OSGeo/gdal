@@ -3064,8 +3064,13 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
 
         CADVector vectMIterDirection = buffer.ReadVector();
         stVertex.vectMIterDirection = vectMIterDirection;
+        if( buffer.IsEOB() )
+        {
+            delete mline;
+            return nullptr;
+        }
         for( unsigned char j = 0; j < mline->nLinesInStyle; ++j )
-        {            
+        {
             CADLineStyle   stLStyle;
             stLStyle.nNumSegParms = buffer.ReadBITSHORT();
             if( stLStyle.nNumSegParms > 0 ) // Or return null here?
@@ -3081,6 +3086,11 @@ CADMLineObject * DWGFileR2000::getMLine(unsigned int dObjectSize,
             }
 
             stVertex.astLStyles.push_back( stLStyle );
+            if( buffer.IsEOB() )
+            {
+                delete mline;
+                return nullptr;
+            }
         }
         mline->avertVertexes.push_back( stVertex );
     }
