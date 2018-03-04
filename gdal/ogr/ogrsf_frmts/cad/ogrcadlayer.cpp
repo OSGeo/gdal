@@ -700,6 +700,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             double dfEndAngle = -1 * poCADEllipse->getStartingAngle() * DEG2RAD;
             double dfAxisRatio = poCADEllipse->getAxisRatio();
 
+            dfStartAngle = fmod(dfStartAngle, 360.0);
+            dfEndAngle = fmod(dfEndAngle, 360.0);
             if( dfStartAngle > dfEndAngle )
                 dfEndAngle += 360.0;
 
