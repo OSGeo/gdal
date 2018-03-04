@@ -131,7 +131,8 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         nPixelOffsetBits = nBits;
         GIntBig nTotalRowBytes =
             CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
-        if( nTotalRowBytes < 0 )
+        if( nTotalRowBytes < 0 || nTotalRowBytes >
+                                    GINTBIG_MAX / 8 / poDS->GetRasterYSize() )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
