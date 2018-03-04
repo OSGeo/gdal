@@ -167,16 +167,18 @@ CPLErr EHdrRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         return RawRasterBand::IReadBlock(nBlockXOff, nBlockYOff, pImage);
 
     // Establish desired position.
-    const vsi_l_offset nLineBytesBig =
-        (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig >
-        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
-        return CE_Failure;
-    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
         (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset =
         static_cast<int>((nStartBit + nLineOffsetBits * nBlockYOff) % 8);
+    const vsi_l_offset nLineEnd =
+        (nStartBit + nLineOffsetBits * nBlockYOff +
+            static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize - 1) / 8;
+    const vsi_l_offset nLineBytesBig = nLineEnd - nLineStart + 1;
+    if( nLineBytesBig >
+        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
+        return CE_Failure;
+    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
 
     // Read data into buffer.
     GByte *pabyBuffer = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nLineBytes));
@@ -229,16 +231,18 @@ CPLErr EHdrRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
 
     // Establish desired position.
-    const vsi_l_offset nLineBytesBig =
-        (static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize + 7) / 8;
-    if( nLineBytesBig >
-        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
-        return CE_Failure;
-    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
     const vsi_l_offset nLineStart =
         (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset =
         static_cast<int>((nStartBit + nLineOffsetBits * nBlockYOff) % 8);
+    const vsi_l_offset nLineEnd =
+        (nStartBit + nLineOffsetBits * nBlockYOff +
+            static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize - 1) / 8;
+    const vsi_l_offset nLineBytesBig = nLineEnd - nLineStart + 1;
+    if( nLineBytesBig >
+        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()) )
+        return CE_Failure;
+    const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
 
     // Read data into buffer.
     GByte *pabyBuffer =
