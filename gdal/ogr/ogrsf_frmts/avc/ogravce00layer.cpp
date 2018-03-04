@@ -520,6 +520,8 @@ bool OGRAVCE00Layer::AppendTableFields( OGRFeature *poFeature )
 
     if( hRecord == nullptr )
         return false;
+    if( psTableRead->hParseInfo->hdr.psTableDef == nullptr )
+        return false;
 
 /* -------------------------------------------------------------------- */
 /*      Translate it.                                                   */
