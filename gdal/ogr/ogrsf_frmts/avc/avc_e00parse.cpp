@@ -1382,9 +1382,26 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             /* Add 1 to numVerticesLine because the first vertex is
              * always duplicated in the TXT binary structure...
              */
-            psTxt->numVerticesLine = AVCE00Str2Int(pszLine+10, 10) + 1;
+            psTxt->numVerticesLine = AVCE00Str2Int(pszLine+10, 10);
+            if( psTxt->numVerticesLine < 0 ||
+                psTxt->numVerticesLine > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TXT line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
+            psTxt->numVerticesLine ++;
 
             psTxt->numVerticesArrow= AVCE00Str2Int(pszLine+20, 10);
+            if( psTxt->numVerticesArrow < -10*1024*1024 ||
+                psTxt->numVerticesArrow > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TXT line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
             psTxt->nSymbol         = AVCE00Str2Int(pszLine+30, 10);
             psTxt->numChars        = AVCE00Str2Int(pszLine+40, 10);
             if( psTxt->numChars <  0 || psTxt->numChars > 10*1024*1024 )
@@ -1401,14 +1418,6 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->pszText = (GByte *)CPLRealloc(psTxt->pszText,
                                                  (psTxt->numChars+1)*
                                                      sizeof(GByte));
-            if( ABS(psTxt->numVerticesLine) > 10*1024*1024 -
-                                                ABS(psTxt->numVerticesArrow) )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Error parsing E00 TXT line: \"%s\"", pszLine);
-                psInfo->numItems = psInfo->iCurItem = 0;
-                return nullptr;
-            }
             numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
             if (numVertices > 0)
@@ -1479,13 +1488,13 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
                     psTxt->pasVertices[0].y = psTxt->pasVertices[1].y;
             }
             else if (iCurCoord >= 8 && iCurCoord < 11 &&
-                     (iVertex = (iCurCoord-8) % 3) < psTxt->numVerticesArrow)
+                     (iVertex = (iCurCoord-8) % 3) < ABS(psTxt->numVerticesArrow))
             {
                 psTxt->pasVertices[iVertex+psTxt->numVerticesLine].x =
                                                     CPLAtof(pszLine+i*nItemSize);
             }
             else if (iCurCoord >= 11 && iCurCoord < 14 &&
-                     (iVertex = (iCurCoord-8) % 3) < psTxt->numVerticesArrow)
+                     (iVertex = (iCurCoord-8) % 3) < ABS(psTxt->numVerticesArrow))
             {
                 psTxt->pasVertices[iVertex+psTxt->numVerticesLine].y =
                                                     CPLAtof(pszLine+i*nItemSize);
@@ -1609,7 +1618,23 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->nUserId         = AVCE00Str2Int(pszLine, 10);
             psTxt->nLevel          = AVCE00Str2Int(pszLine+10, 10);
             psTxt->numVerticesLine = AVCE00Str2Int(pszLine+20, 10);
+            if( psTxt->numVerticesLine < 0 ||
+                psTxt->numVerticesLine > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
             psTxt->numVerticesArrow= AVCE00Str2Int(pszLine+30, 10);
+            if( psTxt->numVerticesArrow < -10*1024*1024 ||
+                psTxt->numVerticesArrow > 10*1024*1024 )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                        "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
+                psInfo->numItems = psInfo->iCurItem = 0;
+                return nullptr;
+            }
             psTxt->nSymbol         = AVCE00Str2Int(pszLine+40, 10);
             psTxt->n28             = AVCE00Str2Int(pszLine+50, 10);
             psTxt->numChars        = AVCE00Str2Int(pszLine+60, 10);
@@ -1628,14 +1653,6 @@ AVCTxt   *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
                                                  (psTxt->numChars+1)*
                                                  sizeof(GByte));
 
-            if( ABS(psTxt->numVerticesLine) > 10*1024*1024 -
-                                                ABS(psTxt->numVerticesArrow) )
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                        "Error parsing E00 TX6/TX7 line: \"%s\"", pszLine);
-                psInfo->numItems = psInfo->iCurItem = 0;
-                return nullptr;
-            }
             numVertices = ABS(psTxt->numVerticesLine) +
                                  ABS(psTxt->numVerticesArrow);
             if (numVertices > 0)
