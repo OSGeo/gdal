@@ -1469,7 +1469,8 @@ AVCTxt   *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         }
         iCurCoord = psInfo->iCurItem * numCoordPerLine;
 
-        for(i=0; i<numCoordPerLine; i++, iCurCoord++)
+        for(i=0; i<numCoordPerLine &&
+                 nLen > static_cast<size_t>(i) * nItemSize; i++, iCurCoord++)
         {
             if (iCurCoord < 4 &&
                 (iVertex = iCurCoord % 4) < psTxt->numVerticesLine-1)
