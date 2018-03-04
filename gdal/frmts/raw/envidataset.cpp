@@ -1890,7 +1890,7 @@ bool ENVIDataset::ReadHeader( VSILFILE *fpHdr )
         // Try to break input into name and value portions.  Trim whitespace.
         size_t iEqual = osWorkingLine.find("=");
 
-        if( iEqual != std::string::npos )
+        if( iEqual != std::string::npos && iEqual > 0 )
         {
             const char *pszValue = osWorkingLine + iEqual + 1;
             while( *pszValue == ' ' || *pszValue == '\t' )
