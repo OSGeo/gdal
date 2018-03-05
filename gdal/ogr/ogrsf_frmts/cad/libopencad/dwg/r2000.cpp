@@ -3196,6 +3196,11 @@ CADImageObject * DWGFileR2000::getImage(unsigned int dObjectSize,
         for( long i = 0; i < image->nNumberVertexesInClipPolygon; ++i )
         {
             CADVector vertPoint = buffer.ReadRAWVector();
+            if( buffer.IsEOB() )
+            {
+                delete image;
+                return nullptr;
+            }
             image->avertClippingPolygonVertexes.push_back( vertPoint );
         }
     }
