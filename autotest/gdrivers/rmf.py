@@ -425,6 +425,58 @@ def rmf_24():
                         pass_count=2)
 
 ###############################################################################
+# Nodata write test
+
+def rmf_25():
+    rmf_drv = gdal.GetDriverByName( 'RMF' )
+    if rmf_drv is None:
+        gdaltest.post_reason( 'RMF driver not found.' )
+        return 'fail'
+
+    src_ds = gdal.Open( 'data/byte.rsw', gdal.GA_ReadOnly )
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    test_ds_name = 'tmp/nodata.rsw'
+    test_ds = rmf_drv.CreateCopy( test_ds_name, src_ds )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to create test dataset copy.' )
+        return 'fail'
+
+    test_ds.GetRasterBand(1).SetNoDataValue( 33 )
+    nd = test_ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 33:
+        gdaltest.post_reason( 'Invalid NoData value after CreateCopy.' )
+        return 'fail'
+    test_ds = None
+
+    test_ds = gdal.Open( test_ds_name, gdal.GA_Update )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        return 'fail'
+    nd = test_ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 33:
+        gdaltest.post_reason( 'Invalid NoData value after dataset reopen.' )
+        return 'fail'
+    test_ds.GetRasterBand(1).SetNoDataValue( 55 )
+    test_ds = None
+
+    test_ds = gdal.Open( test_ds_name, gdal.GA_ReadOnly )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        return 'fail'
+    nd = test_ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 55:
+        gdaltest.post_reason( 'Invalid NoData value after dataset update.' )
+        return 'fail'
+
+    test_ds = None
+    os.remove(test_ds_name)
+
+    return 'success'
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -453,7 +505,8 @@ gdaltest_list = [
     rmf_21,
     rmf_22,
     rmf_23,
-    rmf_24
+    rmf_24,
+    rmf_25
 ]
 
 if __name__ == '__main__':
