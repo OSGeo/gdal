@@ -152,16 +152,8 @@ bool BAGRasterBand::Initialize( hid_t hDatasetIDIn, const char *pszName )
     dataspace = H5Dget_space(hDatasetIDIn);
     const int n_dims = H5Sget_simple_extent_ndims(dataspace);
     native = H5Tget_native_type(datatype, H5T_DIR_ASCEND);
-    hsize_t dims[3] = {
-      static_cast<hsize_t>(0),
-      static_cast<hsize_t>(0),
-      static_cast<hsize_t>(0)
-    };
-    hsize_t maxdims[3] = {
-      static_cast<hsize_t>(0),
-      static_cast<hsize_t>(0),
-      static_cast<hsize_t>(0)
-    };
+    hsize_t dims[3] = { 0, 0, 0 };
+    hsize_t maxdims[3] = { 0, 0, 0 };
 
     eDataType = GH5_GetDataType(native);
 
@@ -187,11 +179,7 @@ bool BAGRasterBand::Initialize( hid_t hDatasetIDIn, const char *pszName )
     {
         if(H5Pget_layout(listid) == H5D_CHUNKED)
         {
-            hsize_t panChunkDims[3] = {
-              static_cast<hsize_t>(0),
-              static_cast<hsize_t>(0),
-              static_cast<hsize_t>(0)
-            };
+	    hsize_t panChunkDims[3] = { 0, 0, 0 };
             const int nDimSize = H5Pget_chunk(listid, 3, panChunkDims);
             nBlockXSize = static_cast<int>(panChunkDims[nDimSize - 1]);
             nBlockYSize = static_cast<int>(panChunkDims[nDimSize - 2]);
@@ -315,7 +303,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         static_cast<H5OFFSET_TYPE>(
             std::max(0, nRasterYSize - (nBlockYOff + 1) * nBlockYSize)),
         static_cast<H5OFFSET_TYPE>(nXOff),
-        static_cast<H5OFFSET_TYPE>(0)
+        0
     };
 
     const int nSizeOfData = static_cast<int>(H5Tget_size(native));
@@ -325,7 +313,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     hsize_t count[3] = {
         std::min(static_cast<hsize_t>(nBlockYSize), GetYSize() - offset[0]),
         std::min(static_cast<hsize_t>(nBlockXSize), GetXSize() - offset[1]),
-        static_cast<hsize_t>(0)
+        0
     };
 
     if( nRasterYSize - (nBlockYOff + 1) * nBlockYSize < 0 )
@@ -346,7 +334,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     hsize_t col_dims[3] = {
         static_cast<hsize_t>(nBlockYSize),
         static_cast<hsize_t>(nBlockXSize),
-        static_cast<hsize_t>(0)
+        0
     };
     const int rank = 2;
     const hid_t memspace = H5Screate_simple(rank, col_dims, nullptr);
@@ -590,16 +578,8 @@ void BAGDataset::LoadMetadata()
     const hid_t datatype = H5Dget_type(hMDDS);
     const hid_t dataspace = H5Dget_space(hMDDS);
     const hid_t native = H5Tget_native_type(datatype, H5T_DIR_ASCEND);
-    hsize_t dims[3] = {
-        static_cast<hsize_t>(0),
-        static_cast<hsize_t>(0),
-        static_cast<hsize_t>(0)
-    };
-    hsize_t maxdims[3] = {
-        static_cast<hsize_t>(0),
-        static_cast<hsize_t>(0),
-        static_cast<hsize_t>(0)
-    };
+    hsize_t dims[3] = { 0, 0, 0 };
+    hsize_t maxdims[3] = { 0, 0, 0 };
 
     H5Sget_simple_extent_dims(dataspace, dims, maxdims);
 
