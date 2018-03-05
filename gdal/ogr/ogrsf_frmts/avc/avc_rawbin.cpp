@@ -381,6 +381,12 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
     }
     else
     {
+        if( (nTarget > 0 && psFile->nOffset > INT_MAX - nTarget) ||
+            psFile->nOffset+nTarget < 0 )
+        {
+            return;
+        }
+
         /* Requested location is not part of the memory buffer...
          * move the FILE * to the right location and be ready to
          * read from there.
