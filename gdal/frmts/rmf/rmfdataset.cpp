@@ -696,6 +696,7 @@ CPLErr RMFRasterBand::SetNoDataValue( double dfNoData )
     RMFDataset *poGDS = reinterpret_cast<RMFDataset *>( poDS );
 
     poGDS->sHeader.dfNoData = dfNoData;
+    poGDS->bHeaderDirty = true;
 
     return CE_None;
 }
