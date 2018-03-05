@@ -956,7 +956,11 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                 poFeatureDefn->AddFieldDefn(&oField);
             }
 
-            osSeqDim = papszDims[nEurostatDims];
+            if( nEurostatDims >= 0 )
+                osSeqDim = papszDims[nEurostatDims];
+            else
+                CPLError(CE_Warning, CPLE_AppDefined, "Invalid nEurostatDims");
+
             CSLDestroy(papszDims);
         }
         else
@@ -1502,7 +1506,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 else if( !bWarningBadTypeOrWidth )
                 {
                     bWarningBadTypeOrWidth = true;
-                    CPLError(
+a                    CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Invalid value type found in record %d for field %s. "
                         "This warning will no longer be emitted",
