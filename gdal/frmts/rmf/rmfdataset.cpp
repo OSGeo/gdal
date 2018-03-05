@@ -70,8 +70,12 @@ static char* RMFUnitTypeToStr( GUInt32 iElevationUnit )
     }
 }
 
-static GUInt32 RMFStrToUnitType( const char* pszUnit )
+static GUInt32 RMFStrToUnitType( const char* pszUnit, int *pbSuccess = nullptr )
 {
+    if( pbSuccess != nullptr )
+    {
+        *pbSuccess = TRUE;
+    }
     if( EQUAL(pszUnit, RMF_UnitsM) )
         return 0;
     else if( EQUAL(pszUnit, RMF_UnitsDM) )
@@ -81,8 +85,14 @@ static GUInt32 RMFStrToUnitType( const char* pszUnit )
     else if( EQUAL(pszUnit, RMF_UnitsMM) )
         return 3;
     else
+    {
         //There is no 'invalid unit' in RMF format. So meter is default...
+        if( pbSuccess != nullptr )
+        {
+            *pbSuccess = FALSE;
+        }
         return 0;
+    }
 }
 
 /************************************************************************/
@@ -754,13 +764,25 @@ CPLErr RMFRasterBand::SetUnitType( const char *pszNewValue )
 
 {
     RMFDataset *poGDS = reinterpret_cast<RMFDataset *>( poDS );
+    int         bSuccess = FALSE;
+    int         iNewUnit = RMFStrToUnitType(pszNewValue, &bSuccess);
 
-    CPLFree(poGDS->pszUnitType);
-    poGDS->pszUnitType = CPLStrdup( pszNewValue );
-    poGDS->sHeader.iElevationUnit = RMFStrToUnitType(poGDS->pszUnitType);
-    poGDS->bHeaderDirty = true;
-
-    return CE_None;
+    if( bSuccess )
+    {
+        CPLFree(poGDS->pszUnitType);
+        poGDS->pszUnitType = CPLStrdup( pszNewValue );
+        poGDS->sHeader.iElevationUnit = iNewUnit;
+        poGDS->bHeaderDirty = true;
+        return CE_None;
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "RMF driver does not support '%s' elevation units. "
+                  "Possible values are: m, dm, cm, mm.",
+                  pszNewValue );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/

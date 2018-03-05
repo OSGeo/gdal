@@ -524,6 +524,12 @@ def rmf_26():
         gdaltest.post_reason( 'Invalid UnitType after dataset update.' )
         return 'fail'
 
+    test_ds.GetRasterBand(1).SetUnitType('ft')
+    unittype = test_ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'mm':
+        gdaltest.post_reason( 'Invalid UnitType after dataset update.' )
+        return 'fail'
+
     test_ds = None
     os.remove(test_ds_name)
 
