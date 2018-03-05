@@ -1506,7 +1506,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 else if( !bWarningBadTypeOrWidth )
                 {
                     bWarningBadTypeOrWidth = true;
-a                    CPLError(
+                    CPLError(
                         CE_Warning, CPLE_AppDefined,
                         "Invalid value type found in record %d for field %s. "
                         "This warning will no longer be emitted",
