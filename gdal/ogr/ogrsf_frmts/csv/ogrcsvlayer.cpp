@@ -1660,7 +1660,7 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
         {
             char **papszVals = CSLTokenizeString2(papszTokens[iAttr], " ", 0);
             eType = CPLGetValueType(papszVals[0]);
-            if( papszVals[0][0] != '\0' &&
+            if( (papszVals[0] && papszVals[0][0] != '\0') &&
                 (eType == CPL_VALUE_INTEGER || eType == CPL_VALUE_REAL) )
             {
                 if( !poFeatureDefn->GetFieldDefn(nEurostatDims + 2 * (iAttr - 1))
