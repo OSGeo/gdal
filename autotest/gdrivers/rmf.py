@@ -477,6 +477,59 @@ def rmf_25():
 
     return 'success'
 ###############################################################################
+# Unit write test
+
+def rmf_26():
+    rmf_drv = gdal.GetDriverByName( 'RMF' )
+    if rmf_drv is None:
+        gdaltest.post_reason( 'RMF driver not found.' )
+        return 'fail'
+
+    src_ds = gdal.Open( 'data/float64.mtw', gdal.GA_ReadOnly )
+
+    if src_ds is None:
+        gdaltest.post_reason( 'Failed to open test dataset.' )
+        return 'fail'
+
+    test_ds_name = 'tmp/unit.mtw'
+    test_ds = rmf_drv.CreateCopy( test_ds_name, src_ds, options=['MTW=YES'] )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to create test dataset copy.' )
+        return 'fail'
+
+    test_ds.GetRasterBand(1).SetUnitType('cm')
+    unittype = test_ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'cm':
+        gdaltest.post_reason( 'Invalid UnitType after CreateCopy.' )
+        return 'fail'
+    test_ds = None
+
+    test_ds = gdal.Open( test_ds_name, gdal.GA_Update )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        return 'fail'
+    unittype = test_ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'cm':
+        gdaltest.post_reason( 'Invalid UnitType after dataset reopen.' )
+        return 'fail'
+    test_ds.GetRasterBand(1).SetUnitType('mm')
+    test_ds = None
+
+    test_ds = gdal.Open( test_ds_name, gdal.GA_ReadOnly )
+    if test_ds is None:
+        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        return 'fail'
+    unittype = test_ds.GetRasterBand(1).GetUnitType()
+    if unittype != 'mm':
+        gdaltest.post_reason( 'Invalid UnitType after dataset update.' )
+        return 'fail'
+
+    test_ds = None
+    os.remove(test_ds_name)
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     rmf_1,
@@ -506,7 +559,8 @@ gdaltest_list = [
     rmf_22,
     rmf_23,
     rmf_24,
-    rmf_25
+    rmf_25,
+    rmf_26
 ]
 
 if __name__ == '__main__':
