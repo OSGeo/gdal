@@ -52,6 +52,49 @@ static const char RMF_UnitsMM[] = "mm";
 constexpr double RMF_DEFAULT_SCALE = 10000.0;
 constexpr double RMF_DEFAULT_RESOLUTION = 100.0;
 
+
+static char* RMFUnitTypeToStr( GUInt32 iElevationUnit )
+{
+    switch ( iElevationUnit )
+    {
+        case 0:
+            return CPLStrdup( RMF_UnitsM );
+        case 1:
+            return CPLStrdup( RMF_UnitsDM );
+        case 2:
+            return CPLStrdup( RMF_UnitsCM );
+        case 3:
+            return CPLStrdup( RMF_UnitsMM );
+        default:
+            return CPLStrdup( RMF_UnitsEmpty );
+    }
+}
+
+static GUInt32 RMFStrToUnitType( const char* pszUnit, int *pbSuccess = nullptr )
+{
+    if( pbSuccess != nullptr )
+    {
+        *pbSuccess = TRUE;
+    }
+    if( EQUAL(pszUnit, RMF_UnitsM) )
+        return 0;
+    else if( EQUAL(pszUnit, RMF_UnitsDM) )
+        return 1;
+    else if( EQUAL(pszUnit, RMF_UnitsCM) )
+        return 2;
+    else if( EQUAL(pszUnit, RMF_UnitsMM) )
+        return 3;
+    else
+    {
+        //There is no 'invalid unit' in RMF format. So meter is default...
+        if( pbSuccess != nullptr )
+        {
+            *pbSuccess = FALSE;
+        }
+        return 0;
+    }
+}
+
 /************************************************************************/
 /* ==================================================================== */
 /*                            RMFRasterBand                             */
@@ -721,11 +764,25 @@ CPLErr RMFRasterBand::SetUnitType( const char *pszNewValue )
 
 {
     RMFDataset *poGDS = reinterpret_cast<RMFDataset *>( poDS );
+    int         bSuccess = FALSE;
+    int         iNewUnit = RMFStrToUnitType(pszNewValue, &bSuccess);
 
-    CPLFree(poGDS->pszUnitType);
-    poGDS->pszUnitType = CPLStrdup( pszNewValue );
-
-    return CE_None;
+    if( bSuccess )
+    {
+        CPLFree(poGDS->pszUnitType);
+        poGDS->pszUnitType = CPLStrdup( pszNewValue );
+        poGDS->sHeader.iElevationUnit = iNewUnit;
+        poGDS->bHeaderDirty = true;
+        return CE_None;
+    }
+    else
+    {
+        CPLError( CE_Warning, CPLE_NotSupported,
+                  "RMF driver does not support '%s' elevation units. "
+                  "Possible values are: m, dm, cm, mm.",
+                  pszNewValue );
+        return CE_Failure;
+    }
 }
 
 /************************************************************************/
@@ -1760,24 +1817,7 @@ do {                                                                    \
     if( poDS->eRMFType == RMFT_MTW )
     {
         CPLFree(poDS->pszUnitType);
-        switch ( poDS->sHeader.iElevationUnit )
-        {
-            case 0:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsM );
-                break;
-            case 1:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsDM );
-                break;
-            case 2:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsCM );
-                break;
-            case 3:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsMM );
-                break;
-            default:
-                poDS->pszUnitType = CPLStrdup( RMF_UnitsEmpty );
-                break;
-        }
+        poDS->pszUnitType = RMFUnitTypeToStr(poDS->sHeader.iElevationUnit);
     }
 
 /* -------------------------------------------------------------------- */
@@ -2058,16 +2098,7 @@ GDALDataset *RMFDataset::Create( const char * pszFilename,
         poDS->paiTiles[poDS->sHeader.nTileTblSize / 4 - 2] + nTileSize;
 
     // Elevation units
-    if( EQUAL(poDS->pszUnitType, RMF_UnitsM) )
-        poDS->sHeader.iElevationUnit = 0;
-    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsDM) )
-        poDS->sHeader.iElevationUnit = 1;
-    else if ( EQUAL(poDS->pszUnitType, RMF_UnitsCM) )
-        poDS->sHeader.iElevationUnit = 2;
-    else if( EQUAL(poDS->pszUnitType, RMF_UnitsMM) )
-        poDS->sHeader.iElevationUnit = 3;
-    else
-        poDS->sHeader.iElevationUnit = 0;
+    poDS->sHeader.iElevationUnit = RMFStrToUnitType(poDS->pszUnitType);
 
     poDS->sHeader.iMapType = -1;
     poDS->sHeader.iProjection = -1;
