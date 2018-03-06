@@ -130,6 +130,17 @@ static const FieldDesc SEGYFields10[] =
     { "CROSSLINE_NUMBER", OFTInteger },
     { "SHOTPOINT_NUMBER", OFTInteger },
     { "SHOTPOINT_SCALAR", OFTInteger },
+    { "VALUE_MEASUREMENT_UNIT", OFTInteger },
+    { "TRADUCTION_CONSTANT_MANTISSA", OFTInteger },
+    { "TRADUCTION_CONSTANT_POWER", OFTInteger },
+    { "DEVICE_IDENTIFIER", OFTInteger },
+    { "TIME_SCALAR", OFTInteger },
+    { "ORIENTATION_TYPE", OFTInteger },
+    { "SOURCE_EFFORT_MANTISSA", OFTInteger },
+    { "SOURCE_EFFORT_POWER", OFTInteger },
+    { "SOURCE_MEASUREMENT_UNIT", OFTInteger },
+    { "X_COORDINATE", OFTInteger },
+    { "Y_COORDINATE", OFTInteger },
 };
 
 static const int TRACE_NUMBER_WITHIN_LINE = 0;
@@ -206,6 +217,17 @@ static const int INLINE_NUMBER = 70;
 static const int CROSSLINE_NUMBER = 71;
 static const int SHOTPOINT_NUMBER = 72;
 static const int SHOTPOINT_SCALAR = 73;
+static const int VALUE_MEASUREMENT_UNIT = 74;
+static const int TRADUCTION_CONSTANT_MANTISSA = 75;
+static const int TRADUCTION_CONSTANT_POWER = 76;
+static const int DEVICE_IDENTIFIER = 77;
+static const int TIME_SCALAR = 78;
+static const int ORIENTATION_TYPE = 79;
+static const int SOURCE_EFFORT_MANTISSA = 80;
+static const int SOURCE_EFFORT_POWER = 81;
+static const int SOURCE_MEASUREMENT_UNIT = 82;
+static const int X_COORDINATE = 83;
+static const int Y_COORDINATE = 84;
 
 /************************************************************************/
 /*                       SEGYReadMSBFloat32()                           */
@@ -464,6 +486,18 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     const int nShotpointNumber = SEGYReadMSBInt32(abyTraceHeader + 196);
     const int nShotpointScalar = SEGYReadMSBInt16(abyTraceHeader + 200);
 
+    const int nValueMeasurementUnit = SEGYReadMSBInt16(abyTraceHeader + 202);
+    const int nTraductionConstantMantissa = SEGYReadMSBInt32(abyTraceHeader + 204);
+    const int nTraductionConstantPower = SEGYReadMSBInt16(abyTraceHeader + 208);
+    const int nDeviceIdentifier = SEGYReadMSBInt16(abyTraceHeader + 212);
+    const int nTimeScalar = SEGYReadMSBInt16(abyTraceHeader + 214);
+    const int nOrientationType = SEGYReadMSBInt16(abyTraceHeader + 216);
+    const int nSourceEffortMantissa = SEGYReadMSBInt32(abyTraceHeader + 224);
+    const int nSourceEffortPower = SEGYReadMSBInt16(abyTraceHeader + 228);
+    const int nSourceMeasurementUnit = SEGYReadMSBInt16(abyTraceHeader + 230);
+    const int nXCoordinate = SEGYReadMSBInt32(abyTraceHeader + 180);
+    const int nYCoordinate = SEGYReadMSBInt32(abyTraceHeader + 184);
+
 #ifdef SEGY_EXTENSIONS
 #if DEBUG_VERBOSE
     // Extensions of http://sioseis.ucsd.edu/segy.header.html
@@ -492,6 +526,8 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     const double dfGroupX = nGroupX * dfHorizontalScale;
     const double dfGroupY = nGroupY * dfHorizontalScale;
 
+    dfHorizontalScale = nHorizontalScalar;
+    
 #if DEBUG_VERBOSE
     const double dfSourceX = nSourceX * dfHorizontalScale;
     const double dfSourceY = nSourceY * dfHorizontalScale;
@@ -580,6 +616,15 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         CPLDebug("SEGY", "nCrosslineNumber = %d", nCrosslineNumber);
         CPLDebug("SEGY", "nShotpointNumber = %d", nShotpointNumber);
         CPLDebug("SEGY", "nShotpointScalar = %d", nShotpointScalar);
+        CPLDebug("SEGY", "nValueMeasurementUnit = %d", nValueMeasurementUnit);
+        CPLDebug("SEGY", "nTraductionConstantMantissa = %d", nTraductionConstantMantissa);
+        CPLDebug("SEGY", "nTraductionConstantPower = %d", nTraductionConstantPower);
+        CPLDebug("SEGY", "nDeviceIdentifier = %d", nDeviceIdentifier);
+        CPLDebug("SEGY", "nTimeScalar = %d", nTimeScalar);
+        CPLDebug("SEGY", "nOrientationType = %d", nOrientationType);
+        CPLDebug("SEGY", "nSourceEffortMantissa = %d", nSourceEffortMantissa);
+        CPLDebug("SEGY", "nSourceEffortPower = %d", nSourceEffortPower);
+        CPLDebug("SEGY", "nSourceMeasurementUnit = %d", nSourceMeasurementUnit);
     }
 #endif
 
@@ -730,6 +775,17 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         poFeature->SetField(CROSSLINE_NUMBER, nCrosslineNumber);
         poFeature->SetField(SHOTPOINT_NUMBER, nShotpointNumber);
         poFeature->SetField(SHOTPOINT_SCALAR, nShotpointScalar);
+        poFeature->SetField(VALUE_MEASUREMENT_UNIT, nValueMeasurementUnit);
+        poFeature->SetField(TRADUCTION_CONSTANT_MANTISSA, nTraductionConstantMantissa);
+        poFeature->SetField(TRADUCTION_CONSTANT_POWER, nTraductionConstantPower);
+        poFeature->SetField(DEVICE_IDENTIFIER, nDeviceIdentifier);
+        poFeature->SetField(TIME_SCALAR, nTimeScalar);
+        poFeature->SetField(ORIENTATION_TYPE, nOrientationType);
+        poFeature->SetField(SOURCE_EFFORT_MANTISSA, nSourceEffortMantissa);
+        poFeature->SetField(SOURCE_EFFORT_POWER, nSourceEffortPower);
+        poFeature->SetField(SOURCE_MEASUREMENT_UNIT, nSourceMeasurementUnit);
+        poFeature->SetField(X_COORDINATE, nXCoordinate);
+        poFeature->SetField(Y_COORDINATE, nYCoordinate);
     }
 
     if( nSamples > 0 && padfValues != NULL )
