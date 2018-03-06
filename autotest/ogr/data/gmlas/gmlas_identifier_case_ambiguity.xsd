@@ -1,0 +1,20 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:element name="differentcase">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="differentcase" type="xs:string"/>
+            <xs:element name="DifferentCASE" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+<xs:element name="DifferentCASE">
+    <xs:complexType>
+        <xs:sequence>
+            <xs:element name="x" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:element>
+</xs:schema>

@@ -68,7 +68,7 @@ char** RasterliteGetTileDriverOptions(char** papszOptions)
     const char* pszDriverName =
         CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
 
-    char** papszTileDriverOptions = NULL;
+    char** papszTileDriverOptions = nullptr;
     if (EQUAL(pszDriverName, "EPSILON"))
     {
         papszTileDriverOptions = CSLSetNameValue(papszTileDriverOptions,
@@ -116,21 +116,21 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
 {
     int nAuthorityCode = 0;
     CPLString osAuthorityName, osProjCS, osProj4;
-    if (pszWKT != NULL && strlen(pszWKT) != 0)
+    if (pszWKT != nullptr && strlen(pszWKT) != 0)
     {
         OGRSpatialReferenceH hSRS = OSRNewSpatialReference(pszWKT);
         if (hSRS)
         {
-            const char* pszAuthorityName = OSRGetAuthorityName(hSRS, NULL);
+            const char* pszAuthorityName = OSRGetAuthorityName(hSRS, nullptr);
             if (pszAuthorityName) osAuthorityName = pszAuthorityName;
 
             const char* pszProjCS = OSRGetAttrValue(hSRS, "PROJCS", 0);
             if (pszProjCS) osProjCS = pszProjCS;
 
-            const char* pszAuthorityCode = OSRGetAuthorityCode(hSRS, NULL);
+            const char* pszAuthorityCode = OSRGetAuthorityCode(hSRS, nullptr);
             if (pszAuthorityCode) nAuthorityCode = atoi(pszAuthorityCode);
 
-            char    *pszProj4 = NULL;
+            char    *pszProj4 = nullptr;
             if( OSRExportToProj4( hSRS, &pszProj4 ) != OGRERR_NONE )
             {
                 CPLFree(pszProj4);
@@ -147,8 +147,8 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
     if (nAuthorityCode != 0 && !osAuthorityName.empty())
     {
         osSQL.Printf   ("SELECT srid FROM spatial_ref_sys WHERE auth_srid = %d", nAuthorityCode);
-        OGRLayerH hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
-        if (hLyr == NULL)
+        OGRLayerH hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
+        if (hLyr == nullptr)
         {
             nSRSId = nAuthorityCode;
 
@@ -167,7 +167,7 @@ static int RasterliteInsertSRID(OGRDataSourceH hDS, const char* pszWKT)
                     nSRSId, osAuthorityName.c_str(),
                     nAuthorityCode, osProj4.c_str() );
 
-            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         }
         else
         {
@@ -204,7 +204,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
 
     OGRLayerH hLyr;
 
-    if (OGR_DS_GetLayerByName(hDS, osRasterLayer.c_str()) == NULL)
+    if (OGR_DS_GetLayerByName(hDS, osRasterLayer.c_str()) == nullptr)
     {
 /* -------------------------------------------------------------------- */
 /*      The table don't exist. Create them                              */
@@ -214,7 +214,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         osSQL.Printf   ("CREATE TABLE \"%s\" ("
                         "id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,"
                         "raster BLOB NOT NULL)", osRasterLayer.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
         /* Create _metadata table */
         osSQL.Printf   ("CREATE TABLE \"%s\" ("
@@ -226,34 +226,34 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                         "pixel_x_size DOUBLE NOT NULL,"
                         "pixel_y_size DOUBLE NOT NULL)",
                         osMetadataLayer.c_str());
-        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
         /* Add geometry column to _metadata table */
         osSQL.Printf("SELECT AddGeometryColumn('%s', 'geometry', %d, 'POLYGON', 2)",
                       osMetadataLayer.c_str(), nSRSId);
-        if ((hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL)) == NULL)
+        if ((hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr)) == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Check that the OGR SQLite driver has Spatialite support");
             OGRReleaseDataSource(hDS);
-            return NULL;
+            return nullptr;
         }
         OGR_DS_ReleaseResultSet(hDS, hLyr);
 
         /* Create spatial index on _metadata table */
         osSQL.Printf("SELECT CreateSpatialIndex('%s', 'geometry')",
                       osMetadataLayer.c_str());
-        if ((hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL)) == NULL)
+        if ((hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr)) == nullptr)
         {
             OGRReleaseDataSource(hDS);
-            return NULL;
+            return nullptr;
         }
         OGR_DS_ReleaseResultSet(hDS, hLyr);
 
         /* Create statistics tables */
         osSQL.Printf("SELECT UpdateLayerStatistics()");
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         CPLPopErrorHandler();
         OGR_DS_ReleaseResultSet(hDS, hLyr);
 
@@ -268,7 +268,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         /* data to be inserted */
         osSQL.Printf("SELECT srid FROM geometry_columns WHERE f_table_name = '%s'",
                      osMetadataLayer.c_str());
-        hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+        hLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         if (hLyr)
         {
             int nExistingSRID = -1;
@@ -287,7 +287,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                     osSQL.Printf("UPDATE geometry_columns SET srid = %d "
                                  "WHERE f_table_name = \"%s\"",
                                  nSRSId, osMetadataLayer.c_str());
-                    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+                    OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
                     /* Re-open the DB to take into account the change of SRS */
                     OGRReleaseDataSource(hDS);
@@ -299,7 +299,7 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "New data has not the same SRS as existing data");
                     OGRReleaseDataSource(hDS);
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -307,10 +307,10 @@ OGRDataSourceH RasterliteCreateTables(OGRDataSourceH hDS, const char* pszTableNa
         if (bWipeExistingData)
         {
             osSQL.Printf("DELETE FROM \"%s\"", osRasterLayer.c_str());
-            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
 
             osSQL.Printf("DELETE FROM \"%s\"", osMetadataLayer.c_str());
-            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+            OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
         }
     }
 
@@ -331,7 +331,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     if (nBands == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "nBands == 0");
-        return NULL;
+        return nullptr;
     }
 
     const char* pszDriverName = CSLFetchNameValueDef(papszOptions, "DRIVER", "GTiff");
@@ -339,21 +339,21 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDAL %s driver cannot be used as underlying driver",
                  pszDriverName);
-        return NULL;
+        return nullptr;
     }
 
     GDALDriverH hTileDriver = GDALGetDriverByName(pszDriverName);
-    if ( hTileDriver == NULL)
+    if ( hTileDriver == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL %s driver", pszDriverName);
-        return NULL;
+        return nullptr;
     }
 
     GDALDriverH hMemDriver = GDALGetDriverByName("MEM");
-    if (hMemDriver == NULL)
+    if (hMemDriver == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load GDAL MEM driver");
-        return NULL;
+        return nullptr;
     }
 
     const int nXSize = GDALGetRasterXSize(poSrcDS);
@@ -372,7 +372,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     else if (adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot use geotransform with rotational terms");
-        return NULL;
+        return nullptr;
     }
 
     const bool bTiled = CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));
@@ -429,7 +429,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
     VSIStatBuf sBuf;
     const bool bExists = (VSIStat(osDBName.c_str(), &sBuf) == 0);
@@ -440,7 +440,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Database already exists. Explicit table name must be specified");
-            return NULL;
+            return nullptr;
         }
         osTableName = CPLGetBasename(osDBName.c_str());
     }
@@ -459,17 +459,17 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         OGRRegisterAll();
 
     OGRSFDriverH hSQLiteDriver = OGRGetDriverByName("SQLite");
-    if (hSQLiteDriver == NULL)
+    if (hSQLiteDriver == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot load OGR SQLite driver");
-        return NULL;
+        return nullptr;
     }
 
     OGRDataSourceH hDS;
 
     if (!bExists)
     {
-        char** papszOGROptions = CSLAddString(NULL, "SPATIALITE=YES");
+        char** papszOGROptions = CSLAddString(nullptr, "SPATIALITE=YES");
         hDS = OGR_Dr_CreateDataSource(hSQLiteDriver,
                                       osDBName.c_str(), papszOGROptions);
         CSLDestroy(papszOGROptions);
@@ -479,11 +479,11 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         hDS = RasterliteOpenSQLiteDB(osDBName.c_str(), GA_Update);
     }
 
-    if (hDS == NULL)
+    if (hDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot load or create SQLite database");
-        return NULL;
+        return nullptr;
     }
 
     CPLString osSQL;
@@ -501,17 +501,17 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     hDS = RasterliteCreateTables(hDS, osTableName.c_str(),
                                  nSRSId, bWipeExistingData);
-    if (hDS == NULL)
-        return NULL;
+    if (hDS == nullptr)
+        return nullptr;
 
     OGRLayerH hRasterLayer = OGR_DS_GetLayerByName(hDS, osRasterLayer.c_str());
     OGRLayerH hMetadataLayer = OGR_DS_GetLayerByName(hDS, osMetadataLayer.c_str());
-    if (hRasterLayer == NULL || hMetadataLayer == NULL)
+    if (hRasterLayer == nullptr || hMetadataLayer == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot find metadata and/or raster tables");
         OGRReleaseDataSource(hDS);
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -532,7 +532,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                   RasterliteGetPixelSizeCond(adfGeoTransform[1], -adfGeoTransform[5]).c_str());
 
     int nOverlappingGeoms = 0;
-    OGRLayerH hCountLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), NULL, NULL);
+    OGRLayerH hCountLyr = OGR_DS_ExecuteSQL(hDS, osSQL.c_str(), nullptr, nullptr);
     if (hCountLyr)
     {
         OGRFeatureH hFeat = OGR_L_GetNextFeature(hCountLyr);
@@ -563,10 +563,10 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     GByte* pabyMEMDSBuffer =
         reinterpret_cast<GByte *>(
             VSIMalloc3(nBlockXSize, nBlockYSize, nBands * nDataTypeSize) );
-    if (pabyMEMDSBuffer == NULL)
+    if (pabyMEMDSBuffer == nullptr)
     {
         OGRReleaseDataSource(hDS);
-        return NULL;
+        return nullptr;
     }
 
     CPLString osTempFileName;
@@ -578,7 +578,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     char** papszTileDriverOptions = RasterliteGetTileDriverOptions(papszOptions);
 
-    OGR_DS_ExecuteSQL(hDS, "BEGIN", NULL, NULL);
+    OGR_DS_ExecuteSQL(hDS, "BEGIN", nullptr, nullptr);
 
     CPLErr eErr = CE_None;
     for(int nBlockYOff=0;eErr == CE_None && nBlockYOff<nYBlocks;nBlockYOff++)
@@ -600,8 +600,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                      nBlockYOff * nBlockYSize,
                                      nReqXSize, nReqYSize,
                                      pabyMEMDSBuffer, nReqXSize, nReqYSize,
-                                     eDataType, nBands, NULL,
-                                     0, 0, 0, NULL);
+                                     eDataType, nBands, nullptr,
+                                     0, 0, 0, nullptr);
             if (eErr != CE_None)
             {
                 break;
@@ -609,8 +609,8 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             GDALDatasetH hMemDS = GDALCreate(hMemDriver, "MEM:::",
                                               nReqXSize, nReqYSize, 0,
-                                              eDataType, NULL);
-            if (hMemDS == NULL)
+                                              eDataType, nullptr);
+            if (hMemDS == nullptr)
             {
                 eErr = CE_Failure;
                 break;
@@ -624,14 +624,14 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                                 pabyMEMDSBuffer + iBand * nDataTypeSize *
                                 nReqXSize * nReqYSize, sizeof(szTmp));
                 char** papszMEMDSOptions
-                    = CSLSetNameValue(NULL, "DATAPOINTER", szTmp);
+                    = CSLSetNameValue(nullptr, "DATAPOINTER", szTmp);
                 GDALAddBand(hMemDS, eDataType, papszMEMDSOptions);
                 CSLDestroy(papszMEMDSOptions);
             }
 
             GDALDatasetH hOutDS = GDALCreateCopy(hTileDriver,
                                         osTempFileName.c_str(), hMemDS, FALSE,
-                                        papszTileDriverOptions, NULL, NULL);
+                                        papszTileDriverOptions, nullptr, nullptr);
 
             GDALClose(hMemDS);
             if ( !hOutDS )
@@ -702,15 +702,15 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
             nBlocks++;
             if (pfnProgress && !pfnProgress(1.0 * nBlocks / nTotalBlocks,
-                                            NULL, pProgressData))
+                                            nullptr, pProgressData))
                 eErr = CE_Failure;
         }
     }
 
     if (eErr == CE_None)
-        OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, "COMMIT", nullptr, nullptr);
     else
-        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", NULL, NULL);
+        OGR_DS_ExecuteSQL(hDS, "ROLLBACK", nullptr, nullptr);
 
     CSLDestroy(papszTileDriverOptions);
 
@@ -719,7 +719,7 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     OGRReleaseDataSource(hDS);
 
     if( eErr == CE_Failure )
-        return NULL;
+        return nullptr;
 
     return reinterpret_cast<GDALDataset *>(
         GDALOpen( pszFilename, GA_Update ) );

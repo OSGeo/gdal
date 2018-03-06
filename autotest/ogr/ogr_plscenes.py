@@ -165,8 +165,10 @@ def ogr_plscenes_data_v1_nominal():
        lyr.TestCapability(ogr.OLCRandomRead) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
+    # Different serialization depending on libjson versions
     gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0.000000}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
     gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
+    gdal.FileFromMemBuffer("""/vsimem/data_v1/stats&POSTFIELDS={"interval":"year","item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"cloud_cover","config":{"gte":0.0}}]}}""", """{ "buckets": [ { "count": 1 }, { "count": 1} ] }""")
     if lyr.GetFeatureCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'

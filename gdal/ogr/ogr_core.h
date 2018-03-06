@@ -637,6 +637,14 @@ typedef enum
 /** Special value for a unset FID */
 #define OGRNullFID            -1
 
+/* Special value for an unknown field type. This should only be used
+ * while reading a file. At the end of file any unknown types should
+ * be set to OFTString.
+*/
+/*! @cond Doxygen_Suppress */
+#define OGRUnknownType        static_cast<OGRFieldType>(-1)
+/*! @endcond */
+
 /** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
  *  a unset field.
  *  Direct use of this value is strongly discouraged.
@@ -712,8 +720,16 @@ typedef union {
 /*! @endcond */
 } OGRField;
 
+#ifdef __cplusplus
 /** Return the number of milliseconds from a datetime with decimal seconds */
-#define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
+inline int OGR_GET_MS(float fSec) {
+  if( CPLIsNan(fSec) ) return 0;
+  if( fSec >= 999 ) return 999;
+  if( fSec <= 0 ) return 0;
+  const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
+  return static_cast<int>(fValue);
+}
+#endif  // __cplusplus
 
 int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
                           int nOptions );
@@ -845,7 +861,7 @@ typedef enum ogr_style_tool_param_symbol_id
     OGRSTSymbolPerp     = 7, /**< Perpendicular */
     OGRSTSymbolOffset   = 8, /**< Offset */
     OGRSTSymbolPriority = 9, /**< Priority */
-    OGRSTSymbolFontName = 10, /**< Font name */
+    OGRSTSymbolFontName = 10, /**< OBSOLETE; do not use */
     OGRSTSymbolOColor   = 11, /**< Outline color */
 #ifndef DOXYGEN_SKIP
     OGRSTSymbolLast     = 12
@@ -874,8 +890,8 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelPriority  = 14, /**< Priority */
     OGRSTLabelStrikeout = 15, /**< Strike out */
     OGRSTLabelStretch   = 16, /**< Stretch */
-    OGRSTLabelAdjHor    = 17, /**< Horizontal adjustment */
-    OGRSTLabelAdjVert   = 18, /**< Vectical adjustment */
+    OGRSTLabelAdjHor    = 17, /**< OBSOLETE; do not use */
+    OGRSTLabelAdjVert   = 18, /**< OBSOLETE; do not use */
     OGRSTLabelHColor    = 19, /**< Highlight color */
     OGRSTLabelOColor    = 20, /**< Outline color */
 #ifndef DOXYGEN_SKIP

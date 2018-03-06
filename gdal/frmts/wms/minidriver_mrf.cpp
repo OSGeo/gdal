@@ -86,7 +86,7 @@ static size_t pread_curl(void *user_data, void *buff, size_t count, off_t offset
 
     int success = (request.nStatus == 200) ||
         (!request.Range.empty() && request.nStatus == 206);
-    if (!success || request.pabyData == NULL || request.nDataLen == 0) {
+    if (!success || request.pabyData == nullptr || request.nDataLen == 0) {
         CPLError(CE_Failure, CPLE_HttpResponse,
             "GDALWMS: Unable to download data from %s",
             request.URL.c_str());
@@ -105,7 +105,7 @@ SectorCache::SectorCache(void *user_data,
                          unsigned int size,
                          unsigned int count ) :
     n(count + 2), m(size), reader(fn ? fn : pread_VSIL),
-    reader_data(user_data), last_used(NULL)
+    reader_data(user_data), last_used(nullptr)
 {
 }
 
@@ -146,13 +146,13 @@ void *SectorCache::data(size_t address) {
     if (target == &store.back())
         store.resize(store.size() - 1);
     // Signal invalid request
-    return NULL;
+    return nullptr;
 }
 
 // Keep in sync with the type enum
 static const int ir_size[WMSMiniDriver_MRF::tEND] = { 16, 8 };
 
-WMSMiniDriver_MRF::WMSMiniDriver_MRF(): m_type(tMRF), fp(NULL), m_request(NULL),index_cache(NULL) {}
+WMSMiniDriver_MRF::WMSMiniDriver_MRF(): m_type(tMRF), fp(nullptr), m_request(nullptr),index_cache(nullptr) {}
 
 WMSMiniDriver_MRF::~WMSMiniDriver_MRF() {
     if (index_cache)
@@ -212,7 +212,7 @@ CPLErr WMSMiniDriver_MRF::EndInit() {
         if (!is_url(m_idxname)) {
             index_is_url = 0;
             fp = VSIFOpenL(m_idxname, "rb");
-            if (fp == NULL) {
+            if (fp == nullptr) {
                 CPLError(CE_Failure, CPLE_FileIO, "Can't open index file %s", m_idxname.c_str());
                 return CE_Failure;
             }
@@ -286,7 +286,7 @@ CPLErr WMSMiniDriver_MRF::TiledImageRequest(WMSHTTPRequest &request,
     }
 
     void *raw_index = index_cache->data(offset);
-    if (raw_index == NULL) {
+    if (raw_index == nullptr) {
         request.Error = "Invalid indexing";
         return CE_Failure;
     };

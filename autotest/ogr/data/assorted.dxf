@@ -1131,7 +1131,7 @@ AcDbBlockTableRecord
   0
 BLOCK_RECORD
   5
-43
+A43
 100
 AcDbSymbolTableRecord
 100
@@ -1257,7 +1257,7 @@ AcDbBlockEnd
   0
 BLOCK
   5
-44
+A44
 100
 AcDbEntity
   8
@@ -1281,7 +1281,7 @@ STAR
   0
 LINE
   5
-45
+A45
 100
 AcDbEntity
 100
@@ -1309,7 +1309,7 @@ ByLayer
   0
 LINE
   5
-46
+A46
 100
 AcDbEntity
 100
@@ -1337,7 +1337,7 @@ ByLayer
   0
 LINE
   5
-47
+A47
 100
 AcDbEntity
 100
@@ -1365,7 +1365,7 @@ ByLayer
   0
 LINE
   5
-48
+A48
 100
 AcDbEntity
 100
@@ -1393,7 +1393,7 @@ ByLayer
   0
 LINE
   5
-49
+A49
 100
 AcDbEntity
 100
@@ -1421,7 +1421,7 @@ ByLayer
   0
 MTEXT
   5
-4A
+A4A
 100
 AcDbEntity
 100
@@ -1461,7 +1461,7 @@ normallatin1
   0
 MTEXT
   5
-4B
+A4B
 100
 AcDbEntity
 100
@@ -1501,7 +1501,7 @@ normallatin1
   0
 ENDBLK
   5
-4A
+B4A
 100
 AcDbEntity
   8

@@ -1,0 +1,4 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://myns gmlas_recoding.xsd">
+<myns:attr>é</myns:attr></myns:main_elt>

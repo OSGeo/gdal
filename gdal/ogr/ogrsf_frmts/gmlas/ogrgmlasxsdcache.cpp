@@ -122,19 +122,36 @@ CPLString GMLASResourceCache::GetCachedFilename(const CPLString& osResource)
     }
 
     // If filename is too long, then truncate it and put a hash at the end
-    if( osLaunderedName.size() >= 255 - strlen(".tmp") )
+    // We try to make sure that the whole filename (including the cache path)
+    // fits into 255 characters, for windows compat
+
+    const size_t nWindowsMaxFilenameSize = 255;
+    // 60 is arbitrary but should be sufficient for most people. We could
+    // always take into account m_osCacheDirectory.size(), but if we want to
+    // to be able to share caches between computers, then this would be impractical.
+    const size_t nTypicalMaxSizeForDirName = 60;
+    const size_t nSizeForDirName =
+    (m_osCacheDirectory.size() > nTypicalMaxSizeForDirName &&
+     m_osCacheDirectory.size() <
+        nWindowsMaxFilenameSize - strlen(".tmp") -  2 * CPL_SHA256_HASH_SIZE) ?
+                m_osCacheDirectory.size() : nTypicalMaxSizeForDirName;
+    CPLAssert( nWindowsMaxFilenameSize >= nSizeForDirName );
+    const size_t nMaxFilenameSize = nWindowsMaxFilenameSize - nSizeForDirName;
+
+    CPLAssert( nMaxFilenameSize >= strlen(".tmp") );
+    if( osLaunderedName.size() >= nMaxFilenameSize - strlen(".tmp") )
     {
         GByte abyHash[CPL_SHA256_HASH_SIZE];
         CPL_SHA256(osResource, osResource.size(), abyHash);
         char* pszHash = CPLBinaryToHex(CPL_SHA256_HASH_SIZE, abyHash);
-        osLaunderedName.resize(255 - strlen(".tmp") -  2 * CPL_SHA256_HASH_SIZE);
+        osLaunderedName.resize(nMaxFilenameSize - strlen(".tmp") -  2 * CPL_SHA256_HASH_SIZE);
         osLaunderedName += pszHash;
         CPLFree(pszHash);
         CPLDebug("GMLAS", "Cached filename truncated to %s",
                     osLaunderedName.c_str());
     }
 
-    return CPLFormFilename( m_osCacheDirectory, osLaunderedName, NULL );
+    return CPLFormFilename( m_osCacheDirectory, osLaunderedName, nullptr );
 }
 
 /************************************************************************/
@@ -180,7 +197,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         }
 
         osOutFilename = CPLFormFilename(osBasePathModified,
-                                        osResourceModified, NULL);
+                                        osResourceModified, nullptr);
     }
 
     CPLDebug("GMLAS", "Resolving %s (%s) to %s",
@@ -188,7 +205,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
                 osBasePath.c_str(),
                 osOutFilename.c_str());
 
-    VSILFILE* fp = NULL;
+    VSILFILE* fp = nullptr;
     if( !m_osCacheDirectory.empty() &&
         osOutFilename.find("/vsicurl_streaming/") == 0 &&
         RecursivelyCreateDirectoryIfNeeded() )
@@ -200,7 +217,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         {
             fp = VSIFOpenL( osCachedFileName, "rb");
         }
-        if( fp != NULL )
+        if( fp != nullptr )
         {
             CPLDebug("GMLAS", "Use cached %s", osCachedFileName.c_str());
         }
@@ -240,7 +257,7 @@ VSILFILE* GMLASXSDCache::Open( const CPLString& osResource,
         }
     }
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Cannot resolve %s", osResource.c_str());

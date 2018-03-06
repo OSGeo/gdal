@@ -890,7 +890,7 @@ def test_gdalwarp_lib_124():
     out_ds.GetRasterBand(1).Fill(21)
     expected_cs = out_ds.GetRasterBand(1).Checksum()
 
-    gdal.Warp(out_ds, src_ds, format = 'MEM')
+    gdal.Warp(out_ds, src_ds)
 
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != expected_cs:
@@ -1667,6 +1667,87 @@ def test_gdalwarp_lib_136():
     return 'success'
 
 ###############################################################################
+# Test warping two input datasets with different SRS, with no explicit target SRS
+
+def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs():
+    src_ds = gdal.Open('../gcore/data/byte.tif')
+    src_ds_32611_left = gdal.Translate('', src_ds, format = 'MEM',
+                                       srcWin = [0,0,10,20],
+                                       outputSRS = 'EPSG:32611')
+    src_ds_32611_right = gdal.Translate('', src_ds, format = 'MEM',
+                                       srcWin = [10,0,10,20],
+                                       outputSRS = 'EPSG:32611')
+    src_ds_4326_right = gdal.Warp('', src_ds_32611_right, format = 'MEM',
+                                  dstSRS = 'EPSG:4326')
+    out_ds = gdal.Warp('', [src_ds_4326_right, src_ds_32611_left], format = 'MEM')
+    if out_ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.RasterXSize != 23:
+        gdaltest.post_reason('fail')
+        print(out_ds.RasterXSize)
+        return 'fail'
+    cs = out_ds.GetRasterBand(1).Checksum()
+    if cs != 5048:
+        gdaltest.post_reason('fail')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://trac.osgeo.org/gdal/ticket/7243
+
+def test_gdalwarp_lib_touching_dateline():
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 100,100)
+    src_ds.SetGeoTransform([-2050000,500,0,2100000,0,-500])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(3411)
+    src_ds.SetProjection(sr.ExportToWkt())
+    out_ds = gdal.Warp('', src_ds, dstSRS = 'EPSG:4326', format = 'MEM')
+    if out_ds.RasterXSize != 319:
+        gdaltest.post_reason('fail')
+        print(out_ds.RasterXSize)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test fix for https://trac.osgeo.org/gdal/ticket/7245
+
+def test_gdalwarp_lib_override_default_output_nodata():
+
+    drv = gdal.GetDriverByName('netCDF')
+    if drv is None:
+        return 'skip'
+
+    creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
+    formats = [ 'NC' ]
+    if creationoptionlist.find('<Value>NC2</Value>') >= 0:
+        formats += [ 'NC2' ]
+    if creationoptionlist.find('<Value>NC4</Value>') >= 0:
+        formats += [ 'NC4', 'NC4C' ]
+
+    for format in formats:
+        gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata = 255,
+                format = 'netCDF', creationOptions = ['FORMAT=' + format])
+        ds = gdal.Open('tmp/out.nc')
+        if ds.GetRasterBand(1).GetNoDataValue() != 255:
+            gdaltest.post_reason('fail')
+            print(format)
+            print(ds.GetRasterBand(1).GetNoDataValue())
+            return 'fail'
+        if ds.GetProjection() == '':
+            gdaltest.post_reason('fail')
+            print(format)
+            return 'fail'
+        ds = None
+        os.unlink('tmp/out.nc')
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def test_gdalwarp_lib_cleanup():
@@ -1751,6 +1832,9 @@ gdaltest_list = [
     test_gdalwarp_lib_134,
     test_gdalwarp_lib_135,
     test_gdalwarp_lib_136,
+    test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs,
+    test_gdalwarp_lib_touching_dateline,
+    test_gdalwarp_lib_override_default_output_nodata,
     test_gdalwarp_lib_cleanup,
     ]
 

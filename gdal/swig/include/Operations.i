@@ -596,13 +596,17 @@ GDALDatasetShadow*  CreatePansharpenedVRT( const char* pszXML,
 /*                             Transformer                              */
 /************************************************************************/
 
+#ifndef SWIGPYTHON
 %rename (Transformer) GDALTransformerInfoShadow;
+#endif
+
 class GDALTransformerInfoShadow {
 private:
   GDALTransformerInfoShadow();
 public:
 %extend {
 
+#ifndef SWIGPYTHON
   GDALTransformerInfoShadow( GDALDatasetShadow *src, GDALDatasetShadow *dst,
                              char **options ) {
     GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
@@ -610,6 +614,7 @@ public:
                                          options );
     return obj;
   }
+#endif
 
   ~GDALTransformerInfoShadow() {
     GDALDestroyTransformer( self );
@@ -693,6 +698,19 @@ public:
 
 } /*extend */
 };
+
+#ifdef SWIGPYTHON
+%newobject Transformer;
+%inline %{
+  GDALTransformerInfoShadow* Transformer( GDALDatasetShadow *src, GDALDatasetShadow *dst,
+                             char **options ) {
+    GDALTransformerInfoShadow *obj = (GDALTransformerInfoShadow*)
+       GDALCreateGenImgProjTransformer2( (GDALDatasetH)src, (GDALDatasetH)dst,
+                                         options );
+    return obj;
+  }
+%}
+#endif
 
 /************************************************************************/
 /*                        ApplyVerticalShiftGrid()                      */

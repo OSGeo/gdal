@@ -1,0 +1,19 @@
+
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+OBJ	=	ogrmvtdataset.obj mvtutils.obj mvt_tile.obj
+EXTRAFLAGS =	-I.. -I..\.. -I..\osm $(SQLITEDEF) $(GEOS_CFLAGS)
+
+!IFDEF SQLITE_LIB
+SQLITEDEF	=	-DHAVE_SQLITE $(SQLITE_INC)
+!ENDIF
+
+default:	$(OBJ)
+
+clean:
+	-del *.obj *.pdb
+
+
+

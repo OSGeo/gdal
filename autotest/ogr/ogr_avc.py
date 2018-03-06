@@ -65,6 +65,9 @@ def ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
     avc_ds = ogr.Open( 'data/test.e00' )
+    if avc_ds.GetLayer(0).GetSpatialRef() is None:
+        gdaltest.post_reason('expected SRS')
+        return 'fail'
 
     if avc_ds is not None:
         return check_content(avc_ds)
@@ -77,6 +80,9 @@ def ogr_avc_1():
 def ogr_avc_2():
 
     avc_ds = ogr.Open( 'data/testavc/testavc' )
+    if avc_ds.GetLayer(0).GetSpatialRef() is None:
+        gdaltest.post_reason('expected SRS')
+        return 'fail'
 
     if avc_ds is not None:
         return check_content(avc_ds)

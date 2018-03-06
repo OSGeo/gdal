@@ -1,0 +1,23 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:myns="http://myns"
+           xmlns:swe="http://www.opengis.net/swe/2.0"
+           targetNamespace="http://myns"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://www.opengis.net/swe/2.0" schemaLocation="gmlas_swe_datarecord_swe.xsd"/>
+<xs:element name="main_elt">
+  <xs:complexType>
+        <xs:sequence>
+            <xs:element name="foo" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                        <xs:complexContent>
+                                <xs:extension base="swe:DataRecordPropertyType">
+                                        <xs:attribute name="nilReason" type="xs:string"/>
+                                </xs:extension>
+                        </xs:complexContent>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

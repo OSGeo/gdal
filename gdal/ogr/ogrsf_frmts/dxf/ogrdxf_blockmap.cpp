@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "cpl_csv.h"
 
+#include <algorithm>
+
 CPL_CVSID("$Id$")
 
 /************************************************************************/
@@ -41,10 +43,13 @@ CPL_CVSID("$Id$")
 bool OGRDXFDataSource::ReadBlocksSection()
 
 {
+    // Force inlining of blocks to false, for when OGRDXFLayer processes
+    // INSERT entities
+    const bool bOldInlineBlocks = bInlineBlocks;
+    bInlineBlocks = false;
+
     OGRDXFLayer *poReaderLayer = static_cast<OGRDXFLayer *>(
         GetLayerByName( "Entities" ));
-    const bool bMergeBlockGeometries = CPLTestBool(
-        CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
 
     iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
 
@@ -60,19 +65,44 @@ bool OGRDXFDataSource::ReadBlocksSection()
         // Process contents of BLOCK definition till we find the
         // first entity.
         CPLString osBlockName;
+        CPLString osBlockRecordHandle;
+        OGRDXFInsertTransformer oBasePointTransformer;
 
         while( (nCode = ReadValue( szLineBuf,sizeof(szLineBuf) )) > 0 )
         {
-            if( nCode == 2 )
+            switch( nCode )
+            {
+              case 2:
                 osBlockName = szLineBuf;
+                break;
 
-            // anything else we want?
+              case 330:
+                // get the block record handle as well, for arrowheads
+                osBlockRecordHandle = szLineBuf;
+                break;
+
+              case 10:
+                oBasePointTransformer.dfXOffset = -CPLAtof( szLineBuf );
+                break;
+
+              case 20:
+                oBasePointTransformer.dfYOffset = -CPLAtof( szLineBuf );
+                break;
+
+              case 30:
+                oBasePointTransformer.dfZOffset = -CPLAtof( szLineBuf );
+                break;
+            }
         }
         if( nCode < 0 )
         {
+            bInlineBlocks = bOldInlineBlocks;
             DXF_READER_ERROR();
             return false;
         }
+
+        // store the block record handle mapping even if the block is empty
+        oBlockRecordHandles[osBlockRecordHandle] = osBlockName;
 
         if( EQUAL(szLineBuf,"ENDBLK") )
             continue;
@@ -82,123 +112,69 @@ bool OGRDXFDataSource::ReadBlocksSection()
 
         if( oBlockMap.find(osBlockName) != oBlockMap.end() )
         {
+            bInlineBlocks = bOldInlineBlocks;
             DXF_READER_ERROR();
             return false;
         }
 
         // Now we will process entities till we run out at the ENDBLK code.
-        // we aggregate the geometries of the features into a multi-geometry,
-        // but throw away other stuff attached to the features.
 
-        OGRFeature *poFeature = NULL;
-        OGRGeometryCollection *poColl = new OGRGeometryCollection();
-        std::vector<OGRFeature*> apoFeatures;
+        PushBlockInsertion( osBlockName );
 
-        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != NULL )
+        OGRDXFFeature *poFeature = nullptr;
+        int nIters = 0;
+        const int nMaxIters = atoi(
+            CPLGetConfigOption("DXF_FEATURE_LIMIT_PER_BLOCK", "10000"));
+        while( (poFeature = poReaderLayer->GetNextUnfilteredFeature()) != nullptr )
         {
-            if( (poFeature->GetStyleString() != NULL
-                 && strstr(poFeature->GetStyleString(),"LABEL") != NULL)
-                || !bMergeBlockGeometries )
+            if( nMaxIters >= 0 && nIters == nMaxIters )
             {
-                apoFeatures.push_back( poFeature );
-            }
-            else
-            {
-                OGRGeometry* poSubGeom = poFeature->StealGeometry();
-                if( poSubGeom )
-                    poColl->addGeometryDirectly( poSubGeom );
                 delete poFeature;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                     "Limit of %d features for block %s reached. "
+                     "If you need more, set the "
+                     "DXF_FEATURE_LIMIT_PER_BLOCK configuration "
+                     "option to the maximum value (or -1 for no limit)",
+                     nMaxIters, osBlockName.c_str());
+                break;
             }
+
+            // Apply the base point translation
+            OGRGeometry *poFeatureGeom = poFeature->GetGeometryRef();
+            if( poFeatureGeom )
+                poFeatureGeom->transform( &oBasePointTransformer );
+
+            // Also apply the base point translation to the original
+            // coordinates of block references
+            if( poFeature->IsBlockReference() )
+            {
+                DXFTriple oTriple = poFeature->GetInsertOCSCoords();
+                OGRPoint oPoint( oTriple.dfX, oTriple.dfY, oTriple.dfZ );
+                oPoint.transform( &oBasePointTransformer );
+                poFeature->SetInsertOCSCoords( DXFTriple(
+                    oPoint.getX(), oPoint.getY(), oPoint.getZ() ) );
+            }
+
+            oBlockMap[osBlockName].apoFeatures.push_back( poFeature );
+            nIters ++;
         }
 
-        if( poColl->getNumGeometries() == 0 )
-            delete poColl;
-        else
-            oBlockMap[osBlockName].poGeometry = SimplifyBlockGeometry(poColl);
-
-        if( !apoFeatures.empty() )
-            oBlockMap[osBlockName].apoFeatures = apoFeatures;
+        PopBlockInsertion();
     }
     if( nCode < 0 )
     {
+        bInlineBlocks = bOldInlineBlocks;
         DXF_READER_ERROR();
         return false;
     }
 
     CPLDebug( "DXF", "Read %d blocks with meaningful geometry.",
               (int) oBlockMap.size() );
+
+    // Restore old inline blocks setting
+    bInlineBlocks = bOldInlineBlocks;
+
     return true;
-}
-
-/************************************************************************/
-/*                       SimplifyBlockGeometry()                        */
-/************************************************************************/
-
-OGRGeometry *OGRDXFDataSource::SimplifyBlockGeometry(
-    OGRGeometryCollection *poCollection )
-
-{
-/* -------------------------------------------------------------------- */
-/*      If there is only one geometry in the collection, just return    */
-/*      it.                                                             */
-/* -------------------------------------------------------------------- */
-    if( poCollection->getNumGeometries() == 1 )
-    {
-        OGRGeometry *poReturn = poCollection->getGeometryRef(0);
-        poCollection->removeGeometry(0, FALSE);
-        delete poCollection;
-        return poReturn;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Convert to polygon, multipolygon, multilinestring or multipoint */
-/* -------------------------------------------------------------------- */
-
-    OGRwkbGeometryType eType =
-                wkbFlatten(poCollection->getGeometryRef(0)->getGeometryType());
-    int i;
-    for(i=1;i<poCollection->getNumGeometries();i++)
-    {
-        if (wkbFlatten(poCollection->getGeometryRef(i)->getGeometryType())
-            != eType)
-        {
-            eType = wkbUnknown;
-            break;
-        }
-    }
-    if (eType == wkbPoint || eType == wkbLineString)
-    {
-        OGRGeometryCollection* poNewColl;
-        if (eType == wkbPoint)
-            poNewColl = new OGRMultiPoint();
-        else
-            poNewColl = new OGRMultiLineString();
-        while(poCollection->getNumGeometries() > 0)
-        {
-            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
-            poCollection->removeGeometry(0,FALSE);
-            poNewColl->addGeometryDirectly(poGeom);
-        }
-        delete poCollection;
-        return poNewColl;
-    }
-    else if (eType == wkbPolygon)
-    {
-        std::vector<OGRGeometry*> aosPolygons;
-        while(poCollection->getNumGeometries() > 0)
-        {
-            OGRGeometry *poGeom = poCollection->getGeometryRef(0);
-            poCollection->removeGeometry(0,FALSE);
-            aosPolygons.push_back(poGeom);
-        }
-        delete poCollection;
-        int bIsValidGeometry;
-        return OGRGeometryFactory::organizePolygons(
-            &aosPolygons[0], (int)aosPolygons.size(),
-            &bIsValidGeometry, NULL);
-    }
-
-    return poCollection;
 }
 
 /************************************************************************/
@@ -216,9 +192,55 @@ DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
     CPLString l_osName = pszName;
 
     if( oBlockMap.count( l_osName ) == 0 )
-        return NULL;
+        return nullptr;
     else
         return &(oBlockMap[l_osName]);
+}
+
+/************************************************************************/
+/*                     GetBlockNameByRecordHandle()                     */
+/*                                                                      */
+/*      Find the name of the block with the given BLOCK_RECORD handle.  */
+/*      If there is no such block, an empty string is returned.         */
+/************************************************************************/
+
+CPLString OGRDXFDataSource::GetBlockNameByRecordHandle( const char *pszID )
+
+{
+    CPLString l_osID = pszID;
+
+    if( oBlockRecordHandles.count( l_osID ) == 0 )
+        return "";
+    else
+        return oBlockRecordHandles[l_osID];
+}
+
+/************************************************************************/
+/*                         PushBlockInsertion()                         */
+/*                                                                      */
+/*      Add a block name to the stack of blocks being inserted.         */
+/*      Returns false if we are already inserting this block.           */
+/************************************************************************/
+
+bool OGRDXFDataSource::PushBlockInsertion( const CPLString& osBlockName )
+
+{
+    // Make sure we are not recursing too deeply (avoid stack overflows) or
+    // inserting a block within itself (avoid billion-laughs type issues).
+    // 128 is a totally arbitrary limit
+    if( aosBlockInsertionStack.size() > 128 ||
+        std::find( aosBlockInsertionStack.begin(),
+            aosBlockInsertionStack.end(), osBlockName )
+        != aosBlockInsertionStack.end() )
+    {
+        CPLError( CE_Warning, CPLE_AppDefined,
+            "Dangerous block recursion detected. "
+            "Some blocks have not been inserted." );
+        return false;
+    }
+
+    aosBlockInsertionStack.push_back( osBlockName );
+    return true;
 }
 
 /************************************************************************/
@@ -228,10 +250,7 @@ DXFBlockDefinition *OGRDXFDataSource::LookupBlock( const char *pszName )
 /************************************************************************/
 
 DXFBlockDefinition::~DXFBlockDefinition()
-
 {
-    delete poGeometry;
-
     while( !apoFeatures.empty() )
     {
         delete apoFeatures.back();

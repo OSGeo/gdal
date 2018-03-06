@@ -63,7 +63,7 @@ bool Huffman::ComputeCodes(const vector<int>& histo)
 
   m_codeTable.resize(size);
   std::fill( m_codeTable.begin(), m_codeTable.end(),
-             std::pair<short, unsigned int>(0, 0) );
+             std::pair<short, unsigned int>(static_cast<short>(0), 0) );
 
   if (!pq.top().TreeToLUT(0, 0, m_codeTable))    // fill the LUT
     return false;
@@ -210,7 +210,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
   int i1 = intVec[3];
 
   if (i0 >= i1 || i0 < 0 || size < 0 || size > (int)m_maxHistoSize ||
-      i1 - i0 >= size)
+      i1 - i0 > size)
   {
     LERC_BRKPNT();
     return false;
@@ -233,7 +233,7 @@ bool Huffman::ReadCodeTable(const Byte** ppByte, size_t& nRemainingBytesInOut)
 
     m_codeTable.resize(size);
     std::fill( m_codeTable.begin(), m_codeTable.end(),
-                std::pair<short, unsigned int>(0, 0) );
+                std::pair<short, unsigned int>(static_cast<short>(0), 0) );
 
     if( GetIndexWrapAround(i0, size) >= size ||
         GetIndexWrapAround(i1 - 1, size) >= size )
@@ -381,7 +381,7 @@ void Huffman::Clear()
     int n = 0;
     m_root->FreeTree(n);
     delete m_root;
-    m_root = NULL;
+    m_root = nullptr;
   }
 }
 
@@ -436,6 +436,10 @@ bool Huffman::GetRange(int& i0, int& i1, int& maxCodeLength) const
   int j = 0;
   while (j < size)    // find the largest stretch of 0's, if any
   {
+    // FIXME? is the type of first (short) appropriate ? Or shouldn't that
+    // check be moved elsewhere
+    if( m_codeTable[j].first < 0 ) // avoids infinite loop
+      return false;
     while (j < size && m_codeTable[j].first > 0) j++;
     int k0 = j;
     while (j < size && m_codeTable[j].first == 0) j++;

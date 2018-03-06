@@ -566,10 +566,10 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 
 {
     if( ( GetColumnCount() == 0 ) && ( GetRowCount() == 0 ) )
-        return NULL;
+        return nullptr;
 
     CPLXMLNode *psTree
-        = CPLCreateXMLNode( NULL, CXT_Element, "GDALRasterAttributeTable" );
+        = CPLCreateXMLNode( nullptr, CXT_Element, "GDALRasterAttributeTable" );
 
 /* -------------------------------------------------------------------- */
 /*      Add attributes with regular binning info if appropriate.        */
@@ -622,13 +622,13 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 /*      Write out each row.                                             */
 /* -------------------------------------------------------------------- */
     const int iRowCount = GetRowCount();
-    CPLXMLNode *psTail = NULL;
-    CPLXMLNode *psRow = NULL;
+    CPLXMLNode *psTail = nullptr;
+    CPLXMLNode *psRow = nullptr;
 
     for( int iRow = 0; iRow < iRowCount; iRow++ )
     {
-        psRow = CPLCreateXMLNode( NULL, CXT_Element, "Row" );
-        if( psTail == NULL )
+        psRow = CPLCreateXMLNode( nullptr, CXT_Element, "Row" );
+        if( psTail == nullptr )
             CPLAddXMLChild( psTree, psRow );
         else
             psTail->psNext = psRow;
@@ -679,8 +679,8 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 /* -------------------------------------------------------------------- */
     double dfRow0Min = 0.0;
     double dfBinSize = 0.0;
-    json_object *poRow0Min = NULL;
-    json_object *poBinSize = NULL;
+    json_object *poRow0Min = nullptr;
+    json_object *poBinSize = nullptr;
 
     if( GetLinearBinning(&dfRow0Min, &dfBinSize) )
     {
@@ -738,7 +738,7 @@ void *GDALRasterAttributeTable::SerializeJSON() const
 
         for( int iCol = 0; iCol < iColCount; iCol++ )
         {
-            json_object *poF = NULL;
+            json_object *poF = nullptr;
             if( GetTypeOfCol(iCol) == GFT_Integer )
                 poF = json_object_new_int( GetValueAsInt(iRow, iCol) );
             else if( GetTypeOfCol(iCol) == GFT_Real )
@@ -774,8 +774,8 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
 /* -------------------------------------------------------------------- */
 /*      Linear binning.                                                 */
 /* -------------------------------------------------------------------- */
-    if( CPLGetXMLValue( psTree, "Row0Min", NULL )
-        && CPLGetXMLValue( psTree, "BinSize", NULL ) )
+    if( CPLGetXMLValue( psTree, "Row0Min", nullptr )
+        && CPLGetXMLValue( psTree, "BinSize", nullptr ) )
     {
         SetLinearBinning( CPLAtof(CPLGetXMLValue( psTree, "Row0Min","" )),
                           CPLAtof(CPLGetXMLValue( psTree, "BinSize","" )) );
@@ -786,7 +786,7 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
 /* -------------------------------------------------------------------- */
 
     for( CPLXMLNode *psChild = psTree->psChild;
-         psChild != NULL;
+         psChild != nullptr;
          psChild = psChild->psNext)
     {
         if( psChild->eType == CXT_Element
@@ -805,7 +805,7 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
 /*      Row data.                                                       */
 /* -------------------------------------------------------------------- */
     for( CPLXMLNode *psChild = psTree->psChild;
-         psChild != NULL;
+         psChild != nullptr;
          psChild = psChild->psNext)
     {
         if( psChild->eType == CXT_Element
@@ -815,13 +815,13 @@ CPLErr GDALRasterAttributeTable::XMLInit( CPLXMLNode *psTree,
             int iField = 0;
 
             for( CPLXMLNode *psF = psChild->psChild;
-                 psF != NULL;
+                 psF != nullptr;
                  psF = psF->psNext )
             {
                 if( psF->eType != CXT_Element || !EQUAL(psF->pszValue,"F") )
                     continue;
 
-                if( psF->psChild != NULL && psF->psChild->eType == CXT_Text )
+                if( psF->psChild != nullptr && psF->psChild->eType == CXT_Text )
                     SetValue( iRow, iField++, psF->psChild->pszValue );
                 else
                     SetValue( iRow, iField++, "" );
@@ -945,7 +945,7 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
     const int iBlue = GetColOfUsage( GFU_Blue );
 
     if( iRed == -1 || iGreen == -1 || iBlue == -1 )
-        return NULL;
+        return nullptr;
 
     const int iAlpha = GetColOfUsage( GFU_Alpha );
 
@@ -960,14 +960,14 @@ GDALColorTable *GDALRasterAttributeTable::TranslateToColorTable(
             iMaxCol = GetColOfUsage( GFU_MinMax );
 
         if( iMaxCol == -1 || GetRowCount() == 0 )
-            return NULL;
+            return nullptr;
 
         for( int iRow = 0; iRow < GetRowCount(); iRow++ )
             nEntryCount =
                 std::max(nEntryCount, GetValueAsInt(iRow, iMaxCol) + 1);
 
         if( nEntryCount < 0 )
-            return NULL;
+            return nullptr;
 
         // Restrict our number of entries to something vaguely sensible.
         nEntryCount = std::min(65535, nEntryCount);
@@ -1015,7 +1015,7 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
                               int nEntryCount )
 
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", NULL );
+    VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", nullptr );
 
     return static_cast<GDALRasterAttributeTable *>(hRAT)->
         TranslateToColorTable( nEntryCount );
@@ -1044,7 +1044,7 @@ void GDALRasterAttributeTable::DumpReadable( FILE * fp )
 
     CPLDestroyXMLNode( psTree );
 
-    if( fp == NULL )
+    if( fp == nullptr )
         fp = stdout;
 
     fprintf( fp, "%s\n", pszXMLText );
@@ -1148,7 +1148,7 @@ void CPL_STDCALL
 GDALDestroyRasterAttributeTable( GDALRasterAttributeTableH hRAT )
 
 {
-    if( hRAT != NULL )
+    if( hRAT != nullptr )
         delete static_cast<GDALRasterAttributeTable *>(hRAT);
 }
 
@@ -1235,7 +1235,7 @@ const char *CPL_STDCALL GDALRATGetNameOfCol( GDALRasterAttributeTableH hRAT,
                                              int iCol )
 
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATGetNameOfCol", NULL );
+    VALIDATE_POINTER1( hRAT, "GDALRATGetNameOfCol", nullptr );
 
     return static_cast<GDALRasterAttributeTable *>(hRAT)->GetNameOfCol( iCol );
 }
@@ -1454,7 +1454,7 @@ const char * CPL_STDCALL
 GDALRATGetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsString", NULL );
+    VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsString", nullptr );
 
     return static_cast<GDALRasterAttributeTable *>(hRAT)->
         GetValueAsString(iRow, iField);
@@ -1883,24 +1883,24 @@ int GDALDefaultRasterAttributeTable::GetRowOfValue( double dfValue ) const
     if( nMinCol == -1 && nMaxCol == -1 )
         return -1;
 
-    const GDALRasterAttributeField *poMin = NULL;
+    const GDALRasterAttributeField *poMin = nullptr;
     if( nMinCol != -1 )
         poMin = &(aoFields[nMinCol]);
     else
-        poMin = NULL;
+        poMin = nullptr;
 
-    const GDALRasterAttributeField *poMax = NULL;
+    const GDALRasterAttributeField *poMax = nullptr;
     if( nMaxCol != -1 )
         poMax = &(aoFields[nMaxCol]);
     else
-        poMax = NULL;
+        poMax = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Search through rows for match.                                  */
 /* -------------------------------------------------------------------- */
     for( int iRow = 0; iRow < nRowCount; iRow++ )
     {
-        if( poMin != NULL )
+        if( poMin != nullptr )
         {
             if( poMin->eType == GFT_Integer )
             {
@@ -1917,7 +1917,7 @@ int GDALDefaultRasterAttributeTable::GetRowOfValue( double dfValue ) const
                 break;
         }
 
-        if( poMax != NULL )
+        if( poMax != nullptr )
         {
             if( (poMax->eType == GFT_Integer
                  && dfValue > poMax->anValues[iRow] ) ||
@@ -2035,7 +2035,7 @@ GDALRasterAttributeTableH CPL_STDCALL
 GDALRATClone( GDALRasterAttributeTableH hRAT )
 
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATClone", NULL );
+    VALIDATE_POINTER1( hRAT, "GDALRATClone", nullptr );
 
     return static_cast<GDALRasterAttributeTable *>(hRAT)->Clone();
 }
@@ -2054,7 +2054,7 @@ void* CPL_STDCALL
 GDALRATSerializeJSON( GDALRasterAttributeTableH hRAT )
 
 {
-    VALIDATE_POINTER1( hRAT, "GDALRATSerializeJSON", NULL );
+    VALIDATE_POINTER1( hRAT, "GDALRATSerializeJSON", nullptr );
 
     return static_cast<GDALRasterAttributeTable *>(hRAT)->SerializeJSON();
 }

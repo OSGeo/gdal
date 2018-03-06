@@ -444,7 +444,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             sAoi.miny, sAoi.maxx, sAoi.maxy);
 #endif
 
-    if (poRDS->hQuadTree == NULL)
+    if (poRDS->hQuadTree == nullptr)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
             "Could not read metadata index.");
@@ -500,7 +500,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         if (!poTileBand->IsCached()) {
 
             // If we have a PKID, add the tile PKID to the list
-            if (poTile->pszPKID != NULL)
+            if (poTile->pszPKID != nullptr)
             {
                 if( !osIDsToFetch.empty() )
                     osIDsToFetch += ",";
@@ -656,7 +656,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             }
         }
 
-        if( poRDS->pszWhere != NULL )
+        if( poRDS->pszWhere != nullptr )
         {
             if( bHasWhere )
                 osCommand += " AND (";
@@ -674,7 +674,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
             osCommand.c_str(), poResult ? PQntuples(poResult) : 0 );
 #endif
 
-        if (poResult == NULL ||
+        if (poResult == nullptr ||
             PQresultStatus(poResult) != PGRES_TUPLES_OK ||
             PQntuples(poResult) < 0) {
 
@@ -709,7 +709,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         {
             const char* pszMetadata = PQgetvalue(poResult, i, 1);
             const char* pszRaster = PQgetvalue(poResult, i, 0);
-            const char *pszPKID = (poRDS->GetPrimaryKeyRef() != NULL) ?  PQgetvalue(poResult, i, 2) : NULL;
+            const char *pszPKID = (poRDS->GetPrimaryKeyRef() != nullptr) ?  PQgetvalue(poResult, i, 2) : nullptr;
             poRDS->CacheTile(pszMetadata, pszRaster, pszPKID, nBand, bAllBandCaching);
         } // All tiles have been added to cache
 
@@ -722,7 +722,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 
     CPLErr eErr = CE_None;
     /* Sort tiles by ascending PKID, so that the draw order is deterministic. */
-    if( poRDS->GetPrimaryKeyRef() != NULL )
+    if( poRDS->GetPrimaryKeyRef() != nullptr )
     {
         qsort(papsMatchingTiles, nFeatureCount, sizeof(PostGISRasterTileDataset*),
               SortTilesByPKID);
@@ -736,7 +736,7 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         eErr =
             poTileBand->poSource->RasterIO( nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize,
-                                            eBufType, nPixelSpace, nLineSpace, NULL);
+                                            eBufType, nPixelSpace, nLineSpace, nullptr);
     }
 
     // Free the object that holds pointers to matching tiles
@@ -767,7 +767,7 @@ CPLErr PostGISRasterRasterBand::SetNoDataValue(double dfNewValue) {
  *  - double: the nodata value for this band.
  */
 double PostGISRasterRasterBand::GetNoDataValue(int *pbSuccess) {
-    if (pbSuccess != NULL)
+    if (pbSuccess != nullptr)
         *pbSuccess = (int) m_bNoDataValueSet;
 
     return m_dfNoDataValue;
@@ -788,18 +788,18 @@ int PostGISRasterRasterBand::GetOverviewCount()
 GDALRasterBand * PostGISRasterRasterBand::GetOverview(int i)
 {
     if (i < 0 || i >= GetOverviewCount())
-        return NULL;
+        return nullptr;
 
     PostGISRasterDataset* poRDS = (PostGISRasterDataset *)poDS;
     PostGISRasterDataset* poOverviewDS = poRDS->GetOverviewDS(i);
     if( poOverviewDS->nBands == 0 )
     {
-        if (!poOverviewDS->SetRasterProperties(NULL) ||
+        if (!poOverviewDS->SetRasterProperties(nullptr) ||
              poOverviewDS->GetRasterCount() != poRDS->GetRasterCount())
         {
             CPLDebug("PostGIS_Raster",
                      "Request for overview %d of band %d failed", i, nBand);
-            return NULL;
+            return nullptr;
         }
     }
 

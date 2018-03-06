@@ -52,19 +52,19 @@ class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
     CPLHashSet     *hSet;
     CPLLock        *hLock;
 
-    public:
-           explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
-           virtual ~GDALHashSetBandBlockCache();
+  public:
+    explicit GDALHashSetBandBlockCache( GDALRasterBand* poBand );
+    ~GDALHashSetBandBlockCache() override;
 
-           virtual bool             Init() override;
-           virtual bool             IsInitOK() override;
-           virtual CPLErr           FlushCache() override;
-           virtual CPLErr           AdoptBlock( GDALRasterBlock * ) override;
-           virtual GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
-                                                          int nYBlockYOff ) override;
-           virtual CPLErr           UnreferenceBlock( GDALRasterBlock* poBlock ) override;
-           virtual CPLErr           FlushBlock( int nXBlockOff, int nYBlockOff,
-                                                int bWriteDirtyBlock ) override;
+    bool Init() override;
+    bool IsInitOK() override;
+    CPLErr FlushCache() override;
+    CPLErr AdoptBlock( GDALRasterBlock * ) override;
+    GDALRasterBlock *TryGetLockedBlockRef( int nXBlockOff,
+                                           int nYBlockYOff ) override;
+    CPLErr UnreferenceBlock( GDALRasterBlock* poBlock ) override;
+    CPLErr FlushBlock( int nXBlockOff, int nYBlockOff,
+                       int bWriteDirtyBlock ) override;
 };
 
 /************************************************************************/
@@ -122,7 +122,7 @@ GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
     GDALRasterBand* poBandIn ) :
     GDALAbstractBandBlockCache(poBandIn),
     hSet(CPLHashSetNew(GDALRasterBlockHashFunc,
-                       GDALRasterBlockEqualFunc, NULL)),
+                       GDALRasterBlockEqualFunc, nullptr)),
     hLock(CPLCreateLock(LOCK_ADAPTIVE_MUTEX))
 {}
 
@@ -269,12 +269,12 @@ CPLErr GDALHashSetBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock = NULL;
+    GDALRasterBlock* poBlock = nullptr;
     {
         CPLLockHolderOptionalLockD( hLock );
         poBlock = reinterpret_cast<GDALRasterBlock*>(
             CPLHashSetLookup(hSet, &oBlockForLookup) );
-        if( poBlock == NULL )
+        if( poBlock == nullptr )
             return CE_None;
         CPLHashSetRemove(hSet, poBlock);
     }
@@ -301,7 +301,7 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock = NULL;
+    GDALRasterBlock* poBlock = nullptr;
     while( true )
     {
         {
@@ -309,8 +309,8 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
             poBlock = reinterpret_cast<GDALRasterBlock*>(
                 CPLHashSetLookup(hSet, &oBlockForLookup) );
         }
-        if( poBlock == NULL )
-            return NULL;
+        if( poBlock == nullptr )
+            return nullptr;
         if( poBlock->TakeLock()  )
             break;
     }

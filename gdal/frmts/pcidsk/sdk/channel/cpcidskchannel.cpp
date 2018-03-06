@@ -38,6 +38,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 
 #include "cpl_port.h"
 
@@ -122,10 +123,10 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
 {
     for( size_t io=0; io < overview_bands.size(); io++ )
     {
-        if( overview_bands[io] != NULL )
+        if( overview_bands[io] != nullptr )
         {
             delete overview_bands[io];
-            overview_bands[io] = NULL;
+            overview_bands[io] = nullptr;
         }
     }
 
@@ -134,6 +135,23 @@ void CPCIDSKChannel::InvalidateOverviewInfo()
     overview_decimations.clear();
 
     overviews_initialized = false;
+}
+
+/************************************************************************/
+/*                         SortOverviewComp()                           */
+/************************************************************************/
+
+static bool SortOverviewComp(const std::string &first,
+                             const std::string &second)
+{
+    if( !STARTS_WITH(first.c_str(), "_Overview_") ||
+        !STARTS_WITH(second.c_str(), "_Overview_") )
+    {
+        return false;
+    }
+    int nFirst = atoi(first.c_str() + 10);
+    int nSecond = atoi(second.c_str() + 10);
+    return nFirst < nSecond;
 }
 
 /************************************************************************/
@@ -148,6 +166,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
     overviews_initialized = true;
 
     std::vector<std::string> keys = GetMetadataKeys();
+    std::sort(keys.begin(), keys.end(), SortOverviewComp); // sort overviews
     size_t i;
 
     for( i = 0; i < keys.size(); i++ )
@@ -158,7 +177,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
         std::string value = GetMetadataValue( keys[i] );
 
         overview_infos.push_back( value );
-        overview_bands.push_back( NULL );
+        overview_bands.push_back( nullptr );
         overview_decimations.push_back( atoi(keys[i].c_str()+10) );
     }
 }
@@ -205,7 +224,7 @@ PCIDSKChannel *CPCIDSKChannel::GetOverview( int overview_index )
         return (PCIDSKChannel*)ThrowPCIDSKExceptionPtr( "Non existent overview (%d) requested.", 
                               overview_index );
 
-    if( overview_bands[overview_index] == NULL )
+    if( overview_bands[overview_index] == nullptr )
     {
         PCIDSKBuffer image_header(1024), file_header(1024);
         char  pseudo_filename[65];

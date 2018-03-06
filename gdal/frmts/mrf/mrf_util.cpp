@@ -97,7 +97,7 @@ const char *OrderName(ILOrder val)
 ILCompression CompToken(const char *opt, ILCompression def)
 {
     int i;
-    if (NULL==opt) return def;
+    if (nullptr==opt) return def;
     for (i=0; ILCompression(i) < IL_ERR_COMP; i++)
         if (EQUAL(opt,ILComp_Name[i]))
             break;
@@ -112,7 +112,7 @@ ILCompression CompToken(const char *opt, ILCompression def)
 ILOrder OrderToken(const char *opt, ILOrder def)
 {
     int i;
-    if (NULL==opt) return def;
+    if (nullptr==opt) return def;
     for (i=0; ILOrder(i)<IL_ERR_ORD; i++)
         if (EQUAL(opt,ILOrder_Name[i]))
             break;
@@ -137,32 +137,33 @@ std::ostream& operator<<(std::ostream &out, const ILIdx& t) {
 }
 
 // Define PPMW to enable this handy debug function
-
 #ifdef PPMW
 void ppmWrite(const char *fname, const char *data, const ILSize &sz) {
-    FILE *fp=fopen(fname,"wb");
-    switch(sz.c) {
-    case 4:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        char *d=(char *)data;
-        for(int i=sz.x*sz.y;i;i--) {
-            fwrite(d,3,1,fp);
-            d+=4;
+    FILE *fp = fopen(fname, "wb");
+    switch (sz.c) {
+    case 4: // Strip the alpha
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        {
+            char *d = (char *)data;
+            for (int i = sz.x*sz.y; i; i--) {
+                fwrite(d, 3, 1, fp);
+                d += 4;
+            }
         }
         break;
     case 3:
-        fprintf(fp,"P6 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x*sz.y,3,fp);
+        fprintf(fp, "P6 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x*sz.y, 3, fp);
         break;
     case 1:
-        fprintf(fp,"P5 %d %d 255\n",sz.x,sz.y);
-        fwrite(data,sz.x,sz.y,fp);
+        fprintf(fp, "P5 %d %d 255\n", sz.x, sz.y);
+        fwrite(data, sz.x, sz.y, fp);
         break;
     default:
-        fprintf(stderr,"Can't write ppm file with %d bands\n",sz.c);/*ok*/
-        return;
+        fprintf(stderr, "Can't write ppm file with %d bands\n", sz.c);/*ok*/
     }
     fclose(fp);
+    return;
 }
 #endif
 
@@ -258,7 +259,7 @@ CPLString getFname(CPLXMLNode *node, const char *token, const CPLString &in, con
 
 double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 {
-    const char *textval=CPLGetXMLValue(node,pszPath,NULL);
+    const char *textval=CPLGetXMLValue(node,pszPath,nullptr);
     if (textval) return atof(textval);
     return def;
 }
@@ -289,7 +290,7 @@ bool is_Endianess_Dependent(GDALDataType dt, ILCompression comp) {
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, int b, int level)
 
 {
-    GDALMRFRasterBand *bnd = NULL;
+    GDALMRFRasterBand *bnd = nullptr;
     switch(pDS->current.comp)
     {
     case IL_PPNG: // Uses the PNG code, just has a palette in each PNG
@@ -304,13 +305,13 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
     default:
-        return NULL;
+        return nullptr;
     }
 
     // If something was flagged during band creation
     if (CPLGetLastErrorNo() != CE_None) {
         delete bnd;
-        return NULL;
+        return nullptr;
     }
 
     // Copy the RW mode from the dataset
@@ -357,21 +358,21 @@ int IsPower(double value, double base) {
 CPLXMLNode *SearchXMLSiblings( CPLXMLNode *psRoot, const char *pszElement )
 
 {
-    if( psRoot == NULL || pszElement == NULL )
-        return NULL;
+    if( psRoot == nullptr || pszElement == nullptr )
+        return nullptr;
 
     // If the strings starts with '=', skip it and test the root
     // If not, start testing with the next sibling
     if (pszElement[0]=='=') pszElement++;
     else psRoot=psRoot->psNext;
 
-    for (;psRoot!=NULL;psRoot=psRoot->psNext)
+    for (;psRoot!=nullptr;psRoot=psRoot->psNext)
         if ((psRoot->eType == CXT_Element ||
              psRoot->eType == CXT_Attribute)
              && EQUAL(pszElement,psRoot->pszValue))
             return psRoot;
 
-    return NULL;
+    return nullptr;
 }
 
 //
@@ -392,8 +393,8 @@ char **CSLAddIfMissing(char **papszList,
 CPLString PrintDouble(double d, const char *frmt)
 {
     CPLString res;
-    res.FormatC(d, NULL);
-    double v = CPLStrtod(res.c_str(), NULL);
+    res.FormatC(d, nullptr);
+    double v = CPLStrtod(res.c_str(), nullptr);
     if (d == v) return res;
 
     //  This would be the right code with a C99 compiler that supports %a readback in strod()
@@ -490,7 +491,7 @@ int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess) {
 
     // There is no ftruncate in VSI, only truncate()
     VSILFILE *ifp = VSIFOpenL(fname, "r+b");
-    if( ifp == NULL )
+    if( ifp == nullptr )
         return false;
 
 // There is no VSIFTruncateL in gdal 1.8 and lower, seek and write something at the end
@@ -578,7 +579,7 @@ USING_NAMESPACE_MRF
 void GDALRegister_mrf()
 
 {
-    if( GDALGetDriverByName("MRF") != NULL )
+    if( GDALGetDriverByName("MRF") != nullptr )
         return;
 
     GDALDriver *driver = new GDALDriver();
@@ -637,6 +638,7 @@ void GDALRegister_mrf()
       GDAL_DMD_OPENOPTIONLIST,
       "<OpenOptionList>"
       "    <Option name='NOERRORS' type='boolean' description='Ignore decompression errors' default='FALSE'/>"
+      "    <Option name='ZSLICE' type='int' description='For a third dimension MRF, pick a slice' default='0'/>"
       "</OpenOptionList>"
       );
 

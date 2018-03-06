@@ -85,12 +85,12 @@ class DIPExDataset : public GDALPamDataset
     double      adfGeoTransform[6];
 
   public:
-                 DIPExDataset();
-    virtual ~DIPExDataset();
+    DIPExDataset();
+    ~DIPExDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * ) override;
 
-    virtual const char *GetProjectionRef( void ) override;
+    const char *GetProjectionRef( void ) override;
     static GDALDataset *Open( GDALOpenInfo * );
 };
 
@@ -105,7 +105,7 @@ class DIPExDataset : public GDALPamDataset
 /************************************************************************/
 
 DIPExDataset::DIPExDataset() :
-    fp(NULL),
+    fp(nullptr),
     eRasterDataType(GDT_Unknown)
 {
     sHeader.NBIH = 0;
@@ -118,15 +118,15 @@ DIPExDataset::DIPExDataset() :
     sHeader.H4322 = 0;
     fill( sHeader.unused1,
           sHeader.unused1 + CPL_ARRAYSIZE(sHeader.unused1),
-          0 );
+          static_cast<char>(0) );
     fill( sHeader.IH19,
           sHeader.IH19 + CPL_ARRAYSIZE(sHeader.IH19),
-          0 );
+          static_cast<GByte>(0) );
     sHeader.IH20 = 0;
     sHeader.SRID = 0;
     fill( sHeader.unused2,
           sHeader.unused2 + CPL_ARRAYSIZE(sHeader.unused2),
-          0 );
+          static_cast<char>(0) );
     sHeader.YOffset = 0.0;
     sHeader.XOffset = 0.0;
     sHeader.YPixSize = 0.0;
@@ -137,13 +137,13 @@ DIPExDataset::DIPExDataset() :
     sHeader.Matrix[3] = 0.0;
     fill( sHeader.unused3,
           sHeader.unused3 + CPL_ARRAYSIZE(sHeader.unused3),
-          0 );
+          static_cast<char>(0) );
     fill( sHeader.ColorTable,
           sHeader.ColorTable + CPL_ARRAYSIZE(sHeader.ColorTable),
-          0 );
+          static_cast<GUInt16>(0) );
     fill( sHeader.unused4,
           sHeader.unused4 + CPL_ARRAYSIZE(sHeader.unused4),
-          0 );
+          static_cast<char>(0) );
 
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -162,7 +162,7 @@ DIPExDataset::~DIPExDataset()
 {
     if( fp )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-    fp = NULL;
+    fp = nullptr;
 }
 
 /************************************************************************/
@@ -177,20 +177,20 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 256 )
-        return NULL;
+        return nullptr;
 
     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
         != 1024 )
-        return NULL;
+        return nullptr;
 
     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 28 )))
         != 4322 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszAccess = NULL;
+    const char *pszAccess = nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
         pszAccess = "r+b";
@@ -200,13 +200,13 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     DIPExDataset *poDS = new DIPExDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, pszAccess );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to open `%s' with access `%s' failed.\n",
                   poOpenInfo->pszFilename, pszAccess );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->eAccess = poOpenInfo->eAccess;
@@ -220,7 +220,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Attempt to read 1024 byte header filed on file %s\n",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -234,7 +234,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nDiff <= 0 || nDiff > INT_MAX )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->nRasterYSize = static_cast<int>(nDiff);
 
@@ -244,7 +244,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nDiff <= 0 || nDiff > INT_MAX )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     poDS->nRasterXSize = static_cast<int>(nDiff);
 
@@ -254,7 +254,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
         !GDALCheckBandCount(nBands, FALSE) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     const int nDIPExDataType = (poDS->sHeader.IH19[1] & 0x7e) >> 2;
@@ -274,7 +274,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unrecognized image data type %d, with BytesPerSample=%d.",
                   nDIPExDataType, nBytesPerSample );
-        return NULL;
+        return nullptr;
     }
 
     if( nLineOffset <= 0 || nLineOffset > INT_MAX / nBands )
@@ -283,7 +283,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid values: nLineOffset = %d, nBands = %d.",
                   nLineOffset, nBands );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -302,7 +302,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
         if( CPLGetLastErrorType() != CE_None )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -347,7 +347,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 
         if( oSR.importFromEPSG( poDS->sHeader.SRID ) == OGRERR_NONE )
         {
-            char *pszWKT = NULL;
+            char *pszWKT = nullptr;
             oSR.exportToWkt( &pszWKT );
             poDS->osSRS = pszWKT;
             CPLFree( pszWKT );
@@ -398,7 +398,7 @@ CPLErr DIPExDataset::GetGeoTransform( double * padfTransform )
 void GDALRegister_DIPEx()
 
 {
-    if( GDALGetDriverByName( "DIPEx" ) != NULL )
+    if( GDALGetDriverByName( "DIPEx" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

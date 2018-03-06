@@ -136,11 +136,11 @@ class VSIIOStream : public CNCSJPCIOStream
     /* To fix ‘virtual bool NCS::CIOStream::Read(INT64, void*, UINT32)’ was hidden' with SDK 5 */
     using CNCSJPCIOStream::Read;
 
-    VSIIOStream() : m_Filename(NULL){
+    VSIIOStream() : m_Filename(nullptr){
         nFileViewCount = 0;
         startOfJPData = 0;
         lengthOfJPData = -1;
-        fpVSIL = NULL;
+        fpVSIL = nullptr;
         bWritable = false;
         bSeekable = false;
         if( CSLTestBoolean(CPLGetConfigOption("GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", "YES")) )
@@ -153,17 +153,17 @@ class VSIIOStream : public CNCSJPCIOStream
     }
     virtual ~VSIIOStream() {
         Close();
-        if (m_Filename!=NULL){
+        if (m_Filename!=nullptr){
             CPLFree(m_Filename);
         }
     }
 
     virtual CNCSError Close() override {
         CNCSError oErr = CNCSJPCIOStream::Close();
-        if( fpVSIL != NULL )
+        if( fpVSIL != nullptr )
         {
             VSIFCloseL( fpVSIL );
-            fpVSIL = NULL;
+            fpVSIL = nullptr;
         }
         return oErr;
     }
@@ -172,9 +172,9 @@ class VSIIOStream : public CNCSJPCIOStream
     virtual VSIIOStream *Clone() override {
         CPLDebug( "ECW", "VSIIOStream::Clone()" );
         VSILFILE *fpNewVSIL = VSIFOpenL( m_Filename, "rb" );
-        if (fpNewVSIL == NULL)
+        if (fpNewVSIL == nullptr)
         {
-            return NULL;
+            return nullptr;
         }else
         {
             VSIIOStream *pDst = new VSIIOStream();
@@ -203,7 +203,7 @@ class VSIIOStream : public CNCSJPCIOStream
         struct stat sStatBuf;
         if( osPath != "" && stat( osPath, &sStatBuf ) != 0 )
         {
-            osFilenameUsed = CPLGenerateTempFilename( NULL );
+            osFilenameUsed = CPLGenerateTempFilename( nullptr );
             // try to preserve the extension.
             if( strlen(CPLGetExtension(pszFilename)) > 0 )
             {
@@ -468,6 +468,16 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     int         nWinBufLoaded;
     void        **papCurLineBuf;
 
+    // Deferred advise read parameters
+    int         m_nAdviseReadXOff;
+    int         m_nAdviseReadYOff;
+    int         m_nAdviseReadXSize;
+    int         m_nAdviseReadYSize;
+    int         m_nAdviseReadBufXSize;
+    int         m_nAdviseReadBufYSize;
+    int         m_nAdviseReadBandCount;
+    int        *m_panAdviseReadBandList;
+
     char        **papszGMLMetadata;
 
     ECWCachedMultiBandIO sCachedMultiBandIO;
@@ -475,6 +485,7 @@ class CPL_DLL ECWDataset : public GDALJP2AbstractDataset
     void        ECW2WKTProjection();
 
     void        CleanupWindow();
+    CPLErr      RunDeferredAdviseRead();
     int         TryWinRasterIO( GDALRWFlag, int, int, int, int,
                                 GByte *, int, int, GDALDataType,
                                 int, int *,

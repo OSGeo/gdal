@@ -168,7 +168,7 @@ def plmosaic_7():
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
-    if ds.GetMetadata("SUBDATASETS") != {}:
+    if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
@@ -184,34 +184,39 @@ def plmosaic_8():
         return 'skip'
 
     gdal.FileFromMemBuffer('/vsimem/root', """{
-    "links" : { "next": "/vsimem/root/?page=2" },
+    "_links" : { "_next": "/vsimem/root/?page=2" },
     "mosaics": [
         {
-            "name": "my_mosaic",
-            "title": "My mosaic",
+            "id": "my_mosaic_id",
+            "name": "my_mosaic_name",
             "coordinate_system": "EPSG:3857",
-            "links" : {
-                "self": "/vsimem/root/my_mosaic"
-            }
+            "_links" : {
+                "_self": "/vsimem/root/my_mosaic"
+            },
+            "quad_download": true
         }
     ],
 }""")
     gdal.FileFromMemBuffer('/vsimem/root/?page=2', """{
-    "links" : { "next": null },
+    "_links" : { "_next": null },
     "mosaics": [
         {
-            "name": "another_mosaic",
+            "id": "another_mosaic_id",
+            "name": "another_mosaic_name",
             "coordinate_system": "EPSG:3857",
-            "links" : {
-                "self": "/vsimem/root/another_mosaic"
-            }
+            "_links" : {
+                "_self": "/vsimem/root/another_mosaic"
+            },
+            "quad_download": true
         },
         {
+            "id": "this_one_will_be_ignored",
             "name": "this_one_will_be_ignored",
             "coordinate_system": "EPSG:1234",
-            "links" : {
-                "self": "/vsimem/root/this_one_will_be_ignored"
-            }
+            "_links" : {
+                "_self": "/vsimem/root/this_one_will_be_ignored"
+            },
+            "quad_download": true
         }
     ],
 }""")
@@ -219,7 +224,7 @@ def plmosaic_8():
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
     gdal.SetConfigOption('PL_URL', None)
-    if ds.GetMetadata("SUBDATASETS") != {'SUBDATASET_2_NAME': 'PLMOSAIC:mosaic=another_mosaic', 'SUBDATASET_2_DESC': 'Mosaic another_mosaic', 'SUBDATASET_1_NAME': 'PLMOSAIC:mosaic=my_mosaic', 'SUBDATASET_1_DESC': 'My mosaic'}:
+    if ds.GetMetadata("SUBDATASETS") != {'SUBDATASET_2_NAME': 'PLMOSAIC:mosaic=another_mosaic_name', 'SUBDATASET_2_DESC': 'Mosaic another_mosaic_name', 'SUBDATASET_1_NAME': 'PLMOSAIC:mosaic=my_mosaic_name', 'SUBDATASET_1_DESC': 'Mosaic my_mosaic_name'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata("SUBDATASETS"))
         return 'fail'
@@ -240,7 +245,7 @@ def plmosaic_9():
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=does_not_exist'])
     gdal.SetConfigOption('PL_URL', None)
     gdal.PopErrorHandler()
-    if ds is not None or gdal.GetLastErrorMsg().find('Cannot find /vsimem/root/does_not_exist') < 0:
+    if ds is not None or gdal.GetLastErrorMsg().find('/vsimem/root/?name__is=does_not_exist') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -255,13 +260,34 @@ def plmosaic_9bis():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{""")
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
     if ds is not None or gdal.GetLastErrorMsg().find('JSON parsing error') < 0:
+        gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Invalid mosaic definition: JSON without mosaics array
+
+def plmosaic_9ter():
+
+    if gdaltest.plmosaic_drv is None:
+        return 'skip'
+
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{}""")
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    gdal.PushErrorHandler()
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
+    gdal.PopErrorHandler()
+    gdal.SetConfigOption('PL_URL', None)
+    if ds is not None or gdal.GetLastErrorMsg().find('No mosaic my_mosaic') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -276,8 +302,11 @@ def plmosaic_10():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic"
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -299,16 +328,17 @@ def plmosaic_11():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
     "coordinate_system": "EPSG:1234",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/"
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
     }
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -330,16 +360,17 @@ def plmosaic_12():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
     "datatype": "blabla",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/"
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
     }
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -361,16 +392,17 @@ def plmosaic_13():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 1.234,
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/"
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 1.1234
     }
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -387,21 +419,22 @@ def plmosaic_13():
 ###############################################################################
 # Invalid mosaic definition: unsupported quad_size
 
-def plmosaic_13bis():
+def plmosaic_14():
 
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
     "coordinate_system": "EPSG:3857",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 1234,
-    "resolution": 4.77731426716,
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/"
+    "grid": {
+        "quad_size": 1234,
+        "resolution": 4.77731426716
     }
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
@@ -416,37 +449,6 @@ def plmosaic_13bis():
     return 'success'
 
 ###############################################################################
-# Invalid mosaic definition: invalid quad_pattern
-
-def plmosaic_14():
-
-    if gdaltest.plmosaic_drv is None:
-        return 'skip'
-
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
-    "name": "my_mosaic",
-    "coordinate_system": "EPSG:3857",
-    "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_missing_tilex_and_tiley",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/"
-    }
-}""")
-    gdal.SetConfigOption('PL_URL', '/vsimem/root')
-    gdal.PushErrorHandler()
-    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic'])
-    gdal.PopErrorHandler()
-    gdal.SetConfigOption('PL_URL', None)
-    if ds is not None or gdal.GetLastErrorMsg().find('Invalid quad_pattern') < 0:
-        gdaltest.post_reason('fail')
-        print(gdal.GetLastErrorMsg())
-        return 'fail'
-
-    return 'success'
-
-###############################################################################
 # Nearly valid mosaic definition. Warning about invalid links.tiles
 
 def plmosaic_15():
@@ -454,27 +456,30 @@ def plmosaic_15():
     if gdaltest.plmosaic_drv is None:
         return 'skip'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
-    "title": "My Mosaic",
     "coordinate_system": "EPSG:3857",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
+    },
     "first_acquired": "first_date",
     "last_acquired": "last_date",
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/",
+    "_links" : {
         "tiles" : "/vsimem/root/my_mosaic/tiles/foo"
-    }
+    },
+    "quad_download": true
+}]
 }""")
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     gdal.PushErrorHandler()
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.PopErrorHandler()
     gdal.SetConfigOption('PL_URL', None)
-    if gdal.GetLastErrorMsg().find('Invalid links.tiles') < 0:
+    if gdal.GetLastErrorMsg().find('Invalid _links.tiles') < 0:
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())
         return 'fail'
@@ -502,32 +507,36 @@ def plmosaic_16():
     except:
         pass
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
     "name": "my_mosaic",
-    "title": "My Mosaic",
     "coordinate_system": "EPSG:3857",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
+    },
     "first_acquired": "first_date",
     "last_acquired": "last_date",
-    "links" : {
-        "quads" : "/vsimem/root/my_mosaic/quads/",
+    "_links" : {
         "tiles" : "/vsimem/root/my_mosaic/tiles{0-3}/{z}/{x}/{y}.png"
-    }
+    },
+    "quad_download": true
+}]
 }""")
 
     # Valid root: one single mosaic, should open the dataset directly
     gdal.FileFromMemBuffer('/vsimem/root', """{
     "mosaics": [
         {
+            "id": "my_mosaic_id",
             "name": "my_mosaic",
-            "title": "My Mosaic",
             "coordinate_system": "EPSG:3857",
-            "links" : {
-                "self": "/vsimem/root/my_mosaic"
-            }
+            "_links" : {
+                "_self": "/vsimem/root/my_mosaic"
+            },
+            "quad_download": true
         }
     ],
 }""")
@@ -549,7 +558,7 @@ def plmosaic_16():
         gdaltest.post_reason('fail')
         print(ds.GetMetadata("SUBDATASETS"))
         return 'fail'
-    if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'TITLE': 'My Mosaic', 'FIRST_ACQUIRED': 'first_date'}:
+    if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'NAME': 'my_mosaic', 'FIRST_ACQUIRED': 'first_date'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
@@ -571,7 +580,7 @@ def plmosaic_17():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'TITLE': 'My Mosaic', 'FIRST_ACQUIRED': 'first_date'}:
+    if ds.GetMetadata() != {'LAST_ACQUIRED': 'last_date', 'NAME': 'my_mosaic', 'FIRST_ACQUIRED': 'first_date'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
@@ -640,32 +649,31 @@ def plmosaic_17():
     ds.FlushCache()
 
     # Invalid tile content
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full', 'garbage')
+    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic_id/quads/0-2047/full', 'garbage')
     gdal.PushErrorHandler()
     ds.GetRasterBand(1).ReadRaster(0,0,1,1)
     gdal.PopErrorHandler()
 
-    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_my_15_0000_2047.tif')
+    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif')
 
     ds.FlushCache()
     shutil.rmtree('tmp/plmosaic_cache')
 
     # GeoTIFF but with wrong dimensions
-    gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full', 1, 1, 1)
+    gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 1, 1, 1)
     gdal.PushErrorHandler()
     ds.GetRasterBand(1).ReadRaster(0,0,1,1)
     gdal.PopErrorHandler()
 
-    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_my_15_0000_2047.tif')
+    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif')
 
     ds.FlushCache()
     shutil.rmtree('tmp/plmosaic_cache')
 
     # Good GeoTIFF
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.GetRasterBand(1).Fill(255)
     tmp_ds = None
-    filesize = gdal.VSIStatL('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full').size
 
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
     val = struct.unpack('B', val)[0]
@@ -674,16 +682,19 @@ def plmosaic_17():
         print(val)
         return 'fail'
 
-    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_my_15_0000_2047.tif')
+    os.stat('tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif')
 
     ds.FlushCache()
 
-    # Read again from file cache. Will fail since /vsimem/root/my_mosaic/quads/my_15_0000_2047 does not exist
-    gdal.PushErrorHandler()
+    # Read again from file cache.
+    # We change the file behind the scene (but not changing its size)
+    # to demonstrate that the cached tile is still use
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds.GetRasterBand(1).Fill(1)
+    tmp_ds = None
     val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
-    gdal.PopErrorHandler()
     val = struct.unpack('B', val)[0]
-    if val != 0:
+    if val != 255:
         gdaltest.post_reason('fail')
         print(val)
         return 'fail'
@@ -692,7 +703,7 @@ def plmosaic_17():
 
     # Read again from file cache, but with TRUST_CACHE=YES
     # delete the full GeoTIFF before
-    gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/full')
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH=tmp,TRUST_CACHE=YES', gdal.OF_RASTER)
     gdal.SetConfigOption('PL_URL', None)
@@ -705,47 +716,16 @@ def plmosaic_17():
         return 'fail'
     ds = None
 
-    # Read again from file cache, with JSon quad definition this time
+    # Read again from file cache but the metatile has changed in between
     gdal.SetConfigOption('PL_URL', '/vsimem/root')
     ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo', 'MOSAIC=my_mosaic', 'CACHE_PATH=tmp'])
     gdal.SetConfigOption('PL_URL', None)
 
-    gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic/quads/my_15_0000_2047', """{
-    "id": "my_15_0000_2047",
-    "properties": {
-        "file_size": %d,
-    }
-}""" % filesize)
-    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
-    val = struct.unpack('B', val)[0]
-    if val != 255:
-        gdaltest.post_reason('fail')
-        return 'fail'
-
-    ds.FlushCache()
-
-    # Read again from file cache but the metatile has changed in between
-    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/0-2047/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
     tmp_ds.SetMetadataItem('foo', 'bar')
     tmp_ds.GetRasterBand(1).Fill(254)
     tmp_ds = None
-    filesize = gdal.VSIStatL('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full').size
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic/quads/my_15_0000_2047', """{
-    "id": "my_15_0000_2047",
-    "type": "Feature",
-    "geometry": {
-        "type": "Polygon",
-        "coordinates" : [ [ [ 0, -200 ],
-                            [ 0, 200 ],
-                            [ 200, 200 ],
-                            [ 200, -200 ],
-                            [ 0, -200 ] ] ]
-    },
-    "properties": {
-        "file_size": %d,
-    }
-}""" % filesize)
+
     val = ds.ReadRaster(0,0,1,1)
     val = struct.unpack('B' * 4, val)
     if val != (254, 0, 0, 0):
@@ -770,13 +750,7 @@ def plmosaic_18():
     gdal.SetConfigOption('PL_URL', None)
 
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
-    if ret != """<LocationInfo>
-  <Quad>
-    <id>my_15_0000_2047</id>
-    <file_size>16843000</file_size>
-    <geometry>POLYGON ((0 -200,0 200,200 200,200 -200,0 -200))</geometry>
-  </Quad>
-</LocationInfo>
+    if ret != """<LocationInfo />
 """:
         gdaltest.post_reason('fail')
         print(ret)
@@ -788,37 +762,9 @@ def plmosaic_18():
         print(ret)
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic/quads/my_15_0000_2047/scenes', """{
-    "type": "FeatureCollection",
-    "features": [
-        {
-            "type" : "Feature",
-            "geometry": {
-                "type": "Polygon",
-                "coordinates" : [ [ [ -200, -200 ],
-                                  [ -200, 200 ],
-                                  [ 0, 200 ],
-                                  [ 0, -200 ],
-                                  [ -200, -200 ] ] ]
-            },
-            "properties" : {
-                "foo": "bar"
-            }
-        },
-        {
-            "type" : "Feature",
-            "geometry": {
-                "type": "Polygon",
-                "coordinates" : [ [ [ 0, -200 ],
-                                  [ 0, 200 ],
-                                  [ 200, 200 ],
-                                  [ 200, -200 ],
-                                  [ 0, -200 ] ] ]
-            },
-            "properties" : {
-                "foo": "baz"
-            }
-        }
+    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic_id/quads/0-2047/items', """{
+    "items": [
+        { "link": "foo" }
     ]
 }""")
 
@@ -826,15 +772,9 @@ def plmosaic_18():
 
     ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
     if ret != """<LocationInfo>
-  <Quad>
-    <id>my_15_0000_2047</id>
-    <file_size>16843000</file_size>
-    <geometry>POLYGON ((0 -200,0 200,200 200,200 -200,0 -200))</geometry>
-  </Quad>
   <Scenes>
     <Scene>
-      <foo>bar</foo>
-      <geometry>POLYGON ((-200 -200,-200 200,0 200,0 -200,-200 -200))</geometry>
+      <link>foo</link>
     </Scene>
   </Scenes>
 </LocationInfo>
@@ -918,7 +858,7 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.ReadRaster(0,0,1,1)
+    ds.ReadRaster(256,512,1,1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -926,7 +866,7 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    ds.GetRasterBand(1).ReadRaster(256,512,1,1)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -934,25 +874,29 @@ def plmosaic_21():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler()
-    ds.GetRasterBand(1).ReadBlock(0,0)
+    ds.GetRasterBand(1).ReadBlock(1,2)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/root/mosaic_uint16', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=mosaic_uint16', """{
+"mosaics": [{
+    "id": "mosaic_uint16",
     "name": "mosaic_uint16",
     "coordinate_system": "EPSG:3857",
     "datatype": "uint16",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
+    },
     "first_acquired": "first_date",
     "last_acquired": "last_date",
-    "links" : {
-        "quads" : "/vsimem/root/mosaic_uint16/quads/",
+    "_links" : {
         "tiles" : "/vsimem/root/mosaic_uint16/tiles{0-3}/{z}/{x}/{y}.png"
-    }
+    },
+    "quad_download": true
+}]
 }""")
 
     # Should emit a warning
@@ -964,20 +908,23 @@ def plmosaic_21():
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot use tile API for full resolution data on non Byte mosaic') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
-    gdal.FileFromMemBuffer('/vsimem/root/mosaic_without_tiles', """{
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=mosaic_without_tiles', """{
+"mosaics": [{
+    "id": "mosaic_without_tiles",
     "name": "mosaic_without_tiles",
     "coordinate_system": "EPSG:3857",
     "datatype": "byte",
-    "quad_pattern": "my_{glevel:d}_{tilex:04d}_{tiley:04d}",
-    "quad_size": 4096,
-    "resolution": 4.77731426716,
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
+    },
     "first_acquired": "first_date",
     "last_acquired": "last_date",
-    "links" : {
-        "quads" : "/vsimem/root/mosaic_without_tiles/quads/",
-    }
+    "quad_download": true
+}]
 }""")
 
     # Should emit a warning
@@ -989,6 +936,112 @@ def plmosaic_21():
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg().find('Cannot find tile definition, so use_tiles will be ignored') < 0:
         gdaltest.post_reason('fail')
+        print(gdal.GetLastErrorMsg())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Valid mosaic definition with bbox
+
+def plmosaic_with_bbox():
+
+    if gdaltest.plmosaic_drv is None:
+        return 'skip'
+
+    try:
+        shutil.rmtree('tmp/plmosaic_cache')
+    except:
+        pass
+
+    gdal.FileFromMemBuffer('/vsimem/root/?name__is=my_mosaic', """{
+"mosaics": [{
+    "id": "my_mosaic_id",
+    "name": "my_mosaic",
+    "coordinate_system": "EPSG:3857",
+    "datatype": "byte",
+    "grid": {
+        "quad_size": 4096,
+        "resolution": 4.77731426716
+    },
+    "bbox" : [
+        -100,
+        30,
+        -90,
+        40
+    ],
+    "first_acquired": "first_date",
+    "last_acquired": "last_date",
+    "_links" : {
+        "tiles" : "/vsimem/root/my_mosaic/tiles{0-3}/{z}/{x}/{y}.png"
+    },
+    "quad_download": true
+}]
+}""")
+
+    # Valid root: one single mosaic, should open the dataset directly
+    gdal.FileFromMemBuffer('/vsimem/root', """{
+    "mosaics": [
+        {
+            "id": "my_mosaic_id",
+            "name": "my_mosaic",
+            "coordinate_system": "EPSG:3857",
+            "_links" : {
+                "_self": "/vsimem/root/my_mosaic"
+            },
+            "quad_download": true
+        }
+    ],
+}""")
+
+    gdal.SetConfigOption('PL_URL', '/vsimem/root')
+    ds = gdal.OpenEx('PLMosaic:', gdal.OF_RASTER, open_options = ['API_KEY=foo'])
+    gdal.SetConfigOption('PL_URL', None)
+    if ds.RasterXSize != 233472:
+        gdaltest.post_reason('fail')
+        print(ds.RasterXSize)
+        return 'fail'
+    if ds.RasterYSize != 286720:
+        gdaltest.post_reason('fail')
+        print(ds.RasterYSize)
+        return 'fail'
+    got_gt = ds.GetGeoTransform()
+    expected_gt = (-11134123.286585508, 4.77731426716, 0.0, 4872401.930333553, 0.0, -4.77731426716)
+    for i in range(6):
+        if abs(got_gt[i] - expected_gt[i]) > 1e-8:
+            gdaltest.post_reason('fail')
+            print(got_gt)
+            return 'fail'
+
+    # Good GeoTIFF
+    tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/root/my_mosaic_id/quads/455-1272/full', 4096, 4096, 4, options = ['INTERLEAVE=BAND', 'SPARSE_OK=YES'])
+    tmp_ds.GetRasterBand(1).Fill(125)
+    tmp_ds = None
+
+    val = ds.GetRasterBand(1).ReadRaster(0,0,1,1)
+    val = struct.unpack('B', val)[0]
+    if val != 125:
+        gdaltest.post_reason('fail')
+        print(val)
+        return 'fail'
+
+    gdal.FileFromMemBuffer('/vsimem/root/my_mosaic_id/quads/455-1272/items', """{
+    "items": [
+        { "link": "bar" }
+    ]
+}""")
+
+    ret = ds.GetRasterBand(1).GetMetadataItem('Pixel_0_0', 'LocationInfo')
+    if ret != """<LocationInfo>
+  <Scenes>
+    <Scene>
+      <link>bar</link>
+    </Scene>
+  </Scenes>
+</LocationInfo>
+""":
+        gdaltest.post_reason('fail')
+        print(ret)
         return 'fail'
 
     return 'success'
@@ -1004,12 +1057,16 @@ def plmosaic_cleanup():
     gdal.Unlink('/vsimem/root_no_mosaics')
     gdal.Unlink('/vsimem/root')
     gdal.Unlink('/vsimem/root/?page=2')
-    gdal.Unlink('/vsimem/root/my_mosaic')
-    gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047')
-    gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/full')
-    gdal.Unlink('/vsimem/root/my_mosaic/quads/my_15_0000_2047/scenes')
-    gdal.Unlink('/vsimem/root/mosaic_uint16')
-    gdal.Unlink('/vsimem/root/mosaic_without_tiles')
+    gdal.Unlink('/vsimem/root/?name__is=my_mosaic')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/full')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/0-2047/items')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/full')
+    gdal.Unlink('/vsimem/root/my_mosaic_id/quads/455-1272/items')
+    gdal.Unlink('/vsimem/root/?name__is=mosaic_uint16')
+    gdal.Unlink('/vsimem/root/?name__is=mosaic_without_tiles')
+
+    if gdal.ReadDir('/vsimem/root') is not None:
+        print(gdal.ReadDir('/vsimem/root'))
 
     try:
         shutil.rmtree('tmp/plmosaic_cache')
@@ -1030,11 +1087,11 @@ gdaltest_list = [
     plmosaic_8,
     plmosaic_9,
     plmosaic_9bis,
+    plmosaic_9ter,
     plmosaic_10,
     plmosaic_11,
     plmosaic_12,
     plmosaic_13,
-    plmosaic_13bis,
     plmosaic_14,
     plmosaic_15,
     plmosaic_16,
@@ -1043,6 +1100,7 @@ gdaltest_list = [
     plmosaic_19,
     plmosaic_20,
     plmosaic_21,
+    plmosaic_with_bbox,
     plmosaic_cleanup ]
 
 if __name__ == '__main__':

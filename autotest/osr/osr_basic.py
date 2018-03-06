@@ -725,6 +725,739 @@ def osr_basic_20():
     return 'success'
 
 ###############################################################################
+# Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
+
+def osr_basic_21():
+
+    wkt1 = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000],
+    PARAMETER["standard_parallel_1",4.45405154589751]]"""
+
+    wkt2 = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["scale_factor",0.997],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000]]"""
+
+    wkt2_not_equivalent = """PROJCS["unnamed",
+    GEOGCS["Segara (Jakarta)",
+        DATUM["Gunung_Segara_Jakarta",
+            SPHEROID["Bessel 1841",6377397.155,299.1528128]],
+        PRIMEM["Jakarta",106.8077194444444],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_1SP"],
+    PARAMETER["central_meridian",110],
+    PARAMETER["scale_factor",0.998],
+    PARAMETER["false_easting",3900000],
+    PARAMETER["false_northing",900000]]"""
+
+    sr1 = osr.SpatialReference()
+    sr1.ImportFromWkt(wkt1)
+    sr2 = osr.SpatialReference()
+    sr2.ImportFromWkt(wkt2)
+
+    if sr1.IsSame(sr2) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if sr2.IsSame(sr1) == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sr2_not_equivalent = osr.SpatialReference()
+    sr2_not_equivalent.ImportFromWkt(wkt2_not_equivalent)
+
+    if sr1.IsSame(sr2_not_equivalent) == 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test LCC_2SP -> LCC_1SP -> LCC_2SP
+
+def osr_basic_22():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",49],
+    PARAMETER["standard_parallel_2",44],
+    PARAMETER["latitude_of_origin",46.5],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    AUTHORITY["EPSG","2154"]]""")
+
+    sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
+    expected_sr2_wkt = """PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.5194302239868],
+    PARAMETER["central_meridian",3],
+    PARAMETER["scale_factor",0.9990510286374693],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6602157.83881033]]"""
+    expected_sr2 = osr.SpatialReference()
+    expected_sr2.ImportFromWkt(expected_sr2_wkt)
+
+    if sr2.IsSame(expected_sr2) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Back to LCC_2SP
+    sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+    if sr3.IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        print(sr3)
+        return 'fail'
+
+    # Particular case of LCC_2SP with phi0=phi1=phi2
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.5],
+    PARAMETER["standard_parallel_2",46.5],
+    PARAMETER["latitude_of_origin",46.5],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+
+    sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
+    expected_sr2_wkt = """PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.5],
+    PARAMETER["central_meridian",3],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]"""
+    expected_sr2 = osr.SpatialReference()
+    expected_sr2.ImportFromWkt(expected_sr2_wkt)
+
+    if sr2.IsSame(expected_sr2) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+    if sr3.IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        print(sr3)
+        return 'fail'
+
+
+
+    # Particular case of LCC_2SP with phi0 != phi1 and phi1=phi2
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.4567],
+    PARAMETER["standard_parallel_2",46.4567],
+    PARAMETER["latitude_of_origin",46.123],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+
+    sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
+    expected_sr2_wkt = """PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.4567],
+    PARAMETER["central_meridian",3],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6637093.292952879]]"""
+    expected_sr2 = osr.SpatialReference()
+    expected_sr2.ImportFromWkt(expected_sr2_wkt)
+
+    if sr2.IsSame(expected_sr2) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+    expected_sr3_wkt = """PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            TOWGS84[0,0,0,0,0,0,0],
+            AUTHORITY["EPSG","6171"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4171"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.4567],
+    PARAMETER["standard_parallel_2",46.4567],
+    PARAMETER["latitude_of_origin",46.4567],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6637093.292952879]]"""
+    expected_sr3 = osr.SpatialReference()
+    expected_sr3.ImportFromWkt(expected_sr3_wkt)
+    if sr3.IsSame(expected_sr3) == 0:
+        gdaltest.post_reason('fail')
+        print(sr3)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test LCC_1SP -> LCC_2SP -> LCC_1SP
+
+def osr_basic_23():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
+                AUTHORITY["EPSG","7011"]],
+            TOWGS84[-168,-60,320,0,0,0,0],
+            AUTHORITY["EPSG","6807"]],
+        PRIMEM["Paris",2.33722917,
+            AUTHORITY["EPSG","8903"]],
+        UNIT["grad",0.01570796326794897,
+            AUTHORITY["EPSG","9105"]],
+        AUTHORITY["EPSG","4807"]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.85],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["X",EAST],
+    AXIS["Y",NORTH],
+    AUTHORITY["EPSG","27584"]]""")
+
+    sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
+    expected_sr2_wkt = """PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
+                AUTHORITY["EPSG","7011"]],
+            TOWGS84[-168,-60,320,0,0,0,0],
+            AUTHORITY["EPSG","6807"]],
+        PRIMEM["Paris",2.33722917,
+            AUTHORITY["EPSG","8903"]],
+        UNIT["grad",0.01570796326794897,
+            AUTHORITY["EPSG","9105"]],
+        AUTHORITY["EPSG","4807"]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",47.51962607709162],
+    PARAMETER["standard_parallel_2",46.17820871246364],
+    PARAMETER["latitude_of_origin",46.85],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]"""
+    expected_sr2 = osr.SpatialReference()
+    expected_sr2.ImportFromWkt(expected_sr2_wkt)
+
+    if sr2.IsSame(expected_sr2) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Back to LCC_2SP
+    sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
+    if sr3.IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        print(sr3)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test Mercator_1SP -> Mercator_2SP -> Mercator_1SP
+
+def osr_basic_24():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563,
+                    AUTHORITY["EPSG","7030"]],
+                AUTHORITY["EPSG","6326"]],
+            PRIMEM["Greenwich",0,
+                AUTHORITY["EPSG","8901"]],
+            UNIT["degree",0.0174532925199433,
+                AUTHORITY["EPSG","9122"]],
+            AUTHORITY["EPSG","4326"]],
+        PROJECTION["Mercator_1SP"],
+        PARAMETER["central_meridian",0],
+        PARAMETER["scale_factor",0.5],
+        PARAMETER["false_easting",0],
+        PARAMETER["false_northing",0]]""")
+
+    sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_2SP)
+    expected_sr2_wkt = """PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563,
+                AUTHORITY["EPSG","7030"]],
+            AUTHORITY["EPSG","6326"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4326"]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",60.08325228676391],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0]]"""
+    expected_sr2 = osr.SpatialReference()
+    expected_sr2.ImportFromWkt(expected_sr2_wkt)
+
+    if sr2.IsSame(expected_sr2) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Back to LCC_2SP
+    sr3 = sr2.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_1SP)
+    if sr3.IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        print(sr3)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test corner cases of ConvertToOtherProjection()
+
+def osr_basic_25():
+
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563]],
+            UNIT["degree",0.0174532925199433]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    sr.SetFromUserInput("""PROJCS["unnamed",
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563]],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Mercator_1SP"],
+        PARAMETER["central_meridian",0],
+        PARAMETER["scale_factor",0.5],
+        PARAMETER["false_easting",0],
+        PARAMETER["false_northing",0]]""")
+
+    sr2 = sr.ConvertToOtherProjection(None)
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sr2 = sr.ConvertToOtherProjection('foo')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
+    if sr2.IsSame(sr) == 0:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Mercator_1SP -> Mercator_2SP: Negative scale factor
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,298.257223563]],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Mercator_1SP"],
+        PARAMETER["central_meridian",0],
+        PARAMETER["scale_factor",-0.5],
+        PARAMETER["false_easting",0],
+        PARAMETER["false_northing",0]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Mercator_1SP -> Mercator_2SP: Invalid eccentricity
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+        GEOGCS["WGS 84",
+            DATUM["WGS_1984",
+                SPHEROID["WGS 84",6378137,0.1]],
+            UNIT["degree",0.0174532925199433]],
+        PROJECTION["Mercator_1SP"],
+        PARAMETER["central_meridian",0],
+        PARAMETER["scale_factor",0.5],
+        PARAMETER["false_easting",0],
+        PARAMETER["false_northing",0]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Mercator_2SP -> Mercator_1SP: Invalid standard_parallel_1
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,298.257223563]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",100],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # Mercator_2SP -> Mercator_1SP: Invalid eccentricity
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["WGS 84",
+        DATUM["WGS_1984",
+            SPHEROID["WGS 84",6378137,0.1]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",60],
+    PARAMETER["central_meridian",0],
+    PARAMETER["false_easting",0],
+    PARAMETER["false_northing",0]]""")
+    sr2 = sr.ConvertToOtherProjection('Mercator_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_1SP -> LCC_2SP: Negative scale factor
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
+        PRIMEM["Paris",2.33722917],
+        UNIT["grad",0.01570796326794897]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.85],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",-0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_1SP -> LCC_2SP: Invalid eccentricity
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,0.1]],
+        PRIMEM["Paris",2.33722917],
+        UNIT["grad",0.01570796326794897]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",46.85],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_1SP -> LCC_2SP: Invalid latitude_of_origin
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
+        PRIMEM["Paris",2.33722917],
+        UNIT["grad",0.01570796326794897]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",200],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_1SP -> LCC_2SP: latitude_of_origin == 0
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["NTF (Paris)",
+        DATUM["Nouvelle_Triangulation_Francaise_Paris",
+            SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
+        PRIMEM["Paris",2.33722917],
+        UNIT["grad",0.01570796326794897]],
+    PROJECTION["Lambert_Conformal_Conic_1SP"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",0],
+    PARAMETER["scale_factor",0.99994471],
+    PARAMETER["false_easting",234.358],
+    PARAMETER["false_northing",4185861.369]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_2SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : Invalid standard_parallel_1
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",246.4567],
+    PARAMETER["standard_parallel_2",46.4567],
+    PARAMETER["latitude_of_origin",46.123],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : Invalid standard_parallel_2
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.4567],
+    PARAMETER["standard_parallel_2",246.4567],
+    PARAMETER["latitude_of_origin",46.123],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : Invalid latitude_of_origin
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.4567],
+    PARAMETER["standard_parallel_2",46.4567],
+    PARAMETER["latitude_of_origin",246.123],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : abs(stdp1) == abs(stdp2)
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",1],
+    PARAMETER["standard_parallel_2",-1],
+    PARAMETER["latitude_of_origin",10],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : stdp1 ~= stdp2 ~= 0
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,298.257222101]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",.0000000000000001],
+    PARAMETER["standard_parallel_2",.0000000000000002],
+    PARAMETER["latitude_of_origin",10],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    # LCC_2SP -> LCC_1SP : Invalid eccentricity
+    sr.SetFromUserInput("""PROJCS["unnamed",
+    GEOGCS["RGF93",
+        DATUM["Reseau_Geodesique_Francais_1993",
+            SPHEROID["GRS 1980",6378137,0.1]],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Lambert_Conformal_Conic_2SP"],
+    PARAMETER["standard_parallel_1",46.4567],
+    PARAMETER["standard_parallel_2",46.4567],
+    PARAMETER["latitude_of_origin",46.123],
+    PARAMETER["central_meridian",3],
+    PARAMETER["false_easting",700000],
+    PARAMETER["false_northing",6600000]]""")
+    sr2 = sr.ConvertToOtherProjection('Lambert_Conformal_Conic_1SP')
+    if sr2 is not None:
+        gdaltest.post_reason('fail')
+        print(sr2)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test corner cases of osr.SetGeocCS()
+
+def osr_basic_setgeogcs():
+
+    sr = osr.SpatialReference()
+    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
+    if sr.ExportToWkt() != 'GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.SetGeogCS('a', 'b', 'c', 1, 2, 'd', 3, 'e', 4)
+    if sr.ExportToWkt() != 'GEOGCS["a",DATUM["b",SPHEROID["c",1,2]],PRIMEM["d",3],UNIT["e",4]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.SetUTM(31)
+    sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0)
+    if sr.ExportToWkt() != 'PROJCS["UTM Zone 31, Northern Hemisphere",GEOGCS["unnamed",DATUM["unknown",SPHEROID["unnamed",0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0.01308996938995747],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    sr.ImportFromWkt('FOO["bar",GEOGCS[]]')
+    if sr.SetGeogCS(None, None, None, 0, 0, None, 0, None, 0) == 0:
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+    if sr.ExportToWkt() != 'FOO["bar",GEOGCS[]]':
+        gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 
 gdaltest_list = [
     osr_basic_1,
@@ -747,6 +1480,12 @@ gdaltest_list = [
     osr_basic_18,
     osr_basic_19,
     osr_basic_20,
+    osr_basic_21,
+    osr_basic_22,
+    osr_basic_23,
+    osr_basic_24,
+    osr_basic_25,
+    osr_basic_setgeogcs,
     None ]
 
 if __name__ == '__main__':

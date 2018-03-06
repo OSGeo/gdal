@@ -918,8 +918,7 @@ def pixfun_dB2pow():
     refdata = refds.GetRasterBand(1).ReadAsArray()
     refdata = refdata.astype('float64')
 
-    #if not numpy.allclose(data, 10.**(refdata/10.)):
-    if not numpy.alltrue(data == 10.**(refdata/10.)):
+    if not numpy.allclose(data, 10.**(refdata/10.)):
         return 'fail'
 
     return 'success'

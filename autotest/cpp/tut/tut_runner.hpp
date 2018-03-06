@@ -62,24 +62,27 @@ struct callback
      * Called when a group started
      * @param name Name of the group
      */
-    virtual void group_started(const std::string& /*name*/)
+    virtual void group_started(const std::string& name)
     {
+        (void)name;
     }
 
     /**
      * Called when a test finished.
      * @param tr Test results.
      */
-    virtual void test_completed(const test_result& /*tr*/)
+    virtual void test_completed(const test_result& tr)
     {
+        (void)tr;
     }
 
     /**
      * Called when a group is completed
      * @param name Name of the group
      */
-    virtual void group_completed(const std::string& /*name*/)
+    virtual void group_completed(const std::string& name)
     {
+        (void)name;
     }
 
     /**
@@ -119,7 +122,7 @@ public:
      */
     void register_group(const std::string& name, group_base* gr)
     {
-        if (gr == 0)
+        if (gr == nullptr)
         {
             throw tut_error("group shall be non-null");
         }
@@ -147,7 +150,7 @@ public:
      */
     void insert_callback(callback* cb)
     {
-        if(cb != NULL)
+        if(cb != nullptr)
         {
             callbacks_.insert(cb);
         }
@@ -194,7 +197,6 @@ public:
 
     /**
      * Runs all tests in all groups.
-     * @param callback Callback object if exists; null otherwise
      */
     void run_tests() const
     {

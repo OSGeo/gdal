@@ -286,7 +286,7 @@ class NTFFileReader
     explicit           NTFFileReader( OGRNTFDataSource * );
                       ~NTFFileReader();
 
-    int               Open( const char * pszFilename = NULL );
+    int               Open( const char * pszFilename = nullptr );
     void              Close();
     VSILFILE         *GetFP() { return fp; }
     void              GetFPPos( vsi_l_offset *pnPos, long * pnFeatureId);
@@ -294,8 +294,8 @@ class NTFFileReader
     void              Reset();
     void              SetBaseFID( long nFeatureId );
 
-    OGRGeometry      *ProcessGeometry( NTFRecord *, int * = NULL );
-    OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = NULL );
+    OGRGeometry      *ProcessGeometry( NTFRecord *, int * = nullptr );
+    OGRGeometry      *ProcessGeometry3D( NTFRecord *, int * = nullptr );
     static int               ProcessAttDesc( NTFRecord *, NTFAttDesc * );
     int               ProcessAttRec( NTFRecord *, int *, char ***, char ***);
     int               ProcessAttRecGroup( NTFRecord **, char ***, char ***);
@@ -314,7 +314,7 @@ class NTFFileReader
                                        const char **ppszCodeDesc );
 
     int               TestForLayer( OGRNTFLayer * );
-    OGRFeature       *ReadOGRFeature( OGRNTFLayer * = NULL );
+    OGRFeature       *ReadOGRFeature( OGRNTFLayer * = nullptr );
     NTFRecord       **ReadRecordGroup();
     NTFRecord        *ReadRecord();
     void              SaveRecord( NTFRecord * );
@@ -529,7 +529,7 @@ class OGRNTFDataSource : public OGRDataSource
     const char         *GetOption( const char * );
 
     int                 Open( const char * pszName, int bTestOpen = FALSE,
-                              char ** papszFileList = NULL );
+                              char ** papszFileList = nullptr );
 
     const char          *GetName() override { return pszName; }
     int                 GetLayerCount() override;

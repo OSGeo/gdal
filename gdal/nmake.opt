@@ -4,11 +4,11 @@
 #
 # Usage examples (see details below):
 # nmake -f makefile.vc
-# nmake -f makefile.vc MSVC_VER=1400
-# nmake -f makefile.vc MSVC_VER=1500 DEBUG=1
-# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1
-# nmake -f makefile.vc MSVC_VER=1600 DEBUG=1 ANALYZE=1 WITH_PDB=1
-# nmake -f makefile.vc MSVC_VER=1400 WIN64=1
+# nmake -f makefile.vc MSVC_VER=1900
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 ANALYZE=1
+# nmake -f makefile.vc MSVC_VER=1900 DEBUG=1 ANALYZE=1 WITH_PDB=1
+# nmake -f makefile.vc MSVC_VER=1900 WIN64=1
 #
 # Options:
 #    DEBUG - set to disable optimizations and link with debug runtimes; also implies WITH_PDB.
@@ -32,20 +32,13 @@
 ###############################################################################
 # Check version of Visual C++ compiler:
 # nmake -f makefile.vc MSVC_VER=xxxx
-# where xxxx is one of following:
+# where xxxx is one of following (older versions no longer supported):
 # 1910 = 15.0(2017)
 # 1900 = 14.0(2015)
-# 1800 = 12.0(2013)
-# 1700 = 11.0(2012)
-# 1600 = 10.0(2010)
-# 1500 = 9.0 (2008)
-# 1400 = 8.0 (2005) - specific compilation flags, different from older VC++
-# 1310 = 7.1 (2003) # is it still supported ?
-# 1300 = 7.0 (2002) # is it still supported ?
 #
 !IFNDEF MSVC_VER
-#assume msvc VS2008.
-MSVC_VER=1500
+#assume msvc VS2015.
+MSVC_VER=1900
 !ENDIF
 
 ###############################################################################
@@ -128,19 +121,11 @@ CXX_PDB_FLAGS=
 !ENDIF
 
 !IFNDEF OPTFLAGS
-!IF $(MSVC_VER) >= 1400
 !IFNDEF DEBUG
 OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /Ox /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DNDEBUG
 !ELSE
-OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MD /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
+OPTFLAGS= $(CXX_ANALYZE_FLAGS) $(CXX_PDB_FLAGS) /nologo /MP /MDd /EHsc /FC /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DDEBUG
 !ENDIF
-!ELSE
-!IFNDEF DEBUG
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /Ox /FC /DNDEBUG
-!ELSE
-OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
-!ENDIF
-!ENDIF  #MSVC_VER
 !ENDIF  # OPTFLAGS
 
 # 
@@ -159,14 +144,6 @@ OPTFLAGS= $(CXX_PDB_FLAGS) /nologo /MD /EHsc /GR /FC /DDEBUG
 # 
 WARNFLAGS =	/W4 /wd4127 /wd4251 /wd4275 /wd4786 /wd4100 /wd4245 /wd4206 /wd4351 /wd4611
 
-!IF $(MSVC_VER) >= 1500
-!IF $(MSVC_VER) < 1700
-# VS 2008 / MSVC_VER = 1500 and VS 2010 / MSVC_VER = 1600 recognizes override, but as an extension.
-# warning C4481: nonstandard extension used: override specifier 'override'
-WARNFLAGS = $(WARNFLAGS) /wd4481
-!ENDIF
-!ENDIF
-
 !ENDIF
 
 # 
@@ -178,12 +155,9 @@ SSSE3FLAGS = /DHAVE_SSSE3_AT_COMPILE_TIME
 #SSE_ARCH_FLAGS = /arch:SSE
 !ENDIF
 
-# VS2010 SP1 or later in fact required for runtime detection of AVX instruction set
 !IFNDEF AVXFLAGS
-!IF $(MSVC_VER) >= 1600
 AVXFLAGS = /DHAVE_AVX_AT_COMPILE_TIME
 AVX_ARCH_FLAGS = /arch:AVX
-!ENDIF
 !ENDIF
 
 # The following are extra disables that can be applied to external source
@@ -195,6 +169,9 @@ SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
 # Linker debug options
 !IFDEF DEBUG
 LDEBUG= /debug
+!ELSEIFDEF WITH_PDB
+# Ensures that PDB is included in release DLL if so requested
+LDEBUG= /debug /opt:ref /opt:icf
 !ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
@@ -253,7 +230,10 @@ INCLUDE_GNM_FRMTS = YES
 BSB_SUPPORTED = 1
 
 # Comment out the following to disable ODBC support.
+
+!IFNDEF ODBC_SUPPORTED
 ODBC_SUPPORTED = 1
+!ENDIF
 
 # Uncomment out the following to enable plugin with SQL Native Client support for MSSQL Bulk Copy.
 #SQLNCLI_VERSION = 11
@@ -359,6 +339,7 @@ JPEG12_SUPPORTED = 1
 #TD_FLAGS = -D_TOOLKIT_IN_DLL_
 #TD_INCLUDE = -I$(TD_BASE)\TD\Include -I$(TD_BASE)\TD\Extensions\ExServices
 # The following works for Teigha 4.2.2
+# In TD_INCLUDE, add /D_TOOLKIT_IN_DLL_ if linking against the .dll
 #TD_INCLUDE = -I$(TD_BASE)\Core\Include -I$(TD_BASE)\Core\Extensions\ExServices -I$(TD_BASE)\Dgn\include -I$(TD_BASE)\Dgn\Extensions\ExServices
 #TD_LIBDIR = $(TD_BASE)\lib\vc14dll
 #TD_LIBS =  \
@@ -610,12 +591,12 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 #SOSI_INC_DIR = e:/sosi
 #SOSI_LIBS = e:/sosi/FYBA.lib e:/sosi/GM.lib e:/sosi/UT.lib
 
-# Uncomment for OpenJpeg (release v2.0.0) support
+# Uncomment for OpenJpeg (release v2.1 or later) support
 #OPENJPEG_ENABLED = YES
-#OPENJPEG_CFLAGS = -IC:\openjpeg\include
+# Note that, contrary to GDAL releases <= 2.2.X, this must point to the
+# directory where openjpeg.h and opj_config.h are set 
+#OPENJPEG_CFLAGS = -IC:\openjpeg\include\openjpeg-2.X
 #OPENJPEG_LIB = C:\openjpeg\lib\openjp2.lib
-# For OpenJpeg >= 2.1, uncomment
-#OPENJPEG_VERSION = 20100
 
 #if using an external zlib uncomment the following lines
 #ZLIB_EXTERNAL_LIB = 1
@@ -626,12 +607,14 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES for Poppler >= 0.16.0
 # Uncomment POPPLER_0_20_OR_LATER = YES for Poppler >= 0.20.0
 # Uncomment POPPLER_0_23_OR_LATER = YES for Poppler >= 0.23.0
+# Uncomment POPPLER_0_58_OR_LATER = YES for Poppler >= 0.58.0
 #POPPLER_ENABLED = YES
 #POPPLER_CFLAGS = -Ie:/kde/include -Ie:/kde/include/poppler
 #POPPLER_HAS_OPTCONTENT = YES
 #POPPLER_BASE_STREAM_HAS_TWO_ARGS = YES
 #POPPLER_0_20_OR_LATER = YES
 #POPPLER_0_23_OR_LATER = YES
+#POPPLER_0_58_OR_LATER = YES
 #POPPLER_LIBS = e:/kde/lib/poppler.lib e:/kde/lib/freetype.lib e:/kde/lib/liblcms-1.lib advapi32.lib gdi32.lib
 
 # Uncomment for PDF support
@@ -673,6 +656,10 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment for LZMA TIFF support
 #LZMA_CFLAGS = -IC:/gdal_trunk/xz-5.0.0-windows/include
 #LZMA_LIBS = C:/gdal_trunk/xz-5.0.0-windows/bin_i486/liblzma.lib
+
+# Uncomment for ZSTD TIFF support
+#ZSTD_CFLAGS = -IC:/install-zstd/include
+#ZSTD_LIBS = C:/install-zstd/lib/libzstd.lib
 
 # Uncomment for WEBP support
 #WEBP_ENABLED = YES
@@ -740,6 +727,10 @@ QHULL_SETTING = INTERNAL
 # When linking against the static lib:
 # CRYPTOPP_LIB = c:/install-cryptopp-x64/lib/cryptlib.lib
 
+# OpenSSL stuff (needed if using curl in multithreaded way, with OpenSSL backend)
+# OPENSSL_INC = -Ic:/install-openssl/include
+# OPENSSL_LIB = c:/instal-oppenssl/lib/ssleay32.lib
+
 # Comment out to disable MRF support.
 MRF_SETTING=yes
 
@@ -803,12 +794,8 @@ GDALLIB	=    $(GDAL_ROOT)/gdal.lib
 !ENDIF
 
 !IFDEF ODBC_SUPPORTED
-!IF $(MSVC_VER) >= 1900
 # legacy_stdio_definitions.lib : https://connect.microsoft.com/VisualStudio/feedback/details/1134693/vs-2015-ctp-5-c-vsnwprintf-s-and-other-functions-are-not-exported-in-appcrt140-dll-breaking-linkage-of-static-libraries
 ODBCLIB = legacy_stdio_definitions.lib odbc32.lib odbccp32.lib user32.lib
-!ELSE
-ODBCLIB = odbc32.lib odbccp32.lib user32.lib
-!ENDIF
 !ENDIF
 
 !IF DEFINED(MRSID_DIR) || DEFINED(MRSID_RASTER_DIR) || DEFINED(MRSID_LIDAR_DIR)
@@ -950,7 +937,7 @@ EXTERNAL_LIBS =	$(OGDILIB) $(XERCES_LIB) $(EXPAT_LIB) $(OCI_LIB) $(PG_LIB) \
 	$(MYSQL_LIB) $(GEOS_LIB) $(HDF5_LIB_LINK) $(KEA_LIB_LINK) $(SDE_LIB) $(ARCOBJECTS_LIB) $(DWG_LIB_LINK) \
 	$(IDB_LIB) $(CURL_LIB) $(DODS_LIB) $(PCIDSK_LIB) \
 	$(ODBCLIB) $(JASPER_LIB) $(PNG_LIB) $(ZLIB_LIB) $(ADD_LIBS) $(OPENJPEG_LIB) \
-	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) \
+	$(MRSID_LIDAR_LIB) $(LIBKML_LIBS) $(SOSI_LIBS) $(PDF_LIB_LINK) $(LZMA_LIBS) $(ZSTD_LIBS) \
 	$(LIBICONV_LIBRARY) $(WEBP_LIBS) $(FGDB_LIB_LINK) $(FREEXL_LIBS) $(GTA_LIBS) \
-	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) ws2_32.lib \
+	$(INGRES_LIB) $(LIBXML2_LIB) $(PCRE_LIB) $(MONGODB_LIB_LINK) $(CRYPTOPP_LIB) $(OPENSSL_LIB) ws2_32.lib \
     kernel32.lib psapi.lib

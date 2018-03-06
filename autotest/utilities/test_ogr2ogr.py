@@ -1969,8 +1969,9 @@ def test_ogr2ogr_51():
     ds = ogr.Open('tmp/test_ogr2ogr_51_dst.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    if sr is None or sr.ExportToWkt().find('GEOGCS["GCS_WGS_1984"') != 0:
+    if sr is None or sr.ExportToWkt().find('GEOGCS["WGS 84"') != 0:
         gdaltest.post_reason('fail')
+        print(sr.ExportToWkt())
         return 'fail'
     feat = lyr.GetNextFeature()
     if feat.GetGeometryRef().ExportToWkt() != 'POINT (1 2)':
@@ -2190,7 +2191,7 @@ def test_ogr2ogr_54():
     content = f.read()
     f.close()
 
-    if content.find('<xs:element name="geometryProperty" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
+    if content.find('<xs:element name="WKT" type="gml:GeometryPropertyType" nillable="true" minOccurs="0" maxOccurs="1"/>') < 0 or \
        content.find('<xs:element name="fld1" nillable="true" minOccurs="0" maxOccurs="1">') < 0 or \
        content.find('<xs:element name="fld2" nillable="true" minOccurs="0" maxOccurs="1">') < 0:
         gdaltest.post_reason('fail')
@@ -2340,8 +2341,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( "id" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "id" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("id") )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "id" , "str") VALUES ('010100000000000000000000000000000000000000', 10, 'a')""") < 0:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
@@ -2355,8 +2356,8 @@ def test_ogr2ogr_57():
     content = f.read()
     f.close()
 
-    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" ( "ogc_fid" SERIAL, CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
-       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkb_geometry" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
+    if content.find("""CREATE TABLE "public"."test_ogr2ogr_57" (    "ogc_fid" SERIAL,    CONSTRAINT "test_ogr2ogr_57_pk" PRIMARY KEY ("ogc_fid") )""") < 0 or \
+       content.find("""INSERT INTO "public"."test_ogr2ogr_57" ("wkt" , "str") VALUES ('010100000000000000000000000000000000000000', 'a')""") < 0:
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
@@ -2621,14 +2622,22 @@ def test_ogr2ogr_64():
     return 'success'
 
 ###############################################################################
-# Test detection of bad extension
+# Test detection of extension
 
 def test_ogr2ogr_65():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' /vsimem/out.csv ../ogr/data/poly.shp')
-    if err.find("The target file has a 'csv' extension") < 0:
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp/out.csv ../ogr/data/poly.shp')
+    ds = gdal.OpenEx('tmp/out.csv')
+    if ds.GetDriver().ShortName != 'CSV':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdal.Unlink('tmp/out.csv')
+
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_ogr2ogr_path() + ' /vsimem/out.xxx ../ogr/data/poly.shp')
+    if err.find("Cannot guess") < 0:
         gdaltest.post_reason('expected a warning about probably wrong extension')
         print(ret)
         print(err)

@@ -1,0 +1,10 @@
+!table
+!version 300
+!charset Neutral
+
+Definition Table
+  Type NATIVE Charset "Neutral"
+  Fields 3
+    AREA Decimal (12,3) Index 1 ;
+    EAS_ID Decimal (11,0);
+    PRFEDEA Char (16) Index 3 ;

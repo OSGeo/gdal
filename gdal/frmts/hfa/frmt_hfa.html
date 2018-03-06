@@ -61,7 +61,7 @@ Layer names can be set and retrieved with the GDALSetDescription/GDALGetDescript
 </ul>
 
 <h2>Configuration Options</h2>
-Currently two <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration options</a> are supported by the HFA driver:
+Currently three <a href="http://trac.osgeo.org/gdal/wiki/ConfigOptions">runtime configuration options</a> are supported by the HFA driver:
 
 <ul>
 <li> <b>HFA_USE_RRD=YES/NO</b> : Whether to force creation of external overviews in Erdas rrd format and with .rrd file name extension (gdaladdo with combination -ro --config USE_RRD YES creates overview file with .aux extension). <p>
@@ -77,6 +77,12 @@ gdaladdo out.tif --config USE_RRD YES --config HFA_USE_RRD YES --config HFA_COMP
 </pre>
 
 </li>
+<li>
+(GDAL &gt;= 2.3) The block size (tile width/height) used for overviews can
+be specified by setting the <b>GDAL_HFA_OVR_BLOCKSIZE</b> configuration option to a power-
+of-two value between 32 and 2048. The default value is 64.
+</li>
+
 </ul>
 
 See Also:<p>

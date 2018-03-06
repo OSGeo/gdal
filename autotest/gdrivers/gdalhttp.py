@@ -173,9 +173,9 @@ def http_4():
     if drv is None:
         return 'skip'
 
-    ds = gdal.Open('/vsicurl/ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif')
+    ds = gdal.Open('/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
     if ds is None:
-        conn = gdaltest.gdalurlopen('ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif')
+        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
         if conn is None:
             print('cannot open URL')
             return 'skip'
@@ -192,7 +192,7 @@ def http_4():
         return 'fail'
 
     filelist = ds.GetFileList()
-    if '/vsicurl/ftp://ftp.remotesensing.org/gdal/data/gtiff/utm.tif' not in filelist:
+    if '/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif' not in filelist:
         print(filelist)
         gdaltest.post_reason('fail')
         return 'fail'

@@ -204,10 +204,10 @@ def ogr_virtualogr_2():
     ds = ogr.Open('/vsimem/ogr_virtualogr_2.db')
     gdal.SetConfigOption('OGR_SQLITE_LIST_VIRTUAL_OGR', None)
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         ds = None
         gdal.Unlink('/vsimem/ogr_virtualogr_2.db')
-        gdaltest.post_reason('expected a failure')
+        gdaltest.post_reason('expected an error message')
         return 'fail'
     did_not_get_error = gdal.GetLastErrorMsg() == ''
     ds = None

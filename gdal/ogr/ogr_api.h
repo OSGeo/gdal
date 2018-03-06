@@ -240,6 +240,7 @@ void   CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
                                   void* pabyY, int nYStride,
                                   void* pabyZ, int nZStride,
                                   void* pabyM, int nMStride );
+void   CPL_DLL OGR_G_SwapXY( OGRGeometryH hGeom );
 
 /* Methods for getting/setting rings and members collections */
 
@@ -627,8 +628,8 @@ int     CPL_DLL OGRGetOpenDSCount(void);
 OGRDataSourceH CPL_DLL OGRGetOpenDS( int iDS );
 /*! @endcond */
 
-/* note: this is also declared in ogrsf_frmts.h */
 void CPL_DLL OGRRegisterAll(void);
+
 /** Clean-up all drivers (including raster ones starting with GDAL 2.0.
  * See GDALDestroyDriverManager() */
 void CPL_DLL OGRCleanupAll(void);

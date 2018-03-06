@@ -2502,6 +2502,69 @@ def ogr_fgdb_23():
     return 'success'
 
 ###############################################################################
+# Read polygons with M component where the M of the closing point is not the
+# one of the starting point (#7017)
+
+def ogr_fgdb_24():
+
+    ds = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/filegdb_polygonzm_m_not_closing_with_curves.gdb.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToIsoWkt())
+            print(f_ref.GetGeometryRef().ExportToIsoWkt())
+            return 'fail'
+
+    ds = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb')
+    lyr = ds.GetLayer(0)
+    ds_ref = ogr.Open('data/filegdb_polygonzm_nan_m_with_curves.gdb.csv')
+    lyr_ref = ds_ref.GetLayer(0)
+    for f in lyr:
+        f_ref = lyr_ref.GetNextFeature()
+        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
+            gdaltest.post_reason('fail')
+            print(f.GetGeometryRef().ExportToIsoWkt())
+            print(f_ref.GetGeometryRef().ExportToIsoWkt())
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test selecting FID column with OGRSQL
+
+def ogr_fgdb_25():
+
+    ds = ogr.Open('data/curves.gdb')
+    sql_lyr = ds.ExecuteSQL('SELECT OBJECTID FROM polygon WHERE OBJECTID = 2')
+    if sql_lyr is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    lyr = ds.GetLayerByName('polygon')
+    lyr.SetAttributeFilter('OBJECTID = 2')
+    f = lyr.GetNextFeature()
+    if f.GetFID() != 2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def ogr_fgdb_cleanup():
@@ -2562,6 +2625,8 @@ gdaltest_list = [
     ogr_fgdb_21,
     ogr_fgdb_22,
     ogr_fgdb_23,
+    ogr_fgdb_24,
+    ogr_fgdb_25,
     ogr_fgdb_cleanup,
     ]
 

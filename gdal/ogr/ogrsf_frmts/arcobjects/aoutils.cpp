@@ -306,7 +306,7 @@ bool AOToOGRSpatialReference(esriGeometry::ISpatialReference* pSR, OGRSpatialRef
 
   ::SysFreeString(buffer);
 
-  if (strlen(strESRIWKT) <= 0)
+  if ( strESRIWKT[0] == '\0' )
   {
     CPLError( CE_Warning, CPLE_AppDefined, "ESRI Spatial Reference is NULL");
     return false;
@@ -338,10 +338,8 @@ bool OGRGeometryToAOGeometry(OGRGeometry* pOGRGeom, esriGeometry::IGeometry** pp
 
   *ppGeometry = NULL;
 
-  GByte* pWKB = NULL;
-
   long wkbSize = pOGRGeom->WkbSize();
-  pWKB = (GByte *) CPLMalloc(wkbSize);
+  GByte* pWKB = (GByte *) CPLMalloc(wkbSize);
 
   if( pOGRGeom->exportToWkb( wkbNDR, pWKB ) != OGRERR_NONE )
   {

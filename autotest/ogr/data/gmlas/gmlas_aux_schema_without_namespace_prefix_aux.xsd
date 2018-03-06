@@ -1,0 +1,14 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://aux"
+           targetNamespace="http://aux"
+           xmlns:main="http://main"
+           elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:import namespace="http://main" schemaLocation="gmlas_aux_schema_without_namespace_prefix_main.xsd"/>
+<xs:element name="genericInt" substitutionGroup="main:generic">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="value" type="xs:integer" minOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>

@@ -43,7 +43,7 @@ OGRWalkSelectLayer::OGRWalkSelectLayer( OGRWalkDataSource *poDSIn,
     poDS = poDSIn;
 
     iNextShapeId = 0;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
     BuildFeatureDefn( "SELECT", poStmt );
@@ -66,10 +66,10 @@ OGRWalkSelectLayer::~OGRWalkSelectLayer()
 void OGRWalkSelectLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 }
 
@@ -80,7 +80,7 @@ void OGRWalkSelectLayer::ClearStatement()
 CPLODBCStatement *OGRWalkSelectLayer::GetStatement()
 
 {
-    if( poStmt == NULL )
+    if( poStmt == nullptr )
         ResetStatement();
 
     return poStmt;
@@ -106,7 +106,7 @@ OGRErr OGRWalkSelectLayer::ResetStatement()
     else
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }

@@ -475,9 +475,9 @@ class OGRMSSQLSpatialDataSource : public OGRDataSource
 
     virtual OGRErr       DeleteLayer( int iLayer ) override;
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 
@@ -514,7 +514,7 @@ class OGRMSSQLSpatialDriver : public OGRSFDriver
     OGRDataSource *Open( const char *, int ) override;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
+                                             char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 };

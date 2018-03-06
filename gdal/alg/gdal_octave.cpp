@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 
 GDALIntegralImage::GDALIntegralImage()
 {
-    pMatrix = NULL;
+    pMatrix = nullptr;
     nHeight = 0;
     nWidth = 0;
 }
@@ -169,8 +169,8 @@ GDALOctaveLayer::GDALOctaveLayer( int nOctave, int nInterval ) :
     scale(static_cast<int>(pow(2.0, nOctave))),
     width(0),
     height(0),
-    detHessians(NULL),
-    signs(NULL)
+    detHessians(nullptr),
+    signs(nullptr)
 {}
 
 void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )

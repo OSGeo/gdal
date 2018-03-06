@@ -26,24 +26,41 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_gpx.h"
+
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+
 #include "cpl_conv.h"
 #include "cpl_csv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
-#include "ogr_gpx.h"
+#include "cpl_vsi.h"
+#ifdef HAVE_EXPAT
+#  include "expat.h"
+#endif
+#include "gdal_version.h"
+#include "ogr_core.h"
+#include "ogr_expat.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
+
 
 CPL_CVSID("$Id$")
 
-static const int SPACE_FOR_METADATA = 160;
+constexpr int SPACE_FOR_METADATA = 160;
 
 /************************************************************************/
 /*                          OGRGPXDataSource()                          */
 /************************************************************************/
 
 OGRGPXDataSource::OGRGPXDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    fpOutput(NULL),
+    fpOutput(nullptr),
     bIsBackSeekable(true),
     pszEOL("\n"),
     nOffsetBounds(-1),
@@ -53,12 +70,12 @@ OGRGPXDataSource::OGRGPXDataSource() :
     dfMaxLon(-180),
     lastGPXGeomTypeWritten(GPX_NONE),
     bUseExtensions(false),
-    pszExtensionsNS(NULL),
+    pszExtensionsNS(nullptr),
 #ifdef HAVE_EXPAT
     validity(GPX_VALIDITY_UNKNOWN),
     nElementsRead(0),
-    pszVersion(NULL),
-    oCurrentParser(NULL),
+    pszVersion(nullptr),
+    oCurrentParser(nullptr),
     nDataHandlerCounter(0),
 #endif
     nLastRteId(-1),
@@ -73,7 +90,7 @@ OGRGPXDataSource::OGRGPXDataSource() :
 OGRGPXDataSource::~OGRGPXDataSource()
 
 {
-    if ( fpOutput != NULL )
+    if ( fpOutput != nullptr )
     {
         if (nLastRteId != -1)
             PrintLine("</rte>");
@@ -137,7 +154,7 @@ OGRLayer *OGRGPXDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -184,14 +201,14 @@ OGRLayer * OGRGPXDataSource::ICreateLayer( const char * pszLayerName,
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Cannot create GPX layer %s with unknown geometry type"
                   , pszLayerName);
-        return NULL;
+        return nullptr;
     }
     else
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                     "Geometry type of `%s' not supported in GPX.\n",
                     OGRGeometryTypeToName(eType) );
-        return NULL;
+        return nullptr;
     }
     nLayers++;
     papoLayers = static_cast<OGRGPXLayer **>(
@@ -216,7 +233,7 @@ void OGRGPXDataSource::startElementValidateCbk(
         if (strcmp(pszNameIn, "gpx") == 0)
         {
             validity = GPX_VALIDITY_VALID;
-            for( int i = 0; ppszAttr[i] != NULL; i += 2)
+            for( int i = 0; ppszAttr[i] != nullptr; i += 2)
             {
                 if (strcmp(ppszAttr[i], "version") == 0)
                 {
@@ -292,19 +309,19 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
 /*      Try to open the file.                                           */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(pszFilename, "r");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     validity = GPX_VALIDITY_UNKNOWN;
     CPLFree(pszVersion);
-    pszVersion = NULL;
+    pszVersion = nullptr;
     bUseExtensions = false;
     nElementsRead = 0;
 
     XML_Parser oParser = OGRCreateExpatXMLParser();
     oCurrentParser = oParser;
     XML_SetUserData(oParser, this);
-    XML_SetElementHandler(oParser, ::startElementValidateCbk, NULL);
+    XML_SetElementHandler(oParser, ::startElementValidateCbk, nullptr);
     XML_SetCharacterDataHandler(oParser, ::dataHandlerValidateCbk);
 
     char aBuf[BUFSIZ];
@@ -374,11 +391,12 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         if( bUseExtensions )
             CPLDebug("GPX", "It uses <extensions>");
 
-        if (pszVersion == NULL)
+        if (pszVersion == nullptr)
         {
             /* Default to 1.1 */
             CPLError(CE_Warning, CPLE_AppDefined, "GPX schema version is unknown. "
-                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.");
+                     "The driver may not be able to handle the file correctly "
+                     "and will behave as if it is GPX 1.1.");
             pszVersion = CPLStrdup("1.1");
         }
         else if (strcmp(pszVersion, "1.0") == 0 || strcmp(pszVersion, "1.1") == 0)
@@ -389,7 +407,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "GPX schema version '%s' is not handled by the driver. "
-                     "The driver may not be able to handle the file correctly and will behave as if it is GPX 1.1.", pszVersion);
+                     "The driver may not be able to handle the file correctly "
+                     "and will behave as if it is GPX 1.1.", pszVersion);
         }
 
         nLayers = 5;
@@ -412,7 +431,8 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
         if (strstr(aBuf, "<?xml") && strstr(aBuf, "<gpx"))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                    "OGR/GPX driver has not been built with read support. Expat library required");
+                     "OGR/GPX driver has not been built with read support. "
+                     "Expat library required");
         }
         VSIFCloseL(fp);
     }
@@ -427,7 +447,7 @@ int OGRGPXDataSource::Open( const char * pszFilename, int bUpdateIn)
 int OGRGPXDataSource::Create( const char *pszFilename,
                               char **papszOptions )
 {
-    if( fpOutput != NULL)
+    if( fpOutput != nullptr)
     {
         CPLAssert( false );
         return FALSE;
@@ -437,14 +457,15 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         pszFilename = "/vsistdout/";
 
 /* -------------------------------------------------------------------- */
-/*     Do not override exiting file.                                    */
+/*     Do not overwrite exiting file.                                   */
 /* -------------------------------------------------------------------- */
     VSIStatBufL sStatBuf;
 
     if( VSIStatL( pszFilename, &sStatBuf ) == 0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "You have to delete %s before being able to create it with the GPX driver",
+                 "You have to delete %s before being able to create it with "
+                 "the GPX driver",
                  pszFilename);
         return FALSE;
     }
@@ -462,7 +483,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
     }
     else
         fpOutput = VSIFOpenL( pszFilename, "w+" );
-    if( fpOutput == NULL )
+    if( fpOutput == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create GPX file %s.",
@@ -482,7 +503,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
         false
 #endif
     ;
-    if( pszCRLFFormat == NULL )
+    if( pszCRLFFormat == nullptr )
     {
         // Use default value for OS.
     }
@@ -504,7 +525,7 @@ int OGRGPXDataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     const char* pszUseExtensions =
         CSLFetchNameValue( papszOptions, "GPX_USE_EXTENSIONS");
-    const char* pszExtensionsNSURL = NULL;
+    const char* pszExtensionsNSURL = nullptr;
     if (pszUseExtensions && CPLTestBool(pszUseExtensions))
     {
         bUseExtensions = true;

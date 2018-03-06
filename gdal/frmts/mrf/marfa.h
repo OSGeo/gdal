@@ -223,6 +223,15 @@ static inline unsigned long long net64(const unsigned long long x)
 #define net64(x) swab64(x)
 #endif
 
+// Count the values in a buffer that match a specific value
+template<typename T> static int MatchCount(T *buff, int sz, T val) {
+    int ncount = 0;
+    for (int i = 0; i < sz; i++)
+        if (buff[i] == val)
+            ncount++;
+    return ncount;
+}
+
 const char *CompName(ILCompression comp);
 const char *OrderName(ILOrder val);
 ILCompression CompToken(const char *, ILCompression def = IL_ERR_COMP);
@@ -238,7 +247,7 @@ CPLString PrintDouble(double d, const char *frmt = "%12.8f");
 void XMLSetAttributeVal(CPLXMLNode *parent, const char* pszName,
     const double val, const char *frmt = "%12.8f");
 CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent,
-    const char*pszName, const ILSize &sz, const char *frmt = NULL);
+    const char*pszName, const ILSize &sz, const char *frmt = nullptr);
 void XMLSetAttributeVal(CPLXMLNode *parent,
     const char*pszName, std::vector<double> const &values);
 //
@@ -359,6 +368,8 @@ protected:
 
     // Apply create options to the current dataset
     void ProcessCreateOptions(char **papszOptions);
+
+    // Called once before the parsing of the XML, should just capture the options in dataset variables
     void ProcessOpenOptions(char **papszOptions);
 
     // Writes the XML tree as MRF.  It does not check the content
@@ -401,6 +412,9 @@ protected:
 
     // Write a tile, the infooffset is the relative position in the index file
     virtual CPLErr WriteTile(void *buff, GUIntBig infooffset, GUIntBig size = 0);
+
+    // Custom CopyWholeRaster for Zen JPEG
+    CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress, void * pProgressData);
 
     // For versioned MRFs, add a version
     CPLErr AddVersion();
@@ -515,9 +529,9 @@ public:
     virtual double  GetMaximum(int *) override;
 
     // MRF specific, fetch is from a remote source
-    CPLErr FetchBlock(int xblk, int yblk, void *buffer = NULL);
+    CPLErr FetchBlock(int xblk, int yblk, void *buffer = nullptr);
     // Fetch a block from a cloned MRF
-    CPLErr FetchClonedBlock(int xblk, int yblk, void *buffer = NULL);
+    CPLErr FetchClonedBlock(int xblk, int yblk, void *buffer = nullptr);
 
     // Block not stored on disk
     CPLErr FillBlock(void *buffer);
@@ -543,7 +557,6 @@ protected:
     // The info about the current image, to enable R-sets
     ILImage img;
     std::vector<GDALMRFRasterBand *> overviews;
-    int overview;
 
     VSILFILE *IdxFP() { return poDS->IdxFP(); }
     GDALRWFlag IdxMode() { return poDS->IdxMode(); }
@@ -588,7 +601,7 @@ protected:
 class PNG_Codec {
 public:
     explicit PNG_Codec(const ILImage &image) : img(image),
-        PNGColors(NULL), PNGAlpha(NULL), PalSize(0), TransSize(0), deflate_flags(0) {}
+        PNGColors(nullptr), PNGAlpha(nullptr), PalSize(0), TransSize(0), deflate_flags(0) {}
 
     virtual ~PNG_Codec() {
         CPLFree(PNGColors);
@@ -759,7 +772,7 @@ public:
 
 protected:
     virtual int GetOverviewCount() override { return 0; }
-    virtual GDALRasterBand *GetOverview(int ) override { return NULL; }
+    virtual GDALRasterBand *GetOverview(int ) override { return nullptr; }
 
     GDALMRFRasterBand *pBand;
 };

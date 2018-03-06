@@ -1,0 +1,5 @@
+<main_elt xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="gmlas_any_field_at_end_of_declaration.xsd">
+    <foo>bar</foo>
+    <extra><something>baz</something></extra>
+</main_elt>

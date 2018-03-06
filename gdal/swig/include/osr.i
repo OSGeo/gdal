@@ -102,6 +102,8 @@ typedef char retStringAndCPLFree;
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "cpl_string.h"
 #include "cpl_conv.h"
 
@@ -425,6 +427,13 @@ public:
     return OSRAutoIdentifyEPSG( self );
   }
 
+#ifdef SWIGPYTHON
+  void FindMatches( char** options = NULL, OSRSpatialReferenceShadow*** matches = NULL, int* nvalues = NULL, int** confidence_values = NULL )
+  {
+        *matches = OSRFindMatches(self, options, nvalues, confidence_values);
+  }
+#endif
+
   OGRErr SetProjection( char const *arg ) {
     return OSRSetProjection( self, arg );
   }
@@ -640,6 +649,13 @@ public:
                     double fe, double fn ) {
     return OSRSetMercator( self, clat, clong,
                            scale, fe, fn );
+  }
+
+%feature( "kwargs" ) SetMercator2SP;
+  OGRErr SetMercator2SP( double stdp1,
+                         double clat, double clong,
+                         double fe, double fn ) {
+    return OSRSetMercator2SP( self, stdp1, clat, clong, fe, fn );
   }
 
 %feature( "kwargs" ) SetMollweide;
@@ -947,6 +963,11 @@ public:
 
   OGRErr MorphFromESRI() {
     return OSRMorphFromESRI(self);
+  }
+
+%newobject ConvertToOtherProjection;
+  OSRSpatialReferenceShadow* ConvertToOtherProjection(const char* other_projection, char **options = NULL) {
+    return OSRConvertToOtherProjection(self, other_projection, options);
   }
 
 } /* %extend */

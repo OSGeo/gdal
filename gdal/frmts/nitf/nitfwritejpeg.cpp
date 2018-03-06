@@ -216,7 +216,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             eErr = poSrcDS->RasterIO( GF_Read, nBlockXSize * nBlockXOff, iLine + nBlockYSize * nBlockYOff, nBlockXSizeToRead, 1,
                                     pabyScanline, nBlockXSizeToRead, 1, eWorkDT,
                                     nBands, anBandList,
-                                    nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize, NULL );
+                                    nBands*nWorkDTSize, nBands * nBlockXSize * nWorkDTSize, nWorkDTSize, nullptr );
 
 #if !defined(JPEG_LIB_MK1_OR_12BIT)
             /* Repeat the last pixel till the end of the line */
@@ -267,7 +267,7 @@ NITFWriteJPEGBlock( GDALDataset *poSrcDS, VSILFILE *fp,
             static_cast<double>( nBlockXOff ) * nBlockYSize * nBlockXSize +
             (iLine + 1) * nBlockXSizeToRead;
         if( eErr == CE_None
-            && !pfnProgress( nCurPixels / nTotalPixels, NULL, pProgressData ) )
+            && !pfnProgress( nCurPixels / nTotalPixels, nullptr, pProgressData ) )
         {
             eErr = CE_Failure;
             CPLError( CE_Failure, CPLE_UserInterrupt,

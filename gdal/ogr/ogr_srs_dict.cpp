@@ -34,6 +34,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
@@ -73,21 +74,22 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /* -------------------------------------------------------------------- */
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
+    CPLString osDictFile(pszDictFile);
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return OGRERR_UNSUPPORTED_SRS;
 
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
 /* -------------------------------------------------------------------- */
     OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
-    const char *pszLine = NULL;
+    const char *pszLine = nullptr;
 
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
 
     {
         if( pszLine[0] == '#' )
@@ -101,7 +103,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             continue;
         }
 
-        if( strstr(pszLine, ",") == NULL )
+        if( strstr(pszLine, ",") == nullptr )
             continue;
 
         if( EQUALN(pszLine, pszCode, strlen(pszCode))
@@ -110,6 +112,10 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
             char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
 
             eErr = importFromWkt( &pszWKT );
+            if( eErr == OGRERR_NONE && osDictFile.find("esri_") == 0 )
+            {
+                morphFromESRI();
+            }
             break;
         }
     }

@@ -1,7 +1,7 @@
 
 include ../../GDALmake.opt
 
-OBJ	=	pdsdataset.o isis2dataset.o isis3dataset.o vicardataset.o nasakeywordhandler.o vicarkeywordhandler.o
+OBJ	=	pdsdataset.o isis2dataset.o isis3dataset.o vicardataset.o nasakeywordhandler.o vicarkeywordhandler.o pds4dataset.o
 
 CPPFLAGS	:=	-I../raw -I../vrt -I../../ogr/ogrsf_frmts/geojson $(JSON_INCLUDE) $(CPPFLAGS)
 

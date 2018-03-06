@@ -108,8 +108,8 @@ OGRGeometry *OGRCurvePolygon::clone() const
 {
     OGRCurvePolygon *poNewPolygon = dynamic_cast<OGRCurvePolygon *>(
         OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poNewPolygon == NULL )
-        return NULL;
+    if( poNewPolygon == nullptr )
+        return nullptr;
     poNewPolygon->assignSpatialReference( getSpatialReference() );
     poNewPolygon->flags = flags;
 
@@ -118,7 +118,7 @@ OGRGeometry *OGRCurvePolygon::clone() const
         if( poNewPolygon->addRing( oCC.papoCurves[i] ) != OGRERR_NONE )
         {
             delete poNewPolygon;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -311,10 +311,38 @@ const OGRCurve *OGRCurvePolygon::getInteriorRingCurve( int iRing ) const
 OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
 {
     if( oCC.nCurveCount == 0 )
-        return NULL;
+        return nullptr;
     OGRCurve *poRet = oCC.papoCurves[0];
-    oCC.papoCurves[0] = NULL;
+    oCC.papoCurves[0] = nullptr;
     return poRet;
+}
+
+/************************************************************************/
+/*                            removeRing()                              */
+/************************************************************************/
+
+/**
+ * \brief Remove a geometry from the container.
+ *
+ * Removing a geometry will cause the geometry count to drop by one, and all
+ * "higher" geometries will shuffle down one in index.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param iIndex the index of the geometry to delete.  A value of -1 is a
+ * special flag meaning that all geometries should be removed.
+ *
+ * @param bDelete if true the geometry will be deallocated, otherwise it will
+ * not.  The default is true as the container is considered to own the
+ * geometries in it.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_FAILURE if the index is
+ * out of range.
+ */
+
+OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
+{
+    return oCC.removeCurve(iIndex, bDelete);
 }
 
 /************************************************************************/
@@ -339,7 +367,7 @@ OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
     OGRCurve* poNewRingCloned = dynamic_cast<OGRCurve *>(poNewRing->clone());
-    if( poNewRingCloned == NULL )
+    if( poNewRingCloned == nullptr )
         return OGRERR_FAILURE;
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
@@ -429,7 +457,7 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
     OGRCurvePolygon* poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
-    if( poCP == NULL )
+    if( poCP == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
@@ -455,7 +483,7 @@ OGRErr OGRCurvePolygon::importFromWkb( const unsigned char * pabyData,
     OGRwkbByteOrder eByteOrder;
     int nDataOffset = 0;
     // coverity[tainted_data]
-    OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
+    OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -495,7 +523,7 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
     OGRCurvePolygon *poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
-    if( poCP == NULL )
+    if( poCP == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
@@ -566,7 +594,13 @@ OGRCurvePolygon::CurvePolyToPoly( double dfMaxAngleStepSizeDegrees,
         OGRLineString* poLS =
             oCC.papoCurves[iRing]->CurveToLine(dfMaxAngleStepSizeDegrees,
                                                papszOptions);
-        poPoly->addRingDirectly(OGRCurve::CastToLinearRing(poLS));
+        OGRLinearRing* poRing = OGRCurve::CastToLinearRing(poLS);
+        if( poRing == nullptr ) {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "OGRCurve::CastToLinearRing failed");
+            break;
+        }
+        poPoly->addRingDirectly(poRing);
     }
     return poPoly;
 }
@@ -643,7 +677,7 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
         return TRUE;
 
     OGRCurvePolygon *poOPoly = dynamic_cast<OGRCurvePolygon *>(poOther);
-    if( poOPoly == NULL )
+    if( poOPoly == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRCurvePolygon.");
@@ -669,7 +703,7 @@ OGRErr OGRCurvePolygon::transform( OGRCoordinateTransformation *poCT )
 double OGRCurvePolygon::get_Area() const
 
 {
-    if( getExteriorRingCurve() == NULL )
+    if( getExteriorRingCurve() == nullptr )
         return 0.0;
 
     double dfArea = getExteriorRingCurve()->get_Area();
@@ -700,6 +734,15 @@ void OGRCurvePolygon::set3D( OGRBoolean bIs3D )
 void OGRCurvePolygon::setMeasured( OGRBoolean bIsMeasured )
 {
     oCC.setMeasured( this, bIsMeasured );
+}
+
+/************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCurvePolygon::assignSpatialReference( OGRSpatialReference * poSR )
+{
+    oCC.assignSpatialReference( this, poSR );
 }
 
 /************************************************************************/
@@ -740,7 +783,7 @@ void OGRCurvePolygon::swapXY()
 
 OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
 {
-    if( getExteriorRingCurve() != NULL &&
+    if( getExteriorRingCurve() != nullptr &&
         getNumInteriorRings() == 0 )
     {
         const int nRet = getExteriorRingCurve()->ContainsPoint(p);
@@ -752,17 +795,34 @@ OGRBoolean OGRCurvePolygon::ContainsPoint( const OGRPoint* p ) const
 }
 
 /************************************************************************/
+/*                          IntersectsPoint()                           */
+/************************************************************************/
+
+OGRBoolean OGRCurvePolygon::IntersectsPoint( const OGRPoint* p ) const
+{
+    if( getExteriorRingCurve() != nullptr &&
+        getNumInteriorRings() == 0 )
+    {
+        const int nRet = getExteriorRingCurve()->IntersectsPoint(p);
+        if( nRet >= 0 )
+            return nRet;
+    }
+
+    return OGRGeometry::Intersects(p);
+}
+
+/************************************************************************/
 /*                               Contains()                             */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
 
 {
-    if( !IsEmpty() && poOtherGeom != NULL &&
+    if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
         const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
-        if( poPoint == NULL )
+        if( poPoint == nullptr )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
@@ -781,17 +841,17 @@ OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
 OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
 
 {
-    if( !IsEmpty() && poOtherGeom != NULL &&
+    if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
         const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
-        if( poPoint == NULL )
+        if( poPoint == nullptr )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRPoint.");
             return FALSE;
         }
-        return ContainsPoint(poPoint);
+        return IntersectsPoint(poPoint);
     }
 
     return OGRGeometry::Intersects(poOtherGeom);
@@ -822,10 +882,10 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
     {
         poCP->oCC.papoCurves[i] =
             OGRCurve::CastToLinearRing(poCP->oCC.papoCurves[i]);
-        if( poCP->oCC.papoCurves[i] == NULL )
+        if( poCP->oCC.papoCurves[i] == nullptr )
         {
             delete poCP;
-            return NULL;
+            return nullptr;
         }
     }
     OGRPolygon* poPoly = new OGRPolygon();
@@ -834,7 +894,7 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
     poPoly->oCC.nCurveCount = poCP->oCC.nCurveCount;
     poPoly->oCC.papoCurves = poCP->oCC.papoCurves;
     poCP->oCC.nCurveCount = 0;
-    poCP->oCC.papoCurves = NULL;
+    poCP->oCC.papoCurves = nullptr;
     delete poCP;
     return poPoly;
 }

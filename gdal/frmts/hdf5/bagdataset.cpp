@@ -102,8 +102,8 @@ public:
     virtual CPLErr          IReadBlock( int, int, void * ) override;
     virtual double          GetNoDataValue( int * ) override;
 
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double GetMaximum( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -337,7 +337,7 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     {
         const herr_t status =
             H5Sselect_hyperslab(dataspace, H5S_SELECT_SET,
-                                 offset, NULL, count, NULL);
+                                 offset, nullptr, count, nullptr);
         if( status < 0 )
             return CE_Failure;
     }
@@ -349,11 +349,11 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         static_cast<hsize_t>(0)
     };
     const int rank = 2;
-    const hid_t memspace = H5Screate_simple(rank, col_dims, NULL);
+    const hid_t memspace = H5Screate_simple(rank, col_dims, nullptr);
     H5OFFSET_TYPE mem_offset[3] = { 0, 0, 0 };
     const herr_t status =
         H5Sselect_hyperslab(memspace, H5S_SELECT_SET,
-                            mem_offset, NULL, count, NULL);
+                            mem_offset, nullptr, count, nullptr);
     if( status < 0 )
         return CE_Failure;
 
@@ -402,8 +402,8 @@ CPLErr BAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
 BAGDataset::BAGDataset() :
     hHDF5(-1),
-    pszProjection(NULL),
-    pszXMLMetadata(NULL)
+    pszProjection(nullptr),
+    pszXMLMetadata(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -412,8 +412,8 @@ BAGDataset::BAGDataset() :
     adfGeoTransform[4] = 0.0;
     adfGeoTransform[5] = 1.0;
 
-    apszMDList[0] = NULL;
-    apszMDList[1] = NULL;
+    apszMDList[0] = nullptr;
+    apszMDList[1] = nullptr;
 }
 
 /************************************************************************/
@@ -440,7 +440,7 @@ int BAGDataset::Identify( GDALOpenInfo * poOpenInfo )
     // Is it an HDF5 file?
     static const char achSignature[] = "\211HDF\r\n\032\n";
 
-    if( poOpenInfo->pabyHeader == NULL ||
+    if( poOpenInfo->pabyHeader == nullptr ||
         memcmp(poOpenInfo->pabyHeader, achSignature, 8) != 0 )
         return FALSE;
 
@@ -460,21 +460,21 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     // Confirm that this appears to be a BAG file.
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     // Confirm the requested access is supported.
     if( poOpenInfo->eAccess == GA_Update )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The BAG driver does not support update access.");
-        return NULL;
+        return nullptr;
     }
 
     // Open the file as an HDF5 file.
     hid_t hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
     if( hHDF5 < 0 )
-        return NULL;
+        return nullptr;
 
     // Confirm it is a BAG dataset by checking for the
     // BAG_Root/Bag Version attribute.
@@ -487,7 +487,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
         if( hBagRoot >= 0 )
             H5Gclose(hBagRoot);
         H5Fclose(hHDF5);
-        return NULL;
+        return nullptr;
     }
     H5Aclose(hVersion);
 
@@ -510,7 +510,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     if( hElevation < 0 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     BAGRasterBand *poElevBand = new BAGRasterBand(poDS, nNextBand);
@@ -519,7 +519,7 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     {
         delete poElevBand;
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = poElevBand->nRasterXSize;
@@ -543,9 +543,17 @@ GDALDataset *BAGDataset::Open( GDALOpenInfo *poOpenInfo )
     // Try to do the same for the nominal_elevation band.
     hid_t hNominal = -1;
 
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#endif
     H5E_BEGIN_TRY {
         hNominal = H5Dopen(hHDF5, "/BAG_root/nominal_elevation");
     } H5E_END_TRY;
+
+#ifdef HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT
+#pragma GCC diagnostic pop
+#endif
 
     BAGRasterBand *const poNBand = new BAGRasterBand(poDS, nNextBand);
     if( hNominal >= 0 && poNBand->Initialize(hNominal, "nominal_elevation") )
@@ -611,14 +619,14 @@ void BAGDataset::LoadMetadata()
     // Try to get the geotransform.
     CPLXMLNode *psRoot = CPLParseXMLString(pszXMLMetadata);
 
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return;
 
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
     CPLXMLNode *const psGeo = CPLSearchXMLNode(psRoot, "=MD_Georectified");
 
-    if( psGeo != NULL )
+    if( psGeo != nullptr )
     {
         char **papszCornerTokens = CSLTokenizeStringComplex(
             CPLGetXMLValue(psGeo, "cornerPoints.Point.coordinates", ""), " ,",
@@ -656,9 +664,9 @@ void BAGDataset::LoadMetadata()
 
     // Fetch acquisition date.
     CPLXMLNode *const psDateTime = CPLSearchXMLNode(psRoot, "=dateTime");
-    if( psDateTime != NULL )
+    if( psDateTime != nullptr )
     {
-        const char *pszDateTimeValue = CPLGetXMLValue(psDateTime, NULL, "");
+        const char *pszDateTimeValue = CPLGetXMLValue(psDateTime, nullptr, "");
         if( pszDateTimeValue )
             SetMetadataItem("BAG_DATETIME", pszDateTimeValue);
     }
@@ -673,13 +681,13 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 {
     CPLXMLNode *const psRoot = CPLParseXMLString(pszISOXML);
 
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return OGRERR_FAILURE;
 
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
     CPLXMLNode *psRSI = CPLSearchXMLNode(psRoot, "=referenceSystemInfo");
-    if( psRSI == NULL )
+    if( psRSI == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to find <referenceSystemInfo> in metadata.");
@@ -692,8 +700,8 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 
     const char *pszSRCodeString =
         CPLGetXMLValue(psRSI, "MD_ReferenceSystem.referenceSystemIdentifier."
-                       "RS_Identifier.code.CharacterString", NULL);
-    if( pszSRCodeString == NULL )
+                       "RS_Identifier.code.CharacterString", nullptr);
+    if( pszSRCodeString == nullptr )
     {
         CPLDebug("BAG",
                  "Unable to find /MI_Metadata/referenceSystemInfo[1]/"
@@ -726,7 +734,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
     oSRS.exportToWkt(&pszProjection);
 
     psRSI = CPLSearchXMLNode(psRSI->psNext, "=referenceSystemInfo");
-    if( psRSI == NULL )
+    if( psRSI == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to find second instance of <referenceSystemInfo> "
@@ -737,8 +745,8 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
 
     pszSRCodeString =
       CPLGetXMLValue(psRSI, "MD_ReferenceSystem.referenceSystemIdentifier."
-                     "RS_Identifier.code.CharacterString", NULL);
-    if( pszSRCodeString == NULL )
+                     "RS_Identifier.code.CharacterString", nullptr);
+    if( pszSRCodeString == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to find /MI_Metadata/referenceSystemInfo[2]/"
@@ -820,10 +828,10 @@ char **BAGDataset::GetMetadataDomainList()
 char **BAGDataset::GetMetadata( const char *pszDomain )
 
 {
-    if( pszDomain != NULL && EQUAL(pszDomain,"xml:BAG") )
+    if( pszDomain != nullptr && EQUAL(pszDomain,"xml:BAG") )
     {
         apszMDList[0] = pszXMLMetadata;
-        apszMDList[1] = NULL;
+        apszMDList[1] = nullptr;
 
         return apszMDList;
     }
@@ -840,7 +848,7 @@ void GDALRegister_BAG()
     if( !GDAL_CHECK_VERSION("BAG") )
         return;
 
-    if( GDALGetDriverByName("BAG") != NULL )
+    if( GDALGetDriverByName("BAG") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

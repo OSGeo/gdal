@@ -449,6 +449,20 @@ BSBInfo *BSBOpen( const char *pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Initialize memory for line offset list.                         */
 /* -------------------------------------------------------------------- */
+    if( psInfo->nYSize > 10000000 )
+    {
+        vsi_l_offset nCurOffset = VSIFTellL(fp);
+        vsi_l_offset nFileSize;
+        VSIFSeekL(fp, 0, SEEK_END);
+        nFileSize = VSIFTellL(fp);
+        if( nFileSize < (vsi_l_offset)(psInfo->nYSize) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Truncated file" );
+            BSBClose( psInfo );
+            return NULL;
+        }
+        VSIFSeekL(fp, nCurOffset, SEEK_SET);
+    }
     psInfo->panLineOffset = (int *)
         VSI_MALLOC2_VERBOSE(sizeof(int), psInfo->nYSize);
     if (psInfo->panLineOffset == NULL)
@@ -498,8 +512,8 @@ BSBInfo *BSBOpen( const char *pszFilename )
         /* that last row (the end of line psInfo->nYSize - 1 is the start */
         /* of the index table), so we can decrement psInfo->nYSize. */
         if( nOffsetIndexTable <= 0 ||
-            psInfo->nYSize - 1 > INT_MAX / 4 ||
-            4 * (psInfo->nYSize - 1) > INT_MAX - nOffsetIndexTable )
+            psInfo->nYSize > INT_MAX / 4 ||
+            4 * psInfo->nYSize > INT_MAX - nOffsetIndexTable )
         {
             /* int32 overflow */
             BSBClose( psInfo );

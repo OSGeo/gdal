@@ -1,5 +1,3 @@
-/* $Id: tiffiop.h,v 1.94 2017-07-04 13:28:42 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -238,8 +236,7 @@ struct tiff {
 	(TIFFReadFile((tif),(buf),(size))==(size))
 #endif
 #ifndef SeekOK
-#define SeekOK(tif, off) \
-	(TIFFSeekFile((tif),(off),SEEK_SET)==(off))
+#define SeekOK(tif, off) _TIFFSeekOK(tif, off)
 #endif
 #ifndef WriteOK
 #define WriteOK(tif, buf, size) \
@@ -315,8 +312,12 @@ typedef size_t TIFFIOSize_t;
 #define _TIFF_off_t off_t
 #endif
 
-#if __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8)
+#if defined(__has_attribute) && defined(__clang__)
+#if __has_attribute(no_sanitize)
 #define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW __attribute__((no_sanitize("unsigned-integer-overflow")))
+#else
+#define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+#endif
 #else
 #define TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 #endif
@@ -384,6 +385,7 @@ extern tmsize_t
 _TIFFReadTileAndAllocBuffer(TIFF* tif,
                             void **buf, tmsize_t bufsizetoalloc,
                             uint32 x, uint32 y, uint32 z, uint16 s);
+extern int _TIFFSeekOK(TIFF* tif, toff_t off);
 
 extern int TIFFInitDumpMode(TIFF*, int);
 #ifdef PACKBITS_SUPPORT
@@ -423,6 +425,9 @@ extern int TIFFInitSGILog(TIFF*, int);
 #endif
 #ifdef LZMA_SUPPORT
 extern int TIFFInitLZMA(TIFF*, int);
+#endif
+#ifdef ZSTD_SUPPORT
+extern int TIFFInitZSTD(TIFF*, int);
 #endif
 #ifdef VMS
 extern const TIFFCodec _TIFFBuiltinCODECS[];

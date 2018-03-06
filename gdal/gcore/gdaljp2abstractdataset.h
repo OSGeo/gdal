@@ -43,20 +43,20 @@ class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
     int                 m_nWORLDFILEIndex;
 
   protected:
-    virtual int         CloseDependentDatasets() CPL_OVERRIDE;
+    int CloseDependentDatasets() override;
 
   public:
-        GDALJP2AbstractDataset();
-        virtual ~GDALJP2AbstractDataset();
+    GDALJP2AbstractDataset();
+    ~GDALJP2AbstractDataset() override;
 
-        void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                              const char* pszOverrideFilename = NULL );
-        void            LoadVectorLayers( int bOpenRemoteResources = FALSE );
+    void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
+                          const char* pszOverrideFilename = nullptr );
+    void LoadVectorLayers( int bOpenRemoteResources = FALSE );
 
-        virtual char      **GetFileList( void ) CPL_OVERRIDE;
+    char **GetFileList( void ) override;
 
-        virtual int         GetLayerCount() CPL_OVERRIDE;
-        virtual OGRLayer   *GetLayer( int i ) CPL_OVERRIDE;
+    int GetLayerCount() override;
+    OGRLayer *GetLayer( int i ) override;
 };
 //! @endcond
 

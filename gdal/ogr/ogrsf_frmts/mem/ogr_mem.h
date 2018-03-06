@@ -101,6 +101,7 @@ class OGRMemLayer : public OGRLayer
 
     int                 TestCapability( const char * ) override;
 
+    bool                IsUpdatable() const { return m_bUpdatable; }
     void                SetUpdatable( bool bUpdatableIn )
         { m_bUpdatable = bUpdatableIn; }
     void                SetAdvertizeUTF8( bool bAdvertizeUTF8In )
@@ -132,9 +133,9 @@ class OGRMemDataSource : public OGRDataSource
     OGRLayer            *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                       OGRSpatialReference * = NULL,
+                                       OGRSpatialReference * = nullptr,
                                        OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL ) override;
+                                       char ** = nullptr ) override;
     OGRErr              DeleteLayer( int iLayer ) override;
 
     int                 TestCapability( const char * ) override;
@@ -153,7 +154,7 @@ class OGRMemDriver : public OGRSFDriver
     OGRDataSource *Open( const char *, int ) override;
 
     virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = NULL ) override;
+                                             char ** = nullptr ) override;
 
     int TestCapability( const char * ) override;
 };

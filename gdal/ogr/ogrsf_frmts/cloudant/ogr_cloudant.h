@@ -73,15 +73,15 @@ class OGRCloudantTableLayer : public OGRCouchDBTableLayer
 class OGRCloudantDataSource : public OGRCouchDBDataSource
 {
   protected:
-            OGRLayer*    OpenDatabase(const char* pszLayerName = NULL);
+            OGRLayer*    OpenDatabase(const char* pszLayerName = nullptr);
   public:
                         OGRCloudantDataSource();
     virtual ~OGRCloudantDataSource();
     virtual int Open( const char * pszFilename, int bUpdateIn);
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-             OGRSpatialReference *poSpatialRef = NULL,
+             OGRSpatialReference *poSpatialRef = nullptr,
              OGRwkbGeometryType eGType = wkbUnknown,
-             char ** papszOptions = NULL ) override;
+             char ** papszOptions = nullptr ) override;
 };
 
 #endif /* ndef OGR_CLOUDANT_H_INCLUDED */

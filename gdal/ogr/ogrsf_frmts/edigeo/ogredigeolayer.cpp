@@ -92,12 +92,12 @@ OGRFeature *OGREDIGEOLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -120,7 +120,7 @@ OGRFeature *OGREDIGEOLayer::GetNextRawFeature()
         return poFeature;
     }
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -132,7 +132,7 @@ OGRFeature * OGREDIGEOLayer::GetFeature(GIntBig nFID)
     if (nFID >= 0 && nFID < (int)aosFeatures.size())
         return aosFeatures[(int)nFID]->Clone();
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -143,7 +143,7 @@ int OGREDIGEOLayer::TestCapability( const char * pszCap )
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
     else if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
@@ -178,7 +178,7 @@ OGRErr OGREDIGEOLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 
 GIntBig OGREDIGEOLayer::GetFeatureCount( int bForce )
 {
-    if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
 
     return (int)aosFeatures.size();

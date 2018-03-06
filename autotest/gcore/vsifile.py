@@ -365,10 +365,19 @@ def vsifile_7():
 
     # Test seeking  beyond file size in read-only mode
     fp = gdal.VSIFOpenL('/vsimem/vsifile_7.bin', 'rb')
-    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0:
+    if gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gdal.VSIFTellL(fp) != 0:
+    if gdal.VSIFEofL(fp) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFTellL(fp) != 0x7FFFFFFFFFFFFFFF:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if len(gdal.VSIFReadL(1, 1, fp)) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if gdal.VSIFEofL(fp) != 1:
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(fp)
@@ -670,6 +679,66 @@ def vsifile_15():
 
     return 'success'
 
+###############################################################################
+# Test failed gdal.Rename() with exceptions enabled
+
+def vsifile_16():
+
+    old_val = gdal.GetUseExceptions()
+    gdal.UseExceptions()
+    try:
+        gdal.Rename('/tmp/i_dont_exist_vsifile_16.tif', '/tmp/me_neither.tif')
+        ret = 'fail'
+    except:
+        ret = 'success'
+    if not old_val:
+        gdal.DontUseExceptions()
+    return ret
+
+###############################################################################
+# Test gdal.GetActualURL() on a non-network based filesystem
+
+def vsifile_17():
+
+    if gdal.GetActualURL('foo') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    if gdal.GetSignedURL('foo') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test gdal.GetFileSystemsPrefixes()
+
+def vsifile_18():
+
+    prefixes = gdal.GetFileSystemsPrefixes()
+    if '/vsimem/' not in prefixes:
+        print(prefixes)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test gdal.GetFileSystemOptions()
+
+def vsifile_19():
+
+    for prefix in gdal.GetFileSystemsPrefixes():
+        options = gdal.GetFileSystemOptions(prefix)
+        # Check that the options is XML correct
+        if options is not None:
+            ret = gdal.ParseXMLString(options)
+            if ret is None:
+                gdaltest.post_reason('fail')
+                print(prefix, options)
+                return 'fail'
+
+    return 'success'
+
 gdaltest_list = [ vsifile_1,
                   vsifile_2,
                   vsifile_3,
@@ -684,7 +753,11 @@ gdaltest_list = [ vsifile_1,
                   vsifile_12,
                   vsifile_13,
                   vsifile_14,
-                  vsifile_15 ]
+                  vsifile_15,
+                  vsifile_16,
+                  vsifile_17,
+                  vsifile_18,
+                  vsifile_19 ]
 
 if __name__ == '__main__':
 

@@ -156,7 +156,7 @@ OGRErr OGRCompoundCurve::importFromWkb( const unsigned char * pabyData,
     OGRwkbByteOrder eByteOrder = wkbNDR;
     int nDataOffset = 0;
     // coverity[tainted_data]
-    OGRErr eErr = oCC.importPreambuleFromWkb(this, pabyData, nSize, nDataOffset,
+    OGRErr eErr = oCC.importPreambleFromWkb(this, pabyData, nSize, nDataOffset,
                                              eByteOrder, 9, eWkbVariant);
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -408,6 +408,15 @@ void OGRCompoundCurve::set3D( OGRBoolean bIs3D )
 void OGRCompoundCurve::setMeasured( OGRBoolean bIsMeasured )
 {
     oCC.setMeasured(this, bIsMeasured);
+}
+
+/************************************************************************/
+/*                       assignSpatialReference()                       */
+/************************************************************************/
+
+void OGRCompoundCurve::assignSpatialReference( OGRSpatialReference * poSR )
+{
+    oCC.assignSpatialReference(this, poSR);
 }
 
 /************************************************************************/
@@ -703,7 +712,7 @@ class OGRCompoundCurvePointIterator: public OGRPointIterator
 
     public:
         explicit OGRCompoundCurvePointIterator( const OGRCompoundCurve* poCCIn ) :
-            poCC(poCCIn), iCurCurve(0), poCurveIter(NULL) {}
+            poCC(poCCIn), iCurCurve(0), poCurveIter(nullptr) {}
         virtual ~OGRCompoundCurvePointIterator() { delete poCurveIter; }
 
         virtual OGRBoolean getNextPoint( OGRPoint* p ) override;
@@ -717,7 +726,7 @@ OGRBoolean OGRCompoundCurvePointIterator::getNextPoint( OGRPoint* p )
 {
     if( iCurCurve == poCC->getNumCurves() )
         return FALSE;
-    if( poCurveIter == NULL )
+    if( poCurveIter == nullptr )
         poCurveIter = poCC->getCurve(0)->getPointIterator();
     if( !poCurveIter->getNextPoint(p) )
     {
@@ -753,10 +762,10 @@ OGRLineString* OGRCompoundCurve::CastToLineString( OGRCompoundCurve* poCC )
     {
         poCC->oCC.papoCurves[i] =
             OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
-        if( poCC->oCC.papoCurves[i] == NULL )
+        if( poCC->oCC.papoCurves[i] == nullptr )
         {
             delete poCC;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -764,12 +773,12 @@ OGRLineString* OGRCompoundCurve::CastToLineString( OGRCompoundCurve* poCC )
     {
         OGRLineString* poLS = (OGRLineString*) poCC->oCC.papoCurves[0];
         poLS->assignSpatialReference(poCC->getSpatialReference());
-        poCC->oCC.papoCurves[0] = NULL;
+        poCC->oCC.papoCurves[0] = nullptr;
         delete poCC;
         return poLS;
     }
 
-    OGRLineString* poLS = poCC->CurveToLineInternal(0, NULL, FALSE);
+    OGRLineString* poLS = poCC->CurveToLineInternal(0, nullptr, FALSE);
     delete poCC;
     return poLS;
 }
@@ -794,10 +803,10 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
     {
         poCC->oCC.papoCurves[i] =
             OGRCurve::CastToLineString(poCC->oCC.papoCurves[i]);
-        if( poCC->oCC.papoCurves[i] == NULL )
+        if( poCC->oCC.papoCurves[i] == nullptr )
         {
             delete poCC;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -805,17 +814,17 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
     {
         OGRLinearRing* poLR =
             OGRCurve::CastToLinearRing( poCC->oCC.papoCurves[0] );
-        if( poLR != NULL )
+        if( poLR != nullptr )
         {
             poLR->assignSpatialReference(poCC->getSpatialReference());
         }
-        poCC->oCC.papoCurves[0] = NULL;
+        poCC->oCC.papoCurves[0] = nullptr;
         delete poCC;
         return poLR;
     }
 
     OGRLinearRing* poLR =
-        (OGRLinearRing *) poCC->CurveToLineInternal(0, NULL, TRUE);
+        (OGRLinearRing *) poCC->CurveToLineInternal(0, nullptr, TRUE);
     delete poCC;
     return poLR;
 }

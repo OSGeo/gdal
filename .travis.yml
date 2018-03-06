@@ -5,15 +5,16 @@ matrix:
   fast_finish: true
   include:
     - os: linux
-      compiler: clang
+      compiler: gcc
       language: cpp
       sudo: required
+      dist: precise
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise_clang
+        - BUILD_NAME=precise
         - DETAILS="debug build, no libtool"
     - os: linux
       compiler: clang
@@ -31,17 +32,7 @@ matrix:
       compiler: clang
       language: cpp
       sudo: required
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=mingw
-        - DETAILS="debug build, libtool"
-    - os: linux
-      compiler: clang
-      language: cpp
-      sudo: required
+      dist: trusty
       cache:
         apt: true
         directories:
@@ -53,6 +44,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
+      dist: precise
       cache:
         apt: true
         directories:
@@ -79,6 +71,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: false
+      dist: precise
       cache:
         apt: true
         directories:
@@ -93,17 +86,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
-      cache:
-        apt: true
-        directories:
-          - $HOME/.ccache
-      env:
-        - BUILD_NAME=gcc48_stdcpp11
-        - DETAILS=""
-    - os: linux
-      compiler: gcc
-      language: cpp
-      sudo: required
+      dist: precise
       cache:
         apt: true
         directories:
@@ -115,6 +98,7 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
+      dist: precise
       cache:
         apt: true
         directories:
@@ -126,12 +110,13 @@ matrix:
       compiler: gcc
       language: cpp
       sudo: required
+      dist: trusty
       cache:
         apt: true
         directories:
           - $HOME/.ccache
       env:
-        - BUILD_NAME=precise_32bit
+        - BUILD_NAME=trusty_32bit
         - DETAILS=""
     - osx_image: xcode8
       language: objective-c

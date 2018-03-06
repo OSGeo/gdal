@@ -57,6 +57,8 @@ apps/gdalsrsinfo
 apps/gdaltindex
 apps/gdaltransform
 apps/gdalwarp
+apps/gnmanalyse
+apps/gnmmanage
 apps/nearblack
 apps/ogr2ogr
 apps/ogrinfo
@@ -76,6 +78,7 @@ swig/java/libosrjni.so
 swig/java/ogr_wrap.cpp
 swig/java/org/
 swig/java/osr_wrap.cpp
+swig/java/gnm_wrap.cpp
 swig/python/build
 swig/perl/Const.bs
 swig/perl/GDAL.bs
@@ -102,3 +105,4 @@ html/
 nmake.local*
 *~
 *tmp
+.python-version

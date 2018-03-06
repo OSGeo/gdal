@@ -55,20 +55,20 @@ class subfile_source : public kdu_compressed_source {
         capabilities(0),
         subfile_offset(0),
         subfile_size(0),
-        file(NULL)
+        file(nullptr)
     {}
 
     ~subfile_source() override { close(); }
 
-    bool exists() const { return (file != NULL); }
+    bool exists() const { return (file != nullptr); }
 
-    bool operator!() const { return (file == NULL); }
+    bool operator!() const { return (file == nullptr); }
 
     void open(const char *fname, int bSequential, int bCached )
       {
           close();
 
-          const char *real_filename = NULL;
+          const char *real_filename = nullptr;
 
           if( EQUALN( fname, "J2K_SUBFILE:",12) )
           {
@@ -92,11 +92,11 @@ class subfile_source : public kdu_compressed_source {
               CSLDestroy(papszTokens);
 
               real_filename = strstr(fname,",");
-              if( real_filename != NULL )
+              if( real_filename != nullptr )
               {
                   real_filename = strstr(real_filename+1,",");
               }
-              if( real_filename != NULL )
+              if( real_filename != nullptr )
               {
                   real_filename++;
               }
@@ -117,7 +117,7 @@ class subfile_source : public kdu_compressed_source {
           }
 
           file = VSIFOpenL( real_filename, "r");
-          if( file == NULL )
+          if( file == nullptr )
           {
               kdu_error e;
               e << "Unable to open compressed data file, \"" <<
@@ -131,7 +131,7 @@ class subfile_source : public kdu_compressed_source {
                   VSICreateCachedFile(
                       reinterpret_cast<VSIVirtualHandle *>(file),
                       IO_CHUNK_SIZE, IO_BUFFER_SIZE));
-              if( file == NULL )
+              if( file == nullptr )
               {
                   kdu_error e;
                   e << "Unable to open compressed data file, \"" <<
@@ -153,8 +153,8 @@ class subfile_source : public kdu_compressed_source {
 
     bool seek(kdu_long offset) override
       {
-          assert(file != NULL);
-          if( file == NULL )
+          assert(file != nullptr);
+          if( file == nullptr )
               return false;
 
           if (!(capabilities & KDU_SOURCE_CAP_SEEKABLE))
@@ -168,7 +168,7 @@ class subfile_source : public kdu_compressed_source {
 
     kdu_long get_pos() override
       {
-        if (file == NULL) return -1;
+        if (file == nullptr) return -1;
         kdu_long result = VSIFTellL(file);
         result -= subfile_offset;
         return result;
@@ -176,7 +176,7 @@ class subfile_source : public kdu_compressed_source {
 
     int read(kdu_byte *buf, int num_bytes) override
       {
-        assert(file != NULL);
+        assert(file != nullptr);
 
         num_bytes = static_cast<int>(
             VSIFReadL(buf, 1, static_cast<size_t>(num_bytes), file));
@@ -185,9 +185,9 @@ class subfile_source : public kdu_compressed_source {
 
     bool close() override
       {
-        if (file != NULL)
+        if (file != nullptr)
             VSIFCloseL(file);
-        file = NULL;
+        file = nullptr;
         return true;
       }
 

@@ -39,12 +39,12 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGROGDIDataSource::OGROGDIDataSource() :
-    m_papoLayers(NULL),
+    m_papoLayers(nullptr),
     m_nLayers(0),
     m_nClientID(-1),
-    m_poSpatialRef(NULL),
-    m_poCurrentLayer(NULL),
-    m_pszFullName(NULL),
+    m_poSpatialRef(nullptr),
+    m_poCurrentLayer(nullptr),
+    m_pszFullName(nullptr),
     m_bLaunderLayerNames(
         CPLTestBool(CPLGetConfigOption("OGR_OGDI_LAUNDER_LAYER_NAMES", "NO")))
 {
@@ -108,9 +108,9 @@ int OGROGDIDataSource::Open( const char * pszNewName )
     if( pszFamily < pszWorkingName+2
         || pszFamily[-2] == '/'
         || pszFamily[-2] == '\\' )
-        pszFamily = NULL;
+        pszFamily = nullptr;
 
-    char *pszLyrName = NULL;
+    char *pszLyrName = nullptr;
     if (pszFamily && pszFamily != pszWorkingName + 4)
     {
         *pszFamily = '\0';
@@ -118,9 +118,9 @@ int OGROGDIDataSource::Open( const char * pszNewName )
 
         pszLyrName = strrchr(pszWorkingName, ':');
         if (pszLyrName == pszWorkingName + 4)
-            pszLyrName = NULL;
+            pszLyrName = nullptr;
 
-        if( pszLyrName != NULL )
+        if( pszLyrName != nullptr )
         {
             *pszLyrName = '\0';
             pszLyrName++;
@@ -176,7 +176,7 @@ int OGROGDIDataSource::Open( const char * pszNewName )
                   "untranslatable PROJ.4 projection: %s\n",
                   ECSTEXT(psResult) ? ECSTEXT(psResult): "(no message string)" );
         delete m_poSpatialRef;
-        m_poSpatialRef = NULL;
+        m_poSpatialRef = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -195,9 +195,9 @@ int OGROGDIDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
 /*      If an explicit layer was selected, just create that layer.      */
 /* -------------------------------------------------------------------- */
-    m_poCurrentLayer = NULL;
+    m_poCurrentLayer = nullptr;
 
-    if( pszLyrName != NULL )
+    if( pszLyrName != nullptr )
     {
         ecs_Family  eFamily;
 
@@ -241,9 +241,9 @@ int OGROGDIDataSource::Open( const char * pszNewName )
             return FALSE;
         }
 
-        const ecs_LayerCapabilities *psLayerCap = NULL;
+        const ecs_LayerCapabilities *psLayerCap = nullptr;
         for( int i = 0;
-             (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != NULL;
+             (psLayerCap = cln_GetLayerCapabilities(m_nClientID,i)) != nullptr;
              i++ )
         {
             if( psLayerCap->families[Point] )
@@ -297,7 +297,7 @@ OGRLayer *OGROGDIDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= m_nLayers )
-        return NULL;
+        return nullptr;
     else
         return m_papoLayers[iLayer];
 }

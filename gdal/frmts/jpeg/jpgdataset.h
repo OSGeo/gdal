@@ -118,7 +118,7 @@ typedef void (*my_jpeg_write_m_byte)(void *cinfo, int val);
 
 CPLErr JPGAppendMask( const char *pszJPGFilename, GDALRasterBand *poMask,
                       GDALProgressFunc pfnProgress, void *pProgressData );
-void   JPGAddEXIFOverview( GDALDataType eWorkDT,
+void   JPGAddEXIF        ( GDALDataType eWorkDT,
                            GDALDataset *poSrcDS, char** papszOptions,
                            void *cinfo,
                            my_jpeg_write_m_header p_jpeg_write_m_header,
@@ -140,7 +140,7 @@ typedef struct GDALJPEGErrorStruct
     void      (*p_previous_emit_message)(j_common_ptr cinfo, int msg_level);
     GDALJPEGErrorStruct() :
         bNonFatalErrorEncountered(false),
-        p_previous_emit_message(NULL)
+        p_previous_emit_message(nullptr)
     {
         memset(&setjmp_buffer, 0, sizeof(setjmp_buffer));
     }

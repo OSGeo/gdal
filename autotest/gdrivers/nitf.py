@@ -548,7 +548,11 @@ def nitf_27():
 # Test Create() with IC=C8 compression with the JP2ECW driver
 
 def nitf_28_jp2ecw():
+
     gdaltest.nitf_28_jp2ecw_is_ok = False
+    if gdal.GetDriverByName('JP2ECW') is None:
+        return 'skip'
+
     import ecw
     if not ecw.has_write_support():
         return 'skip'
@@ -561,6 +565,18 @@ def nitf_28_jp2ecw():
         if ret == 'success':
             gdaltest.nitf_28_jp2ecw_is_ok = True
     else:
+        ret = 'fail'
+
+    tmpfilename = '/vsimem/nitf_28_jp2ecw.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (256,256): # 256 since this is hardcoded as such in the ECW driver
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -660,6 +676,18 @@ def nitf_28_jp2openjpeg_bis():
     else:
         ret = 'fail'
 
+    tmpfilename = '/vsimem/nitf_28_jp2openjpeg_bis.ntf'
+    src_ds = gdal.GetDriverByName('MEM').Create('',1025,1025)
+    gdal.GetDriverByName('NITF').CreateCopy(tmpfilename, src_ds, options = ['IC=C8'])
+    ds = gdal.Open(tmpfilename)
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    ds = None
+    gdal.Unlink(tmpfilename)
+    if (blockxsize, blockysize) != (1024,1024):
+        gdaltest.post_reason('wrong block size')
+        print(blockxsize, blockysize)
+        ret = 'fail'
+
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return ret
@@ -721,7 +749,6 @@ def nitf_30():
 
     src_ds = gdal.Open( 'data/fake_nsif.ntf' )
     ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
-    src_ds = None
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
@@ -751,6 +778,82 @@ def nitf_30():
     ds = None
 
     gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
+
+    # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['BLOCKA_BLOCK_INSTANCE_01=01',
+                   'BLOCKA_BLOCK_COUNT=01',
+                   'BLOCKA_N_GRAY_01=00000',
+                   'BLOCKA_L_LINES_01=01000',
+                   'BLOCKA_LAYOVER_ANGLE_01=000',
+                   'BLOCKA_SHADOW_ANGLE_01=000',
+                   'BLOCKA_FRLC_LOC_01=+42.319331+020.078400',
+                   'BLOCKA_LRLC_LOC_01=+42.317083+020.126072',
+                   'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
+                   'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+        options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
+                   ])
+    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+
+    if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
+       or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
+       or md['NITF_BLOCKA_N_GRAY_01'] != '00000' \
+       or md['NITF_BLOCKA_L_LINES_01'] != '01000' \
+       or md['NITF_BLOCKA_LAYOVER_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_SHADOW_ANGLE_01'] != '000' \
+       or md['NITF_BLOCKA_FRLC_LOC_01'] != '+42.319331+020.078400' \
+       or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
+       or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
+       or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
+        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        print(md)
+        return 'fail'
+
+    # Test that gdal_translate -ullr doesn't propagate BLOCKA
+    gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
+
+    # Test USE_SRC_NITF_METADATA=NO
+    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_no_src_md.ntf', src_ds,
+                                            options = ['USE_SRC_NITF_METADATA=NO'])
+    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    md = ds.GetMetadata()
+    ds = None
+    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
+        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        return 'fail'
 
     return 'success'
 
@@ -1117,6 +1220,11 @@ def nitf_40():
 
 def nitf_41():
 
+    import jpeg
+    jpeg.jpeg_1()
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
+
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
     md = jpg_drv.GetMetadata()
@@ -1149,6 +1257,9 @@ def nitf_41():
 # Check creating a 12-bit JPEG compressed NITF
 
 def nitf_42():
+
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
@@ -1202,6 +1313,11 @@ def nitf_43(driver_to_test, options):
     else:
         ret = 'fail'
     out_ds = None
+
+    if open('tmp/nitf_43.ntf', 'rb').read().decode('LATIN1').find('<gml') >= 0:
+        print('GMLJP2 detected !')
+        ret = 'fail'
+
     gdal.GetDriverByName('NITF').Delete('tmp/nitf_43.ntf')
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -1718,6 +1834,74 @@ def nitf_58():
     ds = None
 
     if md is None or 'NITF_STDIDC_ACQUISITION_DATE' not in md:
+        print(md)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading IMRFCA and IMASDA
+
+def nitf_read_IMRFCA_IMASDA():
+
+    # Create a fake NITF file with fake IMRFCA and IMASDA TRE
+    IMRFCA='0' * 1760
+    IMASDA='0' * 242
+
+    tmpfile = '/vsimem/nitf_read_IMRFCA_IMASDA.ntf'
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md is None or md == {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMRFCA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Only IMASDA
+    gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMASDA=' + IMASDA])
+    ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMRFCA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA[0:-1], 'TRE=IMASDA=' + IMASDA])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+
+    # Too short IMASDA
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('NITF').Create(tmpfile, 1, 1, options = ['TRE=IMRFCA=' + IMRFCA, 'TRE=IMASDA=' + IMASDA[0:-1]])
+        ds = gdal.Open(tmpfile)
+    md = ds.GetMetadata('RPC')
+    ds = None
+    gdal.Unlink(tmpfile)
+    if md != {}:
+        gdaltest.post_reason('fail')
         print(md)
         return 'fail'
 
@@ -2765,6 +2949,18 @@ def nitf_75():
 
     return 'success'
 
+###############################################################################
+# Test reading C4 compressed file
+
+def nitf_read_C4():
+
+    ds = gdal.Open('data/RPFTOC01.ON2')
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 53599:
+        print(cs)
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
@@ -3102,6 +3298,9 @@ def nitf_online_14():
         os.remove('tmp/cache/U_4020h.ntf.aux.xml')
     except:
         pass
+
+    if gdaltest.jpeg_version == '9b':
+        return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     jpg_drv = gdal.GetDriverByName('JPEG')
@@ -3765,6 +3964,7 @@ gdaltest_list = [
     nitf_56,
     nitf_57,
     nitf_58,
+    nitf_read_IMRFCA_IMASDA,
     nitf_59,
     nitf_60,
     nitf_61,
@@ -3782,6 +3982,7 @@ gdaltest_list = [
     nitf_73,
     nitf_74,
     nitf_75,
+    nitf_read_C4,
     nitf_online_1,
     nitf_online_2,
     nitf_online_3,

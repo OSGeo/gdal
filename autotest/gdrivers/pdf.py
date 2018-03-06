@@ -1444,7 +1444,7 @@ def pdf_extra_rasters():
             gdaltest.post_reason('did not get expected layers')
             print(layers)
             return 'fail'
-    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174):
+    if pdf_is_poppler() and (cs != 7926 and cs != 8177 and cs != 8174 and cs != 8165):
         gdaltest.post_reason('bad checksum')
         print(cs)
         return 'fail'
@@ -1597,16 +1597,16 @@ def pdf_write_ogr_with_reprojection():
     options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
 
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
+    ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr_with_reprojection.pdf', src_ds, options = options)
     del ds
     src_ds = None
 
-    ogr_ds = ogr.Open('tmp/pdf_write_ogr.pdf')
+    ogr_ds = ogr.Open('tmp/pdf_write_ogr_with_reprojection.pdf')
     ogr_lyr = ogr_ds.GetLayer(0)
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
 
-    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr.pdf')
+    gdal.GetDriverByName('PDF').Delete('tmp/pdf_write_ogr_with_reprojection.pdf')
 
     gdal.Unlink('tmp/test.csv')
     gdal.Unlink('tmp/test.vrt')

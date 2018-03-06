@@ -765,6 +765,21 @@
                 </xs:complexType>
               </xs:element>
 
+
+              <xs:element name="ResolveInternalXLinks" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                    <xs:documentation>
+                    Whether xlink:href pointing to internal resources should be
+                    resolved, so as to establish cross-layer relationships.
+                    This options requires to keep in-memory xlink:href values
+                    as well as feature ids, which in the case of really large
+                    documents with many features and/or many cross-references
+                    could consume a lot of RAM.
+                    Default is true.
+                    </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>

@@ -49,7 +49,7 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
     if( !poDS->Log("SET standard_conforming_strings = OFF") )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -62,7 +62,7 @@ static GDALDataset* OGRPGDumpDriverCreate( const char * pszName,
 void RegisterOGRPGDump()
 
 {
-    if( GDALGetDriverByName( "PGDUMP" ) != NULL )
+    if( GDALGetDriverByName( "PGDUMP" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -125,6 +125,7 @@ void RegisterOGRPGDump()
                                "Integer Integer64 Real String Date DateTime "
                                "Time IntegerList Integer64List RealList "
                                "StringList Binary" );
+    poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean Int16 Float32" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_DEFAULT_FIELDS, "YES" );
     poDriver->SetMetadataItem( GDAL_DCAP_NOTNULL_GEOMFIELDS, "YES" );

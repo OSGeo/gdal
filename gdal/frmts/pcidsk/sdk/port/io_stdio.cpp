@@ -87,7 +87,7 @@ StdioIOInterface::Open( std::string filename, std::string access ) const
 
     FILE *fp = fopen( filename.c_str(), adjusted_access.c_str() );
 
-    if( fp == NULL )
+    if( fp == nullptr )
         ThrowPCIDSKException( "Failed to open %s: %s", 
                               filename.c_str(), LastError() );
 

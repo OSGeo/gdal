@@ -652,9 +652,9 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     {
         size_t nMessageLen = strlen(pszBasename)*2+256;
         char *pszMessage = (char *) malloc(nMessageLen);
-        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX."
-                  "Try --config SHAPE_RESTORE_SHX true to restore or create it",
-                  pszBasename, pszBasename );
+        snprintf( pszMessage, nMessageLen, "Unable to open %s.shx or %s.SHX. "
+                  "Set SHAPE_RESTORE_SHX config option to YES to restore or "
+                  "create it.", pszBasename, pszBasename );
         psHooks->Error( pszMessage );
         free( pszMessage );
 
@@ -1590,7 +1590,8 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
     int i;
     uchar	*pabyRec;
     int32	i32;
-    int     bExtendFile = FALSE;
+    int     bAppendToLastRecord = FALSE;
+    int     bAppendToFile = FALSE;
 
     psSHP->bUpdated = TRUE;
 
@@ -1887,6 +1888,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
                         psSHP->panRecSize[nShapeId] + 8 == psSHP->nFileSize )
     {
         nRecordOffset = psSHP->panRecOffset[nShapeId];
+        bAppendToLastRecord = TRUE;
     }
     else if( nShapeId == -1 || psSHP->panRecSize[nShapeId] < nRecordSize-8 )
     {
@@ -1902,7 +1904,7 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
             return -1;
         }
 
-        bExtendFile = TRUE;
+        bAppendToFile = TRUE;
         nRecordOffset = psSHP->nFileSize;
     }
     else
@@ -1957,7 +1959,11 @@ SHPWriteObject(SHPHandle psSHP, int nShapeId, SHPObject * psObject )
 
     free( pabyRec );
 
-    if( bExtendFile )
+    if( bAppendToLastRecord )
+    {
+        psSHP->nFileSize = psSHP->panRecOffset[nShapeId] + nRecordSize; 
+    }
+    else if( bAppendToFile )
     {
         if( nShapeId == -1 )
             nShapeId = psSHP->nRecords++;

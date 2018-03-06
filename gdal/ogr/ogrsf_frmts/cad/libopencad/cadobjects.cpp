@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -359,14 +359,23 @@ CADLineObject::CADLineObject() :
 }
 
 //------------------------------------------------------------------------------
+// CADBaseControlObject
+//------------------------------------------------------------------------------
+
+CADBaseControlObject::CADBaseControlObject(ObjectType typeIn) :
+    CADObject(typeIn),
+    nObjectSizeInBits( 0 ),
+    nNumReactors( 0 ),
+    bNoXDictionaryPresent( false )
+{
+}
+
+//------------------------------------------------------------------------------
 // CADBlockControlObject
 //------------------------------------------------------------------------------
 
 CADBlockControlObject::CADBlockControlObject() :
-    CADObject(BLOCK_CONTROL_OBJ),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(BLOCK_CONTROL_OBJ),
     nNumEntries( 0 )
 {
 }
@@ -376,10 +385,7 @@ CADBlockControlObject::CADBlockControlObject() :
 //------------------------------------------------------------------------------
 
 CADBlockHeaderObject::CADBlockHeaderObject() :
-    CADObject(BLOCK_HEADER),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(BLOCK_HEADER),
     b64Flag( false ),
     dXRefIndex( 0 ),
     bXDep( false ),
@@ -401,10 +407,7 @@ CADBlockHeaderObject::CADBlockHeaderObject() :
 //------------------------------------------------------------------------------
 
 CADLayerControlObject::CADLayerControlObject() :
-    CADObject(LAYER_CONTROL_OBJ),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(LAYER_CONTROL_OBJ),
     nNumEntries( 0 )
 {
 }
@@ -414,10 +417,7 @@ CADLayerControlObject::CADLayerControlObject() :
 //------------------------------------------------------------------------------
 
 CADLayerObject::CADLayerObject() :
-    CADObject(LAYER),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(LAYER),
     b64Flag( 0 ),
     dXRefIndex( 0 ),
     bXDep( 0 ),
@@ -436,10 +436,7 @@ CADLayerObject::CADLayerObject() :
 //------------------------------------------------------------------------------
 
 CADLineTypeControlObject::CADLineTypeControlObject() :
-    CADObject(LTYPE_CONTROL_OBJ),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(LTYPE_CONTROL_OBJ),
     nNumEntries( 0 )
 {
 }
@@ -449,10 +446,7 @@ CADLineTypeControlObject::CADLineTypeControlObject() :
 //------------------------------------------------------------------------------
 
 CADLineTypeObject::CADLineTypeObject() :
-    CADObject(LTYPE1),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(LTYPE1),
     b64Flag( false ),
     dXRefIndex( 0 ),
     bXDep( false ),
@@ -520,14 +514,10 @@ CADXLineObject::CADXLineObject() :
 //------------------------------------------------------------------------------
 
 CADDictionaryObject::CADDictionaryObject() :
-    CADObject(DICTIONARY),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(DICTIONARY),
     nNumItems( 0 ),
     dCloningFlag( 0 ),
     dHardOwnerFlag( 0 )
-
 {
 }
 
@@ -835,10 +825,7 @@ CADImageDefObject::CADImageDefObject() :
 //------------------------------------------------------------------------------
 
 CADImageDefReactorObject::CADImageDefReactorObject(ObjectType typeIn) :
-    CADObject(typeIn),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(typeIn),
     dClassVersion( 0 )
 {
 }
@@ -908,10 +895,7 @@ CADPolylinePFaceObject::CADPolylinePFaceObject() :
 //------------------------------------------------------------------------------
 
 CADXRecordObject::CADXRecordObject() :
-    CADObject(XRECORD),
-    nObjectSizeInBits( 0 ),
-    nNumReactors( 0 ),
-    bNoXDictionaryPresent( false ),
+    CADBaseControlObject(XRECORD),
     nNumDataBytes( 0 ),
     dCloningFlag( 0 )
 {

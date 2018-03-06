@@ -46,6 +46,7 @@
  */
 
 #include "ogrsqliteregexp.h"
+#include "sqlite3.h"
 
 #ifdef HAVE_PCRE
 
@@ -57,7 +58,7 @@ typedef struct {
     pcre_extra *e;
 } cache_entry;
 
-static const int CACHE_SIZE = 16;
+constexpr int CACHE_SIZE = 16;
 
 /************************************************************************/
 /*                         OGRSQLiteREGEXPFunction()                    */
@@ -113,9 +114,9 @@ void OGRSQLiteREGEXPFunction( sqlite3_context *ctx,
     else
     {
         cache_entry c;
-        const char *err = NULL;
+        const char *err = nullptr;
         int pos = 0;
-        c.p = pcre_compile(re, 0, &err, &pos, NULL);
+        c.p = pcre_compile(re, 0, &err, &pos, nullptr);
         if (!c.p)
         {
             char *e2 = sqlite3_mprintf("%s: %s (offset %d)", re, err, pos);
@@ -147,7 +148,7 @@ void OGRSQLiteREGEXPFunction( sqlite3_context *ctx,
     CPLAssert(p);
     pcre_extra *e = cache[0].e;
 
-    int rc = pcre_exec(p, e, str, static_cast<int>(strlen(str)), 0, 0, NULL, 0);
+    int rc = pcre_exec(p, e, str, static_cast<int>(strlen(str)), 0, 0, nullptr, 0);
     sqlite3_result_int(ctx, rc >= 0);
 }
 
@@ -168,26 +169,26 @@ void* OGRSQLiteRegisterRegExpFunction(sqlite3*
 
     /* For debugging purposes mostly */
     if( !CPLTestBool(CPLGetConfigOption("OGR_SQLITE_REGEXP", "YES")) )
-        return NULL;
+        return nullptr;
 
     /* Check if we really need to define our own REGEXP function */
-    int rc = sqlite3_exec(hDB, "SELECT 'a' REGEXP 'a'", NULL, NULL, NULL);
+    int rc = sqlite3_exec(hDB, "SELECT 'a' REGEXP 'a'", nullptr, nullptr, nullptr);
     if( rc == SQLITE_OK )
     {
         CPLDebug("SQLITE", "REGEXP already available");
-        return NULL;
+        return nullptr;
     }
 
     cache_entry *cache = (cache_entry*) CPLCalloc(CACHE_SIZE, sizeof(cache_entry));
     sqlite3_create_function(hDB, "REGEXP", 2, SQLITE_UTF8, cache,
-                            OGRSQLiteREGEXPFunction, NULL, NULL);
+                            OGRSQLiteREGEXPFunction, nullptr, nullptr);
 
     /* To clear the error flag */
-    sqlite3_exec(hDB, "SELECT 1", NULL, NULL, NULL);
+    sqlite3_exec(hDB, "SELECT 1", nullptr, nullptr, nullptr);
 
     return cache;
 #else // HAVE_PCRE
-    return NULL;
+    return nullptr;
 #endif // HAVE_PCRE
 }
 
@@ -203,7 +204,7 @@ void OGRSQLiteFreeRegExpCache(void*
                               )
 {
 #ifdef HAVE_PCRE
-    if( hRegExpCache == NULL )
+    if( hRegExpCache == nullptr )
         return;
 
     cache_entry *cache = (cache_entry*) hRegExpCache;

@@ -154,6 +154,64 @@ except OSError, e:
 
     return r
 
+def supports_cxx11(compiler, compiler_flag = None):
+    import tempfile
+    ret = False
+    with open('gdal_python_cxx11_test.cpp', 'wt') as f:
+        f.write("""
+#if __cplusplus < 201103L
+#error "C++11 required"
+#endif
+int main () { return 0; }""")
+        f.close()
+        extra_postargs = None
+        if compiler_flag:
+            extra_postargs=[compiler_flag]
+
+        SILENCE_OUTPUT = False
+        # SILENCE_OUTPUT = True doesn't work with precise
+        if os.name == 'posix' and SILENCE_OUTPUT:
+            # if possible avoid any verbose output for this detection test
+            pid = os.fork()
+            if pid == 0:
+                # in the child
+                sys.stdout = open('/dev/null', 'wt')
+                os.close(2)
+                try:
+                    compiler.compile([f.name], extra_postargs=extra_postargs)
+                    os._exit(0)
+                except:
+                    os._exit(1)
+            else:
+                # in the parent
+                while True:
+                    try:
+                        pid, status = os.waitpid(pid, 0)
+                    except OSError as exc:
+                        import errno
+                        if exc.errno == errno.EINTR:
+                            continue
+                        break
+
+                    if os.WIFEXITED(status):
+                        exit_status = os.WEXITSTATUS(status)
+                        if exit_status == 0:
+                            ret = True
+                    elif os.WIFSTOPPED(status):
+                        continue
+
+                    break
+        else:
+            try:
+                compiler.compile([f.name], extra_postargs=extra_postargs)
+                ret = True
+            except:
+                pass
+    os.unlink('gdal_python_cxx11_test.cpp')
+    if os.path.exists('gdal_python_cxx11_test.o'):
+        os.unlink('gdal_python_cxx11_test.o')
+    return ret
+
 class gdal_ext(build_ext):
 
     GDAL_CONFIG = 'gdal-config'
@@ -169,7 +227,7 @@ class gdal_ext(build_ext):
         self.numpy_include_dir = get_numpy_include()
         self.gdaldir = None
         self.gdal_config = self.GDAL_CONFIG
-        self.already_raised_no_config_error = False
+        self.extra_cflags = []
 
     def get_compiler(self):
         return self.compiler or get_default_compiler()
@@ -181,11 +239,24 @@ class gdal_ext(build_ext):
             # If an error is thrown, it is possibly because
             # the gdal-config location given in setup.cfg is
             # incorrect, or possibly the default -- ../../apps/gdal-config
-            # We'll try one time to use the gdal-config that might be
-            # on the path. If that fails, we're done, however.
-            if not self.already_raised_no_config_error:
-                self.already_raised_no_config_error = True
-                return fetch_config(option)
+            # We'll try to use the gdal-config that might be on the path.
+            return fetch_config(option)
+
+    def build_extensions(self):
+
+        # Add a -std=c++11 or similar flag if needed
+        ct = self.compiler.compiler_type
+        if ct == 'unix' and not supports_cxx11(self.compiler):
+            cxx11_flag = None
+            if supports_cxx11(self.compiler, '-std=c++11'):
+                cxx11_flag = '-std=c++11'
+            if cxx11_flag:
+                for ext in self.extensions:
+                    # gdalconst builds as a .c file
+                    if ext.name != 'osgeo._gdalconst':
+                        ext.extra_compile_args += [ cxx11_flag ]
+
+        build_ext.build_extensions(self)
 
     def finalize_options(self):
         if self.include_dirs is None:
@@ -214,6 +285,17 @@ class gdal_ext(build_ext):
         self.gdaldir = self.get_gdal_config('prefix')
         self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
         self.include_dirs.append(os.path.join(self.gdaldir,'include'))
+
+        cflags = self.get_gdal_config('cflags')
+        if cflags:
+            self.extra_cflags = cflags.split()
+
+    def build_extension(self, ext):
+        # We override this instead of setting extra_compile_args directly on
+        # the Extension() instantiations below because we want to use the same
+        # logic to resolve the location of gdal-config throughout.
+        ext.extra_compile_args.extend(self.extra_cflags)
+        return build_ext.build_extension(self, ext)
 
 
 extra_link_args = []

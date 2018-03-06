@@ -40,10 +40,10 @@ extern "C" void RegisterOGRSEGUKOOA();
 static GDALDataset *OGRSEGUKOOADriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL ||
+        poOpenInfo->fpL == nullptr ||
         poOpenInfo->pabyHeader[0] != 'H' )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRSEGUKOOADataSource   *poDS = new OGRSEGUKOOADataSource();
@@ -51,7 +51,7 @@ static GDALDataset *OGRSEGUKOOADriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -64,7 +64,7 @@ static GDALDataset *OGRSEGUKOOADriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRSEGUKOOA()
 
 {
-    if( GDALGetDriverByName( "SEGUKOOA" ) != NULL )
+    if( GDALGetDriverByName( "SEGUKOOA" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -2055,6 +2055,93 @@ def ogr_libkml_read_placemark_with_kml_prefix():
     return 'success'
 
 ###############################################################################
+# Test reading KML with dumplicated folder name
+
+def ogr_libkml_read_duplicate_folder_name():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/duplicate_folder_name.kml')
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'layer':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+    lyr = ds.GetLayer(1)
+    if lyr.GetName() != 'layer (#2)':
+        gdaltest.post_reason('failure')
+        print(lyr.GetName())
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with a placemark in root document, and a subfolder (#7221)
+
+def ogr_libkml_read_placemark_in_root_and_subfolder():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/placemark_in_root_and_subfolder.kml')
+    lyr = ds.GetLayerByName('TopLevel')
+    if lyr is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    lyr = ds.GetLayerByName('SubFolder1')
+    if lyr is None:
+        gdaltest.post_reason('failure')
+        return 'fail'
+    if lyr.GetFeatureCount() != 1:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with coordinate tuples separated by tabulations (#7231)
+
+def ogr_libkml_read_tab_separated_coord_triplet():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/tab_separated_coord_triplet.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    wkt = 'LINESTRING Z (1 2 3,4 5 6)'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading KML with coordinate with space only content (#7232)
+
+def ogr_libkml_read_kml_with_space_content_in_coordinates():
+
+    if not ogrtest.have_read_libkml:
+        return 'skip'
+
+    ds = ogr.Open('data/kml_with_space_content_in_coordinates.kml')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    wkt = 'LINESTRING EMPTY'
+
+    if ogrtest.check_feature_geometry( feat, wkt):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_libkml_cleanup():
@@ -2155,6 +2242,10 @@ gdaltest_list = [
     ogr_libkml_write_container_properties,
     ogr_libkml_read_gx_timestamp,
     ogr_libkml_read_placemark_with_kml_prefix,
+    ogr_libkml_read_duplicate_folder_name,
+    ogr_libkml_read_placemark_in_root_and_subfolder,
+    ogr_libkml_read_tab_separated_coord_triplet,
+    ogr_libkml_read_kml_with_space_content_in_coordinates,
     ogr_libkml_cleanup ]
 
 if __name__ == '__main__':

@@ -58,7 +58,6 @@ struct GDALTranslateOptionsForBinary
     int bQuiet;
     int bCopySubDatasets;
     char** papszOpenOptions;
-    int bFormatExplicitlySet;
     char* pszFormat;
 };
 
@@ -74,8 +73,6 @@ struct GDALWarpAppOptionsForBinary
 
     int bOverwrite;
     int bCreateOutput;
-    int bFormatExplicitlySet;
-    char* pszFormat;
 };
 
 /* Access modes */
@@ -93,7 +90,6 @@ struct GDALVectorTranslateOptionsForBinary
     char* pszDestDataSource;
     int bQuiet;
     char** papszOpenOptions;
-    int bFormatExplicitlySet;
     char* pszFormat;
     GDALVectorTranslateAccessMode eAccessMode;
 };
@@ -105,8 +101,6 @@ struct GDALDEMProcessingOptionsForBinary
     char* pszColorFilename;
     char* pszDstFilename;
     int bQuiet;
-    int bFormatExplicitlySet;
-    char* pszFormat;
 };
 
 struct GDALNearblackOptionsForBinary
@@ -114,8 +108,6 @@ struct GDALNearblackOptionsForBinary
     char* pszInFile;
     char* pszOutFile;
     int bQuiet;
-    int bFormatExplicitlySet;
-    char* pszFormat;
 };
 
 struct GDALGridOptionsForBinary
@@ -123,7 +115,6 @@ struct GDALGridOptionsForBinary
     char* pszSource;
     char* pszDest;
     int bQuiet;
-    int bFormatExplicitlySet;
     char* pszFormat;
 };
 
@@ -132,7 +123,6 @@ struct GDALRasterizeOptionsForBinary
     char* pszSource;
     char* pszDest;
     int bQuiet;
-    int bFormatExplicitlySet;
     char* pszFormat;
     int bCreateOutput;
 };

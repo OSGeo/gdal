@@ -9,7 +9,6 @@
 
 <p>This driver implements support for access to spatial tables in the
 <a href="http://www.opengeospatial.org/standards/geopackage">OGC GeoPackage format standard</a>
-(targeting 1.0/1.0.1)
 The GeoPackage standard uses a SQLite database file as a generic container, and the standard defines:
 </p>
 <ul>
@@ -23,6 +22,16 @@ following non-linear geometry types :CIRCULARSTRING, COMPOUNDCURVE, CURVEPOLYGON
 
 <p>Starting with GDAL 2.0, GeoPackage raster/tiles are supported. See
 <a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</p>
+
+<h2>Specification version</h2>
+
+<p>Starting with GDAL 2.2, the driver is able to create GeoPackage databases
+following the 1.0/1.0.1, 1.1 or 1.2 versions.
+For GDAL 2.2, it will automatically
+adjust to the minimum version required for the features of GeoPackage used.
+For GDAL 2.3 or later, it will default to 1.2.
+Explicit version choice can be done by specifying the VERSION dataset creation
+option.</p>
 
 <h2>Limitations</h2>
 
@@ -75,7 +84,7 @@ The following functions, with identical syntax and semantics as in Spatialite, a
 
 <ul>
 <li>CreateSpatialIndex(table_name <i>String</i>, geom_column_name <i>String</i>) : creates a spatial index (RTree) on the specified table/geometry column</li>
-<li>DisableSpatialIndex(table_name <i>String</i>, geom_column_name <i>String</i>) : disable an existing spatial index (RTree) on the specified table/geometry column</li>
+<li>DisableSpatialIndex(table_name <i>String</i>, geom_column_name <i>String</i>) : drop an existing spatial index (RTree) on the specified table/geometry column</li>
 </ul>
 
 <h3>Link with Spatialite</h3>
@@ -127,7 +136,20 @@ most OGR utilities, or with the GDALOpenEx() API call.
 
 <h3>Dataset Creation Options</h3>
 
-<p>None related to vector</p>
+<p>The following creation options (specific to vector, or common with raster)
+are available:</p>
+
+<ul>
+<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
+(for application_id and user_version fields). In AUTO mode, this will be equivalent
+to 1.2 starting with GDAL 2.3.</li>
+<li><b>ADD_GPKG_OGR_CONTENTS</b>=YES/NO: (GDAL &gt;= 2.2) Defines whether to add
+a gpkg_ogr_contents table to keep feature count, and associated triggers.
+Defaults to YES.</li>
+</ul>
+
+<p>Other options are available for raster. See the
+<a href="drv_geopackage_raster.html">GeoPackage raster</a> documentation page</p>
 
 <h3>Layer Creation Options</h3>
 
@@ -220,6 +242,11 @@ INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( '
 INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0)
 </pre>
 
+<p>This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA option
+and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option. Starting with GDAL 2.3,
+this can be easily verified if the SQLITE_HAS_COLUMN_METADATA=YES driver metadata item
+is declared (for example with "ogrinfo --format GPKG")</p>
+
 <h3>Examples</h3>
 
 <ul>
@@ -235,7 +262,7 @@ ogr2ogr with <strong>-update</strong>.
 </li>
 
 <li>
-Translation of a directory of shapefiles into a GeoSpackage. Each file will end
+Translation of a directory of shapefiles into a GeoPackage. Each file will end
 up as a new table within the GPKG file.
 The file <code>filename.gpkg</code> must <strong>not</strong> already exist, as it will be created.
 <pre>

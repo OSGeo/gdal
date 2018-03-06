@@ -77,6 +77,7 @@ int CPL_DLL CPL_STDCALL GDALGetDataTypeSize( GDALDataType );  // Deprecated.
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBits( GDALDataType eDataType );
 int CPL_DLL CPL_STDCALL GDALGetDataTypeSizeBytes( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsComplex( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsInteger( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsFloating( GDALDataType );
 int CPL_DLL CPL_STDCALL GDALDataTypeIsSigned( GDALDataType );
 const char CPL_DLL * CPL_STDCALL GDALGetDataTypeName( GDALDataType );
@@ -86,7 +87,7 @@ GDALDataType CPL_DLL CPL_STDCALL GDALDataTypeUnionWithValue( GDALDataType eDT, d
 GDALDataType CPL_DLL CPL_STDCALL GDALFindDataType( int nBits, int bSigned, int bFloating, int bComplex );
 GDALDataType CPL_DLL CPL_STDCALL GDALFindDataTypeForValue( double dValue, int bComplex );
 double CPL_DLL GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int* pbClamped, int* pbRounded );
-GDALDataType CPL_STDCALL GDALGetNonComplexDataType( GDALDataType );
+GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType( GDALDataType );
 
 /**
 * status of the asynchronous stream
@@ -176,14 +177,14 @@ typedef struct
 #define INIT_RASTERIO_EXTRA_ARG(s)  \
     do { (s).nVersion = RASTERIO_EXTRA_ARG_CURRENT_VERSION; \
          (s).eResampleAlg = GRIORA_NearestNeighbour; \
-         (s).pfnProgress = NULL; \
-         (s).pProgressData = NULL; \
+         (s).pfnProgress = NULL_OR_NULLPTR; \
+         (s).pProgressData = NULL_OR_NULLPTR; \
          (s).bFloatingPointWindowValidity = FALSE; } while(0)
 
 /*! Types of color interpretation for raster bands. */
 typedef enum
 {
-    GCI_Undefined=0,
+    /*! Undefined */                                      GCI_Undefined=0,
     /*! Greyscale */                                      GCI_GrayIndex=1,
     /*! Paletted (see associated color table) */          GCI_PaletteIndex=2,
     /*! Red band of RGBA image */                         GCI_RedBand=3,
@@ -200,7 +201,7 @@ typedef enum
     /*! Y Luminance */                                    GCI_YCbCr_YBand=14,
     /*! Cb Chroma */                                      GCI_YCbCr_CbBand=15,
     /*! Cr Chroma */                                      GCI_YCbCr_CrBand=16,
-    /*! Max current value */                              GCI_Max=16
+    /*! Max current value (equals to GCI_YCbCr_CrBand currently) */ GCI_Max=16
 } GDALColorInterp;
 
 const char CPL_DLL *GDALGetColorInterpretationName( GDALColorInterp );
@@ -309,6 +310,11 @@ typedef GIntBig GSpacing;
  * */
 #define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
 
+/** List of (space separated) vector field sub-types support by the CreateField() API.
+ * @since GDAL 2.3
+ * */
+#define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
+
 /** Capability set by a driver that exposes Subdatasets. */
 #define GDAL_DMD_SUBDATASETS "DMD_SUBDATASETS"
 
@@ -316,7 +322,7 @@ typedef GIntBig GSpacing;
 #define GDAL_DCAP_OPEN       "DCAP_OPEN"
 
 /** Capability set by a driver that implements the Create() API.
- * 
+ *
  * If GDAL_DCAP_CREATE is set, but GDAL_DCAP_CREATECOPY not, a generic
  * CreateCopy() implementation is available and will use the Create() API of
  * the driver.
@@ -325,8 +331,8 @@ typedef GIntBig GSpacing;
  */
 #define GDAL_DCAP_CREATE     "DCAP_CREATE"
 
-/** Capability set by a driver that implements the CreateCopy() API. 
- * 
+/** Capability set by a driver that implements the CreateCopy() API.
+ *
  * If GDAL_DCAP_CREATECOPY is not defined, but GDAL_DCAP_CREATE is set, a generic
  * CreateCopy() implementation is available and will use the Create() API of
  * the driver.
@@ -367,6 +373,18 @@ typedef GIntBig GSpacing;
  * @since GDAL 2.0
  */
 #define GDAL_DCAP_NOTNULL_GEOMFIELDS "DCAP_NOTNULL_GEOMFIELDS"
+
+/** Capability set by a non-spatial driver having no support for geometries. E.g. non-spatial
+ * vector drivers (e.g. spreadsheet format drivers) do not support geometries,
+ * and accordingly will have this capability present.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_NONSPATIAL     "DCAP_NONSPATIAL"
+
+/** Capability set by drivers which support feature styles.
+ * @since GDAL 2.3
+ */
+#define GDAL_DCAP_FEATURE_STYLES     "DCAP_FEATURE_STYLES"
 
 void CPL_DLL CPL_STDCALL GDALAllRegister( void );
 
@@ -505,6 +523,7 @@ int          CPL_DLL CPL_STDCALL GDALDumpOpenDatasets( FILE * );
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriverByName( const char * );
 int CPL_DLL         CPL_STDCALL GDALGetDriverCount( void );
 GDALDriverH CPL_DLL CPL_STDCALL GDALGetDriver( int );
+GDALDriverH CPL_DLL CPL_STDCALL GDALCreateDriver( void );
 void        CPL_DLL CPL_STDCALL GDALDestroyDriver( GDALDriverH );
 int         CPL_DLL CPL_STDCALL GDALRegisterDriver( GDALDriverH );
 void        CPL_DLL CPL_STDCALL GDALDeregisterDriver( GDALDriverH );
@@ -983,7 +1002,7 @@ int CPL_DLL CPL_STDCALL GDALCheckVersion( int nVersionMajor, int nVersionMinor,
 
 #endif
 
-/** Strucutre to store Rational Polynomial Coefficients / Rigorous Projection
+/** Structure to store Rational Polynomial Coefficients / Rigorous Projection
  * Model. See http://geotiff.maptools.org/rpc_prop.html */
 typedef struct
 {
@@ -1075,7 +1094,7 @@ typedef enum {
     /*! Color Range Green Maximum */       GFU_GreenMax = 15,
     /*! Color Range Blue Maximum */        GFU_BlueMax = 16,
     /*! Color Range Alpha Maximum */       GFU_AlphaMax = 17,
-    /*! Maximum GFU value */               GFU_MaxCount
+    /*! Maximum GFU value (equals to GFU_AlphaMax+1 currently) */ GFU_MaxCount
 } GDALRATFieldUsage;
 
 GDALRasterAttributeTableH CPL_DLL CPL_STDCALL

@@ -53,16 +53,16 @@ OGRErr OGR_SRS_ImportFromISO19115( OGRSpatialReference *poThis,
     // Parse the XML into tree form.
     CPLXMLNode *psRoot = CPLParseXMLString(pszISOXML);
 
-    if( psRoot == NULL )
+    if( psRoot == nullptr )
         return OGRERR_FAILURE;
 
-    CPLStripXMLNamespace(psRoot, NULL, TRUE);
+    CPLStripXMLNamespace(psRoot, nullptr, TRUE);
 
     // For now we look for projection codes recognised in the BAG
     // format (see ons_fsd.pdf: Metadata Dataset Character String
     // Constants).
     CPLXMLNode *psRSI = CPLSearchXMLNode(psRoot, "=referenceSystemInfo");
-    if( psRSI == NULL )
+    if( psRSI == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unable to find <referenceSystemInfo> in metadata.");

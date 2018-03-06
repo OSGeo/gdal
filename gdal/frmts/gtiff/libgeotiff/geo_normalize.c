@@ -1,5 +1,5 @@
 /******************************************************************************
- * $Id: geo_normalize.c 2769 2017-06-08 12:32:59Z rouault $
+ * $Id: geo_normalize.c 2807 2018-01-26 12:55:19Z rouault $
  *
  * Project:  libgeotiff
  * Purpose:  Code to normalize PCS and other composite codes in a GeoTIFF file.
@@ -260,10 +260,13 @@ double GTIFAngleToDD( double dfAngle, int nUOMAngle )
 {
     if( nUOMAngle == 9110 )		/* DDD.MMSSsss */
     {
-        char	szAngleString[32];
+        if( dfAngle > -999.9 && dfAngle < 999.9 )
+        {
+            char	szAngleString[32];
 
-        sprintf( szAngleString, "%12.7f", dfAngle );
-        dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
+            sprintf( szAngleString, "%12.7f", dfAngle );
+            dfAngle = GTIFAngleStringToDD( szAngleString, nUOMAngle );
+        }
     }
     else if ( nUOMAngle != KvUserDefined )
     {
@@ -1744,6 +1747,9 @@ static void GTIFFetchProjParms( GTIF * psGTIF, GTIFDefn * psDefn )
             dfNatOriginLat = 0.0;
 
         if( GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtNatOriginGeoKey,
+                       &dfNatOriginScale, 0, 1 ) == 0
+            /* See https://github.com/OSGeo/gdal/files/1665718/lasinfo.txt */
+            && GTIFKeyGetDOUBLE(psGTIF, ProjScaleAtCenterGeoKey,
                        &dfNatOriginScale, 0, 1 ) == 0 )
             dfNatOriginScale = 1.0;
 

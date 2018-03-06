@@ -57,10 +57,9 @@ Select the format to create the new file as.  The formats are assigned short
 names such as GTiff (for GeoTIFF) or HFA (for Erdas Imagine).  The list of
 all format codes can be listed with the <b>\-\-formats</b> switch.  Only
 formats list as "(rw)" (read-write) can be written.<p>
-Many utilities default
-to creating GeoTIFF files if a format is not specified.  File extensions
-are not used to guess output format, nor are extensions generally added
-by GDAL if not indicated in the filename by the user.
+Starting with GDAL 2.3, if not specified, the format is guessed from the
+extension (previously was generally GTiff for raster, or ESRI Shapefile for
+vector).
 </dd>
 
 <dt> <b>-co</b> <i>NAME=VALUE</i></dt><dd>
@@ -324,7 +323,10 @@ gdal_translate [--help-general]
        [-srcwin xoff yoff xsize ysize] [-epo] [-eco]
        [-projwin ulx uly lrx lry] [-projwin_srs srs_def]
        [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]
+       [-a_scale value] [-a_offset value]
        [-gcp pixel line easting northing [elevation]]*
+       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]
+       |-colorinterp {red|green|blue|alpha|gray|undefined},...]
        [-mo "META-TAG=VALUE"]* [-q] [-sds]
        [-co "NAME=VALUE"]* [-stats] [-norat]
        [-oo NAME=VALUE]*
@@ -342,8 +344,9 @@ resampling, and rescaling pixels in the process.
 indicated data type.</dd>
 <dt> <b>-strict</b>:</dt><dd> Don't be forgiving of mismatches and lost data
 when translating to the output format.</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input band <i>band</i> for
 output. Bands are numbered from 1. Multiple <b>-b</b> switches may be used
 to select a set of input bands to write to the output file, or to reorder
@@ -423,7 +426,11 @@ as <b>-epo</b>, except that the criterion for erroring out is when the request f
 outside the source raster extent.</dd>
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.</dd>
+<dt> <b>-a_scale</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band scaling
+value(no modification of pixel values is done)</dd>
+<dt> <b>-a_offset</b> <i>value</i>:</dt><dd> (GDAL &gt;=2.3 )Set band offset
+value (no modification of pixel values is done)</dd>
 <dt> <b>-a_ullr</b> <i>ulx uly lrx lry</i>:</dt><dd>
 Assign/override the georeferenced bounds of the output file.  This assigns
 georeferenced bounds to the output file, ignoring what would have been derived
@@ -434,6 +441,14 @@ be set to <i>none</i> to avoid setting a nodata value to the output file if
 one exists for the source file. Note that, if the input dataset has a
 nodata value, this does not cause pixel values that are equal to that nodata
 value to be changed to the value specified with this option.</dd>
+<dt> <b>-colorinterp_X</b> <i>red|green|blue|alpha|gray|undefined</i>:</dt><dd>
+(GDAL >= 2.3) Override the color interpretation of band X (where X is a valid
+band number, starting at 1)
+</dd>
+<dt> <b>-colorinterp</b> <i>red|green|blue|alpha|gray|undefined[,red|green|blue|alpha|gray|undefined]*</i>:</dt><dd>
+(GDAL >= 2.3) Override the color interpretation of all specified bands. For
+example -colorinterp red,green,blue,alpha for a 4 band output dataset.
+</dd>
 <dt> <b>-mo</b> <i>"META-TAG=VALUE"</i>:</dt><dd> Passes a metadata key and
 value to set on the output dataset if possible.</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> Passes a creation option to the
@@ -609,7 +624,7 @@ Functionality of this utility can be done from C with GDALBuildOverviews().
 Example:
 \endhtmlonly
 
-Create overviews,embedded in the supplied TIFF file, with automatic computatino
+Create overviews, embedded in the supplied TIFF file, with automatic computation
 of levels (GDAL 2.3 or later)
 
 \verbatim
@@ -677,7 +692,9 @@ tileindex.
 
 <dl>
 <dt><b>-f</b> format:</dt><dd> (GDAL >= 1.11)
-<p>The OGR format of the output tile index file. Default is ESRI Shapefile.</p>
+<p>The OGR format of the output tile index file. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). </p>
 </dd>
 <dt><b>-tileindex</b> field_name:</dt>
 <dd><p>The output field name to hold the file path/location to the indexed rasters. The default tile index field name is <code>location</code>.</p>
@@ -879,14 +896,14 @@ just be ignored.
 
 <dt> <b>-optim</b> {[AUTO]/VECTOR/RASTER}}:</dt><dd> (starting with GDAL 2.3)
 Force the algorithm used (results are identical). The raster mode is used in most cases and optimise
-read/write operations. The vector mode is usefull with a decent amount of input features and optimise
+read/write operations. The vector mode is useful with a decent amount of input features and optimise
 the CPU use. That mode have to be used with tiled images to be efficient. The auto mode (the default)
 will chose the algorithm based on input and output properties.
 </dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (starting with GDAL 1.10)
 Override the projection for the output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT. No reprojection is done.</dd>
 
 <dt> <b>-r</b>
 <i>{nearest (default),bilinear,cubic,cubicspline,lanczos,average,mode}</i>:</dt><dd>
@@ -984,7 +1001,9 @@ clockwise around a top.
  Input pixel value to treat as "nodata". </dd>
 
 <dt> <b>-f</b> <em>format</em>:</dt> <dd>
-create output in a particular format, default is shapefiles.</dd>
+Create output in a particular format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). </dd>
 
 <dt> <b>-dsco</b> <em>NAME=VALUE</em>:</dt><dd> Dataset creation option (format specific)</dd>
 <dt> <b>-lco</b> <em>NAME=VALUE</em>:</dt><dd> Layer creation option (format specific)</dd>
@@ -1054,13 +1073,18 @@ formats.
 Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
-Since GDAL 1.8.0, the target GDAL file can be created by gdal_rasterize. Either
-the -tr or -ts option must be used in that case.
+Prior to GDAL 1.8.0, gdal_rasterize could only modify existing raster images. 
+Since 1.8.0, it will create a new target raster image when any of the -of, 
+-a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are used. 
+The resolution or size must be specified using the -tr or -ts option for all new
+rasters.  The target raster will be overwritten if it already exists and any of 
+these creation-related options are used.
 
 <dl>
 <dt> <b>-b</b> <em>band</em>: </dt><dd>
 The band(s) to burn values into.  Multiple -b arguments may be used to burn
-into a list of bands.  The default is to burn into band 1.</dd>
+into a list of bands.  The default is to burn into band 1.  Not used when 
+creating a new raster.</dd>
 
 <dt> <b>-i</b>: </dt><dd>
 Invert rasterization.  Burn the fixed burn value, or the burn value associated
@@ -1108,8 +1132,9 @@ the native SQL of an RDBMS by passing OGRSQL. Starting with GDAL 1.10, the
 "SQLITE" dialect can also be used with any datasource.</dd>
 
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL >= 1.8.0)
-Select the output format.  The default is GeoTIFF (GTiff).  Use the short format
-name.</dd>
+Select the output format.  Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 
 <dt> <b>-a_nodata</b> <i>value</i>:</dt><dd> (GDAL >= 1.8.0)
 Assign a specified nodata value to output bands.</dd>
@@ -1121,8 +1146,9 @@ same value is used in all the bands.</dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> (GDAL >= 1.8.0)
 Override the projection for the output file. If not specified, the projection of
-the input vector file will be used if available. If incompatible projections
-between input and output files, no attempt will be made to reproject features.
+the input vector file will be used if available. When using this option, no reprojection
+of features from the SRS of the input vector to the specified SRS of the output raster,
+so use only this option to correct an invalid source SRS.
 The <i>srs_def</i> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
 EPSG:n or a file containing the WKT. </dd>
 
@@ -1165,8 +1191,10 @@ non-error output.</dd>
 Any OGR supported readable datasource.</dd>
 
 <dt> <em>dst_filename</em>: </dt><dd>
-The GDAL supported output file.  Must support update mode access.
-Before GDAL 1.8.0, gdal_rasterize could not create new output files.</dd>
+The GDAL supported output file.  Must support update mode access.  As of GDAL 
+1.8.0, this file will be created (or overwritten if it already exists) if the 
+-of, -a_nodata, -init, -a_srs, -co, -te, -tr, -tap, -ts, or -ot options are 
+used.</dd>
 
 </dl>
 
@@ -1188,6 +1216,14 @@ file, pulling the top elevation from the ROOF_H attribute.
 
 \verbatim
 gdal_rasterize -a ROOF_H -where 'class="A"' -l footprints footprints.shp city_dem.tif
+\endverbatim
+
+The following would burn all polygons from footprint.shp into a new 1000x1000
+rgb TIFF as the color red.  Note that -b is not used; the order of the -burn 
+options determines the bands of the output raster.
+
+\verbatim
+gdal_rasterize -burn 255 -burn 0 -burn 0 -ot Byte -ts 1000 1000 -l footprints footprints.shp mask.tif
 \endverbatim
 
 \if man
@@ -1227,8 +1263,9 @@ color table.  Defaults to 256.  Must be between 2 and 256. </dd>
 <i>palette_file</i> instead of computing it. Can be used to have a consistent
 color table for multiple files.  The <i>palette_file</i> must be a raster file
 in a GDAL supported format with a palette.</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).  Same
-semantics as the <b>-of</b> flag for gdal_translate.  Only output formats
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name. Only output formats
 supporting pseudo-color tables should be used. </dd>
 <dt> <i>source_file</i>:</dt><dd> The input RGB file. </dd>
 <dt> <i>dest_file</i>:</dt><dd> The output pseudo-colored file that will be
@@ -1293,7 +1330,9 @@ This utility will convert a pseudo-color band on the input file into an output
 RGB file of the desired format.
 
 <dl>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Format to generated (defaults to GeoTIFF).</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd>
 Band to convert to RGB, defaults to 1.</dd>
 <dt> <b>-rgba:</b></dt><dd> Generate a RGBA file (instead of a RGB file by default).</dd>
@@ -1442,9 +1481,10 @@ can be treated as transparent when mosaicing.
 
 <dl>
 <dt> <b>-o</b> <i>outfile</i>:</dt><dd> The name of the output file to be
-created.  Newly created files are created with the HFA driver by default
-(Erdas Imagine - .img)</dd>
+created.</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd> (GDAL 1.8.0 or later) Select the output format.
+Starting with GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ERDAS Imagine .img). 
 Use the short format name (GTiff for GeoTIFF for example).</dd>
 <dt> <b>-co</b> <i>"NAME=VALUE"</i>:</dt><dd> (GDAL 1.8.0 or later) Passes a creation option to the
 output format driver.  Multiple <b>-co</b> options may be listed. See <a class="el"
@@ -1535,7 +1575,9 @@ the last image will be copied over earlier ones.
 <dt> <b>-o</b> <i>out_filename</i>:</dt><dd> The name of the output file,
 which will be created if it does not already exist (defaults to "out.tif").</dd>
 <dt> <b>-of</b> <i>format</i>:</dt><dd>
-Output format, defaults to GeoTIFF (GTiff).
+Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.
 </dd>
 <dt> <b>-co</b> <i>NAME=VALUE</i>:</dt><dd>
 Creation option for output file.  Multiple options can be specified.
@@ -1916,8 +1958,9 @@ computer.
 <dt> <b>-ot</b> <i>type</i>:</dt><dd> For the output bands to be of the
 indicated data type.</dd>
 
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 
 <dt> <b>-txe</b> <em>xmin xmax</em>:</dt><dd> Set georeferenced
 X extents of output file to be created.</dd>
@@ -1930,7 +1973,8 @@ output file in pixels and lines.</dd>
 
 <dt> <b>-a_srs</b> <i>srs_def</i>:</dt><dd> Override the projection for the
 output file.  The <i>srs_def</i> may be any of the usual GDAL/OGR forms,
-complete WKT, PROJ.4, EPSG:n or a file containing the WKT. </dd>
+complete WKT, PROJ.4, EPSG:n or a file containing the WKT.
+No reprojection is done. </dd>
 
 <dt> <b>-zfield</b> <i>field_name</i>:</dt><dd> Identifies an attribute field
 on the features to be used to get a Z value from. This value overrides Z value
@@ -2337,8 +2381,9 @@ The following general options are available :
 <dl>
 <dt> <i>input_dem</i>:</dt><dd> The input DEM raster to be processed</dd>
 <dt> <i>output_xxx_map</i>:</dt><dd> The output raster produced</dd>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff).  Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name.</dd>
 <dt> <b>-compute_edges</b>:</dt><dd> (GDAL >= 1.8.0) Do the computation at raster edges and near nodata values</dd>
 <dt> <b>-alg</b> <i>ZevenbergenThorne</i>:</dt><dd> (GDAL >= 1.8.0) Use Zevenbergen & Thorne formula, instead of Horn's formula, to compute slope & aspect. The literature suggests Zevenbergen & Thorne to be more suited to smooth landscapes, whereas Horn's formula to perform better on rougher terrain.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select an input <i>band</i> to be processed. Bands are numbered from 1.</dd>
@@ -2531,6 +2576,7 @@ Options:
    [--help-general] [-h]  Show help and exit
    [-p]                   Pretty-print where applicable (e.g. WKT)
    [-V]                   Validate SRS
+   [-e]                   Search for EPSG number(s) corresponding to SRS
    [-o out_type]          Output type { default, all, wkt_all, proj4,
                                         wkt, wkt_simple, wkt_noct, wkt_esri,
                                         mapinfo, xml }
@@ -2793,8 +2839,9 @@ pan-sharpening operation.
 More details can be found in the <a href="gdal_vrttut.html#gdal_vrttut_pansharpen">VRT tutorial</a>.
 
 <dl>
-<dt> <b>-of</b> <i>format</i>:</dt><dd> Select the output format.  The default
-is GeoTIFF (GTiff). "VRT" can also be used. Use the short format name.</dd>
+<dt> <b>-of</b> <i>format</i>:</dt><dd>Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GTiff). Use the short format name. "VRT" can also be used.</dd>
 <dt> <b>-b</b> <i>band</i>:</dt><dd> Select band <i>band</i> from the input spectral
 bands for output. Bands are numbered from 1 in the order spectral bands are specified.
 Multiple <b>-b</b> switches may be used.

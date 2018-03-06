@@ -149,8 +149,8 @@ def transformer_4():
     (success,pnt) = tr.TransformPoint( 1, pnt[0], pnt[1], pnt[2] )
 
     if not success \
-       or abs(pnt[0]-19.554539744554866) > 0.001 \
-       or abs(pnt[1]-9.1910760024906537) > 0.001 \
+       or abs(pnt[0]-20.436627518907024) > 0.001 \
+       or abs(pnt[1]-10.484599774610549) > 0.001 \
        or pnt[2] != 0:
         print(success, pnt)
         gdaltest.post_reason( 'got wrong reverse transform result.' )
@@ -906,6 +906,19 @@ def transformer_16():
 
     return 'success'
 
+
+###############################################################################
+# Test RPC DEM with unexisting RPC DEM file
+
+def transformer_17():
+
+    ds = gdal.Open('data/rpc.vrt')
+    with gdaltest.error_handler():
+        tr = gdal.Transformer( ds, None, [ 'METHOD=RPC', 'RPC_DEM=/vsimem/i/donot/exist/dem.tif' ] )
+    if tr is not None:
+        return 'fail'
+    return 'success'
+
 gdaltest_list = [
     transformer_1,
     transformer_2,
@@ -922,11 +935,12 @@ gdaltest_list = [
     transformer_13,
     transformer_14,
     transformer_15,
-    transformer_16
+    transformer_16,
+    transformer_17
     ]
 
 disabled_gdaltest_list = [
-    transformer_9
+    transformer_11
 ]
 
 

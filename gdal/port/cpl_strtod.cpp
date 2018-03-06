@@ -72,7 +72,7 @@ extern float strtof(const char *nptr, char **endptr);
  */
 double CPLAtofDelim(const char *nptr, char point)
 {
-    return CPLStrtodDelim(nptr, NULL, point);
+    return CPLStrtodDelim(nptr, nullptr, point);
 }
 
 /************************************************************************/
@@ -116,7 +116,7 @@ double CPLAtofDelim(const char *nptr, char point)
  */
 double CPLAtof(const char *nptr)
 {
-    return CPLStrtod(nptr, NULL);
+    return CPLStrtod(nptr, nullptr);
 }
 
 /************************************************************************/
@@ -147,12 +147,12 @@ double CPLAtofM( const char *nptr )
     for( int i = 0; i < nMaxSearch; i++ )
     {
         if( nptr[i] == ',' )
-            return CPLStrtodDelim( nptr, NULL, ',' );
+            return CPLStrtodDelim( nptr, nullptr, ',' );
         if( nptr[i] == '.' || nptr[i] == '\0' )
-            return CPLStrtodDelim( nptr, NULL, '.' );
+            return CPLStrtodDelim( nptr, nullptr, '.' );
     }
 
-    return CPLStrtodDelim( nptr, NULL, '.' );
+    return CPLStrtodDelim( nptr, nullptr, '.' );
 }
 
 /************************************************************************/
@@ -235,8 +235,8 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
 
     if( nptr[0] == '-' )
     {
-        if( strcmp(nptr, "-1.#QNAN") == 0 ||
-            strcmp(nptr, "-1.#IND") == 0 )
+        if( STARTS_WITH(nptr, "-1.#QNAN") ||
+            STARTS_WITH(nptr, "-1.#IND") )
         {
             if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             // While it is possible on some platforms to flip the sign
@@ -254,7 +254,7 @@ double CPLStrtodDelim(const char *nptr, char **endptr, char point)
     }
     else if( nptr[0] == '1' )
     {
-        if( strcmp(nptr, "1.#QNAN") == 0 )
+        if( STARTS_WITH(nptr, "1.#QNAN") )
         {
             if( endptr ) *endptr = const_cast<char *>(nptr) + strlen(nptr);
             return std::numeric_limits<double>::quiet_NaN();

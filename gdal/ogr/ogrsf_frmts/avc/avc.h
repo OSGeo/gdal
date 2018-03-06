@@ -119,6 +119,9 @@
 #include "cpl_string.h"
 
 #ifdef GDAL_COMPILATION
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
 #include "shapefil.h"
 #else
 #include "dbfopen.h"
@@ -394,7 +397,7 @@ typedef struct AVCField_t
 
 typedef struct AVCRawBinFile_t
 {
-    FILE        *fp;
+    VSILFILE    *fp;
     char        *pszFname;
     AVCAccess   eAccess;
     AVCByteOrder eByteOrder;
@@ -603,7 +606,7 @@ typedef struct AVCE00ReadInfoE00_t
 
     /* File handle of the E00 file currently being processed
      */
-    FILE          *hFile;
+    VSILFILE     *hFile;
 
 } *AVCE00ReadE00Ptr;
 

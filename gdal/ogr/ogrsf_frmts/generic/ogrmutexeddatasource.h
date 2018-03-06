@@ -79,12 +79,12 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
-                                   char **papszOptions = NULL ) override;
+                                   char **papszOptions = nullptr ) override;
 
     virtual OGRStyleTable *GetStyleTable() override;
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable ) override;

@@ -1,5 +1,3 @@
-/* $Id: tif_getimage.c,v 1.112 2017-07-24 10:34:14 erouault Exp $ */
-
 /*
  * Copyright (c) 1991-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -138,7 +136,7 @@ TIFFRGBAImageOK(TIFF* tif, char emsg[1024])
 			/*
 			 * TODO: if at all meaningful and useful, make more complete
 			 * support check here, or better still, refactor to let supporting
-			 * code decide whether there is support and what meaningfull
+			 * code decide whether there is support and what meaningful
 			 * error to return
 			 */
 			break;
@@ -416,7 +414,7 @@ TIFFRGBAImageBegin(TIFFRGBAImage* img, TIFF* tif, int stop, char emsg[1024])
 			/*
 			 * TODO: if at all meaningful and useful, make more complete
 			 * support check here, or better still, refactor to let supporting
-			 * code decide whether there is support and what meaningfull
+			 * code decide whether there is support and what meaningful
 			 * error to return
 			 */
 			break;
@@ -2332,6 +2330,13 @@ initCIELabConversion(TIFFRGBAImage* img)
 	float   *whitePoint;
 	float   refWhite[3];
 
+	TIFFGetFieldDefaulted(img->tif, TIFFTAG_WHITEPOINT, &whitePoint);
+	if (whitePoint[1] == 0.0f ) {
+		TIFFErrorExt(img->tif->tif_clientdata, module,
+		    "Invalid value for WhitePoint tag.");
+		return NULL;
+        }
+
 	if (!img->cielab) {
 		img->cielab = (TIFFCIELabToRGB *)
 			_TIFFmalloc(sizeof(TIFFCIELabToRGB));
@@ -2342,7 +2347,6 @@ initCIELabConversion(TIFFRGBAImage* img)
 		}
 	}
 
-	TIFFGetFieldDefaulted(img->tif, TIFFTAG_WHITEPOINT, &whitePoint);
 	refWhite[1] = 100.0F;
 	refWhite[0] = whitePoint[0] / whitePoint[1] * refWhite[1];
 	refWhite[2] = (1.0F - whitePoint[0] - whitePoint[1])

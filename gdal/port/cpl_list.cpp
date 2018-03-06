@@ -56,10 +56,10 @@ CPL_CVSID("$Id$")
 
 CPLList *CPLListAppend( CPLList *psList, void *pData )
 {
-    CPLList *psLast = NULL;
+    CPLList *psLast = nullptr;
 
     // Allocate room for the new object.
-    if( psList == NULL )
+    if( psList == nullptr )
     {
       psLast = static_cast<CPLList *>( CPLMalloc( sizeof(CPLList) ) );
       psList = psLast;
@@ -73,7 +73,7 @@ CPLList *CPLListAppend( CPLList *psList, void *pData )
 
     // Append object to the end of list.
     psLast->pData = pData;
-    psLast->psNext = NULL;
+    psLast->psNext = nullptr;
 
     return psList;
 }
@@ -115,14 +115,14 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
         CPLList* psLast = CPLListGetLast(psList);
         for( int i = nCount; i <= nPosition - 1; i++ )
         {
-            psLast = CPLListAppend( psLast, NULL );
-            if( psList == NULL )
+            psLast = CPLListAppend( psLast, nullptr );
+            if( psList == nullptr )
                 psList = psLast;
             else
                 psLast = psLast->psNext;
         }
         psLast = CPLListAppend( psLast, pData );
-        if( psList == NULL )
+        if( psList == nullptr )
             psList = psLast;
 
         /* coverity[leaked_storage] */
@@ -155,8 +155,8 @@ CPLList *CPLListInsert( CPLList *psList, void *pData, int nPosition )
 
 CPLList *CPLListGetLast( CPLList * const psList )
 {
-    if( psList == NULL )
-        return NULL;
+    if( psList == nullptr )
+        return nullptr;
 
     CPLList * psCurrent = psList;
     while( psCurrent->psNext )
@@ -182,7 +182,7 @@ CPLList *CPLListGetLast( CPLList * const psList )
 CPLList *CPLListGet( CPLList *psList, int nPosition )
 {
     if( nPosition < 0 )
-        return NULL;
+        return nullptr;
 
     CPLList *psCurrent = psList;
     int iItem = 0;
@@ -238,8 +238,8 @@ int CPLListCount( const CPLList *psList )
 CPLList *CPLListRemove( CPLList *psList, int nPosition )
 {
 
-    if( psList == NULL )
-        return NULL;
+    if( psList == nullptr )
+        return nullptr;
 
     if( nPosition < 0 )
         return psList;      /* Nothing to do. */
@@ -257,12 +257,12 @@ CPLList *CPLListRemove( CPLList *psList, int nPosition )
     {
         psCurrent = psCurrent->psNext;
         // psCurrent == NULL if nPosition >= CPLListCount(psList).
-        if( psCurrent == NULL )
+        if( psCurrent == nullptr )
             return psList;
     }
     CPLList *psRemoved = psCurrent->psNext;
     // psRemoved == NULL if nPosition >= CPLListCount(psList).
-    if( psRemoved == NULL )
+    if( psRemoved == nullptr )
         return psList;
     psCurrent->psNext = psRemoved->psNext;
     CPLFree( psRemoved );
@@ -308,8 +308,8 @@ void CPLListDestroy( CPLList *psList )
 
 CPLList *CPLListGetNext( const CPLList *psElement )
 {
-    if( psElement == NULL )
-        return NULL;
+    if( psElement == nullptr )
+        return nullptr;
 
     return psElement->psNext;
 }
@@ -328,8 +328,8 @@ CPLList *CPLListGetNext( const CPLList *psElement )
 
 void *CPLListGetData( const CPLList *psElement )
 {
-    if( psElement == NULL )
-        return NULL;
+    if( psElement == nullptr )
+        return nullptr;
 
     return psElement->pData;
 }

@@ -32,11 +32,11 @@
 
 CPL_CVSID("$Id$")
 
-static const double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
-static const double METER2RAD = 1.0 / RAD2METER;
+constexpr double RAD2METER = (180.0 / M_PI) * 60.0 * 1852.0;
+constexpr double METER2RAD = 1.0 / RAD2METER;
 
-static const double DEG2RAD = M_PI / 180.0;
-static const double RAD2DEG = 1.0 / DEG2RAD;
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 1.0 / DEG2RAD;
 
 static
 double OGR_Safe_acos( double x )
@@ -81,7 +81,7 @@ double OGR_GreatCircle_InitialHeading( double LatA_deg, double LonA_deg,
     {
         return 0;
     }
-    else if( fabs(LonA_deg - LonB_deg) < 1e-10 &&
+    else if( fabs(fmod(LonA_deg - LonB_deg, 360.0)) < 1e-10 &&
              fabs(LatA_deg - LatB_deg) < 1e-10 )
     {
         return 0; // Arbitrary number
@@ -90,7 +90,7 @@ double OGR_GreatCircle_InitialHeading( double LatA_deg, double LonA_deg,
     {
         return (LonB_deg > LonA_deg) ? 90.0 : 270.0;
     }
-    else if( fabs(LonA_deg - LonB_deg) < 1e-10 )
+    else if( fabs(fmod(LonA_deg - LonB_deg, 360.0)) < 1e-10 )
     {
         return (LatA_deg > LatB_deg) ? 180.0 : 0.0;
     }

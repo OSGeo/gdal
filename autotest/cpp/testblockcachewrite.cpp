@@ -46,8 +46,8 @@ class MyRasterBand: public GDALRasterBand
             bBusy = FALSE;
         }
 
-        CPLErr IReadBlock(int, int, void*) { CPLAssert(FALSE); return CE_Failure; }
-        CPLErr IWriteBlock(int nXBlock, int nYBlock, void*)
+        CPLErr IReadBlock(int, int, void*) CPL_OVERRIDE { CPLAssert(FALSE); return CE_Failure; }
+        CPLErr IWriteBlock(int nXBlock, int nYBlock, void*) CPL_OVERRIDE
         {
             printf("Entering IWriteBlock(%d, %d)\n", nXBlock, nYBlock);
             assert(!bBusy);
@@ -76,7 +76,7 @@ class MyDataset: public GDALDataset
         }
 };
 
-void thread_func(void* /* unused */ )
+static void thread_func(void* /* unused */ )
 {
     printf("begin thread\n");
     GDALFlushCacheBlock();
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
     char buf1[] = { 1 } ;
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 0, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
 
-    hThread = CPLCreateJoinableThread(thread_func, NULL);
+    hThread = CPLCreateJoinableThread(thread_func, nullptr);
     CPLSleep(0.3);
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(poDS, 1), GF_Write, 1, 0, 1, 1, buf1, 1, 1, GDT_Byte, 0, 0));
     GDALFlushCacheBlock();

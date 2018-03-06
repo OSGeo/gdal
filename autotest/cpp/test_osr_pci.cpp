@@ -45,9 +45,9 @@ namespace tut
         OGRSpatialReferenceH srs_;
 
         test_osr_pci_data()
-            : err_(OGRERR_NONE), srs_(NULL)
+            : err_(OGRERR_NONE), srs_(nullptr)
         {
-            srs_ = OSRNewSpatialReference(NULL);
+            srs_ = OSRNewSpatialReference(nullptr);
         }
 
         ~test_osr_pci_data()
@@ -66,7 +66,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         const int size = 17;
         double params[size] = {
@@ -115,7 +115,7 @@ namespace tut
     template<>
     void object::test<2>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         const char* wkt = "\"\"PROJCS[\"unnamed\",GEOGCS[\"NAD27\","
             "DATUM[\"North_American_Datum_1927\","
@@ -134,9 +134,9 @@ namespace tut
         ensure_equals("Can't import Lambert Conformal Conic projection",
             err_, OGRERR_NONE);
 
-        char* proj = NULL;
-        char* units = NULL;
-        double* params = NULL;
+        char* proj = nullptr;
+        char* units = nullptr;
+        double* params = nullptr;
 
         err_ = OSRExportToPCI(srs_, &proj, &units, &params);
         ensure_equals("OSRExportToPCI() failed", err_, OGRERR_NONE);

@@ -4,12 +4,8 @@
  *****************************************************************************/
 
 %init %{
-
-  /*UseExceptions(); is set by GDAL module */
-  if ( OGRGetDriverCount() == 0 ) {
-    OGRRegisterAll();
-  }
-
+    /* %init code */
+    UseExceptions();
 %}
 
 %include callback.i
@@ -27,4 +23,3 @@
 %rename (_CreateLayer) CreateLayer;
 %rename (_DeleteLayer) DeleteLayer;
 %rename (_Validate) Validate;
-

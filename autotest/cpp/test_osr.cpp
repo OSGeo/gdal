@@ -42,9 +42,9 @@ namespace tut
         OGRSpatialReferenceH srs_;
 
         test_osr_data()
-            : err_(OGRERR_NONE), srs_(NULL)
+            : err_(OGRERR_NONE), srs_(nullptr)
         {
-            srs_ = OSRNewSpatialReference(NULL);
+            srs_ = OSRNewSpatialReference(nullptr);
         }
 
         ~test_osr_data()
@@ -63,7 +63,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         err_ = OSRSetUTM(srs_, 11, TRUE);
         ensure_equals("Can't set UTM zone", err_, OGRERR_NONE);
@@ -109,7 +109,7 @@ namespace tut
     template<>
     void object::test<2>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         // California III NAD83
         OSRSetStatePlane(srs_, 403, 1);
@@ -160,7 +160,7 @@ namespace tut
     template<>
     void object::test<3>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         // California III NAD83 (feet)
         OSRSetStatePlaneWithUnits(srs_, 403, 1, "Foot", 0.3048006096012192);
@@ -196,14 +196,14 @@ namespace tut
             std::string(OSRGetAuthorityCode(srs_, "DATUM")), std::string("6269"));
 
         ensure("Got a PROJCS Authority but we should not",
-            NULL == OSRGetAuthorityName(srs_, "PROJCS"));
+            nullptr == OSRGetAuthorityName(srs_, "PROJCS"));
 
         ensure("Got METER authority code on linear units",
-            NULL == OSRGetAuthorityCode(srs_, "PROJCS|UNIT"));
+            nullptr == OSRGetAuthorityCode(srs_, "PROJCS|UNIT"));
 
-        char* unitsName = NULL;
+        char* unitsName = nullptr;
         val = OSRGetLinearUnits(srs_, &unitsName);
-        ensure("Units name is NULL", NULL != unitsName);
+        ensure("Units name is NULL", nullptr != unitsName);
         ensure( "Did not get Foot linear units",
                 std::string("Foot") == unitsName);
     }
@@ -214,14 +214,14 @@ namespace tut
     template<>
     void object::test<4>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         err_ = OSRSetGS(srs_, -117.0, 100000.0, 100000);
         ensure_equals("OSRSetGS failed", err_, OGRERR_NONE);
 
         err_ = OSRSetGeogCS(srs_, "Test GCS", "Test Datum", "WGS84",
             SRS_WGS84_SEMIMAJOR, SRS_WGS84_INVFLATTENING,
-            NULL, 0, NULL, 0);
+            nullptr, 0, nullptr, 0);
         ensure_equals("OSRSetGeogCS failed", err_, OGRERR_NONE);
 
         err_ = OSRSetTOWGS84(srs_, 1, 2, 3, 0, 0, 0, 0);
@@ -236,12 +236,12 @@ namespace tut
         ensure("GetTOWGS84 result is wrong",
             std::equal(coeff, coeff + coeffSize, expect));
 
-        char* proj4 = NULL;
+        char* proj4 = nullptr;
         err_ = OSRExportToProj4(srs_, &proj4);
         ensure_equals("OSRExportToProj4 failed", err_, OGRERR_NONE);
 
-        OGRSpatialReferenceH srs2 = NULL;
-        srs2 = OSRNewSpatialReference(NULL);
+        OGRSpatialReferenceH srs2 = nullptr;
+        srs2 = OSRNewSpatialReference(nullptr);
 
         err_ = OSRImportFromProj4(srs2, proj4);
         ensure_equals("OSRImportFromProj4 failed", err_, OGRERR_NONE);
@@ -260,23 +260,23 @@ namespace tut
     template<>
     void object::test<5>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC:1.3:CRS84");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt1 = NULL;
+        char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
+        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "WGS84");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt2 = NULL;
+        char* wkt2 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt2);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt2);
+        ensure("OSRExportToWkt returned NULL", nullptr != wkt2);
 
         ensure_equals("CRS84 lookup not as expected",
             std::string(wkt1), std::string(wkt2));
@@ -289,23 +289,23 @@ namespace tut
     template<>
     void object::test<6>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:EPSG::4326");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt1 = NULL;
+        char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
+        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
 
         err_ = OSRSetFromUserInput(srs_, "EPSGA:4326");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt2 = NULL;
+        char* wkt2 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt2);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt2);
+        ensure("OSRExportToWkt returned NULL", nullptr != wkt2);
 
         ensure_equals("EPSG:4326 urn lookup not as expected",
             std::string(wkt1), std::string(wkt2));
@@ -318,15 +318,15 @@ namespace tut
     template<>
     void object::test<7 >()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         err_ = OSRSetFromUserInput(srs_, "urn:ogc:def:crs:OGC::AUTO42001:-117:33");
         ensure_equals("OSRSetFromUserInput failed", err_, OGRERR_NONE);
 
-        char* wkt1 = NULL;
+        char* wkt1 = nullptr;
         err_ = OSRExportToWkt(srs_, &wkt1);
         ensure_equals("OSRExportToWkt failed", err_, OGRERR_NONE);
-        ensure("OSRExportToWkt returned NULL", NULL != wkt1);
+        ensure("OSRExportToWkt returned NULL", nullptr != wkt1);
 
         std::string expect("PROJCS[\"UTM Zone 11, Northern Hemisphere\","
                            "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","

@@ -329,7 +329,7 @@ def test_gdalsrsinfo_14bis():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
                                    ' -o proj4 ../ogr/data/Stacks.shp')
 
-    if ret.strip() != "+proj=lcc +lat_1=28.38333333333333 +lat_2=30.28333333333334 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000.0000000001 +y_0=4000000 +datum=NAD83 +units=us-ft +no_defs":
+    if ret.strip() != "+proj=lcc +lat_1=30.28333333333333 +lat_2=28.38333333333333 +lat_0=27.83333333333333 +lon_0=-99 +x_0=600000 +y_0=3999999.9998984 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs":
         return 'fail'
 
     return 'success'
@@ -371,6 +371,41 @@ def test_gdalsrsinfo_16():
     return 'success'
 
 ###############################################################################
+# Test -e
+
+def test_gdalsrsinfo_17():
+    if test_cli_utilities.get_gdalsrsinfo_path() is None:
+        return 'skip'
+
+    # Zero match
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   ' -e "LOCAL_CS[foo]"')
+
+    if ret.find('EPSG:-1') < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    # One match
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   ' -e ../osr/data/lcc_esri.prj')
+
+    if ret.find('EPSG:32119') < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    # Two matches
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+        """ -e "GEOGCS[\"myLKS94\",DATUM[\"Lithuania_1994_ETRS89\",SPHEROID[\"GRS_1980\",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]" """)
+    if ret.find('EPSG:4126') < 0 or ret.find('EPSG:4669') < 0:
+        gdaltest.post_reason('fail')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 gdaltest_list = [
@@ -391,6 +426,7 @@ gdaltest_list = [
     test_gdalsrsinfo_14bis,
     test_gdalsrsinfo_15,
     test_gdalsrsinfo_16,
+    test_gdalsrsinfo_17,
     None
     ]
 

@@ -182,6 +182,8 @@ char *CPLRecodeStub( const char *pszSource,
         }
         else if( EQUAL(pszSrcEncoding, "CP_OEMCP") )
             return CPLWin32Recode( pszSource, CP_OEMCP, CP_UTF8 );
+        else if( EQUAL(pszSrcEncoding, "CP_ACP") )
+            return CPLWin32Recode( pszSource, CP_ACP, CP_UTF8 );
     }
 
 /* ---------------------------------------------------------------------*/
@@ -194,6 +196,10 @@ char *CPLRecodeStub( const char *pszSource,
          if( nCode > 0 ) {
              return CPLWin32Recode( pszSource, CP_UTF8, nCode );
          }
+         else if( EQUAL(pszDstEncoding, "CP_OEMCP") )
+            return CPLWin32Recode( pszSource, CP_UTF8, CP_OEMCP );
+         else if( EQUAL(pszDstEncoding, "CP_ACP") )
+            return CPLWin32Recode( pszSource, CP_UTF8, CP_ACP );
     }
 #endif
 
@@ -324,7 +330,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
                   "Stub recoding implementation does not support "
                   "CPLRecodeFromWCharStub(...,%s,%s)",
                   pszSrcEncoding, pszDstEncoding );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -356,7 +362,7 @@ char *CPLRecodeFromWCharStub( const wchar_t *pwszSource,
     if( nDstLen >= nDstBufSize )
     {
         CPLAssert( false ); // too small!
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -414,8 +420,8 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
     {
         pszUTF8Source =
             CPLRecodeStub(pszSource, pszSrcEncoding, CPL_ENC_UTF8);
-        if( pszUTF8Source == NULL )
-            return NULL;
+        if( pszUTF8Source == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -433,7 +439,7 @@ wchar_t *CPLRecodeToWCharStub( const char *pszSource,
                   pszSrcEncoding, pszDstEncoding );
         if( pszUTF8Source != pszSource )
             CPLFree( pszUTF8Source );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -507,7 +513,7 @@ int CPLIsUTF8Stub(const char* pabyData, int nLen)
 #if ERRORS_TO_CP1252
 // Codes 0x80..0x9f from the Microsoft CP1252 character set, translated
 // to Unicode:
-static const unsigned short cp1252[32] = {
+constexpr unsigned short cp1252[32] = {
     0x20ac, 0x0081, 0x201a, 0x0192, 0x201e, 0x2026, 0x2020, 0x2021,
     0x02c6, 0x2030, 0x0160, 0x2039, 0x0152, 0x008d, 0x017d, 0x008f,
     0x0090, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014,
@@ -1135,7 +1141,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
 
     // Compute the length in wide characters.
     int wlen = MultiByteToWideChar( src_code_page, MB_ERR_INVALID_CHARS, src,
-                                    -1, 0, 0 );
+                                    -1, nullptr, 0 );
     if( wlen == 0 && GetLastError() == ERROR_NO_UNICODE_TRANSLATION )
     {
         if( !bHaveWarned5 )
@@ -1148,7 +1154,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
         }
 
         // Retry now without MB_ERR_INVALID_CHARS flag.
-        wlen = MultiByteToWideChar( src_code_page, 0, src, -1, 0, 0 );
+        wlen = MultiByteToWideChar( src_code_page, 0, src, -1, nullptr, 0 );
     }
 
     // Do the actual conversion.
@@ -1163,9 +1169,9 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
     BOOL bUsedDefaultChar = FALSE;
     int len = 0;
     if( dst_code_page == CP_UTF7 || dst_code_page == CP_UTF8 )
-        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0, NULL );
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, nullptr, 0, nullptr, nullptr );
     else
-        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, 0, 0, 0,
+        len = WideCharToMultiByte( dst_code_page, 0, tbuf, -1, nullptr, 0, nullptr,
                                    &bUsedDefaultChar );
     if( bUsedDefaultChar )
     {
@@ -1181,7 +1187,7 @@ char* CPLWin32Recode( const char* src, unsigned src_code_page,
 
     // Do the actual conversion.
     char* pszResult = static_cast<char *>(CPLCalloc(sizeof(char), len + 1));
-    WideCharToMultiByte(dst_code_page, 0, tbuf, -1, pszResult, len+1, 0, NULL);
+    WideCharToMultiByte(dst_code_page, 0, tbuf, -1, pszResult, len+1, nullptr, nullptr);
     pszResult[len] = 0;
 
     CPLFree(tbuf);
@@ -1414,6 +1420,8 @@ static int utf8test( const char* src, unsigned srclen )
     const char* e = src + srclen;
     while( p < e )
     {
+        if( *p == 0 )
+            return 0;
         if( *p & 0x80 )
         {
             int len = 0;

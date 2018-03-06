@@ -65,7 +65,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
         if( nTokens < 4 )
         {
             CSLDestroy(papszTokens);
-            return NULL;
+            return nullptr;
         }
 
         CPLString osFilename;
@@ -90,7 +90,7 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
     if ( IdentifyCADFile( pFileIO, false ) == FALSE )
     {
         delete pFileIO;
-        return NULL;
+        return nullptr;
     }
 
 
@@ -103,14 +103,14 @@ static GDALDataset *OGRCADDriverOpen( GDALOpenInfo* poOpenInfo )
                   "The CAD driver does not support update access to existing"
                   " datasets.\n" );
         delete pFileIO;
-        return NULL;
+        return nullptr;
     }
 
     GDALCADDataset *poDS = new GDALCADDataset();
     if( !poDS->Open( poOpenInfo, pFileIO, nSubRasterLayer, nSubRasterFID ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -124,7 +124,7 @@ void RegisterOGRCAD()
 {
     GDALDriver  *poDriver;
 
-    if ( GDALGetDriverByName( "CAD" ) == NULL )
+    if ( GDALGetDriverByName( "CAD" ) == nullptr )
     {
         poDriver = new GDALDriver();
         poDriver->SetDescription( "CAD" );
@@ -144,13 +144,14 @@ void RegisterOGRCAD()
         poDriver->pfnOpen = OGRCADDriverOpen;
         poDriver->pfnIdentify = OGRCADDriverIdentify;
         poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+        poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
 }
 
 CPLString CADRecode( const CPLString& sString, int CADEncoding )
 {
-    const char* pszSource[] = {
+    const char* const apszSource[] = {
         /* 0 UNDEFINED */ "",
         /* 1 ASCII */ "US-ASCII",
         /* 2 8859_1 */ "ISO-8859-1",
@@ -199,10 +200,10 @@ CPLString CADRecode( const CPLString& sString, int CADEncoding )
     };
 
     if( CADEncoding > 0 &&
-        CADEncoding < static_cast<int>(sizeof(pszSource) / sizeof(pszSource[0])) &&
+        CADEncoding < static_cast<int>(CPL_ARRAYSIZE(apszSource)) &&
         CADEncoding != 4 )
     {
-        char* pszRecoded = CPLRecode( sString, pszSource[CADEncoding], CPL_ENC_UTF8 );
+        char* pszRecoded = CPLRecode( sString, apszSource[CADEncoding], CPL_ENC_UTF8 );
         CPLString soRecoded(pszRecoded);
         CPLFree(pszRecoded);
         return soRecoded;

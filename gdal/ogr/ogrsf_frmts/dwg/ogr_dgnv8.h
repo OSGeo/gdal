@@ -144,9 +144,9 @@ class OGRDGNV8DataSource : public GDALDataset
     bool                PreCreate( const char *, char ** );
 
     OGRLayer           *ICreateLayer( const char *,
-                                     OGRSpatialReference * = NULL,
+                                     OGRSpatialReference * = nullptr,
                                      OGRwkbGeometryType = wkbUnknown,
-                                     char ** = NULL ) override;
+                                     char ** = nullptr ) override;
 
     int                 GetLayerCount() override { return m_nLayers; }
     OGRLayer            *GetLayer( int ) override;

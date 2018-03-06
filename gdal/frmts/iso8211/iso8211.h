@@ -189,7 +189,7 @@ class CPL_ODLL DDFFieldDefn
                         const char *pszDescription,
                         DDF_data_struct_code eDataStructCode,
                         DDF_data_type_code   eDataTypeCode,
-                        const char *pszFormat = NULL );
+                        const char *pszFormat = nullptr );
     void        AddSubfield( DDFSubfieldDefn *poNewSFDefn,
                              int bDontAddToFormat = FALSE );
     void        AddSubfield( const char *pszName, const char *pszFormat );
@@ -408,11 +408,11 @@ class CPL_ODLL DDFRecord
     DDFField    *GetField( int );
 
     int         GetIntSubfield( const char *, int, const char *, int,
-                                int * = NULL );
+                                int * = nullptr );
     double      GetFloatSubfield( const char *, int, const char *, int,
-                                  int * = NULL );
+                                  int * = nullptr );
     const char *GetStringSubfield( const char *, int, const char *, int,
-                                   int * = NULL );
+                                   int * = nullptr );
 
     int         SetIntSubfield( const char *pszField, int iFieldIndex,
                                 const char *pszSubfield, int iSubfieldIndex,
@@ -511,7 +511,7 @@ class CPL_ODLL DDFRecord
 class CPL_ODLL DDFField
 {
   public:
-    DDFField() : poDefn(NULL), nDataSize(0), pachData(NULL) {}
+    DDFField() : poDefn(nullptr), nDataSize(0), pachData(nullptr) {}
 
     void                Initialize( DDFFieldDefn *, const char *pszData,
                                     int nSize );
@@ -519,7 +519,7 @@ class CPL_ODLL DDFField
     void                Dump( FILE * fp );
 
     const char         *GetSubfieldData( DDFSubfieldDefn *,
-                                         int * = NULL, int = 0 );
+                                         int * = nullptr, int = 0 );
 
     const char         *GetInstanceData( int nInstance, int *pnSize );
 

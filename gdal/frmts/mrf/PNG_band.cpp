@@ -103,19 +103,19 @@ static void write_png(png_structp pngp, png_bytep data, png_size_t length) {
 
 CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
 {
-    png_bytep* png_rowp = NULL;
+    png_bytep* png_rowp = nullptr;
     volatile png_bytep *p_volatile_png_rowp = (volatile png_bytep *)&png_rowp;
 
     // pngp=png_create_read_struct(PNG_LIBPNG_VER_STRING,0,pngEH,pngWH);
-    png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (NULL == pngp) {
+    png_structp pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (nullptr == pngp) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG decompress");
         return CE_Failure;
     }
 
     png_infop infop = png_create_info_struct(pngp);
-    if (NULL == infop) {
-        if (pngp) png_destroy_read_struct(&pngp, &infop, NULL);
+    if (nullptr == infop) {
+        if (pngp) png_destroy_read_struct(&pngp, &infop, nullptr);
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating PNG info");
         return CE_Failure;
     }
@@ -123,7 +123,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     if (setjmp(png_jmpbuf(pngp))) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error during PNG decompress");
         CPLFree((void*)(*p_volatile_png_rowp));
-        png_destroy_read_struct(&pngp, &infop, NULL);
+        png_destroy_read_struct(&pngp, &infop, nullptr);
         return CE_Failure;
     }
 
@@ -137,7 +137,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     if (dst.size < (png_get_rowbytes(pngp, infop)*height)) {
         CPLError(CE_Failure, CPLE_AppDefined,
             "MRF: PNG Page data bigger than the buffer provided");
-        png_destroy_read_struct(&pngp, &infop, NULL);
+        png_destroy_read_struct(&pngp, &infop, nullptr);
         return CE_Failure;
     }
 
@@ -168,7 +168,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
     // png_read_png(pngp,infop,PNG_TRANSFORM_IDENTITY,0);
 
     CPLFree(png_rowp);
-    png_destroy_read_struct(&pngp, &infop, NULL);
+    png_destroy_read_struct(&pngp, &infop, nullptr);
     return CE_None;
 }
 
@@ -185,14 +185,14 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
     png_infop infop;
     buf_mgr mgr = dst;
 
-    pngp = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, pngEH, pngWH);
+    pngp = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, pngEH, pngWH);
     if (!pngp) {
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png structure");
         return CE_Failure;
     }
     infop = png_create_info_struct(pngp);
     if (!infop) {
-        png_destroy_write_struct(&pngp, NULL);
+        png_destroy_write_struct(&pngp, nullptr);
         CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error creating png info structure");
         return CE_Failure;
     }
@@ -208,7 +208,7 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
     int png_ctype;
 
     switch (img.pagesize.c) {
-    case 1: if (PNGColors != NULL) png_ctype = PNG_COLOR_TYPE_PALETTE;
+    case 1: if (PNGColors != nullptr) png_ctype = PNG_COLOR_TYPE_PALETTE;
             else png_ctype = PNG_COLOR_TYPE_GRAY;
             break;
     case 2: png_ctype = PNG_COLOR_TYPE_GRAY_ALPHA; break;
@@ -249,11 +249,11 @@ CPLErr PNG_Codec::CompressPNG(buf_mgr &dst, buf_mgr &src)
         png_set_compression_strategy(pngp, (deflate_flags & ZFLAG_SMASK) >> 6);
 
     // Write the palette and the transparencies if they exist
-    if (PNGColors != NULL)
+    if (PNGColors != nullptr)
     {
         png_set_PLTE(pngp, infop, (png_colorp)PNGColors, PalSize);
         if (TransSize != 0)
-            png_set_tRNS(pngp, infop, (unsigned char*)PNGAlpha, TransSize, NULL);
+            png_set_tRNS(pngp, infop, (unsigned char*)PNGAlpha, TransSize, nullptr);
     }
 
     png_write_info(pngp, infop);

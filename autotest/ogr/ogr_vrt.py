@@ -1366,7 +1366,42 @@ def ogr_vrt_23(shared_ds_flag = ''):
 
 def ogr_vrt_24():
 
-    return ogr_vrt_23(' shared="1"')
+    ret = ogr_vrt_23(' shared="1"')
+    if ret != 'success':
+        return ret
+
+    rec1 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource shared="1">/vsimem/rec2.vrt</SrcDataSource>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+
+    rec2 = """<OGRVRTDataSource>
+    <OGRVRTLayer name="test">
+        <SrcDataSource shared="1">/vsimem/rec2.vrt</SrcDataSource>
+    </OGRVRTLayer>
+</OGRVRTDataSource>"""
+
+    gdal.FileFromMemBuffer('/vsimem/rec1.vrt', rec1)
+    gdal.FileFromMemBuffer('/vsimem/rec2.vrt', rec2)
+
+    ds = ogr.Open('/vsimem/rec1.vrt')
+    if ds is None:
+        return 'fail'
+
+    gdal.ErrorReset()
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds.GetLayer(0).GetLayerDefn()
+    ds.GetLayer(0).GetFeatureCount()
+    gdal.PopErrorHandler()
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('error expected !')
+        return 'fail'
+
+    gdal.Unlink('/vsimem/rec1.vrt')
+    gdal.Unlink('/vsimem/rec2.vrt')
+
+    return 'success'
 
 
 ###############################################################################
@@ -1544,24 +1579,24 @@ def ogr_vrt_28():
     ds = None
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("<OGRVRTDataSource><OGRVRTLayer/></OGRVRTDataSource>")
+    ogr.Open("<OGRVRTDataSource><OGRVRTLayer/></OGRVRTDataSource>")
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('expected datasource opening failure')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error message on datasource opening')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open("data/invalid2.vrt")
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('expected datasource opening failure')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error message on datasource opening')
         return 'fail'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = ogr.Open("data/invalid3.vrt")
     gdal.PopErrorHandler()
-    if ds is not None:
-        gdaltest.post_reason('expected datasource opening failure')
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('expected error message on datasource opening')
         return 'fail'
 
     return 'success'
@@ -1597,7 +1632,7 @@ def ogr_vrt_29():
 
     # Invalid source layer
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("""<OGRVRTDataSource>
+    ogr.Open("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>tmp/non_existing.shp</SrcDataSource>
@@ -1606,13 +1641,13 @@ def ogr_vrt_29():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>""")
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Non-spatial layer
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("""<OGRVRTDataSource>
+    ogr.Open("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="flat">
             <SrcDataSource>data/flat.dbf</SrcDataSource>
@@ -1621,13 +1656,13 @@ def ogr_vrt_29():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>""")
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Missing TargetSRS
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("""<OGRVRTDataSource>
+    ogr.Open("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
@@ -1635,13 +1670,13 @@ def ogr_vrt_29():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>""")
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid TargetSRS
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("""<OGRVRTDataSource>
+    ogr.Open("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
@@ -1650,13 +1685,13 @@ def ogr_vrt_29():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>""")
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Invalid SrcSRS
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open("""<OGRVRTDataSource>
+    ogr.Open("""<OGRVRTDataSource>
     <OGRVRTWarpedLayer>
         <OGRVRTLayer name="ogr_vrt_29">
             <SrcDataSource>tmp/ogr_vrt_29.shp</SrcDataSource>
@@ -1666,7 +1701,7 @@ def ogr_vrt_29():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>""")
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -2023,7 +2058,7 @@ def ogr_vrt_30():
         if check == 0:
             sr = lyr.GetSpatialRef()
             got_wkt = sr.ExportToWkt()
-            if got_wkt.find('GEOGCS["GCS_WGS_1984"') == -1:
+            if got_wkt.find('GEOGCS["WGS 84"') == -1:
                 gdaltest.post_reason('did not get expected WKT')
                 print(got_wkt)
                 return 'fail'
@@ -2850,9 +2885,9 @@ def ogr_vrt_33():
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>"""
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = ogr.Open(ds_str)
+    ogr.Open(ds_str)
     gdal.PopErrorHandler()
-    if ds is not None:
+    if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -3592,6 +3627,22 @@ def ogr_vrt_40():
     return 'success'
 
 ###############################################################################
+# Test GetExtent() on erroneous definition
+
+def ogr_vrt_41():
+
+    ds = ogr.Open("""<OGRVRTDataSource>
+  <OGRVRTLayer name="test">
+    <SrcDataSource>/i_dont/exist</SrcDataSource>
+  </OGRVRTLayer>
+</OGRVRTDataSource>""")
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_handler():
+        lyr.GetExtent()
+
+    return 'success'
+
+###############################################################################
 #
 
 def ogr_vrt_cleanup():
@@ -3659,6 +3710,7 @@ gdaltest_list = [
     ogr_vrt_38,
     ogr_vrt_39,
     ogr_vrt_40,
+    ogr_vrt_41,
     ogr_vrt_cleanup ]
 
 if __name__ == '__main__':

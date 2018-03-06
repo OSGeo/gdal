@@ -46,8 +46,8 @@ template< class Element >
 class TImage : public Image
 {
 public:
-  TImage() : data_(NULL) {}
-  TImage(const TImage& tImg) : data_(NULL) { *this = tImg;  }
+  TImage() : data_(nullptr) {}
+  TImage(const TImage& tImg) : data_(nullptr) { *this = tImg;  }
   virtual ~TImage() {
       clear();
   }
@@ -150,7 +150,7 @@ template< class Element >
 void TImage< Element >::clear()
 {
   free(data_);
-  data_ = NULL;
+  data_ = nullptr;
   width_ = 0;
   height_ = 0;
 }

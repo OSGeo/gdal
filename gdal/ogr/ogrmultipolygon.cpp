@@ -177,7 +177,7 @@ OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface( OGRMultiPolygon* poMP )
         TransferMembersAndDestroy(poMP, new OGRMultiSurface());
 
     OGRMultiSurface* poMultiSurface = dynamic_cast<OGRMultiSurface *>(poGC);
-    if( poMultiSurface == NULL )
+    if( poMultiSurface == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRMultiSurface.");
@@ -202,7 +202,7 @@ OGRErr OGRMultiPolygon::_addGeometryWithExpectedSubGeometryType(
     OGRGeometry *poClone = poNewGeom->clone();
     OGRErr      eErr;
 
-    if( poClone == NULL )
+    if( poClone == nullptr )
         return OGRERR_FAILURE;
     eErr = _addGeometryDirectlyWithExpectedSubGeometryType( poClone, eSubGeometryType );
     if( eErr != OGRERR_NONE )
@@ -240,7 +240,7 @@ OGRErr OGRMultiPolygon::_addGeometryDirectlyWithExpectedSubGeometryType(
 
     OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
                                              sizeof(void*) * (nGeomCount+1) );
-    if( papoNewGeoms == NULL )
+    if( papoNewGeoms == nullptr )
         return OGRERR_FAILURE;
 
     papoGeoms = papoNewGeoms;

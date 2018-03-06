@@ -40,7 +40,7 @@
 #if __GNUC__ >= 5 || __has_builtin(__builtin_sadd_overflow)
 #  define BUILTIN_OVERFLOW_CHECK_AVAILABLE
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
 
 #  include "safeint.h"
 
@@ -111,7 +111,7 @@ inline CPLSafeInt<int> CPLSM(GUInt64 x);
 inline CPLSafeInt<unsigned> CPLSM_TO_UNSIGNED(GUInt64 x);
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1600
+#if defined(_MSC_VER)
 class CPLMSVCSafeIntException : public msl::utilities::SafeIntException
 {
 public:
@@ -134,7 +134,7 @@ inline CPLSafeInt<int> operator+( const CPLSafeInt<int>& A,
     if( __builtin_sadd_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<int>(A2 + B2));
@@ -167,7 +167,7 @@ inline CPLSafeInt<unsigned> operator+( const CPLSafeInt<unsigned>& A,
     if( __builtin_uadd_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<unsigned>(A2 + B2));
@@ -188,7 +188,7 @@ inline CPLSafeInt<int> operator-( const CPLSafeInt<int>& A,
     if( __builtin_ssub_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<int>(A2 - B2));
@@ -222,7 +222,7 @@ inline CPLSafeInt<unsigned> operator-( const CPLSafeInt<unsigned>& A,
     if( __builtin_usub_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<unsigned>(A2 - B2));
@@ -243,7 +243,7 @@ inline CPLSafeInt<int> operator*( const CPLSafeInt<int>& A,
     if( __builtin_smul_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<int, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<int>(A2 * B2));
@@ -291,7 +291,7 @@ inline CPLSafeInt<unsigned> operator*( const CPLSafeInt<unsigned>& A,
     if( __builtin_umul_overflow(A.v(), B.v(), &res) )
         throw CPLSafeIntOverflow();
     return CPLSM(res);
-#elif defined(_MSC_VER) && _MSC_VER >= 1600
+#elif defined(_MSC_VER)
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> A2(A.v());
     msl::utilities::SafeInt<unsigned, CPLMSVCSafeIntException> B2(B.v());
     return CPLSM(static_cast<unsigned>(A2 * B2));

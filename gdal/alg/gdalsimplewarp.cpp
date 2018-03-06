@@ -164,12 +164,11 @@ GDALSimpleWarpRemapping( int nBandCount, GByte **papabySrcData,
 
         for( int iPixel = 0; iPixel < nPixelCount; iPixel++ )
         {
-            if( papabySrcData[0][iPixel] != panFromValue[0] )
-                continue;
-
             bool bMatch = true;
 
-            for( int iBand = 1; iBand < nMapBandCount; iBand++ )
+            // Always check band 0.
+            for( int iBand = 0; bMatch && iBand < std::max(1, nMapBandCount);
+                 iBand++ )
             {
                 if( papabySrcData[iBand][iPixel] != panFromValue[iBand] )
                     bMatch = false;
@@ -289,7 +288,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     {
         papabySrcData[iBand] = static_cast<GByte *>(
             VSI_MALLOC2_VERBOSE(nSrcXSize, nSrcYSize) );
-        if( papabySrcData[iBand] == NULL )
+        if( papabySrcData[iBand] == nullptr )
         {
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "GDALSimpleImageWarp out of memory." );
@@ -457,7 +456,7 @@ GDALSimpleImageWarp( GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             }
         }
 
-        if( pfnProgress != NULL )
+        if( pfnProgress != nullptr )
         {
             if( !pfnProgress( (iDstY + 1) / static_cast<double>(nDstYSize),
                               "", pProgressArg ) )

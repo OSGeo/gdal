@@ -44,7 +44,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    OGRGeometryH hGeom = NULL;
+    OGRGeometryH hGeom = nullptr;
     char* pszGML = static_cast<char*>(CPLMalloc( len + 1 ));
     memcpy(pszGML, buf, len);
     pszGML[len] = '\0';

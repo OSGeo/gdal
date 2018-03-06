@@ -179,11 +179,17 @@
 /*      Which versions of C++ are available.                            */
 /* -------------------------------------------------------------------- */
 
-#ifdef __cplusplus
-#  if __cplusplus >= 201103L
-#    define HAVE_CXX11 1
+/* MSVC fails to define a decent value of __cplusplus. Try to target VS2015*/
+/* as a minimum */
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#  if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
+#    error Must have C++11 or newer.
 #  endif
-/* TODO(schwehr): What are the correct tests for C++ 14 and 17? */
+#  if __cplusplus >= 201402L
+#    define HAVE_CXX14 1
+#  endif
+/* TODO(schwehr): What is the correct test for C++ 17? */
 #endif  /* __cplusplus */
 
 /*---------------------------------------------------------------------
@@ -220,30 +226,10 @@ typedef int             GBool;
 /* -------------------------------------------------------------------- */
 
 #if defined(WIN32) && defined(_MSC_VER)
-
 #define VSI_LARGE_API_SUPPORTED
-typedef __int64          GIntBig;
-typedef unsigned __int64 GUIntBig;
+#endif
 
-/** Minimum GIntBig value */
-#define GINTBIG_MIN     ((GIntBig)(0x80000000) << 32)
-/** Maximum GIntBig value */
-#define GINTBIG_MAX     (((GIntBig)(0x7FFFFFFF) << 32) | 0xFFFFFFFFU)
-/** Maximum GUIntBig value */
-#define GUINTBIG_MAX     (((GUIntBig)(0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
-
-#define CPL_HAS_GINT64 1
-
-/** Signed 64 bit integer type */
-typedef GIntBig          GInt64;
-/** Unsigned 64 bit integer type */
-typedef GUIntBig         GUInt64;
-
-#define GINT64_MIN      GINTBIG_MIN
-#define GINT64_MAX      GINTBIG_MAX
-#define GUINT64_MAX     GUINTBIG_MAX
-
-#elif HAVE_LONG_LONG
+#if HAVE_LONG_LONG
 
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
@@ -299,9 +285,7 @@ typedef int              GPtrDiff_t;
 
 #ifdef GDAL_COMPILATION
 #if HAVE_UINTPTR_T
-#if !defined(_MSC_VER) || _MSC_VER > 1500
 #include <stdint.h>
-#endif
 typedef uintptr_t GUIntptr_t;
 #elif SIZEOF_VOIDP == 8
 typedef GUIntBig GUIntptr_t;
@@ -328,12 +312,7 @@ typedef unsigned int  GUIntptr_t;
 #define CPL_FRMT_GUIB    "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
 
 /*! @cond Doxygen_Suppress */
-/* Workaround VC6 bug */
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-#define GUINTBIG_TO_DOUBLE(x) (double)(GIntBig)(x)
-#else
 #define GUINTBIG_TO_DOUBLE(x) (double)(x)
-#endif
 /*! @endcond */
 
 /*! @cond Doxygen_Suppress */
@@ -406,52 +385,6 @@ typedef unsigned int  GUIntptr_t;
 #define CPL_INLINE
 #endif
 /*! @endcond*/
-
-/*! @cond Doxygen_Suppress */
-// Define NULL_AS_NULLPTR together with -std=c++11 -Wzero-as-null-pointer-constant with GCC
-// to detect misuses of NULL
-#if defined(NULL_AS_NULLPTR) && HAVE_CXX11
-
-#ifdef __GNUC__
-// We need to include all that bunch of system headers, otherwise
-// as they include <stddef.h> with __need_NULL, this overrides our #define NULL nullptr
-// with #define NULL __null
-#include <locale.h>
-#include <unistd.h>
-#include <sys/types.h>
-#ifdef HAVE_ICONV
-#include <iconv.h>
-#endif
-#ifdef HAVE_MMAP
-#include <sys/mman.h>
-#endif
-#include <signal.h>
-#ifndef _WIN32
-#include <dlfcn.h>
-#include <netdb.h>
-#include <fcntl.h>
-#endif
-
-extern "C++" {
-#include <string>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cstddef>
-#include <ostream>
-#include <iostream>
-#include <sstream>
-}
-#endif /* __GNUC__ */
-
-#undef NULL
-#define NULL nullptr
-#else /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
-#ifndef NULL
-#  define NULL  0
-#endif
-#endif /* defined(NULL_AS_NULLPTR) && HAVE_CXX11 */
-/*! @endcond */
 
 #ifndef MAX
 /** Macro to compute the minimum of 2 values */
@@ -653,6 +586,12 @@ static inline char* CPL_afl_friendly_strstr(const char* haystack, const char* ne
 #  define CPLIsNan(x) _isnan(x)
 #  define CPLIsInf(x) (!_isnan(x) && !_finite(x))
 #  define CPLIsFinite(x) _finite(x)
+#elif defined(__GNUC__) && ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 4 ) )
+/* When including <cmath> in C++11 the isnan() macro is undefined, so that */
+/* std::isnan() can work (#6489). This is a GCC specific workaround for now. */
+#  define CPLIsNan(x)    __builtin_isnan(x)
+#  define CPLIsInf(x)    __builtin_isinf(x)
+#  define CPLIsFinite(x) __builtin_isfinite(x)
 #elif defined(__cplusplus) && defined(HAVE_STD_IS_NAN) && HAVE_STD_IS_NAN
 extern "C++" {
 #ifndef DOXYGEN_SKIP
@@ -665,15 +604,9 @@ static inline int CPLIsInf(double f) { return std::isinf(f); }
 static inline int CPLIsFinite(float f) { return std::isfinite(f); }
 static inline int CPLIsFinite(double f) { return std::isfinite(f); }
 }
-#elif defined(__GNUC__) && ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 4 ) )
-/* When including <cmath> in C++11 the isnan() macro is undefined, so that */
-/* std::isnan() can work (#6489). This is a GCC specific workaround for now. */
-#  define CPLIsNan(x)    __builtin_isnan(x)
-#  define CPLIsInf(x)    __builtin_isinf(x)
-#  define CPLIsFinite(x) __builtin_isfinite(x)
 #else
 /** Return whether a floating-pointer number is NaN */
-#if defined(__cplusplus) && defined(__GNUC__) && defined(__linux) && !defined(__ANDROID__)
+#if defined(__cplusplus) && defined(__GNUC__) && defined(__linux) && !defined(__ANDROID__) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /* so to not get warning about conversion from double to float with */
 /* gcc -Wfloat-conversion when using isnan()/isinf() macros */
 extern "C++" {
@@ -725,7 +658,7 @@ static inline int CPLIsFinite(double f) { return !__isnan(f) && !__isinf(f); }
 #endif
 /*! @endcond */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /*! @cond Doxygen_Suppress */
 extern "C++" {
@@ -969,27 +902,20 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_SCAN_FUNC_FORMAT( format_idx, arg_idx )
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400 && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
+#if defined(_MSC_VER) && (defined(GDAL_COMPILATION) || defined(CPL_ENABLE_MSVC_ANNOTATIONS))
 #include <sal.h>
-# if _MSC_VER > 1400
 /** Macro into which to wrap the format argument of a printf-like function.
  * Only used if ANALYZE=1 is specified to nmake */
 #  define CPL_FORMAT_STRING(arg) _Printf_format_string_ arg
 /** Macro into which to wrap the format argument of a sscanf-like function.
  * Only used if ANALYZE=1 is specified to nmake */
 #  define CPL_SCANF_FORMAT_STRING(arg) _Scanf_format_string_ arg
-# else
-/** Macro into which to wrap the format argument of a printf-like function */
-#  define CPL_FORMAT_STRING(arg) __format_string arg
-/** Macro into which to wrap the format argument of a sscanf-like function. */
-#  define CPL_SCANF_FORMAT_STRING(arg) arg
-# endif
 #else
 /** Macro into which to wrap the format argument of a printf-like function */
 # define CPL_FORMAT_STRING(arg) arg
 /** Macro into which to wrap the format argument of a sscanf-like function. */
 # define CPL_SCANF_FORMAT_STRING(arg) arg
-#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 && defined(GDAL_COMPILATION) */
+#endif /* defined(_MSC_VER) && defined(GDAL_COMPILATION) */
 
 #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(DOXYGEN_SKIP)
 /** Qualifier to warn when the return value of a function is not used */
@@ -1040,28 +966,12 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #define CPL_RESTRICT
 #endif
 
-#ifdef __cplusplus
-
-#if HAVE_CXX11 || _MSC_VER >= 1500
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /** To be used in public headers only. For non-public headers or .cpp files,
  * use override directly. */
 #  define CPL_OVERRIDE override
 
-#else
-
-/** To be used in public headers only. For non-public headers or .cpp files,
- * use override directly. */
-#  define CPL_OVERRIDE
-
-/* For GDAL source compilation only, ignore override if non C++11 compiler */
-#ifdef GDAL_COMPILATION
-#  define override
-#endif
-
-#endif /* HAVE_CXX11 || _MSC_VER >= 1500 */
-
-#if HAVE_CXX11
 /** C++11 final qualifier */
 #  define CPL_FINAL final
 
@@ -1073,19 +983,6 @@ static const char *cvsid_aw() { return( cvsid_aw() ? NULL : cpl_cvsid ); }
 #  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
     ClassName( const ClassName & ) = delete; \
     ClassName &operator=( const ClassName & ) = delete;
-#else
-/** C++11 final qualifier */
-#  define CPL_FINAL
-
-/** Helper to remove the copy and assignment constructors so that the compiler
-   will not generate the default versions.
-
-   Must be placed in the private section of a class and should be at the end.
-*/
-#  define CPL_DISALLOW_COPY_ASSIGN(ClassName) \
-    ClassName( const ClassName & ); \
-    ClassName &operator=( const ClassName & );
-#endif  /* HAVE_CXX11 */
 
 #endif /* __cplusplus */
 
@@ -1129,7 +1026,7 @@ CPL_C_END
 /*! @endcond */
 #endif
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 /** Returns the size of C style arrays. */
 #define CPL_ARRAYSIZE(array) \
   ((sizeof(array) / sizeof(*(array))) / \
@@ -1150,7 +1047,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 #define HAVE_GCC_SYSTEM_HEADER
 #endif
 
-#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7) && HAVE_CXX11
+#if ((defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >=7))) || __GNUC__ >= 7)
 /** Macro for fallthrough in a switch case construct */
 #  define CPL_FALLTHROUGH [[clang::fallthrough]];
 #else
@@ -1163,7 +1060,7 @@ inline static bool CPL_TO_BOOL(int x) { return x != 0; }
 // a integer is assigned to a bool
 // WARNING: use only at compilation time, since it is know to not work
 //  at runtime for unknown reasons (crash in MongoDB driver for example)
-#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL)
+#if defined(__cplusplus) && defined(DEBUG_BOOL) && !defined(DO_NOT_USE_DEBUG_BOOL) && !defined(CPL_SUPRESS_CPLUSPLUS)
 extern "C++" {
 class MSVCPedanticBool
 {
@@ -1193,6 +1090,7 @@ class MSVCPedanticBool
         bool operator! () const { return !b; }
         operator bool() const { return b; }
         operator int() const { return b; }
+        operator GIntBig() const { return b; }
 };
 
 inline bool operator== (const bool& one, const MSVCPedanticBool& other) { return one == other.b; }
@@ -1208,6 +1106,15 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <functional>
+#include <memory>
+#include <queue>
+#include <mutex>
+#include <unordered_map>
+#include <thread>
+#include <unordered_set>
+#include <complex>
+#include <iomanip>
 
 } /* extern C++ */
 
@@ -1248,5 +1155,12 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #endif
 /*! @endcond */
 
+/*! @cond Doxygen_Suppress */
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#define NULL_OR_NULLPTR nullptr
+#else
+#define NULL_OR_NULLPTR NULL
+#endif
+/*! @endcond */
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

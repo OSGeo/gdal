@@ -52,7 +52,7 @@ class OGRDWGServices;
 class DWGBlockDefinition
 {
 public:
-    DWGBlockDefinition() : poGeometry(NULL) {}
+    DWGBlockDefinition() : poGeometry(nullptr) {}
     ~DWGBlockDefinition();
 
     OGRGeometry                *poGeometry;
@@ -127,7 +127,7 @@ class OGRDWGLayer : public OGRLayer
 
     void                FormatDimension( CPLString &osText, double dfValue );
 
-    CPLString           TextUnescape( OdString oString);
+    CPLString           TextUnescape( OdString oString, bool );
 
     OdDbBlockTableRecordPtr m_poBlock;
     OdDbObjectIteratorPtr   poEntIter;
@@ -216,7 +216,7 @@ class OGRDWGDataSource : public OGRDataSource
     // Header variables.
     void                ReadHeaderSection();
     const char         *GetVariable(const char *pszName,
-                                    const char *pszDefault=NULL );
+                                    const char *pszDefault=nullptr );
 
     const char         *GetEncoding() { return osEncoding; }
 };

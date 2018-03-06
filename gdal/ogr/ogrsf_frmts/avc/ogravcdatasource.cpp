@@ -35,8 +35,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRAVCDataSource::OGRAVCDataSource() :
-    poSRS(NULL),
-    pszCoverageName(NULL)
+    poSRS(nullptr),
+    pszCoverageName(nullptr)
 {}
 
 /************************************************************************/
@@ -68,7 +68,7 @@ OGRSpatialReference *OGRAVCDataSource::GetSpatialRef()
 const char *OGRAVCDataSource::GetCoverageName()
 
 {
-    if( pszCoverageName == NULL )
+    if( pszCoverageName == nullptr )
         return "";
 
     return pszCoverageName;

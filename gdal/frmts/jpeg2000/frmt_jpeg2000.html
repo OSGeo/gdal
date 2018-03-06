@@ -79,6 +79,9 @@ Indicates whether a UUID/GeoTIFF
 box conforming to the GeoJP2 (GeoTIFF in JPEG2000) specification should be
 included in the file.  Defaults to YES.<p>
 
+<li><p><b>NBITS=int_value</b> : (GDAL &gt;= 2.3) Bits (precision) for sub-byte
+files (1-7), sub-uint16 (9-15).</p></li>
+
 	<li> Encoding parameters, directly delivered to the JasPer library
 	described in the JasPer documentation. Quoted from the docs:<p>
 
@@ -297,8 +300,8 @@ included in the file.  Defaults to YES.<p>
 
 <li> You need modified JasPer library to build this driver with GeoJP2 support
 enabled. Modified version can be downloaded from
-<a href="ftp://ftp.remotesensing.org/gdal/jasper-1.900.1.uuid.tar.gz">
-ftp://ftp.remotesensing.org/gdal/jasper-1.900.1.uuid.tar.gz</a><p>
+<a href="http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz  ">
+http://download.osgeo.org/gdal/jasper-1.900.1.uuid.tar.gz  </a><p>
 
 <li> <a href="http://www.jpeg.org/JPEG2000.html">
 Official JPEG-2000 page

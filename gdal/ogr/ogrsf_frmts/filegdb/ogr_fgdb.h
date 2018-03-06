@@ -298,7 +298,7 @@ public:
 
   OGRLayer*   GetLayer( int ) override;
 
-  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = NULL, OGRwkbGeometryType = wkbUnknown, char** = NULL ) override;
+  virtual OGRLayer* ICreateLayer( const char *, OGRSpatialReference* = nullptr, OGRwkbGeometryType = wkbUnknown, char** = nullptr ) override;
 
   virtual OGRErr DeleteLayer( int ) override;
 
@@ -382,7 +382,7 @@ public:
   virtual const char *GetName() override;
   virtual OGRDataSource *Open( const char *, int ) override;
   virtual int TestCapability( const char * ) override;
-  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = NULL) override;
+  virtual OGRDataSource *CreateDataSource( const char *pszName, char ** = nullptr) override;
   virtual OGRErr DeleteDataSource( const char *pszDataSource ) override;
 
   /* From IOGRTransactionBehaviour */

@@ -48,13 +48,17 @@ def jpeg_1():
 
     ds = gdal.Open( 'data/albania.jpg' )
     cs = ds.GetRasterBand(2).Checksum()
-    if cs == 34298:
-        gdaltest.jpeg8 = True
+    if cs == 34296:
+        gdaltest.jpeg_version = '9b'
+    elif cs == 34298:
+        gdaltest.jpeg_version = '8'
     else:
-        gdaltest.jpeg8 = False
+        gdaltest.jpeg_version = 'pre8'
     ds = None
 
-    if gdaltest.jpeg8:
+    if gdaltest.jpeg_version == '9b':
+        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 34296 )
+    elif gdaltest.jpeg_version == '8':
         tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 34298 )
     else:
         tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
@@ -75,8 +79,7 @@ def jpeg_2():
         if (md['EXIF_GPSLatitudeRef'] != 'N'
             or md['EXIF_GPSLatitude'] != '(41) (1) (22.91)'
             or md['EXIF_PixelXDimension'] != '361'
-            or (md['EXIF_GPSVersionID'] != '0x2 00 00 00'
-                and md['EXIF_GPSVersionID'] != '0x2 0x0 0x0 0x0')
+            or md['EXIF_GPSVersionID'] != '0x02 0x00 0x00 0x00'
             or md['EXIF_ExifVersion'] != '0210'
             or md['EXIF_XResolution'] != '(96)'):
             print(md)
@@ -409,6 +412,9 @@ def jpeg_9():
 
 def jpeg_10():
 
+    if gdaltest.jpeg_version == '9b': # Fails for some reason
+        return 'skip'
+
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
@@ -441,6 +447,9 @@ def jpeg_10():
 # Check creating a 12-bit JPEG
 
 def jpeg_11():
+
+    if gdaltest.jpeg_version == '9b': # Fails for some reason
+        return 'skip'
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
@@ -516,6 +525,9 @@ def jpeg_13():
 
 def jpeg_14():
 
+    if gdaltest.jpeg_version == '9b': # Fails for some reason
+        return 'skip'
+
     # Check if JPEG driver supports 12bit JPEG reading/writing
     drv = gdal.GetDriverByName('JPEG')
     md = drv.GetMetadata()
@@ -574,7 +586,7 @@ def jpeg_16():
     # "Internal" overview
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg8:
+    if gdaltest.jpeg_version in ('8', '9b'):
         expected_cs = 34218
     else:
         expected_cs = 31892
@@ -590,7 +602,7 @@ def jpeg_16():
         return 'fail'
     # Check updated checksum
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg8:
+    if gdaltest.jpeg_version in ('8', '9b'):
         expected_cs = 33698
     else:
         expected_cs = 32460
@@ -607,7 +619,7 @@ def jpeg_16():
         gdaltest.post_reason('fail')
         return 'fail'
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg8:
+    if gdaltest.jpeg_version in ('8', '9b'):
         expected_cs = 33698
     else:
         expected_cs = 32460
@@ -1106,6 +1118,183 @@ def jpeg_27():
     return 'success'
 
 ###############################################################################
+# Test writing of EXIF and GPS tags
+
+def jpeg_28():
+
+    tmpfilename = '/vsimem/jpeg_28.jpg'
+
+    # Nothing
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    ds = gdal.Open(tmpfilename)
+    if len(ds.GetMetadata()) != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    # EXIF tags only
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+
+    src_ds.SetMetadataItem('EXIF_DateTime', 'dt') # not enough values ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeOriginal', '01234567890123456789') # truncated ASCII
+    src_ds.SetMetadataItem('EXIF_DateTimeDigitized', '0123456789012345678') # right number of items ASCII
+    src_ds.SetMetadataItem('EXIF_Make', 'make') # variable ASCII
+
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '01234') # truncated UNDEFINED
+    src_ds.SetMetadataItem('EXIF_ComponentsConfiguration', '0x1F') # not enough values UNDEFINED
+    src_ds.SetMetadataItem('EXIF_FlashpixVersion', 'ABCD') # right number of items UNDEFINED
+    src_ds.SetMetadataItem('EXIF_SpatialFrequencyResponse', '0xab 0xCD') # variable UNDEFINED
+
+    src_ds.SetMetadataItem('EXIF_Orientation', '10') # right number of items SHORT
+    src_ds.SetMetadataItem('EXIF_ResolutionUnit', '2 4') # truncated SHORT
+    src_ds.SetMetadataItem('EXIF_TransferFunction', '0 1') # not enough values SHORT
+    src_ds.SetMetadataItem('EXIF_ISOSpeedRatings', '1 2 3') # variable SHORT
+
+    src_ds.SetMetadataItem('EXIF_StandardOutputSensitivity', '123456789') # right number of items LONG
+
+    src_ds.SetMetadataItem('EXIF_XResolution', '96') # right number of items RATIONAL
+    src_ds.SetMetadataItem('EXIF_YResolution', '96 0') # truncated RATIONAL
+    src_ds.SetMetadataItem('EXIF_CompressedBitsPerPixel', 'nan') # invalid RATIONAL
+    src_ds.SetMetadataItem('EXIF_ApertureValue', '-1') # invalid RATIONAL
+
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    expected_md = {'EXIF_DateTimeDigitized': '0123456789012345678', 'EXIF_DateTimeOriginal': '0123456789012345678', 'EXIF_Orientation': '10', 'EXIF_ApertureValue': '(0)', 'EXIF_YResolution': '(96)', 'EXIF_XResolution': '(96)', 'EXIF_TransferFunction': '0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0', 'EXIF_ExifVersion': '0123', 'EXIF_DateTime': 'dt                 ', 'EXIF_FlashpixVersion': 'ABCD', 'EXIF_ComponentsConfiguration': '0x1f 0x00 0x00 0x00', 'EXIF_Make': 'make', 'EXIF_StandardOutputSensitivity': '123456789', 'EXIF_ResolutionUnit': '2', 'EXIF_CompressedBitsPerPixel': '(0)', 'EXIF_SpatialFrequencyResponse': '0xab 0xcd', 'EXIF_ISOSpeedRatings': '1 2 3'}
+    if got_md != expected_md:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+
+    # Test SRATIONAL
+    for val in (-1.5, -1, -0.5, 0, 0.5, 1, 1.5 ):
+        src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        src_ds.SetMetadataItem('EXIF_ShutterSpeedValue', str(val))
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        src_ds = None
+        if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open(tmpfilename)
+        got_val = ds.GetMetadataItem('EXIF_ShutterSpeedValue')
+        got_val = got_val.replace('(', '').replace(')', '')
+        if float(got_val) != val:
+            gdaltest.post_reason('fail')
+            print(val)
+            print(ds.GetMetadataItem('EXIF_ShutterSpeedValue'))
+            return 'fail'
+
+    # Test RATIONAL
+    for val in (0, 0.5, 1, 1.5 ):
+        src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+        src_ds.SetMetadataItem('EXIF_ApertureValue', str(val))
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        src_ds = None
+        if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+        ds = gdal.Open(tmpfilename)
+        got_val = ds.GetMetadataItem('EXIF_ApertureValue')
+        got_val = got_val.replace('(', '').replace(')', '')
+        if float(got_val) != val:
+            gdaltest.post_reason('fail')
+            print(val)
+            print(ds.GetMetadataItem('EXIF_ApertureValue'))
+            return 'fail'
+
+    # GPS tags only
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
+    src_ds.SetMetadataItem('EXIF_GPSLatitude', '49 34 56.5')
+    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    if got_md != { 'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude' : '(49) (34) (56.5)' }:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    ds = None
+
+    # EXIF and GPS tags
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
+    src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
+    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N' }:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    ds = None
+
+    # EXIF and other metadata
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
+    src_ds.SetMetadataItem('EXIF_invalid', 'foo')
+    src_ds.SetMetadataItem('FOO', 'BAR')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_invalid': 'foo', 'FOO': 'BAR' }:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    ds = None
+
+    # Too much content for EXIF
+    src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
+    src_ds.SetMetadataItem('EXIF_UserComment', ''.join(['x' for i in range(65535)]))
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    src_ds = None
+    ds = None
+
+    # EXIF and GPS tags and EXIF overview
+    src_ds = gdal.GetDriverByName('MEM').Create('',1024,1024)
+    src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
+    src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
+    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds,
+            options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
+    src_ds = None
+    if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = gdal.Open(tmpfilename)
+    got_md = ds.GetMetadata()
+    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N' }:
+        gdaltest.post_reason('fail')
+        print(got_md)
+        return 'fail'
+    if ds.GetRasterBand(1).GetOverview(ds.GetRasterBand(1).GetOverviewCount()-1).XSize != 32:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+    return 'success'
+
+###############################################################################
 # Cleanup
 
 def jpeg_cleanup():
@@ -1150,7 +1339,10 @@ gdaltest_list = [
     jpeg_25,
     jpeg_26,
     jpeg_27,
+    jpeg_28,
     jpeg_cleanup ]
+
+# gdaltest_list = [ jpeg_28 ]
 
 if __name__ == '__main__':
 

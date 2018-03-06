@@ -37,8 +37,11 @@
 #ifdef HAVE_CURL
 
 #include <curl/curl.h>
+#include "cpl_http.h"
+#include "cpl_aws.h"
+#include <map>
 
-class VSIGSHandleHelper
+class VSIGSHandleHelper: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osEndpoint;
@@ -46,21 +49,49 @@ class VSIGSHandleHelper
         CPLString m_osSecretAccessKey;
         CPLString m_osAccessKeyId;
         bool      m_bUseHeaderFile;
+        GOA2Manager m_oManager;
+
+        static bool     GetConfiguration(char** papszOptions,
+                                         CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osHeaderFile,
+                                         GOA2Manager& oManager);
+
+        static bool     GetConfigurationFromConfigFile(
+                                         CPLString& osSecretAccessKey,
+                                         CPLString& osAccessKeyId,
+                                         CPLString& osOAuth2RefreshToken,
+                                         CPLString& osOAuth2ClientId,
+                                         CPLString& osOAuth2ClientSecret,
+                                         CPLString& osCredentials);
+
+        void RebuildURL() override;
 
     public:
         VSIGSHandleHelper(const CPLString& osEndpoint,
                           const CPLString& osBucketObjectKey,
                           const CPLString& osSecretAccessKey,
                           const CPLString& osAccessKeyId,
-                          bool bUseHeaderFile);
+                          bool bUseHeaderFile,
+                          const GOA2Manager& oManager);
        ~VSIGSHandleHelper();
 
         static VSIGSHandleHelper* BuildFromURI(const char* pszURI,
-                                               const char* pszFSPrefix);
+                                               const char* pszFSPrefix,
+                                               char** papszOptions = nullptr);
 
-        struct curl_slist* GetCurlHeaders(const CPLString& osVerb) const;
+        struct curl_slist* GetCurlHeaders(
+            const CPLString& osVerbosVerb,
+            const  struct curl_slist* psExistingHeaders,
+            const void *pabyDataContent = nullptr,
+            size_t nBytesContent = 0) const override;
 
-        const CPLString& GetURL() const { return m_osURL; }
+        const CPLString& GetURL() const override { return m_osURL; }
+
+        CPLString GetSignedURL(char** papszOptions);
+
+        static void CleanMutex();
+        static void ClearCache();
 };
 
 #endif /* HAVE_CURL */

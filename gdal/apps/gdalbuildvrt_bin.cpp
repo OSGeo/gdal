@@ -37,7 +37,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL) CPL_NO_RETURN;
+static void Usage(const char* pszErrorMsg = nullptr) CPL_NO_RETURN;
 
 static void Usage(const char* pszErrorMsg)
 
@@ -78,7 +78,7 @@ static void Usage(const char* pszErrorMsg)
             "    may be added to the VRT.\n"
             );
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -90,7 +90,8 @@ static void Usage(const char* pszErrorMsg)
 
 static GDALBuildVRTOptionsForBinary *GDALBuildVRTOptionsForBinaryNew(void)
 {
-    return (GDALBuildVRTOptionsForBinary*) CPLCalloc(  1, sizeof(GDALBuildVRTOptionsForBinary) );
+    return static_cast<GDALBuildVRTOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALBuildVRTOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -111,7 +112,7 @@ static void GDALBuildVRTOptionsForBinaryFree( GDALBuildVRTOptionsForBinary* psOp
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     EarlySetConfigOptions(argc, argv);
@@ -125,7 +126,7 @@ int main( int argc, char ** argv )
     if( argc < 1 )
         exit( -argc );
 
-    for( int i = 0; argv != NULL && argv[i] != NULL; i++ )
+    for( int i = 0; argv != nullptr && argv[i] != nullptr; i++ )
     {
         if( EQUAL(argv[i], "--utility_version") )
         {
@@ -136,7 +137,7 @@ int main( int argc, char ** argv )
         }
         else if( EQUAL(argv[i],"--help") )
         {
-            Usage(NULL);
+            Usage(nullptr);
         }
     }
 
@@ -145,19 +146,19 @@ int main( int argc, char ** argv )
     GDALBuildVRTOptions *psOptions = GDALBuildVRTOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
-        Usage(NULL);
+        Usage(nullptr);
     }
 
-    if( psOptionsForBinary->pszDstFilename == NULL )
+    if( psOptionsForBinary->pszDstFilename == nullptr )
     {
         Usage("No target filename specified.");
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALBuildVRTOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALBuildVRTOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
     /* Avoid overwriting a non VRT dataset if the user did not put the */
@@ -168,7 +169,7 @@ int main( int argc, char ** argv )
         int bExists = (VSIStat(psOptionsForBinary->pszDstFilename, &sBuf) == 0);
         if (bExists)
         {
-            GDALDriverH hDriver = GDALIdentifyDriver( psOptionsForBinary->pszDstFilename, NULL );
+            GDALDriverH hDriver = GDALIdentifyDriver( psOptionsForBinary->pszDstFilename, nullptr );
             if (hDriver && !(EQUAL(GDALGetDriverShortName(hDriver), "VRT") ||
                    (EQUAL(GDALGetDriverShortName(hDriver), "API_PROXY") &&
                     EQUAL(CPLGetExtension(psOptionsForBinary->pszDstFilename), "VRT"))) )
@@ -186,7 +187,7 @@ int main( int argc, char ** argv )
     int bUsageError = FALSE;
     GDALDatasetH hOutDS = GDALBuildVRT(psOptionsForBinary->pszDstFilename,
                                        psOptionsForBinary->nSrcFiles,
-                                       NULL,
+                                       nullptr,
                                        (const char* const*)psOptionsForBinary->papszSrcFiles,
                                        psOptions, &bUsageError);
     if( bUsageError )
@@ -211,3 +212,4 @@ int main( int argc, char ** argv )
 
     return nRetCode;
 }
+MAIN_END

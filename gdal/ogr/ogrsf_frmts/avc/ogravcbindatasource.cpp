@@ -37,12 +37,12 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRAVCBinDataSource::OGRAVCBinDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
-    psAVC(NULL)
+    pszName(nullptr),
+    psAVC(nullptr)
 {
-    poSRS = NULL;
+    poSRS = nullptr;
 }
 
 /************************************************************************/
@@ -55,7 +55,7 @@ OGRAVCBinDataSource::~OGRAVCBinDataSource()
     if( psAVC )
     {
         AVCE00ReadClose( psAVC );
-        psAVC = NULL;
+        psAVC = nullptr;
     }
 
     CPLFree( pszName );
@@ -88,11 +88,50 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
         CPLErrorReset();
     }
 
-    if( psAVC == NULL )
+    if( psAVC == nullptr )
         return FALSE;
 
     pszName = CPLStrdup( pszNewName );
     pszCoverageName = CPLStrdup( psAVC->pszCoverName );
+
+    // Read SRS first
+    for( int iSection = 0; iSection < psAVC->numSections; iSection++ )
+    {
+        AVCE00Section *psSec = psAVC->pasSections + iSection;
+
+        switch( psSec->eType )
+        {
+          case AVCFilePRJ:
+          {
+              AVCBinFile *hFile = AVCBinReadOpen(psAVC->pszCoverPath,
+                                                 psSec->pszFilename,
+                                                 psAVC->eCoverType,
+                                                 psSec->eType,
+                                                 psAVC->psDBCSInfo);
+              if( hFile && poSRS == nullptr )
+              {
+                  char **papszPRJ = AVCBinReadNextPrj( hFile );
+
+                  poSRS = new OGRSpatialReference();
+                  if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
+                  {
+                      CPLError( CE_Warning, CPLE_AppDefined,
+                                "Failed to parse PRJ section, ignoring." );
+                      delete poSRS;
+                      poSRS = nullptr;
+                  }
+              }
+              if( hFile )
+              {
+                  AVCBinReadClose( hFile );
+              }
+          }
+          break;
+
+          default:
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create layers for the "interesting" sections of the coverage.   */
@@ -118,35 +157,8 @@ int OGRAVCBinDataSource::Open( const char * pszNewName, int bTestOpen )
             papoLayers[nLayers++] = new OGRAVCBinLayer( this, psSec );
             break;
 
-          case AVCFilePRJ:
-          {
-              AVCBinFile *hFile = AVCBinReadOpen(psAVC->pszCoverPath,
-                                                 psSec->pszFilename,
-                                                 psAVC->eCoverType,
-                                                 psSec->eType,
-                                                 psAVC->psDBCSInfo);
-              if( hFile && poSRS == NULL )
-              {
-                  char **papszPRJ = AVCBinReadNextPrj( hFile );
-
-                  poSRS = new OGRSpatialReference();
-                  if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
-                  {
-                      CPLError( CE_Warning, CPLE_AppDefined,
-                                "Failed to parse PRJ section, ignoring." );
-                      delete poSRS;
-                      poSRS = NULL;
-                  }
-              }
-              if( hFile )
-              {
-                  AVCBinReadClose( hFile );
-              }
-          }
-          break;
-
           default:
-            ;
+            break;
         }
     }
 
@@ -170,7 +182,7 @@ OGRLayer *OGRAVCBinDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }

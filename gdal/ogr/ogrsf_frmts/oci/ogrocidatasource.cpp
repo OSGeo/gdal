@@ -32,7 +32,7 @@
 
 CPL_CVSID("$Id$")
 
-static const int anEPSGOracleMapping[] =
+constexpr int anEPSGOracleMapping[] =
 {
     /* Oracle SRID, EPSG GCS/PCS Code */
 
@@ -54,15 +54,15 @@ static const int anEPSGOracleMapping[] =
 OGROCIDataSource::OGROCIDataSource()
 
 {
-    pszName = NULL;
-    pszDBName = NULL;
-    papoLayers = NULL;
+    pszName = nullptr;
+    pszDBName = nullptr;
+    papoLayers = nullptr;
     nLayers = 0;
     bDSUpdate = FALSE;
     bNoLogging = FALSE;
-    poSession = NULL;
-    papoSRS = NULL;
-    panSRID = NULL;
+    poSession = nullptr;
+    papoSRS = nullptr;
+    panSRID = nullptr;
     nKnownSRID = 0;
 }
 
@@ -90,7 +90,7 @@ OGROCIDataSource::~OGROCIDataSource()
     CPLFree( papoSRS );
     CPLFree( panSRID );
 
-    if( poSession != NULL )
+    if( poSession != nullptr )
         delete poSession;
 }
 
@@ -104,7 +104,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
                             int bTestOpen )
 
 {
-    CPLAssert( nLayers == 0 && poSession == NULL );
+    CPLAssert( nLayers == 0 && poSession == nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Verify Oracle prefix.                                           */
@@ -126,7 +126,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
     char *pszUserid;
     const char *pszPassword = "";
     const char *pszDatabase = "";
-    char **papszTableList = NULL;
+    char **papszTableList = nullptr;
     const char *pszWorkspace = "";
 
     int   i;
@@ -195,7 +195,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         poSession = OGRGetOCISession( pszUserid, pszPassword, pszDatabase );
     }
 
-    if( poSession == NULL )
+    if( poSession == nullptr )
     {
         CPLFree(pszUserid);
         CSLDestroy(papszTableList);
@@ -222,7 +222,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /*      If no list of target tables was provided, collect a list of     */
 /*      spatial tables now.                                             */
 /* -------------------------------------------------------------------- */
-    if( papszTableList == NULL )
+    if( papszTableList == nullptr )
     {
         OGROCIStatement oGetTables( poSession );
 
@@ -232,7 +232,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
         {
             char **papszRow;
 
-            while( (papszRow = oGetTables.SimpleFetchRow()) != NULL )
+            while( (papszRow = oGetTables.SimpleFetchRow()) != nullptr )
             {
                 char szFullTableName[100];
 
@@ -253,7 +253,7 @@ int OGROCIDataSource::Open( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Open all the selected tables or views.                          */
 /* -------------------------------------------------------------------- */
-    for( i = 0; papszTableList != NULL && papszTableList[i] != NULL; i++ )
+    for( i = 0; papszTableList != nullptr && papszTableList[i] != nullptr; i++ )
     {
         OpenTable( papszTableList[i], -1, bUpdate, FALSE, papszOpenOptionsIn );
     }
@@ -368,7 +368,7 @@ void OGROCIDataSource::ValidateLayer( const char *pszLayerName )
 /* -------------------------------------------------------------------- */
         char **papszRow;
 
-        while( (papszRow = oValidateStmt.SimpleFetchRow()) != NULL )
+        while( (papszRow = oValidateStmt.SimpleFetchRow()) != nullptr )
         {
             const char *pszReason = papszRow[1];
 
@@ -494,13 +494,24 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                                char ** papszOptions )
 
 {
-    char                szCommand[1024];
     char               *pszSafeLayerName = CPLStrdup(pszLayerName);
 
     poSession->CleanName( pszSafeLayerName );
     CPLDebug( "OCI", "In Create Layer ..." );
 
     bNoLogging = CPLFetchBool( papszOptions, "NO_LOGGING", false );
+
+/* -------------------------------------------------------------------- */
+/*      Get the default string size                                     */
+/* -------------------------------------------------------------------- */
+
+    int nDefaultStringSize = DEFAULT_STRING_SIZE;
+
+    if (CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) != nullptr)
+    {
+        nDefaultStringSize = atoi( 
+            CSLFetchNameValue( papszOptions, "DEFAULT_STRING_SIZE" ) );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Do we already have this layer?  If so, should we blow it        */
@@ -520,7 +531,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
             if( EQUAL(pszSafeLayerName,
                       papoLayers[iLayer]->GetLayerDefn()->GetName()) )
             {
-                if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != NULL
+                if( CSLFetchNameValue( papszOptions, "OVERWRITE" ) != nullptr
                     && !EQUAL(CSLFetchNameValue(papszOptions,"OVERWRITE"),"NO") )
                 {
                     DeleteLayer( pszSafeLayerName );
@@ -533,7 +544,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
                               "replace it.",
                               pszSafeLayerName );
                     CPLFree( pszSafeLayerName );
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -546,9 +557,9 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     char szSRSId[100];
 
     const char* pszSRID = CSLFetchNameValue( papszOptions, "SRID" );
-    if( pszSRID != NULL )
+    if( pszSRID != nullptr )
         snprintf( szSRSId, sizeof(szSRSId), "%s", pszSRID );
-    else if( poSRS != NULL )
+    else if( poSRS != nullptr )
         snprintf( szSRSId, sizeof(szSRSId), "%d", FetchSRSId( poSRS ) );
     else
         strcpy( szSRSId, "NULL" );
@@ -558,7 +569,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     const char *pszGeometryName =
         CSLFetchNameValue( papszOptions, "GEOMETRY_NAME" );
-    if( pszGeometryName == NULL )
+    if( pszGeometryName == nullptr )
         pszGeometryName = "ORA_GEOMETRY";
     const bool bGeomNullable =
         CPLFetchBool(papszOptions, "GEOMETRY_NULLABLE", true);
@@ -576,18 +587,19 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /*      If geometry type is wkbNone, do not create a geometry column.   */
 /* -------------------------------------------------------------------- */
 
-    if ( CSLFetchNameValue( papszOptions, "TRUNCATE" ) == NULL  )
+    CPLString osCommand;
+    if ( CSLFetchNameValue( papszOptions, "TRUNCATE" ) == nullptr  )
     {
         if (eType == wkbNone)
         {
-            snprintf( szCommand, sizeof(szCommand),
+            osCommand.Printf(
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY)",
                      pszSafeLayerName, pszExpectedFIDName);
         }
         else
         {
-            snprintf( szCommand, sizeof(szCommand),
+            osCommand.Printf(
                      "CREATE TABLE \"%s\" ( "
                      "%s INTEGER PRIMARY KEY, "
                      "%s %s%s )",
@@ -598,20 +610,16 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 
         if (bNoLogging)
         {
-            char     szCommand2[1024];
-
-            snprintf( szCommand2, sizeof(szCommand2), "%s", szCommand );
-
-            snprintf( szCommand, sizeof(szCommand), "%s NOLOGGING "
+            osCommand += CPLSPrintf(" NOLOGGING "
               "VARRAY %s.SDO_ELEM_INFO STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) "
               "VARRAY %s.SDO_ORDINATES STORE AS SECUREFILE LOB (NOCACHE NOLOGGING) ",
-              szCommand2, pszGeometryName, pszGeometryName);
+              pszGeometryName, pszGeometryName);
         }
 
-        if( oStatement.Execute( szCommand ) != CE_None )
+        if( oStatement.Execute( osCommand ) != CE_None )
         {
             CPLFree( pszSafeLayerName );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -621,7 +629,7 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
     const char *pszLoaderFile = CSLFetchNameValue(papszOptions,"LOADER_FILE");
     OGROCIWritableLayer *poLayer;
 
-    if( pszLoaderFile == NULL )
+    if( pszLoaderFile == nullptr )
         poLayer = new OGROCITableLayer( this, pszSafeLayerName, eType,
                                         EQUAL(szSRSId,"NULL") ? -1 : atoi(szSRSId),
                                         TRUE, TRUE );
@@ -637,9 +645,10 @@ OGROCIDataSource::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
     poLayer->SetLaunderFlag( CPLFetchBool(papszOptions, "LAUNDER", false) );
     poLayer->SetPrecisionFlag( CPLFetchBool(papszOptions, "PRECISION", true));
+    poLayer->SetDefaultStringSize( nDefaultStringSize );
 
     const char* pszDIM = CSLFetchNameValue(papszOptions,"DIM");
-    if( pszDIM != NULL )
+    if( pszDIM != nullptr )
         poLayer->SetDimension( atoi(pszDIM) );
     else if( eType != wkbNone )
         poLayer->SetDimension( (wkbFlatten(eType) == eType) ? 2 : 3 );
@@ -686,7 +695,7 @@ OGRLayer *OGROCIDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -726,7 +735,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
             pszLayerName++;
 
         DeleteLayer( pszLayerName );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -740,7 +749,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
             pszLayerName++;
 
         ValidateLayer( pszLayerName );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -752,7 +761,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
 
         oCommand.Execute( pszSQLCommand, OCI_COMMIT_ON_SUCCESS );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -765,7 +774,7 @@ OGRLayer * OGROCIDataSource::ExecuteSQL( const char *pszSQLCommand,
         if( oCommand.Execute( pszSQLCommand, OCI_DESCRIBE_ONLY ) == CE_None )
             return new OGROCISelectLayer( this, pszSQLCommand, &oCommand );
         else
-            return NULL;
+            return nullptr;
     }
 }
 
@@ -791,7 +800,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 
 {
     if( nId < 0 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      First, we look through our SRID cache, is it there?             */
@@ -815,23 +824,22 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
              "WHERE SRID = %d AND WKTEXT IS NOT NULL", nId );
 
     if( oStatement.Execute( szSelect ) != CE_None )
-        return NULL;
+        return nullptr;
 
     papszResult = oStatement.SimpleFetchRow();
     if( CSLCount(papszResult) < 1 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Turn into a spatial reference.                                  */
 /* -------------------------------------------------------------------- */
     char *pszWKT = papszResult[0];
-    OGRSpatialReference *poSRS = NULL;
 
-    poSRS = new OGRSpatialReference();
+    OGRSpatialReference* poSRS = new OGRSpatialReference();
     if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;
-        poSRS = NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -853,9 +861,9 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Insert authority information, if it is available.               */
 /* -------------------------------------------------------------------- */
-    if( papszResult[1] != NULL && atoi(papszResult[1]) != 0
-        && papszResult[2] != NULL && strlen(papszResult[1]) != 0
-        && poSRS->GetRoot() != NULL
+    if( papszResult[1] != nullptr && atoi(papszResult[1]) != 0
+        && papszResult[2] != nullptr && strlen(papszResult[1]) != 0
+        && poSRS->GetRoot() != nullptr
         && !bGotEPSGMapping )
     {
         poSRS->SetAuthority( poSRS->GetRoot()->GetValue(),
@@ -886,10 +894,10 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS( int nId )
 int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 
 {
-    char                *pszWKT = NULL;
+    char                *pszWKT = nullptr;
     int                 nSRSId;
 
-    if( poSRS == NULL )
+    if( poSRS == nullptr )
         return -1;
 
     if( !poSRS->IsProjected() && !poSRS->IsGeographic() )
@@ -901,7 +909,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /*      authority values directly, or check if there is a known         */
 /*      translation for an EPSG authority code.                         */
 /* ==================================================================== */
-    const char *pszAuthName = NULL, *pszAuthCode = NULL;
+    const char *pszAuthName = nullptr, *pszAuthCode = nullptr;
 
     if( poSRS->IsGeographic() )
     {
@@ -914,7 +922,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
         pszAuthCode = poSRS->GetAuthorityCode( "PROJCS" );
     }
 
-    if( pszAuthName != NULL && pszAuthCode != NULL )
+    if( pszAuthName != nullptr && pszAuthCode != nullptr )
     {
         if( EQUAL(pszAuthName,"Oracle")
             && atoi(pszAuthCode) != 0 )
@@ -947,7 +955,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      Convert any degree type unit names to "Decimal Degree".         */
 /* -------------------------------------------------------------------- */
-    double dfAngularUnits = poSRS2->GetAngularUnits( NULL );
+    double dfAngularUnits = poSRS2->GetAngularUnits( nullptr );
     if( fabs(dfAngularUnits - 0.0174532925199433) < 0.0000000000000010 )
         poSRS2->SetAngularUnits( "Decimal Degree", 0.0174532925199433 );
 
@@ -967,7 +975,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
     OGROCIStringBuf     oCmdText;
     OGROCIStatement     oCmdStatement( GetSession() );
-    char                **papszResult = NULL;
+    char                **papszResult = nullptr;
 
     oCmdText.Append( "SELECT SRID FROM MDSYS.CS_SRS WHERE WKTEXT = '" );
     oCmdText.Append( pszWKT );
@@ -979,7 +987,7 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 /* -------------------------------------------------------------------- */
 /*      We got it!  Return it.                                          */
 /* -------------------------------------------------------------------- */
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != nullptr && papszResult[0] != nullptr && papszResult[1] == nullptr )
     {
         CPLFree( pszWKT );
         return atoi( papszResult[0] );
@@ -996,9 +1004,9 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
     if( oCmdStatement.Execute("SELECT MAX(SRID) FROM MDSYS.CS_SRS") == CE_None )
         papszResult = oCmdStatement.SimpleFetchRow();
     else
-        papszResult = NULL;
+        papszResult = nullptr;
 
-    if( CSLCount(papszResult) == 1 )
+    if( papszResult != nullptr && papszResult[0] != nullptr && papszResult[1] == nullptr )
         nSRSId = atoi(papszResult[0]) + 1;
     else
         nSRSId = 1;
@@ -1029,11 +1037,11 @@ int OGROCIDataSource::FetchSRSId( OGRSpatialReference * poSRS )
 OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
 
 {
-    OGROCILayer *poLayer = NULL;
+    OGROCILayer *poLayer = nullptr;
     int  i, count;
 
     if ( !pszNameIn )
-        return NULL;
+        return nullptr;
 
     count = GetLayerCount();
 
@@ -1064,5 +1072,5 @@ OGRLayer *OGROCIDataSource::GetLayerByName( const char *pszNameIn )
 
     CPLFree( pszSafeLayerName );
 
-    return i < count ? poLayer : NULL;
+    return i < count ? poLayer : nullptr;
 }

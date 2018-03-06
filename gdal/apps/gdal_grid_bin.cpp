@@ -36,11 +36,11 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdal_grid [--help-general] [--formats]\n"
+        "Usage: gdal_grid [--help-general]\n"
         "    [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
         "          CInt16/CInt32/CFloat32/CFloat64}]\n"
         "    [-of format] [-co \"NAME=VALUE\"]\n"
@@ -77,7 +77,7 @@ static void Usage(const char* pszErrorMsg = NULL)
         "        linear:radius=-1.0:nodata=0.0\n"
         "\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     GDALDestroyDriverManager();
@@ -89,7 +89,8 @@ static void Usage(const char* pszErrorMsg = NULL)
 
 static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 {
-    return (GDALGridOptionsForBinary*) CPLCalloc(  1, sizeof(GDALGridOptionsForBinary) );
+    return static_cast<GDALGridOptionsForBinary *>(
+        CPLCalloc(1, sizeof(GDALGridOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -98,19 +99,20 @@ static GDALGridOptionsForBinary *GDALGridOptionsForBinaryNew(void)
 
 static void GDALGridOptionsForBinaryFree( GDALGridOptionsForBinary* psOptionsForBinary )
 {
-    if( psOptionsForBinary )
-    {
-        CPLFree(psOptionsForBinary->pszSource);
-        CPLFree(psOptionsForBinary->pszDest);
-        CPLFree(psOptionsForBinary->pszFormat);
-        CPLFree(psOptionsForBinary);
-    }
+    if( psOptionsForBinary == nullptr )
+        return;
+
+    CPLFree(psOptionsForBinary->pszSource);
+    CPLFree(psOptionsForBinary->pszDest);
+    CPLFree(psOptionsForBinary->pszFormat);
+    CPLFree(psOptionsForBinary);
 }
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
 
-int main(int argc, char** argv)
+MAIN_START(argc, argv)
 {
     /* Check strict compilation and runtime library version as we use C++ API */
     if (! GDAL_CHECK_VERSION(argv[0]))
@@ -146,32 +148,30 @@ int main(int argc, char** argv)
     GDALGridOptions *psOptions = GDALGridOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALGridOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALGridOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSource == NULL )
+    if( psOptionsForBinary->pszSource == nullptr )
         Usage("No input file specified.");
-    if( psOptionsForBinary->pszDest== NULL )
+    if( psOptionsForBinary->pszDest== nullptr )
         Usage("No output file specified.");
 
-    if( psOptionsForBinary->pszDest == NULL )
+    if( psOptionsForBinary->pszDest == nullptr )
         psOptionsForBinary->pszDest = CPLStrdup(psOptionsForBinary->pszSource);
-    else if (!psOptionsForBinary->bQuiet && !psOptionsForBinary->bFormatExplicitlySet)
-        CheckExtensionConsistency(psOptionsForBinary->pszDest, psOptionsForBinary->pszFormat);
-
+ 
 /* -------------------------------------------------------------------- */
 /*      Open input file.                                                */
 /* -------------------------------------------------------------------- */
     GDALDatasetH hInDS = GDALOpenEx( psOptionsForBinary->pszSource, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                                     NULL, NULL, NULL );
-    if( hInDS == NULL )
+                                     nullptr, nullptr, nullptr );
+    if( hInDS == nullptr )
         exit( 1 );
 
     int bUsageError = FALSE;
@@ -180,7 +180,7 @@ int main(int argc, char** argv)
                                    psOptions, &bUsageError);
     if(bUsageError == TRUE)
         Usage();
-    int nRetCode = (hOutDS) ? 0 : 1;
+    int nRetCode = hOutDS ? 0 : 1;
 
     GDALClose(hInDS);
     GDALClose(hOutDS);
@@ -192,3 +192,4 @@ int main(int argc, char** argv)
 
     return nRetCode;
 }
+MAIN_END

@@ -86,6 +86,10 @@
 #  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"
 #endif
 
+#ifndef SIZEOF_SIZE_T
+#define SIZEOF_SIZE_T SIZEOF_VOIDP
+#endif
+
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "gdal_libtiff_symbol_rename.h"
 #endif

@@ -228,7 +228,7 @@ def ogr_shape_7():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -258,7 +258,7 @@ def ogr_shape_8():
     geom.Destroy()
 
     tr = ogrtest.check_features_against_list( gdaltest.shape_lyr, 'eas_id',
-                                              [ 158, None ] )
+                                              [ 158 ] )
 
     gdaltest.shape_lyr.SetSpatialFilter( None )
 
@@ -643,7 +643,7 @@ def ogr_shape_18():
     # data/poly.shp has arbitrarily assigned EPSG:27700
     srs = osr.SpatialReference()
     srs.ImportFromEPSG( 27700 )
-    srs.StripCTParms()
+    #srs.StripCTParms()
 
     if not srs_lyr.IsSame(srs):
         print('')
@@ -748,7 +748,7 @@ def ogr_shape_21():
         feat = lyr.GetNextFeature()
         gdal.PopErrorHandler()
 
-        if feat.GetGeometryRef() is not None:
+        if feat is not None and feat.GetGeometryRef() is not None:
             return 'fail'
 
     return 'success'
@@ -1511,7 +1511,7 @@ def ogr_shape_35():
     ds = ogr.Open('/vsimem/test35.shp')
     lyr = ds.GetLayer(0)
     srs_read = lyr.GetSpatialRef()
-    if srs_read.ExportToWkt().find('GCS_WGS_1984') == -1:
+    if srs_read.ExportToWkt() != srs.ExportToWkt():
         gdaltest.post_reason('did not get expected SRS')
         print(srs_read)
         return 'fail'
@@ -3671,7 +3671,7 @@ def ogr_shape_76():
     ds = ogr.Open('data/prjwithutf8bom.shp')
     lyr = ds.GetLayer(0)
     sr = lyr.GetSpatialRef()
-    if sr.ExportToWkt().find('GEOGCS["GCS_North_American_1983"') != 0:
+    if sr.ExportToWkt().find('GEOGCS["NAD83"') != 0:
         return 'fail'
 
     return 'success'
@@ -4531,22 +4531,30 @@ def ogr_shape_99():
     ds = ogr.Open('/vsimem/ogr_shape_99.shp')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToPrettyWkt()
-    expected_wkt = """PROJCS["CH1903_LV03",
-    GEOGCS["GCS_CH1903",
+    expected_wkt = """PROJCS["CH1903 / LV03",
+    GEOGCS["CH1903",
         DATUM["CH1903",
-            SPHEROID["Bessel_1841",6377397.155,299.1528128],
-            TOWGS84[674.374,15.056,405.346,0,0,0,0]],
-        PRIMEM["Greenwich",0.0],
-        UNIT["Degree",0.0174532925199433]],
+            SPHEROID["Bessel 1841",6377397.155,299.1528128,
+                AUTHORITY["EPSG","7004"]],
+            TOWGS84[674.374,15.056,405.346,0,0,0,0],
+            AUTHORITY["EPSG","6149"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AUTHORITY["EPSG","4149"]],
     PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],
-    PARAMETER["False_Easting",600000.0],
-    PARAMETER["False_Northing",200000.0],
-    PARAMETER["Scale_Factor",1.0],
-    PARAMETER["Azimuth",90.0],
-    PARAMETER["Longitude_Of_Center",7.439583333333333],
-    PARAMETER["Latitude_Of_Center",46.95240555555556],
+    PARAMETER["latitude_of_center",46.95240555555556],
+    PARAMETER["longitude_of_center",7.439583333333333],
+    PARAMETER["azimuth",90],
     PARAMETER["rectified_grid_angle",90],
-    UNIT["Meter",1.0],
+    PARAMETER["scale_factor",1],
+    PARAMETER["false_easting",600000],
+    PARAMETER["false_northing",200000],
+    UNIT["metre",1,
+        AUTHORITY["EPSG","9001"]],
+    AXIS["Y",EAST],
+    AXIS["X",NORTH],
     AUTHORITY["EPSG","21781"]]"""
     ds = None
 
@@ -5125,6 +5133,147 @@ def ogr_shape_106():
     return 'success'
 
 ###############################################################################
+# Compare to VSI*L file
+
+def is_same(filename1, filename2, verbose = True):
+    f1 = gdal.VSIFOpenL(filename1, "rb")
+    if f1 is None:
+        if verbose:
+            print('%s does not exist' % filename1)
+        return False
+    f2 = gdal.VSIFOpenL(filename2, "rb")
+    if f2 is None:
+        if verbose:
+            print('%s does not exist' % filename2)
+        gdal.VSIFCloseL(f1)
+        return False
+
+    ret = True
+    size1 = gdal.VSIStatL(filename1).size
+    size2 = gdal.VSIStatL(filename2).size
+    if size1 != size2:
+        if verbose:
+            print('%s size is %d, whereas %s size is %d' % (filename1, size1, filename2, size2))
+        ret = False
+    if ret:
+        data1 = gdal.VSIFReadL(1, size1, f1)
+        data2 = gdal.VSIFReadL(1, size2, f2)
+        if data1 != data2:
+            if verbose:
+                print('File content of %s and %s are different' % (filename1, filename2))
+                print(struct.unpack('B' * len(data1), data1))
+                print(struct.unpack('B' * len(data2), data2))
+            ret = False
+
+    gdal.VSIFCloseL(f1)
+    gdal.VSIFCloseL(f2)
+    return ret
+
+###############################################################################
+# Test that multiple edition of the last shape works properly (#7031)
+
+def ogr_shape_107():
+
+    layer_name = 'ogr_shape_107'
+    filename = '/vsimem/' + layer_name + '.shp'
+    copy_filename = '/vsimem/' + layer_name + '_copy.shp'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(2.5 3.5)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be larger
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,3 4)'))
+    lyr.SetFeature(f)
+
+    # Insert new feature
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (5 6)'))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (5 6)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING (1 2,1.5 2.5,3 4)'))
+    lyr.CreateFeature(f)
+
+    # Modify it to be smaller
+    f = lyr.GetFeature(0)
+    f.SetGeometry(ogr.CreateGeometryFromWkt('LINESTRING(1 2,3 4)'))
+    lyr.SetFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetGeometryRef().ExportToWkt() != 'LINESTRING (1 2,3 4)':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return'fail'
+    ds = None
+
+    gdal.VectorTranslate(copy_filename, filename)
+    if not is_same(copy_filename, filename):
+        gdaltest.post_reason('fail')
+        return'fail'
+
+    shape_drv.DeleteDataSource( copy_filename )
+    shape_drv.DeleteDataSource( filename )
+
+
+    return 'success'
+
+###############################################################################
+# Test spatial + attribute filter
+
+def ogr_shape_108():
+
+    ds = ogr.Open('data/poly.shp')
+    lyr = ds.GetLayer(0)
+    lyr.SetSpatialFilterRect(479750.6875,4764702.0,479750.6875,4764702.0)
+    expected_fc = lyr.GetFeatureCount()
+    lyr.SetAttributeFilter("1=1")
+    if lyr.GetFeatureCount() != expected_fc:
+        gdaltest.post_reason('fail')
+        print(lyr.GetFeatureCount(), expected_fc)
+        return'fail'
+
+    return 'success'
+
+###############################################################################
 def ogr_shape_cleanup():
 
     if gdaltest.shape_ds is None:
@@ -5274,9 +5423,11 @@ gdaltest_list = [
     ogr_shape_104,
     ogr_shape_105,
     ogr_shape_106,
+    ogr_shape_107,
+    ogr_shape_108,
     ogr_shape_cleanup ]
 
-# gdaltest_list = [ ogr_shape_106 ]
+# gdaltest_list = [ ogr_shape_107 ]
 
 if __name__ == '__main__':
 

@@ -130,9 +130,13 @@ environment variable to a power-of-two value between 64 and 4096. The default va
 <li>TIFFTAG_RESOLUTIONUNIT</li>
 <li>TIFFTAG_MINSAMPLEVALUE (read only)</li>
 <li>TIFFTAG_MAXSAMPLEVALUE (read only)</li>
+<li><a href="https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html">GEO_METADATA</a>: This tag may be used for embedding XML-encoded instance documents prepared using 19139-based schema (GeoTIFF DGIWG) (GDAL &gt;= 2.3)</li>
+<li><a href="https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html">TIFF_RSID</a>: This tag specifies a File Universal Unique Identifier, or RSID, according to DMF definition (GeoTIFF DGIWG) (GDAL &gt;= 2.3)</li>
 </ul>
 
-<p>The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).</p>
+<p>The name of the metadata item to use is one of the above names ("TIFFTAG_DOCUMENTNAME", ...).
+On creation, those tags can for example be set with <pre>gdal_translate in.tif out.tif -mo {TAGNAME}=VALUE</pre>
+</p>
 
 <p>Other non standard metadata items can be stored in a TIFF file created with the profile GDALGeoTIFF
 (the default, see below in the Creation issues section). Those metadata items are grouped together
@@ -298,13 +302,15 @@ a value from 1 to 7.  The apparent pixel type should be Byte.
 From GDAL 1.6.0, values of n=9...15 (UInt16 type) and n=17...31 (UInt32 type) are also accepted.
 From GDAL 2.2, n=16 is accepted for Float32 type to generate half-precision floating point values.</p></li>
 
-<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/NONE]</b>:
+<li><p><b>COMPRESS=[JPEG/LZW/PACKBITS/DEFLATE/CCITTRLE/CCITTFAX3/CCITTFAX4/LZMA/ZSTD/NONE]</b>:
 Set the compression to use.  JPEG should generally only be used with Byte data (8 bit per channel).
 But starting with GDAL 1.7.0 and provided that GDAL is built with internal libtiff and libjpeg,
 it is possible to read and write TIFF files with 12bit JPEG compressed TIFF files (seen as UInt16 bands with NBITS=12).
 See the <a href="http://trac.osgeo.org/gdal/wiki/TIFF12BitJPEG">"8 and 12 bit JPEG in TIFF"</a> wiki page for more details.
 The CCITT compression should only be used with 1bit (NBITS=1) data.
 LZW and DEFLATE compressions can be used with the PREDICTOR creation option.
+ZSTD is available since GDAL 2.3 when using internal libtiff and if GDAL built
+against libzstd &gt;=1.0, or if built against external libtiff with zstd support.
 None is the default.</p></li>
 
 <li><p><b>NUM_THREADS=number_of_threads/ALL_CPUS</b>: (From GDAL 2.1)
@@ -343,6 +349,8 @@ This is generally the optimal choice for smallest file size, and consequently is
 </li>
 
 <li><p><b>ZLEVEL=[1-9]</b>:  Set the level of compression when using DEFLATE compression. A value of 9 is best, and 1 is least compression. The default is 6.</p></li>
+
+<li><p><b>ZSTD_LEVEL=[1-22]</b>:  Set the level of compression when using ZSTD compression. A value of 22 is best (very slow), and 1 is least compression. The default is 9.</p></li>
 
 <li><p><b>PHOTOMETRIC=[MINISBLACK/MINISWHITE/RGB/CMYK/YCBCR/CIELAB/ICCLAB/ITULAB]</b>:
 Set the photometric interpretation tag. Default is MINISBLACK, but if the
@@ -496,7 +504,7 @@ Can help reading partially corrupted TIFF files</li>
 <li>GTIFF_POINT_GEO_IGNORE: Can be set to TRUE to revert back to the behaviour of GDAL &lt; 1.8.0
 regarding how PixelIsPoint is interpreted w.r.t geotransform. See <a href="http://trac.osgeo.org/gdal/wiki/rfc33_gtiff_pixelispoint">
 RFC 33: GTiff - Fixing PixelIsPoint Interpretation</a> for more details. Default value : FALSE</li>
-<li>GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid stripping the vertical CS of compound CS. Default value : FALSE</li>
+<li>GTIFF_REPORT_COMPD_CS: (GDAL >= 1.9.0). Can be set to TRUE to avoid stripping the vertical CS of compound CS when reading the SRS of a file. Does not affect the writing side. Default value : FALSE</li>
 <li>GDAL_ENABLE_TIFF_SPLIT : Can be set to FALSE to avoid all-in-one-strip files being presented as having. Default value : TRUE</li>
 <!-- debug option : <li>GDAL_TIFF_ENDIANNESS : Possible values : LITTLE, BIG, INVERTED, NATIVE. Default value : NATIVE</li> -->
 <!-- not sure it is wise to advertize this one. I doubt it works correctly if set to NO. CONVERT_YCBCR_TO_RGB -->

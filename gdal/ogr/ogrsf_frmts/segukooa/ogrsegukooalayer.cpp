@@ -53,12 +53,12 @@ OGRFeature *OGRSEGUKOOABaseLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -97,23 +97,23 @@ static const FieldDesc UKOOAP190Fields[] =
     { "DATETIME", OFTDateTime }
 };
 
-static const int FIELD_LINENAME    = 0;
-static const int FIELD_VESSEL_ID   = 1;
-static const int FIELD_SOURCE_ID   = 2;
-static const int FIELD_OTHER_ID    = 3;
-// static const int FIELD_POINTNUMBER = 4;
-static const int FIELD_LONGITUDE   = 5;
-static const int FIELD_LATITUDE    = 6;
-static const int FIELD_EASTING     = 7;
-static const int FIELD_NORTHING    = 8;
-static const int FIELD_DEPTH       = 9;
-static const int FIELD_DAYOFYEAR   = 10;
-static const int FIELD_TIME        = 11;
-static const int FIELD_DATETIME    = 12;
+constexpr int FIELD_LINENAME    = 0;
+constexpr int FIELD_VESSEL_ID   = 1;
+constexpr int FIELD_SOURCE_ID   = 2;
+constexpr int FIELD_OTHER_ID    = 3;
+// constexpr int FIELD_POINTNUMBER = 4;
+constexpr int FIELD_LONGITUDE   = 5;
+constexpr int FIELD_LATITUDE    = 6;
+constexpr int FIELD_EASTING     = 7;
+constexpr int FIELD_NORTHING    = 8;
+constexpr int FIELD_DEPTH       = 9;
+constexpr int FIELD_DAYOFYEAR   = 10;
+constexpr int FIELD_TIME        = 11;
+constexpr int FIELD_DATETIME    = 12;
 
 OGRUKOOAP190Layer::OGRUKOOAP190Layer( const char* pszFilename,
                                       VSILFILE* fpIn ) :
-    poSRS(NULL),
+    poSRS(nullptr),
     fp(fpIn),
     bUseEastingNorthingAsGeometry(CPLTestBool(
         CPLGetConfigOption("UKOOAP190_USE_EASTING_NORTHING", "NO"))),
@@ -165,8 +165,8 @@ void OGRUKOOAP190Layer::ParseHeaders()
 {
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
+        const char* pszLine = CPLReadLine2L(fp,81,nullptr);
+        if (pszLine == nullptr || STARTS_WITH_CI(pszLine, "EOF"))
         {
             break;
         }
@@ -185,7 +185,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
             continue;
 
         if (!bUseEastingNorthingAsGeometry &&
-            STARTS_WITH(pszLine, "H1500") && poSRS == NULL)
+            STARTS_WITH(pszLine, "H1500") && poSRS == nullptr)
         {
             if (STARTS_WITH(pszLine + 33 - 1, "WGS84") ||
                 STARTS_WITH(pszLine + 33 - 1, "WGS-84"))
@@ -199,7 +199,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
             }
         }
         else if (!bUseEastingNorthingAsGeometry &&
-                 STARTS_WITH(pszLine, "H1501") && poSRS != NULL &&
+                 STARTS_WITH(pszLine, "H1501") && poSRS != nullptr &&
                  nLineLen >= 32 + 6 * 6 + 10)
         {
             char aszParams[6][6+1];
@@ -220,7 +220,7 @@ void OGRUKOOAP190Layer::ParseHeaders()
         else if (STARTS_WITH(pszLine, "H0200"))
         {
             char** papszTokens = CSLTokenizeString(pszLine + 33 - 1);
-            for(int i = 0; papszTokens[i] != NULL; i++)
+            for(int i = 0; papszTokens[i] != nullptr; i++)
             {
                 if (strlen(papszTokens[i]) == 4)
                 {
@@ -271,15 +271,15 @@ static bool isleap( int y)
 OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fp, 81, NULL);
-        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
+        const char* pszLine = CPLReadLine2L(fp, 81, nullptr);
+        if (pszLine == nullptr || STARTS_WITH_CI(pszLine, "EOF"))
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
 
         int nLineLen = static_cast<int>(strlen(pszLine));
@@ -356,7 +356,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
             dfLon = -dfLon;
         poFeature->SetField(FIELD_LONGITUDE, dfLon);
 
-        OGRGeometry* poGeom = NULL;
+        OGRGeometry* poGeom = nullptr;
         if (!bUseEastingNorthingAsGeometry)
             poGeom = new OGRPoint(dfLon, dfLat);
 
@@ -410,7 +410,7 @@ OGRFeature *OGRUKOOAP190Layer::GetNextRawFeature()
 
             if( nYear != 0 )
             {
-                static const int mon_lengths[2][12] = {
+                constexpr int mon_lengths[2][12] = {
                     {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
                     {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
                 } ;
@@ -465,22 +465,22 @@ static const FieldDesc SEGP1Fields[] =
 #endif
 };
 
-static const int SEGP1_FIELD_LINENAME    = 0;
-static const int SEGP1_FIELD_POINTNUMBER = 1;
-static const int SEGP1_FIELD_RESHOOTCODE = 2;
-static const int SEGP1_FIELD_LONGITUDE   = 3;
-static const int SEGP1_FIELD_LATITUDE    = 4;
-static const int SEGP1_FIELD_EASTING     = 5;
-static const int SEGP1_FIELD_NORTHING    = 6;
-static const int SEGP1_FIELD_DEPTH       = 7;
-// static const int SEGP1_FIELD_DAYOFYEAR   = 8;
-// static const int SEGP1_FIELD_TIME        = 9;
-// static const int SEGP1_FIELD_DATETIME    = 10;
+constexpr int SEGP1_FIELD_LINENAME    = 0;
+constexpr int SEGP1_FIELD_POINTNUMBER = 1;
+constexpr int SEGP1_FIELD_RESHOOTCODE = 2;
+constexpr int SEGP1_FIELD_LONGITUDE   = 3;
+constexpr int SEGP1_FIELD_LATITUDE    = 4;
+constexpr int SEGP1_FIELD_EASTING     = 5;
+constexpr int SEGP1_FIELD_NORTHING    = 6;
+constexpr int SEGP1_FIELD_DEPTH       = 7;
+// constexpr int SEGP1_FIELD_DAYOFYEAR   = 8;
+// constexpr int SEGP1_FIELD_TIME        = 9;
+// constexpr int SEGP1_FIELD_DATETIME    = 10;
 
 OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
                               VSILFILE* fpIn,
                               int nLatitudeColIn ) :
-    poSRS(NULL),
+    poSRS(nullptr),
     fp(fpIn),
     nLatitudeCol(nLatitudeColIn),
     bUseEastingNorthingAsGeometry(CPLTestBool(
@@ -531,11 +531,11 @@ void OGRSEGP1Layer::ResetReading()
     VSIFSeekL( fp, 0, SEEK_SET );
 
     /* Skip first 20 header lines */
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     for(int i=0; i<20;i++)
     {
-        pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL)
+        pszLine = CPLReadLine2L(fp,81,nullptr);
+        if (pszLine == nullptr)
         {
             bEOF = true;
             break;
@@ -550,16 +550,16 @@ void OGRSEGP1Layer::ResetReading()
 OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
     while( true )
     {
-        pszLine = CPLReadLine2L(fp,81,NULL);
-        if (pszLine == NULL || STARTS_WITH_CI(pszLine, "EOF"))
+        pszLine = CPLReadLine2L(fp,81,nullptr);
+        if (pszLine == nullptr || STARTS_WITH_CI(pszLine, "EOF"))
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
 
         int nLineLen = static_cast<int>(strlen(pszLine));
@@ -576,7 +576,7 @@ OGRFeature *OGRSEGP1Layer::GetNextRawFeature()
         OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
         poFeature->SetFID(nNextFID ++);
 
-        OGRGeometry* poGeom = NULL;
+        OGRGeometry* poGeom = nullptr;
 
         if (nLatitudeCol-1 + 19 <= nLineLen)
         {
@@ -726,7 +726,7 @@ int OGRSEGP1Layer::DetectLatitudeColumn(const char* pszLine)
 OGRSEGUKOOALineLayer::OGRSEGUKOOALineLayer( const char* pszFilename,
                                             OGRLayer *poBaseLayerIn ) :
     poBaseLayer(poBaseLayerIn),
-    poNextBaseFeature(NULL)
+    poNextBaseFeature(nullptr)
 {
     nNextFID = 0;
     bEOF = false;
@@ -765,7 +765,7 @@ void OGRSEGUKOOALineLayer::ResetReading()
     nNextFID = 0;
     bEOF = false;
     delete poNextBaseFeature;
-    poNextBaseFeature = NULL;
+    poNextBaseFeature = nullptr;
     poBaseLayer->ResetReading();
 }
 
@@ -776,23 +776,23 @@ void OGRSEGUKOOALineLayer::ResetReading()
 OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     /* Merge points of base layer that have same value for attribute(0) */
     /* into a single linestring */
 
-    OGRFeature* poFeature = NULL;
-    OGRLineString* poLS = NULL;
+    OGRFeature* poFeature = nullptr;
+    OGRLineString* poLS = nullptr;
 
-    if (poNextBaseFeature == NULL)
+    if (poNextBaseFeature == nullptr)
         poNextBaseFeature = poBaseLayer->GetNextFeature();
 
-    while(poNextBaseFeature != NULL)
+    while(poNextBaseFeature != nullptr)
     {
         if (poNextBaseFeature->IsFieldSetAndNotNull(0) &&
             poNextBaseFeature->GetFieldAsString(0)[0] != '\0')
         {
-            if (poFeature != NULL &&
+            if (poFeature != nullptr &&
                 strcmp(poFeature->GetFieldAsString(0),
                     poNextBaseFeature->GetFieldAsString(0)) != 0)
             {
@@ -802,9 +802,9 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
 
             OGRPoint* poPoint =
                 (OGRPoint*) poNextBaseFeature->GetGeometryRef();
-            if (poPoint != NULL)
+            if (poPoint != nullptr)
             {
-                if (poFeature == NULL)
+                if (poFeature == nullptr)
                 {
                     poFeature = new OGRFeature(poFeatureDefn);
                     poFeature->SetFID(nNextFID ++);

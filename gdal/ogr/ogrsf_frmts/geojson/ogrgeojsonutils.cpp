@@ -35,13 +35,16 @@
 
 CPL_CVSID("$Id$")
 
+const char szESRIJSonPotentialStart1[] =
+    "{\"features\":[{\"geometry\":{\"rings\":[";
+
 /************************************************************************/
-/*                           GeoJSONIsObject()                          */
+/*                           IsJSONObject()                             */
 /************************************************************************/
 
-bool GeoJSONIsObject( const char* pszText )
+static bool IsJSONObject( const char* pszText )
 {
-    if( NULL == pszText )
+    if( nullptr == pszText )
         return false;
 
     /* Skip UTF-8 BOM (#5630) */
@@ -68,15 +71,158 @@ bool GeoJSONIsObject( const char* pszText )
     if( *pszText != '{' )
         return false;
 
-    return
-        (strstr(pszText, "\"type\"") != NULL &&
-         strstr(pszText, "\"coordinates\"") != NULL)
-        || (strstr(pszText, "\"type\"") != NULL &&
-            strstr(pszText, "\"Topology\"") != NULL)
-        || strstr(pszText, "\"FeatureCollection\"") != NULL
-        || strstr(pszText, "\"Feature\"") != NULL
-        || (strstr(pszText, "\"geometryType\"") != NULL &&
-            strstr(pszText, "\"esriGeometry") != NULL);
+    return true;
+}
+
+/************************************************************************/
+/*                           IsTypeSomething()                          */
+/************************************************************************/
+
+static bool IsTypeSomething( const char* pszText, const char* pszTypeValue )
+{
+    const char* pszIter = strstr(pszText, "\"type\"");
+    if( pszIter == nullptr )
+        return false;
+    pszIter += strlen("\"type\"");
+    while( isspace(*pszIter) )
+        pszIter ++;
+    if( *pszIter != ':' )
+        return false;
+    pszIter ++;
+    while( isspace(*pszIter) )
+        pszIter ++;
+    CPLString osValue;
+    osValue.Printf("\"%s\"", pszTypeValue);
+    return STARTS_WITH(pszIter, osValue.c_str());
+}
+
+/************************************************************************/
+/*                           GetCompactJSon()                           */
+/************************************************************************/
+
+static CPLString GetCompactJSon( const char* pszText, size_t nMaxSize )
+{
+    /* Skip UTF-8 BOM (#5630) */
+    const GByte* pabyData = reinterpret_cast<const GByte *>(pszText);
+    if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
+        pszText += 3;
+
+    CPLString osWithoutSpace;
+    bool bInString = false;
+    for( int i = 0; pszText[i] != '\0' &&
+                    osWithoutSpace.size() < nMaxSize; i++ )
+    {
+        if( bInString )
+        {
+            if( pszText[i] == '\\' )
+            {
+                osWithoutSpace += pszText[i];
+                if( pszText[i+1] == '\0' )
+                    break;
+                osWithoutSpace += pszText[i+1];
+                i ++;
+            }
+            else if( pszText[i] == '"' )
+            {
+                bInString = false;
+                osWithoutSpace += '"';
+            }
+            else
+            {
+                osWithoutSpace += pszText[i];
+            }
+        }
+        else if( pszText[i] == '"' )
+        {
+            bInString = true;
+            osWithoutSpace += '"';
+        }
+        else if( !isspace(static_cast<int>(pszText[i])) )
+        {
+            osWithoutSpace += pszText[i];
+        }
+    }
+    return osWithoutSpace;
+}
+
+/************************************************************************/
+/*                           GeoJSONIsObject()                          */
+/************************************************************************/
+
+bool GeoJSONIsObject( const char* pszText )
+{
+    if( !IsJSONObject(pszText) )
+        return false;
+
+    if( IsTypeSomething(pszText, "Feature") ||
+           IsTypeSomething(pszText, "FeatureCollection") ||
+           IsTypeSomething(pszText, "Point") ||
+           IsTypeSomething(pszText, "LineString") ||
+           IsTypeSomething(pszText, "Polygon") ||
+           IsTypeSomething(pszText, "MultiPoint") ||
+           IsTypeSomething(pszText, "MultiLineString") ||
+           IsTypeSomething(pszText, "MultiPolygon") ||
+           IsTypeSomething(pszText, "GeometryCollection") )
+    {
+        return true;
+    }
+
+    CPLString osWithoutSpace = GetCompactJSon(pszText,
+                                            strlen(szESRIJSonPotentialStart1));
+    if( osWithoutSpace.find("{\"features\":[") == 0 &&
+        osWithoutSpace.find(szESRIJSonPotentialStart1) != 0 )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+/************************************************************************/
+/*                       ESRIJSONIsObject()                             */
+/************************************************************************/
+
+bool ESRIJSONIsObject(const char *pszText)
+{
+    if( !IsJSONObject(pszText) )
+        return false;
+
+    if(  // ESRI Json geometry
+            (strstr(pszText, "\"geometryType\"") != nullptr &&
+             strstr(pszText, "\"esriGeometry") != nullptr)
+
+            // ESRI Json "FeatureCollection"
+            || strstr(pszText, "\"fieldAliases\"") != nullptr
+
+            // ESRI Json "FeatureCollection"
+            || (strstr(pszText, "\"fields\"") != nullptr &&
+                strstr(pszText, "\"esriFieldType") != nullptr) )
+    {
+        return true;
+    }
+
+    CPLString osWithoutSpace = GetCompactJSon(pszText,
+                                            strlen(szESRIJSonPotentialStart1));
+    if( osWithoutSpace.find(szESRIJSonPotentialStart1) == 0 )
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
+/************************************************************************/
+/*                       TopoJSONIsObject()                             */
+/************************************************************************/
+
+bool TopoJSONIsObject(const char *pszText)
+{
+    if( !IsJSONObject(pszText) )
+        return false;
+
+    return IsTypeSomething(pszText, "Topology");
 }
 
 /************************************************************************/
@@ -90,7 +236,7 @@ bool GeoJSONFileIsObject( GDALOpenInfo* poOpenInfo )
     // 6000 was chosen as enough bytes to
     // enable all current tests to pass.
 
-    if( poOpenInfo->fpL == NULL ||
+    if( poOpenInfo->fpL == nullptr ||
         !poOpenInfo->TryToIngest(6000) )
     {
         return false;
@@ -115,28 +261,36 @@ GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
     // NOTE: Sometimes URL ends with .geojson token, for example
     //       http://example/path/2232.geojson
     //       It's important to test beginning of source first.
-    if( eGeoJSONProtocolUnknown !=
-        GeoJSONGetProtocolType( poOpenInfo->pszFilename ) )
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSON:http://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSON:https://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "GEOJSON:ftp://") )
+    {
+        srcType = eGeoJSONSourceService;
+    }
+    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://") )
     {
         if( (strstr(poOpenInfo->pszFilename, "SERVICE=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=WFS") ||
              strstr(poOpenInfo->pszFilename, "service=wfs")) &&
              !strstr(poOpenInfo->pszFilename, "json") )
-            return srcType;
+            return eGeoJSONSourceUnknown;
+        if( strstr(poOpenInfo->pszFilename, "f=json") )
+            return eGeoJSONSourceUnknown;
         srcType = eGeoJSONSourceService;
     }
-    else if( EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "geojson" )
-             || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "json" )
-             || EQUAL( CPLGetExtension( poOpenInfo->pszFilename ), "topojson" )
-             || ((STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsigzip/") ||
-                  STARTS_WITH_CI(poOpenInfo->pszFilename, "/vsizip/")) &&
-                 (strstr( poOpenInfo->pszFilename, ".json") ||
-                  strstr( poOpenInfo->pszFilename, ".JSON") ||
-                  strstr( poOpenInfo->pszFilename, ".geojson") ||
-                  strstr( poOpenInfo->pszFilename, ".GEOJSON")) ))
+    else if( STARTS_WITH_CI(poOpenInfo->pszFilename, "GeoJSON:") )
     {
-        if( poOpenInfo->fpL != NULL )
-            srcType = eGeoJSONSourceFile;
+        VSIStatBufL sStat;
+        if( VSIStatL(poOpenInfo->pszFilename + strlen("GeoJSON:"), &sStat) == 0 )
+        {
+            return eGeoJSONSourceFile;
+        }
+        const char* pszText = poOpenInfo->pszFilename + strlen("GeoJSON:");
+        if( GeoJSONIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
     }
     else if( GeoJSONIsObject( poOpenInfo->pszFilename ) )
     {
@@ -151,29 +305,128 @@ GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo )
 }
 
 /************************************************************************/
-/*                           GeoJSONGetProtocolType()                   */
+/*                     ESRIJSONDriverGetSourceType()                    */
 /************************************************************************/
 
-GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource )
+GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
 {
-    GeoJSONProtocolType ptclType = eGeoJSONProtocolUnknown;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:http://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:https://")||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:ftp://") )
+    {
+        return eGeoJSONSourceService;
+    }
+    else if( STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
+             STARTS_WITH(poOpenInfo->pszFilename, "ftp://") )
+    {
+        if( strstr(poOpenInfo->pszFilename, "f=json") != nullptr )
+            return eGeoJSONSourceService;
+        return eGeoJSONSourceUnknown;
+    }
 
-    if( STARTS_WITH_CI(pszSource, "http:") )
-        ptclType = eGeoJSONProtocolHTTP;
-    else if( STARTS_WITH_CI(pszSource, "https:") )
-        ptclType = eGeoJSONProtocolHTTPS;
-    else if( STARTS_WITH_CI(pszSource, "ftp:") )
-        ptclType = eGeoJSONProtocolFTP;
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "ESRIJSON:") )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL(poOpenInfo->pszFilename + strlen("ESRIJSON:"), &sStat) == 0 )
+        {
+            return eGeoJSONSourceFile;
+        }
+        const char* pszText = poOpenInfo->pszFilename + strlen("ESRIJSON:");
+        if( ESRIJSONIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
 
-    return ptclType;
+    if( poOpenInfo->fpL == nullptr )
+    {
+        const char* pszText = poOpenInfo->pszFilename;
+        if( ESRIJSONIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
+
+    // By default read first 6000 bytes.
+    // 6000 was chosen as enough bytes to
+    // enable all current tests to pass.
+    if( poOpenInfo->fpL == nullptr ||
+        !poOpenInfo->TryToIngest(6000) )
+    {
+        return eGeoJSONSourceUnknown;
+    }
+
+    if( poOpenInfo->pabyHeader != nullptr &&
+        ESRIJSONIsObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader)) )
+    {
+        return eGeoJSONSourceFile;
+    }
+    return eGeoJSONSourceUnknown;
 }
 
+/************************************************************************/
+/*                     TopoJSONDriverGetSourceType()                    */
+/************************************************************************/
+
+GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo )
+{
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:http://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:https://")||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:ftp://") )
+    {
+        return eGeoJSONSourceService;
+    }
+    else if( STARTS_WITH(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH(poOpenInfo->pszFilename, "https://") ||
+             STARTS_WITH(poOpenInfo->pszFilename, "ftp://") )
+    {
+        if( strstr(poOpenInfo->pszFilename, "f=json") != nullptr )
+            return eGeoJSONSourceUnknown;
+        return eGeoJSONSourceService;
+    }
+
+    if( STARTS_WITH_CI(poOpenInfo->pszFilename, "TopoJSON:") )
+    {
+        VSIStatBufL sStat;
+        if( VSIStatL(poOpenInfo->pszFilename + strlen("TopoJSON:"), &sStat) == 0 )
+        {
+            return eGeoJSONSourceFile;
+        }
+        const char* pszText = poOpenInfo->pszFilename + strlen("TopoJSON:");
+        if( TopoJSONIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
+
+    if( poOpenInfo->fpL == nullptr )
+    {
+        const char* pszText = poOpenInfo->pszFilename;
+        if( TopoJSONIsObject(pszText) )
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
+
+    // By default read first 6000 bytes.
+    // 6000 was chosen as enough bytes to
+    // enable all current tests to pass.
+    if( poOpenInfo->fpL == nullptr ||
+        !poOpenInfo->TryToIngest(6000) )
+    {
+        return eGeoJSONSourceUnknown;
+    }
+
+    if( poOpenInfo->pabyHeader != nullptr &&
+        TopoJSONIsObject(reinterpret_cast<const char*>(poOpenInfo->pabyHeader)) )
+    {
+        return eGeoJSONSourceFile;
+    }
+    return eGeoJSONSourceUnknown;
+}
 /************************************************************************/
 /*                           GeoJSONPropertyToFieldType()               */
 /************************************************************************/
 
-static const GIntBig MY_INT64_MAX = (((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF;
-static const GIntBig MY_INT64_MIN = ((GIntBig)0x80000000) << 32;
+constexpr GIntBig MY_INT64_MAX = (((GIntBig)0x7FFFFFFF) << 32) | 0xFFFFFFFF;
+constexpr GIntBig MY_INT64_MIN = ((GIntBig)0x80000000) << 32;
 
 OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
@@ -181,7 +434,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 {
     eSubType = OFSTNone;
 
-    if( poObject == NULL ) { return OFTString; }
+    if( poObject == nullptr ) { return OFTString; }
 
     json_type type = json_object_get_type( poObject );
 
@@ -232,7 +485,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
         for( int i = 0; i < nSize; i++ )
         {
             json_object* poRow = json_object_array_get_idx(poObject, i);
-            if( poRow != NULL )
+            if( poRow != nullptr )
             {
                 type = json_object_get_type( poRow );
                 bOnlyBoolean &= type == json_type_boolean;
@@ -267,7 +520,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
 
 OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 {
-    if( poObject == NULL ) { return OFTString; }
+    if( poObject == nullptr ) { return OFTString; }
     const char* pszStr = json_object_get_string( poObject );
 
     OGRField sWrkField;
@@ -278,9 +531,9 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
     if( bSuccess )
     {
         const bool bHasDate =
-            strchr( pszStr, '/' ) != NULL ||
-            strchr( pszStr, '-' ) != NULL;
-        const bool bHasTime = strchr( pszStr, ':' ) != NULL;
+            strchr( pszStr, '/' ) != nullptr ||
+            strchr( pszStr, '-' ) != nullptr;
+        const bool bHasTime = strchr( pszStr, ':' ) != nullptr;
         if( bHasDate && bHasTime )
             return OFTDateTime;
         else if( bHasDate )
@@ -298,7 +551,7 @@ OGRFieldType GeoJSONStringPropertyToFieldType( json_object* poObject )
 
 const char* OGRGeoJSONGetGeometryName( OGRGeometry const* poGeometry )
 {
-    CPLAssert( NULL != poGeometry );
+    CPLAssert( nullptr != poGeometry );
 
     const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
 

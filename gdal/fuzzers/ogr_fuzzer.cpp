@@ -40,7 +40,7 @@
 #ifndef REGISTER_FUNC
 #define REGISTER_FUNC OGRRegisterAll
 #ifndef OGR_SKIP
-#define OGR_SKIP "CAD"
+#define OGR_SKIP "CAD,DXF"
 #endif
 #endif
 
@@ -66,6 +66,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("CPL_TMPDIR", "/tmp");
     CPLSetConfigOption("DISABLE_OPEN_REAL_NETCDF_FILES", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     return 0;
 }
 
@@ -94,14 +95,14 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     REGISTER_FUNC();
     CPLPushErrorHandler(CPLQuietErrorHandler);
 #ifdef USE_FILESYSTEM
-    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, NULL );
+    OGRDataSourceH hDS = OGROpen( szTempFilename, FALSE, nullptr );
 #else
-    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, NULL );
+    OGRDataSourceH hDS = OGROpen( GDAL_FILENAME, FALSE, nullptr );
 #endif
     if( hDS )
     {
         const int nLayers = OGR_DS_GetLayerCount(hDS);
-        for( int i = 0; i < nLayers; i++ )
+        for( int i = 0; i < 10 && i < nLayers; i++ )
         {
             OGRLayerH hLayer = OGR_DS_GetLayer(hDS, i);
             OGR_L_GetSpatialRef(hLayer);
@@ -110,7 +111,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             OGR_L_GetGeometryColumn(hLayer);
             OGRFeatureH hFeature;
             for( int j = 0; j < 1000 &&
-                    (hFeature = OGR_L_GetNextFeature(hLayer)) != NULL; j++ )
+                    (hFeature = OGR_L_GetNextFeature(hLayer)) != nullptr; j++ )
             {
                 OGR_F_Destroy(hFeature);
             }

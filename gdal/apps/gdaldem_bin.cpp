@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /*                               Usage()                                */
 /************************************************************************/
 
-static void Usage(const char* pszErrorMsg = NULL)
+static void Usage(const char* pszErrorMsg = nullptr)
 
 {
     printf( " Usage: \n"
@@ -88,7 +88,7 @@ static void Usage(const char* pszErrorMsg = NULL)
             "   Scale is the ratio of vertical units to horizontal\n"
             "    for Feet:Latlong use scale=370400, for Meters:LatLong use scale=111120 \n\n");
 
-    if( pszErrorMsg != NULL )
+    if( pszErrorMsg != nullptr )
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
 
     exit( 1 );
@@ -101,7 +101,7 @@ static void Usage(const char* pszErrorMsg = NULL)
 static GDALDEMProcessingOptionsForBinary *GDALDEMProcessingOptionsForBinaryNew(void)
 {
     return static_cast<GDALDEMProcessingOptionsForBinary *>(
-        CPLCalloc(  1, sizeof(GDALDEMProcessingOptionsForBinary) ));
+        CPLCalloc(1, sizeof(GDALDEMProcessingOptionsForBinary)));
 }
 
 /************************************************************************/
@@ -117,7 +117,6 @@ static void GDALDEMProcessingOptionsForBinaryFree(
         CPLFree(psOptionsForBinary->pszSrcFilename);
         CPLFree(psOptionsForBinary->pszColorFilename);
         CPLFree(psOptionsForBinary->pszDstFilename);
-        CPLFree(psOptionsForBinary->pszFormat);
         CPLFree(psOptionsForBinary);
     }
 }
@@ -125,7 +124,7 @@ static void GDALDEMProcessingOptionsForBinaryFree(
 /*                                main()                                */
 /************************************************************************/
 
-int main( int argc, char ** argv )
+MAIN_START(argc, argv)
 
 {
     /* Check strict compilation and runtime library version as we use C++ API */
@@ -162,42 +161,35 @@ int main( int argc, char ** argv )
         GDALDEMProcessingOptionsNew(argv + 1, psOptionsForBinary);
     CSLDestroy( argv );
 
-    if( psOptions == NULL )
+    if( psOptions == nullptr )
     {
         Usage();
     }
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALDEMProcessingOptionsSetProgress(psOptions, GDALTermProgress, NULL);
+        GDALDEMProcessingOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
     }
 
-    if( psOptionsForBinary->pszSrcFilename == NULL )
+    if( psOptionsForBinary->pszSrcFilename == nullptr )
     {
         Usage("Missing source.");
     }
     if ( EQUAL(psOptionsForBinary->pszProcessing, "color-relief") &&
-         psOptionsForBinary->pszColorFilename == NULL )
+         psOptionsForBinary->pszColorFilename == nullptr )
     {
         Usage("Missing color file.");
     }
-    if( psOptionsForBinary->pszDstFilename == NULL )
+    if( psOptionsForBinary->pszDstFilename == nullptr )
     {
         Usage("Missing destination.");
-    }
-
-    if( !psOptionsForBinary->bQuiet &&
-        !psOptionsForBinary->bFormatExplicitlySet)
-    {
-        CheckExtensionConsistency(psOptionsForBinary->pszDstFilename,
-                                  psOptionsForBinary->pszFormat);
     }
 
     // Open Dataset and get raster band.
     GDALDatasetH hSrcDataset =
         GDALOpen( psOptionsForBinary->pszSrcFilename, GA_ReadOnly );
 
-    if( hSrcDataset == NULL )
+    if( hSrcDataset == nullptr )
     {
         fprintf( stderr,
                  "GDALOpen failed - %d\n%s\n",
@@ -225,3 +217,4 @@ int main( int argc, char ** argv )
 
     return nRetCode;
 }
+MAIN_END

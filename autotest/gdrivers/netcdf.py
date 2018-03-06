@@ -34,6 +34,7 @@
 import os
 import sys
 import shutil
+import struct
 from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
@@ -3013,6 +3014,133 @@ def netcdf_77():
 
     return 'success'
 
+
+###############################################################################
+# test we handle correctly valid_range={0,255} for a byte dataset with
+# negative nodata value
+
+def netcdf_78():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_valid_range.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# test we handle correctly _Unsigned="true" for a byte dataset with
+# negative nodata value
+
+def netcdf_79():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/byte_with_neg_fillvalue_and_unsigned_hint.nc')
+    if ds.GetRasterBand(1).GetNoDataValue() != 240:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    data = ds.GetRasterBand(1).ReadRaster()
+    data = struct.unpack('B' * 4, data)
+    if data != (128, 129, 126, 127):
+        gdaltest.post_reason('fail')
+        print(data)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test creating and opening with accent
+def netcdf_80():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    test = gdaltest.GDALTest( 'NETCDF', '../data/byte.tif', 1, 4672 )
+    return test.testCreateCopy(new_filename = 'test\xc3\xa9.nc', check_gt=0, check_srs=0, check_minmax = 0)
+
+###############################################################################
+# netCDF file in rotated_pole projection
+
+def netcdf_81():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/rotated_pole.nc')
+
+    if ds.RasterXSize != 137 or ds.RasterYSize != 108:
+        gdaltest.post_reason('Did not get expected dimensions')
+        print(ds.RasterXSize)
+        print(ds.RasterYSize)
+        return 'fail'
+
+    projection = ds.GetProjectionRef()
+    expected_projection = """PROJCS["unnamed",GEOGCS["unknown",DATUM["unknown",SPHEROID["Spheroid",6367470,594.3130483479559]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Rotated_pole"],EXTENSION["PROJ4","+proj=ob_tran +o_proj=longlat +lon_0=18 +o_lon_p=0 +o_lat_p=39.25 +a=6367470 +b=6367470 +to_meter=0.0174532925199 +wktext"]]"""
+    if projection != expected_projection:
+        gdaltest.post_reason('Did not get expected projection')
+        print(projection)
+        return 'fail'
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (-35.47, 0.44, 0.0, 23.65, 0.0, -0.44)
+    if max([abs(gt[i] - expected_gt[i]) for i in range(6)]) > 1e-3:
+        gdaltest.post_reason('Did not get expected geotransform')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# netCDF file with extra dimensions that are oddly indexed (1D variable
+# corresponding to the dimension but with a differentn ame, no corresponding
+# 1D variable, several corresponding variables)
+
+def netcdf_82():
+
+    if gdaltest.netcdf_drv is None:
+        return 'skip'
+
+    with gdaltest.error_handler():
+        ds = gdal.Open('data/oddly_indexed_extra_dims.nc')
+    md = ds.GetMetadata()
+    expected_md = {
+        'NETCDF_DIM_extra_dim_with_var_of_different_name_VALUES': '{100,200}',
+        'NETCDF_DIM_EXTRA': '{extra_dim_with_several_variables,extra_dim_without_variable,extra_dim_with_var_of_different_name}',
+        'x#standard_name': 'projection_x_coordinate',
+        'NC_GLOBAL#Conventions': 'CF-1.5',
+        'y#standard_name': 'projection_y_coordinate',
+        'NETCDF_DIM_extra_dim_with_var_of_different_name_DEF': '{2,6}'
+    }
+    if md != expected_md:
+        gdaltest.post_reason('Did not get expected metadata')
+        print(md)
+        return 'fail'
+
+    md = ds.GetRasterBand(1).GetMetadata()
+    expected_md = {
+        'NETCDF_DIM_extra_dim_with_several_variables': '1',
+        'NETCDF_DIM_extra_dim_with_var_of_different_name': '100',
+        'NETCDF_DIM_extra_dim_without_variable': '1',
+        'NETCDF_VARNAME': 'data'
+    }
+    if md != expected_md:
+        gdaltest.post_reason('Did not get expected metadata')
+        print(md)
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 
 ###############################################################################
@@ -3100,7 +3228,12 @@ gdaltest_list = [
     netcdf_74,
     netcdf_75,
     netcdf_76,
-    netcdf_77
+    netcdf_77,
+    netcdf_78,
+    netcdf_79,
+    netcdf_80,
+    netcdf_81,
+    netcdf_82
 ]
 
 ###############################################################################
@@ -3125,6 +3258,8 @@ gdaltest_list.append( (ut.testSetProjection, item[0]) )
 
 #SetMetadata() not supported
 #gdaltest_list.append( (ut.testSetMetadata, item[0]) )
+
+# gdaltest_list = [ netcdf_1, netcdf_82 ]
 
 # Others we do for each pixel type.
 for item in init_list:

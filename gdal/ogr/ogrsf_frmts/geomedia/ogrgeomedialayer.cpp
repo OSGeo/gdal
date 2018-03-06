@@ -42,15 +42,15 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGeomediaLayer::OGRGeomediaLayer() :
-    poFeatureDefn(NULL),
-    poStmt(NULL),
-    poSRS(NULL),
+    poFeatureDefn(nullptr),
+    poStmt(nullptr),
+    poSRS(nullptr),
     nSRSId(-2), // we haven't even queried the database for it yet.
     iNextShapeId(0),
-    poDS(NULL),
-    pszGeomColumn(NULL),
-    pszFIDColumn(NULL),
-    panFieldOrdinals(NULL)
+    poDS(nullptr),
+    pszGeomColumn(nullptr),
+    pszFIDColumn(nullptr),
+    panFieldOrdinals(nullptr)
 {}
 
 /************************************************************************/
@@ -60,33 +60,33 @@ OGRGeomediaLayer::OGRGeomediaLayer() :
 OGRGeomediaLayer::~OGRGeomediaLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "Geomedia", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
                   poFeatureDefn->GetName() );
     }
 
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
     {
         poFeatureDefn->Release();
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
     }
 
     CPLFree( pszGeomColumn );
     CPLFree( panFieldOrdinals );
     CPLFree( pszFIDColumn );
 
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
     {
         poSRS->Release();
-        poSRS = NULL;
+        poSRS = nullptr;
     }
 }
 
@@ -117,11 +117,11 @@ CPLErr OGRGeomediaLayer::BuildFeatureDefn( const char *pszLayerName,
         oField.SetWidth(std::max(static_cast<short>(0),
                                  poStmtIn->GetColSize(iCol)));
 
-        if( pszGeomColumn != NULL
+        if( pszGeomColumn != nullptr
             && EQUAL(poStmtIn->GetColName(iCol),pszGeomColumn) )
             continue;
 
-        if( pszGeomColumn == NULL
+        if( pszGeomColumn == nullptr
             && EQUAL(poStmtIn->GetColName(iCol),"Geometry")
             && (poStmtIn->GetColType(iCol) == SQL_BINARY ||
                 poStmtIn->GetColType(iCol) == SQL_VARBINARY ||
@@ -199,12 +199,12 @@ OGRFeature *OGRGeomediaLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
@@ -221,8 +221,8 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
 {
     OGRErr err = OGRERR_NONE;
 
-    if( GetStatement() == NULL )
-        return NULL;
+    if( GetStatement() == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we are marked to restart then do so, and fetch a record.     */
@@ -230,8 +230,8 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
     if( !poStmt->Fetch() )
     {
         delete poStmt;
-        poStmt = NULL;
-        return NULL;
+        poStmt = nullptr;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -239,7 +239,7 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature = new OGRFeature( poFeatureDefn );
 
-    if( pszFIDColumn != NULL && poStmt->GetColId(pszFIDColumn) > -1 )
+    if( pszFIDColumn != nullptr && poStmt->GetColId(pszFIDColumn) > -1 )
         poFeature->SetFID(
             atoi(poStmt->GetColData(poStmt->GetColId(pszFIDColumn))) );
     else
@@ -256,7 +256,7 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
         int iSrcField = panFieldOrdinals[iField]-1;
         const char *pszValue = poStmt->GetColData( iSrcField );
 
-        if( pszValue == NULL )
+        if( pszValue == nullptr )
             poFeature->SetFieldNull( iField );
         else if( poFeature->GetFieldDefnRef(iField)->GetType() == OFTBinary )
             poFeature->SetField( iField,
@@ -269,14 +269,14 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
 /*      Try to extract a geometry.                                      */
 /* -------------------------------------------------------------------- */
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
     {
         int iField = poStmt->GetColId( pszGeomColumn );
         GByte *pabyShape = (GByte *) poStmt->GetColData( iField );
         int nBytes = poStmt->GetColDataLength(iField);
-        OGRGeometry *poGeom = NULL;
+        OGRGeometry *poGeom = nullptr;
 
-        if( pabyShape != NULL )
+        if( pabyShape != nullptr )
         {
             err = OGRCreateFromGeomedia( pabyShape, &poGeom, nBytes );
             if( OGRERR_NONE != err )
@@ -287,7 +287,7 @@ OGRFeature *OGRGeomediaLayer::GetNextRawFeature()
             }
         }
 
-        if( poGeom != NULL && OGRERR_NONE == err )
+        if( poGeom != nullptr && OGRERR_NONE == err )
         {
             poGeom->assignSpatialReference( poSRS );
             poFeature->SetGeometryDirectly( poGeom );
@@ -325,7 +325,7 @@ int OGRGeomediaLayer::TestCapability( CPL_UNUSED const char * pszCap )
 const char *OGRGeomediaLayer::GetFIDColumn()
 
 {
-    if( pszFIDColumn != NULL )
+    if( pszFIDColumn != nullptr )
         return pszFIDColumn;
     else
         return "";
@@ -338,7 +338,7 @@ const char *OGRGeomediaLayer::GetFIDColumn()
 const char *OGRGeomediaLayer::GetGeometryColumn()
 
 {
-    if( pszGeomColumn != NULL )
+    if( pszGeomColumn != nullptr )
         return pszGeomColumn;
     else
         return "";

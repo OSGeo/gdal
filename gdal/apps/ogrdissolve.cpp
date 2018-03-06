@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
+#include "commonutils.h"
 #include <map>
 #include <list>
 CPL_CVSID("$Id$")
@@ -63,7 +64,7 @@ typedef std::list<OGRGeometry*> GeometriesList;
 /*                                main()                                */
 /************************************************************************/
 
-int main( int nArgc, char ** papszArgv )
+MAIN_START(nArgc, papszArgv)
 
 {
     const char  *pszFormat = "ESRI Shapefile";
@@ -100,7 +101,7 @@ int main( int nArgc, char ** papszArgv )
 
     for( int iArg = 1; iArg < nArgc; iArg++ )
     {
-        if( EQUAL(papszArgv[iArg],"-f") && iArg < nArgc-1 )
+        if( (EQUAL(papszArgv[iArg],"-f") || EQUAL(papszArgv[iArg],"-of")) && iArg < nArgc-1 )
         {
             pszFormat = papszArgv[++iArg];
         }
@@ -455,6 +456,7 @@ int main( int nArgc, char ** papszArgv )
 
     return 0;
 }
+MAIN_END
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -1144,7 +1146,7 @@ static int DissolveLayer( OGRDataSource *poSrcDS,
 //                     poDstLayer->CommitTransaction();
 //
 //                 printf( "Failed to transform feature %d.\n",
-//                         (int) poFeature->GetFID() );
+//                         static_cast<int>(poFeature->GetFID()) );
 //                 if( !bSkipFailures )
 //                 {
 //                     OGRFeature::DestroyFeature( poFeature );

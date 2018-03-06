@@ -15,6 +15,7 @@ gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]
           [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]
           [-unsetstats] [-stats] [-approx_stats]
           [-scale value] [-offset value]
+          [-colorinterp_X red|green|blue|alpha|gray|undefined]*
           [-gcp pixel line easting northing [elevation]]*
           [-unsetmd] [-oo NAME=VALUE]* [-mo "META-TAG=VALUE"]*  datasetname
 \endverbatim
@@ -88,6 +89,11 @@ Note: these values can be applied using -unscale during a gdal_translate run.</d
 <dt> <b>-offset</b> <i>value</i>:</dt><dd> (GDAL >= 2.2)
 Assign a specified offset value to output bands. If no offset is needed, it
 recommended to set the value to 0. For more see scale.</dd> 
+
+<dt> <b>-colorinterp_X</b> <i>red|green|blue|alpha|gray|undefined</i>:</dt><dd>
+(GDAL >= 2.3) Change the color interpretation of band X (where X is a valid
+band number, starting at 1)
+</dd>
 
 <dt> <b>-gcp</b> <i>pixel line easting northing [elevation]</i>:</dt><dd>
 Add the indicated ground control point to the dataset.  This option

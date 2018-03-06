@@ -66,7 +66,7 @@ OGROpenAirLabelLayer::OGROpenAirLabelLayer( VSILFILE* fp ) :
 OGROpenAirLabelLayer::~OGROpenAirLabelLayer()
 
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
     poFeatureDefn->Release();
@@ -94,12 +94,12 @@ OGRFeature *OGROpenAirLabelLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -121,9 +121,9 @@ OGRFeature *OGROpenAirLabelLayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fpOpenAir, 1024, NULL);
-        if (pszLine == NULL)
-            return NULL;
+        const char* pszLine = CPLReadLine2L(fpOpenAir, 1024, nullptr);
+        if (pszLine == nullptr)
+            return nullptr;
 
         if (pszLine[0] == '*' || pszLine[0] == '\0')
             continue;

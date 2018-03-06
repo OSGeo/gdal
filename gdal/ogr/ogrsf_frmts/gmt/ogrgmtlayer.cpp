@@ -39,8 +39,8 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
-    poSRS(NULL),
-    poFeatureDefn(NULL),
+    poSRS(nullptr),
+    poFeatureDefn(nullptr),
     iNextFID(0),
     bUpdate(CPL_TO_BOOL(bUpdateIn)),
     // Assume header complete in readonly mode.
@@ -48,10 +48,10 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
     bRegionComplete(false),
     nRegionOffset(0),
     fp(VSIFOpenL( pszFilename, (bUpdateIn ? "r+" : "r" ))),
-    papszKeyedValues(NULL),
+    papszKeyedValues(nullptr),
     bValidFile(false)
 {
-    if( fp == NULL )
+    if( fp == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -79,7 +79,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
             nRegionOffset = nStartOfLine;
 
         for( int iKey = 0;
-             papszKeyedValues != NULL && papszKeyedValues[iKey] != NULL;
+             papszKeyedValues != nullptr && papszKeyedValues[iKey] != nullptr;
              iKey++ )
         {
             if( papszKeyedValues[iKey][0] == 'N' )
@@ -96,7 +96,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
                 if( osArg[0] == '"' && osArg.back() == '"' )
                 {
                     osArg = osArg.substr(1,osArg.length()-2);
-                    char *pszArg = CPLUnescapeString(osArg, NULL,
+                    char *pszArg = CPLUnescapeString(osArg, nullptr,
                                                      CPLES_BackslashQuotable);
                     osArg = pszArg;
                     CPLFree( pszArg );
@@ -125,7 +125,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
         if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
     else if( osEPSG.length() )
@@ -134,7 +134,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
         if( poSRS->importFromEPSG( atoi(osEPSG) ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
     else if( osProj4.length() )
@@ -143,7 +143,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
         if( poSRS->importFromProj4( osProj4 ) != OGRERR_NONE )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 
@@ -237,7 +237,7 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
 OGRGmtLayer::~OGRGmtLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "Gmt", "%d features read on layer '%s'.",
                   static_cast<int>(m_nFeaturesRead),
@@ -269,7 +269,7 @@ OGRGmtLayer::~OGRGmtLayer()
     if( poSRS )
         poSRS->Release();
 
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL( fp );
 }
 
@@ -291,14 +291,14 @@ bool OGRGmtLayer::ReadLine()
     if( papszKeyedValues )
     {
         CSLDestroy( papszKeyedValues );
-        papszKeyedValues = NULL;
+        papszKeyedValues = nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read newline.                                                   */
 /* -------------------------------------------------------------------- */
     const char *pszLine = CPLReadLineL( fp );
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
         return false; // end of file.
 
     osLine = pszLine;
@@ -335,7 +335,7 @@ bool OGRGmtLayer::ReadLine()
             const CPLString osValue = osLine.substr(i+2,iValEnd-i-2);
 
             // Unecape contents
-            char *pszUEValue = CPLUnescapeString( osValue, NULL,
+            char *pszUEValue = CPLUnescapeString( osValue, nullptr,
                                                   CPLES_BackslashQuotable );
 
             CPLString osKeyValue = osLine.substr(i+1,1);
@@ -381,7 +381,7 @@ bool OGRGmtLayer::ScanAheadForHole()
 
     while( ReadLine() && osLine[0] == '#' )
     {
-        if( papszKeyedValues != NULL && papszKeyedValues[0][0] == 'H' )
+        if( papszKeyedValues != nullptr && papszKeyedValues[0][0] == 'H' )
             return true;
     }
 
@@ -412,7 +412,7 @@ bool OGRGmtLayer::NextIsFeature()
 
     ReadLine();
 
-    if( osLine[0] == '#' && strstr(osLine,"@D") != NULL )
+    if( osLine[0] == '#' && strstr(osLine,"@D") != nullptr )
         bReturn = true;
 
     VSIFSeekL( fp, nSavedLocation, SEEK_SET );
@@ -438,7 +438,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         && poFeatureDefn->GetGeomType() != wkbUnknown;
 #endif
     CPLString osFieldData;
-    OGRGeometry *poGeom = NULL;
+    OGRGeometry *poGeom = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read lines associated with this feature.                        */
@@ -450,7 +450,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
         if( osLine[0] == '>' )
         {
-            if( poGeom != NULL
+            if( poGeom != nullptr
                 && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
             {
                 OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
@@ -472,7 +472,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != NULL
+            else if( poGeom != nullptr
                      && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
             {
                 if( ScanAheadForHole() )
@@ -481,7 +481,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != NULL
+            else if( poGeom != nullptr
                      && (wkbFlatten(poGeom->getGeometryType())
                          == wkbMultiLineString)
                      && !NextIsFeature() )
@@ -489,7 +489,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 ((OGRMultiLineString *) poGeom)->
                     addGeometryDirectly( new OGRLineString() );
             }
-            else if( poGeom != NULL )
+            else if( poGeom != nullptr )
             {
                 break;
             }
@@ -502,7 +502,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         else if( osLine[0] == '#' )
         {
             for( int i = 0;
-                 papszKeyedValues != NULL && papszKeyedValues[i] != NULL;
+                 papszKeyedValues != nullptr && papszKeyedValues[i] != nullptr;
                  i++ )
             {
                 if( papszKeyedValues[i][0] == 'D' )
@@ -520,7 +520,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
             if( nDim >= 2 )
             {
-                if( poGeom == NULL )
+                if( poGeom == nullptr )
                 {
                     switch( poFeatureDefn->GetGeomType() )
                     {
@@ -584,7 +584,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                   case wkbPolygon:
                   case wkbMultiPolygon:
                   {
-                      OGRPolygon *poPoly = NULL;
+                      OGRPolygon *poPoly = nullptr;
 
                       if( wkbFlatten(poGeom->getGeometryType())
                           == wkbMultiPolygon )
@@ -596,7 +596,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                       else
                           poPoly = reinterpret_cast<OGRPolygon *>(poGeom);
 
-                      OGRLinearRing *poRing = NULL;
+                      OGRLinearRing *poRing = nullptr;
                       if( poPoly->getNumInteriorRings() == 0 )
                           poRing = poPoly->getExteriorRing();
                       else
@@ -636,8 +636,8 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
         }
     }
 
-    if( poGeom == NULL )
-        return NULL;
+    if( poGeom == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create feature.                                                 */
@@ -652,7 +652,7 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 /* -------------------------------------------------------------------- */
     char **papszFD = CSLTokenizeStringComplex( osFieldData, "|", TRUE, TRUE );
 
-    for( int iField = 0; papszFD != NULL && papszFD[iField] != NULL; iField++ )
+    for( int iField = 0; papszFD != nullptr && papszFD[iField] != nullptr; iField++ )
     {
         if( iField >= poFeatureDefn->GetFieldCount() )
             break;
@@ -678,12 +678,12 @@ OGRFeature *OGRGmtLayer::GetNextFeature()
     {
         OGRFeature *poFeature = GetNextRawFeature();
 
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature ) ) )
         {
             return poFeature;
@@ -692,7 +692,7 @@ OGRFeature *OGRGmtLayer::GetNextFeature()
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -710,11 +710,11 @@ OGRErr OGRGmtLayer::CompleteHeader( OGRGeometry *poThisGeom )
 /*      out and write it now.                                           */
 /* -------------------------------------------------------------------- */
     if( poFeatureDefn->GetGeomType() == wkbUnknown
-        && poThisGeom != NULL )
+        && poThisGeom != nullptr )
     {
         poFeatureDefn->SetGeomType(wkbFlatten(poThisGeom->getGeometryType()));
 
-        const char *pszGeom = NULL;
+        const char *pszGeom = nullptr;
         switch( wkbFlatten(poFeatureDefn->GetGeomType()) )
         {
           case wkbPoint:
@@ -825,7 +825,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
     OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    if( poGeom == NULL )
+    if( poGeom == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Features without geometry not supported by GMT writer." );

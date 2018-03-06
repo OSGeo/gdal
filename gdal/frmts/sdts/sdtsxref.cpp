@@ -70,10 +70,10 @@ int SDTS_XREF::Read( const char * pszFilename )
 /*      Read the first record, and verify that this is an XREF record.  */
 /* -------------------------------------------------------------------- */
     DDFRecord *poRecord = oXREFFile.ReadRecord();
-    if( poRecord == NULL )
+    if( poRecord == nullptr )
         return FALSE;
 
-    if( poRecord->GetStringSubfield( "XREF", 0, "MODN", 0 ) == NULL )
+    if( poRecord->GetStringSubfield( "XREF", 0, "MODN", 0 ) == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */

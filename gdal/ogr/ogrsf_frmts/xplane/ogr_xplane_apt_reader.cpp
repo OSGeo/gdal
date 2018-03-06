@@ -46,26 +46,26 @@ OGRXPlaneReader* OGRXPlaneCreateAptFileReader(
 /*                         OGRXPlaneAptReader()                         */
 /************************************************************************/
 OGRXPlaneAptReader::OGRXPlaneAptReader() :
-    poDataSource(NULL),
-    poAPTLayer(NULL),
-    poRunwayLayer(NULL),
-    poStopwayLayer(NULL),
-    poRunwayThresholdLayer(NULL),
-    poWaterRunwayLayer(NULL),
-    poWaterRunwayThresholdLayer(NULL),
-    poHelipadLayer(NULL),
-    poHelipadPolygonLayer(NULL),
-    poTaxiwayRectangleLayer(NULL),
-    poPavementLayer(NULL),
-    poAPTBoundaryLayer(NULL),
-    poAPTLinearFeatureLayer(NULL),
-    poATCFreqLayer(NULL),
-    poStartupLocationLayer(NULL),
-    poAPTLightBeaconLayer(NULL),
-    poAPTWindsockLayer(NULL),
-    poTaxiwaySignLayer(NULL),
-    poVASI_PAPI_WIGWAG_Layer(NULL),
-    poTaxiLocationLayer(NULL),
+    poDataSource(nullptr),
+    poAPTLayer(nullptr),
+    poRunwayLayer(nullptr),
+    poStopwayLayer(nullptr),
+    poRunwayThresholdLayer(nullptr),
+    poWaterRunwayLayer(nullptr),
+    poWaterRunwayThresholdLayer(nullptr),
+    poHelipadLayer(nullptr),
+    poHelipadPolygonLayer(nullptr),
+    poTaxiwayRectangleLayer(nullptr),
+    poPavementLayer(nullptr),
+    poAPTBoundaryLayer(nullptr),
+    poAPTLinearFeatureLayer(nullptr),
+    poATCFreqLayer(nullptr),
+    poStartupLocationLayer(nullptr),
+    poAPTLightBeaconLayer(nullptr),
+    poAPTWindsockLayer(nullptr),
+    poTaxiwaySignLayer(nullptr),
+    poVASI_PAPI_WIGWAG_Layer(nullptr),
+    poTaxiLocationLayer(nullptr),
     nVersion(APT_V_UNKNOWN),
     dfElevation(0.0),
     bControlTower(false)
@@ -97,7 +97,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn ) :
     poAPTWindsockLayer(new OGRXPlaneAPTWindsockLayer()),
     poTaxiwaySignLayer(new OGRXPlaneTaxiwaySignLayer()),
     poVASI_PAPI_WIGWAG_Layer(new OGRXPlane_VASI_PAPI_WIGWAG_Layer()),
-    poTaxiLocationLayer(NULL),
+    poTaxiLocationLayer(nullptr),
     nVersion(APT_V_UNKNOWN),
     dfElevation(0.0),
     bControlTower(false)
@@ -218,12 +218,12 @@ void OGRXPlaneAptReader::Read()
 {
     if( !bResumeLine )
     {
-        CPLAssert(papszTokens == NULL);
+        CPLAssert(papszTokens == nullptr);
     }
 
-    const char* pszLine = NULL;
+    const char* pszLine = nullptr;
 
-    while( bResumeLine || (pszLine = CPLReadLineL(fp)) != NULL )
+    while( bResumeLine || (pszLine = CPLReadLineL(fp)) != nullptr )
     {
         if( !bResumeLine )
         {
@@ -240,7 +240,7 @@ void OGRXPlaneAptReader::Read()
             if( nTokens == 1 && strcmp(papszTokens[0], "99") == 0 )
             {
                 CSLDestroy(papszTokens);
-                papszTokens = NULL;
+                papszTokens = nullptr;
                 bEOF = true;
                 if( bAptHeaderFound )
                 {
@@ -381,7 +381,7 @@ void OGRXPlaneAptReader::Read()
         } while( bResumeLine );
 
         CSLDestroy(papszTokens);
-        papszTokens = NULL;
+        papszTokens = nullptr;
 
         if( poInterestLayer && !poInterestLayer->IsEmpty() )
             return;
@@ -434,13 +434,13 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
     dfLength *= FEET_TO_METER;
     double adfDisplacedThresholdLength[2];
     adfDisplacedThresholdLength[0] = atoi(papszTokens[6]) * FEET_TO_METER;
-    if (strchr(papszTokens[6], '.') != NULL)
+    if (strchr(papszTokens[6], '.') != nullptr)
         adfDisplacedThresholdLength[1] = atoi(strchr(papszTokens[6], '.') + 1) * FEET_TO_METER;
     else
         adfDisplacedThresholdLength[1] = 0;
     double adfStopwayLength[2];
     adfStopwayLength[0] = atoi(papszTokens[7]) * FEET_TO_METER;
-    if (strchr(papszTokens[7], '.') != NULL)
+    if (strchr(papszTokens[7], '.') != nullptr)
         adfStopwayLength[1] = atoi(strchr(papszTokens[7], '.') + 1) * FEET_TO_METER;
     else
         adfStopwayLength[1] = 0;
@@ -475,7 +475,7 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
     if (nTokens == 16)
     {
         adfVisualGlidePathAngle[0] = atoi(papszTokens[15]) / 100.;
-        if (strchr(papszTokens[15], '.') != NULL)
+        if (strchr(papszTokens[15], '.') != nullptr)
             adfVisualGlidePathAngle[1] = atoi(strchr(papszTokens[15], '.') + 1) / 100.;
         else
             adfVisualGlidePathAngle[1] = 0;
@@ -532,7 +532,7 @@ void OGRXPlaneAptReader::ParseRunwayTaxiwayV810Record()
         if (nAPTType == APT_SEAPLANE_HEADER || eSurfaceCode == 13)
         {
             /* Special case for water-runways. No special record in V8.10 */
-            OGRFeature* apoWaterRunwayThreshold[2] = {NULL, NULL};
+            OGRFeature* apoWaterRunwayThreshold[2] = {nullptr, nullptr};
             bool bBuoys = true;
 
             for( int i=0; i < 2; i++ )
@@ -726,7 +726,7 @@ void OGRXPlaneAptReader::ParseRunwayRecord()
         = OGR_GreatCircle_Distance(adfLat[0], adfLon[0], adfLat[1], adfLon[1]);
     if (poRunwayThresholdLayer)
     {
-        OGRFeature* apoRunwayThreshold[2] = { NULL, NULL };
+        OGRFeature* apoRunwayThreshold[2] = { nullptr, nullptr };
         for( int nRwy=0; nRwy<=1 ; nRwy++ )
         {
             const int eMarkings = atoi(papszTokens[8 + 9*nRwy + 5]);
@@ -814,7 +814,7 @@ void OGRXPlaneAptReader::ParseWaterRunwayRecord()
 
     if (poWaterRunwayThresholdLayer)
     {
-        OGRFeature* apoWaterRunwayThreshold[2] = {NULL, NULL};
+        OGRFeature* apoWaterRunwayThreshold[2] = {nullptr, nullptr};
         for( int i = 0; i < 2; i++ )
         {
             apoWaterRunwayThreshold[i] =
@@ -952,7 +952,7 @@ static OGRGeometry* OGRXPlaneAptReaderSplitPolygon(OGRPolygon& polygon)
         OGRGeometryFactory::organizePolygons(
             reinterpret_cast<OGRGeometry**>( papoPolygons ),
             1 + polygon.getNumInteriorRings(),
-            &bIsValid, NULL);
+            &bIsValid, nullptr);
 
     delete[] papoPolygons;
 
@@ -975,10 +975,10 @@ OGRGeometry* OGRXPlaneAptReader::FixPolygonTopology(OGRPolygon& polygon)
     if (poExternalRing->getNumPoints() < 4)
     {
         CPLDebug("XPLANE", "Discarded degenerated polygon at line %d", nLineNumber);
-        return NULL;
+        return nullptr;
     }
 
-    OGRPolygon* poPolygonTemp = NULL;
+    OGRPolygon* poPolygonTemp = nullptr;
     for(int i=0;i<poPolygon->getNumInteriorRings();i++)
     {
         OGRLinearRing* poInternalRing = poPolygon->getInteriorRing(i);
@@ -1089,10 +1089,10 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
     OGRLinearRing linearRing;
 
-    *ppoGeom = NULL;
+    *ppoGeom = nullptr;
 
-    const char* pszLine = NULL;
-    while((pszLine = CPLReadLineL(fp)) != NULL)
+    const char* pszLine = nullptr;
+    while((pszLine = CPLReadLineL(fp)) != nullptr)
     {
         int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
@@ -1293,7 +1293,7 @@ bool OGRXPlaneAptReader::ParsePolygonalGeometry(OGRGeometry** ppoGeom)
 
     CPLAssert(false);
 
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
     return false;
 }
@@ -1317,11 +1317,11 @@ void OGRXPlaneAptReader::ParsePavement()
     const CPLString osPavementName = readStringUntilEnd(4);
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
     bResumeLine = ParsePolygonalGeometry(&poGeom);
-    if (poGeom != NULL && poPavementLayer)
+    if (poGeom != nullptr && poPavementLayer)
     {
         if (poGeom->getGeometryType() == wkbPolygon)
         {
@@ -1348,7 +1348,7 @@ void OGRXPlaneAptReader::ParsePavement()
             }
         }
     }
-    if (poGeom != NULL)
+    if (poGeom != nullptr)
         delete poGeom;
 }
 
@@ -1365,11 +1365,11 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
     const CPLString osBoundaryName = readStringUntilEnd(2);
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
     bResumeLine = ParsePolygonalGeometry(&poGeom);
-    if (poGeom != NULL && poAPTBoundaryLayer)
+    if (poGeom != nullptr && poAPTBoundaryLayer)
     {
         if (poGeom->getGeometryType() == wkbPolygon)
         {
@@ -1393,7 +1393,7 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
             }
         }
     }
-    if (poGeom != NULL)
+    if (poGeom != nullptr)
         delete poGeom;
 }
 
@@ -1427,8 +1427,8 @@ bool OGRXPlaneAptReader::ParseLinearGeometry(
 
     OGRLineString lineString;
 
-    const char* pszLine = NULL;
-    while((pszLine = CPLReadLineL(fp)) != NULL)
+    const char* pszLine = nullptr;
+    while((pszLine = CPLReadLineL(fp)) != nullptr)
     {
         int nType = -1;
         papszTokens = CSLTokenizeString(pszLine);
@@ -1660,7 +1660,7 @@ bool OGRXPlaneAptReader::ParseLinearGeometry(
 
     CPLAssert(false);
 
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
     return false;
 }
@@ -1678,7 +1678,7 @@ void OGRXPlaneAptReader::ParseAPTLinearFeature()
     CPLString osLinearFeatureName = readStringUntilEnd(2);
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
     OGRMultiLineString multilinestring;
     int bIsValid = false;

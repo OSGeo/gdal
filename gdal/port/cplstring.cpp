@@ -173,7 +173,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
 {
-    if( pszFormat == NULL )
+    if( pszFormat == nullptr )
         pszFormat = "%g";
 
     // presumably long enough for any number.
@@ -203,7 +203,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 CPLString &CPLString::Trim()
 
 {
-    static const char szWhitespace[] = " \t\r\n";
+    constexpr char szWhitespace[] = " \t\r\n";
 
     const size_t iLeft = find_first_not_of( szWhitespace );
     const size_t iRight = find_last_not_of( szWhitespace );
@@ -228,9 +228,9 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
 {
-    if( pszSrcEncoding == NULL )
+    if( pszSrcEncoding == nullptr )
         pszSrcEncoding = CPL_ENC_UTF8;
-    if( pszDstEncoding == NULL )
+    if( pszDstEncoding == nullptr )
         pszDstEncoding = CPL_ENC_UTF8;
 
     if( strcmp(pszSrcEncoding, pszDstEncoding) == 0 )
@@ -240,7 +240,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                                   pszSrcEncoding,
                                   pszDstEncoding );
 
-    if( pszRecoded == NULL )
+    if( pszRecoded == nullptr )
         return *this;
 
     assign( pszRecoded );
@@ -390,6 +390,23 @@ CPLString &CPLString::replaceAll( char chBefore,
     return replaceAll(std::string(&chBefore, 1), std::string(&chAfter, 1));
 }
 
+
+/************************************************************************/
+/*                             endsWith()                              */
+/************************************************************************/
+
+/**
+ * Returns whether the string ends with another string
+ * @param osStr other string.
+ * @return true if the string ends wit osStr.
+ */
+bool CPLString::endsWith( const std::string& osStr ) const
+{
+    if( size() < osStr.size() )
+        return false;
+    return substr(size() - osStr.size()) == osStr;
+}
+
 /************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
@@ -439,7 +456,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
                        const char* pszValue)
 {
     CPLString osURL(pszURL);
-    if( strchr(osURL, '?') == NULL )
+    if( strchr(osURL, '?') == nullptr )
         osURL += "?";
     pszURL = osURL.c_str();
 

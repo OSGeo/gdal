@@ -44,9 +44,9 @@ namespace tut
         OGRSpatialReferenceH srs_;
 
         test_osr_proj4_data()
-            : err_(OGRERR_NONE), srs_(NULL)
+            : err_(OGRERR_NONE), srs_(nullptr)
         {
-            srs_ = OSRNewSpatialReference(NULL);
+            srs_ = OSRNewSpatialReference(nullptr);
         }
 
         ~test_osr_proj4_data()
@@ -66,7 +66,7 @@ namespace tut
     template<>
     void object::test<1>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         std::string wkt("+proj=tmerc +lat_0=53.5000000000 +lon_0=-8.0000000000"
               "+k_0=1.0000350000 +x_0=200000.0000000000 +y_0=250000.0000000000"
@@ -93,7 +93,7 @@ namespace tut
     template<>
     void object::test<2>()
     {
-        ensure("SRS handle is NULL", NULL != srs_);
+        ensure("SRS handle is NULL", nullptr != srs_);
 
         std::string wkt("+proj=lcc +x_0=0.6096012192024384e+06 +y_0=0"
             "+lon_0=90dw +lat_0=42dn +lat_1=44d4'n +lat_2=42d44'n"

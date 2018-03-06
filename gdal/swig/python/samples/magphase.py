@@ -27,7 +27,7 @@
 #  DEALINGS IN THE SOFTWARE.
 #******************************************************************************
 
-import gdal
+from osgeo import gdal
 import gdalnumeric
 try:
     import numpy
@@ -46,6 +46,3 @@ gdalnumeric.SaveArray( mag_image, 'magnitude.tif' )
 
 phase_image = numpy.angle(src_image)
 gdalnumeric.SaveArray( phase_image, 'phase.tif' )
-
-
-

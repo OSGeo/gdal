@@ -26,9 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_mem.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "ogr_mem.h"
+#include "gdal.h"
+#include "ogr_core.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 
@@ -50,7 +55,7 @@ const char *OGRMemDriver::GetName() { return "Memory"; }
 
 OGRDataSource *OGRMemDriver::Open( const char * /* pszFilename */, int )
 {
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -84,7 +89,7 @@ int OGRMemDriver::TestCapability( const char *pszCap )
 void RegisterOGRMEM()
 
 {
-    if( GDALGetDriverByName("Memory") != NULL )
+    if( GDALGetDriverByName("Memory") != nullptr )
         return;
 
     OGRSFDriver *poDriver = new OGRMemDriver;

@@ -40,7 +40,6 @@
 CPL_C_START
 int    GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
-void   LibgeotiffOneTimeCleanupMutex();
 CPL_C_END
 
 void    GTIFFSetInExternalOvr( bool b );
@@ -65,6 +64,12 @@ const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
 
+/* GeoTIFF DGIWG */
+/* https://www.awaresystems.be/imaging/tiff/tifftags/tiff_rsid.html */
+#define TIFFTAG_TIFF_RSID      50908
+/* https://www.awaresystems.be/imaging/tiff/tifftags/geo_metadata.html */
+#define TIFFTAG_GEO_METADATA   50909
+
 #if defined(TIFFLIB_VERSION) && TIFFLIB_VERSION >= 20081217 && defined(BIGTIFF_SUPPORT)
 #  define HAVE_UNSETFIELD
 #endif
@@ -84,6 +89,14 @@ const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 
 #if !defined(TIFFTAG_LZMAPRESET)
 #define TIFFTAG_LZMAPRESET      65562   /* LZMA2 preset (compression level) */
+#endif
+
+#if !defined(COMPRESSION_ZSTD)
+#define     COMPRESSION_ZSTD        34926   /* ZSTD */
+#endif
+
+#if !defined(TIFFTAG_ZSTD_LEVEL)
+#define TIFFTAG_ZSTD_LEVEL      65534    /* ZSTD compression level */
 #endif
 
 #endif // GTIFF_H_INCLUDED

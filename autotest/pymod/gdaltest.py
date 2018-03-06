@@ -31,6 +31,7 @@
 
 import contextlib
 import os
+import os.path
 import stat
 import sys
 import time
@@ -570,7 +571,7 @@ class GDALTest:
                        vsimem = 0, new_filename = None, strict_in = 0,
                        skip_preclose_test = 0, delete_copy = 1, gt_epsilon = None,
                        check_checksum_not_null = None, interrupt_during_copy = False,
-                       dest_open_options = None):
+                       dest_open_options = None, quiet_error_handler = True):
 
         if self.testDriver() == 'fail':
             return 'skip'
@@ -597,7 +598,8 @@ class GDALTest:
             else:
                 new_filename = 'tmp/' + self.filename + '.tst'
 
-        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+        if quiet_error_handler:
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         if interrupt_during_copy:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                          strict = strict_in,
@@ -607,7 +609,8 @@ class GDALTest:
             new_ds = self.driver.CreateCopy( new_filename, src_ds,
                                             strict = strict_in,
                                             options = self.options )
-        gdal.PopErrorHandler()
+        if quiet_error_handler:
+            gdal.PopErrorHandler()
 
         if interrupt_during_copy:
             if new_ds is None:
@@ -1259,9 +1262,11 @@ def geotransform_equals(gt1, gt2, gt_epsilon):
 # If GDAL_DOWNLOAD_TEST_DATA is not defined, the function fails
 # If GDAL_DOWNLOAD_TEST_DATA is defined, 'url' is downloaded  as 'filename' in 'tmp/cache/'
 
-def download_file(url, filename, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
+def download_file(url, filename = None, download_size = -1, force_download = False, max_download_duration = None, base_dir = 'tmp/cache'):
 
-    if filename.startswith(base_dir + '/'):
+    if filename is None:
+        filename = os.path.basename(url)
+    elif filename.startswith(base_dir + '/'):
         filename = filename[len(base_dir + '/'):]
 
     global count_skipped_tests_download
@@ -1901,6 +1906,12 @@ def is_file_open(filename):
     return False
 
 ###############################################################################
+# built_against_curl()
+
+def built_against_curl():
+    return gdal.GetDriverByName('HTTP') is not None
+
+###############################################################################
 # error_handler()
 # Allow use of "with" for an ErrorHandler that always pops at the scope close.
 # Defaults to suppressing errors and warnings.
@@ -1924,6 +1935,32 @@ def SetCacheMax(val):
     yield
   finally:
     gdal.SetCacheMax(oldval)
+
+###############################################################################
+# Temporarily define a configuration option
+
+@contextlib.contextmanager
+def config_option(key, val):
+  oldval = gdal.GetConfigOption(key)
+  gdal.SetConfigOption(key, val)
+  try:
+    yield
+  finally:
+    gdal.SetConfigOption(key, oldval)
+
+###############################################################################
+# Temporarily define a set of configuration options
+
+@contextlib.contextmanager
+def config_options(options):
+  oldvals = { key: gdal.GetConfigOption(key) for key in options }
+  for key in options:
+    gdal.SetConfigOption(key, options[key])
+  try:
+    yield
+  finally:
+    for key in options:
+        gdal.SetConfigOption(key, oldvals[key])
 
 ###############################################################################
 run_func = gdaltestaux.run_func

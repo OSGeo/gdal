@@ -36,10 +36,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRXPlaneDataSource::OGRXPlaneDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    poReader(NULL),
+    poReader(nullptr),
     bReadWholeFile(true),
     bWholeFiledReadingDone(false)
 {}
@@ -60,19 +60,19 @@ OGRXPlaneDataSource::~OGRXPlaneDataSource()
 
 void OGRXPlaneDataSource::Reset()
 {
-    if ( poReader != NULL)
+    if ( poReader != nullptr)
     {
         delete poReader;
-        poReader = NULL;
+        poReader = nullptr;
     }
 
     CPLFree( pszName );
-    pszName = NULL;
+    pszName = nullptr;
 
     for( int i = 0; i < nLayers; i++ )
         delete papoLayers[i];
     CPLFree( papoLayers );
-    papoLayers = NULL;
+    papoLayers = nullptr;
     nLayers = 0;
 }
 
@@ -84,7 +84,7 @@ OGRLayer *OGRXPlaneDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }
@@ -137,7 +137,7 @@ int OGRXPlaneDataSource::Open( const char * pszFilename, int bReadWholeFileIn )
     if( poReader && !poReader->StartParsing(pszFilename) )
     {
         delete poReader;
-        poReader = NULL;
+        poReader = nullptr;
     }
     if( poReader )
     {

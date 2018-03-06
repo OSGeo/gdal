@@ -84,8 +84,10 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
 {
     char szWork[128] = { ' ' };
 
-    strncpy( szWork, "USGS GeoTIFF DOQ 1:12000 Q-Quad of ", 35 );
-    strncpy( szWork + 35, reinterpret_cast<const char *>( pabyData + 0 ), 38 );
+    const char* pszDescBegin =  "USGS GeoTIFF DOQ 1:12000 Q-Quad of ";
+    memcpy( szWork, pszDescBegin, strlen(pszDescBegin) );
+    memcpy( szWork + strlen(pszDescBegin),
+             reinterpret_cast<const char *>( pabyData + 0 ), 38 );
 
     int i = 0;
     while ( *(szWork + 72 - i) == ' ' ) {
@@ -93,9 +95,9 @@ static void DOQGetDescription( GDALDataset *poDS, unsigned char *pabyData )
     }
     i--;
 
-    strncpy(
+    memcpy(
         szWork + 73 - i, reinterpret_cast<const char *>( pabyData + 38 ), 2 );
-    strncpy(
+    memcpy(
         szWork + 76 - i, reinterpret_cast<const char *>( pabyData + 44 ), 2 );
     szWork[77-i] = '\0';
 
@@ -134,12 +136,12 @@ class DOQ1Dataset : public RawDataset
 /************************************************************************/
 
 DOQ1Dataset::DOQ1Dataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     dfULX(0.0),
     dfULY(0.0),
     dfXPixelSize(0.0),
     dfYPixelSize(0.0),
-    pszProjection(NULL)
+    pszProjection(nullptr)
 {}
 
 /************************************************************************/
@@ -152,7 +154,7 @@ DOQ1Dataset::~DOQ1Dataset()
     FlushCache();
 
     CPLFree( pszProjection );
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 }
 
@@ -194,7 +196,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 212 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Attempt to extract a few key values from the header.            */
@@ -212,7 +214,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         || dfHeight < 500 || dfHeight > 25000 || CPLIsNan(dfHeight)
         || dfBandStorage < 0 || dfBandStorage > 4 || CPLIsNan(dfBandStorage)
         || dfBandTypes < 1 || dfBandTypes > 9 || CPLIsNan(dfBandTypes) )
-        return NULL;
+        return nullptr;
 
     const int nWidth = static_cast<int>(dfWidth);
     const int nHeight = static_cast<int>(dfHeight);
@@ -228,7 +230,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "DOQ Data Type (%d) is not a supported configuration.",
                   nBandTypes );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -239,7 +241,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The DOQ1 driver does not support update access to existing "
                   "datasets." );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -254,10 +256,10 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterYSize = nHeight;
 
     poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpImage == NULL)
+    if (poDS->fpImage == nullptr)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -302,15 +304,15 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
         if( nZone < 0 || nZone > 60 )
             nZone = 0;
 
-        const char *pszUnits = NULL;
+        const char *pszUnits = nullptr;
         if( static_cast<int>( DOQGetField(poOpenInfo->pabyHeader + 204, 3))
             == 1 )
             pszUnits = "UNIT[\"US survey foot\",0.304800609601219]";
         else
             pszUnits = "UNIT[\"metre\",1]";
 
-        const char *pszDatumLong = NULL;
-        const char *pszDatumShort = NULL;
+        const char *pszDatumLong = nullptr;
+        const char *pszDatumShort = nullptr;
         switch( static_cast<int>(
             DOQGetField(poOpenInfo->pabyHeader + 167, 2) ) )
         {
@@ -358,7 +360,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "Header read error on %s.",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->dfULX = DOQGetField( abyRecordData + 288, 24 );
@@ -372,7 +374,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "Header read error on %s.",
                   poOpenInfo->pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->dfXPixelSize = DOQGetField( abyRecordData + 59, 12 );
@@ -399,7 +401,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_DOQ1()
 
 {
-    if( GDALGetDriverByName( "DOQ1" ) != NULL )
+    if( GDALGetDriverByName( "DOQ1" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

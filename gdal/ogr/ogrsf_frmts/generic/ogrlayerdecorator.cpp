@@ -37,7 +37,7 @@ OGRLayerDecorator::OGRLayerDecorator( OGRLayer* poDecoratedLayer,
     m_poDecoratedLayer(poDecoratedLayer),
     m_bHasOwnership(bTakeOwnership)
 {
-    CPLAssert(poDecoratedLayer != NULL);
+    CPLAssert(poDecoratedLayer != nullptr);
     SetDescription( poDecoratedLayer->GetDescription() );
 }
 
@@ -49,7 +49,7 @@ OGRLayerDecorator::~OGRLayerDecorator()
 
 OGRGeometry *OGRLayerDecorator::GetSpatialFilter()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetSpatialFilter();
 }
 
@@ -93,7 +93,7 @@ void        OGRLayerDecorator::ResetReading()
 
 OGRFeature *OGRLayerDecorator::GetNextFeature()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetNextFeature();
 }
 
@@ -105,7 +105,7 @@ OGRErr      OGRLayerDecorator::SetNextByIndex( GIntBig nIndex )
 
 OGRFeature *OGRLayerDecorator::GetFeature( GIntBig nFID )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetFeature(nFID);
 }
 
@@ -141,13 +141,13 @@ OGRwkbGeometryType OGRLayerDecorator::GetGeomType()
 
 OGRFeatureDefn *OGRLayerDecorator::GetLayerDefn()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetLayerDefn();
 }
 
 OGRSpatialReference *OGRLayerDecorator::GetSpatialRef()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetSpatialRef();
 }
 
@@ -215,7 +215,7 @@ OGRErr      OGRLayerDecorator::SyncToDisk()
 
 OGRStyleTable *OGRLayerDecorator::GetStyleTable()
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetStyleTable();
 }
 
@@ -269,7 +269,7 @@ OGRErr      OGRLayerDecorator::SetIgnoredFields( const char **papszFields )
 
 char      **OGRLayerDecorator::GetMetadata( const char * pszDomain )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetMetadata(pszDomain);
 }
 
@@ -283,7 +283,7 @@ CPLErr      OGRLayerDecorator::SetMetadata( char ** papszMetadata,
 const char *OGRLayerDecorator::GetMetadataItem( const char * pszName,
                                               const char * pszDomain )
 {
-    if( !m_poDecoratedLayer ) return NULL;
+    if( !m_poDecoratedLayer ) return nullptr;
     return m_poDecoratedLayer->GetMetadataItem(pszName, pszDomain);
 }
 

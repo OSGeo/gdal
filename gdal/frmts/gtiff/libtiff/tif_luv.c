@@ -1,5 +1,3 @@
-/* $Id: tif_luv.c,v 1.49 2017-07-24 12:47:30 erouault Exp $ */
-
 /*
  * Copyright (c) 1997 Greg Ward Larson
  * Copyright (c) 1997 Silicon Graphics, Inc.

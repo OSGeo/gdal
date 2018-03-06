@@ -118,7 +118,7 @@ RCreateCopy( const char * pszFilename,
     if( nSize > static_cast<vsi_l_offset>(INT_MAX) )
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big raster");
-        return NULL;
+        return nullptr;
     }
 
     // Some some rudimentary checks.
@@ -130,12 +130,12 @@ RCreateCopy( const char * pszFilename,
 
     // Create the file.
     VSILFILE *fp = VSIFOpenL(osAdjustedFilename, "wb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Unable to create file %s.",
                  pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     // Write header with version, etc.
@@ -180,7 +180,7 @@ RCreateCopy( const char * pszFilename,
         {
             eErr = poBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
                                     padfScanline, nXSize, 1, GDT_Float64,
-                                    sizeof(double), 0, NULL);
+                                    sizeof(double), 0, nullptr);
 
             if( bASCII )
             {
@@ -202,7 +202,7 @@ RCreateCopy( const char * pszFilename,
 
             if( eErr == CE_None &&
                 !pfnProgress((iLine + 1) / static_cast<double>(nYSize),
-                             NULL, pProgressData) )
+                             nullptr, pProgressData) )
             {
                 eErr = CE_Failure;
                 CPLError(CE_Failure, CPLE_UserInterrupt,
@@ -234,7 +234,7 @@ RCreateCopy( const char * pszFilename,
     VSIFCloseL(fp);
 
     if( eErr != CE_None )
-        return NULL;
+        return nullptr;
 
     // Re-open dataset, and copy any auxiliary pam information.
     GDALPamDataset *poDS =

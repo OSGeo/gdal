@@ -54,14 +54,14 @@ static GDALDataset* OGRCloudantDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( OGRCloudantDriverIdentify(poOpenInfo) == 0 )
-        return NULL;
+        return nullptr;
 
     OGRCloudantDataSource   *poDS = new OGRCloudantDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -83,7 +83,7 @@ static GDALDataset* OGRCloudantDriverCreate( const char * pszName,
     if( !poDS->Open( pszName, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -96,7 +96,7 @@ static GDALDataset* OGRCloudantDriverCreate( const char * pszName,
 void RegisterOGRCloudant()
 
 {
-    if( GDALGetDriverByName( "Cloudant" ) != NULL )
+    if( GDALGetDriverByName( "Cloudant" ) != nullptr )
       return;
 
     GDALDriver  *poDriver = new GDALDriver();

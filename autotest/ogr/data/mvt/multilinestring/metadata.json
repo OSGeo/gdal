@@ -1,0 +1,12 @@
+{
+    "name": "multilinestring",
+    "description": "multilinestring",
+    "version": "2",
+    "minzoom": "0",
+    "maxzoom": "0",
+    "center": "2.000000,49.000000,0",
+    "bounds": "2.000000,49.000000,7.000000,54.000000",
+    "type": "overlay",
+    "format": "pbf",
+    "json": "{\"vector_layers\": [ { \"id\": \"multilinestring\", \"description\": \"\", \"minzoom\": 0, \"maxzoom\": 0, \"fields\": {} } ],\"tilestats\": {\"layerCount\": 1,\"layers\": [{\"layer\": \"multilinestring\",\"count\": 1,\"geometry\": \"LineString\",\"attributeCount\": 0,\"attributes\": []}]}}"
+}

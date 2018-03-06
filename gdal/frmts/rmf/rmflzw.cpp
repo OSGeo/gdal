@@ -52,11 +52,11 @@
 CPL_CVSID("$Id$")
 
 // Code marks that there is no predecessor in the string
-static const GUInt32 NO_PRED = 0xFFFF;
+constexpr GUInt32 NO_PRED = 0xFFFF;
 
 // We are using 12-bit codes in this particular implementation
-static const GUInt32 TABSIZE = 4096U;
-static const GUInt32 STACKSIZE = TABSIZE;
+constexpr GUInt32 TABSIZE = 4096U;
+constexpr GUInt32 STACKSIZE = TABSIZE;
 
 /************************************************************************/
 /*                           LZWStringTab                               */
@@ -119,8 +119,8 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, char bFoll)
 int RMFDataset::LZWDecompress( const GByte* pabyIn, GUInt32 nSizeIn,
                                GByte* pabyOut, GUInt32 nSizeOut )
 {
-    if( pabyIn == NULL ||
-        pabyOut == NULL ||
+    if( pabyIn == nullptr ||
+        pabyOut == nullptr ||
         nSizeOut < nSizeIn ||
         nSizeIn < 2 )
         return 0;

@@ -79,7 +79,7 @@ public:
 };
 
 GFFDataset::GFFDataset() :
-    fp(NULL),
+    fp(nullptr),
     eDataType(GDT_Unknown),
     nEndianness(0),
     nVersionMajor(0),
@@ -95,7 +95,7 @@ GFFDataset::GFFDataset() :
 
 GFFDataset::~GFFDataset()
 {
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL(fp);
 }
 
@@ -106,9 +106,9 @@ GFFDataset::~GFFDataset()
 class GFFRasterBand : public GDALPamRasterBand {
     long nRasterBandMemory;
     int nSampleSize;
-public:
+  public:
     GFFRasterBand( GFFDataset *, int, GDALDataType );
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 static unsigned long GFFSampleSize( GDALDataType eDataType )
@@ -205,7 +205,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
     if (!GFFDataset::Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -215,41 +215,33 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The GFF driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     GFFDataset *poDS = new GFFDataset();
 
     poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* Check the endianness of the file */
     VSIFSeekL(poDS->fp,54,SEEK_SET);
     VSIFReadL(&(poDS->nEndianness),2,1,poDS->fp);
 
-    const bool bSwap =
-#if defined(CPL_LSB)
-    false
-#else
-    true
-#endif
-        ;
-
     VSIFSeekL(poDS->fp,8,SEEK_SET);
     VSIFReadL(&poDS->nVersionMinor,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMinor);
+    CPL_LSBPTR16(&poDS->nVersionMinor);
     VSIFReadL(&poDS->nVersionMajor,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&poDS->nVersionMajor);
+    CPL_LSBPTR16(&poDS->nVersionMajor);
     VSIFReadL(&poDS->nLength,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nLength);
+    CPL_LSBPTR32(&poDS->nLength);
 
     unsigned short nCreatorLength = 0;
     VSIFReadL(&nCreatorLength,2,1,poDS->fp);
-    if (bSwap) CPL_SWAP16PTR(&nCreatorLength);
+    CPL_LSBPTR16(&nCreatorLength);
     /* Hack for now... I should properly load the date metadata, for
      * example
      */
@@ -266,18 +258,18 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
     else*/
     {
         VSIFReadL(&poDS->nBPP,4,1,poDS->fp);
-        if (bSwap) CPL_SWAP32PTR(&poDS->nBPP);
+        CPL_LSBPTR32(&poDS->nBPP);
     }
     VSIFReadL(&poDS->nFrameCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nFrameCnt);
+    CPL_LSBPTR32(&poDS->nFrameCnt);
     VSIFReadL(&poDS->nImageType,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nImageType);
+    CPL_LSBPTR32(&poDS->nImageType);
     VSIFReadL(&poDS->nRowMajor,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nRowMajor);
+    CPL_LSBPTR32(&poDS->nRowMajor);
     VSIFReadL(&poDS->nRgCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nRgCnt);
+    CPL_LSBPTR32(&poDS->nRgCnt);
     VSIFReadL(&poDS->nAzCnt,4,1,poDS->fp);
-    if (bSwap) CPL_SWAP32PTR(&poDS->nAzCnt);
+    CPL_LSBPTR32(&poDS->nAzCnt);
 
     /* We now have enough information to determine the number format */
     switch (poDS->nImageType) {
@@ -299,7 +291,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
       default:
         CPLError(CE_Failure, CPLE_AppDefined, "Unknown image type found!");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /* Set raster width/height
@@ -322,7 +314,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid raster dimensions : %d x %d",
                  poDS->nRasterXSize, poDS->nRasterYSize);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->SetBand(1, new GFFRasterBand(poDS, 1, poDS->eDataType));
@@ -347,7 +339,7 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 
 void GDALRegister_GFF()
 {
-    if( GDALGetDriverByName( "GFF" ) != NULL )
+    if( GDALGetDriverByName( "GFF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

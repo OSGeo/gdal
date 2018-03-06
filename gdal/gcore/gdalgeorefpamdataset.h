@@ -60,26 +60,26 @@ class CPL_DLL GDALGeorefPamDataset : public GDALPamDataset
     char**      m_papszMainMD;
 
   public:
-        GDALGeorefPamDataset();
-        virtual ~GDALGeorefPamDataset();
+    GDALGeorefPamDataset();
+    ~GDALGeorefPamDataset() override;
 
-    virtual CPLErr TryLoadXML(char **papszSiblingFiles = NULL) CPL_OVERRIDE;
+    CPLErr TryLoadXML(char **papszSiblingFiles = nullptr) override;
 
-    virtual CPLErr          GetGeoTransform( double * ) CPL_OVERRIDE;
-    virtual const char     *GetProjectionRef() CPL_OVERRIDE;
+    CPLErr          GetGeoTransform( double * ) override;
+    const char     *GetProjectionRef() override;
 
-    virtual int             GetGCPCount() CPL_OVERRIDE;
-    virtual const char     *GetGCPProjection() CPL_OVERRIDE;
-    virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
+    int             GetGCPCount() override;
+    const char     *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadata( const char * pszDomain = "" ) CPL_OVERRIDE;
-    virtual const char *GetMetadataItem( const char * pszName,
-                                          const char * pszDomain = "" ) CPL_OVERRIDE;
-    virtual CPLErr      SetMetadata( char ** papszMetadata,
-                             const char * pszDomain = "" ) CPL_OVERRIDE;
-    virtual CPLErr      SetMetadataItem( const char * pszName,
-                                 const char * pszValue,
-                                 const char * pszDomain = "" ) CPL_OVERRIDE;
+    char      **GetMetadata( const char * pszDomain = "" ) override;
+    const char *GetMetadataItem( const char * pszName,
+                                  const char * pszDomain = "" ) override;
+    CPLErr      SetMetadata( char ** papszMetadata,
+                     const char * pszDomain = "" ) override;
+    CPLErr      SetMetadataItem( const char * pszName,
+                         const char * pszValue,
+                         const char * pszDomain = "" ) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

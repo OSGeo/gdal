@@ -74,6 +74,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psInfo = (AIGInfo_t *) CPLCalloc(sizeof(AIGInfo_t),1);
     psInfo->bHasWarned = FALSE;
+    psInfo->nFailedOpenings = 0;
     psInfo->pszCoverName = pszCoverName;
 
 /* -------------------------------------------------------------------- */
@@ -213,6 +214,12 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
     if( psTInfo->fpGrid != NULL || psTInfo->bTriedToLoad )
         return CE_None;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* After a significant number of failed openings, don't even try further */
+    if( psInfo->nFailedOpenings == 1000 )
+        return CE_None;
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Compute the basename.                                           */
 /* -------------------------------------------------------------------- */
@@ -234,9 +241,14 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     if( psTInfo->fpGrid == NULL )
     {
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "Failed to open grid file, assuming region is nodata:\n%s\n",
-                  pszFilename );
+        psInfo->nFailedOpenings ++;
+        if( psInfo->nFailedOpenings < 100 )
+        {
+            CPLError( CE_Warning, CPLE_OpenFailed,
+                    "Failed to open grid file, assuming region is nodata:\n%s\n",
+                    pszFilename );
+        }
+
         CPLFree( pszFilename );
         return CE_Warning;
     }

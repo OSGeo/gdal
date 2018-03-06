@@ -117,6 +117,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/aea_compressed.dat >> aea_compres
 zip -r $OUT/envi_fuzzer_seed_corpus.zip aea_compressed.tar >/dev/null
 rm aea_compressed.tar
 
+echo "Building ehdr_fuzzer_seed_corpus.zip"
+rm -f $OUT/ehdr_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > ehdr11.tar
+printf "***NEWFILE***:my.hdr\n" >> ehdr11.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.hdr >> ehdr11.tar
+printf "***NEWFILE***:my.dat\n" >> ehdr11.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt >> ehdr11.tar
+zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
+rm ehdr11.tar
+
 echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
@@ -173,10 +184,14 @@ zip -r $OUT/ogr_sdts_fuzzer_seed_corpus.zip ogr_sdts.tar >/dev/null
 rm ogr_sdts.tar
 
 echo "Building ogr_fuzzer_seed_corpus.zip"
+CUR_DIR=$PWD
 cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/ogr_fuzzer_seed_corpus.zip
 zip -r $OUT/ogr_fuzzer_seed_corpus.zip . >/dev/null
-cd $OLDPWD
+cd mvt
+zip $OUT/ogr_fuzzer_seed_corpus.zip * >/dev/null
+cd ..
+cd $CUR_DIR
 
 echo "Building cad_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data/cad
@@ -189,6 +204,53 @@ cd $(dirname $0)/../../autotest/ogr/data
 rm -f $OUT/csv_fuzzer_seed_corpus.zip
 zip -r $OUT/csv_fuzzer_seed_corpus.zip *.csv >/dev/null
 cd $OLDPWD
+
+echo "Building bna_fuzzer_seed_corpus.zip"
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/bna_fuzzer_seed_corpus.zip
+zip -r $OUT/bna_fuzzer_seed_corpus.zip *.bna >/dev/null
+cd $OLDPWD
+
+echo "Building xlsx_fuzzer_seed_corpus.zip"
+rm -f $OUT/xlsx_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data
+for filename in *.xlsx; do
+    mkdir tmpxlsx
+    cd tmpxlsx
+    unzip ../$filename >/dev/null
+    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/xlsx_$filename.tar
+    for i in `find -type f`; do
+        printf "***NEWFILE***:$i\n" >> $CUR_DIR/xlsx_$filename.tar
+        cat $i >> $CUR_DIR/xlsx_$filename.tar
+    done
+    cd ..
+    rm -rf tmpxlsx
+done
+cd $CUR_DIR
+zip -r $OUT/xlsx_fuzzer_seed_corpus.zip xlsx_*.tar >/dev/null
+rm xlsx_*.tar
+
+echo "Building ods_fuzzer_seed_corpus.zip"
+rm -f $OUT/ods_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data
+for filename in *.ods; do
+    mkdir tmpods
+    cd tmpods
+    unzip ../$filename >/dev/null
+    printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/ods_$filename.tar
+    for i in `find -type f`; do
+        printf "***NEWFILE***:$i\n" >> $CUR_DIR/ods_$filename.tar
+        cat $i >> $CUR_DIR/ods_$filename.tar
+    done
+    cd ..
+    rm -rf tmpods
+done
+cd $CUR_DIR
+zip -r $OUT/ods_fuzzer_seed_corpus.zip ods_*.tar >/dev/null
+rm ods_*.tar
+
 
 echo "Building rec_fuzzer_seed_corpus.zip"
 cd $(dirname $0)/../../autotest/ogr/data
@@ -211,18 +273,34 @@ zip -r $OUT/shape_fuzzer_seed_corpus.zip poly_shp.tar >/dev/null
 rm poly_shp.tar
 
 echo "Building mitab_tab_fuzzer_seed_corpus.zip"
+
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > all_geoms_tab.tar
-printf "***NEWFILE***:my.tab\n" >> all_geoms_tab.tar
-cat $(dirname $0)/../../autotest/ogr/data/all_geoms.tab >> all_geoms_tab.tar
-printf "***NEWFILE***:my.map\n" >> all_geoms_tab.tar
-cat $(dirname $0)/../../autotest/ogr/data/all_geoms.map >> all_geoms_tab.tar
-printf "***NEWFILE***:my.dat\n" >> all_geoms_tab.tar
-cat $(dirname $0)/../../autotest/ogr/data/all_geoms.dat >> all_geoms_tab.tar
-printf "***NEWFILE***:my.id\n" >> all_geoms_tab.tar
-cat $(dirname $0)/../../autotest/ogr/data/all_geoms.id >> all_geoms_tab.tar
+for ext in tab map dat id; do
+    printf "***NEWFILE***:my.$ext\n" >> all_geoms_tab.tar
+    cat $(dirname $0)/../../autotest/ogr/data/all_geoms.$ext >> all_geoms_tab.tar
+done
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > poly_indexed.tar
+for ext in tab map dat id; do
+    printf "***NEWFILE***:my.$ext\n" >> poly_indexed.tar
+    cat $(dirname $0)/../../autotest/ogr/data/poly_indexed.$ext >> poly_indexed.tar
+done
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > view.tar
+printf "***NEWFILE***:my.tab\n" >> view.tar
+cat $(dirname $0)/../../autotest/ogr/data/mitab/view_first_table_second_table.tab >> view.tar
+for ext in tab map dat id ind; do
+    printf "***NEWFILE***:first_table.$ext\n" >> view.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/first_table.$ext >> view.tar
+done
+for ext in tab map dat id ind; do
+    printf "***NEWFILE***:second_table.$ext\n" >> view.tar
+    cat $(dirname $0)/../../autotest/ogr/data/mitab/second_table.$ext >> view.tar
+done
+
 rm -f $OUT/mitab_tab_fuzzer_seed_corpus.zip
-zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar >/dev/null
-rm all_geoms_tab.tar
+zip -r $OUT/mitab_tab_fuzzer_seed_corpus.zip all_geoms_tab.tar poly_indexed.tar view.tar >/dev/null
+rm all_geoms_tab.tar poly_indexed.tar view.tar
 
 echo "Building mitab_mif_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > small_mif.tar
@@ -257,6 +335,37 @@ rm -r testopenfilegdb.gdb
 rm testopenfilegdb.gdb.tar
 rm -r testopenfilegdb92.gdb
 rm testopenfilegdb92.gdb.tar
+
+echo "Building avcbin_fuzzer_seed_corpus.zip"
+rm -f $OUT/avcbin_fuzzer_seed_corpus.zip
+CUR_DIR=$PWD
+cd  $(dirname $0)/../../autotest/ogr/data/testavc
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/avcbin.tar
+for f in `find . -type f`; do
+    printf "***NEWFILE***:$f\n" >> $CUR_DIR/avcbin.tar
+    cat $f >> $CUR_DIR/avcbin.tar
+done
+cd $CUR_DIR
+zip -r $OUT/avcbin_fuzzer_seed_corpus.zip avcbin.tar >/dev/null
+rm avcbin.tar
+
+echo "Building avce00_fuzzer_seed_corpus.zip"
+rm -f $OUT/avce00_fuzzer_seed_corpus.zip
+cd $(dirname $0)/../../autotest/ogr/data
+rm -f $OUT/avce00_fuzzer_seed_corpus.zip
+zip -r $OUT/avce00_fuzzer_seed_corpus.zip *.e00 >/dev/null
+cd $OLDPWD
+
+echo "Building gml_fuzzer_seed_corpus.zip"
+rm -f $OUT/gml_fuzzer_seed_corpus.zip
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > $CUR_DIR/archsites_gml.tar
+printf "***NEWFILE***:test.gml\n" >> $CUR_DIR/archsites_gml.tar
+cat $(dirname $0)/../../autotest/ogr/data/archsites.gml >> $CUR_DIR/archsites_gml.tar
+printf "***NEWFILE***:test.xsd\n" >> $CUR_DIR/archsites_gml.tar
+cat $(dirname $0)/../../autotest/ogr/data/archsites.xsd >> $CUR_DIR/archsites_gml.tar
+zip -r $OUT/gml_fuzzer_seed_corpus.zip archsites_gml.tar >/dev/null
+rm archsites_gml.tar
+
 
 echo "Copying data to $OUT"
 cp $(dirname $0)/../data/* $OUT

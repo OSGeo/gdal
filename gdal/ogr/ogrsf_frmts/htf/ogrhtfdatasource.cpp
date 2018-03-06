@@ -37,10 +37,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRHTFDataSource::OGRHTFDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
-    poMetadataLayer(NULL)
+    poMetadataLayer(nullptr)
 {}
 
 /************************************************************************/
@@ -75,7 +75,7 @@ OGRLayer *OGRHTFDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -87,14 +87,14 @@ OGRLayer *OGRHTFDataSource::GetLayer( int iLayer )
 OGRLayer* OGRHTFDataSource::GetLayerByName( const char* pszLayerName )
 {
     if (nLayers == 0)
-        return NULL;
+        return nullptr;
     if (EQUAL(pszLayerName, "polygon"))
         return papoLayers[0];
     if (EQUAL(pszLayerName, "sounding"))
         return papoLayers[1];
     if (EQUAL(pszLayerName, "metadata"))
         return poMetadataLayer;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -111,7 +111,7 @@ int OGRHTFDataSource::Open( const char * pszFilename )
 // --------------------------------------------------------------------
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     bool bEndOfHTFHeader = false;
@@ -131,8 +131,8 @@ int OGRHTFDataSource::Open( const char * pszFilename )
     std::vector<CPLString> aosMD;
     int nTotalSoundings = 0;
 
-    const char* pszLine = NULL;
-    while( (pszLine = CPLReadLine2L(fp, 1024, NULL)) != NULL)
+    const char* pszLine = nullptr;
+    while( (pszLine = CPLReadLine2L(fp, 1024, nullptr)) != nullptr)
     {
         nLines ++;
         if (nLines == 1000)

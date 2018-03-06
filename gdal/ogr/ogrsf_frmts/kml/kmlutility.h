@@ -72,7 +72,7 @@ struct Feature
     OGRGeometry* poGeom;
 
     Feature()
-        : eType(Unknown), poGeom(NULL)
+        : eType(Unknown), poGeom(nullptr)
     {}
 
     ~Feature()

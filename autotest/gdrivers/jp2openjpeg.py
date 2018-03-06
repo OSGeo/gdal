@@ -37,6 +37,7 @@ from osgeo import ogr
 from osgeo import osr
 
 sys.path.append( '../pymod' )
+sys.path.append( '../ogr' )
 sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest
@@ -1099,6 +1100,15 @@ def jp2openjpeg_26():
         print(out_ds.GetRasterBand(1).GetOverview(overview_count-1).YSize)
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.ErrorReset()
+    out_ds.GetRasterBand(1).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    out_ds.GetRasterBand(1).GetOverview(0).Checksum()
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
     out_ds = None
     if gdal.VSIStatL('/vsimem/jp2openjpeg_26.jp2.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -1606,7 +1616,9 @@ def jp2openjpeg_33():
   </VRTRasterBand>
 </VRTDataset>""")
     gdal.PushErrorHandler()
-    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options = ['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000'])
+    # Limit number of resolutions, because of
+    # https://github.com/uclouvain/openjpeg/issues/493
+    out_ds = gdaltest.jp2openjpeg_drv.CreateCopy('/vsimem/jp2openjpeg_33.jp2', src_ds, options = ['BLOCKXSIZE=100000', 'BLOCKYSIZE=100000', 'RESOLUTIONS=5'])
     gdal.PopErrorHandler()
     if out_ds is not None:
         gdaltest.post_reason('fail')
@@ -2293,7 +2305,10 @@ def jp2openjpeg_45():
 
     if gdaltest.jp2openjpeg_drv is None:
         return 'skip'
-    if gdal.GetDriverByName('GML') is None:
+
+    import ogr_gml_read
+    ogr_gml_read.ogr_gml_1()
+    if not gdaltest.have_gml_reader:
         return 'skip'
     if gdal.GetDriverByName('KML') is None and gdal.GetDriverByName('LIBKML') is None:
         return 'skip'
@@ -3584,6 +3599,28 @@ def jp2openjpeg_49():
     return 'success'
 
 ###############################################################################
+# Test opening an image of small dimension with very small tiles (#7012)
+
+def jp2openjpeg_50():
+
+    if gdaltest.jp2openjpeg_drv is None:
+        return 'skip'
+
+    ds = gdal.Open('data/fake_sent2_preview.jp2')
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
+    if blockxsize != ds.RasterXSize or blockysize != ds.RasterYSize:
+        gdaltest.post_reason('expected warning')
+        print(blockxsize, blockysize)
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 2046:
+        gdaltest.post_reason('expected warning')
+        print(cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 def jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3641,6 +3678,7 @@ gdaltest_list = [
     jp2openjpeg_47,
     jp2openjpeg_48,
     jp2openjpeg_49,
+    jp2openjpeg_50,
     jp2openjpeg_online_1,
     jp2openjpeg_online_2,
     jp2openjpeg_online_3,

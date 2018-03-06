@@ -45,7 +45,7 @@ LT_USE_NAMESPACE(LizardTech)
 /* ==================================================================== */
 /************************************************************************/
 
-LTIVSIStream::LTIVSIStream() : poFileHandle(NULL), nError(0), pnRefCount(NULL),
+LTIVSIStream::LTIVSIStream() : poFileHandle(nullptr), nError(0), pnRefCount(nullptr),
 bIsOpen(FALSE)
 {
 }
@@ -75,7 +75,7 @@ LTIVSIStream::~LTIVSIStream()
 LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
                                     const char *pszAccess )
 {
-    CPLAssert(poFileHandle == NULL);
+    CPLAssert(poFileHandle == nullptr);
 
     errno = 0;
     poFileHandle = (VSIVirtualHandle *)VSIFOpenL( pszFilename, pszAccess );
@@ -95,7 +95,7 @@ LT_STATUS LTIVSIStream::initialize( const char *pszFilename,
 
 LT_STATUS LTIVSIStream::initialize( LTIVSIStream* ltiVSIStream )
 {
-    CPLAssert(poFileHandle == NULL);
+    CPLAssert(poFileHandle == nullptr);
 
     poFileHandle = ltiVSIStream->poFileHandle;
     if (poFileHandle)
@@ -128,7 +128,7 @@ bool LTIVSIStream::isEOF()
 
 bool LTIVSIStream::isOpen()
 {
-    return  poFileHandle != NULL && bIsOpen;
+    return  poFileHandle != nullptr && bIsOpen;
 }
 
 /************************************************************************/
@@ -137,7 +137,7 @@ bool LTIVSIStream::isOpen()
 
 LT_STATUS LTIVSIStream::open()
 {
-    bIsOpen = poFileHandle != NULL;
+    bIsOpen = poFileHandle != nullptr;
     return poFileHandle ? LT_STS_Success : LT_STS_Failure;
 }
 

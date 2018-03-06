@@ -439,7 +439,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
     /* malloc of the row*/
     unsigned char *pucPos = reinterpret_cast<unsigned char*>(
                                                         VSIMalloc(ulRowBytes));
-    if (pucPos == NULL)
+    if (pucPos == nullptr)
     {
         return cJP2_Error_Failure_Malloc;
     }
@@ -451,7 +451,7 @@ JP2_Error  JP2_Callback_Conv  GDALJP2Lura_Callback_Compress_Read(
                                   static_cast<int>(ulNum), 1,
                                   pucPos,
                                   static_cast<int>(ulNum), 1,
-                                  eDataType, 0, 0, NULL);
+                                  eDataType, 0, 0, nullptr);
     if (err != CE_None)
     {
         VSIFree(pucPos);

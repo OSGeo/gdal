@@ -19,8 +19,6 @@
 */
 
 #include "marfa.h"
-#include <cassert>
-
 CPL_CVSID("$Id$")
 
 CPL_C_START
@@ -64,8 +62,7 @@ static void RGBA2RGB(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void RGB2RGBA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
         *--stop = *--source_end;
         *--stop = *--source_end;
@@ -84,8 +81,7 @@ static void LA2L(const char *start, const char *stop, char *target) {
 // works from stop to start, the last parameter is the end of the source region
 static void L2LA(const char *start, char *stop, const char *source_end) {
     while (start < stop) {
-        --stop;
-        *(reinterpret_cast<unsigned char*>(stop)) = 0xff;
+        *--stop = ~static_cast<char>(0);
         *--stop = *--source_end;
     }
 }
@@ -93,7 +89,7 @@ static void L2LA(const char *start, char *stop, const char *source_end) {
 static CPLErr initBuffer(buf_mgr &b)
 {
     b.buffer = (char *)(CPLMalloc(b.size));
-    if (b.buffer != NULL)
+    if (b.buffer != nullptr)
         return CE_None;
     CPLError(CE_Failure, CPLE_OutOfMemory, "Allocating temporary JPNG buffer");
     return CE_Failure;
@@ -146,7 +142,7 @@ CPLErr JPNG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 {
     ILImage image(img);
 
-    buf_mgr temp = { NULL, static_cast<size_t>(img.pageSizeBytes) };
+    buf_mgr temp = { nullptr, static_cast<size_t>(img.pageSizeBytes) };
     CPLErr retval = initBuffer(temp);
     if (retval != CE_None)
         return retval;

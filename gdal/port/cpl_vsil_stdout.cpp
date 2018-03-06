@@ -77,12 +77,12 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 
 class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
-public:
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
+  public:
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 };
 
 /************************************************************************/
@@ -96,17 +96,16 @@ class VSIStdoutHandle CPL_FINAL : public VSIVirtualHandle
     vsi_l_offset      m_nOffset;
 
   public:
-                      VSIStdoutHandle() : m_nOffset(0) {}
+    VSIStdoutHandle() : m_nOffset(0) {}
+    ~VSIStdoutHandle() override {}
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize, size_t nMemb )
-        override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb )
-        override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 };
 
 /************************************************************************/
@@ -206,16 +205,16 @@ VSIStdoutFilesystemHandler::Open( const char * /* pszFilename */,
                                   const char *pszAccess,
                                   bool /* bSetError */ )
 {
-    if ( strchr(pszAccess, 'r') != NULL ||
-         strchr(pszAccess, '+') != NULL )
+    if ( strchr(pszAccess, 'r') != nullptr ||
+         strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Read or update mode not supported on /vsistdout");
-        return NULL;
+        return nullptr;
     }
 
 #ifdef WIN32
-    if ( strchr(pszAccess, 'b') != NULL )
+    if ( strchr(pszAccess, 'b') != nullptr )
         setmode( fileno( stdout ), O_BINARY );
 #endif
 
@@ -244,12 +243,12 @@ int VSIStdoutFilesystemHandler::Stat( const char * /* pszFilename */,
 
 class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 {
-public:
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
-                           int nFlags ) override;
+  public:
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 };
 
 /************************************************************************/
@@ -262,18 +261,16 @@ class VSIStdoutRedirectHandle CPL_FINAL : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poHandle;
   public:
-              explicit VSIStdoutRedirectHandle( VSIVirtualHandle* poHandle );
-              virtual ~VSIStdoutRedirectHandle();
+    explicit VSIStdoutRedirectHandle( VSIVirtualHandle* poHandle );
+    ~VSIStdoutRedirectHandle() override;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize, size_t nMemb )
-        override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 };
 
 /************************************************************************/
@@ -385,18 +382,18 @@ VSIStdoutRedirectFilesystemHandler::Open( const char *pszFilename,
                                           bool /* bSetError */ )
 
 {
-    if ( strchr(pszAccess, 'r') != NULL ||
-         strchr(pszAccess, '+') != NULL )
+    if ( strchr(pszAccess, 'r') != nullptr ||
+         strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Read or update mode not supported on /vsistdout_redirect");
-        return NULL;
+        return nullptr;
     }
 
     VSIVirtualHandle* poHandle = reinterpret_cast<VSIVirtualHandle*>(
         VSIFOpenL(pszFilename + strlen("/vsistdout_redirect/"), pszAccess));
-    if (poHandle == NULL)
-        return NULL;
+    if (poHandle == nullptr)
+        return nullptr;
 
     return new VSIStdoutRedirectHandle(poHandle);
 }
@@ -427,6 +424,10 @@ int VSIStdoutRedirectFilesystemHandler::Stat( const char * /* pszFilename */,
  * output stream.
  *
  * The file operations available are of course limited to Write().
+ *
+ * A variation of this file system exists as the /vsistdout_redirect/ file
+ * system handler, where the output function can be defined with
+ * VSIStdoutSetRedirection().
  *
  * @since GDAL 1.8.0
  */

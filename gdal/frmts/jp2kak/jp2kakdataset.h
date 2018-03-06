@@ -182,12 +182,12 @@ class kdu_cpl_error_message : public kdu_thread_safe_message
 
     explicit kdu_cpl_error_message( CPLErr eErrClass ) :
         m_eErrClass(eErrClass),
-        m_pszError(NULL)
+        m_pszError(nullptr)
     {}
 
     void put_text(const char *string) override
     {
-        if( m_pszError == NULL )
+        if( m_pszError == nullptr )
         {
             m_pszError = CPLStrdup(string);
         }
@@ -205,14 +205,14 @@ class kdu_cpl_error_message : public kdu_thread_safe_message
     {
         kdu_thread_safe_message::flush(end_of_message);
 
-        if( m_pszError == NULL )
+        if( m_pszError == nullptr )
             return;
         if( m_pszError[strlen(m_pszError) - 1] == '\n' )
             m_pszError[strlen(m_pszError) - 1] = '\0';
 
         CPLError(m_eErrClass, CPLE_AppDefined, "%s", m_pszError);
         CPLFree(m_pszError);
-        m_pszError = NULL;
+        m_pszError = nullptr;
 
         if( end_of_message && m_eErrClass == CE_Failure )
         {

@@ -43,120 +43,151 @@ class ValidateCloudOptimizedGeoTIFFException(Exception):
     pass
 
 
-def validate(filename, check_tiled=True):
-    """ Return if the passed file is a (Geo)TIFF file with a cloud
-        optimized compatible structure, otherwise raise a
-        ValidateCloudOptimizedGeoTIFFException exception. """
+def validate(ds, check_tiled=True):
+    """Check if a file is a (Geo)TIFF with cloud optimized compatible structure.
+
+    Args:
+      ds: GDAL Dataset for the file to inspect.
+      check_tiled: Set to False to ignore missing tiling.
+
+    Returns:
+      A tuple, whose first element is an array of error messages
+      (empty if there is no error), and the second element, a dictionary
+      with the structure of the GeoTIFF file.
+
+    Raises:
+      ValidateCloudOptimizedGeoTIFFException: Unable to open the file or the
+        file is not a Tiff.
+    """
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 2020000:
         raise ValidateCloudOptimizedGeoTIFFException(
-            "GDAL 2.2 or above required")
+            'GDAL 2.2 or above required')
 
-    gdal.PushErrorHandler()
-    ds = gdal.Open(filename)
-    gdal.PopErrorHandler()
-    if ds is None:
-        raise ValidateCloudOptimizedGeoTIFFException(
-            "Invalid file : %s" % gdal.GetLastErrorMsg())
-    if ds.GetDriver().ShortName != 'GTiff':
-        raise ValidateCloudOptimizedGeoTIFFException(
-            "The file is not a GeoTIFF")
+    unicode_type = type(''.encode('utf-8').decode('utf-8'))
+    if isinstance(ds, str) or isinstance(ds, unicode_type):
+        gdal.PushErrorHandler()
+        ds = gdal.Open(ds)
+        gdal.PopErrorHandler()
+        if ds is None:
+            raise ValidateCloudOptimizedGeoTIFFException(
+                'Invalid file : %s' % gdal.GetLastErrorMsg())
+        if ds.GetDriver().ShortName != 'GTiff':
+            raise ValidateCloudOptimizedGeoTIFFException(
+                'The file is not a GeoTIFF')
 
+    details = {}
+    errors = []
+    filename = ds.GetDescription()
     main_band = ds.GetRasterBand(1)
     ovr_count = main_band.GetOverviewCount()
-    if filename + '.ovr' in ds.GetFileList():
-        raise ValidateCloudOptimizedGeoTIFFException(
-            "Overviews should be internal")
-
-    if check_tiled:
-        block_size = main_band.GetBlockSize()
-        if block_size[0] == main_band.XSize:
-            raise ValidateCloudOptimizedGeoTIFFException(
-                "Full resolution image is not tiled")
+    filelist = ds.GetFileList()
+    if filelist is not None and filename + '.ovr' in filelist:
+        errors += [
+            'Overviews found in external .ovr file. They should be internal']
 
     if main_band.XSize >= 512 or main_band.YSize >= 512:
-        if ovr_count == 0:
-            raise ValidateCloudOptimizedGeoTIFFException(
-                "The file should have overviews")
+        if check_tiled:
+            block_size = main_band.GetBlockSize()
+            if block_size[0] == main_band.XSize and block_size[0] > 1024:
+                errors += [
+                    'The file is greater than 512xH or Wx512, but is not tiled']
 
-    ifd_offset = \
-        [int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))]
-    if ifd_offset[0] != 8:
-        raise ValidateCloudOptimizedGeoTIFFException(
-            "The offset of the main IFD should be 8. It is %d instead" %
-            ifd_offset[0])
+        if ovr_count == 0:
+            errors += [
+                'The file is greater than 512xH or Wx512, but has no overviews']
+
+    ifd_offset = int(main_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
+    ifd_offsets = [ifd_offset]
+    if ifd_offset not in (8, 16):
+        errors += [
+            'The offset of the main IFD should be 8 for ClassicTIFF '
+            'or 16 for BigTIFF. It is %d instead' % ifd_offsets[0]]
+    details['ifd_offsets'] = {}
+    details['ifd_offsets']['main'] = ifd_offset
 
     for i in range(ovr_count):
         # Check that overviews are by descending sizes
         ovr_band = ds.GetRasterBand(1).GetOverview(i)
         if i == 0:
-            if ovr_band.XSize > main_band.XSize or \
-               ovr_band.YSize > main_band.YSize:
-                    raise ValidateCloudOptimizedGeoTIFFException(
-                       "First overview has larger dimension than main band")
+            if (ovr_band.XSize > main_band.XSize or
+                ovr_band.YSize > main_band.YSize):
+                    errors += [
+                        'First overview has larger dimension than main band']
         else:
             prev_ovr_band = ds.GetRasterBand(1).GetOverview(i-1)
-            if ovr_band.XSize > prev_ovr_band.XSize or \
-               ovr_band.YSize > prev_ovr_band.YSize:
-                    raise ValidateCloudOptimizedGeoTIFFException(
-                       "Overview of index %d has larger dimension than "
-                       "overview of index %d" % (i, i-1))
+            if (ovr_band.XSize > prev_ovr_band.XSize or
+                ovr_band.YSize > prev_ovr_band.YSize):
+                    errors += [
+                        'Overview of index %d has larger dimension than '
+                        'overview of index %d' % (i, i-1)]
 
         if check_tiled:
             block_size = ovr_band.GetBlockSize()
-            if block_size[0] == ovr_band.XSize:
-                raise ValidateCloudOptimizedGeoTIFFException(
-                    "Overview of index %d is not tiled" % i)
+            if block_size[0] == ovr_band.XSize and block_size[0] > 1024:
+                errors += [
+                    'Overview of index %d is not tiled' % i]
 
         # Check that the IFD of descending overviews are sorted by increasing
         # offsets
-        ifd_offset.append(int(ovr_band.GetMetadataItem('IFD_OFFSET', 'TIFF')))
-        if ifd_offset[-1] < ifd_offset[-2]:
+        ifd_offset = int(ovr_band.GetMetadataItem('IFD_OFFSET', 'TIFF'))
+        ifd_offsets.append(ifd_offset)
+        details['ifd_offsets']['overview_%d' % i] = ifd_offset
+        if ifd_offsets[-1] < ifd_offsets[-2]:
             if i == 0:
-                raise ValidateCloudOptimizedGeoTIFFException(
-                    "The offset of the IFD for overview of index %d is %d, "
-                    "whereas it should be greater than the one of the main "
-                    "image, which is at byte %d" %
-                    (i, ifd_offset[-1], ifd_offset[-2]))
+                errors += [
+                    'The offset of the IFD for overview of index %d is %d, '
+                    'whereas it should be greater than the one of the main '
+                    'image, which is at byte %d' %
+                    (i, ifd_offsets[-1], ifd_offsets[-2])]
             else:
-                raise ValidateCloudOptimizedGeoTIFFException(
-                    "The offset of the IFD for overview of index %d is %d, "
-                    "whereas it should be greater than the one of index %d, "
-                    "which is at byte %d" %
-                    (i, ifd_offset[-1], i-1, ifd_offset[-2]))
+                errors += [
+                    'The offset of the IFD for overview of index %d is %d, '
+                    'whereas it should be greater than the one of index %d, '
+                    'which is at byte %d' %
+                    (i, ifd_offsets[-1], i-1, ifd_offsets[-2])]
 
     # Check that the imagery starts by the smallest overview and ends with
     # the main resolution dataset
-    data_offset = [int(main_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))]
+    block_offset = main_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF')
+    if not block_offset:
+        errors += ['Missing BLOCK_OFFSET_0_0']
+    data_offset = int(block_offset) if block_offset else None
+    data_offsets = [data_offset]
+    details['data_offsets'] = {}
+    details['data_offsets']['main'] = data_offset
     for i in range(ovr_count):
         ovr_band = ds.GetRasterBand(1).GetOverview(i)
-        data_offset.append(int(
-            ovr_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF')))
+        data_offset = int(ovr_band.GetMetadataItem('BLOCK_OFFSET_0_0', 'TIFF'))
+        data_offsets.append(data_offset)
+        details['data_offsets']['overview_%d' % i] = data_offset
 
-    if data_offset[-1] < ifd_offset[-1]:
+    if data_offsets[-1] < ifd_offsets[-1]:
         if ovr_count > 0:
-            raise ValidateCloudOptimizedGeoTIFFException(
-                "The offset of the first block of the smallest overview "
-                "should be after its IFD")
+            errors += [
+                'The offset of the first block of the smallest overview '
+                'should be after its IFD']
         else:
-            raise ValidateCloudOptimizedGeoTIFFException(
-                "The offset of the first block of the image should "
-                "be after its IFD")
-    for i in range(len(data_offset)-2, 0, -1):
-        if data_offset[i] < data_offset[i+1]:
-            raise ValidateCloudOptimizedGeoTIFFException(
-                "The offset of the first block of overview of index %d should "
-                "be after the one of the overview of index %d" %
-                (i-1, i))
-    if len(data_offset) >= 2 and data_offset[0] < data_offset[1]:
-        raise ValidateCloudOptimizedGeoTIFFException(
-            "The offset of the first block of the main resolution image "
-            "should be after the one of the overview of index %d" %
-            (ovr_count - 1))
+            errors += [
+                'The offset of the first block of the image should '
+                'be after its IFD']
+    for i in range(len(data_offsets)-2, 0, -1):
+        if data_offsets[i] < data_offsets[i + 1]:
+            errors += [
+                'The offset of the first block of overview of index %d should '
+                'be after the one of the overview of index %d' %
+                (i - 1, i)]
+    if len(data_offsets) >= 2 and data_offsets[0] < data_offsets[1]:
+        errors += [
+            'The offset of the first block of the main resolution image'
+            'should be after the one of the overview of index %d' %
+            (ovr_count - 1)]
+
+    return errors, details
 
 
 def main():
-    """ Returns 0 in case of success """
+    """Return 0 in case of success, 1 for failure."""
 
     i = 1
     filename = None
@@ -171,16 +202,24 @@ def main():
         else:
             return Usage()
 
-        i = i + 1
+        i += 1
 
     if filename is None:
         return Usage()
 
     try:
-        validate(filename)
-        ret = 0
-        if not quiet:
-            print('%s is a valid cloud optimized GeoTIFF' % filename)
+        errors, _ = validate(filename)
+        if errors:
+            if not quiet:
+                print('%s is NOT a valid cloud optimized GeoTIFF.' % filename)
+                print('The following errors were found:')
+                for error in errors:
+                    print(' - ' + error)
+            ret = 1
+        else:
+            ret = 0
+            if not quiet:
+                print('%s is a valid cloud optimized GeoTIFF' % filename)
     except ValidateCloudOptimizedGeoTIFFException as e:
         if not quiet:
             print('%s is NOT a valid cloud optimized GeoTIFF : %s' %

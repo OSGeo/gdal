@@ -60,7 +60,7 @@ static int CheckCADFile(CADFileIO * pCADFileIO)
         toupper( pszFilePath[nPathLen - 1] ) == 'F' )
     {
         //TODO: "AutoCAD Binary DXF"
-        std::cerr << "DXF ASCII and binary is not supported yet.";
+        //std::cerr << "DXF ASCII and binary is not supported yet.";
         return 0;
     }
     if( ! ( nPathLen > 3 &&

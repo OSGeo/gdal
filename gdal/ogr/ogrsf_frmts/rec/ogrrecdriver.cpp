@@ -38,25 +38,25 @@ CPL_CVSID("$Id$")
 static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL ||
+    if( poOpenInfo->fpL == nullptr ||
         !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "REC") )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRRECDataSource *poDS = new OGRRECDataSource();
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    if( poDS != nullptr && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "REC Driver doesn't support update." );
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -69,7 +69,7 @@ static GDALDataset *OGRRECDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRREC()
 
 {
-    if( GDALGetDriverByName( "REC" ) != NULL )
+    if( GDALGetDriverByName( "REC" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -78,6 +78,7 @@ void RegisterOGRREC()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "rec" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "EPIInfo .REC " );
+    poDriver->SetMetadataItem( GDAL_DCAP_NONSPATIAL, "YES" );
 
     poDriver->pfnOpen = OGRRECDriverOpen;
 

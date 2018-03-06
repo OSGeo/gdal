@@ -219,7 +219,7 @@ GByte CPL_DLL *CPLHexToBinary( const char *pszHex,
 
 char CPL_DLL *CPLBase64Encode( int nBytes,
                                const GByte *pabyData ) CPL_WARN_UNUSED_RESULT;
-int CPL_DLL CPLBase64DecodeInPlace( GByte* pszBase64 );
+int CPL_DLL CPLBase64DecodeInPlace( GByte* pszBase64 ) CPL_WARN_UNUSED_RESULT;
 
 /** Type of value */
 typedef enum
@@ -319,7 +319,6 @@ char CPL_DLL *CPLForceToASCII(
     const char* pabyData, int nLen,
     char chReplacementChar ) CPL_WARN_UNUSED_RESULT;
 int CPL_DLL CPLStrlenUTF8( const char *pszUTF8Str );
-
 CPL_C_END
 
 /************************************************************************/
@@ -379,14 +378,6 @@ public:
             static_cast<std::string::size_type>(i));
     }
 
-    // Note: This is standard in C++11.
-#ifndef HAVE_CXX11
-    /** Return last character (undefined behaviour if string is empty) */
-    const char& back() const { return operator[](size()-1); }
-    /** Return last character (undefined behaviour if string is empty) */
-    char& back() { return operator[](size()-1); }
-#endif
-
     /** Clear the string */
     void Clear() { resize(0); }
 
@@ -395,7 +386,7 @@ public:
      * string. */
     void Seize( char *pszValue )
     {
-        if (pszValue == NULL )
+        if (pszValue == nullptr )
             Clear();
         else
         {
@@ -412,7 +403,7 @@ public:
     CPLString &vPrintf(
         CPL_FORMAT_STRING(const char *pszFormat), va_list args )
         CPL_PRINT_FUNC_FORMAT(2, 0);
-    CPLString &FormatC( double dfValue, const char *pszFormat = NULL );
+    CPLString &FormatC( double dfValue, const char *pszFormat = nullptr );
     CPLString &Trim();
     CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
     CPLString &replaceAll(
@@ -426,6 +417,8 @@ public:
     size_t    ifind( const char * s, size_t pos = 0 ) const;
     CPLString &toupper( void );
     CPLString &tolower( void );
+
+    bool      endsWith( const std::string& osStr ) const;
 };
 
 CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... )
@@ -520,6 +513,8 @@ class CPL_DLL CPLStringList
 
     /** Return list. Ownership remains to the object */
     char **List() { return papszList; }
+    /** Return list. Ownership remains to the object */
+    char **List() const { return papszList; }
     char **StealList();
 
     CPLStringList &Sort();
@@ -529,6 +524,22 @@ class CPL_DLL CPLStringList
     /** Return lists */
     operator char**(void) { return List(); }
 };
+
+#ifdef GDAL_COMPILATION
+
+#include <memory>
+
+/*! @cond Doxygen_Suppress */
+struct CSLDestroyReleaser
+{
+    void operator()(char** papszStr) { CSLDestroy(papszStr); }
+};
+/*! @endcond */
+
+/** Unique pointer type to use with CSL functions returning a char** */
+using CSLUniquePtr = std::unique_ptr< char*, CSLDestroyReleaser>;
+
+#endif
 
 } // extern "C++"
 

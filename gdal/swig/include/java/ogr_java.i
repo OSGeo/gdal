@@ -13,27 +13,13 @@
 #endif
 
 %pragma(java) jniclasscode=%{
-  private static boolean available = false;
 
   static {
-    try {
-      System.loadLibrary("ogrjni");
-      available = true;
-
-      if (org.gdal.gdal.gdal.HasThreadSupport() == 0)
-      {
-        System.err.println("WARNING : GDAL should be compiled with thread support for safe execution in Java.");
-      }
-
-    } catch (UnsatisfiedLinkError e) {
-      available = false;
-      System.err.println("Native library load failed.");
-      System.err.println(e);
-    }
+    gdalJNI.isAvailable();   // force gdalJNI static initializer to run and load library
   }
 
   public static boolean isAvailable() {
-    return available;
+    return gdalJNI.isAvailable();
   }
 %}
 
@@ -52,6 +38,7 @@
 import org.gdal.osr.SpatialReference;
 import org.gdal.osr.CoordinateTransformation;
 import org.gdal.gdal.MajorObject;
+import org.gdal.gdal.gdalJNI;
 %}
 
 %pragma(java) moduleimports=%{

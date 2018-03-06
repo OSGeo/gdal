@@ -42,7 +42,7 @@ int RECGetFieldCount( FILE * fp )
 
 {
     const char *pszLine = CPLReadLine( fp );
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
         return -1;
     if( atoi(pszLine) < 1 )
         return -1;
@@ -62,7 +62,7 @@ int RECGetFieldDefinition( FILE *fp, char *pszFieldname,
 {
     const char *pszLine = CPLReadLine( fp );
 
-    if( pszLine == NULL )
+    if( pszLine == nullptr )
         return FALSE;
 
     if( strlen(pszLine) < 44 )
@@ -152,7 +152,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
 
         nNextRecLine++;
 
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
             return FALSE;
 
         if( *pszLine == 0 || *pszLine == 26 /* Cntl-Z - DOS EOF */ )
@@ -186,7 +186,7 @@ int RECReadRecord( FILE *fp, char *pszRecord, int nRecordLength )
             return FALSE;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }

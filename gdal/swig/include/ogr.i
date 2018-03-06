@@ -210,9 +210,10 @@ typedef enum
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "gdal.h"
 #include "ogr_api.h"
-#include "ogr_p.h"
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -677,6 +678,7 @@ public:
                         int update=0 ) {
     CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*) OGR_Dr_Open(self, utf8_path, update);
+#ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         CPLDebug(
@@ -687,6 +689,7 @@ public:
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
+#endif
     return ds;
   }
 #ifdef SWIGPYTHON
@@ -2735,6 +2738,10 @@ public:
   }
 %clear OGRGeometryShadow* other;
 
+  OGRErr RemoveGeometry( int iSubGeom ) {
+    return OGR_G_RemoveGeometry( self, iSubGeom, TRUE );
+  }
+
   %newobject Clone;
   OGRGeometryShadow* Clone() {
     return (OGRGeometryShadow*) OGR_G_Clone(self);
@@ -2904,6 +2911,11 @@ public:
 #endif
   void SetPoint_2D(int point, double x, double y) {
     OGR_G_SetPoint_2D(self, point, x, y);
+  }
+
+  /* OGR >= 2.3 */
+  void SwapXY() {
+    OGR_G_SwapXY(self);
   }
 
   /* Geometries own their internal geometries */
@@ -3326,6 +3338,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
   OGRDataSourceShadow* Open( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpen(utf8_path,update,NULL);
+#ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         CPLDebug( "SWIG",
@@ -3334,7 +3347,7 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
-
+#endif
     return ds;
   }
 %}
@@ -3353,12 +3366,13 @@ int OGRGetNonLinearGeometriesEnabledFlag(void);
   OGRDataSourceShadow* OpenShared( const char *utf8_path, int update =0 ) {
     CPLErrorReset();
     OGRDataSourceShadow* ds = (OGRDataSourceShadow*)OGROpenShared(utf8_path,update,NULL);
+#ifndef SWIGPYTHON
     if( CPLGetLastErrorType() == CE_Failure && ds != NULL )
     {
         OGRReleaseDataSource(ds);
         ds = NULL;
     }
-
+#endif
     return ds;
   }
 %}
@@ -3404,7 +3418,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
     char** papszArgvModAfter = papszArgvModBefore;
 
     nResArgCount =
-      OGRGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, nOptions );
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgvModBefore), &papszArgvModAfter, GDAL_OF_VECTOR | nOptions );
 
     CSLDestroy(papszArgvModBefore);
 
@@ -3430,7 +3444,7 @@ OGRDriverShadow* GetDriver(int driver_number) {
         return NULL;
 
     nResArgCount =
-      OGRGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, nOptions );
+      GDALGeneralCmdLineProcessor( CSLCount(papszArgv), &papszArgv, GDAL_OF_VECTOR | nOptions );
 
     if( nResArgCount <= 0 )
         return NULL;

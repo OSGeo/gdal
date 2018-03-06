@@ -33,6 +33,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "cpl_progress.h"
 #include "cpl_vsi.h"
 
 /**
@@ -86,10 +87,25 @@ typedef struct {
 
 } CPLHTTPResult;
 
+/*! @cond Doxygen_Suppress */
+typedef size_t (*CPLHTTPFetchWriteFunc)(void *pBuffer, size_t nSize, size_t nMemb, void *pWriteArg);
+/*! @endcond */
+
 int CPL_DLL   CPLHTTPEnabled( void );
 CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
+CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+                                       GDALProgressFunc pfnProgress,
+                                       void *pProgressArg,
+                                       CPLHTTPFetchWriteFunc pfnWrite,
+                                       void *pWriteArg);
+CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
+                                           int nURLCount,
+                                           int nMaxSimultaneous,
+                                           char **papszOptions);
+
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
+void CPL_DLL  CPLHTTPDestroyMultiResult( CPLHTTPResult **papsResults, int nCount );
 int  CPL_DLL  CPLHTTPParseMultipartMime( CPLHTTPResult *psResult );
 
 /* -------------------------------------------------------------------- */
@@ -106,14 +122,96 @@ char CPL_DLL *GOA2GetRefreshToken( const char *pszAuthToken,
 char CPL_DLL *GOA2GetAccessToken( const char *pszRefreshToken,
                                   const char *pszScope );
 
+char  CPL_DLL **GOA2GetAccessTokenFromServiceAccount(
+                                        const char* pszPrivateKey,
+                                        const char* pszClientEmail,
+                                        const char* pszScope,
+                                        char** papszAdditionalClaims,
+                                        char** papszOptions);
+
+char CPL_DLL **GOA2GetAccessTokenFromCloudEngineVM( char** papszOptions );
+
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 /*! @cond Doxygen_Suppress */
 // Not sure if this belong here, used in cpl_http.cpp, cpl_vsil_curl.cpp and frmts/wms/gdalhttp.cpp
 void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions);
 char** CPLHTTPGetOptionsFromEnv();
+double CPLHTTPGetNewRetryDelay(int response_code, double dfOldDelay);
+void* CPLHTTPIgnoreSigPipe();
+void CPLHTTPRestoreSigPipeHandler(void* old_handler);
+bool CPLMultiPerformWait(void* hCurlMultiHandle, int& repeats);
 /*! @endcond */
+
+bool CPLIsMachinePotentiallyGCEInstance();
+bool CPLIsMachineForSureGCEInstance();
+
+/** Manager of Google OAuth2 authentication.
+ * 
+ * This class handles different authentication methods and handles renewal
+ * of access token.
+ *
+ * @since GDAL 2.3
+ */
+class GOA2Manager
+{
+    public:
+
+        GOA2Manager();
+
+        /** Authentication method */
+        typedef enum
+        {
+            NONE,
+            GCE,
+            ACCESS_TOKEN_FROM_REFRESH,
+            SERVICE_ACCOUNT
+        } AuthMethod;
+
+        bool SetAuthFromGCE( char** papszOptions );
+        bool SetAuthFromRefreshToken( const char* pszRefreshToken,
+                                      const char* pszClientId,
+                                      const char* pszClientSecret,
+                                      char** papszOptions );
+        bool SetAuthFromServiceAccount(const char* pszPrivateKey,
+                                       const char* pszClientEmail,
+                                       const char* pszScope,
+                                       char** papszAdditionalClaims,
+                                       char** papszOptions );
+
+        /** Returns the authentication method. */
+        AuthMethod GetAuthMethod() const { return m_eMethod; }
+
+        const char* GetBearer() const;
+
+        /** Returns private key for SERVICE_ACCOUNT method */
+        const CPLString& GetPrivateKey() const { return m_osPrivateKey; }
+
+        /** Returns client email for SERVICE_ACCOUNT method */
+        const CPLString& GetClientEmail() const { return m_osClientEmail; }
+
+    private:
+
+        mutable CPLString       m_osCurrentBearer;
+        mutable time_t          m_nExpirationTime;
+        AuthMethod      m_eMethod;
+
+        // for ACCESS_TOKEN_FROM_REFRESH
+        CPLString       m_osClientId;
+        CPLString       m_osClientSecret;
+        CPLString       m_osRefreshToken;
+
+        // for SERVICE_ACCOUNT
+        CPLString       m_osPrivateKey;
+        CPLString       m_osClientEmail;
+        CPLString       m_osScope;
+        CPLStringList   m_aosAdditionalClaims;
+
+        CPLStringList   m_aosOptions;
+};
+
+
 #endif // __cplusplus
 
 #endif /* ndef CPL_HTTP_H_INCLUDED */

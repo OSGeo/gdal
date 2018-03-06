@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wcs:CoverageDescriptions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns="http://www.opengis.net/gml/3.2"
+ xmlns:wcs="http://www.opengis.net/wcs/2.0"
+ xmlns:ows="http://www.opengis.net/ows/2.0"
+ xmlns:gml="http://www.opengis.net/gml/3.2"
+ xmlns:gmlcov="http://www.opengis.net/gmlcov/1.0"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:swe="http://www.opengis.net/swe/2.0"
+ xmlns:wcscrs="http://www.opengis.net/wcs/service-extension/crs/1.0"
+ xsi:schemaLocation="http://schemas.opengis.net/wcs/2.0 http://www.opengis.net/wcs/2.0/wcsDescribeCoverage.xsd">
+  <wcs:CoverageDescription gml:id="Coverage2">
+    <gml:boundedBy>
+      <gml:Envelope srsName="http://www.opengis.net/def/crs/EPSG/0/3067" axisLabels="x y" uomLabels="" srsDimension="2">
+        <gml:lowerCorner>61676.038377249904 6605831.1432084311</gml:lowerCorner>
+        <gml:upperCorner>543676.03837724985 7302211.1432084311</gml:upperCorner>
+      </gml:Envelope>
+    </gml:boundedBy>
+    <wcs:CoverageId>Coverage2</wcs:CoverageId>
+    <gml:domainSet>
+      <gml:RectifiedGrid gml:id="grid_Coverage2" dimension = "2">
+        <gml:limits>
+          <gml:GridEnvelope>
+            <gml:low>0 0</gml:low>
+            <gml:high>24099 34818</gml:high>
+          </gml:GridEnvelope>
+        </gml:limits>
+        <gml:axisLabels>x y</gml:axisLabels>
+        <gml:origin>
+          <gml:Point gml:id="grid_origin_Coverage2" srsName="http://www.opengis.net/def/crs/EPSG/0/3067">
+            <gml:pos>61686.038377249904 7302201.1432084311</gml:pos>
+          </gml:Point>
+        </gml:origin>
+        <gml:offsetVector>19.999999999999996 0</gml:offsetVector>
+        <gml:offsetVector>0 -20</gml:offsetVector>
+      </gml:RectifiedGrid>
+    </gml:domainSet>
+    <gmlcov:rangeType>
+      <swe:DataRecord>
+        <swe:field name="band_1">
+          <swe:Quantity>
+            <swe:description>Band 1</swe:description>
+            <swe:uom code="unknown"/>
+            <swe:constraint>
+              <swe:AllowedValues>
+                <swe:interval>0.0 255.0</swe:interval>
+              </swe:AllowedValues>
+            </swe:constraint>
+          </swe:Quantity>
+        </swe:field>
+      </swe:DataRecord>
+    </gmlcov:rangeType>
+    <wcs:ServiceParameters>
+      <wcs:CoverageSubtype>RectifiedGridCoverage</wcs:CoverageSubtype>
+      <wcs:nativeFormat>image/tiff</wcs:nativeFormat>
+    </wcs:ServiceParameters>
+  </wcs:CoverageDescription>
+</wcs:CoverageDescriptions>

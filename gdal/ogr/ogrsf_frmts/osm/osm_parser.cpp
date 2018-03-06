@@ -26,42 +26,71 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#define DO_NOT_DEFINE_READ_VARINT64
-
 #include "osm_parser.h"
 #include "gpb.h"
 
+#include <climits>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <exception>
+#include <string>
+#include <vector>
+
+#include "cpl_config.h"
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "cpl_multiproc.h"
 #include "cpl_worker_thread_pool.h"
+
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
 #endif
-
-#include <algorithm>
 
 CPL_CVSID("$Id$")
 
 // The buffer that are passed to GPB decoding are extended with 0's
 // to be sure that we will be able to read a single 64bit value without
 // doing checks for each byte.
-static const int EXTRA_BYTES = 1;
+constexpr int EXTRA_BYTES = 1;
 
-static const int XML_BUFSIZE = 64 * 1024;
+constexpr int XML_BUFSIZE = 64 * 1024;
 
 // Per OSM PBF spec
-const unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
+constexpr unsigned int MAX_BLOB_HEADER_SIZE = 64 * 1024;
 
 // Per OSM PBF spec (usually much smaller !)
-const unsigned int MAX_BLOB_SIZE = 64 * 1024 * 1024;
+constexpr unsigned int MAX_BLOB_SIZE = 64 * 1024 * 1024;
 
 // GDAL implementation limits
-const unsigned int MAX_ACC_BLOB_SIZE = 50 * 1024 * 1024;
-const unsigned int MAX_ACC_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
-const int N_MAX_JOBS = 1024;
+constexpr unsigned int MAX_ACC_BLOB_SIZE = 50 * 1024 * 1024;
+constexpr unsigned int MAX_ACC_UNCOMPRESSED_SIZE = 100 * 1024 * 1024;
+constexpr int N_MAX_JOBS = 1024;
+
+#if defined(__GNUC__)
+#define CPL_NO_INLINE __attribute__ ((noinline))
+#else
+#define CPL_NO_INLINE
+#endif
+
+class OSMParsingException: public std::exception
+{
+        std::string m_osMessage;
+    public:
+        explicit OSMParsingException(int nLine): m_osMessage(
+            CPLSPrintf("Parsing error occurred at line %d", nLine)) {}
+
+        const char* what() const noexcept override
+                                        { return m_osMessage.c_str(); }
+};
+
+#define THROW_OSM_PARSING_EXCEPTION throw OSMParsingException(__LINE__)
+
 
 /************************************************************************/
 /*                            INIT_INFO()                               */
@@ -74,7 +103,7 @@ static void INIT_INFO( OSMInfo *sInfo )
     sInfo->nVersion = 0;
     sInfo->nUID = 0;
     sInfo->bTimeStampIsStr = false;
-    sInfo->pszUserSID = NULL;
+    sInfo->pszUserSID = nullptr;
 }
 
 /************************************************************************/
@@ -176,9 +205,9 @@ struct _OSMContext
 /*                          ReadBlobHeader()                            */
 /************************************************************************/
 
-static const int BLOBHEADER_IDX_TYPE = 1;
-static const int BLOBHEADER_IDX_INDEXDATA = 2;
-static const int BLOBHEADER_IDX_DATASIZE = 3;
+constexpr int BLOBHEADER_IDX_TYPE = 1;
+constexpr int BLOBHEADER_IDX_INDEXDATA = 2;
+constexpr int BLOBHEADER_IDX_DATASIZE = 3;
 
 typedef enum
 {
@@ -188,70 +217,75 @@ typedef enum
 } BlobType;
 
 static
-bool ReadBlobHeader( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadBlobHeader( const GByte* pabyData, const GByte* pabyDataLimit,
                      unsigned int* pnBlobSize, BlobType* peBlobType )
 {
     *pnBlobSize = 0;
     *peBlobType = BLOB_UNKNOWN;
 
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(BLOBHEADER_IDX_TYPE, WT_DATA) )
+        while(pabyData < pabyDataLimit)
         {
-            unsigned int nDataLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nDataLength);
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( nDataLength == 7 && memcmp(pabyData, "OSMData", 7) == 0 )
+            if( nKey == MAKE_KEY(BLOBHEADER_IDX_TYPE, WT_DATA) )
             {
-                *peBlobType = BLOB_OSMDATA;
-            }
-            else if( nDataLength == 9 && memcmp(pabyData, "OSMHeader", 9) == 0 )
-            {
-                *peBlobType = BLOB_OSMHEADER;
-            }
+                unsigned int nDataLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nDataLength);
 
-            pabyData += nDataLength;
+                if( nDataLength == 7 && memcmp(pabyData, "OSMData", 7) == 0 )
+                {
+                    *peBlobType = BLOB_OSMDATA;
+                }
+                else if( nDataLength == 9 && memcmp(pabyData, "OSMHeader", 9) == 0 )
+                {
+                    *peBlobType = BLOB_OSMHEADER;
+                }
+
+                pabyData += nDataLength;
+            }
+            else if( nKey == MAKE_KEY(BLOBHEADER_IDX_INDEXDATA, WT_DATA) )
+            {
+                // Ignored if found.
+                unsigned int nDataLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nDataLength);
+                pabyData += nDataLength;
+            }
+            else if( nKey == MAKE_KEY(BLOBHEADER_IDX_DATASIZE, WT_VARINT) )
+            {
+                unsigned int nBlobSize = 0;
+                READ_VARUINT32(pabyData, pabyDataLimit, nBlobSize);
+                // printf("nBlobSize = %d\n", nBlobSize);
+                *pnBlobSize = nBlobSize;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else if( nKey == MAKE_KEY(BLOBHEADER_IDX_INDEXDATA, WT_DATA) )
-        {
-            // Ignored if found.
-            unsigned int nDataLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nDataLength);
-            pabyData += nDataLength;
-        }
-        else if( nKey == MAKE_KEY(BLOBHEADER_IDX_DATASIZE, WT_VARINT) )
-        {
-            unsigned int nBlobSize = 0;
-            READ_VARUINT32(pabyData, pabyDataLimit, nBlobSize);
-            // printf("nBlobSize = %d\n", nBlobSize);
-            *pnBlobSize = nBlobSize;
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+
+        return pabyData == pabyDataLimit;
     }
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                          ReadHeaderBBox()                            */
 /************************************************************************/
 
-static const int HEADERBBOX_IDX_LEFT = 1;
-static const int HEADERBBOX_IDX_RIGHT = 2;
-static const int HEADERBBOX_IDX_TOP = 3;
-static const int HEADERBBOX_IDX_BOTTOM = 4;
+constexpr int HEADERBBOX_IDX_LEFT = 1;
+constexpr int HEADERBBOX_IDX_RIGHT = 2;
+constexpr int HEADERBBOX_IDX_TOP = 3;
+constexpr int HEADERBBOX_IDX_BOTTOM = 4;
 
 static
-bool ReadHeaderBBox( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadHeaderBBox( const GByte* pabyData, const GByte* pabyDataLimit,
                      OSMContext* psCtxt )
 {
     psCtxt->dfLeft = 0.0;
@@ -259,163 +293,167 @@ bool ReadHeaderBBox( GByte* pabyData, GByte* pabyDataLimit,
     psCtxt->dfTop = 0.0;
     psCtxt->dfBottom = 0.0;
 
-    /* printf(">ReadHeaderBBox\n"); */
-
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
+        while(pabyData < pabyDataLimit)
+        {
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-        if( nKey == MAKE_KEY(HEADERBBOX_IDX_LEFT, WT_VARINT) )
-        {
-            GIntBig nLeft = 0;
-            READ_VARSINT64(pabyData, pabyDataLimit, nLeft);
-            psCtxt->dfLeft = nLeft * 1e-9;
+            if( nKey == MAKE_KEY(HEADERBBOX_IDX_LEFT, WT_VARINT) )
+            {
+                GIntBig nLeft = 0;
+                READ_VARSINT64(pabyData, pabyDataLimit, nLeft);
+                psCtxt->dfLeft = nLeft * 1e-9;
+            }
+            else if( nKey == MAKE_KEY(HEADERBBOX_IDX_RIGHT, WT_VARINT) )
+            {
+                GIntBig nRight = 0;
+                READ_VARSINT64(pabyData, pabyDataLimit, nRight);
+                psCtxt->dfRight = nRight * 1e-9;
+            }
+            else if( nKey == MAKE_KEY(HEADERBBOX_IDX_TOP, WT_VARINT) )
+            {
+                GIntBig nTop = 0;
+                READ_VARSINT64(pabyData, pabyDataLimit, nTop);
+                psCtxt->dfTop = nTop * 1e-9;
+            }
+            else if( nKey == MAKE_KEY(HEADERBBOX_IDX_BOTTOM, WT_VARINT) )
+            {
+                GIntBig nBottom = 0;
+                READ_VARSINT64(pabyData, pabyDataLimit, nBottom);
+                psCtxt->dfBottom = nBottom * 1e-9;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else if( nKey == MAKE_KEY(HEADERBBOX_IDX_RIGHT, WT_VARINT) )
-        {
-            GIntBig nRight = 0;
-            READ_VARSINT64(pabyData, pabyDataLimit, nRight);
-            psCtxt->dfRight = nRight * 1e-9;
-        }
-        else if( nKey == MAKE_KEY(HEADERBBOX_IDX_TOP, WT_VARINT) )
-        {
-            GIntBig nTop = 0;
-            READ_VARSINT64(pabyData, pabyDataLimit, nTop);
-            psCtxt->dfTop = nTop * 1e-9;
-        }
-        else if( nKey == MAKE_KEY(HEADERBBOX_IDX_BOTTOM, WT_VARINT) )
-        {
-            GIntBig nBottom = 0;
-            READ_VARSINT64(pabyData, pabyDataLimit, nBottom);
-            psCtxt->dfBottom = nBottom * 1e-9;
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+
+        psCtxt->pfnNotifyBounds(psCtxt->dfLeft, psCtxt->dfBottom,
+                                psCtxt->dfRight, psCtxt->dfTop,
+                                psCtxt, psCtxt->user_data);
+
+        return pabyData == pabyDataLimit;
     }
-
-    psCtxt->pfnNotifyBounds(psCtxt->dfLeft, psCtxt->dfBottom,
-                            psCtxt->dfRight, psCtxt->dfTop,
-                            psCtxt, psCtxt->user_data);
-
-    /* printf("<ReadHeaderBBox\n"); */
-    return pabyData == pabyDataLimit;
-
-end_error:
-    /* printf("<ReadHeaderBBox\n"); */
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                          ReadOSMHeader()                             */
 /************************************************************************/
 
-static const int OSMHEADER_IDX_BBOX              = 1;
-static const int OSMHEADER_IDX_REQUIRED_FEATURES = 4;
-static const int OSMHEADER_IDX_OPTIONAL_FEATURES = 5;
-static const int OSMHEADER_IDX_WRITING_PROGRAM   = 16;
-static const int OSMHEADER_IDX_SOURCE            = 17;
+constexpr int OSMHEADER_IDX_BBOX              = 1;
+constexpr int OSMHEADER_IDX_REQUIRED_FEATURES = 4;
+constexpr int OSMHEADER_IDX_OPTIONAL_FEATURES = 5;
+constexpr int OSMHEADER_IDX_WRITING_PROGRAM   = 16;
+constexpr int OSMHEADER_IDX_SOURCE            = 17;
 
 /* Ignored */
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP  = 32;
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER = 33;
-static const int OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   = 34;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP  = 32;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER = 33;
+constexpr int OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL   = 34;
 
 static
-bool ReadOSMHeader( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMHeader( const GByte* pabyData, const GByte* pabyDataLimit,
                     OSMContext* psCtxt )
 {
-    char* pszTxt = NULL;
+    char* pszTxt = nullptr;
 
-    // TODO(schwehr): Remove goto macros.
-
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(OSMHEADER_IDX_BBOX, WT_DATA) )
+        while(pabyData < pabyDataLimit)
         {
-            unsigned int nBBOXSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nBBOXSize);
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( !ReadHeaderBBox(pabyData, pabyData + nBBOXSize, psCtxt) )
-                GOTO_END_ERROR;
-
-            pabyData += nBBOXSize;
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_REQUIRED_FEATURES, WT_DATA) )
-        {
-            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
-            // printf("OSMHEADER_IDX_REQUIRED_FEATURES = %s\n", pszTxt)
-            if( !(strcmp(pszTxt, "OsmSchema-V0.6") == 0 ||
-                  strcmp(pszTxt, "DenseNodes") == 0) )
+            if( nKey == MAKE_KEY(OSMHEADER_IDX_BBOX, WT_DATA) )
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                        "Error: unsupported required feature : %s",
-                        pszTxt);
-                VSIFree(pszTxt);
-                GOTO_END_ERROR;  // TODO(schwehr): Get rid of goto.
+                unsigned int nBBOXSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nBBOXSize);
+
+                if( !ReadHeaderBBox(pabyData, pabyData + nBBOXSize, psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nBBOXSize;
             }
-            VSIFree(pszTxt);
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_REQUIRED_FEATURES, WT_DATA) )
+            {
+                READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+                // printf("OSMHEADER_IDX_REQUIRED_FEATURES = %s\n", pszTxt)
+                if( !(strcmp(pszTxt, "OsmSchema-V0.6") == 0 ||
+                    strcmp(pszTxt, "DenseNodes") == 0) )
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                            "Error: unsupported required feature : %s",
+                            pszTxt);
+                    VSIFree(pszTxt);
+                    THROW_OSM_PARSING_EXCEPTION;
+                }
+                VSIFree(pszTxt);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_OPTIONAL_FEATURES, WT_DATA) )
+            {
+                READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+                // printf("OSMHEADER_IDX_OPTIONAL_FEATURES = %s\n", pszTxt);
+                VSIFree(pszTxt);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_WRITING_PROGRAM, WT_DATA) )
+            {
+                READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+                // printf("OSMHEADER_IDX_WRITING_PROGRAM = %s\n", pszTxt);
+                VSIFree(pszTxt);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_SOURCE, WT_DATA) )
+            {
+                READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+                // printf("OSMHEADER_IDX_SOURCE = %s\n", pszTxt);
+                VSIFree(pszTxt);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP,
+                                    WT_VARINT) )
+            {
+                SKIP_VARINT(pabyData, pabyDataLimit);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER,
+                                    WT_VARINT) )
+            {
+                SKIP_VARINT(pabyData, pabyDataLimit);
+            }
+            else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL,
+                                    WT_DATA) )
+            {
+                READ_TEXT(pabyData, pabyDataLimit, pszTxt);
+                /* printf("OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL = %s\n", pszTxt); */
+                VSIFree(pszTxt);
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_OPTIONAL_FEATURES, WT_DATA) )
-        {
-            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
-            // printf("OSMHEADER_IDX_OPTIONAL_FEATURES = %s\n", pszTxt);
-            VSIFree(pszTxt);
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_WRITING_PROGRAM, WT_DATA) )
-        {
-            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
-            // printf("OSMHEADER_IDX_WRITING_PROGRAM = %s\n", pszTxt);
-            VSIFree(pszTxt);
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_SOURCE, WT_DATA) )
-        {
-            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
-            // printf("OSMHEADER_IDX_SOURCE = %s\n", pszTxt);
-            VSIFree(pszTxt);
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_TIMESTAMP,
-                                  WT_VARINT) )
-        {
-            SKIP_VARINT(pabyData, pabyDataLimit);
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_SEQ_NUMBER,
-                                  WT_VARINT) )
-        {
-            SKIP_VARINT(pabyData, pabyDataLimit);
-        }
-        else if( nKey == MAKE_KEY(OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL,
-                                  WT_DATA) )
-        {
-            READ_TEXT(pabyData, pabyDataLimit, pszTxt);
-            /* printf("OSMHEADER_IDX_OSMOSIS_REPLICATION_BASE_URL = %s\n", pszTxt); */
-            VSIFree(pszTxt);
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+
+        return pabyData == pabyDataLimit;
     }
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                         ReadStringTable()                            */
 /************************************************************************/
 
-static const int READSTRINGTABLE_IDX_STRING = 1;
+constexpr int READSTRINGTABLE_IDX_STRING = 1;
 
 static
-bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadStringTable( const GByte* pabyData, const GByte* pabyDataLimit,
                       OSMContext* psCtxt )
 {
     char* pszStrBuf = (char*)pabyData;
@@ -425,63 +463,66 @@ bool ReadStringTable( GByte* pabyData, GByte* pabyDataLimit,
 
     psCtxt->pszStrBuf = pszStrBuf;
 
-    if( (unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated )
+    try
     {
-        psCtxt->nStrAllocated = std::max(psCtxt->nStrAllocated * 2,
-                                          (unsigned int)(pabyDataLimit - pabyData));
-        int* panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
-            panStrOff, psCtxt->nStrAllocated * sizeof(int));
-        if( panStrOffNew == NULL )
-            GOTO_END_ERROR;
-        panStrOff = panStrOffNew;
-    }
-
-    while(pabyData < pabyDataLimit)
-    {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        while (nKey == MAKE_KEY(READSTRINGTABLE_IDX_STRING, WT_DATA))
+        if( (unsigned int)(pabyDataLimit - pabyData) > psCtxt->nStrAllocated )
         {
-            unsigned int nDataLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nDataLength);
+            psCtxt->nStrAllocated = std::max(psCtxt->nStrAllocated * 2,
+                                            (unsigned int)(pabyDataLimit - pabyData));
+            int* panStrOffNew = (int*) VSI_REALLOC_VERBOSE(
+                panStrOff, psCtxt->nStrAllocated * sizeof(int));
+            if( panStrOffNew == nullptr )
+                THROW_OSM_PARSING_EXCEPTION;
+            panStrOff = panStrOffNew;
+        }
 
-            panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
-            GByte* pbSaved = &pabyData[nDataLength];
+        while(pabyData < pabyDataLimit)
+        {
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            pabyData += nDataLength;
+            while (nKey == MAKE_KEY(READSTRINGTABLE_IDX_STRING, WT_DATA))
+            {
+                unsigned int nDataLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nDataLength);
+
+                panStrOff[nStrCount ++] = static_cast<int>(pabyData - (GByte*)pszStrBuf);
+                GByte* pbSaved = const_cast<GByte*>(&pabyData[nDataLength]);
+
+                pabyData += nDataLength;
+
+                if( pabyData < pabyDataLimit )
+                {
+                    READ_FIELD_KEY(nKey);
+                    *pbSaved = 0;
+                    /* printf("string[%d] = %s\n", nStrCount-1, pbSaved - nDataLength); */
+                }
+                else
+                {
+                    *pbSaved = 0;
+                    /* printf("string[%d] = %s\n", nStrCount-1, pbSaved - nDataLength); */
+                    break;
+                }
+            }
 
             if( pabyData < pabyDataLimit )
             {
-                READ_FIELD_KEY(nKey);
-                *pbSaved = 0;
-                /* printf("string[%d] = %s\n", nStrCount-1, pbSaved - nDataLength); */
-            }
-            else
-            {
-                *pbSaved = 0;
-                /* printf("string[%d] = %s\n", nStrCount-1, pbSaved - nDataLength); */
-                break;
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
             }
         }
 
-        if( pabyData < pabyDataLimit )
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+        psCtxt->panStrOff = panStrOff;
+        psCtxt->nStrCount = nStrCount;
+
+        return pabyData == pabyDataLimit;
     }
-
-    psCtxt->panStrOff = panStrOff;
-    psCtxt->nStrCount = nStrCount;
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-
-    psCtxt->panStrOff = panStrOff;
-    psCtxt->nStrCount = nStrCount;
-
-    return FALSE;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        psCtxt->panStrOff = panStrOff;
+        psCtxt->nStrCount = nStrCount;
+        return false;
+    }
 }
 
 /************************************************************************/
@@ -520,348 +561,353 @@ static unsigned AddWithOverflowAccepted(unsigned a, int b)
 /*                         ReadDenseNodes()                             */
 /************************************************************************/
 
-static const int DENSEINFO_IDX_VERSION   = 1;
-static const int DENSEINFO_IDX_TIMESTAMP = 2;
-static const int DENSEINFO_IDX_CHANGESET = 3;
-static const int DENSEINFO_IDX_UID       = 4;
-static const int DENSEINFO_IDX_USER_SID  = 5;
-static const int DENSEINFO_IDX_VISIBLE   = 6;
+constexpr int DENSEINFO_IDX_VERSION   = 1;
+constexpr int DENSEINFO_IDX_TIMESTAMP = 2;
+constexpr int DENSEINFO_IDX_CHANGESET = 3;
+constexpr int DENSEINFO_IDX_UID       = 4;
+constexpr int DENSEINFO_IDX_USER_SID  = 5;
+constexpr int DENSEINFO_IDX_VISIBLE   = 6;
 
-static const int DENSENODES_IDX_ID        = 1;
-static const int DENSENODES_IDX_DENSEINFO = 5;
-static const int DENSENODES_IDX_LAT       = 8;
-static const int DENSENODES_IDX_LON       = 9;
-static const int DENSENODES_IDX_KEYVALS   = 10;
+constexpr int DENSENODES_IDX_ID        = 1;
+constexpr int DENSENODES_IDX_DENSEINFO = 5;
+constexpr int DENSENODES_IDX_LAT       = 8;
+constexpr int DENSENODES_IDX_LON       = 9;
+constexpr int DENSENODES_IDX_KEYVALS   = 10;
 
 static
-bool ReadDenseNodes( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadDenseNodes( const GByte* pabyData, const GByte* pabyDataLimit,
                      OSMContext* psCtxt )
 {
-    GByte* pabyDataIDs = NULL;
-    GByte* pabyDataIDsLimit = NULL;
-    GByte* pabyDataLat = NULL;
-    GByte* pabyDataLon = NULL;
-    GByte* apabyData[DENSEINFO_IDX_VISIBLE] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    GByte* pabyDataKeyVal = NULL;
+    const GByte* pabyDataIDs = nullptr;
+    const GByte* pabyDataIDsLimit = nullptr;
+    const GByte* pabyDataLat = nullptr;
+    const GByte* pabyDataLon = nullptr;
+    const GByte* apabyData[DENSEINFO_IDX_VISIBLE] = {nullptr, nullptr, nullptr,
+                                               nullptr, nullptr, nullptr};
+    const GByte* pabyDataKeyVal = nullptr;
+    unsigned int nMaxTags = 0;
 
-    /* printf(">ReadDenseNodes\n"); */
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(DENSENODES_IDX_ID, WT_DATA) )
+        while(pabyData < pabyDataLimit)
         {
-            unsigned int nSize = 0;
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( pabyDataIDs != NULL )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( nSize > psCtxt->nNodesAllocated )
+            if( nKey == MAKE_KEY(DENSENODES_IDX_ID, WT_DATA) )
             {
-                psCtxt->nNodesAllocated = std::max(psCtxt->nNodesAllocated * 2,
-                                                 nSize);
-                OSMNode* pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
-                    psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
-                if( pasNodesNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasNodes = pasNodesNew;
-            }
+                unsigned int nSize = 0;
 
-            pabyDataIDs = pabyData;
-            pabyDataIDsLimit = pabyData + nSize;
-            pabyData += nSize;
-        }
-        else if( nKey == MAKE_KEY(DENSENODES_IDX_DENSEINFO, WT_DATA) )
-        {
-            unsigned int nSize = 0;
+                if( pabyDataIDs != nullptr )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            /* Inline reading of DenseInfo structure */
-
-            GByte* pabyDataNewLimit = pabyData + nSize;
-            while(pabyData < pabyDataNewLimit)
-            {
-                READ_FIELD_KEY(nKey);
-
-                const int nFieldNumber = GET_FIELDNUMBER(nKey);
-                if( GET_WIRETYPE(nKey) == WT_DATA &&
-                    nFieldNumber >= DENSEINFO_IDX_VERSION &&
-                    nFieldNumber <= DENSEINFO_IDX_VISIBLE )
+                if( nSize > psCtxt->nNodesAllocated )
                 {
-                    if( apabyData[nFieldNumber - 1] != NULL) GOTO_END_ERROR;
-                    READ_SIZE(pabyData, pabyDataNewLimit, nSize);
-
-                    apabyData[nFieldNumber - 1] = pabyData;
-                    pabyData += nSize;
+                    psCtxt->nNodesAllocated = std::max(psCtxt->nNodesAllocated * 2,
+                                                    nSize);
+                    OSMNode* pasNodesNew = (OSMNode*) VSI_REALLOC_VERBOSE(
+                        psCtxt->pasNodes, psCtxt->nNodesAllocated * sizeof(OSMNode));
+                    if( pasNodesNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasNodes = pasNodesNew;
                 }
+
+                pabyDataIDs = pabyData;
+                pabyDataIDsLimit = pabyData + nSize;
+                pabyData += nSize;
+            }
+            else if( nKey == MAKE_KEY(DENSENODES_IDX_DENSEINFO, WT_DATA) )
+            {
+                unsigned int nSize = 0;
+
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+
+                /* Inline reading of DenseInfo structure */
+
+                const GByte* pabyDataNewLimit = pabyData + nSize;
+                while(pabyData < pabyDataNewLimit)
+                {
+                    READ_FIELD_KEY(nKey);
+
+                    const int nFieldNumber = GET_FIELDNUMBER(nKey);
+                    if( GET_WIRETYPE(nKey) == WT_DATA &&
+                        nFieldNumber >= DENSEINFO_IDX_VERSION &&
+                        nFieldNumber <= DENSEINFO_IDX_VISIBLE )
+                    {
+                        if( apabyData[nFieldNumber - 1] != nullptr) THROW_OSM_PARSING_EXCEPTION;
+                        READ_SIZE(pabyData, pabyDataNewLimit, nSize);
+
+                        apabyData[nFieldNumber - 1] = pabyData;
+                        pabyData += nSize;
+                    }
+                    else
+                    {
+                        SKIP_UNKNOWN_FIELD(pabyData, pabyDataNewLimit, TRUE);
+                    }
+                }
+
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
+            }
+            else if( nKey == MAKE_KEY(DENSENODES_IDX_LAT, WT_DATA) )
+            {
+                if( pabyDataLat != nullptr )
+                    THROW_OSM_PARSING_EXCEPTION;
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+                pabyDataLat = pabyData;
+                pabyData += nSize;
+            }
+            else if( nKey == MAKE_KEY(DENSENODES_IDX_LON, WT_DATA) )
+            {
+                if( pabyDataLon != nullptr )
+                    THROW_OSM_PARSING_EXCEPTION;
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+                pabyDataLon = pabyData;
+                pabyData += nSize;
+            }
+            else if( nKey == MAKE_KEY(DENSENODES_IDX_KEYVALS, WT_DATA) )
+            {
+                if( pabyDataKeyVal != nullptr )
+                    THROW_OSM_PARSING_EXCEPTION;
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+
+                pabyDataKeyVal = pabyData;
+                nMaxTags = nSize / 2;
+
+                if( nMaxTags > psCtxt->nTagsAllocated )
+                {
+
+                    psCtxt->nTagsAllocated = std::max(
+                        psCtxt->nTagsAllocated * 2, nMaxTags);
+                    OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                        psCtxt->pasTags,
+                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    if( pasTagsNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasTags = pasTagsNew;
+                }
+
+                pabyData += nSize;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
+        }
+
+        if( pabyData != pabyDataLimit )
+            THROW_OSM_PARSING_EXCEPTION;
+
+        if( pabyDataIDs != nullptr && pabyDataLat != nullptr &&
+            pabyDataLon != nullptr )
+        {
+            const GByte* pabyDataVersion = apabyData[DENSEINFO_IDX_VERSION - 1];
+            const GByte* pabyDataTimeStamp = apabyData[DENSEINFO_IDX_TIMESTAMP - 1];
+            const GByte* pabyDataChangeset = apabyData[DENSEINFO_IDX_CHANGESET - 1];
+            const GByte* pabyDataUID = apabyData[DENSEINFO_IDX_UID - 1];
+            const GByte* pabyDataUserSID = apabyData[DENSEINFO_IDX_USER_SID - 1];
+            /* GByte* pabyDataVisible = apabyData[DENSEINFO_IDX_VISIBLE - 1]; */
+
+            GIntBig nID = 0;
+            GIntBig nLat = 0;
+            GIntBig nLon = 0;
+            GIntBig nTimeStamp = 0;
+            GIntBig nChangeset = 0;
+            int nUID = 0;
+            unsigned int nUserSID = 0;
+            int nTags = 0;
+            int nNodes = 0;
+
+            const char* pszStrBuf = psCtxt->pszStrBuf;
+            int* panStrOff = psCtxt->panStrOff;
+            const unsigned int nStrCount = psCtxt->nStrCount;
+            OSMTag* pasTags = psCtxt->pasTags;
+            OSMNode* pasNodes = psCtxt->pasNodes;
+
+            int nVersion = 0;
+            /* int nVisible = 1; */
+
+            while(pabyDataIDs < pabyDataIDsLimit)
+            {
+                GIntBig nDelta1, nDelta2;
+                int nKVIndexStart = nTags;
+
+                READ_VARSINT64_NOCHECK(pabyDataIDs, pabyDataIDsLimit, nDelta1);
+                READ_VARSINT64(pabyDataLat, pabyDataLimit, nDelta2);
+                nID = AddWithOverflowAccepted(nID, nDelta1);
+                nLat = AddWithOverflowAccepted(nLat, nDelta2);
+
+                READ_VARSINT64(pabyDataLon, pabyDataLimit, nDelta1);
+                nLon = AddWithOverflowAccepted(nLon, nDelta1);
+
+                if( pabyDataTimeStamp )
+                {
+                    READ_VARSINT64(pabyDataTimeStamp, pabyDataLimit, nDelta2);
+                    nTimeStamp = AddWithOverflowAccepted(nTimeStamp, nDelta2);
+                }
+                if( pabyDataChangeset )
+                {
+                    READ_VARSINT64(pabyDataChangeset, pabyDataLimit, nDelta1);
+                    nChangeset = AddWithOverflowAccepted(nChangeset, nDelta1);
+                }
+                if( pabyDataVersion )
+                {
+                    READ_VARINT32(pabyDataVersion, pabyDataLimit, nVersion);
+                }
+                if( pabyDataUID )
+                {
+                    int nDeltaUID = 0;
+                    READ_VARSINT32(pabyDataUID, pabyDataLimit, nDeltaUID);
+                    nUID = AddWithOverflowAccepted(nUID, nDeltaUID);
+                }
+                if( pabyDataUserSID )
+                {
+                    int nDeltaUserSID = 0;
+                    READ_VARSINT32(pabyDataUserSID, pabyDataLimit, nDeltaUserSID);
+                    nUserSID = AddWithOverflowAccepted(nUserSID, nDeltaUserSID);
+                    if( nUserSID >= nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+                }
+                /* if( pabyDataVisible )
+                    READ_VARINT32(pabyDataVisible, pabyDataLimit, nVisible); */
+
+                if( pabyDataKeyVal != nullptr && pasTags != nullptr )
+                {
+                    while( static_cast<unsigned>(nTags) < nMaxTags )
+                    {
+                        unsigned int nKey, nVal;
+                        READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nKey);
+                        if( nKey == 0 )
+                            break;
+                        if( nKey >= nStrCount )
+                            THROW_OSM_PARSING_EXCEPTION;
+
+                        READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nVal);
+                        if( nVal >= nStrCount )
+                            THROW_OSM_PARSING_EXCEPTION;
+
+                        pasTags[nTags].pszK = pszStrBuf + panStrOff[nKey];
+                        pasTags[nTags].pszV = pszStrBuf + panStrOff[nVal];
+                        nTags ++;
+
+                        /* printf("nKey = %d, nVal = %d\n", nKey, nVal); */
+                    }
+                }
+
+                if( pasTags != nullptr && nTags > nKVIndexStart )
+                    pasNodes[nNodes].pasTags = pasTags + nKVIndexStart;
                 else
-                {
-                    SKIP_UNKNOWN_FIELD(pabyData, pabyDataNewLimit, TRUE);
-                }
-            }
+                    pasNodes[nNodes].pasTags = nullptr;
+                pasNodes[nNodes].nTags = nTags - nKVIndexStart;
 
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(DENSENODES_IDX_LAT, WT_DATA) )
-        {
-            if( pabyDataLat != NULL )
-                GOTO_END_ERROR;
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-            pabyDataLat = pabyData;
-            pabyData += nSize;
-        }
-        else if( nKey == MAKE_KEY(DENSENODES_IDX_LON, WT_DATA) )
-        {
-            if( pabyDataLon != NULL )
-                GOTO_END_ERROR;
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-            pabyDataLon = pabyData;
-            pabyData += nSize;
-        }
-        else if( nKey == MAKE_KEY(DENSENODES_IDX_KEYVALS, WT_DATA) )
-        {
-            if( pabyDataKeyVal != NULL )
-                GOTO_END_ERROR;
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            pabyDataKeyVal = pabyData;
-
-            if( nSize > psCtxt->nTagsAllocated )
-            {
-
-                psCtxt->nTagsAllocated = std::max(
-                    psCtxt->nTagsAllocated * 2, nSize);
-                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
-                    psCtxt->pasTags,
-                    psCtxt->nTagsAllocated * sizeof(OSMTag));
-                if( pasTagsNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasTags = pasTagsNew;
-            }
-
-            pabyData += nSize;
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
-    }
-
-    if( pabyData != pabyDataLimit )
-        GOTO_END_ERROR;
-
-    if( pabyDataIDs != NULL && pabyDataLat != NULL && pabyDataLon != NULL )
-    {
-        GByte* pabyDataVersion = apabyData[DENSEINFO_IDX_VERSION - 1];
-        GByte* pabyDataTimeStamp = apabyData[DENSEINFO_IDX_TIMESTAMP - 1];
-        GByte* pabyDataChangeset = apabyData[DENSEINFO_IDX_CHANGESET - 1];
-        GByte* pabyDataUID = apabyData[DENSEINFO_IDX_UID - 1];
-        GByte* pabyDataUserSID = apabyData[DENSEINFO_IDX_USER_SID - 1];
-        /* GByte* pabyDataVisible = apabyData[DENSEINFO_IDX_VISIBLE - 1]; */
-
-        GIntBig nID = 0;
-        GIntBig nLat = 0;
-        GIntBig nLon = 0;
-        GIntBig nTimeStamp = 0;
-        GIntBig nChangeset = 0;
-        int nUID = 0;
-        unsigned int nUserSID = 0;
-        int nTags = 0;
-        int nNodes = 0;
-
-        const char* pszStrBuf = psCtxt->pszStrBuf;
-        int* panStrOff = psCtxt->panStrOff;
-        const unsigned int nStrCount = psCtxt->nStrCount;
-        OSMTag* pasTags = psCtxt->pasTags;
-        OSMNode* pasNodes = psCtxt->pasNodes;
-
-        int nVersion = 0;
-        /* int nVisible = 1; */
-
-        while(pabyDataIDs < pabyDataIDsLimit)
-        {
-            GIntBig nDelta1, nDelta2;
-            int nKVIndexStart = nTags;
-
-            READ_VARSINT64_NOCHECK(pabyDataIDs, pabyDataIDsLimit, nDelta1);
-            READ_VARSINT64(pabyDataLat, pabyDataLimit, nDelta2);
-            nID = AddWithOverflowAccepted(nID, nDelta1);
-            nLat = AddWithOverflowAccepted(nLat, nDelta2);
-
-            READ_VARSINT64(pabyDataLon, pabyDataLimit, nDelta1);
-            nLon = AddWithOverflowAccepted(nLon, nDelta1);
-
-            if( pabyDataTimeStamp )
-            {
-                READ_VARSINT64(pabyDataTimeStamp, pabyDataLimit, nDelta2);
-                nTimeStamp = AddWithOverflowAccepted(nTimeStamp, nDelta2);
-            }
-            if( pabyDataChangeset )
-            {
-                READ_VARSINT64(pabyDataChangeset, pabyDataLimit, nDelta1);
-                nChangeset = AddWithOverflowAccepted(nChangeset, nDelta1);
-            }
-            if( pabyDataVersion )
-            {
-                READ_VARINT32(pabyDataVersion, pabyDataLimit, nVersion);
-            }
-            if( pabyDataUID )
-            {
-                int nDeltaUID = 0;
-                READ_VARSINT32(pabyDataUID, pabyDataLimit, nDeltaUID);
-                nUID = AddWithOverflowAccepted(nUID, nDeltaUID);
-            }
-            if( pabyDataUserSID )
-            {
-                int nDeltaUserSID = 0;
-                READ_VARSINT32(pabyDataUserSID, pabyDataLimit, nDeltaUserSID);
-                nUserSID = AddWithOverflowAccepted(nUserSID, nDeltaUserSID);
+                pasNodes[nNodes].nID = nID;
+                pasNodes[nNodes].dfLat = .000000001 * (psCtxt->nLatOffset + ((double)psCtxt->nGranularity * nLat));
+                pasNodes[nNodes].dfLon = .000000001 * (psCtxt->nLonOffset + ((double)psCtxt->nGranularity * nLon));
+                if( pasNodes[nNodes].dfLon < -180 || pasNodes[nNodes].dfLon > 180 ||
+                    pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                pasNodes[nNodes].sInfo.bTimeStampIsStr = false;
+                pasNodes[nNodes].sInfo.ts.nTimeStamp = nTimeStamp;
+                pasNodes[nNodes].sInfo.nChangeset = nChangeset;
+                pasNodes[nNodes].sInfo.nVersion = nVersion;
+                pasNodes[nNodes].sInfo.nUID = nUID;
                 if( nUserSID >= nStrCount )
-                    GOTO_END_ERROR;
-            }
-            /* if( pabyDataVisible )
-                READ_VARINT32(pabyDataVisible, pabyDataLimit, nVisible); */
-
-            if( pabyDataKeyVal != NULL && pasTags != NULL )
-            {
-                while( true )
-                {
-                    unsigned int nKey, nVal;
-                    READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nKey);
-                    if( nKey == 0 )
-                        break;
-                    if( nKey >= nStrCount )
-                        GOTO_END_ERROR;
-
-                    READ_VARUINT32(pabyDataKeyVal, pabyDataLimit, nVal);
-                    if( nVal >= nStrCount )
-                        GOTO_END_ERROR;
-
-                    pasTags[nTags].pszK = pszStrBuf + panStrOff[nKey];
-                    pasTags[nTags].pszV = pszStrBuf + panStrOff[nVal];
-                    nTags ++;
-
-                    /* printf("nKey = %d, nVal = %d\n", nKey, nVal); */
-                }
+                    pasNodes[nNodes].sInfo.pszUserSID = "";
+                else
+                    pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
+                /* pasNodes[nNodes].sInfo.nVisible = nVisible; */
+                nNodes ++;
+                /* printf("nLat = " CPL_FRMT_GIB "\n", nLat); printf("nLon = " CPL_FRMT_GIB "\n", nLon); */
             }
 
-            if( pasTags != NULL && nTags > nKVIndexStart )
-                pasNodes[nNodes].pasTags = pasTags + nKVIndexStart;
-            else
-                pasNodes[nNodes].pasTags = NULL;
-            pasNodes[nNodes].nTags = nTags - nKVIndexStart;
+            psCtxt->pfnNotifyNodes(nNodes, pasNodes, psCtxt, psCtxt->user_data);
 
-            pasNodes[nNodes].nID = nID;
-            pasNodes[nNodes].dfLat = .000000001 * (psCtxt->nLatOffset + ((double)psCtxt->nGranularity * nLat));
-            pasNodes[nNodes].dfLon = .000000001 * (psCtxt->nLonOffset + ((double)psCtxt->nGranularity * nLon));
-            if( pasNodes[nNodes].dfLon < -180 || pasNodes[nNodes].dfLon > 180 ||
-                pasNodes[nNodes].dfLat < -90 || pasNodes[nNodes].dfLat > 90 )
-                GOTO_END_ERROR;
-            pasNodes[nNodes].sInfo.bTimeStampIsStr = false;
-            pasNodes[nNodes].sInfo.ts.nTimeStamp = nTimeStamp;
-            pasNodes[nNodes].sInfo.nChangeset = nChangeset;
-            pasNodes[nNodes].sInfo.nVersion = nVersion;
-            pasNodes[nNodes].sInfo.nUID = nUID;
-            if( nUserSID >= nStrCount )
-                pasNodes[nNodes].sInfo.pszUserSID = "";
-            else
-                pasNodes[nNodes].sInfo.pszUserSID = pszStrBuf + panStrOff[nUserSID];
-            /* pasNodes[nNodes].sInfo.nVisible = nVisible; */
-            nNodes ++;
-            /* printf("nLat = " CPL_FRMT_GIB "\n", nLat); printf("nLon = " CPL_FRMT_GIB "\n", nLon); */
+            if(pabyDataIDs != pabyDataIDsLimit)
+                THROW_OSM_PARSING_EXCEPTION;
         }
 
-        psCtxt->pfnNotifyNodes(nNodes, pasNodes, psCtxt, psCtxt->user_data);
-
-        if(pabyDataIDs != pabyDataIDsLimit)
-            GOTO_END_ERROR;
+        return true;
     }
-
-    /* printf("<ReadDenseNodes\n"); */
-
-    return TRUE;
-
-end_error:
-    /* printf("<ReadDenseNodes\n"); */
-
-    return FALSE;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                           ReadOSMInfo()                              */
 /************************************************************************/
 
-static const int INFO_IDX_VERSION   = 1;
-static const int INFO_IDX_TIMESTAMP = 2;
-static const int INFO_IDX_CHANGESET = 3;
-static const int INFO_IDX_UID       = 4;
-static const int INFO_IDX_USER_SID  = 5;
-static const int INFO_IDX_VISIBLE   = 6;
+constexpr int INFO_IDX_VERSION   = 1;
+constexpr int INFO_IDX_TIMESTAMP = 2;
+constexpr int INFO_IDX_CHANGESET = 3;
+constexpr int INFO_IDX_UID       = 4;
+constexpr int INFO_IDX_USER_SID  = 5;
+constexpr int INFO_IDX_VISIBLE   = 6;
 
 static
-bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMInfo( const GByte* pabyData, const GByte* pabyDataLimit,
                   OSMInfo* psInfo, OSMContext* psContext ) CPL_NO_INLINE;
 
 static
-bool ReadOSMInfo( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadOSMInfo( const GByte* pabyData, const GByte* pabyDataLimit,
                   OSMInfo* psInfo, OSMContext* psContext )
 {
-    /* printf(">ReadOSMInfo\n"); */
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
+        while(pabyData < pabyDataLimit)
+        {
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-        if( nKey == MAKE_KEY(INFO_IDX_VERSION, WT_VARINT) )
-        {
-            READ_VARINT32(pabyData, pabyDataLimit, psInfo->nVersion);
+            if( nKey == MAKE_KEY(INFO_IDX_VERSION, WT_VARINT) )
+            {
+                READ_VARINT32(pabyData, pabyDataLimit, psInfo->nVersion);
+            }
+            else if( nKey == MAKE_KEY(INFO_IDX_TIMESTAMP, WT_VARINT) )
+            {
+                READ_VARINT64(pabyData, pabyDataLimit, psInfo->ts.nTimeStamp);
+            }
+            else if( nKey == MAKE_KEY(INFO_IDX_CHANGESET, WT_VARINT) )
+            {
+                READ_VARINT64(pabyData, pabyDataLimit, psInfo->nChangeset);
+            }
+            else if( nKey == MAKE_KEY(INFO_IDX_UID, WT_VARINT) )
+            {
+                READ_VARINT32(pabyData, pabyDataLimit, psInfo->nUID);
+            }
+            else if( nKey == MAKE_KEY(INFO_IDX_USER_SID, WT_VARINT) )
+            {
+                unsigned int nUserSID = 0;
+                READ_VARUINT32(pabyData, pabyDataLimit, nUserSID);
+                if( nUserSID < psContext->nStrCount)
+                    psInfo->pszUserSID = psContext->pszStrBuf +
+                                        psContext->panStrOff[nUserSID];
+            }
+            else if( nKey == MAKE_KEY(INFO_IDX_VISIBLE, WT_VARINT) )
+            {
+                SKIP_VARINT(pabyData, pabyDataLimit);
+                // int nVisible = 0;
+                // READ_VARINT32(pabyData, pabyDataLimit, /*psInfo->*/nVisible);
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else if( nKey == MAKE_KEY(INFO_IDX_TIMESTAMP, WT_VARINT) )
-        {
-            READ_VARINT64(pabyData, pabyDataLimit, psInfo->ts.nTimeStamp);
-        }
-        else if( nKey == MAKE_KEY(INFO_IDX_CHANGESET, WT_VARINT) )
-        {
-            READ_VARINT64(pabyData, pabyDataLimit, psInfo->nChangeset);
-        }
-        else if( nKey == MAKE_KEY(INFO_IDX_UID, WT_VARINT) )
-        {
-            READ_VARINT32(pabyData, pabyDataLimit, psInfo->nUID);
-        }
-        else if( nKey == MAKE_KEY(INFO_IDX_USER_SID, WT_VARINT) )
-        {
-            unsigned int nUserSID = 0;
-            READ_VARUINT32(pabyData, pabyDataLimit, nUserSID);
-            if( nUserSID < psContext->nStrCount)
-                psInfo->pszUserSID = psContext->pszStrBuf +
-                                     psContext->panStrOff[nUserSID];
-        }
-        else if( nKey == MAKE_KEY(INFO_IDX_VISIBLE, WT_VARINT) )
-        {
-            SKIP_VARINT(pabyData, pabyDataLimit);
-            // int nVisible = 0;
-            // READ_VARINT32(pabyData, pabyDataLimit, /*psInfo->*/nVisible);
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+
+        return pabyData == pabyDataLimit;
     }
-    /* printf("<ReadOSMInfo\n"); */
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-    /* printf("<ReadOSMInfo\n"); */
-
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
@@ -872,15 +918,15 @@ end_error:
 /* The one advertized in http://wiki.openstreetmap.org/wiki/PBF_Format and */
 /* used previously seem wrong/old-dated */
 
-static const int NODE_IDX_ID   = 1;
-static const int NODE_IDX_LAT  = 8;
-static const int NODE_IDX_LON  = 9;
-static const int NODE_IDX_KEYS = 2;
-static const int NODE_IDX_VALS = 3;
-static const int NODE_IDX_INFO = 4;
+constexpr int NODE_IDX_ID   = 1;
+constexpr int NODE_IDX_LAT  = 8;
+constexpr int NODE_IDX_LON  = 9;
+constexpr int NODE_IDX_KEYS = 2;
+constexpr int NODE_IDX_VALS = 3;
+constexpr int NODE_IDX_INFO = 4;
 
 static
-bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadNode( const GByte* pabyData, const GByte* pabyDataLimit,
                OSMContext* psCtxt )
 {
     OSMNode sNode;
@@ -890,144 +936,144 @@ bool ReadNode( GByte* pabyData, GByte* pabyDataLimit,
     sNode.dfLon = 0.0;
     INIT_INFO(&(sNode.sInfo));
     sNode.nTags = 0;
-    sNode.pasTags = NULL;
+    sNode.pasTags = nullptr;
 
-    /* printf(">ReadNode\n"); */
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
+        while(pabyData < pabyDataLimit)
+        {
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-        if( nKey == MAKE_KEY(NODE_IDX_ID, WT_VARINT) )
-        {
-            READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, sNode.nID);
-        }
-        else if( nKey == MAKE_KEY(NODE_IDX_LAT, WT_VARINT) )
-        {
-            GIntBig nLat = 0;
-            READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLat);
-            sNode.dfLat =
-                0.000000001 * (psCtxt->nLatOffset +
-                               ((double)psCtxt->nGranularity * nLat));
-        }
-        else if( nKey == MAKE_KEY(NODE_IDX_LON, WT_VARINT) )
-        {
-            GIntBig nLon = 0;
-            READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLon);
-            sNode.dfLon =
-                0.000000001 * (psCtxt->nLonOffset +
-                               ((double)psCtxt->nGranularity * nLon));
-        }
-        else if( nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            GByte* pabyDataNewLimit = NULL;
-            if( sNode.nTags != 0 )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( nSize > psCtxt->nTagsAllocated )
+            if( nKey == MAKE_KEY(NODE_IDX_ID, WT_VARINT) )
             {
-                psCtxt->nTagsAllocated = std::max(
-                    psCtxt->nTagsAllocated * 2, nSize);
-                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
-                    psCtxt->pasTags,
-                    psCtxt->nTagsAllocated * sizeof(OSMTag));
-                if( pasTagsNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasTags = pasTagsNew;
+                READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, sNode.nID);
             }
-
-            pabyDataNewLimit = pabyData + nSize;
-            while (pabyData < pabyDataNewLimit)
+            else if( nKey == MAKE_KEY(NODE_IDX_LAT, WT_VARINT) )
             {
-                unsigned int nKey2 = 0;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
-
-                if( nKey2 >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
-
-                psCtxt->pasTags[sNode.nTags].pszK = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nKey2];
-                psCtxt->pasTags[sNode.nTags].pszV = "";
-                sNode.nTags ++;
+                GIntBig nLat = 0;
+                READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLat);
+                sNode.dfLat =
+                    0.000000001 * (psCtxt->nLatOffset +
+                                ((double)psCtxt->nGranularity * nLat));
             }
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(NODE_IDX_VALS, WT_DATA) )
-        {
-            unsigned int nIter = 0;
-            if( sNode.nTags == 0 )
-                GOTO_END_ERROR;
-            // unsigned int nSize = 0;
-            // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
-            SKIP_VARINT(pabyData, pabyDataLimit);
-
-            for( ; nIter < sNode.nTags; nIter++)
+            else if( nKey == MAKE_KEY(NODE_IDX_LON, WT_VARINT) )
             {
-                unsigned int nVal = 0;
-                READ_VARUINT32(pabyData, pabyDataLimit, nVal);
+                GIntBig nLon = 0;
+                READ_VARSINT64_NOCHECK(pabyData, pabyDataLimit, nLon);
+                sNode.dfLon =
+                    0.000000001 * (psCtxt->nLonOffset +
+                                ((double)psCtxt->nGranularity * nLon));
+            }
+            else if( nKey == MAKE_KEY(NODE_IDX_KEYS, WT_DATA) )
+            {
+                unsigned int nSize = 0;
+                const GByte* pabyDataNewLimit = nullptr;
+                if( sNode.nTags != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                if( nVal >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                if( nSize > psCtxt->nTagsAllocated )
+                {
+                    psCtxt->nTagsAllocated = std::max(
+                        psCtxt->nTagsAllocated * 2, nSize);
+                    OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                        psCtxt->pasTags,
+                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    if( pasTagsNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasTags = pasTagsNew;
+                }
 
-                psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nVal];
+                pabyDataNewLimit = pabyData + nSize;
+                while (pabyData < pabyDataNewLimit)
+                {
+                    unsigned int nKey2 = 0;
+                    READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
+
+                    if( nKey2 >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[sNode.nTags].pszK = psCtxt->pszStrBuf +
+                                                psCtxt->panStrOff[nKey2];
+                    psCtxt->pasTags[sNode.nTags].pszV = "";
+                    sNode.nTags ++;
+                }
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
+            }
+            else if( nKey == MAKE_KEY(NODE_IDX_VALS, WT_DATA) )
+            {
+                unsigned int nIter = 0;
+                if( sNode.nTags == 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                // unsigned int nSize = 0;
+                // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+                SKIP_VARINT(pabyData, pabyDataLimit);
+
+                for( ; nIter < sNode.nTags; nIter++)
+                {
+                    unsigned int nVal = 0;
+                    READ_VARUINT32(pabyData, pabyDataLimit, nVal);
+
+                    if( nVal >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
+                                                psCtxt->panStrOff[nVal];
+                }
+            }
+            else if( nKey == MAKE_KEY(NODE_IDX_INFO, WT_DATA) )
+            {
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+
+                if( !ReadOSMInfo(pabyData, pabyDataLimit + nSize,
+                                &sNode.sInfo, psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
             }
         }
-        else if( nKey == MAKE_KEY(NODE_IDX_INFO, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            if( !ReadOSMInfo(pabyData, pabyDataLimit + nSize,
-                             &sNode.sInfo, psCtxt) )
-                GOTO_END_ERROR;
+        if( sNode.dfLon < -180 || sNode.dfLon > 180 ||
+            sNode.dfLat < -90 || sNode.dfLat > 90 )
+            THROW_OSM_PARSING_EXCEPTION;
 
-            pabyData += nSize;
-        }
+        if( pabyData != pabyDataLimit )
+            THROW_OSM_PARSING_EXCEPTION;
+
+        if( sNode.nTags )
+            sNode.pasTags = psCtxt->pasTags;
         else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+            sNode.pasTags = nullptr;
+        psCtxt->pfnNotifyNodes(1, &sNode, psCtxt, psCtxt->user_data);
+
+        return true;
     }
-
-    if( sNode.dfLon < -180 || sNode.dfLon > 180 ||
-        sNode.dfLat < -90 || sNode.dfLat > 90 )
-        GOTO_END_ERROR;
-
-    if( pabyData != pabyDataLimit )
-        GOTO_END_ERROR;
-
-    if( sNode.nTags )
-        sNode.pasTags = psCtxt->pasTags;
-    else
-        sNode.pasTags = NULL;
-    psCtxt->pfnNotifyNodes(1, &sNode, psCtxt, psCtxt->user_data);
-
-    // printf("<ReadNode\n");
-
-    return true;
-
-end_error:
-    /* printf("<ReadNode\n"); */
-
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                              ReadWay()                               */
 /************************************************************************/
 
-static const int WAY_IDX_ID   = 1;
-static const int WAY_IDX_KEYS = 2;
-static const int WAY_IDX_VALS = 3;
-static const int WAY_IDX_INFO = 4;
-static const int WAY_IDX_REFS = 8;
+constexpr int WAY_IDX_ID   = 1;
+constexpr int WAY_IDX_KEYS = 2;
+constexpr int WAY_IDX_VALS = 3;
+constexpr int WAY_IDX_INFO = 4;
+constexpr int WAY_IDX_REFS = 8;
 
 static
-bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadWay( const GByte* pabyData, const GByte* pabyDataLimit,
               OSMContext* psCtxt )
 {
     OSMWay sWay;
@@ -1036,159 +1082,159 @@ bool ReadWay( GByte* pabyData, GByte* pabyDataLimit,
     sWay.nTags = 0;
     sWay.nRefs = 0;
 
-    // printf(">ReadWay\n");
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(WAY_IDX_ID, WT_VARINT) )
+        while(pabyData < pabyDataLimit)
         {
-            READ_VARINT64(pabyData, pabyDataLimit, sWay.nID);
-        }
-        else if( nKey == MAKE_KEY(WAY_IDX_KEYS, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            GByte* pabyDataNewLimit = NULL;
-            if( sWay.nTags != 0 )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( nSize > psCtxt->nTagsAllocated )
+            if( nKey == MAKE_KEY(WAY_IDX_ID, WT_VARINT) )
             {
-                psCtxt->nTagsAllocated = std::max(
-                    psCtxt->nTagsAllocated * 2, nSize);
-                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
-                    psCtxt->pasTags,
-                    psCtxt->nTagsAllocated * sizeof(OSMTag));
-                if( pasTagsNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasTags = pasTagsNew;
+                READ_VARINT64(pabyData, pabyDataLimit, sWay.nID);
             }
-
-            pabyDataNewLimit = pabyData + nSize;
-            while (pabyData < pabyDataNewLimit)
+            else if( nKey == MAKE_KEY(WAY_IDX_KEYS, WT_DATA) )
             {
-                unsigned int nKey2 = 0;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
+                unsigned int nSize = 0;
+                const GByte* pabyDataNewLimit = nullptr;
+                if( sWay.nTags != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                if( nKey2 >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                if( nSize > psCtxt->nTagsAllocated )
+                {
+                    psCtxt->nTagsAllocated = std::max(
+                        psCtxt->nTagsAllocated * 2, nSize);
+                    OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                        psCtxt->pasTags,
+                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    if( pasTagsNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasTags = pasTagsNew;
+                }
 
-                psCtxt->pasTags[sWay.nTags].pszK = psCtxt->pszStrBuf +
-                                                   psCtxt->panStrOff[nKey2];
-                psCtxt->pasTags[sWay.nTags].pszV = "";
-                sWay.nTags ++;
+                pabyDataNewLimit = pabyData + nSize;
+                while (pabyData < pabyDataNewLimit)
+                {
+                    unsigned int nKey2 = 0;
+                    READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
+
+                    if( nKey2 >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[sWay.nTags].pszK = psCtxt->pszStrBuf +
+                                                    psCtxt->panStrOff[nKey2];
+                    psCtxt->pasTags[sWay.nTags].pszV = "";
+                    sWay.nTags ++;
+                }
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
             }
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(WAY_IDX_VALS, WT_DATA) )
-        {
-            unsigned int nIter = 0;
-            if( sWay.nTags == 0 )
-                GOTO_END_ERROR;
-            // unsigned int nSize = 0;
-            // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
-            SKIP_VARINT(pabyData, pabyDataLimit);
-
-            for(; nIter < sWay.nTags; nIter ++)
+            else if( nKey == MAKE_KEY(WAY_IDX_VALS, WT_DATA) )
             {
-                unsigned int nVal = 0;
-                READ_VARUINT32(pabyData, pabyDataLimit, nVal);
+                unsigned int nIter = 0;
+                if( sWay.nTags == 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                // unsigned int nSize = 0;
+                // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+                SKIP_VARINT(pabyData, pabyDataLimit);
 
-                if( nVal >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                for(; nIter < sWay.nTags; nIter ++)
+                {
+                    unsigned int nVal = 0;
+                    READ_VARUINT32(pabyData, pabyDataLimit, nVal);
 
-                psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nVal];
+                    if( nVal >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
+                                                psCtxt->panStrOff[nVal];
+                }
             }
-        }
-        else if( nKey == MAKE_KEY(WAY_IDX_INFO, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( !ReadOSMInfo(pabyData, pabyData + nSize, &sWay.sInfo, psCtxt) )
-                GOTO_END_ERROR;
-
-            pabyData += nSize;
-        }
-        else if( nKey == MAKE_KEY(WAY_IDX_REFS, WT_DATA) )
-        {
-            GIntBig nRefVal = 0;
-            unsigned int nSize = 0;
-            GByte* pabyDataNewLimit = NULL;
-            if( sWay.nRefs != 0 )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( nSize > psCtxt->nNodeRefsAllocated )
+            else if( nKey == MAKE_KEY(WAY_IDX_INFO, WT_DATA) )
             {
-                psCtxt->nNodeRefsAllocated =
-                    std::max(psCtxt->nNodeRefsAllocated * 2, nSize);
-                GIntBig* panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
-                        psCtxt->panNodeRefs,
-                        psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
-                if( panNodeRefsNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->panNodeRefs = panNodeRefsNew;
-            }
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            pabyDataNewLimit = pabyData + nSize;
-            while (pabyData < pabyDataNewLimit)
+                if( !ReadOSMInfo(pabyData, pabyData + nSize, &sWay.sInfo, psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+            }
+            else if( nKey == MAKE_KEY(WAY_IDX_REFS, WT_DATA) )
             {
-                GIntBig nDeltaRef = 0;
-                READ_VARSINT64_NOCHECK(pabyData, pabyDataNewLimit, nDeltaRef);
-                nRefVal = AddWithOverflowAccepted(nRefVal, nDeltaRef);
+                GIntBig nRefVal = 0;
+                unsigned int nSize = 0;
+                const GByte* pabyDataNewLimit = nullptr;
+                if( sWay.nRefs != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                psCtxt->panNodeRefs[sWay.nRefs ++] = nRefVal;
+                if( nSize > psCtxt->nNodeRefsAllocated )
+                {
+                    psCtxt->nNodeRefsAllocated =
+                        std::max(psCtxt->nNodeRefsAllocated * 2, nSize);
+                    GIntBig* panNodeRefsNew = (GIntBig*) VSI_REALLOC_VERBOSE(
+                            psCtxt->panNodeRefs,
+                            psCtxt->nNodeRefsAllocated * sizeof(GIntBig));
+                    if( panNodeRefsNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->panNodeRefs = panNodeRefsNew;
+                }
+
+                pabyDataNewLimit = pabyData + nSize;
+                while (pabyData < pabyDataNewLimit)
+                {
+                    GIntBig nDeltaRef = 0;
+                    READ_VARSINT64_NOCHECK(pabyData, pabyDataNewLimit, nDeltaRef);
+                    nRefVal = AddWithOverflowAccepted(nRefVal, nDeltaRef);
+
+                    psCtxt->panNodeRefs[sWay.nRefs ++] = nRefVal;
+                }
+
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
             }
-
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
+
+        if( pabyData != pabyDataLimit )
+            THROW_OSM_PARSING_EXCEPTION;
+
+        if( sWay.nTags )
+            sWay.pasTags = psCtxt->pasTags;
         else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+            sWay.pasTags = nullptr;
+        sWay.panNodeRefs = psCtxt->panNodeRefs;
+
+        psCtxt->pfnNotifyWay(&sWay, psCtxt, psCtxt->user_data);
+
+        return true;
     }
-
-    if( pabyData != pabyDataLimit )
-        GOTO_END_ERROR;
-
-    // printf("<ReadWay\n");
-
-    if( sWay.nTags )
-        sWay.pasTags = psCtxt->pasTags;
-    else
-        sWay.pasTags = NULL;
-    sWay.panNodeRefs = psCtxt->panNodeRefs;
-
-    psCtxt->pfnNotifyWay(&sWay, psCtxt, psCtxt->user_data);
-
-    return true;
-
-end_error:
-    // printf("<ReadWay\n");
-
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                            ReadRelation()                            */
 /************************************************************************/
 
-static const int RELATION_IDX_ID        = 1;
-static const int RELATION_IDX_KEYS      = 2;
-static const int RELATION_IDX_VALS      = 3;
-static const int RELATION_IDX_INFO      = 4;
-static const int RELATION_IDX_ROLES_SID = 8;
-static const int RELATION_IDX_MEMIDS    = 9;
-static const int RELATION_IDX_TYPES     = 10;
+constexpr int RELATION_IDX_ID        = 1;
+constexpr int RELATION_IDX_KEYS      = 2;
+constexpr int RELATION_IDX_VALS      = 3;
+constexpr int RELATION_IDX_INFO      = 4;
+constexpr int RELATION_IDX_ROLES_SID = 8;
+constexpr int RELATION_IDX_MEMIDS    = 9;
+constexpr int RELATION_IDX_TYPES     = 10;
 
 static
-bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadRelation( const GByte* pabyData, const GByte* pabyDataLimit,
                    OSMContext* psCtxt )
 {
     OSMRelation sRelation;
@@ -1197,200 +1243,203 @@ bool ReadRelation( GByte* pabyData, GByte* pabyDataLimit,
     sRelation.nTags = 0;
     sRelation.nMembers = 0;
 
-    /* printf(">ReadRelation\n"); */
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(RELATION_IDX_ID, WT_VARINT) )
+        while(pabyData < pabyDataLimit)
         {
-            READ_VARINT64(pabyData, pabyDataLimit, sRelation.nID);
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_KEYS, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            GByte* pabyDataNewLimit = NULL;
-            if( sRelation.nTags != 0 )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( nSize > psCtxt->nTagsAllocated )
+            if( nKey == MAKE_KEY(RELATION_IDX_ID, WT_VARINT) )
             {
-                psCtxt->nTagsAllocated = std::max(
-                    psCtxt->nTagsAllocated * 2, nSize);
-                OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
-                    psCtxt->pasTags,
-                    psCtxt->nTagsAllocated * sizeof(OSMTag));
-                if( pasTagsNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasTags = pasTagsNew;
+                READ_VARINT64(pabyData, pabyDataLimit, sRelation.nID);
             }
-
-            pabyDataNewLimit = pabyData + nSize;
-            while (pabyData < pabyDataNewLimit)
+            else if( nKey == MAKE_KEY(RELATION_IDX_KEYS, WT_DATA) )
             {
-                unsigned int nKey2 = 0;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
+                unsigned int nSize = 0;
+                const GByte* pabyDataNewLimit = nullptr;
+                if( sRelation.nTags != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                if( nKey2 >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                if( nSize > psCtxt->nTagsAllocated )
+                {
+                    psCtxt->nTagsAllocated = std::max(
+                        psCtxt->nTagsAllocated * 2, nSize);
+                    OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
+                        psCtxt->pasTags,
+                        psCtxt->nTagsAllocated * sizeof(OSMTag));
+                    if( pasTagsNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasTags = pasTagsNew;
+                }
 
-                psCtxt->pasTags[sRelation.nTags].pszK =
-                    psCtxt->pszStrBuf + psCtxt->panStrOff[nKey2];
-                psCtxt->pasTags[sRelation.nTags].pszV = "";
-                sRelation.nTags ++;
+                pabyDataNewLimit = pabyData + nSize;
+                while (pabyData < pabyDataNewLimit)
+                {
+                    unsigned int nKey2 = 0;
+                    READ_VARUINT32(pabyData, pabyDataNewLimit, nKey2);
+
+                    if( nKey2 >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[sRelation.nTags].pszK =
+                        psCtxt->pszStrBuf + psCtxt->panStrOff[nKey2];
+                    psCtxt->pasTags[sRelation.nTags].pszV = "";
+                    sRelation.nTags ++;
+                }
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
             }
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_VALS, WT_DATA) )
-        {
-            unsigned int nIter = 0;
-            if( sRelation.nTags == 0 )
-                GOTO_END_ERROR;
-            // unsigned int nSize = 0;
-            // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
-            SKIP_VARINT(pabyData, pabyDataLimit);
-
-            for(; nIter < sRelation.nTags; nIter ++)
+            else if( nKey == MAKE_KEY(RELATION_IDX_VALS, WT_DATA) )
             {
-                unsigned int nVal = 0;
-                READ_VARUINT32(pabyData, pabyDataLimit, nVal);
+                unsigned int nIter = 0;
+                if( sRelation.nTags == 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                // unsigned int nSize = 0;
+                // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+                SKIP_VARINT(pabyData, pabyDataLimit);
 
-                if( nVal >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                for(; nIter < sRelation.nTags; nIter ++)
+                {
+                    unsigned int nVal = 0;
+                    READ_VARUINT32(pabyData, pabyDataLimit, nVal);
 
-                psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
-                                              psCtxt->panStrOff[nVal];
+                    if( nVal >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasTags[nIter].pszV = psCtxt->pszStrBuf +
+                                                psCtxt->panStrOff[nVal];
+                }
             }
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_INFO, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( !ReadOSMInfo(pabyData, pabyData + nSize,
-                             &sRelation.sInfo, psCtxt) )
-                GOTO_END_ERROR;
-
-            pabyData += nSize;
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_ROLES_SID, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            GByte* pabyDataNewLimit = NULL;
-            if( sRelation.nMembers != 0 )
-                GOTO_END_ERROR;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( nSize > psCtxt->nMembersAllocated )
+            else if( nKey == MAKE_KEY(RELATION_IDX_INFO, WT_DATA) )
             {
-                psCtxt->nMembersAllocated =
-                    std::max(psCtxt->nMembersAllocated * 2, nSize);
-                OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
-                        psCtxt->pasMembers,
-                        psCtxt->nMembersAllocated * sizeof(OSMMember));
-                if( pasMembersNew == NULL )
-                    GOTO_END_ERROR;
-                psCtxt->pasMembers = pasMembersNew;
-            }
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            pabyDataNewLimit = pabyData + nSize;
-            while (pabyData < pabyDataNewLimit)
+                if( !ReadOSMInfo(pabyData, pabyData + nSize,
+                                &sRelation.sInfo, psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+            }
+            else if( nKey == MAKE_KEY(RELATION_IDX_ROLES_SID, WT_DATA) )
             {
-                unsigned int nRoleSID = 0;
-                READ_VARUINT32(pabyData, pabyDataNewLimit, nRoleSID);
-                if( nRoleSID >= psCtxt->nStrCount )
-                    GOTO_END_ERROR;
+                unsigned int nSize = 0;
+                const GByte* pabyDataNewLimit = nullptr;
+                if( sRelation.nMembers != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                psCtxt->pasMembers[sRelation.nMembers].pszRole =
-                    psCtxt->pszStrBuf + psCtxt->panStrOff[nRoleSID];
-                psCtxt->pasMembers[sRelation.nMembers].nID = 0;
-                psCtxt->pasMembers[sRelation.nMembers].eType = MEMBER_NODE;
-                sRelation.nMembers ++;
+                if( nSize > psCtxt->nMembersAllocated )
+                {
+                    psCtxt->nMembersAllocated =
+                        std::max(psCtxt->nMembersAllocated * 2, nSize);
+                    OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
+                            psCtxt->pasMembers,
+                            psCtxt->nMembersAllocated * sizeof(OSMMember));
+                    if( pasMembersNew == nullptr )
+                        THROW_OSM_PARSING_EXCEPTION;
+                    psCtxt->pasMembers = pasMembersNew;
+                }
+
+                pabyDataNewLimit = pabyData + nSize;
+                while (pabyData < pabyDataNewLimit)
+                {
+                    unsigned int nRoleSID = 0;
+                    READ_VARUINT32(pabyData, pabyDataNewLimit, nRoleSID);
+                    if( nRoleSID >= psCtxt->nStrCount )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasMembers[sRelation.nMembers].pszRole =
+                        psCtxt->pszStrBuf + psCtxt->panStrOff[nRoleSID];
+                    psCtxt->pasMembers[sRelation.nMembers].nID = 0;
+                    psCtxt->pasMembers[sRelation.nMembers].eType = MEMBER_NODE;
+                    sRelation.nMembers ++;
+                }
+
+                if( pabyData != pabyDataNewLimit )
+                    THROW_OSM_PARSING_EXCEPTION;
             }
-
-            if( pabyData != pabyDataNewLimit )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_MEMIDS, WT_DATA) )
-        {
-            unsigned int nIter = 0;
-            GIntBig nMemID = 0;
-            if( sRelation.nMembers == 0 )
-                GOTO_END_ERROR;
-            // unsigned int nSize = 0;
-            // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
-            SKIP_VARINT(pabyData, pabyDataLimit);
-
-            for(; nIter < sRelation.nMembers; nIter++)
+            else if( nKey == MAKE_KEY(RELATION_IDX_MEMIDS, WT_DATA) )
             {
-                GIntBig nDeltaMemID = 0;
-                READ_VARSINT64(pabyData, pabyDataLimit, nDeltaMemID);
-                nMemID = AddWithOverflowAccepted(nMemID, nDeltaMemID);
+                unsigned int nIter = 0;
+                GIntBig nMemID = 0;
+                if( sRelation.nMembers == 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                // unsigned int nSize = 0;
+                // READ_VARUINT32(pabyData, pabyDataLimit, nSize);
+                SKIP_VARINT(pabyData, pabyDataLimit);
 
-                psCtxt->pasMembers[nIter].nID = nMemID;
+                for(; nIter < sRelation.nMembers; nIter++)
+                {
+                    GIntBig nDeltaMemID = 0;
+                    READ_VARSINT64(pabyData, pabyDataLimit, nDeltaMemID);
+                    nMemID = AddWithOverflowAccepted(nMemID, nDeltaMemID);
+
+                    psCtxt->pasMembers[nIter].nID = nMemID;
+                }
             }
-        }
-        else if( nKey == MAKE_KEY(RELATION_IDX_TYPES, WT_DATA) )
-        {
-            unsigned int nIter = 0;
-            if( sRelation.nMembers == 0 )
-                GOTO_END_ERROR;
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-            if( nSize != sRelation.nMembers )
-                GOTO_END_ERROR;
-
-            for(; nIter < sRelation.nMembers; nIter++)
+            else if( nKey == MAKE_KEY(RELATION_IDX_TYPES, WT_DATA) )
             {
-                unsigned int nType = pabyData[nIter];
-                if( nType > MEMBER_RELATION )
-                    GOTO_END_ERROR;
+                unsigned int nIter = 0;
+                if( sRelation.nMembers == 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+                if( nSize != sRelation.nMembers )
+                    THROW_OSM_PARSING_EXCEPTION;
 
-                psCtxt->pasMembers[nIter].eType = (OSMMemberType) nType;
+                for(; nIter < sRelation.nMembers; nIter++)
+                {
+                    unsigned int nType = pabyData[nIter];
+                    if( nType > MEMBER_RELATION )
+                        THROW_OSM_PARSING_EXCEPTION;
+
+                    psCtxt->pasMembers[nIter].eType = (OSMMemberType) nType;
+                }
+                pabyData += nSize;
             }
-            pabyData += nSize;
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
+        /* printf("<ReadRelation\n"); */
+
+        if( pabyData != pabyDataLimit )
+            THROW_OSM_PARSING_EXCEPTION;
+
+        if( sRelation.nTags )
+            sRelation.pasTags = psCtxt->pasTags;
         else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+            sRelation.pasTags = nullptr;
+
+        sRelation.pasMembers = psCtxt->pasMembers;
+
+        psCtxt->pfnNotifyRelation(&sRelation, psCtxt, psCtxt->user_data);
+
+        return true;
     }
-    /* printf("<ReadRelation\n"); */
-
-    if( pabyData != pabyDataLimit )
-        GOTO_END_ERROR;
-
-    if( sRelation.nTags )
-        sRelation.pasTags = psCtxt->pasTags;
-    else
-        sRelation.pasTags = NULL;
-
-    sRelation.pasMembers = psCtxt->pasMembers;
-
-    psCtxt->pfnNotifyRelation(&sRelation, psCtxt, psCtxt->user_data);
-
-    return true;
-
-end_error:
-    /* printf("<ReadRelation\n"); */
-
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                          ReadPrimitiveGroup()                        */
 /************************************************************************/
 
-static const int PRIMITIVEGROUP_IDX_NODES = 1;
-// static const int PRIMITIVEGROUP_IDX_DENSE = 2;
-// static const int PRIMITIVEGROUP_IDX_WAYS = 3;
-static const int PRIMITIVEGROUP_IDX_RELATIONS = 4;
-// static const int PRIMITIVEGROUP_IDX_CHANGESETS = 5;
+constexpr int PRIMITIVEGROUP_IDX_NODES = 1;
+// constexpr int PRIMITIVEGROUP_IDX_DENSE = 2;
+// constexpr int PRIMITIVEGROUP_IDX_WAYS = 3;
+constexpr int PRIMITIVEGROUP_IDX_RELATIONS = 4;
+// constexpr int PRIMITIVEGROUP_IDX_CHANGESETS = 5;
 
-typedef bool (*PrimitiveFuncType)( GByte* pabyData, GByte* pabyDataLimit,
+typedef bool (*PrimitiveFuncType)( const GByte* pabyData,
+                                   const GByte* pabyDataLimit,
                                    OSMContext* psCtxt );
 
 static const PrimitiveFuncType apfnPrimitives[] =
@@ -1402,166 +1451,171 @@ static const PrimitiveFuncType apfnPrimitives[] =
 };
 
 static
-bool ReadPrimitiveGroup( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadPrimitiveGroup( const GByte* pabyData, const GByte* pabyDataLimit,
                          OSMContext* psCtxt )
 {
-    /* printf(">ReadPrimitiveGroup\n"); */
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        const int nFieldNumber = GET_FIELDNUMBER(nKey) - 1;
-        if( GET_WIRETYPE(nKey) == WT_DATA &&
-            nFieldNumber >= PRIMITIVEGROUP_IDX_NODES - 1 &&
-            nFieldNumber <= PRIMITIVEGROUP_IDX_RELATIONS - 1 )
+        while(pabyData < pabyDataLimit)
         {
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
-            if( !apfnPrimitives[nFieldNumber](pabyData, pabyData + nSize,
-                                              psCtxt) )
-                GOTO_END_ERROR;
+            const int nFieldNumber = GET_FIELDNUMBER(nKey) - 1;
+            if( GET_WIRETYPE(nKey) == WT_DATA &&
+                nFieldNumber >= PRIMITIVEGROUP_IDX_NODES - 1 &&
+                nFieldNumber <= PRIMITIVEGROUP_IDX_RELATIONS - 1 )
+            {
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            pabyData += nSize;
+                if( !apfnPrimitives[nFieldNumber](pabyData, pabyData + nSize,
+                                                psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else
-        {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
-        }
+
+        return pabyData == pabyDataLimit;
     }
-    /* printf("<ReadPrimitiveGroup\n"); */
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-    /* printf("<ReadPrimitiveGroup\n"); */
-
-    return FALSE;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
 /*                          ReadPrimitiveBlock()                        */
 /************************************************************************/
 
-static const int PRIMITIVEBLOCK_IDX_STRINGTABLE      = 1;
-static const int PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP   = 2;
-static const int PRIMITIVEBLOCK_IDX_GRANULARITY      = 17;
-static const int PRIMITIVEBLOCK_IDX_DATE_GRANULARITY = 18;
-static const int PRIMITIVEBLOCK_IDX_LAT_OFFSET       = 19;
-static const int PRIMITIVEBLOCK_IDX_LON_OFFSET       = 20;
+constexpr int PRIMITIVEBLOCK_IDX_STRINGTABLE      = 1;
+constexpr int PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP   = 2;
+constexpr int PRIMITIVEBLOCK_IDX_GRANULARITY      = 17;
+constexpr int PRIMITIVEBLOCK_IDX_DATE_GRANULARITY = 18;
+constexpr int PRIMITIVEBLOCK_IDX_LAT_OFFSET       = 19;
+constexpr int PRIMITIVEBLOCK_IDX_LON_OFFSET       = 20;
 
 static
-bool ReadPrimitiveBlock( GByte* pabyData, GByte* pabyDataLimit,
+bool ReadPrimitiveBlock( const GByte* pabyData, const GByte* pabyDataLimit,
                          OSMContext* psCtxt )
 {
-    GByte* pabyDataSave = pabyData;
+    const GByte* pabyDataSave = pabyData;
 
-    psCtxt->pszStrBuf = NULL;
+    psCtxt->pszStrBuf = nullptr;
     psCtxt->nStrCount = 0;
     psCtxt->nGranularity = 100;
     psCtxt->nDateGranularity = 1000;
     psCtxt->nLatOffset = 0;
     psCtxt->nLonOffset = 0;
 
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_GRANULARITY, WT_VARINT) )
+        while(pabyData < pabyDataLimit)
         {
-            READ_VARINT32(pabyData, pabyDataLimit, psCtxt->nGranularity);
-            if( psCtxt->nGranularity <= 0 )
-                GOTO_END_ERROR;
-        }
-        else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_DATE_GRANULARITY,
-                                  WT_VARINT) )
-        {
-            READ_VARINT32(pabyData, pabyDataLimit, psCtxt->nDateGranularity);
-        }
-        else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_LAT_OFFSET, WT_VARINT) )
-        {
-            READ_VARINT64(pabyData, pabyDataLimit, psCtxt->nLatOffset);
-        }
-        else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_LON_OFFSET, WT_VARINT) )
-        {
-            READ_VARINT64(pabyData, pabyDataLimit, psCtxt->nLonOffset);
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, FALSE);
-        }
-    }
-
-    if( pabyData != pabyDataLimit )
-        GOTO_END_ERROR;
-
-    pabyData = pabyDataSave;
-    while(pabyData < pabyDataLimit)
-    {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_STRINGTABLE, WT_DATA) )
-        {
-            GByte bSaveAfterByte = 0;
-            GByte* pbSaveAfterByte = NULL;
-            if( psCtxt->nStrCount != 0 )
-                GOTO_END_ERROR;
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            // Dirty little trick:
-            // ReadStringTable() will over-write the byte after the
-            // StringTable message with a NUL character, so we backup
-            // it to be able to restore it just before issuing the next
-            // READ_FIELD_KEY. Then we will re-NUL it to have valid
-            // NUL terminated strings.
-            // This trick enable us to keep the strings where there are
-            // in RAM.
-            pbSaveAfterByte = pabyData + nSize;
-            bSaveAfterByte = *pbSaveAfterByte;
-
-            if( !ReadStringTable(pabyData, pabyData + nSize, psCtxt) )
-                GOTO_END_ERROR;
-
-            pabyData += nSize;
-
-            *pbSaveAfterByte = bSaveAfterByte;
-            if( pabyData == pabyDataLimit )
-                break;
-
+            int nKey = 0;
             READ_FIELD_KEY(nKey);
-            *pbSaveAfterByte = 0;
+
+            if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_GRANULARITY, WT_VARINT) )
+            {
+                READ_VARINT32(pabyData, pabyDataLimit, psCtxt->nGranularity);
+                if( psCtxt->nGranularity <= 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+            }
+            else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_DATE_GRANULARITY,
+                                    WT_VARINT) )
+            {
+                READ_VARINT32(pabyData, pabyDataLimit, psCtxt->nDateGranularity);
+            }
+            else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_LAT_OFFSET, WT_VARINT) )
+            {
+                READ_VARINT64(pabyData, pabyDataLimit, psCtxt->nLatOffset);
+            }
+            else if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_LON_OFFSET, WT_VARINT) )
+            {
+                READ_VARINT64(pabyData, pabyDataLimit, psCtxt->nLonOffset);
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, FALSE);
+            }
+        }
+
+        if( pabyData != pabyDataLimit )
+            THROW_OSM_PARSING_EXCEPTION;
+
+        pabyData = pabyDataSave;
+        while(pabyData < pabyDataLimit)
+        {
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
 
             if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_STRINGTABLE, WT_DATA) )
-                GOTO_END_ERROR;
+            {
+                GByte bSaveAfterByte = 0;
+                GByte* pbSaveAfterByte = nullptr;
+                if( psCtxt->nStrCount != 0 )
+                    THROW_OSM_PARSING_EXCEPTION;
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-            /* Yes we go on ! */
+                // Dirty little trick:
+                // ReadStringTable() will over-write the byte after the
+                // StringTable message with a NUL character, so we backup
+                // it to be able to restore it just before issuing the next
+                // READ_FIELD_KEY. Then we will re-NUL it to have valid
+                // NUL terminated strings.
+                // This trick enable us to keep the strings where there are
+                // in RAM.
+                pbSaveAfterByte = const_cast<GByte*>(pabyData + nSize);
+                bSaveAfterByte = *pbSaveAfterByte;
+
+                if( !ReadStringTable(pabyData, pabyData + nSize, psCtxt) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+
+                *pbSaveAfterByte = bSaveAfterByte;
+                if( pabyData == pabyDataLimit )
+                    break;
+
+                READ_FIELD_KEY(nKey);
+                *pbSaveAfterByte = 0;
+
+                if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_STRINGTABLE, WT_DATA) )
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                /* Yes we go on ! */
+            }
+
+            if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP, WT_DATA) )
+            {
+                unsigned int nSize = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nSize);
+
+                if( !ReadPrimitiveGroup(pabyData, pabyData + nSize, psCtxt))
+                    THROW_OSM_PARSING_EXCEPTION;
+
+                pabyData += nSize;
+            }
+            else
+            {
+                SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, FALSE);
+            }
         }
 
-        if( nKey == MAKE_KEY(PRIMITIVEBLOCK_IDX_PRIMITIVEGROUP, WT_DATA) )
-        {
-            unsigned int nSize = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nSize);
-
-            if( !ReadPrimitiveGroup(pabyData, pabyData + nSize, psCtxt))
-                GOTO_END_ERROR;
-
-            pabyData += nSize;
-        }
-        else
-        {
-            SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, FALSE);
-        }
+        return pabyData == pabyDataLimit;
     }
-
-    return pabyData == pabyDataLimit;
-
-end_error:
-
-    return false;
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
+    }
 }
 
 /************************************************************************/
@@ -1574,7 +1628,7 @@ static void DecompressFunction(void* pDataIn)
     psJob->bStatus =
         CPLZLibInflate( psJob->pabySrc, psJob->nSrcSize,
                         psJob->pabyDstBase + psJob->nDstOffset,
-                        psJob->nDstSize, NULL) != NULL;
+                        psJob->nDstSize, nullptr) != nullptr;
 }
 
 /************************************************************************/
@@ -1660,172 +1714,177 @@ static bool RunDecompressionJobsAndProcessAll(OSMContext* psCtxt,
 /*                              ReadBlob()                              */
 /************************************************************************/
 
-static const int BLOB_IDX_RAW       = 1;
-static const int BLOB_IDX_RAW_SIZE  = 2;
-static const int BLOB_IDX_ZLIB_DATA = 3;
+constexpr int BLOB_IDX_RAW       = 1;
+constexpr int BLOB_IDX_RAW_SIZE  = 2;
+constexpr int BLOB_IDX_ZLIB_DATA = 3;
 
 static
 bool ReadBlob( OSMContext* psCtxt, BlobType eType )
 {
     unsigned int nUncompressedSize = 0;
     bool bRet = true;
-    GByte* pabyData = psCtxt->pabyBlob + psCtxt->nBlobOffset;
-    GByte* pabyLastCheckpointData = pabyData;
-    GByte* pabyDataLimit = psCtxt->pabyBlob + psCtxt->nBlobSize;
+    const GByte* pabyData = psCtxt->pabyBlob + psCtxt->nBlobOffset;
+    const GByte* pabyLastCheckpointData = pabyData;
+    const GByte* pabyDataLimit = psCtxt->pabyBlob + psCtxt->nBlobSize;
 
-    while(pabyData < pabyDataLimit)
+    try
     {
-        int nKey = 0;
-        READ_FIELD_KEY(nKey);
-
-        if( nKey == MAKE_KEY(BLOB_IDX_RAW, WT_DATA) )
+        while(pabyData < pabyDataLimit)
         {
-            if( psCtxt->nJobs > 0 &&
-                !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
+            int nKey = 0;
+            READ_FIELD_KEY(nKey);
+
+            if( nKey == MAKE_KEY(BLOB_IDX_RAW, WT_DATA) )
             {
-                GOTO_END_ERROR;
-            }
-
-            unsigned int nDataLength = 0;
-            READ_SIZE(pabyData, pabyDataLimit, nDataLength);
-            if( nDataLength > MAX_BLOB_SIZE ) GOTO_END_ERROR;
-
-            // printf("raw data size = %d\n", nDataLength);
-
-            if( eType == BLOB_OSMHEADER )
-            {
-                bRet = ReadOSMHeader(pabyData, pabyData + nDataLength, psCtxt);
-            }
-            else if( eType == BLOB_OSMDATA )
-            {
-                bRet = ReadPrimitiveBlock(pabyData, pabyData + nDataLength,
-                                          psCtxt);
-            }
-
-            pabyData += nDataLength;
-        }
-        else if( nKey == MAKE_KEY(BLOB_IDX_RAW_SIZE, WT_VARINT) )
-        {
-            READ_VARUINT32(pabyData, pabyDataLimit, nUncompressedSize);
-            // printf("nUncompressedSize = %d\n", nUncompressedSize);
-        }
-        else if( nKey == MAKE_KEY(BLOB_IDX_ZLIB_DATA, WT_DATA) )
-        {
-            unsigned int nZlibCompressedSize = 0;
-            READ_VARUINT32(pabyData, pabyDataLimit, nZlibCompressedSize);
-            if( CHECK_OOB && nZlibCompressedSize >
-                    psCtxt->nBlobSize - psCtxt->nBlobOffset)
-            {
-                GOTO_END_ERROR;
-            }
-
-            // printf("nZlibCompressedSize = %d\n", nZlibCompressedSize);
-
-            if( nUncompressedSize != 0 )
-            {
-                if( nUncompressedSize / 100 > nZlibCompressedSize )
-                {
-                    // Too prevent excessive memory allocations
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                                "Excessive uncompressed vs compressed ratio");
-                    GOTO_END_ERROR;
-                }
                 if( psCtxt->nJobs > 0 &&
-                    (psCtxt->nTotalUncompressedSize >
-                                UINT_MAX - nUncompressedSize ||
-                     psCtxt->nTotalUncompressedSize +
-                            nUncompressedSize > MAX_ACC_UNCOMPRESSED_SIZE) )
+                    !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
                 {
-                    pabyData = pabyLastCheckpointData;
-                    break;
+                    THROW_OSM_PARSING_EXCEPTION;
                 }
-                unsigned nSizeNeeded = psCtxt->nTotalUncompressedSize +
-                                       nUncompressedSize;
-                if( nSizeNeeded > psCtxt->nUncompressedAllocated )
-                {
 
-                    GByte* pabyUncompressedNew = NULL;
-                    if( psCtxt->nUncompressedAllocated <=
-                            UINT_MAX - psCtxt->nUncompressedAllocated / 3 &&
-                        psCtxt->nUncompressedAllocated +
-                            psCtxt->nUncompressedAllocated / 3 <
-                                MAX_ACC_UNCOMPRESSED_SIZE )
+                unsigned int nDataLength = 0;
+                READ_SIZE(pabyData, pabyDataLimit, nDataLength);
+                if( nDataLength > MAX_BLOB_SIZE ) THROW_OSM_PARSING_EXCEPTION;
+
+                // printf("raw data size = %d\n", nDataLength);
+
+                if( eType == BLOB_OSMHEADER )
+                {
+                    bRet = ReadOSMHeader(pabyData, pabyData + nDataLength, psCtxt);
+                }
+                else if( eType == BLOB_OSMDATA )
+                {
+                    bRet = ReadPrimitiveBlock(pabyData, pabyData + nDataLength,
+                                            psCtxt);
+                }
+
+                pabyData += nDataLength;
+            }
+            else if( nKey == MAKE_KEY(BLOB_IDX_RAW_SIZE, WT_VARINT) )
+            {
+                READ_VARUINT32(pabyData, pabyDataLimit, nUncompressedSize);
+                // printf("nUncompressedSize = %d\n", nUncompressedSize);
+            }
+            else if( nKey == MAKE_KEY(BLOB_IDX_ZLIB_DATA, WT_DATA) )
+            {
+                unsigned int nZlibCompressedSize = 0;
+                READ_VARUINT32(pabyData, pabyDataLimit, nZlibCompressedSize);
+                if( CHECK_OOB && nZlibCompressedSize >
+                        psCtxt->nBlobSize - psCtxt->nBlobOffset)
+                {
+                    THROW_OSM_PARSING_EXCEPTION;
+                }
+
+                // printf("nZlibCompressedSize = %d\n", nZlibCompressedSize);
+
+                if( nUncompressedSize != 0 )
+                {
+                    if( nUncompressedSize / 100 > nZlibCompressedSize )
                     {
-                        psCtxt->nUncompressedAllocated =
-                            std::max(psCtxt->nUncompressedAllocated +
-                                            psCtxt->nUncompressedAllocated / 3,
-                                     nSizeNeeded);
+                        // Too prevent excessive memory allocations
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                    "Excessive uncompressed vs compressed ratio");
+                        THROW_OSM_PARSING_EXCEPTION;
+                    }
+                    if( psCtxt->nJobs > 0 &&
+                        (psCtxt->nTotalUncompressedSize >
+                                    UINT_MAX - nUncompressedSize ||
+                        psCtxt->nTotalUncompressedSize +
+                                nUncompressedSize > MAX_ACC_UNCOMPRESSED_SIZE) )
+                    {
+                        pabyData = pabyLastCheckpointData;
+                        break;
+                    }
+                    unsigned nSizeNeeded = psCtxt->nTotalUncompressedSize +
+                                        nUncompressedSize;
+                    if( nSizeNeeded > psCtxt->nUncompressedAllocated )
+                    {
+
+                        GByte* pabyUncompressedNew = nullptr;
+                        if( psCtxt->nUncompressedAllocated <=
+                                UINT_MAX - psCtxt->nUncompressedAllocated / 3 &&
+                            psCtxt->nUncompressedAllocated +
+                                psCtxt->nUncompressedAllocated / 3 <
+                                    MAX_ACC_UNCOMPRESSED_SIZE )
+                        {
+                            psCtxt->nUncompressedAllocated =
+                                std::max(psCtxt->nUncompressedAllocated +
+                                                psCtxt->nUncompressedAllocated / 3,
+                                        nSizeNeeded);
+                        }
+                        else
+                        {
+                            psCtxt->nUncompressedAllocated = nSizeNeeded;
+                        }
+                        if( psCtxt->nUncompressedAllocated > UINT_MAX - EXTRA_BYTES )
+                            THROW_OSM_PARSING_EXCEPTION;
+                        pabyUncompressedNew =
+                            (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
+                                    psCtxt->nUncompressedAllocated + EXTRA_BYTES);
+                        if( pabyUncompressedNew == nullptr )
+                            THROW_OSM_PARSING_EXCEPTION;
+                        psCtxt->pabyUncompressed = pabyUncompressedNew;
+                    }
+                    memset(psCtxt->pabyUncompressed + nSizeNeeded, 0, EXTRA_BYTES);
+
+                    psCtxt->asJobs[psCtxt->nJobs].pabySrc = pabyData;
+                    psCtxt->asJobs[psCtxt->nJobs].nSrcSize = nZlibCompressedSize;
+                    psCtxt->asJobs[psCtxt->nJobs].nDstOffset =
+                                                    psCtxt->nTotalUncompressedSize;
+                    psCtxt->asJobs[psCtxt->nJobs].nDstSize = nUncompressedSize;
+                    psCtxt->nJobs ++;
+                    if( psCtxt->poWTP == nullptr || eType != BLOB_OSMDATA )
+                    {
+                        if( !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
+                        {
+                            THROW_OSM_PARSING_EXCEPTION;
+                        }
                     }
                     else
                     {
-                        psCtxt->nUncompressedAllocated = nSizeNeeded;
+                        // Make sure that uncompressed blobs are separated by
+                        // EXTRA_BYTES in the case where in the future we would
+                        // implement parallel decoding of them (not sure if that's
+                        // doable)
+                        psCtxt->nTotalUncompressedSize +=
+                                                nUncompressedSize + EXTRA_BYTES;
                     }
-                    if( psCtxt->nUncompressedAllocated > UINT_MAX - EXTRA_BYTES )
-                        GOTO_END_ERROR;
-                    pabyUncompressedNew =
-                        (GByte*)VSI_REALLOC_VERBOSE(psCtxt->pabyUncompressed,
-                                psCtxt->nUncompressedAllocated + EXTRA_BYTES);
-                    if( pabyUncompressedNew == NULL )
-                        GOTO_END_ERROR;
-                    psCtxt->pabyUncompressed = pabyUncompressedNew;
                 }
-                memset(psCtxt->pabyUncompressed + nSizeNeeded, 0, EXTRA_BYTES);
 
-                psCtxt->asJobs[psCtxt->nJobs].pabySrc = pabyData;
-                psCtxt->asJobs[psCtxt->nJobs].nSrcSize = nZlibCompressedSize;
-                psCtxt->asJobs[psCtxt->nJobs].nDstOffset =
-                                                psCtxt->nTotalUncompressedSize;
-                psCtxt->asJobs[psCtxt->nJobs].nDstSize = nUncompressedSize;
-                psCtxt->nJobs ++;
-                if( psCtxt->poWTP == NULL || eType != BLOB_OSMDATA )
-                {
-                    if( !RunDecompressionJobsAndProcessAll(psCtxt, eType) )
-                    {
-                        GOTO_END_ERROR;
-                    }
-                }
-                else
-                {
-                    // Make sure that uncompressed blobs are separated by
-                    // EXTRA_BYTES in the case where in the future we would
-                    // implement parallel decoding of them (not sure if that's
-                    // doable)
-                    psCtxt->nTotalUncompressedSize +=
-                                            nUncompressedSize + EXTRA_BYTES;
-                }
+                nUncompressedSize = 0;
+                pabyData += nZlibCompressedSize;
+                pabyLastCheckpointData = pabyData;
+                if( psCtxt->nJobs == N_MAX_JOBS )
+                    break;
             }
-
-            nUncompressedSize = 0;
-            pabyData += nZlibCompressedSize;
-            pabyLastCheckpointData = pabyData;
-            if( psCtxt->nJobs == N_MAX_JOBS )
-                break;
+            else
+            {
+                SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            }
         }
-        else
+
+        if( psCtxt->nJobs > 0 )
         {
-            SKIP_UNKNOWN_FIELD(pabyData, pabyDataLimit, TRUE);
+            if( !RunDecompressionJobs(psCtxt) )
+            {
+                THROW_OSM_PARSING_EXCEPTION;
+            }
+            // Just process one blob at a time
+            if( !ProcessSingleBlob(psCtxt, psCtxt->asJobs[0], eType) )
+            {
+                THROW_OSM_PARSING_EXCEPTION;
+            }
+            psCtxt->iNextJob = 1;
         }
-    }
 
-    if( psCtxt->nJobs > 0 )
+        psCtxt->nBlobOffset = static_cast<unsigned>(pabyData - psCtxt->pabyBlob);
+        return bRet;
+    }
+    catch( const std::exception& e )
     {
-        if( !RunDecompressionJobs(psCtxt) )
-        {
-            GOTO_END_ERROR;
-        }
-        // Just process one blob at a time
-        if( !ProcessSingleBlob(psCtxt, psCtxt->asJobs[0], eType) )
-        {
-            GOTO_END_ERROR;
-        }
-        psCtxt->iNextJob = 1;
+        CPLError(CE_Failure, CPLE_AppDefined, "%s", e.what());
+        return false;
     }
-
-    psCtxt->nBlobOffset = static_cast<unsigned>(pabyData - psCtxt->pabyBlob);
-    return bRet;
-
-end_error:
-    return false;
 }
 
 /************************************************************************/
@@ -1919,7 +1978,7 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
             GByte* pabyBlobNew = static_cast<GByte *>(
                 VSI_REALLOC_VERBOSE(psCtxt->pabyBlob,
                                     psCtxt->nBlobSizeAllocated + EXTRA_BYTES));
-            if( pabyBlobNew == NULL )
+            if( pabyBlobNew == nullptr )
             {
                 eRetCode = OSM_ERROR;
                 break;
@@ -1940,10 +1999,10 @@ static OSMRetCode PBF_ProcessBlock(OSMContext* psCtxt)
 
         nBlobCount ++;
 
-        if( eType == BLOB_OSMDATA && psCtxt->poWTP != NULL )
+        if( eType == BLOB_OSMDATA && psCtxt->poWTP != nullptr )
         {
             // Accumulate BLOB_OSMDATA until we reach either the maximum
-            // number of jobs or a theshold in bytes
+            // number of jobs or a threshold in bytes
             if( nBlobCount == N_MAX_JOBS || nBlobSizeAcc > MAX_ACC_BLOB_SIZE )
             {
                 break;
@@ -2085,7 +2144,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
             if( ppszIter )
             {
-                while( ppszIter[0] != NULL )
+                while( ppszIter[0] != nullptr )
                 {
                     if( strcmp(ppszIter[0], "minlon") == 0 )
                     {
@@ -2148,7 +2207,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
         if( ppszIter )
         {
-            while( ppszIter[0] != NULL )
+            while( ppszIter[0] != nullptr )
             {
                 if( strcmp(ppszIter[0], "id") == 0 )
                 {
@@ -2202,7 +2261,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
         if( ppszIter )
         {
-            while( ppszIter[0] != NULL )
+            while( ppszIter[0] != nullptr )
             {
                 if( strcmp(ppszIter[0], "id") == 0 )
                 {
@@ -2248,7 +2307,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
         if( ppszIter )
         {
-            while( ppszIter[0] != NULL )
+            while( ppszIter[0] != nullptr )
             {
                 if( strcmp(ppszIter[0], "id") == 0 )
                 {
@@ -2283,7 +2342,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
     else if( psCtxt->bInWay &&
              strcmp(pszName, "nd") == 0 )
     {
-        if( ppszAttr != NULL && ppszAttr[0] != NULL &&
+        if( ppszAttr != nullptr && ppszAttr[0] != nullptr &&
             strcmp(ppszAttr[0], "ref") == 0 )
         {
             if( psCtxt->sWay.nRefs < psCtxt->nNodeRefsAllocated )
@@ -2312,7 +2371,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
             OSMMember* pasMembersNew = (OSMMember*) VSI_REALLOC_VERBOSE(
                     psCtxt->pasMembers,
                     nMembersAllocated * sizeof(OSMMember));
-            if( pasMembersNew == NULL )
+            if( pasMembersNew == nullptr )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                         "Cannot allocate enough memory to store members of relation " CPL_FRMT_GIB,
@@ -2332,7 +2391,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
         if( ppszIter )
         {
-            while( ppszIter[0] != NULL )
+            while( ppszIter[0] != nullptr )
             {
                 if( strcmp(ppszIter[0], "ref") == 0 )
                 {
@@ -2365,7 +2424,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
             OSMTag* pasTagsNew = (OSMTag*) VSI_REALLOC_VERBOSE(
                 psCtxt->pasTags,
                 psCtxt->nTagsAllocated * sizeof(OSMTag));
-            if( pasTagsNew == NULL )
+            if( pasTagsNew == nullptr )
             {
                 if( psCtxt->bInNode )
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -2392,7 +2451,7 @@ static void XMLCALL OSM_XML_startElementCbk( void *pUserData,
 
         if( ppszIter )
         {
-            while( ppszIter[0] != NULL )
+            while( ppszIter[0] != nullptr )
             {
                 if( ppszIter[0][0] == 'k' )
                 {
@@ -2567,8 +2626,8 @@ OSMContext* OSM_Open( const char* pszFilename,
 {
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if( fp == NULL )
-        return NULL;
+    if( fp == nullptr )
+        return nullptr;
 
     GByte abyHeader[1024];
     int nRead = static_cast<int>(
@@ -2577,14 +2636,14 @@ OSMContext* OSM_Open( const char* pszFilename,
 
     bool bPBF = false;
 
-    if( strstr((const char*)abyHeader, "<osm") != NULL )
+    if( strstr((const char*)abyHeader, "<osm") != nullptr )
     {
         /* OSM XML */
 #ifndef HAVE_EXPAT
         CPLError(CE_Failure, CPLE_AppDefined,
                  "OSM XML detected, but Expat parser not available");
         VSIFCloseL(fp);
-        return NULL;
+        return nullptr;
 #endif
     }
     else
@@ -2601,7 +2660,7 @@ OSMContext* OSM_Open( const char* pszFilename,
         if( !bPBF )
         {
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -2609,25 +2668,25 @@ OSMContext* OSM_Open( const char* pszFilename,
 
     OSMContext* psCtxt = static_cast<OSMContext *>(
         VSI_MALLOC_VERBOSE(sizeof(OSMContext)) );
-    if( psCtxt == NULL )
+    if( psCtxt == nullptr )
     {
         VSIFCloseL(fp);
-        return NULL;
+        return nullptr;
     }
     memset(psCtxt, 0, sizeof(OSMContext));
     psCtxt->bPBF = bPBF;
     psCtxt->fp = fp;
     psCtxt->pfnNotifyNodes = pfnNotifyNodes;
-    if( pfnNotifyNodes == NULL )
+    if( pfnNotifyNodes == nullptr )
         psCtxt->pfnNotifyNodes = EmptyNotifyNodesFunc;
     psCtxt->pfnNotifyWay = pfnNotifyWay;
-    if( pfnNotifyWay == NULL )
+    if( pfnNotifyWay == nullptr )
         psCtxt->pfnNotifyWay = EmptyNotifyWayFunc;
     psCtxt->pfnNotifyRelation = pfnNotifyRelation;
-    if( pfnNotifyRelation == NULL )
+    if( pfnNotifyRelation == nullptr )
         psCtxt->pfnNotifyRelation = EmptyNotifyRelationFunc;
     psCtxt->pfnNotifyBounds = pfnNotifyBounds;
-    if( pfnNotifyBounds == NULL )
+    if( pfnNotifyBounds == nullptr )
         psCtxt->pfnNotifyBounds = EmptyNotifyBoundsFunc;
     psCtxt->user_data = user_data;
 
@@ -2668,30 +2727,30 @@ OSMContext* OSM_Open( const char* pszFilename,
         psCtxt->nNodeRefsAllocated = 2000;
         psCtxt->panNodeRefs = (GIntBig*) VSI_MALLOC_VERBOSE(sizeof(GIntBig) * psCtxt->nNodeRefsAllocated);
 
-        if( psCtxt->pszStrBuf == NULL ||
-            psCtxt->pasNodes == NULL ||
-            psCtxt->pasTags == NULL ||
-            psCtxt->pasMembers == NULL ||
-            psCtxt->panNodeRefs == NULL )
+        if( psCtxt->pszStrBuf == nullptr ||
+            psCtxt->pasNodes == nullptr ||
+            psCtxt->pasTags == nullptr ||
+            psCtxt->pasMembers == nullptr ||
+            psCtxt->panNodeRefs == nullptr )
         {
             OSM_Close(psCtxt);
-            return NULL;
+            return nullptr;
         }
     }
 #endif
 
     psCtxt->pabyBlob = (GByte*)VSI_MALLOC_VERBOSE(psCtxt->nBlobSizeAllocated);
-    if( psCtxt->pabyBlob == NULL )
+    if( psCtxt->pabyBlob == nullptr )
     {
         OSM_Close(psCtxt);
-        return NULL;
+        return nullptr;
     }
     psCtxt->pabyBlobHeader =
             (GByte*)VSI_MALLOC_VERBOSE(MAX_BLOB_HEADER_SIZE+EXTRA_BYTES);
-    if( psCtxt->pabyBlobHeader == NULL )
+    if( psCtxt->pabyBlobHeader == nullptr )
     {
         OSM_Close(psCtxt);
-        return NULL;
+        return nullptr;
     }
     const char* pszNumThreads =
                 CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
@@ -2701,10 +2760,10 @@ OSMContext* OSM_Open( const char* pszFilename,
     if( nNumCPUs > 1 )
     {
         psCtxt->poWTP = new CPLWorkerThreadPool();
-        if( !psCtxt->poWTP->Setup(nNumCPUs , NULL, NULL) )
+        if( !psCtxt->poWTP->Setup(nNumCPUs , nullptr, nullptr) )
         {
             delete psCtxt->poWTP;
-            psCtxt->poWTP = NULL;
+            psCtxt->poWTP = nullptr;
         }
     }
 
@@ -2717,7 +2776,7 @@ OSMContext* OSM_Open( const char* pszFilename,
 
 void OSM_Close(OSMContext* psCtxt)
 {
-    if( psCtxt == NULL )
+    if( psCtxt == nullptr )
         return;
 
 #ifdef HAVE_EXPAT

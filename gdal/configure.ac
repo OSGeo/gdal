@@ -121,34 +121,43 @@ AX_CHECK_COMPILE_FLAG([-Woverloaded-virtual], [CXX_WFLAGS="$CXX_WFLAGS -Woverloa
 dnl Forbid use of 'or', 'and', ... alias operators
 AX_CHECK_COMPILE_FLAG([-fno-operator-names], [CXX_WFLAGS="$CXX_WFLAGS -fno-operator-names"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=no
+AX_CHECK_COMPILE_FLAG([-Wzero-as-null-pointer-constant], [CXX_WFLAGS="$CXX_WFLAGS -Wzero-as-null-pointer-constant" HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT=yes],,[$ERROR_ON_UNKNOWN_OPTIONS])
+if test "$HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT" = "yes"; then
+AC_DEFINE_UNQUOTED(HAVE_GCC_WARNING_ZERO_AS_NULL_POINTER_CONSTANT, 1,
+          [Define to 1 if the compiler supports -Wzero-as-null-pointer-constant])
+fi
+
 AC_LANG_POP([C++])
 
-CXX11_SUPPORT=no
-AC_ARG_WITH([cpp11],
-	    AS_HELP_STRING([--without-cpp11],
-	       [Disable C++11 compiler options]),,)
+CXX14_SUPPORT=no
+AC_ARG_WITH([cpp14],
+	    AS_HELP_STRING([--with-cpp14],
+	       [Enable C++14 compiler options]),,)
 
-AC_MSG_CHECKING([if use C++11 compiler options])
-if test "$with_cpp11" = "yes" -o "$with_cpp11" = "" ; then
-    dnl Check C++ compiler compatibility with C++11
-    AC_MSG_CHECKING([C++ compiler compatibility with C++11])
-    AX_CXX_COMPILE_STDCXX_11([ext],[optional])
+AC_MSG_CHECKING([if use C++14 compiler options])
+if test "$with_cpp14" = "yes"; then
+    dnl Check C++ compiler compatibility with C++14
+    AC_MSG_CHECKING([C++ compiler compatibility with C++14])
+    AX_CXX_COMPILE_STDCXX([14],[noext],[optional])
 
-    if [test "$HAVE_CXX11" = "1"]; then
-        CXX11_SUPPORT=yes
+    if [test "$HAVE_CXX14" = "1"]; then
+        CXX14_SUPPORT=yes
     fi
     AC_MSG_RESULT([enabled])
 else
     AC_MSG_RESULT([disabled by user])
 fi
-AC_SUBST(CXX11_SUPPORT,$CXX11_SUPPORT)
+AC_SUBST(CXX14_SUPPORT,$CXX14_SUPPORT)
 
-if [test "$CXX11_SUPPORT" = "yes"]; then
-    dnl Available in GCC 5.1
-    AC_LANG_PUSH([C++])
-        AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [CXX_WFLAGS="$CXX_WFLAGS -Wsuggest-override"],,[$ERROR_ON_UNKNOWN_OPTIONS])
-    AC_LANG_POP([C++])
+if [test "$CXX14_SUPPORT" = "no"]; then
+    AX_CXX_COMPILE_STDCXX_11([noext],[mandatory])
 fi
+
+dnl Available in GCC 5.1
+AC_LANG_PUSH([C++])
+    AX_CHECK_COMPILE_FLAG([-Wsuggest-override], [CXX_WFLAGS="$CXX_WFLAGS -Wsuggest-override"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+AC_LANG_POP([C++])
 
 dnl Enable -Wimplicit-fallthrough only if C++11 is enabled since CPL_FALLTHROUGH is only active then
 AC_LANG_PUSH([C++])
@@ -303,6 +312,7 @@ AC_CHECK_FUNCS(posix_spawnp)
 AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_FUNCS(vfork)
 AC_CHECK_FUNCS(mmap)
+AC_CHECK_FUNCS(sigaction)
 AC_CHECK_FUNCS(statvfs)
 AC_CHECK_FUNCS(statvfs64)
 
@@ -315,6 +325,7 @@ AC_CHECK_FUNC_CUSTOM(localtime_r,[#include <time.h>],[time_t t; struct tm ltime;
 AC_LANG_POP(C++)
 
 AC_MSG_CHECKING([for uselocale])
+AC_LANG_PUSH(C++)
 AC_TRY_COMPILE(
   [
 #define _XOPEN_SOURCE 700
@@ -333,6 +344,7 @@ AC_TRY_COMPILE(
   ], [
     AC_MSG_RESULT([no])
 ])
+AC_LANG_POP(C++)
 
 
 OPT_GDAL_FORMATS=
@@ -814,9 +826,19 @@ dnl Check if user requests renaming internal libtiff symbols
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(rename_internal_libtiff_symbols,[  --with-rename-internal-libtiff-symbols[=ARG] Prefix internal libtiff symbols with gdal_ (ARG=yes/no)],,)
-if test "$with_rename_internal_libtiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libtiff_symbols=yes
+    if test "x$with_rename_internal_libtiff_symbols" = "x$no"; then
+        with_rename_internal_libtiff_symbols=no
+    fi
+else
     with_rename_internal_libtiff_symbols=no
+    if test "x$with_rename_internal_libtiff_symbols" = "x$yes" -o "x$with_rename_internal_libtiff_symbols" = "x"; then
+        with_rename_internal_libtiff_symbols=yes
+    fi
 fi
+
 AC_SUBST(RENAME_INTERNAL_LIBTIFF_SYMBOLS,$with_rename_internal_libtiff_symbols)
 
 dnl ---------------------------------------------------------------------------
@@ -824,10 +846,39 @@ dnl Check if user requests renaming internal libgeotiff symbols
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(rename_internal_libgeotiff_symbols,[  --with-rename-internal-libgeotiff-symbols[=ARG] Prefix internal libgeotiff symbols with gdal_ (ARG=yes/no)],,)
-if test "$with_rename_internal_libgeotiff_symbols" = ""; then
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_libgeotiff_symbols=yes
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$no"; then
+        with_rename_internal_libgeotiff_symbols=no
+    fi
+else
     with_rename_internal_libgeotiff_symbols=no
+    if test "x$with_rename_internal_libgeotiff_symbols" = "x$yes" -o "x$with_rename_internal_libgeotiff_symbols" = "x"; then
+        with_rename_internal_libgeotiff_symbols=yes
+    fi
 fi
+
 AC_SUBST(RENAME_INTERNAL_LIBGEOTIFF_SYMBOLS,$with_rename_internal_libgeotiff_symbols)
+
+dnl ---------------------------------------------------------------------------
+dnl Check if user requests renaming internal shapelib symbols
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(rename_internal_shapelib_symbols,[  --with-rename-internal-shapelib-symbols[=ARG] Prefix internal shapelib symbols with gdal_ (ARG=yes/no)],,)
+
+if test "$HAVE_HIDE_INTERNAL_SYMBOLS" = "yes" ; then
+    with_rename_internal_shapelib_symbols=yes
+    if test "x$with_rename_internal_shapelib_symbols" = "x$no"; then
+        with_rename_internal_shapelib_symbols=no
+    fi
+else
+    with_rename_internal_shapelib_symbols=no
+    if test "x$with_rename_internal_shapelib_symbols" = "x$yes" -o "x$with_rename_internal_shapelib_symbols" = "x"; then
+        with_rename_internal_shapelib_symbols=yes
+    fi
+fi
+AC_SUBST(RENAME_INTERNAL_SHAPELIB_SYMBOLS,$with_rename_internal_shapelib_symbols)
 
 
 dnl ---------------------------------------------------------------------------
@@ -1084,15 +1135,54 @@ AC_ARG_WITH(liblzma,[  --with-liblzma[=ARG]       Include liblzma support (ARG=y
 
 if test "$with_liblzma" = "yes" ; then
   AC_CHECK_LIB(lzma,lzma_code,LIBLZMA_SETTING=yes,LIBLZMA_SETTING=no,)
+  AC_CHECK_HEADERS(lzma.h)
 
-  if test "$LIBLZMA_SETTING" = "yes" ; then
+  if test "$LIBLZMA_SETTING" = "yes" -a "$ac_cv_header_lzma_h" = "yes" ; then
     LIBS="-llzma $LIBS"
+  else
+    LIBLZMA_SETTING=no
   fi
 else
     LIBLZMA_SETTING=no
 fi
 
 AC_SUBST(LIBLZMA_SETTING,$LIBLZMA_SETTING)
+
+
+dnl ---------------------------------------------------------------------------
+dnl Check if zstd is available.
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(zstd,[  --with-zstd[=ARG]       Include zstd support (ARG=yes/no/installation_prefix)],,)
+
+if test "$with_zstd" = "" -o "$with_zstd" = "yes" ; then
+  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,)
+
+  if test "$ZSTD_SETTING" = "yes" ; then
+    LIBS="-lzstd $LIBS"
+  else
+    if test "$with_zstd" = "yes" ; then
+      AC_MSG_ERROR([libzstd not found])
+    else
+      echo "libzstd not found - ZSTD support disabled"
+    fi
+  fi
+elif test "$with_zstd" != "" -a "$with_zstd" != "no"; then
+
+  AC_CHECK_LIB(zstd,ZSTD_decompressStream,ZSTD_SETTING=yes,ZSTD_SETTING=no,-L$with_zstd/lib)
+
+  if test "$ZSTD_SETTING" = "yes" -a -f "$with_zstd/include/zstd.h" ; then
+    LIBS="-L$with_zstd/lib -lzstd $LIBS"
+    EXTRA_INCLUDES="-I$with_zstd/include $EXTRA_INCLUDES"
+  else
+    AC_MSG_ERROR([libzstd not found])
+  fi
+
+else
+    ZSTD_SETTING=no
+fi
+
+AC_SUBST(ZSTD_SETTING,$ZSTD_SETTING)
 
 dnl ---------------------------------------------------------------------------
 dnl Select an PostgreSQL Library to use, or disable driver.
@@ -1505,6 +1595,10 @@ if test "x${with_libtiff}" = "xyes" -o "x${with_libtiff}" = "x" ; then
     AC_MSG_RESULT([using internal TIFF code.])
   fi
 
+elif test "x${with_libtiff}" = "xno" ; then
+
+  AC_MSG_ERROR([libtiff is a required dependency])
+
 elif test "x${with_libtiff}" = "xinternal" ; then
 
   TIFF_SETTING=internal
@@ -1588,6 +1682,10 @@ elif test "$with_geotiff" = "internal" ; then
   GEOTIFF_SETTING=internal
 
   echo "using internal GeoTIFF code."
+
+elif test "x${with_geotiff}" = "xno" ; then
+
+  AC_MSG_ERROR([libgeotiff is a required dependency])
 
 else
 
@@ -1682,6 +1780,32 @@ AC_SUBST(JPEG_SETTING,$JPEG_SETTING)
 if test "$JPEG_SETTING" != "no" ; then
   OPT_GDAL_FORMATS="jpeg $OPT_GDAL_FORMATS"
 fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl Check for CharLS
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(charls,
+            AS_HELP_STRING([--with-charls],[Include JPEG-Lossless support]),,)
+
+HAVE_CHARLS=no
+CHARLS_INC=
+
+if test "$with_charls" = "yes" -o "$with_charls" = "" ; then
+
+  AC_CHECK_HEADERS([CharLS/interface.h])
+  if test "$ac_cv_header_CharLS_interface_h" = "yes"; then
+    AC_CHECK_LIB(CharLS,JpegLsDecode,HAVE_CHARLS=yes)
+    if test "$HAVE_CHARLS" = "yes"; then
+        LIBS="-lCharLS $LIBS"
+        CHARLS_INC="-DCHARLS_INTERFACE_H"
+    fi
+  fi
+fi
+
+AC_SUBST(HAVE_CHARLS,$HAVE_CHARLS)
+AC_SUBST(CHARLS_INC,$CHARLS_INC)
 
 dnl ---------------------------------------------------------------------------
 dnl Check for BSB in the local tree.
@@ -1857,10 +1981,6 @@ fi
 
 AC_SUBST(HAVE_OGDI,$HAVE_OGDI)
 AC_SUBST(OGDI_INCLUDE,$OGDI_INCLUDE)
-
-if test "$HAVE_OGDI" != "no" ; then
-  OPT_GDAL_FORMATS="ogdi $OPT_GDAL_FORMATS"
-fi
 
 dnl ---------------------------------------------------------------------------
 dnl Select FME_HOME or disable FME support.
@@ -2538,7 +2658,7 @@ dnl ---------------------------------------------------------------------------
 dnl Select a OpenJPEG Library to use, or disable driver.
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(openjpeg,[  --with-openjpeg[=ARG]     Include JPEG-2000 support via OpenJPEG 2.0 library (ARG=path)],,)
+AC_ARG_WITH(openjpeg,[  --with-openjpeg     Include JPEG-2000 support via OpenJPEG 2.x library],,)
 
 HAVE_OPENJPEG=no
 
@@ -2546,50 +2666,31 @@ if test "$with_openjpeg" = "no" ; then
 
   AC_MSG_NOTICE([OpenJPEG (JPEG2000) support disabled.])
 
-elif test "$with_openjpeg" = "yes" -o "$with_openjpeg" = "" ; then
-
-  AC_CHECK_HEADERS([openjpeg-2.0/openjpeg.h])
-  if test "$ac_cv_header_openjpeg_2_0_openjpeg_h" = "yes"; then
-    AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-    if test "$HAVE_OPENJPEG" = "yes"; then
-        LIBS="-lopenjp2 $LIBS"
-    fi
-  else
-    AC_CHECK_HEADERS([openjpeg-2.1/openjpeg.h])
-    if test "$ac_cv_header_openjpeg_2_1_openjpeg_h" = "yes"; then
-        AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,)
-        if test "$HAVE_OPENJPEG" = "yes"; then
-            OPENJPEG_VERSION=20100
-            LIBS="-lopenjp2 $LIBS"
-        fi
-    fi
-  fi
 else
 
-  HAVE_OPENJPEG=yes
-  if test -r $with_openjpeg/include/openjpeg-2.0/openjpeg.h ; then
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  elif test -r $with_openjpeg/include/openjpeg-2.1/openjpeg.h ; then
-    OPENJPEG_VERSION=20100
-    EXTRA_INCLUDES="-I$with_openjpeg/include $EXTRA_INCLUDES"
-  else
-    AC_MSG_ERROR([openjpeg.h not found in $with_openjpeg/include/openjpeg-2.0 or $with_openjpeg/include/openjpeg-2.1])
-  fi
+  PKG_PROG_PKG_CONFIG([0.25])
+  PKG_CHECK_MODULES([OPENJPEG], [libopenjp2 >= 2.1.0],
+        [OPENJPEG_VERSION=`$PKG_CONFIG --modversion libopenjp2`],
+        [OPENJPEG_VERSION=;])
 
-  AC_CHECK_LIB(openjp2,opj_stream_set_user_data_length,HAVE_OPENJPEG=yes,HAVE_OPENJPEG=no,-L$with_openjpeg/lib)
+  if test -n "$OPENJPEG_CFLAGS"; then
 
-  if test "$HAVE_OPENJPEG" = "yes"; then
-      LIBS="-L$with_openjpeg/lib -lopenjp2 $LIBS"
-      AC_MSG_NOTICE([using OpenJPEG v2 library from $with_openjpeg.])
+    # Test that the package found is for the right architecture
+    saved_LIBS="$LIBS"
+    LIBS="$OPENJPEG_LIBS"
+    AC_CHECK_LIB(openjp2,opj_setup_decoder, [HAVE_OPENJPEG=yes], [HAVE_OPENJPEG=no])
+    LIBS="$saved_LIBS"
+
+    if test "$HAVE_OPENJPEG" = "yes"; then
+        EXTRA_INCLUDES="$OPENJPEG_CFLAGS $EXTRA_INCLUDES"
+        LIBS="$OPENJPEG_LIBS $LIBS"
+    fi
   fi
 fi
 
 if test "$HAVE_OPENJPEG" != "no" ; then
   OPT_GDAL_FORMATS="openjpeg $OPT_GDAL_FORMATS"
 fi
-
-AC_SUBST([HAVE_OPENJPEG],$HAVE_OPENJPEG)
-AC_SUBST([OPENJPEG_VERSION],$OPENJPEG_VERSION)
 
 dnl ---------------------------------------------------------------------------
 dnl Select a FGDB API to use, or disable driver.
@@ -3481,7 +3582,7 @@ if test "$CURL_SETTING" = "yes" ; then
 
   CURL_INC=`$LIBCURL_CONFIG --cflags`
   CURL_LIB=`$LIBCURL_CONFIG --libs`
-  OPT_GDAL_FORMATS="wcs wms plmosaic wmts $OPT_GDAL_FORMATS"
+  OPT_GDAL_FORMATS="wcs wms plmosaic wmts rda $OPT_GDAL_FORMATS"
 
 fi
 
@@ -3727,6 +3828,7 @@ dnl Check for Teigha.
 dnl ---------------------------------------------------------------------------
 
 TEIGHA_DIR=
+TEIGHA_CPPFLAGS=
 
 AC_MSG_CHECKING(Checking for Teigha)
 AC_ARG_WITH(teigha,
@@ -3755,6 +3857,9 @@ else
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Root"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Ge"
         LIBS="${LIBS} -L${TEIGHA_DIR}/bin/${TEIGHA_PLT} -lTD_Alloc"
+        if test -f "${TEIGHA_DIR}/bin/${TEIGHA_PLT}/libTD_Db.so"; then
+            TEIGHA_CPPFLAGS="-D_TOOLKIT_IN_DLL_"
+        fi
     else
         AC_MSG_ERROR([--with-teigha-plt not specified])
     fi
@@ -3762,6 +3867,7 @@ fi
 
 AC_SUBST(TEIGHA_DIR)
 AC_SUBST(HAVE_TEIGHA)
+AC_SUBST(TEIGHA_CPPFLAGS)
 
 dnl ---------------------------------------------------------------------------
 dnl Select Informix DataBlade support
@@ -4280,6 +4386,8 @@ HAVE_POPPLER=no
 POPPLER_HAS_OPTCONTENT=no
 POPPLER_BASE_STREAM_HAS_TWO_ARGS=no
 POPPLER_0_20_OR_LATER=no
+POPPLER_0_23_OR_LATER=no
+POPPLER_0_58_OR_LATER=no
 
 AC_MSG_CHECKING([for poppler])
 
@@ -4318,59 +4426,84 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
         POPPLER_INC=$TEST_POPPLER_INC
         POPPLER_PLUGIN_LIB="${TEST_POPPLER_LIB}"
 
-        # And now try another dirty thing, but this one is
-        # optional.
-        AC_MSG_CHECKING([if Catalog::optContent exists])
+        CHECK_OTHER_POPPLER_VERSION=yes
+
+        # And now we check if we have Poppler >= 0.58.0
+        AC_MSG_CHECKING([if Object does have new API (>= 0.58.0)])
         rm -f testpoppler.*
-        echo '#define private public' > testpoppler.cpp
-        echo '#include <poppler/Object.h>' >> testpoppler.cpp
-        echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
+        echo '#include <poppler/Object.h>' > testpoppler.cpp
+        echo 'int main(int argc, char** argv) { Object o(objNull); return 0; }' >> testpoppler.cpp
         if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+            POPPLER_0_58_OR_LATER=yes
+            POPPLER_0_23_OR_LATER=yes
+            POPPLER_0_20_OR_LATER=yes
+            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
             POPPLER_HAS_OPTCONTENT=yes
+            CHECK_OTHER_POPPLER_VERSION=no
             AC_MSG_RESULT([yes])
         else
             AC_MSG_RESULT([no])
         fi
 
-        # And now we check if we have Poppler >= 0.16.0
-        AC_MSG_CHECKING([if BaseStream constructor needs 2 arguments])
-        rm -f testpoppler.*
-        echo '#include <poppler/Object.h>' > testpoppler.cpp
-        echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-        echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-        echo 'public:' >> testpoppler.cpp
-        echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-        echo '};' >> testpoppler.cpp
-        echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
-        if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-            POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
-            AC_MSG_RESULT([yes])
+        if test "$CHECK_OTHER_POPPLER_VERSION" = "yes"; then
 
-            # And now we check if we have Poppler >= 0.20.0
-            AC_MSG_CHECKING([if we have Poppler >= 0.20.0])
+            # And now try another dirty thing, but this one is
+            # optional.
+            AC_MSG_CHECKING([if Catalog::optContent exists])
             rm -f testpoppler.*
-            echo '#include <poppler/Error.h>' > testpoppler.cpp
-            echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
+            echo '#define private public' > testpoppler.cpp
+            echo '#include <poppler/Object.h>' >> testpoppler.cpp
+            echo '#include <poppler/Catalog.h>' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return &(((Catalog*)0x8000)->optContent) == 0; }' >> testpoppler.cpp
             if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                POPPLER_0_20_OR_LATER=yes
+                POPPLER_HAS_OPTCONTENT=yes
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
+
+            # And now we check if we have Poppler >= 0.16.0
+            AC_MSG_CHECKING([if BaseStream constructor needs 2 arguments])
+            rm -f testpoppler.*
+            echo '#include <poppler/Object.h>' > testpoppler.cpp
+            echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+            echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+            echo 'public:' >> testpoppler.cpp
+            echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+            echo '};' >> testpoppler.cpp
+            echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+            if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                POPPLER_BASE_STREAM_HAS_TWO_ARGS=yes
                 AC_MSG_RESULT([yes])
 
-                # And now we check if we have Poppler >= 0.23.0
-                AC_MSG_CHECKING([if we have Poppler >= 0.23.0])
+                # And now we check if we have Poppler >= 0.20.0
+                AC_MSG_CHECKING([if we have Poppler >= 0.20.0])
                 rm -f testpoppler.*
-                echo '#include <poppler/Object.h>' > testpoppler.cpp
-                echo '#include <poppler/Stream.h>' >> testpoppler.cpp
-                echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
-                echo 'public:' >> testpoppler.cpp
-                echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
-                echo '  ~TestStream() {}' >> testpoppler.cpp
-                echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
-                echo '};' >> testpoppler.cpp
-                echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                echo '#include <poppler/Error.h>' > testpoppler.cpp
+                echo 'int main(int argc, char** argv) { setErrorCallback(0,0); return 0; }' >> testpoppler.cpp
                 if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
-                    POPPLER_0_23_OR_LATER=yes
+                    POPPLER_0_20_OR_LATER=yes
                     AC_MSG_RESULT([yes])
+
+                    # And now we check if we have Poppler >= 0.23.0
+                    AC_MSG_CHECKING([if we have Poppler >= 0.23.0])
+                    rm -f testpoppler.*
+                    echo '#include <poppler/Object.h>' > testpoppler.cpp
+                    echo '#include <poppler/Stream.h>' >> testpoppler.cpp
+                    echo 'class TestStream: public BaseStream {' >> testpoppler.cpp
+                    echo 'public:' >> testpoppler.cpp
+                    echo '  TestStream() : BaseStream(0,0) {}' >> testpoppler.cpp
+                    echo '  ~TestStream() {}' >> testpoppler.cpp
+                    echo '  virtual BaseStream *copy() { return BaseStream::copy(); }' >> testpoppler.cpp
+                    echo '};' >> testpoppler.cpp
+                    echo 'int main(int argc, char** argv) { return 0; }' >> testpoppler.cpp
+                    if test -z "`${CXX} testpoppler.cpp -c ${POPPLER_INC} 2>&1`" ; then
+                        POPPLER_0_23_OR_LATER=yes
+                        AC_MSG_RESULT([yes])
+                    else
+                        AC_MSG_RESULT([no])
+                    fi
+
                 else
                     AC_MSG_RESULT([no])
                 fi
@@ -4378,9 +4511,6 @@ if test "$with_poppler" != "no" -a "$with_poppler" != ""; then
             else
                 AC_MSG_RESULT([no])
             fi
-
-        else
-            AC_MSG_RESULT([no])
         fi
     else
         AC_MSG_RESULT([no])
@@ -4396,6 +4526,7 @@ AC_SUBST(POPPLER_HAS_OPTCONTENT, $POPPLER_HAS_OPTCONTENT)
 AC_SUBST(POPPLER_BASE_STREAM_HAS_TWO_ARGS, $POPPLER_BASE_STREAM_HAS_TWO_ARGS)
 AC_SUBST(POPPLER_0_20_OR_LATER, $POPPLER_0_20_OR_LATER)
 AC_SUBST(POPPLER_0_23_OR_LATER, $POPPLER_0_23_OR_LATER)
+AC_SUBST(POPPLER_0_58_OR_LATER, $POPPLER_0_58_OR_LATER)
 AC_SUBST(POPPLER_INC, $POPPLER_INC)
 AC_SUBST(POPPLER_PLUGIN_LIB, $POPPLER_PLUGIN_LIB)
 
@@ -5364,6 +5495,34 @@ fi
 AC_SUBST(HAVE_CRYPTOPP,$HAVE_CRYPTOPP)
 AC_SUBST(USE_ONLY_CRYPTODLL_ALG,$USE_ONLY_CRYPTODLL_ALG)
 
+dnl ---------------------------------------------------------------------------
+dnl crypto
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(crypto,[  --with-crypto[=ARG]       Include crypto (from openssl) support (ARG=yes, no or path)],,)
+
+HAVE_OPENSSL_CRYPTO=no
+
+AC_MSG_CHECKING([for crypto])
+
+if test "$with_crypto" = "no" ; then
+
+  AC_MSG_RESULT([disabled])
+
+elif test "$with_crypto" = "yes" -o \( "$with_crypto" = "" -a "$HAVE_CRYPTOPP" = "no" \) ; then
+
+    AC_CHECK_LIB(crypto,EVP_sha256,HAVE_OPENSSL_CRYPTO=yes)
+    if test "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+        AC_CHECK_HEADERS([openssl/bio.h])
+        if test "$ac_cv_header_openssl_bio_h" = "no"; then
+            HAVE_OPENSSL_CRYPTO=no
+        else
+            LIBS="-lcrypto $LIBS"
+        fi
+    fi
+fi
+
+AC_SUBST(HAVE_OPENSSL_CRYPTO,$HAVE_OPENSSL_CRYPTO)
 
 dnl ---------------------------------------------------------------------------
 dnl Whether to include MRF in the build
@@ -5381,6 +5540,23 @@ if test "$with_mrf" = yes -o x"$with_mrf" = x ; then
 else
     HAVE_MRF=no
     AC_MSG_RESULT([disabled by user])
+fi
+
+
+dnl ---------------------------------------------------------------------------
+dnl Whether to include NULL driver in the build
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([null],
+	    AS_HELP_STRING([--with-null],
+	       [Enable NULL driver (only useful for development purposes]),,)
+
+AC_MSG_CHECKING([for NULL])
+if test "$with_null" = "yes" ; then
+    OPT_GDAL_FORMATS="null $OPT_GDAL_FORMATS"
+    AC_MSG_RESULT([enabled])
+else
+    AC_MSG_RESULT([disabled])
 fi
 
 dnl ---------------------------------------------------------------------------
@@ -5407,6 +5583,35 @@ fi
 rm -f testdeprecated.*
 rm -f testdeprecated
 
+dnl Use -municode for mingw
+case "${host_os}" in
+    mingw32*)
+        AC_MSG_CHECKING([if mingw supports wmain])
+        rm -f testwmain*
+        echo '#include <wchar.h>' > testwmain.cpp
+        echo '#include <stdlib.h>' >> testwmain.cpp
+        echo 'extern "C" int wmain( int argc, wchar_t ** argv_w );' >> testwmain.cpp
+        echo 'extern "C" int wmain( int , wchar_t **  ) { return 0; } ' >> testwmain.cpp
+        ${CXX} ${CXXFLAGS} ${LDFLAGS} testwmain.cpp -o testwmain.exe -municode 2>/dev/null
+        RETVAL=$?
+        rm -f testwmain*
+        if test $RETVAL -eq 0; then
+            AC_MSG_RESULT([yes])
+            CXXFLAGS="$CXXFLAGS -DSUPPORTS_WMAIN"
+            LDFLAGS="$LDFLAGS -municode"
+        else
+            AC_MSG_RESULT([no])
+        fi
+        ;;
+    *)
+        ;;
+esac
+
+dnl FileGDB v1.5
+if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
+    AC_MSG_ERROR([--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI])
+fi
+
 AC_OUTPUT(GDALmake.opt)
 
 dnl ---------------------------------------------------------------------------
@@ -5419,13 +5624,15 @@ LOC_MSG()
 LOC_MSG([  Installation directory:    ${prefix}])
 LOC_MSG([  C compiler:                ${CC} ${CFLAGS}])
 LOC_MSG([  C++ compiler:              ${CXX} ${CXXFLAGS}])
-LOC_MSG([  C++11 support:             ${CXX11_SUPPORT}])
+LOC_MSG([  C++14 support:             ${CXX14_SUPPORT}])
 LOC_MSG()
 LOC_MSG([  LIBTOOL support:           ${with_libtool}])
 LOC_MSG()
 LOC_MSG([  LIBZ support:              ${LIBZ_SETTING}])
 LOC_MSG([  LIBLZMA support:           ${LIBLZMA_SETTING}])
+LOC_MSG([  ZSTD support:              ${ZSTD_SETTING}])
 LOC_MSG([  cryptopp support:          ${HAVE_CRYPTOPP}])
+LOC_MSG([  crypto/openssl support:    ${HAVE_OPENSSL_CRYPTO}])
 LOC_MSG([  GRASS support:             ${GRASS_SETTING}])
 LOC_MSG([  CFITSIO support:           ${FITS_SETTING}])
 LOC_MSG([  PCRaster support:          ${PCRASTER_SETTING}])
@@ -5438,6 +5645,7 @@ LOC_MSG([  LIBJPEG support:           ${JPEG_SETTING}])
 LOC_MSG([  12 bit JPEG:               ${JPEG12_ENABLED}])
 LOC_MSG([  12 bit JPEG-in-TIFF:       ${TIFF_JPEG12_ENABLED}])
 LOC_MSG([  LIBGIF support:            ${GIF_SETTING}])
+LOC_MSG([  JPEG-Lossless/CharLS:      ${HAVE_CHARLS}])
 LOC_MSG([  OGDI support:              ${HAVE_OGDI}])
 LOC_MSG([  HDF4 support:              ${HAVE_HDF4}])
 LOC_MSG([  HDF5 support:              ${HAVE_HDF5}])
@@ -5531,7 +5739,6 @@ if test "$HAVE_LIBXML2" = "yes" -a "$FGDB_ENABLED" = "yes"; then
     AC_MSG_WARN([--with-libxml2 and --with-fgdb are both available. There might be some incompatibility between system libxml2 and the embedded copy within libFileGDBAPI])
 fi
 
-dnl FileGDB v1.5
-if test "$PROJ_STATIC" = "no" -a "$FGDB_ENABLED" = "yes" -a "$FGDB_HAS_PROJ4" = "yes"; then
-    AC_MSG_WARN([--without-static-proj and --with-fgdb are both available. There might be some incompatibility between system libproj and the embedded copy within libFileGDBAPI])
+if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
+    AC_MSG_WARN([--with-crypto and --with-cryptopp available. This is unusual setup, but will work.])
 fi

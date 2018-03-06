@@ -7,6 +7,54 @@
 
 %feature("autodoc");
 
+%{
+
+/* This is quite annoying but the data member of a string/buffer object */
+/* is sometimes not 8-byte aligned (Linux 64bit at least) given that it is */
+/* part of the object structure, and so has an offset. So we will allocate */
+/* a bit more, do the RasterIO() on a properly aligned buffer, and then move */
+/* back if necessary to the original buffer */
+
+#define ALIGNMENT_EXTRA 63
+#define ALIGNMENT_SHIFT 32
+
+static
+char* get_aligned_buffer(char* data, GDALDataType ntype)
+{
+    int alignment_needed = ntype == GDT_Byte ? 1:
+                           ntype == GDT_Int16 ? 2:
+                           ntype == GDT_UInt16 ? 2:
+                           ntype == GDT_Int32 ? 4:
+                           ntype == GDT_UInt32 ? 4:
+                           ntype == GDT_Float32 ? 4:
+                           ntype == GDT_Float64 ? 8:
+                           ntype == GDT_CInt16 ? 2:
+                           ntype == GDT_CInt32 ? 4:
+                           ntype == GDT_CFloat32 ? 4:
+                           ntype == GDT_CFloat64 ? 8: 8;
+    char* data_aligned = data + (alignment_needed - (size_t)data % alignment_needed) % alignment_needed;
+    if( data_aligned != data )
+        data_aligned += ALIGNMENT_SHIFT;
+    return data_aligned;
+}
+
+static void update_buffer_size(void* obj, char* data, char* data_aligned, size_t buf_size)
+{
+    if( data != data_aligned )
+        memmove(data, data_aligned, buf_size);
+
+#if PY_VERSION_HEX >= 0x03000000
+    PyBytesObject* stringobj = (PyBytesObject *) obj;
+#else
+    PyStringObject* stringobj = (PyStringObject *) obj;
+#endif
+    Py_SIZE(stringobj) = buf_size;
+    stringobj->ob_sval[buf_size] = '\0';
+    stringobj->ob_shash = -1;          /* invalidate cached hash value */
+}
+
+%}
+
 %init %{
   /* gdal_python.i %init code */
   if ( GDALGetDriverCount() == 0 ) {
@@ -209,13 +257,13 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
         ComputeBandRasterIOSize( nxsize, nysize,
                                  GDALGetDataTypeSize( ntype ) / 8,
                                  pixel_space, line_space, FALSE ) );
-    if (buf_size == 0)
+    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
     {
         *buf = NULL;
         return CE_Failure;
     }
 %#if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -225,7 +273,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 %#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -234,11 +282,12 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
+    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data, 0, buf_size);
+        memset(data_aligned, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -261,13 +310,18 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
 
     CPLErr eErr = GDALRasterIOEx( self, GF_Read, nXOff, nYOff, nXSize, nYSize,
-                         (void *) data, nxsize, nysize, ntype,
+                         (void *) data_aligned, nxsize, nysize, ntype,
                          pixel_space, line_space, &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
     }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
+    }
+
     return eErr;
   }
 %clear (void **buf );
@@ -280,12 +334,18 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
     int nBlockXSize, nBlockYSize;
     GDALGetBlockSize(self, &nBlockXSize, &nBlockYSize);
-    int nDataTypeSize = (GDALGetDataTypeSize(GDALGetRasterDataType(self)) / 8);
+    GDALDataType ntype = GDALGetRasterDataType(self);
+    int nDataTypeSize = (GDALGetDataTypeSize(ntype) / 8);
     size_t buf_size = static_cast<size_t>(nBlockXSize) *
                                                 nBlockYSize * nDataTypeSize;
+    if( buf_size + ALIGNMENT_EXTRA < buf_size)
+    {
+        *buf = NULL;
+        return CE_Failure;
+    }
 
 %#if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         *buf = Py_None;
@@ -295,7 +355,7 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 %#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -304,12 +364,19 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
-    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data);
+    char* data_aligned = get_aligned_buffer(data, ntype);
+
+    CPLErr eErr = GDALReadBlock( self, xoff, yoff, (void *) data_aligned);
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
     }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
+    }
+
     return eErr;
   }
 %clear (void **buf );
@@ -492,14 +559,14 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
                                     pband_list, band_list,
                                     pixel_space, line_space, band_space,
                                     FALSE));
-    if (buf_size == 0)
+    if (buf_size == 0 || buf_size + ALIGNMENT_EXTRA < buf_size)
     {
         *buf = NULL;
         return CE_Failure;
     }
 
 %#if PY_VERSION_HEX >= 0x03000000
-    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyBytes_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -508,7 +575,7 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     }
     char *data = PyBytes_AsString( (PyObject *)*buf );
 %#else
-    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size );
+    *buf = (void *)PyString_FromStringAndSize( NULL, buf_size + ALIGNMENT_EXTRA );
     if (*buf == NULL)
     {
         if( !bUseExceptions ) PyErr_Clear();
@@ -517,19 +584,20 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     }
     char *data = PyString_AsString( (PyObject *)*buf );
 %#endif
+    char* data_aligned = get_aligned_buffer(data, ntype);
 
     /* Should we clear the buffer in case there are hole in it ? */
     if( line_space != 0 && pixel_space != 0 && line_space > pixel_space * nxsize )
     {
-        memset(data, 0, buf_size);
+        memset(data_aligned, 0, buf_size);
     }
     else if( band_list > 1 && band_space != 0 )
     {
         if( line_space != 0 && band_space > line_space * nysize )
-            memset(data, 0, buf_size);
+            memset(data_aligned, 0, buf_size);
         else if( pixel_space != 0 && band_space < pixel_space &&
                  pixel_space != GDALGetRasterCount(self) * ntypesize )
-            memset(data, 0, buf_size);
+            memset(data_aligned, 0, buf_size);
     }
 
     GDALRasterIOExtraArg sExtraArg;
@@ -538,13 +606,17 @@ CPLErr ReadRaster1(  int xoff, int yoff, int xsize, int ysize,
     sExtraArg.pfnProgress = callback;
     sExtraArg.pProgressData = callback_data;
     CPLErr eErr = GDALDatasetRasterIOEx(self, GF_Read, xoff, yoff, xsize, ysize,
-                               (void*) data, nxsize, nysize, ntype,
+                               (void*) data_aligned, nxsize, nysize, ntype,
                                band_list, pband_list, pixel_space, line_space, band_space,
                                &sExtraArg );
     if (eErr == CE_Failure)
     {
         Py_DECREF((PyObject*)*buf);
         *buf = NULL;
+    }
+    else
+    {
+        update_buffer_size(*buf, data, data_aligned, buf_size);
     }
     return eErr;
 }
@@ -849,8 +921,10 @@ def Info(ds, **kwargs):
         ret = json.loads(ret)
     return ret
 
+def _strHighPrec(x):
+    return '%.18g' % x
 
-def TranslateOptions(options = [], format = 'GTiff',
+def TranslateOptions(options = [], format = None,
               outputType = GDT_Unknown, bandList = None, maskBand = None,
               width = 0, height = 0, widthPct = 0.0, heightPct = 0.0,
               xRes = 0.0, yRes = 0.0,
@@ -900,7 +974,8 @@ def TranslateOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if maskBand != None:
@@ -916,7 +991,7 @@ def TranslateOptions(options = [], format = 'GTiff',
             for opt in creationOptions:
                 new_options += ['-co', opt ]
         if srcWin is not None:
-            new_options += ['-srcwin', str(srcWin[0]), str(srcWin[1]), str(srcWin[2]), str(srcWin[3])]
+            new_options += ['-srcwin', _strHighPrec(srcWin[0]), _strHighPrec(srcWin[1]), _strHighPrec(srcWin[2]), _strHighPrec(srcWin[3])]
         if strict:
             new_options += ['-strict']
         if unscale:
@@ -928,9 +1003,9 @@ def TranslateOptions(options = [], format = 'GTiff',
                     new_options += [ str(v) ]
         if exponents:
             for exponent in exponents:
-                new_options += ['-exponent', str(exponent)]
+                new_options += ['-exponent', _strHighPrec(exponent)]
         if outputBounds is not None:
-            new_options += ['-a_ullr', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if metadataOptions is not None:
             for opt in metadataOptions:
                 new_options += ['-mo', opt ]
@@ -938,13 +1013,13 @@ def TranslateOptions(options = [], format = 'GTiff',
             new_options += ['-a_srs', str(outputSRS) ]
         if GCPs is not None:
             for gcp in GCPs:
-                new_options += ['-gcp', str(gcp.GCPPixel), str(gcp.GCPLine), str(gcp.GCPX), str(gcp.GCPY), str(gcp.GCPZ) ]
+                new_options += ['-gcp', _strHighPrec(gcp.GCPPixel), _strHighPrec(gcp.GCPLine), _strHighPrec(gcp.GCPX), str(gcp.GCPY), _strHighPrec(gcp.GCPZ) ]
         if projWin is not None:
-            new_options += ['-projwin', str(projWin[0]), str(projWin[1]), str(projWin[2]), str(projWin[3])]
+            new_options += ['-projwin', _strHighPrec(projWin[0]), _strHighPrec(projWin[1]), _strHighPrec(projWin[2]), _strHighPrec(projWin[3])]
         if projWinSRS is not None:
             new_options += ['-projwin_srs', str(projWinSRS) ]
         if noData is not None:
-            new_options += ['-a_nodata', str(noData) ]
+            new_options += ['-a_nodata', _strHighPrec(noData) ]
         if rgbExpand is not None:
             new_options += ['-expand', str(rgbExpand) ]
         if stats:
@@ -969,7 +1044,7 @@ def TranslateOptions(options = [], format = 'GTiff',
             else:
                 new_options += ['-r', str(resampleAlg) ]
         if xRes != 0 and yRes != 0:
-            new_options += ['-tr', str(xRes), str(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
 
     return (GDALTranslateOptions(new_options), callback, callback_data)
 
@@ -992,7 +1067,7 @@ def Translate(destName, srcDS, **kwargs):
 
     return TranslateInternal(destName, srcDS, opts, callback, callback_data)
 
-def WarpOptions(options = [], format = 'GTiff',
+def WarpOptions(options = [], format = None,
          outputBounds = None,
          outputBoundsSRS = None,
          xRes = None, yRes = None, targetAlignedPixels = False,
@@ -1056,17 +1131,18 @@ def WarpOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if workingType != GDT_Unknown:
             new_options += ['-wt', GetDataTypeName(workingType) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3]) ]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3]) ]
         if outputBoundsSRS is not None:
             new_options += ['-te_srs', str(outputBoundsSRS) ]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes) ]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes) ]
         if width != 0 or height != 0:
             new_options += ['-ts', str(width), str(height)]
         if srcSRS is not None:
@@ -1083,7 +1159,7 @@ def WarpOptions(options = [], format = 'GTiff',
             for opt in warpOptions:
                 new_options += ['-wo', str(opt)]
         if errorThreshold is not None:
-            new_options += ['-et', str(errorThreshold)]
+            new_options += ['-et', _strHighPrec(errorThreshold)]
         if resampleAlg is not None:
             if resampleAlg == GRIORA_NearestNeighbour:
                 new_options += ['-r', 'near']
@@ -1178,10 +1254,12 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
         return wrapper_GDALWarpDestDS(destNameOrDestDS, srcDSTab, opts, callback, callback_data)
 
 
-def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
+def VectorTranslateOptions(options = [], format = None,
          accessMode = None,
          srcSRS = None, dstSRS = None, reproject = True,
          SQLStatement = None, SQLDialect = None, where = None, selectFields = None,
+         addFields = False,
+         forceNullable = False,
          spatFilter = None, spatSRS = None,
          datasetCreationOptions = None,
          layerCreationOptions = None,
@@ -1206,6 +1284,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
           SQLDialect --- SQL dialect ('OGRSQL', 'SQLITE', ...)
           where --- WHERE clause to apply to source layer(s)
           selectFields --- list of fields to select
+          addFields --- whether to add new fields found in source layers (to be used with accessMode == 'append')
+          forceNullable --- whether to drop NOT NULL constraints on newly created fields
           spatFilter --- spatial filter as (minX, minY, maxX, maxY) bounding box
           spatSRS --- SRS in which the spatFilter is expressed. If not specified, it is assumed to be the one of the layer(s)
           datasetCreationOptions --- list of dataset creation options
@@ -1227,7 +1307,8 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-f', format]
+        if format is not None:
+            new_options += ['-f', format]
         if srcSRS is not None:
             new_options += ['-s_srs', str(srcSRS) ]
         if dstSRS is not None:
@@ -1250,6 +1331,10 @@ def VectorTranslateOptions(options = [], format = 'ESRI Shapefile',
                 new_options += ['-overwrite']
             else:
                 raise Exception('unhandled accessMode')
+        if addFields:
+            new_options += ['-addfields']
+        if forceNullable:
+            new_options += ['-forceNullable']
         if selectFields is not None:
             val = ''
             for item in selectFields:
@@ -1314,11 +1399,12 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
     else:
         return wrapper_GDALVectorTranslateDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
-def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
+def DEMProcessingOptions(options = [], colorFilename = None, format = None,
               creationOptions = None, computeEdges = False, alg = 'Horn', band = 1,
               zFactor = None, scale = None, azimuth = None, altitude = None,
               combined = False, multiDirectional = False,
               slopeFormat = None, trigonometric = False, zeroForFlat = False,
+              addAlpha = None,
               callback = None, callback_data = None):
     """ Create a DEMProcessingOptions() object that can be passed to gdal.DEMProcessing()
         Keyword arguments are :
@@ -1338,6 +1424,7 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
           slopeformat --- (slope only) "degree" or "percent".
           trigonometric --- (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
           zeroForFlat --- (aspect only) whether to return 0 for flat areas with slope=0, instead of -9999.
+          addAlpha --- adds an alpha band to the output file (only for processing = 'color-relief')
           callback --- callback method
           callback_data --- user data for callback
     """
@@ -1347,7 +1434,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -1374,6 +1462,8 @@ def DEMProcessingOptions(options = [], colorFilename = None, format = 'GTiff',
             new_options += ['-trigonometric' ]
         if zeroForFlat:
             new_options += ['-zero_for_flat' ]
+        if addAlpha:
+            new_options += [ '-alpha' ]
 
     return (GDALDEMProcessingOptions(new_options), colorFilename, callback, callback_data)
 
@@ -1398,7 +1488,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
     return DEMProcessingInternal(destName, srcDS, processing, colorFilename, opts, callback, callback_data)
 
 
-def NearblackOptions(options = [], format = 'GTiff',
+def NearblackOptions(options = [], format = None,
          creationOptions = None, white = False, colors = None,
          maxNonBlack = None, nearDist = None, setAlpha = False, setMask = False,
          callback = None, callback_data = None):
@@ -1411,7 +1501,7 @@ def NearblackOptions(options = [], format = 'GTiff',
           colors --- list of colors  to search for, e.g. ((0,0,0),(255,255,255)). The pixels that are considered as the collar are set to 0
           maxNonBlack --- number of non-black (or other searched colors specified with white / colors) pixels that can be encountered before the giving up search inwards. Defaults to 2.
           nearDist --- select how far from black, white or custom colors the pixel values can be and still considered near black, white or custom color.  Defaults to 15.
-          setAlpha --- adds an alpha band if the output file.
+          setAlpha --- adds an alpha band to the output file.
           setMask --- adds a mask band to the output file.
           callback --- callback method
           callback_data --- user data for callback
@@ -1422,7 +1512,8 @@ def NearblackOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if creationOptions is not None:
             for opt in creationOptions:
                 new_options += ['-co', opt ]
@@ -1470,7 +1561,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALNearblackDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
-def GridOptions(options = [], format = 'GTiff',
+def GridOptions(options = [], format = None,
               outputType = GDT_Unknown,
               width = 0, height = 0,
               creationOptions = None,
@@ -1514,7 +1605,8 @@ def GridOptions(options = [], format = 'GTiff',
         new_options = ParseCommandLine(options)
     else:
         new_options = copy.copy(options)
-        new_options += ['-of', format]
+        if format is not None:
+            new_options += ['-of', format]
         if outputType != GDT_Unknown:
             new_options += ['-ot', GetDataTypeName(outputType) ]
         if width != 0 or height != 0:
@@ -1523,7 +1615,7 @@ def GridOptions(options = [], format = 'GTiff',
             for opt in creationOptions:
                 new_options += ['-co', opt ]
         if outputBounds is not None:
-            new_options += ['-txe', str(outputBounds[0]), str(outputBounds[2]), '-tye', str(outputBounds[1]), str(outputBounds[3])]
+            new_options += ['-txe', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[2]), '-tye', _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS) ]
         if algorithm is not None:
@@ -1632,7 +1724,7 @@ def RasterizeOptions(options = [], format = None,
             else:
                 new_options += ['-init', str(initValues) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if outputSRS is not None:
             new_options += ['-a_srs', str(outputSRS) ]
         if transformerOptions is not None:
@@ -1641,7 +1733,7 @@ def RasterizeOptions(options = [], format = None,
         if width is not None and height is not None:
             new_options += ['-ts', str(width), str(height)]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes)]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         if targetAlignedPixels:
             new_options += ['-tap']
         if inverse:
@@ -1743,9 +1835,9 @@ def BuildVRTOptions(options = [],
         if resolution is not None:
             new_options += ['-resolution', str(resolution) ]
         if outputBounds is not None:
-            new_options += ['-te', str(outputBounds[0]), str(outputBounds[1]), str(outputBounds[2]), str(outputBounds[3])]
+            new_options += ['-te', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
         if xRes is not None and yRes is not None:
-            new_options += ['-tr', str(xRes), str(yRes)]
+            new_options += ['-tr', _strHighPrec(xRes), _strHighPrec(yRes)]
         if targetAlignedPixels:
             new_options += ['-tap']
         if separate:

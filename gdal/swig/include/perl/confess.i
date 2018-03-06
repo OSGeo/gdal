@@ -1,6 +1,7 @@
 %header %{
     void do_confess(const char *error, int push_to_error_stack) {
-        SV *sv = newSVpv(error, 0);
+        SV *sv = newSVpv("", 0);
+        sv_setpvf(sv, "%s\n", error);
         if (push_to_error_stack) {
             AV* error_stack = get_av("Geo::GDAL::error", 0);
             av_push(error_stack, sv);

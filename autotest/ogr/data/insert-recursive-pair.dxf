@@ -1,0 +1,176 @@
+  0
+SECTION
+  2
+TABLES
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  5
+ABC0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+RecursiveBlock1
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+RecursiveBlock1
+  1
+
+  0
+INSERT
+  5
+ABC1
+100
+AcDbEntity
+100
+AcDbBlockReference
+  8
+0
+  2
+RecursiveBlock2
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDBLK
+  5
+ABC2
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+DEF0
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+RecursiveBlock2
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+RecursiveBlock2
+  1
+
+  0
+INSERT
+  5
+DEF1
+100
+AcDbEntity
+100
+AcDbBlockReference
+  8
+0
+  2
+RecursiveBlock1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+INSERT
+  5
+DEF2
+100
+AcDbEntity
+100
+AcDbBlockReference
+  8
+0
+  2
+RecursiveBlock1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+POINT
+  5
+DEF3
+100
+AcDbEntity
+100
+AcDbPoint
+  8
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDBLK
+  5
+DEF4
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+INSERT
+  5
+1234
+100
+AcDbEntity
+100
+AcDbBlockReference
+  8
+0
+  2
+RecursiveBlock1
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  0
+ENDSEC
+  0
+EOF

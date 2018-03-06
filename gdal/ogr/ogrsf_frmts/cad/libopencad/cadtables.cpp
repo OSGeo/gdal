@@ -8,7 +8,7 @@
  *  The MIT License (MIT)
  *
  *  Copyright (c) 2016 Alexandr Borzykh
- *  Copyright (c) 2016 NextGIS, <info@nextgis.com>
+ *  Copyright (c) 2016-2018 NextGIS, <info@nextgis.com>
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include <memory>
 #include <cassert>
 #include <iostream>
+#include <set>
 
 using namespace std;
 
@@ -84,10 +85,15 @@ CADHandle CADTables::GetTableHandle( enum TableType eType )
 int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHandle )
 {
     // Reading Layer Control obj, and aLayers.
+    CADObject* pCADObject = pCADFile->GetObject( dLayerControlHandle );
+
     unique_ptr<CADLayerControlObject> spLayerControl(
-            static_cast<CADLayerControlObject *>(pCADFile->GetObject( dLayerControlHandle )) );
-    if( spLayerControl == nullptr )
+            dynamic_cast<CADLayerControlObject *>(pCADObject) );
+    if( !spLayerControl )
+    {
+        delete pCADObject;
         return CADErrorCodes::TABLE_READ_FAILED;
+    }
 
     for( size_t i = 0; i < spLayerControl->hLayers.size(); ++i )
     {
@@ -96,20 +102,29 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
             CADLayer oCADLayer( pCADFile );
 
             // Init CADLayer from CADLayerObject properties
+            CADObject* pCADLayerObject = pCADFile->GetObject(
+                        spLayerControl->hLayers[i].getAsLong() );
             unique_ptr<CADLayerObject> oCADLayerObj(
-                    static_cast<CADLayerObject *>(pCADFile->GetObject( spLayerControl->hLayers[i].getAsLong() )) );
+                    dynamic_cast<CADLayerObject *>( pCADLayerObject ) );
 
-            oCADLayer.setName( oCADLayerObj->sLayerName );
-            oCADLayer.setFrozen( oCADLayerObj->bFrozen );
-            oCADLayer.setOn( oCADLayerObj->bOn );
-            oCADLayer.setFrozenByDefault( oCADLayerObj->bFrozenInNewVPORT );
-            oCADLayer.setLocked( oCADLayerObj->bLocked );
-            oCADLayer.setLineWeight( oCADLayerObj->dLineWeight );
-            oCADLayer.setColor( oCADLayerObj->dCMColor );
-            oCADLayer.setId( aLayers.size() + 1 );
-            oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
+            if(oCADLayerObj)
+            {
+                oCADLayer.setName( oCADLayerObj->sLayerName );
+                oCADLayer.setFrozen( oCADLayerObj->bFrozen );
+                oCADLayer.setOn( oCADLayerObj->bOn );
+                oCADLayer.setFrozenByDefault( oCADLayerObj->bFrozenInNewVPORT );
+                oCADLayer.setLocked( oCADLayerObj->bLocked );
+                oCADLayer.setLineWeight( oCADLayerObj->dLineWeight );
+                oCADLayer.setColor( oCADLayerObj->dCMColor );
+                oCADLayer.setId( aLayers.size() + 1 );
+                oCADLayer.setHandle( oCADLayerObj->hObjectHandle.getAsLong() );
 
-            aLayers.push_back( oCADLayer );
+                aLayers.push_back( oCADLayer );
+            }
+            else
+            {
+                delete pCADLayerObject;
+            }
         }
     }
 
@@ -117,21 +132,40 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
     if( iterBlockMS == mapTables.end() )
         return CADErrorCodes::TABLE_READ_FAILED;
 
+    CADObject* pCADBlockObject = pCADFile->GetObject(
+                iterBlockMS->second.getAsLong() );
     unique_ptr<CADBlockHeaderObject> spModelSpace(
-            static_cast<CADBlockHeaderObject *>(pCADFile->GetObject( iterBlockMS->second.getAsLong() )) );
+            dynamic_cast<CADBlockHeaderObject *>( pCADBlockObject ) );
+    if(!spModelSpace)
+    {
+        delete pCADBlockObject;
+        return CADErrorCodes::TABLE_READ_FAILED;
+    }
+
+    if(spModelSpace->hEntities.size() < 2)
+    {
+        return CADErrorCodes::TABLE_READ_FAILED;
+    }
 
     auto dCurrentEntHandle = spModelSpace->hEntities[0].getAsLong();
     auto dLastEntHandle    = spModelSpace->hEntities[1].getAsLong();
-    while( dCurrentEntHandle != 0 )
+    // To avoid infinite loops
+    std::set<long> oVisitedHandles;
+    while( dCurrentEntHandle != 0 &&
+           oVisitedHandles.find(dCurrentEntHandle) == oVisitedHandles.end() )
     {
-        unique_ptr<CADEntityObject> spEntityObj( static_cast<CADEntityObject *>(
-                                                         pCADFile->GetObject( dCurrentEntHandle, true )) );
+        oVisitedHandles.insert(dCurrentEntHandle);
 
-        if( spEntityObj == nullptr )
+        CADObject* pCADEntityObject = pCADFile->GetObject( dCurrentEntHandle, true );
+        unique_ptr<CADEntityObject> spEntityObj(
+                    dynamic_cast<CADEntityObject *>( pCADEntityObject ) );
+
+        if( !spEntityObj )
         {
+            delete pCADEntityObject;
             DebugMsg( "Entity object is null\n" );
             break;
-        }
+        } 
         else if ( dCurrentEntHandle == dLastEntHandle )
         {
             FillLayer( spEntityObj.get() );
@@ -158,14 +192,22 @@ int CADTables::ReadLayersTable( CADFile * const pCADFile, long dLayerControlHand
 
 void CADTables::FillLayer( const CADEntityObject * pEntityObject )
 {
+    if(nullptr == pEntityObject)
+    {
+        return;
+    }
+
     for( CADLayer& oLayer : aLayers )
     {
-        if( pEntityObject->stChed.hLayer.getAsLong( pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
+        if( pEntityObject->stChed.hLayer.getAsLong(
+                    pEntityObject->stCed.hObjectHandle ) == oLayer.getHandle() )
         {
             DebugMsg( "Object with type: %s is attached to layer named: %s\n",
-                      getNameByType( pEntityObject->getType() ).c_str(), oLayer.getName().c_str() );
+                      getNameByType( pEntityObject->getType() ).c_str(),
+                      oLayer.getName().c_str() );
 
-            oLayer.addHandle( pEntityObject->stCed.hObjectHandle.getAsLong(), pEntityObject->getType() );
+            oLayer.addHandle( pEntityObject->stCed.hObjectHandle.getAsLong(),
+                              pEntityObject->getType() );
             break;
         }
     }

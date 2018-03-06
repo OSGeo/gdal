@@ -174,6 +174,7 @@ int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
 const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLExpandTilde( const char *pszFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
@@ -280,6 +281,13 @@ char* CPLsetlocale (int category, const char* locale);
 void CPLCleanupSetlocaleMutex(void);
 /*! @endcond */
 
+/*!
+    CPLIsPowerOfTwo()
+    @param i - tested number
+    @return TRUE if i is power of two otherwise return FALSE
+*/
+int CPL_DLL CPLIsPowerOfTwo( unsigned int i );
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
@@ -295,38 +303,31 @@ public:
     CPLLocaleC();
     ~CPLLocaleC();
 
+    /* Make it non-copyable */
+    CPLLocaleC(const CPLLocaleC&) = delete;
+    CPLLocaleC& operator=(const CPLLocaleC&) = delete;
+
 private:
     char *pszOldLocale;
-
-    /* Make it non-copyable */
-    CPLLocaleC(const CPLLocaleC&);
-    CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
 // Does the same as CPLLocaleC except that, when available, it tries to
 // only affect the current thread. But code that would be dependent of
 // setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
 // will not work depending on the actual implementation
+class CPLThreadLocaleCPrivate;
 class CPL_DLL CPLThreadLocaleC
 {
 public:
     CPLThreadLocaleC();
     ~CPLThreadLocaleC();
 
-private:
-#ifdef HAVE_USELOCALE
-    locale_t nNewLocale;
-    locale_t nOldLocale;
-#else
-#if defined(_MSC_VER)
-    int   nOldValConfigThreadLocale;
-#endif
-    char *pszOldLocale;
-#endif
-
     /* Make it non-copyable */
-    CPLThreadLocaleC(const CPLThreadLocaleC&);
-    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&);
+    CPLThreadLocaleC(const CPLThreadLocaleC&) = delete;
+    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&) = delete;
+
+private:
+    CPLThreadLocaleCPrivate* m_private;
 };
 
 #endif /* def __cplusplus */
@@ -348,14 +349,14 @@ public:
                           bool bSetOnlyIfUndefined);
     ~CPLConfigOptionSetter();
 
+    /* Make it non-copyable */
+    CPLConfigOptionSetter(const CPLConfigOptionSetter&) = delete;
+    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&) = delete;
+
 private:
     char* m_pszKey;
     char *m_pszOldValue;
     bool m_bRestoreOldValue;
-
-    /* Make it non-copyable */
-    CPLConfigOptionSetter(const CPLConfigOptionSetter&);
-    CPLConfigOptionSetter& operator=(const CPLConfigOptionSetter&);
 };
 
 #endif /* def __cplusplus */

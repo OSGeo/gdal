@@ -818,7 +818,7 @@ int main()
 
     pModel->fitToView();
     pDb->writeFile( "test_dgnv8.dgn" );
-    pDb = NULL;
+    pDb = nullptr;
 
     ::odrxUninitialize();
 

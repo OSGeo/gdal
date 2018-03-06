@@ -79,7 +79,7 @@ static
 void* GDALCreateSimilarTPSTransformer( void *hTransformArg,
                                        double dfRatioX, double dfRatioY )
 {
-    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarTPSTransformer", NULL );
+    VALIDATE_POINTER1( hTransformArg, "GDALCreateSimilarTPSTransformer", nullptr );
 
     TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(hTransformArg);
 
@@ -144,7 +144,7 @@ void* GDALCreateSimilarTPSTransformer( void *hTransformArg,
 void *GDALCreateTPSTransformer( int nGCPCount, const GDAL_GCP *pasGCPList,
                                 int bReversed )
 {
-    return GDALCreateTPSTransformerInt(nGCPCount, pasGCPList, bReversed, NULL);
+    return GDALCreateTPSTransformerInt(nGCPCount, pasGCPList, bReversed, nullptr);
 }
 
 static void GDALTPSComputeForwardInThread( void *pData )
@@ -251,7 +251,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         if( !bOK )
         {
             GDALDestroyTPSTransformer(psInfo);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -262,7 +262,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     {
         const char* pszWarpThreads =
             CSLFetchNameValue(papszOptions, "NUM_THREADS");
-        if( pszWarpThreads == NULL )
+        if( pszWarpThreads == nullptr )
             pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
         if( EQUAL(pszWarpThreads, "ALL_CPUS") )
             nThreads = CPLGetNumCPUs();
@@ -276,7 +276,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
         CPLJoinableThread* hThread =
             CPLCreateJoinableThread(GDALTPSComputeForwardInThread, psInfo);
         psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
-        if( hThread != NULL )
+        if( hThread != nullptr )
             CPLJoinThread(hThread);
         else
             psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
@@ -290,7 +290,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
     if( !psInfo->bForwardSolved || !psInfo->bReverseSolved )
     {
         GDALDestroyTPSTransformer(psInfo);
-        return NULL;
+        return nullptr;
     }
 
     return psInfo;
@@ -313,7 +313,7 @@ void *GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
 void GDALDestroyTPSTransformer( void *pTransformArg )
 
 {
-    if( pTransformArg == NULL )
+    if( pTransformArg == nullptr )
         return;
 
     TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
@@ -394,11 +394,11 @@ int GDALTPSTransform( void *pTransformArg, int bDstToSrc,
 CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTPSTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeTPSTransformer", nullptr );
 
     TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pTransformArg);
 
-    CPLXMLNode *psTree = CPLCreateXMLNode(NULL, CXT_Element, "TPSTransformer");
+    CPLXMLNode *psTree = CPLCreateXMLNode(nullptr, CXT_Element, "TPSTransformer");
 
 /* -------------------------------------------------------------------- */
 /*      Serialize bReversed.                                            */
@@ -415,7 +415,7 @@ CPLXMLNode *GDALSerializeTPSTransformer( void *pTransformArg )
         GDALSerializeGCPListToXML( psTree,
                                    psInfo->pasGCPList,
                                    psInfo->nGCPCount,
-                                   NULL );
+                                   nullptr );
     }
 
     return psTree;
@@ -432,15 +432,15 @@ void *GDALDeserializeTPSTransformer( CPLXMLNode *psTree )
     /*      Check for GCPs.                                                 */
     /* -------------------------------------------------------------------- */
     CPLXMLNode *psGCPList = CPLGetXMLNode( psTree, "GCPList" );
-    GDAL_GCP *pasGCPList = NULL;
+    GDAL_GCP *pasGCPList = nullptr;
     int nGCPCount = 0;
 
-    if( psGCPList != NULL )
+    if( psGCPList != nullptr )
     {
         GDALDeserializeGCPListFromXML( psGCPList,
                                        &pasGCPList,
                                        &nGCPCount,
-                                       NULL );
+                                       nullptr );
     }
 
 /* -------------------------------------------------------------------- */

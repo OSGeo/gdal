@@ -68,7 +68,7 @@ int main( int argc, char ** argv )
     double dfSFXMax = 0.0;
     double dfSFYMin = 0.0;
     double dfSFYMax = 0.0;
-    const char *pszFilename = NULL;
+    const char *pszFilename = nullptr;
 
     for( int iArg = 1; iArg < argc; iArg++ )
     {
@@ -94,17 +94,17 @@ int main( int argc, char ** argv )
         {
             bReportExtents = true;
         }
-        else if( argv[iArg][0] == '-' || pszFilename != NULL )
+        else if( argv[iArg][0] == '-' || pszFilename != nullptr )
             Usage();
         else
             pszFilename = argv[iArg];
     }
 
-    if( pszFilename == NULL )
+    if( pszFilename == nullptr )
         Usage();
 
     DGNHandle hDGN = DGNOpen( pszFilename, FALSE );
-    if( hDGN == NULL )
+    if( hDGN == nullptr )
         exit( 1 );
 
     if( bRaw )
@@ -114,8 +114,8 @@ int main( int argc, char ** argv )
 
     if( !bSummary )
     {
-        DGNElemCore *psElement = NULL;
-        while( (psElement=DGNReadElement(hDGN)) != NULL )
+        DGNElemCore *psElement = nullptr;
+        while( (psElement=DGNReadElement(hDGN)) != nullptr )
         {
             DGNDumpElement( hDGN, psElement, stdout );
 

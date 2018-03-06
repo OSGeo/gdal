@@ -36,7 +36,7 @@ extern "C" void CPL_DLL RegisterOGRDWG_DGNV8();
 
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
-static CPLMutex* hMutex = NULL;
+static CPLMutex* hMutex = nullptr;
 static bool bInitialized = false;
 static bool bInitSuccess = false;
 static OdStaticRxObject<OGRDWGServices> oDWGServices;
@@ -58,11 +58,24 @@ static void OGRTEIGHAErrorHandler( OdResult oResult )
 /*                        OGRTEIGHAInitialize()                         */
 /************************************************************************/
 
+#ifndef _TOOLKIT_IN_DLL_
+// Define module map for statically linked modules:
+ODRX_DECLARE_STATIC_MODULE_ENTRY_POINT(OdDgnModule);
+ODRX_BEGIN_STATIC_MODULE_MAP()
+ODRX_DEFINE_STATIC_APPMODULE(L"TG_Db", OdDgnModule)
+ODRX_END_STATIC_MODULE_MAP()
+#endif
+
 bool OGRTEIGHAInitialize()
 {
     CPLMutexHolderD(&hMutex);
     if( bInitialized )
         return bInitSuccess;
+
+#ifndef _TOOLKIT_IN_DLL_
+    //Additional static modules initialization
+    ODRX_INIT_STATIC_MODULE_MAP();
+#endif
 
     bInitialized = true;
 
@@ -128,9 +141,9 @@ void OGRTEIGHADeinitialize()
     }
     bInitialized = false;
     bInitSuccess = false;
-    if( hMutex != NULL )
+    if( hMutex != nullptr )
         CPLDestroyMutex(hMutex);
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/

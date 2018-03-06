@@ -51,9 +51,9 @@ class CPLKeywordParser
     const char *pszHeaderNext;
 
     void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
+    bool    ReadWord( CPLString &osWord );
+    bool    ReadPair( CPLString &osName, CPLString &osValue );
+    bool    ReadGroup( const char *pszPathPrefix, int nRecLevel );
 
 public:
     CPLKeywordParser();
@@ -61,7 +61,7 @@ public:
 
     int     Ingest( VSILFILE *fp );
 
-    const char *GetKeyword( const char *pszPath, const char *pszDefault=NULL );
+    const char *GetKeyword( const char *pszPath, const char *pszDefault=nullptr );
     char  **GetAllKeywords() { return papszKeywordList; }
 };
 

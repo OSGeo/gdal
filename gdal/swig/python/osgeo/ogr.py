@@ -6273,6 +6273,11 @@ class Geometry(_object):
         return _ogr.Geometry_AddGeometry(self, *args)
 
 
+    def RemoveGeometry(self, *args):
+        """RemoveGeometry(Geometry self, int iSubGeom) -> OGRErr"""
+        return _ogr.Geometry_RemoveGeometry(self, *args)
+
+
     def Clone(self, *args):
         """
         Clone(Geometry self) -> Geometry
@@ -6430,6 +6435,11 @@ class Geometry(_object):
     def SetPoint_2D(self, *args, **kwargs):
         """SetPoint_2D(Geometry self, int point, double x, double y)"""
         return _ogr.Geometry_SetPoint_2D(self, *args, **kwargs)
+
+
+    def SwapXY(self, *args):
+        """SwapXY(Geometry self)"""
+        return _ogr.Geometry_SwapXY(self, *args)
 
 
     def GetGeometryRef(self, *args):

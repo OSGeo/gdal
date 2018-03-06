@@ -165,17 +165,17 @@ static const char* WFS_ExprGetSRSName( const swq_expr_node* poExpr,
         }
     }
     else if( poExpr->nSubExprCount == iSubArgIndex &&
-             psOptions->poSRS != NULL )
+             psOptions->poSRS != nullptr )
     {
-        if( psOptions->poSRS->GetAuthorityName(NULL) &&
-            EQUAL(psOptions->poSRS->GetAuthorityName(NULL), "EPSG") &&
-            psOptions->poSRS->GetAuthorityCode(NULL) &&
-            oSRS.importFromEPSGA(atoi(psOptions->poSRS->GetAuthorityCode(NULL))) == OGRERR_NONE )
+        if( psOptions->poSRS->GetAuthorityName(nullptr) &&
+            EQUAL(psOptions->poSRS->GetAuthorityName(nullptr), "EPSG") &&
+            psOptions->poSRS->GetAuthorityCode(nullptr) &&
+            oSRS.importFromEPSGA(atoi(psOptions->poSRS->GetAuthorityCode(nullptr))) == OGRERR_NONE )
         {
-            return CPLSPrintf("urn:ogc:def:crs:EPSG::%s", psOptions->poSRS->GetAuthorityCode(NULL));
+            return CPLSPrintf("urn:ogc:def:crs:EPSG::%s", psOptions->poSRS->GetAuthorityCode(nullptr));
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -204,11 +204,11 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             return false;
         }
 
-        const char* pszFieldname = NULL;
+        const char* pszFieldname = nullptr;
         int nIndex = 0;
         const bool bSameTable =
-            psOptions->poFDefn != NULL &&
-            ( poExpr->table_name == NULL ||
+            psOptions->poFDefn != nullptr &&
+            ( poExpr->table_name == nullptr ||
               EQUAL(poExpr->table_name, psOptions->poFDefn->GetName()) );
         if( bSameTable )
         {
@@ -221,7 +221,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
                 pszFieldname = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetNameRef();
             }
         }
-        else if( psOptions->poDS != NULL )
+        else if( psOptions->poDS != nullptr )
         {
             OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->table_name);
             if( poLayer )
@@ -242,12 +242,12 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             }
         }
 
-        if( psOptions->poFDefn == NULL && psOptions->poDS == NULL )
+        if( psOptions->poFDefn == nullptr && psOptions->poDS == nullptr )
             pszFieldname = poExpr->string_value;
 
-        if( pszFieldname == NULL )
+        if( pszFieldname == nullptr )
         {
-            if( poExpr->table_name != NULL )
+            if( poExpr->table_name != nullptr )
                 CPLDebug("WFS", "Field \"%s\".\"%s\" unknown. Cannot use server-side filtering",
                          poExpr->table_name, poExpr->string_value);
             else
@@ -372,7 +372,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             bAddClosingNot = true;
         }
 
-        const char* pszName = NULL;
+        const char* pszName = nullptr;
         switch(nOperation)
         {
             case SWQ_EQ:  pszName = "PropertyIsEqualTo"; break;
@@ -459,21 +459,21 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
     {
         OGRSpatialReference oSRS;
         const char* pszSRSName = WFS_ExprGetSRSName( poExpr, 1, psOptions, oSRS );
-        OGRGeometry* poGeom = NULL;
+        OGRGeometry* poGeom = nullptr;
         char* pszWKT = (char*)poExpr->papoSubExpr[0]->string_value;
-        OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom);
-        char** papszOptions = NULL;
+        OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+        char** papszOptions = nullptr;
         papszOptions = CSLSetNameValue(papszOptions, "FORMAT", "GML3");
-        if( pszSRSName != NULL )
+        if( pszSRSName != nullptr )
         {
             if( oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting() )
             {
                 OGR_SRSNode *poGEOGCS = oSRS.GetAttrNode( "GEOGCS" );
-                if( poGEOGCS != NULL )
+                if( poGEOGCS != nullptr )
                     poGEOGCS->StripNodes( "AXIS" );
 
                 OGR_SRSNode *poPROJCS = oSRS.GetAttrNode( "PROJCS" );
-                if (poPROJCS != NULL && oSRS.EPSGTreatsAsNorthingEasting())
+                if (poPROJCS != nullptr && oSRS.EPSGTreatsAsNorthingEasting())
                     poPROJCS->StripNodes( "AXIS" );
             }
 
@@ -507,8 +507,8 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             EQUAL(poExpr->string_value, "ST_Overlaps") ? "Overlaps" :
             EQUAL(poExpr->string_value, "ST_DWithin") ? "DWithin" :
             EQUAL(poExpr->string_value, "ST_Beyond") ? "Beyond" :
-            NULL;
-        if( pszName == NULL )
+            nullptr;
+        if( pszName == nullptr )
             return false;
         osFilter += "<";
         osFilter += psOptions->pszNSPrefix;
@@ -522,8 +522,8 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
                 (EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_GeomFromText") ||
                  EQUAL(poExpr->papoSubExpr[1]->string_value, "ST_MakeEnvelope")) )
             {
-                int bSameTable = psOptions->poFDefn != NULL &&
-                                ( poExpr->papoSubExpr[0]->table_name == NULL ||
+                int bSameTable = psOptions->poFDefn != nullptr &&
+                                ( poExpr->papoSubExpr[0]->table_name == nullptr ||
                                 EQUAL(poExpr->papoSubExpr[0]->table_name, psOptions->poFDefn->GetName()) );
                 if( bSameTable )
                 {
@@ -535,7 +535,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
                         psOptions->poSRS = psOptions->poFDefn->GetGeomFieldDefn(nIndex)->GetSpatialRef();
                     }
                 }
-                else if( psOptions->poDS != NULL )
+                else if( psOptions->poDS != nullptr )
                 {
                     OGRLayer* poLayer = psOptions->poDS->GetLayerByName(poExpr->papoSubExpr[0]->table_name);
                     if( poLayer )
@@ -554,7 +554,7 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
             const bool bRet =
                 WFS_ExprDumpAsOGCFilter(osFilter, poExpr->papoSubExpr[i],
                                         FALSE, psOptions);
-            psOptions->poSRS = NULL;
+            psOptions->poSRS = nullptr;
             if( !bRet )
                 return false;
         }
@@ -603,7 +603,7 @@ CPLString WFS_TurnSQLFilterToOGCFilter( const swq_expr_node* poExpr,
         sOptions.poDS = poDS;
         sOptions.poFDefn = poFDefn;
         sOptions.nUniqueGeomGMLId = 1;
-        sOptions.poSRS = NULL;
+        sOptions.poSRS = nullptr;
         sOptions.pszNSPrefix = pszNSPrefix;
         osFilter = "";
         if( !WFS_ExprDumpAsOGCFilter(osFilter, poExpr, TRUE, &sOptions) )
@@ -727,9 +727,9 @@ static swq_field_type OGRWFSGeomFromTextChecker( swq_expr_node *op,
                     1, op->string_value);
         return SWQ_ERROR;
     }
-    OGRGeometry* poGeom = NULL;
+    OGRGeometry* poGeom = nullptr;
     char* pszWKT = (char*)op->papoSubExpr[0]->string_value;
-    if( OGRGeometryFactory::createFromWkt(&pszWKT, NULL, &poGeom) != OGRERR_NONE )
+    if( OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
                   1, op->string_value);
@@ -803,20 +803,20 @@ swq_custom_func_registrar* WFSGetCustomFuncRegistrar()
 /************************************************************************/
 
 static const swq_operation OGRWFSSpatialOps[] = {
-{ "ST_Equals", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_Disjoint", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_Touches", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_Contains", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Equals", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Disjoint", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Touches", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Contains", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
 /*{ "ST_Covers", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },*/
-{ "ST_Intersects", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_Within", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Intersects", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Within", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
 /*{ "ST_CoveredBy", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },*/
-{ "ST_Crosses", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_Overlaps", SWQ_CUSTOM_FUNC, NULL, OGRWFSSpatialBooleanPredicateChecker },
-{ "ST_DWithin", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
-{ "ST_Beyond", SWQ_CUSTOM_FUNC, NULL, OGRWFSDWithinBeyondChecker },
-{ "ST_MakeEnvelope", SWQ_CUSTOM_FUNC, NULL, OGRWFSMakeEnvelopeChecker },
-{ "ST_GeomFromText", SWQ_CUSTOM_FUNC, NULL, OGRWFSGeomFromTextChecker }
+{ "ST_Crosses", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_Overlaps", SWQ_CUSTOM_FUNC, nullptr, OGRWFSSpatialBooleanPredicateChecker },
+{ "ST_DWithin", SWQ_CUSTOM_FUNC, nullptr, OGRWFSDWithinBeyondChecker },
+{ "ST_Beyond", SWQ_CUSTOM_FUNC, nullptr, OGRWFSDWithinBeyondChecker },
+{ "ST_MakeEnvelope", SWQ_CUSTOM_FUNC, nullptr, OGRWFSMakeEnvelopeChecker },
+{ "ST_GeomFromText", SWQ_CUSTOM_FUNC, nullptr, OGRWFSGeomFromTextChecker }
 };
 
 const swq_operation *OGRWFSCustomFuncRegistrar::GetOperator( const char * pszName )
@@ -826,5 +826,5 @@ const swq_operation *OGRWFSCustomFuncRegistrar::GetOperator( const char * pszNam
         if( EQUAL(OGRWFSSpatialOps[i].pszName, pszName) )
             return &OGRWFSSpatialOps[i];
     }
-    return NULL;
+    return nullptr;
 }

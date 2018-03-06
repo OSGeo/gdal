@@ -47,6 +47,8 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_PDF_RENDERING_OPTIONS", "RASTER,VECTOR");
     // to avoid timeout in WMS driver
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
+    CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
     GDALAllRegister();
     return 0;
 }
@@ -59,7 +61,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
-    char** papszArgv = NULL;
+    char** papszArgv = nullptr;
 
     // Prevent generating too big output raster. Make sure they are set at
     // the beginning to avoid being accidentally eaten by invalid arguments
@@ -68,10 +70,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     papszArgv = CSLAddString(papszArgv, "1000000");
 
     fp = VSIFOpenL("/vsitar//vsimem/test.tar/cmd.txt", "rb");
-    if( fp != NULL )
+    if( fp != nullptr )
     {
-        const char* pszLine = NULL;
-        while( (pszLine = CPLReadLineL(fp)) != NULL )
+        const char* pszLine = nullptr;
+        while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             if( !EQUAL(pszLine, "-limit_outsize") )
                 papszArgv = CSLAddString(papszArgv, pszLine);
@@ -79,30 +81,82 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         VSIFCloseL(fp);
     }
 
-    if( papszArgv != NULL )
+    int nXDim = -1;
+    int nYDim = -1;
+    bool bXDimPct = false;
+    bool bYDimPct = false;
+    bool bNonNearestResampling = false;
+    if( papszArgv != nullptr )
     {
-        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, NULL);
+        int nCount = CSLCount(papszArgv);
+        for( int i = 0; i < nCount; i++ )
+        {
+            if( EQUAL(papszArgv[i], "-outsize") && i + 2 < nCount )
+            {
+                nXDim = atoi(papszArgv[i+1]);
+                bXDimPct = (papszArgv[i+1][0] != '\0' &&
+                            papszArgv[i+1][strlen(papszArgv[i+1])-1] == '%');
+                nYDim = atoi(papszArgv[i+2]);
+                bYDimPct = (papszArgv[i+2][0] != '\0' &&
+                            papszArgv[i+2][strlen(papszArgv[i+2])-1] == '%');
+            }
+            else if( EQUAL(papszArgv[i], "-r") && i + 1 < nCount )
+            {
+                bNonNearestResampling = !STARTS_WITH_CI(papszArgv[i+1], "NEAR");
+            }
+        }
+    }
+
+    if( papszArgv != nullptr )
+    {
+        GDALTranslateOptions* psOptions = GDALTranslateOptionsNew(papszArgv, nullptr);
         if( psOptions )
         {
             GDALDatasetH hSrcDS = GDALOpen( "/vsitar//vsimem/test.tar/in", GA_ReadOnly );
-            if( hSrcDS != NULL )
+            if( hSrcDS != nullptr )
             {
                 // Also check that reading the source doesn't involve too
                 // much memory
                 GDALDataset* poSrcDS = reinterpret_cast<GDALDataset*>(hSrcDS);
-                vsi_l_offset nSize =
-                    static_cast<vsi_l_offset>(poSrcDS->GetRasterCount()) *
-                    poSrcDS->GetRasterXSize() *
-                    poSrcDS->GetRasterYSize();
-                if( poSrcDS->GetRasterCount() )
-                    nSize *= GDALGetDataTypeSizeBytes(
-                            poSrcDS->GetRasterBand(1)->GetRasterDataType() );
-                if( nSize < 10 * 1024 * 1024 )
+                int nBands = poSrcDS->GetRasterCount();
+                if( nBands < 10 )
                 {
-                    GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
-                                                        psOptions, NULL);
-                    if( hOutDS )
-                        GDALClose(hOutDS);
+                    vsi_l_offset nSize =
+                        static_cast<vsi_l_offset>(nBands) *
+                        poSrcDS->GetRasterXSize() *
+                        poSrcDS->GetRasterYSize();
+                    if( nBands )
+                        nSize *= GDALGetDataTypeSizeBytes(
+                                poSrcDS->GetRasterBand(1)->GetRasterDataType() );
+
+                    // Prevent excessive downsampling which might require huge
+                    // memory allocation
+                    bool bOKForResampling = true;
+                    if( bNonNearestResampling && nXDim >= 0 && nYDim >= 0 )
+                    {
+                        if( bXDimPct && nXDim > 0 )
+                        {
+                            nXDim = static_cast<int>(
+                                poSrcDS->GetRasterXSize() / 100.0 * nXDim);
+                        }
+                        if( bYDimPct && nYDim > 0 )
+                        {
+                            nYDim = static_cast<int>(
+                                poSrcDS->GetRasterYSize() / 100.0 * nYDim);
+                        }
+                        if( nXDim > 0 && poSrcDS->GetRasterXSize() / nXDim > 100 )
+                            bOKForResampling = false;
+                        if( nYDim > 0 && poSrcDS->GetRasterYSize() / nYDim > 100 )
+                            bOKForResampling = false;
+                    }
+
+                    if( nSize < 10 * 1024 * 1024 && bOKForResampling )
+                    {
+                        GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
+                                                            psOptions, nullptr);
+                        if( hOutDS )
+                            GDALClose(hOutDS);
+                    }
                 }
                 GDALClose(hSrcDS);
             }

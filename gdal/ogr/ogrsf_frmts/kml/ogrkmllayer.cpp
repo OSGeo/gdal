@@ -28,12 +28,25 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_kml.h"
 
+#include <string>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"
+#include "kml.h"
+#include "kmlutility.h"
 #include "ogr_api.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_featurestyle.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 
@@ -49,8 +62,8 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
                           OGRwkbGeometryType eReqType,
                           OGRKMLDataSource *poDSIn ) :
     poDS_(poDSIn),
-    poSRS_(poSRSIn ? new OGRSpatialReference(NULL) : NULL),
-    poCT_(NULL),
+    poSRS_(poSRSIn ? new OGRSpatialReference(nullptr) : nullptr),
+    poCT_(nullptr),
     poFeatureDefn_(new OGRFeatureDefn( pszName )),
     iNextKMLId_(0),
     nTotalKMLCount_(-1),
@@ -63,17 +76,17 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
     nLastCount(-1)
 {
     // KML should be created as WGS84.
-    if( poSRSIn != NULL )
+    if( poSRSIn != nullptr )
     {
         poSRS_->SetWellKnownGeogCS( "WGS84" );
         if( !poSRS_->IsSame(poSRSIn) )
         {
             poCT_ = OGRCreateCoordinateTransformation( poSRSIn, poSRS_ );
-            if( poCT_ == NULL && poDSIn->IsFirstCTError() )
+            if( poCT_ == nullptr && poDSIn->IsFirstCTError() )
             {
                 // If we can't create a transformation, issue a warning - but
                 // continue the transformation.
-                char *pszWKT = NULL;
+                char *pszWKT = nullptr;
 
                 poSRSIn->exportToPrettyWkt( &pszWKT, FALSE );
 
@@ -115,13 +128,13 @@ OGRKMLLayer::OGRKMLLayer( const char * pszName,
 
 OGRKMLLayer::~OGRKMLLayer()
 {
-    if( NULL != poFeatureDefn_ )
+    if( nullptr != poFeatureDefn_ )
         poFeatureDefn_->Release();
 
-    if( NULL != poSRS_ )
+    if( nullptr != poSRS_ )
         poSRS_->Release();
 
-    if( NULL != poCT_ )
+    if( nullptr != poCT_ )
         delete poCT_;
 
     CPLFree( pszName_ );
@@ -154,14 +167,14 @@ void OGRKMLLayer::ResetReading()
 OGRFeature *OGRKMLLayer::GetNextFeature()
 {
 #ifndef HAVE_EXPAT
-    return NULL;
+    return nullptr;
 #else
     /* -------------------------------------------------------------------- */
     /*      Loop till we find a feature matching our criteria.              */
     /* -------------------------------------------------------------------- */
     KML *poKMLFile = poDS_->GetKMLFile();
-    if( poKMLFile == NULL )
-        return NULL;
+    if( poKMLFile == nullptr )
+        return nullptr;
 
     poKMLFile->selectLayer(nLayerNumber_);
 
@@ -170,15 +183,15 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         Feature *poFeatureKML =
             poKMLFile->getFeature(iNextKMLId_++, nLastAsked, nLastCount);
 
-        if( poFeatureKML == NULL )
-            return NULL;
+        if( poFeatureKML == nullptr )
+            return nullptr;
 
         OGRFeature *poFeature = new OGRFeature( poFeatureDefn_ );
 
         if( poFeatureKML->poGeom )
         {
             poFeature->SetGeometryDirectly(poFeatureKML->poGeom);
-            poFeatureKML->poGeom = NULL;
+            poFeatureKML->poGeom = nullptr;
         }
 
         // Add fields.
@@ -191,15 +204,15 @@ OGRFeature *OGRKMLLayer::GetNextFeature()
         // Clean up.
         delete poFeatureKML;
 
-        if( poFeature->GetGeometryRef() != NULL && poSRS_ != NULL )
+        if( poFeature->GetGeometryRef() != nullptr && poSRS_ != nullptr )
         {
             poFeature->GetGeometryRef()->assignSpatialReference( poSRS_ );
         }
 
         // Check spatial/attribute filters.
-        if( (m_poFilterGeom == NULL ||
+        if( (m_poFilterGeom == nullptr ||
              FilterGeometry( poFeature->GetGeometryRef() ) ) &&
-            (m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature )) )
+            (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
         }
@@ -220,11 +233,11 @@ GIntBig OGRKMLLayer::GetFeatureCount( int /* bForce */ ) { return 0; }
 
 GIntBig OGRKMLLayer::GetFeatureCount( int bForce )
 {
-    if( m_poFilterGeom != NULL || m_poAttrQuery != NULL )
+    if( m_poFilterGeom != nullptr || m_poAttrQuery != nullptr )
         return OGRLayer::GetFeatureCount(bForce);
 
     KML *poKMLFile = poDS_->GetKMLFile();
-    if( NULL == poKMLFile )
+    if( nullptr == poKMLFile )
         return 0;
 
     poKMLFile->selectLayer(nLayerNumber_);
@@ -249,11 +262,11 @@ CPLString OGRKMLLayer::WriteSchema()
     {
         OGRFieldDefn *fieldDefinition = featureDefinition->GetFieldDefn(j);
 
-        if (NULL != poDS_->GetNameField() &&
+        if (nullptr != poDS_->GetNameField() &&
             EQUAL(fieldDefinition->GetNameRef(), poDS_->GetNameField()) )
             continue;
 
-        if (NULL != poDS_->GetDescriptionField() &&
+        if (nullptr != poDS_->GetDescriptionField() &&
             EQUAL(fieldDefinition->GetNameRef(), poDS_->GetDescriptionField()) )
             continue;
 
@@ -263,8 +276,8 @@ CPLString OGRKMLLayer::WriteSchema()
                                  pszName_, pszName_ );
         }
 
-        const char* pszKMLType = NULL;
-        const char* pszKMLEltName = NULL;
+        const char* pszKMLType = nullptr;
+        const char* pszKMLEltName = nullptr;
         // Match the OGR type to the GDAL type.
         switch (fieldDefinition->GetType())
         {
@@ -321,8 +334,8 @@ CPLString OGRKMLLayer::WriteSchema()
 
 OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
 {
-    CPLAssert( NULL != poFeature );
-    CPLAssert( NULL != poDS_ );
+    CPLAssert( nullptr != poFeature );
+    CPLAssert( nullptr != poDS_ );
 
     if( !bWriter_ )
         return OGRERR_FAILURE;
@@ -336,7 +349,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     }
 
     VSILFILE *fp = poDS_->GetOutputFP();
-    CPLAssert( NULL != fp );
+    CPLAssert( nullptr != fp );
 
     if( poDS_->GetLayerCount() == 1 && nWroteFeatureCount_ == 0 )
     {
@@ -354,7 +367,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         poFeature->SetFID( iNextKMLId_++ );
 
     // Find and write the name element
-    if( NULL != poDS_->GetNameField() )
+    if( nullptr != poDS_->GetNameField() )
     {
         for( int iField = 0;
              iField < poFeatureDefn_->GetFieldCount();
@@ -377,7 +390,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         }
     }
 
-    if( NULL != poDS_->GetDescriptionField() )
+    if( nullptr != poDS_->GetDescriptionField() )
     {
         for( int iField = 0;
              iField < poFeatureDefn_->GetFieldCount();
@@ -402,7 +415,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     }
 
     OGRwkbGeometryType eGeomType = wkbNone;
-    if( poFeature->GetGeometryRef() != NULL )
+    if( poFeature->GetGeometryRef() != nullptr )
         eGeomType = wkbFlatten(poFeature->GetGeometryRef()->getGeometryType());
 
     if( wkbPolygon == eGeomType
@@ -410,10 +423,10 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         || wkbLineString == eGeomType
         || wkbMultiLineString == eGeomType )
     {
-        OGRStylePen *poPen = NULL;
+        OGRStylePen *poPen = nullptr;
         OGRStyleMgr oSM;
 
-        if( poFeature->GetStyleString() != NULL )
+        if( poFeature->GetStyleString() != nullptr )
         {
             oSM.InitFromFeature( poFeature );
 
@@ -430,7 +443,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         }
 
         VSIFPrintfL( fp, "\t<Style>");
-        if( poPen != NULL )
+        if( poPen != nullptr )
         {
             bool bHasWidth = false;
             GBool bDefault = FALSE;
@@ -444,7 +457,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
                 bHasWidth = true;
             const char* pszColor = poPen->Color(bDefault);
             const int nColorLen = static_cast<int>(CPLStrnlen(pszColor, 10));
-            if( pszColor != NULL &&
+            if( pszColor != nullptr &&
                 pszColor[0] == '#' &&
                 !bDefault && nColorLen >= 7)
             {
@@ -496,11 +509,11 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
 
         if( poFeature->IsFieldSetAndNotNull( iField ))
         {
-            if (NULL != poDS_->GetNameField() &&
+            if (nullptr != poDS_->GetNameField() &&
                 EQUAL(poField->GetNameRef(), poDS_->GetNameField()) )
                 continue;
 
-            if (NULL != poDS_->GetDescriptionField() &&
+            if (nullptr != poDS_->GetDescriptionField() &&
                 EQUAL(poField->GetNameRef(), poDS_->GetDescriptionField()) )
                 continue;
 
@@ -514,7 +527,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
             while( *pszRaw == ' ' )
                 pszRaw++;
 
-            char *pszEscaped = NULL;
+            char *pszEscaped = nullptr;
             if (poFeatureDefn_->GetFieldDefn(iField)->GetType() == OFTReal)
             {
                 pszEscaped = CPLStrdup( pszRaw );
@@ -537,13 +550,13 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
     }
 
     // Write out Geometry - for now it isn't indented properly.
-    if( poFeature->GetGeometryRef() != NULL )
+    if( poFeature->GetGeometryRef() != nullptr )
     {
-        char* pszGeometry = NULL;
+        char* pszGeometry = nullptr;
         OGREnvelope sGeomBounds;
-        OGRGeometry *poWGS84Geom = NULL;
+        OGRGeometry *poWGS84Geom = nullptr;
 
-        if (NULL != poCT_)
+        if (nullptr != poCT_)
         {
             poWGS84Geom = poFeature->GetGeometryRef()->clone();
             poWGS84Geom->transform( poCT_ );
@@ -558,7 +571,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         pszGeometry =
             OGR_G_ExportToKML( (OGRGeometryH)poWGS84Geom,
                                poDS_->GetAltitudeMode());
-        if( pszGeometry != NULL )
+        if( pszGeometry != nullptr )
         {
             VSIFPrintfL( fp, "      %s\n", pszGeometry );
         }
@@ -572,7 +585,7 @@ OGRErr OGRKMLLayer::ICreateFeature( OGRFeature* poFeature )
         poWGS84Geom->getEnvelope( &sGeomBounds );
         poDS_->GrowExtents( &sGeomBounds );
 
-        if (NULL != poCT_)
+        if (nullptr != poCT_)
         {
             delete poWGS84Geom;
         }

@@ -1,0 +1,10 @@
+GDAL_ROOT	=	..\..\..
+
+!INCLUDE $(GDAL_ROOT)\nmake.opt
+
+default:
+        cd degrib && $(MAKE) /f makefile.vc && cd ..
+        cd g2clib && $(MAKE) /f makefile.vc && cd ..
+
+
+

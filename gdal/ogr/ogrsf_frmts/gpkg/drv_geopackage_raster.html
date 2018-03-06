@@ -310,20 +310,22 @@ Defaults to NO.</li>
 <li><b>TILING_SCHEME</b>=CUSTOM/GoogleCRS84Quad/GoogleMapsCompatible/InspireCRS84Quad/PseudoTMS_GlobalGeodetic/PseudoTMS_GlobalMercator.
 See <a href="#tiling_schemes">Tiling schemes</a> section. Defaults to CUSTOM.</li>
 <li><b>ZOOM_LEVEL_STRATEGY</b>=AUTO/LOWER/UPPER. Strategy to determine zoom level.
-Only used for TILING_SCHEME is different from CUSTOM. LOWER will select the
+Only used by CreateCopy() for TILING_SCHEME different from CUSTOM. LOWER will select the
 zoom level immediately below the theoretical computed non-integral zoom level,
 leading to subsampling. On the contrary, UPPER will select the immediately above
 zoom level, leading to oversampling. Defaults to AUTO which selects the closest
 zoom level.</li>
 <li><b>RESAMPLING</b>=NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
-Resampling algorithm. Only used for TILING_SCHEME is different from CUSTOM. Defaults
-to BILINEAR.</li>
+Resampling algorithm. Only used by CreateCopy() for TILING_SCHEME different from
+CUSTOM. Defaults to BILINEAR.</li>
 <li><b>PRECISION</b>=floating_point_value_in_vertical_units: Smallest significant value.
 Only used for tile gridded elevation data. Defaults to 1.</li>
-<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt; 2.2) Set GeoPackage version
+<li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
 (for application_id and user_version fields). In AUTO mode, this will be equivalent
-to 1.0, unless a tile gridded elevation dataset is created, in which case 1.2 will
-be used.</li>
+to 1.2 starting with GDAL 2.3.</li>
+<li><b>ADD_GPKG_OGR_CONTENTS</b>=YES/NO: (GDAL &gt;= 2.2) Defines whether to add
+a gpkg_ogr_contents table to keep feature count for vector layers, and
+associated triggers. Defaults to YES.</li>
 </ul>
 
 <h2>Overviews</h2>
@@ -396,9 +398,9 @@ Translation of a GeoTIFF into GeoPackage using GoogleMapsCompatible tiling schem
 </li>
 
 <li>
-Building of overviews of an existing GeoPackage
+Building of overviews of an existing GeoPackage, and forcing JPEG tiles
 <pre>
-% gdaladdo -r cubic my.gpkg 2 4 8 16 32 64
+% gdaladdo -r cubic -oo TILE_FORMAT=JPEG my.gpkg 2 4 8 16 32 64
 </pre>
 </li>
 

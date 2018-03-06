@@ -178,6 +178,8 @@ GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
     }
     else
     {
+        if( gt->gt_ndoubles > MAX_VALUES )
+            goto failure;
         /* resize data array so it can be extended if needed */
         gt->gt_double = (double*) _GTIFrealloc(gt->gt_double,
                                                (MAX_VALUES)*sizeof(double));

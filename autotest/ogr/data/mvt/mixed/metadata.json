@@ -1,0 +1,12 @@
+{
+    "name": "out_mixed",
+    "description": "out_mixed",
+    "version": "2",
+    "minzoom": "0",
+    "maxzoom": "0",
+    "center": "2.000000,49.000000,0",
+    "bounds": "2.000000,49.000000,3.000000,50.000000",
+    "type": "overlay",
+    "format": "pbf",
+    "json": "{\"vector_layers\": [ { \"id\": \"mixed\", \"description\": \"\", \"minzoom\": 0, \"maxzoom\": 0, \"fields\": {} } ],\"tilestats\": {\"layerCount\": 1,\"layers\": [{\"layer\": \"mixed\",\"count\": 2,\"geometry\": \"Point\",\"attributeCount\": 0,\"attributes\": []}]}}"
+}

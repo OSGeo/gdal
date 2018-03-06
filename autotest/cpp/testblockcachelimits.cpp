@@ -35,11 +35,13 @@
 
 #include <cassert>
 
-void thread_func(void* /* unused */)
+#include "test_data.h"
+
+static void thread_func(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0.6");
-    GDALDatasetH hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+    GDALDatasetH hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
     char buf[20*20];
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
     CPLSetThreadLocalConfigOption("GDAL_RB_INTERNALIZE_SLEEP_AFTER_DROP_LOCK", "0");
@@ -48,7 +50,7 @@ void thread_func(void* /* unused */)
 }
 
 
-void thread_func2(void* /* unused */)
+static void thread_func2(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_DROP_LOCK", "0.6");
@@ -58,7 +60,7 @@ void thread_func2(void* /* unused */)
 }
 
 
-void thread_func3(void* /* unused */)
+static void thread_func3(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSleep(0.3);
@@ -68,7 +70,7 @@ void thread_func3(void* /* unused */)
 }
 
 
-void thread_func4(void* /* unused */)
+static void thread_func4(void* /* unused */)
 {
     printf("begin thread %p\n", (void*)CPLGetPID());
     CPLSetThreadLocalConfigOption("GDAL_RB_FLUSHBLOCK_SLEEP_AFTER_RB_LOCK", "0.6");
@@ -89,7 +91,7 @@ int main(int argc, char* argv[])
     CPLSetConfigOption("GDAL_DEBUG_BLOCK_CACHE", "ON");
     GDALAllRegister();
 
-    GDALDatasetH hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+    GDALDatasetH hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
 
     char buf[20*20];
     printf("cache fill\n");
@@ -97,7 +99,7 @@ int main(int argc, char* argv[])
     printf("end of cache fill\n");
     printf("buf[0]=%d\n\n", (int)buf[0]);
 
-    hThread = CPLCreateJoinableThread(thread_func, NULL);
+    hThread = CPLCreateJoinableThread(thread_func, nullptr);
     CPLSleep(0.3);
 
     printf("re read block\n");
@@ -106,7 +108,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
 
     printf("re read block\n");
@@ -115,7 +117,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func3, NULL);
+    hThread = CPLCreateJoinableThread(thread_func3, nullptr);
 
     printf("re read block\n");
     CPLSetThreadLocalConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0.6");
@@ -125,7 +127,7 @@ int main(int argc, char* argv[])
     printf("buf[0]=%d\n", (int)buf[0]);
     CPLJoinThread(hThread);
 
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
     printf("before GDALFlushRasterCache\n");
     GDALFlushRasterCache(GDALGetRasterBand(hDS, 1));
@@ -135,14 +137,14 @@ int main(int argc, char* argv[])
     assert( GDALGetCacheUsed64() == 0 );
 
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
-    hThread = CPLCreateJoinableThread(thread_func2, NULL);
+    hThread = CPLCreateJoinableThread(thread_func2, nullptr);
     CPLSleep(0.3);
     GDALClose(hDS);
     CPLJoinThread(hThread);
 
-    hDS = GDALOpen("../gcore/data/byte.tif", GA_ReadOnly);
+    hDS = GDALOpen(GCORE_DATA_DIR "byte.tif", GA_ReadOnly);
     CPL_IGNORE_RET_VAL(GDALRasterIO(GDALGetRasterBand(hDS, 1), GF_Read, 0, 0, 20, 20, buf, 20, 20, GDT_Byte, 0, 0));
-    hThread = CPLCreateJoinableThread(thread_func4, NULL);
+    hThread = CPLCreateJoinableThread(thread_func4, nullptr);
     CPLSleep(0.3);
     GDALClose(hDS);
     CPLJoinThread(hThread);

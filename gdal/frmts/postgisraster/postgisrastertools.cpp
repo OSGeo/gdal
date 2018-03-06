@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
  **********************************************************************/
 char * ReplaceQuotes(const char * pszInput, int nLength) {
     int i;
-    char * pszOutput = NULL;
+    char * pszOutput = nullptr;
 
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
@@ -67,7 +67,7 @@ char * ReplaceQuotes(const char * pszInput, int nLength) {
  *************************************************************/
 char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
     int i;
-    char* pszOutput = NULL;
+    char* pszOutput = nullptr;
 
     if (nLength == -1)
         nLength = static_cast<int>(strlen(pszInput));
@@ -94,10 +94,9 @@ char * ReplaceSingleQuotes(const char * pszInput, int nLength) {
  * The returned list must be freed with CSLDestroy when no longer needed
  **********************************************************************/
 char** ParseConnectionString(const char * pszConnectionString) {
-    char * pszEscapedConnectionString = NULL;
 
     /* Escape string following SQL scheme */
-    pszEscapedConnectionString =
+    char* pszEscapedConnectionString =
         ReplaceSingleQuotes(pszConnectionString, -1);
 
     /* Avoid PG: part */
@@ -119,8 +118,8 @@ char** ParseConnectionString(const char * pszConnectionString) {
  * GDALDataType object.
  **********************************************************************/
 GBool TranslateDataType(const char * pszDataType,
-        GDALDataType * poDataType = NULL, int * pnBitsDepth = NULL,
-        GBool * pbSignedByte = NULL)
+        GDALDataType * poDataType = nullptr, int * pnBitsDepth = nullptr,
+        GBool * pbSignedByte = nullptr)
 {
     if (!pszDataType)
         return false;

@@ -39,18 +39,18 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRBNADataSource::OGRBNADataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0),
     bUpdate(false),
-    fpOutput(NULL),
+    fpOutput(nullptr),
     bUseCRLF(false),
     bMultiLine(FALSE),
     nbOutID(0),
     bEllipsesAsEllipses(false),
     nbPairPerLine(FALSE),
     coordinatePrecision(0),
-    pszCoordinateSeparator(NULL)
+    pszCoordinateSeparator(nullptr)
 {}
 
 /************************************************************************/
@@ -60,7 +60,7 @@ OGRBNADataSource::OGRBNADataSource() :
 OGRBNADataSource::~OGRBNADataSource()
 
 {
-    if ( fpOutput != NULL )
+    if ( fpOutput != nullptr )
     {
         VSIFCloseL( fpOutput);
     }
@@ -95,7 +95,7 @@ OGRLayer *OGRBNADataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -134,7 +134,7 @@ OGRLayer * OGRBNADataSource::ICreateLayer( const char * pszLayerName,
             CPLError( CE_Failure, CPLE_NotSupported,
                     "Geometry type of `%s' not supported in BNAs.\n",
                     OGRGeometryTypeToName(eType) );
-            return NULL;
+            return nullptr;
     }
 
     nLayers++;
@@ -186,11 +186,11 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
         }
 #else
         int nFeatures[4] = { 0, 0, 0, 0 };
-        OffsetAndLine* offsetAndLineFeaturesTable[4] = { NULL, NULL, NULL, NULL };
+        OffsetAndLine* offsetAndLineFeaturesTable[4] = { nullptr, nullptr, nullptr, nullptr };
         int nIDs[4] = {0, 0, 0, 0};
         bool partialIndexTable = true;
 
-        BNARecord* record = NULL;
+        BNARecord* record = nullptr;
         while(1)
         {
             int offset = static_cast<int>( VSIFTellL(fp) );
@@ -203,7 +203,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
                     ok = TRUE;
                 break;
             }
-            if (record == NULL)
+            if (record == nullptr)
             {
                 /* end of file */
                 ok = TRUE;
@@ -262,7 +262,7 @@ int OGRBNADataSource::Open( const char * pszFilename, int bUpdateIn)
 int OGRBNADataSource::Create( const char *pszFilename,
                               char **papszOptions )
 {
-    if( fpOutput != NULL)
+    if( fpOutput != nullptr)
     {
         CPLAssert( false );
         return FALSE;
@@ -285,7 +285,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
     pszName = CPLStrdup( pszFilename );
 
     fpOutput = VSIFOpenL( pszFilename, "wb" );
-    if( fpOutput == NULL )
+    if( fpOutput == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Failed to create BNA file %s.",
@@ -296,7 +296,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
     /* EOL token */
     const char *pszCRLFFormat = CSLFetchNameValue( papszOptions, "LINEFORMAT");
 
-    if( pszCRLFFormat == NULL )
+    if( pszCRLFFormat == nullptr )
     {
 #ifdef WIN32
         bUseCRLF = true;
@@ -325,7 +325,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
 
     /* Number of identifiers per record */
     const char* pszNbOutID = CSLFetchNameValue ( papszOptions, "NB_IDS");
-    if (pszNbOutID == NULL)
+    if (pszNbOutID == nullptr)
     {
         nbOutID = NB_MIN_BNA_IDS;
     }
@@ -392,7 +392,7 @@ int OGRBNADataSource::Create( const char *pszFilename,
 
     pszCoordinateSeparator = const_cast<char *>(
         CSLFetchNameValue( papszOptions, "COORDINATE_SEPARATOR" ) );
-    if (pszCoordinateSeparator == NULL)
+    if (pszCoordinateSeparator == nullptr)
         pszCoordinateSeparator = CPLStrdup(",");
     else
         pszCoordinateSeparator = CPLStrdup(pszCoordinateSeparator);

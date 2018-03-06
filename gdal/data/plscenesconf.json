@@ -315,6 +315,13 @@
                 "basic_panchromatic_dn",
                 "basic_panchromatic_dn_rpc",
                 "basic_udm",
+                "ortho_analytic_dn",
+                "ortho_analytic_udm",
+                "ortho_visual",
+                "ortho_panchromatic_dn",
+                "ortho_panchromatic_udm",
+                "ortho_pansharpened",
+                "ortho_pansharpened_udm"
             ]
         }
     }

@@ -162,11 +162,14 @@ public:
     CADVector ReadRAWVector();
 
     void Seek(size_t offset, enum SeekPosition position = SeekPosition::CURRENT);
-    size_t PostionBit() const { return m_nBitOffsetFromStart; }
+    size_t PositionBit() const { return m_nBitOffsetFromStart; }
+    bool IsEOB() const { return m_bEOB; }
+
 private:
     char* m_pBuffer;
     size_t m_nBitOffsetFromStart;
     const char* m_guard;
+    bool m_bEOB = false;
 };
 
 // long ReadRAWLONGLONG( const char * pabyInput, size_t& nBitOffsetFromStart);

@@ -70,17 +70,17 @@ CPL_CVSID("$Id$")
  * Constructor.
  **********************************************************************/
 TABSeamless::TABSeamless() :
-    m_pszFname(NULL),
-    m_pszPath(NULL),
+    m_pszFname(nullptr),
+    m_pszPath(nullptr),
     m_eAccessMode(TABRead),
-    m_poFeatureDefnRef(NULL),
-    m_poIndexTable(NULL),
+    m_poFeatureDefnRef(nullptr),
+    m_poIndexTable(nullptr),
     m_nTableNameField(-1),
     m_nCurBaseTableId(-1),
-    m_poCurBaseTable(NULL),
+    m_poCurBaseTable(nullptr),
     m_bEOF(FALSE)
 {
-    m_poCurFeature = NULL;
+    m_poCurFeature = nullptr;
     m_nCurFeatureId = -1;
 }
 
@@ -184,7 +184,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * it as a stringlist in memory.
      *----------------------------------------------------------------*/
     char **papszTABFile = TAB_CSLLoad(m_pszFname);
-    if (papszTABFile == NULL)
+    if (papszTABFile == nullptr)
     {
         if (!bTestOpenNoError)
         {
@@ -260,7 +260,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
     }
 
     OGRFeatureDefn *poDefn = m_poIndexTable->GetLayerDefn();
-    if (poDefn == NULL ||
+    if (poDefn == nullptr ||
         (m_nTableNameField = poDefn->GetFieldIndex("Table")) == -1)
     {
         if (!bTestOpenNoError)
@@ -303,29 +303,29 @@ int TABSeamless::Close()
 {
     if (m_poIndexTable)
         delete m_poIndexTable;  // Automatically closes.
-    m_poIndexTable = NULL;
+    m_poIndexTable = nullptr;
 
     if (m_poFeatureDefnRef )
         m_poFeatureDefnRef->Release();
-    m_poFeatureDefnRef = NULL;
+    m_poFeatureDefnRef = nullptr;
 
     if (m_poCurFeature)
         delete m_poCurFeature;
-    m_poCurFeature = NULL;
+    m_poCurFeature = nullptr;
     m_nCurFeatureId = -1;
 
     CPLFree(m_pszFname);
-    m_pszFname = NULL;
+    m_pszFname = nullptr;
 
     CPLFree(m_pszPath);
-    m_pszPath = NULL;
+    m_pszPath = nullptr;
 
     m_nTableNameField = -1;
     m_nCurBaseTableId = -1;
 
     if (m_poCurBaseTable)
         delete m_poCurBaseTable;
-    m_poCurBaseTable = NULL;
+    m_poCurBaseTable = nullptr;
 
     return 0;
 }
@@ -350,7 +350,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
     int nTableId = (int)nTableId64;
     CPLAssert((GIntBig)nTableId == nTableId64);
 
-    if (m_nCurBaseTableId == nTableId && m_poCurBaseTable != NULL)
+    if (m_nCurBaseTableId == nTableId && m_poCurBaseTable != nullptr)
     {
         // The right table is already opened.  Not much to do!
         m_poCurBaseTable->ResetReading();
@@ -375,7 +375,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
 #ifndef _WIN32
     // On Unix, replace any '\\' in path with '/'
     char *pszPtr = pszFname;
-    while((pszPtr = strchr(pszPtr, '\\')) != NULL)
+    while((pszPtr = strchr(pszPtr, '\\')) != nullptr)
     {
         *pszPtr = '/';
         pszPtr++;
@@ -389,13 +389,13 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
         if (bTestOpenNoError)
             CPLErrorReset();
         delete m_poCurBaseTable;
-        m_poCurBaseTable = NULL;
+        m_poCurBaseTable = nullptr;
         CPLFree(pszFname);
         return -1;
     }
 
     // Set the spatial filter to the new table
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
     {
         m_poCurBaseTable->SetSpatialFilter( m_poFilterGeom );
     }
@@ -428,7 +428,7 @@ int TABSeamless::OpenBaseTable(int nTableId, GBool bTestOpenNoError /*=FALSE*/)
             return -1;
         }
     }
-    else if (nTableId == m_nCurBaseTableId && m_poCurBaseTable != NULL)
+    else if (nTableId == m_nCurBaseTableId && m_poCurBaseTable != nullptr)
     {
         // The right table is already opened.  Not much to do!
         m_poCurBaseTable->ResetReading();
@@ -532,7 +532,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
  **********************************************************************/
 GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
 {
-    if (m_poIndexTable == NULL)
+    if (m_poIndexTable == nullptr)
         return -1; // File is not opened yet
 
     if (nPrevId == -1 || m_nCurBaseTableId != ExtractBaseTableId(nPrevId))
@@ -570,8 +570,8 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
  **********************************************************************/
 TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
 {
-    if (m_poIndexTable == NULL)
-        return NULL; // File is not opened yet
+    if (m_poIndexTable == nullptr)
+        return nullptr; // File is not opened yet
 
     if (nFeatureId == m_nCurFeatureId && m_poCurFeature)
         return m_poCurFeature;
@@ -579,18 +579,18 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
     if (m_nCurBaseTableId != ExtractBaseTableId(nFeatureId))
     {
         if (OpenBaseTable(ExtractBaseTableId(nFeatureId)) != 0)
-            return NULL;
+            return nullptr;
     }
 
     if (m_poCurBaseTable)
     {
         if (m_poCurFeature)
             delete m_poCurFeature;
-        m_poCurFeature = NULL;
+        m_poCurFeature = nullptr;
 
         TABFeature* poCurFeature = (TABFeature*)m_poCurBaseTable->GetFeature(ExtractBaseFeatureId(nFeatureId));
-        if( poCurFeature == NULL )
-            return NULL;
+        if( poCurFeature == nullptr )
+            return nullptr;
         m_poCurFeature = new TABFeature(m_poFeatureDefnRef);
         m_poCurFeature->SetFrom(poCurFeature);
         delete poCurFeature;
@@ -602,7 +602,7 @@ TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
         return m_poCurFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -679,7 +679,7 @@ int TABSeamless::GetBounds( double &dXMin, double &dYMin,
                             double &dXMax, double &dYMax,
                             GBool bForce /*= TRUE*/ )
 {
-    if (m_poIndexTable == NULL)
+    if (m_poIndexTable == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
              "GetBounds() can be called only after dataset has been opened.");
@@ -701,7 +701,7 @@ int TABSeamless::GetBounds( double &dXMin, double &dYMin,
  **********************************************************************/
 OGRErr TABSeamless::GetExtent (OGREnvelope *psExtent, int bForce)
 {
-    if (m_poIndexTable == NULL)
+    if (m_poIndexTable == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
              "GetExtent() can be called only after dataset has been opened.");
@@ -761,11 +761,11 @@ GIntBig TABSeamless::GetFeatureCount(int bForce)
  **********************************************************************/
 OGRSpatialReference *TABSeamless::GetSpatialRef()
 {
-    if (m_poIndexTable == NULL)
+    if (m_poIndexTable == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "GetSpatialRef() failed: file has not been opened yet.");
-        return NULL;
+        return nullptr;
     }
 
     return m_poIndexTable->GetSpatialRef();
@@ -828,12 +828,12 @@ int TABSeamless::TestCapability( const char * pszCap )
 
 void TABSeamless::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABSeamless::Dump() -----\n");
 
-    if (m_poIndexTable == NULL)
+    if (m_poIndexTable == nullptr)
     {
         fprintf(fpOut, "File is not opened.\n");
     }

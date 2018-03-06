@@ -487,8 +487,8 @@ public:
     if ( buf_type != 0 ) {
       ntype = (GDALDataType) *buf_type;
     } else {
-      int lastband = GDALGetRasterCount( self ) - 1;
-      if (lastband < 0)
+      int lastband = GDALGetRasterCount( self );
+      if (lastband <= 0)
         return CE_Failure;
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
@@ -549,8 +549,8 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
     if ( buf_type != 0 ) {
       ntype = (GDALDataType) *buf_type;
     } else {
-      int lastband = GDALGetRasterCount( self ) - 1;
-      if (lastband < 0)
+      int lastband = GDALGetRasterCount( self );
+      if (lastband <= 0)
         return CE_Failure;
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
@@ -581,13 +581,36 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 %clear (GIntBig*);
 #endif
 
+%apply (int *optional_int) { (GDALDataType *buf_type) };
+%apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
+CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
+                    int *buf_xsize = 0, int *buf_ysize = 0,
+                    GDALDataType *buf_type = 0,
+                    int band_list = 0, int *pband_list = 0,
+                    char** options = NULL )
+{
+    int nxsize = (buf_xsize==0) ? xsize : *buf_xsize;
+    int nysize = (buf_ysize==0) ? ysize : *buf_ysize;
+    GDALDataType ntype;
+    if ( buf_type != 0 ) {
+      ntype = (GDALDataType) *buf_type;
+    } else {
+      int lastband = GDALGetRasterCount( self );
+      if (lastband <= 0)
+        return CE_Failure;
+      ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
+    }
+    return GDALDatasetAdviseRead(self, xoff, yoff, xsize, ysize,
+                                 nxsize, nysize, ntype,
+                                 band_list, pband_list, options);
+}
+%clear (GDALDataType *buf_type);
+%clear (int band_list, int *pband_list );
 
 /* NEEDED */
 /* GetSubDatasets */
 /* ReadAsArray */
 /* AddBand */
-/* AdviseRead */
-/* ReadRaster */
 
 #if defined(SWIGPYTHON)
 %feature("kwargs") BeginAsyncReader;
@@ -668,7 +691,7 @@ CPLErr ReadRaster(  int xoff, int yoff, int xsize, int ysize,
 
     if (hAsyncReader)
     {
-        return (GDALAsyncReader*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
+        return (GDALAsyncReaderShadow*) CreateAsyncReaderWrapper(hAsyncReader, pyObject);
     }
     else
     {

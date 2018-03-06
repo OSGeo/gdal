@@ -52,16 +52,16 @@ CPL_CVSID("$Id$")
  * Constructor.
  **********************************************************************/
 TABToolDefTable::TABToolDefTable() :
-    m_papsPen(NULL),
+    m_papsPen(nullptr),
     m_numPen(0),
     m_numAllocatedPen(0),
-    m_papsBrush(NULL),
+    m_papsBrush(nullptr),
     m_numBrushes(0),
     m_numAllocatedBrushes(0),
-    m_papsFont(NULL),
+    m_papsFont(nullptr),
     m_numFonts(0),
     m_numAllocatedFonts(0),
-    m_papsSymbol(NULL),
+    m_papsSymbol(nullptr),
     m_numSymbols(0),
     m_numAllocatedSymbols(0)
 {}
@@ -379,7 +379,7 @@ TABPenDef *TABToolDefTable::GetPenDefRef(int nIndex)
     if (nIndex >0 && nIndex <= m_numPen)
         return m_papsPen[nIndex-1];
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -395,7 +395,7 @@ TABPenDef *TABToolDefTable::GetPenDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
 {
-    if (poNewPenDef == NULL)
+    if (poNewPenDef == nullptr)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -467,7 +467,7 @@ TABBrushDef *TABToolDefTable::GetBrushDefRef(int nIndex)
     if (nIndex >0 && nIndex <= m_numBrushes)
         return m_papsBrush[nIndex-1];
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -483,7 +483,7 @@ TABBrushDef *TABToolDefTable::GetBrushDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
 {
-    if (poNewBrushDef == NULL)
+    if (poNewBrushDef == nullptr)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -556,7 +556,7 @@ TABFontDef *TABToolDefTable::GetFontDefRef(int nIndex)
     if (nIndex >0 && nIndex <= m_numFonts)
         return m_papsFont[nIndex-1];
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -572,7 +572,7 @@ TABFontDef *TABToolDefTable::GetFontDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
 {
-    if (poNewFontDef == NULL)
+    if (poNewFontDef == nullptr)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -636,7 +636,7 @@ TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
     if (nIndex >0 && nIndex <= m_numSymbols)
         return m_papsSymbol[nIndex-1];
 
-    return NULL;
+    return nullptr;
 }
 
 /**********************************************************************
@@ -652,7 +652,7 @@ TABSymbolDef *TABToolDefTable::GetSymbolDefRef(int nIndex)
  **********************************************************************/
 int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
 {
-    if (poNewSymbolDef == NULL)
+    if (poNewSymbolDef == nullptr)
         return -1;
 
     /*-----------------------------------------------------------------

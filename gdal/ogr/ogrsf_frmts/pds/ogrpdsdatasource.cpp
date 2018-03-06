@@ -39,8 +39,8 @@ using namespace OGRPDS;
 /************************************************************************/
 
 OGRPDSDataSource::OGRPDSDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
+    pszName(nullptr),
+    papoLayers(nullptr),
     nLayers(0)
 {}
 
@@ -75,7 +75,7 @@ OGRLayer *OGRPDSDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -89,9 +89,9 @@ const char * OGRPDSDataSource::GetKeywordSub( const char *pszPath,
                                               const char *pszDefault )
 
 {
-    const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
+    const char *pszResult = oKeywords.GetKeyword( pszPath, nullptr );
 
-    if( pszResult == NULL )
+    if( pszResult == nullptr )
         return pszDefault;
 
     if( pszResult[0] != '(' )
@@ -164,14 +164,15 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         osTableFilename = GetKeywordSub(osTableLink, 1, "");
         CPLString osStartRecord = GetKeywordSub(osTableLink, 2, "");
-        nStartBytes = atoi(osStartRecord.c_str()) - 1;
-        if( nStartBytes < 0 ||
+        nStartBytes = atoi(osStartRecord.c_str());
+        if( nStartBytes <= 0 ||
             (( nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize )) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid StartBytes value");
             return false;
         }
+        nStartBytes --;
         nStartBytes *= nRecordSize;
         if (osTableFilename.empty() || osStartRecord.empty() ||
             nStartBytes < 0)
@@ -182,7 +183,7 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
         }
         CPLString osTPath = CPLGetPath(pszFilename);
         CleanString( osTableFilename );
-        osTableFilename = CPLFormCIFilename( osTPath, osTableFilename, NULL );
+        osTableFilename = CPLFormCIFilename( osTPath, osTableFilename, nullptr );
     }
     else
     {
@@ -198,7 +199,7 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
                 return false;
             }
             nStartBytes = nStartBytes - 1;
-            if (strstr(osTableFilename.c_str(), "<BYTES>") == NULL)
+            if (strstr(osTableFilename.c_str(), "<BYTES>") == nullptr)
             {
                 if( nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize )
                 {
@@ -215,7 +216,7 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
             CPLString osTPath = CPLGetPath(pszFilename);
             CleanString( osTableFilename );
             osTableFilename =
-                CPLFormCIFilename( osTPath, osTableFilename, NULL );
+                CPLFormCIFilename( osTPath, osTableFilename, nullptr );
             nStartBytes = 0;
         }
     }
@@ -224,7 +225,7 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
         oKeywords.GetKeyword( MakeAttr(osTableID, "NAME"), "" );
     if (osTableName.empty())
     {
-        if (GetLayerByName(osTableID.c_str()) == NULL)
+        if (GetLayerByName(osTableID.c_str()) == nullptr)
             osTableName = osTableID;
         else
             osTableName = CPLSPrintf("Layer_%d", nLayers+1);
@@ -254,7 +255,7 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     }
 
     VSILFILE* fp = VSIFOpenL(osTableFilename, "rb");
-    if (fp == NULL)
+    if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
                  osTableFilename.c_str());
@@ -267,11 +268,11 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     {
         CPLString osTPath = CPLGetPath(pszFilename);
         CleanString( osTableStructure );
-        osTableStructure = CPLFormCIFilename( osTPath, osTableStructure, NULL );
+        osTableStructure = CPLFormCIFilename( osTPath, osTableStructure, nullptr );
     }
 
     GByte* pabyRecord = (GByte*) VSI_MALLOC_VERBOSE(nRecordSize + 1);
-    if (pabyRecord == NULL)
+    if (pabyRecord == nullptr)
     {
         VSIFCloseL(fp);
         return false;
@@ -306,7 +307,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
 // --------------------------------------------------------------------
 
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    if (fp == nullptr)
         return FALSE;
 
     char szBuffer[512];
@@ -315,7 +316,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
     szBuffer[nbRead] = '\0';
 
     const char* pszPos = strstr(szBuffer, "PDS_VERSION_ID");
-    const bool bIsPDS = pszPos != NULL;
+    const bool bIsPDS = pszPos != nullptr;
 
     if (!bIsPDS)
     {
@@ -358,28 +359,33 @@ int OGRPDSDataSource::Open( const char * pszFilename )
     else
     {
         fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == NULL)
+        if (fp == nullptr)
             return FALSE;
 
-        while( true )
+        // To avoid performance issues with datasets generated by oss-fuzz
+        int nErrors = 0;
+        while( nErrors < 100 )
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            const char* pszLine = CPLReadLine2L(fp, 256, NULL);
+            const char* pszLine = CPLReadLine2L(fp, 256, nullptr);
             CPLPopErrorHandler();
             CPLErrorReset();
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
             char** papszTokens =
                 CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
             int nTokens = CSLCount(papszTokens);
             if (nTokens == 2 &&
                 papszTokens[0][0] == '^' &&
-                strstr(papszTokens[0], "TABLE") != NULL)
+                strstr(papszTokens[0], "TABLE") != nullptr)
             {
-                LoadTable(pszFilename, nRecordSize, papszTokens[0] + 1);
+                if( !LoadTable(pszFilename, nRecordSize, papszTokens[0] + 1) )
+                {
+                    nErrors ++;
+                }
             }
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
         }
         VSIFCloseL(fp);
     }

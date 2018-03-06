@@ -1,5 +1,3 @@
-/* $Id: tif_lzw.c,v 1.57 2017-07-11 10:54:29 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.

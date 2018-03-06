@@ -55,8 +55,9 @@ Output dataset name. Required.
 One or several input vector datasets. Required
 </dd>
 
-<dt> <b>-f</b> <em>format</em>:</dt><dd>Select the output format.
-VRT is a valid output format as well. Defaults to "ESRI Shapefile"</dd>
+<dt> <b>-f</b> <em>format</em>:</dt><dd>Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was ESRI Shapefile). Use the short format name</dd>
 
 <dt> <b>-single</b>:</dt><dd>If specified, all input vector layers will be
 merged into a single one.</dd>

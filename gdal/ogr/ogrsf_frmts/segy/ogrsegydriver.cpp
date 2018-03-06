@@ -35,7 +35,7 @@ CPL_CVSID("$Id$")
 /*                           EBCDICToASCII                              */
 /************************************************************************/
 
-static const GByte EBCDICToASCII[] =
+constexpr GByte EBCDICToASCII[] =
 {
     0x00, 0x01, 0x02, 0x03, 0x9C, 0x09, 0x86, 0x7F, 0x97, 0x8D, 0x8E, 0x0B,
     0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x9D, 0x85, 0x08, 0x87,
@@ -68,15 +68,15 @@ static const GByte EBCDICToASCII[] =
 static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
 {
     if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL ||
+        poOpenInfo->fpL == nullptr ||
         !poOpenInfo->TryToIngest(3200+400) ||
         poOpenInfo->nHeaderBytes < 3200+400 )
     {
-        return NULL;
+        return nullptr;
     }
     if( STARTS_WITH_CI((const char*)poOpenInfo->pabyHeader, "%PDF"))
     {
-        return NULL;
+        return nullptr;
     }
 
 // --------------------------------------------------------------------
@@ -113,7 +113,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
         if( k == 1 )
         {
             CPLFree(pabyASCIITextHeader);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -121,7 +121,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     CPLDebug("SEGY", "Header = \n%s", pabyASCIITextHeader);
 #endif
     CPLFree(pabyASCIITextHeader);
-    pabyASCIITextHeader = NULL;
+    pabyASCIITextHeader = nullptr;
 
 // --------------------------------------------------------------------
 //      Read the next 400 bytes, where the Binary File Header is
@@ -151,7 +151,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
         if( i == 400 )
         {
             CPLFree(pabyASCIITextHeader);
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -162,7 +162,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
     {
         CPLFree(pabyASCIITextHeader);
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     CPLFree(pabyASCIITextHeader);
@@ -176,7 +176,7 @@ static GDALDataset *OGRSEGYDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRSEGY()
 
 {
-    if( GDALGetDriverByName( "SEGY" ) != NULL )
+    if( GDALGetDriverByName( "SEGY" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

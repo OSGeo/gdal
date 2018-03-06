@@ -117,7 +117,7 @@ def reproject_3():
 
     gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear)
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
-    expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'
+    expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
         gdaltest.post_reason('fail')
         import struct
@@ -143,7 +143,7 @@ def reproject_4():
 
     gdal.ReprojectImage( src_ds, dst_ds, '', '', gdal.GRA_Bilinear, options = ['INIT_DEST=NO_DATA'])
     got_data = dst_ds.GetRasterBand(1).ReadRaster(0,0,6,3).decode('latin1')
-    expected_data = '\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03\x03\x7f\x7f\x7f\x7f\x03'
+    expected_data = '\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03\x03\x7f\x7f\x7f\x03\x03'
     if got_data != expected_data:
         gdaltest.post_reason('fail')
         import struct

@@ -87,6 +87,8 @@ int OGRCurve::getDimension() const
  * Tests if a curve is closed. A curve is closed if its start point is
  * equal to its end point.
  *
+ * For equality tests, the M dimension is ignored.
+ *
  * This method relates to the SFCOM ICurve::get_IsClosed() method.
  *
  * @return TRUE if closed, else FALSE.
@@ -101,33 +103,7 @@ int OGRCurve::get_IsClosed() const
     OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
-    if (oStartPoint.IsMeasured() && oEndPoint.IsMeasured())
-    {
-        // XYZM type
-        if (oStartPoint.Is3D() && oEndPoint.Is3D())
-        {
-            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
-                && oStartPoint.getZ() == oEndPoint.getZ() && oStartPoint.getM() == oEndPoint.getM())
-            {
-                return TRUE;
-            }
-            else
-                return FALSE;
-        }
-        // XYM type
-        else
-        {
-            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
-                && oStartPoint.getM() == oEndPoint.getM())
-            {
-                return TRUE;
-            }
-            else
-                return FALSE;
-        }
-    }
-
-    else if (oStartPoint.Is3D() && oEndPoint.Is3D())
+    if (oStartPoint.Is3D() && oEndPoint.Is3D())
     {
         // XYZ type
         if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
@@ -142,13 +118,6 @@ int OGRCurve::get_IsClosed() const
     // one of the points is 3D
     else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
              ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
-    {
-        return FALSE;
-    }
-
-    // one of the points is Measured
-    else if (((oStartPoint.IsMeasured() & oEndPoint.IsMeasured()) == 0) &&
-             ((oStartPoint.IsMeasured() | oEndPoint.IsMeasured()) == 1))
     {
         return FALSE;
     }
@@ -361,7 +330,7 @@ OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
     {
         delete poCC;
         delete poCurve;
-        return NULL;
+        return nullptr;
     }
     poCC->assignSpatialReference(poCurve->getSpatialReference());
     return poCC;
@@ -427,6 +396,26 @@ OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
  */
 
 int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
+{
+    return -1;
+}
+
+/************************************************************************/
+/*                         IntersectsPoint()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns if a point intersects a (closed) curve.
+ *
+ * Final users should use OGRGeometry::Intersects() instead.
+ *
+ * @param p the point to test
+ * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
+ *
+ * @since GDAL 2.3
+ */
+
+int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
 {
     return -1;
 }

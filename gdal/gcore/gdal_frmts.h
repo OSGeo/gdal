@@ -36,7 +36,6 @@
 CPL_C_START
 void CPL_DLL GDALRegister_GTiff(void);
 void CPL_DLL GDALRegister_GXF(void);
-void CPL_DLL GDALRegister_OGDI(void);
 void CPL_DLL GDALRegister_HFA(void);
 void CPL_DLL GDALRegister_AAIGrid(void);
 void CPL_DLL GDALRegister_GRASSASCIIGrid(void);
@@ -119,6 +118,7 @@ void CPL_DLL GDALRegister_DIPEx(void);
 void CPL_DLL GDALRegister_ISIS3(void);
 void CPL_DLL GDALRegister_ISIS2(void);
 void CPL_DLL GDALRegister_PDS(void);
+void CPL_DLL GDALRegister_PDS4(void);
 void CPL_DLL GDALRegister_VICAR(void);
 void CPL_DLL GDALRegister_IDRISI(void);
 void CPL_DLL GDALRegister_Terragen(void);
@@ -190,6 +190,8 @@ void CPL_DLL GDALRegister_RRASTER(void);
 void CPL_DLL GDALRegister_Derived(void);
 void CPL_DLL GDALRegister_JP2Lura(void);
 void CPL_DLL GDALRegister_PRF(void);
+void CPL_DLL GDALRegister_NULL(void);
+void CPL_DLL GDALRegister_RDA(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

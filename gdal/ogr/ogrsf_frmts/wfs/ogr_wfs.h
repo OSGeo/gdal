@@ -196,10 +196,10 @@ class OGRWFSLayer : public OGRLayer
 
     virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
 
-    int                 HasLayerDefn() { return poFeatureDefn != NULL; }
+    int                 HasLayerDefn() { return poFeatureDefn != nullptr; }
 
     OGRFeatureDefn*     ParseSchema(CPLXMLNode* psSchema);
-    OGRFeatureDefn*     BuildLayerDefn(OGRFeatureDefn* poSrcFDefn = NULL);
+    OGRFeatureDefn*     BuildLayerDefn(OGRFeatureDefn* poSrcFDefn = nullptr);
 
     OGRErr              DeleteFromFilter( CPLString osOGCFilter );
 

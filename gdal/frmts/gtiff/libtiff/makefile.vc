@@ -37,7 +37,8 @@ OBJ	= \
 	tif_warning.obj \
 	tif_write.obj \
 	tif_zip.obj \
-    tif_lzma.obj
+	tif_lzma.obj \
+	tif_zstd.obj
 
 GDAL_ROOT	=	..\..\..
 
@@ -45,7 +46,7 @@ GDAL_ROOT	=	..\..\..
 # in tif_jpeg.c:147 and tif_ojpeg.c:248
 
 EXTRAFLAGS = 	$(ZLIB_FLAGS) -DZIP_SUPPORT -DPIXARLOG_SUPPORT \
-		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) /wd4324
+		$(JPEG_FLAGS) $(JPEG12_FLAGS) $(LZMA_FLAGS) $(ZSTD_FLAGS)  /wd4324
 
 !INCLUDE $(GDAL_ROOT)\nmake.opt
 
@@ -71,6 +72,11 @@ EXTRA_DEP    =  libjpeg12src
 !IFDEF LZMA_CFLAGS
 LZMA_FLAGS =	$(LZMA_CFLAGS) -DLZMA_SUPPORT
 !ENDIF
+
+!IFDEF ZSTD_CFLAGS
+ZSTD_FLAGS =	$(ZSTD_CFLAGS) -DZSTD_SUPPORT
+!ENDIF
+
 
 
 

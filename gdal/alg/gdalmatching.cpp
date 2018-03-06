@@ -98,17 +98,17 @@ static std::vector<GDALFeaturePoint> *
 GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
                      int nOctaveStart, int nOctaveEnd, double dfThreshold )
 {
-    if( poDataset == NULL )
+    if( poDataset == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALDataset isn't specified");
-        return NULL;
+        return nullptr;
     }
 
-    if( panBands == NULL )
+    if( panBands == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Raster bands are not specified");
-        return NULL;
+        return nullptr;
     }
 
     if( nOctaveStart <= 0 || nOctaveEnd < 0 ||
@@ -116,14 +116,14 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Octave numbers are invalid");
-        return NULL;
+        return nullptr;
     }
 
     if( dfThreshold < 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Threshold have to be greater than zero");
-        return NULL;
+        return nullptr;
     }
 
     GDALRasterBand *poRstRedBand = poDataset->GetRasterBand(panBands[0]);
@@ -137,7 +137,7 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Must have non-zero width and height.");
-        return NULL;
+        return nullptr;
     }
 
     // Allocate memory for grayscale image.
@@ -232,8 +232,8 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
         GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hFirstImage),
                             anBandMap1,
                             nOctaveStart, nOctaveEnd, dfSURFThreshold);
-    if( poFPCollection1 == NULL )
-        return NULL;
+    if( poFPCollection1 == nullptr )
+        return nullptr;
 
     std::vector<GDALFeaturePoint> *poFPCollection2 =
         GatherFeaturePoints(reinterpret_cast<GDALDataset *>(hSecondImage),
@@ -241,10 +241,10 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
                             nOctaveStart, nOctaveEnd,
                             dfSURFThreshold);
 
-    if( poFPCollection2 == NULL )
+    if( poFPCollection2 == nullptr )
     {
         delete poFPCollection1;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -258,7 +258,7 @@ GDALComputeMatchingPoints( GDALDatasetH hFirstImage,
     {
         delete poFPCollection1;
         delete poFPCollection2;
-        return NULL;
+        return nullptr;
     }
 
     *pnGCPCount = static_cast<int>(oMatchPairs.size()) / 2;

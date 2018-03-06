@@ -71,23 +71,24 @@ namespace Selafin {
         nMinyIndex(-1),
         nMaxyIndex(-1),
         bTreeUpdateNeeded(true),
-        fp(NULL),
-        pszFilename(NULL),
-        pszTitle(NULL),
+        nFileSize(0),
+        fp(nullptr),
+        pszFilename(nullptr),
+        pszTitle(nullptr),
         nVar(0),
-        papszVariables(NULL),
+        papszVariables(nullptr),
         nPoints(0),
         nElements(0),
         nPointsPerElement(0),
-        panConnectivity(NULL),
-        poTree(NULL),
-        panBorder(NULL),
-        panStartDate(NULL),
+        panConnectivity(nullptr),
+        poTree(nullptr),
+        panBorder(nullptr),
+        panStartDate(nullptr),
         nSteps(0),
         nEpsg(0)
     {
-        paadfCoords[0] = NULL;
-        paadfCoords[1] = NULL;
+        paadfCoords[0] = nullptr;
+        paadfCoords[1] = nullptr;
         for( size_t i = 0; i < 7; ++i ) anUnused[i] = 0;
         adfOrigin[0] = 0.0;
         adfOrigin[1] = 0.0;
@@ -96,25 +97,25 @@ namespace Selafin {
     Header::~Header() {
         CPLFree(pszFilename);
         CPLFree(pszTitle);
-        if( papszVariables!=NULL )
+        if( papszVariables!=nullptr )
         {
             for( int i = 0; i < nVar; ++i ) CPLFree(papszVariables[i]);
             CPLFree(papszVariables);
         }
         CPLFree(panConnectivity);
         CPLFree(panBorder);
-        if( poTree!=NULL )
+        if( poTree!=nullptr )
         {
-            CPLQuadTreeForeach(poTree,DumpFeatures,NULL);
+            CPLQuadTreeForeach(poTree,DumpFeatures,nullptr);
             CPLQuadTreeDestroy(poTree);
         }
         CPLFree(panStartDate);
         for( size_t i = 0; i < 2; ++i ) CPLFree(paadfCoords[i]);
-        if( fp != NULL ) VSIFCloseL(fp);
+        if( fp != nullptr ) VSIFCloseL(fp);
     }
 
     void Header::setUpdated() {
-        nHeaderSize=88+16+nVar*40+12*4+((panStartDate==NULL)?0:32)+24+(nElements*nPointsPerElement+2)*4+(nPoints+2)*12;
+        nHeaderSize=88+16+nVar*40+12*4+((panStartDate==nullptr)?0:32)+24+(nElements*nPointsPerElement+2)*4+(nPoints+2)*12;
         nStepSize=12+nVar*(nPoints+2)*4;
     }
 
@@ -151,12 +152,12 @@ namespace Selafin {
     {
         // If there is no quad-tree of the points, build it now
         if (bTreeUpdateNeeded) {
-            if (poTree!=NULL) {
-                CPLQuadTreeForeach(poTree,DumpFeatures,NULL);
+            if (poTree!=nullptr) {
+                CPLQuadTreeForeach(poTree,DumpFeatures,nullptr);
                 CPLQuadTreeDestroy(poTree);
             }
         }
-        if (bTreeUpdateNeeded || poTree==NULL) {
+        if (bTreeUpdateNeeded || poTree==nullptr) {
             bTreeUpdateNeeded=false;
             CPLRectObj *poBB=getBoundingBox();
             poTree=CPLQuadTreeCreate(poBB,GetBoundsFunc);
@@ -325,10 +326,10 @@ namespace Selafin {
         return 1;
     }
 
-    int read_string(VSILFILE *fp,char *&pszData,int nFileSize,bool bDiscard) {
+    int read_string(VSILFILE *fp,char *&pszData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        if (nLength<=0 || nLength == INT_MAX || nLength > nFileSize) {
+        if (nLength<=0 || nLength == INT_MAX || static_cast<unsigned>(nLength) > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return 0;
         }
@@ -340,21 +341,21 @@ namespace Selafin {
         }
         else {
             pszData=(char*)VSI_MALLOC_VERBOSE(nLength+1);
-            if( pszData == NULL )
+            if( pszData == nullptr )
             {
                 return 0;
             }
             if ((int)VSIFReadL(pszData,1,nLength,fp)<(int)nLength) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 VSIFree(pszData);
-                pszData = NULL;
+                pszData = nullptr;
                 return 0;
             }
             pszData[nLength]=0;
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 VSIFree(pszData);
-                pszData = NULL;
+                pszData = nullptr;
                 return 0;
             }
         }
@@ -372,11 +373,11 @@ namespace Selafin {
         return 1;
     }
 
-    int read_intarray(VSILFILE *fp,int *&panData,bool bDiscard) {
+    int read_intarray(VSILFILE *fp,int *&panData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        panData = NULL;
-        if (nLength<0 || nLength+1<=0) {
+        panData = nullptr;
+        if (nLength<0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
         }
@@ -387,19 +388,19 @@ namespace Selafin {
             }
         }
         else {
-            if (nLength==0) panData=NULL; else {
+            if (nLength==0) panData=nullptr; else {
                 panData=(int *)VSI_MALLOC2_VERBOSE(nLength/4,sizeof(int));
-                if (panData==NULL) return -1;
+                if (panData==nullptr) return -1;
             }
             for (int i=0;i<nLength/4;++i) if (read_integer(fp,panData[i])==0) {
                 CPLFree(panData);
-                panData = NULL;
+                panData = nullptr;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
                 CPLFree(panData);
-                panData = NULL;
+                panData = nullptr;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
@@ -443,10 +444,10 @@ namespace Selafin {
         return 1;
     }
 
-    int read_floatarray(VSILFILE *fp,double **papadfData,bool bDiscard) {
+    int read_floatarray(VSILFILE *fp,double **papadfData,vsi_l_offset nFileSize,bool bDiscard) {
         int nLength=0;
         read_integer(fp,nLength);
-        if (nLength<0 || nLength+1<=0) {
+        if (nLength<0 || static_cast<unsigned>(nLength)/4 > nFileSize) {
             CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
             return -1;
         }
@@ -457,17 +458,19 @@ namespace Selafin {
             }
         }
         else {
-            if (nLength==0) *papadfData=NULL; else {
+            if (nLength==0) *papadfData=nullptr; else {
                 *papadfData=(double*)VSI_MALLOC2_VERBOSE(sizeof(double),nLength/4);
-                if (*papadfData==NULL) return -1;
+                if (*papadfData==nullptr) return -1;
             }
             for (int i=0;i<nLength/4;++i) if (read_float(fp,(*papadfData)[i])==0) {
                 CPLFree(*papadfData);
+                *papadfData = nullptr;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
             if (VSIFSeekL(fp,4,SEEK_CUR)!=0) {
                 CPLFree(*papadfData);
+                *papadfData = nullptr;
                 CPLError(CE_Failure,CPLE_FileIO,"%s",SELAFIN_ERROR_MESSAGE);
                 return -1;
             }
@@ -487,28 +490,32 @@ namespace Selafin {
         return 1;
     }
 
-    Header *read_header(VSILFILE *fp,const char *pszFilename) {
-        // Get the total file size (used later to estimate the number of time steps)
+    void Header::UpdateFileSize()
+    {
         VSIFSeekL(fp,0,SEEK_END);
-        int nFileSize = (int)VSIFTellL(fp);
+        nFileSize = VSIFTellL(fp);
         VSIRewindL(fp);
+    }
+
+    Header *read_header(VSILFILE *fp,const char *pszFilename) {
         // Save the filename
         Header *poHeader=new Header();
         poHeader->fp=fp;
+        poHeader->UpdateFileSize();
         poHeader->pszFilename=CPLStrdup(pszFilename);
-        int *panTemp = NULL;
+        int *panTemp = nullptr;
         // Read the title
-        int nLength = read_string(fp,poHeader->pszTitle,nFileSize);
+        int nLength = read_string(fp,poHeader->pszTitle,poHeader->nFileSize);
         if (nLength==0) {
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         // Read the array of 2 integers, with the number of variables at the first position
-        nLength=read_intarray(fp,panTemp);
+        nLength=read_intarray(fp,panTemp,poHeader->nFileSize);
         if (nLength!=2) {
             delete poHeader;
             CPLFree(panTemp);
-            return NULL;
+            return nullptr;
         }
         poHeader->nVar=panTemp[0];
         poHeader->anUnused[0]=panTemp[1];
@@ -516,29 +523,29 @@ namespace Selafin {
         if (poHeader->nVar<0) {
             poHeader->nVar = 0;
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         if( poHeader->nVar > 1000000 &&
-            nFileSize / static_cast<int>(sizeof(int)) < poHeader->nVar)
+            poHeader->nFileSize / sizeof(int) < static_cast<unsigned>(poHeader->nVar))
         {
             poHeader->nVar = 0;
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         // For each variable, read its name as a string of 32 characters
         poHeader->papszVariables=(char**)VSI_MALLOC2_VERBOSE(sizeof(char*),poHeader->nVar);
-        if( poHeader->nVar > 0 && poHeader->papszVariables == NULL )
+        if( poHeader->nVar > 0 && poHeader->papszVariables == nullptr )
         {
             poHeader->nVar = 0;
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         for (int i=0;i<poHeader->nVar;++i) {
-            nLength=read_string(fp,poHeader->papszVariables[i],nFileSize);
+            nLength=read_string(fp,poHeader->papszVariables[i],poHeader->nFileSize);
             if (nLength==0) {
                 poHeader->nVar = i;
                 delete poHeader;
-                return NULL;
+                return nullptr;
             }
             // We eliminate quotes in the names of the variables because SQL requests don't seem to appreciate them
             char *pszc=poHeader->papszVariables[i];
@@ -548,11 +555,11 @@ namespace Selafin {
             }
         }
         // Read an array of 10 integers
-        nLength=read_intarray(fp,panTemp);
+        nLength=read_intarray(fp,panTemp,poHeader->nFileSize);
         if (nLength<10) {
             delete poHeader;
             CPLFree(panTemp);
-            return NULL;
+            return nullptr;
         }
         poHeader->anUnused[1]=panTemp[0];
         poHeader->nEpsg=panTemp[1];
@@ -561,20 +568,20 @@ namespace Selafin {
         for (size_t i=4;i<9;++i) poHeader->anUnused[i-2]=panTemp[i];
         // If the last integer was 1, read an array of 6 integers with the starting date
         if (panTemp[9]==1) {
-            nLength=read_intarray(fp,poHeader->panStartDate);
+            nLength=read_intarray(fp,poHeader->panStartDate,poHeader->nFileSize);
             if (nLength<6) {
                 delete poHeader;
                 CPLFree(panTemp);
-                return NULL;
+                return nullptr;
             }
         }
         CPLFree(panTemp);
         // Read an array of 4 integers with the number of elements, points and points per element
-        nLength=read_intarray(fp,panTemp);
+        nLength=read_intarray(fp,panTemp,poHeader->nFileSize);
         if (nLength<4) {
             delete poHeader;
             CPLFree(panTemp);
-            return NULL;
+            return nullptr;
         }
         poHeader->nElements=panTemp[0];
         poHeader->nPoints=panTemp[1];
@@ -582,33 +589,33 @@ namespace Selafin {
         if (poHeader->nElements<0 || poHeader->nPoints<0 || poHeader->nPointsPerElement<0 || panTemp[3]!=1) {
             delete poHeader;
             CPLFree(panTemp);
-            return NULL;
+            return nullptr;
         }
         CPLFree(panTemp);
         // Read the connectivity table as an array of nPointsPerElement*nElements integers, and check if all point numbers are valid
-        nLength=read_intarray(fp,poHeader->panConnectivity);
-        if (nLength!=poHeader->nElements*poHeader->nPointsPerElement) {
+        nLength=read_intarray(fp,poHeader->panConnectivity,poHeader->nFileSize);
+        if (poHeader->nElements != 0 && nLength/poHeader->nElements != poHeader->nPointsPerElement) {
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         for (int i=0;i<poHeader->nElements*poHeader->nPointsPerElement;++i) {
             if (poHeader->panConnectivity[i]<=0 || poHeader->panConnectivity[i]>poHeader->nPoints) {
                 delete poHeader;
-                return NULL;
+                return nullptr;
             }
         }
         // Read the array of nPoints integers with the border points
-        nLength=read_intarray(fp,poHeader->panBorder);
+        nLength=read_intarray(fp,poHeader->panBorder,poHeader->nFileSize);
         if (nLength!=poHeader->nPoints) {
             delete poHeader;
-            return NULL;
+            return nullptr;
         }
         // Read two arrays of nPoints floats with the coordinates of each point
         for (size_t i=0;i<2;++i) {
-            read_floatarray(fp,poHeader->paadfCoords+i);
+            read_floatarray(fp,poHeader->paadfCoords+i,poHeader->nFileSize);
             if (nLength<poHeader->nPoints) {
                 delete poHeader;
-                return NULL;
+                return nullptr;
             }
             for (int j=0;j<poHeader->nPoints;++j) poHeader->paadfCoords[i][j]+=poHeader->adfOrigin[i];
         }
@@ -617,7 +624,11 @@ namespace Selafin {
         // Update the size of the header and calculate the number of time steps
         poHeader->setUpdated();
         int nPos=poHeader->getPosition(0);
-        poHeader->nSteps=(nFileSize-nPos)/(poHeader->getPosition(1)-nPos);
+        vsi_l_offset nStepsBig = (poHeader->nFileSize-nPos)/(poHeader->getPosition(1)-nPos);
+        if( nStepsBig > INT_MAX )
+            poHeader->nSteps=INT_MAX;
+        else
+            poHeader->nSteps= static_cast<int>(nStepsBig);
         return poHeader;
     }
 
@@ -634,9 +645,9 @@ namespace Selafin {
         anTemp[2]=(int)poHeader->adfOrigin[0];
         anTemp[3]=(int)poHeader->adfOrigin[1];
         for (size_t i=4;i<9;++i) anTemp[i]=poHeader->anUnused[i-2];
-        anTemp[9]=(poHeader->panStartDate!=NULL)?1:0;
+        anTemp[9]=(poHeader->panStartDate!=nullptr)?1:0;
         if (write_intarray(fp,anTemp,10)==0) return 0;
-        if (poHeader->panStartDate!=NULL && write_intarray(fp,poHeader->panStartDate,6)==0) return 0;
+        if (poHeader->panStartDate!=nullptr && write_intarray(fp,poHeader->panStartDate,6)==0) return 0;
         anTemp[0]=poHeader->nElements;
         anTemp[1]=poHeader->nPoints;
         anTemp[2]=poHeader->nPointsPerElement;
@@ -646,7 +657,7 @@ namespace Selafin {
         if (write_intarray(fp,poHeader->panBorder,poHeader->nPoints)==0) return 0;
         double *dfVals = (double*)
             VSI_MALLOC2_VERBOSE(sizeof(double),poHeader->nPoints);
-        if (poHeader->nPoints>0 && dfVals==NULL) return 0;
+        if (poHeader->nPoints>0 && dfVals==nullptr) return 0;
         for (size_t i=0;i<2;++i) {
             for (int j=0;j<poHeader->nPoints;++j) dfVals[j]=poHeader->paadfCoords[i][j]-poHeader->adfOrigin[i];
             if (write_floatarray(fp,dfVals,poHeader->nPoints)==0) {

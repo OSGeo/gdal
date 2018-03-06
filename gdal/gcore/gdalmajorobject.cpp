@@ -95,7 +95,7 @@ const char *GDALMajorObject::GetDescription() const
 const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetDescription", NULL );
+    VALIDATE_POINTER1( hObject, "GDALGetDescription", nullptr );
 
     return static_cast<GDALMajorObject *>(hObject)->GetDescription();
 }
@@ -186,13 +186,13 @@ char **GDALMajorObject::BuildMetadataDomainList( char** papszList,
                                                  int bCheckNonEmpty, ... )
 {
     va_list args;
-    const char* pszDomain = NULL;
+    const char* pszDomain = nullptr;
     va_start(args, bCheckNonEmpty);
 
-    while( (pszDomain = va_arg(args, const char*)) != NULL )
+    while( (pszDomain = va_arg(args, const char*)) != nullptr )
     {
         if( CSLFindString(papszList, pszDomain) < 0 &&
-            (!bCheckNonEmpty || GetMetadata(pszDomain) != NULL) )
+            (!bCheckNonEmpty || GetMetadata(pszDomain) != nullptr) )
         {
             papszList = CSLAddString(papszList, pszDomain);
         }
@@ -219,7 +219,7 @@ char ** CPL_STDCALL
 GDALGetMetadataDomainList( GDALMajorObjectH hObject )
 
 {
-    VALIDATE_POINTER1( hObject, "GetMetadataDomainList", NULL );
+    VALIDATE_POINTER1( hObject, "GetMetadataDomainList", nullptr );
 
     return static_cast<GDALMajorObject *>(hObject)->GetMetadataDomainList();
 }
@@ -266,7 +266,7 @@ char ** CPL_STDCALL
 GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetMetadata", NULL );
+    VALIDATE_POINTER1( hObject, "GDALGetMetadata", nullptr );
 
     return static_cast<GDALMajorObject *>(hObject)->GetMetadata(pszDomain);
 }
@@ -363,7 +363,7 @@ const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
                                               const char *pszDomain )
 
 {
-    VALIDATE_POINTER1( hObject, "GDALGetMetadataItem", NULL );
+    VALIDATE_POINTER1( hObject, "GDALGetMetadataItem", nullptr );
 
     return static_cast<GDALMajorObject *>(hObject)->
         GetMetadataItem( pszName, pszDomain);

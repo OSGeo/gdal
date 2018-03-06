@@ -26,9 +26,14 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_mem.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "ogr_mem.h"
+#include "ogr_core.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
 
 CPL_CVSID("$Id$")
 
@@ -38,7 +43,7 @@ CPL_CVSID("$Id$")
 
 OGRMemDataSource::OGRMemDataSource( const char *pszFilename,
                                     char ** /* papszOptions */ ) :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
     pszName(CPLStrdup(pszFilename))
 {}
@@ -136,7 +141,7 @@ OGRLayer *OGRMemDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }

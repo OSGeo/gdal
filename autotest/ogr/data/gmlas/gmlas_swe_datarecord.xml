@@ -1,0 +1,65 @@
+<myns:main_elt xmlns:myns="http://myns"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                  xmlns:swe="http://www.opengis.net/swe/2.0"
+                  xsi:schemaLocation="http://myns gmlas_swe_datarecord.xsd">
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+            <swe:field name="myCount">
+                <swe:Count definition="http://">
+                    <swe:value>2</swe:value>
+                </swe:Count>
+            </swe:field>
+            <swe:field name="myText">
+                <swe:Text definition="http://">
+                    <swe:value>foo</swe:value>
+                </swe:Text>
+            </swe:field>
+            <swe:field name="myBoolean">
+                <swe:Boolean definition="http://">
+                    <swe:value>true</swe:value>
+                </swe:Boolean>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+    <myns:foo>
+        <swe:DataRecord>
+            <swe:field name="myTime">
+                <swe:Time definition="http://www.opengis.net/def/property/OGC/0/SamplingTime">
+                    <swe:value>2017-09-01T00:00:00</swe:value>
+                </swe:Time>
+            </swe:field>
+            <swe:field name="myCategory">
+                <swe:Category definition="http://dd.eionet.europa.eu/vocabulary/aq/observationverification">
+                    <swe:identifier>myidentifier</swe:identifier>
+                    <swe:codeSpace xlink:href="http://example.com"/>
+                    <swe:value>myvalue</swe:value>
+                </swe:Category>
+            </swe:field>
+            <swe:field name="myQuantity">
+                <swe:Quantity definition="http://dd.eionet.europa.eu/vocabulary/aq/primaryObservation/hour">
+                    <swe:value>1.23</swe:value>
+                </swe:Quantity>
+            </swe:field>
+        </swe:DataRecord>
+    </myns:foo>
+
+</myns:main_elt>

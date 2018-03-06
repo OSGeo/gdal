@@ -36,6 +36,7 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -57,6 +58,12 @@ CPL_C_END
 /*                         GDALGeoLocTransformer                        */
 /* ==================================================================== */
 /************************************************************************/
+
+
+//Constants to track down systematic shifts
+const double FSHIFT = 0.5;
+const double ISHIFT = 0.5;
+const double OVERSAMPLE_FACTOR=1.3;
 
 typedef struct {
     GDALTransformerInfo sTI;
@@ -128,8 +135,8 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
     psTransform->padfGeoLocX = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(sizeof(double), nXSize, nYSize));
 
-    if( psTransform->padfGeoLocX == NULL ||
-        psTransform->padfGeoLocY == NULL )
+    if( psTransform->padfGeoLocX == nullptr ||
+        psTransform->padfGeoLocY == nullptr )
     {
         return false;
     }
@@ -144,7 +151,7 @@ static bool GeoLocLoadFullData( GDALGeoLocTransformInfo *psTransform )
             VSI_MALLOC2_VERBOSE(nXSize, sizeof(double)));
         double* padfTempY = static_cast<double *>(
             VSI_MALLOC2_VERBOSE(nYSize, sizeof(double)));
-        if( padfTempX == NULL || padfTempY == NULL )
+        if( padfTempX == nullptr || padfTempY == nullptr )
         {
             CPLFree(padfTempX);
             CPLFree(padfTempY);
@@ -255,7 +262,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 /*      establish how much dead space there is in the backmap, so it    */
 /*      is approximate.                                                 */
 /* -------------------------------------------------------------------- */
-    const double dfTargetPixels = (nXSize * nYSize * 1.3);
+    const double dfTargetPixels = (nXSize * nYSize * OVERSAMPLE_FACTOR);
     const double dfPixelSize = sqrt((dfMaxX - dfMinX) * (dfMaxY - dfMinY)
                               / dfTargetPixels);
 
@@ -264,15 +271,18 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     const int nBMXSize = psTransform->nBackMapWidth =
         static_cast<int>((dfMaxX - dfMinX) / dfPixelSize + 1);
 
-    if( nBMXSize > INT_MAX / nBMYSize )
+    if( nBMXSize > std::numeric_limits<int>::max() / nBMYSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
                  nBMXSize, nBMYSize);
         return false;
     }
 
+
+
     dfMinX -= dfPixelSize / 2.0;
     dfMaxY += dfPixelSize / 2.0;
+
 
     psTransform->adfBackMapGeoTransform[0] = dfMinX;
     psTransform->adfBackMapGeoTransform[1] = dfPixelSize;
@@ -292,18 +302,25 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
     psTransform->pafBackMapY = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
 
-    if( pabyValidFlag == NULL ||
-        psTransform->pafBackMapX == NULL ||
-        psTransform->pafBackMapY == NULL )
+    float *wgtsBackMap = static_cast<float *>(
+        VSI_MALLOC3_VERBOSE(nBMXSize, nBMYSize, sizeof(float)));
+
+    if( pabyValidFlag == nullptr ||
+        psTransform->pafBackMapX == nullptr ||
+        psTransform->pafBackMapY == nullptr ||
+        wgtsBackMap == nullptr)
     {
         CPLFree( pabyValidFlag );
+        CPLFree( wgtsBackMap );
         return false;
     }
 
     for( int i = nBMXSize * nBMYSize - 1; i >= 0; i-- )
     {
-        psTransform->pafBackMapX[i] = -1.0;
-        psTransform->pafBackMapY[i] = -1.0;
+        psTransform->pafBackMapX[i] = 0.0;
+        psTransform->pafBackMapY[i] = 0.0;
+        wgtsBackMap[i] = 0.0;
+        pabyValidFlag[i] = 0;
     }
 
 /* -------------------------------------------------------------------- */
@@ -324,27 +341,131 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
 
             const int i = iX + iY * nXSize;
 
-            const int iBMX = static_cast<int>(
-                (psTransform->padfGeoLocX[i] - dfMinX) / dfPixelSize);
-            const int iBMY = static_cast<int>(
-                (dfMaxY - psTransform->padfGeoLocY[i]) / dfPixelSize);
+            const double dBMX = static_cast<double>(
+                    (psTransform->padfGeoLocX[i] - dfMinX) / dfPixelSize) - FSHIFT;
 
-            if( iBMX < 0 || iBMY < 0 || iBMX >= nBMXSize || iBMY >= nBMYSize )
+            const double dBMY = static_cast<double>(
+                (dfMaxY - psTransform->padfGeoLocY[i]) / dfPixelSize) - FSHIFT;
+
+
+            //Get top left index by truncation
+            const int iBMX = static_cast<int>(dBMX);
+            const int iBMY = static_cast<int>(dBMY);
+            const double fracBMX = dBMX - iBMX;
+            const double fracBMY = dBMY - iBMY;
+
+            //Check if the center is in range
+            if( iBMX < -1 || iBMY < -1 || iBMX > nBMXSize || iBMY > nBMYSize )
                 continue;
 
-            // This narrowing conversion is unlikely to be out of range unless
-            // dfLINE_STEP and dfLINE_OFFSET take on extreme values.
-            psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] =
-                static_cast<float>(
-                    iX * psTransform->dfPIXEL_STEP +
-                    psTransform->dfPIXEL_OFFSET);
-            psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] =
-                static_cast<float>(
-                    iY * psTransform->dfLINE_STEP +
-                    psTransform->dfLINE_OFFSET);
+            //Check logic for top left pixel
+            if ((iBMX >= 0) && (iBMY >= 0) && (iBMX < nBMXSize) && (iBMY < nBMYSize))
+            {
+                const double tempwt = (1.0 - fracBMX) * (1.0 - fracBMY);
+                psTransform->pafBackMapX[iBMX + iBMY * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                        psTransform->dfPIXEL_OFFSET));
 
-            pabyValidFlag[iBMX + iBMY * nBMXSize] =
-                static_cast<GByte>(nMaxIter+1);
+                psTransform->pafBackMapY[iBMX + iBMY * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
+                        psTransform->dfLINE_OFFSET));
+                wgtsBackMap[iBMX + iBMY * nBMXSize] += static_cast<float>(tempwt);
+
+                //For backward compatibility
+                pabyValidFlag[iBMX + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+            }
+
+            //Check logic for top right pixel
+            if (((iBMX+1) >= 0) && (iBMY >= 0) && ((iBMX+1) < nBMXSize) && (iBMY < nBMYSize))
+            {
+                const double tempwt = fracBMX * (1.0 - fracBMY);
+
+                psTransform->pafBackMapX[iBMX + 1 + iBMY * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                        psTransform->dfPIXEL_OFFSET));
+
+                psTransform->pafBackMapY[iBMX + 1 + iBMY * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iY + FSHIFT)* psTransform->dfLINE_STEP +
+                        psTransform->dfLINE_OFFSET));
+                wgtsBackMap[iBMX + 1 + iBMY * nBMXSize] +=  static_cast<float>(tempwt);
+
+                //For backward compatibility
+                pabyValidFlag[iBMX + 1 + iBMY * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+            }
+
+            //Check logic for bottom right pixel
+            if (((iBMX+1) >= 0) && ((iBMY+1) >= 0) && ((iBMX+1) < nBMXSize) && ((iBMY+1) < nBMYSize))
+            {
+                const double tempwt = fracBMX * fracBMY;
+                psTransform->pafBackMapX[iBMX + 1 + (iBMY+1) * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                        psTransform->dfPIXEL_OFFSET));
+
+                psTransform->pafBackMapY[iBMX + 1 + (iBMY+1) * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
+                        psTransform->dfLINE_OFFSET));
+                wgtsBackMap[iBMX + 1 + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
+
+                //For backward compatibility
+                pabyValidFlag[iBMX + 1 + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+            }
+
+            //Check logic for bottom left pixel
+            if ((iBMX >= 0) && ((iBMY+1) >= 0) && (iBMX < nBMXSize) && ((iBMY+1) < nBMYSize))
+            {
+                const double tempwt = (1.0 - fracBMX) * fracBMY;
+                psTransform->pafBackMapX[iBMX + (iBMY+1) * nBMXSize] +=
+                    static_cast<float>( tempwt * (
+                        (iX + FSHIFT) * psTransform->dfPIXEL_STEP +
+                        psTransform->dfPIXEL_OFFSET));
+
+                psTransform->pafBackMapY[iBMX + (iBMY+1) * nBMXSize] +=
+                    static_cast<float>(tempwt * (
+                        (iY + FSHIFT) * psTransform->dfLINE_STEP +
+                        psTransform->dfLINE_OFFSET));
+                wgtsBackMap[iBMX + (iBMY+1) * nBMXSize] += static_cast<float>(tempwt);
+
+                //For backward compatibility
+                pabyValidFlag[iBMX + (iBMY+1) * nBMXSize] = static_cast<GByte>(nMaxIter+1);
+            }
+
+        }
+    }
+
+
+    //Each pixel in the backmap may have multiple entries.
+    //We now go in average it out using the weights 
+    for(int i = nBMXSize * nBMYSize - 1; i >= 0; i-- )
+    {
+        //Setting these to -1 for backward compatibility
+        if (pabyValidFlag[i] == 0) 
+        {
+            psTransform->pafBackMapX[i] = -1.0;
+            psTransform->pafBackMapY[i] = -1.0;
+        }
+        else
+        {
+            //Check if pixel was only touch during neighbor scan
+            //But no real weight was added as source point matched 
+            //backmap grid node
+            if (wgtsBackMap[i] > 0)
+            {
+                psTransform->pafBackMapX[i] /= wgtsBackMap[i];
+                psTransform->pafBackMapY[i] /= wgtsBackMap[i];
+                pabyValidFlag[i] = static_cast<GByte>(nMaxIter+1);
+            }
+            else
+            {
+                psTransform->pafBackMapX[i] = -1.0;
+                psTransform->pafBackMapY[i] = -1.0;
+                pabyValidFlag[i] = 0;
+            }
         }
     }
 
@@ -463,6 +584,7 @@ static bool GeoLocGenerateBackMap( GDALGeoLocTransformInfo *psTransform )
             break;
     }
 
+    CPLFree( wgtsBackMap );
     CPLFree( pabyValidFlag );
 
     return true;
@@ -481,6 +603,7 @@ static void GDALGeoLocRescale( char**& papszMD, const char* pszItem,
                                       CPLSPrintf("%.18g", dfDefaultVal)));
 
     papszMD = CSLSetNameValue(papszMD, pszItem, CPLSPrintf("%.18g", dfVal));
+
 }
 
 /************************************************************************/
@@ -492,7 +615,7 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg,
                                           double dfRatioX, double dfRatioY )
 {
     VALIDATE_POINTER1(hTransformArg, "GDALCreateSimilarGeoLocTransformer",
-                      NULL);
+                      nullptr);
 
     GDALGeoLocTransformInfo *psInfo =
         static_cast<GDALGeoLocTransformInfo *>(hTransformArg);
@@ -511,7 +634,7 @@ void* GDALCreateSimilarGeoLocTransformer( void *hTransformArg,
 
     psInfo = static_cast<GDALGeoLocTransformInfo*>(
         GDALCreateGeoLocTransformer(
-            NULL, papszGeolocationInfo, psInfo->bReversed));
+            nullptr, papszGeolocationInfo, psInfo->bReversed));
 
     CSLDestroy(papszGeolocationInfo);
 
@@ -528,17 +651,18 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
                                    int bReversed )
 
 {
-    if( CSLFetchNameValue(papszGeolocationInfo, "PIXEL_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "LINE_OFFSET") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "PIXEL_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "LINE_STEP") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "X_BAND") == NULL
-        || CSLFetchNameValue(papszGeolocationInfo, "Y_BAND") == NULL )
+
+    if( CSLFetchNameValue(papszGeolocationInfo, "PIXEL_OFFSET") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_OFFSET") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "PIXEL_STEP") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "LINE_STEP") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "X_BAND") == nullptr
+        || CSLFetchNameValue(papszGeolocationInfo, "Y_BAND") == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Missing some geolocation fields in "
                   "GDALCreateGeoLocTransformer()" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -578,7 +702,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 /* -------------------------------------------------------------------- */
     const char *pszDSName = CSLFetchNameValue( papszGeolocationInfo,
                                                "X_DATASET" );
-    if( pszDSName != NULL )
+    if( pszDSName != nullptr )
     {
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
         psTransform->hDS_X = GDALOpenShared( pszDSName, GA_ReadOnly );
@@ -597,7 +721,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
     }
 
     pszDSName = CSLFetchNameValue( papszGeolocationInfo, "Y_DATASET" );
-    if( pszDSName != NULL )
+    if( pszDSName != nullptr )
     {
         CPLConfigOptionSetter oSetter("CPL_ALLOW_VSISTDIN", "NO", true);
         psTransform->hDS_Y = GDALOpenShared( pszDSName, GA_ReadOnly );
@@ -615,11 +739,11 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         }
     }
 
-    if( psTransform->hDS_X == NULL ||
-        psTransform->hDS_Y == NULL )
+    if( psTransform->hDS_X == nullptr ||
+        psTransform->hDS_Y == nullptr )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -633,11 +757,11 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         std::max(1, atoi(CSLFetchNameValue( papszGeolocationInfo, "Y_BAND" )));
     psTransform->hBand_Y = GDALGetRasterBand( psTransform->hDS_Y, nYBand );
 
-    if( psTransform->hBand_X == NULL ||
-        psTransform->hBand_Y == NULL )
+    if( psTransform->hBand_X == nullptr ||
+        psTransform->hBand_Y == nullptr )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -654,7 +778,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "X_BAND and Y_BAND should have both nYSize == 1");
             GDALDestroyGeoLocTransformer( psTransform );
-            return NULL;
+            return nullptr;
         }
     }
     else if( nXSize_XBand != nXSize_YBand ||
@@ -663,15 +787,15 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "X_BAND and Y_BAND do not have the same dimensions");
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
-    if( nXSize_XBand > INT_MAX / nYSize_XBand )
+    if( nXSize_XBand > std::numeric_limits<int>::max() / nYSize_XBand )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Int overflow : %d x %d",
                  nXSize_XBand, nYSize_XBand);
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -681,7 +805,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
         || !GeoLocGenerateBackMap( psTransform ) )
     {
         GDALDestroyGeoLocTransformer( psTransform );
-        return NULL;
+        return nullptr;
     }
 
     return psTransform;
@@ -695,7 +819,7 @@ void *GDALCreateGeoLocTransformer( GDALDatasetH hBaseDS,
 void GDALDestroyGeoLocTransformer( void *pTransformAlg )
 
 {
-    if( pTransformAlg == NULL )
+    if( pTransformAlg == nullptr )
         return;
 
     GDALGeoLocTransformInfo *psTransform =
@@ -707,11 +831,11 @@ void GDALDestroyGeoLocTransformer( void *pTransformAlg )
     CPLFree( psTransform->padfGeoLocX );
     CPLFree( psTransform->padfGeoLocY );
 
-    if( psTransform->hDS_X != NULL
+    if( psTransform->hDS_X != nullptr
         && GDALDereferenceDataset( psTransform->hDS_X ) == 0 )
             GDALClose( psTransform->hDS_X );
 
-    if( psTransform->hDS_Y != NULL
+    if( psTransform->hDS_Y != nullptr
         && GDALDereferenceDataset( psTransform->hDS_Y ) == 0 )
             GDALClose( psTransform->hDS_Y );
 
@@ -843,10 +967,10 @@ int GDALGeoLocTransform( void *pTransformArg,
 
             const double dfBMX =
                 ((padfX[i] - psTransform->adfBackMapGeoTransform[0])
-                 / psTransform->adfBackMapGeoTransform[1]);
+                 / psTransform->adfBackMapGeoTransform[1]) - ISHIFT;
             const double dfBMY =
                 ((padfY[i] - psTransform->adfBackMapGeoTransform[3])
-                 / psTransform->adfBackMapGeoTransform[5]);
+                 / psTransform->adfBackMapGeoTransform[5]) - ISHIFT;
 
             const int iBMX = static_cast<int>(dfBMX);
             const int iBMY = static_cast<int>(dfBMY);
@@ -926,13 +1050,13 @@ int GDALGeoLocTransform( void *pTransformArg,
 CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
 
 {
-    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGeoLocTransformer", NULL );
+    VALIDATE_POINTER1( pTransformArg, "GDALSerializeGeoLocTransformer", nullptr );
 
     GDALGeoLocTransformInfo *psInfo =
         static_cast<GDALGeoLocTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree =
-        CPLCreateXMLNode( NULL, CXT_Element, "GeoLocTransformer" );
+        CPLCreateXMLNode( nullptr, CXT_Element, "GeoLocTransformer" );
 
 /* -------------------------------------------------------------------- */
 /*      Serialize bReversed.                                            */
@@ -947,9 +1071,9 @@ CPLXMLNode *GDALSerializeGeoLocTransformer( void *pTransformArg )
     char **papszMD = psInfo->papszGeolocationInfo;
     CPLXMLNode *psMD= CPLCreateXMLNode( psTree, CXT_Element, "Metadata" );
 
-    for( int i = 0; papszMD != NULL && papszMD[i] != NULL; i++ )
+    for( int i = 0; papszMD != nullptr && papszMD[i] != nullptr; i++ )
     {
-        char *pszKey = NULL;
+        char *pszKey = nullptr;
         const char *pszRawValue = CPLParseNameValue( papszMD[i], &pszKey );
 
         CPLXMLNode *psMDI = CPLCreateXMLNode( psMD, CXT_Element, "MDI" );
@@ -974,23 +1098,23 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psMetadata = CPLGetXMLNode( psTree, "Metadata" );
 
-    if( psMetadata == NULL ||
+    if( psMetadata == nullptr ||
         psMetadata->eType != CXT_Element
         || !EQUAL(psMetadata->pszValue, "Metadata") )
-        return NULL;
+        return nullptr;
 
-    char **papszMD = NULL;
+    char **papszMD = nullptr;
 
     for( CPLXMLNode *psMDI = psMetadata->psChild;
-         psMDI != NULL;
+         psMDI != nullptr;
          psMDI = psMDI->psNext )
     {
         if( !EQUAL(psMDI->pszValue, "MDI")
             || psMDI->eType != CXT_Element
-            || psMDI->psChild == NULL
-            || psMDI->psChild->psNext == NULL
+            || psMDI->psChild == nullptr
+            || psMDI->psChild->psNext == nullptr
             || psMDI->psChild->eType != CXT_Attribute
-            || psMDI->psChild->psChild == NULL )
+            || psMDI->psChild->psChild == nullptr )
             continue;
 
         papszMD =
@@ -1007,7 +1131,7 @@ void *GDALDeserializeGeoLocTransformer( CPLXMLNode *psTree )
 /* -------------------------------------------------------------------- */
 /*      Generate transformation.                                        */
 /* -------------------------------------------------------------------- */
-    void *pResult = GDALCreateGeoLocTransformer( NULL, papszMD, bReversed );
+    void *pResult = GDALCreateGeoLocTransformer( nullptr, papszMD, bReversed );
 
 /* -------------------------------------------------------------------- */
 /*      Cleanup GCP copy.                                               */

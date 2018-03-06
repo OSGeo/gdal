@@ -33,8 +33,8 @@
 
 CPL_CVSID("$Id$")
 
-S57ClassRegistrar *OGRS57Driver::poRegistrar = NULL;
-static CPLMutex* hS57RegistrarMutex = NULL;
+S57ClassRegistrar *OGRS57Driver::poRegistrar = nullptr;
+static CPLMutex* hS57RegistrarMutex = nullptr;
 
 /************************************************************************/
 /*                            OGRS57Driver()                            */
@@ -49,16 +49,16 @@ OGRS57Driver::OGRS57Driver() {}
 OGRS57Driver::~OGRS57Driver()
 
 {
-    if( poRegistrar != NULL )
+    if( poRegistrar != nullptr )
     {
         delete poRegistrar;
-        poRegistrar = NULL;
+        poRegistrar = nullptr;
     }
 
-    if( hS57RegistrarMutex != NULL )
+    if( hS57RegistrarMutex != nullptr )
     {
         CPLDestroyMutex(hS57RegistrarMutex);
-        hS57RegistrarMutex = NULL;
+        hS57RegistrarMutex = nullptr;
     }
 }
 
@@ -79,7 +79,7 @@ static int OGRS57DriverIdentify( GDALOpenInfo* poOpenInfo )
     {
         return false;
     }
-    return strstr( pachLeader, "DSID") != NULL;
+    return strstr( pachLeader, "DSID") != nullptr;
 }
 
 /************************************************************************/
@@ -90,13 +90,13 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRS57DriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRS57DataSource *poDS = new OGRS57DataSource(poOpenInfo->papszOpenOptions);
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     if( poDS && poOpenInfo->eAccess == GA_Update )
@@ -104,7 +104,7 @@ GDALDataset *OGRS57Driver::Open( GDALOpenInfo* poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "S57 Driver doesn't support update." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -127,7 +127,7 @@ GDALDataset *OGRS57Driver::Create( const char * pszName,
         return poDS;
 
     delete poDS;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -142,14 +142,14 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 /* -------------------------------------------------------------------- */
     CPLMutexHolderD(&hS57RegistrarMutex);
 
-    if( poRegistrar == NULL )
+    if( poRegistrar == nullptr )
     {
         poRegistrar = new S57ClassRegistrar();
 
-        if( !poRegistrar->LoadInfo( NULL, NULL, false ) )
+        if( !poRegistrar->LoadInfo( nullptr, nullptr, false ) )
         {
             delete poRegistrar;
-            poRegistrar = NULL;
+            poRegistrar = nullptr;
         }
     }
 
@@ -163,7 +163,7 @@ S57ClassRegistrar *OGRS57Driver::GetS57Registrar()
 void RegisterOGRS57()
 
 {
-    if( GDALGetDriverByName( "S57" ) != NULL )
+    if( GDALGetDriverByName( "S57" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new OGRS57Driver();

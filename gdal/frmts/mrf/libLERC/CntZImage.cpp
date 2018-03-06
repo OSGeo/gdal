@@ -393,7 +393,10 @@ bool CntZImage::read(Byte** ppByte,
   if (version != 11 || type != type_)
     return false;
 
-  if (width > 20000 || height > 20000)
+  if (width <= 0 || width > 20000 || height <= 0 || height > 20000)
+    return false;
+  // To avoid excessive memory allocation attempts
+  if (width * height > 1800 * 1000 * 1000 / static_cast<int>(sizeof(CntZ)))
     return false;
 
   if (maxZErrorInFile > maxZError)
@@ -500,7 +503,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
   // first, do the entire image as 1 block
   numTilesVertA = 1;
   numTilesHoriA = 1;
-  if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, NULL, numBytesOptA, maxValInImgA))
+  if (!writeTiles(zPart, maxZError, cntsNoIntIn, 1, 1, nullptr, numBytesOptA, maxValInImgA))
   {
     return false;
   }
@@ -529,7 +532,7 @@ bool CntZImage::findTiling(bool zPart, double maxZError, bool cntsNoIntIn,
 
     int numBytes = 0;
     float maxVal;
-    if (!writeTiles(zPart, maxZError, cntsNoIntIn, numTilesVert, numTilesHori, NULL, numBytes, maxVal))
+    if (!writeTiles(zPart, maxZError, cntsNoIntIn, numTilesVert, numTilesHori, nullptr, numBytes, maxVal))
       return false;
 
     if (numBytes < numBytesOptA)
@@ -600,7 +603,7 @@ bool CntZImage::writeTiles(bool zPart, double maxZError, bool cntsNoIntIn,
 
       if (bArr)
       {
-        int numBytesWritten;
+        int numBytesWritten = 0;
         rv = zPart ? writeZTile(  &ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, numValidPixel, zMin, zMax, maxZError) :
                           writeCntTile(&ptr, numBytesWritten, i0, i0 + tileH, j0, j0 + tileW, cntMin, cntMax, cntsNoIntIn);
         if (!rv)

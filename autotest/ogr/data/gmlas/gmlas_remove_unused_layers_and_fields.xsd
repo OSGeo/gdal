@@ -1,0 +1,42 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+              elementFormDefault="qualified"
+              attributeFormDefault="unqualified">
+
+<xs:element name="unused_elt_before">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="unused1" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="main_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="unused1" type="xs:string" minOccurs="0"/>
+        <xs:element name="used1" type="xs:string" minOccurs="0"/>
+        <xs:element name="unused2" type="xs:string" minOccurs="0"/>
+        <xs:element name="unused3" type="xs:string" minOccurs="0"/>
+        <xs:element name="used2" type="xs:string" minOccurs="0"/>
+        <xs:element name="nillable" nillable="true">
+            <xs:complexType>
+                <xs:simpleContent>
+                    <xs:extension base="xs:integer">
+                        <xs:attribute name="nilReason" type="xs:string"/>
+                    </xs:extension>
+                </xs:simpleContent>
+            </xs:complexType>
+        </xs:element>
+        <xs:element ref="unused_elt_before" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+<xs:element name="unused_elt">
+  <xs:complexType>
+    <xs:sequence>
+        <xs:element name="unused1" type="xs:dateTime" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+</xs:schema>

@@ -44,8 +44,7 @@ class OGRNASDataSource;
 
 class OGRNASLayer : public OGRLayer
 {
-    OGRSpatialReference *poSRS;
-    OGRFeatureDefn     *poFeatureDefn;
+    OGRFeatureDefn      *poFeatureDefn;
 
     int                 iNextNASId;
 
@@ -55,8 +54,6 @@ class OGRNASLayer : public OGRLayer
 
   public:
                         OGRNASLayer( const char * pszName,
-                                     OGRSpatialReference *poSRS,
-                                     OGRwkbGeometryType eType,
                                      OGRNASDataSource *poDS );
 
                         virtual ~OGRNASLayer();

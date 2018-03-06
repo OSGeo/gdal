@@ -53,7 +53,7 @@ VecSegDataIndex::VecSegDataIndex()
 
 {
     block_initialized = false;
-    vs = NULL;
+    vs = nullptr;
     dirty = false;
     section = 0;
     offset_on_disk_within_section = 0;
@@ -89,8 +89,8 @@ void VecSegDataIndex::Initialize( CPCIDSKVectorSegment *vsIn, int sectionIn )
     uint32 offset = offset_on_disk_within_section 
         + vs->vh.section_offsets[hsec_shape];
 
-    memcpy( &block_count, vs->GetData(sec_raw,offset,NULL,4), 4);
-    memcpy( &bytes, vs->GetData(sec_raw,offset+4,NULL,4), 4);
+    memcpy( &block_count, vs->GetData(sec_raw,offset,nullptr,4), 4);
+    memcpy( &bytes, vs->GetData(sec_raw,offset+4,nullptr,4), 4);
 
     bool needs_swap = !BigEndianSystem();
 

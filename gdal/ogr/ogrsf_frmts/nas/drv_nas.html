@@ -7,27 +7,43 @@
 
 <h1>NAS - ALKIS</h1>
 
-The NAS reader reads the NAS/ALKIS format used for cadastral data in Germany.
+<p>The NAS driver reads the NAS/ALKIS format used for cadastral data in Germany.
 The format is a GML profile with fairly complex GML3 objects not easily read
-with the general OGR GML driver. <p>
+with the general OGR GML driver.</p>
 
-This driver depends on GDAL/OGR being built with the Xerces XML parsing
-library.<p>
+<p>This driver depends on GDAL/OGR being built with the Xerces XML parsing
+library.</p>
 
-This driver was implemented within the context of the PostNAS project
-which has more information on it's use.<p>
+<p>The driver looks for "opengis.net/gml" and one of the strings semicolon
+separated strings listed in the option <b>NAS_INDICATOR</b> (which defaults to
+"NAS-Operationen;AAA-Fachschema;aaa.xsd;aaa-suite") to
+determine if a input is a NAS file and ignores all files without any matches.</p>
 
-The driver looks for "opengis.net/gml" and one of the strings semicolon
-separated strings listed in the option NAS_INDICATOR (which defaults to
-"NAS-Operationen.xsd;NAS-Operationen_optional.xsd;AAA-Fachschema.xsd") to
-determine if a input is a NAS file and ignores all files without any matches.
+<p>In GDAL 2.3 a bunch of workarounds were removed, that caused the driver to
+remap or ignore some elements and attributes internally to avoid attribute
+conflicts (e.g. <i>zeigtAufExternes</i>).  Instead it now takes the
+<b>NAS_GFS_TEMPLATE</b> option, that makes it possible to cleanly map element
+paths to feature attributes using a GFS file like in the GML driver.  Multiple
+geometries per layer are also possible (eg.  ax_flurstueck.objektkoordinaten
+next to the regular wkb_geometry).
 
-<h2>See Also</h2>
+<p>A <a href="https://github.com/norBIT/alkisimport/blob/master/alkis-schema.gfs">GFS template</a> and
+a corresponding <a href="https://github.com/norBIT/alkisimport/blob/master/alkis-schema.sql">PostgreSQL schema</a>
+of the full NAS schema are part of <a href="http://www.norbit.de/68/">norGIS ALKIS-Import</a>
+(also featuring a shell script and PyQt frontend which ease the import).  The
+two files were generated using <a href="https://github.com/norBIT/xmi2db/">xmi2db</a>
+(fork of <a href="https://github.com/pkorduan/xmi2db">xmi2db</a>) from the
+official application schema.</p>
 
-<ul>
-<li> <a href="http://trac.wheregroup.com/PostNAS">PostNAS</a>
-<li> <a href="http://www.norbit.de/68/">norGIS ALKIS-Import</a>
-</ul>
+<p>New in 2.3 is also the option <b>NAS_NO_RELATION_LAYER</b> that allows to
+disable populating the table <i>alkis_beziehungen</i>.  The information found
+there is redundant to the relation fields also contained in original
+elements/tables.  Enabling the option also makes progress reporting
+available.</p>
+
+<p>This driver was implemented within the context of the
+<a href="http://trac.wheregroup.com/PostNAS">PostNAS project</a>,
+which has more information on it's use and other related projects.</p>
 
 </body>
 </html>

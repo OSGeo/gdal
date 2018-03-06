@@ -1,5 +1,3 @@
-/* $Id: tif_dirread.c,v 1.217 2017-07-15 14:27:50 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -776,7 +774,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryIfd8(TIFF* tif, TIFFDirEntry* di
 static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(
                     TIFF* tif, uint64 offset, tmsize_t size, void** pdest)
 {
-#if SIZEOF_VOIDP == 8 || SIZEOF_SIZE_T == 8
+#if SIZEOF_SIZE_T == 8
         tmsize_t threshold = INITIAL_THRESHOLD;
 #endif
         tmsize_t already_read = 0;
@@ -797,7 +795,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryDataAndRealloc(
             void* new_dest;
             tmsize_t bytes_read;
             tmsize_t to_read = size - already_read;
-#if SIZEOF_VOIDP == 8 || SIZEOF_SIZE_T == 8
+#if SIZEOF_SIZE_T == 8
             if( to_read >= threshold && threshold < MAX_THRESHOLD )
             {
                 to_read = threshold;
@@ -2832,7 +2830,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryPersampleShort(TIFF* tif, TIFFDi
 	if (direntry->tdir_count<(uint64)tif->tif_dir.td_samplesperpixel)
 		return(TIFFReadDirEntryErrCount);
 	err=TIFFReadDirEntryShortArray(tif,direntry,&m);
-	if (err!=TIFFReadDirEntryErrOk)
+	if (err!=TIFFReadDirEntryErrOk || m == NULL)
 		return(err);
 	na=m;
 	nb=tif->tif_dir.td_samplesperpixel;

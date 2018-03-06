@@ -31,8 +31,7 @@
 
 #include <ogr_core.h>
 
-#include "ogr_json_header.h"
-
+#include "cpl_json_header.h"
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 
@@ -51,26 +50,16 @@ enum GeoJSONSourceType
 };
 
 GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo );
-
-/************************************************************************/
-/*                           GeoJSONProtocolType                        */
-/************************************************************************/
-
-enum GeoJSONProtocolType
-{
-    eGeoJSONProtocolUnknown = 0,
-    eGeoJSONProtocolHTTP,
-    eGeoJSONProtocolHTTPS,
-    eGeoJSONProtocolFTP,
-};
-
-GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource );
+GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
+GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
 
 /************************************************************************/
 /*                           GeoJSONIsObject                            */
 /************************************************************************/
 
 bool GeoJSONIsObject( const char* pszText );
+bool ESRIJSONIsObject(const char *pszText);
+bool TopoJSONIsObject(const char *pszText);
 
 /************************************************************************/
 /*                           GeoJSONPropertyToFieldType                 */

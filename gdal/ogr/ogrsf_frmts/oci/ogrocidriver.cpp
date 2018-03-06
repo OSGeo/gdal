@@ -47,7 +47,7 @@ static GDALDataset *OGROCIDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGROCIDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGROCIDataSource    *poDS;
 
@@ -57,7 +57,7 @@ static GDALDataset *OGROCIDriverOpen( GDALOpenInfo* poOpenInfo )
                      poOpenInfo->eAccess == GA_Update, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -79,13 +79,13 @@ static GDALDataset *OGROCIDriverCreate( const char * pszName,
 
     poDS = new OGROCIDataSource();
 
-    if( !poDS->Open( pszName, NULL, TRUE, TRUE ) )
+    if( !poDS->Open( pszName, nullptr, TRUE, TRUE ) )
     {
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
          "Oracle driver doesn't currently support database creation.\n"
                   "Please create database with Oracle tools before loading tables." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -101,7 +101,7 @@ void RegisterOGROCI()
     if( !GDAL_CHECK_VERSION("OCI driver") )
         return;
 
-    if( GDALGetDriverByName( "OCI" ) != NULL )
+    if( GDALGetDriverByName( "OCI" ) != nullptr )
         return;
 
     GDALDriver* poDriver = new GDALDriver();
@@ -133,6 +133,7 @@ void RegisterOGROCI()
         "  <Option name='ADD_LAYER_GTYPE' type='boolean' description='May be set to NO to disable the constraints on the geometry type in the spatial index' default='YES'/>"
         "  <Option name='MULTI_LOAD' type='boolean' description='If enabled new features will be created in groups of 100 per SQL INSERT command' default='YES'/>"
         "  <Option name='MULTI_LOAD_COUNT' type='int' description='Number of itens for a group INSERT' default='100'/>"
+        "  <Option name='DEFAULT_STRING_SIZE' type='int' description='Default string column size' default='4000'/>"
         "  <Option name='LOADER_FILE' type='string' description='If this option is set, all feature information will be written to a file suitable for use with SQL*Loader'/>"
         "  <Option name='DIM' type='integer' description='Set to 2 to force the geometries to be 2D, or 3 to be 2.5D' default='3'/>"
         "  <Option name='GEOMETRY_NAME' type='string' description='Name of geometry column.' default='ORA_GEOMETRY'/>"

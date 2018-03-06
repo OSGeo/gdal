@@ -53,8 +53,10 @@ to indicate that the mask band of the first band must be used (or
 "mask,band_number" for the mask of a specified band)
 </dd>
 
-<dt> <b>-f</b> <i>ogr_format</i></dt><dd> Select the output format of the
-file to be created.  Default is GML.
+<dt> <b>-f</b> <i>ogr_format</i></dt><dd>
+Select the output format. Starting with
+GDAL 2.3, if not specified, the format is guessed from the extension (previously
+was GML). Use the short format name
 </dd>
 
 <dt> <i>out_file</i></dt><dd> The destination vector file to which the polygons will be written.

@@ -33,7 +33,7 @@
 %module gdal_array
 
 %{
-// Define this unconditionnaly of whether DEBUG_BOOL is defined or not,
+// Define this unconditionally of whether DEBUG_BOOL is defined or not,
 // since we do not pass -DDEBUG_BOOL when building the bindings
 #define DO_NOT_USE_DEBUG_BOOL
 
@@ -138,7 +138,7 @@ static void GDALRegister_NUMPY(void)
         return;
     if( GDALGetDriverByName( "NUMPY" ) == NULL )
     {
-        poDriver = new GDALDriver();
+        poDriver = static_cast<GDALDriver*>(GDALCreateDriver());
 
         poDriver->SetDescription( "NUMPY" );
         poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
@@ -1065,7 +1065,6 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
 %pythoncode %{
 import numpy
-from . import _gdal_array
 
 import gdalconst
 import gdal

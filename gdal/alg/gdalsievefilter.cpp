@@ -207,7 +207,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     VALIDATE_POINTER1( hSrcBand, "GDALSieveFilter", CE_Failure );
     VALIDATE_POINTER1( hDstBand, "GDALSieveFilter", CE_Failure );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
@@ -226,13 +226,13 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     GInt32 *panThisLineWriteVal = static_cast<GInt32 *>(
         VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
     GByte *pabyMaskLine =
-        hMaskBand != NULL
+        hMaskBand != nullptr
         ? static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize))
-        : NULL;
-    if( panLastLineVal == NULL || panThisLineVal == NULL ||
-        panLastLineId == NULL || panThisLineId == NULL ||
-        panThisLineWriteVal == NULL ||
-        (hMaskBand != NULL && pabyMaskLine == NULL) )
+        : nullptr;
+    if( panLastLineVal == nullptr || panThisLineVal == nullptr ||
+        panLastLineId == nullptr || panThisLineId == nullptr ||
+        panThisLineWriteVal == nullptr ||
+        (hMaskBand != nullptr && pabyMaskLine == nullptr) )
     {
         CPLFree( panThisLineId );
         CPLFree( panLastLineId );
@@ -259,13 +259,13 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
             GF_Read, 0, iY, nXSize, 1,
             panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
 
-        if( eErr == CE_None && hMaskBand != NULL )
+        if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData(hMaskBand, pabyMaskLine, iY, nXSize,
                                    panThisLineVal);
 
         if( iY == 0 )
             oFirstEnum.ProcessLine(
-                NULL, panThisLineVal, NULL, panThisLineId, nXSize );
+                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
         else
             oFirstEnum.ProcessLine(
                 panLastLineVal, panThisLineVal,
@@ -315,7 +315,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /*      Push the sizes of merged polygon fragments into the             */
 /*      merged polygon id's count.                                      */
 /* -------------------------------------------------------------------- */
-    for( int iPoly = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
+    for( int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
                         iPoly < oFirstEnum.nNextPolygonId; iPoly++ )
     {
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
@@ -357,7 +357,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
         eErr = GDALRasterIO( hSrcBand, GF_Read, 0, iY, nXSize, 1,
                              panThisLineVal, nXSize, 1, GDT_Int32, 0, 0 );
 
-        if( eErr == CE_None && hMaskBand != NULL )
+        if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
                                     panThisLineVal );
 
@@ -370,7 +370,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
         if( iY == 0 )
             oSecondEnum.ProcessLine(
-                NULL, panThisLineVal, NULL, panThisLineId, nXSize );
+                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
         else
             oSecondEnum.ProcessLine(
                 panLastLineVal, panThisLineVal,
@@ -445,8 +445,8 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
     int nIsolatedSmall = 0;
     int nSieveTargets = 0;
 
-    for( int iPoly = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
-                        oFirstEnum.panPolyValue != NULL && // for Coverity
+    for( int iPoly = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
+                        oFirstEnum.panPolyValue != nullptr && // for Coverity
                         iPoly < static_cast<int>(anPolySizes.size()); iPoly++ )
     {
         if( oFirstEnum.panPolyIdMap[iPoly] != iPoly )
@@ -526,7 +526,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* ==================================================================== */
     oSecondEnum.Clear();
 
-    for( int iY = 0; oFirstEnum.panPolyIdMap != NULL && // for Coverity
+    for( int iY = 0; oFirstEnum.panPolyIdMap != nullptr && // for Coverity
                      eErr == CE_None && iY < nYSize; iY++ )
     {
 /* -------------------------------------------------------------------- */
@@ -537,7 +537,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 
         memcpy( panThisLineWriteVal, panThisLineVal, 4 * nXSize );
 
-        if( eErr == CE_None && hMaskBand != NULL )
+        if( eErr == CE_None && hMaskBand != nullptr )
             eErr = GPMaskImageData( hMaskBand, pabyMaskLine, iY, nXSize,
                                     panThisLineVal );
 
@@ -550,7 +550,7 @@ GDALSieveFilter( GDALRasterBandH hSrcBand, GDALRasterBandH hMaskBand,
 /* -------------------------------------------------------------------- */
         if( iY == 0 )
             oSecondEnum.ProcessLine(
-                NULL, panThisLineVal, NULL, panThisLineId, nXSize );
+                nullptr, panThisLineVal, nullptr, panThisLineId, nXSize );
         else
             oSecondEnum.ProcessLine(
                 panLastLineVal, panThisLineVal,

@@ -67,7 +67,7 @@ class CPL_DLL VSIVirtualHandle {
     virtual int       Close() = 0;
     // Base implementation that only supports file extension.
     virtual int       Truncate( vsi_l_offset nNewSize );
-    virtual void     *GetNativeFileDescriptor() { return NULL; }
+    virtual void     *GetNativeFileDescriptor() { return nullptr; }
     virtual VSIRangeStatus GetRangeStatus( CPL_UNUSED vsi_l_offset nOffset,
                                            CPL_UNUSED vsi_l_offset nLength )
                                           { return VSI_RANGE_STATUS_UNKNOWN; }
@@ -100,7 +100,7 @@ public:
     virtual int Rmdir( const char *pszDirname )
                       { (void) pszDirname; errno=ENOENT; return -1; }
     virtual char **ReadDir( const char *pszDirname )
-                      { (void) pszDirname; return NULL; }
+                      { (void) pszDirname; return nullptr; }
     virtual char **ReadDirEx( const char *pszDirname, int /* nMaxFiles */ )
                       { return ReadDir(pszDirname); }
     virtual int Rename( const char *oldpath, const char *newpath )
@@ -109,6 +109,10 @@ public:
                       { (void) pszFilename; return TRUE; }
     virtual GIntBig GetDiskFreeSpace( const char* /* pszDirname */ ) { return -1; }
     virtual int SupportsSparseFiles( const char* /* pszPath */ ) { return FALSE; }
+    virtual int HasOptimizedReadMultiRange(const char* /* pszPath */) { return FALSE; }
+    virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
+    virtual const char* GetOptions() { return nullptr; }
+    virtual char* GetSignedURL(const char* /*pszFilename*/, char** /* papszOptions */) { return nullptr; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -135,6 +139,8 @@ public:
                                 VSIFilesystemHandler * );
     /* RemoveHandler is never defined. */
     /* static void RemoveHandler( const std::string& osPrefix ); */
+
+    static char** GetPrefixes();
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -169,7 +175,7 @@ public:
     int nEntries;
     VSIArchiveEntry* entries;
 
-    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(NULL) {}
+    VSIArchiveContent() : mTime(0), nFileSize(0), nEntries(0), entries(nullptr) {}
     ~VSIArchiveContent();
 };
 
@@ -204,14 +210,15 @@ public:
     VSIArchiveFilesystemHandler();
     virtual ~VSIArchiveFilesystemHandler();
 
-    virtual int      Stat( const char *pszFilename, VSIStatBufL *pStatBuf, int nFlags ) CPL_OVERRIDE;
-    virtual int      Unlink( const char *pszFilename ) CPL_OVERRIDE;
-    virtual int      Rename( const char *oldpath, const char *newpath ) CPL_OVERRIDE;
-    virtual int      Mkdir( const char *pszDirname, long nMode ) CPL_OVERRIDE;
-    virtual int      Rmdir( const char *pszDirname ) CPL_OVERRIDE;
-    virtual char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) CPL_OVERRIDE;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
+    int Unlink( const char *pszFilename ) override;
+    int Rename( const char *oldpath, const char *newpath ) override;
+    int Mkdir( const char *pszDirname, long nMode ) override;
+    int Rmdir( const char *pszDirname ) override;
+    char   **ReadDirEx( const char *pszDirname, int nMaxFiles ) override;
 
-    virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = NULL);
+    virtual const VSIArchiveContent* GetContentOfArchive(const char* archiveFilename, VSIArchiveReader* poReader = nullptr);
     virtual char* SplitFilename(const char *pszFilename, CPLString &osFileInArchive, int bCheckMainFileExists);
     virtual VSIArchiveReader* OpenArchiveFile(const char* archiveFilename, const char* fileInArchiveName);
     virtual int FindFileInArchive(const char* archiveFilename, const char* fileInArchiveName, const VSIArchiveEntry** archiveEntry);

@@ -160,6 +160,11 @@ Default to YES.<p>
 in a external _rpc.txt file. This may be useful since internal RPC00B TRE have
 limited precision. This is only taken into account by CreateCopy() for now.
 Default to NO.<p>
+
+<li> <b>USE_SRC_NITF_METADATA=YES/NO</b>: (GDAL &gt;= 2.3.0) Whether to use
+NITF_xxx metadata items and TRE segments from the input dataset. It may needed
+to set this option to NO if changing the georeferencing of the input file.
+Default to YES.<p>
 </ul>
 
 

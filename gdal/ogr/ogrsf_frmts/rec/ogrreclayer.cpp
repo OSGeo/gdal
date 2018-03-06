@@ -53,6 +53,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 {
     SetDescription( poFeatureDefn->GetName() );
     poFeatureDefn->Reference();
+    poFeatureDefn->SetGeomType( wkbNone );
 
 /* -------------------------------------------------------------------- */
 /*      Read field definition lines.                                    */
@@ -61,7 +62,7 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
     {
         const char *pszLine = CPLReadLine( fp );
 
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
             return;
 
         if( strlen(pszLine) < 44 )
@@ -135,14 +136,14 @@ OGRRECLayer::OGRRECLayer( const char *pszLayerNameIn,
 OGRRECLayer::~OGRRECLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "REC", "%d features read on layer '%s'.",
                   static_cast<int>(m_nFeaturesRead),
                   poFeatureDefn->GetName() );
     }
 
-    if( fpREC != NULL )
+    if( fpREC != nullptr )
         VSIFClose( fpREC );
 
     if( poFeatureDefn )
@@ -180,16 +181,16 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
     {
         const char *pszLine = CPLReadLine( fpREC );
 
-        if( pszLine == NULL )
+        if( pszLine == nullptr )
         {
             CPLFree( pszRecord );
-            return NULL;
+            return nullptr;
         }
 
         if( *pszLine == 0 || *pszLine == 26 /* Cntl-Z - DOS EOF */ )
         {
             CPLFree( pszRecord );
-            return NULL;
+            return nullptr;
         }
 
         // If the end-of-line markers is '?' the record is deleted.
@@ -209,7 +210,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
                       "Apparent corrupt data line .. record FID=%d",
                       nNextFID );
             CPLFree( pszRecord );
-            return NULL;
+            return nullptr;
         }
 
         iSegLen--;
@@ -219,10 +220,10 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
                       "Too much data for record %d.",
                       nNextFID );
             CPLFree( pszRecord );
-            return NULL;
+            return nullptr;
         }
 
-        strncpy( pszRecord+nDataLen, pszLine, iSegLen );
+        memcpy( pszRecord+nDataLen, pszLine, iSegLen );
         pszRecord[nDataLen+iSegLen] = '\0';
         nDataLen += iSegLen;
     }
@@ -267,7 +268,7 @@ OGRFeature * OGRRECLayer::GetNextUnfilteredFeature()
 OGRFeature *OGRRECLayer::GetNextFeature()
 
 {
-    OGRFeature  *poFeature = NULL;
+    OGRFeature  *poFeature = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read features till we find one that satisfies our current       */
@@ -276,10 +277,10 @@ OGRFeature *OGRRECLayer::GetNextFeature()
     while( true )
     {
         poFeature = GetNextUnfilteredFeature();
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
-        if( m_poAttrQuery == NULL || m_poAttrQuery->Evaluate( poFeature ) )
+        if( m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate( poFeature ) )
             break;
 
         delete poFeature;

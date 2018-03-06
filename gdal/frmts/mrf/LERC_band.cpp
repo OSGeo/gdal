@@ -219,7 +219,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
 
     // we need to add the padding bytes so that out-of-buffer-access checksum
     // don't false-positively trigger.
-    size_t nRemaingBytes = src.size + PADDING_BYTES;
+    size_t nRemainingBytes = src.size + PADDING_BYTES;
     Byte *ptr = (Byte *)src.buffer;
 
     // Check that input passes snicker test
@@ -233,7 +233,7 @@ static CPLErr DecompressLERC(buf_mgr &dst, buf_mgr &src, const ILImage &img)
             return CE_Failure;
     }
 
-    if (!zImg.read(&ptr, nRemaingBytes, 1e12))
+    if (!zImg.read(&ptr, nRemainingBytes, 1e12))
     {
         CPLError(CE_Failure,CPLE_AppDefined,"MRF: Error during LERC decompression");
         return CE_Failure;
@@ -310,7 +310,7 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img, doub
         }
     }
     // Set bitmask if it has some ndvs
-    Lerc2 lerc2(w, h, (ndv_count == 0) ? NULL : bitMask.Bits());
+    Lerc2 lerc2(w, h, (ndv_count == 0) ? nullptr : bitMask.Bits());
     bool success = false;
     Byte *ptr = (Byte *)dst.buffer;
 
@@ -392,10 +392,10 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     bool success = false;
     // we need to add the padding bytes so that out-of-buffer-access checksum
     // don't false-positively trigger.
-    size_t nRemaingBytes = src.size + PADDING_BYTES;
+    size_t nRemainingBytes = src.size + PADDING_BYTES;
     BitMask2 bitMask(img.pagesize.x, img.pagesize.y);
     switch (img.dt) {
-#define DECODE(T) success = lerc2.Decode(&ptr, nRemaingBytes, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
+#define DECODE(T) success = lerc2.Decode(&ptr, nRemainingBytes, reinterpret_cast<T *>(dst.buffer), bitMask.Bits())
     case GDT_Byte:      DECODE(GByte);      break;
     case GDT_UInt16:    DECODE(GUInt16);    break;
     case GDT_Int16:     DECODE(GInt16);     break;
@@ -443,21 +443,21 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     if(poOpenInfo->nHeaderBytes <
         static_cast<int>(CntZImage::computeNumBytesNeededToWriteVoidImage()))
     {
-        return NULL;
+        return nullptr;
     }
 
     if (poOpenInfo->eAccess != GA_ReadOnly
-        || poOpenInfo->pszFilename == NULL
-        || poOpenInfo->pabyHeader == NULL
+        || poOpenInfo->pszFilename == nullptr
+        || poOpenInfo->pabyHeader == nullptr
         || strlen(poOpenInfo->pszFilename) < 2)
-        return NULL;
+        return nullptr;
 
     // Check the header too
     char *psz = reinterpret_cast<char *>(poOpenInfo->pabyHeader);
     CPLString sHeader;
     sHeader.assign(psz, psz + poOpenInfo->nHeaderBytes);
     if (!IsLerc(sHeader))
-        return NULL;
+        return nullptr;
 
     // Get the desired type
     const char *pszDataType = CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DATATYPE");
@@ -484,10 +484,10 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
 
     if (size.x <= 0 && sHeader.size() >= CntZImage::computeNumBytesNeededToWriteVoidImage()) {
         CntZImage zImg;
-        size_t nRemaingBytes = poOpenInfo->nHeaderBytes;
+        size_t nRemainingBytes = poOpenInfo->nHeaderBytes;
         Byte *pb = reinterpret_cast<Byte *>(psz);
         // Read only the header, changes pb
-        if (zImg.read(&pb, nRemaingBytes, 1e12, true))
+        if (zImg.read(&pb, nRemainingBytes, 1e12, true))
         {
             size.x = zImg.getWidth();
             size.y = zImg.getHeight();
@@ -498,10 +498,10 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
     }
 
     if (size.x <=0 || size.y <=0 || dt == GDT_Unknown)
-        return NULL;
+        return nullptr;
 
     // Build and return the MRF configuration for a single tile reader
-    CPLXMLNode *config = CPLCreateXMLNode(NULL, CXT_Element, "MRF_META");
+    CPLXMLNode *config = CPLCreateXMLNode(nullptr, CXT_Element, "MRF_META");
     CPLXMLNode *raster = CPLCreateXMLNode(config, CXT_Element, "Raster");
     XMLSetAttributeVal(raster, "Size", size, "%.0f");
     XMLSetAttributeVal(raster, "PageSize", size, "%.0f");
@@ -520,10 +520,10 @@ LERC_Band::LERC_Band(GDALMRFDataset *pDS, const ILImage &image,
 {
     // Pick 1/1000 for floats and 0.5 losless for integers.
     if (eDataType == GDT_Float32 || eDataType == GDT_Float64 )
-        precision = strtod(GetOptionValue( "LERC_PREC" , ".001" ),NULL);
+        precision = strtod(GetOptionValue( "LERC_PREC" , ".001" ),nullptr);
     else
         precision =
-            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), NULL));
+            std::max(0.5, strtod(GetOptionValue("LERC_PREC", ".5"), nullptr));
 
     // Encode in V2 by default.
     version = GetOptlist().FetchBoolean("V1", FALSE) ? 1 : 2;

@@ -82,7 +82,6 @@ class OGRLIBKMLLayer:public OGRLayer
 
   public:
     OGRLIBKMLLayer            ( const char *pszLayerName,
-                                OGRSpatialReference * poSpatialRef,
                                 OGRwkbGeometryType eGType,
                                 OGRLIBKMLDataSource *poOgrDS,
                                 kmldom::ElementPtr poKmlRoot,
@@ -232,9 +231,9 @@ class OGRLIBKMLDataSource:public OGRDataSource
     OGRErr                    DeleteLayer( int ) override;
 
     OGRLayer                 *ICreateLayer( const char *pszName,
-                                            OGRSpatialReference * poSpatialRef = NULL,
+                                            OGRSpatialReference * poSpatialRef = nullptr,
                                             OGRwkbGeometryType eGType = wkbUnknown,
-                                            char **papszOptions = NULL ) override;
+                                            char **papszOptions = nullptr ) override;
 
     OGRStyleTable            *GetStyleTable() override;
     void                      SetStyleTableDirectly( OGRStyleTable * poStyleTable ) override;
@@ -263,7 +262,8 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      Updated() { bUpdated = true; }
 
     int                       ParseLayers( kmldom::ContainerPtr poKmlContainer,
-                                           OGRSpatialReference *poOgrSRS );
+                                           OGRSpatialReference *poOgrSRS,
+                                           bool bRecurse );
     kmldom::SchemaPtr         FindSchema( const char *pszSchemaUrl);
 
   private:
@@ -307,7 +307,6 @@ class OGRLIBKMLDataSource:public OGRDataSource
     void                      SetStyleTable2Kmz( OGRStyleTable * poStyleTable );
 
     OGRLIBKMLLayer           *AddLayer( const char *pszLayerName,
-                                        OGRSpatialReference * poSpatialRef,
                                         OGRwkbGeometryType eGType,
                                         OGRLIBKMLDataSource * poOgrDS,
                                         kmldom::ElementPtr poKmlRoot,

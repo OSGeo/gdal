@@ -45,7 +45,7 @@ OGRGeomediaSelectLayer::OGRGeomediaSelectLayer( OGRGeomediaDataSource *poDSIn,
 
     iNextShapeId = 0;
     nSRSId = -1;
-    poFeatureDefn = NULL;
+    poFeatureDefn = nullptr;
 
     poStmt = poStmtIn;
 
@@ -70,10 +70,10 @@ OGRGeomediaSelectLayer::~OGRGeomediaSelectLayer()
 void OGRGeomediaSelectLayer::ClearStatement()
 
 {
-    if( poStmt != NULL )
+    if( poStmt != nullptr )
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
     }
 }
 
@@ -84,7 +84,7 @@ void OGRGeomediaSelectLayer::ClearStatement()
 CPLODBCStatement *OGRGeomediaSelectLayer::GetStatement()
 
 {
-    if( poStmt == NULL )
+    if( poStmt == nullptr )
         ResetStatement();
 
     return poStmt;
@@ -110,7 +110,7 @@ OGRErr OGRGeomediaSelectLayer::ResetStatement()
     else
     {
         delete poStmt;
-        poStmt = NULL;
+        poStmt = nullptr;
         return OGRERR_FAILURE;
     }
 }

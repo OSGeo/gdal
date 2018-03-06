@@ -295,7 +295,7 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS,
 
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /************************************************************************/
 /*                            GDALWarpKernel                            */
@@ -333,9 +333,9 @@ public:
     /** Height of the source image */
     int                 nSrcYSize;
     /** Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation */
-    int                 nSrcXExtraSize;
+    double              dfSrcXExtraSize;
     /** Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation */
-    int                 nSrcYExtraSize;
+    double              dfSrcYExtraSize;
     /** Array of nBands source images of size nSrcXSize * nSrcYSize. Each subarray must have WARP_EXTRA_ELTS at the end */
     GByte               **papabySrcImage;
 
@@ -446,7 +446,7 @@ private:
                                          int nDstXSize, int nDstYSize,
                                          int *pnSrcXOff, int *pnSrcYOff,
                                          int *pnSrcXSize, int *pnSrcYSize,
-                                         int *pnSrcXExtraSize, int *pnSrcYExtraSize,
+                                         double *pdfSrcXExtraSize, double *pdfSrcYExtraSize,
                                          double* pdfSrcFillRatio );
 
     static CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
@@ -465,7 +465,9 @@ private:
     void           *psThreadData;
 
     void            WipeChunkList();
-    CPLErr          CollectChunkList( int nDstXOff, int nDstYOff,
+    CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,
+                                      int nDstXSize, int nDstYSize );
+    void            CollectChunkList( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize );
     void            ReportTiming( const char * );
 
@@ -475,7 +477,7 @@ public:
 
     CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
     void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize, 
-                                             int *pbWasInitialized = NULL );
+                                             int *pbWasInitialized = nullptr );
     static void     DestroyDestinationBuffer(void* pDstBuffer);
 
     const GDALWarpOptions         *GetOptions();
@@ -493,7 +495,7 @@ public:
                                 int nDstXSize, int nDstYSize,
                                 int nSrcXOff, int nSrcYOff,
                                 int nSrcXSize, int nSrcYSize,
-                                int nSrcXExtraSize, int nSrcYExtraSize,
+                                double dfSrcXExtraSize, double dfSrcYExtraSize,
                                 double dfProgressBase, double dfProgressScale);
     CPLErr          WarpRegionToBuffer( int nDstXOff, int nDstYOff,
                                         int nDstXSize, int nDstYSize,
@@ -508,7 +510,7 @@ public:
                                         GDALDataType eBufDataType,
                                         int nSrcXOff, int nSrcYOff,
                                         int nSrcXSize, int nSrcYSize,
-                                        int nSrcXExtraSize, int nSrcYExtraSize,
+                                        double dfSrcXExtraSize, double dfSrcYExtraSize,
                                         double dfProgressBase, double dfProgressScale);
 };
 

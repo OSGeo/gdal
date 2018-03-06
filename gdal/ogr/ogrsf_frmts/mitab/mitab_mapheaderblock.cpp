@@ -52,17 +52,17 @@ inline double round(double r) {
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
-static const GInt32 HDR_MAGIC_COOKIE = 42424242;
-static const GInt16 HDR_VERSION_NUMBER = 500;
+constexpr GInt32 HDR_MAGIC_COOKIE = 42424242;
+constexpr GInt16 HDR_VERSION_NUMBER = 500;
 
-static const GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
-static const GByte HDR_DEF_REFLECTXAXIS = 0;
+constexpr GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
+constexpr GByte HDR_DEF_REFLECTXAXIS = 0;
 
 /*---------------------------------------------------------------------
  * The header block starts with an array of map object length constants.
  *--------------------------------------------------------------------*/
-static const GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
-static const GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
+constexpr GByte HDR_OBJ_LEN_ARRAY_SIZE = 73;
+constexpr GByte gabyObjLenArray[ HDR_OBJ_LEN_ARRAY_SIZE  ] = {
             0x00,0x0a,0x0e,0x15,0x0e,0x16,0x1b,0xa2,
             0xa6,0xab,0x1a,0x2a,0x2f,0xa5,0xa9,0xb5,
             0xa7,0xb5,0xd9,0x0f,0x17,0x23,0x13,0x1f,
@@ -208,7 +208,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
               "ReadFromFile(): Invalid Magic Cookie: got %d expected %d",
                  nMagicCookie, HDR_MAGIC_COOKIE);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -226,7 +226,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         CPLError(CE_Failure, CPLE_FileIO,
               "ReadFromFile(): Invalid block size %d", m_nRegularBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -265,7 +265,9 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
     m_numBrushDefs = ReadByte();
     m_numSymbolDefs = ReadByte();
     m_numFontDefs = ReadByte();
-    m_numMapToolBlocks = ReadInt16();
+    m_numMapToolBlocks = ReadByte();
+
+    ReadByte(); // skip unused byte
 
     /* DatumId was never set (always 0) until MapInfo 7.8. See bug 910
      * MAP Version Number is 500 in this case.
@@ -288,7 +290,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
         CPLError(CE_Failure, CPLE_FileIO,
               "ReadFromFile(): Null xscale and/or yscale");
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
     m_XDispl = ReadDouble();
@@ -361,7 +363,7 @@ int     TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf,
 int TABMAPHeaderBlock::Int2Coordsys( GInt32 nX, GInt32 nY,
                                      double &dX, double &dY )
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
         return -1;
 
     // For some obscure reason, some guy decided that it would be
@@ -408,7 +410,7 @@ int TABMAPHeaderBlock::Coordsys2Int( double dX, double dY,
                                      GInt32 &nX, GInt32 &nY,
                                      GBool bIgnoreOverflow /*=FALSE*/ )
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
         return -1;
 
     // For some obscure reason, some guy decided that it would be
@@ -497,7 +499,7 @@ int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
                                           int nDeltaX, int nDeltaY,
                                           double &dX, double &dY )
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
         return -1;
 
     return Int2Coordsys(nCenterX+nDeltaX, nCenterY+nDeltaY, dX, dY);
@@ -521,7 +523,7 @@ int TABMAPHeaderBlock::ComprInt2Coordsys( GInt32 nCenterX, GInt32 nCenterY,
 int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
                                          double &dX, double &dY )
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
         return -1;
 
     dX = nX / m_XScale;
@@ -548,7 +550,7 @@ int TABMAPHeaderBlock::Int2CoordsysDist( GInt32 nX, GInt32 nY,
 int TABMAPHeaderBlock::Coordsys2IntDist( double dX, double dY,
                                          GInt32 &nX, GInt32 &nY )
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
         return -1;
 
     nX = (GInt32)(dX*m_XScale);
@@ -620,7 +622,7 @@ int TABMAPHeaderBlock::SetCoordsysBounds( double dXMin, double dYMin,
  **********************************************************************/
 int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Block has not been initialized yet!");
@@ -647,7 +649,7 @@ int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
  **********************************************************************/
 GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Block has not been initialized yet!");
@@ -676,7 +678,7 @@ GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
  **********************************************************************/
 int  TABMAPHeaderBlock::GetProjInfo(TABProjInfo *psProjInfo)
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Block has not been initialized yet!");
@@ -698,7 +700,7 @@ int  TABMAPHeaderBlock::GetProjInfo(TABProjInfo *psProjInfo)
  **********************************************************************/
 int  TABMAPHeaderBlock::SetProjInfo(TABProjInfo *psProjInfo)
 {
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "Block has not been initialized yet!");
@@ -728,7 +730,7 @@ int     TABMAPHeaderBlock::CommitToFile()
 {
     int i;
 
-    if ( m_pabyBuf == NULL || m_nRegularBlockSize == 0 )
+    if ( m_pabyBuf == nullptr || m_nRegularBlockSize == 0 )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
         "TABRawBinBlock::CommitToFile(): Block has not been initialized yet!");
@@ -795,10 +797,12 @@ int     TABMAPHeaderBlock::CommitToFile()
     WriteByte(m_numBrushDefs);
     WriteByte(m_numSymbolDefs);
     WriteByte(m_numFontDefs);
-    WriteInt16(m_numMapToolBlocks);
+    CPLAssert(m_numMapToolBlocks >= 0 && m_numMapToolBlocks <= 255);
+    WriteByte(static_cast<GByte>(m_numMapToolBlocks));
 
+    WriteZeros(1);      // unused byte
     WriteInt16(m_sProj.nDatumId);
-    WriteZeros(1);      // ???
+    WriteZeros(1);      // unused byte
 
     WriteByte(m_sProj.nProjId);
     WriteByte(m_sProj.nEllipsoidId);
@@ -912,12 +916,12 @@ void TABMAPHeaderBlock::UpdatePrecision()
 
 void TABMAPHeaderBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPHeaderBlock::Dump() -----\n");
 
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }

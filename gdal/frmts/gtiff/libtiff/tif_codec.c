@@ -1,5 +1,3 @@
-/* $Id: tif_codec.c,v 1.17 2015-08-19 02:31:04 bfriesen Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -72,6 +70,9 @@ static int NotConfigured(TIFF*, int);
 #ifndef LZMA_SUPPORT
 #define TIFFInitLZMA NotConfigured
 #endif
+#ifndef ZSTD_SUPPORT
+#define TIFFInitZSTD NotConfigured
+#endif
 
 /*
  * Compression schemes statically built into the library.
@@ -99,6 +100,7 @@ TIFFCodec _TIFFBuiltinCODECS[] = {
     { "SGILog",		COMPRESSION_SGILOG,	TIFFInitSGILog },
     { "SGILog24",	COMPRESSION_SGILOG24,	TIFFInitSGILog },
     { "LZMA",		COMPRESSION_LZMA,	TIFFInitLZMA },
+    { "ZSTD",		COMPRESSION_ZSTD,	TIFFInitZSTD },
     { NULL,             0,                      NULL }
 };
 

@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 
 OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn,
                           OGRAVCDataSource *poDSIn ) :
-    poFeatureDefn(NULL),
+    poFeatureDefn(nullptr),
     poDS(poDSIn),
     eSectionType(eSectionTypeIn)
 {}
@@ -53,14 +53,14 @@ OGRAVCLayer::OGRAVCLayer( AVCFileType eSectionTypeIn,
 OGRAVCLayer::~OGRAVCLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poFeatureDefn != NULL )
+    if( m_nFeaturesRead > 0 && poFeatureDefn != nullptr )
     {
         CPLDebug( "AVC", "%d features read on layer '%s'.",
                   static_cast<int>( m_nFeaturesRead ),
                   poFeatureDefn->GetName() );
     }
 
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
         poFeatureDefn->Release();
 }
 
@@ -71,16 +71,6 @@ OGRAVCLayer::~OGRAVCLayer()
 int OGRAVCLayer::TestCapability( const char * /* pszCap */ )
 {
     return FALSE;
-}
-
-/************************************************************************/
-/*                           GetSpatialRef()                            */
-/************************************************************************/
-
-OGRSpatialReference *OGRAVCLayer::GetSpatialRef()
-
-{
-    return poDS->GetSpatialRef();
 }
 
 /************************************************************************/
@@ -182,8 +172,14 @@ int OGRAVCLayer::SetupFeatureDefinition( const char *pszName )
         }
 
       default:
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
         break;
+    }
+
+    if( poFeatureDefn && poFeatureDefn->GetGeomFieldDefn(0) )
+    {
+        poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(
+            poDS->GetSpatialRef());
     }
 
     SetDescription( pszName );
@@ -230,6 +226,7 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
                                 psArc->pasVertices[iVert].x,
                                 psArc->pasVertices[iVert].y );
 
+          poLine->assignSpatialReference( GetSpatialRef() );
           poOGRFeature->SetGeometryDirectly( poLine );
 
 /* -------------------------------------------------------------------- */
@@ -288,8 +285,9 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /* -------------------------------------------------------------------- */
 /*      Apply Geometry                                                  */
 /* -------------------------------------------------------------------- */
-          poOGRFeature->SetGeometryDirectly(
-              new OGRPoint( psCNT->sCoord.x, psCNT->sCoord.y ) );
+          OGRPoint* poPoint = new OGRPoint( psCNT->sCoord.x, psCNT->sCoord.y );
+          poPoint->assignSpatialReference( GetSpatialRef() );
+          poOGRFeature->SetGeometryDirectly( poPoint );
 
 /* -------------------------------------------------------------------- */
 /*      Apply attributes.                                               */
@@ -315,8 +313,9 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /* -------------------------------------------------------------------- */
 /*      Apply Geometry                                                  */
 /* -------------------------------------------------------------------- */
-          poOGRFeature->SetGeometryDirectly(
-              new OGRPoint( psLAB->sCoord1.x, psLAB->sCoord1.y ) );
+          OGRPoint* poPoint = new OGRPoint( psLAB->sCoord1.x, psLAB->sCoord1.y );
+          poPoint->assignSpatialReference( GetSpatialRef() );
+          poOGRFeature->SetGeometryDirectly( poPoint );
 
 /* -------------------------------------------------------------------- */
 /*      Apply attributes.                                               */
@@ -345,9 +344,12 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 /*      Apply Geometry                                                  */
 /* -------------------------------------------------------------------- */
           if( psTXT->numVerticesLine > 0 )
-              poOGRFeature->SetGeometryDirectly(
-                  new OGRPoint( psTXT->pasVertices[0].x,
-                                psTXT->pasVertices[0].y ) );
+          {
+              OGRPoint* poPoint = new OGRPoint( psTXT->pasVertices[0].x,
+                                                psTXT->pasVertices[0].y );
+              poPoint->assignSpatialReference( GetSpatialRef() );
+              poOGRFeature->SetGeometryDirectly( poPoint );
+          }
 
 /* -------------------------------------------------------------------- */
 /*      Apply attributes.                                               */
@@ -362,7 +364,7 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
       }
 
       default:
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -373,7 +375,7 @@ OGRFeature *OGRAVCLayer::TranslateFeature( void *pAVCFeature )
 bool OGRAVCLayer::MatchesSpatialFilter( void *pFeature )
 
 {
-    if( m_poFilterGeom == NULL )
+    if( m_poFilterGeom == nullptr )
         return true;
 
     switch( eSectionType )
@@ -502,7 +504,7 @@ bool OGRAVCLayer::AppendTableDefinition( AVCTableDef *psTableDef )
 
         /* Strip off white space */
         strcpy( szFieldName, psFInfo->szName );
-        if( strstr(szFieldName," ") != NULL )
+        if( strstr(szFieldName," ") != nullptr )
             *(strstr(szFieldName," ")) = '\0';
 
         OGRFieldDefn oFDefn( szFieldName, OFTInteger );

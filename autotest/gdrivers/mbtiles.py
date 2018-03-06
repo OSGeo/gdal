@@ -36,6 +36,7 @@ from osgeo import ogr
 sys.path.append( '../pymod' )
 
 import gdaltest
+import webserver
 
 ###############################################################################
 # Get the mbtiles driver
@@ -74,22 +75,24 @@ def mbtiles_2():
 
     expected_cs_tab = [6324, 19386, 45258]
     expected_cs_tab_jpeg8 = [6016, 13996, 45168]
+    expected_cs_tab_jpeg9b = [6016, 14034, 45168]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).Checksum()
         if ds.GetRasterBand(i + 1).GetColorInterpretation() != gdal.GCI_RedBand + i:
             gdaltest.post_reason('bad color interpretation')
             return 'fail'
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
             gdaltest.post_reason('for band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
     expected_cs_tab = [16642, 15772, 10029]
     expected_cs_tab_jpeg8 = [16621, 14725, 8988]
+    expected_cs_tab_jpeg9b = [16621, 14723, 8988]
     for i in range(3):
         cs = ds.GetRasterBand(i + 1).GetOverview(0).Checksum()
         expected_cs = expected_cs_tab[i]
-        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i]:
+        if cs != expected_cs and cs != expected_cs_tab_jpeg8[i] and cs != expected_cs_tab_jpeg9b[i]:
             gdaltest.post_reason('for overview of band %d, cs = %d, different from expected_cs = %d' % (i + 1, cs, expected_cs))
             return 'fail'
 
@@ -123,12 +126,7 @@ def mbtiles_3():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    try:
-        drv = gdal.GetDriverByName( 'HTTP' )
-    except:
-        drv = None
-
-    if drv is None:
+    if gdal.GetDriverByName( 'HTTP' ) is None:
         return 'skip'
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
@@ -166,6 +164,117 @@ def mbtiles_3():
             return 'skip'
         return 'fail'
 
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_start_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg_three_bands():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/world_l1.mbtiles' : open('data/world_l1.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/world_l1.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_jpeg_single_band():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'JPEG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte_jpeg.mbtiles' : open('data/byte_jpeg.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte_jpeg.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_http_png():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'PNG' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.FileHandler(
+        {'/byte.mbtiles' : open('data/byte.mbtiles','rb').read()})
+    with webserver.install_http_handler(handler):
+        ds = gdal.Open('/vsicurl/http://localhost:%d/byte.mbtiles' % gdaltest.webserver_port)
+    if ds is None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def mbtiles_stop_webserver():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if gdaltest.webserver_port != 0:
+        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
 
@@ -410,6 +519,33 @@ def mbtiles_8():
     if got_ct is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    if out_ds.GetRasterBand(1).GetBlockSize() != [256,256]:
+        gdaltest.post_reason('fail')
+        print(out_ds.GetRasterBand(1).GetBlockSize())
+        return 'fail'
+    out_ds = None
+
+
+    # 512 pixel tiles
+    src_ds = gdal.Open('data/small_world_pct.tif')
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512']  )
+    out_ds = None
+    src_ds = None
+
+    expected_cs = [ 60844, 7388, 53813 ]
+    out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
+    got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    if got_cs != expected_cs:
+        gdaltest.post_reason('fail')
+        print('Got %s, expected %s' % (str(got_cs), str(expected_cs)))
+        return 'fail'
+    got_ct = out_ds.GetRasterBand(1).GetColorTable()
+    if got_ct is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if out_ds.GetRasterBand(1).GetBlockSize() != [512,512]:
+        gdaltest.post_reason('fail')
+        return 'fail'
     out_ds = None
 
     gdal.Unlink('/vsimem/mbtiles_8.mbtiles')
@@ -429,7 +565,7 @@ def mbtiles_9():
     src_ds = gdal.Open('data/byte.tif')
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
     src_ds = None
-    ds = ogr.Open('/vsimem/mbtiles_9.mbtiles', update = 1)
+    ds = ogr.Open('SQLITE:/vsimem/mbtiles_9.mbtiles', update = 1)
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
     ds = None
 
@@ -496,6 +632,98 @@ def mbtiles_11():
     return 'success'
 
 ###############################################################################
+
+def mbtiles_raster_open_in_vector_mode():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    ds = ogr.Open('data/byte.mbtiles')
+    if ds is not None:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def mbtiles_create():
+
+    if gdaltest.mbtiles_drv is None:
+        return 'skip'
+
+    filename = '/vsimem/mbtiles_create.mbtiles'
+    gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
+    with gdaltest.error_handler():
+        if gdal.Open(filename) is not None:
+            gdaltest.post_reason('fail')
+            return 'fail'
+
+    # Nominal case
+    gdal.Unlink(filename)
+    src_ds = gdal.Open('data/byte.mbtiles')
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    ds.SetProjection(src_ds.GetProjectionRef())
+
+    # Cannot modify geotransform once set" 
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open('data/byte.mbtiles')
+    # SetGeoTransform() not supported on read-only dataset"
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    # SetProjection() not supported on read-only dataset
+    with gdaltest.error_handler():
+        ret = ds.SetProjection(src_ds.GetProjectionRef())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Only EPSG:3857 supported on MBTiles dataset
+    with gdaltest.error_handler():
+        ret = ds.SetProjection('LOCAL_CS["foo"]')
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Only north-up non rotated geotransform supported
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([0,1,0,0,0,1])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+    ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
+    # Could not find an appropriate zoom level that matches raster pixel size
+    with gdaltest.error_handler():
+        ret = ds.SetGeoTransform([0,1,0,0,0,-1])
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+
+###############################################################################
 # Cleanup
 
 def mbtiles_cleanup():
@@ -509,6 +737,11 @@ gdaltest_list = [
     mbtiles_1,
     mbtiles_2,
     mbtiles_3,
+    mbtiles_start_webserver,
+    mbtiles_http_jpeg_three_bands,
+    mbtiles_http_jpeg_single_band,
+    mbtiles_http_png,
+    mbtiles_stop_webserver,
     mbtiles_4,
     mbtiles_5,
     mbtiles_6,
@@ -517,9 +750,11 @@ gdaltest_list = [
     mbtiles_9,
     mbtiles_10,
     mbtiles_11,
+    mbtiles_raster_open_in_vector_mode,
+    mbtiles_create,
     mbtiles_cleanup ]
 
-#gdaltest_list = [ mbtiles_1, mbtiles_9 ]
+# gdaltest_list = [ mbtiles_1, mbtiles_create ]
 
 if __name__ == '__main__':
 

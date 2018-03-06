@@ -210,6 +210,16 @@ int CPL_DLL     VSIIsCaseSensitiveFS( const char * pszFilename );
 
 int CPL_DLL     VSISupportsSparseFiles( const char* pszPath );
 
+int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
+
+const char CPL_DLL *VSIGetActualURL( const char* pszFilename );
+
+char CPL_DLL *VSIGetSignedURL( const char* pszFilename, char** papszOptions );
+
+const char CPL_DLL *VSIGetFileSystemOptions( const char* pszFilename );
+
+char CPL_DLL **VSIGetFileSystemsPrefixes( void );
+
 void CPL_DLL   *VSIFGetNativeFileDescriptorL( VSILFILE* );
 
 /* ==================================================================== */
@@ -290,9 +300,11 @@ GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
 char CPL_DLL **VSIReadDir( const char * );
 char CPL_DLL **VSIReadDirRecursive( const char *pszPath );
 char CPL_DLL **VSIReadDirEx( const char *pszPath, int nMaxFiles );
-int CPL_DLL VSIMkdir( const char * pathname, long mode );
-int CPL_DLL VSIRmdir( const char * pathname );
-int CPL_DLL VSIUnlink( const char * pathname );
+int CPL_DLL VSIMkdir( const char * pszPathname, long mode );
+int CPL_DLL VSIMkdirRecursive( const char * pszPathname, long mode );
+int CPL_DLL VSIRmdir( const char * pszDirname );
+int CPL_DLL VSIRmdirRecursive( const char * pszDirname );
+int CPL_DLL VSIUnlink( const char * pszFilename );
 int CPL_DLL VSIRename( const char * oldpath, const char * newpath );
 char CPL_DLL *VSIStrerror( int );
 GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
@@ -312,6 +324,12 @@ void VSIInstallS3FileHandler(void);
 void VSIInstallS3StreamingFileHandler(void);
 void VSIInstallGSFileHandler(void);
 void VSIInstallGSStreamingFileHandler(void);
+void VSIInstallAzureFileHandler(void);
+void VSIInstallAzureStreamingFileHandler(void);
+void VSIInstallOSSFileHandler(void);
+void VSIInstallOSSStreamingFileHandler(void);
+void VSIInstallSwiftFileHandler(void);
+void VSIInstallSwiftStreamingFileHandler(void);
 void VSIInstallGZipFileHandler(void); /* No reason to export that */
 void VSIInstallZipFileHandler(void); /* No reason to export that */
 void VSIInstallStdinHandler(void); /* No reason to export that */

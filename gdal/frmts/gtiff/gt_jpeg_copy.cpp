@@ -55,7 +55,7 @@ CPL_CVSID("$Id$")
 static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
 {
     // Test if we can directly copy original JPEG content if available.
-    if( poSrcDS->GetDriver() != NULL &&
+    if( poSrcDS->GetDriver() != nullptr &&
         poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
     {
         VRTDataset* poVRTDS = (VRTDataset* )poSrcDS;
@@ -272,15 +272,15 @@ CPLErr GTIFF_DirectCopyFromJPEG( GDALDataset* poDS, GDALDataset* poSrcDS,
 int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
 {
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if( poSrcDS == NULL )
+    if( poSrcDS == nullptr )
         return FALSE;
-    if( poSrcDS->GetDriver() == NULL )
+    if( poSrcDS->GetDriver() == nullptr )
         return FALSE;
     if( !EQUAL(GDALGetDriverShortName(poSrcDS->GetDriver()), "JPEG") )
         return FALSE;
 
     const char* pszCompress = CSLFetchNameValue(papszCreateOptions, "COMPRESS");
-    if( pszCompress == NULL || !EQUAL(pszCompress, "JPEG") )
+    if( pszCompress == nullptr || !EQUAL(pszCompress, "JPEG") )
         return FALSE;
 
     const int nBlockXSize =
@@ -290,7 +290,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
     int nMCUSize = 8;
     const char* pszSrcColorSpace =
         poSrcDS->GetMetadataItem("SOURCE_COLOR_SPACE", "IMAGE_STRUCTURE");
-    if( pszSrcColorSpace != NULL && EQUAL(pszSrcColorSpace, "YCbCr") )
+    if( pszSrcColorSpace != nullptr && EQUAL(pszSrcColorSpace, "YCbCr") )
         nMCUSize = 16;
 
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -301,7 +301,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
         CSLFetchNameValue(papszCreateOptions, "PHOTOMETRIC");
 
     const bool bCompatiblePhotometric =
-        pszPhotometric == NULL ||
+        pszPhotometric == nullptr ||
         (nMCUSize == 16 && EQUAL(pszPhotometric, "YCbCr")) ||
         (nMCUSize == 8 && nBands == 4 &&
          poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
@@ -316,7 +316,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
     if( !bCompatiblePhotometric )
         return FALSE;
 
-    if( nBands == 4 && pszPhotometric == NULL &&
+    if( nBands == 4 && pszPhotometric == nullptr &&
          poSrcDS->GetRasterBand(1)->GetColorInterpretation() == GCI_CyanBand &&
          poSrcDS->GetRasterBand(2)->GetColorInterpretation() ==
          GCI_MagentaBand &&
@@ -332,7 +332,7 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
         CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
 
     const bool bCompatibleInterleave =
-        pszInterleave == NULL ||
+        pszInterleave == nullptr ||
         (nBands > 1 && EQUAL(pszInterleave, "PIXEL")) ||
         nBands == 1;
     if( !bCompatibleInterleave )
@@ -341,10 +341,10 @@ int GTIFF_CanCopyFromJPEG( GDALDataset* poSrcDS, char** &papszCreateOptions )
     if( (nBlockXSize == nXSize || (nBlockXSize % nMCUSize) == 0) &&
          (nBlockYSize == nYSize || (nBlockYSize % nMCUSize) == 0) &&
          poSrcDS->GetRasterBand(1)->GetRasterDataType() == GDT_Byte &&
-         CSLFetchNameValue(papszCreateOptions, "NBITS") == NULL &&
-         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == NULL )
+         CSLFetchNameValue(papszCreateOptions, "NBITS") == nullptr &&
+         CSLFetchNameValue(papszCreateOptions, "JPEG_QUALITY") == nullptr )
     {
-        if( nMCUSize == 16 && pszPhotometric == NULL )
+        if( nMCUSize == 16 && pszPhotometric == nullptr )
             papszCreateOptions =
                 CSLSetNameValue(papszCreateOptions, "PHOTOMETRIC", "YCBCR");
         return TRUE;
@@ -395,13 +395,13 @@ void GTIFF_Set_TIFFTAG_JPEGTABLES( TIFF* hTIFF,
     if( nPhotometric != PHOTOMETRIC_YCBCR )
     {
         JQUANT_TBL* qtbl = sCInfo.quant_tbl_ptrs[1];
-        if( qtbl != NULL )
+        if( qtbl != nullptr )
             qtbl->sent_table = TRUE;
         JHUFF_TBL* htbl = sCInfo.dc_huff_tbl_ptrs[1];
-        if( htbl != NULL )
+        if( htbl != nullptr )
             htbl->sent_table = TRUE;
         htbl = sCInfo.ac_huff_tbl_ptrs[1];
-        if( htbl != NULL )
+        if( htbl != nullptr )
             htbl->sent_table = TRUE;
     }
     jpeg_write_tables( &sCInfo );
@@ -426,7 +426,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
                                                GDALDataset* poSrcDS )
 {
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if( poSrcDS == NULL )
+    if( poSrcDS == nullptr )
         return CE_Failure;
 
 /* -------------------------------------------------------------------- */
@@ -434,7 +434,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
 /* -------------------------------------------------------------------- */
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if( fpJPEG == NULL )
+    if( fpJPEG == nullptr )
         return CE_Failure;
 
     struct jpeg_error_mgr sJErr;
@@ -486,7 +486,7 @@ CPLErr GTIFF_CopyFromJPEG_WriteAdditionalTags( TIFF* hTIFF,
          * default value is inappropriate for YCbCr.  Fill in the
          * proper value if application didn't set it.
          */
-        float *ref = NULL;
+        float *ref = nullptr;
         if( !TIFFGetField(hTIFF, TIFFTAG_REFERENCEBLACKWHITE, &ref) )
         {
             long top = 1L << nBitsPerSample;
@@ -800,11 +800,11 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     bShouldFallbackToNormalCopyIfFail = TRUE;
 
     poSrcDS = GetUnderlyingDataset(poSrcDS);
-    if( poSrcDS == NULL )
+    if( poSrcDS == nullptr )
         return CE_Failure;
 
     VSILFILE* fpJPEG = VSIFOpenL(poSrcDS->GetDescription(), "rb");
-    if( fpJPEG == NULL )
+    if( fpJPEG == nullptr )
         return CE_Failure;
 
     CPLErr eErr = CE_None;
@@ -830,7 +830,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     jpeg_create_decompress(&sDInfo);
 
     // This is to address bug related in ticket #1795.
-    if( CPLGetConfigOption("JPEGMEM", NULL) == NULL )
+    if( CPLGetConfigOption("JPEGMEM", nullptr) == nullptr )
     {
         // If the user doesn't provide a value for JPEGMEM, be sure that at
         // least 500 MB will be used before creating the temporary file.
@@ -869,7 +869,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
     // mechanism that can expose a pseudo one-line-strip whereas the
     // real layout is a single big strip.
 
-    TIFF* hTIFF = static_cast<TIFF*>( poDS->GetInternalHandle(NULL) );
+    TIFF* hTIFF = static_cast<TIFF*>( poDS->GetInternalHandle(nullptr) );
     if( TIFFIsTiled(hTIFF) )
     {
         TIFFGetField( hTIFF, TIFFTAG_TILEWIDTH, &(nBlockXSize) );
@@ -927,7 +927,7 @@ CPLErr GTIFF_CopyFromJPEG(GDALDataset* poDS, GDALDataset* poSrcDS,
 
             if( !pfnProgress((iY * nXBlocks + iX + 1) * 1.0 /
                                 (nXBlocks * nYBlocks),
-                             NULL, pProgressData ) )
+                             nullptr, pProgressData ) )
                 eErr = CE_Failure;
         }
     }

@@ -49,14 +49,14 @@ const char *GNMNetwork::GetProjectionRef()
 
 char **GNMNetwork::GetFileList()
 {
-    return NULL;
+    return nullptr;
 }
 
 //--- C API --------------------------------------------------------------------
 
 const char* CPL_STDCALL GNMGetName (GNMNetworkH hNet)
 {
-    VALIDATE_POINTER1( hNet, "GNMGetVersion", NULL );
+    VALIDATE_POINTER1( hNet, "GNMGetVersion", nullptr );
 
     return ((GNMNetwork*)hNet)->GetName();
 }
@@ -77,7 +77,7 @@ CPLErr CPL_STDCALL GNMDisconnectAll (GNMNetworkH hNet)
 
 OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID (GNMNetworkH hNet, GNMGFID nGFID)
 {
-    VALIDATE_POINTER1( hNet, "GNMGetFeatureByGlobalFID", NULL );
+    VALIDATE_POINTER1( hNet, "GNMGetFeatureByGlobalFID", nullptr );
 
     return (OGRFeatureH) ((GNMNetwork*)hNet)->GetFeatureByGlobalFID(nGFID);
 }
@@ -86,8 +86,20 @@ OGRLayerH CPL_STDCALL GNMGetPath (GNMNetworkH hNet, GNMGFID nStartFID,
                               GNMGFID nEndFID, GNMGraphAlgorithmType eAlgorithm,
                               char** papszOptions)
 {
-    VALIDATE_POINTER1( hNet, "GNMGetPath", NULL );
+    VALIDATE_POINTER1( hNet, "GNMGetPath", nullptr );
 
     return (OGRLayerH) ((GNMNetwork*)hNet)->GetPath(nStartFID, nEndFID,
                                                     eAlgorithm, papszOptions);
+}
+
+GNMNetworkH CPL_STDCALL GNMCastToNetwork(GDALMajorObjectH hBase)
+{
+    return reinterpret_cast<GNMNetworkH>(
+        dynamic_cast<GNMNetwork*>(reinterpret_cast<GDALMajorObject*>(hBase)));
+}
+
+GNMGenericNetworkH CPL_STDCALL GNMCastToGenericNetwork(GDALMajorObjectH hBase)
+{
+    return reinterpret_cast<GNMGenericNetworkH>(
+        dynamic_cast<GNMNetwork*>(reinterpret_cast<GDALMajorObject*>(hBase)));
 }

@@ -193,11 +193,63 @@ CPL_C_END
 #else
 #  define VALIDATE_POINTER_ERR CE_Failure
 #endif
+
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+
+extern "C++"
+{
+
+#include <string>
+
+class CPLErrorHandlerPusher
+{
+    public:
+        explicit CPLErrorHandlerPusher(CPLErrorHandler hHandler)
+        {
+            CPLPushErrorHandler(hHandler);
+        }
+
+        CPLErrorHandlerPusher(CPLErrorHandler hHandler, void* user_data)
+        {
+            CPLPushErrorHandlerEx(hHandler, user_data);
+        }
+
+        ~CPLErrorHandlerPusher()
+        {
+            CPLPopErrorHandler();
+        }
+};
+
+class CPLErrorStateBackuper
+{
+        CPLErrorNum m_nLastErrorNum;
+        CPLErr      m_nLastErrorType;
+        std::string m_osLastErrorMsg;
+
+    public:
+        CPLErrorStateBackuper() :
+            m_nLastErrorNum(CPLGetLastErrorNo()),
+            m_nLastErrorType(CPLGetLastErrorType()),
+            m_osLastErrorMsg(CPLGetLastErrorMsg())
+        {}
+
+        ~CPLErrorStateBackuper()
+        {
+            CPLErrorSetState(m_nLastErrorType, m_nLastErrorNum,
+                             m_osLastErrorMsg.c_str());
+        }
+};
+
+}
+
+#endif
+
 /*! @endcond */
 
 /** Validate that a pointer is not NULL */
 #define VALIDATE_POINTER0(ptr, func) \
-   do { if( NULL == ptr ) \
+   do { if( NULL_OR_NULLPTR == ptr ) \
       { \
         CPLErr const ret = VALIDATE_POINTER_ERR; \
         CPLError( ret, CPLE_ObjectNull, \
@@ -206,7 +258,7 @@ CPL_C_END
 
 /** Validate that a pointer is not NULL, and return rc if it is NULL */
 #define VALIDATE_POINTER1(ptr, func, rc) \
-   do { if( NULL == ptr ) \
+   do { if( NULL_OR_NULLPTR == ptr ) \
       { \
           CPLErr const ret = VALIDATE_POINTER_ERR; \
           CPLError( ret, CPLE_ObjectNull, \

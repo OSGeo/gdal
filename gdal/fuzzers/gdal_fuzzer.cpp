@@ -75,6 +75,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     // to avoid timeout in WMS driver
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
+    CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
@@ -165,23 +166,29 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 // Could probably be fixed for the CHUNKY_STRIP_READ_SUPPORT
                 // mode.
                 // Workaround https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2606
-                if( ((nBYSize == 1 && nYSizeToRead > 1) ||
-                     nBXSize < GDALGetRasterXSize(hDS)) &&
-                    GDALGetRasterYSize(hDS) > INT_MAX /
-                            static_cast<int>(sizeof(GUInt16)) /
-                                nSimultaneousBands / GDALGetRasterXSize(hDS) &&
+                const char* pszCompress =
+                    GDALGetMetadataItem(hDS, "COMPRESSION", "IMAGE_STRUCTURE");
+                if( pszCompress != nullptr &&
+                    ((nBYSize == 1 && nYSizeToRead > 1 &&
+                      GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
+                                        "BLOCK_OFFSET_0_1", "TIFF") == nullptr) ||
+                     nBXSize != GDALGetRasterXSize(hDS)) &&
                     GDALGetDatasetDriver(hDS) == GDALGetDriverByName("GTiff") )
                 {
-                    const char* pszCompress =
-                        GDALGetMetadataItem(hDS, "COMPRESSION",
-                                            "IMAGE_STRUCTURE");
-                    if( pszCompress && EQUAL(pszCompress, "PIXARLOG") )
+                    if( EQUAL(pszCompress, "PIXARLOG") &&
+                        GDALGetRasterYSize(hDS) > INT_MAX /
+                            static_cast<int>(sizeof(GUInt16)) /
+                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
                     {
-                        if( GDALGetMetadataItem(GDALGetRasterBand(hDS, 1),
-                                               "BLOCK_OFFSET_0_1", NULL) == NULL )
-                        {
-                            bDoCheckSum = false;
-                        }
+                        bDoCheckSum = false;
+                    }
+                    // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2874
+                    else if( EQUAL(pszCompress, "SGILOG24") &&
+                        GDALGetRasterYSize(hDS) > INT_MAX /
+                            static_cast<int>(sizeof(GUInt32)) /
+                                nSimultaneousBands / GDALGetRasterXSize(hDS) )
+                    {
+                        bDoCheckSum = false;
                     }
                 }
 
@@ -207,6 +214,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             for( int i = 0; i < nBands; i++ )
             {
                 GDALRasterBandH hBand = GDALGetRasterBand(hDS, i+1);
+                CPLDebug("FUZZER", "Checksum band %d: %d,%d,%d,%d",
+                         i+1,0, 0, nXSizeToRead, nYSizeToRead);
                 GDALChecksumImage(hBand, 0, 0, nXSizeToRead, nYSizeToRead);
             }
         }
@@ -219,7 +228,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALGetGCPCount(hDS);
         GDALGetGCPs(hDS);
         GDALGetGCPProjection(hDS);
-        GDALGetMetadata(hDS, NULL);
+        GDALGetMetadata(hDS, nullptr);
 
         GDALClose(hDS);
     }

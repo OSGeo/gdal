@@ -46,18 +46,19 @@ OGROCIWritableLayer::OGROCIWritableLayer()
 
     nOrdinalCount = 0;
     nOrdinalMax = 0;
-    padfOrdinals = NULL;
+    padfOrdinals = nullptr;
 
     nElemInfoCount = 0;
     nElemInfoMax = 0;
-    panElemInfo = NULL;
+    panElemInfo = nullptr;
 
     bLaunderColumnNames = TRUE;
     bPreservePrecision = FALSE;
+    nDefaultStringSize = DEFAULT_STRING_SIZE;
     bTruncationReported = FALSE;
-    poSRS = NULL;
+    poSRS = nullptr;
 
-    papszOptions = NULL;
+    papszOptions = nullptr;
 }
 
 /************************************************************************/
@@ -290,7 +291,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     else if( oField.GetType() == OFTString )
     {
         if( oField.GetWidth() == 0 || !bPreservePrecision )
-            strcpy( szFieldType, "VARCHAR2(2047)" );
+            snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
         else
             snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", oField.GetWidth() );
     }
@@ -304,12 +305,12 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     }
     else if( bApproxOK )
     {
-        oField.SetDefault(NULL);
+        oField.SetDefault(nullptr);
         CPLError( CE_Warning, CPLE_NotSupported,
                   "Can't create field %s with type %s on Oracle layers.  Creating as VARCHAR.",
                   oField.GetNameRef(),
                   OGRFieldDefn::GetFieldTypeName(oField.GetType()) );
-        strcpy( szFieldType, "VARCHAR2(2047)" );
+        snprintf( szFieldType, sizeof(szFieldType), "VARCHAR2(%d)", nDefaultStringSize );
     }
     else
     {
@@ -345,7 +346,7 @@ OGRErr OGROCIWritableLayer::CreateField( OGRFieldDefn *poFieldIn, int bApproxOK 
     }
     snprintf( oCommand.GetString(), nCommandSize, "ALTER TABLE %s ADD \"%s\" %s",
              poFeatureDefn->GetName(), szFieldName, szFieldType);
-    if( oField.GetDefault() != NULL && !oField.IsDefaultDriverSpecific() )
+    if( oField.GetDefault() != nullptr && !oField.IsDefaultDriverSpecific() )
     {
         snprintf( oCommand.GetString() + strlen(oCommand.GetString()),
                   nCommandSize - strlen(oCommand.GetString()),
@@ -386,7 +387,7 @@ void OGROCIWritableLayer::ParseDIMINFO( const char *pszOptionName,
     char **papszTokens;
 
     pszUserDIMINFO = CSLFetchNameValue( papszOptions, pszOptionName );
-    if( pszUserDIMINFO == NULL )
+    if( pszUserDIMINFO == nullptr )
         return;
 
     papszTokens =
@@ -418,7 +419,7 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
     nOrdinalCount = 0;
     nElemInfoCount = 0;
 
-    if( poGeometry == NULL )
+    if( poGeometry == nullptr )
         return OGRERR_FAILURE;
 
 /* ==================================================================== */

@@ -103,7 +103,8 @@ static const char * const apszGcsNameMapping[] = {
 "Militar_Geographische_Institute", "GCS_MGI",
 "ED50", "GCS_European_1950",
 "ETRS89", "GCS_ETRS_1989",
-NULL, NULL};
+"NAD27_Michigan", "GCS_North_American_Michigan", 
+nullptr, nullptr};
 
 static const char * const apszGcsNameMappingBasedOnProjCS[] = {
 "EUREF_FIN_TM35FIN", "GCS_ETRS_1989", "GCS_EUREF_FIN",
@@ -118,7 +119,7 @@ static const char * const apszGcsNameMappingBasedOnProjCS[] = {
 "Belge_Lambert_1950", "GCS_Belge_1950", "GCS_Belge_1950_Brussels",
 "MONREF_1997_UTM_Zone_46N", "GCS_ITRF_2000", "GCS_MONREF_1997",
 "MONREF_1997_UTM_Zone_47N", "GCS_ITRF_2000", "GCS_MONREF_1997",
-NULL, NULL, NULL};
+nullptr, nullptr, nullptr};
 
 static const char * const apszGcsNameMappingBasedOnUnit[] = {
 "Voirol_Unifie_1960", "Degree", "GCS_Voirol_Unifie_1960_Degree",
@@ -127,7 +128,7 @@ static const char * const apszGcsNameMappingBasedOnUnit[] = {
 "Voirol_1875", "Degree", "GCS_Voirol_1875_Degree",
 "Voirol 1875", "Degree", "GCS_Voirol_1875_Degree",
 "NTF", "Grad", "GCS_NTF_Paris",
-NULL, NULL, NULL};
+nullptr, nullptr, nullptr};
 
 static const char * const apszGcsNameMappingBasedPrime[] = {
 "Bern_1898", "Bern", "GCS_Bern_1898_Bern",
@@ -138,7 +139,7 @@ static const char * const apszGcsNameMappingBasedPrime[] = {
 "NGO_1948", "Oslo", "GCS_NGO_1948_Oslo",
 "S_JTSK", "Ferro", "GCS_S_JTSK_Ferro",
 "Stockholm_1938", "Stockholm", "GCS_RT38_Stockholm",
-NULL, NULL, NULL};
+nullptr, nullptr, nullptr};
 
 static const char * const apszInvFlatteningMapping[] = {
 "293.464999999", "293.465",
@@ -183,7 +184,7 @@ static const char * const apszInvFlatteningMapping[] = {
 "300.80169999999", "300.8017",
 "300.80170000000", "300.8017",
 "300.80170009712", "300.8017",
-NULL, NULL};
+nullptr, nullptr};
 
 static const char * const apszParamValueMapping[] = {
 "Cassini", "false_easting", "283799.9999", "283800.0",
@@ -201,7 +202,7 @@ static const char * const apszParamValueMapping[] = {
 "Krovak", "longitude_of_center", "24.83333333333334", "24.83333333333333",
 "Hotine_Oblique_Mercator_Azimuth_Center", "longitude_of_center", "7.439583333333334", "7.439583333333333",
 "Hotine_Oblique_Mercator_Azimuth_Center", "latitude_of_center", "46.95240555555557", "46.95240555555556",
-NULL, NULL, NULL, NULL};
+nullptr, nullptr, nullptr, nullptr};
 
 static const char * const apszParamNameMapping[] = {
 "Lambert_Azimuthal_Equal_Area", "longitude_of_center", "Central_Meridian",
@@ -216,7 +217,7 @@ static const char * const apszParamNameMapping[] = {
 "Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "longitude_of_point_1", "Longitude_Of_1st_Point",
 "Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "latitude_of_point_2", "Latitude_Of_2nd_Point",
 "Hotine_Oblique_Mercator_Two_Point_Natural_Origin", "longitude_of_point_2", "Longitude_Of_2nd_Point",
-NULL, NULL, NULL};
+nullptr, nullptr, nullptr};
 
 static const char * const apszDeleteParametersBasedOnProjection[] = {
 "Stereographic_South_Pole", "scale_factor",
@@ -230,12 +231,12 @@ static const char * const apszDeleteParametersBasedOnProjection[] = {
 "Plate_Carree", "standard_parallel_1",
 "Hotine_Oblique_Mercator_Azimuth_Center", "rectified_grid_angle",
 "Hotine_Oblique_Mercator_Azimuth_Natural_Origin", "rectified_grid_angle",
-NULL, NULL};
+nullptr, nullptr};
 
 static const char * const apszAddParametersBasedOnProjection[] = {
 "Cassini", "scale_factor", "1.0",
 "Mercator", "standard_parallel_1", "0.0",
-NULL, NULL, NULL};
+nullptr, nullptr, nullptr};
 
 static const int statePlaneZoneMapping[] = {
 /* old zone code, prj code, new zone code */

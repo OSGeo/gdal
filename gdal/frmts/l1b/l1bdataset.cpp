@@ -467,7 +467,7 @@ CPLErr L1BRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* -------------------------------------------------------------------- */
 /*      Read data into the buffer.                                      */
 /* -------------------------------------------------------------------- */
-    GUInt16     *iScan = NULL;          // Unpacked 16-bit scanline buffer
+    GUInt16     *iScan = nullptr;          // Unpacked 16-bit scanline buffer
     int         i, j;
 
     switch (poGDS->iDataFormat)
@@ -560,7 +560,7 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
     // sStartTime
     // sStopTime
     bHighGCPDensityStrategy(CPLTestBool(CPLGetConfigOption("L1B_HIGH_GCP_DENSITY", "TRUE"))),
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     nGCPCount(0),
     iGCPOffset(0),
     iGCPCodeOffset(0),
@@ -588,12 +588,12 @@ L1BDataset::L1BDataset( L1BFileFormat eL1BFormatIn ) :
         "PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",8901]],"
         "UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",9108]],"
         "AUTHORITY[\"EPSG\",4322]]" )),
-    fp(NULL),
+    fp(nullptr),
     bGuessDataFormat(FALSE),
     // L1B is normally big-endian ordered, so byte-swap on little-endian CPU.
     bByteSwap(CPL_IS_LSB),
     bExposeMaskBand(FALSE),
-    poMaskBand(NULL)
+    poMaskBand(nullptr)
 {}
 
 /************************************************************************/
@@ -612,7 +612,7 @@ L1BDataset::~L1BDataset()
     }
     if ( pszGCPProjection )
         CPLFree( pszGCPProjection );
-    if( fp != NULL )
+    if( fp != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
     delete poMaskBand;
 }
@@ -853,7 +853,7 @@ void L1BDataset::ProcessRecordHeaders()
               SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL( pRecordHeader, 1, nRecordDataStart, fp ));
 
-    FetchTimeCode( &sStopTime, pRecordHeader, NULL );
+    FetchTimeCode( &sStopTime, pRecordHeader, nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Pick a skip factor so that we will get roughly 20 lines         */
@@ -899,7 +899,7 @@ void L1BDataset::ProcessRecordHeaders()
     {
         pasGCPList = (GDAL_GCP *)VSI_CALLOC_VERBOSE(
                                     nExpectedGCPs, sizeof(GDAL_GCP) );
-        if (pasGCPList == NULL)
+        if (pasGCPList == nullptr)
         {
             CPLFree( pRecordHeader );
             return;
@@ -978,7 +978,7 @@ void L1BDataset::ProcessRecordHeaders()
         if( nGCPCount == 0 )
         {
             CPLFree( pasGCPList );
-            pasGCPList = NULL;
+            pasGCPList = nullptr;
         }
     }
 
@@ -1017,8 +1017,8 @@ void L1BDataset::FetchMetadata()
         return;
     }
 
-    const char* pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", NULL);
-    if( pszDir == NULL )
+    const char* pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", nullptr);
+    if( pszDir == nullptr )
     {
         pszDir = CPLGetPath(GetDescription());
         if( pszDir[0] == '\0' )
@@ -1026,7 +1026,7 @@ void L1BDataset::FetchMetadata()
     }
     CPLString osMetadataFile(CPLSPrintf("%s/%s_metadata.csv", pszDir, CPLGetFilename(GetDescription())));
     VSILFILE* fpCSV = VSIFOpenL(osMetadataFile, "wb");
-    if( fpCSV == NULL )
+    if( fpCSV == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create metadata file : %s",
                  osMetadataFile.c_str());
@@ -1056,7 +1056,7 @@ void L1BDataset::FetchMetadata()
         GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
-        FetchTimeCode( &timeCode, pabyRecordHeader, NULL );
+        FetchTimeCode( &timeCode, pabyRecordHeader, nullptr );
 
         CPL_IGNORE_RET_VAL(VSIFPrintfL(fpCSV,
                     "%d,%d,%d,%d,%d,",
@@ -1118,8 +1118,8 @@ void L1BDataset::FetchMetadata()
 void L1BDataset::FetchMetadataNOAA15()
 {
     int i,j;
-    const char* pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", NULL);
-    if( pszDir == NULL )
+    const char* pszDir = CPLGetConfigOption("L1B_METADATA_DIRECTORY", nullptr);
+    if( pszDir == nullptr )
     {
         pszDir = CPLGetPath(GetDescription());
         if( pszDir[0] == '\0' )
@@ -1127,7 +1127,7 @@ void L1BDataset::FetchMetadataNOAA15()
     }
     CPLString osMetadataFile(CPLSPrintf("%s/%s_metadata.csv", pszDir, CPLGetFilename(GetDescription())));
     VSILFILE* fpCSV = VSIFOpenL(osMetadataFile, "wb");
-    if( fpCSV == NULL )
+    if( fpCSV == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create metadata file : %s",
                  osMetadataFile.c_str());
@@ -1203,7 +1203,7 @@ void L1BDataset::FetchMetadataNOAA15()
         GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
-        FetchTimeCode( &timeCode, pabyRecordHeader, NULL );
+        FetchTimeCode( &timeCode, pabyRecordHeader, nullptr );
 
         /* Clock drift delta */
         i16 = GetInt16(pabyRecordHeader + 6);
@@ -1335,7 +1335,7 @@ void L1BDataset::FetchMetadataNOAA15()
 /*                           EBCDICToASCII                              */
 /************************************************************************/
 
-static const GByte EBCDICToASCII[] =
+constexpr GByte EBCDICToASCII[] =
 {
 0x00, 0x01, 0x02, 0x03, 0x9C, 0x09, 0x86, 0x7F, 0x97, 0x8D, 0x8E, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 0x10, 0x11, 0x12, 0x13, 0x9D, 0x85, 0x08, 0x87, 0x18, 0x19, 0x92, 0x8F, 0x1C, 0x1D, 0x1E, 0x1F,
@@ -1806,7 +1806,7 @@ CPLErr L1BDataset::ProcessDatasetHeader(const char* pszFilename)
 
     SetMetadataItem( "DATASET_NAME", szDatasetName );
 
-    const char *pszText = NULL;
+    const char *pszText = nullptr;
     switch( eSpacecraftID )
     {
         case TIROSN:
@@ -2306,7 +2306,7 @@ class L1BGeolocRasterBand: public GDALRasterBand
             L1BGeolocRasterBand(L1BGeolocDataset* poDS, int nBand);
 
             virtual CPLErr IReadBlock(int, int, void*) override;
-            virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+            virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -2514,7 +2514,7 @@ CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
                 iFirstNonValid = poL1BDS->iGCPStart + nGotGCPs * poL1BDS->iGCPStep + poL1BDS->iGCPStep / 2;
             for(i=iFirstNonValid; i<nRasterXSize; i++)
             {
-                padfData[i] = GetNoDataValue(NULL);
+                padfData[i] = GetNoDataValue(nullptr);
             }
             if( iFirstNonValid > 0 )
             {
@@ -2530,7 +2530,7 @@ CPLErr L1BGeolocRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
             padfData[i] = (nBand == 1) ? pasGCPList[i].dfGCPX : pasGCPList[i].dfGCPY;
         }
         for(i=nGotGCPs;i<nRasterXSize;i++)
-            padfData[i] = GetNoDataValue(NULL);
+            padfData[i] = GetNoDataValue(nullptr);
     }
 
     if( poL1BDS->eLocationIndicator == ASCEND )
@@ -2604,7 +2604,7 @@ class L1BSolarZenithAnglesRasterBand: public GDALRasterBand
                                         int nBand );
 
         virtual CPLErr IReadBlock(int, int, void*) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -2724,7 +2724,7 @@ CPLErr L1BSolarZenithAnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     }
 
     for(;i<nRasterXSize;i++)
-        pafData[i] = static_cast<float>(GetNoDataValue(NULL));
+        pafData[i] = static_cast<float>(GetNoDataValue(nullptr));
 
     if( poL1BDS->eLocationIndicator == ASCEND )
     {
@@ -3025,8 +3025,19 @@ L1BFileFormat L1BDataset::DetectFormat( const char* pszFilename,
                               const GByte* pabyHeader, int nHeaderBytes )
 
 {
-    if (pabyHeader == NULL || nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
+    if (pabyHeader == nullptr || nHeaderBytes < L1B_NOAA9_HEADER_SIZE)
         return L1B_NONE;
+
+    // try NOAA-18 formats
+    if ( nHeaderBytes > 22 + 10
+        && *(pabyHeader + 0) == '\0'
+        && *(pabyHeader + 1) == '\0'
+        && *(pabyHeader + 2) == '\0'
+        && *(pabyHeader + 3) == '\0'
+        && *(pabyHeader + 4) == '\0'
+        && *(pabyHeader + 5) == '\0'
+        && EQUALN((const char*)(pabyHeader + 22), "/N1BD/N18/", 10))
+        return L1B_NOAA15_NOHDR;
 
     // We will try the NOAA-15 and later formats first
     if ( nHeaderBytes > L1B_NOAA15_HEADER_SIZE + 61
@@ -3121,8 +3132,8 @@ int L1BDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    GDALDataset* poOutDS = NULL;
-    VSILFILE* fp = NULL;
+    GDALDataset* poOutDS = nullptr;
+    VSILFILE* fp = nullptr;
     CPLString osFilename = poOpenInfo->pszFilename;
     int bAskGeolocationDS = FALSE;
     int bInterpolGeolocationDS = FALSE;
@@ -3138,7 +3149,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
          STARTS_WITH_CI(poOpenInfo->pszFilename, "L1B_CLOUDS:") )
     {
         GByte abyHeader[1024];
-        const char* pszFilename = NULL;
+        const char* pszFilename = nullptr;
         if( STARTS_WITH_CI(poOpenInfo->pszFilename, "L1BGCPS_INTERPOL:") )
         {
             bAskGeolocationDS = TRUE;
@@ -3175,7 +3186,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Can't open file \"%s\".", osFilename.c_str() );
-            return NULL;
+            return nullptr;
         }
         CPL_IGNORE_RET_VAL(VSIFReadL( abyHeader, 1, sizeof(abyHeader)-1, fp));
         abyHeader[sizeof(abyHeader)-1] = '\0';
@@ -3189,9 +3200,9 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if ( eL1BFormat == L1B_NONE )
     {
-        if( fp != NULL )
+        if( fp != nullptr )
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3202,9 +3213,9 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The L1B driver does not support update access to existing"
                   " datasets.\n" );
-        if( fp != NULL )
+        if( fp != nullptr )
             CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -3215,7 +3226,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS = new L1BDataset( eL1BFormat );
 
-    if( fp == NULL )
+    if( fp == nullptr )
         fp = VSIFOpenL( osFilename, "rb" );
     poDS->fp = fp;
     if ( !poDS->fp || VSIStatL(osFilename, &sStat) != 0 )
@@ -3338,7 +3349,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else if( bAskAnglesDS )
@@ -3348,7 +3359,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else if( bAskCloudsDS )
@@ -3358,7 +3369,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
         else
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -3403,7 +3414,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( eL1BFormat == L1B_NOAA9 )
     {
-        char** papszSubdatasets = NULL;
+        char** papszSubdatasets = nullptr;
         papszSubdatasets = CSLSetNameValue(papszSubdatasets, "SUBDATASET_1_NAME",
                                         CPLSPrintf("L1B_SOLAR_ZENITH_ANGLES:\"%s\"", osFilename.c_str()));
         papszSubdatasets = CSLSetNameValue(papszSubdatasets, "SUBDATASET_1_DESC",
@@ -3413,7 +3424,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
     }
     else
     {
-        char** papszSubdatasets = NULL;
+        char** papszSubdatasets = nullptr;
         papszSubdatasets = CSLSetNameValue(papszSubdatasets, "SUBDATASET_1_NAME",
                                         CPLSPrintf("L1B_ANGLES:\"%s\"", osFilename.c_str()));
         papszSubdatasets = CSLSetNameValue(papszSubdatasets, "SUBDATASET_1_DESC",
@@ -3516,7 +3527,7 @@ GDALDataset *L1BDataset::Open( GDALOpenInfo * poOpenInfo )
 
 bad:
     delete poDS;
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -3526,7 +3537,7 @@ bad:
 void GDALRegister_L1B()
 
 {
-    if( GDALGetDriverByName( "L1B" ) != NULL )
+    if( GDALGetDriverByName( "L1B" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

@@ -177,7 +177,7 @@ NWT_GRCRasterBand::~NWT_GRCRasterBand() {}
 
 double NWT_GRCRasterBand::GetNoDataValue( int *pbSuccess )
 {
-    if( pbSuccess != NULL )
+    if( pbSuccess != nullptr )
         *pbSuccess = TRUE;
 
     return 0.0;  // Northwood grid 0 is always null.
@@ -242,11 +242,11 @@ CPLErr NWT_GRCRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /* ==================================================================== */
 /************************************************************************/
 NWT_GRCDataset::NWT_GRCDataset() :
-    fp(NULL),
-    pGrd(NULL),
-    papszCategories(NULL),
-    pszProjection(NULL),
-    poColorTable(NULL)
+    fp(nullptr),
+    pGrd(nullptr),
+    papszCategories(nullptr),
+    pszProjection(nullptr),
+    poColorTable(nullptr)
 {
     memset(abyHeader, 0, sizeof(abyHeader) );
 }
@@ -260,10 +260,10 @@ NWT_GRCDataset::~NWT_GRCDataset()
     CSLDestroy( papszCategories );
 
     FlushCache();
-    pGrd->fp = NULL;       // this prevents nwtCloseGrid from closing the fp
+    pGrd->fp = nullptr;       // this prevents nwtCloseGrid from closing the fp
     nwtCloseGrid( pGrd );
 
-    if( fp != NULL )
+    if( fp != nullptr )
         VSIFCloseL( fp );
 
     CPLFree( pszProjection );
@@ -290,7 +290,7 @@ CPLErr NWT_GRCDataset::GetGeoTransform( double *padfTransform )
 /************************************************************************/
 const char *NWT_GRCDataset::GetProjectionRef()
 {
-    if (pszProjection == NULL)
+    if (pszProjection == nullptr)
     {
         OGRSpatialReference *poSpatialRef
           = MITABCoordSys2SpatialRef( pGrd->cMICoordSys );
@@ -332,7 +332,7 @@ int NWT_GRCDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -340,10 +340,10 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
     NWT_GRCDataset *poDS = new NWT_GRCDataset();
 
     poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fp == NULL)
+    if (poDS->fp == nullptr)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -357,10 +357,10 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (!nwt_ParseHeader( poDS->pGrd, reinterpret_cast<char *>( poDS->abyHeader ) ) ||
         !GDALCheckDatasetDimensions(poDS->pGrd->nXSide, poDS->pGrd->nYSide) ||
-        poDS->pGrd->stClassDict == NULL)
+        poDS->pGrd->stClassDict == nullptr)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( poDS->pGrd->nBitsPerPixel != 8 &&
@@ -368,7 +368,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->pGrd->nBitsPerPixel != 32 )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = poDS->pGrd->nXSide;
@@ -402,7 +402,7 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_NWT_GRC()
 
 {
-    if( GDALGetDriverByName( "NWT_GRC" ) != NULL )
+    if( GDALGetDriverByName( "NWT_GRC" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

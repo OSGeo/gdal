@@ -42,8 +42,8 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
     poReader(poReaderIn),
     poDS(poDSIn),
     nFeatureCount(0),
-    panModuleFCount(NULL),
-    panModuleOffset(NULL),
+    panModuleFCount(nullptr),
+    panModuleOffset(nullptr),
     iLastFeatureId(0),
     iLastModule(-1)
 {
@@ -75,7 +75,7 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
         panModuleOffset[poDS->GetModuleCount()] = nFeatureCount;
     }
 
-    poReader->SetModule( NULL );
+    poReader->SetModule( nullptr );
 }
 
 /************************************************************************/
@@ -85,7 +85,7 @@ OGRTigerLayer::OGRTigerLayer( OGRTigerDataSource *poDSIn,
 OGRTigerLayer::~OGRTigerLayer()
 
 {
-    if( m_nFeaturesRead > 0 && poReader->GetFeatureDefn() != NULL )
+    if( m_nFeaturesRead > 0 && poReader->GetFeatureDefn() != nullptr )
     {
         CPLDebug( "TIGER", "%d features read on layer '%s'.",
                   (int) m_nFeaturesRead,
@@ -117,7 +117,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 
 {
     if( nFeatureId < 1 || nFeatureId > nFeatureCount )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we don't have the current module open for the requested      */
@@ -134,7 +134,7 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
 
         if( !poReader->SetModule( poDS->GetModule(iLastModule) ) )
         {
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -144,11 +144,11 @@ OGRFeature *OGRTigerLayer::GetFeature( GIntBig nFeatureId )
     OGRFeature  *poFeature =
         poReader->GetFeature( (int)nFeatureId-panModuleOffset[iLastModule]-1 );
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
     {
         poFeature->SetFID( nFeatureId );
 
-        if( poFeature->GetGeometryRef() != NULL )
+        if( poFeature->GetGeometryRef() != nullptr )
             poFeature->GetGeometryRef()->assignSpatialReference(
                 poDS->GetSpatialRef() );
 
@@ -175,19 +175,19 @@ OGRFeature *OGRTigerLayer::GetNextFeature()
     {
         OGRFeature      *poFeature = GetFeature( ++iLastFeatureId );
 
-        if( poFeature == NULL )
+        if( poFeature == nullptr )
             break;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
             return poFeature;
 
         delete poFeature;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -225,7 +225,7 @@ OGRFeatureDefn *OGRTigerLayer::GetLayerDefn()
 
 {
     OGRFeatureDefn* poFDefn = poReader->GetFeatureDefn();
-    if( poFDefn != NULL )
+    if( poFDefn != nullptr )
     {
         if( poFDefn->GetGeomFieldCount() > 0 )
             poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDS->GetSpatialRef());
@@ -262,7 +262,7 @@ OGRErr OGRTigerLayer::ICreateFeature( OGRFeature *poFeature )
 GIntBig OGRTigerLayer::GetFeatureCount( int bForce )
 
 {
-    if( m_poFilterGeom == NULL && m_poAttrQuery == NULL )
+    if( m_poFilterGeom == nullptr && m_poAttrQuery == nullptr )
         return nFeatureCount;
     else
         return OGRLayer::GetFeatureCount( bForce );

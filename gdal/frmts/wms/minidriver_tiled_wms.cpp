@@ -82,8 +82,8 @@ static GDALColorEntry GetXMLColorEntry(CPLXMLNode *p)
 static CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement)
 
 {
-    if (psRoot == NULL || pszElement == NULL)
-        return NULL;
+    if (psRoot == nullptr || pszElement == nullptr)
+        return nullptr;
 
     // If the strings starts with '=', skip it and test the root
     // If not, start testing with the next sibling
@@ -92,14 +92,14 @@ static CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement)
     else
         psRoot = psRoot->psNext;
 
-    for (; psRoot != NULL; psRoot = psRoot->psNext)
+    for (; psRoot != nullptr; psRoot = psRoot->psNext)
     {
         if ((psRoot->eType == CXT_Element ||
             psRoot->eType == CXT_Attribute)
             && EQUAL(pszElement, psRoot->pszValue))
             return psRoot;
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -120,12 +120,12 @@ static CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement)
 static CPLXMLNode *SearchLeafGroupName(CPLXMLNode *psRoot, const char *name)
 
 {
-    CPLXMLNode *ret = NULL;
+    CPLXMLNode *ret = nullptr;
 
-    if (psRoot == NULL || name == NULL) return NULL;
+    if (psRoot == nullptr || name == nullptr) return nullptr;
 
     // Has to be a leaf TileGroup with the right name
-    if (NULL == SearchXMLSiblings(psRoot->psChild, "TiledGroup"))
+    if (nullptr == SearchXMLSiblings(psRoot->psChild, "TiledGroup"))
     {
         if (EQUAL(name, CPLGetXMLValue(psRoot, "Name", "")))
         {
@@ -139,7 +139,7 @@ static CPLXMLNode *SearchLeafGroupName(CPLXMLNode *psRoot, const char *name)
     else
     { // Is metagroup, try children then siblings
         ret = SearchLeafGroupName(psRoot->psChild, name);
-        if (NULL != ret) return ret;
+        if (nullptr != ret) return ret;
         return SearchLeafGroupName(psRoot->psNext, name);
     }
 }
@@ -228,16 +228,16 @@ static void FindChangePattern(char *cdata, char **substs, char **keys, CPLString
         ret = papszTokens[j];  // The target string
         bool matches = true;
 
-        for (int k = 0; k < keycount && keys != NULL; k++)
+        for (int k = 0; k < keycount && keys != nullptr; k++)
         {
             const char *key = keys[k];
             int sub_number = CSLPartialFindString(substs, key);
             if (sub_number != -1)
             { // It is a listed match
                 // But is the match for the key position?
-                char *found_key = NULL;
+                char *found_key = nullptr;
                 const char *found_value = CPLParseNameValue(substs[sub_number], &found_key);
-                if (found_key != NULL && EQUAL(found_key, key))
+                if (found_key != nullptr && EQUAL(found_key, key))
                 {  // Should exits in the request
                     if (std::string::npos == ret.find(key))
                     {
@@ -248,7 +248,7 @@ static void FindChangePattern(char *cdata, char **substs, char **keys, CPLString
                     // Execute the substitution on the "ret" string
                     URLSearchAndReplace(&ret, key, "%s", found_value);
                 }
-                if (found_key != NULL) CPLFree(found_key);
+                if (found_key != nullptr) CPLFree(found_key);
             }
             else
             {  // Key not in the subst list, should not match
@@ -270,7 +270,7 @@ static void FindChangePattern(char *cdata, char **substs, char **keys, CPLString
 }
 
 WMSMiniDriver_TiledWMS::WMSMiniDriver_TiledWMS() :
-m_requests(NULL),
+m_requests(nullptr),
 m_bsx(0),
 m_bsy(0)
 {}
@@ -294,7 +294,7 @@ CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list, int i)
     CPLString req;
     double scale = -1;
     int position = -1;
-    while (NULL != list[i])
+    while (nullptr != list[i])
     {
         double tscale = Scale(list[i]);
         if (tscale >= scale)
@@ -307,7 +307,7 @@ CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list, int i)
     if (position > -1)
     {
         req = list[position];
-        list = CSLRemoveStrings(list, position, 1, NULL);
+        list = CSLRemoveStrings(list, position, 1, nullptr);
     }
     return req;
 }
@@ -319,12 +319,12 @@ CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list, int i)
 CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **OpenOptions)
 {
     CPLErr ret = CE_None;
-    CPLXMLNode *tileServiceConfig = NULL;
-    CPLXMLNode *TG = NULL;
+    CPLXMLNode *tileServiceConfig = nullptr;
+    CPLXMLNode *TG = nullptr;
 
-    char **requests = NULL;
-    char **substs = NULL;
-    char **keys = NULL;
+    char **requests = nullptr;
+    char **substs = nullptr;
+    char **keys = nullptr;
 
     try { // Parse info from the WMS Service node
 //        m_end_url = CPLGetXMLValue(config, "AdditionalArgs", "");
@@ -340,7 +340,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         // Change strings, key is an attribute, value is the value of the Change node
         // Multiple substitutions are possible
         TG = CPLSearchXMLNode(config, "Change");
-        while (TG != NULL) {
+        while (TG != nullptr) {
             CPLString name = CPLGetXMLValue(TG, "key", "");
             if (name.empty())
                 throw CPLOPrintf("%s Change element needs a non-empty \"key\" attribute", SIG);
@@ -364,15 +364,15 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             psconfig = GDALWMSDataset::GetServerConfig(getTileServiceUrl,
                 const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts()));
 
-            if (psconfig == NULL)
+            if (psconfig == nullptr)
                 throw CPLOPrintf("%s HTTP failure", SIG);
         }
 
         // psconfig contains the GetTileService return now
-        if (NULL == (tileServiceConfig = CPLParseXMLString(psconfig)))
+        if (nullptr == (tileServiceConfig = CPLParseXMLString(psconfig)))
             throw CPLOPrintf("%s Error parsing the GetTileService response", SIG);
 
-        if (NULL == (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns")))
+        if (nullptr == (TG = CPLSearchXMLNode(tileServiceConfig, "TiledPatterns")))
             throw CPLOPrintf("%s Can't locate TiledPatterns in server response.", SIG);
 
         // Get the global base_url and bounding box, these can be overwritten at the tileGroup level
@@ -381,7 +381,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         CPLXMLNode *global_latlonbbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.LatLonBoundingBox");
         CPLXMLNode *global_bbox = CPLGetXMLNode(tileServiceConfig, "TiledPatterns.BoundingBox");
 
-        if (NULL == (TG = SearchLeafGroupName(TG->psChild, tiledGroupName)))
+        if (nullptr == (TG = SearchLeafGroupName(TG->psChild, tiledGroupName)))
             throw CPLOPrintf("%s No TiledGroup ""%s"" in server response.", SIG, tiledGroupName.c_str());
 
         int band_count = atoi(CPLGetXMLValue(TG, "Bands", "3"));
@@ -390,23 +390,23 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             throw CPLOPrintf("%s Invalid number of bands in server response", SIG);
 
         // Collect all keys defined by this tileset
-        if (NULL != CPLGetXMLNode(TG, "Key")) {
+        if (nullptr != CPLGetXMLNode(TG, "Key")) {
             CPLXMLNode *node = CPLGetXMLNode(TG, "Key");
-            while (NULL != node) {
-                const char *val = CPLGetXMLValue(node, NULL, NULL);
+            while (nullptr != node) {
+                const char *val = CPLGetXMLValue(node, nullptr, nullptr);
                 if (val) keys = CSLAddString(keys, val);
                 node = SearchXMLSiblings(node, "Key");
             }
         }
 
         // Data values are attributes, they include NoData Min and Max
-        if (NULL != CPLGetXMLNode(TG, "DataValues")) {
-            const char *nodata = CPLGetXMLValue(TG, "DataValues.NoData", NULL);
-            if (nodata != NULL) m_parent_dataset->WMSSetNoDataValue(nodata);
-            const char *min = CPLGetXMLValue(TG, "DataValues.min", NULL);
-            if (min != NULL) m_parent_dataset->WMSSetMinValue(min);
-            const char *max = CPLGetXMLValue(TG, "DataValues.max", NULL);
-            if (max != NULL) m_parent_dataset->WMSSetMaxValue(max);
+        if (nullptr != CPLGetXMLNode(TG, "DataValues")) {
+            const char *nodata = CPLGetXMLValue(TG, "DataValues.NoData", nullptr);
+            if (nodata != nullptr) m_parent_dataset->WMSSetNoDataValue(nodata);
+            const char *min = CPLGetXMLValue(TG, "DataValues.min", nullptr);
+            if (min != nullptr) m_parent_dataset->WMSSetMinValue(min);
+            const char *max = CPLGetXMLValue(TG, "DataValues.max", nullptr);
+            if (max != nullptr) m_parent_dataset->WMSSetMaxValue(max);
         }
 
         m_parent_dataset->WMSSetBandsCount(band_count);
@@ -419,11 +419,11 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
 
         // Bounding box, local, global, local lat-lon, global lat-lon, in this order
         CPLXMLNode *bbox = CPLGetXMLNode(TG, "BoundingBox");
-        if (NULL == bbox) bbox = global_bbox;
-        if (NULL == bbox) bbox = CPLGetXMLNode(TG, "LatLonBoundingBox");
-        if (NULL == bbox) bbox = global_latlonbbox;
+        if (nullptr == bbox) bbox = global_bbox;
+        if (nullptr == bbox) bbox = CPLGetXMLNode(TG, "LatLonBoundingBox");
+        if (nullptr == bbox) bbox = global_latlonbbox;
 
-        if (NULL == bbox)
+        if (nullptr == bbox)
             throw CPLOPrintf("%s Can't locate the LatLonBoundingBox in server response", SIG);
 
         m_data_window.m_x0 = CPLAtof(CPLGetXMLValue(bbox, "minx", "0"));
@@ -450,7 +450,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         // RGB or RGBA are same
         //
 
-        GDALColorTable *poColorTable = NULL;
+        GDALColorTable *poColorTable = nullptr;
 
         if ((band_count == 1) && CPLGetXMLNode(TG, "Palette")) {
             CPLXMLNode *node = CPLGetXMLNode(TG, "Palette");
@@ -487,7 +487,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                         throw CPLOPrintf("%s Palette index %d not allowed", SIG, start_idx);
 
                     poColorTable->SetColorEntry(start_idx, &ce_start);
-                    while (NULL != (p = SearchXMLSiblings(p, "Entry"))) {
+                    while (nullptr != (p = SearchXMLSiblings(p, "Entry"))) {
                         // For every entry, create a ramp
                         ce_end = GetXMLColorEntry(p);
                         end_idx = static_cast<int>(getXMLNum(p, "idx", CPLOPrintf("%d", start_idx + 1)));
@@ -517,7 +517,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
         m_data_window.m_sx = 0;
         m_data_window.m_sy = 0;
 
-        while ((NULL != Pattern) && (NULL != (Pattern = SearchXMLSiblings(Pattern, "=TilePattern")))) {
+        while ((nullptr != Pattern) && (nullptr != (Pattern = SearchXMLSiblings(Pattern, "=TilePattern")))) {
             int mbsx, mbsy, sx, sy;
             double x, y, X, Y;
 
@@ -529,7 +529,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             try {
                 const char* pszWIDTH = CSLFetchNameValue(papszTokens, "WIDTH");
                 const char* pszHEIGHT = CSLFetchNameValue(papszTokens, "HEIGHT");
-                if (pszWIDTH == NULL || pszHEIGHT == NULL)
+                if (pszWIDTH == nullptr || pszHEIGHT == nullptr)
                     throw CPLOPrintf("%s Cannot find width or height parameters in %s", SIG, request.c_str());
 
                 mbsx = atoi(pszWIDTH);
@@ -612,7 +612,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
                 else { // Base resolution
                     GDALWMSRasterBand *band = new
                         GDALWMSRasterBand(m_parent_dataset, j, 1);
-                    if (poColorTable != NULL) band->SetColorInterpretation(GCI_PaletteIndex);
+                    if (poColorTable != nullptr) band->SetColorInterpretation(GCI_PaletteIndex);
                     else band->SetColorInterpretation(BandInterp(band_count, j));
                     m_parent_dataset->mSetBand(j, band);
                 }
@@ -623,7 +623,7 @@ CPLErr WMSMiniDriver_TiledWMS::Initialize(CPLXMLNode *config, CPL_UNUSED char **
             throw CPLOPrintf("%s No usable TilePattern elements found", SIG);
 
         // Do we need to embed the server configuration in the prototype XML
-        if (CPLGetXMLValue(config, "Configuration", NULL) == NULL) {
+        if (CPLGetXMLValue(config, "Configuration", nullptr) == nullptr) {
             // Get the proposed XML, it will exist at this point
             CPLXMLNode *cfg_root = CPLParseXMLString(m_parent_dataset->GetMetadataItem("XML", "WMS"));
 

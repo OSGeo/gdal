@@ -38,12 +38,12 @@ CPL_CVSID("$Id$")
 
 OGRXPlaneReader::OGRXPlaneReader() :
     nLineNumber(0),
-    papszTokens(NULL),
+    papszTokens(nullptr),
     nTokens(0),
-    fp(NULL),
-    pszFilename(NULL),
+    fp(nullptr),
+    pszFilename(nullptr),
     bEOF(false),
-    poInterestLayer(NULL)
+    poInterestLayer(nullptr)
 {}
 
 /***********************************************************************/
@@ -53,14 +53,14 @@ OGRXPlaneReader::OGRXPlaneReader() :
 OGRXPlaneReader::~OGRXPlaneReader()
 {
     CPLFree(pszFilename);
-    pszFilename = NULL;
+    pszFilename = nullptr;
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
-    if (fp != NULL)
+    if (fp != nullptr)
         VSIFCloseL(fp);
-    fp = NULL;
+    fp = nullptr;
 }
 
 /************************************************************************/
@@ -70,7 +70,7 @@ OGRXPlaneReader::~OGRXPlaneReader()
 bool OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
 {
     fp = VSIFOpenL( pszFilenameIn, "rb" );
-    if (fp == NULL)
+    if (fp == nullptr)
         return false;
 
     fp = (VSILFILE*) VSICreateBufferedReaderHandle ( (VSIVirtualHandle*) fp );
@@ -80,7 +80,7 @@ bool OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
                      strcmp(pszLine, "A") != 0))
     {
         VSIFCloseL(fp);
-        fp = NULL;
+        fp = nullptr;
         return false;
     }
 
@@ -88,7 +88,7 @@ bool OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
     if( !pszLine || !IsRecognizedVersion(pszLine) )
     {
         VSIFCloseL(fp);
-        fp = NULL;
+        fp = nullptr;
         return false;
     }
 
@@ -109,7 +109,7 @@ bool OGRXPlaneReader::StartParsing( const char * pszFilenameIn )
 
 void OGRXPlaneReader::Rewind()
 {
-    if (fp == NULL)
+    if (fp == nullptr)
         return;
 
     VSIRewindL(fp);
@@ -119,7 +119,7 @@ void OGRXPlaneReader::Rewind()
     nLineNumber = 2;
 
     CSLDestroy(papszTokens);
-    papszTokens = NULL;
+    papszTokens = nullptr;
 
     bEOF = false;
 }
@@ -130,7 +130,7 @@ void OGRXPlaneReader::Rewind()
 
 int OGRXPlaneReader::GetNextFeature()
 {
-    if( fp == NULL || bEOF || poInterestLayer == NULL )
+    if( fp == nullptr || bEOF || poInterestLayer == nullptr )
         return FALSE;
 
     Read();
@@ -143,7 +143,7 @@ int OGRXPlaneReader::GetNextFeature()
 
 bool OGRXPlaneReader::ReadWholeFile()
 {
-    if( fp == NULL || bEOF || nLineNumber != 2 || poInterestLayer != NULL )
+    if( fp == nullptr || bEOF || nLineNumber != 2 || poInterestLayer != nullptr )
         return false;
 
     Read();
@@ -174,7 +174,7 @@ bool OGRXPlaneReader::assertMinCol( int nMinColNum ) const
 bool OGRXPlaneReader::readDouble( double* pdfValue, int iToken,
                                   const char* pszTokenDesc ) const
 {
-    char* pszNext = NULL;
+    char* pszNext = nullptr;
     *pdfValue = CPLStrtod(papszTokens[iToken], &pszNext);
     if (*pszNext != '\0' )
     {
@@ -309,7 +309,7 @@ const char* OGRXPlaneEnumeration::GetText(int eValue)
     }
     CPLDebug("XPlane", "Unknown value (%d) for enumeration %s",
              eValue, m_pszEnumerationName);
-    return NULL;
+    return nullptr;
 }
 
 /***********************************************************************/
@@ -318,7 +318,7 @@ const char* OGRXPlaneEnumeration::GetText(int eValue)
 
 int OGRXPlaneEnumeration::GetValue(const char* pszText)
 {
-    if (pszText != NULL)
+    if (pszText != nullptr)
     {
         for( int i=0; i < m_nElements; i++ )
         {

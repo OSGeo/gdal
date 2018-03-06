@@ -35,32 +35,14 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(__MACH__) && defined(__APPLE__)
-
-#include <libkern/OSAtomic.h>
-
-int CPLAtomicAdd(volatile int* ptr, int increment)
-{
-    return OSAtomicAdd32(increment, (int*)(ptr));
-}
-
-int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
-{
-    return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
-}
-
-#elif defined(_MSC_VER)
+#if defined(_MSC_VER)
 
 #include <windows.h>
 
 int CPLAtomicAdd(volatile int* ptr, int increment)
 {
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-  return InterlockedExchangeAdd((LONG*)(ptr), (LONG)(increment)) + increment;
-#else
   return InterlockedExchangeAdd((volatile LONG*)(ptr),
                                 (LONG)(increment)) + increment;
-#endif
 }
 
 int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
@@ -129,6 +111,20 @@ int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
     return __sync_bool_compare_and_swap (ptr, oldval, newval);
 }
 
+#elif defined(__MACH__) && defined(__APPLE__)
+
+#include <libkern/OSAtomic.h>
+
+int CPLAtomicAdd(volatile int* ptr, int increment)
+{
+    return OSAtomicAdd32(increment, (int*)(ptr));
+}
+
+int CPLAtomicCompareAndExchange(volatile int* ptr, int oldval, int newval)
+{
+    return OSAtomicCompareAndSwap32(oldval, newval, (int*)(ptr));
+}
+
 #elif !defined(CPL_MULTIPROC_PTHREAD)
 #warning "Needs real lock API to implement properly atomic increment"
 
@@ -153,7 +149,7 @@ int CPLAtomicCompareAndExchange( volatile int* ptr, int oldval, int newval )
 
 #include "cpl_multiproc.h"
 
-static CPLLock *hAtomicOpLock = NULL;
+static CPLLock *hAtomicOpLock = nullptr;
 
 // Slow, but safe, implementation using a mutex.
 int CPLAtomicAdd(volatile int* ptr, int increment)

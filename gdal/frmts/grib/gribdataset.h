@@ -30,6 +30,9 @@
  *
  */
 
+#ifndef GRIBDATASET_H
+#define GRIBDATASET_H
+
 #include "cpl_port.h"
 
 #include <cerrno>
@@ -50,14 +53,14 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
-#include "degrib18/degrib/datasource.h"
-#include "degrib18/degrib/degrib2.h"
-#include "degrib18/degrib/filedatasource.h"
-#include "degrib18/degrib/inventory.h"
-#include "degrib18/degrib/memorydatasource.h"
-#include "degrib18/degrib/meta.h"
-#include "degrib18/degrib/myerror.h"
-#include "degrib18/degrib/type.h"
+#include "degrib/degrib/datasource.h"
+#include "degrib/degrib/degrib2.h"
+#include "degrib/degrib/filedatasource.h"
+#include "degrib/degrib/inventory.h"
+#include "degrib/degrib/memorydatasource.h"
+#include "degrib/degrib/meta.h"
+#include "degrib/degrib/myerror.h"
+#include "degrib/degrib/type.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
@@ -82,6 +85,11 @@ class GRIBDataset : public GDALPamDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                    GDALDataset *poSrcDS,
+                                    int bStrict, char ** papszOptions,
+                                    GDALProgressFunc pfnProgress,
+                                    void * pProgressData );
 
     CPLErr      GetGeoTransform( double *padfTransform ) override;
     const char *GetProjectionRef() override;
@@ -115,7 +123,7 @@ public:
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual const char *GetDescription() const override;
 
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     void    FindPDSTemplate();
 
@@ -123,6 +131,7 @@ public:
 
 private:
     CPLErr       LoadData();
+    void    FindNoDataGrib2(bool bSeekToStart = true);
 
     static void ReadGribData( DataSource &, sInt4, int, double **,
                               grib_MetaData ** );
@@ -135,6 +144,11 @@ private:
 
     int nGribDataXSize;
     int nGribDataYSize;
+    int     m_nGribVersion;
+
+    bool    m_bHasLookedForNoData;
+    double  m_dfNoData;
+    bool    m_bHasNoData;
 };
 
 namespace gdal {
@@ -144,19 +158,19 @@ namespace grib {
 class InventoryWrapper {
   public:
     explicit InventoryWrapper(const std::string &filepath)
-        : inv_(NULL), inv_len_(0), num_messages_(0), result_(0) {
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
       FileDataSource grib(filepath.c_str());
       result_ = GRIB2Inventory(grib, &inv_, &inv_len_, 0 /* all messages */,
                                &num_messages_);
     }
     explicit InventoryWrapper(FileDataSource file_data_source)
-        : inv_(NULL), inv_len_(0), num_messages_(0), result_(0) {
+        : inv_(nullptr), inv_len_(0), num_messages_(0), result_(0) {
       result_ = GRIB2Inventory(file_data_source, &inv_, &inv_len_,
                                0 /* all messages */, &num_messages_);
     }
 
     ~InventoryWrapper() {
-        if (inv_ == NULL) return;
+        if (inv_ == nullptr) return;
         for (uInt4 i = 0; i < inv_len_; i++) {
             GRIB2InventoryFree(inv_ + i);
         }
@@ -165,7 +179,7 @@ class InventoryWrapper {
 
     // Modifying the contents pointed to by the return is allowed.
     inventoryType * get(int i) const {
-      if (i < 0 || i >= static_cast<int>(inv_len_)) return NULL;
+      if (i < 0 || i >= static_cast<int>(inv_len_)) return nullptr;
       return inv_ + i;
     }
 
@@ -182,3 +196,8 @@ class InventoryWrapper {
 
 }  // namespace grib
 }  // namespace gdal
+
+const char* const apszJ2KDrivers[] =
+        { "JP2KAK", "JP2OPENJPEG", "JPEG2000", "JP2ECW" };
+
+#endif // GRIBDATASET_H

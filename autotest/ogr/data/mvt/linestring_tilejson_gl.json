@@ -1,0 +1,14 @@
+{
+    "name": "out_linestring",
+    "description": "out_linestring",
+    "version": "2",
+    "minzoom": 0,
+    "maxzoom": 0,
+    "center": [2.000000,49.000000,0],
+    "bounds": [2.000000,49.000000,3.000000,50.000000],
+    "type": "overlay",
+    "format": "pbf",
+    "vector_layers": [{"maxzoom": 0, "fields": {"foo": "String"}, "minzoom": 0, "id": "linestring", "description": ""}],
+    "tilestats": {"layers": [{"count": 1, "geometry": "LineString", "layer": "linestring", "attributeCount": 0, "attributes": []}], "layerCount": 1},
+    "tilejson": "2.0.0"
+}

@@ -68,7 +68,7 @@ CPCIDSKEphemerisSegment::CPCIDSKEphemerisSegment(PCIDSKFile *fileIn,
     CPCIDSKSegment(fileIn, segmentIn, segment_pointer),
     loaded_(false),mbModified(false)
 {
-    mpoEphemeris = NULL;
+    mpoEphemeris = nullptr;
     if(bLoad)
     {
         Load();
@@ -193,14 +193,13 @@ CPCIDSKEphemerisSegment::ReadAvhrrEphemerisSegment(int nStartBlock,
 {
     int  nBlock = 0, nLine = 0;
     int nPos = 0;
-    AvhrrSeg_t *as = NULL;
 
     int nDataLength = seg_data.buffer_size;
 /* -------------------------------------------------------------------- */
 /*  Allocate the AVHRR segment portion of EphemerisSeg_t.               */
 /* -------------------------------------------------------------------- */
     psEphSegRec->AvhrrSeg = new AvhrrSeg_t();
-    as = psEphSegRec->AvhrrSeg;
+    AvhrrSeg_t* as = psEphSegRec->AvhrrSeg;
 
 /* -------------------------------------------------------------------- */
 /*  Read in the Ninth Block which contains general info + ephemeris     */
@@ -372,10 +371,9 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 /* -------------------------------------------------------------------- */
 /*  Check that the AvhrrSeg is not NULL.                                */
 /* -------------------------------------------------------------------- */
-    AvhrrSeg_t *as = NULL;
-    as = psEphSegRec->AvhrrSeg;
+    AvhrrSeg_t* as = psEphSegRec->AvhrrSeg;
 
-    if ( as == NULL)
+    if ( as == nullptr)
     {
         return ThrowPCIDSKException("The AvhrrSeg is NULL.");
     }
@@ -1168,7 +1166,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 
         AttitudeSeg = psOrbit->AttitudeSeg;
 
-        if (AttitudeSeg == NULL)
+        if (AttitudeSeg == nullptr)
         {
             return ThrowPCIDSKException("The AttitudeSeg is NULL.");
         }
@@ -1253,7 +1251,7 @@ CPCIDSKEphemerisSegment::EphemerisToBinary( EphemerisSeg_t * psOrbit,
 
         RadarSeg = psOrbit->RadarSeg;
 
-        if (RadarSeg == NULL)
+        if (RadarSeg == nullptr)
         {
             return ThrowPCIDSKException("The RadarSeg is NULL.");
         }

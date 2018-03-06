@@ -68,21 +68,21 @@ class MFFDataset : public RawDataset
     void        ScanForProjectionInfo();
 
   public:
-                MFFDataset();
-    virtual ~MFFDataset();
+    MFFDataset();
+    ~MFFDataset() override;
 
     char        **papszHdrLines;
 
     VSILFILE        **pafpBandFiles;
 
-    virtual char** GetFileList() override;
+    char** GetFileList() override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override;
+    const char *GetGCPProjection() override;
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
@@ -109,12 +109,11 @@ class MFFTiledBand : public GDALRasterBand
     bool           bNative;
 
   public:
+    MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
+                  GDALDataType, int );
+    ~MFFTiledBand() override;
 
-                   MFFTiledBand( MFFDataset *, int, VSILFILE *, int, int,
-                                 GDALDataType, int );
-    virtual ~MFFTiledBand();
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -240,12 +239,12 @@ MFFSpheroidList :: MFFSpheroidList()
 
 MFFDataset::MFFDataset() :
     nGCPCount(0),
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     pszProjection(CPLStrdup("")),
     pszGCPProjection(CPLStrdup("")),
-    m_papszFileList(NULL),
-    papszHdrLines(NULL),
-    pafpBandFiles(NULL)
+    m_papszFileList(nullptr),
+    papszHdrLines(nullptr),
+    pafpBandFiles(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -264,11 +263,11 @@ MFFDataset::~MFFDataset()
 {
     FlushCache();
     CSLDestroy( papszHdrLines );
-    if( pafpBandFiles != NULL )
+    if( pafpBandFiles != nullptr )
     {
         for( int i = 0; i < GetRasterCount(); i++ )
         {
-            if( pafpBandFiles[i] != NULL )
+            if( pafpBandFiles[i] != nullptr )
             {
                 if( VSIFCloseL( pafpBandFiles[i] ) != 0 )
                 {
@@ -363,7 +362,7 @@ void MFFDataset::ScanForGCPs()
 {
     int NUM_GCPS = 0;
 
-    if( CSLFetchNameValue(papszHdrLines, "NUM_GCPS") != NULL )
+    if( CSLFetchNameValue(papszHdrLines, "NUM_GCPS") != nullptr )
         NUM_GCPS = atoi(CSLFetchNameValue(papszHdrLines, "NUM_GCPS"));
     if (NUM_GCPS < 0)
         return;
@@ -371,12 +370,12 @@ void MFFDataset::ScanForGCPs()
     nGCPCount = 0;
     pasGCPList = static_cast<GDAL_GCP *>(
         VSICalloc( sizeof(GDAL_GCP) , 5 + NUM_GCPS ) );
-    if (pasGCPList == NULL)
+    if (pasGCPList == nullptr)
         return;
 
     for( int nCorner = 0; nCorner < 5; nCorner++ )
     {
-        const char * pszBase=NULL;
+        const char * pszBase=nullptr;
         double dfRasterX = 0.0;
         double dfRasterY = 0.0;
 
@@ -416,8 +415,8 @@ void MFFDataset::ScanForGCPs()
         snprintf( szLatName, sizeof(szLatName), "%s_LATITUDE", pszBase );
         snprintf( szLongName, sizeof(szLongName), "%s_LONGITUDE", pszBase );
 
-        if( CSLFetchNameValue(papszHdrLines, szLatName) != NULL
-            && CSLFetchNameValue(papszHdrLines, szLongName) != NULL )
+        if( CSLFetchNameValue(papszHdrLines, szLatName) != nullptr
+            && CSLFetchNameValue(papszHdrLines, szLongName) != nullptr )
         {
             GDALInitGCPs( 1, pasGCPList + nGCPCount );
 
@@ -448,7 +447,7 @@ void MFFDataset::ScanForGCPs()
     {
         char szName[25] = { '\0' };
         snprintf( szName, sizeof(szName), "GCP%d", i+1 );
-        if( CSLFetchNameValue( papszHdrLines, szName ) == NULL )
+        if( CSLFetchNameValue( papszHdrLines, szName ) == nullptr )
             continue;
 
         char **papszTokens = CSLTokenizeStringComplex(
@@ -487,7 +486,7 @@ void MFFDataset::ScanForProjectionInfo()
     const char *pszSpheroidName
         = CSLFetchNameValue(papszHdrLines, "SPHEROID_NAME");
 
-    if (pszProjName == NULL)
+    if (pszProjName == nullptr)
     {
         CPLFree( pszProjection );
         CPLFree( pszGCPProjection );
@@ -513,7 +512,7 @@ void MFFDataset::ScanForProjectionInfo()
     {
         int nZone;
 
-        if (pszOriginLong == NULL)
+        if (pszOriginLong == nullptr)
         {
           // If origin not specified, assume 0.0.
             CPLError(
@@ -530,15 +529,15 @@ void MFFDataset::ScanForProjectionInfo()
         else
             oProj.SetUTM( nZone, 1 );
 
-        if (pszOriginLong != NULL)
+        if (pszOriginLong != nullptr)
             oProj.SetProjParm(SRS_PP_CENTRAL_MERIDIAN,CPLAtof(pszOriginLong));
     }
 
     OGRSpatialReference oLL;
-    if (pszOriginLong != NULL)
+    if (pszOriginLong != nullptr)
         oLL.SetProjParm(SRS_PP_LONGITUDE_OF_ORIGIN,CPLAtof(pszOriginLong));
 
-    if (pszSpheroidName == NULL)
+    if (pszSpheroidName == nullptr)
     {
         CPLError(
             CE_Warning, CPLE_AppDefined,
@@ -566,7 +565,7 @@ void MFFDataset::ScanForProjectionInfo()
               = CSLFetchNameValue(papszHdrLines, "SPHEROID_EQUATORIAL_RADIUS");
           const char *pszSpheroidPolarRadius
               = CSLFetchNameValue(papszHdrLines, "SPHEROID_POLAR_RADIUS");
-          if ((pszSpheroidEqRadius != NULL) && (pszSpheroidPolarRadius != NULL))
+          if ((pszSpheroidEqRadius != nullptr) && (pszSpheroidPolarRadius != nullptr))
           {
             const double eq_radius = CPLAtof( pszSpheroidEqRadius );
             const double polar_radius = CPLAtof( pszSpheroidPolarRadius );
@@ -613,7 +612,7 @@ void MFFDataset::ScanForProjectionInfo()
         OGRCoordinateTransformation *poTransform
             = OGRCreateCoordinateTransformation( &oLL, &oProj );
         bool bSuccess = true;
-        if( poTransform == NULL )
+        if( poTransform == nullptr )
         {
             CPLErrorReset();
             bSuccess = FALSE;
@@ -658,8 +657,8 @@ void MFFDataset::ScanForProjectionInfo()
 
     CPLFree( pszProjection );
     CPLFree( pszGCPProjection );
-    pszProjection = NULL;
-    pszGCPProjection = NULL;
+    pszProjection = nullptr;
+    pszGCPProjection = nullptr;
     oProj.exportToWkt( &pszProjection );
     oProj.exportToWkt( &pszGCPProjection );
 
@@ -689,23 +688,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the header file.              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fpL == NULL )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 17 || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( !EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "hdr") )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Load the .hdr file, and compress white space out around the     */
 /*      equal sign.                                                     */
 /* -------------------------------------------------------------------- */
     char **papszHdrLines = CSLLoad( poOpenInfo->pszFilename );
-    if( papszHdrLines == NULL )
-        return NULL;
+    if( papszHdrLines == nullptr )
+        return nullptr;
 
     // Remove spaces.  e.g.
     // SPHEROID_NAME = CLARKE_1866 -> SPHEROID_NAME=CLARKE_1866
-    for( int i = 0; papszHdrLines[i] != NULL; i++ )
+    for( int i = 0; papszHdrLines[i] != nullptr; i++ )
     {
         int iDst = 0;
         char *pszLine = papszHdrLines[i];
@@ -723,21 +722,21 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify it is an MFF file.                                       */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue( papszHdrLines, "IMAGE_FILE_FORMAT" ) != NULL
+    if( CSLFetchNameValue( papszHdrLines, "IMAGE_FILE_FORMAT" ) != nullptr
         && !EQUAL(CSLFetchNameValue(papszHdrLines, "IMAGE_FILE_FORMAT"),
                   "MFF") )
     {
         CSLDestroy( papszHdrLines );
-        return NULL;
+        return nullptr;
     }
 
-    if( (CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == NULL
-         || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == NULL)
-        && (CSLFetchNameValue( papszHdrLines, "no_rows" ) == NULL
-            || CSLFetchNameValue(papszHdrLines,"no_columns") == NULL) )
+    if( (CSLFetchNameValue( papszHdrLines, "IMAGE_LINES" ) == nullptr
+         || CSLFetchNameValue(papszHdrLines,"LINE_SAMPLES") == nullptr)
+        && (CSLFetchNameValue( papszHdrLines, "no_rows" ) == nullptr
+            || CSLFetchNameValue(papszHdrLines,"no_columns") == nullptr) )
     {
         CSLDestroy( papszHdrLines );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -752,8 +751,8 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Set some dataset wide information.                              */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszHdrLines,"no_rows") != NULL
-        && CSLFetchNameValue(papszHdrLines,"no_columns") != NULL )
+    if( CSLFetchNameValue(papszHdrLines,"no_rows") != nullptr
+        && CSLFetchNameValue(papszHdrLines,"no_columns") != nullptr )
     {
         poDS->nRasterXSize = atoi(CSLFetchNameValue(papszHdrLines,"no_columns"));
         poDS->nRasterYSize = atoi(CSLFetchNameValue(papszHdrLines,"no_rows"));
@@ -769,11 +768,11 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     bool bNative = true;
-    if( CSLFetchNameValue( papszHdrLines, "BYTE_ORDER" ) != NULL )
+    if( CSLFetchNameValue( papszHdrLines, "BYTE_ORDER" ) != nullptr )
     {
 #ifdef CPL_MSB
         bNative = EQUAL(CSLFetchNameValue(papszHdrLines, "BYTE_ORDER"), "MSB");
@@ -788,7 +787,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     int nTileXSize = 0;
     int nTileYSize = 0;
     const char *pszRefinedType = CSLFetchNameValue(papszHdrLines, "type" );
-    const bool bTiled = CSLFetchNameValue(papszHdrLines, "no_rows") != NULL;
+    const bool bTiled = CSLFetchNameValue(papszHdrLines, "no_rows") != nullptr;
 
     if( bTiled )
     {
@@ -804,7 +803,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->nRasterYSize-1 > INT_MAX - nTileYSize )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -815,23 +814,23 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
     char * const pszTargetBase =
         CPLStrdup(CPLGetBasename( poOpenInfo->pszFilename ));
     char **papszDirFiles = VSIReadDir( CPLGetPath( poOpenInfo->pszFilename ) );
-    if( papszDirFiles == NULL )
+    if( papszDirFiles == nullptr )
     {
         CPLFree(pszTargetPath);
         CPLFree(pszTargetBase);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     int nSkipped = 0;
     for( int nRawBand = 0; true; nRawBand++ )
     {
-        const char *pszExtension = NULL;
+        const char *pszExtension = nullptr;
 
         /* Find the next raw band file. */
 
         int i = 0;  // Used after for.
-        for( ; papszDirFiles[i] != NULL; i++ )
+        for( ; papszDirFiles[i] != nullptr; i++ )
         {
             if( !EQUAL(CPLGetBasename(papszDirFiles[i]),pszTargetBase) )
                 continue;
@@ -840,24 +839,24 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
             if( strlen(pszExtension) >= 2
                 && isdigit(pszExtension[1])
                 && atoi(pszExtension+1) == nRawBand
-                && strchr("bBcCiIjJrRxXzZ",pszExtension[0]) != NULL )
+                && strchr("bBcCiIjJrRxXzZ",pszExtension[0]) != nullptr )
                 break;
         }
 
-        if( papszDirFiles[i] == NULL  )
+        if( papszDirFiles[i] == nullptr  )
             break;
 
         /* open the file for required level of access */
         const char *pszRawFilename = CPLFormFilename(pszTargetPath,
-                                                     papszDirFiles[i], NULL );
+                                                     papszDirFiles[i], nullptr );
 
-        VSILFILE *fpRaw = NULL;
+        VSILFILE *fpRaw = nullptr;
         if( poOpenInfo->eAccess == GA_Update )
             fpRaw = VSIFOpenL( pszRawFilename, "rb+" );
         else
             fpRaw = VSIFOpenL( pszRawFilename, "rb" );
 
-        if( fpRaw == NULL )
+        if( fpRaw == nullptr )
         {
             CPLError( CE_Warning, CPLE_OpenFailed,
                       "Unable to open %s ... skipping.",
@@ -869,7 +868,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 
         GDALDataType eDataType = GDT_Unknown;
         pszExtension = CPLGetExtension(papszDirFiles[i]);
-        if( pszRefinedType != NULL )
+        if( pszRefinedType != nullptr )
         {
             if( EQUAL(pszRefinedType, "C*4") )
                 eDataType = GDT_CFloat32;
@@ -950,7 +949,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
         const int nBand = poDS->GetRasterCount() + 1;
 
         const int nPixelOffset = GDALGetDataTypeSize(eDataType)/8;
-        GDALRasterBand *poBand = NULL;
+        GDALRasterBand *poBand = nullptr;
 
         if( bTiled )
         {
@@ -994,7 +993,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "Perhaps this dataset is readonly?",
                       nSkipped );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -1002,7 +1001,7 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
                       "MFF header file read successfully, but no bands "
                       "were successfully found and opened." );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1010,12 +1009,12 @@ GDALDataset *MFFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Set all information from the .hdr that isn't well know to be    */
 /*      metadata.                                                       */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; papszHdrLines[i] != NULL; i++ )
+    for( int i = 0; papszHdrLines[i] != nullptr; i++ )
     {
-        char *pszName = NULL;
+        char *pszName = nullptr;
 
         const char *pszValue = CPLParseNameValue(papszHdrLines[i], &pszName);
-        if( pszName == NULL || pszValue == NULL )
+        if( pszName == nullptr || pszValue == nullptr )
             continue;
 
         if( !EQUAL(pszName,"END")
@@ -1072,13 +1071,13 @@ int GetMFFProjectionType(const char *pszNewProjection)
       }
       else
       {
-          if( oSRS.GetAttrValue("PROJECTION") != NULL &&
+          if( oSRS.GetAttrValue("PROJECTION") != nullptr &&
               EQUAL(oSRS.GetAttrValue("PROJECTION"),
                     SRS_PT_TRANSVERSE_MERCATOR) )
           {
               return MFFPRJ_UTM;
           }
-          else if( oSRS.GetAttrValue("PROJECTION") == NULL &&
+          else if( oSRS.GetAttrValue("PROJECTION") == nullptr &&
                    oSRS.IsGeographic() )
           {
               return MFFPRJ_LL;
@@ -1107,7 +1106,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "MFF driver does not support %d bands.", nBands );
-        return NULL;
+        return nullptr;
     }
 
     if( eType != GDT_Byte && eType != GDT_Float32 && eType != GDT_UInt16
@@ -1118,7 +1117,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
               "data type (%s).\n",
               GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1143,15 +1142,15 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
 /* -------------------------------------------------------------------- */
 /*      Create the header file.                                         */
 /* -------------------------------------------------------------------- */
-    const char *pszFilename = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
+    const char *pszFilename = CPLFormFilename( nullptr, pszBaseFilename, "hdr" );
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "wt" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't create %s.\n", pszFilename );
         CPLFree(pszBaseFilename);
-        return NULL;
+        return nullptr;
     }
 
     bool bOK = VSIFPrintfL( fp, "IMAGE_FILE_FORMAT = MFF\n" ) >= 0;
@@ -1164,7 +1163,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
     bOK &= VSIFPrintfL( fp, "BYTE_ORDER = LSB\n" ) >= 0;
 #endif
 
-    if (CSLFetchNameValue(papszParmList,"NO_END") == NULL)
+    if (CSLFetchNameValue(papszParmList,"NO_END") == nullptr)
         bOK &= VSIFPrintfL( fp, "END\n" ) >= 0;
 
     if( VSIFCloseL( fp ) != 0 )
@@ -1188,14 +1187,14 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
         else if( eType == GDT_CFloat32 )
             CPLsnprintf( szExtension, sizeof(szExtension), "x%02d", iBand );
 
-        pszFilename = CPLFormFilename( NULL, pszBaseFilename, szExtension );
+        pszFilename = CPLFormFilename( nullptr, pszBaseFilename, szExtension );
         fp = VSIFOpenL( pszFilename, "wb" );
-        if( fp == NULL )
+        if( fp == nullptr )
         {
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Couldn't create %s.\n", pszFilename );
             CPLFree(pszBaseFilename);
-            return NULL;
+            return nullptr;
         }
 
         bOK &= VSIFWriteL( "", 1, 1, fp ) == 1;
@@ -1206,7 +1205,7 @@ GDALDataset *MFFDataset::Create( const char * pszFilenameIn,
     if( !bOK )
     {
         CPLFree( pszBaseFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1237,12 +1236,12 @@ MFFDataset::CreateCopy( const char * pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "MFF driver does not support source dataset with zero band.");
-        return NULL;
+        return nullptr;
     }
 
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
-        return NULL;
+    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
+        return nullptr;
 
     // Check that other bands match type- sets type
     // to unknown if they differ.
@@ -1264,8 +1263,8 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
     CSLDestroy(newpapszOptions);
 
-    if (poDS == NULL)
-        return NULL;
+    if (poDS == nullptr)
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Copy the image data.                                            */
@@ -1296,7 +1295,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
             {
                 if( !pfnProgress(
                        (nBlocksDone++) / static_cast<float>( nBlockTotal ),
-                       NULL, pProgressData ) )
+                       nullptr, pProgressData ) )
                 {
                     CPLError( CE_Failure, CPLE_UserInterrupt,
                               "User terminated" );
@@ -1306,7 +1305,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                     GDALDriver *poMFFDriver = static_cast<GDALDriver *>(
                         GDALGetDriverByName( "MFF" ) );
                     poMFFDriver->Delete( pszFilename );
-                    return NULL;
+                    return nullptr;
                 }
 
                 const int nTBXSize = std::min( nBlockXSize, nXSize - iXOffset );
@@ -1314,26 +1313,26 @@ MFFDataset::CreateCopy( const char * pszFilename,
 
                 CPLErr eErr = poSrcBand->RasterIO(
                     GF_Read, iXOffset, iYOffset, nTBXSize, nTBYSize,
-                    pData, nTBXSize, nTBYSize, eType, 0, 0, NULL );
+                    pData, nTBXSize, nTBYSize, eType, 0, 0, nullptr );
 
                 if( eErr != CE_None )
                 {
                     delete poDS;
                     CPLFree( pData );
-                    return NULL;
+                    return nullptr;
                 }
 
                 eErr = poDstBand->RasterIO( GF_Write,
                                             iXOffset, iYOffset,
                                             nTBXSize, nTBYSize,
                                             pData, nTBXSize, nTBYSize,
-                                            eType, 0, 0, NULL );
+                                            eType, 0, 0, nullptr );
 
                 if( eErr != CE_None )
                 {
                     delete poDS;
                     CPLFree( pData );
-                    return NULL;
+                    return nullptr;
                 }
             }
         }
@@ -1365,15 +1364,15 @@ MFFDataset::CreateCopy( const char * pszFilename,
     }
 
     const char *pszFilenameGEO
-        = CPLFormFilename( NULL, pszBaseFilename, "hdr" );
+        = CPLFormFilename( nullptr, pszBaseFilename, "hdr" );
 
     VSILFILE *fp = VSIFOpenL( pszFilenameGEO, "at" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Couldn't open %s for appending.\n", pszFilenameGEO );
         CPLFree(pszBaseFilename);
-        return NULL;
+        return nullptr;
     }
 
     /* MFF requires corner and center gcps */
@@ -1440,11 +1439,11 @@ MFFDataset::CreateCopy( const char * pszFilename,
               tempGeoTransform[5]*(poSrcDS->GetRasterYSize())/2.0;
 
           OGRSpatialReference oUTMorLL(poSrcDS->GetProjectionRef());
-          char *newGCPProjection = NULL;
+          char *newGCPProjection = nullptr;
           (oUTMorLL.GetAttrNode("GEOGCS"))->exportToWkt(&newGCPProjection);
           OGRSpatialReference oLL(newGCPProjection);
           CPLFree(newGCPProjection);
-          newGCPProjection = NULL;
+          newGCPProjection = nullptr;
 
           if( STARTS_WITH_CI(poSrcDS->GetProjectionRef(), "PROJCS") )
           {
@@ -1452,7 +1451,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                 = OGRCreateCoordinateTransformation( &oUTMorLL, &oLL );
 
             // projected coordinate system- need to translate gcps */
-            bool bSuccess = poTransform != NULL;
+            bool bSuccess = poTransform != nullptr;
 
             for ( int index = 0; index < 5; index++ )
             {
@@ -1518,7 +1517,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
     /* --------------------------------------------------------------------*/
 
           const char *pszSrcProjection = poSrcDS->GetProjectionRef();
-          char *spheroid_name = NULL;
+          char *spheroid_name = nullptr;
 
           if( !STARTS_WITH_CI(pszSrcProjection, "GEOGCS")
            && !STARTS_WITH_CI(pszSrcProjection, "PROJCS")
@@ -1534,7 +1533,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
           {
              OGRSpatialReference oSRS(pszSrcProjection);
 
-             if( oSRS.GetAttrValue("PROJECTION") != NULL &&
+             if( oSRS.GetAttrValue("PROJECTION") != nullptr &&
                  EQUAL(oSRS.GetAttrValue("PROJECTION"),
                        SRS_PT_TRANSVERSE_MERCATOR) )
              {
@@ -1544,7 +1543,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                          oSRS.GetProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0,
                                           &ogrerrorOl)) >= 0;
              }
-             else if (oSRS.GetAttrValue("PROJECTION") == NULL &&
+             else if (oSRS.GetAttrValue("PROJECTION") == nullptr &&
                       oSRS.IsGeographic())
              {
                   bOK &= VSIFPrintfL(fp,"PROJECTION_NAME = LL\n") >= 0;
@@ -1566,7 +1565,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
                  spheroid_name =
                      mffEllipsoids->GetSpheroidNameByEqRadiusAndInvFlattening(
                          eq_radius, inv_flattening);
-                 if (spheroid_name != NULL)
+                 if (spheroid_name != nullptr)
                  {
                      bOK &= VSIFPrintfL(fp, "SPHEROID_NAME = %s\n",
                                         spheroid_name ) >= 0;
@@ -1594,7 +1593,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
     {
         delete poDS;
         CPLFree(pszBaseFilename);
-        return NULL;
+        return nullptr;
     }
 
     /* End of georeferencing stuff */
@@ -1607,7 +1606,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
         poDstBand->FlushCache();
     }
 
-    if( !pfnProgress( 1.0, NULL, pProgressData ) )
+    if( !pfnProgress( 1.0, nullptr, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt,
                   "User terminated" );
@@ -1617,7 +1616,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
             GDALGetDriverByName( "MFF" ) );
         poMFFDriver->Delete( pszFilename );
         CPLFree(pszBaseFilename);
-        return NULL;
+        return nullptr;
     }
 
     poDS->CloneInfo( poSrcDS, GCIF_PAM_DEFAULT );
@@ -1633,7 +1632,7 @@ MFFDataset::CreateCopy( const char * pszFilename,
 void GDALRegister_MFF()
 
 {
-    if( GDALGetDriverByName( "MFF" ) != NULL )
+    if( GDALGetDriverByName( "MFF" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

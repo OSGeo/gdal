@@ -37,10 +37,10 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 OGRDODSDataSource::OGRDODSDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
-    poConnection(NULL),
+    pszName(nullptr),
+    poConnection(nullptr),
     poBTF(new BaseTypeFactory())
 {
     // TODO: This implies that the order in the class declaration is wrong.
@@ -61,7 +61,7 @@ OGRDODSDataSource::~OGRDODSDataSource()
 
     CPLFree( papoLayers );
 
-    if( poConnection != NULL )
+    if( poConnection != nullptr )
         delete poConnection;
 
     delete poDDS;
@@ -119,8 +119,8 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /*      the putenv() if there isn't already a DODS_CONF in the          */
 /*      environment.                                                    */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "DODS_CONF", NULL ) != NULL
-        && getenv("DODS_CONF") == NULL )
+    if( CPLGetConfigOption( "DODS_CONF", nullptr ) != nullptr
+        && getenv("DODS_CONF") == nullptr )
     {
         const int knBufSize = 1000;
         static char szDODS_CONF[knBufSize];
@@ -133,7 +133,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 /* -------------------------------------------------------------------- */
 /*      If we have a overriding AIS file location, apply it now.       */
 /* -------------------------------------------------------------------- */
-    if( CPLGetConfigOption( "DODS_AIS_FILE", NULL ) != NULL )
+    if( CPLGetConfigOption( "DODS_AIS_FILE", nullptr ) != nullptr )
     {
         string oAISFile = CPLGetConfigOption( "DODS_AIS_FILE", "" );
         RCReader::instance()->set_ais_database( oAISFile );
@@ -191,7 +191,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
 #ifdef LIBDAP_39
     AttrTable* poTable = oDAS.container();
-    if (poTable == NULL)
+    if (poTable == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot get container");
         return FALSE;
@@ -209,7 +209,7 @@ int OGRDODSDataSource::Open( const char * pszNewName )
             string target_container = poAttr->get_attr( "target_container" );
             BaseType *poVar = poDDS->var( target_container.c_str() );
 
-            if( poVar == NULL )
+            if( poVar == nullptr )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Unable to find variable '%s' named in\n"
@@ -244,11 +244,11 @@ int OGRDODSDataSource::Open( const char * pszNewName )
 
             if( poVar->type() == dods_sequence_c )
                 AddLayer( new OGRDODSSequenceLayer(this,poVar->name().c_str(),
-                                                   NULL) );
+                                                   nullptr) );
             else if( poVar->type() == dods_grid_c
                      || poVar->type() == dods_array_c )
                 AddLayer( new OGRDODSGridLayer(this,poVar->name().c_str(),
-                                               NULL) );
+                                               nullptr) );
         }
     }
 
@@ -285,7 +285,7 @@ OGRLayer *OGRDODSDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
     else
         return papoLayers[iLayer];
 }

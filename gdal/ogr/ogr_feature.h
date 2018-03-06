@@ -222,9 +222,10 @@ class CPL_DLL OGRFeatureDefn
 //! @endcond
 
   public:
-       explicit OGRFeatureDefn( const char * pszName = NULL );
+       explicit OGRFeatureDefn( const char * pszName = nullptr );
     virtual    ~OGRFeatureDefn();
 
+    void                 SetName( const char* pszName );
     virtual const char  *GetName();
 
     virtual int         GetFieldCount();
@@ -261,7 +262,7 @@ class CPL_DLL OGRFeatureDefn
 
     virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
 
-    static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = NULL );
+    static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
 
   private:
@@ -295,6 +296,8 @@ class CPL_DLL OGRFeature
     OGRStyleTable       *m_poStyleTable;
     char                *m_pszTmpFieldValue;
 //! @endcond
+
+    bool                CopySelfTo( OGRFeature *poNew );
 
   public:
     explicit            OGRFeature( OGRFeatureDefn * );
@@ -435,7 +438,7 @@ class CPL_DLL OGRFeature
     GIntBig             GetFID() const { return nFID; }
     virtual OGRErr      SetFID( GIntBig nFIDIn );
 
-    void                DumpReadable( FILE *, char** papszOptions = NULL );
+    void                DumpReadable( FILE *, char** papszOptions = nullptr );
 
     OGRErr              SetFrom( OGRFeature *, int = TRUE );
     OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
@@ -499,14 +502,21 @@ class CPL_DLL OGRFeatureQuery
 
     int         CanUseIndex( swq_expr_node*, OGRLayer * );
 
+    OGRErr      Compile( OGRLayer *, OGRFeatureDefn*, const char *,
+                         int bCheck,
+                         swq_custom_func_registrar* poCustomFuncRegistrar );
   public:
                 OGRFeatureQuery();
                ~OGRFeatureQuery();
 
+    OGRErr      Compile( OGRLayer *, const char *,
+                         int bCheck = TRUE,
+                         swq_custom_func_registrar*
+                         poCustomFuncRegistrar = nullptr );
     OGRErr      Compile( OGRFeatureDefn *, const char *,
                          int bCheck = TRUE,
                          swq_custom_func_registrar*
-                         poCustomFuncRegistrar = NULL );
+                         poCustomFuncRegistrar = nullptr );
     int         Evaluate( OGRFeature * );
 
     GIntBig    *EvaluateAgainstIndices( OGRLayer *, OGRErr * );

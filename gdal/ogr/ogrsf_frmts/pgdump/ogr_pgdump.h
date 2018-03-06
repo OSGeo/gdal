@@ -119,6 +119,7 @@ class OGRPGDumpLayer : public OGRLayer
     int                 iFIDAsRegularColumnIndex;
     bool                bAutoFIDOnCreateViaCopy;
     bool                bCopyStatementWithFID;
+    bool                bNeedToUpdateSequence;
 
     char              **papszOverrideColumnTypes;
 
@@ -126,6 +127,8 @@ class OGRPGDumpLayer : public OGRLayer
 
     OGRErr              StartCopy(int bSetFID);
     CPLString           BuildCopyFields(int bSetFID);
+
+    void                UpdateSequenceIfNeeded();
 
   public:
                         OGRPGDumpLayer(OGRPGDumpDataSource* poDS,
@@ -210,9 +213,9 @@ class OGRPGDumpDataSource : public OGRDataSource
     virtual OGRLayer   *GetLayer( int ) override;
 
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     virtual int         TestCapability( const char * ) override;
 

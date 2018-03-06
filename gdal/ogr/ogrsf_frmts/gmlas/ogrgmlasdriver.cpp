@@ -55,17 +55,17 @@ static GDALDataset *OGRGMLASDriverOpen( GDALOpenInfo* poOpenInfo )
     OGRGMLASDataSource    *poDS;
 
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
     if( OGRGMLASDriverIdentify( poOpenInfo ) == FALSE )
-        return NULL;
+        return nullptr;
 
     poDS = new OGRGMLASDataSource();
 
     if( !poDS->Open(  poOpenInfo ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -78,7 +78,7 @@ static GDALDataset *OGRGMLASDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRGMLAS()
 
 {
-    if( GDALGetDriverByName( "GMLAS" ) != NULL )
+    if( GDALGetDriverByName( "GMLAS" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

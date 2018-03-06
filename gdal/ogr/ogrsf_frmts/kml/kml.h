@@ -30,6 +30,8 @@
 #ifndef OGR_KML_KML_H_INCLUDED
 #define OGR_KML_KML_H_INCLUDED
 
+#ifdef HAVE_EXPAT
+
 #include "ogr_expat.h"
 #include "cpl_vsi.h"
 
@@ -37,14 +39,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-/* Workaround VC6 bug */
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-namespace std
-{
-  typedef ::size_t size_t;
-}
-#endif
 
 #include "cpl_port.h"
 #include "kmlutility.h"
@@ -123,5 +117,7 @@ private:
     int nDataHandlerCounter;
     int nWithoutEventCounter;
 };
+
+#endif // HAVE_EXPAT
 
 #endif /* OGR_KML_KML_H_INCLUDED */

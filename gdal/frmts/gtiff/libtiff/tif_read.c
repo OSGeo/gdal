@@ -1,5 +1,3 @@
-/* $Id: tif_read.c,v 1.65 2017-07-15 12:33:25 erouault Exp $ */
-
 /*
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -58,7 +56,7 @@ static int TIFFReadAndRealloc( TIFF* tif, tmsize_t size,
                                int is_strip, uint32 strip_or_tile,
                                const char* module )
 {
-#if SIZEOF_VOIDP == 8 || SIZEOF_SIZE_T == 8
+#if SIZEOF_SIZE_T == 8
         tmsize_t threshold = INITIAL_THRESHOLD;
 #endif
         tmsize_t already_read = 0;
@@ -73,7 +71,7 @@ static int TIFFReadAndRealloc( TIFF* tif, tmsize_t size,
         {
             tmsize_t bytes_read;
             tmsize_t to_read = size - already_read;
-#if SIZEOF_VOIDP == 8 || SIZEOF_SIZE_T == 8
+#if SIZEOF_SIZE_T == 8
             if( to_read >= threshold && threshold < MAX_THRESHOLD &&
                 already_read + to_read + rawdata_offset > tif->tif_rawdatasize )
             {
@@ -544,7 +542,7 @@ TIFFReadEncodedStrip(TIFF* tif, uint32 strip, void* buf, tmsize_t size)
 
 /* Variant of TIFFReadEncodedStrip() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillStrip() has
- *   suceeded. This avoid excessive memory allocation in case of truncated
+ *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedStrip() if *buf != NULL
  */
@@ -1019,7 +1017,7 @@ TIFFReadEncodedTile(TIFF* tif, uint32 tile, void* buf, tmsize_t size)
 
 /* Variant of TIFFReadTile() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
- *   suceeded. This avoid excessive memory allocation in case of truncated
+ *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedTile() if *buf != NULL
  */
@@ -1038,7 +1036,7 @@ _TIFFReadTileAndAllocBuffer(TIFF* tif,
 
 /* Variant of TIFFReadEncodedTile() that does 
  * * if *buf == NULL, *buf = _TIFFmalloc(bufsizetoalloc) only after TIFFFillTile() has
- *   suceeded. This avoid excessive memory allocation in case of truncated
+ *   succeeded. This avoid excessive memory allocation in case of truncated
  *   file.
  * * calls regular TIFFReadEncodedTile() if *buf != NULL
  */

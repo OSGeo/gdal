@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     {
         printf("Raw expression dump :\n");
         expr_out->Dump(stderr, 0);
-        if (expr_out->Evaluate(NULL))
+        if (expr_out->Evaluate(nullptr))
         {
             printf("After evaluation :\n");
             expr_out->Dump(stderr, 0);

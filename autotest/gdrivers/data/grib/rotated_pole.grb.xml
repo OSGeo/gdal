@@ -1,0 +1,19 @@
+<VSISparseFile>
+  <Length>648964</Length>
+  <SubfileRegion>
+    <Filename relative="1">rotated_pole.grb.begin</Filename>
+    <DestinationOffset>0</DestinationOffset>
+    <SourceOffset>0</SourceOffset>
+    <RegionLength>1024</RegionLength>
+  </SubfileRegion>
+  <ConstantRegion>
+    <DestinationOffset>1024</DestinationOffset>
+    <RegionLength>647936</RegionLength>
+    <Value>0</Value>
+  </ConstantRegion>
+  <ConstantRegion>
+    <DestinationOffset>648960</DestinationOffset>
+    <RegionLength>4</RegionLength>
+    <Value>55</Value> <!-- 7 -->
+  </ConstantRegion>
+</VSISparseFile>

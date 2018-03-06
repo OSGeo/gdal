@@ -26,18 +26,41 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogr_osm.h"
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <time.h>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_port.h"
+#include "cpl_progress.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
+#include "cpl_vsi.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
+#include "ogr_spatialref.h"
+#include "ogrsf_frmts.h"
+#include "ogr_osm.h"
+#include "osm_parser.h"
+#include "sqlite3.h"
 
 CPL_CVSID("$Id$")
 
-static const int SWITCH_THRESHOLD = 10000;
-static const int MAX_THRESHOLD = 100000;
+constexpr int SWITCH_THRESHOLD = 10000;
+constexpr int MAX_THRESHOLD = 100000;
 
-static const int ALLTAGS_LENGTH = 8192;
+constexpr int ALLTAGS_LENGTH = 8192;
 
 /************************************************************************/
 /*                          OGROSMLayer()                               */
@@ -54,7 +77,7 @@ OGROSMLayer::OGROSMLayer( OGROSMDataSource* poDSIn, int nIdxLayerIn,
     nFeatureArraySize(0),
     nFeatureArrayMaxSize(0),
     nFeatureArrayIndex(0),
-    papoFeatures(NULL),
+    papoFeatures(nullptr),
     bHasOSMId(false),
     nIndexOSMId(-1),
     nIndexOSMWayId(-1),
@@ -151,9 +174,9 @@ void OGROSMLayer::ForceResetReading()
 
 OGRErr OGROSMLayer::SetAttributeFilter( const char* pszAttrQuery )
 {
-    if( pszAttrQuery == NULL && m_pszAttrQueryString == NULL )
+    if( pszAttrQuery == nullptr && m_pszAttrQueryString == nullptr )
         return OGRERR_NONE;
-    if( pszAttrQuery != NULL && m_pszAttrQueryString != NULL &&
+    if( pszAttrQuery != nullptr && m_pszAttrQueryString != nullptr &&
         strcmp(pszAttrQuery, m_pszAttrQueryString) == 0 )
         return OGRERR_NONE;
 
@@ -198,8 +221,8 @@ GIntBig OGROSMLayer::GetFeatureCount( int bForce )
 
 OGRFeature *OGROSMLayer::GetNextFeature()
 {
-    OGROSMLayer* poNewCurLayer = NULL;
-    OGRFeature* poFeature = MyGetNextFeature(&poNewCurLayer, NULL, NULL);
+    OGROSMLayer* poNewCurLayer = nullptr;
+    OGRFeature* poFeature = MyGetNextFeature(&poNewCurLayer, nullptr, nullptr);
     poDS->SetCurrentLayer(poNewCurLayer);
     return poFeature;
 }
@@ -215,13 +238,13 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
     {
         if( poDS->IsInterleavedReading() )
         {
-            if( *ppoNewCurLayer  == NULL )
+            if( *ppoNewCurLayer  == nullptr )
             {
                  *ppoNewCurLayer = this;
             }
             else if( *ppoNewCurLayer  != this )
             {
-                return NULL;
+                return nullptr;
             }
 
             // If too many features have been accumulated in another layer, we
@@ -236,7 +259,7 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
                                     "features in '%s'",
                              poDS->papoLayers[i]->GetName(),
                              GetName());
-                    return NULL;
+                    return nullptr;
                 }
             }
 
@@ -259,31 +282,31 @@ OGRFeature *OGROSMLayer::MyGetNextFeature( OGROSMLayer** ppoNewCurLayer,
                                  "no more feature in '%s'",
                                  poDS->papoLayers[i]->GetName(),
                                  GetName());
-                        return NULL;
+                        return nullptr;
                     }
                 }
 
                 /* Game over : no more data to read from the stream */
-                *ppoNewCurLayer = NULL;
-                return NULL;
+                *ppoNewCurLayer = nullptr;
+                return nullptr;
             }
         }
         else
         {
             while( true )
             {
-                int bRet = poDS->ParseNextChunk(nIdxLayer, NULL, NULL);
+                int bRet = poDS->ParseNextChunk(nIdxLayer, nullptr, nullptr);
                 if( nFeatureArraySize != 0 )
                     break;
                 if( bRet == FALSE )
-                    return NULL;
+                    return nullptr;
             }
         }
     }
 
     OGRFeature* poFeature = papoFeatures[nFeatureArrayIndex];
 
-    papoFeatures[nFeatureArrayIndex] = NULL;
+    papoFeatures[nFeatureArrayIndex] = nullptr;
     nFeatureArrayIndex++;
 
     if( nFeatureArrayIndex == nFeatureArraySize )
@@ -338,7 +361,7 @@ bool OGROSMLayer::AddToArray( OGRFeature* poFeature,
         OGRFeature** papoNewFeatures = static_cast<OGRFeature **>(
             VSI_REALLOC_VERBOSE(papoFeatures,
                                 nFeatureArrayMaxSize * sizeof(OGRFeature*)));
-        if( papoNewFeatures == NULL )
+        if( papoNewFeatures == nullptr )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "For layer %s, cannot resize feature array to %d features",
@@ -358,7 +381,7 @@ bool OGROSMLayer::AddToArray( OGRFeature* poFeature,
 
 int OGROSMLayer::EvaluateAttributeFilter(OGRFeature* poFeature)
 {
-    return (m_poAttrQuery == NULL
+    return (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature ));
 }
 
@@ -383,9 +406,9 @@ int  OGROSMLayer::AddFeature(OGRFeature* poFeature,
     if( poGeom )
         poGeom->assignSpatialReference( poSRS );
 
-    if( (m_poFilterGeom == NULL
+    if( (m_poFilterGeom == nullptr
         || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL || bAttrFilterAlreadyEvaluated
+        && (m_poAttrQuery == nullptr || bAttrFilterAlreadyEvaluated
             || m_poAttrQuery->Evaluate( poFeature )) )
     {
         if( !AddToArray(poFeature, bCheckFeatureThreshold) )
@@ -428,7 +451,7 @@ OGRErr OGROSMLayer::GetExtent( OGREnvelope *psExtent,
 const char* OGROSMLayer::GetLaunderedFieldName( const char* pszName )
 {
     if( poDS->DoesAttributeNameLaundering()  &&
-        strchr(pszName, ':') != NULL )
+        strchr(pszName, ':') != nullptr )
     {
         size_t i = 0;
         for( ;
@@ -553,7 +576,7 @@ static const char* GetValueOfTag(const char* pszKeyToSearch,
             return pasTags[k].pszV;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -718,7 +741,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
         "(CASE WHEN [railway] IS NOT NULL THEN 5 ELSE 0 END) + "
         "(CASE WHEN [layer] IS NOT NULL THEN 10 * CAST([layer] AS INTEGER) " */
 
-            const char* pszHighway = NULL;
+            const char* pszHighway = nullptr;
             if( nHighwayIdx >= 0)
             {
                 if( poFeature->IsFieldSetAndNotNull(nHighwayIdx) )
@@ -764,7 +787,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 }
             }
 
-            const char* pszBridge = NULL;
+            const char* pszBridge = nullptr;
             if( nBridgeIdx >= 0)
             {
                 if( poFeature->IsFieldSetAndNotNull(nBridgeIdx) )
@@ -784,7 +807,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 }
             }
 
-            const char* pszTunnel = NULL;
+            const char* pszTunnel = nullptr;
             if( nTunnelIdx >= 0)
             {
                 if( poFeature->IsFieldSetAndNotNull(nTunnelIdx) )
@@ -804,7 +827,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 }
             }
 
-            const char* pszRailway = NULL;
+            const char* pszRailway = nullptr;
             if( nRailwayIdx >= 0 )
             {
                 if( poFeature->IsFieldSetAndNotNull(nRailwayIdx) )
@@ -819,7 +842,7 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
                 nZOrder += 5;
             }
 
-            const char* pszLayer = NULL;
+            const char* pszLayer = nullptr;
             if( nLayerIdx >= 0 )
             {
                 if( poFeature->IsFieldSetAndNotNull(nLayerIdx) )
@@ -918,10 +941,10 @@ void OGROSMLayer::SetFieldsFromTags(OGRFeature* poFeature,
 
 const OGREnvelope* OGROSMLayer::GetSpatialFilterEnvelope()
 {
-    if( m_poFilterGeom != NULL )
+    if( m_poFilterGeom != nullptr )
         return &m_sFilterEnvelope;
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
@@ -963,14 +986,14 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
                                         OGRFieldType eType,
                                         const char* pszSQL )
 {
-    if( poDS->hDBForComputedAttributes == NULL )
+    if( poDS->hDBForComputedAttributes == nullptr )
     {
         const int rc =
             sqlite3_open_v2(
                 ":memory:", &(poDS->hDBForComputedAttributes),
                 SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
                 SQLITE_OPEN_NOMUTEX,
-                NULL );
+                nullptr );
         if( rc != SQLITE_OK )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
@@ -1033,9 +1056,9 @@ void OGROSMLayer::AddComputedAttribute( const char* pszName,
 
     CPLDebug("OSM", "SQL : \"%s\"", osSQL.c_str());
 
-    sqlite3_stmt *hStmt = NULL;
+    sqlite3_stmt *hStmt = nullptr;
     int rc = sqlite3_prepare_v2( poDS->hDBForComputedAttributes, osSQL, -1,
-                              &hStmt, NULL );
+                              &hStmt, nullptr );
     if( rc != SQLITE_OK )
     {
         CPLError( CE_Failure, CPLE_AppDefined,

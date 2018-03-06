@@ -47,7 +47,7 @@ CPL_CVSID("$Id$")
 /*
 ** Decode a base64 character.
 */
-static const unsigned char CPLBase64DecodeChar[256] = {
+constexpr unsigned char CPLBase64DecodeChar[256] = {
     // Not Base64 characters.
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
@@ -198,7 +198,7 @@ int CPLBase64DecodeInPlace( GByte* pszBase64 )
 
 char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
 {
-    static const char base64Chars[] =
+    constexpr char base64Chars[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     const int kCharArray3Size = 3;

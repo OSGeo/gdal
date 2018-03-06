@@ -7,6 +7,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2006, Mateusz Loskot <mateusz@loskot.net>
 // Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+// Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+// Copyright (c) 2017, NextGIS <info@nextgis.com>
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Library General Public
@@ -26,12 +28,17 @@
 
 #include "gdal_unit_test.h"
 
-#include <cpl_error.h>
-#include <cpl_hash_set.h>
-#include <cpl_list.h>
-#include <cpl_sha256.h>
-#include <cpl_string.h>
+#include "cpl_error.h"
+#include "cpl_hash_set.h"
+#include "cpl_list.h"
+#include "cpl_sha256.h"
+#include "cpl_string.h"
 #include "cpl_safemaths.hpp"
+#include "cpl_time.h"
+#include "cpl_json.h"
+#include "cpl_json_streaming_parser.h"
+#include "cpl_mem_cache.h"
+#include "cpl_http.h"
 
 #include <fstream>
 #include <string>
@@ -69,7 +76,7 @@ namespace tut
     {
         CPLList* list;
 
-        list = CPLListInsert(NULL, (void*)0, 0);
+        list = CPLListInsert(nullptr, (void*)nullptr, 0);
         ensure(CPLListCount(list) == 1);
         list = CPLListRemove(list, 2);
         ensure(CPLListCount(list) == 1);
@@ -77,9 +84,9 @@ namespace tut
         ensure(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
         ensure(CPLListCount(list) == 0);
-        list = NULL;
+        list = nullptr;
 
-        list = CPLListInsert(NULL, (void*)0, 2);
+        list = CPLListInsert(nullptr, (void*)nullptr, 2);
         ensure(CPLListCount(list) == 3);
         list = CPLListRemove(list, 2);
         ensure(CPLListCount(list) == 2);
@@ -87,16 +94,16 @@ namespace tut
         ensure(CPLListCount(list) == 1);
         list = CPLListRemove(list, 0);
         ensure(CPLListCount(list) == 0);
-        list = NULL;
+        list = nullptr;
 
         list = CPLListAppend(list, (void*)1);
         ensure(CPLListGet(list,0) == list);
-        ensure(CPLListGet(list,1) == NULL);
+        ensure(CPLListGet(list,1) == nullptr);
         list = CPLListAppend(list, (void*)2);
         list = CPLListInsert(list, (void*)3, 2);
         ensure(CPLListCount(list) == 3);
         CPLListDestroy(list);
-        list = NULL;
+        list = nullptr;
 
         list = CPLListAppend(list, (void*)1);
         list = CPLListAppend(list, (void*)2);
@@ -108,7 +115,7 @@ namespace tut
         ensure(CPLListGet(list,2)->pData == (void*)3);
         ensure(CPLListGet(list,3)->pData == (void*)4);
         CPLListDestroy(list);
-        list = NULL;
+        list = nullptr;
 
         list = CPLListInsert(list, (void*)4, 1);
         CPLListGet(list,0)->pData = (void*)2;
@@ -123,7 +130,7 @@ namespace tut
         list = CPLListRemove(list, 1);
         list = CPLListRemove(list, 0);
         list = CPLListRemove(list, 0);
-        ensure(list == NULL);
+        ensure(list == nullptr);
     }
 
     typedef struct
@@ -193,7 +200,7 @@ namespace tut
         CPLHashSetDestroy(set);
     }
 
-    int sumValues(void* elt, void* user_data)
+    static int sumValues(void* elt, void* user_data)
     {
         int* pnSum = (int*)user_data;
         *pnSum += *(int*)elt;
@@ -213,7 +220,7 @@ namespace tut
           data[i] = i;
         }
 
-        CPLHashSet* set = CPLHashSetNew(NULL, NULL, NULL);
+        CPLHashSet* set = CPLHashSetNew(nullptr, nullptr, nullptr);
         for(int i=0;i<HASH_SET_SIZE;i++)
         {
             ensure(CPLHashSetInsert(set, (void*)&data[i]) == TRUE);
@@ -466,7 +473,7 @@ namespace tut
             CPLErrorReset();
             char    *pszDecodedString = CPLRecode( oTestString.szString,
                 oTestString.szEncoding, oReferenceString.szEncoding);
-            if( strstr(CPLGetLastErrorMsg(), "Recode from KOI8-R to UTF-8 not supported") != NULL )
+            if( strstr(CPLGetLastErrorMsg(), "Recode from KOI8-R to UTF-8 not supported") != nullptr )
             {
                 CPLFree( pszDecodedString );
                 break;
@@ -478,9 +485,9 @@ namespace tut
             bool bOK = (memcmp(pszDecodedString, oReferenceString.szString,
                            nLength) == 0);
             // FIXME Some tests fail on Mac. Not sure why, but do not error out just for that
-            if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != NULL ||
-                         strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != NULL ||
-                         getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != NULL))
+            if( !bOK && (strstr(CPLGetConfigOption("TRAVIS_OS_NAME", ""), "osx") != nullptr ||
+                         strstr(CPLGetConfigOption("BUILD_NAME", ""), "osx") != nullptr ||
+                         getenv("DO_NOT_FAIL_ON_RECODE_ERRORS") != nullptr))
             {
                 fprintf(stderr, "Recode from %s failed\n", oTestString.szEncoding);
             }
@@ -503,7 +510,7 @@ namespace tut
     {
         CPLStringList  oCSL;
 
-        ensure( "7nil", oCSL.List() == NULL );
+        ensure( "7nil", oCSL.List() == nullptr );
 
         oCSL.AddString( "def" );
         oCSL.AddString( "abc" );
@@ -511,13 +518,13 @@ namespace tut
         ensure_equals( "7", oCSL.Count(), 2 );
         ensure( "70", EQUAL(oCSL[0], "def") );
         ensure( "71", EQUAL(oCSL[1], "abc") );
-        ensure( "72", oCSL[17] == NULL );
-        ensure( "73", oCSL[-1] == NULL );
+        ensure( "72", oCSL[17] == nullptr );
+        ensure( "73", oCSL[-1] == nullptr );
         ensure_equals( "74", oCSL.FindString("abc"), 1 );
 
         CSLDestroy( oCSL.StealList() );
         ensure_equals( "75", oCSL.Count(), 0 );
-        ensure( "76", oCSL.List() == NULL );
+        ensure( "76", oCSL.List() == nullptr );
 
         // Test that the list will make an internal copy when needed to
         // modify a read-only list.
@@ -548,7 +555,7 @@ namespace tut
         oNVL.AddNameValue( "2KEY", "VALUE2" );
         ensure_equals( oNVL.Count(), 2 );
         ensure( EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
-        ensure( oNVL.FetchNameValue("MISSING") == NULL );
+        ensure( oNVL.FetchNameValue("MISSING") == nullptr );
 
         oNVL.AddNameValue( "KEY1", "VALUE3" );
         ensure( EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
@@ -560,8 +567,8 @@ namespace tut
         ensure_equals( oNVL.Count(), 3 );
 
         // make sure deletion works.
-        oNVL.SetNameValue( "2KEY", NULL );
-        ensure( oNVL.FetchNameValue("2KEY") == NULL );
+        oNVL.SetNameValue( "2KEY", nullptr );
+        ensure( oNVL.FetchNameValue("2KEY") == nullptr );
         ensure_equals( oNVL.Count(), 2 );
 
         // Test boolean support.
@@ -613,7 +620,7 @@ namespace tut
         ensure( "c5", EQUAL(oTestSort[1],"L=2") );
         ensure( "c6", EQUAL(oTestSort[2],"T=3") );
         ensure( "c7", EQUAL(oTestSort[3],"Z=1") );
-        ensure_equals( "c8", oTestSort[4], (const char*)NULL );
+        ensure_equals( "c8", oTestSort[4], (const char*)nullptr );
 
         // Test FetchNameValue() in a sorted list
         ensure( "c9", EQUAL(oTestSort.FetchNameValue("A"),"4") );
@@ -628,7 +635,7 @@ namespace tut
         ensure( "c15", EQUAL(oTestSort[2],"L=2") );
         ensure( "c16", EQUAL(oTestSort[3],"T=3") );
         ensure( "c17", EQUAL(oTestSort[4],"Z=1") );
-        ensure_equals( "c18", oTestSort[5], (const char*)NULL );
+        ensure_equals( "c18", oTestSort[5], (const char*)nullptr );
 
         // Test SetNameValue() of an existing item in a sorted list
         oTestSort.SetNameValue("Z", "6");
@@ -642,7 +649,7 @@ namespace tut
         ensure( "c23", EQUAL(oTestSort[3],"T=3") );
         ensure( "c24", EQUAL(oTestSort[4],"W=7") );
         ensure( "c25", EQUAL(oTestSort[5],"Z=6") );
-        ensure_equals( "c26", oTestSort[6], (const char*)NULL );
+        ensure_equals( "c26", oTestSort[6], (const char*)nullptr );
     }
 
     template<>
@@ -659,7 +666,7 @@ namespace tut
         ensure_equals( "91", oNVL.Count(), 2 );
         ensure( "92", EQUAL(oNVL.FetchNameValue("KEY1"),"VALUE1") );
         ensure( "93", EQUAL(oNVL.FetchNameValue("2KEY"),"VALUE2") );
-        ensure( "94", oNVL.FetchNameValue("MISSING") == NULL );
+        ensure( "94", oNVL.FetchNameValue("MISSING") == nullptr );
 
         oNVL.AddNameValue( "KEY1", "VALUE3" );
         ensure_equals( "95", oNVL.Count(), 3 );
@@ -671,8 +678,8 @@ namespace tut
         ensure_equals( "99", oNVL.Count(), 3 );
 
         // make sure deletion works.
-        oNVL.SetNameValue( "2KEY", NULL );
-        ensure( "9a", oNVL.FetchNameValue("2KEY") == NULL );
+        oNVL.SetNameValue( "2KEY", nullptr );
+        ensure( "9a", oNVL.FetchNameValue("2KEY") == nullptr );
         ensure_equals( "9b", oNVL.Count(), 2 );
 
         // Test insertion logic pretty carefully.
@@ -730,19 +737,19 @@ namespace tut
 
         // The following tests will fail because of overflows
         CPLErrorReset();
-        ensure( "11.1", VSIMalloc2( ~(size_t)0, ~(size_t)0 ) == NULL );
+        ensure( "11.1", VSIMalloc2( ~(size_t)0, ~(size_t)0 ) == nullptr );
         ensure( "11.1bis", CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.2", VSIMalloc3( 1, ~(size_t)0, ~(size_t)0 ) == NULL );
+        ensure( "11.2", VSIMalloc3( 1, ~(size_t)0, ~(size_t)0 ) == nullptr );
         ensure( "11.2bis", CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.3", VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == NULL );
+        ensure( "11.3", VSIMalloc3( ~(size_t)0, 1, ~(size_t)0 ) == nullptr );
         ensure( "11.3bis", CPLGetLastErrorType() != CE_None );
 
         CPLErrorReset();
-        ensure( "11.4", VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == NULL );
+        ensure( "11.4", VSIMalloc3( ~(size_t)0, ~(size_t)0, 1 ) == nullptr );
         ensure( "11.4bis", CPLGetLastErrorType() != CE_None );
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
@@ -750,43 +757,43 @@ namespace tut
             // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
             CPLErrorReset();
-            ensure( "11.6", VSIMalloc( ~(size_t)0 ) == NULL );
+            ensure( "11.6", VSIMalloc( ~(size_t)0 ) == nullptr );
             ensure( "11.6bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.7", VSIMalloc2( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.7", VSIMalloc2( ~(size_t)0, 1 ) == nullptr );
             ensure( "11.7bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.8", VSIMalloc3( ~(size_t)0, 1, 1 ) == NULL );
+            ensure( "11.8", VSIMalloc3( ~(size_t)0, 1, 1 ) == nullptr );
             ensure( "11.8bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.9", VSICalloc( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.9", VSICalloc( ~(size_t)0, 1 ) == nullptr );
             ensure( "11.9bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.10", VSIRealloc( NULL, ~(size_t)0 ) == NULL );
+            ensure( "11.10", VSIRealloc( nullptr, ~(size_t)0 ) == nullptr );
             ensure( "11.10bis", CPLGetLastErrorType() == CE_None ); /* no error reported */
 
             CPLErrorReset();
-            ensure( "11.11", VSI_MALLOC_VERBOSE( ~(size_t)0 ) == NULL );
+            ensure( "11.11", VSI_MALLOC_VERBOSE( ~(size_t)0 ) == nullptr );
             ensure( "11.11bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.12", VSI_MALLOC2_VERBOSE( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.12", VSI_MALLOC2_VERBOSE( ~(size_t)0, 1 ) == nullptr );
             ensure( "11.12bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.13", VSI_MALLOC3_VERBOSE( ~(size_t)0, 1, 1 ) == NULL );
+            ensure( "11.13", VSI_MALLOC3_VERBOSE( ~(size_t)0, 1, 1 ) == nullptr );
             ensure( "11.13bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.14", VSI_CALLOC_VERBOSE( ~(size_t)0, 1 ) == NULL );
+            ensure( "11.14", VSI_CALLOC_VERBOSE( ~(size_t)0, 1 ) == nullptr );
             ensure( "11.14bis", CPLGetLastErrorType() != CE_None );
 
             CPLErrorReset();
-            ensure( "11.15", VSI_REALLOC_VERBOSE( NULL, ~(size_t)0 ) == NULL );
+            ensure( "11.15", VSI_REALLOC_VERBOSE( nullptr, ~(size_t)0 ) == nullptr );
             ensure( "11.15bis", CPLGetLastErrorType() != CE_None );
 #endif
         }
@@ -795,43 +802,43 @@ namespace tut
 
         // The following allocs will return NULL because of 0 byte alloc
         CPLErrorReset();
-        ensure( "11.16", VSIMalloc2( 0, 1 ) == NULL );
+        ensure( "11.16", VSIMalloc2( 0, 1 ) == nullptr );
         ensure( "11.16bis", CPLGetLastErrorType() == CE_None );
-        ensure( "11.17", VSIMalloc2( 1, 0 ) == NULL );
+        ensure( "11.17", VSIMalloc2( 1, 0 ) == nullptr );
 
         CPLErrorReset();
-        ensure( "11.18", VSIMalloc3( 0, 1, 1 ) == NULL );
+        ensure( "11.18", VSIMalloc3( 0, 1, 1 ) == nullptr );
         ensure( "11.18bis", CPLGetLastErrorType() == CE_None );
-        ensure( "11.19", VSIMalloc3( 1, 0, 1 ) == NULL );
-        ensure( "11.20", VSIMalloc3( 1, 1, 0 ) == NULL );
+        ensure( "11.19", VSIMalloc3( 1, 0, 1 ) == nullptr );
+        ensure( "11.20", VSIMalloc3( 1, 1, 0 ) == nullptr );
     }
 
     template<>
     template<>
     void object::test<12>()
     {
-        ensure( strcmp(CPLFormFilename("a", "b", NULL), "a/b") == 0 ||
-                strcmp(CPLFormFilename("a", "b", NULL), "a\\b") == 0 );
-        ensure( strcmp(CPLFormFilename("a/", "b", NULL), "a/b") == 0 ||
-                strcmp(CPLFormFilename("a/", "b", NULL), "a\\b") == 0 );
-        ensure( strcmp(CPLFormFilename("a\\", "b", NULL), "a/b") == 0 ||
-                strcmp(CPLFormFilename("a\\", "b", NULL), "a\\b") == 0 );
-        ensure_equals( CPLFormFilename(NULL, "a", "b"), "a.b");
-        ensure_equals( CPLFormFilename(NULL, "a", ".b"), "a.b");
-        ensure_equals( CPLFormFilename("/a", "..", NULL), "/");
-        ensure_equals( CPLFormFilename("/a/", "..", NULL), "/");
-        ensure_equals( CPLFormFilename("/a/b", "..", NULL), "/a");
-        ensure_equals( CPLFormFilename("/a/b/", "..", NULL), "/a");
-        ensure( EQUAL(CPLFormFilename("c:", "..", NULL), "c:/..") ||
-                EQUAL(CPLFormFilename("c:", "..", NULL), "c:\\..") );
-        ensure( EQUAL(CPLFormFilename("c:\\", "..", NULL), "c:/..") ||
-                EQUAL(CPLFormFilename("c:\\", "..", NULL), "c:\\..") );
-        ensure_equals( CPLFormFilename("c:\\a", "..", NULL), "c:");
-        ensure_equals( CPLFormFilename("c:\\a\\", "..", NULL), "c:");
-        ensure_equals( CPLFormFilename("c:\\a\\b", "..", NULL), "c:\\a");
-        ensure_equals( CPLFormFilename("\\\\$\\c:\\a", "..", NULL), "\\\\$\\c:");
-        ensure( EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:/..") ||
-                EQUAL(CPLFormFilename("\\\\$\\c:", "..", NULL), "\\\\$\\c:\\..") );
+        ensure( strcmp(CPLFormFilename("a", "b", nullptr), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a", "b", nullptr), "a\\b") == 0 );
+        ensure( strcmp(CPLFormFilename("a/", "b", nullptr), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a/", "b", nullptr), "a\\b") == 0 );
+        ensure( strcmp(CPLFormFilename("a\\", "b", nullptr), "a/b") == 0 ||
+                strcmp(CPLFormFilename("a\\", "b", nullptr), "a\\b") == 0 );
+        ensure_equals( CPLFormFilename(nullptr, "a", "b"), "a.b");
+        ensure_equals( CPLFormFilename(nullptr, "a", ".b"), "a.b");
+        ensure_equals( CPLFormFilename("/a", "..", nullptr), "/");
+        ensure_equals( CPLFormFilename("/a/", "..", nullptr), "/");
+        ensure_equals( CPLFormFilename("/a/b", "..", nullptr), "/a");
+        ensure_equals( CPLFormFilename("/a/b/", "..", nullptr), "/a");
+        ensure( EQUAL(CPLFormFilename("c:", "..", nullptr), "c:/..") ||
+                EQUAL(CPLFormFilename("c:", "..", nullptr), "c:\\..") );
+        ensure( EQUAL(CPLFormFilename("c:\\", "..", nullptr), "c:/..") ||
+                EQUAL(CPLFormFilename("c:\\", "..", nullptr), "c:\\..") );
+        ensure_equals( CPLFormFilename("c:\\a", "..", nullptr), "c:");
+        ensure_equals( CPLFormFilename("c:\\a\\", "..", nullptr), "c:");
+        ensure_equals( CPLFormFilename("c:\\a\\b", "..", nullptr), "c:\\a");
+        ensure_equals( CPLFormFilename("\\\\$\\c:\\a", "..", nullptr), "\\\\$\\c:");
+        ensure( EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:/..") ||
+                EQUAL(CPLFormFilename("\\\\$\\c:", "..", nullptr), "\\\\$\\c:\\..") );
     }
 
     template<>
@@ -916,7 +923,16 @@ namespace tut
         gbGotError = false;
         CPLPopErrorHandler();
 
-        CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : NULL);
+        CPLSetConfigOption("CPL_DEBUG", oldVal.size() ? oldVal.c_str() : nullptr);
+
+        oldHandler = CPLSetErrorHandler(nullptr);
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLErrorHandler newOldHandler = CPLSetErrorHandler(nullptr);
+        ensure_equals(newOldHandler, static_cast<CPLErrorHandler>(nullptr));
+        CPLDebug("TEST", "Test");
+        CPLError(CE_Failure, CPLE_AppDefined, "test");
+        CPLSetErrorHandler(oldHandler);
     }
 
 /************************************************************************/
@@ -964,27 +980,27 @@ namespace tut
     void object::test<17>()
     {
         GByte* ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), 1));
-        ensure( ptr != NULL );
+        ensure( ptr != nullptr );
         ensure( ((size_t)ptr % sizeof(void*)) == 0 );
         *ptr = 1;
         VSIFreeAligned(ptr);
 
         ptr = static_cast<GByte*>(VSIMallocAligned(16, 1));
-        ensure( ptr != NULL );
+        ensure( ptr != nullptr );
         ensure( ((size_t)ptr % 16) == 0 );
         *ptr = 1;
         VSIFreeAligned(ptr);
 
-        VSIFreeAligned(NULL);
+        VSIFreeAligned(nullptr);
 
 #ifndef WIN32
         // Illegal use of API. Returns non NULL on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(2, 1));
-        ensure( ptr == NULL );
+        ensure( ptr == nullptr );
 
         // Illegal use of API. Crashes on Windows
         ptr = static_cast<GByte*>(VSIMallocAligned(5, 1));
-        ensure( ptr == NULL );
+        ensure( ptr == nullptr );
 #endif
 
         if( !CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")) )
@@ -992,10 +1008,10 @@ namespace tut
             // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), ~((size_t)0)));
-            ensure( ptr == NULL );
+            ensure( ptr == nullptr );
 
             ptr = static_cast<GByte*>(VSIMallocAligned(sizeof(void*), (~((size_t)0)) - sizeof(void*)));
-            ensure( ptr == NULL );
+            ensure( ptr == nullptr );
 #endif
         }
     }
@@ -1010,7 +1026,7 @@ namespace tut
         CPLSetConfigOption("FOOFOO", "BAR");
         char** options = CPLGetConfigOptions();
         ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
-        CPLSetConfigOptions(NULL);
+        CPLSetConfigOptions(nullptr);
         ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
         CPLSetConfigOptions(options);
         ensure_equals (CPLGetConfigOption("FOOFOO", "i_dont_exist"), "BAR");
@@ -1027,7 +1043,7 @@ namespace tut
         CPLSetThreadLocalConfigOption("FOOFOO", "BAR");
         char** options = CPLGetThreadLocalConfigOptions();
         ensure_equals (CSLFetchNameValue(options, "FOOFOO"), "BAR");
-        CPLSetThreadLocalConfigOptions(NULL);
+        CPLSetThreadLocalConfigOptions(nullptr);
         ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "i_dont_exist");
         CPLSetThreadLocalConfigOptions(options);
         ensure_equals (CPLGetThreadLocalConfigOption("FOOFOO", "i_dont_exist"), "BAR");
@@ -1042,7 +1058,7 @@ namespace tut
 
         CPLSetConfigOption("HOME", "/foo");
         ensure ( EQUAL(CPLExpandTilde("~/bar"), "/foo/bar") || EQUAL(CPLExpandTilde("~/bar"), "/foo\\bar") );
-        CPLSetConfigOption("HOME", NULL);
+        CPLSetConfigOption("HOME", nullptr);
     }
 
     template<>
@@ -1088,32 +1104,32 @@ namespace tut
     template<>
     void object::test<23>()
     {
-        char* pszText = CPLUnescapeString("&lt;&gt;&amp;&apos;&quot;&#x3f;&#x3F;&#63;", NULL, CPLES_XML);
+        char* pszText = CPLUnescapeString("&lt;&gt;&amp;&apos;&quot;&#x3f;&#x3F;&#63;", nullptr, CPLES_XML);
         ensure_equals( CPLString(pszText), "<>&'\"???");
         CPLFree(pszText);
 
         // Integer overflow
-        pszText = CPLUnescapeString("&10000000000000000;", NULL, CPLES_XML);
+        pszText = CPLUnescapeString("&10000000000000000;", nullptr, CPLES_XML);
         // We do not really care about the return value
         CPLFree(pszText);
 
         // Integer overflow
-        pszText = CPLUnescapeString("&#10000000000000000;", NULL, CPLES_XML);
+        pszText = CPLUnescapeString("&#10000000000000000;", nullptr, CPLES_XML);
         // We do not really care about the return value
         CPLFree(pszText);
 
         // Error case
-        pszText = CPLUnescapeString("&foo", NULL, CPLES_XML);
+        pszText = CPLUnescapeString("&foo", nullptr, CPLES_XML);
         ensure_equals( CPLString(pszText), "");
         CPLFree(pszText);
 
         // Error case
-        pszText = CPLUnescapeString("&#x", NULL, CPLES_XML);
+        pszText = CPLUnescapeString("&#x", nullptr, CPLES_XML);
         ensure_equals( CPLString(pszText), "");
         CPLFree(pszText);
 
         // Error case
-        pszText = CPLUnescapeString("&#", NULL, CPLES_XML);
+        pszText = CPLUnescapeString("&#", nullptr, CPLES_XML);
         ensure_equals( CPLString(pszText), "");
         CPLFree(pszText);
     }
@@ -1135,9 +1151,16 @@ namespace tut
         strcpy(szBuffer, "123456789");
         snprintf(szBuffer, 3, "%s", "xy");
         ensure( memcmp(szBuffer, "xy" "\0" "4", 4) == 0 );
+#ifdef HAVE_CPL_SAFER_SNPRINTF
+        // Disabled by default, because crashes on gcc48_stdcpp11 target
+        // In function ‘int snprintf(char*, size_t, const char*, ...)’,
+        // inlined from ‘void tut::test_object<Data>::test() [with int n = 24; Data = tut::test_cpl_data]’ at test_cpl.cpp:1141:48:
+        // /usr/include/x86_64-linux-gnu/bits/stdio2.h:66:44: warning: call to int __builtin___snprintf_chk(char*, long unsigned int, int, long unsigned int, const char*, ...) will always overflow destination buffer [enabled by default]
+
         strcpy(szBuffer, "123456789");
         snprintf(szBuffer, INT_MAX, "%s", "xy");
         ensure( memcmp(szBuffer, "xy" "\0" "4", 4) == 0 );
+#endif
     }
 
 
@@ -1239,4 +1262,1151 @@ namespace tut
         try { (CPLSM(1U) / CPLSM(0U)).v(); ensure(false); } catch (...) {}
     }
 
+    // Test CPLParseRFC822DateTime()
+    template<>
+    template<>
+    void object::test<27>()
+    {
+        int year, month, day, hour, min, sec, tz, weekday;
+        ensure( !CPLParseRFC822DateTime("", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr), TRUE );
+
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 +0015", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 101 );
+        ensure_equals( weekday, 4 );
+
+        ensure_equals( CPLParseRFC822DateTime("Thu, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, 56 );
+        ensure_equals( tz, 100 );
+        ensure_equals( weekday, 4 );
+
+        // Without day of week, second and timezone
+        ensure_equals( CPLParseRFC822DateTime("15 Jan 2017 12:34", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ensure_equals( year, 2017 );
+        ensure_equals( month, 1 );
+        ensure_equals( day, 15 );
+        ensure_equals( hour, 12 );
+        ensure_equals( min, 34 );
+        ensure_equals( sec, -1 );
+        ensure_equals( tz, 0 );
+        ensure_equals( weekday, 0 );
+
+        ensure_equals( CPLParseRFC822DateTime("XXX, 15 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday), TRUE );
+        ensure_equals( weekday, 0 );
+
+        ensure( !CPLParseRFC822DateTime("Sun, 01 Jan 2017 12", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("00 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("32 Jan 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 XXX 2017 12:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 -1:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 24:34:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:-1:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:60:56 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:-1 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("01 Jan 2017 12:34:61 GMT", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 XXX", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +-100", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+        ensure( !CPLParseRFC822DateTime("15 Jan 2017 12:34:56 +9900", &year, &month, &day, &hour, &min, &sec, &tz, &weekday) );
+
+    }
+
+    // Test CPLCopyTree()
+    template<>
+    template<>
+    void object::test<28>()
+    {
+        CPLString osTmpPath(CPLGetDirname(CPLGenerateTempFilename(nullptr)));
+        CPLString osSrcDir(CPLFormFilename(osTmpPath, "src_dir", nullptr));
+        CPLString osNewDir(CPLFormFilename(osTmpPath, "new_dir", nullptr));
+        ensure( VSIMkdir(osSrcDir, 0755) == 0 );
+        CPLString osSrcFile(CPLFormFilename(osSrcDir, "my.bin", nullptr));
+        VSILFILE* fp = VSIFOpenL(osSrcFile, "wb");
+        ensure( fp != nullptr );
+        VSIFCloseL(fp);
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, "/i/do_not/exist") < 0 );
+        CPLPopErrorHandler();
+
+        ensure( CPLCopyTree(osNewDir, osSrcDir) == 0 );
+        VSIStatBufL sStat;
+        CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", nullptr));
+        ensure( VSIStatL(osNewFile, &sStat) == 0 );
+
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( CPLCopyTree(osNewDir, osSrcDir) < 0 );
+        CPLPopErrorHandler();
+
+        VSIUnlink( osNewFile );
+        VSIRmdir( osNewDir );
+        VSIUnlink( osSrcFile );
+        VSIRmdir( osSrcDir );
+    }
+
+    class CPLJSonStreamingParserDump: public CPLJSonStreamingParser
+    {
+            std::vector<bool> m_abFirstMember;
+            CPLString m_osSerialized;
+            CPLString m_osException;
+
+        public:
+            CPLJSonStreamingParserDump() {}
+
+            virtual void Reset() CPL_OVERRIDE
+            {
+                m_osSerialized.clear();
+                m_osException.clear();
+                CPLJSonStreamingParser::Reset();
+            }
+
+            virtual void String(const char* pszValue, size_t) CPL_OVERRIDE;
+            virtual void Number(const char* pszValue, size_t) CPL_OVERRIDE;
+            virtual void Boolean(bool bVal) CPL_OVERRIDE;
+            virtual void Null() CPL_OVERRIDE;
+
+            virtual void StartObject() CPL_OVERRIDE;
+            virtual void EndObject() CPL_OVERRIDE;
+            virtual void StartObjectMember(const char* pszKey, size_t) CPL_OVERRIDE;
+
+            virtual void StartArray() CPL_OVERRIDE;
+            virtual void EndArray() CPL_OVERRIDE;
+            virtual void StartArrayMember() CPL_OVERRIDE;
+
+            virtual void Exception(const char* pszMessage) CPL_OVERRIDE;
+
+            const CPLString& GetSerialized() const { return m_osSerialized; }
+            const CPLString& GetException() const { return m_osException; }
+    };
+
+    void CPLJSonStreamingParserDump::StartObject()
+    {
+        m_osSerialized += "{";
+        m_abFirstMember.push_back(true);
+    }
+    void CPLJSonStreamingParserDump::EndObject()
+    {
+        m_osSerialized += "}";
+        m_abFirstMember.pop_back();
+    }
+
+    void CPLJSonStreamingParserDump::StartObjectMember(const char* pszKey,
+                                                       size_t)
+    {
+        if( !m_abFirstMember.back() )
+            m_osSerialized += ", ";
+        m_osSerialized += CPLSPrintf("\"%s\": ", pszKey);
+        m_abFirstMember.back() = false;
+    }
+
+    void CPLJSonStreamingParserDump::String(const char* pszValue, size_t)
+    {
+        m_osSerialized += GetSerializedString(pszValue);
+    }
+
+    void CPLJSonStreamingParserDump::Number(const char* pszValue, size_t)
+    {
+        m_osSerialized += pszValue;
+    }
+
+    void CPLJSonStreamingParserDump::Boolean(bool bVal)
+    {
+        m_osSerialized += bVal ? "true" : "false";
+    }
+
+    void CPLJSonStreamingParserDump::Null()
+    {
+        m_osSerialized += "null";
+    }
+
+    void CPLJSonStreamingParserDump::StartArray()
+    {
+        m_osSerialized += "[";
+        m_abFirstMember.push_back(true);
+    }
+
+    void CPLJSonStreamingParserDump::EndArray()
+    {
+        m_osSerialized += "]";
+        m_abFirstMember.pop_back();
+    }
+
+    void CPLJSonStreamingParserDump::StartArrayMember()
+    {
+        if( !m_abFirstMember.back() )
+            m_osSerialized += ", ";
+        m_abFirstMember.back() = false;
+    }
+
+    void CPLJSonStreamingParserDump::Exception(const char* pszMessage)
+    {
+        m_osException = pszMessage;
+    }
+
+    // Test CPLJSonStreamingParser()
+    template<>
+    template<>
+    void object::test<29>()
+    {
+        // nominal cases
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "true";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "false";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "null";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "10";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "123eE-34";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\\\a\\b\\f\\n\\r\\t\\u0020\\u0001\\\"\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\\\a\\b\\f\\n\\r\\t \\u0001\\\"\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u0001\\u0020\\ud834\\uDD1E\\uDD1E\\uD834\\uD834\\uD834\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\\u0001 \xf0\x9d\x84\x9e\xef\xbf\xbd\xef\xbf\xbd\xef\xbf\xbd\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ud834\\t\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xef\xbf\xbd\\t\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u00e9\"";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "\"\xc3\xa9\"" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{}";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[[]]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sText );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1,2]";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "[1, 2]" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{\"a\":null}";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), "{\"a\": null}" );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = " { \"a\" : null ,\r\n\t\"b\": {\"c\": 1}, \"d\": [1] }";
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            const char sExpected[] = "{\"a\": null, \"b\": {\"c\": 1}, \"d\": [1]}";
+            ensure_equals( oParser.GetSerialized(), sExpected );
+
+            oParser.Reset();
+            ensure( oParser.Parse( sText, strlen(sText), true ) );
+            ensure_equals( oParser.GetSerialized(), sExpected );
+
+            oParser.Reset();
+            for( size_t i = 0; sText[i]; i++ )
+                ensure( oParser.Parse( sText + i, 1, sText[i+1] == 0 ) );
+            ensure_equals( oParser.GetSerialized(), sExpected );
+        }
+
+        // errors
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "tru1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "truxe";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "truex";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "fals";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "falsxe";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "falsex";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nul";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nulxl";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "nullx";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "true false";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "x";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "}";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[,";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[|";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "]";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ :";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ ,";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ |";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ 1";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": 1 2";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\", ";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\" }";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{\"a\" x}";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "1x";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\x\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\ux";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\u000";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\uD834\\ux\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"\\\"";
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "\"too long\"";
+            oParser.SetMaxStringSize(2);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "[[]]";
+            oParser.SetMaxDepth(1);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+        {
+            CPLJSonStreamingParserDump oParser;
+            const char sText[] = "{ \"x\": {} }";
+            oParser.SetMaxDepth(1);
+            ensure( !oParser.Parse( sText, strlen(sText), true ) );
+            ensure( !oParser.GetException().empty() );
+        }
+    }
+
+    // Test cpl_mem_cache
+    template<>
+    template<>
+    void object::test<30>()
+    {
+        lru11::Cache<int,int> cache(2,1);
+        ensure_equals( cache.size(), 0U );
+        ensure( cache.empty() );
+        cache.clear();
+        int val;
+        ensure( !cache.tryGet(0, val) );
+        try
+        {
+            cache.get(0);
+            ensure( false );
+        }
+        catch( const lru11::KeyNotFound& )
+        {
+            ensure( true );
+        }
+        ensure( !cache.remove(0) );
+        ensure( !cache.contains(0) );
+        ensure_equals( cache.getMaxSize(), 2U );
+        ensure_equals( cache.getElasticity(), 1U );
+        ensure_equals( cache.getMaxAllowedSize(), 3U );
+
+        cache.insert(0, 1);
+        val = 0;
+        ensure( cache.tryGet(0, val) );
+        ensure_equals( val, 1 );
+        ensure_equals( cache.get(0), 1 );
+        ensure_equals( cache.getCopy(0), 1);
+        ensure_equals( cache.size(), 1U );
+        ensure( !cache.empty() );
+        ensure( cache.contains(0) );
+        bool visited = false;
+        auto lambda = [&visited] (const lru11::KeyValuePair<int, int>& kv)
+        {
+            if(kv.key == 0 && kv.value == 1)
+                visited = true;
+        };
+        cache.cwalk( lambda );
+        ensure( visited) ;
+        cache.insert(0, 2);
+        ensure_equals( cache.get(0), 2 );
+        ensure_equals( cache.size(), 1U );
+        cache.insert(1, 3);
+        cache.insert(2, 4);
+        ensure_equals( cache.size(), 3U );
+        cache.insert(3, 5);
+        ensure_equals( cache.size(), 2U );
+        ensure( cache.contains(2) );
+        ensure( cache.contains(3) );
+        ensure( !cache.contains(0) );
+        ensure( !cache.contains(1) );
+        ensure( cache.remove(2) );
+        ensure( !cache.contains(2) );
+        ensure_equals( cache.size(), 1U );
+    }
+
+    // Test CPLJSONDocument
+    template<>
+    template<>
+    void object::test<31>()
+    {
+        {
+            // Test Json document LoadUrl
+            CPLJSONDocument oDocument;
+            const char *options[5] = {
+              "CONNECTTIMEOUT=15",
+              "TIMEOUT=20",
+              "MAX_RETRY=5",
+              "RETRY_DELAY=1",
+              nullptr
+            };
+
+            oDocument.GetRoot().Add("foo", "bar");
+
+            if( CPLHTTPEnabled() )
+            {
+                ensure( oDocument.LoadUrl(
+                    "http://demo.nextgis.com/api/component/pyramid/pkg_version",
+                    const_cast<char**>(options) ) );
+                CPLJSONObject oJsonRoot = oDocument.GetRoot();
+                ensure( oJsonRoot.IsValid() );
+
+                CPLString soVersion = oJsonRoot.GetString("nextgisweb", "0");
+                ensure_not( EQUAL(soVersion, "0") );
+            }
+        }
+        {
+            // Test Json document LoadChunks
+            CPLJSONDocument oDocument;
+
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.LoadChunks("/i_do/not/exist", 512) );
+            CPLPopErrorHandler();
+
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.LoadChunks("test_cpl.cpp", 512) );
+            CPLPopErrorHandler();
+
+            oDocument.GetRoot().Add("foo", "bar");
+
+            ensure( oDocument.LoadChunks((data_ + SEP + "test.json").c_str(), 512) );
+
+            CPLJSONObject oJsonRoot = oDocument.GetRoot();
+            ensure( oJsonRoot.IsValid() );
+            ensure_equals( oJsonRoot.GetInteger("resource/id", 10), 0 );
+
+            CPLJSONObject oJsonResource = oJsonRoot.GetObj("resource");
+            ensure( oJsonResource.IsValid() );
+            std::vector<CPLJSONObject> children = oJsonResource.GetChildren();
+            ensure(children.size() == 11);
+
+            CPLJSONArray oaScopes = oJsonRoot.GetArray("resource/scopes");
+            ensure( oaScopes.IsValid() );
+            ensure_equals( oaScopes.Size(), 2);
+
+            CPLJSONObject oHasChildren = oJsonRoot.GetObj("resource/children");
+            ensure( oHasChildren.IsValid() );
+            ensure_equals( oHasChildren.ToBool(), true );
+
+            ensure_equals( oJsonResource.GetBool( "children", false ), true );
+
+            CPLJSONObject oJsonId = oJsonRoot["resource/owner_user/id"];
+            ensure( oJsonId.IsValid() );
+        }
+        {
+            CPLJSONDocument oDocument;
+            ensure( !oDocument.LoadMemory(nullptr, 0) );
+            ensure( !oDocument.LoadMemory(CPLString()) );
+        }
+        {
+            // Copy constructor
+            CPLJSONDocument oDocument;
+            CPLJSONDocument oDocument2(oDocument);
+            CPLJSONObject oObj;
+            CPLJSONObject oObj2(oObj);
+            // Assignment operator
+            oDocument2 = oDocument;
+            oDocument2 = oDocument2;
+            oObj2 = oObj;
+            oObj2 = oObj2;
+        }
+        {
+            // Save
+            CPLJSONDocument oDocument;
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            ensure( !oDocument.Save("/i_do/not/exist") );
+            CPLPopErrorHandler();
+        }
+        {
+            CPLJSONObject oObj;
+            oObj.Add("string", std::string("my_string"));
+            ensure_equals( oObj.GetString("string"), std::string("my_string"));
+            ensure_equals( oObj.GetString("inexisting_string", "default"),
+                           std::string("default"));
+            oObj.Add("const_char_star", nullptr);
+            oObj.Add("const_char_star", "my_const_char_star");
+            ensure_equals( oObj.GetObj("const_char_star").GetType(), CPLJSONObject::String );
+            oObj.Add("int", 1);
+            ensure_equals( oObj.GetInteger("int"), 1 );
+            ensure_equals( oObj.GetInteger("inexisting_int", -987), -987 );
+            ensure_equals( oObj.GetObj("int").GetType(), CPLJSONObject::Integer );
+            oObj.Add("int64", GINT64_MAX);
+            ensure_equals( oObj.GetLong("int64"), GINT64_MAX );
+            ensure_equals( oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN );
+            ensure_equals( oObj.GetObj("int64").GetType(), CPLJSONObject::Integer );
+            oObj.Add("double", 1.25);
+            ensure_equals( oObj.GetDouble("double"), 1.25 );
+            ensure_equals( oObj.GetDouble("inexisting_double", -987.0), -987.0 );
+            ensure_equals( oObj.GetObj("double").GetType(), CPLJSONObject::Double );
+            oObj.Add("array", CPLJSONArray());
+            ensure_equals( oObj.GetObj("array").GetType(), CPLJSONObject::Array );
+            oObj.Add("obj", CPLJSONObject());
+            ensure_equals( oObj.GetObj("obj").GetType(), CPLJSONObject::Object );
+            oObj.Add("bool", true);
+            ensure_equals( oObj.GetBool("bool"), true );
+            ensure_equals( oObj.GetBool("inexisting_bool", false), false );
+            ensure_equals( oObj.GetObj("bool").GetType(), CPLJSONObject::Boolean );
+            oObj.AddNull("null_field");
+            //ensure_equals( oObj.GetObj("null_field").GetType(), CPLJSONObject::Null );
+            ensure_equals( oObj.GetObj("inexisting").GetType(), CPLJSONObject::Unknown );
+            oObj.Set("string", std::string("my_string"));
+            oObj.Set("const_char_star", nullptr);
+            oObj.Set("const_char_star", "my_const_char_star");
+            oObj.Set("int", 1);
+            oObj.Set("int64", GINT64_MAX);
+            oObj.Set("double", 1.25);
+            //oObj.Set("array", CPLJSONArray());
+            //oObj.Set("obj", CPLJSONObject());
+            oObj.Set("bool", true);
+            oObj.SetNull("null_field");
+            ensure( CPLJSONArray().GetChildren().empty() );
+            oObj.ToArray();
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Spaced), std::string("{ }") );
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Pretty), std::string("{\n}") );
+            ensure_equals( CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Plain), std::string("{}") );
+        }
+        {
+            CPLJSONArray oArrayConstructorString(std::string("foo"));
+            CPLJSONArray oArray;
+            oArray.Add(CPLJSONObject());
+            oArray.Add(std::string("str"));
+            oArray.Add("const_char_star");
+            oArray.Add(1.25);
+            oArray.Add(1);
+            oArray.Add(GINT64_MAX);
+            oArray.Add(true);
+            ensure_equals(oArray.Size(), 7);
+        }
+    }
+
+    // Test CPLRecodeIconv() with re-allocation
+    template<>
+    template<>
+    void object::test<32>()
+    {
+#ifdef CPL_RECODE_ICONV
+        int N = 32800;
+        char* pszIn = static_cast<char*>(CPLMalloc(N + 1));
+        for(int i=0;i<N;i++)
+            pszIn[i] = '\xE9';
+        pszIn[N] = 0;
+        char* pszExpected = static_cast<char*>(CPLMalloc(N * 2 + 1));
+        for(int i=0;i<N;i++)
+        {
+            pszExpected[2*i] = '\xC3';
+            pszExpected[2*i+1] = '\xA9';
+        }
+        pszExpected[N * 2] = 0;
+        char* pszRet = CPLRecode(pszIn, "ISO-8859-2", CPL_ENC_UTF8);
+        ensure_equals( memcmp(pszExpected, pszRet, N * 2 + 1), 0 );
+        CPLFree(pszIn);
+        CPLFree(pszRet);
+        CPLFree(pszExpected);
+#endif
+    }
+
+    // Test CPLHTTPParseMultipartMime()
+    template<>
+    template<>
+    void object::test<33>()
+    {
+        CPLHTTPResult* psResult;
+
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing boundary value
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No content
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // No part
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Missing end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Truncated header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "Content-Type: foo";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Invalid end boundary
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText = "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        ensure( !CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLPopErrorHandler();
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, no header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+                       static_cast<char**>(nullptr) );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, with header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid single part, 2 headers
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "Content-Disposition: bar\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CSLCount(psResult->pasMimePart[0].papszHeaders), 2 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[1]),
+                       CPLString("Content-Disposition=bar") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Single part, but with header without extra terminating \r\n
+        // (invalid normally, but apparently necessary for some ArcGIS WCS implementations)
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "Content-Type: bla\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ensure_equals( psResult->nMimePartCount, 1 );
+        ensure_equals( CPLString(psResult->pasMimePart[0].papszHeaders[0]),
+                       CPLString("Content-Type=bla") );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLHTTPDestroyResult(psResult);
+
+        // Valid 2 parts, no header
+        psResult =
+            static_cast<CPLHTTPResult*>(CPLCalloc(1, sizeof(CPLHTTPResult)));
+        psResult->pszContentType =
+            CPLStrdup("multipart/form-data; boundary=myboundary");
+        {
+            const char* pszText =
+                "--myboundary  some junk\r\n"
+                "\r\n"
+                "Bla"
+                "\r\n"
+                "--myboundary\r\n"
+                "\r\n"
+                "second part"
+                "\r\n"
+                "--myboundary--\r\n";
+            psResult->pabyData = reinterpret_cast<GByte*>(CPLStrdup(pszText));
+            psResult->nDataLen = static_cast<int>(strlen(pszText));
+        }
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        ensure_equals( psResult->nMimePartCount, 2 );
+        ensure_equals( psResult->pasMimePart[0].papszHeaders,
+                       static_cast<char**>(nullptr) );
+        ensure_equals( psResult->pasMimePart[0].nDataLen, 3 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[0].pabyData),
+                       "Bla", 3) == 0 );
+        ensure_equals( psResult->pasMimePart[1].nDataLen, 11 );
+        ensure( strncmp(reinterpret_cast<char*>(psResult->pasMimePart[1].pabyData),
+                       "second part", 11) == 0 );
+        ensure( CPL_TO_BOOL(CPLHTTPParseMultipartMime(psResult)) );
+        CPLHTTPDestroyResult(psResult);
+
+    }
 } // namespace tut

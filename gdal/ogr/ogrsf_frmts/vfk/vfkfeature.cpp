@@ -48,9 +48,9 @@ IVFKFeature::IVFKFeature( IVFKDataBlock *poDataBlock ) :
     m_nGeometryType(poDataBlock->GetGeometryType()),
     m_bGeometry(false),
     m_bValid(false),
-    m_paGeom(NULL)
+    m_paGeom(nullptr)
 {
-    CPLAssert(NULL != poDataBlock);
+    CPLAssert(nullptr != poDataBlock);
 }
 
 /*!
@@ -61,7 +61,7 @@ IVFKFeature::~IVFKFeature()
     if( m_paGeom )
         delete m_paGeom;
 
-    m_poDataBlock = NULL;
+    m_poDataBlock = nullptr;
 }
 
 /*!
@@ -104,7 +104,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
     m_bGeometry = true;
 
     delete m_paGeom;
-    m_paGeom = NULL;
+    m_paGeom = nullptr;
     m_bValid = true;
 
     if (!poGeom) {
@@ -148,7 +148,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
             OGRPoint pt;
             OGRCircularString poGeomString;
 
-            OGRGeometry *poGeomCurved = NULL;
+            OGRGeometry *poGeomCurved = nullptr;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
                 const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
@@ -333,7 +333,8 @@ bool IVFKFeature::LoadGeometry()
         return LoadGeometryLineStringSBP();
     }
     else if (EQUAL (pszName, "HP") ||
-             EQUAL (pszName, "DPM")) {
+             EQUAL (pszName, "DPM") ||
+             EQUAL (pszName, "ZVB")) {
         /* -> wkbLineString */
         return LoadGeometryLineStringHP();
     }
@@ -383,7 +384,7 @@ bool VFKFeature::SetProperties(const char *pszLine)
     unsigned int iIndex = 0;
     unsigned int nLength = 0;
     bool inString = false;
-    char* pszProp = NULL;
+    char* pszProp = nullptr;
     std::vector<CPLString> oPropList;
     while( *poChar != '\0' )
     {
@@ -526,7 +527,7 @@ const VFKProperty *VFKFeature::GetProperty(int iIndex) const
 {
     if (iIndex < 0 || iIndex >= m_poDataBlock->GetPropertyCount() ||
         size_t(iIndex) >= m_propertyList.size())
-        return NULL;
+        return nullptr;
 
     const VFKProperty* poProperty = &m_propertyList[iIndex];
     return poProperty;
@@ -558,8 +559,12 @@ bool VFKFeature::LoadGeometryPoint()
     if (i_idxY < 0 || i_idxX < 0)
         return false;
 
-    const double x = -1.0 * GetProperty(i_idxY)->GetValueD();
-    const double y = -1.0 * GetProperty(i_idxX)->GetValueD();
+    auto propertyY = GetProperty(i_idxY);
+    auto propertyX = GetProperty(i_idxX);
+    if( !propertyY || !propertyX )
+        return false;
+    const double x = -1.0 * propertyY->GetValueD();
+    const double y = -1.0 * propertyX->GetValueD();
     OGRPoint pt(x, y);
     SetGeometry(&pt);
 
@@ -590,8 +595,15 @@ bool VFKFeature::LoadGeometryLineStringSBP()
     OGRLineString OGRLine;
     while( true )
     {
-        const int id = poLine->GetProperty(idxBp_Id)->GetValueI();
-        const int ipcb = poLine->GetProperty(idxPCB)->GetValueI();
+        auto property_idxBp_Id = poLine->GetProperty(idxBp_Id);
+        if( !property_idxBp_Id )
+            break;
+        auto property_idxPCB = poLine->GetProperty(idxPCB);
+        if( !property_idxPCB )
+            break;
+
+        const int id = property_idxBp_Id->GetValueI();
+        const int ipcb = property_idxPCB->GetValueI();
         if (OGRLine.getNumPoints() > 0 && ipcb == 1)
         {
             m_poDataBlock->GetPreviousFeature(); /* push back */
@@ -639,7 +651,10 @@ bool VFKFeature::LoadGeometryLineStringHP()
     if (idxId < 0 || idxHp_Id < 0)
         return false;
 
-    const int id = GetProperty(idxId)->GetValueI();
+    auto property = GetProperty(idxId);
+    if( !property )
+        return false;
+    const int id = property->GetValueI();
     VFKFeature *poLine = poDataBlockLines->GetFeature(idxHp_Id, id);
     if (!poLine || !poLine->GetGeometry())
         return false;
@@ -666,19 +681,20 @@ OGRErr VFKFeature::LoadProperties( OGRFeature *poFeature )
 {
     for( int iField = 0; iField < m_poDataBlock->GetPropertyCount(); iField++ )
     {
-        if( GetProperty(iField)->IsNull() )
+        auto property = GetProperty(iField);
+        if( !property || property->IsNull() )
             continue;
 
         OGRFieldType fType = poFeature->GetDefnRef()->GetFieldDefn(iField)->GetType();
         if (fType == OFTInteger)
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueI());
+                                property->GetValueI());
         else if (fType == OFTReal)
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueD());
+                                property->GetValueD());
         else
             poFeature->SetField(iField,
-                                GetProperty(iField)->GetValueS());
+                                property->GetValueS());
     }
 
     return OGRERR_NONE;

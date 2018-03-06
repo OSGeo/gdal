@@ -119,7 +119,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     VALIDATE_POINTER1( hSrcBand, "GDALComputeProximity", CE_Failure );
     VALIDATE_POINTER1( hProximityBand, "GDALComputeProximity", CE_Failure );
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* -------------------------------------------------------------------- */
@@ -182,7 +182,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      Get input NODATA value.                                         */
 /* -------------------------------------------------------------------- */
     double dfSrcNoDataValue = 0.0;
-    double *pdfSrcNoData = NULL;
+    double *pdfSrcNoData = nullptr;
     if( CPLFetchBool( papszOptions, "USE_INPUT_NODATA", false ) )
     {
         int bSrcHasNoData = 0;
@@ -196,7 +196,7 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
     float fNoDataValue = 0.0f;
     pszOpt = CSLFetchNameValue( papszOptions, "NODATA" );
-    if( pszOpt != NULL )
+    if( pszOpt != nullptr )
     {
         fNoDataValue = static_cast<float>(CPLAtof(pszOpt));
     }
@@ -225,11 +225,11 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /* -------------------------------------------------------------------- */
 /*      Get the target value(s).                                        */
 /* -------------------------------------------------------------------- */
-    int *panTargetValues = NULL;
+    int *panTargetValues = nullptr;
     int nTargetValues = 0;
 
     pszOpt = CSLFetchNameValue( papszOptions, "VALUES" );
-    if( pszOpt != NULL )
+    if( pszOpt != nullptr )
     {
         char **papszValuesTokens =
             CSLTokenizeStringComplex( pszOpt, ",", FALSE, FALSE);
@@ -259,22 +259,23 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
 /*      temporary file for this purpose.                                */
 /* -------------------------------------------------------------------- */
     GDALRasterBandH hWorkProximityBand = hProximityBand;
-    GDALDatasetH hWorkProximityDS = NULL;
+    GDALDatasetH hWorkProximityDS = nullptr;
     const GDALDataType eProxType = GDALGetRasterDataType(hProximityBand);
     CPLErr eErr = CE_None;
 
     // TODO(schwehr): Localize after removing gotos.
-    float *pafProximity = NULL;
-    int *panNearX = NULL;
-    int *panNearY = NULL;
-    GInt32 *panSrcScanline = NULL;
+    float *pafProximity = nullptr;
+    int *panNearX = nullptr;
+    int *panNearY = nullptr;
+    GInt32 *panSrcScanline = nullptr;
+    bool bTempFileAlreadyDeleted = false;
 
     if( eProxType == GDT_Byte
         || eProxType == GDT_UInt16
         || eProxType == GDT_UInt32 )
     {
         GDALDriverH hDriver = GDALGetDriverByName("GTiff");
-        if( hDriver == NULL )
+        if( hDriver == nullptr )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "GDALComputeProximity needs GTiff driver" );
@@ -284,12 +285,16 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
         CPLString osTmpFile = CPLGenerateTempFilename( "proximity" );
         hWorkProximityDS =
             GDALCreate( hDriver, osTmpFile,
-                        nXSize, nYSize, 1, GDT_Float32, NULL );
-        if( hWorkProximityDS == NULL )
+                        nXSize, nYSize, 1, GDT_Float32, nullptr );
+        if( hWorkProximityDS == nullptr )
         {
             eErr = CE_Failure;
             goto end;
         }
+        // On Unix, attempt at deleting the temporary file now, so that
+        // if the process gets interrupted, it is automatically destroyed
+        // by the operating system.
+        bTempFileAlreadyDeleted = VSIUnlink( osTmpFile ) == 0;
         hWorkProximityBand = GDALGetRasterBand( hWorkProximityDS, 1 );
     }
 
@@ -306,10 +311,10 @@ GDALComputeProximity( GDALRasterBandH hSrcBand,
     panSrcScanline =
         static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
 
-    if( pafProximity == NULL
-        || panNearX == NULL
-        || panNearY == NULL
-        || panSrcScanline == NULL)
+    if( pafProximity == nullptr
+        || panNearX == nullptr
+        || panNearY == nullptr
+        || panSrcScanline == nullptr)
     {
         eErr = CE_Failure;
         goto end;
@@ -440,14 +445,29 @@ end:
     CPLFree( pafProximity );
     CPLFree( panTargetValues );
 
-    if( hWorkProximityDS != NULL )
+    if( hWorkProximityDS != nullptr )
     {
         CPLString osProxFile = GDALGetDescription( hWorkProximityDS );
         GDALClose( hWorkProximityDS );
-        GDALDeleteDataset( GDALGetDriverByName( "GTiff" ), osProxFile );
+        if( !bTempFileAlreadyDeleted )
+        {
+            GDALDeleteDataset( GDALGetDriverByName( "GTiff" ), osProxFile );
+        }
     }
 
     return eErr;
+}
+
+/************************************************************************/
+/*                         SquareDistance()                             */
+/************************************************************************/
+
+static double SquareDistance(double dfX1, double dfX2,
+                             double dfY1, double dfY2)
+{
+    const double dfDX = dfX1 - dfX2;
+    const double dfDY = dfY1 - dfY2;
+    return dfDX * dfDX + dfDY * dfDY;
 }
 
 /************************************************************************/
@@ -497,20 +517,19 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Are we near(er) to the closest target to the above (below)      */
 /*      pixel?                                                          */
 /* -------------------------------------------------------------------- */
-        float fNearDistSq =
-            static_cast<float>(
+        double dfNearDistSq =
                 std::max(dfMaxDist, static_cast<double>(nXSize)) *
-                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0);
+                std::max(dfMaxDist, static_cast<double>(nXSize)) * 2.0;
 
         if( panNearX[iPixel] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iPixel] - iPixel) * (panNearX[iPixel] - iPixel)
-                 + (panNearY[iPixel] - iLine) * (panNearY[iPixel] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iPixel], iPixel,
+                               panNearY[iPixel], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
             }
             else
             {
@@ -527,13 +546,13 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iPixel != iStart && panNearX[iLast] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iLast] - iPixel) * (panNearX[iLast] - iPixel)
-                 + (panNearY[iLast] - iLine) * (panNearY[iLast] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iLast], iPixel,
+                               panNearY[iLast], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
                 panNearX[iPixel] = panNearX[iLast];
                 panNearY[iPixel] = panNearY[iLast];
             }
@@ -547,13 +566,13 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 
         if( iTR != iEnd && panNearX[iTR] != -1 )
         {
-            const float fDistSq = static_cast<float>(
-                (panNearX[iTR] - iPixel) * (panNearX[iTR] - iPixel)
-                 + (panNearY[iTR] - iLine) * (panNearY[iTR] - iLine));
+            const double dfDistSq =
+                SquareDistance(panNearX[iTR], iPixel,
+                               panNearY[iTR], iLine);
 
-            if( fDistSq < fNearDistSq )
+            if( dfDistSq < dfNearDistSq )
             {
-                fNearDistSq = fDistSq;
+                dfNearDistSq = dfDistSq;
                 panNearX[iPixel] = panNearX[iTR];
                 panNearY[iPixel] = panNearY[iTR];
             }
@@ -563,12 +582,12 @@ ProcessProximityLine( GInt32 *panSrcScanline, int *panNearX, int *panNearY,
 /*      Update our proximity value.                                     */
 /* -------------------------------------------------------------------- */
         if( panNearX[iPixel] != -1
-            && (pdfSrcNoDataValue == NULL
+            && (pdfSrcNoDataValue == nullptr
                 || panSrcScanline[iPixel] != *pdfSrcNoDataValue)
-            && fNearDistSq <= dfMaxDist * dfMaxDist
+            && dfNearDistSq <= dfMaxDist * dfMaxDist
             && (pafProximity[iPixel] < 0
-                || fNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
-            pafProximity[iPixel] = static_cast<float>(sqrt(fNearDistSq));
+                || dfNearDistSq < pafProximity[iPixel] * pafProximity[iPixel]) )
+            pafProximity[iPixel] = static_cast<float>(sqrt(dfNearDistSq));
     }
 
     return CE_None;

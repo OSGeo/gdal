@@ -33,10 +33,14 @@
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <string>
 #if HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
+
+#include <algorithm>
+#include <limits>
+#include <string>
+#include <utility>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -51,12 +55,53 @@
 
 CPL_CVSID("$Id$")
 
-// static const int R_NILSXP = 0;
-static const int R_LISTSXP = 2;
-static const int R_CHARSXP = 9;
-static const int R_INTSXP = 13;
-static const int R_REALSXP = 14;
-static const int R_STRSXP = 16;
+// constexpr int R_NILSXP = 0;
+constexpr int R_LISTSXP = 2;
+constexpr int R_CHARSXP = 9;
+constexpr int R_INTSXP = 13;
+constexpr int R_REALSXP = 14;
+constexpr int R_STRSXP = 16;
+
+namespace {
+
+// TODO(schwehr): Move this to port/? for general use.
+bool SafeMult(GIntBig a, GIntBig b, GIntBig *result) {
+    if (a == 0 || b == 0) {
+      *result = 0;
+      return true;
+    }
+
+    bool result_positive = (a >= 0 && b >= 0) || (a < 0 && b < 0);
+    if (result_positive) {
+        // Cannot convert min() to positive.
+        if (a == std::numeric_limits<GIntBig>::min() ||
+            b == std::numeric_limits<GIntBig>::min()) {
+            *result = 0;
+            return false;
+        }
+        if (a < 0) {
+            a = -a;
+            b = -b;
+        }
+        if (a > std::numeric_limits<GIntBig>::max() / b) {
+            *result = 0;
+            return false;
+        }
+        *result = a * b;
+        return true;
+    }
+
+    if (b < a) std::swap(a, b);
+    if (a < (std::numeric_limits<GIntBig>::min() + 1) / b) {
+        *result = 0;
+        return false;
+    }
+
+    *result = a * b;
+    return true;
+}
+
+}  // namespace
 
 /************************************************************************/
 /*                            RRasterBand()                             */
@@ -99,10 +144,10 @@ CPLErr RRasterBand::IReadBlock( int /* nBlockXOff */,
 /************************************************************************/
 
 RDataset::RDataset() :
-    fp(NULL),
+    fp(nullptr),
     bASCII(FALSE),
     nStartOfData(0),
-    padfMatrixValues(NULL)
+    padfMatrixValues(nullptr)
 {}
 
 /************************************************************************/
@@ -206,7 +251,7 @@ const char *RDataset::ReadString()
     const size_t nLen = static_cast<size_t>(nLenSigned);
 
     char *pachWrkBuf = static_cast<char *>(VSIMalloc(nLen));
-    if (pachWrkBuf == NULL)
+    if (pachWrkBuf == nullptr)
     {
         osLastStringRead = "";
         return "";
@@ -258,7 +303,7 @@ bool RDataset::ReadPair( CPLString &osObjName, int &nObjCode )
 
     // Read the object name.
     const char *pszName = ReadString();
-    if( pszName == NULL || pszName[0] == '\0' )
+    if( pszName == nullptr || pszName[0] == '\0' )
         return false;
 
     osObjName = pszName;
@@ -299,12 +344,12 @@ int RDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 {
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    if( poOpenInfo->pabyHeader == NULL )
-        return NULL;
+    if( poOpenInfo->pabyHeader == nullptr )
+        return nullptr;
 #else
     // During fuzzing, do not use Identify to reject crazy content.
     if( !Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 #endif
 
     // Confirm the requested access is supported.
@@ -313,7 +358,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_NotSupported,
                  "The R driver does not support update access to existing"
                  " datasets.");
-        return NULL;
+        return nullptr;
     }
 
     // Do we need to route the file through the decompression machinery?
@@ -326,10 +371,10 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     RDataset *poDS = new RDataset();
 
     poDS->fp = VSIFOpenL(osAdjustedFilename, "r");
-    if( poDS->fp == NULL )
+    if( poDS->fp == nullptr )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->bASCII = STARTS_WITH_CI(
@@ -343,7 +388,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "It appears %s is not a version 2 R object file after all!",
                  poOpenInfo->pszFilename);
-        return NULL;
+        return nullptr;
     }
 
     // Skip the version values.
@@ -357,7 +402,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->ReadPair(osObjName, nObjCode) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( nObjCode % 256 != R_REALSXP )
@@ -365,7 +410,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "Failed to find expected numeric vector object.");
-        return NULL;
+        return nullptr;
     }
 
     poDS->SetMetadataItem("R_OBJECT_NAME", osObjName);
@@ -377,7 +422,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError(
             CE_Failure, CPLE_AppDefined, "nValueCount < 0: %d", nValueCount);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nStartOfData = VSIFTellL(poDS->fp);
@@ -398,7 +443,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
             nValueCount,
             stat.st_size - poDS->nStartOfData);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Read/Skip ahead to attributes.
@@ -406,12 +451,12 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         poDS->padfMatrixValues =
             static_cast<double *>(VSIMalloc2(nValueCount, sizeof(double)));
-        if (poDS->padfMatrixValues == NULL)
+        if (poDS->padfMatrixValues == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot allocate %d doubles", nValueCount);
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         for( int iValue = 0; iValue < nValueCount; iValue++ )
             poDS->padfMatrixValues[iValue] = poDS->ReadFloat();
@@ -449,7 +494,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "R 'dim' dimension wrong.");
                 delete poDS;
-                return NULL;
+                return nullptr;
             }
         }
         else if( nObjCode % 256 == R_REALSXP )
@@ -490,28 +535,31 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed to find dim dimension information for R dataset.");
-        return NULL;
+        return nullptr;
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBandCount, TRUE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-    if( nValueCount < static_cast<GIntBig>(nBandCount) * poDS->nRasterXSize *
-                          poDS->nRasterYSize )
+    GIntBig result = 0;
+    bool ok = SafeMult(nBandCount, poDS->nRasterXSize, &result);
+    ok &= SafeMult(result, poDS->nRasterYSize, &result);
+
+    if( !ok || nValueCount <  result )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Not enough pixel data.");
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Create the raster band object(s).
     for( int iBand = 0; iBand < nBandCount; iBand++ )
     {
-        GDALRasterBand *poBand = NULL;
+        GDALRasterBand *poBand = nullptr;
 
         if( poDS->bASCII )
             poBand = new RRasterBand(
@@ -547,7 +595,7 @@ GDALDataset *RDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_R()
 
 {
-    if( GDALGetDriverByName("R") != NULL )
+    if( GDALGetDriverByName("R") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();

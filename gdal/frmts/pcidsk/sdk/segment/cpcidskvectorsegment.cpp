@@ -202,7 +202,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       case FieldTypeInteger:
       {
           int32 value;
-          memcpy( &value, GetData( section, offset, NULL, 4), 4 );
+          memcpy( &value, GetData( section, offset, nullptr, 4), 4 );
           if( needs_swap )
               SwapData( &value, 4, 1 );
           field.SetValue( value );
@@ -212,7 +212,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       case FieldTypeFloat:
       {
           float value;
-          memcpy( &value, GetData( section, offset, NULL, 4), 4 );
+          memcpy( &value, GetData( section, offset, nullptr, 4), 4 );
           if( needs_swap )
               SwapData( &value, 4, 1 );
           field.SetValue( value );
@@ -222,7 +222,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       case FieldTypeDouble:
       {
           double value;
-          memcpy( &value, GetData( section, offset, NULL, 8), 8 );
+          memcpy( &value, GetData( section, offset, nullptr, 8), 8 );
           if( needs_swap )
               SwapData( &value, 8, 1 );
           field.SetValue( value );
@@ -266,7 +266,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
       {
           std::vector<int32> value;
           int32 count;
-          char *srcdata = GetData( section, offset, NULL, 4 );
+          char *srcdata = GetData( section, offset, nullptr, 4 );
           memcpy( &count, srcdata, 4 );
           if( needs_swap )
               SwapData( &count, 4, 1 );
@@ -276,7 +276,7 @@ uint32 CPCIDSKVectorSegment::ReadField( uint32 offset, ShapeField& field,
           {
               if( offset > std::numeric_limits<uint32>::max() - 8 )
                     return ThrowPCIDSKException(0, "Invalid offset = %u", offset);
-              memcpy( &(value[0]), GetData(section,offset+4,NULL,4*count), 4*count );
+              memcpy( &(value[0]), GetData(section,offset+4,nullptr,4*count), 4*count );
               if( needs_swap )
                   SwapData( &(value[0]), 4, count );
           }
@@ -418,9 +418,9 @@ char *CPCIDSKVectorSegment::GetData( int section, uint32 offset,
 /* -------------------------------------------------------------------- */
 /*      Select the section to act on.                                   */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer *pbuf = NULL;
-    uint32       *pbuf_offset = NULL;
-    bool         *pbuf_dirty = NULL;
+    PCIDSKBuffer *pbuf = nullptr;
+    uint32       *pbuf_offset = nullptr;
+    bool         *pbuf_dirty = nullptr;
 
     if( section == sec_raw )
     {
@@ -498,7 +498,7 @@ char *CPCIDSKVectorSegment::GetData( int section, uint32 offset,
 /* -------------------------------------------------------------------- */
 /*      Return desired info.                                            */
 /* -------------------------------------------------------------------- */
-    if( bytes_available != NULL )
+    if( bytes_available != nullptr )
         *bytes_available = *pbuf_offset + pbuf->buffer_size - offset;
 
     if( update )
@@ -564,9 +564,9 @@ void CPCIDSKVectorSegment::FlushDataBuffer( int section )
 /* -------------------------------------------------------------------- */
 /*      Select the section to act on.                                   */
 /* -------------------------------------------------------------------- */
-    PCIDSKBuffer *pbuf = NULL;
-    uint32       *pbuf_offset = NULL;
-    bool         *pbuf_dirty = NULL;
+    PCIDSKBuffer *pbuf = nullptr;
+    uint32       *pbuf_offset = nullptr;
+    bool         *pbuf_dirty = nullptr;
 
     if( section == sec_raw )
     {
@@ -1001,7 +1001,7 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
 
     if( vert_off > std::numeric_limits<uint32>::max() - 4 )
         return ThrowPCIDSKException( "Invalid vert_off = %u", vert_off);
-    memcpy( &vertex_count, GetData( sec_vert, vert_off+4, NULL, 4 ), 4 );
+    memcpy( &vertex_count, GetData( sec_vert, vert_off+4, nullptr, 4 ), 4 );
     if( needs_swap )
         SwapData( &vertex_count, 4, 1 );
 
@@ -1022,7 +1022,7 @@ void CPCIDSKVectorSegment::GetVertices( ShapeId shape_id,
         if( vert_off > std::numeric_limits<uint32>::max() - 8 )
             return ThrowPCIDSKException( "Invalid vert_off = %u", vert_off);
         memcpy( &(vertices[0]), 
-                GetData( sec_vert, vert_off+8, NULL, vertex_count*24),
+                GetData( sec_vert, vert_off+8, nullptr, vertex_count*24),
                 vertex_count * 24 );
         if( needs_swap )
             SwapData( &(vertices[0]), 8, vertex_count*3 );
@@ -1153,7 +1153,7 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
 /* -------------------------------------------------------------------- */
 /*      If no default is provided, use the obvious value.               */
 /* -------------------------------------------------------------------- */
-    if( default_value == NULL )
+    if( default_value == nullptr )
     {
         switch( type )
         {
@@ -1361,7 +1361,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
 
     if( vert_off != 0xffffffff )
     {
-        memcpy( &chunk_size, GetData( sec_vert, vert_off, NULL, 4 ), 4 );
+        memcpy( &chunk_size, GetData( sec_vert, vert_off, nullptr, 4 ), 4 );
         if( needs_swap )
             SwapData( &chunk_size, 4, 1 );
 
@@ -1404,7 +1404,7 @@ void CPCIDSKVectorSegment::SetVertices( ShapeId id,
 /* -------------------------------------------------------------------- */
 /*      Write the data into the working buffer.                         */
 /* -------------------------------------------------------------------- */
-    memcpy( GetData( sec_vert, vert_off, NULL, vbuf.buffer_size, true ),
+    memcpy( GetData( sec_vert, vert_off, nullptr, vbuf.buffer_size, true ),
             vbuf.buffer, vbuf.buffer_size );
 
 /* -------------------------------------------------------------------- */
@@ -1428,7 +1428,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
     uint32 i;
     int shape_index = IndexFromShapeId( id );
     std::vector<ShapeField> full_list;
-    const std::vector<ShapeField> *listp = NULL;
+    const std::vector<ShapeField> *listp = nullptr;
 
     if( shape_index == -1 )
         return ThrowPCIDSKException( "Attempt to call SetFields() on non-existing shape id '%d'.",
@@ -1475,7 +1475,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
 
     if( rec_off != 0xffffffff )
     {
-        memcpy( &chunk_size, GetData( sec_record, rec_off, NULL, 4 ), 4 );
+        memcpy( &chunk_size, GetData( sec_record, rec_off, nullptr, 4 ), 4 );
         if( needs_swap )
             SwapData( &chunk_size, 4, 1 );
 
@@ -1505,7 +1505,7 @@ void CPCIDSKVectorSegment::SetFields( ShapeId id,
 /* -------------------------------------------------------------------- */
 /*      Write the data into the working buffer.                         */
 /* -------------------------------------------------------------------- */
-    memcpy( GetData( sec_record, rec_off, NULL, fbuf.buffer_size, true ),
+    memcpy( GetData( sec_record, rec_off, nullptr, fbuf.buffer_size, true ),
             fbuf.buffer, fbuf.buffer_size );
 
 /* -------------------------------------------------------------------- */

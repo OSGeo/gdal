@@ -78,7 +78,7 @@ bool GDALMDReaderResursDK1::HasRequiredFiles() const
  */
 char** GDALMDReaderResursDK1::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osXMLSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osXMLSourceFilename );
 
@@ -97,11 +97,11 @@ void GDALMDReaderResursDK1::LoadMetadata()
     {
         CPLXMLNode* psNode = CPLParseXMLFile(m_osXMLSourceFilename);
 
-        if(psNode != NULL)
+        if(psNode != nullptr)
         {
             CPLXMLNode* pMSPRootNode = CPLSearchXMLNode(psNode, "=MSP_ROOT");
 
-            if(pMSPRootNode != NULL)
+            if(pMSPRootNode != nullptr)
             {
                 m_papszIMDMD = ReadXMLToList(pMSPRootNode, m_papszIMDMD, "MSP_ROOT");
             }
@@ -113,14 +113,14 @@ void GDALMDReaderResursDK1::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
-    if(NULL == m_papszIMDMD)
+    if(nullptr == m_papszIMDMD)
     {
         return;
     }
 
     //extract imagery metadata
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD, "MSP_ROOT.cCodeKA");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
@@ -129,11 +129,11 @@ void GDALMDReaderResursDK1::LoadMetadata()
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                                             "MSP_ROOT.Normal.dSceneDate");
 
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         const char* pszTime = CSLFetchNameValue(m_papszIMDMD,
                                          "MSP_ROOT.Normal.tSceneTime");
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
             pszTime = "00:00:00.000000";
 
         char buffer[80];
@@ -154,7 +154,7 @@ void GDALMDReaderResursDK1::LoadMetadata()
 time_t GDALMDReaderResursDK1::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if(nullptr == pszDateTime)
         return 0;
 
     int iYear;
@@ -194,7 +194,7 @@ char** GDALMDReaderResursDK1::AddXMLNameValueToList(char** papszList,
     char** papszTokens = CSLTokenizeString2( pszValue, "\n",
         CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES );
 
-    for(int i = 0; papszTokens[i] != NULL; i++ )
+    for(int i = 0; papszTokens[i] != nullptr; i++ )
     {
 
         char** papszSubTokens = CSLTokenizeString2( papszTokens[i], "=",

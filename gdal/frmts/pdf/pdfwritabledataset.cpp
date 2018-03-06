@@ -37,9 +37,9 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 PDFWritableVectorDataset::PDFWritableVectorDataset() :
-    papszOptions(NULL),
+    papszOptions(nullptr),
     nLayers(0),
-    papoLayers(NULL),
+    papoLayers(nullptr),
     bModified(FALSE)
 {}
 
@@ -73,7 +73,7 @@ GDALDataset* PDFWritableVectorDataset::Create( const char * pszName,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "PDFWritableVectorDataset::Create() can only be called with "
                  "nBands = 0 to create a vector-only PDF");
-        return NULL;
+        return nullptr;
     }
     PDFWritableVectorDataset* poDataset = new PDFWritableVectorDataset();
 
@@ -126,7 +126,7 @@ OGRLayer *PDFWritableVectorDataset::GetLayer( int iLayer )
 
 {
     if (iLayer < 0 || iLayer >= nLayers)
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -191,7 +191,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     const char* pszDPI = CSLFetchNameValue(papszOptions, "DPI");
     double dfDPI = DEFAULT_DPI;
-    if( pszDPI != NULL )
+    if( pszDPI != nullptr )
     {
         dfDPI = CPLAtof(pszDPI);
         if (dfDPI < DEFAULT_DPI)
@@ -204,10 +204,10 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 
     const char* pszWriteUserUnit = CSLFetchNameValue(papszOptions, "WRITE_USERUNIT");
     bool bWriteUserUnit;
-    if( pszWriteUserUnit != NULL )
+    if( pszWriteUserUnit != nullptr )
         bWriteUserUnit = CPLTestBool( pszWriteUserUnit );
     else
-        bWriteUserUnit = ( pszDPI == NULL );
+        bWriteUserUnit = ( pszDPI == nullptr );
 
     const char* pszNEATLINE = CSLFetchNameValue(papszOptions, "NEATLINE");
 
@@ -251,7 +251,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
 /*      Create file.                                                    */
 /* -------------------------------------------------------------------- */
     VSILFILE* fp = VSIFOpenL(GetDescription(), "wb");
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to create PDF file %s.\n",
@@ -276,7 +276,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
         nWidth = static_cast<int>(nHeight / dfRatio);
     }
 
-    GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, NULL );
+    GDALDataset* poSrcDS = MEMDataset::Create( "MEM:::", nWidth, nHeight, 0, GDT_Byte, nullptr );
 
     double adfGeoTransform[6];
     adfGeoTransform[0] = sGlobalExtent.MinX;
@@ -291,7 +291,7 @@ OGRErr PDFWritableVectorDataset::SyncToDisk()
     OGRSpatialReference* poSRS = papoLayers[0]->GetSpatialRef();
     if (poSRS)
     {
-        char* pszWKT = NULL;
+        char* pszWKT = nullptr;
         poSRS->exportToWkt(&pszWKT);
         poSrcDS->SetProjection(pszWKT);
         CPLFree(pszWKT);

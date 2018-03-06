@@ -1,0 +1,63 @@
+<html>
+<head>
+<title>ESRIJSON / FeatureService driver</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>ESRIJSON / FeatureService driver</h1>
+
+<p>(Note: prior to GDAL 2.3, the functionality of this driver was available in the
+GeoJSON driver. They are now distinct drivers)</p>
+
+<p>This driver can read the JSON output of Feature Service requests following the
+<a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification</a>, like
+implemented by <a href="http://help.arcgis.com/en/arcgisserver/10.0/apis/rest/index.html">ArcGIS Server REST API</a>.
+Starting with OGR 2.0, the driver can scroll through such result sets that
+are spread over multiple pages (for ArcGIS servers &gt;= 10.3). This is automatically enabled
+if URL does not contain an explicit <i>resultOffset</i> parameter. If it contains
+this parameter and scrolling is still desired, the FEATURE_SERVER_PAGING open option must be set to YES.
+The page size can be explicitly set with the <i>resultRecordCount</i> parameter (but
+is subject to a server limit). If it is not set, OGR will set it to the maximum
+value allowed by the server.</p>
+
+<h2>Datasource</h2>
+
+<p>The driver accepts three types of sources of data:</p>
+<ul>
+<li>Uniform Resource Locator (<a href="http://en.wikipedia.org/wiki/URL">URL</a>) - a Web address to
+perform <a href="http://en.wikipedia.org/wiki/HTTP">HTTP</a> request.</li>
+<li>Plain text file with ESRIJSON data - identified from the file extension .json</li>
+<li>Text passed directly and encoded in ESRI JSON</li>
+</ul>
+
+Starting with GDAL 2.3, the URL/filename/text might be prefixed with ESRIJSON: to avoid any ambiguity with other drivers.
+
+<h2>Open options</h2>
+
+<p>(GDAL &gt;= 2.0)</p>
+
+<ul>
+<li><b>FEATURE_SERVER_PAGING</b> = YES/NO: Whether to automatically scroll through
+results with a ArcGIS Feature Service endpoint.</li>
+</ul>
+
+<h2>Example</h2>
+
+<p>Read the result of a FeatureService request against a GeoServices REST server:
+<pre>
+ogrinfo -ro -al "http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Hydrography/Watershed173811/FeatureServer/0/query?where=objectid+%3D+objectid&amp;outfields=*&amp;f=json"
+</pre>
+</p>
+
+<h2>See Also</h2>
+
+<p>
+<ul>
+<li><a href="drv_geojson.html">GeoJSON driver</a></li>
+<li><a href="http://www.esri.com/industries/landing-pages/geoservices/geoservices.html">GeoServices REST Specification</a></li>
+</ul>
+</p>
+
+</body>
+</html>

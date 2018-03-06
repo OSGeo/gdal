@@ -119,7 +119,7 @@ CPLErr KEAOverview::IWriteBlock( int nBlockXOff, int nBlockYOff, void * pImage )
 GDALRasterAttributeTable *KEAOverview::GetDefaultRAT()
 {
     // KEARasterBand implements this, but we don't want to
-    return NULL;
+    return nullptr;
 }
 
 CPLErr KEAOverview::SetDefaultRAT(CPL_UNUSED const GDALRasterAttributeTable *poRAT)

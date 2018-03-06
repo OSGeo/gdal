@@ -60,14 +60,14 @@ OGRDataSource *OGRMSSQLSpatialDriver::Open( const char * pszFilename, int bUpdat
     OGRMSSQLSpatialDataSource     *poDS;
 
     if( !STARTS_WITH_CI(pszFilename, "MSSQL:") )
-        return NULL;
+        return nullptr;
 
     poDS = new OGRMSSQLSpatialDataSource();
 
     if( !poDS->Open( pszFilename, bUpdate, TRUE ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     else
         return poDS;
@@ -81,7 +81,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
                                                         CPL_UNUSED char **papszOptions )
 {
     if( !STARTS_WITH_CI(pszName, "MSSQL:") )
-        return NULL;
+        return nullptr;
 
     OGRMSSQLSpatialDataSource   *poDS = new OGRMSSQLSpatialDataSource();
     if( !poDS->Open( pszName, TRUE, TRUE ) )
@@ -90,7 +90,7 @@ OGRDataSource *OGRMSSQLSpatialDriver::CreateDataSource( const char * pszName,
         CPLError( CE_Failure, CPLE_AppDefined,
          "MSSQL Spatial driver doesn't currently support database creation.\n"
                   "Please create database with the Microsoft SQL Server Client Tools." );
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -154,6 +154,8 @@ void RegisterOGRMSSQLSpatial()
 "  <Option name='GEOMETRY_NULLABLE' type='boolean' description='Whether the values of the geometry column can be NULL' default='YES'/>"
 "  <Option name='EXTRACT_SCHEMA_FROM_LAYER_NAME' type='boolean' description='Whether a dot in a layer name should be considered as the separator for the schema and table name' default='YES'/>"
 "</LayerCreationOptionList>");
+
+    poDriver->SetMetadataItem( GDAL_DMD_CONNECTION_PREFIX, "MSSQL:");
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONFIELDDATATYPES,
                                "Integer Integer64 Real String Date Time "

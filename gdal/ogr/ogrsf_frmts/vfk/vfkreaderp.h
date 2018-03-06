@@ -78,7 +78,7 @@ public:
     bool           IsPreProcessed() const override { return false; }
     bool           IsValid() const override { return true; }
     int            ReadDataBlocks() override;
-    int            ReadDataRecords(IVFKDataBlock * = NULL) override;
+    int            ReadDataRecords(IVFKDataBlock * = nullptr) override;
     int            LoadGeometry() override;
 
     int            GetDataBlockCount() const override { return m_nDataBlockCount; }
@@ -116,13 +116,13 @@ public:
 
     bool          IsSpatial() const override { return m_bSpatial; }
     bool          IsPreProcessed() const override { return !m_bNewDb; }
-    bool          IsValid() const override { return m_poDB != NULL; }
+    bool          IsValid() const override { return m_poDB != nullptr; }
     int           ReadDataBlocks() override;
-    int           ReadDataRecords(IVFKDataBlock * = NULL) override;
+    int           ReadDataRecords(IVFKDataBlock * = nullptr) override;
 
     sqlite3_stmt *PrepareStatement(const char *);
     OGRErr        ExecuteSQL( const char *, bool = false );
-    OGRErr        ExecuteSQL(sqlite3_stmt *);
+    OGRErr        ExecuteSQL(sqlite3_stmt *&);
 };
 
 #endif // GDAL_OGR_VFK_VFKREADERP_H_INCLUDED

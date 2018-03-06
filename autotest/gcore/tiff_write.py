@@ -3574,7 +3574,11 @@ def tiff_write_87():
 
     import validate_cloud_optimized_geotiff
     try:
-        validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled = False)
+        errors, _ = validate_cloud_optimized_geotiff.validate('tmp/tiff_write_87_dst.tif', check_tiled = False)
+        if len(errors) != 0:
+            gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
+            print(errors)
+            return 'fail'
     except:
         gdaltest.post_reason('validate_cloud_optimized_geotiff failed')
         return 'fail'
@@ -4334,6 +4338,7 @@ def tiff_write_102():
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_102.tif',1,1)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(7401)
+    name = sr.GetAttrValue('COMPD_CS')
     wkt = sr.ExportToWkt()
     ds.SetProjection(wkt)
     ds = None
@@ -4357,6 +4362,14 @@ def tiff_write_102():
 
     if wkt2.find('COMPD_CS') == 0:
         gdaltest.post_reason('got COMPD_CS, but did not expected it')
+        print(wkt2)
+        return 'fail'
+
+    sr2 = osr.SpatialReference()
+    sr2.SetFromUserInput(wkt1)
+    got_name = sr2.GetAttrValue('COMPD_CS')
+    if got_name != name:
+        gdaltest.post_reason('dit not get expected COMPD_CS name')
         print(wkt2)
         return 'fail'
 
@@ -4983,8 +4996,8 @@ def tiff_write_123():
         return 'fail'
     ds = None
 
-    # Test overriding internal color interpretation with PAM one
-    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif', gdal.GA_Update)
+    # Test overriding internal color interpretation with PAM one (read-only mode)
+    ds = gdal.Open('/vsimem/tiff_write_123_bgr.tif')
     ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
     ds = None
     statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_bgr.tif.aux.xml',
@@ -5108,6 +5121,54 @@ def tiff_write_123():
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb_src.tif')
     gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
 
+    # Test that PHOTOMETRIC=RGB overrides the source color interpretation of the
+    # first 3 bands
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 3)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgb.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgb.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgb.tif')
+
+    src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 5)
+    src_ds.GetRasterBand(5).SetColorInterpretation(gdal.GCI_AlphaBand)
+    gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_123_rgbua.tif', src_ds,
+                                      options = ['PHOTOMETRIC=RGB'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgbua.tif')
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(5).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgbua.tif')
+
+
+    # Test updating alpha to undefined
+    gdaltest.tiff_drv.Create('/vsimem/tiff_write_123_rgba_to_undefined.tif', 1,1,4,
+                             options=['PHOTOMETRIC=RGB', 'ALPHA=YES'])
+    ds = gdal.Open('/vsimem/tiff_write_123_rgba_to_undefined.tif', gdal.GA_Update)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_Undefined)
+    ds = None
+    statBuf = gdal.VSIStatL('/vsimem/tiff_write_123_rgba_to_undefined.tif.aux.xml', gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG)
+    if statBuf is not None:
+        gdaltest.post_reason('did not expect PAM file')
+        return 'fail'
+    ds = gdal.Open('/vsimem/tiff_write_123_rgba_to_undefined.tif')
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_Undefined:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_123_rgba_to_undefined.tif')
+
+
     return 'success'
 
 ###############################################################################
@@ -5196,11 +5257,11 @@ def tiff_write_126():
 
     src_ds = gdal.Open('../gdrivers/data/small_world_400pct.vrt')
 
-    options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEGTABLESMODE=0'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
-                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788,56561], [61397,2463], [29605,33654], [10904,10453]),
+    options_list = [ (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR'], [48788,56561], [61397,2463,2454], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'JPEGTABLESMODE=0'], [48788,56561], [61397,2463,2454], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES'], [48788,56561], [61397,2463,2454], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=800'], [48788,56561], [61397,2463,2454], [29605,33654], [10904,10453]),
+                     (['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'BLOCKYSIZE=64'], [48788,56561], [61397,2463,2454], [29605,33654], [10904,10453]),
                      (['COMPRESS=JPEG'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
                      (['COMPRESS=JPEG', 'INTERLEAVE=BAND', 'TILED=YES'], [49887,58937], [59311,2826], [30829,34806], [11664,58937]),
@@ -7490,6 +7551,337 @@ def tiff_write_163():
     return 'success'
 
 ###############################################################################
+# Test that we handle [0,1,0,0,0,1] geotransform as a regular geotransform
+
+def tiff_write_164():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1)
+    ds.SetGeoTransform([0,1,0,0,0,1])
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    gt = ds.GetGeoTransform(can_return_null = True)
+    ds = None
+
+    if gt != (0,1,0,0,0,1):
+        gdaltest.post_reason('fail')
+        print(gt)
+        return 'fail'
+
+    # Test [0,1,0,0,0,-1] as well
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1)
+    ds.SetGeoTransform([0,1,0,0,0,-1])
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    gt = ds.GetGeoTransform(can_return_null = True)
+    ds = None
+
+    if gt != (0,1,0,0,0,-1):
+        gdaltest.post_reason('fail')
+        print(gt)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test the current behaviour of per-band nodata vs per-dataset serialization
+
+def tiff_write_165():
+
+    ds = gdaltest.tiff_drv.Create('/vsimem/test.tif', 1, 1, 3)
+    ret = ds.GetRasterBand(1).SetNoDataValue(100)
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(2).SetNoDataValue(200)
+    if gdal.GetLastErrorMsg() == '':
+        gdaltest.post_reason('warning expected, but not emitted')
+        return 'fail'
+    if ret != 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    if nd != 100:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    nd = ds.GetRasterBand(2).GetNoDataValue()
+    if nd != 200:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    ds = None
+
+    ds = gdal.Open('/vsimem/test.tif')
+    nd = ds.GetRasterBand(1).GetNoDataValue()
+    ds = None
+
+    if nd != 200:
+        gdaltest.post_reason('fail')
+        print(nd)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test reading & writing Z dimension for ModelTiepointTag and ModelPixelScaleTag (#7093)
+
+def tiff_write_166():
+
+    ds = gdal.Open('data/tiff_vertcs_scale_offset.tif')
+    if ds.GetRasterBand(1).GetScale() != 2.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOffset() != 10.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+
+    # Scale + offset through CreateCopy()
+    gdal.Translate('/vsimem/tiff_write_166.tif', 'data/byte.tif',
+                   options = '-a_srs EPSG:26711+5773 -a_scale 2.0 -a_offset 10 -co PROFILE=GEOTIFF')
+    if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_166.tif')
+    if ds.GetRasterBand(1).GetScale() != 2.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOffset() != 10.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_write_166.tif')
+
+    # Offset only through CreateCopy()
+    gdal.Translate('/vsimem/tiff_write_166.tif', 'data/byte.tif',
+                   options = '-a_srs EPSG:26711+5773 -a_offset 10 -co PROFILE=GEOTIFF')
+    if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_166.tif')
+    if ds.GetRasterBand(1).GetScale() != 1.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+
+    if ds.GetRasterBand(1).GetOffset() != 10.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_write_166.tif')
+
+    # Scale + offset through Create()
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:26711+5773')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([440720,60,0,3751320,0,-60])
+    ds.GetRasterBand(1).SetScale(2)
+    ds.GetRasterBand(1).SetOffset(10)
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_166.tif')
+    if ds.GetRasterBand(1).GetScale() != 2.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+    if ds.GetRasterBand(1).GetOffset() != 10.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_write_166.tif')
+
+    # Scale only through Create()
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:26711+5773')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([440720,60,0,3751320,0,-60])
+    ds.GetRasterBand(1).SetScale(2)
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_166.tif')
+    if ds.GetRasterBand(1).GetScale() != 2.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+    if ds.GetRasterBand(1).GetOffset() != 0.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_write_166.tif')
+
+    # Offset only through through Create()
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_write_166.tif', 1, 1, options = ['PROFILE=GEOTIFF'])
+    sr = osr.SpatialReference()
+    sr.SetFromUserInput('EPSG:26711+5773')
+    ds.SetProjection(sr.ExportToWkt())
+    ds.SetGeoTransform([440720,60,0,3751320,0,-60])
+    ds.GetRasterBand(1).SetOffset(10)
+    ds = None
+    if gdal.VSIStatL('/vsimem/tiff_write_166.tif.aux.xml') is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    ds = gdal.Open('/vsimem/tiff_write_166.tif')
+    if ds.GetRasterBand(1).GetScale() != 1.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetScale())
+        return 'fail'
+    if ds.GetRasterBand(1).GetOffset() != 10.0:
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetOffset())
+        return 'fail'
+    ds = None
+    gdal.Unlink('/vsimem/tiff_write_166.tif')
+
+    return 'success'
+
+###############################################################################
+def tiff_write_167_deflate_zlevel():
+
+    src_ds = gdal.Open('data/byte.tif')
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'ZLEVEL=1'])
+    size1 = gdal.VSIStatL('/vsimem/out.tif').size
+
+    gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'NUM_THREADS=2',
+                                                        'ZLEVEL=9'])
+    size2 = gdal.VSIStatL('/vsimem/out.tif').size
+    gdal.Unlink('/vsimem/out.tif')
+
+    if size2 >= size1:
+        gdaltest.post_reason('fail')
+        print(size1, size2)
+        return 'fail'
+
+    ds = gdal.GetDriverByName('GTiff').Create('/vsimem/out.tif', 20, 20, 1,
+                                             options = ['COMPRESS=DEFLATE',
+                                                        'ZLEVEL=9'])
+    ds.SetProjection(src_ds.GetProjectionRef())
+    ds.SetGeoTransform(src_ds.GetGeoTransform())
+    ds.WriteRaster(0, 0, 20, 20, src_ds.ReadRaster())
+    ds = None
+
+    size2_create = gdal.VSIStatL('/vsimem/out.tif').size
+    gdal.Unlink('/vsimem/out.tif')
+
+    if size2 != size2_create:
+        gdaltest.post_reason('fail')
+        print(size2, size2_create)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test CCITTFAX3
+
+def tiff_write_168_ccitfax3():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize1bit.tif', 1, 5918,
+                            options = [ 'NBITS=1', 'COMPRESS=CCITTFAX3' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test CCITTRLE
+
+def tiff_write_169_ccitrle():
+
+    ut = gdaltest.GDALTest( 'GTiff', 'oddsize1bit.tif', 1, 5918,
+                            options = [ 'NBITS=1', 'COMPRESS=CCITTRLE' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
+# Test invalid compression method
+
+def tiff_write_170_invalid_compresion():
+
+    src_ds = gdal.Open('data/byte.tif')
+    with gdaltest.error_handler():
+        gdal.GetDriverByName('GTiff').CreateCopy('/vsimem/out.tif', src_ds,
+                                        options = [ 'COMPRESS=INVALID' ] )
+    if gdal.GetLastErrorMsg() == '':
+        return 'fail'
+    gdal.Unlink('/vsimem/out.tif')
+    return 'success'
+
+###############################################################################
+# Test ZSTD compression
+
+def tiff_write_171_zstd():
+
+    md = gdaltest.tiff_drv.GetMetadata()
+    if md['DMD_CREATIONOPTIONLIST'].find('ZSTD') == -1:
+        return 'skip'
+
+    ut = gdaltest.GDALTest( 'GTiff', 'byte.tif', 1, 4672,
+                            options = [ 'COMPRESS=ZSTD', 'ZSTD_LEVEL=1' ] )
+    return ut.testCreateCopy()
+
+###############################################################################
+# GeoTIFF DGIWG tags
+
+def tiff_write_172_geometadata_tiff_rsid():
+
+    tmpfilename = '/vsimem/tiff_write_172_geometadata_tiff_rsid.tiff'
+    ds = gdal.GetDriverByName('GTiff').Create(tmpfilename, 1, 1)
+    ds.SetMetadataItem('GEO_METADATA', 'foo')
+    ds.SetMetadataItem('TIFF_RSID', 'bar')
+    ds = None
+
+    ds = gdal.Open(tmpfilename, gdal.GA_Update)
+    if ds.GetMetadataItem('GEO_METADATA') != 'foo':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadataItem('TIFF_RSID') != 'bar':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds.SetMetadata({})
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    if ds.GetMetadataItem('GEO_METADATA') is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetMetadataItem('TIFF_RSID') is not None:
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+    return 'success'
+
+###############################################################################
 # Ask to run again tests with GDAL_API_PROXY=YES
 
 def tiff_write_api_proxy():
@@ -7682,10 +8074,19 @@ gdaltest_list = [
     tiff_write_161,
     tiff_write_162,
     tiff_write_163,
+    tiff_write_164,
+    tiff_write_165,
+    tiff_write_166,
+    tiff_write_167_deflate_zlevel,
+    tiff_write_168_ccitfax3,
+    tiff_write_169_ccitrle,
+    tiff_write_170_invalid_compresion,
+    tiff_write_171_zstd,
+    tiff_write_172_geometadata_tiff_rsid,
     #tiff_write_api_proxy,
     tiff_write_cleanup ]
 
-# gdaltest_list = [ tiff_write_1, tiff_write_163 ]
+# gdaltest_list = [ tiff_write_1, tiff_write_170_invalid_compresion ]
 
 if __name__ == '__main__':
 

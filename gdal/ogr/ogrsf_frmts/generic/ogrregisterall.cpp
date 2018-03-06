@@ -95,6 +95,8 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef GEOJSON_ENABLED
     RegisterOGRGeoJSON();
+    RegisterOGRESRIJSON();
+    RegisterOGRTopoJSON();
 #endif
 #ifdef ILI_ENABLED
     RegisterOGRILI1();
@@ -295,6 +297,9 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef GMLAS_ENABLED
     RegisterOGRGMLAS();
+#endif
+#ifdef MVT_ENABLED
+    RegisterOGRMVT();
 #endif
 
 /* Put TIGER and AVCBIN at end since they need poOpenInfo->GetSiblingFiles() */

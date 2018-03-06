@@ -61,7 +61,7 @@ CPCIDSKADS40ModelSegment::CPCIDSKADS40ModelSegment(PCIDSKFile *fileIn,
     catch( const PCIDSKException& )
     {
         delete pimpl_;
-        pimpl_ = NULL;
+        pimpl_ = nullptr;
         throw;
     }
 }

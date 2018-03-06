@@ -45,7 +45,7 @@ int nwt_ParseHeader( NWT_GRID * pGrd, char *nwtHeader )
     else if( nwtHeader[4] == '8' )
         pGrd->cFormat = 0x80;        //  grc classified type
 
-    pGrd->stClassDict = NULL;
+    pGrd->stClassDict = nullptr;
 
     memcpy( reinterpret_cast<void *>( &pGrd->fVersion ),
             reinterpret_cast<void *>( &nwtHeader[5] ),
@@ -450,20 +450,20 @@ NWT_GRID *nwtOpenGrid( char *filename )
     char nwtHeader[1024];
     VSILFILE *fp = VSIFOpenL( filename, "rb" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Can't open %s", filename );
-        return NULL;
+        return nullptr;
     }
 
     if( !VSIFReadL( nwtHeader, 1024, 1, fp ) )
-        return NULL;
+        return nullptr;
 
     if( nwtHeader[0] != 'H' ||
         nwtHeader[1] != 'G' ||
         nwtHeader[2] != 'P' ||
         nwtHeader[3] != 'C' )
-          return NULL;
+          return nullptr;
 
     NWT_GRID *pGrd = reinterpret_cast<NWT_GRID *>(
         calloc( sizeof(NWT_GRID), 1 ) );
@@ -479,7 +479,7 @@ NWT_GRID *nwtOpenGrid( char *filename )
                  nwtHeader[4] );
         if( pGrd )
             free( pGrd );
-        return NULL;
+        return nullptr;
     }
 
     strncpy( pGrd->szFileName, filename, sizeof(pGrd->szFileName) );

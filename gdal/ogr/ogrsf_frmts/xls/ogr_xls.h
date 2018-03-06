@@ -76,7 +76,7 @@ class OGRXLSLayer : public OGRLayer
 
     virtual int                 TestCapability( const char * ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() override { return NULL; }
+    virtual OGRSpatialReference *GetSpatialRef() override { return nullptr; }
 };
 
 /************************************************************************/
@@ -92,6 +92,10 @@ class OGRXLSDataSource : public OGRDataSource
 
     const void*         xlshandle;
 
+    CPLString           m_osANSIFilename;
+#ifdef WIN32
+    CPLString           m_osTempFilename;
+#endif
   public:
                         OGRXLSDataSource();
                         virtual ~OGRXLSDataSource();

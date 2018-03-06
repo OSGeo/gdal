@@ -1334,8 +1334,7 @@ def gpkg_14():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg', open_options = ['MINX=-10','MAXY=10','MINY=-30','MAXX=30'])
-    ## There's some non null data in R,G,B bands that is masked by the alpha. Oh well...
-    expected_cs = [2762,2762,2762,1223]
+    expected_cs = [1223,1223,1223,1223]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -1356,7 +1355,7 @@ def gpkg_14():
     ds = None
 
     ds = gdal.OpenEx('/vsimem/tmp.gpkg')
-    expected_cs = [15080,15080,15080,13365]
+    expected_cs = [13365, 13365, 13365, 13365]
     got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -2929,7 +2928,8 @@ def gpkg_35():
     ds.WriteRaster(256, 0, 256, height, white_data)
 
     oldSize = gdal.GetCacheMax()
-    gdal.SetCacheMax(256 * 256 * 4)
+    # + 2 * 128 > + 2 * sizeof(GDALRasterBlock). Cf gdalrasterblock.cpp:GetEffectiveBlockSize()
+    gdal.SetCacheMax((256 * 256 + 2 * 128) * 4)
 
     got_data = ds.ReadRaster(0, 0, 256, height)
 
@@ -3437,6 +3437,43 @@ cellsize     60
 
     gdal.Unlink('/vsimem/gpkg_39.gpkg')
 
+    # Test detecting tiles at zero (without nodata value)
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_39')
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_39.gpkg')
+
+    # Test detecting tiles at nodata value
+    ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_Float32)
+    ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(4326)
+    ds.SetProjection(sr.ExportToWkt())
+    ds.GetRasterBand(1).SetNoDataValue(2)
+    ds.GetRasterBand(1).Fill(2)
+    ds.GetRasterBand(1).FlushCache()
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_39')
+    f = sql_lyr.GetNextFeature()
+    if f is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink('/vsimem/gpkg_39.gpkg')
+
     return 'success'
 
 ###############################################################################
@@ -3448,19 +3485,19 @@ def gpkg_40():
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    # Should default to 1.0
+    # Should default to 1.2
     gdal.Translate('/vsimem/gpkg_40.gpkg', src_ds, format = 'GPKG')
     ds = gdal.Open('/vsimem/gpkg_40.gpkg')
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
     f = sql_lyr.GetNextFeature()
-    if f['application_id'] != 1196437808:
+    if f['application_id'] != 1196444487:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
     ds.ReleaseResultSet(sql_lyr)
     sql_lyr = ds.ExecuteSQL('PRAGMA user_version')
     f = sql_lyr.GetNextFeature()
-    if f['user_version'] != 0:
+    if f['user_version'] != 10200:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3715,6 +3752,38 @@ def gpkg_47():
     return 'success'
 
 ###############################################################################
+# Test fix for https://issues.qgis.org/issues/16997 (opening a file with
+# subdatasets on Windows)
+
+def gpkg_48():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    if sys.platform == 'win32':
+        filename = os.path.join(os.getcwd(), 'tmp', 'byte.gpkg')
+    else:
+        # Test Windows code path in a weird way...
+        filename = 'C:\\byte.gpkg'
+
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG', creationOptions = ['RASTER_TABLE=foo'])
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG', creationOptions = ['APPEND_SUBDATASET=YES', 'RASTER_TABLE=bar'])
+    ds = gdal.Open( 'GPKG:' + filename + ':foo')
+    if ds is None:
+        gdal.Unlink(filename)
+        return 'fail'
+    ds = None
+    ds = gdal.Open( 'GPKG:' + filename + ':bar')
+    if ds is None:
+        gdal.Unlink(filename)
+        return 'fail'
+    ds = None
+
+    gdal.Unlink(filename)
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3783,6 +3852,7 @@ gdaltest_list = [
     gpkg_45,
     gpkg_46,
     gpkg_47,
+    gpkg_48,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]

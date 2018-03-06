@@ -36,12 +36,12 @@ CPL_CVSID("$Id$")
 
 // #define SEGY_EXTENSIONS
 
-static const int DT_IBM_4BYTES_FP       = 1;
-static const int DT_4BYTES_INT          = 2;
-static const int DT_2BYTES_INT          = 3;
-static const int DT_4BYTES_FP_WITH_GAIN = 4;
-static const int DT_IEEE_4BYTES_FP      = 5;
-static const int DT_1BYTE_INT           = 8;
+constexpr int DT_IBM_4BYTES_FP       = 1;
+constexpr int DT_4BYTES_INT          = 2;
+constexpr int DT_2BYTES_INT          = 3;
+constexpr int DT_4BYTES_FP_WITH_GAIN = 4;
+constexpr int DT_IEEE_4BYTES_FP      = 5;
+constexpr int DT_1BYTE_INT           = 8;
 
 typedef struct
 {
@@ -143,91 +143,91 @@ static const FieldDesc SEGYFields10[] =
     { "Y_COORDINATE", OFTInteger },
 };
 
-static const int TRACE_NUMBER_WITHIN_LINE = 0;
-static const int TRACE_NUMBER_WITHIN_FILE = 1;
-static const int ORIGINAL_FIELD_RECORD_NUMBER = 2;
-static const int TRACE_NUMBER_WITHIN_ORIGINAL_FIELD_RECORD = 3;
-static const int TRACE_IDENTIFICATION_CODE = 4;
-static const int ENSEMBLE_NUMBER = 5;
-static const int TRACE_NUMBER_WITHIN_ENSEMBLE = 6;
-static const int NUMBER_VERTICAL_SUMMED_TRACES = 7;
-static const int NUMBER_HORIZONTAL_STACKED_TRACES = 8;
-static const int DATA_USE = 9;
-static const int DISTANCE_SOURCE_GROUP = 10;
-static const int RECEIVER_GROUP_ELEVATION = 11;
-static const int SURFACE_ELEVATION_AT_SOURCE = 12;
-static const int SOURCE_DEPTH_BELOW_SURFACE = 13;
-static const int DATUM_ELEVATION_AT_RECEIVER_GROUP = 14;
-static const int DATUM_ELEVATION_AT_SOURCE = 15;
-static const int WATER_DEPTH_AT_SOURCE = 16;
-static const int WATER_DEPTH_AT_GROUP = 17;
-static const int VERTICAL_SCALAR = 18;
-static const int HORIZONTAL_SCALAR = 19;
-static const int SOURCE_X = 20;
-static const int SOURCE_Y = 21;
-static const int GROUP_X = 22;
-static const int GROUP_Y = 23;
-static const int COORDINATE_UNITS = 24;
-static const int WEATHERING_VELOCITY = 25;
-static const int SUB_WEATHERING_VELOCITY = 26;
-static const int UPHOLE_TIME_AT_SOURCE = 27;
-static const int UPHOLE_TIME_AT_GROUP = 28;
-static const int SOURCE_STATIC_CORRECTION = 29;
-static const int GROUP_STATIC_CORRECTION = 30;
-static const int TOTAL_STATIC_CORRECTION = 31;
-static const int LAG_TIME_A = 32;
-static const int LAG_TIME_B = 33;
-static const int DELAY_RECORDING_TIME = 34;
-static const int MUTE_TIME_START = 35;
-static const int MUTE_TIME_END = 36;
-static const int SAMPLES = 37;
-static const int SAMPLE_INTERVAL = 38;
-static const int GAIN_TYPE = 39;
-static const int INSTRUMENT_GAIN_CONSTANT = 40;
-static const int INSTRUMENT_INITIAL_GAIN = 41;
-static const int CORRELATED = 42;
-static const int SWEEP_FREQUENCY_AT_START = 43;
-static const int SWEEP_FREQUENCY_AT_END = 44;
-static const int SWEEP_LENGTH = 45;
-static const int SWEEP_TYPE = 46;
-static const int SWEEP_TRACE_TAPER_LENGTH_AT_START = 47;
-static const int SWEEP_TRACE_TAPER_LENGTH_AT_END = 48;
-static const int TAPER_TYPE = 49;
-static const int ALIAS_FILTER_FREQUENCY = 50;
-static const int ALIAS_FILTER_SLOPE = 51;
-static const int NOTCH_FILTER_FREQUENCY = 52;
-static const int NOTCH_FILTER_SLOPE = 53;
-static const int LOW_CUT_FREQUENCY = 54;
-static const int HIGH_CUT_FREQUENCY = 55;
-static const int LOW_CUT_SLOPE = 56;
-static const int HIGH_CUT_SLOPE = 57;
-static const int YEAR = 58;
-static const int DAY_OF_YEAR = 59;
-static const int HOUR = 60;
-static const int MINUTE = 61;
-static const int SECOND = 62;
-static const int TIME_BASIC_CODE = 63;
-static const int TRACE_WEIGHTING_FACTOR = 64;
-static const int GEOPHONE_GROUP_NUMBER_OF_ROLL_SWITH = 65;
-static const int GEOPHONE_GROUP_NUMBER_OF_TRACE_NUMBER_ONE = 66;
-static const int GEOPHONE_GROUP_NUMBER_OF_LAST_TRACE = 67;
-static const int GAP_SIZE = 68;
-static const int OVER_TRAVEL = 69;
-static const int INLINE_NUMBER = 70;
-static const int CROSSLINE_NUMBER = 71;
-static const int SHOTPOINT_NUMBER = 72;
-static const int SHOTPOINT_SCALAR = 73;
-static const int VALUE_MEASUREMENT_UNIT = 74;
-static const int TRADUCTION_CONSTANT_MANTISSA = 75;
-static const int TRADUCTION_CONSTANT_POWER = 76;
-static const int DEVICE_IDENTIFIER = 77;
-static const int TIME_SCALAR = 78;
-static const int ORIENTATION_TYPE = 79;
-static const int SOURCE_EFFORT_MANTISSA = 80;
-static const int SOURCE_EFFORT_POWER = 81;
-static const int SOURCE_MEASUREMENT_UNIT = 82;
-static const int X_COORDINATE = 83;
-static const int Y_COORDINATE = 84;
+constexpr int TRACE_NUMBER_WITHIN_LINE = 0;
+constexpr int TRACE_NUMBER_WITHIN_FILE = 1;
+constexpr int ORIGINAL_FIELD_RECORD_NUMBER = 2;
+constexpr int TRACE_NUMBER_WITHIN_ORIGINAL_FIELD_RECORD = 3;
+constexpr int TRACE_IDENTIFICATION_CODE = 4;
+constexpr int ENSEMBLE_NUMBER = 5;
+constexpr int TRACE_NUMBER_WITHIN_ENSEMBLE = 6;
+constexpr int NUMBER_VERTICAL_SUMMED_TRACES = 7;
+constexpr int NUMBER_HORIZONTAL_STACKED_TRACES = 8;
+constexpr int DATA_USE = 9;
+constexpr int DISTANCE_SOURCE_GROUP = 10;
+constexpr int RECEIVER_GROUP_ELEVATION = 11;
+constexpr int SURFACE_ELEVATION_AT_SOURCE = 12;
+constexpr int SOURCE_DEPTH_BELOW_SURFACE = 13;
+constexpr int DATUM_ELEVATION_AT_RECEIVER_GROUP = 14;
+constexpr int DATUM_ELEVATION_AT_SOURCE = 15;
+constexpr int WATER_DEPTH_AT_SOURCE = 16;
+constexpr int WATER_DEPTH_AT_GROUP = 17;
+constexpr int VERTICAL_SCALAR = 18;
+constexpr int HORIZONTAL_SCALAR = 19;
+constexpr int SOURCE_X = 20;
+constexpr int SOURCE_Y = 21;
+constexpr int GROUP_X = 22;
+constexpr int GROUP_Y = 23;
+constexpr int COORDINATE_UNITS = 24;
+constexpr int WEATHERING_VELOCITY = 25;
+constexpr int SUB_WEATHERING_VELOCITY = 26;
+constexpr int UPHOLE_TIME_AT_SOURCE = 27;
+constexpr int UPHOLE_TIME_AT_GROUP = 28;
+constexpr int SOURCE_STATIC_CORRECTION = 29;
+constexpr int GROUP_STATIC_CORRECTION = 30;
+constexpr int TOTAL_STATIC_CORRECTION = 31;
+constexpr int LAG_TIME_A = 32;
+constexpr int LAG_TIME_B = 33;
+constexpr int DELAY_RECORDING_TIME = 34;
+constexpr int MUTE_TIME_START = 35;
+constexpr int MUTE_TIME_END = 36;
+constexpr int SAMPLES = 37;
+constexpr int SAMPLE_INTERVAL = 38;
+constexpr int GAIN_TYPE = 39;
+constexpr int INSTRUMENT_GAIN_CONSTANT = 40;
+constexpr int INSTRUMENT_INITIAL_GAIN = 41;
+constexpr int CORRELATED = 42;
+constexpr int SWEEP_FREQUENCY_AT_START = 43;
+constexpr int SWEEP_FREQUENCY_AT_END = 44;
+constexpr int SWEEP_LENGTH = 45;
+constexpr int SWEEP_TYPE = 46;
+constexpr int SWEEP_TRACE_TAPER_LENGTH_AT_START = 47;
+constexpr int SWEEP_TRACE_TAPER_LENGTH_AT_END = 48;
+constexpr int TAPER_TYPE = 49;
+constexpr int ALIAS_FILTER_FREQUENCY = 50;
+constexpr int ALIAS_FILTER_SLOPE = 51;
+constexpr int NOTCH_FILTER_FREQUENCY = 52;
+constexpr int NOTCH_FILTER_SLOPE = 53;
+constexpr int LOW_CUT_FREQUENCY = 54;
+constexpr int HIGH_CUT_FREQUENCY = 55;
+constexpr int LOW_CUT_SLOPE = 56;
+constexpr int HIGH_CUT_SLOPE = 57;
+constexpr int YEAR = 58;
+constexpr int DAY_OF_YEAR = 59;
+constexpr int HOUR = 60;
+constexpr int MINUTE = 61;
+constexpr int SECOND = 62;
+constexpr int TIME_BASIC_CODE = 63;
+constexpr int TRACE_WEIGHTING_FACTOR = 64;
+constexpr int GEOPHONE_GROUP_NUMBER_OF_ROLL_SWITH = 65;
+constexpr int GEOPHONE_GROUP_NUMBER_OF_TRACE_NUMBER_ONE = 66;
+constexpr int GEOPHONE_GROUP_NUMBER_OF_LAST_TRACE = 67;
+constexpr int GAP_SIZE = 68;
+constexpr int OVER_TRAVEL = 69;
+constexpr int INLINE_NUMBER = 70;
+constexpr int CROSSLINE_NUMBER = 71;
+constexpr int SHOTPOINT_NUMBER = 72;
+constexpr int SHOTPOINT_SCALAR = 73;
+constexpr int VALUE_MEASUREMENT_UNIT = 74;
+constexpr int TRADUCTION_CONSTANT_MANTISSA = 75;
+constexpr int TRADUCTION_CONSTANT_POWER = 76;
+constexpr int DEVICE_IDENTIFIER = 77;
+constexpr int TIME_SCALAR = 78;
+constexpr int ORIENTATION_TYPE = 79;
+constexpr int SOURCE_EFFORT_MANTISSA = 80;
+constexpr int SOURCE_EFFORT_POWER = 81;
+constexpr int SOURCE_MEASUREMENT_UNIT = 82;
+constexpr int X_COORDINATE = 83;
+constexpr int Y_COORDINATE = 84;
 
 /************************************************************************/
 /*                       SEGYReadMSBFloat32()                           */
@@ -335,12 +335,12 @@ OGRFeature *OGRSEGYLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -359,7 +359,7 @@ static float GetIBMFloat(const GByte* pabyData)
     int nVal = 0;
     memcpy(&nVal, pabyData, 4);
     CPL_MSBPTR32(&nVal);
-    const int nSign = 1 - 2 * ((nVal >> 31) & 0x01);
+    const int nSign = 1 - 2 * (((unsigned)nVal >> 31) & 0x01);
     const int nExp = (nVal >> 24) & 0x7f;
     const int nMant = nVal & 0xffffff;
 
@@ -385,14 +385,14 @@ static float GetIBMFloat(const GByte* pabyData)
 OGRFeature *OGRSEGYLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     GByte abyTraceHeader[240];
 
     if( (int)VSIFReadL(abyTraceHeader, 1, 240, fp) != 240 )
     {
         bEOF = true;
-        return NULL;
+        return nullptr;
     }
 
     const int nTraceNumberWithinLine = SEGYReadMSBInt32(abyTraceHeader + 0);
@@ -443,7 +443,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     if( nSamples < 0 )
     {
         bEOF = true;
-        return NULL;
+        return nullptr;
     }
     const int nSampleInterval = SEGYReadMSBInt16(abyTraceHeader + 116);
 
@@ -632,7 +632,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         VSI_MALLOC_VERBOSE(nDataSize * nSamples));
     double* padfValues = static_cast<double *>(
         VSI_CALLOC_VERBOSE(nSamples, sizeof(double)));
-    if( pabyData == NULL || padfValues == NULL )
+    if( pabyData == nullptr || padfValues == nullptr )
     {
         VSIFSeekL( fp, nDataSize * nSamples, SEEK_CUR );
     }
@@ -788,7 +788,7 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
         poFeature->SetField(Y_COORDINATE, nYCoordinate);
     }
 
-    if( nSamples > 0 && padfValues != NULL )
+    if( nSamples > 0 && padfValues != nullptr )
         poFeature->SetField(poFeature->GetFieldCount() - 1,
                             nSamples, padfValues);
 
@@ -832,38 +832,38 @@ static const FieldDesc SEGYHeaderFields[] =
     { "NUMBER_OF_EXTENDED_TEXTUAL_FILE_HEADER", OFTInteger },
 };
 
-static const int HEADER_TEXT_HEADER = 0;
-static const int HEADER_JOB_ID_NUMBER = 1;
-static const int HEADER_LINE_NUMBER = 2;
-static const int HEADER_REEL_NUMBER = 3;
-static const int HEADER_DATA_TRACES_PER_ENSEMBLE = 4;
-static const int HEADER_AUX_TRACES_PER_ENSEMBLE = 5;
-static const int HEADER_SAMPLE_INTERVAL = 6;
-static const int HEADER_SAMPLE_INTERVAL_ORIGINAL = 7;
-static const int HEADER_SAMPLES_PER_DATA_TRACE = 8;
-static const int HEADER_SAMPLES_PER_DATA_TRACE_ORIGINAL = 9;
-static const int HEADER_DATA_SAMPLE_TYPE = 10;
-static const int HEADER_ENSEMBLE_FOLD = 11;
-static const int HEADER_TRACE_SORTING_CODE = 12;
-static const int HEADER_VERTICAL_SUM_CODE = 13;
-static const int HEADER_SWEEP_FREQUENCY_AT_START = 14;
-static const int HEADER_SWEEP_FREQUENCY_AT_END = 15;
-static const int HEADER_SWEEP_LENGTH = 16;
-static const int HEADER_SWEEP_TYPE = 17;
-static const int HEADER_TRACE_NUMBER_OF_SWEEP_CHANNEL = 18;
-static const int HEADER_SWEEP_TRACE_TAPER_LENGTH_AT_START = 19;
-static const int HEADER_SWEEP_TRACE_TAPER_LENGTH_AT_END = 20;
-static const int HEADER_TAPER_TYPE = 21;
-static const int HEADER_CORRELATED = 22;
-static const int HEADER_BINARY_GAIN_RECOVERED = 23;
-static const int HEADER_AMPLITUDE_RECOVERY_METHOD = 24;
-static const int HEADER_MEASUREMENT_SYSTEM = 25;
-static const int HEADER_IMPULSE_SIGNAL_POLARITY = 26;
-static const int HEADER_VIBRATORY_POLARY_CODE = 27;
-static const int HEADER_SEGY_REVISION_NUMBER = 28;
-static const int HEADER_FLOAT_SEGY_REVISION_NUMBER = 29;
-static const int HEADER_FIXED_LENGTH_TRACE_FLAG = 30;
-static const int HEADER_NUMBER_OF_EXTENDED_TEXTUAL_FILE_HEADER = 31;
+constexpr int HEADER_TEXT_HEADER = 0;
+constexpr int HEADER_JOB_ID_NUMBER = 1;
+constexpr int HEADER_LINE_NUMBER = 2;
+constexpr int HEADER_REEL_NUMBER = 3;
+constexpr int HEADER_DATA_TRACES_PER_ENSEMBLE = 4;
+constexpr int HEADER_AUX_TRACES_PER_ENSEMBLE = 5;
+constexpr int HEADER_SAMPLE_INTERVAL = 6;
+constexpr int HEADER_SAMPLE_INTERVAL_ORIGINAL = 7;
+constexpr int HEADER_SAMPLES_PER_DATA_TRACE = 8;
+constexpr int HEADER_SAMPLES_PER_DATA_TRACE_ORIGINAL = 9;
+constexpr int HEADER_DATA_SAMPLE_TYPE = 10;
+constexpr int HEADER_ENSEMBLE_FOLD = 11;
+constexpr int HEADER_TRACE_SORTING_CODE = 12;
+constexpr int HEADER_VERTICAL_SUM_CODE = 13;
+constexpr int HEADER_SWEEP_FREQUENCY_AT_START = 14;
+constexpr int HEADER_SWEEP_FREQUENCY_AT_END = 15;
+constexpr int HEADER_SWEEP_LENGTH = 16;
+constexpr int HEADER_SWEEP_TYPE = 17;
+constexpr int HEADER_TRACE_NUMBER_OF_SWEEP_CHANNEL = 18;
+constexpr int HEADER_SWEEP_TRACE_TAPER_LENGTH_AT_START = 19;
+constexpr int HEADER_SWEEP_TRACE_TAPER_LENGTH_AT_END = 20;
+constexpr int HEADER_TAPER_TYPE = 21;
+constexpr int HEADER_CORRELATED = 22;
+constexpr int HEADER_BINARY_GAIN_RECOVERED = 23;
+constexpr int HEADER_AMPLITUDE_RECOVERY_METHOD = 24;
+constexpr int HEADER_MEASUREMENT_SYSTEM = 25;
+constexpr int HEADER_IMPULSE_SIGNAL_POLARITY = 26;
+constexpr int HEADER_VIBRATORY_POLARY_CODE = 27;
+constexpr int HEADER_SEGY_REVISION_NUMBER = 28;
+constexpr int HEADER_FLOAT_SEGY_REVISION_NUMBER = 29;
+constexpr int HEADER_FIXED_LENGTH_TRACE_FLAG = 30;
+constexpr int HEADER_NUMBER_OF_EXTENDED_TEXTUAL_FILE_HEADER = 31;
 
 /************************************************************************/
 /*                         OGRSEGYHeaderLayer()                         */
@@ -925,12 +925,12 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
     while( true )
     {
         OGRFeature *poFeature = GetNextRawFeature();
-        if( poFeature == NULL )
-            return NULL;
+        if( poFeature == nullptr )
+            return nullptr;
 
-        if( (m_poFilterGeom == NULL
+        if( (m_poFilterGeom == nullptr
              || FilterGeometry( poFeature->GetGeometryRef() ) )
-            && (m_poAttrQuery == NULL
+            && (m_poAttrQuery == nullptr
                 || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -949,7 +949,7 @@ OGRFeature *OGRSEGYHeaderLayer::GetNextFeature()
 OGRFeature *OGRSEGYHeaderLayer::GetNextRawFeature()
 {
     if( bEOF )
-        return NULL;
+        return nullptr;
 
     bEOF = true;
 

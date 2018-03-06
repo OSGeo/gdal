@@ -183,8 +183,8 @@ OGRGeometry *OGRPoint::clone() const
 
 {
     OGRPoint *poNewPoint = new (std::nothrow) OGRPoint( x, y, z, m );
-    if( poNewPoint == NULL )
-        return NULL;
+    if( poNewPoint == nullptr )
+        return nullptr;
 
     poNewPoint->assignSpatialReference( getSpatialReference() );
     poNewPoint->flags = flags;
@@ -306,7 +306,7 @@ OGRErr OGRPoint::importFromWkb( const unsigned char *pabyData,
 
     flags = 0;
     OGRErr eErr =
-        importPreambuleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
+        importPreambleFromWkb( pabyData, nSize, eByteOrder, eWkbVariant );
     pabyData += 5;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -411,9 +411,13 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
     }
 
     if( eByteOrder == wkbNDR )
-        nGType = CPL_LSBWORD32( nGType );
+    {
+        CPL_LSBPTR32( &nGType );
+    }
     else
-        nGType = CPL_MSBWORD32( nGType );
+    {
+        CPL_MSBPTR32( &nGType );
+    }
 
     memcpy( pabyData, &nGType, 4 );
     pabyData += 4;
@@ -485,7 +489,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -493,9 +497,6 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     if( bHasM ) flags |= OGR_G_MEASURED;
     if( bIsEmpty )
     {
-        // Should be at the end.
-        if( !((*ppszInput[0] == '\000') || (*ppszInput[0] == ',')) )
-            return OGRERR_CORRUPT_DATA;
         return OGRERR_NONE;
     }
     else
@@ -508,9 +509,9 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /* -------------------------------------------------------------------- */
 /*      Read the point list which should consist of exactly one point.  */
 /* -------------------------------------------------------------------- */
-    OGRRawPoint *poPoints = NULL;
-    double *padfZ = NULL;
-    double *padfM = NULL;
+    OGRRawPoint *poPoints = nullptr;
+    double *padfZ = nullptr;
+    double *padfM = nullptr;
     int nMaxPoint = 0;
     int nPoints = 0;
     int flagsFromInput = flags;
@@ -518,7 +519,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     pszInput = OGRWktReadPointsM( pszInput, &poPoints, &padfZ, &padfM,
                                   &flagsFromInput,
                                   &nMaxPoint, &nPoints );
-    if( pszInput == NULL || nPoints != 1 )
+    if( pszInput == nullptr || nPoints != 1 )
     {
         CPLFree( poPoints );
         CPLFree( padfZ );
@@ -543,12 +544,12 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 
     if( bHasZ )
     {
-        if( padfZ != NULL )
+        if( padfZ != nullptr )
             z = padfZ[0];
     }
     if( bHasM )
     {
-        if( padfM != NULL )
+        if( padfM != nullptr )
             m = padfM[0];
     }
 
@@ -721,7 +722,7 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
         return FALSE;
 
     OGRPoint *poOPoint = dynamic_cast<OGRPoint *>(poOther);
-    if( poOPoint == NULL )
+    if( poOPoint == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
                  "dynamic_cast failed.  Expected OGRPoint.");
@@ -774,12 +775,12 @@ void OGRPoint::swapXY()
 OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
 
 {
-    if( !IsEmpty() && poOtherGeom != NULL &&
+    if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
     {
         const OGRCurvePolygon *poCurve =
             dynamic_cast<const OGRCurvePolygon *>(poOtherGeom);
-        if( poCurve == NULL )
+        if( poCurve == nullptr )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");
@@ -798,12 +799,12 @@ OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
 OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
 
 {
-    if( !IsEmpty() && poOtherGeom != NULL &&
+    if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
     {
         const OGRCurvePolygon *poCurve =
             dynamic_cast<const OGRCurvePolygon *>(poOtherGeom);
-        if( poCurve == NULL )
+        if( poCurve == nullptr )
         {
             CPLError(CE_Fatal, CPLE_AppDefined,
                      "dynamic_cast failed.  Expected OGRCurvePolygon.");

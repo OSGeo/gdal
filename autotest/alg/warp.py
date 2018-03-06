@@ -270,7 +270,7 @@ def warp_3_float_downsize():
     if gdaltest.tiff_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/utmsmall_cubic_2.vrt' )
+    ds = gdal.Open( 'data/utmsmall_cubic_2_float.vrt' )
     ref_ds = gdal.Open( 'data/utmsmall_cubic_2.tif' )
     maxdiff = gdaltest.compare_ds(ds, ref_ds)
     ds = None
@@ -1050,10 +1050,12 @@ def warp_29():
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', 'ALL_CPUS')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
@@ -1061,10 +1063,12 @@ def warp_29():
 
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     ds = gdal.Open( 'data/white_nodata.vrt' )
     cs_multithread = ds.GetRasterBand(1).Checksum()
     ds = None
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
 
     if cs_monothread != cs_multithread:
         gdaltest.post_reason('failed')
@@ -1075,8 +1079,10 @@ def warp_29():
     ds = gdal.Open('data/byte_gcp.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     got_cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
@@ -1086,8 +1092,10 @@ def warp_29():
     ds = gdal.Open('data/byte_tps.vrt')
     old_val = gdal.GetConfigOption('GDAL_NUM_THREADS')
     gdal.SetConfigOption('GDAL_NUM_THREADS', '2')
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', '0')
     got_cs = ds.GetRasterBand(1).Checksum()
     gdal.SetConfigOption('GDAL_NUM_THREADS', old_val)
+    gdal.SetConfigOption('WARP_THREAD_CHUNK_SIZE', None)
     ds = None
 
     if got_cs != src_ds.GetRasterBand(1).Checksum():
@@ -1806,6 +1814,40 @@ def warp_55():
 
     return 'success'
 
+###############################################################################
+# Test bilinear interpolation when warping into same coordinate system (and
+# same size). This test crops a single pixel out of a 3-by-3 image.
+
+def warp_56():
+    
+    try:
+        from osgeo import gdalnumeric
+        gdalnumeric.zeros
+        import numpy
+    except:
+        return 'skip'
+
+    pix_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    src_ds = gdal.GetDriverByName('MEM').Create('', 3, 3)
+    src_ds.GetRasterBand(1).WriteArray(numpy.array([[0,0,0],
+                                                    [0,0,0],
+                                                    [0,0,100]]))
+    src_ds.SetGeoTransform([1, 1,  0,
+                            1, 0,  1])
+        
+    for off in numpy.linspace(0, 2, 21):
+        pix_ds.SetGeoTransform([off + 1, 1,  0,
+                                off + 1, 0,  1])
+        gdal.Warp(pix_ds, src_ds, resampleAlg='bilinear')
+        
+        exp = 0 if off < 1 else 100 * (off - 1)**2
+        warped = pix_ds.GetRasterBand(1).ReadAsArray()[0,0]
+        if abs(warped - exp) > 0.6:
+            gdaltest.post_reason('offset: {}, expected: {:.0f}, got: {}'.format(off, exp, warped))
+            return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     warp_1,
     warp_1_short,
@@ -1878,7 +1920,8 @@ gdaltest_list = [
     warp_52,
     warp_53,
     warp_54,
-    warp_55
+    warp_55,
+    warp_56
     ]
 #gdaltest_list = [ warp_55 ]
 

@@ -58,7 +58,7 @@ void OGRDataSource::DestroyDataSource( OGRDataSource *poDS )
 void OGR_DS_Destroy( OGRDataSourceH hDS )
 
 {
-    if( hDS == NULL )
+    if( hDS == nullptr )
         return;
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
@@ -131,12 +131,12 @@ OGRLayerH OGR_DS_CreateLayer( OGRDataSourceH hDS,
                               char ** papszOptions )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_CreateLayer", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_CreateLayer", nullptr );
 
-    if (pszName == NULL)
+    if (pszName == nullptr)
     {
         CPLError ( CE_Failure, CPLE_ObjectNull, "Name was NULL in OGR_DS_CreateLayer");
-        return NULL;
+        return nullptr;
     }
     OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *)hDS)->CreateLayer(
         pszName, (OGRSpatialReference *) hSpatialRef, eType, papszOptions );
@@ -158,9 +158,9 @@ OGRLayerH OGR_DS_CopyLayer( OGRDataSourceH hDS,
                             char **papszOptions )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_CopyLayer", NULL );
-    VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", NULL );
-    VALIDATE_POINTER1( pszNewName, "OGR_DS_CopyLayer", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_CopyLayer", nullptr );
+    VALIDATE_POINTER1( hSrcLayer, "OGR_DS_CopyLayer", nullptr );
+    VALIDATE_POINTER1( pszNewName, "OGR_DS_CopyLayer", nullptr );
 
     return (OGRLayerH)
         ((GDALDataset *) hDS)->CopyLayer( (OGRLayer *) hSrcLayer,
@@ -193,7 +193,7 @@ OGRErr OGR_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer )
 OGRLayerH OGR_DS_GetLayerByName( OGRDataSourceH hDS, const char *pszName )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerByName", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayerByName", nullptr );
 
     OGRLayerH hLayer = (OGRLayerH) ((GDALDataset *) hDS)->GetLayerByName( pszName );
 
@@ -215,7 +215,7 @@ OGRLayerH OGR_DS_ExecuteSQL( OGRDataSourceH hDS,
                              const char *pszDialect )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_ExecuteSQL", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_ExecuteSQL", nullptr );
 
     OGRLayerH hLayer = (OGRLayerH)
         ((GDALDataset *)hDS)->ExecuteSQL( pszStatement,
@@ -284,7 +284,7 @@ int OGR_DS_GetLayerCount( OGRDataSourceH hDS )
 OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayer", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetLayer", nullptr );
 
     OGRLayerH hLayer = (OGRLayerH) ((GDALDataset*)hDS)->GetLayer( iLayer );
 
@@ -303,7 +303,7 @@ OGRLayerH OGR_DS_GetLayer( OGRDataSourceH hDS, int iLayer )
 const char *OGR_DS_GetName( OGRDataSourceH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetName", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetName", nullptr );
 
     return ((GDALDataset*)hDS)->GetDescription();
 }
@@ -331,7 +331,7 @@ OGRErr OGR_DS_SyncToDisk( OGRDataSourceH hDS )
 OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetDriver", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetDriver", nullptr );
 
     return (OGRSFDriverH) ((OGRDataSource *) hDS)->GetDriver();
 }
@@ -343,7 +343,7 @@ OGRSFDriverH OGR_DS_GetDriver( OGRDataSourceH hDS )
 OGRStyleTableH OGR_DS_GetStyleTable( OGRDataSourceH hDS )
 
 {
-    VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", NULL );
+    VALIDATE_POINTER1( hDS, "OGR_DS_GetStyleTable", nullptr );
 
     return (OGRStyleTableH) ((GDALDataset *) hDS)->GetStyleTable( );
 }

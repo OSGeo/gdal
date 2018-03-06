@@ -62,8 +62,8 @@ CBandInterleavedChannel::CBandInterleavedChannel( PCIDSKBuffer &image_header,
         : CPCIDSKChannel( image_header, ih_offsetIn, fileIn, pixel_typeIn, channelnum)
 
 {
-    io_handle_p = NULL;
-    io_mutex_p = NULL;
+    io_handle_p = nullptr;
+    io_mutex_p = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Establish the data layout.                                      */
@@ -135,7 +135,7 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
         || yoff < 0 || yoff + ysize > GetBlockHeight() )
     {
         return ThrowPCIDSKException( 0,
-            "Invalid window in ReadBloc(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
+            "Invalid window in ReadBlock(): xoff=%d,yoff=%d,xsize=%d,ysize=%d",
             xoff, yoff, xsize, ysize );
     }
 
@@ -145,12 +145,20 @@ int CBandInterleavedChannel::ReadBlock( int block_index, void *buffer,
     int    pixel_size = DataTypeSize( pixel_type );
     uint64 offset = start_byte + line_offset * block_index
         + pixel_offset * xoff;
+    if( xsize > 1 && pixel_offset > static_cast<uint64>(INT_MAX / (xsize - 1)) )
+    {
+        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+    }
+    if( pixel_offset*(xsize-1) > static_cast<uint64>(INT_MAX - pixel_size) )
+    {
+        return ThrowPCIDSKException( 0, "Int overfow in ReadBlock() ");
+    }
     int    window_size = (int) (pixel_offset*(xsize-1) + pixel_size);
 
 /* -------------------------------------------------------------------- */
 /*      Get file access handles if we don't already have them.          */
 /* -------------------------------------------------------------------- */
-    if( io_handle_p == NULL )
+    if( io_handle_p == nullptr )
         file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str(),
                             file->GetUpdatable() );
 
@@ -224,7 +232,7 @@ int CBandInterleavedChannel::WriteBlock( int block_index, void *buffer )
 /* -------------------------------------------------------------------- */
 /*      Get file access handles if we don't already have them.          */
 /* -------------------------------------------------------------------- */
-    if( io_handle_p == NULL )
+    if( io_handle_p == nullptr )
         file->GetIODetails( &io_handle_p, &io_mutex_p, filename.c_str(),
                             file->GetUpdatable() );
 
@@ -363,7 +371,7 @@ void CBandInterleavedChannel
         CLinkSegment *link = 
             dynamic_cast<CLinkSegment*>( file->GetSegment( link_segment ) );
         
-        if( link != NULL )
+        if( link != nullptr )
         {
             link->SetPath( filenameIn );
             link->Synchronize();
@@ -465,7 +473,7 @@ std::string CBandInterleavedChannel::MassageLink( std::string filename_in ) cons
         
         CLinkSegment* link_seg = 
             dynamic_cast<CLinkSegment*>(file->GetSegment(seg_num));
-        if (link_seg == NULL)
+        if (link_seg == nullptr)
         {
             ThrowPCIDSKException("Failed to get Link Information Segment.");
             return "";

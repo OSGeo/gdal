@@ -54,6 +54,7 @@
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"
@@ -61,7 +62,6 @@ using namespace std;
 #include "cpl_vsi_error.h"
 
 #include "gdal.h"
-#include "gdal_priv.h"
 #include "gdal_alg.h"
 #include "gdalwarper.h"
 
@@ -211,7 +211,13 @@ typedef enum {
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
   /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
-  /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6
+  /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
+  /*  GRA_Gauss=7 reserved. */
+  /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
+  /*! Min (selects minimum of all non-NODATA contributing pixels) */ GRA_Min=9,
+  /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
+  /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
+  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
 } GDALResampleAlg;
 
 %rename (AsyncStatusType) GDALAsyncStatusType;
@@ -792,12 +798,14 @@ GDALDatasetShadow* Open( char const* name ) {
 GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
+#ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
           GDALClose(ds);
       ds = NULL;
   }
+#endif
   return (GDALDatasetShadow*) ds;
 }
 %}
@@ -822,12 +830,14 @@ GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
 #endif
   GDALDatasetShadow *ds = GDALOpenEx( utf8_path, nOpenFlags, allowed_drivers,
                                       open_options, sibling_files );
+#ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
           GDALClose(ds);
       ds = NULL;
   }
+#endif
   return (GDALDatasetShadow*) ds;
 }
 %}
@@ -840,12 +850,14 @@ GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
 GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
   GDALDatasetShadow *ds = GDALOpenShared( utf8_path, eAccess );
+#ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
           GDALClose(ds);
       ds = NULL;
   }
+#endif
   return (GDALDatasetShadow*) ds;
 }
 %}

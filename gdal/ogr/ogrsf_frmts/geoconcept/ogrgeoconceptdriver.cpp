@@ -64,7 +64,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
     const char* pszExtension = CPLGetExtension(pszFilename);
     if( !EQUAL(pszExtension,"gxt") && !EQUAL(pszExtension,"txt") )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
@@ -72,7 +72,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
     if( !poDS->Open( pszFilename, true, CPL_TO_BOOL(bUpdate) ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     return poDS;
 }
@@ -88,27 +88,27 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
                                                       char** papszOptions )
 
 {
-    VSIStatBuf  stat;
+    VSIStatBufL  sStat;
     /* int bSingleNewFile = FALSE; */
 
-    if( pszName==NULL || strlen(pszName)==0 )
+    if( pszName==nullptr || strlen(pszName)==0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid datasource name (null or empty)");
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Is the target a valid existing directory?                       */
 /* -------------------------------------------------------------------- */
-    if( CPLStat( pszName, &stat ) == 0 )
+    if( VSIStatL( pszName, &sStat ) == 0 )
     {
-        if( !VSI_ISDIR(stat.st_mode) )
+        if( !VSI_ISDIR(sStat.st_mode) )
         {
             CPLError( CE_Failure, CPLE_AppDefined,
                       "%s is not a valid existing directory.",
                       pszName );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -125,30 +125,13 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Otherwise try to create a new directory.                        */
-/* -------------------------------------------------------------------- */
-    else
-    {
-        VSIStatBuf  sStat;
-
-        if( VSIStat( pszName, &sStat ) == 0 )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Attempt to create datasource named %s, "
-                      "but that is an existing directory.",
-                      pszName );
-            return NULL;
-        }
-    }
-
-/* -------------------------------------------------------------------- */
 /*      Return a new OGRDataSource()                                    */
 /* -------------------------------------------------------------------- */
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     return poDS;
 }
@@ -160,11 +143,11 @@ OGRDataSource *OGRGeoconceptDriver::CreateDataSource( const char* pszName,
 OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
 
 {
-    VSIStatBuf sStatBuf;
+    VSIStatBufL sStatBuf;
     static const char * const apszExtensions[] =
-        { "gxt", "txt", "gct", "gcm", "gcr", NULL };
+        { "gxt", "txt", "gct", "gcm", "gcr", nullptr };
 
-    if( VSIStat( pszDataSource, &sStatBuf ) != 0 )
+    if( VSIStatL( pszDataSource, &sStatBuf ) != 0 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s does not appear to be a file or directory.",
@@ -179,11 +162,11 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
             EQUAL(CPLGetExtension(pszDataSource),"txt")
            ) )
     {
-        for( int iExt=0; apszExtensions[iExt] != NULL; iExt++ )
+        for( int iExt=0; apszExtensions[iExt] != nullptr; iExt++ )
         {
             const char *pszFile = CPLResetExtension(pszDataSource,
                                                     apszExtensions[iExt] );
-            if( VSIStat( pszFile, &sStatBuf ) == 0 )
+            if( VSIStatL( pszFile, &sStatBuf ) == 0 )
                 VSIUnlink( pszFile );
         }
     }
@@ -192,7 +175,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
         char **papszDirEntries = VSIReadDir( pszDataSource );
 
         for( int iFile = 0;
-             papszDirEntries != NULL && papszDirEntries[iFile] != NULL;
+             papszDirEntries != nullptr && papszDirEntries[iFile] != nullptr;
              iFile++ )
         {
             if( CSLFindString( const_cast<char **>( apszExtensions ),
@@ -200,7 +183,7 @@ OGRErr OGRGeoconceptDriver::DeleteDataSource( const char *pszDataSource )
             {
                 VSIUnlink( CPLFormFilename( pszDataSource,
                                             papszDirEntries[iFile],
-                                            NULL ) );
+                                            nullptr ) );
             }
         }
 
@@ -258,6 +241,7 @@ void RegisterOGRGeoconcept()
 "the Name found in the GCT file for a sub-type section within the previous "
 "type section'/>"
 "</LayerCreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
 }

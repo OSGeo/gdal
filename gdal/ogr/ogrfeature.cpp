@@ -38,6 +38,7 @@
 #include <cstring>
 #include <ctime>
 
+#include <limits>
 #include <new>
 #include <vector>
 
@@ -52,7 +53,7 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
 
 CPL_CVSID("$Id$")
 
@@ -77,13 +78,13 @@ CPL_CVSID("$Id$")
 OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
     nFID(OGRNullFID),
     poDefn(poDefnIn),
-    papoGeometries(NULL),
-    pauFields(NULL),
-    m_pszNativeData(NULL),
-    m_pszNativeMediaType(NULL),
-    m_pszStyleString(NULL),
-    m_poStyleTable(NULL),
-    m_pszTmpFieldValue(NULL)
+    papoGeometries(nullptr),
+    pauFields(nullptr),
+    m_pszNativeData(nullptr),
+    m_pszNativeMediaType(nullptr),
+    m_pszStyleString(nullptr),
+    m_poStyleTable(nullptr),
+    m_pszTmpFieldValue(nullptr)
 {
     poDefnIn->Reference();
 
@@ -95,7 +96,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
                            sizeof(OGRGeometry*)));
 
     // Initialize array to the unset special value.
-    if( pauFields != NULL )
+    if( pauFields != nullptr )
     {
         for( int i = 0; i < poDefn->GetFieldCount(); i++ )
         {
@@ -127,7 +128,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
 OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 
 {
-    VALIDATE_POINTER1( hDefn, "OGR_F_Create", NULL );
+    VALIDATE_POINTER1( hDefn, "OGR_F_Create", nullptr );
     return reinterpret_cast<OGRFeatureH>(
         OGRFeature::CreateFeature(reinterpret_cast<OGRFeatureDefn *>(hDefn)));
 }
@@ -139,7 +140,7 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 OGRFeature::~OGRFeature()
 
 {
-    if( pauFields != NULL )
+    if( pauFields != nullptr )
     {
         const int nFieldcount = poDefn->GetFieldCount();
         for( int i = 0; i < nFieldcount; i++ )
@@ -152,12 +153,12 @@ OGRFeature::~OGRFeature()
             switch( poFDefn->GetType() )
             {
               case OFTString:
-                if( pauFields[i].String != NULL )
+                if( pauFields[i].String != nullptr )
                     VSIFree( pauFields[i].String );
                 break;
 
               case OFTBinary:
-                if( pauFields[i].Binary.paData != NULL )
+                if( pauFields[i].Binary.paData != nullptr )
                     VSIFree( pauFields[i].Binary.paData );
                 break;
 
@@ -178,7 +179,7 @@ OGRFeature::~OGRFeature()
         }
     }
 
-    if( papoGeometries != NULL )
+    if( papoGeometries != nullptr )
     {
         const int nGeomFieldCount = poDefn->GetGeomFieldCount();
 
@@ -245,15 +246,15 @@ OGRFeature *OGRFeature::CreateFeature( OGRFeatureDefn *poDefn )
 
 {
     OGRFeature* poFeature = new (std::nothrow) OGRFeature( poDefn );
-    if( poFeature == NULL )
-        return NULL;
+    if( poFeature == nullptr )
+        return nullptr;
 
-    if( (poFeature->pauFields == NULL && poDefn->GetFieldCount() != 0) ||
-        (poFeature->papoGeometries == NULL &&
+    if( (poFeature->pauFields == nullptr && poDefn->GetFieldCount() != 0) ||
+        (poFeature->papoGeometries == nullptr &&
          poDefn->GetGeomFieldCount() != 0) )
     {
         delete poFeature;
-        return NULL;
+        return nullptr;
     }
 
     return poFeature;
@@ -315,7 +316,7 @@ void OGRFeature::DestroyFeature( OGRFeature *poFeature )
 OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetDefnRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetDefnRef", nullptr );
 
     return reinterpret_cast<OGRFeatureDefnH>(
         reinterpret_cast<OGRFeature *>(hFeat)->GetDefnRef());
@@ -488,11 +489,11 @@ OGRGeometry *OGRFeature::StealGeometry()
     if( GetGeomFieldCount() > 0 )
     {
         OGRGeometry *poReturn = papoGeometries[0];
-        papoGeometries[0] = NULL;
+        papoGeometries[0] = nullptr;
         return poReturn;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -516,11 +517,11 @@ OGRGeometry *OGRFeature::StealGeometry( int iGeomField )
     if( iGeomField >= 0 && iGeomField < GetGeomFieldCount() )
     {
         OGRGeometry *poReturn = papoGeometries[iGeomField];
-        papoGeometries[iGeomField] = NULL;
+        papoGeometries[iGeomField] = nullptr;
         return poReturn;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -543,7 +544,7 @@ OGRGeometry *OGRFeature::StealGeometry( int iGeomField )
 OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_StealGeometry", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_StealGeometry", nullptr );
 
     return reinterpret_cast<OGRGeometryH>(
         reinterpret_cast<OGRFeature *>(hFeat)->StealGeometry());
@@ -558,7 +559,8 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
  *
  * \brief Fetch pointer to feature geometry.
  *
- * This method is the same as the C function OGR_F_GetGeometryRef().
+ * This method is essentially the same as the C function OGR_F_GetGeometryRef().
+ * (the only difference is that the C function honours OGRGetNonLinearGeometriesEnabledFlag())
  *
  * Starting with GDAL 1.11, this is equivalent to calling
  * OGRFeature::GetGeomFieldRef(0).
@@ -572,7 +574,7 @@ OGRGeometry *OGRFeature::GetGeometryRef()
     if( GetGeomFieldCount() > 0 )
         return GetGeomFieldRef(0);
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -582,7 +584,8 @@ OGRGeometry *OGRFeature::GetGeometryRef()
 /**
  * \brief Fetch an handle to feature geometry.
  *
- * This function is the same as the C++ method OGRFeature::GetGeometryRef().
+ * This function is essentially the same as the C++ method OGRFeature::GetGeometryRef()
+ * (the only difference is that this C function honours OGRGetNonLinearGeometriesEnabledFlag())
  *
  * @param hFeat handle to the feature to get geometry from.
  * @return an handle to internal feature geometry.  This object should
@@ -592,12 +595,12 @@ OGRGeometry *OGRFeature::GetGeometryRef()
 OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", nullptr );
 
     OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
 
-    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
+    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != nullptr &&
         OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
     {
         const OGRwkbGeometryType eTargetType =
@@ -631,7 +634,7 @@ OGRGeometry *OGRFeature::GetGeomFieldRef( int iField )
 
 {
     if( iField < 0 || iField >= GetGeomFieldCount() )
-        return NULL;
+        return nullptr;
     else
         return papoGeometries[iField];
 }
@@ -655,7 +658,7 @@ OGRGeometry *OGRFeature::GetGeomFieldRef( const char* pszFName )
 {
     const int iField = GetGeomFieldIndex(pszFName);
     if( iField < 0 )
-        return NULL;
+        return nullptr;
 
     return papoGeometries[iField];
 }
@@ -680,12 +683,12 @@ OGRGeometry *OGRFeature::GetGeomFieldRef( const char* pszFName )
 OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldRef", nullptr );
 
     OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
     OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iField);
 
-    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != NULL &&
+    if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != nullptr &&
         OGR_GT_IsNonLinear(poGeom->getGeometryType()) )
     {
         const OGRwkbGeometryType eTargetType =
@@ -812,10 +815,10 @@ OGRErr OGRFeature::SetGeomField( int iField, const OGRGeometry * poGeomIn )
     {
         delete papoGeometries[iField];
 
-        if( poGeomIn != NULL )
+        if( poGeomIn != nullptr )
             papoGeometries[iField] = poGeomIn->clone();
         else
-            papoGeometries[iField] = NULL;
+            papoGeometries[iField] = nullptr;
     }
 
     // TODO(schwehr): Verify that the geometry matches the defn's type.
@@ -874,60 +877,13 @@ OGRFeature *OGRFeature::Clone()
 
 {
     OGRFeature *poNew = CreateFeature( poDefn );
-    if( poNew == NULL )
-        return NULL;
+    if( poNew == nullptr )
+        return nullptr;
 
-    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    if( !CopySelfTo( poNew ) )
     {
-        if( !poNew->SetFieldInternal( i, pauFields + i ) )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-    for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
-    {
-        if( papoGeometries[i] != NULL )
-        {
-            poNew->papoGeometries[i] = papoGeometries[i]->clone();
-            if( poNew->papoGeometries[i] == NULL )
-            {
-                delete poNew;
-                return NULL;
-            }
-        }
-    }
-
-    if( m_pszStyleString != NULL )
-    {
-        poNew->m_pszStyleString = VSI_STRDUP_VERBOSE(m_pszStyleString);
-        if( poNew->m_pszStyleString == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-
-    poNew->SetFID( GetFID() );
-
-    if( m_pszNativeData != NULL )
-    {
-        poNew->m_pszNativeData = VSI_STRDUP_VERBOSE(m_pszNativeData);
-        if( poNew->m_pszNativeData == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
-    }
-
-    if( m_pszNativeMediaType != NULL )
-    {
-        poNew->m_pszNativeMediaType = VSI_STRDUP_VERBOSE(m_pszNativeMediaType);
-        if( poNew->m_pszNativeMediaType == NULL )
-        {
-            delete poNew;
-            return NULL;
-        }
+        delete poNew;
+        return nullptr;
     }
 
     return poNew;
@@ -952,10 +908,80 @@ OGRFeature *OGRFeature::Clone()
 OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_Clone", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_Clone", nullptr );
 
     return reinterpret_cast<OGRFeatureH>(
         reinterpret_cast<OGRFeature *>(hFeat)->Clone());
+}
+
+/************************************************************************/
+/*                             CopySelfTo()                             */
+/************************************************************************/
+
+/**
+* \brief Copies the innards of this OGRFeature into the supplied object.
+*
+* This is mainly intended to allow derived classes to implement their own
+* Clone functions.
+*
+* @param poNew The object into which to copy the data of this object.
+* @return True if successful, false if the copy failed.
+*/
+
+bool OGRFeature::CopySelfTo( OGRFeature* poNew )
+{
+    for( int i = 0; i < poDefn->GetFieldCount(); i++ )
+    {
+        if( !poNew->SetFieldInternal( i, pauFields + i ) )
+        {
+            return false;
+        }
+    }
+    if( poNew->papoGeometries )
+    {
+        for( int i = 0; i < poDefn->GetGeomFieldCount(); i++ )
+        {
+            if( papoGeometries[i] != nullptr )
+            {
+                poNew->papoGeometries[i] = papoGeometries[i]->clone();
+                if( poNew->papoGeometries[i] == nullptr )
+                {
+                    return false;
+                }
+            }
+        }
+    }
+
+    if( m_pszStyleString != nullptr )
+    {
+        poNew->m_pszStyleString = VSI_STRDUP_VERBOSE(m_pszStyleString);
+        if( poNew->m_pszStyleString == nullptr )
+        {
+            return false;
+        }
+    }
+
+    poNew->SetFID( GetFID() );
+
+    if( m_pszNativeData != nullptr )
+    {
+        poNew->m_pszNativeData = VSI_STRDUP_VERBOSE(m_pszNativeData);
+        if( poNew->m_pszNativeData == nullptr )
+        {
+            return false;
+        }
+    }
+
+    if( m_pszNativeMediaType != nullptr )
+    {
+        poNew->m_pszNativeMediaType = VSI_STRDUP_VERBOSE(m_pszNativeMediaType);
+        if( poNew->m_pszNativeMediaType == nullptr )
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /************************************************************************/
@@ -1033,14 +1059,14 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", nullptr );
 
     OGRFeature *poFeat = reinterpret_cast<OGRFeature *>(hFeat);
 
     if( i < 0 || i >= poFeat->GetFieldCount() )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", i);
-        return NULL;
+        return nullptr;
     }
 
     return reinterpret_cast<OGRFieldDefnH>(poFeat->GetFieldDefnRef(i));
@@ -1173,7 +1199,7 @@ int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
 OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldDefnRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldDefnRef", nullptr );
 
     return reinterpret_cast<OGRGeomFieldDefnH>(
         reinterpret_cast<OGRFeature *>(hFeat)->GetGeomFieldDefnRef(i));
@@ -1256,13 +1282,13 @@ int OGRFeature::IsFieldSet( int iField )
 
           case SPF_OGR_GEOM_WKT:
           case SPF_OGR_GEOMETRY:
-            return GetGeomFieldCount() > 0 && papoGeometries[0] != NULL;
+            return GetGeomFieldCount() > 0 && papoGeometries[0] != nullptr;
 
           case SPF_OGR_STYLE:
-            return GetStyleString() != NULL;
+            return GetStyleString() != nullptr;
 
           case SPF_OGR_GEOM_AREA:
-            if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+            if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return FALSE;
 
             return OGR_G_Area(
@@ -1326,7 +1352,7 @@ void OGRFeature::UnsetField( int iField )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL || !IsFieldSet(iField) )
+    if( poFDefn == nullptr || !IsFieldSet(iField) )
         return;
 
     if( !IsFieldNull(iField) )
@@ -1528,7 +1554,7 @@ void OGRFeature::SetFieldNull( int iField )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL || IsFieldNull(iField) )
+    if( poFDefn == nullptr || IsFieldNull(iField) )
         return;
 
     if( IsFieldSet(iField) )
@@ -1620,7 +1646,7 @@ void OGR_F_SetFieldNull( OGRFeatureH hFeat, int iField )
 OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetRawFieldRef", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetRawFieldRef", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->GetRawFieldRef( iField );
 }
@@ -1683,7 +1709,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
         }
 
         case SPF_OGR_GEOM_AREA:
-            if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+            if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0;
             return static_cast<int>(
                 OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
@@ -1695,7 +1721,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return 0;
 
     if( !IsFieldSetAndNotNull(iField) )
@@ -1727,7 +1753,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
     }
     else if( eType == OFTString )
     {
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
             return 0;
         else
             return atoi(pauFields[iField].String);
@@ -1810,7 +1836,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
             return nFID;
 
         case SPF_OGR_GEOM_AREA:
-            if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+            if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0;
             return static_cast<int>(
                 OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
@@ -1822,7 +1848,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return 0;
 
     if( !IsFieldSetAndNotNull(iField) )
@@ -1843,11 +1869,11 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
     }
     else if( eType == OFTString )
     {
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
             return 0;
         else
         {
-            return CPLAtoGIntBigEx(pauFields[iField].String, TRUE, NULL);
+            return CPLAtoGIntBigEx(pauFields[iField].String, TRUE, nullptr);
         }
     }
 
@@ -1928,7 +1954,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
             return static_cast<double>(GetFID());
 
         case SPF_OGR_GEOM_AREA:
-            if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+            if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0.0;
             return
                 OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0]));
@@ -1940,7 +1966,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return 0.0;
 
     if( !IsFieldSetAndNotNull(iField) )
@@ -1961,7 +1987,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
     }
     else if( eType == OFTString )
     {
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
             return 0;
         else
             return CPLAtof(pauFields[iField].String);
@@ -2001,7 +2027,7 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 /*                      OGRFeatureFormatDateTimeBuffer()                */
 /************************************************************************/
 
-static const int TEMP_BUFFER_SIZE = 80;
+constexpr int TEMP_BUFFER_SIZE = 80;
 static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                                             int nYear, int nMonth, int nDay,
                                             int nHour, int nMinute,
@@ -2019,6 +2045,14 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                   nMinute,
                   fSecond );
     else  // Default format.
+    {
+        if( CPLIsNan(fSecond) || fSecond < 0.0  || fSecond > 62.0 )
+        {
+            fSecond = 0.0;
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "OGRFeatureFormatDateTimeBuffer: fSecond is invalid.  "
+                     "Forcing '%f' to 0.0.", fSecond);
+        }
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%04d/%02d/%02d %02d:%02d:%02d",
                   nYear,
@@ -2027,6 +2061,7 @@ static void OGRFeatureFormatDateTimeBuffer( char szTempBuffer[TEMP_BUFFER_SIZE],
                   nHour,
                   nMinute,
                   static_cast<int>(fSecond) );
+    }
 
     if( nTZFlag > 1 )
     {
@@ -2093,7 +2128,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     char szTempBuffer[TEMP_BUFFER_SIZE] = {};
 
     CPLFree(m_pszTmpFieldValue);
-    m_pszTmpFieldValue = NULL;
+    m_pszTmpFieldValue = nullptr;
 
     const int iSpecialField = iField - poDefn->GetFieldCount();
     if( iSpecialField >= 0 )
@@ -2104,25 +2139,25 @@ const char *OGRFeature::GetFieldAsString( int iField )
           case SPF_FID:
             CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE, CPL_FRMT_GIB, GetFID() );
             m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-            if( m_pszTmpFieldValue == NULL )
+            if( m_pszTmpFieldValue == nullptr )
                 return "";
             return m_pszTmpFieldValue;
 
           case SPF_OGR_GEOMETRY:
-            if( GetGeomFieldCount() > 0 && papoGeometries[0] != NULL )
+            if( GetGeomFieldCount() > 0 && papoGeometries[0] != nullptr )
                 return papoGeometries[0]->getGeometryName();
             else
                 return "";
 
           case SPF_OGR_STYLE:
-            if( GetStyleString() == NULL )
+            if( GetStyleString() == nullptr )
                 return "";
             else
                 return GetStyleString();
 
           case SPF_OGR_GEOM_WKT:
           {
-              if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+              if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                   return "";
 
               if( papoGeometries[0]->exportToWkt( &m_pszTmpFieldValue ) ==
@@ -2133,14 +2168,14 @@ const char *OGRFeature::GetFieldAsString( int iField )
           }
 
           case SPF_OGR_GEOM_AREA:
-            if( GetGeomFieldCount() == 0 || papoGeometries[0] == NULL )
+            if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return "";
 
             CPLsnprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
                 OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
             m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-            if( m_pszTmpFieldValue == NULL )
+            if( m_pszTmpFieldValue == nullptr )
                 return "";
             return m_pszTmpFieldValue;
 
@@ -2151,7 +2186,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return "";
 
     if( !IsFieldSetAndNotNull(iField) )
@@ -2160,7 +2195,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
     {
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
             return "";
         else
             return pauFields[iField].String;
@@ -2170,7 +2205,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         snprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   "%d", pauFields[iField].Integer );
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2179,7 +2214,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         CPLsnprintf( szTempBuffer, TEMP_BUFFER_SIZE,
                   CPL_FRMT_GIB, pauFields[iField].Integer64 );
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2201,7 +2236,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                   szFormat, pauFields[iField].Real );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2217,7 +2252,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                                        pauFields[iField].Date.TZFlag );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2229,7 +2264,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                   pauFields[iField].Date.Day );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2250,7 +2285,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
                 static_cast<int>(pauFields[iField].Date.Second) );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2283,7 +2318,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ")" );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2316,7 +2351,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ")" );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2358,7 +2393,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ")" );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2390,7 +2425,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
             strcat( szTempBuffer, ")" );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2412,7 +2447,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
         CPLFree( pszHex );
 
         m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( m_pszTmpFieldValue == NULL )
+        if( m_pszTmpFieldValue == nullptr )
             return "";
         return m_pszTmpFieldValue;
     }
@@ -2443,7 +2478,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsString", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsString", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsString(iField);
 }
@@ -2489,19 +2524,19 @@ const int *OGRFeature::GetFieldAsIntegerList( int iField, int *pnCount )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != NULL && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
         poFDefn->GetType() == OFTIntegerList )
     {
-        if( pnCount != NULL )
+        if( pnCount != nullptr )
             *pnCount = pauFields[iField].IntegerList.nCount;
 
         return pauFields[iField].IntegerList.paList;
     }
 
-    if( pnCount != NULL )
+    if( pnCount != nullptr )
         *pnCount = 0;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2529,7 +2564,7 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
                                         int *pnCount )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsIntegerList", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsIntegerList", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->
         GetFieldAsIntegerList(iField, pnCount);
@@ -2574,19 +2609,19 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List( int iField, int *pnCount )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != NULL && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
         poFDefn->GetType() == OFTInteger64List )
     {
-        if( pnCount != NULL )
+        if( pnCount != nullptr )
             *pnCount = pauFields[iField].Integer64List.nCount;
 
         return pauFields[iField].Integer64List.paList;
     }
 
-    if( pnCount != NULL )
+    if( pnCount != nullptr )
         *pnCount = 0;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2615,7 +2650,7 @@ const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField,
                                               int *pnCount )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger64List", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger64List", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->
         GetFieldAsInteger64List(iField, pnCount);
@@ -2658,19 +2693,19 @@ const double *OGRFeature::GetFieldAsDoubleList( int iField, int *pnCount )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn != NULL && IsFieldSetAndNotNull(iField) &&
+    if( poFDefn != nullptr && IsFieldSetAndNotNull(iField) &&
         poFDefn->GetType() == OFTRealList )
     {
-        if( pnCount != NULL )
+        if( pnCount != nullptr )
             *pnCount = pauFields[iField].RealList.nCount;
 
         return pauFields[iField].RealList.paList;
     }
 
-    if( pnCount != NULL )
+    if( pnCount != nullptr )
         *pnCount = 0;
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2698,7 +2733,7 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
                                           int *pnCount )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDoubleList", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDoubleList", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->
         GetFieldAsDoubleList(iField, pnCount);
@@ -2743,18 +2778,18 @@ char **OGRFeature::GetFieldAsStringList( int iField )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
-        return NULL;
+    if( poFDefn == nullptr )
+        return nullptr;
 
     if( !IsFieldSetAndNotNull(iField) )
-        return NULL;
+        return nullptr;
 
     if( poFDefn->GetType() == OFTStringList )
     {
         return pauFields[iField].StringList.paList;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2782,7 +2817,7 @@ char **OGRFeature::GetFieldAsStringList( int iField )
 char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsStringList", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsStringList", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsStringList(iField);
 }
@@ -2812,11 +2847,11 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 
     *pnBytes = 0;
 
-    if( poFDefn == NULL )
-        return NULL;
+    if( poFDefn == nullptr )
+        return nullptr;
 
     if( !IsFieldSetAndNotNull(iField) )
-        return NULL;
+        return nullptr;
 
     if( poFDefn->GetType() == OFTBinary )
     {
@@ -2829,7 +2864,7 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
         return reinterpret_cast<GByte *>(pauFields[iField].String);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -2855,8 +2890,8 @@ GByte *OGRFeature::GetFieldAsBinary( int iField, int *pnBytes )
 GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsBinary", NULL );
-    VALIDATE_POINTER1( pnBytes, "OGR_F_GetFieldAsBinary", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsBinary", nullptr );
+    VALIDATE_POINTER1( pnBytes, "OGR_F_GetFieldAsBinary", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->
         GetFieldAsBinary(iField, pnBytes);
@@ -2893,7 +2928,7 @@ int OGRFeature::GetFieldAsDateTime( int iField,
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return FALSE;
 
     if( !IsFieldSetAndNotNull(iField) )
@@ -3097,24 +3132,24 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField )
     const int iSpecialField = iField - poDefn->GetFieldCount();
     if( iSpecialField >= 0 )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
-        return NULL;
+    if( poFDefn == nullptr )
+        return nullptr;
 
     if( !IsFieldSetAndNotNull(iField) )
-        return NULL;
+        return nullptr;
 
-    char* pszRet = NULL;
+    char* pszRet = nullptr;
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTStringList )
     {
         json_object* poObj = json_object_new_array();
         char** papszValues = GetFieldAsStringList(iField);
-        for( int i=0; papszValues[i] != NULL; i++)
+        for( int i=0; papszValues[i] != nullptr; i++)
         {
             json_object_array_add( poObj,
                                    json_object_new_string(papszValues[i]) );
@@ -3210,7 +3245,7 @@ void OGRFeature::SetField( int iField, int nValue )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -3253,7 +3288,7 @@ void OGRFeature::SetField( int iField, int nValue )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
         {
             OGR_RawField_SetUnset(&pauFields[iField]);
         }
@@ -3263,7 +3298,7 @@ void OGRFeature::SetField( int iField, int nValue )
         char szTempBuffer[64] = {};
 
         snprintf( szTempBuffer, sizeof(szTempBuffer), "%d", nValue );
-        char *apszValues[2] = { szTempBuffer, NULL };
+        char *apszValues[2] = { szTempBuffer, nullptr };
         SetField( iField, apszValues);
     }
     else
@@ -3350,7 +3385,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -3409,7 +3444,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
         {
             OGR_RawField_SetUnset(&pauFields[iField]);
         }
@@ -3419,7 +3454,7 @@ void OGRFeature::SetField( int iField, GIntBig nValue )
         char szTempBuffer[64] = {};
 
         CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue );
-        char *apszValues[2] = { szTempBuffer, NULL };
+        char *apszValues[2] = { szTempBuffer, nullptr };
         SetField( iField, apszValues);
     }
     else
@@ -3507,10 +3542,10 @@ void OGRFeature::SetField( int iField, double dfValue )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
-    OGRFieldType eType = poFDefn->GetType();
+    const OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTReal )
     {
         // if( poFDefn->GetSubType() == OFSTFloat32 &&
@@ -3525,7 +3560,12 @@ void OGRFeature::SetField( int iField, double dfValue )
     }
     else if( eType == OFTInteger )
     {
-        pauFields[iField].Integer = static_cast<int>(dfValue);
+        const int nMin = std::numeric_limits<int>::min();
+        const int nMax = std::numeric_limits<int>::max();
+        const int nVal =
+            dfValue < nMin ? nMin :
+            dfValue > nMax ? nMax : static_cast<int>(dfValue);
+        pauFields[iField].Integer = OGRFeatureGetIntegerValue(poFDefn, nVal);
         pauFields[iField].Set.nMarker2 = 0;
         pauFields[iField].Set.nMarker3 = 0;
     }
@@ -3558,7 +3598,7 @@ void OGRFeature::SetField( int iField, double dfValue )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE( szTempBuffer );
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
         {
             OGR_RawField_SetUnset(&pauFields[iField]);
         }
@@ -3568,7 +3608,7 @@ void OGRFeature::SetField( int iField, double dfValue )
         char szTempBuffer[64] = {};
 
         CPLsnprintf( szTempBuffer, sizeof(szTempBuffer), "%.16g", dfValue );
-        char *apszValues[2] = { szTempBuffer, NULL };
+        char *apszValues[2] = { szTempBuffer, nullptr };
         SetField( iField, apszValues);
     }
     else
@@ -3659,10 +3699,10 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                                                  "YES" ) );
 
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
-    char *pszLast = NULL;
+    char *pszLast = nullptr;
 
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTString )
@@ -3671,7 +3711,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             CPLFree( pauFields[iField].String );
 
         pauFields[iField].String = VSI_STRDUP_VERBOSE(pszValue ? pszValue : "");
-        if( pauFields[iField].String == NULL )
+        if( pauFields[iField].String == nullptr )
         {
             OGR_RawField_SetUnset(&pauFields[iField]);
         }
@@ -3699,7 +3739,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     }
     else if( eType == OFTInteger64 )
     {
-        pauFields[iField].Integer64 = CPLAtoGIntBigEx(pszValue, bWarn, NULL);
+        pauFields[iField].Integer64 = CPLAtoGIntBigEx(pszValue, bWarn, nullptr);
         pauFields[iField].Set.nMarker3 = 0;
     }
     else if( eType == OFTReal )
@@ -3725,7 +3765,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
              || eType == OFTInteger64List
              || eType == OFTRealList )
     {
-        json_object* poJSonObj = NULL;
+        json_object* poJSonObj = nullptr;
         if( pszValue[0] == '[' && pszValue[strlen(pszValue)-1] == ']' &&
             OGRJSonParse(pszValue, &poJSonObj, false) )
         {
@@ -3768,15 +3808,15 @@ void OGRFeature::SetField( int iField, const char * pszValue )
         }
         else
         {
-            char **papszValueList = NULL;
+            char **papszValueList = nullptr;
 
-            if( pszValue[0] == '(' && strchr(pszValue, ':') != NULL )
+            if( pszValue[0] == '(' && strchr(pszValue, ':') != nullptr )
             {
                 papszValueList = CSLTokenizeString2(
                     pszValue, ",:()", 0 );
             }
 
-            if( papszValueList == NULL || *papszValueList == NULL
+            if( papszValueList == nullptr || *papszValueList == nullptr
                 || atoi(papszValueList[0]) != CSLCount(papszValueList)-1 )
             {
                 // Do nothing - the count does not match entries.
@@ -3815,7 +3855,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
                     for( int i = 0; i < nCount; i++ )
                     {
                         const GIntBig nVal =
-                            CPLAtoGIntBigEx(papszValueList[i+1], TRUE, NULL);
+                            CPLAtoGIntBigEx(papszValueList[i+1], TRUE, nullptr);
                         anValues.push_back( nVal );
                     }
                     if( nCount > 0 )
@@ -3842,20 +3882,20 @@ void OGRFeature::SetField( int iField, const char * pszValue )
     {
         if( pszValue && *pszValue )
         {
-            json_object* poJSonObj = NULL;
-            if( pszValue[0] == '(' && strchr(pszValue, ':') != NULL &&
+            json_object* poJSonObj = nullptr;
+            if( pszValue[0] == '(' && strchr(pszValue, ':') != nullptr &&
                 pszValue[strlen(pszValue)-1] == ')' )
             {
                 char** papszValueList =
                     CSLTokenizeString2(pszValue, ",:()", 0);
                 const int nCount =
-                    papszValueList[0] == NULL ? 0 : atoi(papszValueList[0]);
+                    papszValueList[0] == nullptr ? 0 : atoi(papszValueList[0]);
                 std::vector<char*> aosValues;
                 if( nCount == CSLCount(papszValueList)-1 )
                 {
                     for( int i = 0; i < nCount; i++ )
                         aosValues.push_back( papszValueList[i+1] );
-                    aosValues.push_back( NULL );
+                    aosValues.push_back( nullptr );
                     SetField( iField, &(aosValues[0]) );
                 }
                 CSLDestroy(papszValueList);
@@ -3881,7 +3921,7 @@ void OGRFeature::SetField( int iField, const char * pszValue )
             }
             else
             {
-                const char *papszValues[2] = { pszValue, NULL };
+                const char *papszValues[2] = { pszValue, nullptr };
                 SetField( iField, const_cast<char **>(papszValues) );
             }
         }
@@ -3968,14 +4008,14 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTIntegerList )
     {
         OGRField uField;
-        int *panValuesMod = NULL;
+        int *panValuesMod = nullptr;
 
         if( poFDefn->GetSubType() == OFSTBoolean ||
             poFDefn->GetSubType() == OFSTInt16 )
@@ -3985,11 +4025,11 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
                 int nVal = OGRFeatureGetIntegerValue(poFDefn, panValues[i]);
                 if( panValues[i] != nVal )
                 {
-                    if( panValuesMod == NULL )
+                    if( panValuesMod == nullptr )
                     {
                         panValuesMod = static_cast<int *>(
                             VSI_MALLOC_VERBOSE(nCount * sizeof(int)) );
-                        if( panValuesMod == NULL )
+                        if( panValuesMod == nullptr )
                             return;
                         memcpy(panValuesMod, panValues, nCount * sizeof(int));
                     }
@@ -4035,11 +4075,11 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
     {
         char** papszValues = static_cast<char **>(
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
-        if( papszValues == NULL )
+        if( papszValues == nullptr )
             return;
         for( int i = 0; i < nCount; i++ )
             papszValues[i] = VSI_STRDUP_VERBOSE(CPLSPrintf("%d", panValues[i]));
-        papszValues[nCount] = NULL;
+        papszValues[nCount] = nullptr;
         SetField( iField, papszValues);
         CSLDestroy(papszValues);
     }
@@ -4124,7 +4164,7 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -4180,12 +4220,12 @@ void OGRFeature::SetField( int iField, int nCount, const GIntBig *panValues )
     {
         char** papszValues = static_cast<char **>(
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
-        if( papszValues == NULL )
+        if( papszValues == nullptr )
             return;
         for( int i = 0; i < nCount; i++ )
             papszValues[i] =
                 VSI_STRDUP_VERBOSE(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
-        papszValues[nCount] = NULL;
+        papszValues[nCount] = nullptr;
         SetField( iField, papszValues);
         CSLDestroy(papszValues);
     }
@@ -4268,7 +4308,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -4313,12 +4353,12 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
     {
         char** papszValues = static_cast<char **>(
             VSI_MALLOC_VERBOSE((nCount+1) * sizeof(char*)) );
-        if( papszValues == NULL )
+        if( papszValues == nullptr )
             return;
         for( int i = 0; i < nCount; i++ )
             papszValues[i] =
                 VSI_STRDUP_VERBOSE(CPLSPrintf("%.16g", padfValues[i]));
-        papszValues[nCount] = NULL;
+        papszValues[nCount] = nullptr;
         SetField( iField, papszValues);
         CSLDestroy(papszValues);
     }
@@ -4396,7 +4436,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -4416,7 +4456,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
         const int nValues = CSLCount(papszValues);
         int* panValues = static_cast<int *>(
             VSI_MALLOC_VERBOSE(nValues * sizeof(int)) );
-        if( panValues == NULL )
+        if( panValues == nullptr )
             return;
         for( int i = 0; i < nValues; i++ )
         {
@@ -4445,11 +4485,11 @@ void OGRFeature::SetField( int iField, char ** papszValues )
         const int nValues = CSLCount(papszValues);
         GIntBig* panValues = static_cast<GIntBig *>(
             VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig)) );
-        if( panValues == NULL )
+        if( panValues == nullptr )
             return;
         for( int i = 0; i < nValues; i++ )
         {
-            panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, NULL);
+            panValues[i] = CPLAtoGIntBigEx(papszValues[i], TRUE, nullptr);
         }
         SetField( iField, nValues, panValues );
         CPLFree(panValues);
@@ -4459,7 +4499,7 @@ void OGRFeature::SetField( int iField, char ** papszValues )
         const int nValues = CSLCount(papszValues);
         double* padfValues = static_cast<double *>(
             VSI_MALLOC_VERBOSE(nValues * sizeof(double)) );
-        if( padfValues == NULL )
+        if( padfValues == nullptr )
             return;
         for( int i = 0; i < nValues; i++ )
         {
@@ -4526,7 +4566,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -4544,7 +4584,7 @@ void OGRFeature::SetField( int iField, int nBytes, GByte *pabyData )
     else if( eType == OFTString || eType == OFTStringList )
     {
         char* pszStr = static_cast<char *>( VSI_MALLOC_VERBOSE(nBytes + 1) );
-        if( pszStr == NULL )
+        if( pszStr == nullptr )
             return;
         memcpy(pszStr, pabyData, nBytes);
         pszStr[nBytes] = 0;
@@ -4642,7 +4682,7 @@ void OGRFeature::SetField( int iField, int nYear, int nMonth, int nDay,
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
 
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return;
 
     OGRFieldType eType = poFDefn->GetType();
@@ -4813,7 +4853,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
-    if( poFDefn == NULL )
+    if( poFDefn == nullptr )
         return false;
 
     if( poFDefn->GetType() == OFTInteger )
@@ -4833,15 +4873,15 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         if( IsFieldSetAndNotNull(iField) )
             CPLFree( pauFields[iField].String );
 
-        if( puValue->String == NULL )
-            pauFields[iField].String = NULL;
+        if( puValue->String == nullptr )
+            pauFields[iField].String = nullptr;
         else if( OGR_RawField_IsUnset(puValue) ||
                  OGR_RawField_IsNull(puValue) )
             pauFields[iField] = *puValue;
         else
         {
             pauFields[iField].String = VSI_STRDUP_VERBOSE( puValue->String );
-            if( pauFields[iField].String == NULL )
+            if( pauFields[iField].String == nullptr )
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
@@ -4870,7 +4910,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         {
             pauFields[iField].IntegerList.paList =
                 static_cast<int *>( VSI_MALLOC_VERBOSE(sizeof(int) * nCount) );
-            if( pauFields[iField].IntegerList.paList == NULL )
+            if( pauFields[iField].IntegerList.paList == nullptr )
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
@@ -4897,7 +4937,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         {
             pauFields[iField].Integer64List.paList = static_cast<GIntBig *>(
                 VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nCount) );
-            if( pauFields[iField].Integer64List.paList == NULL )
+            if( pauFields[iField].Integer64List.paList == nullptr )
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
@@ -4924,7 +4964,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         {
             pauFields[iField].RealList.paList = static_cast<double *>(
                 VSI_MALLOC_VERBOSE(sizeof(double) * nCount) );
-            if( pauFields[iField].RealList.paList == NULL )
+            if( pauFields[iField].RealList.paList == nullptr )
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
@@ -4947,14 +4987,14 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         }
         else
         {
-            char** papszNewList = NULL;
+            char** papszNewList = nullptr;
             for( char** papszIter = puValue->StringList.paList;
-                 papszIter != NULL && *papszIter != NULL;
+                 papszIter != nullptr && *papszIter != nullptr;
                  ++papszIter )
             {
                 char** papszNewList2 =
                     CSLAddStringMayFail(papszNewList, *papszIter);
-                if( papszNewList2 == NULL )
+                if( papszNewList2 == nullptr )
                 {
                     CSLDestroy(papszNewList);
                     OGR_RawField_SetUnset(&pauFields[iField]);
@@ -4982,7 +5022,7 @@ bool OGRFeature::SetFieldInternal( int iField, OGRField * puValue )
         {
             pauFields[iField].Binary.paData = static_cast<GByte *>(
                 VSI_MALLOC_VERBOSE(puValue->Binary.nCount) );
-            if( pauFields[iField].Binary.paData == NULL )
+            if( pauFields[iField].Binary.paData == nullptr )
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
                 return false;
@@ -5061,7 +5101,7 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
 void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
 
 {
-    if( fpOut == NULL )
+    if( fpOut == nullptr )
         fpOut = stdout;
 
     char szFID[32];
@@ -5071,7 +5111,7 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
 
     const char* pszDisplayFields =
         CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");
-    if( pszDisplayFields == NULL || CPLTestBool(pszDisplayFields) )
+    if( pszDisplayFields == nullptr || CPLTestBool(pszDisplayFields) )
     {
         for( int iField = 0; iField < GetFieldCount(); iField++ )
         {
@@ -5097,11 +5137,11 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
         }
     }
 
-    if( GetStyleString() != NULL )
+    if( GetStyleString() != nullptr )
     {
         const char* pszDisplayStyle =
             CSLFetchNameValue(papszOptions, "DISPLAY_STYLE");
-        if( pszDisplayStyle == NULL || CPLTestBool(pszDisplayStyle) )
+        if( pszDisplayStyle == nullptr || CPLTestBool(pszDisplayStyle) )
         {
             fprintf( fpOut, "  Style = %s\n", GetStyleString() );
         }
@@ -5112,13 +5152,13 @@ void OGRFeature::DumpReadable( FILE * fpOut, char** papszOptions )
     {
         const char* pszDisplayGeometry =
             CSLFetchNameValue(papszOptions, "DISPLAY_GEOMETRY");
-        if( !(pszDisplayGeometry != NULL && EQUAL(pszDisplayGeometry, "NO")) )
+        if( !(pszDisplayGeometry != nullptr && EQUAL(pszDisplayGeometry, "NO")) )
         {
             for( int iField = 0; iField < nGeomFieldCount; iField++ )
             {
                 OGRGeomFieldDefn *poFDefn = poDefn->GetGeomFieldDefn(iField);
 
-                if( papoGeometries[iField] != NULL )
+                if( papoGeometries[iField] != nullptr )
                 {
                     fprintf( fpOut, "  " );
                     if( strlen(poFDefn->GetNameRef()) > 0 &&
@@ -5445,13 +5485,13 @@ OGRBoolean OGRFeature::Equal( OGRFeature * poFeature )
         OGRGeometry* poThisGeom = GetGeomFieldRef(i);
         OGRGeometry* poOtherGeom = poFeature->GetGeomFieldRef(i);
 
-        if( poThisGeom == NULL && poOtherGeom != NULL )
+        if( poThisGeom == nullptr && poOtherGeom != nullptr )
             return FALSE;
 
-        if( poThisGeom != NULL && poOtherGeom == NULL )
+        if( poThisGeom != nullptr && poOtherGeom == nullptr )
             return FALSE;
 
-        if( poThisGeom != NULL && poOtherGeom != NULL
+        if( poThisGeom != nullptr && poOtherGeom != nullptr
             && (!poThisGeom->Equals( poOtherGeom ) ) )
             return FALSE;
     }
@@ -5521,7 +5561,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 /* -------------------------------------------------------------------- */
     int *panMap = static_cast<int *>(
         VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() ) );
-    if( panMap == NULL )
+    if( panMap == nullptr )
         return OGRERR_FAILURE;
     for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
     {
@@ -5654,7 +5694,7 @@ OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int *panMap ,
             if( iSrc >= 0 )
                 SetGeomField( i, poSrcFeature->GetGeomFieldRef(iSrc) );
             else
-                SetGeomField( i, NULL );
+                SetGeomField( i, nullptr );
         }
     }
 
@@ -5918,7 +5958,7 @@ const char *OGRFeature::GetStyleString()
     if( iStyleFieldIndex >= 0 )
         return GetFieldAsString(iStyleFieldIndex);
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -5940,7 +5980,7 @@ const char *OGRFeature::GetStyleString()
 
 const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleString", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleString", nullptr );
 
     return reinterpret_cast<OGRFeature *>(hFeat)->GetStyleString();
 }
@@ -5966,7 +6006,7 @@ void OGRFeature::SetStyleString(const char *pszString)
     if( m_pszStyleString )
     {
         CPLFree(m_pszStyleString);
-        m_pszStyleString = NULL;
+        m_pszStyleString = nullptr;
     }
 
     if( pszString )
@@ -6055,7 +6095,7 @@ void OGRFeature::SetStyleTable( OGRStyleTable *poStyleTable )
 {
     if( m_poStyleTable )
         delete m_poStyleTable;
-    m_poStyleTable = poStyleTable ? poStyleTable->Clone() : NULL;
+    m_poStyleTable = poStyleTable ? poStyleTable->Clone() : nullptr;
 }
 
 //************************************************************************/
@@ -6085,7 +6125,7 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
                                 int *panRemapSource )
 
 {
-    if( poNewDefn == NULL )
+    if( poNewDefn == nullptr )
         poNewDefn = poDefn;
 
     OGRField *pauNewFields = static_cast<OGRField *>(
@@ -6131,7 +6171,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                     int *panRemapSource )
 
 {
-    if( poNewDefn == NULL )
+    if( poNewDefn == nullptr )
         poNewDefn = poDefn;
 
     OGRGeometry** papoNewGeomFields = static_cast<OGRGeometry **>(
@@ -6143,7 +6183,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
     {
         if( panRemapSource[iDstField] == -1 )
         {
-            papoNewGeomFields[iDstField] = NULL;
+            papoNewGeomFields[iDstField] = nullptr;
         }
         else
         {
@@ -6175,7 +6215,7 @@ OGRErr OGRFeature::RemapGeomFields( OGRFeatureDefn *poNewDefn,
 OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", nullptr );
 
     return reinterpret_cast<OGRStyleTableH>(
         reinterpret_cast<OGRFeature *>(hFeat)->GetStyleTable());
@@ -6237,13 +6277,13 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
             continue;
         const char* pszDefault = poDefn->GetFieldDefn(i)->GetDefault();
         OGRFieldType eType = poDefn->GetFieldDefn(i)->GetType();
-        if( pszDefault != NULL )
+        if( pszDefault != nullptr )
         {
             if( eType == OFTDate || eType == OFTTime || eType == OFTDateTime )
             {
                 if( STARTS_WITH_CI(pszDefault, "CURRENT") )
                 {
-                    time_t t = time(NULL);
+                    time_t t = time(nullptr);
                     struct tm brokendown;
                     CPLUnixTimeToYMDHMS(t, &brokendown);
                     SetField(i, brokendown.tm_year + 1900,
@@ -6277,7 +6317,7 @@ void OGRFeature::FillUnsetWithDefault( int bNotNullableOnly,
             {
                 CPLString osDefault(pszDefault + 1);
                 osDefault.resize(osDefault.size()-1);
-                char* pszTmp = CPLUnescapeString(osDefault, NULL, CPLES_SQL);
+                char* pszTmp = CPLUnescapeString(osDefault, nullptr, CPLES_SQL);
                 SetField(i, pszTmp);
                 CPLFree(pszTmp);
             }
@@ -6350,7 +6390,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
     {
         if( (nValidateFlags & OGR_F_VAL_NULL) &&
             !poDefn->GetGeomFieldDefn(i)->IsNullable() &&
-            GetGeomFieldRef(i) == NULL )
+            GetGeomFieldRef(i) == nullptr )
         {
             bRet = false;
             if( bEmitError )
@@ -6365,7 +6405,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             poDefn->GetGeomFieldDefn(i)->GetType() != wkbUnknown )
         {
             OGRGeometry* poGeom = GetGeomFieldRef(i);
-            if( poGeom != NULL )
+            if( poGeom != nullptr )
             {
                 const OGRwkbGeometryType eType =
                     poDefn->GetGeomFieldDefn(i)->GetType();
@@ -6400,7 +6440,7 @@ int OGRFeature::Validate( int nValidateFlags, int bEmitError )
             !poDefn->GetFieldDefn(i)->IsNullable() &&
             !IsFieldSet(i) &&
             (!(nValidateFlags & OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT) ||
-               poDefn->GetFieldDefn(i)->GetDefault() == NULL))
+               poDefn->GetFieldDefn(i)->GetDefault() == nullptr))
         {
             bRet = false;
             if( bEmitError )
@@ -6535,7 +6575,7 @@ int OGR_F_Validate( OGRFeatureH hFeat, int nValidateFlags, int bEmitError )
 const char *OGR_F_GetNativeData( OGRFeatureH hFeat )
 
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeData", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeData", nullptr );
 
     return reinterpret_cast<const OGRFeature *>(hFeat)->GetNativeData();
 }
@@ -6585,7 +6625,7 @@ const char *OGR_F_GetNativeData( OGRFeatureH hFeat )
 
 const char *OGR_F_GetNativeMediaType( OGRFeatureH hFeat )
 {
-    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeMediaType", NULL );
+    VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeMediaType", nullptr );
 
     return reinterpret_cast<const OGRFeature *>(hFeat)->GetNativeMediaType();
 }
@@ -6614,7 +6654,7 @@ const char *OGR_F_GetNativeMediaType( OGRFeatureH hFeat )
 void OGRFeature::SetNativeData( const char* pszNativeData )
 {
     CPLFree( m_pszNativeData );
-    m_pszNativeData = pszNativeData ? VSI_STRDUP_VERBOSE(pszNativeData) : NULL;
+    m_pszNativeData = pszNativeData ? VSI_STRDUP_VERBOSE(pszNativeData) : nullptr;
 }
 
 /************************************************************************/
@@ -6671,7 +6711,7 @@ void OGRFeature::SetNativeMediaType( const char* pszNativeMediaType )
 {
     CPLFree( m_pszNativeMediaType );
     m_pszNativeMediaType =
-        pszNativeMediaType ? VSI_STRDUP_VERBOSE(pszNativeMediaType) : NULL;
+        pszNativeMediaType ? VSI_STRDUP_VERBOSE(pszNativeMediaType) : nullptr;
 }
 
 /************************************************************************/

@@ -26,9 +26,13 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
+#include "ogr_sqlite.h"
+
 #include "cpl_conv.h"
 #include "cpl_string.h"
-#include "ogr_sqlite.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
 
 CPL_CVSID("$Id$")
 
@@ -40,7 +44,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
     const char* pszLayerName,
     int nValIn ) :
     nVal(nValIn),
-    pszVal(NULL),
+    pszVal(nullptr),
     poFeatureDefn(new OGRFeatureDefn( "SELECT" )),
     iNextShapeId(0)
 {
@@ -73,10 +77,10 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
 OGRSQLiteSingleFeatureLayer::~OGRSQLiteSingleFeatureLayer()
 {
-    if( poFeatureDefn != NULL )
+    if( poFeatureDefn != nullptr )
     {
         poFeatureDefn->Release();
-        poFeatureDefn = NULL;
+        poFeatureDefn = nullptr;
     }
     CPLFree(pszVal);
 }
@@ -97,7 +101,7 @@ void OGRSQLiteSingleFeatureLayer::ResetReading()
 OGRFeature * OGRSQLiteSingleFeatureLayer::GetNextFeature()
 {
     if (iNextShapeId != 0)
-        return NULL;
+        return nullptr;
 
     OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
     if (pszVal)

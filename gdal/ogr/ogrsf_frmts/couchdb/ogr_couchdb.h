@@ -31,9 +31,9 @@
 #define OGR_COUCHDB_H_INCLUDED
 
 #include "ogrsf_frmts.h"
-#include "cpl_http.h"
 
-#include "ogr_json_header.h"
+#include "cpl_json_header.h"
+#include "cpl_http.h"
 
 #include <vector>
 #include <map>
@@ -257,7 +257,7 @@ class OGRCouchDBDataSource : public OGRDataSource
                                 const char* pszURI,
                                 const char* pszData);
 
-    OGRLayer*           OpenDatabase(const char* pszLayerName = NULL);
+    OGRLayer*           OpenDatabase(const char* pszLayerName = nullptr);
     OGRLayer*           OpenView();
     void                DeleteLayer( const char *pszLayerName );
 
@@ -279,9 +279,9 @@ class OGRCouchDBDataSource : public OGRDataSource
     virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
     virtual OGRErr      DeleteLayer(int) override;
 
     virtual OGRLayer*  ExecuteSQL( const char *pszSQLCommand,

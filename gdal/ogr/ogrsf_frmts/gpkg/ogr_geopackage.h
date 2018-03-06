@@ -36,6 +36,7 @@
 #include "ogrsqliteutility.h"
 
 #include <vector>
+#include <set>
 
 #define UNKNOWN_SRID   -2
 #define DEFAULT_SRID    0
@@ -63,6 +64,24 @@ static const GUInt32 GPKG_1_2_VERSION = 0x000027D8U; // 10200
 
 static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
+
+typedef struct
+{
+    CPLString osExtensionName;
+    CPLString osDefinition;
+    CPLString osScope;
+} GPKGExtensionDesc;
+
+typedef struct
+{
+    CPLString osDataType;
+    CPLString osIdentifier;
+    CPLString osDescription;
+    CPLString osMinX;
+    CPLString osMinY;
+    CPLString osMaxX;
+    CPLString osMaxY;
+} GPKGContentsDesc;
 
 /************************************************************************/
 /*                          GDALGeoPackageDataset                       */
@@ -177,11 +196,27 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
         void                    CreateOGREmptyTableIfNeeded();
         void                    RemoveOGREmptyTable();
 
+        std::map<CPLString, CPLString> m_oMapNameToType;
+        const std::map<CPLString, CPLString>&
+                                        GetNameTypeMapFromSQliteMaster();
+        void RemoveTableFromSQLiteMasterCache(const char* pszTableName);
+
+        bool                    m_bMapTableToExtensionsBuilt;
+        std::map< CPLString, std::vector<GPKGExtensionDesc> > m_oMapTableToExtensions;
+        const std::map< CPLString, std::vector<GPKGExtensionDesc> > &
+                                        GetExtensions();
+
+        bool                    m_bMapTableToContentsBuilt;
+        std::map< CPLString, GPKGContentsDesc > m_oMapTableToContents;
+        const std::map< CPLString, GPKGContentsDesc > & GetContents();
+
+        std::map<int, OGRSpatialReference*> m_oMapSrsIdToSrs;
+
     public:
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
 
-        virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
+        virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
         virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
         virtual char **     GetMetadataDomainList() override;
@@ -282,6 +317,8 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
 class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
 {
+        bool                    m_bStatsComputed;
+
     public:
                                 GDALGeoPackageRasterBand(GDALGeoPackageDataset* poDS,
                                                          int nTileWidth, int nTileHeight);
@@ -351,6 +388,9 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
     bool                        m_bIsTable;
+    bool                        m_bIsSpatial;
+    bool                        m_bIsInGpkgContents;
+    bool                        m_bFeatureDefnCompleted;
     int                         m_iSrs;
     OGREnvelope*                m_poExtent;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
@@ -384,6 +424,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     bool                        m_bHasReadMetadataFromStorage;
     bool                        m_bHasTriedDetectingFID64;
     GPKGASpatialVariant         m_eASPatialVariant;
+    std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned;
 
     virtual OGRErr      ResetStatement() override;
 
@@ -395,18 +436,28 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     OGRErr              RecreateTable(const CPLString& osColumnsForCreate,
                                       const CPLString& osFieldListForSelect);
 #ifdef ENABLE_GPKG_OGR_CONTENTS
-    void                CreateTriggers(const char* pszTableName = NULL);
+    void                CreateTriggers(const char* pszTableName = nullptr);
     void                DisableTriggers(bool bNullifyFeatureCount = true);
 #endif
 
+    void                CheckGeometryType( OGRFeature *poFeature );
+
+    OGRErr              ReadTableDefinition();
+    void                InitView();
+
     public:
                         OGRGeoPackageTableLayer( GDALGeoPackageDataset *poDS,
-                                            const char * pszTableName );
+                                                 const char * pszTableName );
                         virtual ~OGRGeoPackageTableLayer();
 
     /************************************************************************/
     /* OGR API methods */
 
+    const char*         GetName() override { return GetDescription(); }
+    const char*         GetFIDColumn() override;
+    OGRwkbGeometryType  GetGeomType() override;
+    const char*         GetGeometryColumn() override;
+    OGRFeatureDefn*     GetLayerDefn() override;
     int                 TestCapability( const char * ) override;
     OGRErr              CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
     OGRErr              CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
@@ -434,10 +485,14 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
                 { return OGRGeoPackageLayer::GetExtent(iGeomField, psExtent, bForce); }
 
-    void                PostInit();
     void                RecomputeExtent();
 
-    OGRErr              ReadTableDefinition(bool bIsSpatial, bool bIsGpkgTable);
+    void                SetOpeningParameters(bool bIsInGpkgContents,
+                                             bool bIsSpatial,
+                                             const char* pszGeomColName,
+                                             const char* pszGeomType,
+                                             bool bHasZ,
+                                             bool bHasM);
     void                SetCreationParameters( OGRwkbGeometryType eGType,
                                                const char* pszGeomColumnName,
                                                int bGeomNullable,
@@ -451,10 +506,10 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
                                 { m_eASPatialVariant = eASPatialVariant; }
 
     void                CreateSpatialIndexIfNecessary();
-    bool                CreateSpatialIndex(const char* pszTableName = NULL);
+    bool                CreateSpatialIndex(const char* pszTableName = nullptr);
     bool                DropSpatialIndex(bool bCalledFromSQLFunction = false);
 
-    virtual char **     GetMetadata( const char *pszDomain = NULL ) override;
+    virtual char **     GetMetadata( const char *pszDomain = nullptr ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                              const char * pszDomain = "" ) override;
     virtual char **     GetMetadataDomainList() override;

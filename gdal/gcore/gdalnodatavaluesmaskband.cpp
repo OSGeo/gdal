@@ -48,7 +48,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand( GDALDataset* poDSIn ) :
-    padfNodataValues(NULL)
+    padfNodataValues(nullptr)
 {
     const char* pszNoDataValues = poDSIn->GetMetadataItem("NODATA_VALUES");
     char** papszNoDataValues =
@@ -137,7 +137,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     GByte *pabySrc = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE( nBands * GDALGetDataTypeSizeBytes(eWrkDT),
                              nBlockXSize, nBlockYSize ) );
-    if (pabySrc == NULL)
+    if (pabySrc == nullptr)
     {
         return CE_Failure;
     }
@@ -175,7 +175,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                 nYSizeRequest,
                 eWrkDT, 0,
                 nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
-                NULL );
+                nullptr );
         if( eErr != CE_None )
             return eErr;
     }

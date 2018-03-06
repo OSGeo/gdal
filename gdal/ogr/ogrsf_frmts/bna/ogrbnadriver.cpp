@@ -46,14 +46,14 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
     {
         pszFilename += 4;
     }
-    else if( poOpenInfo->fpL == NULL ||
+    else if( poOpenInfo->fpL == nullptr ||
         !(EQUAL( CPLGetExtension(pszFilename), "bna" )
            || ((STARTS_WITH_CI(pszFilename, "/vsigzip/") ||
                 STARTS_WITH_CI(pszFilename, "/vsizip/")) &&
                (strstr( pszFilename, ".bna") ||
                 strstr( pszFilename, ".BNA")))) )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRBNADataSource   *poDS = new OGRBNADataSource();
@@ -61,7 +61,7 @@ static GDALDataset *OGRBNADriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( pszFilename, poOpenInfo->eAccess == GA_Update ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -83,7 +83,7 @@ static GDALDataset *OGRBNADriverCreate( const char * pszName,
     if( !poDS->Create( pszName, papszOptions ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -109,7 +109,7 @@ static CPLErr OGRBNADriverDelete( const char *pszFilename )
 void RegisterOGRBNA()
 
 {
-    if( GDALGetDriverByName( "BNA" ) != NULL )
+    if( GDALGetDriverByName( "BNA" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();

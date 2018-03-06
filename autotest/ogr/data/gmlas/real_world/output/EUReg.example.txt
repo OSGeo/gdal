@@ -98,6 +98,7 @@ OGRFeature(productionfacility):1
   beginlifespanversion (DateTime) = (null)
   hostingsite_href (String) = #_123456789.SITE
   hostingsite_owns (Integer(Boolean)) = 0
+  hostingsite_productionsite_eureg_productionsite_pkid (String) = _123456789.SITE
   facilityname_owns (Integer(Boolean)) = 0
   facilityname_featurename_nameoffeature (String) = EXAMPLE FACILITY 1
   facilityname_featurename_confidentialityreason_owns (Integer(Boolean)) = 0
@@ -109,6 +110,7 @@ OGRFeature(productionfacility):1
   eprtrannexiactivity_eprtrannexiactivitytyp_mainactivity_owns (Integer(Boolean)) = 0
   eprtrannexiactivity_eprtrannexiactivitytyp_mainactivity_href (String) = http://dd.eionet.europa.eu/vocabulary/euregistryonindustrialsites/EPRTRAnnexIActivityValue/1(c)
   remarks (StringList) = (1:,...)
+  dateofstartofoperation (Date) = 1982/01/01
   address_owns (Integer(Boolean)) = 0
   address_addressdetails_streetname (String) = Administrative Street
   address_addressdetails_buildingnumber (String) = 20
@@ -199,12 +201,14 @@ OGRFeature(productionfacility_groupedinstallation):1
   parent_id (String) = _000000002.FACILITY
   href (String) = #_010101011.INSTALLATION
   owns (Integer(Boolean)) = 0
+  productioninstallation_eureg_productioninstallation_pkid (String) = _010101011.INSTALLATION
 
 OGRFeature(productionfacility_groupedinstallation):2
   ogr_pkid (String) = _000000002.FACILITY_groupedInstallation_2
   parent_id (String) = _000000002.FACILITY
   href (String) = #_010101012.INSTALLATION
   owns (Integer(Boolean)) = 0
+  productioninstallation_eureg_productioninstallation_pkid (String) = _010101012.INSTALLATION
 
 
 Layer name: productionfacility_competentauthorityeprtr
@@ -321,6 +325,8 @@ OGRFeature(eureg_productioninstallation):1
   permit_permitdetails_permitgranted (Integer(Boolean)) = 1
   permit_permitdetails_permitreconsidered (Integer(Boolean)) = 0
   permit_permitdetails_permitupdated (Integer(Boolean)) = 0
+  permit_permitdetails_dateofgranting (Date) = 1956/01/01
+  dateofstartofoperation (Date) = 1956/01/01
   pointgeometry = POINT (2.10433 41.991931)
 
 OGRFeature(eureg_productioninstallation):2
@@ -342,6 +348,8 @@ OGRFeature(eureg_productioninstallation):2
   permit_permitdetails_permitgranted (Integer(Boolean)) = 1
   permit_permitdetails_permitreconsidered (Integer(Boolean)) = 0
   permit_permitdetails_permitupdated (Integer(Boolean)) = 0
+  permit_permitdetails_dateofgranting (Date) = 1982/01/01
+  dateofstartofoperation (Date) = 1982/01/01
   pointgeometry = POINT (2.104327 41.991929)
 
 
@@ -363,12 +371,14 @@ OGRFeature(eureg_productioninstallation_groupedinstallationpart):1
   parent_id (String) = _010101011.INSTALLATION
   href (String) = #_987654321.PART
   owns (Integer(Boolean)) = 0
+  productioninstallatipart_eureg_productioninstallatipart_pkid (String) = _987654321.PART
 
 OGRFeature(eureg_productioninstallation_groupedinstallationpart):2
   ogr_pkid (String) = _010101012.INSTALLATION_groupedInstallationPart_2
   parent_id (String) = _010101012.INSTALLATION
   href (String) = #_987654322.PART
   owns (Integer(Boolean)) = 0
+  productioninstallatipart_eureg_productioninstallatipart_pkid (String) = _987654322.PART
 
 
 Layer name: eureg_productioninstallation_competentauthoritypermits
@@ -513,6 +523,7 @@ OGRFeature(eureg_productioninstallationpart):1
   planttype_href (String) = http://dd.eionet.europa.eu/vocabulary/euregistryonindustrialsites/PlantTypeValue/LCP
   nominalcapacity_owns (Integer(Boolean)) = 0
   totalratedthermalinput (Real) = 125
+  dateofstartofoperation (Date) = 1956/01/01
   pointgeometry = POINT (2.104327 41.991929)
 
 OGRFeature(eureg_productioninstallationpart):2
@@ -529,6 +540,7 @@ OGRFeature(eureg_productioninstallationpart):2
   nominalcapacity_owns (Integer(Boolean)) = 0
   nomincapac_capacwasteincintype_totalnominacapacianywastetype (Real) = 80
   nominacapaci_capacitwasteincinertype_permittcapacithazardous (Real) = 0
+  dateofstartofoperation (Date) = 1982/01/01
   pointgeometry = POINT (2.10433 41.991931)
 
 
@@ -626,6 +638,7 @@ OGRFeature(eureg_productionsite):1
   sitename_featurename_confidentialityreason_owns (Integer(Boolean)) = 0
   reportdata_href (String) = #ES.RD.2017
   reportdata_owns (Integer(Boolean)) = 0
+  reportdata_reportdata_pkid (String) = ES.RD.2017
   eureg_location = POINT (2.104334 41.991925)
 
 

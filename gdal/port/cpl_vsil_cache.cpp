@@ -61,10 +61,10 @@ public:
   VSICacheChunk() :
       bDirty(false),
       iBlock(0),
-      poLRUPrev(NULL),
-      poLRUNext(NULL),
+      poLRUPrev(nullptr),
+      poLRUNext(nullptr),
       nDataFilled(0),
-      pabyData(NULL)
+      pabyData(nullptr)
     {}
 
     virtual ~VSICacheChunk()
@@ -74,9 +74,9 @@ public:
 
     bool Allocate( size_t nChunkSize )
     {
-        CPLAssert( pabyData == NULL );
+        CPLAssert( pabyData == nullptr );
         pabyData = static_cast<GByte *>(VSIMalloc( nChunkSize ));
-        return (pabyData != NULL);
+        return (pabyData != nullptr);
     }
 
     bool           bDirty;  // TODO(schwehr): Not used?  Added in r22564.
@@ -101,7 +101,7 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
     VSICachedFile( VSIVirtualHandle *poBaseHandle,
                    size_t nChunkSize,
                    size_t nCacheSize );
-    virtual ~VSICachedFile() { Close(); }
+    ~VSICachedFile() override { Close(); }
 
     void          FlushLRU();
     int           LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
@@ -125,16 +125,20 @@ class VSICachedFile CPL_FINAL : public VSIVirtualHandle
 
     bool           bEOF;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
-    virtual void     *GetNativeFileDescriptor() override
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize,
+                 size_t nMemb ) override;
+    int ReadMultiRange( int nRanges, void ** ppData,
+                        const vsi_l_offset* panOffsets,
+                        const size_t* panSizes ) override;
+
+    size_t Write( const void *pBuffer, size_t nSize,
+                  size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
+    void *GetNativeFileDescriptor() override
         { return poBase->GetNativeFileDescriptor(); }
 };
 
@@ -149,8 +153,8 @@ VSICachedFile::VSICachedFile( VSIVirtualHandle *poBaseHandle, size_t nChunkSize,
     nFileSize(0),  // Set below.
     nCacheUsed(0),
     nCacheMax(nCacheSize),
-    poLRUStart(NULL),
-    poLRUEnd(NULL),
+    poLRUStart(nullptr),
+    poLRUEnd(nullptr),
     bEOF(false)
 {
     m_nChunkSize = nChunkSize;
@@ -179,8 +183,8 @@ int VSICachedFile::Close()
     }
     oMapOffsetToCache.clear();
 
-    poLRUStart = NULL;
-    poLRUEnd = NULL;
+    poLRUStart = nullptr;
+    poLRUEnd = nullptr;
 
     nCacheUsed = 0;
 
@@ -188,7 +192,7 @@ int VSICachedFile::Close()
     {
         poBase->Close();
         delete poBase;
-        poBase = NULL;
+        poBase = nullptr;
     }
 
     return 0;
@@ -238,7 +242,7 @@ vsi_l_offset VSICachedFile::Tell()
 void VSICachedFile::FlushLRU()
 
 {
-    CPLAssert( poLRUStart != NULL );
+    CPLAssert( poLRUStart != nullptr );
 
     VSICacheChunk *poBlock = poLRUStart;
 
@@ -248,14 +252,14 @@ void VSICachedFile::FlushLRU()
 
     poLRUStart = poBlock->poLRUNext;
     if( poLRUEnd == poBlock )
-        poLRUEnd = NULL;
+        poLRUEnd = nullptr;
 
-    if( poBlock->poLRUNext != NULL )
-        poBlock->poLRUNext->poLRUPrev = NULL;
+    if( poBlock->poLRUNext != nullptr )
+        poBlock->poLRUNext->poLRUPrev = nullptr;
 
     CPLAssert( !poBlock->bDirty );
 
-    oMapOffsetToCache[poBlock->iBlock] = NULL;
+    oMapOffsetToCache[poBlock->iBlock] = nullptr;
 
     delete poBlock;
 }
@@ -278,21 +282,21 @@ void VSICachedFile::Demote( VSICacheChunk *poBlock )
     if( poLRUStart == poBlock )
         poLRUStart = poBlock->poLRUNext;
 
-    if( poBlock->poLRUPrev != NULL )
+    if( poBlock->poLRUPrev != nullptr )
         poBlock->poLRUPrev->poLRUNext = poBlock->poLRUNext;
 
-    if( poBlock->poLRUNext != NULL )
+    if( poBlock->poLRUNext != nullptr )
         poBlock->poLRUNext->poLRUPrev = poBlock->poLRUPrev;
 
-    poBlock->poLRUNext = NULL;
-    poBlock->poLRUPrev = NULL;
+    poBlock->poLRUNext = nullptr;
+    poBlock->poLRUPrev = nullptr;
 
-    if( poLRUEnd != NULL )
+    if( poLRUEnd != nullptr )
         poLRUEnd->poLRUNext = poBlock;
 
     poLRUEnd = poBlock;
 
-    if( poLRUStart == NULL )
+    if( poLRUStart == nullptr )
         poLRUStart = poBlock;
 }
 
@@ -390,7 +394,7 @@ int VSICachedFile::LoadBlocks( vsi_l_offset nStartBlock, size_t nBlockCount,
 
         poBlock->iBlock = nStartBlock + i;
 
-        CPLAssert( oMapOffsetToCache[i+nStartBlock] == NULL );
+        CPLAssert( oMapOffsetToCache[i+nStartBlock] == nullptr );
 
         oMapOffsetToCache[i + nStartBlock] = poBlock;
 
@@ -436,11 +440,11 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
 
     for( vsi_l_offset iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++ )
     {
-        if( oMapOffsetToCache[iBlock] == NULL )
+        if( oMapOffsetToCache[iBlock] == nullptr )
         {
             size_t nBlocksToLoad = 1;
             while( iBlock + nBlocksToLoad <= nEndBlock
-                   && (oMapOffsetToCache[iBlock+nBlocksToLoad] == NULL) )
+                   && (oMapOffsetToCache[iBlock+nBlocksToLoad] == nullptr) )
                 nBlocksToLoad++;
 
             LoadBlocks( iBlock, nBlocksToLoad, pBuffer, nSize * nCount );
@@ -456,7 +460,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
     {
         const vsi_l_offset iBlock = (nOffset + nAmountCopied) / m_nChunkSize;
         VSICacheChunk * poBlock = oMapOffsetToCache[iBlock];
-        if( poBlock == NULL )
+        if( poBlock == nullptr )
         {
             // We can reach that point when the amount to read exceeds
             // the cache size.
@@ -464,7 +468,7 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
                        static_cast<GByte *>(pBuffer) + nAmountCopied,
                        std::min(nSize * nCount - nAmountCopied, m_nChunkSize));
             poBlock = oMapOffsetToCache[iBlock];
-            CPLAssert(poBlock != NULL);
+            CPLAssert(poBlock != nullptr);
         }
 
         const vsi_l_offset nStartOffset =
@@ -499,6 +503,18 @@ size_t VSICachedFile::Read( void * pBuffer, size_t nSize, size_t nCount )
     if( nRet != nCount )
         bEOF = true;
     return nRet;
+}
+
+/************************************************************************/
+/*                           ReadMultiRange()                           */
+/************************************************************************/
+
+int VSICachedFile::ReadMultiRange( int const nRanges, void ** const ppData,
+                                   const vsi_l_offset* const panOffsets,
+                                   const size_t* const panSizes )
+{
+    // If the base is /vsicurl/
+    return poBase->ReadMultiRange( nRanges, ppData, panOffsets, panSizes );
 }
 
 /************************************************************************/

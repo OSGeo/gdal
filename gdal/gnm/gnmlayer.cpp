@@ -214,8 +214,8 @@ void GNMGenericLayer::ResetReading()
 OGRFeature *GNMGenericLayer::GetNextFeature()
 {
     OGRFeature* pFeature = m_poLayer->GetNextFeature();
-    if(NULL == pFeature)
-        return NULL;
+    if(nullptr == pFeature)
+        return nullptr;
     GNMGFID nGFID = pFeature->GetFieldAsGNMGFID(GNM_SYSFIELD_GFID);
     m_mnFIDMap[nGFID] = pFeature->GetFID();
     pFeature->SetFID(nGFID);
@@ -230,7 +230,7 @@ OGRErr GNMGenericLayer::SetNextByIndex(GIntBig nIndex)
 OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
 {
     OGRFeature *poFeature = GetFeature(nFID);
-    if(NULL == poFeature)
+    if(nullptr == poFeature)
         return CE_Failure;
 
     nFID = poFeature->GetFID();

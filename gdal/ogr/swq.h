@@ -202,9 +202,9 @@ public:
 
 class swq_parse_context {
 public:
-    swq_parse_context() : nStartToken(0), pszInput(NULL), pszNext(NULL),
-                          pszLastValid(NULL), bAcceptCustomFuncs(FALSE),
-                          poRoot(NULL), poCurSelect(NULL) {}
+    swq_parse_context() : nStartToken(0), pszInput(nullptr), pszNext(nullptr),
+                          pszLastValid(nullptr), bAcceptCustomFuncs(FALSE),
+                          poRoot(nullptr), poCurSelect(nullptr) {}
 
     int        nStartToken;
     const char *pszInput;
@@ -338,7 +338,7 @@ public:
     int                        bAllowDistinctOnGeometryField;
     int                        bAllowDistinctOnMultipleFields;
 
-                    swq_select_parse_options(): poCustomFuncRegistrar(NULL),
+                    swq_select_parse_options(): poCustomFuncRegistrar(nullptr),
                                                 bAllowFieldsInSecondaryTablesInWhere(FALSE),
                                                 bAddSecondaryTablesGeometryFields(FALSE),
                                                 bAlwaysPrefixWithTableName(FALSE),
@@ -358,7 +358,7 @@ public:
 
     char        *raw_select;
 
-    int         PushField( swq_expr_node *poExpr, const char *pszAlias=NULL,
+    int         PushField( swq_expr_node *poExpr, const char *pszAlias=nullptr,
                            int distinct_flag = FALSE );
     int         result_columns;
     swq_col_def *column_defs;

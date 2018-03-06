@@ -50,7 +50,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-static const int MAX_BUFFER_SIZE = 65536;
+constexpr int MAX_BUFFER_SIZE = 65536;
 
 CPL_CVSID("$Id$")
 
@@ -73,17 +73,17 @@ class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
                              const GByte* pabyBeginningContent,
                              vsi_l_offset nCheatFileSizeIn );
     // TODO(schwehr): Add override when support dropped for VS2008.
-    virtual ~VSIBufferedReaderHandle();
+    ~VSIBufferedReaderHandle() override;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Flush() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize,
+                 size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize,
+                  size_t nMemb ) override;
+    int Eof() override;
+    int Flush() override;
+    int Close() override;
 };
 
 //! @endcond
@@ -382,7 +382,7 @@ int VSIBufferedReaderHandle::Close()
     {
         m_poBaseHandle->Close();
         delete m_poBaseHandle;
-        m_poBaseHandle = NULL;
+        m_poBaseHandle = nullptr;
     }
     return 0;
 }

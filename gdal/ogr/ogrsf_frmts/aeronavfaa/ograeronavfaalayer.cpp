@@ -47,7 +47,7 @@ OGRAeronavFAALayer::OGRAeronavFAALayer( VSILFILE* fp,
     fpAeronavFAA(fp),
     bEOF(false),
     nNextFID(0),
-    psRecordDesc(NULL)
+    psRecordDesc(nullptr)
 {
     poFeatureDefn->Reference();
     poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
@@ -61,7 +61,7 @@ OGRAeronavFAALayer::OGRAeronavFAALayer( VSILFILE* fp,
 OGRAeronavFAALayer::~OGRAeronavFAALayer()
 
 {
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
         poSRS->Release();
 
     poFeatureDefn->Release();
@@ -90,15 +90,15 @@ OGRFeature *OGRAeronavFAALayer::GetNextFeature()
     while( true )
     {
         if( bEOF )
-            return NULL;
+            return nullptr;
 
         OGRFeature  *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
+        if (poFeature == nullptr)
+            return nullptr;
 
-        if((m_poFilterGeom == NULL
+        if((m_poFilterGeom == nullptr
             || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
+        && (m_poAttrQuery == nullptr
             || m_poAttrQuery->Evaluate( poFeature )) )
         {
             return poFeature;
@@ -219,11 +219,11 @@ OGRFeature *OGRAeronavFAADOFLayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 130, NULL);
-        if (pszLine == NULL)
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 130, nullptr);
+        if (pszLine == nullptr)
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
         if (strlen(pszLine) != 128)
             continue;
@@ -321,11 +321,11 @@ OGRFeature *OGRAeronavFAANAVAIDLayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 134, NULL);
-        if (pszLine == NULL)
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 134, nullptr);
+        if (pszLine == nullptr)
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
         if (strlen(pszLine) != 132)
             continue;
@@ -414,19 +414,19 @@ int OGRAeronavFAARouteLayer::GetLatLon(const char* pszLat, const char* pszLon, d
 
 OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
 {
-    OGRFeature* poFeature = NULL;
-    OGRLineString* poLS = NULL;
+    OGRFeature* poFeature = nullptr;
+    OGRLineString* poLS = nullptr;
 
     while( true )
     {
-        const char* pszLine = NULL;
+        const char* pszLine = nullptr;
         if (!osLastReadLine.empty())
             pszLine = osLastReadLine.c_str();
         else
-            pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
+            pszLine = CPLReadLine2L(fpAeronavFAA, 87, nullptr);
         osLastReadLine = "";
 
-        if (pszLine == NULL)
+        if (pszLine == nullptr)
         {
             bEOF = true;
             break;
@@ -466,7 +466,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             break;
         }
 
-        if (poFeature == NULL)
+        if (poFeature == nullptr)
         {
             if (pszLine[2] == ' ' || pszLine[2] == '-' )
             {
@@ -474,7 +474,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
             }
 
             if (STARTS_WITH(pszLine + 29, "                    ") ||
-                strchr(pszLine, '(') != NULL)
+                strchr(pszLine, '(') != nullptr)
             {
                 CPLString osName = pszLine + 2;
                 osName.resize(60);
@@ -486,7 +486,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
                 if (strcmp(osName.c_str(), "(DELETIONS LIST)") == 0)
                 {
                     bEOF = true;
-                    return NULL;
+                    return nullptr;
                 }
 
                 poFeature = new OGRFeature(poFeatureDefn);
@@ -529,7 +529,7 @@ OGRFeature *OGRAeronavFAARouteLayer::GetNextRawFeature()
         poLS->addPoint(dfLon, dfLat);
     }
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
         poFeature->SetGeometryDirectly(poLS);
     return poFeature;
 }
@@ -614,11 +614,11 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
 
     while( true )
     {
-        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 87, NULL);
-        if (pszLine == NULL)
+        const char* pszLine = CPLReadLine2L(fpAeronavFAA, 87, nullptr);
+        if (pszLine == nullptr)
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
         if (strlen(pszLine) != 85)
             continue;
@@ -626,7 +626,7 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
         if (STARTS_WITH(pszLine, "DELETIONS"))
         {
             bEOF = true;
-            return NULL;
+            return nullptr;
         }
 
         if (nNextFID == 0 && nCountUnderscoreLines < 2)
@@ -640,9 +640,9 @@ OGRFeature *OGRAeronavFAAIAPLayer::GetNextRawFeature()
             continue;
         if (STARTS_WITH(pszLine, "                                                                               "))
             continue;
-        if (strstr(pszLine, "NAVIGATIONAL AIDS") != NULL)
+        if (strstr(pszLine, "NAVIGATIONAL AIDS") != nullptr)
             continue;
-        if (strstr(pszLine, "TERMINAL INSTRUMENT FIXES") != NULL)
+        if (strstr(pszLine, "TERMINAL INSTRUMENT FIXES") != nullptr)
             continue;
 
         const char* pszComma = strchr(pszLine, ',');

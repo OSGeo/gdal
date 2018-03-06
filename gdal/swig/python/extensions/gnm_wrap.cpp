@@ -3133,9 +3133,10 @@ namespace swig {
 #include <iostream>
 using namespace std;
 
+#define CPL_SUPRESS_CPLUSPLUS
+
 #include "gdal.h"
 #include "ogr_api.h"
-#include "ogr_p.h"
 #include "ogr_core.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
@@ -3202,8 +3203,12 @@ PythonBindingErrorHandler(CPLErr eclass, int code, const char *msg )
   ** We do not want to interfere with warnings or debug messages since
   ** they won't be translated into exceptions.
   */
-  if (eclass == CE_Warning || eclass == CE_Debug ) {
+  else if (eclass == CE_Warning || eclass == CE_Debug ) {
     pfnPreviousHandler(eclass, code, msg );
+  }
+  else {
+    CPLSetThreadLocalConfigOption("__last_error_message", msg);
+    CPLSetThreadLocalConfigOption("__last_error_code", CPLSPrintf("%d", code));
   }
 }
 
@@ -3277,6 +3282,27 @@ template<class T> static T ReturnSame(T x)
     if( bReturnSame )
         return x;
     return 0;
+}
+
+static void ClearErrorState()
+{
+    CPLSetThreadLocalConfigOption("__last_error_message", NULL);
+    CPLSetThreadLocalConfigOption("__last_error_code", NULL);
+    CPLErrorReset();
+}
+
+static void StoreLastException()
+{
+    const char* pszLastErrorMessage =
+        CPLGetThreadLocalConfigOption("__last_error_message", NULL);
+    const char* pszLastErrorCode =
+        CPLGetThreadLocalConfigOption("__last_error_code", NULL);
+    if( pszLastErrorMessage != NULL && pszLastErrorCode != NULL )
+    {
+        CPLErrorSetState( CE_Failure,
+            static_cast<CPLErrorNum>(atoi(pszLastErrorCode)),
+            pszLastErrorMessage);
+    }
 }
 
 
@@ -3428,12 +3454,12 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 
 
   GNMNetworkShadow* CastToNetwork(GDALMajorObjectShadow* base) {
-      return (GNMNetworkShadow*)dynamic_cast<GNMNetwork*>((GDALMajorObject*)base);
+      return (GNMNetworkShadow*)GNMCastToNetwork((GDALMajorObjectH)base);
   }
 
 
   GNMGenericNetworkShadow* CastToGenericNetwork(GDALMajorObjectShadow* base) {
-      return (GNMGenericNetworkShadow*)dynamic_cast<GNMGenericNetwork*>((GDALMajorObject*)base);
+      return (GNMGenericNetworkShadow*)GNMCastToGenericNetwork((GDALMajorObjectH)base);
   }
 
 SWIGINTERN void delete_GNMNetworkShadow(GNMNetworkShadow *self){
@@ -4039,7 +4065,7 @@ SWIGINTERN PyObject *_wrap_CastToNetwork(PyObject *SWIGUNUSEDPARM(self), PyObjec
   arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4079,7 +4105,7 @@ SWIGINTERN PyObject *_wrap_CastToGenericNetwork(PyObject *SWIGUNUSEDPARM(self), 
   arg1 = reinterpret_cast< GDALMajorObjectShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4118,7 +4144,7 @@ SWIGINTERN PyObject *_wrap_delete_Network(PyObject *SWIGUNUSEDPARM(self), PyObje
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4164,7 +4190,7 @@ SWIGINTERN PyObject *_wrap_Network_ReleaseResultSet(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4204,7 +4230,7 @@ SWIGINTERN PyObject *_wrap_Network_GetVersion(PyObject *SWIGUNUSEDPARM(self), Py
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4244,7 +4270,7 @@ SWIGINTERN PyObject *_wrap_Network_GetName(PyObject *SWIGUNUSEDPARM(self), PyObj
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4294,7 +4320,7 @@ SWIGINTERN PyObject *_wrap_Network_GetFeatureByGlobalFID(PyObject *SWIGUNUSEDPAR
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4418,7 +4444,7 @@ SWIGINTERN PyObject *_wrap_Network_GetPath(PyObject *SWIGUNUSEDPARM(self), PyObj
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4466,7 +4492,7 @@ SWIGINTERN PyObject *_wrap_Network_DisconnectAll(PyObject *SWIGUNUSEDPARM(self),
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4506,7 +4532,7 @@ SWIGINTERN PyObject *_wrap_Network_GetProjection(PyObject *SWIGUNUSEDPARM(self),
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4546,7 +4572,7 @@ SWIGINTERN PyObject *_wrap_Network_GetProjectionRef(PyObject *SWIGUNUSEDPARM(sel
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4586,7 +4612,7 @@ SWIGINTERN PyObject *_wrap_Network_GetFileList(PyObject *SWIGUNUSEDPARM(self), P
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4734,7 +4760,7 @@ SWIGINTERN PyObject *_wrap_Network_CreateLayer(PyObject *SWIGUNUSEDPARM(self), P
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4863,7 +4889,7 @@ SWIGINTERN PyObject *_wrap_Network_CopyLayer(PyObject *SWIGUNUSEDPARM(self), PyO
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4922,7 +4948,7 @@ SWIGINTERN PyObject *_wrap_Network_DeleteLayer(PyObject *SWIGUNUSEDPARM(self), P
   arg2 = static_cast< int >(val2);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -4978,7 +5004,7 @@ SWIGINTERN PyObject *_wrap_Network_GetLayerCount(PyObject *SWIGUNUSEDPARM(self),
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5029,7 +5055,7 @@ SWIGINTERN PyObject *_wrap_Network_GetLayerByIndex(PyObject *SWIGUNUSEDPARM(self
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5079,7 +5105,7 @@ SWIGINTERN PyObject *_wrap_Network_GetLayerByName(PyObject *SWIGUNUSEDPARM(self)
   arg2 = reinterpret_cast< char * >(buf2);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5136,7 +5162,7 @@ SWIGINTERN PyObject *_wrap_Network_TestCapability(PyObject *SWIGUNUSEDPARM(self)
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5192,7 +5218,7 @@ SWIGINTERN PyObject *_wrap_Network_StartTransaction(PyObject *SWIGUNUSEDPARM(sel
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5248,7 +5274,7 @@ SWIGINTERN PyObject *_wrap_Network_CommitTransaction(PyObject *SWIGUNUSEDPARM(se
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5304,7 +5330,7 @@ SWIGINTERN PyObject *_wrap_Network_RollbackTransaction(PyObject *SWIGUNUSEDPARM(
   arg1 = reinterpret_cast< GNMNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5366,7 +5392,7 @@ SWIGINTERN PyObject *_wrap_delete_GenericNetwork(PyObject *SWIGUNUSEDPARM(self),
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5463,7 +5489,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ConnectFeatures(PyObject *SWIGUNUSEDPA
   arg7 = static_cast< GNMDirection >(val7);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5533,7 +5559,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DisconnectFeatures(PyObject *SWIGUNUSE
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5583,7 +5609,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DisconnectFeaturesWithId(PyObject *SWI
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5680,7 +5706,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ReconnectFeatures(PyObject *SWIGUNUSED
   arg7 = static_cast< GNMDirection >(val7);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5735,7 +5761,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_CreateRule(PyObject *SWIGUNUSEDPARM(se
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5777,7 +5803,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DeleteAllRules(PyObject *SWIGUNUSEDPAR
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5832,7 +5858,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_DeleteRule(PyObject *SWIGUNUSEDPARM(se
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -5874,7 +5900,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_GetRules(PyObject *SWIGUNUSEDPARM(self
   arg1 = reinterpret_cast< GNMGenericNetworkShadow * >(argp1);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -6019,7 +6045,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ConnectPointsByLines(PyObject *SWIGUNU
   arg6 = static_cast< GNMDirection >(val6);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -6086,7 +6112,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeBlockState(PyObject *SWIGUNUSEDP
   arg3 = static_cast< bool >(val3);
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
@@ -6137,7 +6163,7 @@ SWIGINTERN PyObject *_wrap_GenericNetwork_ChangeAllBlockState(PyObject *SWIGUNUS
   }
   {
     if ( bUseExceptions ) {
-      CPLErrorReset();
+      ClearErrorState();
     }
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;

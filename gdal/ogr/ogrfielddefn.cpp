@@ -63,7 +63,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
     // Should nWidth & nPrecision be defined in some particular way for numbers?
     nWidth(0),
     nPrecision(0),
-    pszDefault(NULL),
+    pszDefault(nullptr),
     bIgnore(FALSE),
     eSubType(OFSTNone),
     bNullable(TRUE)
@@ -87,7 +87,7 @@ OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype ) :
     eJustify(poPrototype->GetJustify()),
     nWidth(poPrototype->GetWidth()),
     nPrecision(poPrototype->GetPrecision()),
-    pszDefault(NULL),
+    pszDefault(nullptr),
     bIgnore(FALSE),  // TODO(schwehr): Can we use IsIgnored()?
     eSubType(poPrototype->GetSubType()),
     bNullable(poPrototype->IsNullable())
@@ -432,7 +432,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
 
 {
     CPLFree(pszDefault);
-    pszDefault = NULL;
+    pszDefault = nullptr;
 
     if( pszDefaultIn && pszDefaultIn[0] == '\''  &&
         pszDefaultIn[strlen(pszDefaultIn)-1] == '\'' )
@@ -461,7 +461,7 @@ void OGRFieldDefn::SetDefault( const char* pszDefaultIn )
         }
     }
 
-    pszDefault = pszDefaultIn ? CPLStrdup(pszDefaultIn) : NULL;
+    pszDefault = pszDefaultIn ? CPLStrdup(pszDefaultIn) : nullptr;
 }
 
 /************************************************************************/
@@ -561,7 +561,7 @@ const char *OGR_Fld_GetDefault( OGRFieldDefnH hDefn )
 
 int OGRFieldDefn::IsDefaultDriverSpecific() const
 {
-    if( pszDefault == NULL )
+    if( pszDefault == nullptr )
         return FALSE;
 
     if( EQUAL(pszDefault, "NULL") ||
@@ -573,7 +573,7 @@ int OGRFieldDefn::IsDefaultDriverSpecific() const
     if( pszDefault[0] == '\'' && pszDefault[strlen(pszDefault)-1] == '\'' )
         return FALSE;
 
-    char* pszEnd = NULL;
+    char* pszEnd = nullptr;
     CPLStrtod(pszDefault, &pszEnd);
     if( *pszEnd == '\0' )
         return FALSE;

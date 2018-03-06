@@ -122,7 +122,7 @@ public:
 
     IVFKDataBlock       *GetDataBlock() const { return m_poDataBlock; }
     OGRwkbGeometryType   GetGeometryType() const { return m_nGeometryType; }
-    bool                 SetGeometry(OGRGeometry *, const char * = NULL);
+    bool                 SetGeometry(OGRGeometry *, const char * = nullptr);
     OGRGeometry         *GetGeometry();
 
     bool                 LoadGeometry();
@@ -303,7 +303,7 @@ private:
 public:
     VFKDataBlock(const char *pszName, const IVFKReader *poReader) : IVFKDataBlock(pszName, poReader) {}
 
-    VFKFeature        *GetFeature(int, GUIntBig, VFKFeatureList* = NULL);
+    VFKFeature        *GetFeature(int, GUIntBig, VFKFeatureList* = nullptr);
     VFKFeatureList     GetFeatures(int, GUIntBig);
     VFKFeatureList     GetFeatures(int, int, GUIntBig);
 
@@ -356,8 +356,8 @@ private:
 
 protected:
     virtual IVFKDataBlock *CreateDataBlock(const char *) = 0;
-    virtual void           AddDataBlock(IVFKDataBlock * = NULL, const char * = NULL) = 0;
-    virtual OGRErr         AddFeature(IVFKDataBlock * = NULL, VFKFeature * = NULL) = 0;
+    virtual void           AddDataBlock(IVFKDataBlock * = nullptr, const char * = nullptr) = 0;
+    virtual OGRErr         AddFeature(IVFKDataBlock * = nullptr, VFKFeature * = nullptr) = 0;
 
 public:
     virtual ~IVFKReader();
@@ -367,7 +367,7 @@ public:
     virtual bool           IsPreProcessed() const = 0;
     virtual bool           IsValid() const = 0;
     virtual int            ReadDataBlocks() = 0;
-    virtual int            ReadDataRecords(IVFKDataBlock * = NULL) = 0;
+    virtual int            ReadDataRecords(IVFKDataBlock * = nullptr) = 0;
     virtual int            LoadGeometry() = 0;
 
     virtual int            GetDataBlockCount() const = 0;

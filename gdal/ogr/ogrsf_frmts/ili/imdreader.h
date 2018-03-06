@@ -42,7 +42,7 @@ class GeomFieldInfo
 public:
     CPLString       iliGeomType;
 
-    GeomFieldInfo() : geomTable(NULL) {}
+    GeomFieldInfo() : geomTable(nullptr) {}
     ~GeomFieldInfo() {
        if( geomTable )
            geomTable->Release();
@@ -72,7 +72,7 @@ public:
     OGRFeatureDefn* GetGeomTableDefnRef() const { return geomTable; }
     void            SetGeomTableDefn(OGRFeatureDefn* geomTableIn)
     {
-        CPLAssert(geomTable == NULL);
+        CPLAssert(geomTable == nullptr);
         geomTable = geomTableIn;
         if( geomTable )
             geomTable->Reference();
@@ -89,7 +89,7 @@ public:
     GeomFieldInfos  poGeomFieldInfos;
     StructFieldInfos poStructFieldInfos;
 
-    FeatureDefnInfo() : poTableDefn(NULL) {}
+    FeatureDefnInfo() : poTableDefn(nullptr) {}
     ~FeatureDefnInfo() {
        if( poTableDefn )
            poTableDefn->Release();
@@ -121,7 +121,7 @@ public:
     OGRFeatureDefn* GetTableDefnRef() const { return poTableDefn; }
     void            SetTableDefn(OGRFeatureDefn* poTableDefnIn)
     {
-        CPLAssert(poTableDefn == NULL);
+        CPLAssert(poTableDefn == nullptr);
         poTableDefn= poTableDefnIn;
         if( poTableDefn )
             poTableDefn->Reference();

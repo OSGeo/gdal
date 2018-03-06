@@ -238,21 +238,30 @@ class GDALPansharpenOperation
                                                      GDALDataType eBufDataType,
                                                      int nValues,
                                                      int nBandValues) const;
-        void WeightedBroveyPositiveWeights(
-                                                     const GUInt16* pPanBuffer,
-                                                     const GUInt16* pUpsampledSpectralBuffer,
-                                                     GUInt16* pDataBuf,
+        template<class T> void WeightedBroveyPositiveWeights(
+                                                     const T* pPanBuffer,
+                                                     const T* pUpsampledSpectralBuffer,
+                                                     T* pDataBuf,
                                                      int nValues,
                                                      int nBandValues,
-                                                     GUInt16 nMaxValue) const;
+                                                     T nMaxValue) const;
 
-        template<int NINPUT, int NOUTPUT> int WeightedBroveyPositiveWeightsInternal(
-                                                     const GUInt16* pPanBuffer,
-                                                     const GUInt16* pUpsampledSpectralBuffer,
-                                                     GUInt16* pDataBuf,
+        template<class T, int NINPUT, int NOUTPUT> int WeightedBroveyPositiveWeightsInternal(
+                                                     const T* pPanBuffer,
+                                                     const T* pUpsampledSpectralBuffer,
+                                                     T* pDataBuf,
                                                      int nValues,
                                                      int nBandValues,
-                                                     GUInt16 nMaxValue) const;
+                                                     T nMaxValue) const;
+
+        // cppcheck-suppress unusedPrivateFunction
+        template<class T> void WeightedBroveyGByteOrUInt16(
+                                                     const T* pPanBuffer,
+                                                     const T* pUpsampledSpectralBuffer,
+                                                     T* pDataBuf,
+                                                     int nValues,
+                                                     int nBandValues,
+                                                     T nMaxValue ) const;
 
         CPLErr PansharpenChunk( GDALDataType eWorkDataType, GDALDataType eBufDataType,
                                                      const void* pPanBuffer,

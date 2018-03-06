@@ -143,7 +143,7 @@ bool GDALMDReaderEROS::HasRequiredFiles() const
  */
 char** GDALMDReaderEROS::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
     if(!m_osRPBSourceFilename.empty())
@@ -175,19 +175,19 @@ void GDALMDReaderEROS::LoadMetadata()
 
     const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD, "satellite");
     const char* pszSatId2 = CSLFetchNameValue(m_papszIMDMD, "camera");
-    if(NULL != pszSatId1 && NULL != pszSatId2)
+    if(nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                            MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
                            CPLStripQuotes(pszSatId1).c_str(),
                            CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(NULL != pszSatId1 && NULL == pszSatId2)
+    else if(nullptr != pszSatId1 && nullptr == pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
     }
-    else if(NULL == pszSatId1 && NULL != pszSatId2)
+    else if(nullptr == pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
@@ -195,7 +195,7 @@ void GDALMDReaderEROS::LoadMetadata()
 
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                                  "overall_cc");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         int nCC = atoi(pszCloudCover);
         if(nCC > 100 || nCC < 0)
@@ -211,7 +211,7 @@ void GDALMDReaderEROS::LoadMetadata()
     }
 
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD, "sweep_start_utc");
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         char buffer[80];
         time_t timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
@@ -227,14 +227,14 @@ void GDALMDReaderEROS::LoadMetadata()
 char** GDALMDReaderEROS::LoadImdTxtFile()
 {
     char** papszLines = CSLLoad(m_osIMDSourceFilename);
-    if(NULL == papszLines)
-        return NULL;
+    if(nullptr == papszLines)
+        return nullptr;
 
-    char** papszIMD = NULL;
+    char** papszIMD = nullptr;
     char szName[22];
     int i, j;
 
-    for(i = 0; papszLines[i] != NULL; i++)
+    for(i = 0; papszLines[i] != nullptr; i++)
     {
         const char *pszLine = papszLines[i];
         if( CPLStrnlen(pszLine, 21) >= 21 )
@@ -267,7 +267,7 @@ char** GDALMDReaderEROS::LoadImdTxtFile()
 time_t GDALMDReaderEROS::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if(nullptr == pszDateTime)
         return 0;
 
     int iYear;
