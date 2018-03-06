@@ -4,7 +4,7 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  wfs33 driver testing.
+# Purpose:  WFS3 driver testing.
 # Author:   Even Rouault <even dot rouault at spatialys dot com>
 #
 ###############################################################################
