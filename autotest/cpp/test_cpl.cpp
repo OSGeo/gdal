@@ -2120,6 +2120,11 @@ namespace tut
             oArray.Add(true);
             ensure_equals(oArray.Size(), 7);
         }
+        {
+            CPLJSONDocument oDocument;
+            ensure( oDocument.LoadMemory(CPLString("{ \"/foo\" : \"bar\" }")) );
+            ensure_equals( oDocument.GetRoot().GetString("/foo"), std::string("bar") );
+        }
     }
 
     // Test CPLRecodeIconv() with re-allocation
