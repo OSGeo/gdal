@@ -517,6 +517,9 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
 
     void        FlushCacheInternal( bool bFlushDirectory );
 
+    int         m_nHasOptimizedReadMultiRange = -1;
+    int         HasOptimizedReadMultiRange();
+
   protected:
     virtual int         CloseDependentDatasets() override;
 
@@ -2068,6 +2071,19 @@ CPLVirtualMem* GTiffRasterBand::GetVirtualMemAutoInternal( GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
+/*                     HasOptimizedReadMultiRange()                     */
+/************************************************************************/
+
+int GTiffDataset::HasOptimizedReadMultiRange()
+{
+    if( m_nHasOptimizedReadMultiRange >= 0 )
+        return m_nHasOptimizedReadMultiRange;
+    m_nHasOptimizedReadMultiRange =
+        VSIHasOptimizedReadMultiRange(osFilename);
+    return m_nHasOptimizedReadMultiRange;
+}
+
+/************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
 
@@ -2126,7 +2142,7 @@ CPLErr GTiffDataset::IRasterIO( GDALRWFlag eRWFlag,
     if( eAccess == GA_ReadOnly &&
         eRWFlag == GF_Read &&
         nPlanarConfig == PLANARCONFIG_CONTIG &&
-        VSIHasOptimizedReadMultiRange(osFilename) )
+        HasOptimizedReadMultiRange() )
     {
         pBufferedData = reinterpret_cast<GTiffRasterBand *>(
             GetRasterBand(1))->CacheMultiRange(nXOff, nYOff,
@@ -4139,7 +4155,7 @@ CPLErr GTiffRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     void* pBufferedData = nullptr;
     if( poGDS->eAccess == GA_ReadOnly &&
         eRWFlag == GF_Read &&
-        VSIHasOptimizedReadMultiRange(poGDS->osFilename) )
+        poGDS->HasOptimizedReadMultiRange() )
     {
         pBufferedData = CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
                                         nBufXSize, nBufYSize,
