@@ -1027,6 +1027,15 @@ CPLJSONObject CPLJSONObject::GetObjectByPath(const std::string &osPath,
                                              std::string &osName) const
 {
     json_object *poVal = nullptr;
+
+    // Typically for keys that contain / character
+    if( json_object_object_get_ex( TO_JSONOBJ(GetInternalHandle()),
+                                   osPath.c_str(), &poVal ) )
+    {
+        osName = osPath;
+        return *this;
+    }
+
     CPLStringList pathPortions( CSLTokenizeString2( osPath.c_str(),
                                                     JSON_PATH_DELIMITER, 0 ) );
     int portionsCount = pathPortions.size();
