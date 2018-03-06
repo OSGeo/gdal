@@ -1297,6 +1297,31 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
     }
 
+    // Currently each EHdrRasterBand allocates nPixelOffset * nRasterXSize bytes
+    // so for a pixel interleaved scheme, this will allocate lots of memory!
+    // Actually this is quadratic in the number of bands!
+    // Do a few sanity checks to avoid excessive memory allocation on
+    // small files.
+    // But ultimately we should fix RawRasterBand to have a shared buffer
+    // among bands.
+    if( nBits >= 8 &&
+        (nBands > 10 ||
+         static_cast<vsi_l_offset>(nPixelOffset) * poDS->nRasterXSize > 20000) )
+    {
+        vsi_l_offset nExpectedFileSize =
+            nSkipBytes + nBandOffset * (nBands - 1) +
+            (poDS->nRasterYSize-1) * static_cast<vsi_l_offset>(nLineOffset) +
+            (poDS->nRasterXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
+        CPL_IGNORE_RET_VAL( VSIFSeekL(poDS->fpImage, 0, SEEK_END) );
+        vsi_l_offset nFileSize = VSIFTellL(poDS->fpImage);
+        if( nFileSize < nExpectedFileSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
+            delete poDS;
+            return nullptr;
+        }
+    }
+
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->PamInitialize();
 
