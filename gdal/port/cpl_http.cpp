@@ -252,7 +252,7 @@ static size_t CPLHdrWriteFct( void *buffer, size_t size, size_t nmemb,
     if( pszKey && pszValue )
     {
         psResult->papszHeaders =
-            CSLSetNameValue(psResult->papszHeaders, pszKey, pszValue);
+            CSLAddNameValue(psResult->papszHeaders, pszKey, pszValue);
     }
     CPLFree(pszHdr);
     CPLFree(pszKey);
