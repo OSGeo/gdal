@@ -213,6 +213,7 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef WFS_ENABLED
     RegisterOGRWFS();
+    RegisterOGRWFS3();
 #endif
 #ifdef SOSI_ENABLED
     RegisterOGRSOSI();
