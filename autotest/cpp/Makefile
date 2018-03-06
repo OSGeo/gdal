@@ -11,7 +11,7 @@ PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm tes
 
 all: $(PROGS)
 
-test:
+test check:
 	make quick_test
 	./testperfcopywords
 
