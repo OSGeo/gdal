@@ -1,0 +1,152 @@
+<html>
+<head>
+<title>WFS3 - OGC WFS 3.0 service (experimental)</title>
+</head>
+
+<body bgcolor="#ffffff">
+
+<h1>WFS3 - OGC WFS 3.0 service (experimental)</h1>
+
+(GDAL/OGR &gt;= 2.3.0)<p>
+
+<b>NOTE: THIS IS BASED ON A DRAFT VERSION OF THE WFS 3.0 SPECIFICATION</b><p>
+
+This driver can connect to a OGC WFS 3.0 service. It assumes that the
+service supports OpenAPI 3.0/JSON/GeoJSON encoding for respectively API
+description, feature collection metadata and feature collection data.<p>
+
+<h2>Dataset name syntax</h2>
+
+The syntax to open a WFS datasource is : <i>WFS3:http://path/to/WFS/endpoint</i></p>
+
+<h2>Layer schema</h2>
+
+OGR needs a fixed schema per layer, but WFS 3.0 Core is more lax on this. So
+for now OGR will retrieve the first page of featurs (10 features) and establish
+a schema from this.
+
+<h2>Filtering</h2>
+
+The driver will forward any spatial filter set with SetSpatialFilter() to the server.
+In WFS 3.0 Core, only a subset of attributes allowed by the server can be
+queried for equalities, potentially combined with a AND logical operator.
+More complex requests will be partly or completely evaluated on client-side.<p>
+
+Rectangular spatial filtering is forward to the server as well.<p>
+
+<h2>Open options</h2>
+
+The following options are available:
+<ul>
+<li><b>URL</b>=url: URL to the WFS server endpoint. Required when using the
+"WFS:" string as the connection string.</li>
+<li><b>PAGE_SIZE</b>=integer: Number of features to retrieve per request.
+Defaults to 10. Minimum is 1, maximum 10000.</li>
+</ul>
+
+<h2>Examples</h2>
+
+<li>
+Listing the types of a WFS server :
+<pre>
+$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn
+
+INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
+      using driver `WFS3' successful.
+1: namedplace (Point)
+</pre>
+<p>
+
+<li>
+Listing the summary information of a WFS server :
+<pre>
+$ ogrinfo -al -so WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn7
+
+INFO: Open of `WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn'
+      using driver `WFS3' successful.
+
+Layer name: namedplace
+Metadata:
+  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
+  TITLE=Named Place
+Geometry: Point
+Feature Count: 147629
+Extent: (5.866666, 47.270270) - (15.030484, 55.053446)
+Layer SRS WKT:
+GEOGCS["WGS 84",
+    DATUM["WGS_1984",
+        SPHEROID["WGS 84",6378137,298.257223563,
+            AUTHORITY["EPSG","7030"]],
+        AUTHORITY["EPSG","6326"]],
+    PRIMEM["Greenwich",0,
+        AUTHORITY["EPSG","8901"]],
+    UNIT["degree",0.0174532925199433,
+        AUTHORITY["EPSG","9122"]],
+    AUTHORITY["EPSG","4326"]]
+id: String (0.0)
+beginLifespanVersion: DateTime (0.0)
+inspireId.localId: String (0.0)
+inspireId.namespace: String (0.0)
+localType: String (0.0)
+name.language: String (0.0)
+name.sourceOfName: String (0.0)
+name.spelling.text: String (0.0)
+name.spelling.script: String (0.0)
+</pre>
+<p>
+
+<li>
+Filtering on a property
+<pre>
+$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn namedplace -al -q -where "\"name.spelling.text\" = 'Sandharlanden'"
+
+Layer name: namedplace
+Metadata:
+  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
+  TITLE=Named Place
+OGRFeature(namedplace):1
+  id (String) = NAMEDPLACE_DEBKGGND00000K72
+  beginLifespanVersion (DateTime) = 2015/03/26 00:00:00
+  inspireId.localId (String) = DEBKGGND00000K72
+  inspireId.namespace (String) = https://registry.gdi-de.org/id/de.bund.bkg.inspire.gn250
+  localType (String) = AX_Ortslage
+  name.language (String) = german
+  name.sourceOfName (String) = Geographische Namen 1:250.000
+  name.spelling.text (String) = Sandharlanden
+  name.spelling.script (String) = Latn
+  POINT (11.819395 48.839015)
+</pre>
+<p>
+
+<li>
+Spatial filtering
+<pre>
+$ ogrinfo WFS3:http://wfs3hackathon.ldproxy.net/rest/services/de_gn namedplace -al -q -spat 11.85 48.82 11.86 48.83
+
+Layer name: namedplace
+Metadata:
+  DESCRIPTION=Harmonized INSPIRE Geographical Names (Annex I)
+  TITLE=Named Place
+OGRFeature(namedplace):1
+  id (String) = NAMEDPLACE_DEBKGGND00001F1Q
+  beginLifespanVersion (DateTime) = 2015/03/26 00:00:00
+  inspireId.localId (String) = DEBKGGND00001F1Q
+  inspireId.namespace (String) = https://registry.gdi-de.org/id/de.bund.bkg.inspire.gn250
+  localType (String) = AX_Gemeinde
+  name.language (String) = german
+  name.sourceOfName (String) = Geographische Namen 1:250.000
+  name.spelling.text (String) = Abensberg
+  name.spelling.script (String) = Latn
+  POINT (11.85305 48.828552)
+</pre>
+<p>
+
+<h2>See Also</h2>
+
+<ul>
+<li> <a href="https://rawgit.com/opengeospatial/WFS_FES/master/docs/17-069.html">OGC WFS 3.0 Standard (DRAFT)</a><p>
+<li> <a href="drv_wfs.html">WFS (1.0,1.1,2.0) driver documentation</a></a><p>
+</ul>
+
+</body>
+</html>
