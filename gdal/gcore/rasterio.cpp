@@ -2954,7 +2954,11 @@ static inline void GDALFastCopy( T* CPL_RESTRICT pDest,
                                  int nSrcStride,
                                  int nIters )
 {
-    if( nDestStride == static_cast<int>(sizeof(T)) )
+    if( nIters == 1 )
+    {
+        *pDest = *pSrc;
+    }
+    else if( nDestStride == static_cast<int>(sizeof(T)) )
     {
         if( nSrcStride == static_cast<int>(sizeof(T)) )
         {
