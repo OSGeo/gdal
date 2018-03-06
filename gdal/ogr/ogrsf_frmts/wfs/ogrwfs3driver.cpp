@@ -54,7 +54,7 @@ class OGRWFS3Dataset : public GDALDataset
         bool                                   m_bAPIDocLoaded = false;
         CPLJSONDocument                        m_oAPIDoc;
 
-        bool                    DownloadJSon(
+        static bool                    DownloadJSon(
             const CPLString& osURL,
             CPLJSONDocument& oDoc,
             const char* pszAccept = "application/geo+json, application/json",
