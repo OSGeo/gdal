@@ -972,6 +972,7 @@ int OGRGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv,
  *
  *   YYYY-MM-DD HH:MM:SS[.sss]+nn
  *   or YYYY-MM-DDTHH:MM:SS[.sss]Z (ISO 8601 format)
+ *   or YYYY-MM-DDZ
  *
  * The seconds may also have a decimal portion (which is ignored).  And
  * just dates (YYYY-MM-DD) or just times (HH:MM:SS[.sss]) are also supported.
@@ -1074,6 +1075,8 @@ int OGRParseDate( const char *pszInput,
         // If ISO 8601 format.
         if( *pszInput == 'T' )
             ++pszInput;
+        else if( *pszInput == 'Z' )
+            return TRUE;
         else if( *pszInput != ' ' )
             return FALSE;
     }

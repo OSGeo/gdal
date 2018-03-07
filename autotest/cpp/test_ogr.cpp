@@ -554,6 +554,15 @@ namespace tut
         ensure_equals(sField.Date.Second, 0.0f);
         ensure_equals(sField.Date.TZFlag, 0);
 
+        ensure_equals(OGRParseDate("2017-11-31Z", &sField, 0), TRUE);
+        ensure_equals(sField.Date.Year, 2017);
+        ensure_equals(sField.Date.Month, 11);
+        ensure_equals(sField.Date.Day, 31);
+        ensure_equals(sField.Date.Hour, 0);
+        ensure_equals(sField.Date.Minute, 0);
+        ensure_equals(sField.Date.Second, 0.0f);
+        ensure_equals(sField.Date.TZFlag, 0);
+
         ensure_equals(OGRParseDate("12:34", &sField, 0), TRUE);
         ensure_equals(sField.Date.Year, 0);
         ensure_equals(sField.Date.Month, 0);
