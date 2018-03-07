@@ -897,9 +897,10 @@ GIntBig OGRWFS3Layer::GetFeatureCount(int bForce)
         CPLString osURL(m_osURL);
         osURL = CPLURLAddKVP(osURL, "resultType", "hits");
         osURL = AddFilters(osURL);
-        bool bGMLRequest = false;
 #ifndef REMOVE_HACK
-        bGMLRequest = m_osURL.find("cubeserv") != std::string::npos;
+        bool bGMLRequest = m_osURL.find("cubeserv") != std::string::npos;
+#else
+        constexpr bool bGMLRequest = false;
 #endif
         if( bGMLRequest )
         {
