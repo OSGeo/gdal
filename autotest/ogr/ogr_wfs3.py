@@ -177,7 +177,7 @@ def ogr_wfs3_empty_layer():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/api', 200,
                 { 'Content-Type': 'application/json' }, '{}')
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 '{ "type": "FeatureCollection", "features": [] }')
     with webserver.install_http_handler(handler):
@@ -344,7 +344,7 @@ def ogr_wfs3_fc_no_links_next_legacy_behaviour():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/api', 200,
                 { 'Content-Type': 'application/json' }, '{}')
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
                     {
@@ -451,7 +451,7 @@ def ogr_wfs3_fc_links_next_geojson():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/api', 200,
                 { 'Content-Type': 'application/json' }, '{}')
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
                     {
@@ -528,7 +528,7 @@ def ogr_wfs3_fc_links_next_headers():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/api', 200,
                 { 'Content-Type': 'application/json' }, '{}')
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
                     {
@@ -613,7 +613,7 @@ def ogr_wfs3_spatial_filter():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/wfs3/api', 200,
                 { 'Content-Type': 'application/json' }, '{}')
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
                     {
@@ -779,7 +779,7 @@ def ogr_wfs3_attribute_filter():
                 }
             }
         }""")
-    handler.add('GET', '/wfs3/foo', 200,
+    handler.add('GET', '/wfs3/foo?count=10', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
                     {
