@@ -1477,7 +1477,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
                 if( !vertex )
                 {
                     delete pCADVertexPFaceObject;
-                    continue;
+                    break;
                 }
 
                 polyline->addVertex( vertex->vertPosition );
