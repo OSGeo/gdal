@@ -46,7 +46,14 @@ EXPORTED_FUNCTIONS = "[\
   '_GDALWarpAppOptionsSetProgress',\
   '_GDALWarpAppOptionsFree',\
   '_GDALWarp',\
-  '_GDALReprojectImage'\
+  '_GDALReprojectImage',\
+  '_CPLError',\
+  '_CPLSetErrorHandler',\
+  '_CPLQuietErrorHandler',\
+  '_CPLErrorReset',\
+  '_CPLGetLastErrorMsg',\
+  '_CPLGetLastErrorNo',\
+  '_CPLGetLastErrorType'\
 ]"
 
 export EMCONFIGURE_JS
@@ -68,7 +75,7 @@ gdal.js: $(GDAL)/libgdal.a
 		-s TOTAL_MEMORY=256MB \
 		-s WASM=1 \
 		-s NO_EXIT_RUNTIME=1 \
-		-s RESERVED_FUNCTION_POINTERS=1 \
+		-s RESERVED_FUNCTION_POINTERS=2 \
 		--preload-file $(GDAL)/data/pcs.csv@/usr/local/share/gdal/pcs.csv \
 		--preload-file $(GDAL)/data/gcs.csv@/usr/local/share/gdal/gcs.csv \
 		--preload-file $(GDAL)/data/gcs.override.csv@/usr/local/share/gdal/gcs.override.csv \
@@ -81,8 +88,7 @@ gdal.js: $(GDAL)/libgdal.a
 		--preload-file $(GDAL)/data/compdcs.csv@/usr/local/share/gdal/compdcs.csv \
 		--preload-file $(GDAL)/data/geoccs.csv@/usr/local/share/gdal/geoccs.csv \
 		--preload-file $(GDAL)/data/stateplane.csv@/usr/local/share/gdal/stateplane.csv
-		
-		
+
 
 $(GDAL)/libgdal.a: $(PROJ4)/src/.libs/libproj.a $(GDAL)/config.status
 	cd $(GDAL) && EMCC_CFLAGS="$(GDAL_EMCC_CFLAGS)" $(EMMAKE) make lib-target

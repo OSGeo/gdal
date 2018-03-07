@@ -6,11 +6,18 @@ var TIFFPATH = '/tiffs';
 var initialized = false;
 
 var GDALOpen,
+    GDALClose,
     GDALGetRasterCount,
     GDALGetRasterXSize,
     GDALGetRasterYSize,
     GDALGetProjectionRef,
-    GDALGetGeoTransform;
+    GDALGetGeoTransform,
+    CPLQuietErrorHandler,
+    CPLSetErrorHandler,
+    CPLGetLastErrorMsg,
+    CPLGetLastErrorNo,
+    CPLGetLastErrorType,
+    CPLErrorReset;
 
 // Set up Module object for gdal.js to populate. Emscripten sets up its compiled
 // code to look for a Module object in the global scope. If found, it reads runtime
@@ -31,6 +38,14 @@ var Module = {
         // any time we want to pass a pointer to an object, such as in GDALOpen, which in
         // C returns a pointer to a GDALDataset, we need to use 'number'.
         GDALOpen = Module.cwrap('GDALOpen', 'number', ['string']);
+        GDALClose = Module.cwrap('GDALClose', null, ['number']);
+        CPLErrorReset = Module.cwrap('CPLErrorReset', null, []);
+        CPLSetErrorHandler = Module.cwrap('CPLSetErrorHandler', 'number', ['number']);
+        CPLQuietErrorHandler = Module.cwrap('CPLQuietErrorHandler', null, ['number', 'number', 'number']);
+        var cplQuietFnPtr = Runtime.addFunction(CPLQuietErrorHandler);
+        CPLGetLastErrorNo = Module.cwrap('CPLGetLastErrorNo', 'number', []);
+        CPLGetLastErrorMsg = Module.cwrap('CPLGetLastErrorMsg', 'string', []);
+        CPLGetLastErrorType = Module.cwrap('CPLGetLastErrorType', 'number', []);
         GDALGetRasterCount = Module.cwrap('GDALGetRasterCount', 'number', ['number']);
         GDALGetRasterXSize = Module.cwrap('GDALGetRasterXSize', 'number', ['number']);
         GDALGetRasterYSize = Module.cwrap('GDALGetRasterYSize', 'number', ['number']);
@@ -40,6 +55,7 @@ var Module = {
         // georeferenced footprint. See http://www.gdal.org/gdal_datamodel.html
         GDALGetGeoTransform = Module.cwrap('GDALGetGeoTransform', 'number', ['number', 'number']);
 
+        CPLSetErrorHandler(cplQuietFnPtr);
         // Create a "directory" where user-selected files will be placed
         FS.mkdir(TIFFPATH);
         initialized = true;
@@ -60,11 +76,20 @@ function inspectTiff(files) {
     FS.mount(WORKERFS, {
         files: files
     }, TIFFPATH);
-    
+
     var results = [];
+    CPLErrorReset();
     for(var i = 0; i < files.length; i++) {
         // Create a GDAL Dataset
         var dataset = GDALOpen(TIFFPATH + '/' + files[i].name);
+        if (CPLGetLastErrorNo() !== 0) {
+            console.log('Error occurred opening dataset');
+            console.log('Error message: ', CPLGetLastErrorMsg());
+            console.log('Error number: ', CPLGetLastErrorNo());
+            console.log('Resetting errors');
+            CPLErrorReset();
+            continue;
+        }
         var bandCount = GDALGetRasterCount(dataset);
         var maxX = GDALGetRasterXSize(dataset);
         var maxY = GDALGetRasterYSize(dataset);
@@ -112,6 +137,8 @@ function inspectTiff(files) {
             coordinateTransform: geoTransform,
             corners: geoCorners
         });
+
+        GDALClose(dataset);
     }
 
     // Now pass this back to the calling thread, which is presumably where we'd want to handle it:

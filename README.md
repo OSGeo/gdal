@@ -58,6 +58,13 @@ This library exports the following GDAL functions:
 - GDALWarpAppOptionsFree
 - GDALWarp
 - GDALReprojectImage
+- CPLError
+- CPLSetErrorHandler
+- CPLQuietErrorHandler
+- CPLErrorReset
+- CPLGetLastErrorMsg
+- CPLGetLastErrorNo
+- CPLGetLastErrorType
 
 For documentation of these functions' behavior, please see the
 [GDAL documentation](http://www.gdal.org/gdal_8h.html)
