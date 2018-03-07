@@ -731,66 +731,72 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
                 return nullptr;
             }
 
-            CPLJSONArray oLinks = oDoc.GetRoot().GetArray("links");
-            if( oLinks.IsValid() )
+            // To avoid issues with implementations having a non-relevant
+            // next link, make sure the current page is not empty
+            // We could even check that the feature count is the page size
+            // actually
+            if( m_poUnderlyingLayer->GetFeatureCount() > 0 )
             {
-                for( int i = 0; i < oLinks.Size(); i++ )
+                CPLJSONArray oLinks = oDoc.GetRoot().GetArray("links");
+                if( oLinks.IsValid() )
                 {
-                    CPLJSONObject oLink = oLinks[i];
-                    if( !oLink.IsValid() ||
-                        oLink.GetType() != CPLJSONObject::Type::Object )
+                    for( int i = 0; i < oLinks.Size(); i++ )
                     {
-                        continue;
-                    }
-                    if( oLink.GetString("rel") == "next" &&
-                        oLink.GetString("type") == "application/geo+json" )
-                    {
-                        m_osGetURL = oLink.GetString("href");
-                        break;
-                    }
-                }
-            }
-
-            if( m_osGetURL.empty() )
-            {
-                for( int i = 0; i < aosHeaders.size(); i++ )
-                {
-                    CPLDebug("WFS3", "%s", aosHeaders[i]);
-                    if( STARTS_WITH_CI(aosHeaders[i], "Link=") &&
-                        strstr(aosHeaders[i], "rel=\"next\"") &&
-                        strstr(aosHeaders[i], "type=\"application/geo+json\"") )
-                    {
-                        const char* pszStart = strchr(aosHeaders[i], '<');
-                        if( pszStart )
+                        CPLJSONObject oLink = oLinks[i];
+                        if( !oLink.IsValid() ||
+                            oLink.GetType() != CPLJSONObject::Type::Object )
                         {
-                            const char* pszEnd = strchr(pszStart + 1, '>');
-                            if( pszEnd )
-                            {
-                                m_osGetURL = pszStart + 1;
-                                m_osGetURL.resize(pszEnd - pszStart - 1);
-                            }
+                            continue;
                         }
-                        break;
+                        if( oLink.GetString("rel") == "next" &&
+                            oLink.GetString("type") == "application/geo+json" )
+                        {
+                            m_osGetURL = oLink.GetString("href");
+                            break;
+                        }
                     }
                 }
-            }
+
+                if( m_osGetURL.empty() )
+                {
+                    for( int i = 0; i < aosHeaders.size(); i++ )
+                    {
+                        CPLDebug("WFS3", "%s", aosHeaders[i]);
+                        if( STARTS_WITH_CI(aosHeaders[i], "Link=") &&
+                            strstr(aosHeaders[i], "rel=\"next\"") &&
+                            strstr(aosHeaders[i], "type=\"application/geo+json\"") )
+                        {
+                            const char* pszStart = strchr(aosHeaders[i], '<');
+                            if( pszStart )
+                            {
+                                const char* pszEnd = strchr(pszStart + 1, '>');
+                                if( pszEnd )
+                                {
+                                    m_osGetURL = pszStart + 1;
+                                    m_osGetURL.resize(pszEnd - pszStart - 1);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
 
 #ifndef REMOVE_HACK
-            if( m_osGetURL.empty() &&
-                m_poUnderlyingLayer->GetFeatureCount() > 0 )
-            {
-                m_osGetURL = m_osURL;
-                if( m_poDS->m_nPageSize > 0 )
+                if( m_osGetURL.empty() )
                 {
-                    m_osGetURL = CPLURLAddKVP(m_osGetURL, "count",
-                                        CPLSPrintf("%d", m_poDS->m_nPageSize));
+                    m_osGetURL = m_osURL;
+                    if( m_poDS->m_nPageSize > 0 )
+                    {
+                        m_osGetURL = CPLURLAddKVP(m_osGetURL, "count",
+                                            CPLSPrintf("%d", m_poDS->m_nPageSize));
+                    }
+                    m_osGetURL = CPLURLAddKVP(m_osGetURL, "startIndex",
+                        CPLSPrintf(CPL_FRMT_GIB,
+                            m_nFID + m_poUnderlyingLayer->GetFeatureCount() - 1));
+                    m_osGetURL = AddFilters(m_osGetURL);
                 }
-                m_osGetURL = CPLURLAddKVP(m_osGetURL, "startIndex",
-                    CPLSPrintf(CPL_FRMT_GIB,
-                        m_nFID + m_poUnderlyingLayer->GetFeatureCount() - 1));
-                m_osGetURL = AddFilters(m_osGetURL);
-            }
 #endif
+            }
         }
 
         poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
