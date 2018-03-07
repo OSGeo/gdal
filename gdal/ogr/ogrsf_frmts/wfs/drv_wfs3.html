@@ -21,9 +21,15 @@ The syntax to open a WFS datasource is : <i>WFS3:http://path/to/WFS/endpoint</i>
 
 <h2>Layer schema</h2>
 
-OGR needs a fixed schema per layer, but WFS 3.0 Core is more lax on this. So
-for now OGR will retrieve the first page of features (10 features) and establish
-a schema from this.
+OGR needs a fixed schema per layer, but WFS 3.0 Core doesn't impose fixed schema.
+So the driver will first try to examine in the /api endpoint if the
+/{layername}/{id} path points to a schema describing properties. If not,
+it will retrieve the first page of features (10 features) and establish
+a schema from this.<p>
+
+Note: as a hack it is possible to point to an alternate /api endpoint with the
+OGR_WFS3_API_URL configuration option/environment variable.<p>
+<pre>OGR_WFS3_API_URL=https://raw.githubusercontent.com/opengeospatial/wfs3hackathon/master/openapi.json ogrinfo WFS3:https://www.ldproxy.nrw.de/kataster flurstueck -al -q</pre>
 
 <h2>Filtering</h2>
 

@@ -92,6 +92,7 @@ class OGRWFS3Layer: public OGRLayer
         std::set<CPLString> m_aoSetQueriableAttributes;
 
         void            EstablishFeatureDefn();
+        bool            EstablishFeatureDefnFromAPIDoc();
         OGRFeature     *GetNextRawFeature();
         CPLString       AddFilters(const CPLString& osURL);
         CPLString       BuildFilter(swq_expr_node* poNode);
@@ -137,6 +138,14 @@ bool OGRWFS3Dataset::DownloadJSon(const CPLString& osURL,
                                   const char* pszAccept,
                                   CPLStringList* paosHeaders)
 {
+#ifndef REMOVE_HACK
+    VSIStatBufL sStatBuf;
+    if( VSIStatL(osURL, &sStatBuf) == 0 )
+    {
+        CPLDebug("WFS3", "Reading %s", osURL.c_str());
+        return oDoc.Load(osURL);
+    }
+#endif
     char** papszOptions = CSLSetNameValue(nullptr,
             "HEADERS", (CPLString("Accept: ") + pszAccept).c_str());
     CPLHTTPResult* psResult = CPLHTTPFetch(osURL, papszOptions);
@@ -154,7 +163,11 @@ bool OGRWFS3Dataset::DownloadJSon(const CPLString& osURL,
         return false;
     }
 
-    if( psResult->pszContentType == nullptr ||
+    if( strstr(osURL, "raw.githubusercontent.com") && strstr(osURL, ".json") )
+    {
+        // OK
+    }
+    else if( psResult->pszContentType == nullptr ||
         (strstr(psResult->pszContentType, "application/json") == nullptr &&
          strstr(psResult->pszContentType, "application/geo+json") == nullptr) )
     {
@@ -194,11 +207,19 @@ const CPLJSONDocument& OGRWFS3Dataset::GetAPIDoc()
     if( m_bAPIDocLoaded )
         return m_oAPIDoc;
     m_bAPIDocLoaded = true;
+#ifndef REMOVE_HACK
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    bool bOK = DownloadJSon(m_osRootURL + "/api", m_oAPIDoc,
+#endif
+    CPLString osURL(m_osRootURL + "/api");
+#ifndef REMOVE_HACK
+    osURL = CPLGetConfigOption("OGR_WFS3_API_URL", osURL.c_str());
+#endif
+    bool bOK = DownloadJSon(osURL, m_oAPIDoc,
                      "application/openapi+json;version=3.0, application/json");
+#ifndef REMOVE_HACK
     CPLPopErrorHandler();
     CPLErrorReset();
+#endif
     if( bOK )
     {
         return m_oAPIDoc;
@@ -347,6 +368,66 @@ OGRFeatureDefn* OGRWFS3Layer::GetLayerDefn()
     return m_poFeatureDefn;
 }
 
+
+/************************************************************************/
+/*                  EstablishFeatureDefnFromAPIDoc()                    */
+/************************************************************************/
+
+bool OGRWFS3Layer::EstablishFeatureDefnFromAPIDoc()
+{
+    CPLJSONDocument oDoc = m_poDS->GetAPIDoc();
+    if( oDoc.GetRoot().GetString("openapi").empty() )
+        return false;
+
+    CPLJSONObject oSchema = oDoc.GetRoot().GetObj("paths")
+            .GetObj(CPLString("/") + GetDescription() + "/{id}")
+            .GetObj("get/responses/200/content")
+            .GetObj("application/geo+json")
+            .GetObj("schema");
+    if( !oSchema.IsValid() )
+        return false;
+    CPLString osRef = oSchema.GetString("$ref");
+    if( !osRef.empty() && osRef.find("#/") == 0 )
+    {
+        oSchema = oDoc.GetRoot().GetObj(osRef.substr(2));
+    }
+    CPLJSONObject oProperties = oSchema.GetObj("properties/properties/properties");
+    if( !oProperties.IsValid() )
+        return false;
+    for( const auto& oProp : oProperties.GetChildren() )
+    {
+        if( oProp.GetType() != CPLJSONObject::Type::Object )
+            continue;
+        OGRFieldDefn oFieldDefn(oProp.GetName().c_str(), OFTString);
+        CPLString osType = oProp.GetString("type");
+        CPLString osFormat = oProp.GetString("format");
+        if( osType == "string" && osFormat == "date" )
+            oFieldDefn.SetType(OFTDate);
+        else if( osType == "string" && osFormat == "date-time" )
+            oFieldDefn.SetType(OFTDateTime);
+        else if( osType == "number" )
+        {
+            oFieldDefn.SetType(OFTReal);
+            if( osFormat == "float" )
+                oFieldDefn.SetSubType(OFSTFloat32);
+        }
+        else if( osType == "integer" )
+        {
+            if( osFormat == "int64" )
+                oFieldDefn.SetType(OFTInteger64);
+            else
+                oFieldDefn.SetType(OFTInteger);
+        }
+        else if( osType == "boolean" )
+        {
+            oFieldDefn.SetType(OFTInteger);
+            oFieldDefn.SetSubType(OFSTBoolean);
+        }
+        m_poFeatureDefn->AddFieldDefn(&oFieldDefn);
+    }
+    return true;
+}
+
 /************************************************************************/
 /*                        EstablishFeatureDefn()                        */
 /************************************************************************/
@@ -355,6 +436,9 @@ void OGRWFS3Layer::EstablishFeatureDefn()
 {
     CPLAssert(!m_bFeatureDefnEstablished);
     m_bFeatureDefnEstablished = true;
+
+    if( EstablishFeatureDefnFromAPIDoc() )
+        return;
 
     CPLJSONDocument oDoc;
     if( !m_poDS->DownloadJSon(
@@ -546,6 +630,7 @@ OGRFeature* OGRWFS3Layer::GetNextRawFeature()
     poFeature->SetFrom(poSrcFeature);
     poFeature->SetFID(m_nFID);
     m_nFID ++;
+    delete poSrcFeature;
     return poFeature;
 }
 
