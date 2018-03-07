@@ -170,14 +170,157 @@ def ogr_wfs3_empty_layer():
         gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/api', 200,
+                { 'Content-Type': 'application/json' }, '{}')
     handler.add('GET', '/wfs3/foo', 200,
                 { 'Content-Type': 'application/geo+json' },
                 '{ "type": "FeatureCollection", "features": [] }')
     with webserver.install_http_handler(handler):
         if lyr.GetLayerDefn().GetFieldCount() != 0:
             gdaltest.post_reason('fail')
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_wfs3_schema_from_api():
+    if gdaltest.wfs3_drv is None:
+        return 'skip'
+
+    if gdaltest.webserver_port == 0:
+        return 'skip'
+
+    handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3', 200,
+                { 'Content-Type': 'application/json' },
+                '{ "collections" : [ { "name": "foo" }] }')
+    with webserver.install_http_handler(handler):
+        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetLayerCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    lyr = ds.GetLayer(0)
+    if lyr.GetName() != 'foo':
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    handler = webserver.SequentialHandler()
+    # Fake openapi response
+    handler.add('GET', '/wfs3/api', 200, { 'Content-Type': 'application/json' },
+        """{
+            "openapi": "3.0.0",
+            "paths" : {
+                "/foo/{id}": {
+                    "get": {
+                        "responses": {
+                          "200": {
+                            "description": "A feature.",
+                            "content": {
+                                "application/geo+json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/foo"
+                                    }
+                                }
+                            }
+                          }
+                        }
+                    }
+                }
+            },
+            "components": {
+              "schemas": {
+                "foo": {
+                    "type": "object",
+                    "required": [
+                        "id",
+                        "type",
+                        "geometry",
+                        "properties"
+                    ],
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                            "Feature"
+                            ]
+                        },
+                        "geometry": {
+                            "$ref": "#/components/schemas/geometryGeoJSON"
+                        },
+                        "id": {
+                            "type": "string"
+                        },
+                        "properties": {
+                            "type": "object",
+                            "properties": {
+                                "date_attr": {
+                                    "type": "string",
+                                    "format": "date"
+                                },
+                                "date_time_attr": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                },
+                                "real_attr": {
+                                    "type": "number"
+                                },
+                                "float_attr": {
+                                    "type": "number",
+                                    "format": "float"
+                                },
+                                "int_attr": {
+                                    "type": "integer"
+                                },
+                                "int64_attr": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "boolean_attr": {
+                                    "type": "boolean"
+                                },
+                                "string_attr": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                  }
+                }
+              }
+           }
+        }""")
+    with webserver.install_http_handler(handler):
+        if lyr.GetLayerDefn().GetFieldCount() != 8:
+            gdaltest.post_reason('fail')
+            return 'fail'
+    expected_attrs = [
+        ("date_attr", ogr.OFTDate, ogr.OFSTNone),
+        ("date_time_attr", ogr.OFTDateTime, ogr.OFSTNone),
+        ("real_attr", ogr.OFTReal, ogr.OFSTNone),
+        ("float_attr", ogr.OFTReal, ogr.OFSTFloat32),
+        ("int_attr", ogr.OFTInteger, ogr.OFSTNone),
+        ("int64_attr", ogr.OFTInteger64, ogr.OFSTNone),
+        ("boolean_attr", ogr.OFTInteger, ogr.OFSTBoolean),
+        ("string_attr", ogr.OFTString, ogr.OFSTNone),
+    ]
+    for (attr_name, type, subtype) in expected_attrs:
+        fld_idx = lyr.GetLayerDefn().GetFieldIndex(attr_name)
+        if fld_idx < 0:
+            gdaltest.post_reason('fail')
+            print(attr_name)
+            return 'fail'
+        fld_defn = lyr.GetLayerDefn().GetFieldDefn(fld_idx)
+        if fld_defn.GetType() != type and fld_defn.GetSubType() != subtype:
+            gdaltest.post_reason('fail')
+            print(attr_name, fld_defn.GetType(), fld_defn.GetSubType())
             return 'fail'
 
     return 'success'
@@ -199,6 +342,8 @@ def ogr_wfs3_fc_no_links_next_legacy_behaviour():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/api', 200,
+                { 'Content-Type': 'application/json' }, '{}')
     handler.add('GET', '/wfs3/foo', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
@@ -304,6 +449,8 @@ def ogr_wfs3_fc_links_next_geojson():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/api', 200,
+                { 'Content-Type': 'application/json' }, '{}')
     handler.add('GET', '/wfs3/foo', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
@@ -379,6 +526,8 @@ def ogr_wfs3_fc_links_next_headers():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/api', 200,
+                { 'Content-Type': 'application/json' }, '{}')
     handler.add('GET', '/wfs3/foo', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
@@ -462,6 +611,8 @@ def ogr_wfs3_spatial_filter():
         return 'fail'
 
     handler = webserver.SequentialHandler()
+    handler.add('GET', '/wfs3/api', 200,
+                { 'Content-Type': 'application/json' }, '{}')
     handler.add('GET', '/wfs3/foo', 200,
                 { 'Content-Type': 'application/geo+json' },
                 """{ "type": "FeatureCollection", "features": [
@@ -607,18 +758,6 @@ def ogr_wfs3_attribute_filter():
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/wfs3/foo', 200,
-                { 'Content-Type': 'application/geo+json' },
-                """{ "type": "FeatureCollection", "features": [
-                    {
-                        "type": "Feature",
-                        "properties": {
-                            "attr1": "",
-                            "attr2": 0,
-                            "attr3": ""
-                        }
-                    }
-                ] }""")
     # Fake openapi response
     handler.add('GET', '/wfs3/api', 200, { 'Content-Type': 'application/json' },
         """{
@@ -640,6 +779,18 @@ def ogr_wfs3_attribute_filter():
                 }
             }
         }""")
+    handler.add('GET', '/wfs3/foo', 200,
+                { 'Content-Type': 'application/geo+json' },
+                """{ "type": "FeatureCollection", "features": [
+                    {
+                        "type": "Feature",
+                        "properties": {
+                            "attr1": "",
+                            "attr2": 0,
+                            "attr3": ""
+                        }
+                    }
+                ] }""")
     with webserver.install_http_handler(handler):
         lyr.SetAttributeFilter("(attr1 = 'foo' AND attr2 = 2) AND attr3 = 'bar'")
 
@@ -728,6 +879,7 @@ gdaltest_list = [
     ogr_wfs3_init,
     ogr_wfs3_errors,
     ogr_wfs3_empty_layer,
+    ogr_wfs3_schema_from_api,
     ogr_wfs3_fc_no_links_next_legacy_behaviour,
     ogr_wfs3_fc_links_next_geojson,
     ogr_wfs3_fc_links_next_headers,
