@@ -120,12 +120,12 @@ closed before being re-opened for read.
 
 \section gdal_virtual_file_systems_vsigzip /vsigzip/ (gzipped file)
 
-/vsizip/ is a file handler that allows reading on-the-fly
+/vsigzip/ is a file handler that allows reading on-the-fly
 in GZip (.gz) files without decompressing them priorly.
 
 To view a gzipped file as uncompressed by GDAL, you must use the
 /vsigzip/path/to/the/file.gz syntax, where
-path/to/the/file.zip is relative or absolute
+path/to/the/file.gz is relative or absolute
 
 Examples:
 <pre>
@@ -158,20 +158,20 @@ path/to/the/file.tar is relative or absolute and path/inside/the/tar/file is
 the relative path to the file inside the archive.
 
 To use the .tar as a directory, you can use /vsizip/path/to/the/file.tar or
-/vsizip/path/to/the/file.tar/subdir. Directory listing is available with
+/vsitar/path/to/the/file.tar/subdir. Directory listing is available with
 VSIReadDir(). A VSIStatL("/vsitar/...") call will return the uncompressed size
 of the file. Directories inside the TAR file can be distinguished from regular
 files with the VSI_ISDIR(stat.st_mode) macro as for regular file systems.
 Getting directory listing and file statistics are fast operations.
 
 Note: in the particular case where the .tar file contains a single file located
-at its root, just mentioning "/vsizip/path/to/the/file.tar" will work
+at its root, just mentioning "/vsitar/path/to/the/file.tar" will work
 
 Examples:
 <pre>
-/vsizip/my.tar/my.tif  (relative path to the .tar)
-/vsizip//home/even/my.tar/subdir/my.tif  (absolute path to the .tar)
-/vsizip/c:\\users\\even\\my.tar\\subdir\\my.tif
+/vsitar/my.tar/my.tif  (relative path to the .tar)
+/vsitar//home/even/my.tar/subdir/my.tif  (absolute path to the .tar)
+/vsitar/c:\\users\\even\\my.tar\\subdir\\my.tif
 </pre>
 
 Starting with GDAL 2.2, an alternate syntax is available so as to enable
