@@ -9963,9 +9963,9 @@ static void CreateTIFFColorTable(GDALColorTable* poColorTable,
 
             poColorTable->GetColorEntryAsRGB( iColor, &sRGB );
 
-            anTRed[iColor] = static_cast<unsigned short>(256 * sRGB.c1);
-            anTGreen[iColor] = static_cast<unsigned short>(256 * sRGB.c2);
-            anTBlue[iColor] = static_cast<unsigned short>(256 * sRGB.c3);
+            anTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
+            anTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
+            anTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
         }
         else
         {
@@ -13872,7 +13872,7 @@ CPLErr GTiffDataset::OpenOffset( TIFF *hTIFFIn,
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
             // TODO(schwehr): Ensure the color entries are never negative?
-            const unsigned short divisor = 256;
+            const unsigned short divisor = 257;
             const GDALColorEntry oEntry = {
                 static_cast<short>(panRed[iColor] / divisor),
                 static_cast<short>(panGreen[iColor] / divisor),
@@ -16323,7 +16323,7 @@ GDALDataset *GTiffDataset::Create( const char * pszFilename,
 
         for( int iColor = nColorCount - 1; iColor >= 0; iColor-- )
         {
-            const unsigned short divisor = 256;
+            const unsigned short divisor = 257;
             const GDALColorEntry oEntry = {
                 static_cast<short>(panRed[iColor] / divisor),
                 static_cast<short>(panGreen[iColor] / divisor),
@@ -16845,9 +16845,9 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
                 poCT->GetColorEntryAsRGB( iColor, &sRGB );
 
-                panTRed[iColor] = static_cast<unsigned short>(256 * sRGB.c1);
-                panTGreen[iColor] = static_cast<unsigned short>(256 * sRGB.c2);
-                panTBlue[iColor] = static_cast<unsigned short>(256 * sRGB.c3);
+                panTRed[iColor] = static_cast<unsigned short>(257 * sRGB.c1);
+                panTGreen[iColor] = static_cast<unsigned short>(257 * sRGB.c2);
+                panTBlue[iColor] = static_cast<unsigned short>(257 * sRGB.c3);
             }
             else
             {
