@@ -340,6 +340,10 @@ bool OGRWFS3Dataset::Open(GDALOpenInfo* poOpenInfo)
             if( oCollection.GetType() != CPLJSONObject::Type::Object )
                 continue;
             CPLString osName( oCollection.GetString("name") );
+#ifndef REMOVE_HACK
+            if( osName.empty() )
+                osName = oCollection.GetString("collectionId");
+#endif
             if( osName.empty() )
                 continue;
             CPLString osTitle( oCollection.GetString("title") );
