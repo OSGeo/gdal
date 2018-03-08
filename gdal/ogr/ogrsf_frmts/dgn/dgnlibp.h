@@ -39,7 +39,7 @@ typedef struct {
     int         next_element_id;
 
     int         nElemBytes;
-    GByte       abyElem[131076];
+    GByte       abyElem[131076+1];
 
     bool        got_tcb;
     int         dimension;

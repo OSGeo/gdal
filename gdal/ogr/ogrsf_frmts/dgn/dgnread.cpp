@@ -109,12 +109,14 @@ int DGNLoadRawElement( DGNInfo *psDGN, int *pnType, int *pnLevel )
 /* -------------------------------------------------------------------- */
 /*      Read the rest of the element data into the working buffer.      */
 /* -------------------------------------------------------------------- */
-    if( nWords * 2 + 4 > (int) sizeof(psDGN->abyElem) )
+    if( nWords * 2 + 4 >= (int) sizeof(psDGN->abyElem) )
         return FALSE;
 
     /* coverity[tainted_data] */
     if( (int) VSIFReadL( psDGN->abyElem + 4, 2, nWords, psDGN->fp ) != nWords )
         return FALSE;
+    psDGN->abyElem[4 + 2 * nWords] = 0;
+    psDGN->abyElem[sizeof(psDGN->abyElem)-1] = 0;
 
     psDGN->nElemBytes = nWords * 2 + 4;
 
@@ -1383,7 +1385,35 @@ static DGNElemCore *DGNParseTagSet( DGNInfo * psDGN )
     {
         DGNTagDef *tagDef = psTagSet->tagList + iTag;
 
-        if( nDataOffset >= static_cast<size_t>(psDGN->nElemBytes) )
+        // Check the buffer is large enough to read all tagDef components
+        size_t nDataOffsetEnd = nDataOffset;
+        if( nDataOffsetEnd <= static_cast<size_t>(psDGN->nElemBytes) )
+        {
+            nDataOffsetEnd += strlen((char *)psDGN->abyElem + nDataOffsetEnd)+1 +
+                              2;
+        }
+        if( nDataOffsetEnd <= static_cast<size_t>(psDGN->nElemBytes) )
+        {
+            nDataOffsetEnd += strlen((char *)psDGN->abyElem + nDataOffsetEnd)+1 +
+                              2 + 5;
+            if( tagDef->type == 1 )
+            {
+                nDataOffsetEnd += strlen(tagDef->defaultValue.string)+1;
+            }
+            else if( tagDef->type == 3 || tagDef->type == 5 )
+            {
+                nDataOffsetEnd += 4;
+            }
+            else if( tagDef->type == 4 )
+            {
+                nDataOffsetEnd += 8;
+            }
+            else
+            {
+                nDataOffsetEnd += 4;
+            }
+        }
+        if( nDataOffsetEnd > static_cast<size_t>(psDGN->nElemBytes) )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "nDataOffset >= static_cast<size_t>(psDGN->nElemBytes)");
