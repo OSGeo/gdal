@@ -12768,6 +12768,8 @@ void GTiffDataset::ApplyPamInfo()
         const char *pszPamGCPProjection = GDALPamDataset::GetGCPProjection();
         if( pszPamGCPProjection != nullptr && strlen(pszPamGCPProjection) > 0 )
             pszProjection = CPLStrdup(pszPamGCPProjection);
+        else
+            pszProjection = CPLStrdup("");
 
         bLookedForProjection = true;
     }
@@ -17959,7 +17961,8 @@ CPLErr GTiffDataset::SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
             bForceUnsetGTOrGCPs = true;
         }
 
-        if( !EQUAL(pszProjection, "") &&
+        if( pszProjection != nullptr &&
+            !EQUAL(pszProjection, "") &&
                    (pszGCPProjection == nullptr ||
                    pszGCPProjection[0] == '\0') )
             bForceUnsetProjection = true;
