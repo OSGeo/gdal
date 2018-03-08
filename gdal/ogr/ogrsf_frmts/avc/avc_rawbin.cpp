@@ -217,6 +217,19 @@ void AVCRawBinSetFileDataSize(AVCRawBinFile *psFile, int nFileDataSize)
 }
 
 /**********************************************************************
+ *                      AVCRawBinIsFileGreaterThan()
+ *
+ **********************************************************************/
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize)
+{
+    vsi_l_offset nCurPos = VSIFTellL(psFile->fp);
+    VSIFSeekL(psFile->fp, 0, SEEK_END);
+    bool bRet = VSIFTellL(psFile->fp) >= nSize;
+    VSIFSeekL(psFile->fp, nCurPos, SEEK_SET);
+    return bRet;
+}
+
+/**********************************************************************
  *                          AVCRawBinReadBytes()
  *
  * Copy the number of bytes from the input file to the specified

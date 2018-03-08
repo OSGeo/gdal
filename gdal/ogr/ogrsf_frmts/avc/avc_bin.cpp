@@ -823,6 +823,12 @@ int _AVCBinReadNextArc(AVCRawBinFile *psFile, AVCArc *psArc,
     numVertices    = AVCRawBinReadInt32(psFile);
     if( numVertices < 0 || numVertices > 100 * 1024 * 1024 )
         return -1;
+    if( numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile,
+                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    {
+        return -1;
+    }
 
     /* Realloc the vertices array only if it needs to grow...
      * do not realloc to a smaller size.
@@ -949,6 +955,11 @@ int _AVCBinReadNextPal(AVCRawBinFile *psFile, AVCPal *psPal,
     numArcs            = AVCRawBinReadInt32(psFile);
     if( numArcs < 0 || numArcs > 100 * 1024 * 1024 )
         return -1;
+    if( numArcs > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile, numArcs * sizeof(int) * 3) )
+    {
+        return -1;
+    }
 
     /* Realloc the arc list array only if it needs to grow...
      * do not realloc to a smaller size.
@@ -1052,6 +1063,11 @@ int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
     numLabels      = AVCRawBinReadInt32(psFile);
     if( numLabels < 0 || numLabels > 100 * 1024 * 1024 )
         return -1;
+    if( numLabels > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile, numLabels * sizeof(int)) )
+    {
+        return -1;
+    }
 
     /* Realloc the LabelIds array only if it needs to grow...
      * do not realloc to a smaller size.
@@ -1400,6 +1416,12 @@ int _AVCBinReadNextTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
                 100 * 1024 * 1024 - ABS(psTxt->numVerticesArrow) )
         return -1;
     numVertices = ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+    if( numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile,
+                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    {
+        return -1;
+    }
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
         psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
@@ -1495,6 +1517,12 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     numVertices = ABS(psTxt->numVerticesLine);
     if( numVertices < 2 )
         return -1;
+    if( numVertices > 10 * 1024 * 1024 &&
+        !AVCRawBinIsFileGreaterThan(psFile,
+                numVertices * ((nPrecision == AVC_SINGLE_PREC) ? 8 : 16)) )
+    {
+        return -1;
+    }
 
     if (psTxt->pasVertices == nullptr || numVertices > numVerticesBefore)
         psTxt->pasVertices = (AVCVertex*)CPLRealloc(psTxt->pasVertices,
