@@ -667,6 +667,7 @@ void        AVCRawBinClose(AVCRawBinFile *psInfo);
 void        AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
 GBool       AVCRawBinEOF(AVCRawBinFile *psInfo);
 void        AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
 
 void        AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead,
                                GByte *pBuf);
