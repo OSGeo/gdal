@@ -118,7 +118,7 @@ class CPL_DLL OGROCISession {
                                const char *pszPassword,
                                const char *pszDatabase );
 
-    int      Failed( sword nStatus, const char *pszFunction = NULL );
+    int      Failed( sword nStatus, const char *pszFunction = nullptr );
 
     CPLErr   GetParmInfo( OCIParam *hParmDesc, OGRFieldDefn *poOGRDefn,
                           ub2 *pnOCIType, ub4 *pnOCILen );
@@ -150,10 +150,10 @@ class CPL_DLL OGROCIStatement {
     OCIStmt     *GetStatement() { return hStatement; }
     CPLErr       BindScalar( const char *pszPlaceName,
                              void *pData, int nDataLen, int nSQLType,
-                             sb2 *paeInd = NULL );
+                             sb2 *paeInd = nullptr );
     CPLErr       BindString( const char *pszPlaceName,
                              const char *pszData,
-                             sb2 *paeInd = NULL );
+                             sb2 *paeInd = nullptr );
     CPLErr       BindObject( const char *pszPlaceName, void *pahObject,
                              OCIType *hTDO, void **papIndicators );
 
@@ -549,9 +549,9 @@ class OGROCIDataSource : public OGRDataSource
 
     virtual OGRErr      DeleteLayer(int) override;
     virtual OGRLayer    *ICreateLayer( const char *,
-                                      OGRSpatialReference * = NULL,
+                                      OGRSpatialReference * = nullptr,
                                       OGRwkbGeometryType = wkbUnknown,
-                                      char ** = NULL ) override;
+                                      char ** = nullptr ) override;
 
     int                 TestCapability( const char * ) override;
 

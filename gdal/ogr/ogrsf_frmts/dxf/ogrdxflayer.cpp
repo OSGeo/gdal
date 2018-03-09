@@ -2645,18 +2645,18 @@ OGRDXFFeature *OGRDXFLayer::TranslateASMEntity()
     // Return a feature with no geometry but with one very interesting field.
     // Seems like we have to make a copy of this data, which is then
     // freed by the feature
-    GByte* abyData = new GByte[nDataLength];
-    memcpy( abyData, pabyBinaryData, nDataLength );
+    GByte* pabyData = new GByte[nDataLength];
+    memcpy( pabyData, pabyBinaryData, nDataLength );
     poFeature->SetField( poFeatureDefn->GetFieldIndex( "ASMData" ), 
-        static_cast<int>( nDataLength ), abyData );
+        static_cast<int>( nDataLength ), pabyData );
+    delete[] pabyData;
 
     // Set up an affine transformation matrix so the user will be able to
     // transform the resulting 3D geometry
     poFeature->poASMTransform = 
         std::unique_ptr<OGRDXFAffineTransform>( new OGRDXFAffineTransform() );
 
-    OGRField oField = poFeature->poASMTransform->ToField();
-    poFeature->SetField( "ASMTransform", &oField );
+    poFeature->poASMTransform->SetField( poFeature, "ASMTransform" );
 
 #ifdef notdef
     FILE *fp;
@@ -2956,8 +2956,7 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline( const CPLString& osBlockName,
                 oInnerTrans = oTransformer.GetOffsetTransformer();
                 poSubFeature->poASMTransform->ComposeWith( oInnerTrans );
 
-                OGRField oField = poSubFeature->poASMTransform->ToField();
-                poSubFeature->SetField( "ASMTransform", &oField );
+                poSubFeature->poASMTransform->SetField( poSubFeature, "ASMTransform" );
             }
 
             // If we are merging features, and this is not text or a block

@@ -313,7 +313,7 @@ const char *KEARasterAttributeTable::GetValueAsString( int iRow, int iField ) co
 int KEARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    int nValue;
+    int nValue = 0;
     if( (const_cast<KEARasterAttributeTable*>(this))->
                 ValuesIO(GF_Read, iField, iRow, 1, &nValue ) != CE_None )
     {
@@ -326,7 +326,7 @@ int KEARasterAttributeTable::GetValueAsInt( int iRow, int iField ) const
 double KEARasterAttributeTable::GetValueAsDouble( int iRow, int iField ) const
 {
     // Get ValuesIO do do the work
-    double dfValue;
+    double dfValue = 0.0;
     if( (const_cast<KEARasterAttributeTable*>(this))->
                 ValuesIO(GF_Read, iField, iRow, 1, &dfValue ) != CE_None )
     {

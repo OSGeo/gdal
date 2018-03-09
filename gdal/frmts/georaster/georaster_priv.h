@@ -244,7 +244,7 @@ class GeoRasterRasterBand : public GDALRasterBand
     GeoRasterRasterBand( GeoRasterDataset* poGDS,
                          int nBand,
                          int nLevel,
-                         GDALDataset* poJP2Dataset = NULL );
+                         GDALDataset* poJP2Dataset = nullptr );
     ~GeoRasterRasterBand() override;
 
 private:
@@ -272,10 +272,10 @@ private:
     void                ApplyNoDataArry( void* pBuffer );
 
 public:
-    double GetNoDataValue( int *pbSuccess = NULL ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
     CPLErr SetNoDataValue( double dfNoDataValue ) override;
-    double GetMinimum( int* pbSuccess = NULL ) override;
-    double GetMaximum( int* pbSuccess = NULL ) override;
+    double GetMinimum( int* pbSuccess = nullptr ) override;
+    double GetMaximum( int* pbSuccess = nullptr ) override;
     GDALColorTable *GetColorTable() override;
     CPLErr SetColorTable( GDALColorTable *poInColorTable ) override;
     GDALColorInterp GetColorInterpretation() override;
