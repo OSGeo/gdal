@@ -224,7 +224,7 @@ transform_list = [ \
      'No-op Optimization (geodetic)', None, None),
 
     # Test GRS80 -> EPSG:3857
-    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2,49,0.0), 1e-9,
+    ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2,49,0.0), 1e-8,
      '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-4,
      'GRS80 -> EPSG:3857', None, None),
 
