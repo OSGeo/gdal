@@ -216,12 +216,17 @@ CPLODBCStatement *OGRODBCTableLayer::GetStatement()
 
 static CPLString EscapeAndQuoteIdentifier(const CPLString& osStr)
 {
-    CPLString osRet;
+    CPLString osRet; int num_dots = 0;
     for( size_t i = 0; i < osStr.size(); i++ )
     {
         if( osStr[i] == '"' )
         {
             osRet += "\\\"";
+        }
+        else if (osStr[i] == '.' && num_dots == 0){
+            /* It's schema qualified, so first segment we assume is the schema and should be quoted separately */
+            osRet += "\".\"";
+            num_dots += 1;
         }
         else
         {
