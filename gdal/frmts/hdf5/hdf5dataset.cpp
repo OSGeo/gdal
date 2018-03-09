@@ -104,11 +104,12 @@ void GDALRegister_HDF5()
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
     hGroupID(-1),
+    hFapl(0),
     papszSubDatasets(nullptr),
     bIsHDFEOS(FALSE),
     nDatasetType(-1),
     nSubDataCount(0),
-    fileBuffer(nullptr),
+    pabyFileBuffer(nullptr),
     poH5RootGroup(nullptr),
     papszMetadata(nullptr),
     poH5CurrentObject(nullptr)
@@ -120,10 +121,10 @@ HDF5Dataset::HDF5Dataset() :
 HDF5Dataset::~HDF5Dataset()
 {
     CSLDestroy(papszMetadata);
-    if( fileBuffer != nullptr )
-        CPLFree(fileBuffer);
-    if( fapl > 0 )
-        H5Pclose(fapl);
+    if( pabyFileBuffer != nullptr )
+        CPLFree(pabyFileBuffer);
+    if( hFapl > 0 )
+        H5Pclose(hFapl);
     if( hGroupID > 0 )
         H5Gclose(hGroupID);
     if( hHDF5 > 0 )
@@ -315,22 +316,22 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     // Try opening the dataset.
     if (VSIStat(poOpenInfo->pszFilename, &statBuf) == 0 &&
         VSI_ISREG(statBuf.st_mode))
-      {
+    {
         poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
-      }
+    }
     else
-      {
+    {
         // Not a regular file: ingest and use the HDF5 memory driver
-        if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->fileBuffer, &filesz, -1))
-          {
+        if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->pabyFileBuffer, &filesz, -1))
+        {
             delete poDS;
             return nullptr;
-          }
-        poDS->fapl = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_core(poDS->fapl, 64 * 1024, FALSE /* no backing store */);
-        H5Pset_file_image(poDS->fapl, poDS->fileBuffer, filesz);
-        poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->fapl);
-      }
+        }
+        poDS->hFapl = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_core(poDS->hFapl, 64 * 1024, FALSE /* no backing store */);
+        H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, filesz);
+        poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->hFapl);
+    }
 
     if( poDS->hHDF5 < 0 )
     {
