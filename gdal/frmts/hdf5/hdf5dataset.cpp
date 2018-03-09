@@ -321,6 +321,12 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else
     {
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 8 && (H5_VERS_MINOR < 8 || H5_VERS_RELEASE < 9)
+        // HDF5 introduced H5Pset_file_image in version 1.8.
+        // So we can't open non-regular files.
+        delete poDS;
+        return nullptr;
+#else
         // Not a regular file: ingest and use the HDF5 memory driver
         if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->pabyFileBuffer, &filesz, -1))
         {
@@ -332,6 +338,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
         H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, filesz);
         poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->hFapl);
     }
+#endif
 
     if( poDS->hHDF5 < 0 )
     {
