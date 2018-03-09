@@ -1967,7 +1967,6 @@ netCDFDataset::~netCDFDataset()
 
     CPLFree(pszProjection);
     CPLFree(pszCFProjection);
-    CPLFree(pszCFCoordinates);
 
     if( cdfid > 0 )
     {
@@ -4207,7 +4206,7 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
         // Save value of pszCFCoordinates for later.
         if( bWriteLonLat )
         {
-            pszCFCoordinates = CPLStrdup(NCDF_LONLAT);
+            pszCFCoordinates = NCDF_LONLAT;
         }
     }
     else
