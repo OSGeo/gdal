@@ -935,7 +935,7 @@ class RL2RasterBand CPL_FINAL: public GDALPamRasterBand
         virtual CPLErr      IReadBlock( int, int, void* ) override;
         virtual GDALColorInterp GetColorInterpretation() override
                                                     { return m_eColorInterp; }
-        virtual double      GetNoDataValue( int* pbSuccess = NULL ) override;
+        virtual double      GetNoDataValue( int* pbSuccess = nullptr ) override;
         virtual GDALColorTable* GetColorTable() override;
         virtual int         GetOverviewCount() override;
         virtual GDALRasterBand* GetOverview(int) override;

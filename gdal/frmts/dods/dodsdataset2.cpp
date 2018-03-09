@@ -1480,7 +1480,7 @@ DODSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                 + oVarName + string("' from the data source at:\n")
                 + poDODS->GetUrl() );
 
-        Array *poA = NULL;
+        Array *poA = nullptr;
         switch (poBt->type()) {
           case dods_grid_c:
             poA = dynamic_cast<Array*>(dynamic_cast<Grid*>(poBt)->array_var());
