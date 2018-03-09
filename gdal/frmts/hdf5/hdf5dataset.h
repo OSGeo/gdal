@@ -65,10 +65,12 @@ class HDF5Dataset : public GDALPamDataset
 protected:
     hid_t            hHDF5;
     hid_t            hGroupID; // H handler interface.
+    hid_t            fapl; // file access property list
     char             **papszSubDatasets;
     int              bIsHDFEOS;
     int              nDatasetType;
     int              nSubDataCount;
+    GByte            *fileBuffer;
 
     HDF5GroupObjects *poH5RootGroup; /* Contain hdf5 Groups information */
 

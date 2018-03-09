@@ -74,7 +74,7 @@ Virtual file systems can only be used with GDAL or OGR drivers supporting the
 full list of these formats can be obtained by looking at the driver marked with
 'v' when running either gdalinfo --formats or ogrinfo --formats.
 
-Notable exceptions are the netCDF, HDF4 and HDF5 drivers.
+Notable exceptions are the netCDF and HDF4 drivers.
 
 \section gdal_virtual_file_systems_vsizip /vsizip/ (.zip archives)
 

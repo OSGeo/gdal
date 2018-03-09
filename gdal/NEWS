@@ -13,6 +13,7 @@
  * Improvements in network-based /vsi handlers: /vsicurl, /vsis3, /vsigs. Add
  /vsiaz for Microsoft Azure Blobs and /vsioss for Alibaba Cloud Object Storage Service
  * Command line utilities: use Unicode main on Windows to avoid issues with non-ASCII characters (#7065)
+ * HDF5 format driver can now read from VSI resources like ZIP files.
 
 == New installed files ==
 
