@@ -244,16 +244,13 @@ public:
         adfVector[2] = adfNewVector[2] + oCT.dfZOffset;
     }
 
-    OGRField ToField() const
+    void SetField(OGRFeature* poFeature, const char* pszFieldName) const
     {
-        OGRField oField;
-        oField.RealList.nCount = 12;
-
-        oField.RealList.paList = new double[12];
-        memcpy( oField.RealList.paList, adfMatrix, sizeof(adfMatrix) );
-        memcpy( oField.RealList.paList + 9, adfVector, sizeof(adfVector) );
-
-        return oField;
+        double* padfList = new double[12];
+        memcpy( padfList, adfMatrix, sizeof(adfMatrix) );
+        memcpy( padfList + 9, adfVector, sizeof(adfVector) );
+        poFeature->SetField(pszFieldName, 12, padfList);
+        delete[] padfList;
     }
 };
 
