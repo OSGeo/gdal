@@ -3266,7 +3266,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
             }
 
             GDALProxyPoolDataset* proxyDS = NULL;
-            if( bIsPreview )
+            if( bIsPreview || bIsTCI )
             {
                 proxyDS = oMapPVITile[osTile];
                 if( proxyDS == NULL )
@@ -3300,7 +3300,7 @@ SENTINEL2Dataset* SENTINEL2Dataset::CreateL1CL2ADataset(
 
             if( nBand != nAlphaBand )
             {
-                poBand->AddSimpleSource( proxyDS->GetRasterBand((bIsPreview) ? nBand : 1),
+                poBand->AddSimpleSource( proxyDS->GetRasterBand((bIsPreview || bIsTCI) ? nBand : 1),
                                         0, 0,
                                         oGranuleInfo.nWidth,
                                         oGranuleInfo.nHeight,
