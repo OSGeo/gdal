@@ -414,7 +414,7 @@ OCIType* OWConnection::DescribeType( const char *pszTypeName )
         (OCILockOpt) OCI_LOCK_NONE,
         (dvoid**) (dvoid*) &hType ), hError );
 /*
-    OCIType*  hType     = NULL;
+    OCIType*  hType     = nullptr;
 
     CheckError( OCITypeByName(
         hEnv,

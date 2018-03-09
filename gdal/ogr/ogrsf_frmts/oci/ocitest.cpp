@@ -38,7 +38,7 @@ CPL_CVSID("$Id$")
 int main( int nArgc, char ** papszArgv )
 
 {
-    OGROCISession *poSession = NULL;
+    OGROCISession *poSession = nullptr;
     const char *pszStatement = "SELECT * FROM NEPSITE";
     char **papszResult;
 
@@ -46,7 +46,7 @@ int main( int nArgc, char ** papszArgv )
         pszStatement = papszArgv[1];
 
     poSession = OGRGetOCISession( "system", "LetoKing", "" );
-    if( poSession == NULL )
+    if( poSession == nullptr )
         exit( 1 );
 
     OGROCIStatement oStatement( poSession );
@@ -54,7 +54,7 @@ int main( int nArgc, char ** papszArgv )
     if( oStatement.Execute( pszStatement ) == CE_Failure )
         exit( 2 );
 
-    while( (papszResult = oStatement.SimpleFetchRow()) != NULL )
+    while( (papszResult = oStatement.SimpleFetchRow()) != nullptr )
     {
         OGRFeatureDefn *poDefn = oStatement.GetResultDefn();
         int nColCount = poDefn->GetFieldCount();

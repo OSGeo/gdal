@@ -217,7 +217,7 @@ int OGRMDBJavaEnv::Init()
            from the PATH instead. This is POSIX-compliant code. */
         FILE *javaCmd = popen("\"${JAVA_HOME}${JAVA_HOME:+/bin/}java\" -XshowSettings 2>&1 | grep 'sun.boot.library.path'", "r");
 
-        if (javaCmd != NULL)
+        if (javaCmd != nullptr)
         {
             char szTmp[PATH_MAX];
             size_t javaCmdRead = fread(szTmp, 1, sizeof(szTmp), javaCmd);
@@ -244,7 +244,7 @@ int OGRMDBJavaEnv::Init()
         pfnJNI_GetCreatedJavaVMs = (jint (*)(JavaVM **, jsize, jsize *))
             CPLGetSymbol(jvmLibPtr, "JNI_GetCreatedJavaVMs");
 
-        if (pfnJNI_GetCreatedJavaVMs == NULL)
+        if (pfnJNI_GetCreatedJavaVMs == nullptr)
         {
             CPLDebug("MDB", "Cannot find JNI_GetCreatedJavaVMs function");
             return FALSE;
@@ -294,7 +294,7 @@ int OGRMDBJavaEnv::Init()
             pfnJNI_CreateJavaVM = (jint (*)(JavaVM **, void **, void *))
                 CPLGetSymbol(jvmLibPtr, "JNI_CreateJavaVM");
 
-            if (pfnJNI_CreateJavaVM == NULL)
+            if (pfnJNI_CreateJavaVM == nullptr)
                 return FALSE;
             else
                 ret = pfnJNI_CreateJavaVM(&jvm, (void **)&env, &args);

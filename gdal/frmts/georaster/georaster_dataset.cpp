@@ -1867,7 +1867,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 
     CPLPushErrorHandler( CPLQuietErrorHandler );
 
-    if( oSRS.importFromEPSG( poGeoRaster->nSRID ) == OGRERR_NONE )
+    if( oSRS.importFromEPSG( static_cast<int>(poGeoRaster->nSRID) ) == OGRERR_NONE )
     {
         /*
          * Ignores the WKT from Oracle and use the one from GDAL's
@@ -1905,7 +1905,7 @@ const char* GeoRasterDataset::GetProjectionRef( void )
     if( strlen(poGeoRaster->sAuthority) > 0 )
     {
        oSRS.SetAuthority(oSRS.GetRoot()->GetValue(), 
-           poGeoRaster->sAuthority.c_str(), poGeoRaster->nSRID);
+           poGeoRaster->sAuthority.c_str(), static_cast<int>(poGeoRaster->nSRID));
     }
 
     int nSpher = OWParseEPSG( oSRS.GetAttrValue("GEOGCS|DATUM|SPHEROID") );
@@ -2428,7 +2428,7 @@ CPLErr GeoRasterDataset::Delete( const char* pszFilename )
 {
     (void) pszFilename;
 /***
-    GeoRasterDataset* poGRD = NULL;
+    GeoRasterDataset* poGRD = nullptr;
 
     poGRD = (GeoRasterDataset*) GDALOpen( pszFilename, GA_Update );
 
