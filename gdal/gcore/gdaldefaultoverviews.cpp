@@ -1002,7 +1002,7 @@ GDALRasterBand *GDALDefaultOverviews::GetMaskBand( int nBand )
 {
     const int nFlags = GetMaskFlags( nBand );
 
-    if( nFlags == MISSING_FLAGS )
+    if( poMaskDS == nullptr || nFlags == MISSING_FLAGS )
         return nullptr;
 
     if( nFlags & GMF_PER_DATASET )
