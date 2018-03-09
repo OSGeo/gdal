@@ -34,6 +34,8 @@
 
 #include "libkml_headers.h"
 
+#include <map>
+
 class OGRLIBKMLDataSource;
 
 CPLString OGRLIBKMLGetSanitizedNCName(const char* pszName);
@@ -178,12 +180,13 @@ class OGRLIBKMLLayer:public OGRLayer
 
 class OGRLIBKMLDataSource:public OGRDataSource
 {
-    char                     *pszName;
+    char                     *m_pszName;
 
     /***** layers *****/
     OGRLIBKMLLayer          **papoLayers;
     int                       nLayers;
     int                       nAlloced;
+    std::map<CPLString, OGRLIBKMLLayer*> m_oMapLayers;
 
     bool                      bUpdate;
     bool                      bUpdated;
@@ -223,7 +226,7 @@ class OGRLIBKMLDataSource:public OGRDataSource
     explicit OGRLIBKMLDataSource       ( kmldom::KmlFactory *poKmlFactory );
     ~OGRLIBKMLDataSource      ();
 
-    const char               *GetName() override { return pszName; }
+    const char               *GetName() override { return m_pszName; }
 
     int                       GetLayerCount() override { return nLayers; }
     OGRLayer                 *GetLayer( int ) override;
