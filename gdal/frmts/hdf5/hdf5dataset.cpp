@@ -341,7 +341,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
         }
         poDS->hFapl = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_core(poDS->hFapl, 64 * 1024, FALSE /* no backing store */);
-        H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, filesz);
+        H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, static_cast<size_t>(filesz));
         poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->hFapl);
     }
 #endif
