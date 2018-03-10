@@ -332,7 +332,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
 #else
         // Not a regular file: ingest and use the HDF5 memory driver
-	vsi_l_offset filesz;
+        vsi_l_offset filesz;
         if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->pabyFileBuffer, &filesz, -1))
         {
             delete poDS;
