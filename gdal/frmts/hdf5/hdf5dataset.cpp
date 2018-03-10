@@ -42,6 +42,10 @@
 #include "hdf5.h"
 #include "hdf5dataset.h"
 
+#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 8 && (H5_VERS_MINOR < 8 || H5_VERS_RELEASE < 9)
+#define HDF5_SUPPORTS_MEMORY_FILE
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -79,7 +83,9 @@ void GDALRegister_HDF5()
 
     GDALDriver *poDriver = new GDALDriver();
 
+#ifdef HDF5_SUPPORTS_MEMORY_FILE
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+#endif
     poDriver->SetDescription("HDF5");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
@@ -321,7 +327,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else
     {
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 8 && (H5_VERS_MINOR < 8 || H5_VERS_RELEASE < 9)
+#ifdef HDF5_SUPPORTS_MEMORY_FILE
         // HDF5 introduced H5Pset_file_image in version 1.8.
         // So we can't open non-regular files.
         delete poDS;
