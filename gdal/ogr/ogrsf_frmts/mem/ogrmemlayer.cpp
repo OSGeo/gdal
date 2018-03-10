@@ -560,27 +560,15 @@ OGRErr OGRMemLayer::CreateField( OGRFieldDefn *poField, int /* bApproxOK */ )
     // Add field definition and setup remap definition.
     m_poFeatureDefn->AddFieldDefn(poField);
 
-    int *panRemap = static_cast<int *>(
-        CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()));
-    for( int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i )
-    {
-        if( i < m_poFeatureDefn->GetFieldCount() - 1 )
-            panRemap[i] = i;
-        else
-            panRemap[i] = -1;
-    }
-
     // Remap all the internal features.  Hopefully there aren't any
     // external features referring to our OGRFeatureDefn!
     IOGRMemLayerFeatureIterator *poIter = GetIterator();
     OGRFeature *poFeature = nullptr;
     while( (poFeature = poIter->Next()) != nullptr )
     {
-        poFeature->RemapFields(nullptr, panRemap);
+        poFeature->AppendField();
     }
     delete poIter;
-
-    CPLFree(panRemap);
 
     m_bUpdated = true;
 

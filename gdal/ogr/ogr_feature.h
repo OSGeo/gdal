@@ -447,6 +447,7 @@ class CPL_DLL OGRFeature
 //! @cond Doxygen_Suppress
     OGRErr              RemapFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
+    void                AppendField();
     OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
 //! @endcond
