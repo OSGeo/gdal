@@ -3566,7 +3566,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
         // and that ODsCCreateGeomFieldAfterCreateLayer is available, use it
         // so as to be able to set the not null constraint (if the driver supports it)
         // Same if the source geometry column has a non empty name that is not
-        // overriden
+        // overridden
         else if( anRequestedGeomFields.empty() &&
                  nSrcGeomFieldCount == 1 &&
                  m_poDstDS->TestCapability(ODsCCreateGeomFieldAfterCreateLayer) &&

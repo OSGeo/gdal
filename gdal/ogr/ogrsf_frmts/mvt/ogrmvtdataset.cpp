@@ -4370,7 +4370,7 @@ void OGRMVTWriterDataset::UpdateLayerProperties(
                 {
                     oFieldProps.m_dfMinVal = oValue.getNumericValue();
                     oFieldProps.m_dfMaxVal = oValue.getNumericValue();
-                    oFieldProps.m_bAllInt = true; // overriden just below
+                    oFieldProps.m_bAllInt = true; // overridden just below
                 }
                 oFieldProps.m_eType = 
                     oValue.isNumeric() ? MVTTileLayerValue::ValueType::DOUBLE :
