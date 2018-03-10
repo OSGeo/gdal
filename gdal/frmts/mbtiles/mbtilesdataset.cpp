@@ -2714,9 +2714,9 @@ GDALDataset* MBTilesDataset::Open(GDALOpenInfo* poOpenInfo)
         bool bFoundRasterTile = nBands > 0;
         if( !bFoundRasterTile )
             nTileSize = knDEFAULT_BLOCK_SIZE;
-        // Map RGB to RGBA since we can guess wrong (see #6836)
-        if (nBands < 0 || nBands == 3)
-            nBands = 4;
+
+        // Force 4 bands by default (see #6119)
+        nBands = 4;
 
         const char* pszBandCount = CSLFetchNameValueDef(
             poOpenInfo->papszOpenOptions, "BAND_COUNT",
