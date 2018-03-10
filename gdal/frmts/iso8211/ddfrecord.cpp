@@ -527,6 +527,14 @@ int DDFRecord::ReadHeader()
 
             if(DDF_FIELD_TERMINATOR != tmpBuf[0]) {
                 nFieldCount++;
+                if( nFieldCount == 1000 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                         "Too many fields in DDF file.");
+                    CPLFree(tmpBuf);
+                    nFieldOffset = -1;
+                    return FALSE;
+                }
             }
         }
         while(DDF_FIELD_TERMINATOR != tmpBuf[0]);
