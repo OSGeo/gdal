@@ -66,3 +66,5 @@ See COMMITERS file.
     sets same iff vertices have the same orientation
       nearzero iff diagonal[k] < qh NEARzero[k]
 ogr2ogr --config OGR_STROKE_CURVE TRUE -SQL 'SELECT Rechtsstatus,publiziertAb,MetadatenGeobasisdaten,Eigentumsbeschraenkung,ZustaendigeStelle,Flaeche FROM "OeREBKRM09trsfr.Transferstruktur.Geometrie"' shpdir ch.bazl.sicherheitszonenplan.oereb_20131118.xtf,OeREBKRM09vs.imd OeREBKRM09trsfr.Transferstruktur.Geometrie
+   /* 130 */ {"MSLET", "Mean Sea Level Pressure (NAM Model Reduction)", "Pa", UC_NONE},
+      addSimpleType(&oTypes, "INST_EFFEKT", "installertEffekt", OFTInteger);

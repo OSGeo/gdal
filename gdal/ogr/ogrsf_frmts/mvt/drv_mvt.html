@@ -216,7 +216,7 @@ algorithm. Defaults to YES. Should be left to YES for FORMAT=MBTILES.</li>
 for tile generation. By default, this will be a file in the same directory as
 the output file/directory.</li>
 <li><b>MAX_SIZE</b>=integer. Maximum size of a tile in bytes (after compression).
-Defaults to 500 000. If a tile is greater than this treshold, features will be
+Defaults to 500 000. If a tile is greater than this threshold, features will be
 written with reduced precision, or discarded.</li>
 <li><b>MAX_FEATURES</b>=integer. Maximum number of features per tile. Defaults
 to 200 000.</li>
@@ -243,7 +243,7 @@ the metadata.json, and are honoured by the OGR MVT reader.
 <h2>Layer configuration</h2>
 
 <p>
-The above mentionned CONF dataset creation option can be set to a string whose
+The above mentioned CONF dataset creation option can be set to a string whose
 value is a JSon serialized document such as the below one:
 </p>
 
@@ -280,7 +280,7 @@ to the dataset creation option MINZOOM value.</li>
 <li><b>MAXZOOM</b>=integer: Minimum zoom level at which tiles are generated. Defaults
 to the dataset creation option MAXZOOM value. Maximum supported value is 22</li>
 <li><b>NAME</b>=string: Target layer name. Defaults to the layer name, but can
-be overriden so that several OGR layers map to a single target MVT layer.
+be overridden so that several OGR layers map to a single target MVT layer.
 The typical use case is to have different OGR layers for mutually exclusive
 zoom level ranges.</li>
 <li><b>DESCRIPTION</b>=string: A description of the layer.</li>
