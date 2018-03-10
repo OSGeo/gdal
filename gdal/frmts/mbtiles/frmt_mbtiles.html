@@ -22,7 +22,8 @@ to be built with GEOS.</p>
 
 <p>The SRS is always the Pseudo-Mercator (a.k.a Google Mercator) projection.</p>
 
-<p>By default, the driver will try to determine the number of bands by probing
+<p>Starting with GDAL 2.3, the driver will open a dataset as RGBA. For previous
+versions, the driver will try to determine the number of bands by probing
 the content of one tile. It is possible to alter this behaviour by defining the
 MBTILES_BAND_COUNT configuration option (or starting with GDAL 2.1, the
 BAND_COUNT open option) to the number of bands. The values supported are 1, 2, 3
