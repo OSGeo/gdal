@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "ogr_feature.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "cpl_conv.h"
@@ -375,6 +376,20 @@ OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
 
     return hFieldDefnH;
 }
+
+//! @cond Doxygen_Suppress
+
+/************************************************************************/
+/*                        ReserveSpaceForFields()                       */
+/************************************************************************/
+
+void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
+{
+    papoFieldDefn = static_cast<OGRFieldDefn **>(
+        CPLRealloc(papoFieldDefn,
+                   sizeof(void *) * std::max(nFieldCount, nFieldCountIn)));
+}
+//! @endcond
 
 /************************************************************************/
 /*                            AddFieldDefn()                            */
