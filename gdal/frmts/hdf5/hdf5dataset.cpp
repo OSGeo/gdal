@@ -308,9 +308,6 @@ int HDF5Dataset::Identify( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    vsi_l_offset filesz;
-    VSIStatBuf statBuf;
-
     if( !Identify(poOpenInfo) )
         return nullptr;
 
@@ -320,6 +317,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
+    VSIStatBuf statBuf;
     if (VSIStat(poOpenInfo->pszFilename, &statBuf) == 0 &&
         VSI_ISREG(statBuf.st_mode))
     {
@@ -327,13 +325,14 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else
     {
-#ifdef HDF5_SUPPORTS_MEMORY_FILE
+#ifndef HDF5_SUPPORTS_MEMORY_FILE
         // HDF5 introduced H5Pset_file_image in version 1.8.
         // So we can't open non-regular files.
         delete poDS;
         return nullptr;
 #else
         // Not a regular file: ingest and use the HDF5 memory driver
+	vsi_l_offset filesz;
         if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->pabyFileBuffer, &filesz, -1))
         {
             delete poDS;
@@ -343,8 +342,8 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
         H5Pset_fapl_core(poDS->hFapl, 64 * 1024, FALSE /* no backing store */);
         H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, static_cast<size_t>(filesz));
         poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->hFapl);
-    }
 #endif
+    }
 
     if( poDS->hHDF5 < 0 )
     {
