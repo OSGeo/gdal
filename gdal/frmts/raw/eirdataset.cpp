@@ -52,7 +52,9 @@ class EIRDataset : public RawDataset
     char **papszExtraFiles;
 
     void        ResetKeyValue( const char *pszKey, const char *pszValue );
+#ifdef unused
     const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
+#endif
 
   public:
     EIRDataset();
@@ -116,6 +118,7 @@ EIRDataset::~EIRDataset()
     CSLDestroy( papszExtraFiles );
 }
 
+#ifdef unused
 /************************************************************************/
 /*                            GetKeyValue()                             */
 /************************************************************************/
@@ -139,6 +142,7 @@ const char *EIRDataset::GetKeyValue( const char *pszKey,
 
     return pszDefault;
 }
+#endif
 
 /************************************************************************/
 /*                           ResetKeyValue()                            */
@@ -237,11 +241,7 @@ int EIRDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
-        return nullptr;
-
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fp == nullptr )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     /* header example and description
@@ -290,12 +290,12 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
     // parse the header file
     const char *pszLine = nullptr;
-    while( (pszLine = CPLReadLineL( fp )) != nullptr )
+    VSIRewindL(poOpenInfo->fpL);
+    while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr )
     {
         nLineCount++;
 
         if ( (nLineCount == 1) && !EQUAL(pszLine, "IMAGINE_RAW_FILE") ) {
-            CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
             return nullptr;
         }
 
@@ -377,7 +377,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
                     papszTokens[1] );
                 CSLDestroy( papszTokens );
                 CSLDestroy( papszHDR );
-                CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
                 return nullptr;
             }
         }
@@ -393,8 +392,6 @@ GDALDataset *EIRDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CSLDestroy( papszTokens );
     }
-
-    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */
