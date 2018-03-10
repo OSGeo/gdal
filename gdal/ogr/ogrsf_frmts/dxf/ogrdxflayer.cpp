@@ -3205,6 +3205,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
 /* -------------------------------------------------------------------- */
 
     bool bLimitReached = false;
+    GUInt32 nErrorCounter = CPLGetErrorCounter();
     for( int iRow = 0; !bLimitReached && iRow < nRowCount; iRow++ )
     {
         for( int iColumn = 0; !bLimitReached && iColumn < nColumnCount; iColumn++ )
@@ -3216,6 +3217,10 @@ OGRDXFFeature *OGRDXFLayer::TranslateINSERT()
                     iRow * dfRowSpacing * cos( oTransformer.dfAngle ),
                 papszAttribs, apoAttribs );
 
+            if( CPLGetErrorCounter() > 100 + nErrorCounter )
+            {
+                bLimitReached = true;
+            }
             // Prevent excessive memory usage with an arbitrary limit
             if( apoPendingFeatures.size() > 100000 ||
                 apoPendingFeatures.GetFeaturesSize() > 100*1024*1024  )
