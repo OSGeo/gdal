@@ -92,16 +92,18 @@ void sbits(unsigned char *out,const g2int *in,g2int iskip,g2int nbyte,g2int nski
 / v1.1
 */
 {
-      g2int i,bitcnt,tbit,ibit,itmp,imask,itmp2,itmp3;
-      g2int nbit,l_index;
-      static const g2int ones[]={1,3,7,15,31,63,127,255};
+      g2int i;
+      unsigned bitcnt,tbit,ibit,itmp,imask,itmp2,itmp3;
+      unsigned nbit,l_index;
+      static const unsigned ones[]={1,3,7,15,31,63,127,255};
+      const unsigned* u_in = (const unsigned*)in;
 
 //     number bits from zero to ...
 //     nbit is the last bit of the field to be filled
 
       nbit = iskip + nbyte - 1;
       for (i=0;i<n;i++) {
-         itmp = *(in+i);
+         itmp = *(u_in+i);
          bitcnt = nbyte;
          l_index=nbit/8;
          ibit=nbit%8;
