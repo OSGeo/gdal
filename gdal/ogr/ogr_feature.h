@@ -262,6 +262,10 @@ class CPL_DLL OGRFeatureDefn
 
     virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
 
+//! @cond Doxygen_Suppress
+    void ReserveSpaceForFields(int nFieldCountIn);
+//! @endcond
+
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
 
