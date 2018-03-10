@@ -484,7 +484,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Confirm that the header is compatible with a ISCE dataset.    */
 /* -------------------------------------------------------------------- */
-    if ( !Identify(poOpenInfo) )
+    if ( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
     {
         return nullptr;
     }
@@ -610,27 +610,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->nRasterYSize = nFileLength;
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->pszXMLFilename = CPLStrdup( osXMLFilename.c_str() );
-
-/* -------------------------------------------------------------------- */
-/*      Reopen file in update mode if necessary.                        */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    }
-    else
-    {
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    }
-    if( poDS->fpImage == nullptr )
-    {
-        CSLDestroy( papszXmlProps );
-        delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within ISCE driver.\n",
-                  poOpenInfo->pszFilename );
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
