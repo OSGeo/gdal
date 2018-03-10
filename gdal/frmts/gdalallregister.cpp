@@ -410,7 +410,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_PNM();
     GDALRegister_DOQ1();
     GDALRegister_DOQ2();
-    GDALRegister_GenBin();
     GDALRegister_PAux();
     GDALRegister_MFF();
     GDALRegister_HKV();
@@ -434,11 +433,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_KRO();
     GDALRegister_ROIPAC();
     GDALRegister_RRASTER();
-
-    // Those ones need to look for side car files so put them at end
-    GDALRegister_ENVI();
-    GDALRegister_EHdr();
-    GDALRegister_ISCE();
 #endif
 
 #ifdef FRMT_arg
@@ -564,6 +558,14 @@ void CPL_STDCALL GDALAllRegister()
 #endif
 
     OGRRegisterAllInternal();
+
+#ifdef FRMT_raw
+    // Those ones need to look for side car files so put them at end
+    GDALRegister_GenBin();
+    GDALRegister_ENVI();
+    GDALRegister_EHdr();
+    GDALRegister_ISCE();
+#endif
 
 #ifdef FRMT_wcs
     GDALRegister_HTTP();
