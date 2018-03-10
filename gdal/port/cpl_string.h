@@ -510,6 +510,8 @@ class CPL_DLL CPLStringList
     /** Return string at specified index */
     const char * operator[](size_t i) const {
       return (*this)[static_cast<int>(i)]; }
+    const char * operator[](const char* pszKey) const {
+        return FetchNameValue(pszKey); }
 
     /** Return list. Ownership remains to the object */
     char **List() { return papszList; }
