@@ -514,7 +514,7 @@ gdaltest_list = [
     hdf5_10,
     hdf5_11,
     hdf5_12,
-    hdf5_13
+    hdf5_13,
     hdf5_14
 ]
 
