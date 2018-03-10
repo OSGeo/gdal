@@ -1018,6 +1018,27 @@ static void MultiPerform(CURLM* hCurlMultiHandle,
 }
 
 /************************************************************************/
+/*                       VSICurlDummyWriteFunc()                        */
+/************************************************************************/
+
+static size_t VSICurlDummyWriteFunc( void *, size_t , size_t , void * )
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                  VSICURLResetHeaderAndWriterFunctions()              */
+/************************************************************************/
+
+static void VSICURLResetHeaderAndWriterFunctions(CURL* hCurlHandle)
+{
+    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION,
+                     VSICurlDummyWriteFunc);
+    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION,
+                     VSICurlDummyWriteFunc);
+}
+
+/************************************************************************/
 /*                           GetFileSize()                              */
 /************************************************************************/
 
@@ -1109,8 +1130,7 @@ retry:
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     if( headers != nullptr )
         curl_slist_free_all(headers);
@@ -1532,8 +1552,7 @@ retry:
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     if( headers != nullptr )
         curl_slist_free_all(headers);
@@ -2119,8 +2138,7 @@ int VSICurlHandle::ReadMultiRange( int const nRanges, void ** const ppData,
         }
 
         curl_multi_remove_handle(hMultiHandle, aHandles[iReq]);
-        curl_easy_setopt(aHandles[iReq], CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(aHandles[iReq], CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(aHandles[iReq]);
         curl_easy_cleanup(aHandles[iReq]);
         CPLFree(apszRanges[iReq]);
         CPLFree(asWriteFuncData[iReq].pBuffer);
@@ -2239,8 +2257,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(
 
     MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     if( headers != nullptr )
         curl_slist_free_all(headers);
@@ -5070,8 +5087,7 @@ bool VSIS3WriteHandle::InitiateMultipartUpload()
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -5212,8 +5228,7 @@ bool VSIS3WriteHandle::UploadPart()
     curl_easy_perform(hCurlHandle);
     CPLHTTPRestoreSigPipeHandler(old_handler);
 
-    curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-    curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+    VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
     curl_slist_free_all(headers);
 
@@ -5547,8 +5562,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -6139,8 +6153,7 @@ int IVSIS3LikeFSHandler::DeleteObject( const char *pszFilename )
         curl_easy_perform(hCurlHandle);
         CPLHTTPRestoreSigPipeHandler(old_handler);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         curl_slist_free_all(headers);
 
@@ -6284,8 +6297,7 @@ char** IVSIS3LikeFSHandler::GetFileList( const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         if( headers != nullptr )
             curl_slist_free_all(headers);
@@ -8220,8 +8232,7 @@ char** VSISwiftFSHandler::GetFileList( const char *pszDirname,
 
         MultiPerform(hCurlMultiHandle, hCurlHandle);
 
-        curl_easy_setopt(hCurlHandle, CURLOPT_HEADERFUNCTION, nullptr);
-        curl_easy_setopt(hCurlHandle, CURLOPT_WRITEFUNCTION, nullptr);
+        VSICURLResetHeaderAndWriterFunctions(hCurlHandle);
 
         if( headers != nullptr )
             curl_slist_free_all(headers);
