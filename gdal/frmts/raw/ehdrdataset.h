@@ -83,6 +83,7 @@ class EHdrDataset : public RawDataset
     char      **papszHDR;
 
     bool        bCLRDirty;
+    GDALColorTable* m_poColorTable = nullptr;
 
     CPLErr      ReadSTX();
     CPLErr      RewriteSTX();
@@ -124,6 +125,8 @@ class EHdrRasterBand : public RawRasterBand
 {
    friend class EHdrDataset;
 
+    bool           m_bOwnEhdrColorTable = false;
+    GDALColorTable* m_poEhdrColorTable = nullptr;
     int            nBits;
     vsi_l_offset   nStartBit;
     int            nPixelOffsetBits;
@@ -150,7 +153,7 @@ class EHdrRasterBand : public RawRasterBand
                     int nLineOffset,
                     GDALDataType eDataType, int bNativeOrder,
                     int nBits);
-    ~EHdrRasterBand() override {}
+    ~EHdrRasterBand() override;
 
     CPLErr IReadBlock( int, int, void * ) override;
     CPLErr IWriteBlock( int, int, void * ) override;
@@ -164,6 +167,7 @@ class EHdrRasterBand : public RawRasterBand
     CPLErr SetStatistics( double dfMin, double dfMax,
                           double dfMean, double dfStdDev ) override;
     CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
+    GDALColorTable* GetColorTable() override;
 };
 
 #endif  // GDAL_FRMTS_RAW_EHDRDATASET_H_INCLUDED
