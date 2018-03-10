@@ -128,6 +128,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/ehdr11.flt >> ehdr11.tar
 zip -r $OUT/ehdr_fuzzer_seed_corpus.zip ehdr11.tar >/dev/null
 rm ehdr11.tar
 
+echo "Building genbin_fuzzer_seed_corpus.zip"
+rm -f $OUT/genbin_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > genbin.tar
+printf "***NEWFILE***:my.hdr\n" >> genbin.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.hdr >> genbin.tar
+printf "***NEWFILE***:my.bil\n" >> genbin.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil >> genbin.tar
+zip -r $OUT/genbin_fuzzer_seed_corpus.zip genbin.tar >/dev/null
+rm genbin.tar
+
 echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
