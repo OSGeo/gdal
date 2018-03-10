@@ -940,7 +940,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
-    if( poOpenInfo->nHeaderBytes < 2 )
+    if( poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     // Tear apart the filename to form a .HDR filename.
@@ -1193,22 +1193,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->papszHDR = papszHDR;
-
-    // Open target binary file.
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    else
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "r+b");
-
-    if( poDS->fpImage == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open %s with write permission.\n%s",
-                 osName.c_str(), VSIStrerror(errno));
-        delete poDS;
-        return nullptr;
-    }
-
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
     poDS->eAccess = poOpenInfo->eAccess;
 
     // Figure out the data type.
@@ -1228,14 +1214,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             eDataType = GDT_UInt32;  // Default
     }
-    else if( nBits == 8 )
+    else if( nBits >= 1 && nBits <= 8 )
     {
         eDataType = GDT_Byte;
         nBits = 8;
-    }
-    else if( nBits < 8 && nBits >= 1 )
-    {
-        eDataType = GDT_Byte;
     }
     else if( nBits == -1 )
     {
@@ -1256,7 +1238,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                  "EHdr driver does not support %d NBITS value.",
                  nBits);
         delete poDS;
-        poDS = nullptr;
         return nullptr;
     }
 
@@ -1273,9 +1254,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize * nBands;
@@ -1286,9 +1266,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (nCols > std::numeric_limits<int>::max() / nItemSize)
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize;
@@ -1300,9 +1279,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         // Assume BIL.
         if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize;
