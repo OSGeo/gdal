@@ -65,7 +65,7 @@ void mkieee(g2float *a,g2int *rieee,g2int num)
 //  Set Sign bit (bit 31 - leftmost bit)
 //
         if (a[j] < 0.0) {
-          ieee= 1 << 31;
+          ieee= (g2int) (1U << 31);
           atemp=-1.0*a[j];
         }
         else {
