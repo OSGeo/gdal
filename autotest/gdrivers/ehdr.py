@@ -89,6 +89,10 @@ def ehdr_4():
 
     ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
 
+    ds.GetRasterBand( 1 ).SetRasterColorTable( None )
+
+    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+
     ds.GetRasterBand( 1 ).SetNoDataValue( 17 )
 
     ds = None

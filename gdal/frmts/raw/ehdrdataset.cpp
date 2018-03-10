@@ -156,6 +156,17 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 }
 
+
+/************************************************************************/
+/*                          ~EHdrRasterBand()                           */
+/************************************************************************/
+
+EHdrRasterBand::~EHdrRasterBand()
+{
+    if( m_bOwnEhdrColorTable )
+        delete m_poEhdrColorTable;
+}
+
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
@@ -424,6 +435,8 @@ EHdrDataset::~EHdrDataset()
 
     CPLFree(pszProjection);
     CSLDestroy(papszHDR);
+
+    delete m_poColorTable;
 }
 
 /************************************************************************/
@@ -1593,7 +1606,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp != nullptr )
     {
-        GDALColorTable oColorTable;
+        poDS->m_poColorTable = new GDALColorTable();
+
         int bHasWarned = FALSE;
 
         while( true )
@@ -1621,7 +1635,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         255
                     };
 
-                    oColorTable.SetColorEntry(nIndex, &oEntry);
+                    poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
                 }
                 else
                 {
@@ -1643,8 +1657,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( int i = 1; i <= poDS->nBands; i++ )
         {
-            GDALRasterBand *poBand = poDS->GetRasterBand(i);
-            poBand->SetColorTable(&oColorTable);
+            EHdrRasterBand *poBand =
+                    dynamic_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
+            poBand->m_bOwnEhdrColorTable = false;
+            poBand->m_poEhdrColorTable = poDS->m_poColorTable;
             poBand->SetColorInterpretation(GCI_PaletteIndex);
         }
 
@@ -1950,14 +1966,27 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
 }
 
 /************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable* EHdrRasterBand::GetColorTable()
+{
+    return m_poEhdrColorTable;
+}
+
+/************************************************************************/
 /*                           SetColorTable()                            */
 /************************************************************************/
 
 CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
 {
-    const CPLErr err = RawRasterBand::SetColorTable(poNewCT);
-    if( err != CE_None )
-        return err;
+    if( m_bOwnEhdrColorTable )
+        delete m_poEhdrColorTable;
+    m_bOwnEhdrColorTable = true;
+    if( poNewCT == nullptr )
+        m_poEhdrColorTable = nullptr;
+    else
+        m_poEhdrColorTable = poNewCT->Clone();
 
     reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
