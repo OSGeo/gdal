@@ -4,6 +4,7 @@
 matrix:
   fast_finish: true
   include:
+
     - os: linux
       compiler: gcc
       language: cpp
@@ -128,6 +129,28 @@ matrix:
       env:
         - BUILD_NAME=osx
         - DETAILS="debug build, libtool"
+
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: required
+      dist: trusty
+      cache:
+        apt: true
+      env:
+        - BUILD_NAME=csa_part_1
+        - DETAILS="CLang Static Analyzer part 1"
+
+    - os: linux
+      compiler: gcc
+      language: cpp
+      sudo: required
+      dist: trusty
+      cache:
+        apt: true
+      env:
+        - BUILD_NAME=csa_part_2
+        - DETAILS="CLang Static Analyzer part 2"
 
 before_install:
   - ./gdal/ci/travis/${BUILD_NAME}/before_install.sh
