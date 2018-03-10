@@ -2525,7 +2525,9 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
         // establish the layer definitions.
         OGRMVTDataset   *poDS = nullptr;
         bool bTryToListDir =
-            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl") &&
+            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl/") &&
+            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl_streaming/") &&
+            !STARTS_WITH(poOpenInfo->pszFilename, "/vsicurl?") &&
             !STARTS_WITH(poOpenInfo->pszFilename, "http://") &&
             !STARTS_WITH(poOpenInfo->pszFilename, "https://");
         CPLStringList aosDirContent;
@@ -2538,6 +2540,7 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
                             "TILE_COUNT_TO_ESTABLISH_FEATURE_DEFN", "1000"));
         int nCountTiles = 0;
+        int nFailedAttempts = 0;
         for( int i = 0; i <
                 (bTryToListDir ? aosDirContent.Count(): (1 << nZ)); i++ )
         {
@@ -2664,13 +2667,21 @@ GDALDataset *OGRMVTDataset::OpenDirectory( GDALOpenInfo* poOpenInfo )
                     }
                     nCountTiles ++;
                 }
+                else if( !bTryToListDir )
+                {
+                    nFailedAttempts ++;
+                }
                 delete poTileDS;
                 CSLDestroy(oOpenInfo.papszOpenOptions);
 
+                if( nFailedAttempts == 10 )
+                    break;
                 if( nMaxTiles > 0 && nCountTiles == nMaxTiles )
                     break;
             }
 
+            if( nFailedAttempts == 10 )
+                break;
             if( nMaxTiles > 0 && nCountTiles == nMaxTiles )
                 break;
         }
