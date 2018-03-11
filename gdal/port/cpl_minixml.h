@@ -157,7 +157,7 @@ int        CPL_DLL CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
 
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 #include <memory>
 
