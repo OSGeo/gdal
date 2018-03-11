@@ -173,7 +173,7 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Confirm that the header is compatible with a ROIPAC dataset.    */
 /* -------------------------------------------------------------------- */
-    if ( !Identify(poOpenInfo) )
+    if ( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
     {
         return nullptr;
     }
@@ -259,27 +259,8 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fpRsc = fpRsc;
     poDS->pszRscFilename = CPLStrdup( osRscFilename.c_str() );
-
-/* -------------------------------------------------------------------- */
-/*      Reopen file in update mode if necessary.                        */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    }
-    else
-    {
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    }
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within ROI_PAC driver.",
-                  poOpenInfo->pszFilename );
-        CSLDestroy( papszRsc );
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
