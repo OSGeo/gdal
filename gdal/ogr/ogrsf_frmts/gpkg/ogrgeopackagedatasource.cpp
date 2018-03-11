@@ -4888,6 +4888,109 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 }
 
 /************************************************************************/
+/*                       DeleteRasterLayer()                            */
+/************************************************************************/
+
+OGRErr GDALGeoPackageDataset::DeleteRasterLayer( const char* pszLayerName )
+{
+
+    if( SoftStartTransaction() != OGRERR_NONE )
+        return OGRERR_FAILURE;
+
+    char* pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_tile_matrix WHERE lower(table_name) = lower('%q')",
+             pszLayerName);
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_tile_matrix_set WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_contents WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE && HasExtensionsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_extensions WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE && HasMetadataTables() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_metadata_reference WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    // Check foreign key integrity
+    if ( eErr == OGRERR_NONE )
+    {
+        eErr = PragmaCheck("foreign_key_check", "", 0);
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        eErr = SoftCommitTransaction();
+    }
+    return eErr;
+}
+
+/************************************************************************/
+/*                    DeleteVectorOrRasterLayer()                       */
+/************************************************************************/
+
+bool GDALGeoPackageDataset::DeleteVectorOrRasterLayer(
+                                                const char* pszLayerName )
+{
+
+    int idx = FindLayerIndex( pszLayerName );
+    if( idx >= 0 )
+    {
+        DeleteLayer( idx );
+        return true;
+    }
+
+    char* pszSQL = sqlite3_mprintf(
+            "SELECT 1 FROM gpkg_contents WHERE "
+            "lower(table_name) = lower('%q') "
+            "AND data_type IN ('tiles')",
+            pszLayerName);
+    bool bIsRasterTable = SQLGetInteger(hDB, pszSQL, nullptr) == 1;
+    sqlite3_free(pszSQL);
+    if( bIsRasterTable )
+    {
+        DeleteRasterLayer(pszLayerName);
+        return true;
+    }
+    return false;
+}
+
+
+/************************************************************************/
 /*                       TestCapability()                               */
 /************************************************************************/
 
@@ -4976,12 +5079,11 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         while( *pszLayerName == ' ' )
             pszLayerName++;
 
-        int idx = FindLayerIndex( pszLayerName );
-        if( idx >= 0 )
-            DeleteLayer( idx );
-        else
+        if( !DeleteVectorOrRasterLayer(pszLayerName) )
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "Unknown layer: %s",
                      pszLayerName);
+        }
         return nullptr;
     }
 
@@ -5016,12 +5118,8 @@ OGRLayer * GDALGeoPackageDataset::ExecuteSQL( const char *pszSQLCommand,
         while( *pszLayerName == ' ' )
             pszLayerName++;
 
-        int idx = FindLayerIndex( SQLUnescape(pszLayerName) );
-        if( idx >= 0 )
-        {
-            DeleteLayer( idx );
+        if( DeleteVectorOrRasterLayer(SQLUnescape(pszLayerName)) )
             return nullptr;
-        }
     }
 
 /* -------------------------------------------------------------------- */
