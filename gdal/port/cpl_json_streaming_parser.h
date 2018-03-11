@@ -31,7 +31,7 @@
 
 /*! @cond Doxygen_Suppress */
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 #include <vector>
 #include <string>
