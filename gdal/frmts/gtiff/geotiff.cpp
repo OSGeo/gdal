@@ -102,9 +102,6 @@
 
 CPL_CVSID("$Id$")
 
-#if SIZEOF_VOIDP == 4
-static bool bGlobalStripIntegerOverflow = false;
-#endif
 static bool bGlobalInExternalOvr = false;
 
 // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
@@ -12160,80 +12157,6 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo* poOpenInfo)
 }
 
 /************************************************************************/
-/*                  GTiffCheckCurrentDirIsCompatOfStripChop()           */
-/************************************************************************/
-
-static bool GTiffCheckCurrentDirIsCompatOfStripChop( TIFF* l_hTIFF,
-                                                     bool& bCandidateForStripChopReopening )
-{
-    uint32 nXSize = 0;
-    TIFFGetField( l_hTIFF, TIFFTAG_IMAGEWIDTH, &nXSize );
-
-    uint32 nYSize = 0;
-    TIFFGetField( l_hTIFF, TIFFTAG_IMAGELENGTH, &nYSize );
-
-    if( nXSize > INT_MAX || nYSize > INT_MAX )
-    {
-        return false;
-    }
-
-    uint16 l_nPlanarConfig = 0;
-    if( !TIFFGetField( l_hTIFF, TIFFTAG_PLANARCONFIG, &(l_nPlanarConfig) ) )
-        l_nPlanarConfig = PLANARCONFIG_CONTIG;
-
-    uint16 l_nCompression = 0;
-    if( !TIFFGetField( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) ) )
-        l_nCompression = COMPRESSION_NONE;
-
-    uint32 l_nRowsPerStrip = 0;
-    if( !TIFFGetField( l_hTIFF, TIFFTAG_ROWSPERSTRIP, &(l_nRowsPerStrip) ) )
-        l_nRowsPerStrip = nYSize;
-
-    bool bCanReopenWithStripChop = true;
-    if( !TIFFIsTiled( l_hTIFF ) &&
-        l_nCompression == COMPRESSION_NONE &&
-        l_nRowsPerStrip >= nYSize &&
-        l_nPlanarConfig == PLANARCONFIG_CONTIG )
-    {
-        bCandidateForStripChopReopening = true;
-        if( nYSize > 10 * 1024 * 1024 )
-        {
-            uint16 l_nSamplesPerPixel = 0;
-            if( !TIFFGetField( l_hTIFF, TIFFTAG_SAMPLESPERPIXEL,
-                               &l_nSamplesPerPixel ) )
-                l_nSamplesPerPixel = 1;
-
-            uint16 l_nBitsPerSample = 0;
-            if( !TIFFGetField(l_hTIFF, TIFFTAG_BITSPERSAMPLE,
-                              &(l_nBitsPerSample)) )
-                l_nBitsPerSample = 1;
-
-            const vsi_l_offset nLineSize =
-                (l_nSamplesPerPixel * static_cast<vsi_l_offset>(nXSize) *
-                 l_nBitsPerSample + 7) / 8;
-            int nDefaultStripHeight = static_cast<int>(8192 / nLineSize);
-            if( nDefaultStripHeight == 0 ) nDefaultStripHeight = 1;
-            const vsi_l_offset nStrips = nYSize / nDefaultStripHeight;
-
-            // There is a risk of DoS due to huge amount of memory allocated in
-            // ChopUpSingleUncompressedStrip() in libtiff.
-            if( nStrips > 10 * 1024 * 1024 &&
-                !CPLTestBool(
-                    CPLGetConfigOption("GTIFF_FORCE_STRIP_CHOP", "NO")) )
-            {
-                CPLError(
-                    CE_Warning, CPLE_AppDefined,
-                    "Potential denial of service detected. Avoid using strip "
-                    "chop. Set the GTIFF_FORCE_STRIP_CHOP configuration open "
-                    "to go over this test." );
-                bCanReopenWithStripChop = false;
-            }
-        }
-    }
-    return bCanReopenWithStripChop;
-}
-
-/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -12302,27 +12225,9 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     // Open and disable "strip chopping" (c option)
     TIFF *l_hTIFF =
         VSI_TIFFOpen( pszFilename,
-                      poOpenInfo->eAccess == GA_ReadOnly ? "rc" : "r+c",
+                      poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
                       poOpenInfo->fpL );
     CPLPopErrorHandler();
-#if SIZEOF_VOIDP == 4
-    if( l_hTIFF == nullptr )
-    {
-        // Case of one-strip file where the strip size is > 2GB (#5403).
-        if( bGlobalStripIntegerOverflow )
-        {
-            l_hTIFF =
-                VSI_TIFFOpen( pszFilename,
-                              poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
-                              poOpenInfo->fpL );
-            bGlobalStripIntegerOverflow = false;
-        }
-    }
-    else
-    {
-        bGlobalStripIntegerOverflow = false;
-    }
-#endif
 
     // Now emit errors and change their criticality if needed
     // We only emit failures if we didn't manage to open the file.
@@ -12358,67 +12263,6 @@ GDALDataset *GTiffDataset::Open( GDALOpenInfo * poOpenInfo )
     uint16 l_nCompression = 0;
     if( !TIFFGetField( l_hTIFF, TIFFTAG_COMPRESSION, &(l_nCompression) ) )
         l_nCompression = COMPRESSION_NONE;
-
-    bool bCandidateForStripChopReopening = false;
-    if( GTiffCheckCurrentDirIsCompatOfStripChop(l_hTIFF,
-                                    bCandidateForStripChopReopening ) &&
-        bCandidateForStripChopReopening )
-    {
-        bool bReopenWithStripChop = true;
-
-#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
-        int iDirIndex = 1;
-#endif
-        // Inspect all directories to decide if we can safely re-open in
-        // strip chop mode
-
-        toff_t nCurOffset = TIFFCurrentDirOffset(l_hTIFF);
-        bool bHasSeveralDirecotries = false;
-
-        while( !TIFFLastDirectory( l_hTIFF ) )
-        {
-            bHasSeveralDirecotries = true;
-            const CPLErr eLastErrorType = CPLGetLastErrorType();
-            const CPLErrorNum eLastErrorNo = CPLGetLastErrorNo();
-            const CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-            CPLPushErrorHandler(CPLQuietErrorHandler);
-            bool bOk = TIFFReadDirectory( l_hTIFF ) != 0;
-            CPLPopErrorHandler();
-            CPLErrorSetState(eLastErrorType, eLastErrorNo, osLastErrorMsg);
-            if( !bOk )
-                break;
-
-#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
-            if( iDirIndex == 32768 )
-                break;
-#endif
-            if( !GTiffCheckCurrentDirIsCompatOfStripChop(l_hTIFF,
-                                    bCandidateForStripChopReopening) )
-            {
-                bReopenWithStripChop = false;
-                break;
-            }
-#if !defined(SUPPORTS_MORE_THAN_32768_DIRECTORIES)
-            iDirIndex ++;
-#endif
-        }
-
-        if( bReopenWithStripChop )
-        {
-            CPLDebug("GTiff", "Reopen with strip chop enabled");
-            XTIFFClose(l_hTIFF);
-            l_hTIFF =
-                VSI_TIFFOpen( pszFilename,
-                              poOpenInfo->eAccess == GA_ReadOnly ? "r" : "r+",
-                              poOpenInfo->fpL );
-            if( l_hTIFF == nullptr )
-                return nullptr;
-        }
-        else if( bHasSeveralDirecotries )
-        {
-            TIFFSetSubDirectory( l_hTIFF, nCurOffset );
-        }
-    }
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -18570,21 +18414,6 @@ GTiffWarningHandler(const char* module, const char* fmt, va_list ap )
 static void
 GTiffErrorHandler( const char* module, const char* fmt, va_list ap )
 {
-#if SIZEOF_VOIDP == 4
-    // Case of one-strip file where the strip size is > 2GB (#5403).
-    if( strcmp(module, "TIFFStripSize") == 0 &&
-        strstr(fmt, "Integer overflow") != nullptr )
-    {
-        bGlobalStripIntegerOverflow = true;
-        return;
-    }
-    if( bGlobalStripIntegerOverflow &&
-        strstr(fmt, "Cannot handle zero strip size") != nullptr )
-    {
-        return;
-    }
-#endif
-
 #ifdef BIGTIFF_SUPPORT
     if( strcmp(fmt, "Maximum TIFF file size exceeded") == 0 )
     {
