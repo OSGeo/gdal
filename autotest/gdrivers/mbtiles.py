@@ -335,7 +335,7 @@ def mbtiles_5():
     gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds )
     src_ds = None
 
-    ds = gdal.Open('/vsimem/mbtiles_5.mbtiles')
+    ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options = ['BAND_COUNT=2'])
     if ds.RasterXSize != 19 or ds.RasterYSize != 19:
         gdaltest.post_reason('fail')
         print(ds.RasterXSize)

@@ -91,6 +91,7 @@ build_gdal_specialized_fuzzer adrg GDALRegister_ADRG  "/vsimem/test.tar" "/vsita
 build_gdal_specialized_fuzzer srp GDALRegister_SRP "/vsimem/test.tar" "/vsitar//vsimem/test.tar/FKUSRP01.IMG"
 build_gdal_specialized_fuzzer envi GDALRegister_ENVI "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.dat"
 build_gdal_specialized_fuzzer ehdr GDALRegister_EHdr "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.dat"
+build_gdal_specialized_fuzzer genbin GDALRegister_GenBin "/vsimem/test.tar" "/vsitar//vsimem/test.tar/my.bil"
 build_gdal_specialized_fuzzer aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsitar//vsimem/test.tar/hdr.adf"
 # mrf can use indirectly the GTiff driver
 build_gdal_specialized_fuzzer mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte.mrf"

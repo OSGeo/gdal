@@ -6161,6 +6161,21 @@ OGRErr OGRFeature::RemapFields( OGRFeatureDefn *poNewDefn,
 }
 
 /************************************************************************/
+/*                            AppendField()                             */
+/*                                                                      */
+/*      This is used to transform a feature "in place" by appending     */
+/*      an unset field.                                                 */
+/************************************************************************/
+
+void OGRFeature::AppendField()
+{
+    int nFieldCount = poDefn->GetFieldCount();
+    pauFields = static_cast<OGRField *>(CPLRealloc( pauFields,
+                            nFieldCount * sizeof(OGRField) ) );
+    OGR_RawField_SetUnset(&pauFields[nFieldCount-1]);
+}
+
+/************************************************************************/
 /*                        RemapGeomFields()                             */
 /*                                                                      */
 /*      This is used to transform a feature "in place" from one         */

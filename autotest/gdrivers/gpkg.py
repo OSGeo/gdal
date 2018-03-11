@@ -40,7 +40,7 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
 sys.path.append( '../pymod' )
 sys.path.append('../../gdal/swig/python/samples')
 
-from osgeo import osr, gdal
+from osgeo import osr, gdal, ogr
 import gdaltest
 
 ###############################################################################
@@ -3784,6 +3784,28 @@ def gpkg_48():
     return 'success'
 
 ###############################################################################
+def gpkg_delete_raster_layer():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    filename = '/vsimem/byte.gpkg'
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG')
+    ds = ogr.Open(filename, update = 1)
+    ds.ExecuteSQL('DROP TABLE byte')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_contents')
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
+    ds = None
+
+    gdal.Unlink(filename)
+
+    if fc != 0:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3853,6 +3875,7 @@ gdaltest_list = [
     gpkg_46,
     gpkg_47,
     gpkg_48,
+    gpkg_delete_raster_layer,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]

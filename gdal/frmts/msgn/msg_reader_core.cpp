@@ -306,9 +306,13 @@ void Msg_reader_core::read_metadata_block(VSILFILE* fin) {
     }
 
     do {
-        CPL_IGNORE_RET_VAL(VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin));
-        CPL_IGNORE_RET_VAL(VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin));
-        CPL_IGNORE_RET_VAL(VSIFReadL(&visir_line, sizeof(SUB_VISIRLINE), 1, fin));
+        if( VSIFReadL(&gp_header, sizeof(GP_PK_HEADER), 1, fin) != 1 ||
+            VSIFReadL(&sub_header, sizeof(GP_PK_SH1), 1, fin) != 1 ||
+            VSIFReadL(&visir_line, sizeof(SUB_VISIRLINE), 1, fin) != 1 )
+        {
+            _open_success = false;
+            break;
+        }
         to_native(visir_line);
         to_native(gp_header);
 

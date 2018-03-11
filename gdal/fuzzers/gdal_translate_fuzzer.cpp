@@ -150,7 +150,26 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                             bOKForResampling = false;
                     }
 
-                    if( nSize < 10 * 1024 * 1024 && bOKForResampling )
+                    bool bOKForSrc = true;
+                    if( nBands )
+                    {
+                        int nBXSize = 0, nBYSize = 0;
+                        GDALGetBlockSize( GDALGetRasterBand(hSrcDS, 1), &nBXSize,
+                                          &nBYSize );
+                        const char* pszInterleave =
+                            GDALGetMetadataItem( hSrcDS, "INTERLEAVE",
+                                                 "IMAGE_STRUCTURE" );
+                        int nSimultaneousBands =
+                            (pszInterleave && EQUAL(pszInterleave, "PIXEL")) ?
+                                        nBands : 1;
+                        if( static_cast<GIntBig>(nSimultaneousBands)*
+                                        nBXSize * nBYSize > 10 * 1024 * 1024 )
+                        {
+                            bOKForSrc = false;
+                        }
+                    }
+
+                    if( bOKForSrc && nSize < 10 * 1024 * 1024 && bOKForResampling )
                     {
                         GDALDatasetH hOutDS = GDALTranslate("/vsimem/out", hSrcDS,
                                                             psOptions, nullptr);

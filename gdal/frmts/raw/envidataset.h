@@ -76,7 +76,7 @@ class ENVIDataset : public RawDataset
 
     char       *pszProjection;
 
-    char        **papszHeader;
+    CPLStringList m_aosHeader;
 
     CPLString   osStaFilename;
 

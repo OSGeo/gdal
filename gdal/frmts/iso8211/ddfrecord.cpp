@@ -347,11 +347,16 @@ int DDFRecord::ReadHeader()
 /*      If we don't find a field terminator at the end of the record    */
 /*      we will read extra bytes till we get to it.                     */
 /* -------------------------------------------------------------------- */
+        int nDataSizeAlloc = nDataSize;
         while( pachData[nDataSize-1] != DDF_FIELD_TERMINATOR
                && (nDataSize < 2 || pachData[nDataSize-2] != DDF_FIELD_TERMINATOR) )
         {
             nDataSize++;
-            pachData = (char *) CPLRealloc(pachData,nDataSize+1);
+            if( nDataSize > nDataSizeAlloc )
+            {
+                nDataSizeAlloc *= 2;
+                pachData = (char *) CPLRealloc(pachData,nDataSizeAlloc+1);
+            }
             pachData[nDataSize] = '\0';
 
             if( VSIFReadL( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
@@ -527,6 +532,14 @@ int DDFRecord::ReadHeader()
 
             if(DDF_FIELD_TERMINATOR != tmpBuf[0]) {
                 nFieldCount++;
+                if( nFieldCount == 1000 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                         "Too many fields in DDF file.");
+                    CPLFree(tmpBuf);
+                    nFieldOffset = -1;
+                    return FALSE;
+                }
             }
         }
         while(DDF_FIELD_TERMINATOR != tmpBuf[0]);

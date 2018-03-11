@@ -156,6 +156,17 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
         SetMetadataItem("PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE");
 }
 
+
+/************************************************************************/
+/*                          ~EHdrRasterBand()                           */
+/************************************************************************/
+
+EHdrRasterBand::~EHdrRasterBand()
+{
+    if( m_bOwnEhdrColorTable )
+        delete m_poEhdrColorTable;
+}
+
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
@@ -424,6 +435,8 @@ EHdrDataset::~EHdrDataset()
 
     CPLFree(pszProjection);
     CSLDestroy(papszHDR);
+
+    delete m_poColorTable;
 }
 
 /************************************************************************/
@@ -927,7 +940,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     // Assume the caller is pointing to the binary (i.e. .bil) file.
-    if( poOpenInfo->nHeaderBytes < 2 )
+    if( poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     // Tear apart the filename to form a .HDR filename.
@@ -1180,22 +1193,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->papszHDR = papszHDR;
-
-    // Open target binary file.
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    else
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "r+b");
-
-    if( poDS->fpImage == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open %s with write permission.\n%s",
-                 osName.c_str(), VSIStrerror(errno));
-        delete poDS;
-        return nullptr;
-    }
-
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
     poDS->eAccess = poOpenInfo->eAccess;
 
     // Figure out the data type.
@@ -1215,14 +1214,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         else
             eDataType = GDT_UInt32;  // Default
     }
-    else if( nBits == 8 )
+    else if( nBits >= 1 && nBits <= 8 )
     {
         eDataType = GDT_Byte;
         nBits = 8;
-    }
-    else if( nBits < 8 && nBits >= 1 )
-    {
-        eDataType = GDT_Byte;
     }
     else if( nBits == -1 )
     {
@@ -1243,7 +1238,6 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                  "EHdr driver does not support %d NBITS value.",
                  nBits);
         delete poDS;
-        poDS = nullptr;
         return nullptr;
     }
 
@@ -1260,9 +1254,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize * nBands;
@@ -1273,9 +1266,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         if (nCols > std::numeric_limits<int>::max() / nItemSize)
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize;
@@ -1287,9 +1279,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
         // Assume BIL.
         if (nCols > std::numeric_limits<int>::max() / (nItemSize * nBands))
         {
-            delete poDS;
-            poDS = nullptr;
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
+            delete poDS;
             return nullptr;
         }
         nPixelOffset = nItemSize;
@@ -1593,7 +1584,8 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp != nullptr )
     {
-        GDALColorTable oColorTable;
+        poDS->m_poColorTable = new GDALColorTable();
+
         int bHasWarned = FALSE;
 
         while( true )
@@ -1621,7 +1613,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                         255
                     };
 
-                    oColorTable.SetColorEntry(nIndex, &oEntry);
+                    poDS->m_poColorTable->SetColorEntry(nIndex, &oEntry);
                 }
                 else
                 {
@@ -1643,8 +1635,10 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         for( int i = 1; i <= poDS->nBands; i++ )
         {
-            GDALRasterBand *poBand = poDS->GetRasterBand(i);
-            poBand->SetColorTable(&oColorTable);
+            EHdrRasterBand *poBand =
+                    dynamic_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
+            poBand->m_bOwnEhdrColorTable = false;
+            poBand->m_poEhdrColorTable = poDS->m_poColorTable;
             poBand->SetColorInterpretation(GCI_PaletteIndex);
         }
 
@@ -1950,14 +1944,27 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
 }
 
 /************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable* EHdrRasterBand::GetColorTable()
+{
+    return m_poEhdrColorTable;
+}
+
+/************************************************************************/
 /*                           SetColorTable()                            */
 /************************************************************************/
 
 CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
 {
-    const CPLErr err = RawRasterBand::SetColorTable(poNewCT);
-    if( err != CE_None )
-        return err;
+    if( m_bOwnEhdrColorTable )
+        delete m_poEhdrColorTable;
+    m_bOwnEhdrColorTable = true;
+    if( poNewCT == nullptr )
+        m_poEhdrColorTable = nullptr;
+    else
+        m_poEhdrColorTable = poNewCT->Clone();
 
     reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 

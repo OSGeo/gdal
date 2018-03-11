@@ -22,5 +22,5 @@ utilities-test:
 pyscripts-test:
 	python run_all.py pyscripts
 
-test:
+test check:
 	@$(MAKE) $(MFLAGS) gcore-test gdrivers-test alg-test ogr-test osr-test utilities-test pyscripts-test

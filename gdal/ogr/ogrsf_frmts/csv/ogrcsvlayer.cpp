@@ -553,6 +553,8 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
         CSLFetchNameValueDef(papszOpenOptions, "KEEP_GEOM_COLUMNS", "YES"));
 
     // Build field definitions.
+    poFeatureDefn->ReserveSpaceForFields(nFieldCount);
+
     for( int iField = 0; !bIsEurostatTSV && iField < nFieldCount; iField++ )
     {
         char *pszFieldName = nullptr;

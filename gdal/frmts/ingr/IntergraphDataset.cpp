@@ -212,7 +212,7 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
         if( !
           ( hTileDir.ApplicationType     == 1 &&
             hTileDir.SubTypeCode         == 7 &&
-            ( hTileDir.WordsToFollow % 4 ) == 0 &&
+            //( hTileDir.WordsToFollow % 4 ) == 0 &&
             hTileDir.PacketVersion       == 1 &&
             hTileDir.Identifier          == 1 ) )
         {

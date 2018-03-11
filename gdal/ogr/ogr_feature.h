@@ -262,6 +262,10 @@ class CPL_DLL OGRFeatureDefn
 
     virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
 
+//! @cond Doxygen_Suppress
+    void ReserveSpaceForFields(int nFieldCountIn);
+//! @endcond
+
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
 
@@ -447,6 +451,7 @@ class CPL_DLL OGRFeature
 //! @cond Doxygen_Suppress
     OGRErr              RemapFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
+    void                AppendField();
     OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn,
                                      int *panRemapSource );
 //! @endcond

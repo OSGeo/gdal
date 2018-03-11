@@ -212,6 +212,10 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 
         std::map<int, OGRSpatialReference*> m_oMapSrsIdToSrs;
 
+        OGRErr              DeleteRasterLayer( const char* pszLayerName );
+        bool                DeleteVectorOrRasterLayer(
+                                                const char* pszLayerName );
+
     public:
                             GDALGeoPackageDataset();
                             virtual ~GDALGeoPackageDataset();
