@@ -326,7 +326,7 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     else
     {
 #ifndef HDF5_SUPPORTS_MEMORY_FILE
-        // HDF5 introduced H5Pset_file_image in version 1.8.
+        // HDF5 introduced H5Pset_file_image in version 1.8.9.
         // So we can't open non-regular files.
         delete poDS;
         return nullptr;
