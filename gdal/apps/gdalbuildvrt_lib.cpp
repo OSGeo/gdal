@@ -53,6 +53,7 @@
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
+#include "ogr_spatialref.h"
 #include "vrtdataset.h"
 
 CPL_CVSID("$Id$")
@@ -405,6 +406,25 @@ static int ProjAreEqual(const char* pszWKT1, const char* pszWKT2)
 }
 
 /************************************************************************/
+/*                         GetProjectionName()                          */
+/************************************************************************/
+
+static CPLString GetProjectionName(const char* pszProjection)
+{
+    if( !pszProjection )
+        return "(null)";
+
+    OGRSpatialReference oSRS;
+    oSRS.SetFromUserInput(pszProjection);
+    const char* pszRet = nullptr;
+    if( oSRS.IsProjected() )
+        pszRet = oSRS.GetAttrValue("PROJCS");
+    else if( oSRS.IsGeographic() )
+        pszRet = oSRS.GetAttrValue("GEOGCS");
+    return pszRet ? pszRet : "(null)";
+}
+
+/************************************************************************/
 /*                           AnalyseRaster()                            */
 /************************************************************************/
 
@@ -673,13 +693,19 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     {
         if ((proj != nullptr && pszProjectionRef == nullptr) ||
             (proj == nullptr && pszProjectionRef != nullptr) ||
-            (proj != nullptr && pszProjectionRef != nullptr && ProjAreEqual(proj, pszProjectionRef) == FALSE))
+            (proj != nullptr && pszProjectionRef != nullptr &&
+                        ProjAreEqual(proj, pszProjectionRef) == FALSE))
         {
             if (!bAllowProjectionDifference)
             {
+                CPLString osExpected = GetProjectionName(pszProjectionRef);
+                CPLString osGot = GetProjectionName(proj);
                 CPLError(CE_Warning, CPLE_NotSupported,
-                            "gdalbuildvrt does not support heterogeneous projection. Skipping %s",
-                            dsFileName);
+                         "gdalbuildvrt does not support heterogeneous "
+                         "projection: expected %s, got %s. Skipping %s",
+                         osExpected.c_str(),
+                         osGot.c_str(),
+                         dsFileName);
                 return FALSE;
             }
         }
@@ -688,19 +714,40 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
             if (nMaxBandNo > _nBands)
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                            "gdalbuildvrt does not support heterogeneous band numbers. Skipping %s",
-                        dsFileName);
+                         "gdalbuildvrt does not support heterogeneous band "
+                         "numbers: expected %d, got %d. Skipping %s",
+                         _nBands, nMaxBandNo, dsFileName);
                 return FALSE;
             }
             for(j=0;j<nMaxBandNo;j++)
             {
                 GDALRasterBandH hRasterBand = GDALGetRasterBand( hDS, j+1 );
-                if (pasBandProperties[j].colorInterpretation != GDALGetRasterColorInterpretation(hRasterBand) ||
-                    pasBandProperties[j].dataType != GDALGetRasterDataType(hRasterBand))
+                if (pasBandProperties[j].colorInterpretation !=
+                            GDALGetRasterColorInterpretation(hRasterBand))
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
-                                "gdalbuildvrt does not support heterogeneous band characteristics. Skipping %s",
-                                dsFileName);
+                             "gdalbuildvrt does not support heterogeneous "
+                             "band color interpretation: expected %s, got %s. "
+                             "Skipping %s",
+                             GDALGetColorInterpretationName(
+                                 pasBandProperties[j].colorInterpretation),
+                             GDALGetColorInterpretationName(
+                                 GDALGetRasterColorInterpretation(hRasterBand)),
+                             dsFileName);
+                    return FALSE;
+                }
+                if (pasBandProperties[j].dataType !=
+                                    GDALGetRasterDataType(hRasterBand))
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "gdalbuildvrt does not support heterogeneous "
+                             "band data type: expected %s, got %s. "
+                             "Skipping %s",
+                             GDALGetDataTypeName(
+                                 pasBandProperties[j].dataType),
+                             GDALGetDataTypeName(
+                                 GDALGetRasterDataType(hRasterBand)),
+                             dsFileName);
                     return FALSE;
                 }
                 if (pasBandProperties[j].colorTable)
