@@ -822,20 +822,9 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
             CPLFree(pszEWKB);
         }
 
-        if( !bHasUserFieldMatchingFID )
+        if( bWriteInsertInto && !bHasUserFieldMatchingFID && !osFIDColName.empty() )
         {
-            if( !osFIDColName.empty() && nNextFID >= 0 )
-            {
-                if( bHasJustGotNextFID )
-                {
-                    if( bMustComma )
-                        osSQL += ", ";
-                    // No need to set bMustComma to true in else case.
-                    // Not in a loop.
-                    osSQL += CPLSPrintf(CPL_FRMT_GIB, nNextFID);
-                }
-            }
-            else if( !osFIDColName.empty() && poFeature->GetFID() != OGRNullFID )
+            if( poFeature->GetFID() != OGRNullFID )
             {
                 if( bMustComma )
                     osSQL += ", ";
@@ -844,12 +833,21 @@ OGRErr OGRCARTOTableLayer::ICreateFeature( OGRFeature *poFeature )
 
                 osSQL += CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFID());
             }
+            else if( nNextFID >= 0 && bHasJustGotNextFID )
+            {
+                if( bMustComma )
+                    osSQL += ", ";
+                // No need to set bMustComma to true in else case.
+                // Not in a loop.
+                osSQL += CPLSPrintf(CPL_FRMT_GIB, nNextFID);
+            }
         }
 
         osSQL += ")";
     }
 
-    if( !bHasUserFieldMatchingFID && !osFIDColName.empty() && nNextFID >= 0 )
+    if( !bHasUserFieldMatchingFID && !osFIDColName.empty() && nNextFID >= 0 &&
+        poFeature->GetFID() == OGRNullFID )
     {
         poFeature->SetFID(nNextFID);
         nNextFID ++;
