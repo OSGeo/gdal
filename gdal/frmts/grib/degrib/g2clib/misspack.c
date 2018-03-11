@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 #include "grib2.h"
 
 void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
@@ -275,8 +276,18 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         //
         miss1=jfld[0];
         for ( j=0; j<nonmiss; j++) if (jfld[j] < miss1) miss1 = jfld[j];
-        miss1--;
-        miss2=miss1-1;
+        if( miss1 <= INT_MIN + 1 )
+        {
+            // E. Rouault: no idea if this is correct, but avoids integer
+            // wrap over
+            miss1++;
+            miss2 = miss1 + 1;
+        }
+        else
+        {
+            miss1--;
+            miss2=miss1-1;
+        }
         n=0;
         for ( j=0; j<ndpts; j++) {
            if ( ifldmiss[j] == 0 ) {
