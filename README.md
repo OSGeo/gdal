@@ -14,7 +14,7 @@ GDAL - Geospatial Data Abstraction Library
 | Android                  | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=android&label=android)](https://travis-ci.org/OSGeo/gdal) |
 | Big endian host          | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=big_endian&label=big_endian)](https://travis-ci.org/OSGeo/gdal) |
 | GCC 5.2 C++14 -fsanitize | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=gcc52_stdcpp14_sanitize&label=gcc52_stdcpp14_sanitize)](https://travis-ci.org/OSGeo/gdal) |
-| Clang Static Analyzer    | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_1&csa_part_1)](https://travis-ci.org/OSGeo/gdal) [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_2&csa_part_2)](https://travis-ci.org/OSGeo/gdal) |
+| Clang Static Analyzer    | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_1&label=csa_part_1)](https://travis-ci.org/OSGeo/gdal) [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_2&label=csa_part_2)](https://travis-ci.org/OSGeo/gdal) |
 | Coverity Scan            | [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal) |
 
 GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats. This is a mirror of the GDAL Subversion repository.
