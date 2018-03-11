@@ -905,9 +905,6 @@ ISCERasterBand::ISCERasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRawIn,
 
 void GDALRegister_ISCE()
 {
-    if( !GDAL_CHECK_VERSION( "ISCE" ) )
-        return;
-
     if( GDALGetDriverByName( "ISCE" ) != nullptr )
         return;
 

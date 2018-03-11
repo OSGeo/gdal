@@ -915,9 +915,6 @@ ROIPACRasterBand::ROIPACRasterBand( GDALDataset *poDSIn, int nBandIn, void *fpRa
 
 void GDALRegister_ROIPAC()
 {
-    if( !GDAL_CHECK_VERSION( "ROI_PAC" ) )
-        return;
-
     if( GDALGetDriverByName( "ROI_PAC" ) != nullptr )
         return;
 
