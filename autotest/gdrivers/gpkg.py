@@ -3794,8 +3794,16 @@ def gpkg_delete_raster_layer():
                    creationOptions = ['RASTER_TABLE=foo'])
     ds = ogr.Open(filename, update = 1)
     ds.ExecuteSQL('DROP TABLE foo')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
+    fc = sql_lyr.GetFeatureCount()
+    ds.ReleaseResultSet(sql_lyr)
     ds.ExecuteSQL('VACUUM')
     ds = None
+
+    if fc != 0:
+        gdaltest.post_reason('fail')
+        print(fc)
+        return 'fail'
 
     # Check that there is no more any reference to the layer
     f = gdal.VSIFOpenL(filename, 'rb')
