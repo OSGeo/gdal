@@ -624,10 +624,16 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
 /* -------------------------------------------------------------------- */
-    const char *sDataType =
+    const char *pszDataType =
         CSLFetchNameValue( const_cast<char **>(apszISCE2GDALDatatypes),
                            CSLFetchNameValue( papszXmlProps, "DATA_TYPE" ) );
-    const GDALDataType eDataType = GDALGetDataTypeByName( sDataType );
+    if( pszDataType == nullptr )
+    {
+        delete poDS;
+        CSLDestroy( papszXmlProps );
+        return nullptr;
+    }
+    const GDALDataType eDataType = GDALGetDataTypeByName( pszDataType );
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const char *sScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
     int nPixelOffset = 0;
