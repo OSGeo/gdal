@@ -139,6 +139,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/tm4628_96.bil >> genbin.tar
 zip -r $OUT/genbin_fuzzer_seed_corpus.zip genbin.tar >/dev/null
 rm genbin.tar
 
+echo "Building isce_fuzzer_seed_corpus.zip"
+rm -f $OUT/isce_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > isce.tar
+printf "***NEWFILE***:isce.slc\n" >> isce.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc >> isce.tar
+printf "***NEWFILE***:isce.slc.xml\n" >> isce.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/isce.slc.xml >> isce.tar
+zip -r $OUT/isce_fuzzer_seed_corpus.zip isce.tar >/dev/null
+rm isce.tar
+
 echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
