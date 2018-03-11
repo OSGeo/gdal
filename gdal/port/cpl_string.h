@@ -64,7 +64,7 @@ char CPL_DLL **CSLAddString(char **papszStrList,
                             const char *pszNewString) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLAddStringMayFail(
     char **papszStrList, const char *pszNewString) CPL_WARN_UNUSED_RESULT;
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
   int CPL_DLL CSLCount(const char * const *papszStrList);
 #else
   int CPL_DLL CSLCount(char **papszStrList);
@@ -98,7 +98,7 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 
 int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 char CPL_DLL **CSLLoad2(
     const char *pszFname, int nMaxLines, int nMaxCols,
     const char * const * papszOptions) CPL_WARN_UNUSED_RESULT;
@@ -116,7 +116,7 @@ char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
 char CPL_DLL **CSLRemoveStrings(
     char **papszStrList, int nFirstLineToDelete,
     int nNumToRemove, char ***ppapszRetStrings) CPL_WARN_UNUSED_RESULT;
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 int CPL_DLL CSLFindString( const char * const *papszList,
                            const char *pszTarget );
 int CPL_DLL CSLFindStringCaseSensitive( const char * const *papszList,
@@ -141,7 +141,7 @@ int CPL_DLL CSLTestBoolean( const char *pszValue );
 /* Do not use CPLTestBoolean in C++ code.  Use CPLTestBool. */
 int CPL_DLL CPLTestBoolean( const char *pszValue );
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #ifdef DO_NOT_USE_DEBUG_BOOL
 #define CPLTestBool(x) CPL_TO_BOOL(CPLTestBoolean(x))
 #define CPLFetchBool(list,key,default) \
@@ -163,7 +163,7 @@ bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
 const char CPL_DLL *
       CPLParseNameValue( const char *pszNameValue, char **ppszKey );
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 const char CPL_DLL *
       CSLFetchNameValue( const char * const *papszStrList, const char *pszName);
 const char CPL_DLL *
