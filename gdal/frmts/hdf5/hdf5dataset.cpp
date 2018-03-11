@@ -42,7 +42,7 @@
 #include "hdf5.h"
 #include "hdf5dataset.h"
 
-#if H5_VERS_MAJOR == 1 && H5_VERS_MINOR <= 8 && (H5_VERS_MINOR < 8 || H5_VERS_RELEASE < 9)
+#if H5_VERS_MAJOR > 1 || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 8 || (H5_VERS_MINOR == 8 && H5_VERS_RELEASE >=9)))
 #define HDF5_SUPPORTS_MEMORY_FILE
 #endif
 
