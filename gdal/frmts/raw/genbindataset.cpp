@@ -497,25 +497,29 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 /* -------------------------------------------------------------------- */
     if( oSRS.GetAttrNode( "GEOGCS" ) == nullptr )
     {
+        const char* pszSpheroidName =
+            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" );
+        const char* pszSemiMajor =
+            CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS");
+        const char* pszSemiMinor =
+            CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS");
         if( pszDatumName != nullptr
             && oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
         {
             // good
         }
-        else if( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" )
-                 && CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS" )
-                 && CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS" ) )
+        else if( pszSpheroidName && pszSemiMajor && pszSemiMinor )
         {
-            const double dfSemiMajor
-                = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS"));
-            const double dfSemiMinor
-                = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS"));
+            const double dfSemiMajor = CPLAtofM(pszSemiMajor);
+            const double dfSemiMinor = CPLAtofM(pszSemiMinor);
 
-            oSRS.SetGeogCS( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
-                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
-                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
+            oSRS.SetGeogCS( pszSpheroidName,
+                            pszSpheroidName,
+                            pszSpheroidName,
                             dfSemiMajor,
-                            1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
+                            (dfSemiMajor == 0.0 ||
+                             dfSemiMajor == dfSemiMinor) ? 0.0 :
+                                1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
         }
         else // fallback default.
             oSRS.SetWellKnownGeogCS( "WGS84" );
@@ -843,7 +847,9 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszHdr,"UL_X_COORDINATE") != nullptr
+    if( poDS->nRasterXSize > 1 &&
+        poDS->nRasterYSize > 1 &&
+        CSLFetchNameValue(papszHdr,"UL_X_COORDINATE") != nullptr
         && CSLFetchNameValue(papszHdr,"UL_Y_COORDINATE") != nullptr
         && CSLFetchNameValue(papszHdr,"LR_X_COORDINATE") != nullptr
         && CSLFetchNameValue(papszHdr,"LR_Y_COORDINATE") != nullptr )
