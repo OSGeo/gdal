@@ -4802,11 +4802,34 @@ OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
 
     if( eErr == OGRERR_NONE && HasMetadataTables() )
     {
+        // Delete from gpkg_metadata metadata records that are only referenced
+        // by the table we are about to drop
         pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_metadata_reference WHERE lower(table_name) = lower('%q')",
+                "DELETE FROM gpkg_metadata WHERE id IN ("
+                "SELECT DISTINCT md_file_id FROM "
+                "gpkg_metadata_reference WHERE "
+                "lower(table_name) = lower('%q') AND md_parent_id is NULL) "
+                "AND id NOT IN ("
+                "SELECT DISTINCT md_file_id FROM gpkg_metadata_reference WHERE "
+                "md_file_id IN (SELECT DISTINCT md_file_id FROM "
+                "gpkg_metadata_reference WHERE "
+                "lower(table_name) = lower('%q') AND md_parent_id is NULL) "
+                "AND lower(table_name) <> lower('%q'))",
+                pszLayerName,
+                pszLayerName,
                 pszLayerName);
         eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkg_metadata_reference WHERE "
+                    "lower(table_name) = lower('%q')",
+                    pszLayerName);
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
     }
 
     if( eErr == OGRERR_NONE )
