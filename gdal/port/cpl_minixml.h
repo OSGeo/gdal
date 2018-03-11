@@ -158,35 +158,22 @@ int        CPL_DLL CPLSerializeXMLTreeToFile( const CPLXMLNode *psTree,
 CPL_C_END
 
 #ifdef __cplusplus
+
+#include <memory>
+
 /** Manage a tree of XML nodes so that all nodes are freed when the instance goes
  * out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
  */
-class CPLXMLTreeCloser {
+class CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode>
+{
  public:
   /** Constructor */
-  explicit CPLXMLTreeCloser(CPLXMLNode* data) { the_data_ = data; }
-
-  /** Destructor */
-  ~CPLXMLTreeCloser() {
-    if (the_data_) CPLDestroyXMLNode(the_data_);
-  }
-
-  /** Returns the node pointer/
-   * Modifying the contents pointed to by the return is allowed.
-   * @return the node pointer */
-  CPLXMLNode* get() const { return the_data_; }
+  explicit CPLXMLTreeCloser(CPLXMLNode* data):
+    std::unique_ptr<CPLXMLNode>(data) {}
 
   /** Returns a pointer to the document (root) element
    * @return the node pointer */
   CPLXMLNode* getDocumentElement();
-
-  /** Returns the node pointer/
-   * Modifying the contents pointed to by the return is allowed.
-   * @return the node pointer */
-  CPLXMLNode* operator->() const { return get(); }
-
- private:
-  CPLXMLNode* the_data_;
 };
 #endif /* __cplusplus */
 
