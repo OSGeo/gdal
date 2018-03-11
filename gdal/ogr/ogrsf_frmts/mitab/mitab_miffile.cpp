@@ -2111,7 +2111,7 @@ OGRErr MIFFile::GetExtent (OGREnvelope *psExtent, int bForce)
     if (bForce == TRUE)
         PreParseFile();
 
-    if (m_bPreParsed)
+    if (m_bPreParsed && m_bExtentsSet)
     {
         *psExtent = m_sExtents;
         return OGRERR_NONE;
