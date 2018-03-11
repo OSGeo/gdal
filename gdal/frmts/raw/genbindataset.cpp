@@ -478,7 +478,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
             }
         }
 
-        const char *pszUnits = CSLFetchNameValue( papszHdr, "MAP_UNITS" );
+        const char *pszUnits = CSLFetchNameValueDef( papszHdr, "MAP_UNITS", "" );
         double dfUnits = 0.0;
         if( EQUAL(pszUnits,"feet") )
             dfUnits = CPLAtofM(SRS_UL_US_FOOT_CONV);
