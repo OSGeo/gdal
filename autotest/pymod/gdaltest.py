@@ -1963,6 +1963,17 @@ def config_options(options):
         gdal.SetConfigOption(key, oldvals[key])
 
 ###############################################################################
+# Temporarily create a file
+
+@contextlib.contextmanager
+def tempfile(filename, content):
+  gdal.FileFromMemBuffer(filename, content)
+  try:
+      yield
+  finally:
+      gdal.Unlink(filename)
+
+###############################################################################
 run_func = gdaltestaux.run_func
 urlescape = gdaltestaux.urlescape
 gdalurlopen = gdaltestaux.gdalurlopen
