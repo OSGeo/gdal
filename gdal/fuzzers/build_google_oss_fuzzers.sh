@@ -98,6 +98,7 @@ build_gdal_specialized_fuzzer aig GDALRegister_AIGrid "/vsimem/test.tar" "/vsita
 # mrf can use indirectly the GTiff driver
 build_gdal_specialized_fuzzer mrf "GDALRegister_mrf();GDALRegister_GTiff" "/vsimem/test.tar" "/vsitar//vsimem/test.tar/byte.mrf"
 build_gdal_specialized_fuzzer gdal_sdts GDALRegister_SDTS "/vsimem/test.tar" "/vsitar//vsimem/test.tar/1107CATD.DDF"
+build_gdal_specialized_fuzzer gdal_vrt GDALAllRegister "/vsimem/test.tar" "/vsitar//vsimem/test.tar/test.vrt"
 
 build_fuzzer gdal_filesystem_fuzzer $(dirname $0)/gdal_fuzzer.cpp -DUSE_FILESYSTEM
 build_fuzzer ogr_filesystem_fuzzer $(dirname $0)/ogr_fuzzer.cpp -DUSE_FILESYSTEM

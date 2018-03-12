@@ -2309,21 +2309,13 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     // small files.
     // But ultimately we should fix RawRasterBand to have a shared buffer
     // among bands.
-    if( nBands > 10 ||
-        static_cast<vsi_l_offset>(nPixelOffset) * poDS->nRasterXSize > 20000 )
+    if( !RAWDatasetCheckMemoryUsage(
+                        poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nPixelOffset, nLineOffset, nHeaderSize, nBandOffset,
+                        poDS->fpImage) )
     {
-        vsi_l_offset nExpectedFileSize =
-            nHeaderSize + nBandOffset * (nBands - 1) +
-            (poDS->nRasterYSize-1) * static_cast<vsi_l_offset>(nLineOffset) +
-            (poDS->nRasterXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
-        CPL_IGNORE_RET_VAL( VSIFSeekL(poDS->fpImage, 0, SEEK_END) );
-        vsi_l_offset nFileSize = VSIFTellL(poDS->fpImage);
-        if( nFileSize < nExpectedFileSize )
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
-            delete poDS;
-            return nullptr;
-        }
+        delete poDS;
+        return nullptr;
     }
 
     // Create band information objects.

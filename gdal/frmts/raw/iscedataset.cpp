@@ -712,6 +712,16 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
+    if( !RAWDatasetCheckMemoryUsage(
+                        poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nPixelOffset, nLineOffset, 0, nBandOffset,
+                        poDS->fpImage) )
+    {
+        delete poDS;
+        CSLDestroy( papszXmlProps );
+        return nullptr;
+    }
+
     poDS->nBands = nBands;
     for (int b = 0; b < nBands; b++)
     {

@@ -489,7 +489,8 @@ GDALDataset *ROIPACDataset::Open( GDALOpenInfo *poOpenInfo )
                                                  "=",
                                                  CSLT_STRIPLEADSPACES
                                                  | CSLT_STRIPENDSPACES);
-        if ( strcmp( papszTokens[0], "WIDTH" ) == 0
+        if ( CSLCount(papszTokens) < 2
+              || strcmp( papszTokens[0], "WIDTH" ) == 0
               || strcmp( papszTokens[0], "FILE_LENGTH" ) == 0
               || strcmp( papszTokens[0], "X_FIRST" ) == 0
               || strcmp( papszTokens[0], "X_STEP" ) == 0

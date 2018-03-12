@@ -131,6 +131,9 @@ class CPL_DLL OGR_SRSNode
  *
  * See <a href="osr_tutorial.html">the tutorial</a> for more information on
  * how to use this class.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  */
 
 class CPL_DLL OGRSpatialReference

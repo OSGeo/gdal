@@ -197,6 +197,16 @@ def vrt_read_5():
         print(ds.GetGCPProjection())
         return 'fail'
 
+    ds.SetGCPs( ds.GetGCPs(), ds.GetGCPProjection() )
+
+    gcps = ds.GetGCPs()
+    if len(gcps) != 2 or ds.GetGCPCount() != 2:
+        return 'fail'
+
+    if ds.GetGCPProjection().find("WGS 84") == -1:
+        print(ds.GetGCPProjection())
+        return 'fail'
+
     band = ds.GetRasterBand(1)
     if band.GetDescription() != 'MyDescription':
         print(band.GetDescription())
