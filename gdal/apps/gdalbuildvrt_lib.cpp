@@ -82,8 +82,12 @@ typedef struct
     int    nBlockXSize;
     int    nBlockYSize;
     GDALDataType firstBandType;
-    int*         panHasNoData;
+    bool*        pabHasNoData;
     double*      padfNoDataValues;
+    bool*        pabHasOffset;
+    double*      padfOffset;
+    bool*        pabHasScale;
+    double*      padfScale;
     int    bHasDatasetMask;
     int    nMaskBlockXSize;
     int    nMaskBlockYSize;
@@ -94,8 +98,12 @@ typedef struct
     GDALColorInterp        colorInterpretation;
     GDALDataType           dataType;
     GDALColorTableH        colorTable;
-    int                    bHasNoData;
+    bool                   bHasNoData;
     double                 noDataValue;
+    bool                   bHasOffset;
+    double                 dfOffset;
+    bool                   bHasScale;
+    double                 dfScale;
 } BandProperty;
 
 /************************************************************************/
@@ -364,7 +372,11 @@ VRTBuilder::~VRTBuilder()
         for(int i=0;i<nInputFiles;i++)
         {
             CPLFree(pasDatasetProperties[i].padfNoDataValues);
-            CPLFree(pasDatasetProperties[i].panHasNoData);
+            CPLFree(pasDatasetProperties[i].pabHasNoData);
+            CPLFree(pasDatasetProperties[i].padfOffset);
+            CPLFree(pasDatasetProperties[i].pabHasOffset);
+            CPLFree(pasDatasetProperties[i].padfScale);
+            CPLFree(pasDatasetProperties[i].pabHasScale);
         }
     }
     CPLFree(pasDatasetProperties);
@@ -596,8 +608,18 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 
     psDatasetProperties->padfNoDataValues =
         static_cast<double *>(CPLCalloc(sizeof(double), _nBands));
-    psDatasetProperties->panHasNoData =
-        static_cast<int *>(CPLCalloc(sizeof(int), _nBands));
+    psDatasetProperties->pabHasNoData =
+        static_cast<bool *>(CPLCalloc(sizeof(bool), _nBands));
+
+    psDatasetProperties->padfOffset =
+        static_cast<double *>(CPLCalloc(sizeof(double), _nBands));
+    psDatasetProperties->pabHasOffset =
+        static_cast<bool *>(CPLCalloc(sizeof(bool), _nBands));
+
+    psDatasetProperties->padfScale=
+        static_cast<double *>(CPLCalloc(sizeof(double), _nBands));
+    psDatasetProperties->pabHasScale =
+        static_cast<bool *>(CPLCalloc(sizeof(bool), _nBands));
 
     psDatasetProperties->bHasDatasetMask = GDALGetMaskFlags(GDALGetRasterBand(hDS, 1)) == GMF_PER_DATASET;
     if (psDatasetProperties->bHasDatasetMask)
@@ -611,7 +633,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
     {
         if (nSrcNoDataCount > 0)
         {
-            psDatasetProperties->panHasNoData[j] = TRUE;
+            psDatasetProperties->pabHasNoData[j] = true;
             if (j < nSrcNoDataCount)
                 psDatasetProperties->padfNoDataValues[j] = padfSrcNoData[j];
             else
@@ -619,10 +641,24 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
         }
         else
         {
+            int bHasNoData = false;
             psDatasetProperties->padfNoDataValues[j]  =
                 GDALGetRasterNoDataValue(GDALGetRasterBand(hDS, j+1),
-                                        &psDatasetProperties->panHasNoData[j]);
+                                         &bHasNoData);
+            psDatasetProperties->pabHasNoData[j] = bHasNoData != 0;
         }
+
+        int bHasOffset = false;
+        psDatasetProperties->padfOffset[j] =
+            GDALGetRasterOffset(GDALGetRasterBand(hDS, j+1), &bHasOffset);
+        psDatasetProperties->pabHasOffset[j] = bHasOffset != 0 &&
+                            psDatasetProperties->padfOffset[j] != 0.0;
+
+        int bHasScale = false;
+        psDatasetProperties->padfScale[j] =
+            GDALGetRasterScale(GDALGetRasterBand(hDS, j+1), &bHasScale);
+        psDatasetProperties->pabHasScale[j] = bHasScale != 0 &&
+                            psDatasetProperties->padfScale[j] != 1.0;
     }
 
     if (bFirst)
@@ -675,7 +711,7 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
 
                 if (nVRTNoDataCount > 0)
                 {
-                    pasBandProperties[j].bHasNoData = TRUE;
+                    pasBandProperties[j].bHasNoData = true;
                     if (j < nVRTNoDataCount)
                         pasBandProperties[j].noDataValue = padfVRTNoData[j];
                     else
@@ -683,9 +719,23 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                 }
                 else
                 {
+                    int bHasNoData = false;
                     pasBandProperties[j].noDataValue =
-                            GDALGetRasterNoDataValue(hRasterBand, &pasBandProperties[j].bHasNoData);
+                            GDALGetRasterNoDataValue(hRasterBand, &bHasNoData);
+                    pasBandProperties[j].bHasNoData = bHasNoData != 0;
                 }
+
+                int bHasOffset = false;
+                pasBandProperties[j].dfOffset =
+                    GDALGetRasterOffset(hRasterBand, &bHasOffset);
+                pasBandProperties[j].bHasOffset = bHasOffset != 0 &&
+                                pasBandProperties[j].dfOffset != 0.0;
+
+                int bHasScale = false;
+                pasBandProperties[j].dfScale =
+                    GDALGetRasterScale(hRasterBand, &bHasScale);
+                pasBandProperties[j].bHasScale = bHasScale != 0 && 
+                                pasBandProperties[j].dfScale != 1.0;
             }
         }
     }
@@ -789,6 +839,39 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                         }
                     }
                 }
+
+                if( psDatasetProperties->pabHasOffset[j] != pasBandProperties[j].bHasOffset ||
+                    (pasBandProperties[j].bHasOffset &&
+                     psDatasetProperties->padfOffset[j] != pasBandProperties[j].dfOffset) )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "gdalbuildvrt does not support heterogeneous "
+                             "band offset: expected (%d,%f), got (%d,%f). "
+                             "Skipping %s",
+                             pasBandProperties[j].bHasOffset,
+                             pasBandProperties[j].dfOffset,
+                             psDatasetProperties->pabHasOffset[j],
+                             psDatasetProperties->padfOffset[j],
+                             dsFileName);
+                    return FALSE;
+                }
+
+                if( psDatasetProperties->pabHasScale[j] != pasBandProperties[j].bHasScale ||
+                    (pasBandProperties[j].bHasScale &&
+                     psDatasetProperties->padfScale[j] != pasBandProperties[j].dfScale) )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "gdalbuildvrt does not support heterogeneous "
+                             "band scale: expected (%d,%f), got (%d,%f). "
+                             "Skipping %s",
+                             pasBandProperties[j].bHasScale,
+                             pasBandProperties[j].dfScale,
+                             psDatasetProperties->pabHasScale[j],
+                             psDatasetProperties->padfScale[j],
+                             dsFileName);
+                    return FALSE;
+                }
+
             }
         }
         if (!bUserExtent)
@@ -887,7 +970,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
 
         VRTSimpleSource* poSimpleSource;
-        if (bAllowSrcNoData && psDatasetProperties->panHasNoData[0])
+        if (bAllowSrcNoData && psDatasetProperties->pabHasNoData[0])
         {
             GDALSetRasterNoDataValue(hVRTBand, psDatasetProperties->padfNoDataValues[0]);
             poSimpleSource = new VRTComplexSource();
@@ -904,6 +987,12 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                                     dfSrcXSize, dfSrcYSize,
                                     dfDstXOff, dfDstYOff,
                                     dfDstXSize, dfDstYSize );
+
+        if( psDatasetProperties->pabHasOffset[0] )
+            poVRTBand->SetOffset( psDatasetProperties->padfOffset[0] );
+
+        if( psDatasetProperties->pabHasScale[0] )
+            poVRTBand->SetScale( psDatasetProperties->padfScale[0] );
 
         poVRTBand->AddSource( poSimpleSource );
 
@@ -934,6 +1023,12 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             GDALSetRasterNoDataValue(hBand, pasBandProperties[nSelBand].noDataValue);
         if ( bHideNoData )
             GDALSetMetadataItem(hBand,"HideNoDataValue","1",nullptr);
+
+        if( pasBandProperties[nSelBand].bHasOffset )
+            GDALSetRasterOffset( hBand, pasBandProperties[nSelBand].dfOffset );
+
+        if( pasBandProperties[nSelBand].bHasScale )
+            GDALSetRasterScale( hBand, pasBandProperties[nSelBand].dfScale );
     }
 
     VRTSourcedRasterBand* poMaskVRTBand = nullptr;
@@ -1007,7 +1102,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
 
             VRTSimpleSource* poSimpleSource;
-            if (bAllowSrcNoData && psDatasetProperties->panHasNoData[nSelBand])
+            if (bAllowSrcNoData && psDatasetProperties->pabHasNoData[nSelBand])
             {
                 poSimpleSource = new VRTComplexSource();
                 poSimpleSource->SetNoDataValue( psDatasetProperties->padfNoDataValues[nSelBand] );
