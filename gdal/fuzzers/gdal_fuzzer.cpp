@@ -251,7 +251,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
 
             int nOverviewCount = GDALGetOverviewCount(hBand);
             for( int i = 0; i < nOverviewCount; i++ )
-                GDALGetRasterBandXSize(GDALGetOverview(hBand, i));
+            {
+                GDALGetOverview(hBand, i);
+            }
         }
 
         GDALClose(hDS);
