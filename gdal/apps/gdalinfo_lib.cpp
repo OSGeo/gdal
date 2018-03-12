@@ -1196,7 +1196,9 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                      iOverview < GDALGetOverviewCount(hMaskBand);
                      iOverview++ )
                 {
-                    GDALRasterBandH hOverview;
+                    GDALRasterBandH hOverview = GDALGetOverview( hMaskBand, iOverview );
+                    if( !hOverview )
+                        break;
                     json_object *poMaskOverview = nullptr;
                     json_object *poMaskOverviewSize = nullptr;
 
@@ -1211,7 +1213,6 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                             Concat(osStr, psOptions->bStdoutOutput, ", " );
                     }
 
-                    hOverview = GDALGetOverview( hMaskBand, iOverview );
                     if(bJson)
                     {
                         json_object *poMaskOverviewSizeX =
