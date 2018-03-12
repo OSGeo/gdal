@@ -620,6 +620,9 @@ void OGRSpatialReference::dumpReadable()
 
 /**
  * Convert this SRS into a nicely formatted WKT string for display to a person.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  *
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
@@ -689,6 +692,9 @@ OGRErr CPL_STDCALL OSRExportToPrettyWkt( OGRSpatialReferenceH hSRS, char ** ppsz
 
 /**
  * \brief Convert this SRS into WKT format.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  *
  * Note that the returned WKT string should be freed with
  * CPLFree() when no longer needed.  It is the responsibility of the caller.
@@ -719,6 +725,9 @@ OGRErr OGRSpatialReference::exportToWkt( char ** ppszResult ) const
 
 /**
  * \brief Convert this SRS into WKT format.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  *
  * This function is the same as OGRSpatialReference::exportToWkt().
  */
@@ -746,6 +755,9 @@ OGRErr CPL_STDCALL OSRExportToWkt( OGRSpatialReferenceH hSRS,
  * much of the input string as needed to construct this SRS is consumed from
  * the input string, and the input string pointer
  * is then updated to point to the remaining (unused) input.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  *
  * This method is the same as the C function OSRImportFromWkt().
  *
@@ -795,6 +807,9 @@ OGRErr OGRSpatialReference::importFromWkt( char ** ppszInput )
 
 /**
  * \brief Import from WKT string.
+ * 
+ * Consult also the <a href="wktproblems.html">OGC WKT Coordinate System Issues</a> page
+ * for implementation details of WKT in OGR.
  *
  * This function is the same as OGRSpatialReference::importFromWkt().
  */
