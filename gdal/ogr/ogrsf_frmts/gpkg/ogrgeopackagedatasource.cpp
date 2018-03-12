@@ -4780,6 +4780,75 @@ int GDALGeoPackageDataset::FindLayerIndex( const char *pszLayerName )
 }
 
 /************************************************************************/
+/*                       DeleteLayerCommon()                            */
+/************************************************************************/
+
+OGRErr GDALGeoPackageDataset::DeleteLayerCommon(const char* pszLayerName)
+{
+    char* pszSQL = sqlite3_mprintf(
+            "DELETE FROM gpkg_contents WHERE lower(table_name) = lower('%q')",
+            pszLayerName);
+    OGRErr eErr = SQLCommand(hDB, pszSQL);
+    sqlite3_free(pszSQL);
+
+    if( eErr == OGRERR_NONE && HasExtensionsTable() )
+    {
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_extensions WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    if( eErr == OGRERR_NONE && HasMetadataTables() )
+    {
+        // Delete from gpkg_metadata metadata records that are only referenced
+        // by the table we are about to drop
+        pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_metadata WHERE id IN ("
+                "SELECT DISTINCT md_file_id FROM "
+                "gpkg_metadata_reference WHERE "
+                "lower(table_name) = lower('%q') AND md_parent_id is NULL) "
+                "AND id NOT IN ("
+                "SELECT DISTINCT md_file_id FROM gpkg_metadata_reference WHERE "
+                "md_file_id IN (SELECT DISTINCT md_file_id FROM "
+                "gpkg_metadata_reference WHERE "
+                "lower(table_name) = lower('%q') AND md_parent_id is NULL) "
+                "AND lower(table_name) <> lower('%q'))",
+                pszLayerName,
+                pszLayerName,
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+
+        if( eErr == OGRERR_NONE )
+        {
+            pszSQL = sqlite3_mprintf(
+                    "DELETE FROM gpkg_metadata_reference WHERE "
+                    "lower(table_name) = lower('%q')",
+                    pszLayerName);
+            eErr = SQLCommand(hDB, pszSQL);
+            sqlite3_free(pszSQL);
+        }
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
+
+    // Check foreign key integrity
+    if ( eErr == OGRERR_NONE )
+    {
+        eErr = PragmaCheck("foreign_key_check", "", 0);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
 /*                            DeleteLayer()                             */
 /************************************************************************/
 
@@ -4795,40 +4864,16 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     CPLDebug( "GPKG", "DeleteLayer(%s)", osLayerName.c_str() );
 
-    if( SoftStartTransaction() != OGRERR_NONE )
-        return OGRERR_FAILURE;
-
-    if( m_papoLayers[iLayer]->HasSpatialIndex() )
-        m_papoLayers[iLayer]->DropSpatialIndex();
-
-    char* pszSQL = sqlite3_mprintf(
-            "DELETE FROM gpkg_geometry_columns WHERE lower(table_name) = lower('%q')",
-             osLayerName.c_str());
-    OGRErr eErr = SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
+    OGRErr eErr = SoftStartTransaction();
 
     if( eErr == OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_contents WHERE lower(table_name) = lower('%q')",
-                osLayerName.c_str());
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
+        if( m_papoLayers[iLayer]->HasSpatialIndex() )
+            m_papoLayers[iLayer]->DropSpatialIndex();
 
-    if( eErr == OGRERR_NONE && HasExtensionsTable() )
-    {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_extensions WHERE lower(table_name) = lower('%q')",
-                osLayerName.c_str());
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    if( eErr == OGRERR_NONE && HasMetadataTables() )
-    {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_metadata_reference WHERE lower(table_name) = lower('%q')",
+        char* pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_geometry_columns WHERE "
+                "lower(table_name) = lower('%q')",
                 osLayerName.c_str());
         eErr = SQLCommand(hDB, pszSQL);
         sqlite3_free(pszSQL);
@@ -4836,7 +4881,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     if( eErr == OGRERR_NONE && HasDataColumnsTable() )
     {
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_data_columns WHERE lower(table_name) = lower('%q')",
                 osLayerName.c_str());
         eErr = SQLCommand(hDB, pszSQL);
@@ -4846,7 +4891,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if( eErr == OGRERR_NONE && m_bHasGPKGOGRContents )
     {
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_ogr_contents WHERE lower(table_name) = lower('%q')",
                 osLayerName.c_str());
         eErr = SQLCommand(hDB, pszSQL);
@@ -4856,15 +4901,7 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 
     if( eErr == OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", osLayerName.c_str());
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    // Check foreign key integrity
-    if ( eErr == OGRERR_NONE )
-    {
-        eErr = PragmaCheck("foreign_key_check", "", 0);
+        eErr = DeleteLayerCommon(osLayerName.c_str());
     }
 
     if( eErr == OGRERR_NONE )
@@ -4894,18 +4931,20 @@ OGRErr GDALGeoPackageDataset::DeleteLayer( int iLayer )
 OGRErr GDALGeoPackageDataset::DeleteRasterLayer( const char* pszLayerName )
 {
 
-    if( SoftStartTransaction() != OGRERR_NONE )
-        return OGRERR_FAILURE;
+    OGRErr eErr = SoftStartTransaction();
 
-    char* pszSQL = sqlite3_mprintf(
-            "DELETE FROM gpkg_tile_matrix WHERE lower(table_name) = lower('%q')",
-             pszLayerName);
-    OGRErr eErr = SQLCommand(hDB, pszSQL);
-    sqlite3_free(pszSQL);
+    if( eErr == OGRERR_NONE)
+    {
+        char* pszSQL = sqlite3_mprintf(
+                "DELETE FROM gpkg_tile_matrix WHERE lower(table_name) = lower('%q')",
+                pszLayerName);
+        eErr = SQLCommand(hDB, pszSQL);
+        sqlite3_free(pszSQL);
+    }
 
     if( eErr == OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf(
+        char* pszSQL = sqlite3_mprintf(
                 "DELETE FROM gpkg_tile_matrix_set WHERE lower(table_name) = lower('%q')",
                 pszLayerName);
         eErr = SQLCommand(hDB, pszSQL);
@@ -4914,48 +4953,18 @@ OGRErr GDALGeoPackageDataset::DeleteRasterLayer( const char* pszLayerName )
 
     if( eErr == OGRERR_NONE )
     {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_contents WHERE lower(table_name) = lower('%q')",
-                pszLayerName);
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    if( eErr == OGRERR_NONE && HasExtensionsTable() )
-    {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_extensions WHERE lower(table_name) = lower('%q')",
-                pszLayerName);
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    if( eErr == OGRERR_NONE && HasMetadataTables() )
-    {
-        pszSQL = sqlite3_mprintf(
-                "DELETE FROM gpkg_metadata_reference WHERE lower(table_name) = lower('%q')",
-                pszLayerName);
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    if( eErr == OGRERR_NONE )
-    {
-        pszSQL = sqlite3_mprintf("DROP TABLE \"%w\"", pszLayerName);
-        eErr = SQLCommand(hDB, pszSQL);
-        sqlite3_free(pszSQL);
-    }
-
-    // Check foreign key integrity
-    if ( eErr == OGRERR_NONE )
-    {
-        eErr = PragmaCheck("foreign_key_check", "", 0);
+        eErr = DeleteLayerCommon(pszLayerName);
     }
 
     if( eErr == OGRERR_NONE )
     {
         eErr = SoftCommitTransaction();
     }
+    else
+    {
+        SoftRollbackTransaction();
+    }
+    
     return eErr;
 }
 

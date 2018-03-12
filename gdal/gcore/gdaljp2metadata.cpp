@@ -280,7 +280,7 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                         if( i < nXMLLength )
                         {
                             CPLPushErrorHandler(CPLQuietErrorHandler);
-                            CPLXMLNode* psNode = CPLParseXMLString(pszXML);
+                            CPLXMLTreeCloser psNode(CPLParseXMLString(pszXML));
                             CPLPopErrorHandler();
                             if( psNode == nullptr )
                             {
@@ -294,10 +294,6 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                                     if( pszXML[j] == '\0' )
                                         pszXML[j] = '\n';
                                 }
-                            }
-                            else
-                            {
-                                CPLDestroyXMLNode(psNode);
                             }
                         }
                     }
@@ -316,16 +312,15 @@ void GDALJP2Metadata::CollectGMLData( GDALJP2Box *poGMLData )
                     pszGDALMultiDomainMetadata == nullptr &&
                     strstr(pszXML, "GDALMultiDomainMetadata") != nullptr )
                 {
-                    CPLXMLNode* psTree = CPLParseXMLString(pszXML);
+                    CPLXMLTreeCloser psTree(CPLParseXMLString(pszXML));
                     if( psTree != nullptr )
                     {
                         CPLXMLNode* psGDALMDMD =
-                            CPLSearchXMLNode(psTree, "GDALMultiDomainMetadata");
+                            CPLSearchXMLNode(psTree.get(), "GDALMultiDomainMetadata");
                         if( psGDALMDMD )
                             pszGDALMultiDomainMetadata =
                                 CPLSerializeXMLTree(psGDALMDMD);
                     }
-                    CPLDestroyXMLNode(psTree);
                 }
             }
 
@@ -562,14 +557,12 @@ int GDALJP2Metadata::ReadBoxes( VSILFILE *fpVSIL )
             if( pszXMLIPR == nullptr )
             {
                 pszXMLIPR = (char*) oBox.ReadBoxData();
-                CPLXMLNode* psNode = CPLParseXMLString(pszXMLIPR);
+                CPLXMLTreeCloser psNode(CPLParseXMLString(pszXMLIPR));
                 if( psNode == nullptr )
                 {
                     CPLFree(pszXMLIPR);
                     pszXMLIPR = nullptr;
                 }
-                else
-                    CPLDestroyXMLNode(psNode);
             }
             else
             {
@@ -793,7 +786,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Try and parse the dictionary.                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psDictTree = CPLParseXMLString( pszDictionary );
+    CPLXMLTreeCloser psDictTree(CPLParseXMLString( pszDictionary ));
 
     if( psDictTree == nullptr )
     {
@@ -801,13 +794,12 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
         return nullptr;
     }
 
-    CPLStripXMLNamespace( psDictTree, nullptr, TRUE );
+    CPLStripXMLNamespace( psDictTree.get(), nullptr, TRUE );
 
-    CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree, "=Dictionary" );
+    CPLXMLNode *psDictRoot = CPLSearchXMLNode( psDictTree.get(), "=Dictionary" );
 
     if( psDictRoot == nullptr )
     {
-        CPLDestroyXMLNode( psDictTree );
         CPLFree(pszLabel);
         return nullptr;
     }
@@ -841,7 +833,6 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 /*      Cleanup                                                         */
 /* -------------------------------------------------------------------- */
     CPLFree( pszLabel );
-    CPLDestroyXMLNode( psDictTree );
 
     return psHit;
 }
@@ -861,7 +852,7 @@ GetDictionaryItem( char **papszGMLMetadata, const char *pszURN )
 int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 
 {
-    CPLXMLNode *psDictEntry = GetDictionaryItem( papszGMLMetadata, pszURN );
+    CPLXMLTreeCloser psDictEntry(GetDictionaryItem( papszGMLMetadata, pszURN ));
 
     if( psDictEntry == nullptr )
         return FALSE;
@@ -869,8 +860,8 @@ int GDALJP2Metadata::GMLSRSLookup( const char *pszURN )
 /* -------------------------------------------------------------------- */
 /*      Reserialize this fragment.                                      */
 /* -------------------------------------------------------------------- */
-    char *pszDictEntryXML = CPLSerializeXMLTree( psDictEntry );
-    CPLDestroyXMLNode( psDictEntry );
+    char *pszDictEntryXML = CPLSerializeXMLTree( psDictEntry.get() );
+    psDictEntry.reset();
 
 /* -------------------------------------------------------------------- */
 /*      Try to convert into an OGRSpatialReference.                     */
@@ -917,18 +908,18 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
 /*      Try parsing the XML.  Wipe any namespace prefixes.              */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psXML = CPLParseXMLString( pszCoverage );
+    CPLXMLTreeCloser psXML(CPLParseXMLString( pszCoverage ));
 
     if( psXML == nullptr )
         return FALSE;
 
-    CPLStripXMLNamespace( psXML, nullptr, TRUE );
+    CPLStripXMLNamespace( psXML.get(), nullptr, TRUE );
 
 /* -------------------------------------------------------------------- */
 /*      Isolate RectifiedGrid.  Eventually we will need to support      */
 /*      other georeferencing objects.                                   */
 /* -------------------------------------------------------------------- */
-    CPLXMLNode *psRG = CPLSearchXMLNode( psXML, "=RectifiedGrid" );
+    CPLXMLNode *psRG = CPLSearchXMLNode( psXML.get(), "=RectifiedGrid" );
     CPLXMLNode *psOriginPoint = nullptr;
     const char *pszOffset1 = nullptr;
     const char *pszOffset2 = nullptr;
@@ -951,7 +942,6 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 /* -------------------------------------------------------------------- */
     if( psOriginPoint == nullptr || pszOffset1 == nullptr || pszOffset2 == nullptr )
     {
-        CPLDestroyXMLNode( psXML );
         return FALSE;
     }
 
@@ -1023,7 +1013,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if( pszSRSName == nullptr )
     {
         pszSRSName =
-            CPLGetXMLValue( psXML,
+            CPLGetXMLValue( psXML.get(),
                             "=FeatureCollection.boundedBy.Envelope.srsName",
                             nullptr );
     }
@@ -1144,8 +1134,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         }
     }
 
-    CPLDestroyXMLNode( psXML );
-    psXML = nullptr;
+    psXML.reset();
     psRG = nullptr;
 
     if( bNeedAxisFlip )
@@ -1994,17 +1983,16 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     CPL_json_object_object_get(poRootInstance, "grid_coverage_range_type_file");
                 if( poGCRTFile && json_object_get_type(poGCRTFile) == json_type_string )
                 {
-                    CPLXMLNode* psTmp = CPLParseXMLFile(json_object_get_string(poGCRTFile));
+                    CPLXMLTreeCloser psTmp(CPLParseXMLFile(json_object_get_string(poGCRTFile)));
                     if( psTmp != nullptr )
                     {
-                        CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
+                        CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp.get());
                         if( psTmpRoot )
                         {
                             char* pszTmp = CPLSerializeXMLTree(psTmpRoot);
                             osCoverageRangeTypeXML = pszTmp;
                             CPLFree(pszTmp);
                         }
-                        CPLDestroyXMLNode(psTmp);
                     }
                 }
             }
@@ -2356,17 +2344,16 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         // Read custom grid coverage file.
         if( !osGridCoverageFile.empty() )
         {
-            CPLXMLNode* psTmp = CPLParseXMLFile(osGridCoverageFile);
+            CPLXMLTreeCloser psTmp(CPLParseXMLFile(osGridCoverageFile));
             if( psTmp == nullptr )
                 return nullptr;
-            CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp);
+            CPLXMLNode* psTmpRoot = GDALGMLJP2GetXMLRoot(psTmp.get());
             if( psTmpRoot )
             {
                 char* pszTmp = CPLSerializeXMLTree(psTmpRoot);
                 osGridCoverage = pszTmp;
                 CPLFree(pszTmp);
             }
-            CPLDestroyXMLNode(psTmp);
         }
     }
 
@@ -2499,37 +2486,37 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
     if( !aoMetadata.empty() || !aoAnnotations.empty() || !aoGMLFiles.empty() ||
         !aoStyles.empty() || !aoExtensions.empty() )
     {
-        CPLXMLNode* psRoot = CPLParseXMLString(osDoc);
+        CPLXMLTreeCloser psRoot(CPLParseXMLString(osDoc));
         CPLAssert(psRoot);
-        CPLXMLNode* psGMLJP2CoverageCollection = GDALGMLJP2GetXMLRoot(psRoot);
+        CPLXMLNode* psGMLJP2CoverageCollection = GDALGMLJP2GetXMLRoot(psRoot.get());
         CPLAssert(psGMLJP2CoverageCollection);
 
         for( int i=0; i < static_cast<int>(aoMetadata.size()); ++i )
         {
-            CPLXMLNode* psMetadata = nullptr;
+            CPLXMLTreeCloser psMetadata(nullptr);
             if( !aoMetadata[i].osFile.empty() )
-                psMetadata = CPLParseXMLFile(aoMetadata[i].osFile);
+                psMetadata = CPLXMLTreeCloser(CPLParseXMLFile(aoMetadata[i].osFile));
             else if( !aoMetadata[i].osContent.empty() )
-                psMetadata = CPLParseXMLString(aoMetadata[i].osContent);
+                psMetadata = CPLXMLTreeCloser(CPLParseXMLString(aoMetadata[i].osContent));
             else if( aoMetadata[i].bGDALMetadata )
             {
-                psMetadata = CreateGDALMultiDomainMetadataXML(poSrcDS, TRUE);
+                psMetadata = CPLXMLTreeCloser(CreateGDALMultiDomainMetadataXML(poSrcDS, TRUE));
                 if( psMetadata )
                 {
-                    CPLSetXMLValue(psMetadata, "#xmlns", "http://gdal.org");
+                    CPLSetXMLValue(psMetadata.get(), "#xmlns", "http://gdal.org");
                     CPLXMLNode* psNewMetadata =
                         CPLCreateXMLNode(nullptr, CXT_Element, "gmljp2:metadata");
-                    CPLAddXMLChild(psNewMetadata, psMetadata);
-                    psMetadata = psNewMetadata;
+                    CPLAddXMLChild(psNewMetadata, psMetadata.release());
+                    psMetadata = CPLXMLTreeCloser(psNewMetadata);
                 }
             }
             else
-                psMetadata =
+                psMetadata = CPLXMLTreeCloser(
                     GDALGMLJP2GenerateMetadata(aoMetadata[i].osTemplateFile,
-                                               aoMetadata[i].osSourceFile);
+                                               aoMetadata[i].osSourceFile));
             if( psMetadata == nullptr )
                 continue;
-            CPLXMLNode* psMetadataRoot = GDALGMLJP2GetXMLRoot(psMetadata);
+            CPLXMLNode* psMetadataRoot = GDALGMLJP2GetXMLRoot(psMetadata.get());
             if( psMetadataRoot )
             {
                 if( strcmp(psMetadataRoot->pszValue,
@@ -2537,8 +2524,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 {
                     CPLXMLNode* psNewMetadata = CPLCreateXMLNode(nullptr, CXT_Element, "gmljp2:eopMetadata");
                     CPLAddXMLChild(psNewMetadata, CPLCloneXMLTree(psMetadataRoot));
-                    CPLDestroyXMLNode(psMetadata);
-                    psMetadata = psMetadataRoot = psNewMetadata;
+                    psMetadataRoot = psNewMetadata;
+                    psMetadata = CPLXMLTreeCloser(psNewMetadata);
                 }
                 if( strcmp(psMetadataRoot->pszValue, "gmljp2:isoMetadata") != 0 &&
                     strcmp(psMetadataRoot->pszValue, "gmljp2:eopMetadata") != 0 &&
@@ -2588,7 +2575,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     CPLAddXMLChild( psGMLJP2Metadata, CPLCloneXMLTree(psMetadataRoot) );
                 }
             }
-            CPLDestroyXMLNode(psMetadata);
         }
 
         bool bRootHasXLink = false;
@@ -2598,13 +2584,13 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoGMLFiles.size()); ++i )
         {
             // Is the file already a GML file?
-            CPLXMLNode* psGMLFile = nullptr;
+            CPLXMLTreeCloser psGMLFile(nullptr);
             if( !aoGMLFiles[i].osFile.empty() )
             {
                 if( EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "gml") ||
                     EQUAL(CPLGetExtension(aoGMLFiles[i].osFile), "xml") )
                 {
-                    psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
+                    psGMLFile = CPLXMLTreeCloser(CPLParseXMLFile(aoGMLFiles[i].osFile));
                 }
                 GDALDriverH hDrv = nullptr;
                 if( psGMLFile == nullptr )
@@ -2622,7 +2608,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 if( psGMLFile == nullptr && hDrv == hGMLDrv )
                 {
                     // Yes, parse it
-                    psGMLFile = CPLParseXMLFile(aoGMLFiles[i].osFile);
+                    psGMLFile = CPLXMLTreeCloser(CPLParseXMLFile(aoGMLFiles[i].osFile));
                 }
                 else if( psGMLFile == nullptr )
                 {
@@ -2671,7 +2657,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         if( hDS )
                         {
                             GDALClose(hDS);
-                            psGMLFile = CPLParseXMLFile(osTmpFile);
+                            psGMLFile = CPLXMLTreeCloser(CPLParseXMLFile(osTmpFile));
                             aoGMLFiles[i].osFile = osTmpFile;
                             VSIUnlink(osTmpFile);
                             aosTmpFiles.push_back(CPLResetExtension(osTmpFile, "xsd"));
@@ -2689,7 +2675,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     continue;
             }
 
-            CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile) : nullptr;
+            CPLXMLNode* psGMLFileRoot = psGMLFile ? GDALGMLJP2GetXMLRoot(psGMLFile.get()) : nullptr;
             if( psGMLFileRoot || !aoGMLFiles[i].osRemoteResource.empty() )
             {
                 CPLXMLNode *node_f;
@@ -2865,9 +2851,8 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 if( aoGMLFiles[i].bInline )
                     CPLAddXMLChild(node_f, CPLCloneXMLTree(psGMLFileRoot));
                 else
-                    CPLSerializeXMLTreeToFile( psGMLFile, osTmpFile );
+                    CPLSerializeXMLTreeToFile( psGMLFile.get(), osTmpFile );
             }
-            CPLDestroyXMLNode(psGMLFile);
         }
 
         // c.f.
@@ -2875,9 +2860,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         for( int i = 0; i < static_cast<int>(aoAnnotations.size()); ++i )
         {
             // Is the file already a KML file?
-            CPLXMLNode* psKMLFile = nullptr;
+            CPLXMLTreeCloser psKMLFile(nullptr);
             if( EQUAL(CPLGetExtension(aoAnnotations[i].osFile), "kml") )
-                 psKMLFile = CPLParseXMLFile(aoAnnotations[i].osFile);
+                 psKMLFile = CPLXMLTreeCloser(CPLParseXMLFile(aoAnnotations[i].osFile));
             GDALDriverH hDrv = nullptr;
             if( psKMLFile == nullptr )
             {
@@ -2894,7 +2879,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psKMLFile == nullptr && (hDrv == hKMLDrv || hDrv == hLIBKMLDrv) )
             {
                 // Yes, parse it
-                psKMLFile = CPLParseXMLFile(aoAnnotations[i].osFile);
+                psKMLFile = CPLXMLTreeCloser(CPLParseXMLFile(aoAnnotations[i].osFile));
             }
             else if( psKMLFile == nullptr )
             {
@@ -2927,7 +2912,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                     if( hDS )
                     {
                         GDALClose(hDS);
-                        psKMLFile = CPLParseXMLFile(osTmpFile);
+                        psKMLFile = CPLXMLTreeCloser(CPLParseXMLFile(osTmpFile));
                         aoAnnotations[i].osFile = osTmpFile;
                         VSIUnlink(osTmpFile);
                     }
@@ -2942,7 +2927,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
             if( psKMLFile == nullptr )
                 continue;
 
-            CPLXMLNode* psKMLFileRoot = GDALGMLJP2GetXMLRoot(psKMLFile);
+            CPLXMLNode* psKMLFileRoot = GDALGMLJP2GetXMLRoot(psKMLFile.get());
             if( psKMLFileRoot )
             {
                 CPLXMLNode* psFeatureMemberOfGridCoverage =
@@ -2966,17 +2951,16 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
                 CPLAddXMLChild(psAnnotation, CPLCloneXMLTree(psKMLFileRoot));
             }
-            CPLDestroyXMLNode(psKMLFile);
         }
 
         // Add styles.
         for( int i = 0; i < static_cast<int>(aoStyles.size()); ++i )
         {
-            CPLXMLNode* psStyle = CPLParseXMLFile(aoStyles[i].osFile);
+            CPLXMLTreeCloser psStyle(CPLParseXMLFile(aoStyles[i].osFile));
             if( psStyle == nullptr )
                 continue;
 
-            CPLXMLNode* psStyleRoot = GDALGMLJP2GetXMLRoot(psStyle);
+            CPLXMLNode* psStyleRoot = GDALGMLJP2GetXMLRoot(psStyle.get());
             if( psStyleRoot )
             {
                 CPLXMLNode *psGMLJP2Style = nullptr;
@@ -3010,17 +2994,16 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
 
                 CPLAddXMLChild( psGMLJP2Style, CPLCloneXMLTree(psStyleRoot) );
             }
-            CPLDestroyXMLNode(psStyle);
         }
 
         // Add extensions.
         for( int i = 0; i < static_cast<int>(aoExtensions.size()); ++i )
         {
-            CPLXMLNode* psExtension = CPLParseXMLFile(aoExtensions[i].osFile);
+            CPLXMLTreeCloser psExtension(CPLParseXMLFile(aoExtensions[i].osFile));
             if( psExtension == nullptr )
                 continue;
 
-            CPLXMLNode* psExtensionRoot = GDALGMLJP2GetXMLRoot(psExtension);
+            CPLXMLNode* psExtensionRoot = GDALGMLJP2GetXMLRoot(psExtension.get());
             if( psExtensionRoot )
             {
                 CPLXMLNode *psGMLJP2Extension;
@@ -3055,12 +3038,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                 CPLAddXMLChild( psGMLJP2Extension,
                                 CPLCloneXMLTree(psExtensionRoot) );
             }
-            CPLDestroyXMLNode(psExtension);
         }
 
-        char* pszRoot = CPLSerializeXMLTree(psRoot);
-        CPLDestroyXMLNode(psRoot);
-        psRoot = nullptr;
+        char* pszRoot = CPLSerializeXMLTree(psRoot.get());
+        psRoot.reset();
         osDoc = pszRoot;
         CPLFree(pszRoot);
         pszRoot = nullptr;
@@ -3095,12 +3076,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
         GByte* pabyContent = nullptr;
         if( VSIIngestFile( nullptr, aoBoxes[i].osFile, &pabyContent, nullptr, -1 ) )
         {
-            CPLXMLNode* psNode = CPLParseXMLString((const char*)pabyContent);
+            CPLXMLTreeCloser psNode(CPLParseXMLString((const char*)pabyContent));
             CPLFree(pabyContent);
             pabyContent = nullptr;
-            if( psNode )
+            if( psNode.get() )
             {
-                CPLXMLNode* psRoot = GDALGMLJP2GetXMLRoot(psNode);
+                CPLXMLNode* psRoot = GDALGMLJP2GetXMLRoot(psNode.get());
                 if( psRoot )
                 {
                     GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(psRoot);
@@ -3109,7 +3090,6 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2( int nXSize, int nYSize,
                         GDALJP2Box::CreateLabelledXMLAssoc( aoBoxes[i].osLabel,
                                                             (const char*)pabyContent ) );
                 }
-                CPLDestroyXMLNode (psNode);
             }
         }
         CPLFree(pabyContent);
@@ -3213,12 +3193,12 @@ GDALJP2Box *GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
                                        GDALDataset* poSrcDS,
                                        int bMainMDDomainOnly )
 {
-    CPLXMLNode* psMasterXMLNode = CreateGDALMultiDomainMetadataXML(
-                                       poSrcDS, bMainMDDomainOnly );
+    CPLXMLTreeCloser psMasterXMLNode(CreateGDALMultiDomainMetadataXML(
+                                       poSrcDS, bMainMDDomainOnly ));
     if( psMasterXMLNode == nullptr )
         return nullptr;
-    char* pszXML = CPLSerializeXMLTree(psMasterXMLNode);
-    CPLDestroyXMLNode(psMasterXMLNode);
+    char* pszXML = CPLSerializeXMLTree(psMasterXMLNode.get());
+    psMasterXMLNode.reset();
 
     GDALJP2Box* poBox = new GDALJP2Box();
     poBox->SetType("xml ");

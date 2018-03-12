@@ -175,7 +175,7 @@ def http_4():
 
     ds = gdal.Open('/vsicurl/ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
     if ds is None:
-        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif')
+        conn = gdaltest.gdalurlopen('ftp://download.osgeo.org/gdal/data/gtiff/utm.tif', timeout = 4)
         if conn is None:
             print('cannot open URL')
             return 'skip'

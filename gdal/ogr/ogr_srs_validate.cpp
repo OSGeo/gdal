@@ -1198,9 +1198,9 @@ int OGRSpatialReference::IsAliasFor( const char *pszParm1,
 /* -------------------------------------------------------------------- */
 /*      Does this group also contain pszParm2?                          */
 /* -------------------------------------------------------------------- */
-    while( papszAliasGroupList[iGroup] != nullptr )
+    for( ; papszAliasGroupList[iGroup] != nullptr; iGroup++ )
     {
-        if( EQUAL(papszAliasGroupList[iGroup++], pszParm2) )
+        if( EQUAL(papszAliasGroupList[iGroup], pszParm2) )
             return TRUE;
     }
 

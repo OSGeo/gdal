@@ -1687,7 +1687,10 @@ int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo * poOpenInfo)
         return -1;
     if( poOpenInfo->nHeaderBytes == 0 )
         return FALSE;
-    if( !EQUAL(pszExt, "kml") ||
+    if( 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+        !EQUAL(pszExt, "kml") ||
+#endif
         strstr((const char*)poOpenInfo->pabyHeader, "<kml") == nullptr )
         return FALSE;
 

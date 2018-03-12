@@ -3790,18 +3790,31 @@ def gpkg_delete_raster_layer():
         return 'skip'
 
     filename = '/vsimem/byte.gpkg'
-    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG')
+    gdal.Translate(filename, 'data/byte.tif', format = 'GPKG',
+                   creationOptions = ['RASTER_TABLE=foo'])
     ds = ogr.Open(filename, update = 1)
-    ds.ExecuteSQL('DROP TABLE byte')
-    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_contents')
+    ds.ExecuteSQL('DROP TABLE foo')
+    sql_lyr = ds.ExecuteSQL('SELECT * FROM gpkg_metadata')
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
+    ds.ExecuteSQL('VACUUM')
     ds = None
 
-    gdal.Unlink(filename)
-
     if fc != 0:
+        gdaltest.post_reason('fail')
+        print(fc)
         return 'fail'
+
+    # Check that there is no more any reference to the layer
+    f = gdal.VSIFOpenL(filename, 'rb')
+    content = gdal.VSIFReadL(1, 1000000, f).decode('latin1')
+    gdal.VSIFCloseL(f)
+
+    if content.find('foo') >= 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    gdal.Unlink(filename)
 
     return 'success'
 
