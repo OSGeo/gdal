@@ -129,7 +129,7 @@ to use the raw names without cleanup.  So for NTF they use
 "NTF (Paris meridian)". <p>
 
 The short result of this is that it is almost impossible to recognise and
-compre datums between different Simple Features implementations, though I have
+compare datums between different Simple Features implementations, though I have
 had some success in translating ESRI datum names to match Cadcorp/OGR 
 conventions, with some special casing.<p>
 
@@ -169,10 +169,9 @@ What units should the prime meridian appear in?<p>
 <li> The CT 1.0 specification (7.3.14 PRIMEM) says <i>"The units of the 
 <longitude> must be inferred from the context. If the PRIMEM clause occurs 
 inside a GEOGCS, then the longitude units will match those of the geographic 
-coordinate system. If the PRIMEM clause occurs inside a GEOCCS, then the units 
-will be in degrees."</i>  While this text clearly has an error in it, I believe
-it intends to say that inside a GEOGCS the units are determined from the 
-GEOGCS units, while outside a GEOGCS it is in degrees. <p>
+coordinate system."</i> 
+Note: for a geocentric coordinate system, it says <i>"If the PRIMEM clause
+occurs inside a GEOCCS, then the units will be in degrees"</i>.<p>
 
 <li> The SF-SQL spec (99-049) does not attempt to address the issue of
 units of the prime meridian.<p>
@@ -186,6 +185,24 @@ GEOGCS["GCS_NTF_Paris",
     SPHEROID["Clarke_1880_IGN",6378249.2,293.46602]],
   PRIMEM["Paris",2.337229166666667],
   UNIT["Grad",0.015707963267948967]]
+</pre>
+
+<li>OGR implements the same interpretation as ESRI for its
+OGRSpatialReference class: the PRIMEM longitude is always in degrees.
+See <a href="https://trac.osgeo.org/gdal/ticket/4524">GDAL Ticket #4524</a>
+
+<pre>
+GEOGCS["NTF (Paris)",
+    DATUM["Nouvelle_Triangulation_Francaise_Paris",
+        SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
+            AUTHORITY["EPSG","7011"]],
+        TOWGS84[-168,-60,320,0,0,0,0],
+        AUTHORITY["EPSG","6807"]],
+    PRIMEM["Paris",2.33722917,
+        AUTHORITY["EPSG","8903"]],
+    UNIT["grad",0.01570796326794897,
+        AUTHORITY["EPSG","9105"]],
+    AUTHORITY["EPSG","4807"]]
 </pre>
 
 <li> Cadcorp implements according to the CT 1.0 specification as shown in
@@ -224,12 +241,14 @@ GEOGCS [ "Longitude / Latitude (NTF with Paris prime meridian)",
 
 <h2>Sign of TOWGS84 Rotations</h2>
 
+<h3>Discussion</h3>
+
 In EPSG there are two methods of defining the 7 parameter 
 bursa wolf parameters, 9606 (position vector 7-parameter) and 
 9607 (coordinate frame rotation).  The only difference is 
 that the sign of the rotation coefficients is reversed between them.<p>
  
-I had somehow convinced myself that the TOWGS84 values in WKT 
+I (Frank Warmerdam) had somehow convinced myself that the TOWGS84 values in WKT 
 were supposed to be done using the sense in 9606 (position 
 vector 7-parameter) and that if I read a 9607 I would need to 
 switch the rotation signs before putting it into a TOWGS84 
@@ -267,6 +286,13 @@ to what seemed to work for the test data available.<p>
 
 I am prepared to adhere to the Cadorp sign usage (as per EPSG 9607) if
 this can be clarified in the specification.<p>
+
+<h3>Current state of OGR implementation</h3>
+
+OGR imports from/exports to WKT assumes EPSG 9606 convention (position vector 7-parameter),
+as <a href="http://proj4.org/parameters.html#towgs84-datum-transformation-to-wgs84">proj.4 does</a>.<p>
+When importing from EPSG parameters expressed with EPSG 9607, it does the
+appropriate conversion (negating the sign of the rotation terms).<p>
 
 <h2>Longitudes Relative to PRIMEM?</h2>
 
@@ -336,6 +362,13 @@ Equirectangular.
 
 <hr>
 
-Written by <a href="https://web.archive.org/web/20130728081442/http://pobox.com/~warmerdam">Frank Warmerdam</a>.<p>
+History
+<ul>
+<li>2018: Even Rouault: make it clear that OGR implements EPSG 9606 convention for TOWGS84.</li>
+<li>2018: Even Rouault: remove mention about CT 1.0 specification (7.3.14 PRIMEM)
+having an error, and explicitly mentions that OGR uses degrees for PRIMEM longitude.</li>
+<li>2018: Even Rouault: add hyperlinks</li>
+<li>2007 or before: Originally written by <a href="https://web.archive.org/web/20130728081442/http://pobox.com/~warmerdam">Frank Warmerdam</a>.<p></li>
+</ul>
 
 </body>
