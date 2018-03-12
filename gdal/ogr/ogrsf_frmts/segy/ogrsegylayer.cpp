@@ -526,8 +526,6 @@ OGRFeature *OGRSEGYLayer::GetNextRawFeature()
     const double dfGroupX = nGroupX * dfHorizontalScale;
     const double dfGroupY = nGroupY * dfHorizontalScale;
 
-    dfHorizontalScale = nHorizontalScalar;
-    
 #if DEBUG_VERBOSE
     const double dfSourceX = nSourceX * dfHorizontalScale;
     const double dfSourceY = nSourceY * dfHorizontalScale;
