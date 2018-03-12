@@ -227,10 +227,10 @@ void ISCEDataset::FlushCache( void )
             const_cast<char **>(apszGDAL2ISCEDatatypes),
             sType ) );
 
-    const char *sScheme = apszSchemeNames[eScheme];
+    const char *pszScheme = apszSchemeNames[eScheme];
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "SCHEME" );
-    CPLCreateXMLElementAndValue( psTmpNode, "value", sScheme );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", pszScheme );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "BYTE_ORDER" );
@@ -635,12 +635,12 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     const GDALDataType eDataType = GDALGetDataTypeByName( pszDataType );
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    const char *sScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
+    const char *pszScheme = CSLFetchNameValue( papszXmlProps, "SCHEME" );
     int nPixelOffset = 0;
     int nLineOffset = 0;
     vsi_l_offset nBandOffset = 0;
     bool bIntOverflow = false;
-    if( EQUAL( sScheme, "BIL" ) )
+    if( EQUAL( pszScheme, "BIL" ) )
     {
         poDS->eScheme = BIL;
         nPixelOffset = nDTSize;
@@ -652,7 +652,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
             nBandOffset = nDTSize * static_cast<vsi_l_offset>(nWidth);
         }
     }
-    else if( EQUAL( sScheme, "BIP" ) )
+    else if( EQUAL( pszScheme, "BIP" ) )
     {
         poDS->eScheme = BIP;
         nPixelOffset = nDTSize * nBands;
@@ -681,7 +681,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
             nBandOffset = nDTSize;
         }
     }
-    else if ( EQUAL( sScheme, "BSQ" ) )
+    else if ( EQUAL( pszScheme, "BSQ" ) )
     {
         poDS->eScheme = BSQ;
         nPixelOffset = nDTSize;
@@ -695,11 +695,11 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
     }
     else
     {
-        CSLDestroy( papszXmlProps );
-        delete poDS;
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unknown scheme \"%s\" within ISCE raster.",
-                  CSLFetchNameValue( papszXmlProps, "SCHEME" ) );
+                  pszScheme );
+        CSLDestroy( papszXmlProps );
+        delete poDS;
         return nullptr;
     }
 
@@ -806,7 +806,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
                                   char **papszOptions )
 {
     const char *sType = GDALGetDataTypeName( eType );
-    const char *sScheme = CSLFetchNameValueDef( papszOptions,
+    const char *pszScheme = CSLFetchNameValueDef( papszOptions,
                                                 "SCHEME",
                                                 "BIP" );
 
@@ -861,7 +861,7 @@ GDALDataset *ISCEDataset::Create( const char *pszFilename,
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "SCHEME" );
-    CPLCreateXMLElementAndValue( psTmpNode, "value", sScheme );
+    CPLCreateXMLElementAndValue( psTmpNode, "value", pszScheme );
 
     psTmpNode = CPLCreateXMLNode( psDocNode, CXT_Element, "property" );
     CPLAddXMLAttributeAndValue( psTmpNode, "name", "BYTE_ORDER" );

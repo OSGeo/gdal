@@ -161,15 +161,22 @@ CPL_C_END
 
 #include <memory>
 
+/*! @cond Doxygen_Suppress */
+struct CPLXMLTreeCloserDeleter
+{
+    void operator()(CPLXMLNode* psNode) { CPLDestroyXMLNode(psNode); }
+};
+/*! @endcond */
+
 /** Manage a tree of XML nodes so that all nodes are freed when the instance goes
  * out of scope.  Only the top level node should be in a CPLXMLTreeCloser.
  */
-class CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode>
+class CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>
 {
  public:
   /** Constructor */
   explicit CPLXMLTreeCloser(CPLXMLNode* data):
-    std::unique_ptr<CPLXMLNode>(data) {}
+    std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDeleter>(data) {}
 
   /** Returns a pointer to the document (root) element
    * @return the node pointer */
