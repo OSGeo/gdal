@@ -28,7 +28,6 @@ for dirname in alg port gcore ogr frmts gnm apps; do
         -DDEBUG_MUTEX \
         -DDEBUG_PROXY_POOL \
         -Doverride= \
-        -DUNDER_CPPCHECK \
         -DOCAD_EXTERN= \
         -DTIFFLIB_VERSION=99999999 \
         --include=port/cpl_config.h \
