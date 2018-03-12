@@ -174,4 +174,15 @@ public:
     CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)
 };
 
+#ifdef GDAL_COMPILATION
+
+bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
+                                int nPixelOffset,
+                                int nLineOffset,
+                                vsi_l_offset nHeaderSize,
+                                vsi_l_offset nBandOffset,
+                                VSILFILE* fp);
+
+#endif
+
 #endif // GDAL_FRMTS_RAW_RAWDATASET_H_INCLUDED

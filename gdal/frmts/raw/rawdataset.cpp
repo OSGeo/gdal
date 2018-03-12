@@ -1219,3 +1219,41 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
                                   panBandMap, nPixelSpace, nLineSpace,
                                   nBandSpace, psExtraArg);
 }
+
+
+/************************************************************************/
+/*                  RAWDatasetCheckMemoryUsage()                        */
+/************************************************************************/
+
+bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
+                                int nPixelOffset,
+                                int nLineOffset,
+                                vsi_l_offset nHeaderSize,
+                                vsi_l_offset nBandOffset,
+                                VSILFILE* fp)
+{
+
+    // Currently each RawRasterBand allocates nPixelOffset * nRasterXSize bytes
+    // so for a pixel interleaved scheme, this will allocate lots of memory!
+    // Actually this is quadratic in the number of bands!
+    // Do a few sanity checks to avoid excessive memory allocation on
+    // small files.
+    // But ultimately we should fix RawRasterBand to have a shared buffer
+    // among bands.
+    if( nBands > 10 ||
+        static_cast<vsi_l_offset>(nPixelOffset) * nXSize > 20000 )
+    {
+        vsi_l_offset nExpectedFileSize =
+            nHeaderSize + nBandOffset * (nBands - 1) +
+            (nYSize-1) * static_cast<vsi_l_offset>(nLineOffset) +
+            (nXSize-1) * static_cast<vsi_l_offset>(nPixelOffset);
+        CPL_IGNORE_RET_VAL( VSIFSeekL(fp, 0, SEEK_END) );
+        vsi_l_offset nFileSize = VSIFTellL(fp);
+        if( nFileSize < nExpectedFileSize )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Image file is too small");
+            return false;
+        }
+    }
+    return true;
+}
