@@ -74,7 +74,8 @@ protected:
     bool                 bEOF;
     int                  nFetchedObjects;
     int                  iNextInFetchedObjects;
-    GIntBig              iNext;
+    GIntBig              m_nNextFID;
+    GIntBig              m_nNextOffset;
     json_object         *poCachedObj;
 
     virtual OGRFeature  *GetNextRawFeature();
@@ -94,7 +95,7 @@ protected:
 
     virtual OGRFeatureDefn *    GetLayerDefn() override;
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) = 0;
-    virtual json_object*        FetchNewFeatures(GIntBig iNext);
+    virtual json_object*        FetchNewFeatures();
 
     virtual const char*         GetFIDColumn() override { return osFIDColName.c_str(); }
 
@@ -128,7 +129,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
     bool                bInDeferredInsert;
     InsertState         eDeferredInsertState;
     CPLString           osDeferredInsertSQL;
-    GIntBig             nNextFID;
+    GIntBig             m_nNextFIDWrite;
 
     bool                bDeferredCreation;
     bool                bCartodbfy;
@@ -144,7 +145,7 @@ class OGRCARTOTableLayer : public OGRCARTOLayer
 
     virtual const char*         GetName() override { return osName.c_str(); }
     virtual OGRFeatureDefn *    GetLayerDefnInternal(json_object* poObjIn) override;
-    virtual json_object*        FetchNewFeatures(GIntBig iNext) override;
+    virtual json_object*        FetchNewFeatures() override;
 
     virtual GIntBig             GetFeatureCount( int bForce = TRUE ) override;
     virtual OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
