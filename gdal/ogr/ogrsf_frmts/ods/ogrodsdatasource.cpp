@@ -232,7 +232,7 @@ OGRODSDataSource::OGRODSDataSource() :
     nDataHandlerCounter(0),
     nCurLine(0),
     nEmptyRowsAccumulated(0),
-    nRowsRepeated(0),
+    nRowsRepeated(1),
     nCurCol(0),
     nCellsRepeated(0),
     bEndTableParsing(false),
@@ -670,12 +670,13 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
             bEndTableParsing = true;
             return;
         }
-        if (nRowsRepeated < 0 || nRowsRepeated > 10000)
+        if (nRowsRepeated <= 0 || nRowsRepeated > 10000)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid value for number-rows-repeated = %d",
                      nRowsRepeated);
             bEndTableParsing = true;
+            nRowsRepeated = 1;
             return;
         }
         const int nFields = std::max(
@@ -861,7 +862,7 @@ void OGRODSDataSource::startElementRow(const char *pszNameIn,
         const size_t nCellMemSize =
             (!osValue.empty()) ? osValue.size() : osFormula.size();
         if( nCellMemSize > static_cast<size_t>(10 * 1024 * 1024) /
-                (std::max(nCellsRepeated, 1) * std::max(nRowsRepeated, 1)) )
+                (std::max(nCellsRepeated, 1) * nRowsRepeated) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too much memory for row/cell repetition");
