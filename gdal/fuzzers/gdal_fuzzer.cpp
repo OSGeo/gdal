@@ -229,10 +229,19 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         GDALGetGCPs(hDS);
         GDALGetGCPProjection(hDS);
         GDALGetMetadata(hDS, nullptr);
+        GDALGetMetadataItem(hDS, "foo", nullptr);
         CSLDestroy(GDALGetFileList(hDS));
         if( nBands > 0 )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+
+            int bFound = FALSE;
+            GDALGetRasterNoDataValue(hBand, &bFound);
+            GDALGetRasterOffset(hBand, &bFound);
+            GDALGetRasterScale(hBand, &bFound);
+            GDALGetRasterUnitType(hBand);
+            GDALGetMetadata(hBand, nullptr);
+            GDALGetMetadataItem(hBand, "foo", nullptr);
 
             int nFlags = GDALGetMaskFlags(hBand);
             GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
