@@ -154,6 +154,9 @@ class CPL_DLL VRTDataset : public GDALDataset
     std::vector<GDALDataset*> m_apoOverviewsBak;
     char         **m_papszXMLVRTMetadata;
 
+    VRTRasterBand*      InitBand(const char* pszSubclass, int nBand,
+                                 bool bAllowPansharpened);
+
   protected:
     virtual int         CloseDependentDatasets() CPL_OVERRIDE;
 
