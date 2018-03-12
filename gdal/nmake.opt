@@ -186,7 +186,9 @@ WIN64=YES
 # If you don't want some entry points to have STDCALL conventions, 
 # comment out the following and add -DCPL_DISABLE_STDCALL in OPTFLAGS.
 # This option has no effect on 64-bit windows.
+!IFNDEF STDCALL
 STDCALL=YES
+!ENDIF
 
 # Version number embedded in DLL name. 
 # If GDAL version is X.Y.Z, VERSION = X * 100 + Y
@@ -195,20 +197,28 @@ VERSION =	202
 !ENDIF
 
 # Comment the following out if you want PAM supported disabled
-# by default.  
+# by default.
+!IFNDEF PAM_SETTING
 PAM_SETTING=-DPAM_ENABLED
+!ENDIF
 
 # Uncomment the following to link OGR utilities against main GDAL DLL
 # instead of statically linking against OGR libraries.
+!IFNDEF DLLBUILD
 DLLBUILD=1
+!ENDIF
 
 # Enable all OGR formats, or only raster formats?  Comment out to disable
 # vector formats. 
+!IFNDEF INCLUDE_OGR_FRMTS
 INCLUDE_OGR_FRMTS = YES
+!ENDIF
 
 # Enable all GNM formats?  Comment out to disable
 # gnm formats.
+!IFNDEF INCLUDE_GNM_FRMTS
 INCLUDE_GNM_FRMTS = YES
+!ENDIF
 
 # To be enabled defined to point to setargv.obj from the Visual C++ directory,
 # when you want the utility programs to be able to expand wildcards. 
@@ -227,7 +237,9 @@ INCLUDE_GNM_FRMTS = YES
 #LIBICONV_CFLAGS = -DICONV_CONST=const
 
 # Comment out the following to disable BSB support.
+!IFNDEF BSB_SUPPORTED
 BSB_SUPPORTED = 1
+!ENDIF
 
 # Comment out the following to disable ODBC support.
 
@@ -242,10 +254,15 @@ ODBC_SUPPORTED = 1
 #SQLNCLI_INCLUDE = "-I$(SQLNCLI_DIR)\Include" -DSQLNCLI_VERSION=$(SQLNCLI_VERSION) -DMSSQL_BCP_SUPPORTED=1
 
 # Comment out the following to disable JPEG support.
+
+!IFNDEF JPEG_SUPPORTED
 JPEG_SUPPORTED = 1
+!ENDIF
 
 # This will enable 12bit libjpeg - use only with internal jpeg builds.
+!IFNDEF JPEG12_SUPPORTED
 JPEG12_SUPPORTED = 1
+!ENDIF
 
 #if using an external jpeg library uncomment the following lines
 #JPEG_EXTERNAL_LIB = 1
@@ -768,7 +785,9 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib/Win32
 !ENDIF
 
 !IFDEF INCLUDE_GNM_FRMTS
+!IFNDEF GNM_FLAG
 GNM_FLAG = -DGNM_ENABLED
+!ENDIF
 !ENDIF
 
 #LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
