@@ -806,6 +806,16 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( nBits < 0 &&
+        !RAWDatasetCheckMemoryUsage(
+                        poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nPixelOffset, nLineOffset, 0, nBandOffset,
+                        poDS->fpImage) )
+    {
+        delete poDS;
+        return nullptr;
+    }
+
     poDS->SetDescription( poOpenInfo->pszFilename );
     poDS->PamInitialize();
 
