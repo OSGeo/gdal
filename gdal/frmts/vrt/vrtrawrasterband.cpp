@@ -370,7 +370,14 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
     int nLineOffset = 0;
     const char* pszLineOffset = CPLGetXMLValue( psTree, "LineOffset", nullptr );
     if( pszLineOffset == nullptr )
-        nLineOffset = nWordDataSize * GetXSize();
+    {
+        if( nPixelOffset > INT_MAX / GetXSize() )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Int overflow");
+            return CE_Failure;
+        }
+        nLineOffset = nPixelOffset * GetXSize();
+    }
     else
         nLineOffset = atoi(pszLineOffset);
 

@@ -918,11 +918,21 @@ CPLErr VRTDataset::AddBand( GDALDataType eType, char **papszOptions )
         if( pszPixelOffset != nullptr )
             nPixelOffset = atoi(pszPixelOffset);
 
-        int nLineOffset = nWordDataSize * GetRasterXSize();
+        int nLineOffset;
         const char* pszLineOffset = 
                                 CSLFetchNameValue(papszOptions, "LineOffset");
         if( pszLineOffset != nullptr )
             nLineOffset = atoi(pszLineOffset);
+        else
+        {
+            if( nPixelOffset > INT_MAX / GetRasterXSize() ||
+                nPixelOffset < INT_MIN / GetRasterXSize() )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Int overflow");
+                return CE_Failure;
+            }
+            nLineOffset = nPixelOffset * GetRasterXSize();
+        }
 
         const char *pszByteOrder =
                                 CSLFetchNameValue(papszOptions, "ByteOrder");
