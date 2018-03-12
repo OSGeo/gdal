@@ -340,9 +340,8 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
         return CE_Failure;
     }
 
-    // TODO(schwehr): Should this be a bool?
-    const int l_bRelativeToVRT =
-        atoi(CPLGetXMLValue( psTree, "SourceFilename.relativeToVRT", "1" ) );
+    const bool l_bRelativeToVRT = CPLTestBool(
+        CPLGetXMLValue( psTree, "SourceFilename.relativeToVRT", "1" ));
 
 /* -------------------------------------------------------------------- */
 /*      Collect layout information.                                     */
@@ -354,9 +353,11 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
         pszImageOffset, static_cast<int>(strlen(pszImageOffset)) );
 
     int nPixelOffset = nWordDataSize;
-    if( CPLGetXMLValue( psTree, "PixelOffset", nullptr ) != nullptr )
+    const char* pszPixelOffset =
+                            CPLGetXMLValue( psTree, "PixelOffset", nullptr );
+    if( pszPixelOffset != nullptr )
     {
-        nPixelOffset = atoi(CPLGetXMLValue( psTree, "PixelOffset", "0") );
+        nPixelOffset = atoi(pszPixelOffset);
     }
     if (nPixelOffset <= 0)
     {
@@ -367,10 +368,11 @@ CPLErr VRTRawRasterBand::XMLInit( CPLXMLNode * psTree,
     }
 
     int nLineOffset = 0;
-    if( CPLGetXMLValue( psTree, "LineOffset", nullptr ) == nullptr )
+    const char* pszLineOffset = CPLGetXMLValue( psTree, "LineOffset", nullptr );
+    if( pszLineOffset == nullptr )
         nLineOffset = nWordDataSize * GetXSize();
     else
-        nLineOffset = atoi(CPLGetXMLValue( psTree, "LineOffset", "0") );
+        nLineOffset = atoi(pszLineOffset);
 
     const char *pszByteOrder = CPLGetXMLValue( psTree, "ByteOrder", nullptr );
 
