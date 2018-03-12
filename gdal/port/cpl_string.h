@@ -444,7 +444,7 @@ public:
     CPLSTRING_DLL CPLString &toupper( void );
     CPLSTRING_DLL CPLString &tolower( void );
 
-    bool      endsWith( const std::string& osStr ) const;
+    CPLSTRING_DLL bool      endsWith( const std::string& osStr ) const;
 };
 
 #ifndef _MSC_VER
