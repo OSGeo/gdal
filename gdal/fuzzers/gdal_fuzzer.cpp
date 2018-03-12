@@ -233,8 +233,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         if( nBands > 0 )
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
-            GDALGetMaskFlags(hBand);
-            GDALGetRasterBandXSize(GDALGetMaskBand(hBand));
+
+            int nFlags = GDALGetMaskFlags(hBand);
+            GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand);
+            GDALGetRasterBandXSize(hMaskBand);
+            if( bDoCheckSum && nFlags == GMF_PER_DATASET )
+                GDALChecksumImage(hMaskBand, 0, 0, nXSizeToRead, nYSizeToRead);
+
             int nOverviewCount = GDALGetOverviewCount(hBand);
             for( int i = 0; i < nOverviewCount; i++ )
                 GDALGetRasterBandXSize(GDALGetOverview(hBand, i));

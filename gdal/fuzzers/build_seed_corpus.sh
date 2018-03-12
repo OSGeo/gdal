@@ -161,6 +161,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc >> roipac.tar
 zip -r $OUT/roipac_fuzzer_seed_corpus.zip roipac.tar >/dev/null
 rm roipac.tar
 
+echo "Building gdal_vrt_fuzzer_seed_corpus.zip"
+rm -f $OUT/gdal_vrt_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > gdal_vrt.tar
+printf "***NEWFILE***:byte.tif\n" >> gdal_vrt.tar
+cat $(dirname $0)/../../autotest/gcore/data/byte.tif >> gdal_vrt.tar
+printf "***NEWFILE***:test.vrt\n" >> gdal_vrt.tar
+cat $(dirname $0)/../../autotest/gcore/data/byte.vrt >> gdal_vrt.tar
+zip -r $OUT/gdal_vrt_fuzzer_seed_corpus.zip gdal_vrt.tar >/dev/null
+rm gdal_vrt.tar
+
 echo "Building aig_fuzzer_seed_corpus.zip"
 printf "FUZZER_FRIENDLY_ARCHIVE\n" > aig.tar
 for x in hdr.adf sta.adf dblbnd.adf vat.adf w001001.adf abc3x1.clr prj.adf w001001x.adf; do
