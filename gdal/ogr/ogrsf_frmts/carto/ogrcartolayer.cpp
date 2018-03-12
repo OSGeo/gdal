@@ -71,7 +71,8 @@ void OGRCARTOLayer::ResetReading()
     bEOF = false;
     nFetchedObjects = -1;
     iNextInFetchedObjects = 0;
-    iNext = 0;
+    m_nNextOffset = 0;
+    m_nNextFID = 0;
 }
 
 /************************************************************************/
@@ -107,7 +108,7 @@ OGRFeature *OGRCARTOLayer::BuildFeature(json_object* poRowObj)
         }
         else
         {
-            poFeature->SetFID(iNext);
+            poFeature->SetFID(m_nNextFID);
         }
 
         for(int i=0;i<poFeatureDefn->GetFieldCount();i++)
@@ -168,7 +169,7 @@ OGRFeature *OGRCARTOLayer::BuildFeature(json_object* poRowObj)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object* OGRCARTOLayer::FetchNewFeatures(GIntBig iNextIn)
+json_object* OGRCARTOLayer::FetchNewFeatures()
 {
     CPLString osSQL = osBaseSQL;
     if( osSQL.ifind("SELECT") != std::string::npos &&
@@ -177,7 +178,7 @@ json_object* OGRCARTOLayer::FetchNewFeatures(GIntBig iNextIn)
         osSQL += " LIMIT ";
         osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
         osSQL += " OFFSET ";
-        osSQL += CPLSPrintf(CPL_FRMT_GIB, iNextIn);
+        osSQL += CPLSPrintf(CPL_FRMT_GIB, m_nNextOffset);
     }
     return poDS->RunSQL(osSQL);
 }
@@ -204,7 +205,7 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
             GetLayerDefn();
         }
 
-        json_object* poObj = FetchNewFeatures(iNext);
+        json_object* poObj = FetchNewFeatures();
         if( poObj == nullptr )
         {
             bEOF = true;
@@ -240,7 +241,8 @@ OGRFeature *OGRCARTOLayer::GetNextRawFeature()
     iNextInFetchedObjects ++;
 
     OGRFeature* poFeature = BuildFeature(poRowObj);
-    iNext = poFeature->GetFID() + 1;
+    m_nNextOffset ++;
+    m_nNextFID = poFeature->GetFID() + 1;
 
     return poFeature;
 }
