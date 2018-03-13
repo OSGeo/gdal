@@ -11,6 +11,8 @@
 */
 
 /*#include "f2c.h"*/
+#include "cpl_port.h"
+#include <limits.h>
 #include <stdlib.h>
 #include "grib2.h"
 typedef g2int logical;
@@ -26,23 +28,23 @@ typedef g2int logical;
     /* Initialized data */
 
     const  integer mallow = 1073741825;   /*  MALLOW=2**30+1  */
-    static integer ifeed = 12;
-    static integer ifirst = 0;
+    integer ifeed = 12;
+    integer ifirst = 0;
 
     /* System generated locals */
     integer i__1, i__2, i__3;
 
     /* Local variables */
-    static integer j, k, l;
-    static logical adda;
-    static integer ired, kinc, mina, maxa, minb, maxb, minc, maxc, ibxx2[31];
-    static char cfeed[1];
-    static integer nenda, nendb, ibita, ibitb, minak, minbk, maxak, maxbk,
+    integer j, k, l;
+    logical adda;
+    integer ired, kinc, mina, maxa, minb, maxb, minc, maxc, ibxx2[31];
+    char cfeed[1];
+    integer nenda, nendb, ibita, ibitb, minak, minbk, maxak, maxbk,
 	    minck, maxck, nouta, lmiss, itest, nount;
     extern /* Subroutine */ int reduce(integer *, integer *, integer *,
 	    integer *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, integer *, integer *, integer *);
-    static integer ibitbs, mislla, misllb, misllc, iersav, lminpk, ktotal,
+    integer ibitbs, mislla, misllb, misllc, iersav, lminpk, ktotal,
 	    kounta, kountb, kstart, mstart, mintst, maxtst,
 	    kounts, mintstk, maxtstk;
     integer *misslx;
@@ -774,6 +776,14 @@ L160:
 /*        CALCULATED. */
 
 L165:
+    if( (GIntBig)maxb - minb < INT_MIN ||
+        (GIntBig)maxb - minb > INT_MAX )
+    {
+        *ier = -1;
+        free(misslx);
+        return 0;
+    }
+
     for (ibitb = ibitbs; ibitb <= 30; ++ibitb) {
 	if (maxb - minb < ibxx2[ibitb] - lmiss) {
 	    goto L170;

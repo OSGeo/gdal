@@ -3586,7 +3586,8 @@ def ogr_gpkg_41():
 
     ds = ogr.Open('/vsimem/ogr_gpkg_41.gpkg')
     lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     if f['mycol'] != 'myval' or f.GetFID() != 1:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -3595,7 +3596,8 @@ def ogr_gpkg_41():
 
     ds = ogr.Open('/vsimem/ogr_gpkg_41.gpkg')
     lyr = ds.GetLayer(0)
-    f = lyr.GetFeature(1)
+    with gdaltest.error_handler():
+        f = lyr.GetFeature(1)
     if f['mycol'] != 'myval' or f.GetFID() != 1:
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -4371,9 +4373,10 @@ def ogr_gpkg_52():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    ds = ogr.Open('data/poly.gpkg')
+    ds = ogr.Open('data/poly_non_conformant.gpkg')
     lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
     if f is None:
         return 'fail'
 

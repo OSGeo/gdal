@@ -36,6 +36,7 @@
 #include "cpl_minixml.h"
 #include "gmlutils.h"
 
+#include <map>
 #include <vector>
 
 // Special value to map to a NULL field
@@ -152,6 +153,7 @@ class CPL_DLL GMLFeatureClass
     int          n_nElementNameLen;
     int         m_nPropertyCount;
     GMLPropertyDefn **m_papoProperty;
+    std::map<CPLString, int> m_oMapPropertyNameToIndex;
 
     int         m_nGeometryPropertyCount;
     GMLGeometryPropertyDefn **m_papoGeometryProperty;

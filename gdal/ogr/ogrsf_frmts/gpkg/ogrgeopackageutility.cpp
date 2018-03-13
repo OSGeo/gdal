@@ -77,7 +77,15 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
 
     /* Integer types */
     if ( STRNCASECMP("INT", pszGpkgType, 3) == 0 )
+    {
+        if( !EQUAL("INT", pszGpkgType) && !EQUAL("INTEGER", pszGpkgType) )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field format '%s' not supported. "
+                     "Interpreted as INT", pszGpkgType);
+        }
         return OFTInteger64;
+    }
     else if ( EQUAL("MEDIUMINT", pszGpkgType) )
         return OFTInteger;
     else if ( EQUAL("SMALLINT", pszGpkgType) )
@@ -109,11 +117,25 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
     {
         if( pszGpkgType[4] == '(' )
             nMaxWidth = atoi(pszGpkgType+5);
+        else if( pszGpkgType[4] != '\0' )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field format '%s' not supported. "
+                     "Interpreted as TEXT", pszGpkgType);
+        }
         return OFTString;
     }
 
     else if ( STRNCASECMP("BLOB", pszGpkgType, 4) == 0 )
+    {
+        if( pszGpkgType[4] != '(' && pszGpkgType[4] != '\0' )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Field format '%s' not supported. "
+                     "Interpreted as BLOB", pszGpkgType);
+        }
         return OFTBinary;
+    }
 
     /* Date types */
     else if ( EQUAL("DATE", pszGpkgType) )
@@ -123,7 +145,14 @@ OGRFieldType GPkgFieldToOGR(const char *pszGpkgType, OGRFieldSubType& eSubType,
 
     /* Illegal! */
     else
+    {
+        if( GPkgGeometryTypeToWKB(pszGpkgType, false, false) == wkbNone )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                    "Field format '%s' not supported", pszGpkgType);
+        }
         return (OGRFieldType)(OFTMaxType + 1);
+    }
 }
 
 /* Requirement 5: The columns of tables in a GeoPackage SHALL only be */
