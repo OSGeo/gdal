@@ -940,7 +940,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         int bNotNull = SQLResultGetValueAsInteger(&oResultTable, 3, iRecord);
         const char* pszDefault = SQLResultGetValue(&oResultTable, 4, iRecord);
         int nPKIDIndex = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
-        OGRFieldSubType eSubType;
+        OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
         OGRFieldType oType = (OGRFieldType)(OFTMaxType + 1);
 
