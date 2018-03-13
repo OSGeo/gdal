@@ -66,7 +66,6 @@ VRTRasterBand::VRTRasterBand() :
     m_bNoDataValueSet(FALSE),
     m_bHideNoDataValue(FALSE),
     m_dfNoDataValue(-10000.0),
-    m_poColorTable(nullptr),
     m_eColorInterp(GCI_Undefined),
     m_pszUnitType(nullptr),
     m_papszCategoryNames(nullptr),
@@ -108,8 +107,9 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     m_bNoDataValueSet = FALSE;
     m_bHideNoDataValue = FALSE;
     m_dfNoDataValue = -10000.0;
-    m_poColorTable = nullptr;
+    m_poColorTable.reset();
     m_eColorInterp = GCI_Undefined;
+    m_poRAT.reset();
 
     m_pszUnitType = nullptr;
     m_papszCategoryNames = nullptr;
@@ -129,9 +129,6 @@ VRTRasterBand::~VRTRasterBand()
 
 {
     CPLFree( m_pszUnitType );
-
-    if( m_poColorTable != nullptr )
-        delete m_poColorTable;
 
     CSLDestroy( m_papszCategoryNames );
     if( m_psSavedHistograms != nullptr )
@@ -171,6 +168,14 @@ CPLErr VRTRasterBand::CopyCommonInfoFrom( GDALRasterBand * poSrcBand )
     SetCategoryNames( poSrcBand->GetCategoryNames() );
     if( !EQUAL(poSrcBand->GetUnitType(),"") )
         SetUnitType( poSrcBand->GetUnitType() );
+
+    GDALRasterAttributeTable* poRAT = poSrcBand->GetDefaultRAT();
+    if( poRAT != nullptr &&
+        static_cast<GIntBig>(poRAT->GetColumnCount()) *
+            poRAT->GetRowCount() < 1024 * 1024 )
+    {
+        SetDefaultRAT(poRAT);
+    }
 
     return CE_None;
 }
@@ -451,6 +456,16 @@ CPLErr VRTRasterBand::XMLInit( CPLXMLNode * psTree,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Raster Attribute Table                                          */
+/* -------------------------------------------------------------------- */
+    CPLXMLNode *psRAT = CPLGetXMLNode( psTree, "GDALRasterAttributeTable" );
+    if( psRAT != nullptr )
+    {
+        m_poRAT.reset(new GDALDefaultRasterAttributeTable());
+        m_poRAT->XMLInit( psRAT, "" );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Histograms                                                      */
 /* -------------------------------------------------------------------- */
     CPLXMLNode *psHist = CPLGetXMLNode( psTree, "Histograms" );
@@ -687,6 +702,16 @@ CPLXMLNode *VRTRasterBand::SerializeToXML( const char *pszVRTPath )
         }
     }
 
+/* -------------------------------------------------------------------- */
+/*      Raster Attribute Table                                          */
+/* -------------------------------------------------------------------- */
+    if( m_poRAT != nullptr )
+    {
+        CPLXMLNode* psSerializedRAT = m_poRAT->Serialize();
+        if( psSerializedRAT != nullptr )
+            CPLAddXMLChild( psTree, psSerializedRAT );
+    }
+
 /* ==================================================================== */
 /*      Overviews                                                       */
 /* ==================================================================== */
@@ -800,15 +825,11 @@ double VRTRasterBand::GetNoDataValue( int *pbSuccess )
 CPLErr VRTRasterBand::SetColorTable( GDALColorTable *poTableIn )
 
 {
-    if( m_poColorTable != nullptr )
+    if( poTableIn == nullptr )
+        m_poColorTable.reset();
+    else
     {
-        delete m_poColorTable;
-        m_poColorTable = nullptr;
-    }
-
-    if( poTableIn )
-    {
-        m_poColorTable = poTableIn->Clone();
+        m_poColorTable.reset(poTableIn->Clone());
         m_eColorInterp = GCI_PaletteIndex;
     }
 
@@ -824,7 +845,7 @@ CPLErr VRTRasterBand::SetColorTable( GDALColorTable *poTableIn )
 GDALColorTable *VRTRasterBand::GetColorTable()
 
 {
-    return m_poColorTable;
+    return m_poColorTable.get();
 }
 
 /************************************************************************/
@@ -837,6 +858,31 @@ CPLErr VRTRasterBand::SetColorInterpretation( GDALColorInterp eInterpIn )
     reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
     m_eColorInterp = eInterpIn;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable* VRTRasterBand::GetDefaultRAT()
+{
+    return m_poRAT.get();
+}
+
+/************************************************************************/
+/*                            SetDefaultRAT()                           */
+/************************************************************************/
+
+CPLErr VRTRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+{
+    if( poRAT == nullptr )
+        m_poRAT.reset();
+    else
+        m_poRAT.reset(poRAT->Clone());
+
+    reinterpret_cast<VRTDataset *>( poDS )->SetNeedsFlush();
 
     return CE_None;
 }

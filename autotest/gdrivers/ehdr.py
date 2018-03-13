@@ -116,6 +116,10 @@ def ehdr_5():
         gdaltest.post_reason( 'color table not persisted properly.' )
         return 'fail'
 
+    if band.GetDefaultRAT():
+        gdaltest.post_reason( 'did not expect RAT' )
+        return 'fail'
+
     band = None
     ct = None
     ds = None
@@ -348,6 +352,61 @@ def ehdr_14():
 
     return 'success'
 
+###############################################################################
+# Test support for RAT (#3253)
+
+def ehdr_rat():
+
+    tmpfile = '/vsimem/rat.bil'
+    gdal.Translate(tmpfile, 'data/int16_rat.bil', format = 'EHdr')
+    ds = gdal.Open(tmpfile)
+    rat = ds.GetRasterBand(1).GetDefaultRAT()
+    if rat is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if rat.GetColumnCount() != 4:
+        gdaltest.post_reason('fail')
+        print(rat.GetColumnCount())
+        return 'fail'
+    if rat.GetRowCount() != 25:
+        gdaltest.post_reason('fail')
+        print(rat.GetRowCount())
+        return 'fail'
+    for (idx, val) in [ (0,-500), (1,127), (2,40), (3,65) ]:
+        if rat.GetValueAsInt(0, idx) != val:
+            gdaltest.post_reason('fail')
+            print(idx, rat.GetValueAsInt(0, idx))
+            return 'fail'
+    for (idx, val) in [ (0,2000), (1,145), (2,97), (3,47) ]:
+        if rat.GetValueAsInt(24, idx) != val:
+            gdaltest.post_reason('fail')
+            print(idx, rat.GetValueAsInt(24, idx))
+            return 'fail'
+    if ds.GetRasterBand(1).GetColorTable() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.GetRasterBand(1).SetDefaultRAT(None)
+    ds.GetRasterBand(1).SetColorTable(None)
+    ds = None
+
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    if ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable():
+        gdaltest.post_reason('fail')
+        return 'fail'
+    with gdaltest.error_handler():
+        ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
+    if ret == 0:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('EHDR').Delete(tmpfile)
+
+    return 'success'
+
 gdaltest_list = [
     ehdr_1,
     ehdr_2,
@@ -362,7 +421,8 @@ gdaltest_list = [
     ehdr_11,
     ehdr_12,
     ehdr_13,
-    ehdr_14 ]
+    ehdr_14,
+    ehdr_rat ]
 
 if __name__ == '__main__':
 

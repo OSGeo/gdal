@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "gdal_rat.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -640,6 +641,15 @@ GDALDataset *GDALDriver::DefaultCreateCopy( const char * pszFilename,
         char** papszCatNames = poSrcBand->GetCategoryNames();
         if (nullptr != papszCatNames)
             poDstBand->SetCategoryNames( papszCatNames );
+
+        // Only copy RAT if it is of reasonable size to fit in memory
+        GDALRasterAttributeTable* poRAT = poSrcBand->GetDefaultRAT();
+        if( poRAT != nullptr &&
+            static_cast<GIntBig>(poRAT->GetColumnCount()) *
+                poRAT->GetRowCount() < 1024 * 1024 )
+        {
+            poDstBand->SetDefaultRAT(poRAT);
+        }
 
         if( !bStrict )
         {

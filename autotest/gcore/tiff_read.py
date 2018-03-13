@@ -3078,7 +3078,7 @@ def tiff_read_minimum_tiff_tags_with_warning():
 
 ###############################################################################
 
-def check_libtiff_internal_or_greater(expected_maj,expected_min,expected_micro):
+def check_libtiff_internal_or_at_least(expected_maj,expected_min,expected_micro):
 
     md = gdal.GetDriverByName('GTiff').GetMetadata()
     if md['LIBTIFF'] == 'INTERNAL':
@@ -3116,7 +3116,7 @@ def tiff_read_unknown_compression():
 
 def tiff_read_leak_ZIPSetupDecode():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3130,7 +3130,7 @@ def tiff_read_leak_ZIPSetupDecode():
 
 def tiff_read_excessive_memory_TIFFFillStrip():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3144,7 +3144,7 @@ def tiff_read_excessive_memory_TIFFFillStrip():
 
 def tiff_read_excessive_memory_TIFFFillStrip2():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3157,7 +3157,7 @@ def tiff_read_excessive_memory_TIFFFillStrip2():
 
 def tiff_read_excessive_memory_TIFFFillTile():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3170,7 +3170,7 @@ def tiff_read_excessive_memory_TIFFFillTile():
 
 def tiff_read_big_strip():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000  -co blockysize=2000 -r bilinear -ot float32')
@@ -3202,7 +3202,7 @@ def tiff_read_big_strip_chunky_way():
 
 def tiff_read_big_tile():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     gdal.Translate('/vsimem/test.tif', 'data/byte.tif', options = '-co compress=lzw -outsize 10000 2000 -co tiled=yes -co blockxsize=10000 -co blockysize=2000 -r bilinear -ot float32')
@@ -3236,6 +3236,18 @@ def tiff_read_huge_number_strips():
     with gdaltest.error_handler():
         ds = gdal.Open('data/huge-number-strips.tif')
         ds.GetRasterBand(1).Checksum()
+
+    return 'success'
+
+###############################################################################
+
+def tiff_read_huge_implied_number_strips():
+
+    if not check_libtiff_internal_or_at_least(4,0,10):
+        return 'skip'
+
+    with gdaltest.error_handler():
+        gdal.Open('data/huge-implied-number-strips.tif')
 
     return 'success'
 
@@ -3299,7 +3311,7 @@ def tiff_read_uint33():
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1545
 def tiff_read_corrupted_deflate_singlestrip():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3313,7 +3325,7 @@ def tiff_read_corrupted_deflate_singlestrip():
 
 def tiff_read_packbits_not_enough_data():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     with gdaltest.error_handler():
@@ -3436,7 +3448,7 @@ def tiff_read_stripoffset_types():
 
 def tiff_read_progressive_jpeg_denial_of_service():
 
-    if not check_libtiff_internal_or_greater(4,0,9):
+    if not check_libtiff_internal_or_at_least(4,0,9):
         return 'skip'
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
@@ -3470,7 +3482,7 @@ def tiff_read_progressive_jpeg_denial_of_service():
 
 def tiff_read_old_style_lzw():
 
-    if not check_libtiff_internal_or_greater(4,0,8):
+    if not check_libtiff_internal_or_at_least(4,0,8):
         return 'skip'
 
     ds = gdal.Open('data/quad-lzw-old-style.tif')
@@ -3534,7 +3546,7 @@ def tiff_read_mmap_interface():
 
 def tiff_read_jpeg_too_big_last_stripe():
 
-    if not check_libtiff_internal_or_greater(4,0,9):
+    if not check_libtiff_internal_or_at_least(4,0,9):
         return 'skip'
 
     ds = gdal.Open('data/tif_jpeg_too_big_last_stripe.tif')
@@ -3728,6 +3740,7 @@ gdaltest_list.append( (tiff_read_big_strip_chunky_way) )
 gdaltest_list.append( (tiff_read_big_tile) )
 gdaltest_list.append( (tiff_read_huge_tile) )
 gdaltest_list.append( (tiff_read_huge_number_strips) )
+gdaltest_list.append( (tiff_read_huge_implied_number_strips) )
 gdaltest_list.append( (tiff_read_many_blocks) )
 gdaltest_list.append( (tiff_read_many_blocks_truncated) )
 gdaltest_list.append( (tiff_read_uint33) )

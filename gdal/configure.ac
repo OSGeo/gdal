@@ -2767,6 +2767,7 @@ dnl ---------------------------------------------------------------------------
 ECW_FLAGS=
 ECW_LIBS=
 ECW_INCLUDE=
+ECW_54=
 
 AC_ARG_WITH(ecw,[  --with-ecw[=ARG]        Include ECW support (ARG=ECW SDK Path, yes or no)],,)
 
@@ -2829,19 +2830,59 @@ else
 
   # ECW SDK 5.0 style and also for the case where license type is included in path i.e. specific license type is requested.
   elif test -r $with_ecw/lib/$ECW_ARCH/$ECW_CONF/libNCSEcw.a ; then
-    ECW_LIBDIR=$with_ecw/lib/$ECW_ARCH/$ECW_CONF
-    ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
-    AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
+    # Test if we must use the newabi version (SDK 5.4)
+    if test -r $with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+        echo "#include <string>" > testnewabi.cpp
+        echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
+        echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
+        if test -z "`${CXX} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+            ECW_LIBDIR=$with_ecw/lib/newabi/$ECW_ARCH/$ECW_CONF
+            ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
+            with_ecw=$with_ecw/$ecw_license_type
+            ECW_54="yes"
+            AC_MSG_RESULT([found Intergraph 5.4+ SDK with newabi in ${ECW_LIBDIR}.])
+            rm -f testnewabi.*
+            rm -f testnewabi
+            break
+        fi
+        rm -f testnewabi.*
+        rm -f testnewabi
+    fi
+    if test "$ECW_LIBS" = ""; then
+        ECW_LIBDIR=$with_ecw/lib/$ECW_ARCH/$ECW_CONF
+        ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
+        AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
+    fi
  # ECWJP2 SDK 5.1 style
   elif test -d $with_ecw; then
     for ecw_license_type in "Desktop_Read-Write" "Server_Read-Only_EndUser" "Server_Read-Only" "Server_Read-Write" "Desktop_Read-Only"
       do
-        ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/$ECW_ARCH/$ECW_CONF
-        if test -r $ECW_LIBDIR/libNCSEcw.a; then
-          ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
-          with_ecw=$with_ecw/$ecw_license_type
-          AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
-          break
+        # Test if we must use the newabi version (SDK 5.4)
+        if test -r $with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF/libNCSEcw.a; then
+            echo "#include <string>" > testnewabi.cpp
+            echo "namespace NCS { class CString { public: static std::wstring Utf8Decode (const std::string &sUtf8); }; }" >> testnewabi.cpp
+            echo "int main() { return static_cast<int>(NCS::CString::Utf8Decode(std::string()).size()); }" >> testnewabi.cpp
+            if test -z "`${CXX} ${CPPFLAGS} testnewabi.cpp -L$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF -lNCSEcw -o testnewabi 2>&1`" ; then
+                ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/newabi/$ECW_ARCH/$ECW_CONF
+                ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
+                with_ecw=$with_ecw/$ecw_license_type
+                AC_MSG_RESULT([found Intergraph 5.4+ SDK with newabi in ${ECW_LIBDIR}.])
+                ECW_54="yes"
+                rm -f testnewabi.*
+                rm -f testnewabi
+                break
+            fi
+            rm -f testnewabi.*
+            rm -f testnewabi
+        fi
+        if test "$ECW_LIBS" = ""; then
+            ECW_LIBDIR=$with_ecw/$ecw_license_type/lib/$ECW_ARCH/$ECW_CONF
+            if test -r $ECW_LIBDIR/libNCSEcw.a; then
+                ECW_LIBS="-L$ECW_LIBDIR -lNCSEcw $ECW_FRAMEWORK_COCOA"
+                with_ecw=$with_ecw/$ecw_license_type
+                AC_MSG_RESULT([found Intergraph 5.x+ SDK in ${ECW_LIBDIR}.])
+                break
+            fi
         fi
       done
  else
@@ -5741,4 +5782,8 @@ fi
 
 if test "$HAVE_CRYPTOPP" = "yes" -a "$HAVE_OPENSSL_CRYPTO" = "yes"; then
     AC_MSG_WARN([--with-crypto and --with-cryptopp available. This is unusual setup, but will work.])
+fi
+
+if test "$HAVE_TEIGHA" = "yes" -a "$ECW_54" = "yes"; then
+    AC_MSG_WARN([Both Teigha SDK and ECW SDK >= 5.4 found. This was found to cause crashes in ECW driver.])
 fi
