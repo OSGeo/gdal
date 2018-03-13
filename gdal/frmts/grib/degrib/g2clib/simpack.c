@@ -91,6 +91,14 @@ void simpack(g2float *fld,g2int ndpts,g2int *idrstmpl,unsigned char *cpack,g2int
         *lcpack = -1;
         return;
       }
+      if( !(floor(rmax*dscale) >= -FLT_MAX && floor(rmax*dscale) <= FLT_MAX) )
+      {
+         fprintf(stderr,
+                    "Scaled max value not representable on IEEE754 "
+                    "single precision float\n");
+        *lcpack = -1;
+        return;
+      }
       rmin_dscaled = rmin*dscale;
       rmax_dscaled = rmax*dscale;
 
