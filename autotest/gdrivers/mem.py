@@ -808,6 +808,27 @@ def mem_categorynames():
 
     return 'success'
 
+
+###############################################################################
+# Check ColorTable support
+
+def mem_colortable():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ds.GetRasterBand(1).SetColorTable(ct)
+    if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).SetColorTable(None)
+    if ds.GetRasterBand(1).GetColorTable() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 # cleanup
 
@@ -831,6 +852,7 @@ gdaltest_list = [
     mem_12,
     mem_rat,
     mem_categorynames,
+    mem_colortable,
     mem_cleanup ]
 
 if __name__ == '__main__':
