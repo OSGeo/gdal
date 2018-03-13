@@ -330,8 +330,9 @@ CPLErr GDALRasterBand::RasterIO( GDALRWFlag eRWFlag,
 
     if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
     {
-        ReportError( eFlushBlockErr, CPLE_AppDefined,
-                     "An error occurred while writing a dirty block");
+        ReportError(eFlushBlockErr, CPLE_AppDefined,
+                    "An error occurred while writing a dirty block "
+                    "from GDALRasterBand::RasterIO");
         CPLErr eErr = eFlushBlockErr;
         eFlushBlockErr = CE_None;
         return eErr;
@@ -705,8 +706,9 @@ CPLErr GDALRasterBand::WriteBlock( int nXBlockOff, int nYBlockOff,
 
     if( eFlushBlockErr != CE_None )
     {
-        ReportError( eFlushBlockErr, CPLE_AppDefined,
-                     "An error occurred while writing a dirty block");
+        ReportError(eFlushBlockErr, CPLE_AppDefined,
+                    "An error occurred while writing a dirty block "
+                    "from GDALRasterBand::WriteBlock");
         CPLErr eErr = eFlushBlockErr;
         eFlushBlockErr = CE_None;
         return eErr;
@@ -1034,8 +1036,9 @@ CPLErr GDALRasterBand::FlushCache()
 
     if (eFlushBlockErr != CE_None)
     {
-        ReportError( eFlushBlockErr, CPLE_AppDefined,
-                     "An error occurred while writing a dirty block");
+        ReportError(
+            eFlushBlockErr, CPLE_AppDefined,
+            "An error occurred while writing a dirty block from FlushCache");
         eFlushBlockErr = CE_None;
     }
 
