@@ -389,7 +389,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     int            m_bHideNoDataValue;
     double         m_dfNoDataValue;
 
-    GDALColorTable *m_poColorTable;
+    std::unique_ptr<GDALColorTable> m_poColorTable;
 
     GDALColorInterp m_eColorInterp;
 

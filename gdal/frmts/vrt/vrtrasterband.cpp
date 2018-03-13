@@ -66,7 +66,6 @@ VRTRasterBand::VRTRasterBand() :
     m_bNoDataValueSet(FALSE),
     m_bHideNoDataValue(FALSE),
     m_dfNoDataValue(-10000.0),
-    m_poColorTable(nullptr),
     m_eColorInterp(GCI_Undefined),
     m_pszUnitType(nullptr),
     m_papszCategoryNames(nullptr),
@@ -108,8 +107,9 @@ void VRTRasterBand::Initialize( int nXSize, int nYSize )
     m_bNoDataValueSet = FALSE;
     m_bHideNoDataValue = FALSE;
     m_dfNoDataValue = -10000.0;
-    m_poColorTable = nullptr;
+    m_poColorTable.reset();
     m_eColorInterp = GCI_Undefined;
+    m_poRAT.reset();
 
     m_pszUnitType = nullptr;
     m_papszCategoryNames = nullptr;
@@ -129,9 +129,6 @@ VRTRasterBand::~VRTRasterBand()
 
 {
     CPLFree( m_pszUnitType );
-
-    if( m_poColorTable != nullptr )
-        delete m_poColorTable;
 
     CSLDestroy( m_papszCategoryNames );
     if( m_psSavedHistograms != nullptr )
@@ -828,15 +825,11 @@ double VRTRasterBand::GetNoDataValue( int *pbSuccess )
 CPLErr VRTRasterBand::SetColorTable( GDALColorTable *poTableIn )
 
 {
-    if( m_poColorTable != nullptr )
+    if( poTableIn == nullptr )
+        m_poColorTable.reset();
+    else
     {
-        delete m_poColorTable;
-        m_poColorTable = nullptr;
-    }
-
-    if( poTableIn )
-    {
-        m_poColorTable = poTableIn->Clone();
+        m_poColorTable.reset(poTableIn->Clone());
         m_eColorInterp = GCI_PaletteIndex;
     }
 
@@ -852,7 +845,7 @@ CPLErr VRTRasterBand::SetColorTable( GDALColorTable *poTableIn )
 GDALColorTable *VRTRasterBand::GetColorTable()
 
 {
-    return m_poColorTable;
+    return m_poColorTable.get();
 }
 
 /************************************************************************/
