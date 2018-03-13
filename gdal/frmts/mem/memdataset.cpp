@@ -535,6 +535,28 @@ CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
 
     return CE_None;
 }
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable* MEMRasterBand::GetDefaultRAT()
+{
+    return m_poRAT.get();
+}
+
+/************************************************************************/
+/*                            SetDefaultRAT()                           */
+/************************************************************************/
+
+CPLErr MEMRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+{
+    if( poRAT == nullptr )
+        m_poRAT.reset();
+    else
+        m_poRAT.reset(poRAT->Clone());
+
+    return CE_None;
+}
 
 /************************************************************************/
 /*                            GetUnitType()                             */
