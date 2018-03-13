@@ -58,7 +58,7 @@ CPLString GetCompressionSoftwareName(){
 #else
         char* szLastSlash = strrchr(szProcessName, '/');
 #endif
-        if( szLastSlash != NULL )
+        if( szLastSlash != nullptr )
             memmove(szProcessName, szLastSlash + 1, strlen(szLastSlash + 1) + 1);
     }
     else
@@ -304,7 +304,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
     {
         const char *pszAuthName = oSRS.GetAuthorityName( "PROJCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "PROJCS" ));
         }
@@ -313,7 +313,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
     {
         const char *pszAuthName = oSRS.GetAuthorityName( "GEOGCS" );
 
-        if( pszAuthName != NULL && EQUAL(pszAuthName,"epsg") )
+        if( pszAuthName != nullptr && EQUAL(pszAuthName,"epsg") )
         {
             nEPSGCode = atoi(oSRS.GetAuthorityCode( "GEOGCS" ));
         }
@@ -387,13 +387,13 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
 /*      If we need a user defined CRSDictionary entry, prepare it       */
 /*      here.                                                           */
 /* -------------------------------------------------------------------- */
-    char *pszDictBox = NULL;
+    char *pszDictBox = nullptr;
 
     if( nEPSGCode == 0 )
     {
-        char *pszGMLDef = NULL;
+        char *pszGMLDef = nullptr;
 
-        if( oSRS.exportToXML( &pszGMLDef, NULL ) == OGRERR_NONE )
+        if( oSRS.exportToXML( &pszGMLDef, nullptr ) == OGRERR_NONE )
         {
             pszDictBox = (char *) CPLMalloc(strlen(pszGMLDef) + 4000);
 
@@ -441,7 +441,7 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
     poAssoc->m_OtherBoxes.push_back( poGMLData );
     poAssoc->m_OwnedBoxes.push_back( poGMLData );
 
-    if( pszDictBox != NULL )
+    if( pszDictBox != nullptr )
     {
         poAssoc = new CNCSJP2File::CNCSJPXAssocBox();
         m_oGMLAssoc.m_OtherBoxes.push_back( poAssoc );
@@ -554,13 +554,13 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION >= 40
     const char* pszECWKey = CSLFetchNameValue( papszOptions, "ECW_ENCODE_KEY");
-    if( pszECWKey == NULL )
-        pszECWKey = CPLGetConfigOption( "ECW_ENCODE_KEY", NULL );
+    if( pszECWKey == nullptr )
+        pszECWKey = CPLGetConfigOption( "ECW_ENCODE_KEY", nullptr );
 
     const char* pszECWCompany =
         CSLFetchNameValue( papszOptions, "ECW_ENCODE_COMPANY");
-    if( pszECWCompany == NULL )
-        pszECWCompany = CPLGetConfigOption( "ECW_ENCODE_COMPANY", NULL );
+    if( pszECWCompany == nullptr )
+        pszECWCompany = CPLGetConfigOption( "ECW_ENCODE_COMPANY", nullptr );
 
     if( pszECWKey && pszECWCompany)
     {
@@ -630,7 +630,7 @@ CPLErr GDALECWCompressor::Initialize(
     {
         bool bECWV3 = false;
         pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
-        if( pszOption != NULL )
+        if( pszOption != nullptr )
         {
             bECWV3 = (3 == atoi(pszOption));
         }
@@ -1056,39 +1056,39 @@ CPLErr GDALECWCompressor::Initialize(
 /* -------------------------------------------------------------------- */
 #if ECWSDK_VERSION>=50
     if (psClient->nFormatVersion>2){
-        if (psClient->pFileMetaData == NULL){
+        if (psClient->pFileMetaData == nullptr){
             NCSEcwInitMetaData(&psClient->pFileMetaData);
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")!=nullptr){
             psClient->pFileMetaData->sAcquisitionDate = NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_DATE")).c_str());
         }
 
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")!=nullptr){
             psClient->pFileMetaData->sAcquisitionSensorName =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME")).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")!=nullptr){
             psClient->pFileMetaData->sAddress =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_ADDRESS")).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")!=nullptr){
             psClient->pFileMetaData->sAuthor =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_AUTHOR")).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")!=nullptr){
             psClient->pFileMetaData->sClassification =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_CLASSIFICATION")).c_str());
         }
-        if ( pszECWCompany != NULL && CPLTestBool(CPLGetConfigOption("GDAL_ECW_WRITE_COMPANY", "YES"))  ){
+        if ( pszECWCompany != nullptr && CPLTestBool(CPLGetConfigOption("GDAL_ECW_WRITE_COMPANY", "YES"))  ){
             psClient->pFileMetaData->sCompany = NCSStrDupT(NCS::CString(pszECWCompany).c_str());
         }
         CPLString osCompressionSoftware = GetCompressionSoftwareName();
         if ( !osCompressionSoftware.empty() ) {
             psClient->pFileMetaData->sCompressionSoftware = NCSStrDupT(NCS::CString(osCompressionSoftware.c_str()).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")!=nullptr){
             psClient->pFileMetaData->sCopyright =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_COPYRIGHT")).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")!=nullptr){
             psClient->pFileMetaData->sEmail =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_EMAIL")).c_str());
         }
-        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")!=NULL){
+        if (m_poSrcDS && m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")!=nullptr){
             psClient->pFileMetaData->sTelephone =  NCSStrDupT(NCS::CString(m_poSrcDS->GetMetadataItem("FILE_METADATA_TELEPHONE")).c_str());
         }
     }
@@ -1213,7 +1213,7 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     bool bECWV3 = false;
     if (bIsJPEG2000 == FALSE){
         const char* pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
-        if( pszOption != NULL )
+        if( pszOption != nullptr )
         {
             bECWV3 = (3 == atoi(pszOption));
         }
@@ -1344,8 +1344,8 @@ ECWCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
             }
             double dHistMin, dHistMax;
             int nBuckets;
-            GUIntBig *pHistogram = NULL;
-            if (poSrcDS->GetRasterBand(i)->GetDefaultHistogram(&dHistMin, &dHistMax,&nBuckets,&pHistogram, FALSE, NULL, NULL) == CE_None){
+            GUIntBig *pHistogram = nullptr;
+            if (poSrcDS->GetRasterBand(i)->GetDefaultHistogram(&dHistMin, &dHistMax,&nBuckets,&pHistogram, FALSE, nullptr, nullptr) == CE_None){
                 poDS->GetRasterBand(i)->SetDefaultHistogram(dHistMin, dHistMax, nBuckets, pHistogram);
                 VSIFree(pHistogram);
             }
@@ -1393,7 +1393,7 @@ ECWCreateCopyECW( const char * pszFilename, GDALDataset *poSrcDS,
 #if ECWSDK_VERSION >= 50
     bool bECWV3 = false;
     const char* pszOption = CSLFetchNameValue(papszOptions, "ECW_FORMAT_VERSION");
-    if( pszOption != NULL )
+    if( pszOption != nullptr )
     {
         bECWV3 = (3 == atoi(pszOption));
     }

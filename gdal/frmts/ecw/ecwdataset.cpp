@@ -308,9 +308,9 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
     }
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
     bool bHistogramFromFile = false;
-    if ( poGDS->pStatistics != NULL ){
+    if ( poGDS->pStatistics != nullptr ){
         NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
-        if ( bandStats.Histogram != NULL && bandStats.nHistBucketCount > 0 ){
+        if ( bandStats.Histogram != nullptr && bandStats.nHistBucketCount > 0 ){
             *pnBuckets = bandStats.nHistBucketCount;
             *ppanHistogram = (GUIntBig *)VSIMalloc(bandStats.nHistBucketCount *sizeof(GUIntBig));
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++){
@@ -319,10 +319,10 @@ CPLErr ECWRasterBand::GetDefaultHistogram( double *pdfMin, double *pdfMax,
             //JTO: this is not perfect as You can't tell who wrote the histogram !!!
             //It will offset it unnecessarily for files with hists not modified by GDAL.
             double dfHalfBucket = (bandStats.fMaxHist -  bandStats.fMinHist) / (2 * (*pnBuckets - 1));
-            if ( pdfMin != NULL ){
+            if ( pdfMin != nullptr ){
                 *pdfMin = bandStats.fMinHist - dfHalfBucket;
             }
-            if ( pdfMax != NULL ){
+            if ( pdfMax != nullptr ){
                 *pdfMax = bandStats.fMaxHist + dfHalfBucket;
             }
             bHistogramFromFile = true;
@@ -379,11 +379,11 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
     //determine if there are statistics in PAM file.
     double dummy;
     int dummy_i;
-    GUIntBig *dummy_histogram = NULL;
+    GUIntBig *dummy_histogram = nullptr;
     bool hasPAMDefaultHistogram =
         GDALPamRasterBand::GetDefaultHistogram(
             &dummy, &dummy, &dummy_i, &dummy_histogram,
-            FALSE, NULL, NULL) == CE_None;
+            FALSE, nullptr, nullptr) == CE_None;
     if( hasPAMDefaultHistogram ) {
         VSIFree(dummy_histogram);
     }
@@ -404,7 +404,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
 
     NCSFileStatistics *pStatistics = poGDS->pStatistics;
 
-    if (pStatistics == NULL){
+    if (pStatistics == nullptr){
         error = NCSEcwInitStatistics(&pStatistics, nStatsBandCount, bucketCounts);
         poGDS->bStatisticsDirty = TRUE;
         poGDS->pStatistics = pStatistics;
@@ -421,7 +421,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram( double dfMin, double dfMax,
         //2. There is no existing histogram but statistics are set for one or more bands (pStatistics->nHistBucketCounts is zero).
         if ((int)pStatistics->BandsStats[nStatsBandIndex].nHistBucketCount != nBuckets){
             //no. There is no room. We need more!
-            NCSFileStatistics *pNewStatistics = NULL;
+            NCSFileStatistics *pNewStatistics = nullptr;
             for (size_t i=0;i<pStatistics->nNumberOfBands;i++){
                 bucketCounts[i] = pStatistics->BandsStats[i].nHistBucketCount;
             }
@@ -497,7 +497,7 @@ double ECWRasterBand::GetMinimum(int* pbSuccess)
         if ( error.Success() )
         {
             GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
-            if ( poGDS->pStatistics != NULL )
+            if ( poGDS->pStatistics != nullptr )
             {
                 NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
                 if ( bandStats.fMinVal == bandStats.fMinVal )
@@ -524,7 +524,7 @@ double ECWRasterBand::GetMaximum(int* pbSuccess)
         if ( error.Success() )
         {
             GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
-            if ( poGDS->pStatistics != NULL )
+            if ( poGDS->pStatistics != nullptr )
             {
                 NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
                 if ( bandStats.fMaxVal == bandStats.fMaxVal )
@@ -567,26 +567,26 @@ CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
     bool bStatisticsFromFile = false;
 
-    if ( poGDS->pStatistics != NULL )
+    if ( poGDS->pStatistics != nullptr )
     {
         bStatisticsFromFile = true;
         NCSBandStats& bandStats = poGDS->pStatistics->BandsStats[nStatsBandIndex];
-        if ( pdfMin != NULL && bandStats.fMinVal == bandStats.fMinVal){
+        if ( pdfMin != nullptr && bandStats.fMinVal == bandStats.fMinVal){
             *pdfMin = bandStats.fMinVal;
         }else{
             bStatisticsFromFile = false;
         }
-        if ( pdfMax != NULL && bandStats.fMaxVal == bandStats.fMaxVal){
+        if ( pdfMax != nullptr && bandStats.fMaxVal == bandStats.fMaxVal){
             *pdfMax = bandStats.fMaxVal;
         }else{
             bStatisticsFromFile = false;
         }
-        if ( pdfMean != NULL && bandStats.fMeanVal == bandStats.fMeanVal){
+        if ( pdfMean != nullptr && bandStats.fMeanVal == bandStats.fMeanVal){
             *pdfMean = bandStats.fMeanVal;
         }else{
             bStatisticsFromFile = false;
         }
-        if ( padfStdDev != NULL && bandStats.fStandardDev == bandStats.fStandardDev){
+        if ( padfStdDev != nullptr && bandStats.fStandardDev == bandStats.fStandardDev){
             *padfStdDev  = bandStats.fStandardDev;
         }else{
             bStatisticsFromFile = false;
@@ -601,16 +601,16 @@ CPLErr ECWRasterBand::GetStatistics( int bApproxOK, int bForce,
             &dfMax,
             &dfMean,
             &dfStdDev);
-        if (pdfMin!=NULL) {
+        if (pdfMin!=nullptr) {
             *pdfMin = dfMin;
         }
-        if (pdfMax !=NULL){
+        if (pdfMax !=nullptr){
             *pdfMax = dfMax;
         }
-        if (pdfMean !=NULL){
+        if (pdfMean !=nullptr){
             *pdfMean = dfMean;
         }
-        if (padfStdDev!=NULL){
+        if (padfStdDev!=nullptr){
             *padfStdDev = dfStdDev;
         }
         if ( pamError == CE_None){
@@ -649,8 +649,8 @@ CPLErr ECWRasterBand::SetStatistics( double dfMin, double dfMax,
             return GDALPamRasterBand::SetStatistics(dfMin, dfMax, dfMean, dfStdDev);
     }
     GetBandIndexAndCountForStatistics(nStatsBandIndex, nStatsBandCount);
-    if (poGDS->pStatistics == NULL){
-        error = NCSEcwInitStatistics(&poGDS->pStatistics, nStatsBandCount, NULL);
+    if (poGDS->pStatistics == nullptr){
+        error = NCSEcwInitStatistics(&poGDS->pStatistics, nStatsBandCount, nullptr);
         if (!error.Success()){
             CPLError( CE_Warning, CPLE_AppDefined,
                         "NCSEcwInitStatistics failed in ECWRasterBand::SetStatistic. Statistics will be written to PAM." );
@@ -964,7 +964,7 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
     bUseOldBandRasterIOImplementation = FALSE;
 #if ECWSDK_VERSION>=50
 
-    pStatistics = NULL;
+    pStatistics = nullptr;
     bStatisticsDirty = FALSE;
     bStatisticsInitialized = FALSE;
     bFileMetaDataDirty = FALSE;
@@ -1021,7 +1021,7 @@ ECWDataset::~ECWDataset()
     CleanupWindow();
 
 #if ECWSDK_VERSION>=50
-    NCSFileMetaData* pFileMetaDataCopy = NULL;
+    NCSFileMetaData* pFileMetaDataCopy = nullptr;
     if( bFileMetaDataDirty )
     {
         NCSCopyMetaData(&pFileMetaDataCopy, psFileInfo->pFileMetaData);
@@ -1136,7 +1136,7 @@ NCS::CError ECWDataset::StatisticsWrite()
     CPLDebug("ECW", "In StatisticsWrite()");
     NCSFileView* view = NCSEcwEditOpen( GetDescription() );
     NCS::CError error;
-    if ( view != NULL ){
+    if ( view != nullptr ){
         error = NCSEcwEditSetStatistics(view, pStatistics);
         if (error.Success()){
             error = NCSEcwEditFlushAll(view);
@@ -1156,7 +1156,7 @@ NCS::CError ECWDataset::StatisticsWrite()
 /************************************************************************/
 
 void ECWDataset::CleanupStatistics(){
-    if (bStatisticsInitialized == TRUE && pStatistics !=NULL){
+    if (bStatisticsInitialized == TRUE && pStatistics !=nullptr){
         NCSEcwFreeStatistics(pStatistics);
     }
 }
@@ -1250,76 +1250,76 @@ CPLErr ECWDataset::SetMetadataItem( const char * pszName,
         return CE_None;
     }
 #if ECWSDK_VERSION >=50
-    else if ( psFileInfo != NULL &&
+    else if ( psFileInfo != nullptr &&
               psFileInfo->nFormatVersion >= 3 &&
               eAccess == GA_Update &&
-              (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-              pszName != NULL &&
+              (pszDomain == nullptr || EQUAL(pszDomain, "")) &&
+              pszName != nullptr &&
               STARTS_WITH(pszName, "FILE_METADATA_") )
     {
         bFileMetaDataDirty = TRUE;
 
-        if( psFileInfo->pFileMetaData == NULL )
+        if( psFileInfo->pFileMetaData == nullptr )
             NCSInitMetaData(&(psFileInfo->pFileMetaData));
 
         if( strcmp(pszName, "FILE_METADATA_CLASSIFICATION") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sClassification);
-            psFileInfo->pFileMetaData->sClassification = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sClassification = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_ACQUISITION_DATE") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sAcquisitionDate);
-            psFileInfo->pFileMetaData->sAcquisitionDate = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sAcquisitionDate = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_ACQUISITION_SENSOR_NAME") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sAcquisitionSensorName);
-            psFileInfo->pFileMetaData->sAcquisitionSensorName = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sAcquisitionSensorName = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_COMPRESSION_SOFTWARE") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sCompressionSoftware);
-            psFileInfo->pFileMetaData->sCompressionSoftware = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sCompressionSoftware = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_AUTHOR") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sAuthor);
-            psFileInfo->pFileMetaData->sAuthor = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sAuthor = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_COPYRIGHT") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sCopyright);
-            psFileInfo->pFileMetaData->sCopyright = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sCopyright = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_COMPANY") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sCompany);
-            psFileInfo->pFileMetaData->sCompany = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sCompany = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_EMAIL") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sEmail);
-            psFileInfo->pFileMetaData->sEmail = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sEmail = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_ADDRESS") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sAddress);
-            psFileInfo->pFileMetaData->sAddress = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sAddress = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else if( strcmp(pszName, "FILE_METADATA_TELEPHONE") == 0 )
         {
             NCSFree(psFileInfo->pFileMetaData->sTelephone);
-            psFileInfo->pFileMetaData->sTelephone = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : NULL;
+            psFileInfo->pFileMetaData->sTelephone = pszValue ? NCSStrDupT(NCS::CString(pszValue).c_str()) : nullptr;
             return GDALDataset::SetMetadataItem( pszName, pszValue, pszDomain );
         }
         else
@@ -1382,20 +1382,20 @@ CPLErr ECWDataset::SetMetadata( char ** papszMetadata,
            CSLFetchNameValue(papszMetadata, "DATUM") != nullptr ||
            CSLFetchNameValue(papszMetadata, "UNITS") != nullptr))
 #if ECWSDK_VERSION >=50
-       || (psFileInfo != NULL &&
+       || (psFileInfo != nullptr &&
            psFileInfo->nFormatVersion >= 3 &&
            eAccess == GA_Update &&
-           (pszDomain == NULL || EQUAL(pszDomain, "")) &&
-           (CSLFetchNameValue(papszMetadata, "FILE_METADATA_CLASSIFICATION") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_DATE") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_SENSOR_NAME") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPRESSION_SOFTWARE") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_AUTHOR") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COPYRIGHT") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPANY") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_EMAIL") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ADDRESS") != NULL ||
-            CSLFetchNameValue(papszMetadata, "FILE_METADATA_TELEPHONE") != NULL))
+           (pszDomain == nullptr || EQUAL(pszDomain, "")) &&
+           (CSLFetchNameValue(papszMetadata, "FILE_METADATA_CLASSIFICATION") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_DATE") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ACQUISITION_SENSOR_NAME") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPRESSION_SOFTWARE") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_AUTHOR") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COPYRIGHT") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_COMPANY") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_EMAIL") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_ADDRESS") != nullptr ||
+            CSLFetchNameValue(papszMetadata, "FILE_METADATA_TELEPHONE") != nullptr))
 #endif
         )
     {
@@ -1507,7 +1507,7 @@ void ECWDataset::WriteHeader()
 #if ECWSDK_VERSION<50
     eErr = NCSEcwEditWriteInfo((char*) GetDescription(), psEditInfo, nullptr, nullptr, nullptr);
 #else
-    eErr = NCSEcwEditWriteInfo( NCS::CString::Utf8Decode(GetDescription()).c_str(), psEditInfo, NULL, NULL, NULL);
+    eErr = NCSEcwEditWriteInfo( NCS::CString::Utf8Decode(GetDescription()).c_str(), psEditInfo, nullptr, nullptr, nullptr);
 #endif
     if (eErr != NCS_SUCCESS)
     {
@@ -2789,7 +2789,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
     // output jp2 header info
     if( bIsJPEG2000 && poDS->poFileView ) {
         // comments
-        char *csComments = NULL;
+        char *csComments = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:COMMENTS", &csComments);
         if (csComments) {
             poDS->SetMetadataItem("ALL_COMMENTS", CPLString().Printf("%s", csComments));
@@ -2829,7 +2829,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         poDS->SetMetadataItem("TILE_HEIGHT", CPLString().Printf("%d", nTileSizeY), JPEG2000_DOMAIN_NAME);
 
         // Precinct Sizes on X axis
-        char *csPreSizeX = NULL;
+        char *csPreSizeX = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PRECINCTSIZE:X", &csPreSizeX);
         if (csPreSizeX) {
                 poDS->SetMetadataItem("PRECINCT_SIZE_X", csPreSizeX, JPEG2000_DOMAIN_NAME);
@@ -2837,7 +2837,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
 
         // Precinct Sizes on Y axis
-        char *csPreSizeY = NULL;
+        char *csPreSizeY = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PRECINCTSIZE:Y", &csPreSizeY);
         if (csPreSizeY) {
             poDS->SetMetadataItem("PRECINCT_SIZE_Y", csPreSizeY, JPEG2000_DOMAIN_NAME);
@@ -2855,7 +2855,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         poDS->SetMetadataItem("CODE_BLOCK_SIZE_Y", CPLString().Printf("%d", nCodeBlockSizeY), JPEG2000_DOMAIN_NAME);
 
         // Bitdepth
-        char *csBitdepth = NULL;
+        char *csBitdepth = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:BITDEPTH", &csBitdepth);
         if (csBitdepth) {
             poDS->SetMetadataItem("PRECISION", csBitdepth, JPEG2000_DOMAIN_NAME);
@@ -2873,7 +2873,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         poDS->SetMetadataItem("QUALITY_LAYERS", CPLString().Printf("%d", nLayers), JPEG2000_DOMAIN_NAME);
 
         // Progression Order
-        char *csOrder = NULL;
+        char *csOrder = nullptr;
         poDS->poFileView->GetParameter((char*)"JPC:DECOMPRESS:PROGRESSION:ORDER", &csOrder);
         if (csOrder) {
             poDS->SetMetadataItem("PROGRESSION_ORDER", csOrder, JPEG2000_DOMAIN_NAME);
@@ -2881,7 +2881,7 @@ GDALDataset *ECWDataset::Open( GDALOpenInfo * poOpenInfo, int bIsJPEG2000 )
         }
 
         // DWT Filter
-        const char *csFilter = NULL;
+        const char *csFilter = nullptr;
         UINT32 nFilter;
         poDS->poFileView->GetParameter((char*)"JP2:TRANSFORMATION:TYPE", &nFilter);
         if (nFilter)
@@ -2953,7 +2953,7 @@ char **ECWDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
                                    TRUE,
-                                   "ECW", "GML", NULL);
+                                   "ECW", "GML", nullptr);
 }
 
 /************************************************************************/
@@ -3006,27 +3006,27 @@ char **ECWDataset::GetMetadata( const char *pszDomain )
 #if ECWSDK_VERSION >= 50
 void ECWDataset::ReadFileMetaDataFromFile()
 {
-    if (psFileInfo->pFileMetaData == NULL) return;
+    if (psFileInfo->pFileMetaData == nullptr) return;
 
-    if (psFileInfo->pFileMetaData->sClassification != NULL )
+    if (psFileInfo->pFileMetaData->sClassification != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_CLASSIFICATION", NCS::CString(psFileInfo->pFileMetaData->sClassification));
-    if (psFileInfo->pFileMetaData->sAcquisitionDate != NULL )
+    if (psFileInfo->pFileMetaData->sAcquisitionDate != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_DATE", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionDate));
-    if (psFileInfo->pFileMetaData->sAcquisitionSensorName != NULL )
+    if (psFileInfo->pFileMetaData->sAcquisitionSensorName != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_ACQUISITION_SENSOR_NAME", NCS::CString(psFileInfo->pFileMetaData->sAcquisitionSensorName));
-    if (psFileInfo->pFileMetaData->sCompressionSoftware != NULL )
+    if (psFileInfo->pFileMetaData->sCompressionSoftware != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_COMPRESSION_SOFTWARE", NCS::CString(psFileInfo->pFileMetaData->sCompressionSoftware));
-    if (psFileInfo->pFileMetaData->sAuthor != NULL )
+    if (psFileInfo->pFileMetaData->sAuthor != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_AUTHOR", NCS::CString(psFileInfo->pFileMetaData->sAuthor));
-    if (psFileInfo->pFileMetaData->sCopyright != NULL )
+    if (psFileInfo->pFileMetaData->sCopyright != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_COPYRIGHT", NCS::CString(psFileInfo->pFileMetaData->sCopyright));
-    if (psFileInfo->pFileMetaData->sCompany != NULL )
+    if (psFileInfo->pFileMetaData->sCompany != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_COMPANY", NCS::CString(psFileInfo->pFileMetaData->sCompany));
-    if (psFileInfo->pFileMetaData->sEmail != NULL )
+    if (psFileInfo->pFileMetaData->sEmail != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_EMAIL", NCS::CString(psFileInfo->pFileMetaData->sEmail));
-    if (psFileInfo->pFileMetaData->sAddress != NULL )
+    if (psFileInfo->pFileMetaData->sAddress != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_ADDRESS", NCS::CString(psFileInfo->pFileMetaData->sAddress));
-    if (psFileInfo->pFileMetaData->sTelephone != NULL )
+    if (psFileInfo->pFileMetaData->sTelephone != nullptr )
         GDALDataset::SetMetadataItem("FILE_METADATA_TELEPHONE", NCS::CString(psFileInfo->pFileMetaData->sTelephone));
 }
 
@@ -3044,11 +3044,11 @@ void ECWDataset::WriteFileMetaData(NCSFileMetaData* pFileMetaDataCopy)
 
     bFileMetaDataDirty = FALSE;
 
-    NCSFileView *psFileView = NULL;
+    NCSFileView *psFileView = nullptr;
     NCSError eErr;
 
     psFileView = NCSEditOpen( GetDescription() );
-    if (psFileView == NULL)
+    if (psFileView == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "NCSEditOpen() failed");
@@ -3431,11 +3431,11 @@ void ECWInitialize()
     CPL_IGNORE_RET_VAL(pszOpt);
 
 #if ECWSDK_VERSION >= 40
-    pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", NULL );
+    pszOpt = CPLGetConfigOption( "ECWP_CACHE_SIZE_MB", nullptr );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_ECWP_CACHE_SIZE_MB, (INT32) atoi( pszOpt ) );
 
-    pszOpt = CPLGetConfigOption( "ECWP_CACHE_LOCATION", NULL );
+    pszOpt = CPLGetConfigOption( "ECWP_CACHE_LOCATION", nullptr );
     if( pszOpt )
     {
         NCSecwSetConfig( NCSCFG_ECWP_CACHE_LOCATION, pszOpt );
@@ -3473,17 +3473,17 @@ void ECWInitialize()
         NCSecwSetConfig( NCSCFG_CACHE_MAXOPEN, (UINT32) atoi(pszOpt) );
 
 #if ECWSDK_VERSION >= 40
-    pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", NULL );
+    pszOpt = CPLGetConfigOption( "ECW_AUTOGEN_J2I", nullptr );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_JP2_AUTOGEN_J2I,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-    pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", NULL );
+    pszOpt = CPLGetConfigOption( "ECW_OPTIMIZE_USE_NEAREST_NEIGHBOUR", nullptr );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_OPTIMIZE_USE_NEAREST_NEIGHBOUR,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
 
-    pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", NULL );
+    pszOpt = CPLGetConfigOption( "ECW_RESILIENT_DECODING", nullptr );
     if( pszOpt )
         NCSecwSetConfig( NCSCFG_RESILIENT_DECODING,
                          (BOOLEAN) CPLTestBool( pszOpt ) );
@@ -3561,7 +3561,7 @@ void GDALRegister_ECW()
     poDriver->pfnUnloadDriver = GDALDeregister_ECW;
 #ifdef HAVE_COMPRESS
     // The create method does not work with SDK 3.3 ( crash in
-    // CNCSJP2FileView::WriteLineBIL() due to m_pFile being NULL ).
+    // CNCSJP2FileView::WriteLineBIL() due to m_pFile being nullptr ).
 #if ECWSDK_VERSION >= 50
     poDriver->pfnCreate = ECWCreateECW;
 #endif

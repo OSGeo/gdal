@@ -72,7 +72,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                   "  Buffer = %dx%d\n",
                   nXOff, nYOff, nXSize, nYSize,
                   nBufXSize, nBufYSize );
-        return NULL;
+        return nullptr;
     }
 
     if( nXOff < 0 || nXOff > INT_MAX - nXSize || nXOff + nXSize > nRasterXSize
@@ -82,16 +82,16 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                   "Access window out of range in RasterIO().  Requested\n"
                   "(%d,%d) of size %dx%d on raster of %dx%d.",
                   nXOff, nYOff, nXSize, nYSize, nRasterXSize, nRasterYSize );
-        return NULL;
+        return nullptr;
     }
 
     if( nBandCount <= 0 || nBandCount > nBands )
     {
         ReportError( CE_Failure, CPLE_IllegalArg, "Invalid band count" );
-        return NULL;
+        return nullptr;
     }
 
-    if( panBandMap != NULL )
+    if( panBandMap != nullptr )
     {
         for( i = 0; i < nBandCount; i++ )
         {
@@ -100,7 +100,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
                 ReportError( CE_Failure, CPLE_IllegalArg,
                       "panBandMap[%d] = %d, this band does not exist on dataset.",
                       i, panBandMap[i] );
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -123,7 +123,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
     poReader->eBufType = eBufType;
     poReader->nBandCount = nBandCount;
     poReader->panBandMap = (int *) CPLCalloc(sizeof(int),nBandCount);
-    if( panBandMap != NULL )
+    if( panBandMap != nullptr )
     {
         memcpy( poReader->panBandMap, panBandMap, sizeof(int) * nBandCount );
     }
@@ -143,10 +143,10 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
     poReader->poFileView = OpenFileView( GetDescription(), true,
                                          poReader->bUsingCustomStream );
 
-    if( poReader->poFileView == NULL )
+    if( poReader->poFileView == nullptr )
     {
         delete poReader;
-        return NULL;
+        return nullptr;
     }
 
     poReader->poFileView->SetClientData( poReader );
@@ -175,7 +175,7 @@ ECWDataset::BeginAsyncReader( int nXOff, int nYOff, int nXSize, int nYSize,
         CPLError( CE_Failure, CPLE_AppDefined,
                   "%s", NCSGetErrorText(eNCSErr) );
 
-        return NULL;
+        return nullptr;
     }
 
     return poReader;
@@ -200,10 +200,10 @@ ECWAsyncReader::ECWAsyncReader()
     hMutex = CPLCreateMutex();
     CPLReleaseMutex( hMutex );
 
-    poFileView = NULL;
+    poFileView = nullptr;
     bUpdateReady = FALSE;
     bComplete = FALSE;
-    panBandMap = NULL;
+    panBandMap = nullptr;
 }
 
 /************************************************************************/
@@ -223,10 +223,10 @@ ECWAsyncReader::~ECWAsyncReader()
     }
 
     CPLFree(panBandMap);
-    panBandMap = NULL;
+    panBandMap = nullptr;
 
     CPLDestroyMutex( hMutex );
-    hMutex = NULL;
+    hMutex = nullptr;
 }
 
 /************************************************************************/
@@ -243,10 +243,10 @@ ECWAsyncReader::~ECWAsyncReader()
 NCSEcwReadStatus ECWAsyncReader::RefreshCB( NCSFileView *pFileView )
 
 {
-    NCSFileViewSetInfo *psVSI = NULL;
+    NCSFileViewSetInfo *psVSI = nullptr;
 
     NCScbmGetViewInfo( pFileView, &psVSI );
-    if( psVSI != NULL )
+    if( psVSI != nullptr )
     {
         CPLDebug( "ECW", "RefreshCB(): BlockCounts=%d/%d/%d/%d",
                   psVSI->nBlocksAvailableAtSetView,
