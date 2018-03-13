@@ -11,6 +11,8 @@
 */
 
 /*#include "f2c.h"*/
+#include "cpl_port.h"
+#include <limits.h>
 #include <stdlib.h>
 #include "grib2.h"
 typedef g2int logical;
@@ -774,6 +776,14 @@ L160:
 /*        CALCULATED. */
 
 L165:
+    if( (GIntBig)maxb - minb < INT_MIN ||
+        (GIntBig)maxb - minb > INT_MAX )
+    {
+        *ier = -1;
+        free(misslx);
+        return 0;
+    }
+
     for (ibitb = ibitbs; ibitb <= 30; ++ibitb) {
 	if (maxb - minb < ibxx2[ibitb] - lmiss) {
 	    goto L170;
