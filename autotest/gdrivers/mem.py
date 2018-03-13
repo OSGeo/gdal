@@ -775,6 +775,40 @@ def mem_12():
     return 'success'
 
 ###############################################################################
+# Check RAT support
+
+def mem_rat():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
+    if ds.GetRasterBand(1).GetDefaultRAT() is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).SetDefaultRAT(None)
+    if ds.GetRasterBand(1).GetDefaultRAT() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Check CategoryNames support
+
+def mem_categorynames():
+
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
+    ds.GetRasterBand(1).SetCategoryNames(['foo'])
+    if ds.GetRasterBand(1).GetCategoryNames() != ['foo']:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).SetCategoryNames([])
+    if ds.GetRasterBand(1).GetCategoryNames() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def mem_cleanup():
@@ -795,6 +829,8 @@ gdaltest_list = [
     mem_10,
     mem_11,
     mem_12,
+    mem_rat,
+    mem_categorynames,
     mem_cleanup ]
 
 if __name__ == '__main__':

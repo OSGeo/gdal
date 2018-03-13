@@ -92,10 +92,7 @@ MEMRasterBand::MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
     bOwnData(true),
     bNoDataSet(FALSE),
     dfNoData(0.0),
-    poColorTable(nullptr),
     eColorInterp(GCI_Undefined),
-    pszUnitType(nullptr),
-    papszCategoryNames(nullptr),
     dfOffset(0.0),
     dfScale(1.0),
     psSavedHistograms(nullptr)
@@ -125,10 +122,7 @@ MEMRasterBand::MEMRasterBand( GDALDataset *poDSIn, int nBandIn,
     bOwnData(bAssumeOwnership),
     bNoDataSet(FALSE),
     dfNoData(0.0),
-    poColorTable(nullptr),
     eColorInterp(GCI_Undefined),
-    pszUnitType(nullptr),
-    papszCategoryNames(nullptr),
     dfOffset(0.0),
     dfScale(1.0),
     psSavedHistograms(nullptr)
@@ -164,12 +158,6 @@ MEMRasterBand::~MEMRasterBand()
     {
         VSIFree( pabyData );
     }
-
-    if( poColorTable != nullptr )
-        delete poColorTable;
-
-    CPLFree( pszUnitType );
-    CSLDestroy( papszCategoryNames );
 
     if (psSavedHistograms != nullptr)
         CPLDestroyXMLNode(psSavedHistograms);
@@ -490,7 +478,7 @@ CPLErr MEMRasterBand::DeleteNoDataValue()
 GDALColorInterp MEMRasterBand::GetColorInterpretation()
 
 {
-    if( poColorTable != nullptr )
+    if( m_poColorTable != nullptr )
         return GCI_PaletteIndex;
 
     return eColorInterp;
@@ -515,7 +503,7 @@ CPLErr MEMRasterBand::SetColorInterpretation( GDALColorInterp eGCI )
 GDALColorTable *MEMRasterBand::GetColorTable()
 
 {
-    return poColorTable;
+    return m_poColorTable.get();
 }
 
 /************************************************************************/
@@ -525,13 +513,10 @@ GDALColorTable *MEMRasterBand::GetColorTable()
 CPLErr MEMRasterBand::SetColorTable( GDALColorTable *poCT )
 
 {
-    if( poColorTable != nullptr )
-        delete poColorTable;
-
     if( poCT == nullptr )
-        poColorTable = nullptr;
+        m_poColorTable.reset();
     else
-        poColorTable = poCT->Clone();
+        m_poColorTable.reset(poCT->Clone());
 
     return CE_None;
 }
@@ -565,10 +550,7 @@ CPLErr MEMRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
 const char *MEMRasterBand::GetUnitType()
 
 {
-    if( pszUnitType == nullptr )
-        return "";
-
-    return pszUnitType;
+    return m_osUnitType.c_str();
 }
 
 /************************************************************************/
@@ -578,12 +560,7 @@ const char *MEMRasterBand::GetUnitType()
 CPLErr MEMRasterBand::SetUnitType( const char *pszNewValue )
 
 {
-    CPLFree( pszUnitType );
-
-    if( pszNewValue == nullptr )
-        pszUnitType = nullptr;
-    else
-        pszUnitType = CPLStrdup(pszNewValue);
+    m_osUnitType = pszNewValue ? pszNewValue : "";
 
     return CE_None;
 }
@@ -643,7 +620,7 @@ CPLErr MEMRasterBand::SetScale( double dfNewScale )
 char **MEMRasterBand::GetCategoryNames()
 
 {
-    return papszCategoryNames;
+    return m_aosCategoryNames.List();
 }
 
 /************************************************************************/
@@ -653,8 +630,7 @@ char **MEMRasterBand::GetCategoryNames()
 CPLErr MEMRasterBand::SetCategoryNames( char ** papszNewNames )
 
 {
-    CSLDestroy( papszCategoryNames );
-    papszCategoryNames = CSLDuplicate( papszNewNames );
+    m_aosCategoryNames = CSLDuplicate(papszNewNames);
 
     return CE_None;
 }
