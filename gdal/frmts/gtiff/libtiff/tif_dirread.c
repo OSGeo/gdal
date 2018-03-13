@@ -5696,6 +5696,17 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
         if( nstrips == 0 )
             return;
 
+        /* If we are going to allocate a lot of memory, make sure that the */
+        /* file is as big as needed */
+        if( tif->tif_mode == O_RDONLY &&
+            nstrips > 1000000 &&
+            (tif->tif_dir.td_stripoffset[0] >= TIFFGetFileSize(tif) ||
+             tif->tif_dir.td_stripbytecount[0] >
+                    TIFFGetFileSize(tif) - tif->tif_dir.td_stripoffset[0]) )
+        {
+            return;
+        }
+
 	newcounts = (uint64*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint64),
 				"for chopped \"StripByteCounts\" array");
 	newoffsets = (uint64*) _TIFFCheckMalloc(tif, nstrips, sizeof (uint64),
