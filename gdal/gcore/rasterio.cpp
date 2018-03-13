@@ -75,8 +75,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 {
     if( eRWFlag == GF_Write && eFlushBlockErr != CE_None )
     {
-        CPLError( eFlushBlockErr, CPLE_AppDefined,
-                  "An error occurred while writing a dirty block" );
+        CPLError(eFlushBlockErr, CPLE_AppDefined,
+                 "An error occurred while writing a dirty block "
+                 "from GDALRasterBand::IRasterIO");
         CPLErr eErr = eFlushBlockErr;
         eFlushBlockErr = CE_None;
         return eErr;
