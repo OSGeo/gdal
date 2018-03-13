@@ -625,6 +625,27 @@ def vrtmisc_colortable():
     return 'success'
 
 ###############################################################################
+# Check histogram support
+
+def vrtmisc_histogram():
+
+    tmpfile = '/vsimem/vrtmisc_histogram.vrt'
+    ds = gdal.Translate(tmpfile, 'data/byte.tif', format = 'VRT')
+    ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3000000000,4])
+    ds = None
+
+    ds = gdal.Open(tmpfile)
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force=0)
+    ds = None
+
+    if hist != (1.0, 2.0, 2, [3000000000, 4]):
+        print(hist)
+        return 'fail'
+
+    gdal.Unlink(tmpfile)
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -651,6 +672,7 @@ gdaltest_list = [
     vrtmisc_18,
     vrtmisc_rat,
     vrtmisc_colortable,
+    vrtmisc_histogram,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
