@@ -356,7 +356,9 @@ class CPLStringT : public std::string
 #else
 
 #  define CPLSTRING_DLL
+/*! @cond Doxygen_Suppress */
 #  define CPLStringT CPLString
+/*! @endcond */
   
 class CPL_DLL CPLString : public std::string
   
