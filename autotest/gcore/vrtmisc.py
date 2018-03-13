@@ -606,6 +606,25 @@ def vrtmisc_rat():
     return "success"
 
 ###############################################################################
+# Check ColorTable support
+
+def vrtmisc_colortable():
+
+    ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
+    ct = gdal.ColorTable()
+    ct.SetColorEntry( 0, (255,255,255,255) )
+    ds.GetRasterBand(1).SetColorTable(ct)
+    if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds.GetRasterBand(1).SetColorTable(None)
+    if ds.GetRasterBand(1).GetColorTable() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -631,6 +650,7 @@ gdaltest_list = [
     vrtmisc_17,
     vrtmisc_18,
     vrtmisc_rat,
+    vrtmisc_colortable,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
