@@ -99,6 +99,7 @@ void GMLFeatureClass::StealProperties()
     m_nPropertyCount = 0;
     CPLFree(m_papoProperty);
     m_papoProperty = nullptr;
+    m_oMapPropertyNameToIndex.clear();
 }
 
 /************************************************************************/
@@ -142,9 +143,9 @@ GMLPropertyDefn *GMLFeatureClass::GetProperty( int iIndex ) const
 int GMLFeatureClass::GetPropertyIndex( const char *pszName ) const
 
 {
-    for( int i = 0; i < m_nPropertyCount; i++ )
-        if( EQUAL(pszName, m_papoProperty[i]->GetName()) )
-            return i;
+    auto oIter = m_oMapPropertyNameToIndex.find(CPLString(pszName).toupper());
+    if( oIter != m_oMapPropertyNameToIndex.end() )
+        return oIter->second;
 
     return -1;
 }
@@ -186,6 +187,8 @@ int GMLFeatureClass::AddProperty( GMLPropertyDefn *poDefn )
         CPLRealloc(m_papoProperty, sizeof(void *) * m_nPropertyCount));
 
     m_papoProperty[m_nPropertyCount - 1] = poDefn;
+    m_oMapPropertyNameToIndex[ CPLString(poDefn->GetName()).toupper() ] =
+        m_nPropertyCount - 1;
 
     return m_nPropertyCount - 1;
 }

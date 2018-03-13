@@ -1066,9 +1066,17 @@ void GMLReader::SetFeaturePropertyDirectly( const char *pszElement,
                 osFieldName[nPos] = '_';
 
             // Does this conflict with an existing property name?
-            while( poClass->GetProperty(osFieldName) != nullptr )
+            for( int i = 0; poClass->GetProperty(osFieldName) != nullptr; i++ )
             {
                 osFieldName += "_";
+                if( i == 10 )
+                {
+                    CPLDebug("GML",
+                             "Too many conflicting property names : %s.",
+                             osFieldName.c_str());
+                    CPLFree(pszValue);
+                    return;
+                }
             }
 
             GMLPropertyDefn *poPDefn =
