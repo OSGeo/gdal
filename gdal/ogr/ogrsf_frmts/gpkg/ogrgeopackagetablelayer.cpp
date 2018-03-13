@@ -942,7 +942,12 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         int nPKIDIndex = SQLResultGetValueAsInteger(&oResultTable, 5, iRecord);
         OGRFieldSubType eSubType;
         int nMaxWidth = 0;
-        OGRFieldType oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
+        OGRFieldType oType = (OGRFieldType)(OFTMaxType + 1);
+
+        if ( !EQUAL(pszType, "") || m_bIsTable )
+        {
+            oType = GPkgFieldToOGR(pszType, eSubType, nMaxWidth);
+        }
 
         /* Not a standard field type... */
         if ( !EQUAL(pszType, "") && !EQUAL(pszName, "OGC_FID") &&
