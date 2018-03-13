@@ -587,12 +587,18 @@ def vrtmisc_rat():
 
     ds = None
 
-    vrt_ds = gdal.Open('/vsimem/vrtmisc_rat.vrt')
+    vrt_ds = gdal.Open('/vsimem/vrtmisc_rat.vrt', gdal.GA_Update)
     rat = vrt_ds.GetRasterBand(1).GetDefaultRAT()
     if rat is None or rat.GetColumnCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
+    vrt_ds.GetRasterBand(1).SetDefaultRAT(None)
+    if vrt_ds.GetRasterBand(1).GetDefaultRAT() is not None:
+        gdaltest.post_reason('fail')
+        return 'fail'
     vrt_ds = None
+
+    ds = None
 
     gdal.Unlink('/vsimem/vrtmisc_rat.vrt')
     gdal.Unlink('/vsimem/vrtmisc_rat.tif')

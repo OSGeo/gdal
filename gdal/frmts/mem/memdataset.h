@@ -138,11 +138,11 @@ class CPL_DLL MEMRasterBand : public GDALPamRasterBand
     int         bNoDataSet;
     double      dfNoData;
 
-    GDALColorTable *poColorTable;
+    std::unique_ptr<GDALColorTable> m_poColorTable;
     GDALColorInterp eColorInterp;
 
-    char           *pszUnitType;
-    char           **papszCategoryNames;
+    CPLString      m_osUnitType;
+    CPLStringList  m_aosCategoryNames;
 
     double         dfOffset;
     double         dfScale;
