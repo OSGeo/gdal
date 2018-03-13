@@ -37,16 +37,16 @@ typedef g2int logical;
     /* Local variables */
     integer j, k, l;
     logical adda;
-    integer ired, kinc, mina, maxa, minb, maxb, minc, maxc, ibxx2[31];
+    integer ired, kinc, mina, maxa, minb = 0, maxb = 0, minc = 0, maxc = 0, ibxx2[31];
     char cfeed[1];
-    integer nenda, nendb, ibita, ibitb, minak, minbk, maxak, maxbk,
-	    minck, maxck, nouta, lmiss, itest, nount;
+    integer nenda, nendb = 0, ibita, ibitb = 0, minak, minbk = 0, maxak, maxbk = 0,
+	    minck = 0, maxck, nouta = 0, lmiss, itest = 0, nount = 0;
     extern /* Subroutine */ int reduce(integer *, integer *, integer *,
 	    integer *, integer *, integer *, integer *, integer *, integer *,
 	    integer *, integer *, integer *, integer *);
-    integer ibitbs, mislla, misllb, misllc, iersav, lminpk, ktotal,
-	    kounta, kountb, kstart, mstart, mintst, maxtst,
-	    kounts, mintstk, maxtstk;
+    integer ibitbs = 0, mislla, misllb = 0, misllc = 0, iersav = 0, lminpk, ktotal,
+	    kounta, kountb = 0, kstart, mstart = 0, mintst = 0, maxtst = 0,
+	    kounts = 0, mintstk = 0, maxtstk = 0;
     integer *misslx;
 
 
