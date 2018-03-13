@@ -163,8 +163,6 @@ EHdrRasterBand::EHdrRasterBand( GDALDataset *poDSIn,
 
 EHdrRasterBand::~EHdrRasterBand()
 {
-    if( m_bOwnEhdrColorTable )
-        delete m_poEhdrColorTable;
 }
 
 /************************************************************************/
@@ -419,7 +417,7 @@ EHdrDataset::~EHdrDataset()
         }
 
         if( bCLRDirty )
-            RewriteColorTable(poBand->GetColorTable());
+            RewriteCLR(poBand);
 
         if( bHDRDirty )
             RewriteHDR();
@@ -435,8 +433,6 @@ EHdrDataset::~EHdrDataset()
 
     CPLFree(pszProjection);
     CSLDestroy(papszHDR);
-
-    delete m_poColorTable;
 }
 
 /************************************************************************/
@@ -501,38 +497,68 @@ void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
 }
 
 /************************************************************************/
-/*                         RewriteColorTable()                          */
+/*                           RewriteCLR()                               */
 /************************************************************************/
 
-void EHdrDataset::RewriteColorTable( GDALColorTable *poTable )
+void EHdrDataset::RewriteCLR( GDALRasterBand* poBand )
 
 {
     CPLString osCLRFilename = CPLResetExtension(GetDescription(), "clr");
-    if( poTable )
+    GDALColorTable* poTable = poBand->GetColorTable();
+    GDALRasterAttributeTable* poRAT = poBand->GetDefaultRAT();
+    if( poTable || poRAT )
     {
         VSILFILE *fp = VSIFOpenL(osCLRFilename, "wt");
         if( fp != nullptr )
         {
-            for( int iColor = 0;
-                 iColor < poTable->GetColorEntryCount();
-                 iColor++ )
+            // Write RAT in priority if both are defined
+            if( poRAT )
             {
-                GDALColorEntry sEntry;
-                poTable->GetColorEntryAsRGB(iColor, &sEntry);
-
-                // I wish we had a way to mark transparency.
-                CPLString oLine;
-                oLine.Printf("%3d %3d %3d %3d\n",
-                             iColor, sEntry.c1, sEntry.c2, sEntry.c3);
-                if( VSIFWriteL(
-                    reinterpret_cast<void *>(
-                        const_cast<char *>( oLine.c_str() ) ),
-                    strlen(oLine), 1, fp ) != 1 )
+                for( int iEntry = 0;
+                    iEntry < poRAT->GetRowCount();
+                    iEntry++ )
                 {
-                    CPLError(CE_Failure, CPLE_FileIO,
-                             "Error while write color table");
-                    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-                    return;
+                    CPLString oLine;
+                    oLine.Printf("%3d %3d %3d %3d\n",
+                                 poRAT->GetValueAsInt(iEntry, 0),
+                                 poRAT->GetValueAsInt(iEntry, 1),
+                                 poRAT->GetValueAsInt(iEntry, 2),
+                                 poRAT->GetValueAsInt(iEntry, 3));
+                    if( VSIFWriteL(
+                        reinterpret_cast<void *>(
+                            const_cast<char *>( oLine.c_str() ) ),
+                        strlen(oLine), 1, fp ) != 1 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                "Error while write color table");
+                        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                for( int iColor = 0;
+                    iColor < poTable->GetColorEntryCount();
+                    iColor++ )
+                {
+                    GDALColorEntry sEntry;
+                    poTable->GetColorEntryAsRGB(iColor, &sEntry);
+
+                    // I wish we had a way to mark transparency.
+                    CPLString oLine;
+                    oLine.Printf("%3d %3d %3d %3d\n",
+                                iColor, sEntry.c1, sEntry.c2, sEntry.c3);
+                    if( VSIFWriteL(
+                        reinterpret_cast<void *>(
+                            const_cast<char *>( oLine.c_str() ) ),
+                        strlen(oLine), 1, fp ) != 1 )
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                "Error while write color table");
+                        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
+                        return;
+                    }
                 }
             }
             if( VSIFCloseL(fp) != 0 )
@@ -1568,9 +1594,17 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( fp != nullptr )
     {
-        poDS->m_poColorTable = new GDALColorTable();
+        std::shared_ptr<GDALRasterAttributeTable> poRat(
+            new GDALDefaultRasterAttributeTable());
+        poRat->CreateColumn("Value", GFT_Integer, GFU_Generic);
+        poRat->CreateColumn("Red", GFT_Integer, GFU_Red);
+        poRat->CreateColumn("Green", GFT_Integer, GFU_Green);
+        poRat->CreateColumn("Blue", GFT_Integer, GFU_Blue);
 
-        int bHasWarned = FALSE;
+        poDS->m_poColorTable.reset(new GDALColorTable());
+
+        bool bHasFoundNonCTValues = false;
+        int nRatRow = 0;
 
         while( true )
         {
@@ -1587,6 +1621,12 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
             if ( CSLCount(papszValues) >= 4 )
             {
                 const int nIndex = atoi(papszValues[0]);
+                poRat->SetValue(nRatRow, 0, nIndex);
+                poRat->SetValue(nRatRow, 1, atoi(papszValues[1]));
+                poRat->SetValue(nRatRow, 2, atoi(papszValues[2]));
+                poRat->SetValue(nRatRow, 3, atoi(papszValues[3]));
+                nRatRow ++;
+
                 if (nIndex >= 0 && nIndex < 65536)
                 {
                     const GDALColorEntry oEntry =
@@ -1606,9 +1646,9 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
                     //   http://www.ngdc.noaa.gov/mgg/topo/elev/esri/clr/
                     // But, there's no way of representing them with GDAL color
                     // table model.
-                    if (!bHasWarned)
+                    if (!bHasFoundNonCTValues)
                         CPLDebug("EHdr", "Ignoring color index : %d", nIndex);
-                    bHasWarned = TRUE;
+                    bHasFoundNonCTValues = true;
                 }
             }
 
@@ -1617,12 +1657,17 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
+        if( bHasFoundNonCTValues )
+        {
+            poDS->m_poRAT.swap(poRat);
+        }
+
         for( int i = 1; i <= poDS->nBands; i++ )
         {
             EHdrRasterBand *poBand =
                     dynamic_cast<EHdrRasterBand*>(poDS->GetRasterBand(i));
-            poBand->m_bOwnEhdrColorTable = false;
-            poBand->m_poEhdrColorTable = poDS->m_poColorTable;
+            poBand->m_poColorTable = poDS->m_poColorTable;
+            poBand->m_poRAT = poDS->m_poRAT;
             poBand->SetColorInterpretation(GCI_PaletteIndex);
         }
 
@@ -1933,7 +1978,7 @@ CPLErr EHdrRasterBand::SetStatistics( double dfMinIn, double dfMaxIn,
 
 GDALColorTable* EHdrRasterBand::GetColorTable()
 {
-    return m_poEhdrColorTable;
+    return m_poColorTable.get();
 }
 
 /************************************************************************/
@@ -1942,13 +1987,54 @@ GDALColorTable* EHdrRasterBand::GetColorTable()
 
 CPLErr EHdrRasterBand::SetColorTable( GDALColorTable *poNewCT )
 {
-    if( m_bOwnEhdrColorTable )
-        delete m_poEhdrColorTable;
-    m_bOwnEhdrColorTable = true;
     if( poNewCT == nullptr )
-        m_poEhdrColorTable = nullptr;
+        m_poColorTable.reset();
     else
-        m_poEhdrColorTable = poNewCT->Clone();
+        m_poColorTable.reset(poNewCT->Clone());
+
+    reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable* EHdrRasterBand::GetDefaultRAT()
+{
+    return m_poRAT.get();
+}
+
+/************************************************************************/
+/*                            SetDefaultRAT()                           */
+/************************************************************************/
+
+CPLErr EHdrRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+{
+    if( poRAT )
+    {
+        if( !(poRAT->GetColumnCount() == 4 &&
+              poRAT->GetTypeOfCol(0) == GFT_Integer &&
+              poRAT->GetTypeOfCol(1) == GFT_Integer &&
+              poRAT->GetTypeOfCol(2) == GFT_Integer &&
+              poRAT->GetTypeOfCol(3) == GFT_Integer &&
+              poRAT->GetUsageOfCol(0) == GFU_Generic &&
+              poRAT->GetUsageOfCol(1) == GFU_Red &&
+              poRAT->GetUsageOfCol(2) == GFU_Green &&
+              poRAT->GetUsageOfCol(3) == GFU_Blue) )
+        {
+            CPLError(CE_Warning, CPLE_NotSupported,
+                     "Unsupported type of RAT: "
+                     "only value,R,G,B ones are supported");
+            return CE_Failure;
+        }
+    }
+
+    if( poRAT == nullptr )
+        m_poRAT.reset();
+    else
+        m_poRAT.reset(poRAT->Clone());
 
     reinterpret_cast<EHdrDataset *>(poDS)->bCLRDirty = true;
 
