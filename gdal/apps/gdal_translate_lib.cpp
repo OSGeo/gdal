@@ -48,6 +48,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_rat.h"
 #include "gdal_vrt.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
@@ -1801,6 +1802,18 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                                         psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
                                         adfDstWin[0], adfDstWin[1],
                                         adfDstWin[2], adfDstWin[3] );
+            }
+        }
+
+        // Only copy RAT if it is of reasonable size to fit in memory
+        if( !psOptions->bNoRAT )
+        {
+            GDALRasterAttributeTable* poRAT = poSrcBand->GetDefaultRAT();
+            if( poRAT != nullptr &&
+                static_cast<GIntBig>(poRAT->GetColumnCount()) *
+                    poRAT->GetRowCount() < 1024 * 1024 )
+            {
+                poVRTBand->SetDefaultRAT(poRAT);
             }
         }
     }

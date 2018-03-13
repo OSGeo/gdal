@@ -549,6 +549,57 @@ def vrtmisc_18():
     return "success"
 
 ###############################################################################
+# Check RAT support
+
+def vrtmisc_rat():
+
+    ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format = 'MEM')
+    rat = gdal.RasterAttributeTable()
+    rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic ) 
+    ds.GetRasterBand(1).SetDefaultRAT(rat)
+
+    vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_rat.vrt', ds)
+
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    vrt_ds = None
+
+    if xml_vrt.find('<GDALRasterAttributeTable>') < 0:
+        gdaltest.post_reason('fail')
+        print(xml_vrt)
+        return 'fail'
+
+
+    vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format = 'VRT', srcWin = [0,0,1,1])
+
+    xml_vrt = vrt_ds.GetMetadata('xml:VRT')[0]
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    vrt_ds = None
+
+    if xml_vrt.find('<GDALRasterAttributeTable>') < 0:
+        gdaltest.post_reason('fail')
+        print(xml_vrt)
+        return 'fail'
+
+    ds = None
+
+    vrt_ds = gdal.Open('/vsimem/vrtmisc_rat.vrt')
+    rat = vrt_ds.GetRasterBand(1).GetDefaultRAT()
+    if rat is None or rat.GetColumnCount() != 1:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    vrt_ds = None
+
+    gdal.Unlink('/vsimem/vrtmisc_rat.vrt')
+    gdal.Unlink('/vsimem/vrtmisc_rat.tif')
+
+    return "success"
+
+###############################################################################
 # Cleanup.
 
 def vrtmisc_cleanup():
@@ -573,6 +624,7 @@ gdaltest_list = [
     vrtmisc_16,
     vrtmisc_17,
     vrtmisc_18,
+    vrtmisc_rat,
     vrtmisc_cleanup ]
 
 if __name__ == '__main__':
