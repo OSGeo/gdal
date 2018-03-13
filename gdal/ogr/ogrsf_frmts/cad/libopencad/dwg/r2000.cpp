@@ -1383,7 +1383,6 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
         case CADObject::IMAGE:
         {
-            CADImage * image = new CADImage();
             CADImageObject * cadImage = static_cast<CADImageObject *>(
                     readedObject.get());
 
@@ -1393,6 +1392,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
 
             if(cadImageDef)
             {
+                CADImage * image = new CADImage();
                 image->setClippingBoundaryType( cadImage->dClipBoundaryType );
                 image->setFilePath( cadImageDef->sFilePath );
                 image->setVertInsertionPoint( cadImage->vertInsertion );
