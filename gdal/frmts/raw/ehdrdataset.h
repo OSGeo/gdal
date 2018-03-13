@@ -46,6 +46,7 @@
 #endif
 
 #include <limits>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -56,6 +57,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "gdal_rat.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
@@ -83,14 +85,16 @@ class EHdrDataset : public RawDataset
     char      **papszHDR;
 
     bool        bCLRDirty;
-    GDALColorTable* m_poColorTable = nullptr;
+    std::shared_ptr<GDALColorTable> m_poColorTable;
+    std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+
 
     CPLErr      ReadSTX();
     CPLErr      RewriteSTX();
     CPLErr      RewriteHDR();
     void        ResetKeyValue( const char *pszKey, const char *pszValue );
     const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
-    void        RewriteColorTable( GDALColorTable * );
+    void        RewriteCLR(GDALRasterBand*);
 
   public:
     EHdrDataset();
@@ -125,8 +129,9 @@ class EHdrRasterBand : public RawRasterBand
 {
    friend class EHdrDataset;
 
-    bool           m_bOwnEhdrColorTable = false;
-    GDALColorTable* m_poEhdrColorTable = nullptr;
+    std::shared_ptr<GDALColorTable> m_poColorTable;
+    std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+
     int            nBits;
     vsi_l_offset   nStartBit;
     int            nPixelOffsetBits;
@@ -168,6 +173,9 @@ class EHdrRasterBand : public RawRasterBand
                           double dfMean, double dfStdDev ) override;
     CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
     GDALColorTable* GetColorTable() override;
+
+    GDALRasterAttributeTable *GetDefaultRAT() override;
+    CPLErr SetDefaultRAT( const GDALRasterAttributeTable * poRAT ) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_EHDRDATASET_H_INCLUDED
