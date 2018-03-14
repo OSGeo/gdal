@@ -390,7 +390,7 @@ def test_gdal_translate_lib_100():
 
 def test_gdal_translate_lib_101():
 
-    ds = gdal.Translate('/vsimem/test_gdal_translate_lib_101.tif', gdal.Open('../gcore/data/byte.tif'), creationOptions = ['PIXELTYPE=SIGNEDBYTE'], noData = -128)
+    ds = gdal.Translate('/vsimem/test_gdal_translate_lib_101.tif', gdal.Open('../gcore/data/byte.tif'), creationOptions = ['PIXELTYPE=SIGNEDBYTE'], noData = '-128')
     if ds.GetRasterBand(1).GetMetadataItem('PIXELTYPE', 'IMAGE_STRUCTURE') != 'SIGNEDBYTE':
         gdaltest.post_reason('Did not get SIGNEDBYTE')
         return 'fail'
