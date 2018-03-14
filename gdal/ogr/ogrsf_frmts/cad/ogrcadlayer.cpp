@@ -505,6 +505,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                 {
                     double dfSegmentBulge = adfBulges[iCurrentVertex];
                     double dfH = ( dfSegmentBulge * dfLength ) / 2;
+                    if( dfH == 0.0 )
+                        dfH = 1.0; // just to avoid a division by zero
                     double dfRadius = ( dfH / 2 ) + ( dfLength * dfLength / ( 8 * dfH ) );
                     double dfOgrArcRotation = 0, dfOgrArcRadius = fabs( dfRadius );
 
