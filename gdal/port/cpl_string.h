@@ -333,15 +333,17 @@ extern "C++"
 #include <string>
 #endif
 
-//! Convenient string class based on std::string.
-  
-// wk 2017-04-20: VC++ implicitly applies __declspec(dllexport) to template base classes of classes marked with __declspec(dllexport)
-// Hence, VC++ would export symbols for the specialization of std::basic_string<char>, since it is a base class of CPLString, which is marked with CPL_DLL.
-// As a result, if an application linked both gdal.dll and a static library that (implicitly) instantiates std::string (almost all do!),
-// then the linker would emit an error concerning duplicate symbols for std::string.
-// The least intrusive solution
-// is to turn CPLString into a template class (that is not marked with CPL_DLL), make CPLString a typedef for a specialization of that template class,
-// and mark the few non-inline member functions of CPLStringT with CPL_DLL.
+// wk 2017-04-20: VC++ implicitly applies __declspec(dllexport) to template base
+// classes of classes marked with __declspec(dllexport).
+// Hence, VC++ would export symbols for the specialization of std::basic_string<char>,
+// since it is a base class of CPLString, which is marked with CPL_DLL.
+// As a result, if an application linked both gdal.dll and a static library that
+// (implicitly) instantiates std::string (almost all do!), then the linker would
+// emit an error concerning duplicate symbols for std::string.
+// The least intrusive solution is to turn CPLString into a template class
+// (that is not marked with CPL_DLL), make CPLString a typedef for a specialization
+// of that template class, and mark only the few non-inline member functions of
+// CPLStringT with CPL_DLL.
   
 #ifdef _MSC_VER
 
@@ -360,6 +362,7 @@ class CPLStringT : public std::string
 #  define CPLStringT CPLString
 /*! @endcond */
   
+//! Convenient string class based on std::string.
 class CPL_DLL CPLString : public std::string
   
 #endif
