@@ -179,7 +179,8 @@ class CPL_DLL VRTDataset : public GDALDataset
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
-    virtual CPLErr SetMetadata( char **papszMD, const char *pszDomain = "" ) override;
+    virtual CPLErr SetMetadata( char **papszMetadata,
+                                const char *pszDomain = "" ) override;
     virtual CPLErr SetMetadataItem( const char *pszName, const char *pszValue,
                                     const char *pszDomain = "" ) override;
 
@@ -471,7 +472,7 @@ class CPL_DLL VRTRasterBand : public GDALRasterBand
     virtual GDALRasterBand *GetMaskBand() override;
     virtual int             GetMaskFlags() override;
 
-    virtual CPLErr          CreateMaskBand( int nFlags ) override;
+    virtual CPLErr          CreateMaskBand( int nFlagsIn ) override;
 
     void SetMaskBand(VRTRasterBand* poMaskBand);
 
