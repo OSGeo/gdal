@@ -249,7 +249,7 @@ def Info(ds, **kwargs):
     return ret
 
 def _strHighPrec(x):
-    return '%.18g' % x
+    return x if _is_str_or_unicode(x) else '%.18g' % x
 
 def TranslateOptions(options = [], format = None,
               outputType = GDT_Unknown, bandList = None, maskBand = None,
