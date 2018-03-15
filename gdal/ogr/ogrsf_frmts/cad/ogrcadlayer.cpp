@@ -470,11 +470,10 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
              * Last case - if polyline has mixed arcs and lines.
              */
             bool   bLineStringStarted = false;
-            size_t iCurrentVertex = 0,
-                   iLastVertex = poCADLWPolyline->getVertexCount() - 1;
             std::vector< double > adfBulges = poCADLWPolyline->getBulges();
+            const size_t nCount = std::min(adfBulges.size(), poCADLWPolyline->getVertexCount());
 
-            while( iCurrentVertex != iLastVertex )
+            for( size_t iCurrentVertex = 0; iCurrentVertex < nCount; iCurrentVertex++ )
             {
                 CADVector stCurrentVertex = poCADLWPolyline->getVertex( iCurrentVertex );
                 CADVector stNextVertex = poCADLWPolyline->getVertex( iCurrentVertex + 1 );
@@ -601,8 +600,6 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
                     delete( poArcpoLS );
                 }
-
-                ++iCurrentVertex;
             }
 
             if( poCADLWPolyline->isClosed() )
