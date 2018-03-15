@@ -87,7 +87,7 @@ protected:
         std::map<CPLString, CPLString> m_oMapQueryParameters;
 
         virtual void RebuildURL() = 0;
-        CPLString GetQueryString() const;
+        CPLString GetQueryString(bool bAddEmptyValueAfterEqual) const;
 
 public:
         IVSIS3LikeHandleHelper() {}
