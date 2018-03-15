@@ -161,6 +161,17 @@ cat $(dirname $0)/../../autotest/gdrivers/data/srtm.dem.rsc >> roipac.tar
 zip -r $OUT/roipac_fuzzer_seed_corpus.zip roipac.tar >/dev/null
 rm roipac.tar
 
+echo "Building rraster_fuzzer_seed_corpus.zip"
+rm -f $OUT/rraster_fuzzer_seed_corpus.zip
+
+printf "FUZZER_FRIENDLY_ARCHIVE\n" > rraster.tar
+printf "***NEWFILE***:my.grd\n" >> rraster.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.grd >> rraster.tar
+printf "***NEWFILE***:my.gri\n" >> rraster.tar
+cat $(dirname $0)/../../autotest/gdrivers/data/byte_rraster.gri >> rraster.tar
+zip -r $OUT/rraster_fuzzer_seed_corpus.zip rraster.tar >/dev/null
+rm rraster.tar
+
 echo "Building gdal_vrt_fuzzer_seed_corpus.zip"
 rm -f $OUT/gdal_vrt_fuzzer_seed_corpus.zip
 
