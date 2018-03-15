@@ -1,5 +1,7 @@
 #include "csf.h"
 #include "csfimpl.h"
+#include <assert.h>
+#include <string.h>
 
 /* make block empty
  */
@@ -177,10 +179,16 @@ CSF_FADDR32 CsfSeekAttrSpace(
 					noPosFound = 0;
                                         break;
 				case ATTR_NOT_USED:
-					if (i+1 == NR_ATTR_IN_BLOCK)
+					/*
+						KDJ: Commented out because control flow will never
+						reach it. See while condition above.
+						Added assert to document/verify this.
+					if (i == NR_ATTR_IN_BLOCK)
 						endBlock = b.next;
 					else
-						endBlock = b.attrs[i+1].attrOffset;
+					*/
+					assert(i < NR_ATTR_IN_BLOCK);
+					endBlock = b.attrs[i+1].attrOffset;
 					if ( (size_t)( endBlock - b.attrs[i].attrOffset) >= size)
 						/* this position can
 							hold the attr */
@@ -210,7 +218,7 @@ CSF_FADDR32 CsfSeekAttrSpace(
 		M_ERROR(WRITE_ERROR);
 		resultPos = 0;
 	}
-	if( fseek(m->fp, (long)resultPos, SEEK_SET) != 0 ) /* fsetpos() is better */
+	if( csf_fseek(m->fp, resultPos, SEEK_SET) != 0 ) /* fsetpos() is better */
         {
                 M_ERROR(WRITE_ERROR);
                 resultPos = 0;

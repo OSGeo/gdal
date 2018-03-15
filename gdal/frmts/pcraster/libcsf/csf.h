@@ -40,7 +40,14 @@ typedef REAL8 CSF_VAR_TYPE;
  * (0) of the file                                
  */
 typedef UINT4 CSF_FADDR32;
-typedef long  CSF_FADDR;
+typedef
+#ifdef _WIN32
+    /* long is 32 bit on Windows */
+    __int64
+#else
+    long
+#endif
+        CSF_FADDR;
 
 /* value for first 27 bytes of MAIN_HEADER.signature */
 #define CSF_SIG  "RUU CROSS SYSTEM MAP FORMAT"
