@@ -1,5 +1,5 @@
-#include "csf.h" 
-#include "csfimpl.h" 
+#include "csf.h"
+#include "csfimpl.h"
 
 
 int csf_fseek(
@@ -7,24 +7,20 @@ int csf_fseek(
     CSF_FADDR offset,
     int origin)
 {
-    return
 #ifdef _WIN32
-        _fseeki64
+    return _fseeki64(file, offset, origin);
 #else
-        fseek
+    return fseek(file, offset, origin);
 #endif
-            (file, offset, origin);
 }
 
 
 CSF_FADDR csf_ftell(
     FILE* file)
 {
-    return
 #ifdef _WIN32
-        _ftelli64
+    return _ftelli64(file);
 #else
-        ftell
+    return ftell(file);
 #endif
-            (file);
 }
