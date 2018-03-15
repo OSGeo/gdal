@@ -769,7 +769,8 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
                                 "=",
                                 CSLT_STRIPLEADSPACES
                                 | CSLT_STRIPENDSPACES);
-        if ( EQUAL( papszTokens[0], "WIDTH" )
+        if ( CSLCount(papszTokens) < 2
+              || EQUAL( papszTokens[0], "WIDTH" )
               || EQUAL( papszTokens[0], "LENGTH" )
               || EQUAL( papszTokens[0], "NUMBER_BANDS" )
               || EQUAL( papszTokens[0], "DATA_TYPE" )

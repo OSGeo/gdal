@@ -838,13 +838,13 @@ def test_gdalwarp_30():
 
     ds = None
 
-    if file_size1 <= file_size2:
+    if file_size1 < file_size2:
         print(file_size1)
         print(file_size2)
         gdaltest.post_reason('Size with -wo OPTIMIZE_SIZE=TRUE larger than without !')
         return 'fail'
 
-    if file_size1 <= file_size3:
+    if file_size1 < file_size3:
         print(file_size1)
         print(file_size3)
         gdaltest.post_reason('Size with -wo STREAMABLE_OUTPUT=TRUE larger than without !')

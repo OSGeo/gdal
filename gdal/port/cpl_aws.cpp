@@ -438,7 +438,7 @@ void VSIS3HandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey,
                        m_bUseHTTPS, m_bUseVirtualHosting);
-    m_osURL += GetQueryString();
+    m_osURL += GetQueryString(false);
 }
 
 /************************************************************************/
@@ -1055,7 +1055,7 @@ VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
 /*                          GetQueryString()                            */
 /************************************************************************/
 
-CPLString IVSIS3LikeHandleHelper::GetQueryString() const
+CPLString IVSIS3LikeHandleHelper::GetQueryString(bool bAddEmptyValueAfterEqual) const
 {
     CPLString osQueryString;
     std::map<CPLString, CPLString>::const_iterator oIter =
@@ -1067,7 +1067,7 @@ CPLString IVSIS3LikeHandleHelper::GetQueryString() const
         else
             osQueryString += "&";
         osQueryString += oIter->first;
-        if( !oIter->second.empty() )
+        if( !oIter->second.empty() || bAddEmptyValueAfterEqual )
         {
             osQueryString += "=";
             osQueryString += CPLAWSURLEncode(oIter->second);
@@ -1114,7 +1114,7 @@ VSIS3HandleHelper::GetCurlHeaders( const CPLString& osVerb,
     const CPLString osXAMZContentSHA256 =
         CPLGetLowerCaseHexSHA256(pabyDataContent, nBytesContent);
 
-    CPLString osCanonicalQueryString(GetQueryString());
+    CPLString osCanonicalQueryString(GetQueryString(true));
     if( !osCanonicalQueryString.empty() )
         osCanonicalQueryString = osCanonicalQueryString.substr(1);
 
@@ -1380,7 +1380,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(char** papszOptions)
     AddQueryParameter("X-Amz-Expires", osXAMZExpires);
     AddQueryParameter("X-Amz-SignedHeaders", "host");
 
-    CPLString osCanonicalQueryString(GetQueryString().substr(1));
+    CPLString osCanonicalQueryString(GetQueryString(true).substr(1));
 
     const CPLString osHost(m_bUseVirtualHosting && !m_osBucket.empty()
         ? CPLString(m_osBucket + "." + m_osEndpoint) : m_osEndpoint);

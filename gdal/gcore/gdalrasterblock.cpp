@@ -680,8 +680,9 @@ GDALRasterBlock::~GDALRasterBlock()
 static size_t GetEffectiveBlockSize(int nBlockSize)
 {
     // The real cost of a block allocation is more than just nBlockSize
+    // As we allocate with 64-byte alignment, use 64 as a multiple.
     // We arbitrarily add 2 * sizeof(GDALRasterBlock) to account for that
-    return nBlockSize + 2 * sizeof(GDALRasterBlock);
+    return DIV_ROUND_UP(nBlockSize, 64) + 2 * sizeof(GDALRasterBlock);
 }
 
 /************************************************************************/

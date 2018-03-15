@@ -470,11 +470,10 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
              * Last case - if polyline has mixed arcs and lines.
              */
             bool   bLineStringStarted = false;
-            size_t iCurrentVertex = 0,
-                   iLastVertex = poCADLWPolyline->getVertexCount() - 1;
             std::vector< double > adfBulges = poCADLWPolyline->getBulges();
+            const size_t nCount = std::min(adfBulges.size(), poCADLWPolyline->getVertexCount());
 
-            while( iCurrentVertex != iLastVertex )
+            for( size_t iCurrentVertex = 0; iCurrentVertex < nCount; iCurrentVertex++ )
             {
                 CADVector stCurrentVertex = poCADLWPolyline->getVertex( iCurrentVertex );
                 CADVector stNextVertex = poCADLWPolyline->getVertex( iCurrentVertex + 1 );
@@ -505,6 +504,8 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
                 {
                     double dfSegmentBulge = adfBulges[iCurrentVertex];
                     double dfH = ( dfSegmentBulge * dfLength ) / 2;
+                    if( dfH == 0.0 )
+                        dfH = 1.0; // just to avoid a division by zero
                     double dfRadius = ( dfH / 2 ) + ( dfLength * dfLength / ( 8 * dfH ) );
                     double dfOgrArcRotation = 0, dfOgrArcRadius = fabs( dfRadius );
 
@@ -599,8 +600,6 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
 
                     delete( poArcpoLS );
                 }
-
-                ++iCurrentVertex;
             }
 
             if( poCADLWPolyline->isClosed() )

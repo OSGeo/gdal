@@ -9,7 +9,7 @@ void CsfReadAttrBlock(
 	ATTR_CNTRL_BLOCK *b) /* write-only. attribute control block read */
 {
 	int i;
-	if (fseek(m->fp, (long)pos, SEEK_SET) != 0 )
+	if (csf_fseek(m->fp, pos, SEEK_SET) != 0 )
             return;
 	for(i=0; i < NR_ATTR_IN_BLOCK; i++)
 	{

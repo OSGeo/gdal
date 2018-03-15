@@ -12,7 +12,7 @@ int CsfWriteAttrBlock(
 {
  int i;
 
- if ( fseek(m->fp,(long) pos, SEEK_SET) )
+ if ( csf_fseek(m->fp, pos, SEEK_SET) )
  	return 1;
 
  for(i=0; i < NR_ATTR_IN_BLOCK; i++)

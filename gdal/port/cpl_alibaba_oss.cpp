@@ -195,7 +195,7 @@ void VSIOSSHandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osBucket, m_osObjectKey,
                        m_bUseHTTPS, m_bUseVirtualHosting);
-    m_osURL += GetQueryString();
+    m_osURL += GetQueryString(false);
 }
 
 /************************************************************************/
@@ -282,7 +282,7 @@ VSIOSSHandleHelper::GetCurlHeaders( const CPLString& osVerb,
     CPLString osCanonicalQueryString;
     if( !m_osObjectKey.empty() )
     {
-        osCanonicalQueryString = GetQueryString();
+        osCanonicalQueryString = GetQueryString(false);
     }
 
     CPLString osCanonicalizedResource( m_osBucket.empty() ? CPLString("/") :

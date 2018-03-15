@@ -733,7 +733,7 @@ void VSIGSHandleHelper::RebuildURL()
     if( !m_osBucketObjectKey.empty() &&
         m_osBucketObjectKey.find('/') == std::string::npos )
         m_osURL += "/";
-    m_osURL += GetQueryString();
+    m_osURL += GetQueryString(false);
 }
 
 /************************************************************************/

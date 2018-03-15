@@ -1172,7 +1172,13 @@ def grib_grib2_write_data_encodings():
     found_j2k_drivers = []
     for drvname in [ 'JP2KAK', 'JP2OPENJPEG', 'JPEG2000', 'JP2ECW' ]:
         if gdal.GetDriverByName(drvname) is not None:
-            found_j2k_drivers.append(drvname)
+            if drvname != 'JP2ECW':
+                found_j2k_drivers.append(drvname)
+            else:
+                import ecw
+                if ecw.has_write_support():
+                    found_j2k_drivers.append(drvname)
+
     if len(found_j2k_drivers) > 0:
         tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000' ], 4672, GS5_JPEG2000 ] ]
         tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2' ], 4672, GS5_JPEG2000 ] ] # COMPRESSION_RATIO ignored in that case
@@ -1280,23 +1286,32 @@ def grib_grib2_write_data_encodings():
     for encoding in encodings:
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
-        gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = ['DATA_ENCODING=' + encoding] )
-        error_msg = gdal.GetLastErrorMsg()
-        if error_msg != '':
-            gdaltest.post_reason('did not expect error for %s, %s' % (str(filename), str(options)))
-            return 'fail'
-        out_ds = gdal.Open(tmpfilename)
-        got_vals = struct.unpack(4 * 'd', out_ds.ReadRaster())
-        out_ds = None
-        gdal.Unlink(tmpfilename)
-        if encoding == 'IEEE_FLOATING_POINT':
-            expected_vals = (1.23, 1.45, 1.56, 1.78)
+        options = ['DATA_ENCODING=' + encoding]
+        if encoding == 'COMPLEX_PACKING':
+            with gdaltest.error_handler():
+                success = gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = options )
+            if success:
+                gdaltest.post_reason('expected error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
+                return 'fail'
         else:
-            expected_vals = (1.2300000190734863, 1.4487500190734863, 1.5581250190734863, 1.7807812690734863)
-        if max([abs(got_vals[i] - expected_vals[i]) for i in range(4)]) > 1e-7:
-            gdaltest.post_reason('did not get expected values')
-            print(got_vals)
-            return 'fail'
+            gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = options )
+            error_msg = gdal.GetLastErrorMsg()
+            if error_msg != '':
+                gdaltest.post_reason('did not expect error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
+                return 'fail'
+            out_ds = gdal.Open(tmpfilename)
+            got_vals = struct.unpack(4 * 'd', out_ds.ReadRaster())
+            out_ds = None
+            if encoding == 'IEEE_FLOATING_POINT':
+                expected_vals = (1.23, 1.45, 1.56, 1.78)
+            else:
+                expected_vals = (1.2300000190734863, 1.4487500190734863, 1.5581250190734863, 1.7807812690734863)
+            if max([abs(got_vals[i] - expected_vals[i]) for i in range(4)]) > 1e-7:
+                gdaltest.post_reason('did not get expected values')
+                print(got_vals)
+                return 'fail'
+        gdal.Unlink(tmpfilename)
+
     test_ds = None
 
     # Test floating point data with very large dynamic

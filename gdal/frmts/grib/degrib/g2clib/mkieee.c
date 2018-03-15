@@ -38,17 +38,12 @@ void mkieee(g2float *a,g2int *rieee,g2int num)
       g2int  j,n,ieee,iexp,imant;
       double  /* alog2, */ atemp;
 
-      static double  two23,two126;
-      static g2int test=0;
+      static const double two23 = 8388608.0;              // pow(2,23)
+      static const double two126 = 8.507059173023462e+37; // pow(2,126)
+
     //g2intu msk1=0x80000000;        // 10000000000000000000000000000000 binary
     //g2int msk2=0x7F800000;         // 01111111100000000000000000000000 binary
     //g2int msk3=0x007FFFFF;         // 00000000011111111111111111111111 binary
-
-      if ( test == 0 ) {
-         two23=(double)int_power(2.0,23);
-         two126=(double)int_power(2.0,126);
-         test=1;
-      }
 
       // alog2=0.69314718;       //  ln(2.0)
 
