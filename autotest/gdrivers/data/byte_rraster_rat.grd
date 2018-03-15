@@ -1,0 +1,17 @@
+[georeference]
+nrows=20
+ncols=20
+xmin=440720
+ymin=3750120
+xmax=441920
+ymax=3751320
+projection=+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat
+[data]
+datatype=INT1U
+byteorder=little
+nbands=1
+bandorder=BIL
+categorical=TRUE
+ratnames=ID:int_field:numeric_field:string_field:red:green:blue:alpha:pixelcount:name
+rattypes=integer:integer:numeric:character:integer:integer:integer:integer:integer:character
+ratvalues=0:1:10:11:1.2:2.3:foo:bar:0:1:2:3:4:5:6:7:8:9:baz:baw

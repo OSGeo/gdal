@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pprint
 import sys
 from osgeo import gdal
 
@@ -46,10 +47,207 @@ def rraster_1():
                         check_gt = ref_ds.GetGeoTransform(),
                         check_min = 74,
                         check_max = 255 )
-    return ret
+    if ret != 'success':
+        return ret
+
+    ds = gdal.Open('data/byte_rraster.grd')
+    md = ds.GetMetadata()
+    if md != {'CREATOR': "R package 'raster'", 'CREATED': '2016-06-25 17:32:47'}:
+        gdaltest.post_reason('fail')
+        print(md)
+        return 'fail'
+    if ds.GetRasterBand(1).GetDescription() != 'byte':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    return 'success'
+
+###############################################################################
+def _compare_val(got, expected, key_name, to_print):
+    if type(got) == type([]) and type(expected) == type([]):
+        if len(got) != len(expected):
+            print('Unexpected number of elements for %s. Got %d, expected %d' % (key_name, len(got), len(expected)))
+            pprint.pprint(to_print)
+            return False
+        for idx in range(len(got)):
+            if not _compare_val(got[idx], expected[idx], '%s[%d]' % (key_name, idx), to_print):
+                return False
+    elif type(got) == type({}) and type(expected) == type({}):
+        if not _is_dict_included_in_dict(got, expected, key_name, to_print):
+            pprint.pprint(to_print)
+            return False
+    elif got != expected:
+        print('Value for %s is different' % key_name)
+        pprint.pprint(got)
+        return False
+    return True
+
+###############################################################################
+def _is_dict_included_in_dict(got, expected, key_name = '', to_print = None):
+    if to_print is None:
+        to_print = got
+    for k in expected:
+        if k not in got:
+            print('Missing %s' % k)
+            return False
+        if not _compare_val(got[k], expected[k], key_name + '/' + k, to_print):
+            return False
+    return True
+
+###############################################################################
+def rraster_rgba():
+
+    ds = gdal.Open('data/rgba_rraster.grd')
+    info = gdal.Info(ds, computeChecksum = True, format = 'json')
+    expected_info = {
+'bands': [{'band': 1,
+             'block': [2, 1],
+             'checksum': 19,
+             'colorInterpretation': 'Red',
+             'description': 'red'},
+            {'band': 2,
+             'block': [2, 1],
+             'checksum': 27,
+             'colorInterpretation': 'Green',
+             'description': 'green'},
+            {'band': 3,
+             'block': [2, 1],
+             'checksum': 22,
+             'colorInterpretation': 'Blue',
+             'description': 'blue'},
+            {'band': 4,
+             'block': [2, 1],
+             'checksum': 7,
+             'colorInterpretation': 'Alpha',
+             'description': 'alpha'}]
+}
+    if not _is_dict_included_in_dict(info, expected_info):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def rraster_ct_rgb():
+
+    ds = gdal.Open('data/byte_rraster_ct_rgb.grd')
+    info = gdal.Info(ds, format = 'json')
+    expected_info = {
+'bands': [{'band': 1,
+             'colorInterpretation': 'Palette',
+             'colorTable': {'count': 2,
+                             'entries': [[10, 20, 30, 255],
+                                         [11, 21, 31, 255]],
+                             'palette': 'RGB'},
+             'type': 'Byte'}]
+}
+    if not _is_dict_included_in_dict(info, expected_info):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def rraster_ct_rgba():
+
+    ds = gdal.Open('data/byte_rraster_ct_rgba.grd')
+    info = gdal.Info(ds, format = 'json')
+    expected_info = {
+'bands': [{'band': 1,
+             'colorInterpretation': 'Palette',
+             'colorTable': {'count': 2,
+                             'entries': [[10, 20, 30, 0],
+                                         [11, 21, 31, 255]],
+                             'palette': 'RGB'},
+             'type': 'Byte'}]
+}
+    if not _is_dict_included_in_dict(info, expected_info):
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+def rraster_rat():
+
+    ds = gdal.Open('data/byte_rraster_rat.grd')
+    info = gdal.Info(ds, format = 'json')
+    expected_info = {
+'bands': [{'band': 1,
+             'block': [20, 1],
+             'colorInterpretation': 'Undefined',
+             'metadata': {},
+             'type': 'Byte'}],
+'rat': {'fieldDefn': [{'index': 0,
+                          'name': 'ID',
+                          'type': 2,
+                          'usage': 0},
+                         {'index': 1,
+                          'name': 'int_field',
+                          'type': 2,
+                          'usage': 0},
+                         {'index': 2,
+                          'name': 'numeric_field',
+                          'type': 2,
+                          'usage': 0},
+                         {'index': 3,
+                          'name': 'string_field',
+                          'type': 2,
+                          'usage': 0},
+                         {'index': 4,
+                          'name': 'red',
+                          'type': 0,
+                          'usage': 6},
+                         {'index': 5,
+                          'name': 'green',
+                          'type': 0,
+                          'usage': 7},
+                         {'index': 6,
+                          'name': 'blue',
+                          'type': 0,
+                          'usage': 8},
+                         {'index': 7,
+                          'name': 'alpha',
+                          'type': 0,
+                          'usage': 9},
+                         {'index': 8,
+                          'name': 'pixelcount',
+                          'type': 2,
+                          'usage': 1},
+                         {'index': 9,
+                          'name': 'name',
+                          'type': 2,
+                          'usage': 2}],
+          'row': [{'f': ['0',
+                           '10',
+                           '1.2',
+                           'foo',
+                           0,
+                           2,
+                           4,
+                           6,
+                           '8',
+                           'baz'],
+                    'index': 0},
+                   {'f': ['1',
+                           '11',
+                           '2.3',
+                           'bar',
+                           1,
+                           3,
+                           5,
+                           7,
+                           '9',
+                           'baw'],
+                    'index': 1}]}
+}
+    if not _is_dict_included_in_dict(info, expected_info):
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     rraster_1,
+    rraster_rgba,
+    rraster_ct_rgb,
+    rraster_ct_rgba,
+    rraster_rat,
     ]
 
 

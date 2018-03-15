@@ -1,0 +1,16 @@
+[georeference]
+nrows=2
+ncols=2
+xmin=440720
+ymin=3750120
+xmax=441920
+ymax=3751320
+projection=+proj=utm +zone=11 +datum=NAD27 +units=m +no_defs +ellps=clrk66 +nadgrids=@conus,@alaska,@ntv2_0.gsb,@ntv1_can.dat
+[data]
+datatype=INT1U
+byteorder=little
+nbands=4
+bandorder=BIL
+categorical=FALSE
+[description]
+layername=red:green:blue:alpha

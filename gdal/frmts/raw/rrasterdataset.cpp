@@ -29,9 +29,13 @@
 #include "cpl_port.h"
 
 #include "gdal_frmts.h"
+#include "gdal_rat.h"
+#include "gdal_priv.h"
 
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
+
+#include <memory>
 
 CPL_CVSID("$Id$")
 
@@ -47,6 +51,8 @@ class RRASTERDataset : public RawDataset
     double      m_adfGeoTransform[6];
     VSILFILE   *m_fpImage;
     CPLString   m_osProjection;
+    std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+    std::shared_ptr<GDALColorTable> m_poCT;
 
   public:
     RRASTERDataset();
@@ -69,9 +75,13 @@ class RRASTERDataset : public RawDataset
 
 class RRASTERRasterBand: public RawRasterBand
 {
+      friend class RRASTERDataset;
+
       bool      m_bMinMaxValid;
       double    m_dfMin;
       double    m_dfMax;
+      std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
+      std::shared_ptr<GDALColorTable> m_poCT;
 
   public:
       RRASTERRasterBand( GDALDataset *poDS, int nBand, void * fpRaw,
@@ -82,6 +92,9 @@ class RRASTERRasterBand: public RawRasterBand
       void SetMinMax( double dfMin, double dfMax );
       double GetMinimum( int *pbSuccess = nullptr ) override;
       double GetMaximum( int *pbSuccess = nullptr ) override;
+
+      GDALColorTable *GetColorTable() override;
+      GDALRasterAttributeTable *GetDefaultRAT() override;
 
 #ifdef UPDATE_SUPPORTED
   protected:
@@ -151,6 +164,24 @@ double RRASTERRasterBand::GetMaximum(int *pbSuccess )
         return m_dfMax;
     }
     return RawRasterBand::GetMaximum(pbSuccess);
+}
+
+/************************************************************************/
+/*                           GetColorTable()                            */
+/************************************************************************/
+
+GDALColorTable* RRASTERRasterBand::GetColorTable()
+{
+    return m_poCT.get();
+}
+
+/************************************************************************/
+/*                           GetDefaultRAT()                            */
+/************************************************************************/
+
+GDALRasterAttributeTable* RRASTERRasterBand::GetDefaultRAT()
+{
+    return m_poRAT.get();
 }
 
 #ifdef UPDATE_SUPPORTED
@@ -302,6 +333,12 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osNoDataValue("NA");
     CPLString osMinValue;
     CPLString osMaxValue;
+    CPLString osCreator;
+    CPLString osCreated;
+    CPLString osLayerName;
+    CPLString osRatNames;
+    CPLString osRatTypes;
+    CPLString osRatValues;
     VSIRewindL(poOpenInfo->fpL);
     while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024, nullptr)) != nullptr )
     {
@@ -309,7 +346,11 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
         if( pszKey && pszValue )
         {
-            if( EQUAL(pszKey, "ncols") )
+            if( EQUAL(pszKey, "creator") )
+                osCreator = pszValue;
+            if( EQUAL(pszKey, "created") )
+                osCreated = pszValue;
+            else if( EQUAL(pszKey, "ncols") )
                 nCols = atoi(pszValue);
             else if( EQUAL(pszKey, "nrows") )
                 nRows = atoi(pszValue);
@@ -337,6 +378,14 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                 osMinValue = pszValue;
             else if( EQUAL(pszKey, "maxvalue") )
                 osMaxValue = pszValue;
+            else if( EQUAL(pszKey, "ratnames") )
+                osRatNames = pszValue;
+            else if( EQUAL(pszKey, "rattypes") )
+                osRatTypes = pszValue;
+            else if( EQUAL(pszKey, "ratvalues") )
+                osRatValues = pszValue;
+            else if( EQUAL(pszKey, "layername") )
+                osLayerName = pszValue;
         }
         CPLFree(pszKey);
     }
@@ -489,17 +538,105 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         }
     }
 
-    char** papszMinValues = CSLTokenizeString2(osMinValue, ":", 0);
-    char** papszMaxValues = CSLTokenizeString2(osMaxValue, ":", 0);
-    if( CSLCount(papszMinValues) != l_nBands ||
-        CSLCount(papszMaxValues) != l_nBands )
+    if( !osCreator.empty() )
+        poDS->GDALDataset::SetMetadataItem("CREATOR", osCreator);
+
+    if( !osCreated.empty() )
+        poDS->GDALDataset::SetMetadataItem("CREATED", osCreated);
+
+    // Instanciate RAT
+    if( !osRatNames.empty() && !osRatTypes.empty() && !osRatValues.empty() )
     {
-        CSLDestroy(papszMinValues);
-        CSLDestroy(papszMaxValues);
-        papszMinValues = nullptr;
-        papszMaxValues = nullptr;
+        CPLStringList aosRatNames(CSLTokenizeString2(osRatNames, ":", 0));
+        CPLStringList aosRatTypes(CSLTokenizeString2(osRatTypes, ":", 0));
+        CPLStringList aosRatValues(CSLTokenizeString2(osRatValues, ":", 0));
+        if( !aosRatNames.empty() &&
+            aosRatNames.size() == aosRatTypes.size() &&
+            (aosRatValues.size() % aosRatNames.size()) == 0 )
+        {
+            const int nValues = aosRatValues.size() / aosRatNames.size();
+            if( (aosRatNames.size() == 4 || aosRatNames.size() == 5) &&
+                EQUAL(aosRatNames[1], "red") &&
+                EQUAL(aosRatNames[2], "green") &&
+                EQUAL(aosRatNames[3], "blue") &&
+                (aosRatNames.size() == 4 || EQUAL(aosRatNames[4], "alpha")) &&
+                EQUAL(aosRatTypes[0], "integer") &&
+                EQUAL(aosRatTypes[1], "integer") &&
+                EQUAL(aosRatTypes[2], "integer") &&
+                EQUAL(aosRatTypes[3], "integer") &&
+                (aosRatTypes.size() == 4 || EQUAL(aosRatTypes[4], "integer")) )
+            {
+                poDS->m_poCT.reset(new GDALColorTable());
+                for( int i = 0; i < nValues; i++ )
+                {
+                    const int nIndex = atoi(aosRatValues[i]);
+                    if( nIndex >= 0 && nIndex < 65536 )
+                    {
+                        const int nRed = atoi(aosRatValues[nValues+i]);
+                        const int nGreen = atoi(aosRatValues[2*nValues+i]);
+                        const int nBlue = atoi(aosRatValues[3*nValues+i]);
+                        const int nAlpha = aosRatTypes.size() == 4 ? 255 :
+                                            atoi(aosRatValues[4*nValues+i]);
+                        const GDALColorEntry oEntry =
+                        {
+                            static_cast<short>(nRed),
+                            static_cast<short>(nGreen),
+                            static_cast<short>(nBlue),
+                            static_cast<short>(nAlpha)
+                        };
+
+                        poDS->m_poCT->SetColorEntry(nIndex, &oEntry);
+                    }
+                }
+            }
+            else
+            {
+                poDS->m_poRAT.reset(new GDALDefaultRasterAttributeTable());
+                for( int i = 0; i < aosRatNames.size(); i++ )
+                {
+                    poDS->m_poRAT->CreateColumn(
+                        aosRatNames[i], 
+                        EQUAL(aosRatNames[i], "integer") ?  GFT_Integer :
+                        EQUAL(aosRatNames[i], "numeric") ?  GFT_Real :
+                                                            GFT_String,
+                        EQUAL(aosRatNames[i], "red") ? GFU_Red :
+                        EQUAL(aosRatNames[i], "green") ? GFU_Green :
+                        EQUAL(aosRatNames[i], "blue") ? GFU_Blue :
+                        EQUAL(aosRatNames[i], "alpha") ? GFU_Alpha :
+                        EQUAL(aosRatNames[i], "name") ? GFU_Name :
+                        EQUAL(aosRatNames[i], "pixelcount") ? GFU_PixelCount :
+                                                             GFU_Generic
+                    );
+                }
+                for( int i = 0; i < nValues; i++ )
+                {
+                    for( int j = 0; j < aosRatTypes.size(); j++ )
+                    {
+                        if( poDS->m_poRAT->GetTypeOfCol(j) == GFT_Integer )
+                        {
+                             poDS->m_poRAT->SetValue(i, j,
+                                    atoi(aosRatValues[j * nValues + i]));
+                        }
+                        else if( poDS->m_poRAT->GetTypeOfCol(j) == GFT_Real )
+                        {
+                             poDS->m_poRAT->SetValue(i, j,
+                                    CPLAtof(aosRatValues[j * nValues + i]));
+                        }
+                        else
+                        {
+                             poDS->m_poRAT->SetValue(i, j,
+                                    aosRatValues[j * nValues + i]);
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    CPLStringList aosMinValues(CSLTokenizeString2(osMinValue, ":", 0));
+    CPLStringList aosMaxValues(CSLTokenizeString2(osMaxValue, ":", 0));
+
+    CPLStringList aosLayerNames(CSLTokenizeString2(osLayerName, ":", 0));
     for( int i=1; i<=l_nBands; i++ )
     {
         RRASTERRasterBand* poBand = new RRASTERRasterBand(
@@ -512,19 +649,35 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
             poDS->GetRasterBand(i)->SetMetadataItem(
                     "SIGNEDBYTE", "PIXELTYPE", "IMAGE_STRUCTURE" );
         }
-        if( !EQUAL(osNoDataValue, "NA") )
+        if( !osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA") )
         {
             double dfNoDataValue = CPLAtof(osNoDataValue);
             poBand->SetNoDataValue(dfNoDataValue);
         }
-        if( papszMinValues && papszMaxValues )
+        if( i - 1 < static_cast<int>(aosMinValues.size()) &&
+            i - 1 < static_cast<int>(aosMaxValues.size()) )
         {
-            poBand->SetMinMax( CPLAtof(papszMinValues[i-1]),
-                               CPLAtof(papszMaxValues[i-1]) );
+            poBand->SetMinMax( CPLAtof(aosMinValues[i-1]),
+                               CPLAtof(aosMaxValues[i-1]) );
         }
+        if( i - 1 < static_cast<int>(aosLayerNames.size()) )
+        {
+            const CPLString& osName(aosLayerNames[i-1]);
+            poBand->GDALRasterBand::SetDescription(osName);
+            if( EQUAL(osName, "red") )
+                poBand->SetColorInterpretation( GCI_RedBand );
+            else if( EQUAL(osName, "green") )
+                poBand->SetColorInterpretation( GCI_GreenBand );
+            else if( EQUAL(osName, "blue") )
+                poBand->SetColorInterpretation( GCI_BlueBand );
+            else if( EQUAL(osName, "alpha") )
+                poBand->SetColorInterpretation( GCI_AlphaBand );
+        }
+        poBand->m_poRAT = poDS->m_poRAT;
+        poBand->m_poCT = poDS->m_poCT;
+        if( poBand->m_poCT )
+            poBand->SetColorInterpretation(GCI_PaletteIndex);
     }
-    CSLDestroy(papszMinValues);
-    CSLDestroy(papszMaxValues);
 
     return poDS;
 }
