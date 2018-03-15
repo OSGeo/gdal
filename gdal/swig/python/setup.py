@@ -24,11 +24,17 @@ from glob import glob
 # If no CXX environment variable is defined, then the value of the CXX variable
 # in GDALmake.opt will not be set as an environment variable
 if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
-    print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CXX'])
-    del os.environ['CXX']
+    if os.environ['CXX'].strip().startswith('ccache ') and os.environ['CXX'].strip()[len('ccache '):].find(' ') < 0:
+        os.environ['CXX'] = os.environ['CXX'].strip()[len('ccache '):]
+    else:
+        print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CXX'])
+        del os.environ['CXX']
 if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
-    print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CC'])
-    del os.environ['CC']
+    if os.environ['CC'].strip().startswith('ccache ') and os.environ['CC'].strip()[len('ccache '):].find(' ') < 0:
+        os.environ['CC'] = os.environ['CC'].strip()[len('ccache '):]
+    else:
+        print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CC'])
+        del os.environ['CC']
 
 # ---------------------------------------------------------------------------
 # Switches
