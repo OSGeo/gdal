@@ -647,7 +647,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         if( EQUAL(osDataType, "INT1S") )
         {
             poDS->GetRasterBand(i)->SetMetadataItem(
-                    "SIGNEDBYTE", "PIXELTYPE", "IMAGE_STRUCTURE" );
+                    "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
         }
         if( !osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA") )
         {
