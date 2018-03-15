@@ -76,6 +76,7 @@ int LLVMFuzzerInitialize(int* /*argc*/, char*** argv)
     CPLSetConfigOption("GDAL_WMS_ABORT_CURL_REQUEST", "YES");
     CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "1");
     CPLSetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "1");
+    CPLSetConfigOption("GDAL_CACHEMAX", "1000"); // Limit to 1 GB
 #ifdef GTIFF_USE_MMAP
     CPLSetConfigOption("GTIFF_USE_MMAP", "YES");
 #endif
