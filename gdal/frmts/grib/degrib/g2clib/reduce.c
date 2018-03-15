@@ -23,18 +23,18 @@
 {
     /* Initialized data */
 
-    static integer ifeed = 12;
+    static const integer ifeed = 12;
 
     /* System generated locals */
     integer i__1, i__2;
 
     /* Local variables */
-    static integer newboxtp, j, l, m, jj, lxn, left;
-    static real pimp;
-    static integer move, novl;
-    static char cfeed[1];
-    static integer /* nboxj[31], */ lxnkp, iorigb, ibxx2m1, movmin,
-        ntotbt[31], ntotpr, newboxt;
+    integer newboxtp = 0, j, l, m = 0, jj = 0, lxn = 0, left = 0;
+    real pimp = 0;
+    integer move = 0, novl = 0;
+    char cfeed[1];
+    integer /* nboxj[31], */ lxnkp = 0, iorigb = 0, ibxx2m1 = 0, movmin = 0,
+        ntotbt[31], ntotpr = 0, newboxt = 0;
     integer *newbox, *newboxp;
 
 

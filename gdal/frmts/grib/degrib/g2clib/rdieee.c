@@ -34,17 +34,13 @@ void rdieee(g2int *rieee,g2float *a,g2int num)
       g2int  isign,iexp,imant;
 
       g2float  sign,temp;
-      static g2float  two23,two126;
-      static g2int test=0;
+      static const double two23 = 1.1920928955078125e-07; // pow(2,-23)
+      static const double two126 = 1.1754943508222875e-38; // pow(2,-126)
+
+
       g2intu msk1=0x80000000;        // 10000000000000000000000000000000 binary
       g2int msk2=0x7F800000;         // 01111111100000000000000000000000 binary
       g2int msk3=0x007FFFFF;         // 00000000011111111111111111111111 binary
-
-      if ( test == 0 ) {
-         two23=(g2float)int_power(2.0,-23);
-         two126=(g2float)int_power(2.0,-126);
-         test=1;
-      }
 
       for (j=0;j<num;j++) {
 //
