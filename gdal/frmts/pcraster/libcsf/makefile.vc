@@ -7,7 +7,7 @@ OBJ	=	endian.obj swapio.obj vs2.obj vsdef.obj rextend.obj\
 vsvers.obj legend.obj strpad.obj strconst.obj vsis.obj ruseas.obj rmalloc.obj create2.obj \
 _getcell.obj _getrow.obj _gsomece.obj _putcell.obj _rputrow.obj\
 attravai.obj attrsize.obj csfglob.obj csfsup.obj delattr.obj\
-filename.obj gattrblk.obj gattridx.obj gcellrep.obj \
+file.obj filename.obj gattrblk.obj gattridx.obj gcellrep.obj \
  cellsize.obj gdattype.obj getattr.obj getx0.obj\
 gety0.obj ggisfid.obj gmaxval.obj gminval.obj gnrcols.obj gnrrows.obj\
 gproj.obj gputproj.obj gvalscal.obj gvartype.obj gversion.obj ismv.obj\
