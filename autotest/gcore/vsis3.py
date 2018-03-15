@@ -1354,8 +1354,8 @@ def vsis3_6():
             request.send_header('Content-Length', 0)
             request.end_headers()
 
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
-    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads', custom_method = method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads=', custom_method = method)
+    handler.add('POST', '/s3_fake_bucket4/large_file.bin?uploads=', custom_method = method)
 
     def method(request):
         if request.headers['Content-Length'] != '1048576':
@@ -1427,10 +1427,10 @@ def vsis3_6():
         return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_403_error.bin?uploads', 403)
-    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_empty_result.bin?uploads', 200)
-    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads', 200, {}, 'foo')
-    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads', 200, {}, '<foo/>')
+    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_403_error.bin?uploads=', 403)
+    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_empty_result.bin?uploads=', 200)
+    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads=', 200, {}, 'foo')
+    handler.add('POST', '/s3_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads=', 200, {}, '<foo/>')
     with webserver.install_http_handler(handler):
       for filename in [ '/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
                         '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
@@ -1454,12 +1454,12 @@ def vsis3_6():
             return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('POST', '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploads', 200, {},
+    handler.add('POST', '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploads=', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
     handler.add('PUT', '/s3_fake_bucket4/large_file_upload_part_403_error.bin?partNumber=1&uploadId=my_id', 403)
     handler.add('DELETE', '/s3_fake_bucket4/large_file_upload_part_403_error.bin?uploadId=my_id', 204)
 
-    handler.add('POST', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploads', 200, {},
+    handler.add('POST', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploads=', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
     handler.add('PUT', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?partNumber=1&uploadId=my_id', 200)
     handler.add('DELETE', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploadId=my_id', 204)
@@ -1489,7 +1489,7 @@ def vsis3_6():
 
     # Simulate failure in AbortMultipart stage
     handler = webserver.SequentialHandler()
-    handler.add('POST', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploads', 200, {},
+    handler.add('POST', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploads=', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
     handler.add('PUT', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?partNumber=1&uploadId=my_id', 403)
     handler.add('DELETE', '/s3_fake_bucket4/large_file_abortmultipart_403_error.bin?uploadId=my_id', 403)
@@ -1519,7 +1519,7 @@ def vsis3_6():
 
     # Simulate failure in CompleteMultipartUpload stage
     handler = webserver.SequentialHandler()
-    handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploads', 200, {},
+    handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploads=', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
     handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, { 'ETag': 'first_etag' }, '')
     handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, { 'ETag': 'second_etag' }, '')

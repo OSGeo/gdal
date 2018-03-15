@@ -1067,11 +1067,8 @@ CPLString IVSIS3LikeHandleHelper::GetQueryString() const
         else
             osQueryString += "&";
         osQueryString += oIter->first;
-        if( !oIter->second.empty() )
-        {
-            osQueryString += "=";
-            osQueryString += CPLAWSURLEncode(oIter->second);
-        }
+        osQueryString += "=";
+        osQueryString += CPLAWSURLEncode(oIter->second);
     }
     return osQueryString;
 }
