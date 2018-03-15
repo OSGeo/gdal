@@ -60,7 +60,7 @@ void rdieee(g2int *rieee,g2float *a,g2int num)
         }
         else if ( iexp == 0 ) {
           if ( imant != 0 )
-            a[j]=sign*two126*two23*(g2float)imant;
+            a[j]=(float)(sign*two126*two23*(g2float)imant);
           else
             a[j]=(float)(sign*0.0);
 
