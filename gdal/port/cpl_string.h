@@ -333,21 +333,51 @@ extern "C++"
 #include <string>
 #endif
 
+// VC++ implicitly applies __declspec(dllexport) to template base
+// classes of classes marked with __declspec(dllexport).
+// Hence, VC++ would export symbols for the specialization of std::basic_string<char>,
+// since it is a base class of CPLString, which is marked with CPL_DLL.
+// As a result, if an application linked both gdal.dll and a static library that
+// (implicitly) instantiates std::string (almost all do!), then the linker would
+// emit an error concerning duplicate symbols for std::string.
+// The least intrusive solution is to turn CPLString into a template class
+// (that is not marked with CPL_DLL), make CPLString a typedef for a specialization
+// of that template class, and mark only the few non-inline member functions of
+// CPLStringT with CPL_DLL.
+#ifdef _MSC_VER
+
+#  define CPLSTRING_DLL CPL_DLL
+
+template< class Dummy = void > class CPLStringT;
+typedef CPLStringT<> CPLString;
+
+template< class Dummy >
+class CPLStringT : public std::string
+
+#else
+
+/*! @cond Doxygen_Suppress */
+#  define CPLSTRING_DLL
+#  define CPLStringT CPLString
+/*! @endcond */
+
 //! Convenient string class based on std::string.
 class CPL_DLL CPLString : public std::string
+
+#endif
 {
 public:
 
     /** Constructor */
-    CPLString(void) {}
+    CPLStringT(void) {}
     /** Constructor */
     // cppcheck-suppress noExplicitConstructor
-    CPLString( const std::string &oStr ) : std::string( oStr ) {}
+    CPLStringT( const std::string &oStr ) : std::string( oStr ) {}
     /** Constructor */
     // cppcheck-suppress noExplicitConstructor
-    CPLString( const char *pszStr ) : std::string( pszStr ) {}
+    CPLStringT( const char *pszStr ) : std::string( pszStr ) {}
     /** Constructor */
-    CPLString( const char *pszStr, size_t n ) : std::string( pszStr, n ) {}
+    CPLStringT( const char *pszStr, size_t n ) : std::string( pszStr, n ) {}
 
     /** Return string as zero terminated character array */
     operator const char* (void) const { return c_str(); }
@@ -397,29 +427,33 @@ public:
 
     /* There seems to be a bug in the way the compiler count indices...
      * Should be CPL_PRINT_FUNC_FORMAT (1, 2) */
-    CPLString &Printf(
+    CPLSTRING_DLL CPLString &Printf(
         CPL_FORMAT_STRING(const char *pszFormat), ... )
         CPL_PRINT_FUNC_FORMAT (2, 3);
-    CPLString &vPrintf(
+    CPLSTRING_DLL CPLString &vPrintf(
         CPL_FORMAT_STRING(const char *pszFormat), va_list args )
         CPL_PRINT_FUNC_FORMAT(2, 0);
-    CPLString &FormatC( double dfValue, const char *pszFormat = nullptr );
-    CPLString &Trim();
-    CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
-    CPLString &replaceAll(
+    CPLSTRING_DLL CPLString &FormatC( double dfValue, const char *pszFormat = nullptr );
+    CPLSTRING_DLL CPLString &Trim();
+    CPLSTRING_DLL CPLString &Recode( const char *pszSrcEncoding, const char *pszDstEncoding );
+    CPLSTRING_DLL CPLString &replaceAll(
         const std::string &osBefore, const std::string& osAfter );
-    CPLString &replaceAll( const std::string &osBefore, char chAfter );
-    CPLString &replaceAll( char chBefore, const std::string &osAfter );
-    CPLString &replaceAll( char chBefore, char chAfter );
+    CPLSTRING_DLL CPLString &replaceAll( const std::string &osBefore, char chAfter );
+    CPLSTRING_DLL CPLString &replaceAll( char chBefore, const std::string &osAfter );
+    CPLSTRING_DLL CPLString &replaceAll( char chBefore, char chAfter );
 
     /* case insensitive find alternates */
-    size_t    ifind( const std::string & str, size_t pos = 0 ) const;
-    size_t    ifind( const char * s, size_t pos = 0 ) const;
-    CPLString &toupper( void );
-    CPLString &tolower( void );
+    CPLSTRING_DLL size_t    ifind( const std::string & str, size_t pos = 0 ) const;
+    CPLSTRING_DLL size_t    ifind( const char * s, size_t pos = 0 ) const;
+    CPLSTRING_DLL CPLString &toupper( void );
+    CPLSTRING_DLL CPLString &tolower( void );
 
-    bool      endsWith( const std::string& osStr ) const;
+    CPLSTRING_DLL bool      endsWith( const std::string& osStr ) const;
 };
+
+#ifndef _MSC_VER
+#  undef CPLStringT
+#endif
 
 CPLString CPL_DLL CPLOPrintf(CPL_FORMAT_STRING(const char *pszFormat), ... )
     CPL_PRINT_FUNC_FORMAT (1, 2);
