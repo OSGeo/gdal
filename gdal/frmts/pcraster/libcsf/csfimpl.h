@@ -235,4 +235,11 @@ int CsfValidSize(size_t size);
 				M_ERROR(ILLHANDLE);	\
 			}
 
+
+int                csf_fseek           (FILE* file,
+                                        CSF_FADDR offset,
+                                        int origin);
+
+CSF_FADDR          csf_ftell           (FILE* file);
+
 #endif /* CSF__IMPL_H */
