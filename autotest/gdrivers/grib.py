@@ -1172,7 +1172,13 @@ def grib_grib2_write_data_encodings():
     found_j2k_drivers = []
     for drvname in [ 'JP2KAK', 'JP2OPENJPEG', 'JPEG2000', 'JP2ECW' ]:
         if gdal.GetDriverByName(drvname) is not None:
-            found_j2k_drivers.append(drvname)
+            if drvname != 'JP2ECW':
+                found_j2k_drivers.append(drvname)
+            else:
+                import ecw
+                if ecw.has_write_support():
+                    found_j2k_drivers.append(drvname)
+
     if len(found_j2k_drivers) > 0:
         tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000' ], 4672, GS5_JPEG2000 ] ]
         tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2' ], 4672, GS5_JPEG2000 ] ] # COMPRESSION_RATIO ignored in that case
