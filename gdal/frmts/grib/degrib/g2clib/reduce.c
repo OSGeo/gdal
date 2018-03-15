@@ -111,6 +111,12 @@
 /*           NONE */
 
 
+    if( *kbit <= 0 || *kbit > 32 )
+    {
+        *ier = 714;
+        return 0;
+    }
+
 /*        NEWBOX( ) AND NEWBOXP( ) were AUTOMATIC ARRAYS. */
     newbox = (integer *)calloc(*ndg,sizeof(integer));
     newboxp = (integer *)calloc(*ndg,sizeof(integer));
