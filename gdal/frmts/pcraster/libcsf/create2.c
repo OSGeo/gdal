@@ -193,14 +193,14 @@ MAP *Rcreate(
 	/* enlarge the file to the length needed by seeking and writing
 	one byte of crap */
 
-	if ( fseek(newMap->fp, (long)(fileSize-1),SEEK_SET) || /* fsetpos() is better */
+	if ( csf_fseek(newMap->fp, fileSize-1, SEEK_SET) || /* fsetpos() is better */
 	    newMap->write(&crap, (size_t)1, (size_t)1, newMap->fp) != 1 )
 	{
 		M_ERROR(NOSPACE);
 		goto error_open;
 	}
 	(void)fflush(newMap->fp);
-	if ( ftell(newMap->fp) != (long)fileSize)
+	if ( csf_ftell(newMap->fp) != (CSF_FADDR)fileSize)
 	{
 		M_ERROR(NOSPACE);
 		goto error_open;

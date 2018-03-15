@@ -37,7 +37,7 @@ int Mclose(
      CsfSwap((void*)&(m->raster.maxVal), CELLSIZE(m->raster.cellRepr),(size_t)1);
     }
 
-    if(fseek(m->fp,(long)ADDR_MAIN_HEADER,SEEK_SET) != 0 ||
+    if(csf_fseek(m->fp, ADDR_MAIN_HEADER,SEEK_SET) != 0 ||
        m->write((void*)&(m->main.signature),sizeof(char), CSF_SIG_SPACE,m->fp)
                                                        != CSF_SIG_SPACE ||
        m->write((void*)&(m->main.version),sizeof(UINT2),(size_t)1,m->fp)!=1 ||
@@ -54,7 +54,7 @@ int Mclose(
     }
     
 
-    if ( fseek(m->fp,ADDR_SECOND_HEADER, SEEK_SET) != 0 ||
+    if ( csf_fseek(m->fp,ADDR_SECOND_HEADER, SEEK_SET) != 0 ||
         m->write((void*)&(m->raster.valueScale),sizeof(UINT2),(size_t)1,m->fp) !=1 ||
       m->write((void*)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp) !=1 ||
         fwrite((void*)&(m->raster.minVal), sizeof(CSF_VAR_TYPE),(size_t)1,m->fp) !=1 ||
