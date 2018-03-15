@@ -227,7 +227,7 @@ CPLString VSISwiftHandleHelper::BuildURL(const CPLString& osStorageURL,
 void VSISwiftHandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osStorageURL, m_osBucket, m_osObjectKey);
-    m_osURL += GetQueryString();
+    m_osURL += GetQueryString(false);
 }
 
 /************************************************************************/

@@ -361,7 +361,7 @@ void VSIAzureBlobHandleHelper::RebuildURL()
 {
     m_osURL = BuildURL(m_osEndpoint, m_osStorageAccount, m_osBucket,
                        m_osObjectKey, m_bUseHTTPS);
-    m_osURL += GetQueryString();
+    m_osURL += GetQueryString(false);
 }
 
 /************************************************************************/
