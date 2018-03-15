@@ -26,6 +26,9 @@ from glob import glob
 if 'CXX' in os.environ and os.environ['CXX'].strip().find(' ') >= 0:
     print('WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CXX'])
     del os.environ['CXX']
+if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
+    print('WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of distutils' % os.environ['CC'])
+    del os.environ['CC']
 
 # ---------------------------------------------------------------------------
 # Switches
