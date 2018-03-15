@@ -43,6 +43,8 @@ template <class T>
 static CPLErr
 GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
                               double dfYRatioDstToSrc,
+                              double dfSrcXDelta,
+                              double dfSrcYDelta,
                               GDALDataType eWrkDataType,
                               T * pChunk,
                               int nChunkXOff, int nChunkXSize,
@@ -77,7 +79,7 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 /* ==================================================================== */
     for( int iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
     {
-        int nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+        int nSrcXOff = (int) (dfSrcXDelta + (0.5 + iDstPixel) * dfXRatioDstToSrc);
         if ( nSrcXOff < nChunkXOff )
             nSrcXOff = nChunkXOff;
 
@@ -92,7 +94,7 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
         T *pSrcScanline;
         int   nSrcYOff;
 
-        nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        nSrcYOff = (int) (dfSrcYDelta + (0.5 + iDstLine) * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
@@ -120,8 +122,8 @@ GDALResampleChunk32R_NearT( double dfXRatioDstToSrc,
 static CPLErr
 GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
                         double dfYRatioDstToSrc,
-                        CPL_UNUSED double dfSrcXDelta,
-                        CPL_UNUSED double dfSrcYDelta,
+                        double dfSrcXDelta,
+                        double dfSrcYDelta,
                         GDALDataType eWrkDataType,
                         void * pChunk,
                         CPL_UNUSED GByte * pabyChunkNodataMask_unused,
@@ -139,6 +141,8 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
     if (eWrkDataType == GDT_Byte)
         return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (GByte *) pChunk,
                         nChunkXOff, nChunkXSize,
@@ -149,6 +153,8 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
     else if (eWrkDataType == GDT_UInt16)
         return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (GInt16 *) pChunk,
                         nChunkXOff, nChunkXSize,
@@ -159,6 +165,8 @@ GDALResampleChunk32R_Near( double dfXRatioDstToSrc,
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk32R_NearT(dfXRatioDstToSrc,
                         dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (float *) pChunk,
                         nChunkXOff, nChunkXSize,
@@ -223,6 +231,8 @@ template <class T, class Tsum>
 static CPLErr
 GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
                                  double dfYRatioDstToSrc,
+                                 double dfSrcXDelta,
+                                 double dfSrcYDelta,
                                  GDALDataType eWrkDataType,
                                  T* pChunk,
                                  GByte * pabyChunkNodataMask,
@@ -287,12 +297,10 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     {
         int   nSrcXOff, nSrcXOff2;
 
-        nSrcXOff =
-            (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+        nSrcXOff = (int) (dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
         if ( nSrcXOff < nChunkXOff )
             nSrcXOff = nChunkXOff;
-        nSrcXOff2 = (int)
-            (0.5 + (iDstPixel+1)* dfXRatioDstToSrc);
+        nSrcXOff2 = (int) ceil(dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc);
         if( nSrcXOff2 == nSrcXOff )
             nSrcXOff2 ++;
 
@@ -315,12 +323,11 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
     CPLErr eErr = CE_None;
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff = (int) (dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 =
-            (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil(dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -339,6 +346,7 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
         if (poColorTable == NULL)
         {
             if (bSrcXSpacingIsTwo && nSrcYOff2 == nSrcYOff + 2 &&
+                dfXRatioDstToSrc == 2 && dfYRatioDstToSrc == 2 &&
                 pabyChunkNodataMask == NULL && (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16))
             {
                 /* Optimized case : no nodata, overview by a factor of 2 and regular x and y src spacing */
@@ -454,8 +462,8 @@ GDALResampleChunk32R_AverageT( double dfXRatioDstToSrc,
 
 static CPLErr
 GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                        CPL_UNUSED double dfSrcXDelta,
-                        CPL_UNUSED double dfSrcYDelta,
+                        double dfSrcXDelta,
+                        double dfSrcYDelta,
                         GDALDataType eWrkDataType,
                         void * pChunk,
                         GByte * pabyChunkNodataMask,
@@ -471,6 +479,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 {
     if (eWrkDataType == GDT_Byte)
         return GDALResampleChunk32R_AverageT<GByte, int>(dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (GByte *) pChunk,
                         pabyChunkNodataMask,
@@ -484,6 +494,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         poColorTable);
     else if (eWrkDataType == GDT_UInt16 && dfXRatioDstToSrc * dfYRatioDstToSrc < 65536 )
         return GDALResampleChunk32R_AverageT<GUInt16, GUInt32>(dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (GUInt16 *) pChunk,
                         pabyChunkNodataMask,
@@ -497,6 +509,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
                         poColorTable);
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk32R_AverageT<float, double>(dfXRatioDstToSrc, dfYRatioDstToSrc,
+                        dfSrcXDelta,
+                        dfSrcYDelta,
                         eWrkDataType,
                         (float *) pChunk,
                         pabyChunkNodataMask,
@@ -519,8 +533,8 @@ GDALResampleChunk32R_Average( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
 static CPLErr
 GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                              CPL_UNUSED double dfSrcXDelta,
-                              CPL_UNUSED double dfSrcYDelta,
+                              double dfSrcXDelta,
+                              double dfSrcYDelta,
                               CPL_UNUSED GDALDataType eWrkDataType,
                               void * pChunk,
                               GByte * pabyChunkNodataMask,
@@ -608,8 +622,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* ==================================================================== */
     for( int iDstLine = nDstYOff; iDstLine < nDstYOff2 && eErr == CE_None; iDstLine++ )
     {
-        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
-        int nSrcYOff2 = (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc) + 1;
+        int nSrcYOff = (int) (0.5 + dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) (0.5 + dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc) + 1;
 
         if( nSrcYOff < nChunkYOff )
         {
@@ -643,8 +657,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
         int  iDstPixel;
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-            int nSrcXOff = (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
-            int nSrcXOff2 = (int)(0.5 + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
+            int nSrcXOff = (int) (0.5 + dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int) (0.5 + dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc) + 1;
 
             int iSizeX = nSrcXOff2 - nSrcXOff;
             nSrcXOff = nSrcXOff + iSizeX/2 - nGaussMatrixDim/2;
@@ -762,8 +776,8 @@ GDALResampleChunk32R_Gauss( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 
 static CPLErr
 GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
-                             CPL_UNUSED double dfSrcXDelta,
-                             CPL_UNUSED double dfSrcYDelta,
+                             double dfSrcXDelta,
+                             double dfSrcYDelta,
                              CPL_UNUSED GDALDataType eWrkDataType,
                              void * pChunk,
                              GByte * pabyChunkNodataMask,
@@ -818,12 +832,11 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
     {
         int iDstPixel;
 
-        int nSrcYOff = (int) (0.5 + iDstLine * dfYRatioDstToSrc);
+        int nSrcYOff = (int) (dfSrcYDelta + iDstLine * dfYRatioDstToSrc);
         if ( nSrcYOff < nChunkYOff )
             nSrcYOff = nChunkYOff;
 
-        int nSrcYOff2 =
-            (int) (0.5 + (iDstLine+1) * dfYRatioDstToSrc);
+        int nSrcYOff2 = (int) ceil(dfSrcYDelta + (iDstLine+1) * dfYRatioDstToSrc);
         if( nSrcYOff2 == nSrcYOff )
             nSrcYOff2 ++;
 
@@ -846,12 +859,10 @@ GDALResampleChunk32R_Mode( double dfXRatioDstToSrc, double dfYRatioDstToSrc,
 /* -------------------------------------------------------------------- */
         for( iDstPixel = nDstXOff; iDstPixel < nDstXOff2; iDstPixel++ )
         {
-            int nSrcXOff =
-                (int) (0.5 + iDstPixel * dfXRatioDstToSrc);
+            int nSrcXOff = (int) (dfSrcXDelta + iDstPixel * dfXRatioDstToSrc);
             if ( nSrcXOff < nChunkXOff )
                 nSrcXOff = nChunkXOff;
-            int nSrcXOff2 = (int)
-                (0.5 + (iDstPixel+1) * dfXRatioDstToSrc);
+            int nSrcXOff2 = (int) ceil(dfSrcXDelta + (iDstPixel+1) * dfXRatioDstToSrc);
             if( nSrcXOff2 == nSrcXOff )
                 nSrcXOff2 ++;
 

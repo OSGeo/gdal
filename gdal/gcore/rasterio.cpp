@@ -81,7 +81,8 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /*      A common case is the data requested with the destination        */
 /*      is packed, and the block width is the raster width.             */
 /* ==================================================================== */
-    if( nPixelSpace == nBufDataSize
+    if( !psExtraArg->bFloatingPointWindowValidity
+        && nPixelSpace == nBufDataSize
         && nLineSpace == nPixelSpace * nXSize
         && nBlockXSize == GetXSize()
         && nBufXSize == nXSize
@@ -241,8 +242,9 @@ CPLErr GDALRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 /* ==================================================================== */
     int         iSrcX;
 
-    if ( /* nPixelSpace == nBufDataSize
-            && */ nXSize == nBufXSize
+    if ( !psExtraArg->bFloatingPointWindowValidity
+         /* && nPixelSpace == nBufDataSize */
+         && nXSize == nBufXSize
          && nYSize == nBufYSize )
     {
 //        printf( "IRasterIO(%d,%d,%d,%d) rw=%d case 2\n",
@@ -955,8 +957,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
             else
                 nDstYCount = nBufYSize - nDstYOff;
 
-            int nChunkYOff = nYOff + (int) (nDstYOff * dfYRatioDstToSrc);
-            int nChunkYOff2 = nYOff + 1 + (int) ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc);
+            int nChunkYOff = (int) (dfYOff + nDstYOff * dfYRatioDstToSrc);
+            int nChunkYOff2 = (int) ceil(dfYOff + (nDstYOff + nDstYCount) * dfYRatioDstToSrc);
             if( nChunkYOff2 > nRasterYSize )
                 nChunkYOff2 = nRasterYSize;
             int nYCount = nChunkYOff2 - nChunkYOff;
@@ -983,8 +985,8 @@ CPLErr GDALRasterBand::RasterIOResampled( CPL_UNUSED GDALRWFlag eRWFlag,
                 else
                     nDstXCount = nBufXSize - nDstXOff;
 
-                int nChunkXOff = nXOff + (int) (nDstXOff * dfXRatioDstToSrc);
-                int nChunkXOff2 = nXOff + 1 + (int) ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc);
+                int nChunkXOff = (int) (dfXOff + nDstXOff * dfXRatioDstToSrc);
+                int nChunkXOff2 = (int) ceil(dfXOff + (nDstXOff + nDstXCount) * dfXRatioDstToSrc);
                 if( nChunkXOff2 > nRasterXSize )
                     nChunkXOff2 = nRasterXSize;
                 int nXCount = nChunkXOff2 - nChunkXOff;
