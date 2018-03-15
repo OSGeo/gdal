@@ -85,14 +85,14 @@ MAP  *Mopen(
   *  fail
   */
 
- (void)fseek(m->fp,0L, SEEK_END);
- if (ftell(m->fp) < (long)ADDR_DATA)
+ (void)csf_fseek(m->fp,0, SEEK_END);
+ if (csf_ftell(m->fp) < ADDR_DATA)
  {
  	M_ERROR(NOT_CSF);
  	goto error_open;
  }
 
- (void)fseek(m->fp, 14+CSF_SIG_SPACE, SEEK_SET);
+ (void)csf_fseek(m->fp, 14+CSF_SIG_SPACE, SEEK_SET);
  if (1 != fread((void *)&s, sizeof(UINT4),(size_t)1,m->fp))
  {
      fprintf(stderr, "WARNING: Unable to read ORD_OK in CSF.\n");
@@ -116,7 +116,7 @@ MAP  *Mopen(
 #endif
  }
  
- (void)fseek(m->fp, ADDR_MAIN_HEADER, SEEK_SET);
+ (void)csf_fseek(m->fp, ADDR_MAIN_HEADER, SEEK_SET);
  m->read((void *)&(m->main.signature), sizeof(char), CSF_SIG_SPACE,m->fp);
  m->read((void *)&(m->main.version),   sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->main.gisFileId), sizeof(UINT4),(size_t)1,m->fp);
@@ -127,7 +127,7 @@ MAP  *Mopen(
  /*                                             14+CSF_SIG_SPACE
   */
  
- (void)fseek(m->fp, ADDR_SECOND_HEADER, SEEK_SET);
+ (void)csf_fseek(m->fp, ADDR_SECOND_HEADER, SEEK_SET);
  m->read((void *)&(m->raster.valueScale), sizeof(UINT2),(size_t)1,m->fp);
  m->read((void *)&(m->raster.cellRepr), sizeof(UINT2),(size_t)1,m->fp);
 

@@ -1,5 +1,6 @@
 #include "csf.h"
 #include "csfimpl.h"
+#include <string.h>
 
 static void UINT1tLdd(size_t nrCells, void *Buf)
 {

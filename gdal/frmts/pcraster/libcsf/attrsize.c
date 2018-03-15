@@ -1,5 +1,6 @@
 #include "csf.h"
 #include "csfimpl.h"
+#include <string.h>
 
 /* get the size of an attribute (LIBRARY_INTERNAL)
  * returns
