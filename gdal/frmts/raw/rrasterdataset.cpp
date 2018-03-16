@@ -509,10 +509,10 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i, poBand );
         if( EQUAL(osDataType, "INT1S") )
         {
-            poDS->GetRasterBand(i)->SetMetadataItem(
+            poDS->GetRasterBand(i)->GDALRasterBand::SetMetadataItem(
                     "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
         }
-        if( !EQUAL(osNoDataValue, "NA") )
+        if( !osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA") )
         {
             double dfNoDataValue = CPLAtof(osNoDataValue);
             poBand->SetNoDataValue(dfNoDataValue);
