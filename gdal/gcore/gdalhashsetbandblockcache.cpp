@@ -32,11 +32,11 @@
 
 #include <cstddef>
 #include <algorithm>
+#include <set>
 #include <vector>
 
 #include "cpl_config.h"
 #include "cpl_error.h"
-#include "cpl_hash_set.h"
 #include "cpl_multiproc.h"
 
 CPL_CVSID("$Id$")
@@ -49,7 +49,23 @@ CPL_CVSID("$Id$")
 
 class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
 {
-    CPLHashSet     *hSet;
+    struct BlockComparator
+    {
+        // Do not change this comparator, because this order is assumed by
+        // tests like tiff_write_133 for flushing from top to bottom, left
+        // to right.
+        bool operator() (const GDALRasterBlock* const& lhs,
+                         const GDALRasterBlock* const& rhs) const
+        {
+            if( lhs->GetYOff() < rhs->GetYOff() )
+                return true;
+            if( lhs->GetYOff() > rhs->GetYOff() )
+                return false;
+            return lhs->GetXOff() < rhs->GetXOff();
+        }
+    };
+
+    std::set<GDALRasterBlock*, BlockComparator> m_oSet;
     CPLLock        *hLock;
 
   public:
@@ -78,51 +94,13 @@ GDALAbstractBandBlockCache* GDALHashSetBandBlockCacheCreate(
 }
 
 /************************************************************************/
-/*                      GDALRasterBlockHashFunc()                       */
-/************************************************************************/
-
-// Calculate hash value.
-static unsigned long GDALRasterBlockHashFunc( const void * const elt )
-{
-    const GDALRasterBlock * const poBlock =
-        static_cast<const GDALRasterBlock *>(elt);
-#if SIZEOF_UNSIGNED_LONG == 8
-    return static_cast<unsigned long>(
-        poBlock->GetXOff() |
-        (static_cast<unsigned long>(poBlock->GetYOff()) << 32) );
-#else
-    return static_cast<unsigned long>(
-        ((poBlock->GetXOff() & 0xFFFF) ^ (poBlock->GetYOff() >> 16)) |
-        (((poBlock->GetYOff() & 0xFFFF) ^ (poBlock->GetXOff() >> 16)) << 16));
-#endif
-}
-
-/************************************************************************/
-/*                      GDALRasterBlockEqualFunc()                      */
-/************************************************************************/
-
-// Test equality.
-// Must return an int rather than a bool to work with CPLHashSetNew.
-static int GDALRasterBlockEqualFunc( const void * const elt1,
-                                     const void * const elt2 )
-{
-    const GDALRasterBlock * const poBlock1 =
-        static_cast<const GDALRasterBlock *>(elt1);
-    const GDALRasterBlock * const poBlock2 =
-        static_cast<const GDALRasterBlock *>(elt2);
-    return poBlock1->GetXOff() == poBlock2->GetXOff() &&
-           poBlock1->GetYOff() == poBlock2->GetYOff();
-}
-
-/************************************************************************/
 /*                       GDALHashSetBandBlockCache()                    */
 /************************************************************************/
 
 GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
     GDALRasterBand* poBandIn ) :
     GDALAbstractBandBlockCache(poBandIn),
-    hSet(CPLHashSetNew(GDALRasterBlockHashFunc,
-                       GDALRasterBlockEqualFunc, nullptr)),
+
     hLock(CPLCreateLock(LOCK_ADAPTIVE_MUTEX))
 {}
 
@@ -133,7 +111,6 @@ GDALHashSetBandBlockCache::GDALHashSetBandBlockCache(
 GDALHashSetBandBlockCache::~GDALHashSetBandBlockCache()
 {
     FlushCache();
-    CPLHashSetDestroy(hSet);
     CPLDestroyLock(hLock);
 }
 
@@ -165,38 +142,9 @@ CPLErr GDALHashSetBandBlockCache::AdoptBlock( GDALRasterBlock * poBlock )
     FreeDanglingBlocks();
 
     CPLLockHolderOptionalLockD( hLock );
-    CPLHashSetInsert(hSet, poBlock);
+    m_oSet.insert(poBlock);
 
     return CE_None;
-}
-
-/************************************************************************/
-/*              GDALHashSetBandBlockCacheFlushCacheIterFunc()           */
-/************************************************************************/
-
-// Must return an int to work with CPLHashSetForeach.
-static int GDALHashSetBandBlockCacheFlushCacheIterFunc( void* elt,
-                                                        void* user_data )
-{
-    // TODO(schwehr): Do all of the HashSet stuff be done in a type safe manner.
-    std::vector<GDALRasterBlock*>* papoBlocks =
-        static_cast<std::vector<GDALRasterBlock *> *>(user_data);
-    GDALRasterBlock* poBlock = static_cast<GDALRasterBlock *>(elt);
-    papoBlocks->push_back(poBlock);
-    return true;
-}
-
-/************************************************************************/
-/*                  GDALHashSetBandBlockCacheSortBlocks()               */
-/************************************************************************/
-
-// TODO: Both args should be const.
-static bool GDALHashSetBandBlockCacheSortBlocks( GDALRasterBlock* poBlock1,
-                                                 GDALRasterBlock* poBlock2 )
-{
-    return poBlock1->GetYOff() < poBlock2->GetYOff() ||
-           ( poBlock1->GetYOff() == poBlock2->GetYOff() &&
-             poBlock1->GetXOff() < poBlock2->GetXOff() );
 }
 
 /************************************************************************/
@@ -212,22 +160,16 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
     std::vector<GDALRasterBlock*> apoBlocks;
     {
         CPLLockHolderOptionalLockD( hLock );
-        CPLHashSetForeach(hSet,
-                          GDALHashSetBandBlockCacheFlushCacheIterFunc,
-                          &apoBlocks);
-
-        CPLHashSetClear(hSet);
+        apoBlocks.reserve( m_oSet.size() );
+        for( const auto& poBlock: m_oSet )
+        {
+            apoBlocks.push_back(poBlock);
+        }
+        m_oSet.clear();
     }
 
-    // Sort blocks by increasing y and then x in order to please some tests
-    // like tiff_write_133
-    std::sort(apoBlocks.begin(), apoBlocks.end(),
-              GDALHashSetBandBlockCacheSortBlocks);
-
-    for( size_t i = 0; i < apoBlocks.size(); ++i )
+    for( auto& poBlock: apoBlocks )
     {
-        GDALRasterBlock* const poBlock = apoBlocks[i];
-
         if( poBlock->DropLockForRemovalFromStorage() )
         {
             CPLErr eErr = CE_None;
@@ -256,7 +198,7 @@ CPLErr GDALHashSetBandBlockCache::UnreferenceBlock( GDALRasterBlock* poBlock )
     UnreferenceBlockBase();
 
     CPLLockHolderOptionalLockD( hLock );
-    CPLHashSetRemoveDeferRehash(hSet, poBlock);
+    m_oSet.erase(poBlock);
     return CE_None;
 }
 
@@ -272,11 +214,11 @@ CPLErr GDALHashSetBandBlockCache::FlushBlock( int nXBlockOff, int nYBlockOff,
     GDALRasterBlock* poBlock = nullptr;
     {
         CPLLockHolderOptionalLockD( hLock );
-        poBlock = reinterpret_cast<GDALRasterBlock*>(
-            CPLHashSetLookup(hSet, &oBlockForLookup) );
-        if( poBlock == nullptr )
+        auto oIter = m_oSet.find(&oBlockForLookup);
+        if( oIter == m_oSet.end() )
             return CE_None;
-        CPLHashSetRemove(hSet, poBlock);
+        poBlock = *oIter;
+        m_oSet.erase(oIter);
     }
 
     if( !poBlock->DropLockForRemovalFromStorage() )
@@ -306,8 +248,9 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
     {
         {
             CPLLockHolderOptionalLockD( hLock );
-            poBlock = reinterpret_cast<GDALRasterBlock*>(
-                CPLHashSetLookup(hSet, &oBlockForLookup) );
+            auto oIter = m_oSet.find(&oBlockForLookup);
+            if( oIter != m_oSet.end() )
+                poBlock = *oIter;
         }
         if( poBlock == nullptr )
             return nullptr;
