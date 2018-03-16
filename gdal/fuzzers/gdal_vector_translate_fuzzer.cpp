@@ -73,6 +73,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
         if( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
             osOutFilename = pszLine;
+            osOutFilename = osOutFilename.replaceAll('/', '_');
         }
         while( (pszLine = CPLReadLineL(fp)) != nullptr )
         {
