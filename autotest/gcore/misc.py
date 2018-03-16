@@ -123,19 +123,21 @@ def get_filename(drv, dirname):
 
     filename = '%s/foo' % dirname
     if drv.ShortName == 'GTX':
-        filename = filename + '.gtx'
+        filename += '.gtx'
     elif drv.ShortName == 'RST':
-        filename = filename + '.rst'
+        filename += '.rst'
     elif drv.ShortName == 'SAGA':
-        filename = filename + '.sdat'
+        filename += '.sdat'
     elif drv.ShortName == 'ADRG':
         filename = '%s/ABCDEF01.GEN' % dirname
     elif drv.ShortName == 'SRTMHGT':
         filename = '%s/N48E002.HGT' % dirname
     elif drv.ShortName == 'ECW':
-        filename = filename + '.ecw'
+        filename += '.ecw'
     elif drv.ShortName == 'KMLSUPEROVERLAY':
-        filename = filename + '.kmz'
+        filename += '.kmz'
+    elif drv.ShortName == 'RRASTER':
+        filename += '.grd'
 
     return filename
 

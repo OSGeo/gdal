@@ -35,6 +35,8 @@
 #include "rawdataset.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 
 CPL_CVSID("$Id$")
@@ -47,12 +49,30 @@ CPL_CVSID("$Id$")
 
 class RRASTERDataset : public RawDataset
 {
+    bool        m_bHeaderDirty = false;
     CPLString   m_osGriFilename;
-    double      m_adfGeoTransform[6];
-    VSILFILE   *m_fpImage;
+    bool        m_bGeoTransformValid = false;
+    double      m_adfGeoTransform[6]{0,1,0,0,0,-1};
+    VSILFILE   *m_fpImage = nullptr;
     CPLString   m_osProjection;
     std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
     std::shared_ptr<GDALColorTable> m_poCT;
+    bool        m_bNativeOrder = true;
+    CPLString   m_osCreator;
+    CPLString   m_osCreated;
+    CPLString   m_osBandOrder;
+    CPLString   m_osLegend;
+    bool        m_bInitRaster = false;
+
+    static bool ComputeSpacings(const CPLString& osBandOrder,
+                                int nCols,
+                                int nRows,
+                                int l_nBands,
+                                GDALDataType eDT,
+                                int& nPixelOffset,
+                                int& nLineOffset,
+                                vsi_l_offset& nBandOffset);
+    void        RewriteHeader();
 
   public:
     RRASTERDataset();
@@ -62,9 +82,28 @@ class RRASTERDataset : public RawDataset
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Create( const char *pszFilename,
+                                int nXSize, int nYSize, int nBands,
+                                GDALDataType eType, char **papszOptions );
+    static GDALDataset *CreateCopy( const char * pszFilename,
+                                      GDALDataset * poSrcDS,
+                                      int bStrict, char ** papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void * pProgressData );
 
     CPLErr GetGeoTransform( double * ) override;
-  const char *GetProjectionRef() override;
+    CPLErr SetGeoTransform( double *padfGeoTransform ) override;
+    const char *GetProjectionRef() override;
+    CPLErr SetProjection( const char *pszSRS ) override;
+
+    CPLErr      SetMetadata( char ** papszMetadata,
+                                     const char * pszDomain = "" ) override;
+    CPLErr      SetMetadataItem( const char * pszName,
+                                         const char * pszValue,
+                                         const char * pszDomain = "" ) override;
+
+    void SetHeaderDirty() { m_bHeaderDirty = true; }
+    void InitImageIfNeeded();
 };
 
 /************************************************************************/
@@ -77,9 +116,10 @@ class RRASTERRasterBand: public RawRasterBand
 {
       friend class RRASTERDataset;
 
-      bool      m_bMinMaxValid;
-      double    m_dfMin;
-      double    m_dfMax;
+      bool      m_bHasNoDataValue = false;
+      double    m_dfNoDataValue = 0.0;
+      double    m_dfMin = std::numeric_limits<double>::infinity();
+      double    m_dfMax = -std::numeric_limits<double>::infinity();
       std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
       std::shared_ptr<GDALColorTable> m_poCT;
 
@@ -93,17 +133,23 @@ class RRASTERRasterBand: public RawRasterBand
       double GetMinimum( int *pbSuccess = nullptr ) override;
       double GetMaximum( int *pbSuccess = nullptr ) override;
 
-      GDALColorTable *GetColorTable() override;
-      GDALRasterAttributeTable *GetDefaultRAT() override;
+      double GetNoDataValue( int* pbSuccess = nullptr ) override;
+      CPLErr SetNoDataValue( double dfNoData ) override;
 
-#ifdef UPDATE_SUPPORTED
+      GDALColorTable *GetColorTable() override;
+      CPLErr SetColorTable( GDALColorTable *poNewCT ) override;
+
+      GDALRasterAttributeTable *GetDefaultRAT() override;
+      CPLErr SetDefaultRAT( const GDALRasterAttributeTable * poRAT ) override;
+
+      void SetDescription( const char *pszDesc ) override;
+
   protected:
       CPLErr IWriteBlock( int, int, void * ) override;
       CPLErr IRasterIO( GDALRWFlag, int, int, int, int,
                         void *, int, int, GDALDataType,
                         GSpacing nPixelSpace, GSpacing nLineSpace,
                         GDALRasterIOExtraArg* psExtraArg ) override;
-#endif
 };
 
 /************************************************************************/
@@ -118,10 +164,7 @@ RRASTERRasterBand::RRASTERRasterBand( GDALDataset *poDSIn, int nBandIn,
                                       GDALDataType eDataTypeIn,
                                       int bNativeOrderIn ) :
     RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
-                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE),
-    m_bMinMaxValid( false ),
-    m_dfMin( 0.0 ),
-    m_dfMax( 0.0 )
+                  nLineOffsetIn, eDataTypeIn, bNativeOrderIn, TRUE)
 {
 }
 
@@ -131,7 +174,6 @@ RRASTERRasterBand::RRASTERRasterBand( GDALDataset *poDSIn, int nBandIn,
 
 void RRASTERRasterBand::SetMinMax( double dfMin, double dfMax )
 {
-    m_bMinMaxValid = true;
     m_dfMin = dfMin;
     m_dfMax = dfMax;
 }
@@ -142,7 +184,7 @@ void RRASTERRasterBand::SetMinMax( double dfMin, double dfMax )
 
 double RRASTERRasterBand::GetMinimum( int *pbSuccess )
 {
-    if( m_bMinMaxValid )
+    if( m_dfMin <= m_dfMax )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
@@ -157,7 +199,7 @@ double RRASTERRasterBand::GetMinimum( int *pbSuccess )
 
 double RRASTERRasterBand::GetMaximum(int *pbSuccess )
 {
-    if( m_bMinMaxValid )
+    if( m_dfMin <= m_dfMax )
     {
         if( pbSuccess )
             *pbSuccess = TRUE;
@@ -176,6 +218,26 @@ GDALColorTable* RRASTERRasterBand::GetColorTable()
 }
 
 /************************************************************************/
+/*                           SetColorTable()                            */
+/************************************************************************/
+
+CPLErr RRASTERRasterBand::SetColorTable( GDALColorTable *poNewCT )
+{
+    RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+    if( poGDS->GetAccess() != GA_Update )
+        return CE_Failure;
+
+    if( poNewCT == nullptr )
+        m_poCT.reset();
+    else
+        m_poCT.reset(poNewCT->Clone());
+
+    poGDS->SetHeaderDirty();
+
+    return CE_None;
+}
+
+/************************************************************************/
 /*                           GetDefaultRAT()                            */
 /************************************************************************/
 
@@ -184,7 +246,155 @@ GDALRasterAttributeTable* RRASTERRasterBand::GetDefaultRAT()
     return m_poRAT.get();
 }
 
-#ifdef UPDATE_SUPPORTED
+/************************************************************************/
+/*                            SetDefaultRAT()                           */
+/************************************************************************/
+
+CPLErr RRASTERRasterBand::SetDefaultRAT( const GDALRasterAttributeTable * poRAT )
+{
+    RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+    if( poGDS->GetAccess() != GA_Update )
+        return CE_Failure;
+
+    if( poRAT == nullptr )
+        m_poRAT.reset();
+    else
+        m_poRAT.reset(poRAT->Clone());
+
+    poGDS->SetHeaderDirty();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                           SetDescription()                           */
+/************************************************************************/
+
+void RRASTERRasterBand::SetDescription( const char *pszDesc )
+{
+    RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+    if( poGDS->GetAccess() != GA_Update )
+        return;
+
+    GDALRasterBand::SetDescription(pszDesc);
+
+    poGDS->SetHeaderDirty();
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double RRASTERRasterBand::GetNoDataValue(int* pbSuccess)
+{
+    if( pbSuccess )
+        *pbSuccess = m_bHasNoDataValue;
+    return m_dfNoDataValue;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr RRASTERRasterBand::SetNoDataValue(double dfNoData)
+{
+    RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+    if( poGDS->GetAccess() != GA_Update )
+        return CE_Failure;
+
+    m_bHasNoDataValue = true;
+    m_dfNoDataValue = dfNoData;
+    poGDS->SetHeaderDirty();
+    return CE_None;
+}
+
+/************************************************************************/
+/*                             GetMinMax()                              */
+/************************************************************************/
+
+template<class T> 
+static void GetMinMax(const T* buffer, int nBufXSize, int nBufYSize,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      double dfNoDataValue,
+                      double& dfMin, double& dfMax)
+{
+    for( int iY = 0; iY < nBufYSize; iY++ )
+    {
+        for( int iX = 0; iX < nBufXSize; iX++ )
+        {
+            const double dfVal = buffer[iY * nLineSpace + iX * nPixelSpace];
+            if( dfVal != dfNoDataValue && !CPLIsNan(dfVal) )
+            {
+                dfMin = std::min(dfMin, dfVal);
+                dfMax = std::max(dfMax, dfVal);
+            }
+        }
+    }
+}
+
+static void GetMinMax(const void* pBuffer, GDALDataType eDT,
+                      bool bByteSigned,
+                      int nBufXSize, int nBufYSize,
+                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      double dfNoDataValue,
+                      double& dfMin, double& dfMax)
+{
+    switch( eDT )
+    {
+        case GDT_Byte:
+            if( bByteSigned )
+                GetMinMax( static_cast<const signed char*>(pBuffer),
+                           nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                           dfNoDataValue,
+                           dfMin, dfMax );
+            else
+                GetMinMax( static_cast<const GByte*>(pBuffer),
+                           nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                           dfNoDataValue,
+                           dfMin, dfMax );
+            break;
+        case GDT_UInt16:
+            GetMinMax( static_cast<const GUInt16*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        case GDT_Int16:
+            GetMinMax( static_cast<const GInt16*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        case GDT_UInt32:
+            GetMinMax( static_cast<const GUInt32*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        case GDT_Int32:
+            GetMinMax( static_cast<const GInt32*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        case GDT_Float32:
+            GetMinMax( static_cast<const float*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        case GDT_Float64:
+            GetMinMax( static_cast<const double*>(pBuffer),
+                       nBufXSize, nBufYSize, nPixelSpace, nLineSpace,
+                       dfNoDataValue,
+                       dfMin, dfMax );
+            break;
+        default:
+            CPLAssert(false);
+            break;
+    }
+}
+
 /************************************************************************/
 /*                            IWriteBlock()                             */
 /************************************************************************/
@@ -192,7 +402,21 @@ GDALRasterAttributeTable* RRASTERRasterBand::GetDefaultRAT()
 CPLErr RRASTERRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
                                        void * pImage )
 {
-    m_bMinMaxValid = false;
+    RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+    poGDS->InitImageIfNeeded();
+
+    const char* pszPixelType =
+        GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    bool bByteSigned = (eDataType == GDT_Byte && pszPixelType &&
+                        EQUAL(pszPixelType, "SIGNEDBYTE"));
+    int bGotNoDataValue = false;
+    double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
+    if( !bGotNoDataValue )
+        dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+    GetMinMax(pImage, eDataType, bByteSigned,
+              nBlockXSize, nBlockYSize, 1, nBlockXSize,
+              dfNoDataValue,
+              m_dfMin, m_dfMax);
     return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
 }
 
@@ -210,28 +434,38 @@ CPLErr RRASTERRasterBand::IRasterIO( GDALRWFlag eRWFlag,
 
 {
     if( eRWFlag == GF_Write )
-        m_bMinMaxValid = false;
+    {
+        RRASTERDataset* poGDS = static_cast<RRASTERDataset*>(poDS);
+        poGDS->InitImageIfNeeded();
+
+        const char* pszPixelType =
+            GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+        bool bByteSigned = (eDataType == GDT_Byte && pszPixelType &&
+                            EQUAL(pszPixelType, "SIGNEDBYTE"));
+        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        int bGotNoDataValue = false;
+        double dfNoDataValue = GetNoDataValue(&bGotNoDataValue);
+        if( !bGotNoDataValue )
+            dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+        GetMinMax(pData, eDataType, bByteSigned,
+                  nBufXSize, nBufYSize,
+                  nPixelSpace / nDTSize, nLineSpace / nDTSize,
+                  dfNoDataValue,
+                  m_dfMin, m_dfMax);
+    }
     return RawRasterBand::IRasterIO( eRWFlag, nXOff, nYOff,
                                      nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize,
                                      eBufType,
                                      nPixelSpace, nLineSpace, psExtraArg );
 }
-#endif
 
 /************************************************************************/
 /*                           RRASTERDataset()                           */
 /************************************************************************/
 
-RRASTERDataset::RRASTERDataset() :
-    m_fpImage(nullptr)
+RRASTERDataset::RRASTERDataset()
 {
-    m_adfGeoTransform[0] = 0.0;
-    m_adfGeoTransform[1] = 1.0;
-    m_adfGeoTransform[2] = 0.0;
-    m_adfGeoTransform[3] = 0.0;
-    m_adfGeoTransform[4] = 0.0;
-    m_adfGeoTransform[5] = 1.0;
 }
 
 /************************************************************************/
@@ -241,9 +475,327 @@ RRASTERDataset::RRASTERDataset() :
 RRASTERDataset::~RRASTERDataset()
 
 {
-    FlushCache();
     if( m_fpImage != nullptr )
+    {
+        InitImageIfNeeded();
+        FlushCache();
         VSIFCloseL(m_fpImage);
+    }
+    if( m_bHeaderDirty )
+        RewriteHeader();
+}
+
+/************************************************************************/
+/*                        InitImageIfNeeded()                           */
+/************************************************************************/
+
+void RRASTERDataset::InitImageIfNeeded()
+{
+    CPLAssert(m_fpImage);
+    if( !m_bInitRaster )
+        return;
+    m_bInitRaster = false;
+    int bGotNoDataValue = false;
+    double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bGotNoDataValue);
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    if( dfNoDataValue == 0.0 )
+    {
+        VSIFTruncateL(m_fpImage,
+            static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize * nBands *
+            nDTSize);
+    }
+    else
+    {
+        GByte abyNoDataValue[16];
+        GDALCopyWords(&dfNoDataValue, GDT_Float64, 0,
+                      abyNoDataValue, eDT, 0,
+                      1);
+        for( GUIntBig i = 0; i <
+                static_cast<GUIntBig>(nRasterXSize) * nRasterYSize * nBands;
+             i++ )
+        {
+            VSIFWriteL(abyNoDataValue, 1, nDTSize, m_fpImage);
+        }
+    }
+}
+
+/************************************************************************/
+/*                           RewriteHeader()                            */
+/************************************************************************/
+
+void RRASTERDataset::RewriteHeader()
+{
+    VSILFILE* fp = VSIFOpenL(GetDescription(), "wb");
+    if( !fp )
+        return;
+
+    VSIFPrintfL(fp, "[general]\n");
+    if( !m_osCreator.empty() )
+        VSIFPrintfL(fp, "creator=%s\n", m_osCreator.c_str());
+    if( !m_osCreated.empty() )
+        VSIFPrintfL(fp, "created=%s\n", m_osCreated.c_str());
+
+    VSIFPrintfL(fp, "[georeference]\n");
+    VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
+    VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
+
+    VSIFPrintfL(fp, "xmin=%.18g\n", m_adfGeoTransform[0]);
+    VSIFPrintfL(fp, "ymin=%.18g\n",
+            m_adfGeoTransform[3] + nRasterYSize * m_adfGeoTransform[5]);
+    VSIFPrintfL(fp, "xmax=%.18g\n",
+            m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1]);
+    VSIFPrintfL(fp, "ymax=%.18g\n", m_adfGeoTransform[3]);
+
+    if( !m_osProjection.empty() )
+    {
+        OGRSpatialReference oSRS;
+        oSRS.SetFromUserInput(m_osProjection);
+        char* pszProj4 = nullptr;
+        oSRS.exportToProj4(&pszProj4);
+        if( pszProj4 )
+        {
+            VSIFPrintfL(fp, "projection=%s\n", pszProj4);
+            VSIFree(pszProj4);
+        }
+    }
+
+    VSIFPrintfL(fp, "[data]\n");
+    GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    const char* pszPixelType =
+        GetRasterBand(1)->GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE");
+    VSIFPrintfL(fp, "datatype=%s\n",
+        (eDT == GDT_Byte && pszPixelType && EQUAL(pszPixelType, "SIGNEDBYTE"))
+                          ?        "INT1S" :
+        (eDT == GDT_Byte) ?        "INT1U" :
+        (eDT == GDT_UInt16) ?      "INT2U" :
+        (eDT == GDT_UInt32) ?      "INT4U" :
+        (eDT == GDT_Int16) ?       "INT2S" :
+        (eDT == GDT_Int32) ?       "INT4S" :
+        (eDT == GDT_Float32) ?     "FLT4S" :
+        /*(eDT == GDT_Float64) ?*/ "FLT8S");
+
+    int bGotNoDataValue = false;
+    double dfNoDataValue = GetRasterBand(1)->GetNoDataValue(&bGotNoDataValue);
+    if( bGotNoDataValue )
+        VSIFPrintfL(fp, "nodatavalue=%.18g\n", dfNoDataValue);
+
+#if CPL_IS_LSB
+    VSIFPrintfL(fp, "byteorder=%s\n", m_bNativeOrder ? "little": "big");
+#else
+    VSIFPrintfL(fp, "byteorder=%s\n", !m_bNativeOrder ? "little": "big");
+#endif
+    VSIFPrintfL(fp, "nbands=%d\n", nBands);
+    if( nBands > 1 )
+        VSIFPrintfL(fp, "bandorder=%s\n", m_osBandOrder.c_str());
+    CPLString osMinValue, osMaxValue;
+    for( int i = 1; i <= nBands; i++ )
+    {
+        RRASTERRasterBand* poBand = static_cast<RRASTERRasterBand*>(
+            GetRasterBand(i));
+        if( i > 1 )
+        {
+            osMinValue += ":";
+            osMaxValue += ":";
+        }
+        if( poBand->m_dfMin > poBand->m_dfMax )
+        {
+            osMinValue.clear();
+            break;
+        }
+        osMinValue += CPLSPrintf("%.18g", poBand->m_dfMin);
+        osMaxValue += CPLSPrintf("%.18g", poBand->m_dfMax);
+    }
+    if( !osMinValue.empty() )
+    {
+        VSIFPrintfL(fp, "minvalue=%s\n", osMinValue.c_str());
+        VSIFPrintfL(fp, "maxvalue=%s\n", osMaxValue.c_str());
+    }
+
+    GDALColorTable* poCT = GetRasterBand(1)->GetColorTable();
+    GDALRasterAttributeTable* poRAT = GetRasterBand(1)->GetDefaultRAT();
+    if( poCT == nullptr && poRAT == nullptr )
+    {
+        VSIFPrintfL(fp, "categorical=FALSE\n");
+    }
+    else
+    {
+        VSIFPrintfL(fp, "categorical=TRUE\n");
+        if( poCT && poRAT )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Both color table and raster attribute table defined. "
+                     "Writing only the later");
+        }
+        if( poRAT )
+        {
+            CPLString osRatNames;
+            CPLString osRatTypes;
+            for( int i = 0; i < poRAT->GetColumnCount(); i++ )
+            {
+                if( !osRatNames.empty() )
+                {
+                    osRatNames += ":";
+                    osRatTypes += ":";
+                }
+                osRatNames +=
+                    CPLString(poRAT->GetNameOfCol(i)).replaceAll(':', '.');
+                GDALRATFieldType eColType = poRAT->GetTypeOfCol(i);
+                if( eColType == GFT_Integer )
+                    osRatTypes += "integer";
+                else if( eColType == GFT_Real )
+                    osRatTypes += "numeric";
+                else
+                    osRatTypes += "character";
+            }
+            VSIFPrintfL(fp, "ratnames=%s\n", osRatNames.c_str());
+            VSIFPrintfL(fp, "rattypes=%s\n", osRatTypes.c_str());
+            CPLString osRatValues;
+            for( int i = 0; i < poRAT->GetColumnCount(); i++ )
+            {
+                GDALRATFieldType eColType = poRAT->GetTypeOfCol(i);
+                for( int j = 0; j < poRAT->GetRowCount(); j++ )
+                {
+                    if( i != 0 || j != 0 )
+                        osRatValues += ":";
+                    if( eColType == GFT_Integer )
+                    {
+                        osRatValues += CPLSPrintf("%d",
+                                                 poRAT->GetValueAsInt(j, i));
+                    }
+                    else if( eColType == GFT_Real )
+                    {
+                        osRatValues += CPLSPrintf("%.18g",
+                                                 poRAT->GetValueAsDouble(j, i));
+                    }
+                    else
+                    {
+                        const char* pszVal = poRAT->GetValueAsString(j, i);
+                        if( pszVal )
+                        {
+                            osRatValues +=
+                                CPLString(pszVal).replaceAll(':', '.');
+                        }
+                    }
+                }
+            }
+            VSIFPrintfL(fp, "ratvalues=%s\n", osRatValues.c_str());
+        }
+        else
+        {
+            bool bNeedsAlpha = false;
+            for( int i = 0; i < poCT->GetColorEntryCount(); i++ )
+            {
+                if( poCT->GetColorEntry(i)->c4 != 255 )
+                {
+                    bNeedsAlpha = true;
+                    break;
+                }
+            }
+            if( !bNeedsAlpha )
+            {
+                VSIFPrintfL(fp, "ratnames=%s\n",
+                            "ID:red:green:blue");
+                VSIFPrintfL(fp, "rattypes=%s\n",
+                            "integer:integer:integer:integer");
+            }
+            else
+            {
+                VSIFPrintfL(fp, "ratnames=%s\n",
+                            "ID:red:green:blue:alpha");
+                VSIFPrintfL(fp, "rattypes=%s\n",
+                            "integer:integer:integer:integer:integer");
+            }
+
+            CPLString osRatID;
+            CPLString osRatR;
+            CPLString osRatG;
+            CPLString osRatB;
+            CPLString osRatA;
+            for( int i = 0; i < poCT->GetColorEntryCount(); i++ )
+            {
+                const GDALColorEntry* psEntry = poCT->GetColorEntry(i);
+                if( i > 0 )
+                {
+                    osRatID += ":";
+                    osRatR += ":";
+                    osRatG += ":";
+                    osRatB += ":";
+                    osRatA += ":";
+                }
+                osRatID += CPLSPrintf("%d", i);
+                osRatR += CPLSPrintf("%d", psEntry->c1);
+                osRatG += CPLSPrintf("%d", psEntry->c2);
+                osRatB += CPLSPrintf("%d", psEntry->c3);
+                osRatA += CPLSPrintf("%d", psEntry->c4);
+            }
+            if( !bNeedsAlpha )
+            {
+                VSIFPrintfL(fp, "ratvalues=%s:%s:%s:%s\n",
+                            osRatID.c_str(), osRatR.c_str(),
+                            osRatG.c_str(), osRatB.c_str());
+            }
+            else
+            {
+                VSIFPrintfL(fp, "ratvalues=%s:%s:%s:%s:%s\n",
+                            osRatID.c_str(), osRatR.c_str(),
+                            osRatG.c_str(), osRatB.c_str(), osRatA.c_str());
+            }
+        }
+    }
+
+    if( !m_osLegend.empty() )
+        VSIFPrintfL(fp, "[legend]\n%s", m_osLegend.c_str());
+
+    CPLString osLayerName;
+    bool bGotSignificantBandDesc = false;
+    for( int i = 1; i <= nBands; i++ )
+    {
+        GDALRasterBand* poBand = GetRasterBand(i);
+        const char* pszDesc = poBand->GetDescription();
+        if( EQUAL(pszDesc, "") )
+        {
+            GDALColorInterp eInterp = poBand->GetColorInterpretation();
+            if( eInterp == GCI_RedBand )
+            {
+                bGotSignificantBandDesc = true;
+                pszDesc = "red";
+            }
+            else if( eInterp == GCI_GreenBand )
+            {
+                bGotSignificantBandDesc = true;
+                pszDesc = "green";
+            }
+            else if( eInterp == GCI_BlueBand )
+            {
+                bGotSignificantBandDesc = true;
+                pszDesc = "blue";
+            }
+            else if( eInterp == GCI_AlphaBand )
+            {
+                bGotSignificantBandDesc = true;
+                pszDesc = "alpha";
+            }
+            else
+            {
+                pszDesc = CPLSPrintf("Band%d", i);
+            }
+        }
+        else
+        {
+            bGotSignificantBandDesc = true;
+        }
+        if( i > 1 )
+            osLayerName += ":";
+        osLayerName += CPLString(pszDesc).replaceAll(':','.');
+    }
+    if( bGotSignificantBandDesc )
+    {
+        VSIFPrintfL(fp, "[description]\n");
+        VSIFPrintfL(fp, "layername=%s\n", osLayerName.c_str());
+    }
+
+    VSIFCloseL(fp);
 }
 
 /************************************************************************/
@@ -266,7 +818,41 @@ char **RRASTERDataset::GetFileList()
 
 CPLErr RRASTERDataset::GetGeoTransform( double * padfGeoTransform )
 {
-    memcpy( padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double) );
+    if( m_bGeoTransformValid )
+    {
+        memcpy( padfGeoTransform, m_adfGeoTransform, 6 * sizeof(double) );
+        return CE_None;
+    }
+    return CE_Failure;
+}
+
+/************************************************************************/
+/*                          SetGeoTransform()                           */
+/************************************************************************/
+
+CPLErr RRASTERDataset::SetGeoTransform( double *padfGeoTransform )
+
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot set geotransform on a read-only dataset");
+        return CE_Failure;
+    }
+
+    // We only support non-rotated images with info in the .HDR file.
+    if( padfGeoTransform[2] != 0.0 || padfGeoTransform[4] != 0.0 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Rotated / skewed images not supported");
+        return GDALPamDataset::SetGeoTransform(padfGeoTransform);
+    }
+
+    // Record new geotransform.
+    m_bGeoTransformValid = true;
+    memcpy(m_adfGeoTransform, padfGeoTransform, sizeof(double) * 6);
+    SetHeaderDirty();
+
     return CE_None;
 }
 
@@ -277,6 +863,66 @@ CPLErr RRASTERDataset::GetGeoTransform( double * padfGeoTransform )
 const char * RRASTERDataset::GetProjectionRef()
 {
     return m_osProjection.c_str();
+}
+
+/************************************************************************/
+/*                           SetProjection()                            */
+/************************************************************************/
+
+CPLErr RRASTERDataset::SetProjection( const char *pszSRS )
+
+{
+    if( GetAccess() != GA_Update )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot set prejection on a read-only dataset");
+        return CE_Failure;
+    }
+
+    m_osProjection = pszSRS ? pszSRS : "";
+    SetHeaderDirty();
+
+    return CE_None;
+}
+
+/************************************************************************/
+/*                            SetMetadata()                             */
+/************************************************************************/
+
+CPLErr RRASTERDataset::SetMetadata( char ** papszMetadata,
+                                    const char * pszDomain )
+{
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
+    {
+        m_osCreator = CSLFetchNameValueDef(papszMetadata, "CREATOR", "");
+        m_osCreated = CSLFetchNameValueDef(papszMetadata, "CREATED", "");
+        SetHeaderDirty();
+    }
+    return GDALDataset::SetMetadata(papszMetadata, pszDomain);
+}
+
+/************************************************************************/
+/*                          SetMetadataItem()                           */
+/************************************************************************/
+
+CPLErr RRASTERDataset::SetMetadataItem( const char * pszName,
+                                        const char * pszValue,
+                                        const char * pszDomain )
+{
+    if( pszDomain == nullptr || EQUAL(pszDomain, "") )
+    {
+        if( EQUAL(pszName, "CREATOR") )
+        {
+            m_osCreator = pszValue ? pszValue : "";
+            SetHeaderDirty();
+        }
+        if( EQUAL(pszName, "CREATED") )
+        {
+            m_osCreated = pszValue ? pszValue : "";
+            SetHeaderDirty();
+        }
+    }
+    return GDALDataset::SetMetadataItem(pszName, pszValue, pszDomain);
 }
 
 /************************************************************************/
@@ -304,6 +950,81 @@ int RRASTERDataset::Identify( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                          ComputeSpacing()                            */
+/************************************************************************/
+
+bool RRASTERDataset::ComputeSpacings(const CPLString& osBandOrder,
+                                     int nCols,
+                                     int nRows,
+                                     int l_nBands,
+                                     GDALDataType eDT,
+                                     int& nPixelOffset,
+                                     int& nLineOffset,
+                                     vsi_l_offset& nBandOffset)
+{
+    nPixelOffset = 0;
+    nLineOffset = 0;
+    nBandOffset = 0;
+    const int nPixelSize = GDALGetDataTypeSizeBytes( eDT );
+    if( l_nBands == 1 || EQUAL( osBandOrder, "BIL" ) )
+    {
+        nPixelOffset = nPixelSize;
+        if( l_nBands != 0 && nPixelSize != 0 &&
+            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
+            return false;
+        }
+        nLineOffset = nPixelSize * nCols * l_nBands;
+        nBandOffset = nPixelSize * nCols;
+    }
+    else if( EQUAL( osBandOrder, "BIP" ) )
+    {
+        if( l_nBands != 0 && nPixelSize != 0 &&
+            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
+            return false;
+        }
+        nPixelOffset = nPixelSize * l_nBands;
+        nLineOffset = nPixelSize * nCols * l_nBands;
+        nBandOffset = nPixelSize;
+    }
+    else if( EQUAL( osBandOrder, "BSQ" ) )
+    {
+        if( nPixelSize != 0 && nCols > INT_MAX / nPixelSize )
+        {
+            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
+            return false;
+        }
+        nPixelOffset = nPixelSize;
+        nLineOffset = nPixelSize * nCols;
+        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+    }
+    else if( l_nBands > 1 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Unknown bandorder" );
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                            CastToFloat()                             */
+/************************************************************************/
+
+static float CastToFloat(double dfVal)
+{
+    if( CPLIsInf(dfVal) || CPLIsNan(dfVal) ||
+        (dfVal >= -std::numeric_limits<float>::max() &&
+         dfVal <= std::numeric_limits<float>::max()) )
+    {
+        return static_cast<float>(dfVal);
+    }
+    return std::numeric_limits<float>::quiet_NaN();
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -311,12 +1032,6 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 {
     if( !Identify(poOpenInfo) )
         return nullptr;
-
-    if( poOpenInfo->eAccess == GA_Update )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
-        return nullptr;
-    }
 
     const char* pszLine = nullptr;
     int nRows = 0;
@@ -339,9 +1054,21 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osRatNames;
     CPLString osRatTypes;
     CPLString osRatValues;
+    bool bInLegend = false;
+    CPLString osLegend;
     VSIRewindL(poOpenInfo->fpL);
     while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024 * 1024, nullptr)) != nullptr )
     {
+        if( pszLine[0] == '[' )
+        {
+            bInLegend = EQUAL(pszLine, "[legend]");
+            continue;
+        }
+        if( bInLegend )
+        {
+            osLegend += pszLine;
+            osLegend += "\n";
+        }
         char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
         if( pszKey && pszValue )
@@ -447,45 +1174,9 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     int nPixelOffset = 0;
     int nLineOffset = 0;
     vsi_l_offset nBandOffset = 0;
-    const int nPixelSize = GDALGetDataTypeSizeBytes( eDT );
-    if( l_nBands == 1 || EQUAL( osBandOrder, "BIL" ) )
+    if( !ComputeSpacings(osBandOrder, nCols, nRows, l_nBands, eDT,
+                         nPixelOffset, nLineOffset, nBandOffset) )
     {
-        nPixelOffset = nPixelSize;
-        if( l_nBands != 0 && nPixelSize != 0 &&
-            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return nullptr;
-        }
-        nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = nPixelSize * nCols;
-    }
-    else if( EQUAL( osBandOrder, "BIP" ) )
-    {
-        if( l_nBands != 0 && nPixelSize != 0 &&
-            nCols > INT_MAX / ( l_nBands * nPixelSize ) )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return nullptr;
-        }
-        nPixelOffset = nPixelSize * l_nBands;
-        nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = nPixelSize;
-    }
-    else if( EQUAL( osBandOrder, "BSQ" ) )
-    {
-        if( nPixelSize != 0 && nCols > INT_MAX / nPixelSize )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined, "Too many columns" );
-            return nullptr;
-        }
-        nPixelOffset = nPixelSize;
-        nLineOffset = nPixelSize * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
-    }
-    else if( l_nBands > 1 )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined, "Unknown bandorder" );
         return nullptr;
     }
 
@@ -509,13 +1200,20 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         osGriFilename = CPLFormFilename( osDirname, osBasename, osGRIExtension );
     }
 
-    VSILFILE* fpImage = VSIFOpenL( osGriFilename, "rb" );
+    VSILFILE* fpImage = VSIFOpenL( osGriFilename,
+                            (poOpenInfo->eAccess == GA_Update) ? "rb+" : "rb" );
     if( fpImage == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Cannot open %s", osGriFilename.c_str());
         return nullptr;
+    }
 
     RRASTERDataset* poDS = new RRASTERDataset;
+    poDS->eAccess = poOpenInfo->eAccess;
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
+    poDS->m_bGeoTransformValid = true;
     poDS->m_adfGeoTransform[0] = dfXMin;
     poDS->m_adfGeoTransform[1] = (dfXMax - dfXMin) / nCols;
     poDS->m_adfGeoTransform[2] = 0.0;
@@ -524,6 +1222,11 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRows;
     poDS->m_osGriFilename = osGriFilename;
     poDS->m_fpImage = fpImage;
+    poDS->m_bNativeOrder = bNativeOrder;
+    poDS->m_osCreator = osCreator;
+    poDS->m_osCreated = osCreated;
+    poDS->m_osBandOrder = osBandOrder;
+    poDS->m_osLegend = osLegend;
 
     if( !osProjection.empty() )
     {
@@ -661,7 +1364,10 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         if( !osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA") )
         {
             double dfNoDataValue = CPLAtof(osNoDataValue);
-            poBand->SetNoDataValue(dfNoDataValue);
+            if( eDT == GDT_Float32 )
+                dfNoDataValue = CastToFloat(dfNoDataValue);
+            poBand->m_bHasNoDataValue = true;
+            poBand->m_dfNoDataValue = dfNoDataValue;
         }
         if( i - 1 < static_cast<int>(aosMinValues.size()) &&
             i - 1 < static_cast<int>(aosMaxValues.size()) )
@@ -692,6 +1398,130 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 }
 
 /************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
+
+GDALDataset *RRASTERDataset::Create( const char * pszFilename,
+                                  int nXSize, int nYSize, int nBands,
+                                  GDALDataType eType,
+                                  char **papszOptions )
+
+{
+    // Verify input options.
+    if (nBands <= 0)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "RRASTER driver does not support %d bands.", nBands);
+        return nullptr;
+    }
+
+    if( eType != GDT_Byte &&
+        eType != GDT_UInt16 && eType != GDT_Int16 &&
+        eType != GDT_Int32 && eType != GDT_UInt32 &&
+        eType != GDT_Float32 && eType != GDT_Float64 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported data type (%s).",
+                 GDALGetDataTypeName(eType));
+        return nullptr;
+    }
+
+    CPLString osGRDExtension(CPLGetExtension(pszFilename));
+    if( !EQUAL(osGRDExtension, "grd") )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "RRASTER driver only supports grd extension");
+        return nullptr;
+    }
+
+    int nPixelOffset = 0;
+    int nLineOffset = 0;
+    vsi_l_offset nBandOffset = 0;
+    CPLString osBandOrder(
+        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
+    if( !ComputeSpacings(osBandOrder,
+                         nXSize, nYSize, nBands, eType,
+                         nPixelOffset, nLineOffset, nBandOffset) )
+    {
+        return nullptr;
+    }
+
+    CPLString osGRIExtension( (osGRDExtension[0] == 'g') ? "gri" : "GRI" );
+    CPLString osGriFilename( CPLResetExtension(pszFilename, osGRIExtension) );
+
+    // Try to create the file.
+    VSILFILE *fpImage = VSIFOpenL(osGriFilename, "wb+");
+
+    if( fpImage == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Attempt to create file `%s' failed.",
+                 osGriFilename.c_str());
+        return nullptr;
+    }
+
+    RRASTERDataset* poDS = new RRASTERDataset;
+    poDS->eAccess = GA_Update;
+    poDS->m_bHeaderDirty = true;
+    poDS->m_osGriFilename = osGriFilename;
+    poDS->nRasterXSize = nXSize;
+    poDS->nRasterYSize = nYSize;
+    poDS->m_fpImage = fpImage;
+    poDS->m_bNativeOrder = true;
+    poDS->m_osBandOrder = osBandOrder.toupper();
+    poDS->m_bInitRaster = CPLFetchBool(papszOptions, "INIT_RASTER", true);
+
+    const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
+    const bool bByteSigned = (eType == GDT_Byte && pszPixelType &&
+                        EQUAL(pszPixelType, "SIGNEDBYTE"));
+
+    for( int i=1; i<=nBands; i++ )
+    {
+        RRASTERRasterBand* poBand = new RRASTERRasterBand(
+                                  poDS, i, fpImage, nBandOffset * (i-1),
+                                  nPixelOffset,
+                                  nLineOffset, eType, true );
+        poDS->SetBand( i, poBand );
+        if( bByteSigned)
+        {
+            poBand->GDALRasterBand::SetMetadataItem(
+                    "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
+        }
+    }
+
+    return poDS;
+}
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *RRASTERDataset::CreateCopy( const char * pszFilename,
+                                      GDALDataset * poSrcDS,
+                                      int bStrict, char ** papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void * pProgressData )
+
+{
+    // Proceed with normal copying using the default createcopy  operators.
+    GDALDriver *poDriver =
+        reinterpret_cast<GDALDriver *>(GDALGetDriverByName("RRASTER"));
+
+    char** papszAdjustedOptions = CSLDuplicate(papszOptions);
+    papszAdjustedOptions =
+        CSLSetNameValue(papszAdjustedOptions, "INIT_RASTER", "NO");
+    GDALDataset *poOutDS = poDriver->DefaultCreateCopy(
+        pszFilename, poSrcDS, bStrict, papszAdjustedOptions, pfnProgress,
+        pProgressData);
+    CSLDestroy(papszAdjustedOptions);
+
+    if( poOutDS != nullptr )
+        poOutDS->FlushCache();
+
+    return poOutDS;
+}
+
+/************************************************************************/
 /*                   GDALRegister_RRASTER()                             */
 /************************************************************************/
 
@@ -709,11 +1539,25 @@ void GDALRegister_RRASTER()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "R Raster" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
                                "frmt_various.html#RRASTER" );
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                              "Byte Int16 UInt16 Int32 UInt32 Float32 Float64");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+"<CreationOptionList>"
+"   <Option name='PIXELTYPE' type='string' description='By setting this to "
+    "SIGNEDBYTE, a new Byte file can be forced to be written as signed byte'/>"
+"   <Option name='INTERLEAVE' type='string-select' default='BIL'>"
+"       <Value>BIP</Value>"
+"       <Value>BIL</Value>"
+"       <Value>BSQ</Value>"
+"   </Option>"
+"</CreationOptionList>" );
+
     poDriver->pfnOpen = RRASTERDataset::Open;
     poDriver->pfnIdentify = RRASTERDataset::Identify;
+    poDriver->pfnCreate = RRASTERDataset::Create;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
