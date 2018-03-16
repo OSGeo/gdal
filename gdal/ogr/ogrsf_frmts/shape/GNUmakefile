@@ -14,7 +14,7 @@ endif
 
 default:	$(O_OBJ:.o=.$(OBJ_EXT))
 
-$(OBJ) $(O_OBJ):	ogrshape.h shapefil.h
+$(OBJ) $(O_OBJ):	ogrshape.h shapefil.h shpopen.c dbfopen.c shptree.c sbnsearch.c
 
 clean:
 	rm -f *.o $(O_OBJ)
