@@ -340,7 +340,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     CPLString osRatTypes;
     CPLString osRatValues;
     VSIRewindL(poOpenInfo->fpL);
-    while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024, nullptr)) != nullptr )
+    while( (pszLine = CPLReadLine2L(poOpenInfo->fpL, 1024 * 1024, nullptr)) != nullptr )
     {
         char* pszKey = nullptr;
         const char* pszValue = CPLParseNameValue(pszLine, &pszKey);
@@ -554,6 +554,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
             aosRatNames.size() == aosRatTypes.size() &&
             (aosRatValues.size() % aosRatNames.size()) == 0 )
         {
+            bool bIsCompatibleOfCT = false;
             const int nValues = aosRatValues.size() / aosRatNames.size();
             if( (aosRatNames.size() == 4 || aosRatNames.size() == 5) &&
                 EQUAL(aosRatNames[1], "red") &&
@@ -566,6 +567,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
                 EQUAL(aosRatTypes[3], "integer") &&
                 (aosRatTypes.size() == 4 || EQUAL(aosRatTypes[4], "integer")) )
             {
+                bIsCompatibleOfCT = true;
                 poDS->m_poCT.reset(new GDALColorTable());
                 for( int i = 0; i < nValues; i++ )
                 {
@@ -587,17 +589,24 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 
                         poDS->m_poCT->SetColorEntry(nIndex, &oEntry);
                     }
+                    else
+                    {
+                        bIsCompatibleOfCT = false;
+                        poDS->m_poCT.reset();
+                        break;
+                    }
                 }
             }
-            else
+
+            if( !bIsCompatibleOfCT )
             {
                 poDS->m_poRAT.reset(new GDALDefaultRasterAttributeTable());
                 for( int i = 0; i < aosRatNames.size(); i++ )
                 {
                     poDS->m_poRAT->CreateColumn(
                         aosRatNames[i], 
-                        EQUAL(aosRatNames[i], "integer") ?  GFT_Integer :
-                        EQUAL(aosRatNames[i], "numeric") ?  GFT_Real :
+                        EQUAL(aosRatTypes[i], "integer") ?  GFT_Integer :
+                        EQUAL(aosRatTypes[i], "numeric") ?  GFT_Real :
                                                             GFT_String,
                         EQUAL(aosRatNames[i], "red") ? GFU_Red :
                         EQUAL(aosRatNames[i], "green") ? GFU_Green :
@@ -646,7 +655,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->SetBand( i, poBand );
         if( EQUAL(osDataType, "INT1S") )
         {
-            poDS->GetRasterBand(i)->SetMetadataItem(
+            poDS->GetRasterBand(i)->GDALRasterBand::SetMetadataItem(
                     "PIXELTYPE", "SIGNEDBYTE", "IMAGE_STRUCTURE" );
         }
         if( !osNoDataValue.empty() && !EQUAL(osNoDataValue, "NA") )
