@@ -1209,6 +1209,15 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
+    if( !RAWDatasetCheckMemoryUsage(
+                        nCols, nRows, l_nBands,
+                        nPixelOffset, nLineOffset, 0, nBandOffset,
+                        fpImage) )
+    {
+        VSIFCloseL(fpImage);
+        return nullptr;
+    }
+
     RRASTERDataset* poDS = new RRASTERDataset;
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->nRasterXSize = nCols;
