@@ -1130,8 +1130,8 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         eDT = GDT_Int16;
     else if( EQUAL(osDataType, "INT4S") )
         eDT = GDT_Int32;
-    else if( EQUAL(osDataType, "INT8S") )
-        eDT = GDT_Float64; // Approximate matching
+    //else if( EQUAL(osDataType, "INT8S") )
+    //    eDT = GDT_UInt64; // unhandled
     else if( EQUAL(osDataType, "INT1U") )
         eDT = GDT_Byte;
     else if( EQUAL(osDataType, "INT2U") )
