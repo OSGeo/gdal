@@ -1469,7 +1469,7 @@ GDALDataset *RRASTERDataset::Create( const char * pszFilename,
     poDS->m_fpImage = fpImage;
     poDS->m_bNativeOrder = true;
     poDS->m_osBandOrder = osBandOrder.toupper();
-    poDS->m_bInitRaster = CPLFetchBool(papszOptions, "INIT_RASTER", true);
+    poDS->m_bInitRaster = CPLFetchBool(papszOptions, "@INIT_RASTER", true);
 
     const char *pszPixelType = CSLFetchNameValue(papszOptions, "PIXELTYPE");
     const bool bByteSigned = (eType == GDT_Byte && pszPixelType &&
@@ -1509,7 +1509,7 @@ GDALDataset *RRASTERDataset::CreateCopy( const char * pszFilename,
 
     char** papszAdjustedOptions = CSLDuplicate(papszOptions);
     papszAdjustedOptions =
-        CSLSetNameValue(papszAdjustedOptions, "INIT_RASTER", "NO");
+        CSLSetNameValue(papszAdjustedOptions, "@INIT_RASTER", "NO");
     GDALDataset *poOutDS = poDriver->DefaultCreateCopy(
         pszFilename, poSrcDS, bStrict, papszAdjustedOptions, pfnProgress,
         pProgressData);
@@ -1558,6 +1558,7 @@ void GDALRegister_RRASTER()
     poDriver->pfnOpen = RRASTERDataset::Open;
     poDriver->pfnIdentify = RRASTERDataset::Identify;
     poDriver->pfnCreate = RRASTERDataset::Create;
+    poDriver->pfnCreateCopy = RRASTERDataset::CreateCopy;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }
