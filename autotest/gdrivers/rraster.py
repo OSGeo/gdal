@@ -369,16 +369,22 @@ def rraster_datatypes():
     return 'success'
 
 ###############################################################################
-def rraster_nodata():
+def rraster_nodata_and_metadata():
 
     filename = '/vsimem/temp.grd'
     ds = gdal.GetDriverByName('RRASTER').Create(filename, 1, 1)
     ds.GetRasterBand(1).SetNoDataValue(1)
     ds.GetRasterBand(1).SetColorTable(None)
     ds.GetRasterBand(1).SetDefaultRAT(None)
+    ds.SetMetadataItem('CREATOR', 'GDAL')
+    ds.SetMetadataItem('CREATED', 'Today')
     ds = None
     ds = gdal.Open(filename)
+    if ds.GetMetadata() != { 'CREATOR': 'GDAL', 'CREATED': 'Today'}:
+        gdaltest.post_reason('fail')
+        return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != 1:
+        gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
@@ -408,6 +414,35 @@ def rraster_update():
 
     return 'success'
 
+###############################################################################
+def rraster_colorinterpretation():
+
+    filename = '/vsimem/temp.grd'
+    ds = gdal.GetDriverByName('RRASTER').Create(filename, 1, 1, 4)
+    ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
+    ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+    ds = None
+    ds = gdal.Open(filename)
+    if ds.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    if ds.GetRasterBand(4).GetColorInterpretation() != gdal.GCI_AlphaBand:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    ds = None
+
+    gdal.GetDriverByName('RRASTER').Delete(filename)
+
+    return 'success'
+
 gdaltest_list = [
     rraster_1,
     rraster_1_copy,
@@ -421,8 +456,9 @@ gdaltest_list = [
     rraster_rat_copy,
     rraster_signedbyte,
     rraster_datatypes,
-    rraster_nodata,
+    rraster_nodata_and_metadata,
     rraster_update,
+    rraster_colorinterpretation,
     ]
 
 
