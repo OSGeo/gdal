@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>
+#include <float.h>
 #include "grib2.h"
 
 void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
@@ -70,14 +71,14 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
       const g2int zero=0;
       g2int  *gref, *gwidth, *glen;
       g2int  glength, grpwidth;
-      g2int  i, n, iofst, imin, ival1, ival2, isd, minsd, nbitsd = 0;
+      g2int  i, n, iofst, ival1, ival2, isd, minsd, nbitsd = 0;
       g2int  nbitsgref, left, iwmax, ngwidthref, nbitsgwidth, ilmax;
       g2int  nglenref, nglenlast, nbitsglen /* , ij */;
       g2int  j, missopt, nonmiss, itemp, maxorig, nbitorig, miss1, miss2;
       g2int  ngroups, ng, num0, num1, num2;
       g2int  imax, lg, mtemp, ier = 0, igmax;
       g2int  kfildo, minpk, inc, maxgrps, ibit, jbit, kbit, novref, lbitref;
-      g2float  rmissp, rmisss, bscale, dscale, rmin, temp;
+      g2float  rmissp, rmisss, bscale, dscale, rmin, rmax, temp;
       const g2int simple_alg = 0;
       const g2float alog2=0.69314718f;       //  ln(2.0)
       const g2int one=1;
@@ -104,7 +105,8 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
           *lcpack = -1;
           return;
       }
-      rmin=1E+37f;
+      rmin=FLT_MAX;
+      rmax=-FLT_MAX;
       if ( missopt ==  1 ) {        // Primary missing value only
          for ( j=0; j<ndpts; j++) {
            if (fld[j] == rmissp) {
@@ -113,6 +115,7 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            else {
               ifldmiss[j]=0;
               if (fld[j] < rmin) rmin=fld[j];
+              if (fld[j] > rmax) rmax=fld[j];
            }
          }
       }
@@ -127,8 +130,45 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
            else {
               ifldmiss[j]=0;
               if (fld[j] < rmin) rmin=fld[j];
+              if (fld[j] > rmax) rmax=fld[j];
            }
          }
+      }
+
+      if( !(floor(rmin*dscale) >= -FLT_MAX && floor(rmin*dscale) <= FLT_MAX) )
+      {
+         fprintf(stderr,
+                    "Scaled min value not representable on IEEE754 "
+                    "single precision float\n");
+        *lcpack = -1;
+        free(ifldmiss);
+        return;
+      }
+      if (idrstmpl[1] == 0)
+      {
+        double max_diff = RINT(rmax*dscale) - RINT(rmin*dscale);
+        if( !(max_diff >= 0 && max_diff <= INT_MAX) )
+        {
+            fprintf(stderr,
+                        "Difference of scaled max value with scaled min value "
+                        "not representable on int \n");
+            *lcpack = -1;
+            free(ifldmiss);
+            return;
+        }
+      }
+      else
+      {
+        double max_diff = RINT(rmax*dscale - rmin*dscale) * bscale;
+        if( !(max_diff >= 0 && max_diff <= INT_MAX) )
+        {
+            fprintf(stderr,
+                        "Difference of scaled max value with scaled min value "
+                        "not representable on int \n");
+            *lcpack = -1;
+            free(ifldmiss);
+            return;
+        }
       }
 //
 //  Allocate work arrays:
@@ -162,12 +202,10 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         //
         nonmiss=0;
         if (idrstmpl[1] == 0) {        //  No binary scaling
-           imin=(g2int)RINT(rmin*dscale);
-           //imax=(g2int)rint(rmax*dscale);
-           rmin=(g2float)imin;
+           rmin=(g2float)RINT(rmin*dscale);
            for ( j=0; j<ndpts; j++) {
               if (ifldmiss[j] == 0) {
-                jfld[nonmiss]=(g2int)RINT(fld[j]*dscale)-imin;
+                jfld[nonmiss]=(g2int)(RINT(fld[j]*dscale)-rmin);
                 nonmiss++;
               }
            }
