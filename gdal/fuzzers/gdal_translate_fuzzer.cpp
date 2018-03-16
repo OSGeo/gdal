@@ -32,7 +32,6 @@
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
-#include "gdal_frmts.h"
 
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
@@ -185,8 +184,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     }
     CSLDestroy(papszArgv);
 
-    VSIUnlink("/vsimem/test.tar");
-    VSIUnlink("/vsimem/out");
+    VSIRmdirRecursive("/vsimem/");
 
     CPLPopErrorHandler();
 

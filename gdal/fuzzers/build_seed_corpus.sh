@@ -40,6 +40,33 @@ rm -f $OUT/gdal_translate_fuzzer_seed_corpus.zip
 zip -r $OUT/gdal_translate_fuzzer_seed_corpus.zip test.tar >/dev/null
 rm test.tar
 
+
+echo "Building gdal_vector_translate_fuzzer_seed_corpus.zip"
+echo "FUZZER_FRIENDLY_ARCHIVE" > test.tar
+echo "***NEWFILE***:cmd.txt" >> test.tar
+echo "non_significant_output_name" >> test.tar
+echo "-f" >> test.tar
+echo "Memory" >> test.tar
+echo "-s_srs" >> test.tar
+echo "EPSG:4326" >> test.tar
+echo "-t_srs" >> test.tar
+echo "EPSG:32631" >> test.tar
+echo "first" >> test.tar
+echo "second" >> test.tar
+echo "***NEWFILE***:in/first.csv" >> test.tar
+echo "int_field,float_field,string_field,WKT" >> test.tar
+echo "1,2.34,\"foo\",\"POINT(1 2)\"" >> test.tar
+echo "***NEWFILE***:in/first.csvt" >> test.tar
+echo "Integer,Real,String,WKT" >> test.tar
+echo "***NEWFILE***:in/second.csv" >> test.tar
+echo "int_field,float_field,string_field,WKT" >> test.tar
+echo "1,2.34,\"foo\",\"POINT(1 2)\"" >> test.tar
+echo "***NEWFILE***:in/second.csvt" >> test.tar
+echo "Integer,Real,String,WKT" >> test.tar
+rm -f $OUT/gdal_vector_translate_fuzzer_seed_corpus.zip
+zip -r $OUT/gdal_vector_translate_fuzzer_seed_corpus.zip test.tar >/dev/null
+rm test.tar
+
 echo "Building gtiff_fuzzer_seed_corpus.zip"
 rm -f $OUT/gtiff_fuzzer_seed_corpus.zip
 cd $(dirname $0)/../../autotest/gcore/data
