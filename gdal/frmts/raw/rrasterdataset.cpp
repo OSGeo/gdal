@@ -1155,14 +1155,14 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    int bNativeOrder = TRUE;
+    bool bNativeOrder = true;
     if( EQUAL(osByteOrder, "little") )
     {
-        bNativeOrder = CPL_IS_LSB;
+        bNativeOrder = CPL_TO_BOOL(CPL_IS_LSB);
     }
     else if( EQUAL(osByteOrder, "big") )
     {
-        bNativeOrder = !CPL_IS_LSB;
+        bNativeOrder = CPL_TO_BOOL(!CPL_IS_LSB);
     }
     else if( !EQUAL(osByteOrder, "") )
     {
