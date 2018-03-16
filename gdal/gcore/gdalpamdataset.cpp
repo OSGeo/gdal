@@ -239,6 +239,14 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
 /* -------------------------------------------------------------------- */
 /*      Process bands.                                                  */
 /* -------------------------------------------------------------------- */
+
+    // Find last child
+    CPLXMLNode* psLastChild = psDSTree->psChild;
+    for( ; psLastChild != nullptr && psLastChild->psNext;
+                                    psLastChild = psLastChild->psNext )
+    {
+    }
+
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         GDALPamRasterBand * const poBand =
@@ -251,7 +259,17 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
         CPLXMLNode * const psBandTree = poBand->SerializeToXML( pszUnused );
 
         if( psBandTree != nullptr )
-            CPLAddXMLChild( psDSTree, psBandTree );
+        {
+            if( psLastChild == nullptr )
+            {
+                CPLAddXMLChild( psDSTree, psBandTree );
+            }
+            else
+            {
+                psLastChild->psNext = psBandTree;
+            }
+            psLastChild = psBandTree;
+        }
     }
 
 /* -------------------------------------------------------------------- */
