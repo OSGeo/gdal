@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <climits>
 #include <cstring>
 
