@@ -355,6 +355,15 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     else if( poRDS->options == 0x0b )
     {
+        if( nBlockSize < 5 )
+        {
+            CPLFree( blockData );
+            CPLError( CE_Failure, CPLE_AppDefined,
+                      "RIK decompression failed. "
+                      "Not enough bytes." );
+            return CE_Failure;
+        }
+
         const bool LZW_HAS_CLEAR_CODE = !!(blockData[4] & 0x80);
         const int LZW_MAX_BITS = blockData[4] & 0x1f; // Max 13
         if( LZW_MAX_BITS > 13 )
