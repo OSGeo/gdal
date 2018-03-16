@@ -241,6 +241,15 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 
     CPLFree( pszExpandedFilename );
 
+    if( !RAWDatasetCheckMemoryUsage(
+                        nRasterXSize, nRasterYSize, 1,
+                        nPixelOffset, nLineOffset, nImageOffset, 0,
+                        reinterpret_cast<VSILFILE*>(fp)) )
+    {
+        VSIFCloseL(reinterpret_cast<VSILFILE*>(fp));
+        return CE_Failure;
+    }
+
     m_pszSourceFilename = CPLStrdup(pszFilename);
     m_bRelativeToVRT = bRelativeToVRTIn;
 
