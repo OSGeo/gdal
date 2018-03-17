@@ -2864,7 +2864,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     else
     {
         int nLayerCount = 0;
-        OGRLayer** papoLayers = nullptr;
+        std::vector<OGRLayer*> apoLayers;
 
 /* -------------------------------------------------------------------- */
 /*      Process each data source layer.                                 */
@@ -2872,8 +2872,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         if ( CSLCount(psOptions->papszLayers) == 0)
         {
             nLayerCount = poDS->GetLayerCount();
-            papoLayers = static_cast<OGRLayer **>(
-                CPLMalloc(sizeof(OGRLayer*) * nLayerCount));
+            apoLayers.resize(nLayerCount);
 
             for( int iLayer = 0;
                  iLayer < nLayerCount;
@@ -2891,7 +2890,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     return nullptr;
                 }
 
-                papoLayers[iLayer] = poLayer;
+                apoLayers[iLayer] = poLayer;
             }
         }
 /* -------------------------------------------------------------------- */
@@ -2900,8 +2899,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         else
         {
             nLayerCount = CSLCount(psOptions->papszLayers);
-            papoLayers = static_cast<OGRLayer **>(
-              CPLMalloc(sizeof(OGRLayer*) * nLayerCount));
+            apoLayers.resize(nLayerCount);
 
             for( int iLayer = 0;
                 psOptions->papszLayers[iLayer] != nullptr;
@@ -2922,7 +2920,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     }
                 }
 
-                papoLayers[iLayer] = poLayer;
+                apoLayers[iLayer] = poLayer;
             }
         }
 
@@ -2939,15 +2937,15 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             psOptions->pszNewLayerName = CPLStrdup(CPLGetBasename(osDestFilename));
         }
 
-        GIntBig* panLayerCountFeatures =
-            static_cast<GIntBig *>(CPLCalloc(sizeof(GIntBig), nLayerCount));
+        std::vector<GIntBig> anLayerCountFeatures;
+        anLayerCountFeatures.resize(nLayerCount);
         GIntBig nCountLayersFeatures = 0;
         GIntBig nAccCountFeatures = 0;
 
         /* First pass to apply filters and count all features if necessary */
         for( int iLayer = 0; iLayer < nLayerCount; iLayer++ )
         {
-            OGRLayer        *poLayer = papoLayers[iLayer];
+            OGRLayer        *poLayer = apoLayers[iLayer];
             if (poLayer == nullptr)
                 continue;
 
@@ -2978,8 +2976,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
                 else
                 {
-                    panLayerCountFeatures[iLayer] = poLayer->GetFeatureCount();
-                    nCountLayersFeatures += panLayerCountFeatures[iLayer];
+                    anLayerCountFeatures[iLayer] = poLayer->GetFeatureCount();
+                    nCountLayersFeatures += anLayerCountFeatures[iLayer];
                 }
             }
         }
@@ -2987,7 +2985,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         /* Second pass to do the real job */
         for( int iLayer = 0; iLayer < nLayerCount && nRetCode == 0; iLayer++ )
         {
-            OGRLayer        *poLayer = papoLayers[iLayer];
+            OGRLayer        *poLayer = apoLayers[iLayer];
             if (poLayer == nullptr)
                 continue;
 
@@ -3005,7 +3003,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     pfnProgress = GDALScaledProgress;
                     pProgressArg =
                         GDALCreateScaledProgress(nAccCountFeatures * 1.0 / nCountLayersFeatures,
-                                                (nAccCountFeatures + panLayerCountFeatures[iLayer] / 2) * 1.0 / nCountLayersFeatures,
+                                                (nAccCountFeatures + anLayerCountFeatures[iLayer] / 2) * 1.0 / nCountLayersFeatures,
                                                 psOptions->pfnProgress,
                                                 psOptions->pProgressData);
                 }
@@ -3035,16 +3033,16 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     pfnProgress = GDALScaledProgress;
                     GIntBig nStart = 0;
                     if (poPassedLayer != poLayer && psOptions->nMaxSplitListSubFields != 1)
-                        nStart = panLayerCountFeatures[iLayer] / 2;
+                        nStart = anLayerCountFeatures[iLayer] / 2;
                     pProgressArg =
                         GDALCreateScaledProgress((nAccCountFeatures + nStart) * 1.0 / nCountLayersFeatures,
-                                                (nAccCountFeatures + panLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures,
+                                                (nAccCountFeatures + anLayerCountFeatures[iLayer]) * 1.0 / nCountLayersFeatures,
                                                 psOptions->pfnProgress,
                                                 psOptions->pProgressData);
                 }
             }
 
-            nAccCountFeatures += panLayerCountFeatures[iLayer];
+            nAccCountFeatures += anLayerCountFeatures[iLayer];
 
             TargetLayerInfo* psInfo = oSetup.Setup(poPassedLayer,
                                                    psOptions->pszNewLayerName,
@@ -3055,7 +3053,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
             if( (psInfo == nullptr ||
                 !oTranslator.Translate( nullptr, psInfo,
-                                        panLayerCountFeatures[iLayer], nullptr,
+                                        anLayerCountFeatures[iLayer], nullptr,
                                         nTotalEventsDone,
                                         pfnProgress, pProgressArg, psOptions ))
                 && !psOptions->bSkipFailures )
@@ -3076,9 +3074,6 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             if (psOptions->bDisplayProgress)
                 GDALDestroyScaledProgress(pProgressArg);
         }
-
-        CPLFree(panLayerCountFeatures);
-        CPLFree(papoLayers);
     }
 /* -------------------------------------------------------------------- */
 /*      Process DS style table                                          */
