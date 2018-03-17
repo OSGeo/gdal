@@ -246,7 +246,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
                         nPixelOffset, nLineOffset, nImageOffset, 0,
                         reinterpret_cast<VSILFILE*>(fp)) )
     {
-        VSIFCloseL(reinterpret_cast<VSILFILE*>(fp));
+        CPLCloseShared(fp);
         return CE_Failure;
     }
 
@@ -269,6 +269,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Illegal ByteOrder value '%s', should be LSB or MSB.",
                       pszByteOrder );
+            CPLCloseShared(fp);
             return CE_Failure;
         }
     }
