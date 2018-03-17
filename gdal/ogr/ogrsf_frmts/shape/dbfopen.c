@@ -466,6 +466,26 @@ DBFOpen( const char * pszFilename, const char * pszAccess )
 }
 
 /************************************************************************/
+/*                      DBFGetLenWithoutExtension()                     */
+/************************************************************************/
+
+static int DBFGetLenWithoutExtension(const char* pszBasename)
+{
+    int i;
+    int nLen = (int)strlen(pszBasename);
+    for( i = nLen-1;
+         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i-- )
+    {
+        if( pszBasename[i] == '.' )
+        {
+            return i;
+        }
+    }
+    return nLen;
+}
+
+/************************************************************************/
 /*                              DBFOpen()                               */
 /*                                                                      */
 /*      Open a .dbf file.                                               */
@@ -478,10 +498,10 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     DBFHandle		psDBF;
     SAFile		pfCPG;
     unsigned char	*pabyBuf;
-    int			nFields, nHeadLen, iField, i;
-    char		*pszBasename, *pszFullname;
+    int			nFields, nHeadLen, iField;
+    char		*pszFullname;
     int                 nBufSize = 500;
-    size_t              nFullnameLen;
+    int                 nLenWithoutExtension;
 
 /* -------------------------------------------------------------------- */
 /*      We only allow the access strings "rb" and "r+".                  */
@@ -501,22 +521,10 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 /*	Compute the base (layer) name.  If there is any extension	*/
 /*	on the passed in filename we will strip it off.			*/
 /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(pszFilename)+5);
-    strcpy( pszBasename, pszFilename );
-    for( i = (int)strlen(pszBasename)-1;
-         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
-         i-- )
-    {
-        if( pszBasename[i] == '.' )
-        {
-            pszBasename[i] = '\0';
-            break;
-        }
-    }
-
-    nFullnameLen = strlen(pszBasename) + 5;
-    pszFullname = (char *) malloc(nFullnameLen);
-    snprintf( pszFullname, nFullnameLen, "%s.dbf", pszBasename );
+    nLenWithoutExtension = DBFGetLenWithoutExtension(pszFilename);
+    pszFullname = (char *) malloc(nLenWithoutExtension + 5);
+    memcpy(pszFullname, pszFilename, nLenWithoutExtension);
+    memcpy(pszFullname + nLenWithoutExtension, ".dbf", 5);
 
     psDBF = (DBFHandle) calloc( 1, sizeof(DBFInfo) );
     psDBF->fp = psHooks->FOpen( pszFullname, pszAccess );
@@ -524,19 +532,18 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
 
     if( psDBF->fp == NULL )
     {
-        snprintf( pszFullname, nFullnameLen, "%s.DBF", pszBasename );
+        memcpy(pszFullname + nLenWithoutExtension, ".DBF", 5);
         psDBF->fp = psDBF->sHooks.FOpen(pszFullname, pszAccess );
     }
 
-    snprintf( pszFullname, nFullnameLen, "%s.cpg", pszBasename );
+    memcpy(pszFullname + nLenWithoutExtension, ".cpg", 5);
     pfCPG = psHooks->FOpen( pszFullname, "r" );
     if( pfCPG == NULL )
     {
-        snprintf( pszFullname, nFullnameLen, "%s.CPG", pszBasename );
+        memcpy(pszFullname + nLenWithoutExtension, ".CPG", 5);
         pfCPG = psHooks->FOpen( pszFullname, "r" );
     }
 
-    free( pszBasename );
     free( pszFullname );
 
     if( psDBF->fp == NULL )
@@ -779,31 +786,19 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
 {
     DBFHandle	psDBF;
     SAFile	fp;
-    char	*pszFullname, *pszBasename;
-    int		i, ldid = -1;
+    char	*pszFullname;
+    int		ldid = -1;
     char chZero = '\0';
-    size_t      nFullnameLen;
+    int         nLenWithoutExtension;
 
 /* -------------------------------------------------------------------- */
 /*	Compute the base (layer) name.  If there is any extension	*/
 /*	on the passed in filename we will strip it off.			*/
 /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(pszFilename)+5);
-    strcpy( pszBasename, pszFilename );
-    for( i = (int)strlen(pszBasename)-1;
-         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
-         i-- )
-    {
-        if( pszBasename[i] == '.' )
-        {
-            pszBasename[i] = '\0';
-            break;
-        }
-    }
-
-    nFullnameLen = strlen(pszBasename) + 5;
-    pszFullname = (char *) malloc(nFullnameLen);
-    snprintf( pszFullname, nFullnameLen, "%s.dbf", pszBasename );
+    nLenWithoutExtension = DBFGetLenWithoutExtension(pszFilename);
+    pszFullname = (char *) malloc(nLenWithoutExtension + 5);
+    memcpy(pszFullname, pszFilename, nLenWithoutExtension);
+    memcpy(pszFullname + nLenWithoutExtension, ".dbf", 5);
 
 /* -------------------------------------------------------------------- */
 /*      Create the file.                                                */
@@ -811,7 +806,6 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     fp = psHooks->FOpen( pszFullname, "wb" );
     if( fp == NULL )
     {
-        free( pszBasename );
         free( pszFullname );
         return( NULL );
     }
@@ -822,12 +816,11 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     fp = psHooks->FOpen( pszFullname, "rb+" );
     if( fp == NULL )
     {
-        free( pszBasename );
         free( pszFullname );
         return( NULL );
     }
 
-    snprintf( pszFullname, nFullnameLen, "%s.cpg", pszBasename );
+    memcpy(pszFullname + nLenWithoutExtension, ".cpg", 5);
     if( pszCodePage != NULL )
     {
         if( strncmp( pszCodePage, "LDID/", 5 ) == 0 )
@@ -848,7 +841,6 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
         psHooks->Remove( pszFullname );
     }
 
-    free( pszBasename );
     free( pszFullname );
 
 /* -------------------------------------------------------------------- */
