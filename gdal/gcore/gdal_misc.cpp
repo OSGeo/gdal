@@ -60,12 +60,6 @@
 
 CPL_CVSID("$Id$")
 
-#if defined(WIN32) && _MSC_VER < 1800
-inline double round(double r) {
-    return (r > 0.0) ? floor(r + 0.5) : ceil(r - 0.5);
-}
-#endif
-
 static int GetMinBitsForPair(
     const bool pabSigned[], const bool pabFloating[], const int panBits[])
 {
