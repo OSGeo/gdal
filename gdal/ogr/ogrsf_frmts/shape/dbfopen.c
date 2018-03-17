@@ -504,12 +504,15 @@ DBFOpenLL( const char * pszFilename, const char * pszAccess, SAHooks *psHooks )
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
     for( i = (int)strlen(pszBasename)-1;
-	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-	       && pszBasename[i] != '\\';
-	 i-- ) {}
-
-    if( pszBasename[i] == '.' )
-        pszBasename[i] = '\0';
+         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i-- )
+    {
+        if( pszBasename[i] == '.' )
+        {
+            pszBasename[i] = '\0';
+            break;
+        }
+    }
 
     nFullnameLen = strlen(pszBasename) + 5;
     pszFullname = (char *) malloc(nFullnameLen);
@@ -788,12 +791,15 @@ DBFCreateLL( const char * pszFilename, const char * pszCodePage, SAHooks *psHook
     pszBasename = (char *) malloc(strlen(pszFilename)+5);
     strcpy( pszBasename, pszFilename );
     for( i = (int)strlen(pszBasename)-1;
-	 i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-	       && pszBasename[i] != '\\';
-	 i-- ) {}
-
-    if( pszBasename[i] == '.' )
-        pszBasename[i] = '\0';
+         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i-- )
+    {
+        if( pszBasename[i] == '.' )
+        {
+            pszBasename[i] = '\0';
+            break;
+        }
+    }
 
     nFullnameLen = strlen(pszBasename) + 5;
     pszFullname = (char *) malloc(nFullnameLen);
