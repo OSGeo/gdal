@@ -302,7 +302,7 @@ GDALDataType CPL_STDCALL GDALFindDataTypeForValue(
  * \brief Get data type size in <b>bytes</b>.
  *
  * Returns the size of a GDT_* type in bytes.  In contrast,
- * GDALGetDataTypeBits() returns the size in <b>bits</b>.
+ * GDALGetDataTypeSize() returns the size in <b>bits</b>.
  *
  * @param eDataType type, such as GDT_Byte.
  * @return the number of bytes or zero if it is not recognised.
@@ -490,6 +490,64 @@ int CPL_STDCALL GDALDataTypeIsSigned( GDALDataType eDataType )
       default:
         return TRUE;
     }
+}
+
+/************************************************************************/
+/*                    GDALDataTypeIsConversionLossy()                   */
+/************************************************************************/
+
+/**
+ * \brief Is conversion from eTypeFrom to eTypeTo potentially lossy
+ *
+ * @param eTypeFrom input datatype
+ * @param eTypeTo output datatype
+ * @return TRUE if conversion from eTypeFrom to eTypeTo potentially lossy.
+ * @since GDAL 2.3
+ */
+
+int CPL_STDCALL GDALDataTypeIsConversionLossy( GDALDataType eTypeFrom,
+                                               GDALDataType eTypeTo )
+{
+    // E.g cfloat32 -> float32
+    if( GDALDataTypeIsComplex(eTypeFrom) && !GDALDataTypeIsComplex(eTypeTo) )
+        return TRUE;
+
+    eTypeFrom = GDALGetNonComplexDataType(eTypeFrom);
+    eTypeTo = GDALGetNonComplexDataType(eTypeTo);
+
+    if( GDALDataTypeIsInteger(eTypeTo) )
+    {
+        // E.g. float32 -> int32 
+        if( GDALDataTypeIsFloating(eTypeFrom) )
+            return TRUE;
+
+        // E.g. Int16 to UInt16
+        const int bIsFromSigned = GDALDataTypeIsSigned(eTypeFrom);
+        const int bIsToSigned = GDALDataTypeIsSigned(eTypeTo);
+        if( bIsFromSigned && !bIsToSigned )
+            return TRUE;
+
+        // E.g UInt32 to UInt16
+        const int nFromSize =  GDALGetDataTypeSize(eTypeFrom);
+        const int nToSize = GDALGetDataTypeSize(eTypeTo);
+        if( nFromSize > nToSize )
+            return TRUE;
+
+        // E.g UInt16 to Int16
+        if( nFromSize == nToSize && !bIsFromSigned && bIsToSigned )
+            return TRUE;
+
+        return FALSE;
+    }
+
+    if( eTypeTo == GDT_Float32 && (eTypeFrom == GDT_Int32 ||
+                                   eTypeFrom == GDT_UInt32 ||
+                                   eTypeFrom == GDT_Float64) )
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 /************************************************************************/

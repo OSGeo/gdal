@@ -734,7 +734,8 @@ CPLErr PostGISRasterRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         PostGISRasterTileRasterBand* poTileBand =
             (PostGISRasterTileRasterBand *)poTile->GetRasterBand(nBand);
         eErr =
-            poTileBand->poSource->RasterIO( nXOff, nYOff, nXSize, nYSize,
+            poTileBand->poSource->RasterIO( eDataType,
+                                            nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize,
                                             eBufType, nPixelSpace, nLineSpace, nullptr);
     }

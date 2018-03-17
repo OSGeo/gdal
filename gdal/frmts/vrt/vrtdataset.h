@@ -86,7 +86,8 @@ class CPL_DLL VRTSource
 public:
     virtual ~VRTSource();
 
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr  RasterIO( GDALDataType eBandDataType,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -838,7 +839,8 @@ public:
                                     int *, int *, int *, int *,
                                     int *, int *, int *, int * );
 
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr  RasterIO( GDALDataType eBandDataType,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -876,6 +878,7 @@ public:
     GDALRasterBand* GetBand();
     int             IsSameExceptBandNumber( VRTSimpleSource* poOtherSource );
     CPLErr          DatasetRasterIO(
+                               GDALDataType eBandDataType,
                                int nXOff, int nYOff, int nXSize, int nYSize,
                                void * pData, int nBufXSize, int nBufYSize,
                                GDALDataType eBufType,
@@ -897,7 +900,8 @@ class VRTAveragedSource : public VRTSimpleSource
 {
 public:
                     VRTAveragedSource();
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr  RasterIO( GDALDataType eBandDataType,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -967,7 +971,8 @@ public:
                                     double dfXDstRatio, double dfYDstRatio);
     virtual        ~VRTComplexSource();
 
-    virtual CPLErr RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr RasterIO( GDALDataType eBandDataType,
+                             int nXOff, int nYOff, int nXSize, int nYSize,
                              void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -1034,7 +1039,8 @@ public:
     virtual CPLErr  FilterData( int nXSize, int nYSize, GDALDataType eType,
                                 GByte *pabySrcData, GByte *pabyDstData ) = 0;
 
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr  RasterIO( GDALDataType eBandDataType,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -1096,7 +1102,8 @@ public:
     virtual CPLErr  XMLInit( CPLXMLNode *, const char *, void* ) override { return CE_Failure; }
     virtual CPLXMLNode *SerializeToXML( const char *pszVRTPath ) override;
 
-    virtual CPLErr  RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+    virtual CPLErr  RasterIO( GDALDataType eBandDataType,
+                              int nXOff, int nYOff, int nXSize, int nYSize,
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,

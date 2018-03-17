@@ -1594,7 +1594,8 @@ CPLErr VRTDataset::IRasterIO( GDALRWFlag eRWFlag,
             VRTSimpleSource* poSource = reinterpret_cast<VRTSimpleSource *>(
                 poBand->papoSources[iSource] );
 
-            eErr = poSource->DatasetRasterIO( nXOff, nYOff, nXSize, nYSize,
+            eErr = poSource->DatasetRasterIO( poBand->GetRasterDataType(),
+                                              nXOff, nYOff, nXSize, nYSize,
                                               pData, nBufXSize, nBufYSize,
                                               eBufType,
                                               nBandCount, panBandMap,

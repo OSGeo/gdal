@@ -88,6 +88,8 @@ GDALDataType CPL_DLL CPL_STDCALL GDALFindDataType( int nBits, int bSigned, int b
 GDALDataType CPL_DLL CPL_STDCALL GDALFindDataTypeForValue( double dValue, int bComplex );
 double CPL_DLL GDALAdjustValueToDataType( GDALDataType eDT, double dfValue, int* pbClamped, int* pbRounded );
 GDALDataType CPL_DLL CPL_STDCALL GDALGetNonComplexDataType( GDALDataType );
+int CPL_DLL CPL_STDCALL GDALDataTypeIsConversionLossy( GDALDataType eTypeFrom,
+                                                       GDALDataType eTypeTo );
 
 /**
 * status of the asynchronous stream
