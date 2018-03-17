@@ -2955,6 +2955,16 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
         int      bInner, iVert, nVertCount, nVertStart, iCheckRing;
         double   dfSum, dfTestX, dfTestY;
 
+        nVertStart = psObject->panPartStart[iOpRing];
+
+        if( iOpRing == psObject->nParts-1 )
+            nVertCount = psObject->nVertices - psObject->panPartStart[iOpRing];
+        else
+            nVertCount = psObject->panPartStart[iOpRing+1]
+                - psObject->panPartStart[iOpRing];
+
+        if (nVertCount < 2)
+            continue;
 /* -------------------------------------------------------------------- */
 /*      Determine if this ring is an inner ring or an outer ring        */
 /*      relative to all the other rings.  For now we assume the         */
@@ -2975,25 +2985,26 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
         bInner = FALSE;
         for( iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++ )
         {
+            int nVertStartCheck, nVertCountCheck;
             int iEdge;
 
             if( iCheckRing == iOpRing )
                 continue;
 
-            nVertStart = psObject->panPartStart[iCheckRing];
+            nVertStartCheck = psObject->panPartStart[iCheckRing];
 
             if( iCheckRing == psObject->nParts-1 )
-                nVertCount = psObject->nVertices
+                nVertCountCheck = psObject->nVertices
                     - psObject->panPartStart[iCheckRing];
             else
-                nVertCount = psObject->panPartStart[iCheckRing+1]
+                nVertCountCheck = psObject->panPartStart[iCheckRing+1]
                     - psObject->panPartStart[iCheckRing];
 
-            for( iEdge = 0; iEdge < nVertCount; iEdge++ )
+            for( iEdge = 0; iEdge < nVertCountCheck; iEdge++ )
             {
                 int iNext;
 
-                if( iEdge < nVertCount-1 )
+                if( iEdge < nVertCountCheck-1 )
                     iNext = iEdge+1;
                 else
                     iNext = 0;
@@ -3002,19 +3013,19 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
                  * Test whether the edge 'straddles' the horizontal ray from the test point (dfTestY,dfTestY)
                  * The rule #1 also excludes edges colinear with the ray.
                  */
-                if ( ( psObject->padfY[iEdge+nVertStart] < dfTestY
-                       && dfTestY <= psObject->padfY[iNext+nVertStart] )
-                     || ( psObject->padfY[iNext+nVertStart] < dfTestY
-                          && dfTestY <= psObject->padfY[iEdge+nVertStart] ) )
+                if ( ( psObject->padfY[iEdge+nVertStartCheck] < dfTestY
+                       && dfTestY <= psObject->padfY[iNext+nVertStartCheck] )
+                     || ( psObject->padfY[iNext+nVertStartCheck] < dfTestY
+                          && dfTestY <= psObject->padfY[iEdge+nVertStartCheck] ) )
                 {
                     /* Rule #2:
                      * Test if edge-ray intersection is on the right from the test point (dfTestY,dfTestY)
                      */
                     double const intersect =
-                        ( psObject->padfX[iEdge+nVertStart]
-                          + ( dfTestY - psObject->padfY[iEdge+nVertStart] )
-                          / ( psObject->padfY[iNext+nVertStart] - psObject->padfY[iEdge+nVertStart] )
-                          * ( psObject->padfX[iNext+nVertStart] - psObject->padfX[iEdge+nVertStart] ) );
+                        ( psObject->padfX[iEdge+nVertStartCheck]
+                          + ( dfTestY - psObject->padfY[iEdge+nVertStartCheck] )
+                          / ( psObject->padfY[iNext+nVertStartCheck] - psObject->padfY[iEdge+nVertStartCheck] )
+                          * ( psObject->padfX[iNext+nVertStartCheck] - psObject->padfX[iEdge+nVertStartCheck] ) );
 
                     if (intersect  < dfTestX)
                     {
@@ -3028,16 +3039,6 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
 /*      Determine the current order of this ring so we will know if     */
 /*      it has to be reversed.                                          */
 /* -------------------------------------------------------------------- */
-        nVertStart = psObject->panPartStart[iOpRing];
-
-        if( iOpRing == psObject->nParts-1 )
-            nVertCount = psObject->nVertices - psObject->panPartStart[iOpRing];
-        else
-            nVertCount = psObject->panPartStart[iOpRing+1]
-                - psObject->panPartStart[iOpRing];
-
-        if (nVertCount < 2)
-            continue;
 
         dfSum = psObject->padfX[nVertStart] * (psObject->padfY[nVertStart+1] - psObject->padfY[nVertStart+nVertCount-1]);
         for( iVert = nVertStart + 1; iVert < nVertStart+nVertCount-1; iVert++ )
