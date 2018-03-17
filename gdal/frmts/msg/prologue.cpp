@@ -230,11 +230,7 @@ void Prologue::read(std::ifstream & ifile)
 
   int iSkipHeadersSize = size_SatelliteStatus() + size_ImageAcquisition() + size_CelestialEvents() + size_Correction();
 
-#if _MSC_VER > 1000 && _MSC_VER < 1300
-  ifile.seekg(iSkipHeadersSize, std::ios_base::seekdir::cur);
-#else
   ifile.seekg(iSkipHeadersSize, std::ios_base::cur);
-#endif
 
   m_idr = new ImageDescriptionRecord(ifile);
 
