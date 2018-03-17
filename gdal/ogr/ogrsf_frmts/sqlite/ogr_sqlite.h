@@ -926,7 +926,7 @@ class RL2RasterBand CPL_FINAL: public GDALPamRasterBand
                                            int nBlockYSizeIn,
                                            bool bHasNoDataIn,
                                            double dfNoDataValueIn );
-                            RL2RasterBand( const RL2RasterBand* poOther );
+        explicit            RL2RasterBand( const RL2RasterBand* poOther );
 
         virtual            ~RL2RasterBand();
 
