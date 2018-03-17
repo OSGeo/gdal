@@ -5265,6 +5265,29 @@ def ogr_shape_108():
 
     return 'success'
 
+
+###############################################################################
+# Test writing invalid polygon
+
+def ogr_shape_109():
+
+    layer_name = 'ogr_shape_109'
+    filename = '/vsimem/' + layer_name + '.shp'
+
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name)
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('POLYGON ((1 2))'))
+    lyr.CreateFeature(f)
+
+    ds = None
+    shape_drv.DeleteDataSource( filename )
+
+    return 'success'
+
 ###############################################################################
 def ogr_shape_cleanup():
 
@@ -5417,6 +5440,7 @@ gdaltest_list = [
     ogr_shape_106,
     ogr_shape_107,
     ogr_shape_108,
+    ogr_shape_109,
     ogr_shape_cleanup ]
 
 # gdaltest_list = [ ogr_shape_107 ]
