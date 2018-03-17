@@ -2924,6 +2924,97 @@ SHPDestroyObject( SHPObject * psShape )
 }
 
 /************************************************************************/
+/*                       SHPGetPartVertexCount()                        */
+/************************************************************************/
+
+static int SHPGetPartVertexCount( const SHPObject * psObject, int iPart )
+{
+    if( iPart == psObject->nParts-1 )
+        return psObject->nVertices - psObject->panPartStart[iPart];
+    else
+        return psObject->panPartStart[iPart+1] - psObject->panPartStart[iPart];
+}
+
+/************************************************************************/
+/*                      SHPRewindIsInnerRing()                          */
+/************************************************************************/
+
+static int SHPRewindIsInnerRing( const SHPObject * psObject,
+                                 int iOpRing )
+{
+/* -------------------------------------------------------------------- */
+/*      Determine if this ring is an inner ring or an outer ring        */
+/*      relative to all the other rings.  For now we assume the         */
+/*      first ring is outer and all others are inner, but eventually    */
+/*      we need to fix this to handle multiple island polygons and      */
+/*      unordered sets of rings.                                        */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+
+    /* Use point in the middle of segment to avoid testing
+     * common points of rings.
+     */
+    const int iOpRingStart = psObject->panPartStart[iOpRing];
+    double dfTestX = ( psObject->padfX[iOpRingStart] +
+                       psObject->padfX[iOpRingStart + 1] ) / 2;
+    double dfTestY = ( psObject->padfY[iOpRingStart] +
+                       psObject->padfY[iOpRingStart + 1] ) / 2;
+
+    int bInner = FALSE;
+    int iCheckRing;
+    for( iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++ )
+    {
+        int nVertStartCheck, nVertCountCheck;
+        int iEdge;
+
+        if( iCheckRing == iOpRing )
+            continue;
+
+        nVertStartCheck = psObject->panPartStart[iCheckRing];
+        nVertCountCheck = SHPGetPartVertexCount(psObject, iCheckRing);
+
+        for( iEdge = 0; iEdge < nVertCountCheck; iEdge++ )
+        {
+            int iNext;
+
+            if( iEdge < nVertCountCheck-1 )
+                iNext = iEdge+1;
+            else
+                iNext = 0;
+
+            /* Rule #1:
+             * Test whether the edge 'straddles' the horizontal ray from
+             * the test point (dfTestY,dfTestY)
+             * The rule #1 also excludes edges colinear with the ray.
+             */
+            if ( ( psObject->padfY[iEdge+nVertStartCheck] < dfTestY
+                    && dfTestY <= psObject->padfY[iNext+nVertStartCheck] )
+                    || ( psObject->padfY[iNext+nVertStartCheck] < dfTestY
+                        && dfTestY <= psObject->padfY[iEdge+nVertStartCheck] ) )
+            {
+                /* Rule #2:
+                 * Test if edge-ray intersection is on the right from the
+                 * test point (dfTestY,dfTestY)
+                 */
+                double const intersect =
+                    ( psObject->padfX[iEdge+nVertStartCheck]
+                        + ( dfTestY - psObject->padfY[iEdge+nVertStartCheck] )
+                        / ( psObject->padfY[iNext+nVertStartCheck] -
+                            psObject->padfY[iEdge+nVertStartCheck] )
+                        * ( psObject->padfX[iNext+nVertStartCheck] -
+                            psObject->padfX[iEdge+nVertStartCheck] ) );
+
+                if (intersect  < dfTestX)
+                {
+                    bInner = !bInner;
+                }
+            }
+        }
+    } /* for iCheckRing */
+    return bInner;
+}
+
+/************************************************************************/
 /*                          SHPRewindObject()                           */
 /*                                                                      */
 /*      Reset the winding of polygon objects to adhere to the           */
@@ -2952,101 +3043,33 @@ SHPRewindObject( CPL_UNUSED SHPHandle hSHP,
 /* -------------------------------------------------------------------- */
     for( iOpRing = 0; iOpRing < psObject->nParts; iOpRing++ )
     {
-        int      bInner, iVert, nVertCount, nVertStart, iCheckRing;
-        double   dfSum, dfTestX, dfTestY;
+        int      bInner, iVert, nVertCount, nVertStart;
+        double   dfSum;
 
         nVertStart = psObject->panPartStart[iOpRing];
-
-        if( iOpRing == psObject->nParts-1 )
-            nVertCount = psObject->nVertices - psObject->panPartStart[iOpRing];
-        else
-            nVertCount = psObject->panPartStart[iOpRing+1]
-                - psObject->panPartStart[iOpRing];
+        nVertCount = SHPGetPartVertexCount(psObject, iOpRing);
 
         if (nVertCount < 2)
             continue;
-/* -------------------------------------------------------------------- */
-/*      Determine if this ring is an inner ring or an outer ring        */
-/*      relative to all the other rings.  For now we assume the         */
-/*      first ring is outer and all others are inner, but eventually    */
-/*      we need to fix this to handle multiple island polygons and      */
-/*      unordered sets of rings.                                        */
-/*                                                                      */
-/* -------------------------------------------------------------------- */
 
-        /* Use point in the middle of segment to avoid testing
-         * common points of rings.
-         */
-        dfTestX = ( psObject->padfX[psObject->panPartStart[iOpRing]]
-                    + psObject->padfX[psObject->panPartStart[iOpRing] + 1] ) / 2;
-        dfTestY = ( psObject->padfY[psObject->panPartStart[iOpRing]]
-                    + psObject->padfY[psObject->panPartStart[iOpRing] + 1] ) / 2;
-
-        bInner = FALSE;
-        for( iCheckRing = 0; iCheckRing < psObject->nParts; iCheckRing++ )
-        {
-            int nVertStartCheck, nVertCountCheck;
-            int iEdge;
-
-            if( iCheckRing == iOpRing )
-                continue;
-
-            nVertStartCheck = psObject->panPartStart[iCheckRing];
-
-            if( iCheckRing == psObject->nParts-1 )
-                nVertCountCheck = psObject->nVertices
-                    - psObject->panPartStart[iCheckRing];
-            else
-                nVertCountCheck = psObject->panPartStart[iCheckRing+1]
-                    - psObject->panPartStart[iCheckRing];
-
-            for( iEdge = 0; iEdge < nVertCountCheck; iEdge++ )
-            {
-                int iNext;
-
-                if( iEdge < nVertCountCheck-1 )
-                    iNext = iEdge+1;
-                else
-                    iNext = 0;
-
-                /* Rule #1:
-                 * Test whether the edge 'straddles' the horizontal ray from the test point (dfTestY,dfTestY)
-                 * The rule #1 also excludes edges colinear with the ray.
-                 */
-                if ( ( psObject->padfY[iEdge+nVertStartCheck] < dfTestY
-                       && dfTestY <= psObject->padfY[iNext+nVertStartCheck] )
-                     || ( psObject->padfY[iNext+nVertStartCheck] < dfTestY
-                          && dfTestY <= psObject->padfY[iEdge+nVertStartCheck] ) )
-                {
-                    /* Rule #2:
-                     * Test if edge-ray intersection is on the right from the test point (dfTestY,dfTestY)
-                     */
-                    double const intersect =
-                        ( psObject->padfX[iEdge+nVertStartCheck]
-                          + ( dfTestY - psObject->padfY[iEdge+nVertStartCheck] )
-                          / ( psObject->padfY[iNext+nVertStartCheck] - psObject->padfY[iEdge+nVertStartCheck] )
-                          * ( psObject->padfX[iNext+nVertStartCheck] - psObject->padfX[iEdge+nVertStartCheck] ) );
-
-                    if (intersect  < dfTestX)
-                    {
-                        bInner = !bInner;
-                    }
-                }
-            }
-        } /* for iCheckRing */
+        bInner = SHPRewindIsInnerRing(psObject, iOpRing);
 
 /* -------------------------------------------------------------------- */
 /*      Determine the current order of this ring so we will know if     */
 /*      it has to be reversed.                                          */
 /* -------------------------------------------------------------------- */
 
-        dfSum = psObject->padfX[nVertStart] * (psObject->padfY[nVertStart+1] - psObject->padfY[nVertStart+nVertCount-1]);
+        dfSum = psObject->padfX[nVertStart] *
+                        (psObject->padfY[nVertStart+1] -
+                         psObject->padfY[nVertStart+nVertCount-1]);
         for( iVert = nVertStart + 1; iVert < nVertStart+nVertCount-1; iVert++ )
         {
-            dfSum += psObject->padfX[iVert] * (psObject->padfY[iVert+1] - psObject->padfY[iVert-1]);
+            dfSum += psObject->padfX[iVert] * (psObject->padfY[iVert+1] -
+                                               psObject->padfY[iVert-1]);
         }
 
-        dfSum += psObject->padfX[iVert] * (psObject->padfY[nVertStart] - psObject->padfY[iVert-1]);
+        dfSum += psObject->padfX[iVert] * (psObject->padfY[nVertStart] -
+                                           psObject->padfY[iVert-1]);
 
 /* -------------------------------------------------------------------- */
 /*      Reverse if necessary.                                           */
