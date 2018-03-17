@@ -755,7 +755,7 @@ float* GRIB2Section567Writer::GetFloatData()
             static_cast<GSpacing>(-m_nXSize * sizeof(float)):
             static_cast<GSpacing>(m_nXSize * sizeof(float)),
         nullptr);
-    if( eErr != CE_None && (m_eDT == GDT_Float32 || m_eDT == GDT_Float64) )
+    if( eErr == CE_None && (m_eDT == GDT_Float32 || m_eDT == GDT_Float64) )
     {
         for( GUInt32 i = 0; i < m_nDataPoints; i++ )
         {
