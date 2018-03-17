@@ -173,16 +173,20 @@ void RawRasterBand::Initialize()
 
     // Allocate working scanline.
     nLoadedScanline = -1;
+    const int nDTSize = GDALGetDataTypeSizeBytes(GetRasterDataType());
     if (nBlockXSize <= 0 ||
-        std::abs(nPixelOffset) > std::numeric_limits<int>::max() / nBlockXSize)
+        (nBlockXSize > 1 && std::abs(nPixelOffset) >
+            std::numeric_limits<int>::max() / (nBlockXSize - 1)) ||
+        std::abs(nPixelOffset) * (nBlockXSize - 1) >
+            std::numeric_limits<int>::max() - nDTSize)
     {
         nLineSize = 0;
         pLineBuffer = nullptr;
     }
     else
     {
-        nLineSize = std::abs(nPixelOffset) * nBlockXSize;
-        pLineBuffer = VSIMalloc2(std::abs(nPixelOffset), nBlockXSize);
+        nLineSize = std::abs(nPixelOffset) * (nBlockXSize - 1) + nDTSize;
+        pLineBuffer = VSIMalloc(nLineSize);
     }
     if (pLineBuffer == nullptr)
     {
@@ -317,9 +321,7 @@ CPLErr RawRasterBand::AccessLine( int iLine )
 
     // Read the line.  Take care not to request any more bytes than
     // are needed, and not to lose a partially successful scanline read.
-    const size_t nBytesToRead = std::abs(nPixelOffset) * (nBlockXSize - 1)
-        + GDALGetDataTypeSizeBytes(GetRasterDataType());
-
+    const size_t nBytesToRead = nLineSize;
     const size_t nBytesActuallyRead = Read(pLineBuffer, 1, nBytesToRead);
     if( nBytesActuallyRead < nBytesToRead )
     {
@@ -452,9 +454,7 @@ CPLErr RawRasterBand::IWriteBlock( CPL_UNUSED int nBlockXOff,
     }
 
     // Write data buffer.
-    const int nBytesToWrite = std::abs(nPixelOffset) * (nBlockXSize - 1) +
-                              GDALGetDataTypeSizeBytes(GetRasterDataType());
-
+    const int nBytesToWrite = nLineSize;
     if( eErr == CE_None
         && Write(pLineBuffer, 1, nBytesToWrite)
         < static_cast<size_t>(nBytesToWrite) )

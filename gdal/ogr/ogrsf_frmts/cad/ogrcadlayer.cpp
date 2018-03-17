@@ -473,7 +473,7 @@ OGRFeature *OGRCADLayer::GetFeature( GIntBig nFID )
             std::vector< double > adfBulges = poCADLWPolyline->getBulges();
             const size_t nCount = std::min(adfBulges.size(), poCADLWPolyline->getVertexCount());
 
-            for( size_t iCurrentVertex = 0; iCurrentVertex < nCount; iCurrentVertex++ )
+            for( size_t iCurrentVertex = 0; iCurrentVertex + 1 < nCount; iCurrentVertex++ )
             {
                 CADVector stCurrentVertex = poCADLWPolyline->getVertex( iCurrentVertex );
                 CADVector stNextVertex = poCADLWPolyline->getVertex( iCurrentVertex + 1 );

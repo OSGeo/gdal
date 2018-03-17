@@ -672,7 +672,16 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
 /*  Read the file size from the SHP file.               */
 /* -------------------------------------------------------------------- */
     pabyBuf = (uchar *) malloc(100);
-    psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP );
+    if( psSHP->sHooks.FRead( pabyBuf, 100, 1, psSHP->fpSHP ) != 1 )
+    {
+        psSHP->sHooks.Error( ".shp file is unreadable, or corrupt." );
+        psSHP->sHooks.FClose( psSHP->fpSHP );
+        psSHP->sHooks.FClose( psSHP->fpSHX );
+        free( pabyBuf );
+        free( psSHP );
+
+        return( NULL );
+    }
 
     psSHP->nFileSize = ((unsigned int)pabyBuf[24]<<24)|(pabyBuf[25]<<16)|
                         (pabyBuf[26]<<8)|pabyBuf[27];

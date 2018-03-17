@@ -365,10 +365,15 @@ vsi_l_offset VSIMemHandle::Tell()
 size_t VSIMemHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 
 {
-    // FIXME: Integer overflow check should be placed here:
     size_t nBytesToRead = nSize * nCount;
+    if( nCount > 0 && nBytesToRead / nCount != nSize )
+    {
+        bEOF = true;
+        return 0;
+    }
 
-    if( poFile->nLength <= m_nOffset )
+    if( poFile->nLength <= m_nOffset ||
+        nBytesToRead + m_nOffset < nBytesToRead )
     {
         bEOF = true;
         return 0;
@@ -407,8 +412,15 @@ size_t VSIMemHandle::Write( const void * pBuffer, size_t nSize, size_t nCount )
             return 0;
     }
 
-    // FIXME: Integer overflow check should be placed here:
     const size_t nBytesToWrite = nSize * nCount;
+    if( nCount > 0 && nBytesToWrite / nCount != nSize )
+    {
+        return 0;
+    }
+    if( nBytesToWrite + m_nOffset < nBytesToWrite )
+    {
+        return 0;
+    }
 
     if( nBytesToWrite + m_nOffset > poFile->nLength )
     {
