@@ -1190,7 +1190,8 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
 /************************************************************************/
 
 CPLErr
-VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+VRTSimpleSource::RasterIO( GDALDataType eBandDataType,
+                           int nXOff, int nYOff, int nXSize, int nYSize,
                            void *pData, int nBufXSize, int nBufYSize,
                            GDALDataType eBufType,
                            GSpacing nPixelSpace,
@@ -1262,13 +1263,50 @@ VRTSimpleSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
         + nOutXOff * nPixelSpace
         + static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
 
-    const CPLErr eErr =
-        m_poRasterBand->RasterIO(
-            GF_Read,
-            nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-            pabyOut,
-            nOutXSize, nOutYSize,
-            eBufType, nPixelSpace, nLineSpace, psExtraArg );
+    CPLErr eErr = CE_Failure;
+
+    if( GDALDataTypeIsConversionLossy(m_poRasterBand->GetRasterDataType(),
+                                      eBandDataType) )
+    {
+        const int nBandDTSize = GDALGetDataTypeSizeBytes(eBandDataType);
+        void* pTemp = VSI_MALLOC3_VERBOSE(nOutXSize, nOutYSize, nBandDTSize);
+        if( pTemp )
+        {
+            eErr =
+                m_poRasterBand->RasterIO(
+                    GF_Read,
+                    nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                    pTemp,
+                    nOutXSize, nOutYSize,
+                    eBandDataType, 0, 0, psExtraArg );
+            if( eErr == CE_None )
+            {
+                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                for( int iY = 0; iY < nOutYSize; iY++ )
+                {
+                    GDALCopyWords(pabyTemp + static_cast<size_t>(iY) *
+                                                    nBandDTSize * nOutXSize,
+                                  eBandDataType, nBandDTSize,
+                                  pabyOut +
+                                    static_cast<size_t>(iY) * nLineSpace,
+                                  eBufType,
+                                  static_cast<int>(nPixelSpace),
+                                  nOutXSize);
+                }
+            }
+            VSIFree(pTemp);
+        }
+    }
+    else
+    {
+        eErr =
+            m_poRasterBand->RasterIO(
+                GF_Read,
+                nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                pabyOut,
+                nOutXSize, nOutYSize,
+                eBufType, nPixelSpace, nLineSpace, psExtraArg );
+    }
 
     if( NeedMaxValAdjustment() )
     {
@@ -1519,6 +1557,7 @@ CPLErr VRTSimpleSource::GetHistogram(
 /************************************************************************/
 
 CPLErr VRTSimpleSource::DatasetRasterIO(
+    GDALDataType eBandDataType,
     int nXOff, int nYOff, int nXSize, int nYSize,
     void * pData, int nBufXSize, int nBufYSize,
     GDALDataType eBufType,
@@ -1585,13 +1624,57 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
         static_cast<unsigned char *>(pData)
         + nOutXOff * nPixelSpace
         + (GPtrDiff_t)nOutYOff * nLineSpace;
-    const CPLErr eErr = poDS->RasterIO(
-        GF_Read,
-        nReqXOff, nReqYOff, nReqXSize, nReqYSize,
-        pabyOut,
-        nOutXSize, nOutYSize,
-        eBufType, nBandCount, panBandMap,
-        nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+
+    CPLErr eErr = CE_Failure;
+
+    if( GDALDataTypeIsConversionLossy(m_poRasterBand->GetRasterDataType(),
+                                      eBandDataType) )
+    {
+        const int nBandDTSize = GDALGetDataTypeSizeBytes(eBandDataType);
+        void* pTemp = VSI_MALLOC3_VERBOSE(nOutXSize, nOutYSize,
+                                          nBandDTSize * nBandCount);
+        if( pTemp )
+        {
+            eErr = poDS->RasterIO(
+                GF_Read,
+                nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+                pTemp,
+                nOutXSize, nOutYSize,
+                eBandDataType, nBandCount, panBandMap,
+                0, 0, 0, psExtraArg );
+            if( eErr == CE_None )
+            {
+                GByte* pabyTemp = reinterpret_cast<GByte*>(pTemp);
+                const size_t nSrcBandSpace = static_cast<size_t>(nOutYSize) *
+                                                nOutXSize * nBandDTSize;
+                for( int iBand = 0; iBand < nBandCount; iBand ++ )
+                {
+                    for( int iY = 0; iY < nOutYSize; iY++ )
+                    {
+                        GDALCopyWords(pabyTemp + iBand * nSrcBandSpace +
+                                        static_cast<size_t>(iY) * nBandDTSize * nOutXSize,
+                                    eBandDataType, nBandDTSize,
+                                    pabyOut +
+                                        static_cast<size_t>(iY) * nLineSpace +
+                                        static_cast<size_t>(iBand) * nBandSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    nOutXSize);
+                    }
+                }
+            }
+            VSIFree(pTemp);
+        }
+    }
+    else
+    {
+        eErr = poDS->RasterIO(
+            GF_Read,
+            nReqXOff, nReqYOff, nReqXSize, nReqYSize,
+            pabyOut,
+            nOutXSize, nOutYSize,
+            eBufType, nBandCount, panBandMap,
+            nPixelSpace, nLineSpace, nBandSpace, psExtraArg );
+    }
 
     if( NeedMaxValAdjustment() )
     {
@@ -1670,7 +1753,8 @@ CPLXMLNode *VRTAveragedSource::SerializeToXML( const char *pszVRTPath )
 /************************************************************************/
 
 CPLErr
-VRTAveragedSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+VRTAveragedSource::RasterIO( GDALDataType /*eBandDataType*/,
+                             int nXOff, int nYOff, int nXSize, int nYSize,
                              void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType,
                              GSpacing nPixelSpace,
@@ -2299,7 +2383,8 @@ void VRTComplexSource::SetColorTableComponent( int nComponent )
 /************************************************************************/
 
 CPLErr
-VRTComplexSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+VRTComplexSource::RasterIO( GDALDataType /*eBandDataType*/,
+                            int nXOff, int nYOff, int nXSize, int nYSize,
                             void *pData, int nBufXSize, int nBufYSize,
                             GDALDataType eBufType,
                             GSpacing nPixelSpace,
@@ -2782,7 +2867,8 @@ CPLXMLNode *VRTFuncSource::SerializeToXML( CPL_UNUSED const char * pszVRTPath )
 /************************************************************************/
 
 CPLErr
-VRTFuncSource::RasterIO( int nXOff, int nYOff, int nXSize, int nYSize,
+VRTFuncSource::RasterIO( GDALDataType /*eBandDataType*/,
+                         int nXOff, int nYOff, int nXSize, int nYSize,
                          void *pData, int nBufXSize, int nBufYSize,
                          GDALDataType eBufType,
                          GSpacing nPixelSpace,

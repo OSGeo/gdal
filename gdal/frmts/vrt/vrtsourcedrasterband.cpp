@@ -299,7 +299,8 @@ CPLErr VRTSourcedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
             psExtraArg->pfnProgress = nullptr;
 
         eErr =
-            papoSources[iSource]->RasterIO( nXOff, nYOff, nXSize, nYSize,
+            papoSources[iSource]->RasterIO( eDataType,
+                                            nXOff, nYOff, nXSize, nYSize,
                                             pData, nBufXSize, nBufYSize,
                                             eBufType, nPixelSpace, nLineSpace,
                                             psExtraArg);
