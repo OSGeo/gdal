@@ -42,7 +42,7 @@
 
 namespace geos {
     class Geometry;
-};
+}
 
 #endif
 
