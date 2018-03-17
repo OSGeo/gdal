@@ -321,7 +321,8 @@ def vrtrawlink_8():
             <ByteOrder>LSB</ByteOrder>
         </VRTRasterBand>
         </VRTDataset>""")
-        if ds:
+        if ds or gdal.GetLastErrorMsg().find('Image file is too small') < 0:
+            print(gdal.GetLastErrorMsg())
             return 'fail'
 
     return 'success'
@@ -332,12 +333,13 @@ def vrtrawlink_8():
 def vrtrawlink_9():
 
     with gdaltest.error_handler():
-        ds = gdal.Open("""<VRTDataset rasterXSize="1 rasterYSize="1">
+        ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
         <SourceFilename relativetoVRT="0">i/do/not/exist</SourceFilename>
     </VRTRasterBand>
     </VRTDataset>""")
-    if ds:
+    if ds or gdal.GetLastErrorMsg().find('Unable to open') < 0:
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
@@ -348,13 +350,14 @@ def vrtrawlink_9():
 def vrtrawlink_10():
 
     with gdaltest.error_handler():
-        ds = gdal.Open("""<VRTDataset rasterXSize="1 rasterYSize="1">
+        ds = gdal.Open("""<VRTDataset rasterXSize="1" rasterYSize="1">
     <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
         <SourceFilename relativetoVRT="0">data/small.raw</SourceFilename>
         <ByteOrder>invalid</ByteOrder>
     </VRTRasterBand>
     </VRTDataset>""")
-    if ds:
+    if ds or gdal.GetLastErrorMsg().find('ByteOrder') < 0:
+        print(gdal.GetLastErrorMsg())
         return 'fail'
 
     return 'success'
