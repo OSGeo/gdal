@@ -603,12 +603,15 @@ SHPOpenLL( const char * pszLayer, const char * pszAccess, SAHooks *psHooks )
     pszBasename = (char *) malloc(strlen(pszLayer)+5);
     strcpy( pszBasename, pszLayer );
     for( i = (int)strlen(pszBasename)-1;
-         i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-             && pszBasename[i] != '\\';
-         i-- ) {}
-
-    if( pszBasename[i] == '.' )
-        pszBasename[i] = '\0';
+         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i-- )
+    {
+        if( pszBasename[i] == '.' )
+        {
+            pszBasename[i] = '\0';
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Open the .shp and .shx files.  Note that files pulled from  */
@@ -988,12 +991,15 @@ SHPRestoreSHX ( const char * pszLayer, const char * pszAccess, SAHooks *psHooks 
     pszBasename = (char *) malloc(strlen(pszLayer)+5);
     strcpy( pszBasename, pszLayer );
     for( i = (int)strlen(pszBasename)-1;
-         i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
-             && pszBasename[i] != '\\';
-         i-- ) {}
-
-    if( pszBasename[i] == '.' )
-        pszBasename[i] = '\0';
+         i > 0 && pszBasename[i] != '/' && pszBasename[i] != '\\';
+         i-- )
+    {
+        if( pszBasename[i] == '.' )
+        {
+            pszBasename[i] = '\0';
+            break;
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*  Open the .shp file.  Note that files pulled from                    */
