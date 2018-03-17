@@ -510,7 +510,10 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
 
         VFKFeatureSQLite *poFeature =
             (VFKFeatureSQLite *) GetFeatureByIndex(rowId - 1);
-        CPLAssert(nullptr != poFeature && poFeature->GetFID() == iFID);
+        if( poFeature == nullptr || poFeature->GetFID() != iFID )
+        {
+            continue;
+        }
 
         if( bIsPar )
         {
