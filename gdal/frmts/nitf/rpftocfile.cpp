@@ -388,6 +388,12 @@ RPFToc* RPFTOCReadFromBuffer(const char* pszFilename, VSILFILE* fp, const char* 
     unsigned short frameFileIndexRecordLength;
     bOK &= VSIFReadL( &frameFileIndexRecordLength, sizeof(frameFileIndexRecordLength), 1, fp) == 1;
     CPL_MSBPTR16( &frameFileIndexRecordLength );
+    if( frameFileIndexRecordLength < 3 * sizeof(short) )
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Invalid file");
+        RPFTOCFree(toc);
+        return nullptr;
+    }
 
     if( !bOK )
     {
