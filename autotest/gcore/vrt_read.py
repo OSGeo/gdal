@@ -952,6 +952,12 @@ def vrt_read_22():
         print(ds.GetRasterBand(1).ComputeStatistics(False))
         return 'fail'
 
+    data = ds.ReadRaster()
+    got = struct.unpack('B' * 20*20, data)
+    if got[0] != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <Metadata domain="IMAGE_STRUCTURE">
