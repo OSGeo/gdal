@@ -306,6 +306,60 @@ def vrtrawlink_7():
     return 'success'
 
 ###############################################################################
+# Test error case (too much memory allocation)
+
+def vrtrawlink_8():
+
+    for i in range(2):
+        with gdaltest.error_handler():
+            ds = gdal.Open("""<VRTDataset rasterXSize="200000" rasterYSize="1">
+        <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+            <SourceFilename relativetoVRT="0">data/small.raw</SourceFilename>
+            <ImageOffset>0</ImageOffset>
+            <PixelOffset>200000</PixelOffset>
+            <LineOffset>1</LineOffset>
+            <ByteOrder>LSB</ByteOrder>
+        </VRTRasterBand>
+        </VRTDataset>""")
+        if ds:
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test error case (inexisting file)
+
+def vrtrawlink_9():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open("""<VRTDataset rasterXSize="1 rasterYSize="1">
+    <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+        <SourceFilename relativetoVRT="0">i/do/not/exist</SourceFilename>
+    </VRTRasterBand>
+    </VRTDataset>""")
+    if ds:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Test error case (invalid byte order)
+
+def vrtrawlink_10():
+
+    with gdaltest.error_handler():
+        ds = gdal.Open("""<VRTDataset rasterXSize="1 rasterYSize="1">
+    <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+        <SourceFilename relativetoVRT="0">data/small.raw</SourceFilename>
+        <ByteOrder>invalid</ByteOrder>
+    </VRTRasterBand>
+    </VRTDataset>""")
+    if ds:
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def vrtrawlink_cleanup():
@@ -329,6 +383,9 @@ gdaltest_list = [
     vrtrawlink_5,
     vrtrawlink_6,
     vrtrawlink_7,
+    vrtrawlink_8,
+    vrtrawlink_9,
+    vrtrawlink_10,
     vrtrawlink_cleanup ]
 
 if __name__ == '__main__':
