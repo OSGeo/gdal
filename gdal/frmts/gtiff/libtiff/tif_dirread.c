@@ -5700,9 +5700,8 @@ ChopUpSingleUncompressedStrip(TIFF* tif)
         /* file is as big as needed */
         if( tif->tif_mode == O_RDONLY &&
             nstrips > 1000000 &&
-            (tif->tif_dir.td_stripoffset[0] >= TIFFGetFileSize(tif) ||
-             tif->tif_dir.td_stripbytecount[0] >
-                    TIFFGetFileSize(tif) - tif->tif_dir.td_stripoffset[0]) )
+            (offset >= TIFFGetFileSize(tif) ||
+             stripbytes > (TIFFGetFileSize(tif) - offset) / (nstrips - 1)) )
         {
             return;
         }
