@@ -111,7 +111,7 @@
 /*           NONE */
 
 
-    if( *kbit <= 0 || *kbit > 32 )
+    if( *kbit <= 1 || *kbit > 32 )
     {
         *ier = 714;
         return 0;
