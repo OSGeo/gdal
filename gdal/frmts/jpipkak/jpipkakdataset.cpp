@@ -1238,7 +1238,7 @@ JPIPKAKDataset::TestUseBlockIO( CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
                                 int nXSize, int nYSize,
                                 int nBufXSize, int nBufYSize,
                                 CPL_UNUSED GDALDataType eDataType,
-                                int nBandCount, int *panBandList )
+                                int nBandCount, int *panBandList ) const
 
 {
 /* -------------------------------------------------------------------- */

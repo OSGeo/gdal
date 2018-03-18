@@ -712,7 +712,7 @@ CPLErr MSGRasterBand::IReadBlock( int /*nBlockXOff*/, int nBlockYOff,
     return CE_None;
 }
 
-double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS)
+double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS) const
 {
   int iIndex = iChannel - 1; // just for speed optimization
 

@@ -116,7 +116,7 @@ class SAGARasterBand : public GDALPamRasterBand
     int             m_nBits;
 
     void            SetDataType( GDALDataType eType );
-    void            SwapBuffer(void* pImage);
+    void            SwapBuffer(void* pImage) const;
 
 public:
     SAGARasterBand( SAGADataset *, int );
@@ -165,7 +165,7 @@ void SAGARasterBand::SetDataType( GDALDataType eType )
 /*                             SwapBuffer()                             */
 /************************************************************************/
 
-void SAGARasterBand::SwapBuffer(void* pImage)
+void SAGARasterBand::SwapBuffer(void* pImage) const
 {
 
 #ifdef CPL_LSB

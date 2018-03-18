@@ -98,7 +98,7 @@ public:
     enum { tMRF, tBundle, tEND };
 
 private:
-    size_t GetIndexAddress(const GDALWMSTiledImageRequestInfo &tiri);
+    size_t GetIndexAddress(const GDALWMSTiledImageRequestInfo &tiri) const;
 
     // The path or URL for index
     CPLString m_idxname;

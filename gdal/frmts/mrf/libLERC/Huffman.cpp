@@ -603,7 +603,7 @@ bool Huffman::BitUnStuffCodes(const Byte** ppByte, size_t& nRemainingBytesInOut,
 
 struct MyLargerThanOp
 {
-  inline bool operator() (const pair<int, int>& p0, const pair<int, int>& p1)  { return p0.first > p1.first; }
+  inline bool operator() (const pair<int, int>& p0, const pair<int, int>& p1) const { return p0.first > p1.first; }
 };
 
 // -------------------------------------------------------------------------- ;

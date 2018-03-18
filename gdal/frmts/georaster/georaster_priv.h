@@ -269,7 +269,7 @@ private:
     int                 nNoDataArraySz;
     bool                bHasNoDataArray;
 
-    void                ApplyNoDataArry( void* pBuffer );
+    void                ApplyNoDataArry( void* pBuffer ) const;
 
 public:
     double GetNoDataValue( int *pbSuccess = nullptr ) override;
@@ -340,7 +340,7 @@ class GeoRasterWrapper
     void                LoadNoDataValues();
 
     void                UnpackNBits( GByte* pabyData );
-    void                PackNBits( GByte* pabyData );
+    void                PackNBits( GByte* pabyData ) const;
     unsigned long       CompressJpeg();
     unsigned long       CompressDeflate();
     void                UncompressJpeg( unsigned long nBufferSize );
@@ -403,7 +403,7 @@ public:
                             int nXOffset,
                             int nYOffset,
                             void* pData );
-    long                GetBlockNumber( int nB, int nX, int nY )
+    long                GetBlockNumber( int nB, int nX, int nY ) const
                         {
                             return nLevelOffset +
                                    (long) ( ( ceil( (double)

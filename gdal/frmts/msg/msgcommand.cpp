@@ -241,7 +241,7 @@ std::string MSGCommand::parse(std::string const& command_line)
   return sErr;
 }
 
-int MSGCommand::iNrChannels()
+int MSGCommand::iNrChannels() const
 {
   int iRet = 0;
   for (int i=0; i<12; ++i)
@@ -251,7 +251,7 @@ int MSGCommand::iNrChannels()
   return iRet;
 }
 
-int MSGCommand::iChannel(int iChannelNumber)
+int MSGCommand::iChannel(int iChannelNumber) const
 {
   // return the iChannelNumber-th channel
   // iChannelNumber is a value between 1 and 12

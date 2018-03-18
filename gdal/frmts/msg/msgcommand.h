@@ -42,8 +42,8 @@ public:
   std::string sFileName(int iSatellite, int iSequence, int iStrip);
   std::string sPrologueFileName(int iSatellite, int iSequence);
   std::string sCycle(int iCycle);
-  int iNrChannels();
-  int iChannel(int iNr);
+  int iNrChannels() const;
+  int iChannel(int iNr) const;
 
   static int iNrStrips(int iChannel);
 

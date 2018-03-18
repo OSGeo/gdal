@@ -223,7 +223,7 @@ private:
     AISConnect *GetConnect() { return poConnect; }
 
     /// Return the data source URL
-    string GetUrl() { return oURL; }
+    const string& GetUrl() const { return oURL; }
     DAS &GetDAS() { return oDAS; }
     DDS &GetDDS() { return *poDDS; }
 };

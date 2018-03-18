@@ -197,8 +197,8 @@ class GDALPDFWriter
 
        void Close();
 
-       int  GetCatalogNum() { return nCatalogId; }
-       int  GetCatalogGen() { return nCatalogGen; }
+       int  GetCatalogNum() const { return nCatalogId; }
+       int  GetCatalogGen() const { return nCatalogGen; }
 
        int  ParseTrailerAndXRef();
        void UpdateProj(GDALDataset* poSrcDS,

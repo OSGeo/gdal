@@ -1089,7 +1089,7 @@ CPLErr IntergraphBitmapBand::IReadBlock( int nBlockXOff,
 int IntergraphRasterBand::LoadBlockBuf( int nBlockXOff,
                                         int nBlockYOff,
                                         int nBlobkBytes,
-                                        GByte *pabyBlock )
+                                        GByte *pabyBlock ) const
 {
     vsi_l_offset nSeekOffset  = 0;
     uint32 nReadSize    = 0;

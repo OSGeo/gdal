@@ -832,7 +832,7 @@ GDALDataType SDERasterBand::MorphESRIRasterType(int gtype) {
 /************************************************************************/
 /*                           QueryRaster()                              */
 /************************************************************************/
-CPLErr SDERasterBand::QueryRaster( SE_RASCONSTRAINT& constraint )
+CPLErr SDERasterBand::QueryRaster( SE_RASCONSTRAINT& constraint ) const
 {
 
     SDEDataset *poGDS = (SDEDataset *) poDS;

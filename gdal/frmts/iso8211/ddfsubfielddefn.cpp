@@ -781,7 +781,7 @@ void DDFSubfieldDefn::DumpData( const char * pachData, int nMaxBytes,
  */
 
 int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable,
-                                      int *pnBytesUsed )
+                                      int *pnBytesUsed ) const
 
 {
     int nDefaultSize;
@@ -836,7 +836,7 @@ int DDFSubfieldDefn::GetDefaultValue( char *pachData, int nBytesAvailable,
 int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
                                         int *pnBytesUsed,
                                         const char *pszValue,
-                                        int nValueLength )
+                                        int nValueLength ) const
 
 {
     int nSize;
@@ -898,7 +898,7 @@ int DDFSubfieldDefn::FormatStringValue( char *pachData, int nBytesAvailable,
  */
 
 int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
-                                     int *pnBytesUsed, int nNewValue )
+                                     int *pnBytesUsed, int nNewValue ) const
 
 {
     int nSize;
@@ -990,7 +990,7 @@ int DDFSubfieldDefn::FormatIntValue( char *pachData, int nBytesAvailable,
  */
 
 int DDFSubfieldDefn::FormatFloatValue( char *pachData, int nBytesAvailable,
-                                       int *pnBytesUsed, double dfNewValue )
+                                       int *pnBytesUsed, double dfNewValue ) const
 
 {
     int nSize;

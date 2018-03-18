@@ -79,7 +79,7 @@ public:
 
 protected:
     int  HandleUninstantiatedTile( int nBlockXOff, int nBlockYOff, void* pImage);
-    int  LoadBlockBuf( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
+    int  LoadBlockBuf( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock ) const;
     bool ReshapeBlock( int nBlockXOff, int nBlockYOff, int nBlockBytes, GByte *pabyBlock );
     void FlushBandHeader();
     void BlackWhiteCT( bool bReverse = false );

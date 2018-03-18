@@ -454,7 +454,7 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
 
 void HFAType::DumpInstValue( FILE *fpOut,
                              GByte *pabyData, GUInt32 nDataOffset,
-                             int nDataSize, const char *pszPrefix )
+                             int nDataSize, const char *pszPrefix ) const
 
 {
     for( int iField = 0; iField < nFields && nDataSize > 0; iField++ )
@@ -486,7 +486,7 @@ void HFAType::DumpInstValue( FILE *fpOut,
 /************************************************************************/
 
 int HFAType::GetInstBytes( GByte *pabyData, int nDataSize,
-                           std::set<HFAField*>& oVisitedFields )
+                           std::set<HFAField*>& oVisitedFields ) const
 
 {
     if( nBytes >= 0 )

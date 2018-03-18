@@ -291,7 +291,7 @@ public:
 
     CPLErr            ProcessBlock( int iBlockX, int iBlockY );
 
-    void              GetBlockSize( int *, int * );
+    void              GetBlockSize( int *, int * ) const;
 
     void              SetApplyVerticalShiftGrid(const char* pszVGrids,
                                              int bInverse,
@@ -369,7 +369,7 @@ public:
                                GSpacing nBandSpace,
                                GDALRasterIOExtraArg* psExtraArg) override;
 
-    void              GetBlockSize( int *, int * );
+    void              GetBlockSize( int *, int * ) const;
 
     GDALPansharpenOperation* GetPansharpener() { return m_poPansharpener; }
 };
@@ -864,9 +864,9 @@ public:
                                   void *pProgressData ) override;
 
     void            DstToSrc( double dfX, double dfY,
-                              double &dfXOut, double &dfYOut );
+                              double &dfXOut, double &dfYOut ) const;
     void            SrcToDst( double dfX, double dfY,
-                              double &dfXOut, double &dfYOut );
+                              double &dfXOut, double &dfYOut ) const;
 
     virtual void   GetFileList( char*** ppapszFileList, int *pnSize,
                                 int *pnMaxSize, CPLHashSet* hSetFiles ) override;
@@ -1021,7 +1021,7 @@ public:
 class VRTFilteredSource : public VRTComplexSource
 {
 private:
-    int          IsTypeSupported( GDALDataType eType );
+    int          IsTypeSupported( GDALDataType eType ) const;
 
 protected:
     int          m_nSupportedTypesCount;

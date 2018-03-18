@@ -366,7 +366,7 @@ public:
                              int nYSize);
     ~PostGISRasterTileDataset();
     CPLErr GetGeoTransform(double *) override;
-    void   GetExtent(double* pdfMinX, double* pdfMinY, double* pdfMaxX, double* pdfMaxY);
+    void   GetExtent(double* pdfMinX, double* pdfMinY, double* pdfMaxX, double* pdfMaxY) const;
     const char* GetPKID() const { return pszPKID; }
 };
 

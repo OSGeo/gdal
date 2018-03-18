@@ -297,7 +297,7 @@ public:
     const char  *GetName() const CPL_WARN_UNUSED_RESULT { return szName; }
     void SetName( const char *pszNodeName );
 
-    const char  *GetType() CPL_WARN_UNUSED_RESULT { return szType; }
+    const char  *GetType() const CPL_WARN_UNUSED_RESULT { return szType; }
     HFAType     *GetTypeObject() CPL_WARN_UNUSED_RESULT;
 
     GByte      *GetData() CPL_WARN_UNUSED_RESULT { LoadData(); return pabyData; }
@@ -380,7 +380,7 @@ class HFAField
                                const char *pszPrefix = nullptr );
 
     int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields );
-    int         GetInstCount( GByte * pabyData, int nDataSize );
+    int         GetInstCount( GByte * pabyData, int nDataSize ) const;
 };
 
 /************************************************************************/
@@ -410,7 +410,7 @@ class HFAType
 
     void        Dump( FILE * );
 
-    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields );
+    int         GetInstBytes( GByte *, int, std::set<HFAField*>& oVisitedFields ) const;
     int         GetInstCount( const char *pszField, GByte *pabyData,
                               GUInt32 nDataOffset, int nDataSize );
     bool        ExtractInstValue( const char * pszField,
@@ -422,7 +422,7 @@ class HFAType
                               char chReqType, void * pValue );
     void        DumpInstValue( FILE *fpOut, GByte *pabyData,
                                GUInt32 nDataOffset, int nDataSize,
-                               const char *pszPrefix = nullptr );
+                               const char *pszPrefix = nullptr ) const;
 };
 
 /************************************************************************/

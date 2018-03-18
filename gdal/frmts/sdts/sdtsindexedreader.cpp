@@ -65,7 +65,7 @@ SDTSIndexedReader::~SDTSIndexedReader()
   efficiently.
   */
 
-int SDTSIndexedReader::IsIndexed()
+int SDTSIndexedReader::IsIndexed() const
 
 {
     return nIndexSize >= 0;

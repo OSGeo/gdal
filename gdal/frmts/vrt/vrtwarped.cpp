@@ -1549,7 +1549,7 @@ CPLXMLNode *VRTWarpedDataset::SerializeToXML( const char *pszVRTPathIn )
 /*                            GetBlockSize()                            */
 /************************************************************************/
 
-void VRTWarpedDataset::GetBlockSize( int *pnBlockXSize, int *pnBlockYSize )
+void VRTWarpedDataset::GetBlockSize( int *pnBlockXSize, int *pnBlockYSize ) const
 
 {
     CPLAssert( nullptr != pnBlockXSize );

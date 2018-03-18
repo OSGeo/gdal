@@ -358,7 +358,7 @@ int Msg_reader_core::_chan_to_idx(Msg_channel_names channel) {
     return 0;
 }
 
-void Msg_reader_core::get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude) {
+void Msg_reader_core::get_pixel_geo_coordinates(unsigned int line, unsigned int column, double& longitude, double& latitude) const {
     Conversions::convert_pixel_to_geo((unsigned int)(line + _line_start), (unsigned int)(column + _col_start), longitude, latitude);
 }
 
