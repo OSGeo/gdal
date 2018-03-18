@@ -2001,7 +2001,7 @@ void ValueRange::init( double rRaw0 )
             iRawUndef = 0;
 }
 
-std::string ValueRange::ToString()
+std::string ValueRange::ToString() const
 {
     char buffer[200];
     if (fabs(get_rLo()) > 1.0e20 || fabs(get_rHi()) > 1.0e20)
@@ -2013,7 +2013,7 @@ std::string ValueRange::ToString()
     return std::string(buffer);
 }
 
-double ValueRange::rValue(int iRawIn)
+double ValueRange::rValue(int iRawIn) const
 {
     if (iRawIn == iUNDEF || iRawIn == iRawUndef)
         return rUNDEF;
@@ -2028,7 +2028,7 @@ double ValueRange::rValue(int iRawIn)
     return rVal;
 }
 
-int ValueRange::iRaw(double rValueIn)
+int ValueRange::iRaw(double rValueIn) const
 {
     if (rValueIn == rUNDEF) // || !fContains(rValue))
         return iUNDEF;

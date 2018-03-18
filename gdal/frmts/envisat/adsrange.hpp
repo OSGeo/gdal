@@ -86,49 +86,49 @@ class ADSRange
     /* GETTERS */
 
     /* get index of the first matched ADS record */
-    inline int getFirstIndex( void )
+    inline int getFirstIndex( void ) const
     {
         return this->idx_first ;
     }
 
     /* get index of the last matched ADS record */
-    inline int getLastIndex( void )
+    inline int getLastIndex( void ) const
     {
         return this->idx_last ;
     }
 
     /* get offset of the first matched ADS record */
-    inline int getFirstOffset( void )
+    inline int getFirstOffset( void ) const
     {
         return this->off_first ;
     }
 
     /* get offset of the last matched ADS record */
-    inline int getLastOffset( void )
+    inline int getLastOffset( void ) const
     {
         return this->off_last ;
     }
 
     /* get MJD time of the first matched ADS record */
-    inline TimeDelta getFirstTime( void )
+    inline TimeDelta getFirstTime( void ) const
     {
         return this->mjd_first ;
     }
 
     /* get MJD time of the last matched ADS record */
-    inline TimeDelta getLastTime( void )
+    inline TimeDelta getLastTime( void ) const
     {
         return this->mjd_last ;
     }
 
     /* get MJD time of the first MDS record */
-    inline TimeDelta getMDSRFirstTime( void )
+    inline TimeDelta getMDSRFirstTime( void ) const
     {
         return this->mjd_m_first ;
     }
 
     /* get MJD time of the last MDS record */
-    inline TimeDelta getMDSRLastTime( void )
+    inline TimeDelta getMDSRLastTime( void ) const
     {
         return this->mjd_m_last ;
     }

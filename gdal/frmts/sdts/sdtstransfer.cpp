@@ -186,7 +186,7 @@ void SDTSTransfer::Close()
   </ul>
  */
 
-SDTSLayerType SDTSTransfer::GetLayerType( int iEntry )
+SDTSLayerType SDTSTransfer::GetLayerType( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nLayers )
@@ -210,7 +210,7 @@ SDTSLayerType SDTSTransfer::GetLayerType( int iEntry )
   methods.
  */
 
-int SDTSTransfer::GetLayerCATDEntry( int iEntry )
+int SDTSTransfer::GetLayerCATDEntry( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nLayers )

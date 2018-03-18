@@ -124,7 +124,7 @@ int SDTS_IREF::Read( const char * pszFilename )
 /*      Return the number of SADR'es in the passed field.               */
 /************************************************************************/
 
-int SDTS_IREF::GetSADRCount( DDFField * poField )
+int SDTS_IREF::GetSADRCount( DDFField * poField ) const
 
 {
     if( nDefaultSADRFormat )

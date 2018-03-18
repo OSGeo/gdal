@@ -261,7 +261,7 @@ CPLErr WMSMiniDriver_MRF::EndInit() {
 }
 
 // Return -1 if error occurs
-size_t WMSMiniDriver_MRF::GetIndexAddress(const GDALWMSTiledImageRequestInfo &tiri) {
+size_t WMSMiniDriver_MRF::GetIndexAddress(const GDALWMSTiledImageRequestInfo &tiri) const {
     // Bottom level is 0
     int l = - tiri.m_level;
     if (l < 0 || l >= static_cast<int>(offsets.size()))

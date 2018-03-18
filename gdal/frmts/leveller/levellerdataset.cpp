@@ -289,7 +289,7 @@ class LevellerDataset : public GDALPamDataset
     UNITLABEL id_to_code(const char*) const;
     UNITLABEL meter_measure_to_code(double) const;
     bool compute_elev_scaling(const OGRSpatialReference&);
-    void raw_to_proj(double, double, double&, double&);
+    void raw_to_proj(double, double, double&, double&) const;
 
 public:
     LevellerDataset();
@@ -669,7 +669,7 @@ static double average(double a, double b)
     return 0.5 * (a + b);
 }
 
-void LevellerDataset::raw_to_proj(double x, double y, double& xp, double& yp)
+void LevellerDataset::raw_to_proj(double x, double y, double& xp, double& yp) const
 {
     xp = x * m_adfTransform[1] + m_adfTransform[0];
     yp = y * m_adfTransform[5] + m_adfTransform[3];

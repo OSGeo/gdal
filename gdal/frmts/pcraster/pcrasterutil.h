@@ -94,7 +94,7 @@ void               castValuesToLddRange(void* buffer,
 template<typename T>
 struct CastToBooleanRange
 {
-  void operator()(T& value) {
+  void operator()(T& value) const {
     if(!pcr::isMV(value)) {
       if(value != 0) {
         value = T(value > T(0));
@@ -109,7 +109,7 @@ struct CastToBooleanRange
 template<>
 struct CastToBooleanRange<UINT1>
 {
-  void operator()(UINT1& value) {
+  void operator()(UINT1& value) const {
     if(!pcr::isMV(value)) {
       value = UINT1(value > UINT1(0));
     }
@@ -119,7 +119,7 @@ struct CastToBooleanRange<UINT1>
 template<>
 struct CastToBooleanRange<UINT2>
 {
-  void operator()(UINT2& value) {
+  void operator()(UINT2& value) const {
     if(!pcr::isMV(value)) {
       value = UINT2(value > UINT2(0));
     }
@@ -129,7 +129,7 @@ struct CastToBooleanRange<UINT2>
 template<>
 struct CastToBooleanRange<UINT4>
 {
-  void operator()(UINT4& value) {
+  void operator()(UINT4& value) const {
     if(!pcr::isMV(value)) {
       value = UINT4(value > UINT4(0));
     }
@@ -138,7 +138,7 @@ struct CastToBooleanRange<UINT4>
 
 struct CastToDirection
 {
-  void operator()(REAL4& value) {
+  void operator()(REAL4& value) const {
     REAL4 factor = static_cast<REAL4>(M_PI / 180.0);
     if(!pcr::isMV(value)) {
       value = REAL4(value * factor);
@@ -148,7 +148,7 @@ struct CastToDirection
 
 struct CastToLdd
 {
-  void operator()(UINT1& value) {
+  void operator()(UINT1& value) const {
     if(!pcr::isMV(value)) {
       if((value < 1) || (value > 9)) {
         CPLError(CE_Warning, CPLE_IllegalArg,

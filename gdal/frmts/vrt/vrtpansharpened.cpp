@@ -1295,7 +1295,7 @@ CPLXMLNode *VRTPansharpenedDataset::SerializeToXML( const char *pszVRTPathIn )
 /*                            GetBlockSize()                            */
 /************************************************************************/
 
-void VRTPansharpenedDataset::GetBlockSize( int *pnBlockXSize, int *pnBlockYSize )
+void VRTPansharpenedDataset::GetBlockSize( int *pnBlockXSize, int *pnBlockYSize ) const
 
 {
     assert( nullptr != pnBlockXSize );

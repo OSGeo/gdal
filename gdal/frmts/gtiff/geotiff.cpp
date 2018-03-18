@@ -373,7 +373,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
                                     int bPreserveDataBuffer );
     template<class T>
     bool         HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
-                                int nLineStride, int nComponents );
+                                int nLineStride, int nComponents ) const;
     bool         HasOnlyNoData( const void* pBuffer, int nWidth, int nHeight,
                                 int nLineStride, int nComponents );
     inline bool  IsFirstPixelEqualToNoData( const void* pBuffer );
@@ -447,7 +447,7 @@ class GTiffDataset CPL_FINAL : public GDALPamDataset
     bool           bHasDiscardedLsb;
     std::vector<int> anMaskLsb;
     std::vector<int> anOffsetLsb;
-    void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand);
+    void           DiscardLsb(GByte* pabyBuffer, int nBytes, int iBand) const;
     void           GetDiscardLsbOption( char** papszOptions );
 
     CPLWorkerThreadPool *poCompressThreadPool;
@@ -7935,7 +7935,7 @@ template<> bool IsEqualToNoData<double>( double value, double noDataValue )
 
 template<class T>
 bool GTiffDataset::HasOnlyNoDataT( const T* pBuffer, int nWidth, int nHeight,
-                                   int nLineStride, int nComponents )
+                                   int nLineStride, int nComponents ) const
 {
     const T noDataValue = static_cast<T>((bNoDataSet) ? dfNoDataValue : 0.0);
     // Fast test: check the 4 corners and the middle pixel.
@@ -8725,7 +8725,7 @@ bool GTiffDataset::SubmitCompressionJob( int nStripOrTile, GByte* pabyData,
 /*                          DiscardLsb()                                */
 /************************************************************************/
 
-void GTiffDataset::DiscardLsb( GByte* pabyBuffer, int nBytes, int iBand )
+void GTiffDataset::DiscardLsb( GByte* pabyBuffer, int nBytes, int iBand ) const
 {
     if( nBitsPerSample == 8 )
     {

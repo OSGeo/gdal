@@ -73,7 +73,7 @@ class WCSDataset : public GDALPamDataset
     CPLString   osDefaultTime;
     std::vector<CPLString> aosTimePositions;
 
-    int         TestUseBlockIO( int, int, int, int, int, int );
+    int         TestUseBlockIO( int, int, int, int, int, int ) const;
     CPLErr      DirectRasterIO( GDALRWFlag, int, int, int, int,
                                 void *, int, int, GDALDataType,
                                 int, int *,

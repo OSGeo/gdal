@@ -869,7 +869,7 @@ int VRTSimpleSource::IsSameExceptBandNumber( VRTSimpleSource* poOtherSource )
 /************************************************************************/
 
 void VRTSimpleSource::SrcToDst( double dfX, double dfY,
-                                double &dfXOut, double &dfYOut )
+                                double &dfXOut, double &dfYOut ) const
 
 {
     dfXOut = ((dfX - m_dfSrcXOff) / m_dfSrcXSize) * m_dfDstXSize + m_dfDstXOff;
@@ -883,7 +883,7 @@ void VRTSimpleSource::SrcToDst( double dfX, double dfY,
 /************************************************************************/
 
 void VRTSimpleSource::DstToSrc( double dfX, double dfY,
-                                double &dfXOut, double &dfYOut )
+                                double &dfXOut, double &dfYOut ) const
 
 {
     dfXOut = ((dfX - m_dfDstXOff) / m_dfDstXSize) * m_dfSrcXSize + m_dfSrcXOff;

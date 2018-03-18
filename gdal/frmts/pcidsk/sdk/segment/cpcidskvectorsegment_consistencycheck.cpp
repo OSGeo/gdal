@@ -59,7 +59,7 @@ public:
     std::vector<uint32>  sizes;
 
     // binary search for the offset closes to our target or earlier.
-    uint32  FindPreceding( uint32 offset )
+    uint32  FindPreceding( uint32 offset ) const
         {
             if( offsets.empty() )
                 return 0;

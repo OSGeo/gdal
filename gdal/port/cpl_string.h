@@ -569,7 +569,7 @@ class CPL_DLL CPLStringList
 /*! @cond Doxygen_Suppress */
 struct CSLDestroyReleaser
 {
-    void operator()(char** papszStr) { CSLDestroy(papszStr); }
+    void operator()(char** papszStr) const { CSLDestroy(papszStr); }
 };
 /*! @endcond */
 

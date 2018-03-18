@@ -24,7 +24,7 @@ class SDERasterBand : public GDALRasterBand
         SE_QUERYINFO&           InitializeQuery();
         SE_RASCONSTRAINT&       InitializeConstraint (  long* nBlockXOff,
                                                         long* nBlockYOff);
-        CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint );
+        CPLErr                  QueryRaster( SE_RASCONSTRAINT& constraint ) const;
 
         int                     nOverview;
         int                     nOverviews;

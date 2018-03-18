@@ -296,7 +296,7 @@ AAIGDataset::~AAIGDataset()
 /*                                Tell()                                */
 /************************************************************************/
 
-GUIntBig AAIGDataset::Tell() { return nBufferOffset + nOffsetInBuffer; }
+GUIntBig AAIGDataset::Tell() const { return nBufferOffset + nOffsetInBuffer; }
 
 /************************************************************************/
 /*                                Seek()                                */

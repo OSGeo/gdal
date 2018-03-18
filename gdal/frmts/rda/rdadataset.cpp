@@ -193,7 +193,7 @@ class GDALRDADataset: public GDALDataset
                                         int /*nBands*/, int* /*panBands*/,
                                         char ** /* papszOptions */) override;
         char**          GetMetadata( const char* pszDomain = "" ) override;
-        bool            IsMaxCurlConnectionsSet();
+        bool            IsMaxCurlConnectionsSet() const;
         void            MaxCurlConnectionsSet(unsigned int nMaxCurlConnections);
 };
 
@@ -1377,7 +1377,7 @@ bool GDALRDADataset::ReadRPCs()
 /************************************************************************/
 /*                      IsMaxCurlConnectionsSet()                       */
 /************************************************************************/
-bool GDALRDADataset::IsMaxCurlConnectionsSet()
+bool GDALRDADataset::IsMaxCurlConnectionsSet() const
 {
     return m_bIsMaxCurlConnectionsExplicitlySet;
 }
