@@ -427,6 +427,7 @@ bool OGRAVCE00Layer::CheckSetupTable(AVCE00Section *psTblSectionIn)
     AVCE00ReadNextObjectE00(psTableRead);
     bNeedReset = true;
 
+    CPLFree(pszTableFilename);
     pszTableFilename = CPLStrdup(psTblSectionIn->pszFilename);
     nTableBaseField = poFeatureDefn->GetFieldCount();
 

@@ -1720,6 +1720,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     for( int iSource = 0; iSource < nSources && eErr == CE_None; iSource++ ) {
         GByte* pabyBuffer = reinterpret_cast<GByte*>(pBuffers[iSource]);
         eErr = reinterpret_cast<VRTSource *>( papoSources[iSource] )->RasterIO(
+            eSrcType,
             nXOffExt, nYOffExt, nXSizeExt, nYSizeExt,
             pabyBuffer + (nYShiftInBuffer * nExtBufXSize +
                                             nXShiftInBuffer) * nSrcTypeSize,

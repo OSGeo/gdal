@@ -466,4 +466,140 @@ namespace tut
         ensure_equals( GDALDataTypeIsComplex(GDT_CFloat64), TRUE );
     }
 
+    // Test GDALDataTypeIsConversionLossy()
+    template<> template<> void object::test<16>()
+    {
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Byte) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_UInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Int32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_Float64) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Byte, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Byte) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_UInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Int32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt16, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int16, GDT_UInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Int32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_Float64) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int16, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_UInt32, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_UInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Int32, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Int32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float32, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_Float64, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_Float64) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt16, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt16) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CInt32, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CInt32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat32, GDT_CFloat64) );
+
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Byte) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_UInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Int32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_Float64) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt16) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CInt32) );
+        ensure( GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat32) );
+        ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat64) );
+    }
+
 } // namespace tut

@@ -497,7 +497,8 @@ int VSIRmdirRecursive( const char* pszDirname )
     char** papszFiles = VSIReadDir(pszDirname);
     for( char** papszIter = papszFiles; papszIter && *papszIter; ++papszIter )
     {
-        if( strcmp(*papszIter, ".") == 0 ||
+        if( (*papszIter)[0] == '\0' ||
+            strcmp(*papszIter, ".") == 0 ||
             strcmp(*papszIter, "..") == 0 )
         {
             continue;

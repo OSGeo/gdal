@@ -522,7 +522,7 @@ void CADEllipse::setAxisRatio( double value )
 CADVector CADEllipse::getSMAxis()
 {
     return vectSMAxis;
-};
+}
 
 void CADEllipse::setSMAxis( const CADVector& SMAxisVect )
 {

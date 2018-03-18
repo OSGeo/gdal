@@ -33,6 +33,7 @@
 import os
 import sys
 import shutil
+import struct
 
 sys.path.append( '../pymod' )
 
@@ -120,7 +121,6 @@ def vrt_read_3():
     # A simple Checksum() cannot detect if the fix works or not as
     # Checksum() reads line per line, and we must use IRasterIO() on multi-line request
     data = ds.GetRasterBand(1).ReadRaster(90,0,20,100)
-    import struct
     got = struct.unpack('B' * 20*100, data)
     for i in range(100):
         if got[i*20 + 9 ] != 255:
@@ -952,6 +952,12 @@ def vrt_read_22():
         print(ds.GetRasterBand(1).ComputeStatistics(False))
         return 'fail'
 
+    data = ds.ReadRaster()
+    got = struct.unpack('B' * 20*20, data)
+    if got[0] != 63:
+        gdaltest.post_reason('failure')
+        return 'fail'
+
     ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <Metadata domain="IMAGE_STRUCTURE">
@@ -1184,7 +1190,6 @@ def vrt_read_26():
   </VRTRasterBand>
 </VRTDataset>""")
 
-    import struct
     full_data = vrt_ds.GetRasterBand(1).ReadRaster(0,0,22,22)
     full_data = struct.unpack('B' * 22 * 22, full_data)
 
@@ -1313,13 +1318,49 @@ def vrt_read_30():
 </VRTDataset>""")
 
     data = ds.ReadRaster(0,0,2,2,2,2, buf_pixel_space = 3, buf_line_space = 2 * 3, buf_band_space = 1)
-    import struct
     got = struct.unpack('B' * 2*2*3, data)
     for i in range(2*2*3):
         if got[i] != 0:
             print(got)
             return 'fail'
     ds = None
+
+    return 'success'
+
+###############################################################################
+# Check that we take into account intermediate data type demotion
+
+def vrt_read_31():
+
+    gdal.FileFromMemBuffer('/vsimem/in.asc',
+"""ncols        2
+nrows        2
+xllcorner    0
+yllcorner    0
+dx           1
+dy           1
+-255         1
+254          256""")
+
+    ds = gdal.Translate('', '/vsimem/in.asc', outputType = gdal.GDT_Byte, format = 'VRT')
+
+    data = ds.GetRasterBand(1).ReadRaster(0,0,2,2, buf_type = gdal.GDT_Float32)
+    got = struct.unpack('f' * 2*2, data)
+    if got != (0, 1, 254, 255):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    data = ds.ReadRaster(0,0,2,2, buf_type = gdal.GDT_Float32)
+    got = struct.unpack('f' * 2*2, data)
+    if got != (0, 1, 254, 255):
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    ds = None
+
+    gdal.Unlink('/vsimem/in.asc')
 
     return 'success'
 
@@ -1360,6 +1401,7 @@ gdaltest_list.append( vrt_read_27 )
 gdaltest_list.append( vrt_read_28 )
 gdaltest_list.append( vrt_read_29 )
 gdaltest_list.append( vrt_read_30 )
+gdaltest_list.append( vrt_read_31 )
 
 if __name__ == '__main__':
 
