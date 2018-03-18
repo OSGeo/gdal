@@ -274,7 +274,7 @@ class RPFTOCProxyRasterDataSet : public GDALProxyPoolDataset
 
         void SetReferenceColorTable(GDALColorTable* colorTableRefIn) { this->colorTableRef = colorTableRefIn;}
 
-        const GDALColorTable* GetReferenceColorTable() { return colorTableRef; }
+        const GDALColorTable* GetReferenceColorTable() const { return colorTableRef; }
 
         int SanityCheckOK(GDALDataset* sourceDS);
 

@@ -280,7 +280,7 @@ WMSMiniDriver_TiledWMS::~WMSMiniDriver_TiledWMS() {
 }
 
 // Returns the scale of a WMS request as compared to the base resolution
-double WMSMiniDriver_TiledWMS::Scale(const char *request) {
+double WMSMiniDriver_TiledWMS::Scale(const char *request) const {
     int bbox = FindBbox(request);
     if (bbox < 0) return 0;
     double x, y, X, Y;
@@ -289,7 +289,7 @@ double WMSMiniDriver_TiledWMS::Scale(const char *request) {
 }
 
 // Finds, extracts, and returns the highest resolution request string from a list, starting at item i
-CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list, int i)
+CPLString WMSMiniDriver_TiledWMS::GetLowestScale(char **& list, int i) const
 {
     CPLString req;
     double scale = -1;

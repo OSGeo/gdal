@@ -61,7 +61,7 @@ class DTEDDataset : public GDALPamDataset
     const char *GetProjectionRef() override;
     CPLErr GetGeoTransform( double * ) override;
 
-    const char* GetFileName() { return pszFilename; }
+    const char* GetFileName() const { return pszFilename; }
     void SetFileName(const char* pszFilename);
 
     static GDALDataset *Open( GDALOpenInfo * );

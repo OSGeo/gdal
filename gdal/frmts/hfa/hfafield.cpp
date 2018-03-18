@@ -1504,7 +1504,7 @@ int HFAField::GetInstBytes( GByte *pabyData, int nDataSize,
 /*      this is extracted from the data itself.                         */
 /************************************************************************/
 
-int HFAField::GetInstCount( GByte * pabyData, int nDataSize )
+int HFAField::GetInstCount( GByte * pabyData, int nDataSize ) const
 
 {
     if( chPointer == '\0' )

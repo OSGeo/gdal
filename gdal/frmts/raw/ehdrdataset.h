@@ -89,12 +89,12 @@ class EHdrDataset : public RawDataset
     std::shared_ptr<GDALRasterAttributeTable> m_poRAT;
 
 
-    CPLErr      ReadSTX();
-    CPLErr      RewriteSTX();
+    CPLErr      ReadSTX() const;
+    CPLErr      RewriteSTX() const;
     CPLErr      RewriteHDR();
     void        ResetKeyValue( const char *pszKey, const char *pszValue );
     const char *GetKeyValue( const char *pszKey, const char *pszDefault = "" );
-    void        RewriteCLR(GDALRasterBand*);
+    void        RewriteCLR(GDALRasterBand*) const;
 
   public:
     EHdrDataset();

@@ -105,12 +105,12 @@ class CPL_ODLL DDFModule
 
     /** Fetch the number of defined fields. */
 
-    int         GetFieldCount() { return nFieldDefnCount; }
+    int         GetFieldCount() const { return nFieldDefnCount; }
     DDFFieldDefn *GetField(int);
     void        AddField( DDFFieldDefn *poNewFDefn );
 
     // This is really just for internal use.
-    int         GetFieldControlLength() { return _fieldControlLength; }
+    int         GetFieldControlLength() const { return _fieldControlLength; }
     void        AddCloneRecord( DDFRecord * );
     void        RemoveCloneRecord( DDFRecord * );
 
@@ -203,15 +203,15 @@ class CPL_ODLL DDFFieldDefn
     /** Fetch a pointer to the field name (tag).
      * @return this is an internal copy and should not be freed.
      */
-    const char  *GetName() { return pszTag; }
+    const char  *GetName() const { return pszTag; }
 
     /** Fetch a longer description of this field.
      * @return this is an internal copy and should not be freed.
      */
-    const char  *GetDescription() { return _fieldName; }
+    const char  *GetDescription() const { return _fieldName; }
 
     /** Get the number of subfields. */
-    int         GetSubfieldCount() { return nSubfieldCount; }
+    int         GetSubfieldCount() const { return nSubfieldCount; }
 
     DDFSubfieldDefn *GetSubfield( int i );
     DDFSubfieldDefn *FindSubfieldDefn( const char * );
@@ -223,14 +223,14 @@ class CPL_ODLL DDFFieldDefn
      * @return The width of the field in bytes, or zero if the field is not
      * apparently of a fixed width.
      */
-    int         GetFixedWidth() { return nFixedWidth; }
+    int         GetFixedWidth() const { return nFixedWidth; }
 
     /**
      * Fetch repeating flag.
      * @see DDFField::GetRepeatCount()
      * @return TRUE if the field is marked as repeating.
      */
-    int         IsRepeating() { return bRepeatingSubfields; }
+    int         IsRepeating() const { return bRepeatingSubfields; }
 
     static char       *ExpandFormat( const char * );
 
@@ -295,10 +295,10 @@ public:
     void        SetName( const char * pszName );
 
     /** Get pointer to subfield name. */
-    const char  *GetName() { return pszName; }
+    const char  *GetName() const { return pszName; }
 
     /** Get pointer to subfield format string */
-    const char  *GetFormat() { return pszFormatString; }
+    const char  *GetFormat() const { return pszFormatString; }
     int         SetFormat( const char * pszFormat );
 
     /**
@@ -309,7 +309,7 @@ public:
      * DDFBinaryString.
      */
 
-    DDFDataType GetType() { return eType; }
+    DDFDataType GetType() const { return eType; }
 
     double      ExtractFloatData( const char *pachData, int nMaxBytes,
                                   int * pnConsumedBytes );
@@ -322,19 +322,19 @@ public:
 
     int         FormatStringValue( char *pachData, int nBytesAvailable,
                                    int *pnBytesUsed, const char *pszValue,
-                                   int nValueLength = -1 );
+                                   int nValueLength = -1 ) const;
 
     int         FormatIntValue( char *pachData, int nBytesAvailable,
-                                int *pnBytesUsed, int nNewValue );
+                                int *pnBytesUsed, int nNewValue ) const;
 
     int         FormatFloatValue( char *pachData, int nBytesAvailable,
-                                  int *pnBytesUsed, double dfNewValue );
+                                  int *pnBytesUsed, double dfNewValue ) const;
 
     /** Get the subfield width (zero for variable). */
-    int         GetWidth() { return nFormatWidth; } // zero for variable.
+    int         GetWidth() const { return nFormatWidth; } // zero for variable.
 
     int         GetDefaultValue( char *pachData, int nBytesAvailable,
-                                 int *pnBytesUsed );
+                                 int *pnBytesUsed ) const;
 
     void        Dump( FILE * fp );
 
@@ -402,7 +402,7 @@ class CPL_ODLL DDFRecord
     void        Dump( FILE * );
 
     /** Get the number of DDFFields on this record. */
-    int         GetFieldCount() { return nFieldCount; }
+    int         GetFieldCount() const { return nFieldCount; }
 
     DDFField    *FindField( const char *, int = 0 );
     DDFField    *GetField( int );
@@ -425,14 +425,14 @@ class CPL_ODLL DDFRecord
                                   double dfNewValue );
 
     /** Fetch size of records raw data (GetData()) in bytes. */
-    int         GetDataSize() { return nDataSize; }
+    int         GetDataSize() const { return nDataSize; }
 
     /**
      * Fetch the raw data for this record.  The returned pointer is effectively
      * to the data for the first field of the record, and is of size
      * GetDataSize().
      */
-    const char  *GetData() { return pachData; }
+    const char  *GetData() const { return pachData; }
 
     /**
      * Fetch the DDFModule with which this record is associated.
@@ -527,10 +527,10 @@ class CPL_ODLL DDFField
      * Return the pointer to the entire data block for this record. This
      * is an internal copy, and should not be freed by the application.
      */
-    const char         *GetData() { return pachData; }
+    const char         *GetData() const { return pachData; }
 
     /** Return the number of bytes in the data block returned by GetData(). */
-    int                 GetDataSize() { return nDataSize; }
+    int                 GetDataSize() const { return nDataSize; }
 
     int                 GetRepeatCount();
 

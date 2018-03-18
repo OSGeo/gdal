@@ -3899,7 +3899,7 @@ void GeoRasterWrapper::UnpackNBits( GByte* pabyData )
 //                                                                  PackNBits()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterWrapper::PackNBits( GByte* pabyData )
+void GeoRasterWrapper::PackNBits( GByte* pabyData ) const
 {
     int nPixCount = nBandBlockSize * nRowBlockSize * nColumnBlockSize;
 

@@ -827,7 +827,7 @@ class netCDFDataset : public GDALPamDataset
                               void * pProgressData );
     void AddGridMappingRef();
 
-    bool GetDefineMode() { return bDefineMode; }
+    bool GetDefineMode() const { return bDefineMode; }
     bool SetDefineMode( bool bNewDefineMode );
 
     CPLErr      ReadAttributes( int, int );
@@ -874,7 +874,7 @@ class netCDFDataset : public GDALPamDataset
     virtual int  GetLayerCount() override { return nLayers; }
     virtual OGRLayer* GetLayer(int nIdx) override;
 
-    int GetCDFID() { return cdfid; }
+    int GetCDFID() const { return cdfid; }
 
     /* static functions */
     static int Identify( GDALOpenInfo * );

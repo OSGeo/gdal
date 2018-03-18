@@ -122,7 +122,7 @@ public:
    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
    protected:
-   double getMaxValue();
+   double getMaxValue() const;
    double nodatavalue;
    virtual bool ElementPassesFilter(const PointData &, size_t);
    template<typename DTYPE>
@@ -437,7 +437,7 @@ CPLErr   MG4LidarRasterBand::doReadBlock(int nBlockXOff, int nBlockYOff, void * 
    return CE_None;
 }
 
-double MG4LidarRasterBand::getMaxValue()
+double MG4LidarRasterBand::getMaxValue() const
 {
    double retval;
    switch(eDataType)

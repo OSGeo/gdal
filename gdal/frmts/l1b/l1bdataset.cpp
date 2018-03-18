@@ -216,9 +216,9 @@ class TimeCode {
     {
         lMillisecond = millisecond;
     }
-    long GetYear() { return lYear; }
-    long GetDay() { return lDay; }
-    long GetMillisecond() { return lMillisecond; }
+    long GetYear() const { return lYear; }
+    long GetDay() const { return lDay; }
+    long GetMillisecond() const { return lMillisecond; }
     char* PrintTime()
     {
         snprintf(szString, L1B_TIMECODE_LENGTH,
@@ -298,23 +298,23 @@ class L1BDataset : public GDALPamDataset
     GDALRasterBand* poMaskBand;
 
     void        ProcessRecordHeaders();
-    int         FetchGCPs( GDAL_GCP *, GByte *, int );
+    int         FetchGCPs( GDAL_GCP *, GByte *, int ) const;
     static void        FetchNOAA9TimeCode(TimeCode *, const GByte *, int *);
-    void        FetchNOAA15TimeCode(TimeCode *, const GByte *, int *);
+    void        FetchNOAA15TimeCode(TimeCode *, const GByte *, int *) const;
     void        FetchTimeCode( TimeCode *psTime, const void *pRecordHeader,
-                               int *peLocationIndicator );
+                               int *peLocationIndicator ) const;
     CPLErr      ProcessDatasetHeader(const char* pszFilename);
     int         ComputeFileOffsets();
 
     void        FetchMetadata();
     void        FetchMetadataNOAA15();
 
-    vsi_l_offset GetLineOffset(int nBlockYOff);
+    vsi_l_offset GetLineOffset(int nBlockYOff) const;
 
-    GUInt16     GetUInt16(const void* pabyData);
-    GInt16      GetInt16(const void* pabyData);
-    GUInt32     GetUInt32(const void* pabyData);
-    GInt32      GetInt32(const void* pabyData);
+    GUInt16     GetUInt16(const void* pabyData) const;
+    GInt16      GetInt16(const void* pabyData) const;
+    GUInt32     GetUInt32(const void* pabyData) const;
+    GInt32      GetInt32(const void* pabyData) const;
 
     static L1BFileFormat  DetectFormat( const char* pszFilename,
                               const GByte* pabyHeader, int nHeaderBytes );
@@ -621,7 +621,7 @@ L1BDataset::~L1BDataset()
 /*                          GetLineOffset()                             */
 /************************************************************************/
 
-vsi_l_offset L1BDataset::GetLineOffset(int nBlockYOff)
+vsi_l_offset L1BDataset::GetLineOffset(int nBlockYOff) const
 {
     return (eLocationIndicator == DESCEND) ?
         nDataStartOffset + (vsi_l_offset)nBlockYOff * nRecordSize :
@@ -665,7 +665,7 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 /*      Byte swapping helpers                                           */
 /************************************************************************/
 
-GUInt16 L1BDataset::GetUInt16(const void* pabyData)
+GUInt16 L1BDataset::GetUInt16(const void* pabyData) const
 {
     GUInt16 iTemp;
     memcpy(&iTemp, pabyData, 2);
@@ -674,7 +674,7 @@ GUInt16 L1BDataset::GetUInt16(const void* pabyData)
     return iTemp;
 }
 
-GInt16 L1BDataset::GetInt16(const void* pabyData)
+GInt16 L1BDataset::GetInt16(const void* pabyData) const
 {
     GInt16 iTemp;
     memcpy(&iTemp, pabyData, 2);
@@ -683,7 +683,7 @@ GInt16 L1BDataset::GetInt16(const void* pabyData)
     return iTemp;
 }
 
-GUInt32 L1BDataset::GetUInt32(const void* pabyData)
+GUInt32 L1BDataset::GetUInt32(const void* pabyData) const
 {
     GUInt32 lTemp;
     memcpy(&lTemp, pabyData, 4);
@@ -692,7 +692,7 @@ GUInt32 L1BDataset::GetUInt32(const void* pabyData)
     return lTemp;
 }
 
-GInt32 L1BDataset::GetInt32(const void* pabyData)
+GInt32 L1BDataset::GetInt32(const void* pabyData) const
 {
     GInt32 lTemp;
     memcpy(&lTemp, pabyData, 4);
@@ -733,7 +733,7 @@ void L1BDataset::FetchNOAA9TimeCode( TimeCode *psTime,
 
 void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
                                       const GByte *pabyRecordHeader,
-                                      int *peLocationIndicator )
+                                      int *peLocationIndicator ) const
 {
     psTime->SetYear(GetUInt16(pabyRecordHeader + 2));
     psTime->SetDay(GetUInt16(pabyRecordHeader + 4));
@@ -751,7 +751,7 @@ void L1BDataset::FetchNOAA15TimeCode( TimeCode *psTime,
 
 void L1BDataset::FetchTimeCode( TimeCode *psTime,
                                 const void *pRecordHeader,
-                                int *peLocationIndicator )
+                                int *peLocationIndicator ) const
 {
     if (eSpacecraftID <= NOAA14)
     {
@@ -770,7 +770,7 @@ void L1BDataset::FetchTimeCode( TimeCode *psTime,
 /************************************************************************/
 
 int L1BDataset::FetchGCPs( GDAL_GCP *pasGCPListRow,
-                           GByte *pabyRecordHeader, int iLine )
+                           GByte *pabyRecordHeader, int iLine ) const
 {
     // LAC and HRPT GCPs are tied to the center of pixel,
     // GAC ones are slightly displaced.

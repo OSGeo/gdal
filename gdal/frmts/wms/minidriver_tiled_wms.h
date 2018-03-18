@@ -40,8 +40,8 @@ public:
                                 const GDALWMSTiledImageRequestInfo &tiri) override;
 
 protected:
-    double Scale(const char *request);
-    CPLString GetLowestScale(char **&list,int i);
+    double Scale(const char *request) const;
+    CPLString GetLowestScale(char **&list,int i) const;
     GDALWMSDataWindow m_data_window;
     char **m_requests;
     int m_bsx;

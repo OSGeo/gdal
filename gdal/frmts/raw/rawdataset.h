@@ -161,14 +161,14 @@ public:
     void         StoreNoDataValue( double );
 
     // Query methods for internal data.
-    vsi_l_offset GetImgOffset() { return nImgOffset; }
-    int          GetPixelOffset() { return nPixelOffset; }
-    int          GetLineOffset() { return nLineOffset; }
-    int          GetNativeOrder() { return bNativeOrder; }
-    int          GetIsVSIL() { return bIsVSIL; }
-    FILE        *GetFP() { return (bIsVSIL) ? reinterpret_cast<FILE *>( fpRawL ) : fpRaw; }
-    VSILFILE    *GetFPL() { CPLAssert(bIsVSIL); return fpRawL; }
-    int          GetOwnsFP() { return bOwnsFP; }
+    vsi_l_offset GetImgOffset() const { return nImgOffset; }
+    int          GetPixelOffset() const { return nPixelOffset; }
+    int          GetLineOffset() const { return nLineOffset; }
+    int          GetNativeOrder() const { return bNativeOrder; }
+    int          GetIsVSIL() const { return bIsVSIL; }
+    FILE        *GetFP() const { return (bIsVSIL) ? reinterpret_cast<FILE *>( fpRawL ) : fpRaw; }
+    VSILFILE    *GetFPL() const { CPLAssert(bIsVSIL); return fpRawL; }
+    int          GetOwnsFP() const { return bOwnsFP; }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(RawRasterBand)

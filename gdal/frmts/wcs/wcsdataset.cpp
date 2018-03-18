@@ -160,7 +160,7 @@ int WCSDataset::TestUseBlockIO( CPL_UNUSED int nXOff,
                                 int nXSize,
                                 int nYSize,
                                 int nBufXSize,
-                                int nBufYSize )
+                                int nBufYSize ) const
 {
     int bUseBlockedIO = bForceCachedIO;
 

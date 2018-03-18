@@ -68,7 +68,7 @@ public:
         COASPMetadataItem *GetNextItem();
         COASPMetadataItem *GetItem(int nItem);
         int GotoMetadataItem(const char *pszName);
-        int GetCurrentItem() { return nCurrentItem; }
+        int GetCurrentItem() const { return nCurrentItem; }
 };
 
 /* Your average metadata item */

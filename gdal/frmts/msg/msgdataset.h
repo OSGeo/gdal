@@ -52,7 +52,7 @@ class MSGRasterBand : public GDALRasterBand
     virtual CPLErr IReadBlock( int, int, void * ) override;
 
   private:
-    double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS);
+    double rRadiometricCorrection(unsigned int iDN, int iChannel, int iRow, int iCol, MSGDataset* poGDS) const;
     bool fScanNorth;
     int iLowerShift; // nr of pixels that lower HRV image is shifted compared to upper
     int iSplitLine; // line from top where the HRV image splits

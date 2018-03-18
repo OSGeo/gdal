@@ -440,7 +440,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     unsigned int i;
     unsigned int band_count = 1;
     unsigned int missing_band_count = 0;
-    unsigned char* bands = poDS->msg_reader_core->get_band_map();
+    const unsigned char* bands = poDS->msg_reader_core->get_band_map();
     unsigned char band_map[MSG_NUM_CHANNELS+1];   // map GDAL band numbers to MSG channels
     for (i=0; i < MSG_NUM_CHANNELS; i++) {
         if (bands[i]) {
@@ -507,7 +507,7 @@ GDALDataset *MSGNDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->pszProjection = nullptr;
     oSRS.exportToWkt( &(poDS->pszProjection) );
 
-    CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
+    const CALIBRATION* cal = poDS->msg_reader_core->get_calibration_parameters();
     char tagname[30];
     char field[300];
 

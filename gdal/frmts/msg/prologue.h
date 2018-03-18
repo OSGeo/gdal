@@ -30,10 +30,6 @@
 #if !defined(AFX_PROLOGUE_H__777B5B86_04F4_4A01_86F6_24615DCD8446__INCLUDED_)
 #define AFX_PROLOGUE_H__777B5B86_04F4_4A01_86F6_24615DCD8446__INCLUDED_
 
-#if _MSC_VER > 1000
-#pragma once
-#endif // _MSC_VER > 1000
-
 #include <fstream>
 
 class ReferenceGridRecord
@@ -109,12 +105,12 @@ public:
 
   void read(std::ifstream & ifile);
 
-  const ImageDescriptionRecord * idr()
+  const ImageDescriptionRecord * idr() const
   {
     return m_idr;
   }
 
-  const RadiometricProcessingRecord * rpr()
+  const RadiometricProcessingRecord * rpr() const
   {
     return m_rpr;
   }

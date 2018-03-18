@@ -990,7 +990,7 @@ int GeoRasterRasterBand::GetMaskFlags()
 //                                                            ApplyNoDataArry()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterRasterBand::ApplyNoDataArry(void* pBuffer)
+void GeoRasterRasterBand::ApplyNoDataArry(void* pBuffer) const
 {
     int i = 0;
     int j = 0;

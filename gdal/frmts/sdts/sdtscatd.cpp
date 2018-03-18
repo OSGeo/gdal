@@ -199,7 +199,7 @@ int SDTS_CATD::Read( const char * pszFilename )
 /*                         GetModuleFilePath()                          */
 /************************************************************************/
 
-const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
+const char * SDTS_CATD::GetModuleFilePath( const char * pszModule ) const
 
 {
     for( int i = 0; i < nEntries; i++ )
@@ -215,7 +215,7 @@ const char * SDTS_CATD::GetModuleFilePath( const char * pszModule )
 /*                           GetEntryModule()                           */
 /************************************************************************/
 
-const char * SDTS_CATD::GetEntryModule( int iEntry )
+const char * SDTS_CATD::GetEntryModule( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
@@ -239,7 +239,7 @@ const char * SDTS_CATD::GetEntryModule( int iEntry )
  * and will be something like "Attribute Primary        ".
  */
 
-const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
+const char * SDTS_CATD::GetEntryTypeDesc( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
@@ -273,7 +273,7 @@ const char * SDTS_CATD::GetEntryTypeDesc( int iEntry )
  * </ul>
  */
 
-SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
+SDTSLayerType SDTS_CATD::GetEntryType( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nEntries )
@@ -316,7 +316,7 @@ SDTSLayerType SDTS_CATD::GetEntryType( int iEntry )
  * string should not be altered, or freed by the application.
  */
 
-const char * SDTS_CATD::GetEntryFilePath( int iEntry )
+const char * SDTS_CATD::GetEntryFilePath( int iEntry ) const
 
 {
     if( iEntry < 0 || iEntry >= nEntries )

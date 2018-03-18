@@ -106,7 +106,7 @@ void VRTFilteredSource::SetFilteringDataTypesSupported( int nTypeCount,
 /*                          IsTypeSupported()                           */
 /************************************************************************/
 
-int VRTFilteredSource::IsTypeSupported( GDALDataType eTestType )
+int VRTFilteredSource::IsTypeSupported( GDALDataType eTestType ) const
 
 {
     for( int i = 0; i < m_nSupportedTypesCount; i++ )

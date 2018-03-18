@@ -40,7 +40,7 @@ NAMESPACE_LERC_START
 // Returns false if input seems wrong
 // Not safe if fed garbage !!!
 // Zero size mask is fine, only checks the end marker
-bool BitMask::RLEdecompress(const Byte* src, size_t nRemainingBytes) {
+bool BitMask::RLEdecompress(const Byte* src, size_t nRemainingBytes) const {
     Byte *dst = m_pBits;
     int sz = Size();
     short int count;

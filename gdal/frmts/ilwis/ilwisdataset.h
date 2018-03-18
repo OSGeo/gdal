@@ -62,15 +62,15 @@ public:
     ValueRange(double min, double max);  // step = 1
     ValueRange(double min, double max, double step);
     explicit ValueRange(const std::string& str);
-    std::string ToString();
-    ilwisStoreType get_NeededStoreType() { return st; }
-    double get_rLo() { return _rLo; }
-    double get_rHi() { return _rHi; }
-    double get_rStep() { return _rStep; }
-    double get_rRaw0() { return _r0; }
-    int get_iDec() { return _iDec; }
-    double rValue(int raw);
-    int iRaw(double value);
+    std::string ToString() const;
+    ilwisStoreType get_NeededStoreType() const { return st; }
+    double get_rLo() const { return _rLo; }
+    double get_rHi() const { return _rHi; }
+    double get_rStep() const { return _rStep; }
+    double get_rRaw0() const { return _r0; }
+    int get_iDec() const { return _iDec; }
+    double rValue(int raw) const;
+    int iRaw(double value) const;
 
 private:
     void init(double rRaw0);

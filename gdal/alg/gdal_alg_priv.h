@@ -137,7 +137,7 @@ public:
 
 struct IntEqualityTest
 {
-    bool operator()(GInt32 a, GInt32 b) { return a == b; }
+    bool operator()(GInt32 a, GInt32 b) const { return a == b; }
 };
 
 typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonEnumerator;

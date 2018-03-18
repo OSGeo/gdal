@@ -127,13 +127,13 @@ struct ILSize {
         x = x_; y = y_; z = z_; c = c_; l = l_;
     }
 
-    bool operator==(const ILSize& other)
+    bool operator==(const ILSize& other) const
     {
         return ((x == other.x) && (y == other.y) && (z == other.z) &&
             (c == other.c) && (l == other.l));
     }
 
-    bool operator!=(const ILSize& other) { return !(*this == other); }
+    bool operator!=(const ILSize& other) const { return !(*this == other); }
 };
 
 std::ostream& operator<<(std::ostream &out, const ILSize& sz);

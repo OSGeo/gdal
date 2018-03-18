@@ -164,7 +164,7 @@ CPL_C_END
 /*! @cond Doxygen_Suppress */
 struct CPLXMLTreeCloserDeleter
 {
-    void operator()(CPLXMLNode* psNode) { CPLDestroyXMLNode(psNode); }
+    void operator()(CPLXMLNode* psNode) const { CPLDestroyXMLNode(psNode); }
 };
 /*! @endcond */
 

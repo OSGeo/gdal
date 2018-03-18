@@ -92,7 +92,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     int         nOffsetInBuffer;
 
     char        Getc();
-    GUIntBig    Tell();
+    GUIntBig    Tell() const;
     int         Seek( GUIntBig nOffset );
 
   protected:

@@ -500,7 +500,7 @@ void EHdrDataset::ResetKeyValue( const char *pszKey, const char *pszValue )
 /*                           RewriteCLR()                               */
 /************************************************************************/
 
-void EHdrDataset::RewriteCLR( GDALRasterBand* poBand )
+void EHdrDataset::RewriteCLR( GDALRasterBand* poBand ) const
 
 {
     CPLString osCLRFilename = CPLResetExtension(GetDescription(), "clr");
@@ -742,7 +742,7 @@ CPLErr EHdrDataset::RewriteHDR()
 /*                             RewriteSTX()                             */
 /************************************************************************/
 
-CPLErr EHdrDataset::RewriteSTX()
+CPLErr EHdrDataset::RewriteSTX() const
 {
     const CPLString osPath = CPLGetPath(GetDescription());
     const CPLString osName = CPLGetBasename(GetDescription());
@@ -784,7 +784,7 @@ CPLErr EHdrDataset::RewriteSTX()
 /*                              ReadSTX()                               */
 /************************************************************************/
 
-CPLErr EHdrDataset::ReadSTX()
+CPLErr EHdrDataset::ReadSTX() const
 {
     const CPLString osPath = CPLGetPath(GetDescription());
     const CPLString osName = CPLGetBasename(GetDescription());
