@@ -5219,6 +5219,11 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 return nullptr;
             }
 
+            OGR_G_DestroyGeometry(psOptions->hClipSrc);
+            psOptions->hClipSrc = nullptr;
+            CPLFree(psOptions->pszClipSrcDS);
+            psOptions->pszClipSrcDS = nullptr;
+
             VSIStatBufL  sStat;
             psOptions->bClipSrc = true;
             if ( IsNumber(papszArgv[i+1])
@@ -5234,7 +5239,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 oRing.addPoint( CPLAtof(papszArgv[i+3]), CPLAtof(papszArgv[i+2]) );
                 oRing.addPoint( CPLAtof(papszArgv[i+1]), CPLAtof(papszArgv[i+2]) );
 
-                OGR_G_DestroyGeometry(psOptions->hClipSrc);
                 psOptions->hClipSrc = (OGRGeometryH) OGRGeometryFactory::createGeometry(wkbPolygon);
                 ((OGRPolygon *) psOptions->hClipSrc)->addRing( &oRing );
                 i += 4;
@@ -5244,7 +5248,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];
-                OGR_G_DestroyGeometry(psOptions->hClipSrc);
                 OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, (OGRGeometry **)&psOptions->hClipSrc);
                 if (psOptions->hClipSrc == nullptr)
                 {
@@ -5261,7 +5264,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             }
             else
             {
-                CPLFree(psOptions->pszClipSrcDS);
                 psOptions->pszClipSrcDS = CPLStrdup(papszArgv[i+1]);
                 i ++;
             }
@@ -5293,6 +5295,11 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 return nullptr;
             }
 
+            OGR_G_DestroyGeometry(psOptions->hClipDst);
+            psOptions->hClipDst = nullptr;
+            CPLFree(psOptions->pszClipDstDS);
+            psOptions->pszClipDstDS = nullptr;
+
             VSIStatBufL  sStat;
             if ( IsNumber(papszArgv[i+1])
                  && papszArgv[i+2] != nullptr
@@ -5307,7 +5314,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 oRing.addPoint( CPLAtof(papszArgv[i+3]), CPLAtof(papszArgv[i+2]) );
                 oRing.addPoint( CPLAtof(papszArgv[i+1]), CPLAtof(papszArgv[i+2]) );
 
-                OGR_G_DestroyGeometry(psOptions->hClipDst);
                 psOptions->hClipDst = (OGRGeometryH) OGRGeometryFactory::createGeometry(wkbPolygon);
                 ((OGRPolygon *) psOptions->hClipDst)->addRing( &oRing );
                 i += 4;
@@ -5317,7 +5323,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
                 char* pszTmp = (char*) papszArgv[i+1];
-                OGR_G_DestroyGeometry(psOptions->hClipDst);
                 OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, (OGRGeometry **)&psOptions->hClipDst);
                 if (psOptions->hClipDst == nullptr)
                 {
@@ -5330,7 +5335,6 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             }
             else
             {
-                CPLFree(psOptions->pszClipDstDS);
                 psOptions->pszClipDstDS = CPLStrdup(papszArgv[i+1]);
                 i ++;
             }
