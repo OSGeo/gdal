@@ -4715,7 +4715,7 @@ static char GCIOAPI_CALL1(*) _escapeString_GCIO (
     res= CPLStrdup(theString);
     return res;
   }
-  if( (res= (char *)CPLMalloc(l*2)) )
+  if( (res= (char *)CPLMalloc(l*2+1)) )
   {
     for (i= 0, o= 0; i<l; i++, o++)
     {
