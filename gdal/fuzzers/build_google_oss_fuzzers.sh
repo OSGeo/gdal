@@ -61,8 +61,10 @@ build_fuzzer gtiff_mmap $(dirname $0)/gdal_fuzzer.cpp -DREGISTER_FUNC=GDALRegist
 
 fuzzerFiles=$(dirname $0)/*.cpp
 for F in $fuzzerFiles; do
-    fuzzerName=$(basename $F .cpp)
-    build_fuzzer $fuzzerName $F
+    if test $F != "$(dirname $0)/fuzzingengine.cpp"; then
+        fuzzerName=$(basename $F .cpp)
+        build_fuzzer $fuzzerName $F
+    fi
 done
 
 build_ogr_specialized_fuzzer dxf RegisterOGRDXF "/vsimem/test" "/vsimem/test"
