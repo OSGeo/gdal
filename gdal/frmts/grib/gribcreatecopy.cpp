@@ -755,20 +755,6 @@ float* GRIB2Section567Writer::GetFloatData()
             static_cast<GSpacing>(-m_nXSize * sizeof(float)):
             static_cast<GSpacing>(m_nXSize * sizeof(float)),
         nullptr);
-    if( eErr == CE_None && (m_eDT == GDT_Float32 || m_eDT == GDT_Float64) )
-    {
-        for( GUInt32 i = 0; i < m_nDataPoints; i++ )
-        {
-            if( !CPLIsFinite( pafData[i] ) )
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                            "Non-finite values not supported for "
-                            "this data encoding");
-                eErr = CE_Failure;
-                break;
-            }
-        }
-    }
     if( eErr != CE_None )
     {
         VSIFree(pafData);
@@ -783,6 +769,14 @@ float* GRIB2Section567Writer::GetFloatData()
         {
             continue;
         }
+        if( !CPLIsFinite( pafData[i] ) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Non-finite values not supported for "
+                        "this data encoding");
+            VSIFree(pafData);
+            return nullptr;
+        }
         pafData[i] += m_fValOffset;
         if( pafData[i] < m_fMin ) m_fMin = pafData[i];
         if( pafData[i] > m_fMax ) m_fMax = pafData[i];
@@ -790,6 +784,21 @@ float* GRIB2Section567Writer::GetFloatData()
     if( m_fMin > m_fMax )
     {
         m_fMin = m_fMax = static_cast<float>(m_dfNoData);
+    }
+
+    // We chech that the actual range of values got from the above RasterIO
+    // request does not go over the expected range of the datatype, as we
+    // later assume that for computing nMaxBitsPerElt. 
+    // This shouldn't happen for well-behaved drivers, but this can still
+    // happen in practice, if some drivers don't completely fill buffers etc.
+    if( m_fMax > m_fMin &&
+        GDALDataTypeIsInteger(m_eDT) &&
+        ceil(log(m_fMax - m_fMin) / log(2.0)) > GDALGetDataTypeSize(m_eDT) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Garbage values found when requesting input dataset");
+        VSIFree(pafData);
+        return nullptr;
     }
 
     m_dfMinScaled =
