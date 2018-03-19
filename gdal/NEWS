@@ -1,3 +1,114 @@
+= GDAL/OGR 2.2.4 Release Notes = 
+
+The 2.2.4 release is a bug fix release.
+
+== Build ==
+
+ * configure: add support for ECW SDK 5.4, by detecting if we must link against the newabi or oldabi link
+
+== Port ==
+
+ * CPLSetErrorHandler(): avoid later crashes when passing a null callback (https://github.com/OSGeo/gdal/pull/298)
+
+== GDAL utilities ==
+
+ * gdalinfo: make sure to display geodetic coordinates always in degree (and not potentially in another unit such as grad) (#4198)
+ * gdalinfo / VRT: fix crash with implicit overviews on per-dataset mask band (https://github.com/mapbox/rasterio/issues/1266#issuecomment-367233149)
+ * gdalwarp: fix when several input datasets with different SRS are specified, and no explicit target SRS is provided (#7170)
+ * gdal_rasterize: fix crash in some situations with ALL_TOUCHED option (#7176)
+
+== GDAL algorithms ==
+
+ * Warping: use panSrcBands[0] in the single band case (regression fix, https://github.com/OSGeo/gdal/pull/295)
+
+== GDAL drivers ==
+
+AirSAR driver:
+ * fix computation of imaginary part in C23 case (#7222)
+
+EHdr driver:
+ * fix read heap buffer overflow with nbits < 8. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=6724. Credit to OSS Fuzz
+
+GTiff driver:
+ * use consistently multiplication/division by 257 when converting between GDAL [0,255] range to TIFF [0,65535] range for color map values (#2213)
+
+netCDF driver:
+ * behave correctly when an extra dimension of a variable has a corresponding 1D variable of different names (#7165)
+
+NITF driver:
+ * fix swapped lines and samples in IMRFCA (https://github.com/OSGeo/gdal/pull/289)
+
+PCRaster driver:
+ * fix fseek/ftell for large files on Windows (#7255)
+
+RRASTER driver:
+ * fix wrong declaration of PIXELTYPE=SIGNEDBYTE for datatype=INT1S
+ * fix reading empty nodatavalue keyword
+
+Sentinel2 driver:
+ * make sure that the True Color Image subdatset really uses the R,G,B bands and not the R,R,R (#7251)
+
+VRT driver:
+ * VRTDerivedRasterBand: fix detection of Python runtime already loaded when more than 100 modules are linked. Fixes QGIS3 use case (#7213)
+
+== OGR core ==
+
+ * Fixed memory leak in OGRPolygon::PointOnSurface method (https://github.com/OSGeo/gdal/pull/269)
+ * OGRCT: make sure to free the proj4 context after freeing the projection objects, to avoid crashes
+
+== OGR utilities ==
+
+ * ogr2ogr: honour -select when using -addfiels; fix converting from Memory to Memory datasources (#7217)
+
+== OGR drivers ==
+
+Carto driver:
+ * fix append mode by retrieving the sequence name for the primary key (#7203)
+ * fix insertion with ogr2ogr -preserve_fid (#7216)
+ * fix missing features when iterating over a SQL result layer with pagination (#6880)
+
+GeoJSON driver:
+ * fix writing of id with RFC7946=YES (#7194)
+ * Add support for json-c v0.13 (#7195)
+
+GPKG driver:
+ * fix incorrect rtree_<t>_<c>_update3 trigger statement, as found in https://github.com/opengeospatial/geopackage/issues/414
+
+LIBKML driver:
+ * workaround Windows specific issue with libkml (at least the version used by OSGeo4W at time of writing), where tabulations as coordinate separators aren't properly handled (#7231)
+ * workaround Windows specific issue if the content of <coordinates> is non-empty and does not contain any digit (#7232)
+
+MITAB driver:
+ * fix crash on reading TAB views (#7171)
+ * add support for SWEREF99 datum (#7256)
+
+NAS driver:
+ * also accept unqualified attribute name in wfs:Update
+ * fix memory leak and potential assertion. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2661. Credit to OSS Fuzz
+
+NTF driver: 
+ * fix regression introduced by fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=2166 causing some valid records to be skipped (#7204)
+
+Shapefile driver:
+ * fix write heap buffer overflow when provided with empty string filename. Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=6992. Credit to OSS Fuzz
+ * fix potential read heap buffer overflow in single-point polygon in SHPRewindObject(). Fixes https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=6993. Credit to OSS Fuzz
+
+ODBC driver:
+ * deal with table names that require double quoting (#7242)
+
+XLSX driver:
+ * fix updating multi layer document where existing layers where dropped (#7225)
+ * on writing, use %.16g formatting for floating point numbers (#7230)
+
+== GNM ==
+ * avoid potential issue with CPL circular buffers (can happen if there are extra drivers that use CPLGet....() functions)
+
+== SWIG bindings ==
+
+ * Fix potential null pointer dereference in Python/Perl Dataset.WriteRaster() and Perl Dataset.ReadRaster() when buffer type is not specified and there is a single band
+ * Python bindings: add addFields and forceNullable options to gdal.VectorTranslate() (#7217)
+ * Python bindings: fix build when CC variable is made of serveral words
+
 = GDAL/OGR 2.2.3 Release Notes = 
 
 The 2.2.3 release is a bug fix release.
