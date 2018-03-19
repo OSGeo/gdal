@@ -844,7 +844,7 @@ public:
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+                              GDALRasterIOExtraArg* psExtraArgIn ) override;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
@@ -905,7 +905,7 @@ public:
                               void *pData, int nBufXSize, int nBufYSize,
                               GDALDataType eBufType,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
-                              GDALRasterIOExtraArg* psExtraArg ) override;
+                              GDALRasterIOExtraArg* psExtraArgIn ) override;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
@@ -976,7 +976,7 @@ public:
                              void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType,
                              GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GDALRasterIOExtraArg* psExtraArg ) override;
+                             GDALRasterIOExtraArg* psExtraArgIn ) override;
 
     virtual double GetMinimum( int nXSize, int nYSize, int *pbSuccess ) override;
     virtual double GetMaximum( int nXSize, int nYSize, int *pbSuccess ) override;
@@ -1021,7 +1021,7 @@ public:
 class VRTFilteredSource : public VRTComplexSource
 {
 private:
-    int          IsTypeSupported( GDALDataType eType ) const;
+    int          IsTypeSupported( GDALDataType eTestType ) const;
 
 protected:
     int          m_nSupportedTypesCount;
