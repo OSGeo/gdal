@@ -6,11 +6,13 @@ environment:
     VS_VER: 2017
     SDK: release-1911
     MSVC_VER: 1911
+    PYTHON: "C:\Python27"
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     platform: x64
     VS_VER: 2015
     SDK: release-1900-x64
     MSVC_VER: 1900
+    PYTHON: "C:\Python27-x64"
 
 shallow_clone: true
 
@@ -31,22 +33,20 @@ install:
       Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
       Install-Module Pscx -AllowClobber
       Install-Module VSSetup -Scope CurrentUser
+      $env:PATH="$env:PYTHON;$env:PATH"
       # Install SWIG and VC for Python2.7 by Choco
       cinst -y --no-progress swig vcpython27
       if($env:platform -eq "x86")
       {
         Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture x86
-        $env:PATH="c:\python27;$env:PATH"
         $env:WIN64_ARG=""
         exec { pip install numpy }
       }
       else
       {
         Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture amd64
-        $env:PATH="c:\python27-x64;$env:PATH"
         $env:WIN64_ARG="WIN64=YES"
-        appveyor DownloadFile "https://pypi.python.org/packages/64/f2/2aa3b3274abe211b773e8a6d8801e19a9451646c213a333359c6a600484a/numpy-1.14.2-cp27-none-win_amd64.whl#md5=187a94722b84d65cc3a9ecfce27ee3b2" -FileName numpy-1.14.2-cp27-none-win_amd64.whl
-        exec { pip install numpy-1.14.2-cp27-none-win_amd64.whl }
+        exec { pip installc "https://pypi.python.org/packages/64/f2/2aa3b3274abe211b773e8a6d8801e19a9451646c213a333359c6a600484a/numpy-1.14.2-cp27-none-win_amd64.whl#md5=187a94722b84d65cc3a9ecfce27ee3b2" }
       }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
       $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
