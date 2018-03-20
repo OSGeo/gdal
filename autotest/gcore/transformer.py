@@ -490,15 +490,6 @@ def transformer_9():
 
 def transformer_10():
 
-    sr = osr.SpatialReference()
-    sr.ImportFromProj4('+proj=longlat +datum=WGS84 +geoidgrids=./tmp/fake.gtx +vunits=m +foo=bar +no_defs')
-    if sr.ExportToProj4().find('foo=bar') >= 0:
-        print('Missing proj.4')
-        return 'skip'
-    if sr.ExportToProj4().find('geoidgrids') < 0:
-        print('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
-        return 'skip'
-
     # Create fake vertical shift grid
     out_ds = gdal.GetDriverByName('GTX').Create('tmp/fake.gtx',10,10,1,gdal.GDT_Float32)
     out_ds.SetGeoTransform([-180,36,0,90,0,-18])
@@ -508,6 +499,16 @@ def transformer_10():
     out_ds.GetRasterBand(1).Fill(100)
     out_ds = None
 
+    sr = osr.SpatialReference()
+    sr.ImportFromProj4('+proj=longlat +datum=WGS84 +geoidgrids=./tmp/fake.gtx +vunits=m +foo=bar +no_defs')
+    if sr.ExportToProj4().find('foo=bar') >= 0:
+        print('Missing proj.4')
+        gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
+        return 'skip'
+    if sr.ExportToProj4().find('geoidgrids') < 0:
+        print('Missing geoidgrids in %s. Outdated proj.4 version' % sr.ExportToProj4())
+        gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
+        return 'skip'
 
     # Create a fake DEM
     ds_dem = gdal.GetDriverByName('GTiff').Create('/vsimem/dem.tif', 100, 100, 1, gdal.GDT_Byte)
