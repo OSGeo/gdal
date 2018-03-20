@@ -1,7 +1,5 @@
 %extend OGRLayerShadow {
 // File: ogrlayer_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id$\") ";
-
 %feature("docstring")  Reference "int OGR_L_Reference(OGRLayerH
 hLayer) ";
 
@@ -347,7 +345,7 @@ OGRERR_NONE on success. ";
 %feature("docstring")  DeleteField "OGRErr
 OGR_L_DeleteField(OGRLayerH hLayer, int iField)
 
-Create a new field on a layer.
+Delete an existing field on a layer.
 
 You must use this to delete existing fields on a real layer.
 Internally the OGRFeatureDefn for the layer will be updated to reflect
@@ -793,10 +791,13 @@ features that geometrically intersect the filter geometry will be
 returned.
 
 Currently this test is may be inaccurately implemented, but it is
-guaranteed that all features who's envelope (as returned by
+guaranteed that all features whose envelope (as returned by
 OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter will
 be returned. This can result in more shapes being returned that should
 strictly be the case.
+
+Starting with GDAL 2.3, features with null or empty geometries will
+never be considered as matching a spatial filter.
 
 This function makes an internal copy of the passed geometry. The
 passed geometry remains the responsibility of the caller, and may be
@@ -1045,14 +1046,20 @@ hLayer:  handle to the layer
 geometry column name. ";
 
 %feature("docstring")  GetStyleTable "OGRStyleTableH
-OGR_L_GetStyleTable(OGRLayerH hLayer) ";
+OGR_L_GetStyleTable(OGRLayerH hLayer)
+
+Get style table. ";
 
 %feature("docstring")  SetStyleTableDirectly "void
 OGR_L_SetStyleTableDirectly(OGRLayerH hLayer, OGRStyleTableH
-hStyleTable) ";
+hStyleTable)
+
+Set style table (and take ownership) ";
 
 %feature("docstring")  SetStyleTable "void
-OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable) ";
+OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
+
+Set style table. ";
 
 %feature("docstring")  GetName "const char* OGR_L_GetName(OGRLayerH
 hLayer)
@@ -1173,7 +1180,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1192,6 +1199,11 @@ PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the containment of
 features of method layer within the features of this layer. This will
 speed up the method significantly in some cases. Requires that the
 prepared geometries are in effect.
+
+KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result
+features with lower dimension geometry that would otherwise be added
+to the result layer. The default is to add but only if the result
+layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Intersection().
 
@@ -1227,13 +1239,13 @@ pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char
 Union of two layers.
 
 The result layer contains features whose geometries represent areas
-that are in either in the input layer or in the method layer. The
-features in the result layer have attributes from both input and
-method layers. For features which represent areas that are only in the
-input or in the method layer the respective attributes have undefined
-values. The schema of the result layer can be set by the user or, if
-it is empty, is initialized to contain all fields in the input and
-method layers.
+that are in either in the input layer, in the method layer, or in
+both. The features in the result layer have attributes from both input
+and method layers. For features which represent areas that are only in
+the input or in the method layer the respective attributes have
+undefined values. The schema of the result layer can be set by the
+user or, if it is empty, is initialized to contain all fields in the
+input and method layers.
 
 If the schema of the result is set by user and contains fields that
 have the same name as a field in input and in method layer, then the
@@ -1246,7 +1258,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1260,6 +1272,11 @@ created from the fields of the method layer.
 USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
 geometries to pretest intersection of features of method layer with
 features of this layer.
+
+KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result
+features with lower dimension geometry that would otherwise be added
+to the result layer. The default is to add but only if the result
+layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Union().
 
@@ -1315,7 +1332,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1377,7 +1394,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1391,6 +1408,11 @@ created from the fields of the method layer.
 USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared
 geometries to pretest intersection of features of method layer with
 features of this layer.
+
+KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result
+features with lower dimension geometry that would otherwise be added
+to the result layer. The default is to add but only if the result
+layer has an unknown geometry type.
 
 This function is the same as the C++ method OGRLayer::Identity().
 
@@ -1445,7 +1467,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1502,7 +1524,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.
@@ -1558,7 +1580,7 @@ layer and copy it into a memory layer.
 This method relies on GEOS support. Do not use unless the GEOS support
 is compiled in.  The recognized list of options is :
 SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature
-could not be inserted.
+could not be inserted or a GEOS call failed.
 
 PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into
 MultiPolygons, or LineStrings to MultiLineStrings.

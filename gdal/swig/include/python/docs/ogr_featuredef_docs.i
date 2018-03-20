@@ -1,8 +1,5 @@
 %extend OGRFeatureDefnShadow {
 // File: ogrfeaturedefn_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfeaturedefn.cpp
-32696 2016-01-03 10:48:58Z rouault $\") ";
-
 %feature("docstring")  Create "OGRFeatureDefnH OGR_FD_Create(const
 char *pszName)
 
@@ -208,7 +205,7 @@ hDefn:  handle to the feature definition to get the field definition
 from.
 
 iGeomField:  the geometry field to fetch, between 0 and
-GetGeomFieldCount()-1.
+GetGeomFieldCount() - 1.
 
 an handle to an internal field definition object or NULL if invalid
 index. This object should not be modified or freed by the application.
@@ -249,7 +246,7 @@ Delete an existing geometry field definition.
 
 To delete an existing geometry field definition from a layer
 definition, do not use this function directly, but use
-OGR_L_DeleteGeomField() instead (*not implemented yet*).
+OGR_L_DeleteGeomField() instead ( not implemented yet).
 
 This method should only be called while there are no OGRFeature
 objects in existence based on this OGRFeatureDefn.

@@ -1,8 +1,5 @@
 %extend OGRFieldDefnShadow {
 // File: ogrfielddefn_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrfielddefn.cpp
-31961 2015-12-03 02:01:09Z goatbar $\") ";
-
 %feature("docstring")  Create "OGRFieldDefnH OGR_Fld_Create(const
 char *pszName, OGRFieldType eType)
 
@@ -187,10 +184,10 @@ OGR_Fld_IsDefaultDriverSpecific(OGRFieldDefnH hDefn)
 
 Returns whether the default value is driver specific.
 
-Driver specific default values are those that are *not* NULL, a
-numeric value, a literal value enclosed between single quote
-characters, CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or datetime
-literal value.
+Driver specific default values are those that are not NULL, a numeric
+value, a literal value enclosed between single quote characters,
+CURRENT_TIMESTAMP, CURRENT_TIME, CURRENT_DATE or datetime literal
+value.
 
 This function is the same as the C++ method
 OGRFieldDefn::IsDefaultDriverSpecific().
@@ -412,7 +409,7 @@ By default, fields are nullable.
 
 Even if this method returns FALSE (i.e not-nullable field), it doesn't
 mean that OGRFeature::IsFieldSet() will necessary return TRUE, as
-fields can be temporary unset and null/not-null validation is usually
+fields can be temporary unset and null /not-null validation is usually
 done when OGRLayer::CreateFeature()/SetFeature() is called.
 
 This method is the same as the C++ method OGRFieldDefn::IsNullable().
