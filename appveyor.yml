@@ -45,7 +45,8 @@ install:
         Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture amd64
         $env:PATH="c:\python27-x64;$env:PATH"
         $env:WIN64_ARG="WIN64=YES"
-        exec { pip install "https://pypi.python.org/packages/64/f2/2aa3b3274abe211b773e8a6d8801e19a9451646c213a333359c6a600484a/numpy-1.14.2-cp27-none-win_amd64.whl#md5=187a94722b84d65cc3a9ecfce27ee3b2" }
+        appveyor DownloadFile "https://pypi.python.org/packages/64/f2/2aa3b3274abe211b773e8a6d8801e19a9451646c213a333359c6a600484a/numpy-1.14.2-cp27-none-win_amd64.whl#md5=187a94722b84d65cc3a9ecfce27ee3b2" -FileName numpy-1.14.2-cp27-none-win_amd64.whl
+        exec { pip install numpy-1.14.2-cp27-none-win_amd64.whl }
       }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
       $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
