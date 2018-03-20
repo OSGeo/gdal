@@ -161,8 +161,9 @@ CPL_C_END
 
 extern "C++"
 {
-
+#ifndef DOXYGEN_SKIP
 #include <memory>
+#endif
 
 /*! @cond Doxygen_Suppress */
 struct CPLXMLTreeCloserDeleter
