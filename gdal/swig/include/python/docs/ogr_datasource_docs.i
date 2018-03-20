@@ -1,8 +1,5 @@
 %extend OGRDataSourceShadow {
 // File: ogrdatasource_8cpp.xml
-%feature("docstring")  CPL_CVSID "CPL_CVSID(\"$Id: ogrdatasource.cpp
-33105 2016-01-23 15:27:32Z rouault $\") ";
-
 %feature("docstring")  Destroy "void OGR_DS_Destroy(OGRDataSourceH
 hDS)
 
@@ -53,7 +50,10 @@ pszName:  the name for the new layer. This should ideally not match
 any existing layer on the datasource.
 
 hSpatialRef:  handle to the coordinate system to use for the new
-layer, or NULL if no coordinate system is available.
+layer, or NULL if no coordinate system is available. The driver might
+only increase the reference counter of the object to take ownership,
+and not make a full copy, so do not use OSRDestroySpatialReference(),
+but OSRRelease() instead when you are done with the object.
 
 eType:  the geometry type for the layer. Use wkbUnknown if there are
 no constraints on the types geometry to be written.
@@ -284,14 +284,18 @@ pointer to an internal name string which should not be modified or
 freed by the caller. ";
 
 %feature("docstring")  SyncToDisk "OGRErr
-OGR_DS_SyncToDisk(OGRDataSourceH hDS) ";
+OGR_DS_SyncToDisk(OGRDataSourceH hDS)
+
+Flush pending changes to disk.
+
+See GDALDataset::FlushCache() ";
 
 %feature("docstring")  GetDriver "OGRSFDriverH
 OGR_DS_GetDriver(OGRDataSourceH hDS)
 
 Returns the driver that the dataset was opened with.
 
-NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the returned
+NOTE: Starting with GDAL 2.0, it is NOT safe to cast the returned
 handle to OGRSFDriver*. If a C++ object is needed, the handle should
 be cast to GDALDriver*.
 
@@ -306,14 +310,19 @@ NULL if driver info is not available, or pointer to a driver owned by
 the OGRSFDriverManager. ";
 
 %feature("docstring")  GetStyleTable "OGRStyleTableH
-OGR_DS_GetStyleTable(OGRDataSourceH hDS) ";
+OGR_DS_GetStyleTable(OGRDataSourceH hDS)
+
+Get style table. ";
 
 %feature("docstring")  SetStyleTableDirectly "void
 OGR_DS_SetStyleTableDirectly(OGRDataSourceH hDS, OGRStyleTableH
-hStyleTable) ";
+hStyleTable)
+
+Set style table (and take ownership) ";
 
 %feature("docstring")  SetStyleTable "void
 OGR_DS_SetStyleTable(OGRDataSourceH hDS, OGRStyleTableH hStyleTable)
-";
+
+Set style table. ";
 
 }
