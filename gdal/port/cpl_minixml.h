@@ -159,6 +159,9 @@ CPL_C_END
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
+
 #include <memory>
 
 /*! @cond Doxygen_Suppress */
@@ -182,6 +185,9 @@ class CPLXMLTreeCloser: public std::unique_ptr<CPLXMLNode, CPLXMLTreeCloserDelet
    * @return the node pointer */
   CPLXMLNode* getDocumentElement();
 };
+
+} // extern "C++"
+
 #endif /* __cplusplus */
 
 #endif /* CPL_MINIXML_H_INCLUDED */
