@@ -26,8 +26,8 @@
 
 #include "gdal_unit_test.h"
 
-#include <ogr_api.h>
-#include <ogrsf_frmts.h>
+#include "ogr_api.h"
+#include "ogrsf_frmts.h"
 
 #ifdef HAVE_GEOS
 #include <geos_c.h>

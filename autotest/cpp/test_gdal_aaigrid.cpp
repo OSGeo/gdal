@@ -26,10 +26,10 @@
 
 #include "gdal_unit_test.h"
 
-#include <cpl_string.h>
-#include <gdal_alg.h>
-#include <gdal_priv.h>
-#include <gdal.h>
+#include "cpl_string.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "gdal.h"
 
 #include <fstream>
 #include <sstream>

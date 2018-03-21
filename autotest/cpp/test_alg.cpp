@@ -31,8 +31,8 @@
 
 #include "cpl_conv.h"
 
-#include <gdal_alg.h>
-#include <gdalwarper.h>
+#include "gdal_alg.h"
+#include "gdalwarper.h"
 
 namespace tut
 {

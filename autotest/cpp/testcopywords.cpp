@@ -28,7 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
-#include <gdal.h>
+#include "gdal.h"
 
 #include <iostream>
 

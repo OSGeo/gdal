@@ -25,10 +25,10 @@
 
 #include "gdal_unit_test.h"
 
-#include <gdal_priv.h>
-#include <gdal_utils.h>
-#include <gdal_priv_templates.hpp>
-#include <gdal.h>
+#include "gdal_priv.h"
+#include "gdal_utils.h"
+#include "gdal_priv_templates.hpp"
+#include "gdal.h"
 
 #include <limits>
 #include <string>
