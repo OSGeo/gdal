@@ -4775,81 +4775,130 @@ dnl ---------------------------------------------------------------------------
 dnl PROJ.4 related stuff.
 dnl ---------------------------------------------------------------------------
 
-AC_MSG_CHECKING([how to link PROJ.4 library])
+AC_MSG_CHECKING([how to link PROJ library])
 
-AC_ARG_WITH(static_proj4,[  --with-static-proj4=ARG Compile with PROJ.4 statically (ARG=no or path)],,)
+AC_ARG_WITH(proj,[  --with-proj=ARG Compile with PROJ.x (ARG=no or path)],,)
 
-if test "x$with_static_proj4" = "xno" -o "x$with_static_proj4" = "x"; then
+dnl Could probably be removed once proj 5.0.1 is OK. There are known issues proj 5.0.0.
+AC_ARG_WITH(proj5_api,[  --with-proj5-api=ARG Allow using PROJ.5 new API  (ARG=no/yes, default to yes)],,)
+
+dnl Legacy
+AC_ARG_WITH(static_proj4,[  --with-static-proj4=ARG Compile with PROJ.4 statically (deprecated, use --with-proj instead) (ARG=no or path)],,)
+if test "x$with_static_proj4" != "x" -a "x$with_proj" != "x" ; then
+    AC_MSG_ERROR([only one of --static-proj4 and --proj can be used])
+fi
+if test "x$with_static_proj4" != "x"; then
+    AC_MSG_WARN([--with-static-proj4 is deprecated. Please use --with-proj])
+    with_proj=$with_static_proj4
+fi
+
+if test "x$with_proj" = "xno" -o "x$with_proj" = "x"; then
 
   PROJ_STATIC=no
   AC_MSG_RESULT([link dynamically.])
 
 else
 
-  PROJ_STATIC=yes
+  PROJ_STATIC=no
   AC_MSG_RESULT([link statically.])
 
   ORIG_LIBS="$LIBS"
   PROJ_LIB="-lproj"
 
-  if test "x$with_static_proj4" = "xyes" ; then
+  if test "x$with_proj" = "xyes" ; then
     LIBS="$PROJ_LIB $ORIG_LIBS"
-    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+    if test "$with_proj5_api" = "yes" -o "$with_proj5_api" = ""; then
+        AC_CHECK_LIB(proj,proj_create,PROJ_STATIC=yes,PROJ_STATIC=no,)
+    fi
+    if test "$PROJ_STATIC" = "yes"; then
+        AC_CHECK_HEADERS([proj.h])
+        if test "$ac_cv_header_proj_h" = "yes" ; then
+            AC_MSG_NOTICE([proj >= 5 detected])
+            PROJ_VERSION=5
+        else
+            PROJ_STATIC=no
+        fi
+    else
+        AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        AC_MSG_NOTICE([proj 4.x detected])
+        PROJ_VERSION=4
+    fi
   else
 
-    LIBS="-L$with_static_proj4/lib $PROJ_LIB $ORIG_LIBS"
-    AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
-
-    if test "$PROJ_STATIC" = "no"; then
-      dnl Disable previous value cached by the previous AC_CHECK_LIB test :
-      dnl AC_CHECK_LIB caches the result value for a couple (function, library)
-      dnl in a variable named "ac_cv_lib_<library name>_<function name>".
-      dnl In order to try to locate the library in different locations, using
-      dnl different values of LIBS, we have to 'unset' this variable after
-      dnl each negative test.
-
-      unset ac_cv_lib_proj_pj_init
-
-      LIBS="-L$with_static_proj4/src $PROJ_LIB $ORIG_LIBS"
-      AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+    LIBS="-L$with_proj/lib $PROJ_LIB $ORIG_LIBS"
+    if test "$with_proj5_api" = "yes" -o "$with_proj5_api" = ""; then
+        AC_CHECK_LIB(proj,proj_create,PROJ_STATIC=yes,PROJ_STATIC=no,)
     fi
+    if test "$PROJ_STATIC" = "yes"; then
+        if test -r "$with_proj/include/proj.h" ; then
+          PROJ_INCLUDE="-I$with_proj/include"
+          AC_MSG_NOTICE([proj >= 5 detected])
+          PROJ_VERSION=5
+        else
+          AC_MSG_ERROR([proj.h not found])
+        fi
+    else
+        AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
 
-    if test "$PROJ_STATIC" = "no"; then
-      unset ac_cv_lib_proj_pj_init
-      LIBS="-L$with_static_proj4/src/.libs $PROJ_LIB $ORIG_LIBS"
-      AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        if test "$PROJ_STATIC" = "no"; then
+            dnl Disable previous value cached by the previous AC_CHECK_LIB test :
+            dnl AC_CHECK_LIB caches the result value for a couple (function, library)
+            dnl in a variable named "ac_cv_lib_<library name>_<function name>".
+            dnl In order to try to locate the library in different locations, using
+            dnl different values of LIBS, we have to 'unset' this variable after
+            dnl each negative test.
+
+            unset ac_cv_lib_proj_pj_init
+
+            LIBS="-L$with_proj/src $PROJ_LIB $ORIG_LIBS"
+            AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        fi
+
+        if test "$PROJ_STATIC" = "no"; then
+            unset ac_cv_lib_proj_pj_init
+            LIBS="-L$with_proj/src/.libs $PROJ_LIB $ORIG_LIBS"
+            AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        fi
+
+        if test "$PROJ_STATIC" = "no"; then
+            unset ac_cv_lib_proj_pj_init
+            LIBS="-L$with_proj $PROJ_LIB $ORIG_LIBS"
+            AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        fi
+
+        if test "$PROJ_STATIC" = "no"; then
+            unset ac_cv_lib_proj_pj_init
+            LIBS="$PROJ_LIB $ORIG_LIBS"
+            AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
+        fi
+
+        if test "$PROJ_STATIC" = "yes"; then
+            AC_MSG_NOTICE([proj 4.x detected])
+            PROJ_VERSION=4
+        fi
     fi
-
-    if test "$PROJ_STATIC" = "no"; then
-      unset ac_cv_lib_proj_pj_init
-      LIBS="-L$with_static_proj4 $PROJ_LIB $ORIG_LIBS"
-      AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
-    fi
-
-    if test "$PROJ_STATIC" = "no"; then
-      unset ac_cv_lib_proj_pj_init
-      LIBS="$PROJ_LIB $ORIG_LIBS"
-      AC_CHECK_LIB(proj,pj_init,PROJ_STATIC=yes,PROJ_STATIC=no,)
-    fi
-
   fi
-
   if test "$PROJ_STATIC" = "no"; then
-    LIBS="$ORIG_LIBS"
+      LIBS="$ORIG_LIBS"
   fi
 
-  if test -r "$with_static_proj4/src/proj_api.h" ; then
-    PROJ_INCLUDE="-I$with_static_proj4/src"
-  elif test -r "$with_static_proj4/include/proj_api.h" ; then
-    PROJ_INCLUDE="-I$with_static_proj4/include"
-  elif test -r "$with_static_proj4/proj_api.h" ; then
-    PROJ_INCLUDE="-I$with_static_proj4"
+  if test "$PROJ_VERSION" = "4"; then
+      if test -r "$with_proj/src/proj_api.h" ; then
+          PROJ_INCLUDE="-I$with_proj/src"
+      elif test -r "$with_proj/include/proj_api.h" ; then
+          PROJ_INCLUDE="-I$with_proj/include"
+      elif test -r "$with_proj/proj_api.h" ; then
+          PROJ_INCLUDE="-I$with_proj"
+      fi
   fi
-
+  if test "$PROJ_STATIC" = "no"; then
+    AC_MSG_ERROR([cannot find proj])
+  fi
 fi
 
 AC_SUBST(PROJ_STATIC)
 AC_SUBST(PROJ_INCLUDE)
+AC_SUBST(PROJ_VERSION)
 
 dnl ---------------------------------------------------------------------------
 dnl Get/override version.
@@ -5759,7 +5808,7 @@ else
 fi
 LOC_MSG([  SWIG Bindings:             ${WHAT_BINDINGS}])
 LOC_MSG()
-LOC_MSG([  Statically link PROJ.4:    ${PROJ_STATIC}])
+LOC_MSG([  Statically link PROJ:      ${PROJ_STATIC}])
 LOC_MSG([  enable GNM building:       ${GNM_ENABLED}])
 LOC_MSG([  enable pthread support:    ${PTHREAD_ENABLED}])
 LOC_MSG([  enable POSIX iconv support:${am_cv_func_iconv}])

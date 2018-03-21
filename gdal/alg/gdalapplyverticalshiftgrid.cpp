@@ -36,7 +36,11 @@
 #include "ogr_spatialref.h"
 
 #ifdef PROJ_STATIC
+#if defined(PROJ_VERSION) && PROJ_VERSION >= 5
+#include "proj.h"
+#else
 #include "proj_api.h"
+#endif
 #endif
 
 #include <limits>
@@ -568,7 +572,13 @@ static CPLString GetProj4Filename(const char* pszFilename)
         return pszFilename;
     }
 
-#if defined(PROJ_STATIC) && PJ_VERSION > 493
+#if defined(PROJ_STATIC) && PROJ_VERSION >= 5
+    PJ_GRID_INFO info = proj_grid_info(pszFilename);
+    if( info.filename[0] )
+    {
+        osFilename = info.filename;
+    }
+#elif defined(PROJ_STATIC) && PJ_VERSION > 493
     osFilename.resize(2048);
     projCtx ctx = pj_ctx_alloc();
     if( pj_find_file(ctx, pszFilename, &osFilename[0], osFilename.size()) )
