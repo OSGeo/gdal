@@ -14,7 +14,6 @@
     l_segment->YUR = seg_data.GetDouble(nPos+215, 22);
     seg_data.Put(psOrbit->YUR,nPos+215,22,"%22.14f");
 /* Putting statics in headers is trouble. */
-See COMMITERS file. 
   /* When multiple interpeters are used, a module could have already been initialized in
     const char* pszNAM = record->GetStringSubfield("DSI", 0, "NAM", 0);
                     const char* pszNAM = record->GetStringSubfield("FDR", iFDRFieldInstance++, "NAM", 0);
