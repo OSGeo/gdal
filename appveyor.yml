@@ -10,6 +10,7 @@ shallow_clone: true
 
 cache:
   - downloads -> appveyor.yml
+  - '%LOCALAPPDATA%\pip\Cache'
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
 
