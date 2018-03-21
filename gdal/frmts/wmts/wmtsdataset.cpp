@@ -1542,11 +1542,13 @@ GDALDataset* WMTSDataset::Open(GDALOpenInfo* poOpenInfo)
                         {
                             delete poCT;
                             dfX2 += 360;
+                            OGRSpatialReference oWGS84_with_over;
+                            oWGS84_with_over.SetFromUserInput("+proj=longlat +datum=WGS84 +over +wktext");
                             char* pszProj4 = nullptr;
                             oTMS.oSRS.exportToProj4(&pszProj4);
                             oSRS.SetFromUserInput(CPLSPrintf("%s +over +wktext", pszProj4));
                             CPLFree(pszProj4);
-                            poCT = OGRCreateCoordinateTransformation(&oWGS84, &oSRS);
+                            poCT = OGRCreateCoordinateTransformation(&oWGS84_with_over, &oSRS);
                             if( poCT &&
                                 poCT->Transform(1, &dfX1, &dfY1) &&
                                 poCT->Transform(1, &dfX2, &dfY2) )

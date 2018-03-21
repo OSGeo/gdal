@@ -210,7 +210,7 @@ transform_list = [ \
 
     # Test Vertical Datum Shift with a change of horizontal and vert units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
-     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,135.881817690812), 0.01,
+     '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,136.055454832886), 0.01,
      'EGM 96 Conversion', None, "GRID:egm96_15.gtx" ),
 
     # Test optimization in case of identical projections (projected)
@@ -225,7 +225,7 @@ transform_list = [ \
 
     # Test GRS80 -> EPSG:3857
     ('+proj=longlat +ellps=GRS80 +towgs84=0,0,0 +no_defs', (2,49,0.0), 1e-8,
-     '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-4,
+     '+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs', (222638.981586547, 6274861.39384813, 0), 1e-3,
      'GRS80 -> EPSG:3857', None, None),
 
     ]

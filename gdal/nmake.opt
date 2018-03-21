@@ -532,10 +532,14 @@ GRIB_SETTING=yes
 #NETCDF_HAS_NC4 = yes
 #NETCDF_HAS_HDF4 = yes
 
-# PROJ.4 stuff
-# Uncomment the following lines to link PROJ.4 library statically. Otherwise
+# PROJ stuff
+# Uncomment the following lines to link PROJ library statically. Otherwise
 # it will be linked dynamically during runtime.
-#PROJ_FLAGS = -DPROJ_STATIC
+# To use the new API of proj5 or later, use
+#PROJ_FLAGS = -DPROJ_STATIC -DPROJ_VERSION=5
+# for proj 4.x:
+#PROJ_FLAGS = -DPROJ_STATIC -DPROJ_VERSION=4
+
 #PROJ_INCLUDE = -Id:\projects\proj.4\src
 #PROJ_LIBRARY = d:\projects\proj.4\src\proj_i.lib
 
