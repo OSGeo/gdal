@@ -26,9 +26,9 @@
 
 #include "gdal_unit_test.h"
 
-#include <cpl_error.h>
-#include <ogr_api.h>
-#include <ogr_srs_api.h>
+#include "cpl_error.h"
+#include "ogr_api.h"
+#include "ogr_srs_api.h"
 
 #include <algorithm>
 #include <cmath>

@@ -27,11 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <cpl_conv.h>
-#include <cpl_string.h>
-#include <gdal_alg.h>
-#include <gdal_priv.h>
-#include <gdal.h>
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "gdal_alg.h"
+#include "gdal_priv.h"
+#include "gdal.h"
 
 #include <cassert>
 

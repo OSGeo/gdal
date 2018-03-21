@@ -27,13 +27,13 @@
 #define WIN32_LEAN_AND_MEAN
 #endif // _MSC_VER
 
-#include <gdal_unit_test.h>
+#include "gdal_unit_test.h"
 
-#include <cpl_conv.h>
-#include <cpl_multiproc.h>
-#include <gdal.h>
-#include <ogr_api.h>
-#include <ogrsf_frmts.h>
+#include "cpl_conv.h"
+#include "cpl_multiproc.h"
+#include "gdal.h"
+#include "ogr_api.h"
+#include "ogrsf_frmts.h"
 
 #include <tut_reporter.hpp>
 

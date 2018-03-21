@@ -25,7 +25,7 @@
 #ifndef TUT_GDAL_H_INCLUDED
 #define TUT_GDAL_H_INCLUDED
 
-#include <ogr_api.h> // GDAL
+#include "ogr_api.h" // GDAL
 #include <cassert>
 #include <sstream>
 #include <string>

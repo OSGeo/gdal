@@ -25,7 +25,7 @@
 
 #include "gdal_unit_test.h"
 
-#include <ogrsf_frmts.h>
+#include "ogrsf_frmts.h"
 #include "../../gdal/ogr/ogrsf_frmts/osm/gpb.h"
 
 #include <string>

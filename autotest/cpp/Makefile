@@ -1,10 +1,10 @@
 # This Makefile requires GNU Make.
 
 include ../../gdal/GDALmake.opt
-CXXFLAGS += -I. -Itut
+CXXFLAGS += -I. -Itut $(GDAL_INCLUDE)
 CPPFLAGS:=$(filter-out -DGDAL_COMPILATION,$(CPPFLAGS))
 
-CFLAGS += -I. -Itut
+CFLAGS += -I. -Itut $(GDAL_INCLUDE)
 
 PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_c_include_from_cpp_file
 

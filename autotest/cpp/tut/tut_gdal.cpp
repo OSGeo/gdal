@@ -27,7 +27,7 @@
 
 #include <tut.hpp> // TUT
 #include <tut_gdal.h>
-#include <ogr_api.h> // GDAL
+#include "ogr_api.h" // GDAL
 #include <algorithm> // C++
 #include <cmath>
 #include <sstream>

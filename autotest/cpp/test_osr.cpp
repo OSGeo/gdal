@@ -25,8 +25,8 @@
 
 #include "gdal_unit_test.h"
 
-#include <cpl_string.h>
-#include <ogr_srs_api.h>
+#include "cpl_string.h"
+#include "ogr_srs_api.h"
 
 #include <algorithm>
 #include <cmath>
