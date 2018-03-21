@@ -2,7 +2,7 @@
 
 Current:
 
-See COMMITERS file.
+See COMMITTERS file.
 
 Historical and Current:
 
