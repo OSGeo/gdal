@@ -300,7 +300,11 @@ GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *pDS, const ILImage &image, i
     case IL_NONE: bnd = new Raw_Band(pDS, image, b, level);  break;
     // ZLIB is just raw + deflate
     case IL_ZLIB: bnd = new Raw_Band(pDS, image, b, level);  bnd->SetDeflate(1); break;
-    case IL_TIF:  bnd = new TIF_Band(pDS, image, b, level);  break;
+    case IL_TIF: 
+        if( image.pageSizeBytes > INT_MAX - 1024 )
+            return nullptr;
+        bnd = new TIF_Band(pDS, image, b, level);
+        break;
 #if defined(LERC)
     case IL_LERC: bnd = new LERC_Band(pDS, image, b, level); break;
 #endif
