@@ -85,7 +85,7 @@ class GPKGChecker:
             self.errors += [(req, msg)]
             if self.abort_at_first_error:
                 if req:
-                    raise GPKGCheckException('Req %d: %s' % (req, msg))
+                    raise GPKGCheckException('Req %s: %s' % (str(req), msg))
                 else:
                     raise GPKGCheckException(msg)
         return cond
@@ -884,7 +884,7 @@ class GPKGChecker:
         for (table_name, data_type) in rows:
             self._check_tile_user_table(c, table_name, data_type)
 
-    def _check_tiled_gridded_elevation_data(self, c):
+    def _check_tiled_gridded_coverage_data(self, c):
 
         self._log('Checking tiled gridded elevation data')
 
@@ -898,26 +898,30 @@ class GPKGChecker:
 
         c.execute("SELECT 1 FROM sqlite_master WHERE "
                   "name = 'gpkg_2d_gridded_coverage_ancillary'")
-        self._assert(c.fetchone() is not None, 120,
+        self._assert(c.fetchone() is not None, 'gpkg_2d_gridded_coverage#1',
                      'gpkg_2d_gridded_coverage_ancillary table is missing')
 
         c.execute("PRAGMA table_info(gpkg_2d_gridded_coverage_ancillary)")
         columns = c.fetchall()
         expected_columns = [
-            (0, 'id', 'INTEGER', 0, None, 1),
+            (0, 'id', 'INTEGER', 1, None, 1),
             (1, 'tile_matrix_set_name', 'TEXT', 1, None, 0),
             (2, 'datatype', 'TEXT', 1, "'integer'", 0),
             (3, 'scale', 'REAL', 1, '1.0', 0),
             (4, 'offset', 'REAL', 1, '0.0', 0),
             (5, 'precision', 'REAL', 0, '1.0', 0),
-            (6, 'data_null', 'REAL', 0, None, 0)
+            (6, 'data_null', 'REAL', 0, None, 0),
+            (7, 'grid_cell_encoding', 'TEXT', 0, "'grid-value-is-center'", 0),
+            (8, 'uom', 'TEXT', 0, None, 0),
+            (9, 'field_name', 'TEXT', 0, "'Height'", 0),
+            (10, 'quantity_definition', 'TEXT', 0, "'Height'", 0)
         ]
-        self._check_structure(columns, expected_columns, 120,
+        self._check_structure(columns, expected_columns, 'gpkg_2d_gridded_coverage#1',
                               'gpkg_2d_gridded_coverage_ancillary')
 
         c.execute("SELECT 1 FROM sqlite_master WHERE "
                   "name = 'gpkg_2d_gridded_tile_ancillary'")
-        self._assert(c.fetchone() is not None, 121,
+        self._assert(c.fetchone() is not None, 'gpkg_2d_gridded_coverage#2',
                      'gpkg_2d_gridded_tile_ancillary table is missing')
 
         c.execute("PRAGMA table_info(gpkg_2d_gridded_tile_ancillary)")
@@ -934,104 +938,103 @@ class GPKGChecker:
             (8, 'std_dev', 'REAL', 0, 'NULL', 0)
         ]
 
-        self._check_structure(columns, expected_columns, 121,
+        self._check_structure(columns, expected_columns, 'gpkg_2d_gridded_coverage#2',
                               'gpkg_2d_gridded_tile_ancillary')
 
         c.execute("SELECT srs_id, organization, organization_coordsys_id, "
                   "definition FROM gpkg_spatial_ref_sys "
                   "WHERE srs_id = 4979")
         ret = c.fetchall()
-        self._assert(len(ret) == 1, 122,
+        self._assert(len(ret) == 1, 'gpkg_2d_gridded_coverage#3',
                      "gpkg_spatial_ref_sys shall have a row for srs_id=4979")
-        self._assert(ret[0][1].lower() == 'epsg', 122,
+        self._assert(ret[0][1].lower() == 'epsg', 'gpkg_2d_gridded_coverage#3',
                      'wrong value for organization for srs_id = 4979: %s' %
                      ret[0][1])
-        self._assert(ret[0][2] == 4979, 122,
+        self._assert(ret[0][2] == 4979, 'gpkg_2d_gridded_coverage#3',
                      ('wrong value for organization_coordsys_id for ' +
                       'srs_id = 4979: %s') % ret[0][2])
 
         c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
-        self._assert(c.fetchone() is not None, 125,
+        self._assert(c.fetchone() is not None, 'gpkg_2d_gridded_coverage#6',
                      'gpkg_extensions does not exist')
         c.execute("SELECT table_name, column_name, definition, scope FROM "
                   "gpkg_extensions WHERE "
-                  "extension_name = 'gpkg_elevation_tiles'")
+                  "extension_name = 'gpkg_2d_gridded_coverage'")
         rows = c.fetchall()
-        self._assert(len(rows) == 2 + len(tables), 125,
-                     "Wrong number of entries in gpkg_elevation_tiles with"
-                     "gpkg_elevation_tiles extension name")
+        self._assert(len(rows) == 2 + len(tables), 'gpkg_2d_gridded_coverage#6',
+                     "Wrong number of entries in gpkg_extensions with "
+                     "2d_gridded_coverage extension name")
         found_gpkg_2d_gridded_coverage_ancillary = False
         found_gpkg_2d_gridded_tile_ancillary = False
         expected_def = \
-            'http://www.geopackage.org/spec/' \
-            '#extension_tiled_gridded_elevation_data'
+            'http://docs.opengeospatial.org/is/17-066r1/17-066r1.html'
         for (table_name, column_name, definition, scope) in rows:
             if table_name == 'gpkg_2d_gridded_coverage_ancillary':
                 found_gpkg_2d_gridded_coverage_ancillary = True
-                self._assert(column_name is None, 125,
+                self._assert(column_name is None, 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for "
                              "gpkg_2d_gridded_coverage_ancillary "
                              "in gpkg_extensions")
-                self._assert(definition == expected_def, 125,
-                             "Wrong entry for "
+                self._assert(definition == expected_def, 'gpkg_2d_gridded_coverage#6',
+                             "Wrong entry (definition) for "
                              "gpkg_2d_gridded_coverage_ancillary "
                              "in gpkg_extensions")
-                self._assert(scope == 'read-write', 125,
+                self._assert(scope == 'read-write', 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for "
                              "gpkg_2d_gridded_coverage_ancillary "
                              "in gpkg_extensions")
             elif table_name == 'gpkg_2d_gridded_tile_ancillary':
                 found_gpkg_2d_gridded_tile_ancillary = True
-                self._assert(column_name is None, 125,
+                self._assert(column_name is None, 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for "
                              "gpkg_2d_gridded_tile_ancillary "
                              "in gpkg_extensions")
-                self._assert(definition == expected_def, 125,
-                             "Wrong entry for "
+                self._assert(definition == expected_def, 'gpkg_2d_gridded_coverage#6',
+                             "Wrong entry (definition) for "
                              "gpkg_2d_gridded_tile_ancillary "
                              "in gpkg_extensions")
-                self._assert(scope == 'read-write', 125,
+                self._assert(scope == 'read-write', 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for "
                              "gpkg_2d_gridded_tile_ancillary "
                              "in gpkg_extensions")
             else:
-                self._assert(table_name in tables, 125,
+                self._assert(table_name in tables, 'gpkg_2d_gridded_coverage#6',
                              "Unexpected table_name registered for " +
-                             "gpkg_elevation_tiles: %s" % table_name)
-                self._assert(column_name == 'tile_data', 125,
+                             "2d_gridded_coverage: %s" % table_name)
+                self._assert(column_name == 'tile_data', 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for %s " % table_name +
                              "in gpkg_extensions")
-                self._assert(definition == expected_def, 125,
-                             "Wrong entry for %s " % table_name +
+                self._assert(definition == expected_def, 'gpkg_2d_gridded_coverage#6',
+                             "Wrong entry (definition) for %s " % table_name +
                              "in gpkg_extensions")
-                self._assert(scope == 'read-write', 125,
+                self._assert(scope == 'read-write', 'gpkg_2d_gridded_coverage#6',
                              "Wrong entry for %s " % table_name +
                              "in gpkg_extensions")
 
-        self._assert(found_gpkg_2d_gridded_coverage_ancillary, 125,
+        self._assert(found_gpkg_2d_gridded_coverage_ancillary, 'gpkg_2d_gridded_coverage#6',
                      "gpkg_2d_gridded_coverage_ancillary not registered "
-                     "for gpkg_elevation_tiles")
-        self._assert(found_gpkg_2d_gridded_tile_ancillary, 125,
+                     "for 2d_gridded_coverage")
+        self._assert(found_gpkg_2d_gridded_tile_ancillary, 'gpkg_2d_gridded_coverage#6',
                      "gpkg_2d_gridded_tile_ancillary not registered "
-                     "for gpkg_elevation_tiles")
+                     "for 2d_gridded_coverage")
 
         c.execute("SELECT tile_matrix_set_name, datatype FROM "
                   "gpkg_2d_gridded_coverage_ancillary")
         rows = c.fetchall()
-        self._assert(len(rows) == len(tables), 126,
+        self._assert(len(rows) == len(tables), 'gpkg_2d_gridded_coverage#7',
                      "Wrong number of entries in "
                      "gpkg_2d_gridded_coverage_ancillary")
         for (tile_matrix_set_name, datatype) in rows:
-            self._assert(tile_matrix_set_name in tables, 126,
+            self._assert(tile_matrix_set_name in tables, 'gpkg_2d_gridded_coverage#7',
                          "Table %s has a row in " % tile_matrix_set_name +
                          "gpkg_2d_gridded_coverage_ancillary, but not in "
                          "gpkg_contents")
             c.execute('SELECT 1 FROM gpkg_tile_matrix_set WHERE '
                       'table_name = ?', (tile_matrix_set_name,))
-            self._assert(c.fetchone() is not None, 127,
+            self._assert(c.fetchone() is not None, 'gpkg_2d_gridded_coverage#8',
                          'missing entry in gpkg_tile_matrix_set ' +
                          'for %s' % tile_matrix_set_name)
-            self._assert(datatype in ('integer', 'float'), 128,
+            self._assert(datatype in ('integer', 'float'), 'gpkg_2d_gridded_coverage#9',
                          'Unexpected datatype = %s' % datatype)
 
         for table in tables:
@@ -1040,7 +1043,7 @@ class GPKGChecker:
             c.execute("SELECT COUNT(*) FROM gpkg_2d_gridded_tile_ancillary "
                       "WHERE tpudt_name = ?", (table, ))
             count_tile_ancillary = c.fetchone()
-            self._assert(count_tpudt == count_tile_ancillary, 129,
+            self._assert(count_tpudt == count_tile_ancillary, 'gpkg_2d_gridded_coverage#10',
                          ("Inconsistent number of rows in " +
                           "gpkg_2d_gridded_tile_ancillary for %s") % table)
 
@@ -1048,7 +1051,7 @@ class GPKGChecker:
                   "gpkg_2d_gridded_tile_ancillary")
         rows = c.fetchall()
         for (tpudt_name, ) in rows:
-            self._assert(tpudt_name in tables, 130,
+            self._assert(tpudt_name in tables, 'gpkg_2d_gridded_coverage#11',
                          "tpudt_name = %s is invalid" % tpudt_name)
 
         c.execute("SELECT tile_matrix_set_name FROM "
@@ -1060,7 +1063,7 @@ class GPKGChecker:
                       "tpudt_name = ? AND "
                       "NOT (offset == 0.0 AND scale == 1.0)",
                       (tile_matrix_set_name,))
-            self._assert(len(c.fetchall()) == 0, 130,
+            self._assert(len(c.fetchall()) == 0, 'gpkg_2d_gridded_coverage#9',
                          "Wrong scale and offset values " +
                          "for %s " % tile_matrix_set_name +
                          "in gpkg_2d_gridded_coverage_ancillary")
@@ -1069,7 +1072,7 @@ class GPKGChecker:
             c.execute("SELECT 1 FROM gpkg_2d_gridded_tile_ancillary WHERE " +
                       "tpudt_name = ? AND tpudt_id NOT IN (SELECT id FROM " +
                       "%s)" % table, (table,))
-            self._assert(len(c.fetchall()) == 0, 131,
+            self._assert(len(c.fetchall()) == 0, 'gpkg_2d_gridded_coverage#12',
                          "tpudt_id in gpkg_2d_gridded_coverage_ancillary " +
                          "not referencing an id from %s" % table)
 
@@ -1089,7 +1092,7 @@ class GPKGChecker:
                 is_tiff = blob_ar[0:4] == (0x49, 0x49, 0x2A, 0x00) or \
                     blob_ar[0:4] == (0x4D, 0x4D, 0x00, 0x2A)
                 if datatype == 'integer':
-                    self._assert(is_png, 132,
+                    self._assert(is_png, 'gpkg_2d_gridded_coverage#13',
                                  'Tile for %s should be PNG' % table_name)
                     if has_gdal:
                         tmp_file = '/vsimem/temp_validate_gpkg.tif'
@@ -1100,14 +1103,14 @@ class GPKGChecker:
                         gdal.FileFromMemBuffer(tmp_file, blob)
                         ds = gdal.Open(tmp_file)
                         try:
-                            self._assert(ds is not None, 132,
+                            self._assert(ds is not None, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
-                            self._assert(ds.RasterCount == 1, 132,
+                            self._assert(ds.RasterCount == 1, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             self._assert(ds.GetRasterBand(1).DataType ==
-                                         gdal.GDT_UInt16, 132,
+                                         gdal.GDT_UInt16, 'gpkg_2d_gridded_coverage#13',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                         finally:
@@ -1115,10 +1118,10 @@ class GPKGChecker:
                     else:
                         if not warn_gdal_not_available:
                             warn_gdal_not_available = True
-                            self._log('GDAL not available. Req 132 not tested')
+                            self._log('GDAL not available. Req gpkg_2d_gridded_coverage#13 not tested')
 
                 elif datatype == 'float':
-                    self._assert(is_tiff, 133,
+                    self._assert(is_tiff, 'gpkg_2d_gridded_coverage#14',
                                  'Tile for %s should be TIFF' % table_name)
                     if has_gdal:
                         tmp_file = '/vsimem/temp_validate_gpkg.tif'
@@ -1129,30 +1132,30 @@ class GPKGChecker:
                         gdal.FileFromMemBuffer(tmp_file, blob)
                         ds = gdal.Open(tmp_file)
                         try:
-                            self._assert(ds is not None, 134,
+                            self._assert(ds is not None, 'gpkg_2d_gridded_coverage#15',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
-                            self._assert(ds.RasterCount == 1, 135,
+                            self._assert(ds.RasterCount == 1, 'gpkg_2d_gridded_coverage#16',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             self._assert(ds.GetRasterBand(1).DataType ==
-                                         gdal.GDT_Float32, 136,
+                                         gdal.GDT_Float32, 'gpkg_2d_gridded_coverage#17',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             compression = ds.GetMetadataItem('COMPRESSION',
                                                              'IMAGE_STRUCTURE')
                             self._assert(compression is None or
-                                         compression == 'LZW', 137,
+                                         compression == 'LZW', 'gpkg_2d_gridded_coverage#18',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             ovr_count = ds.GetRasterBand(1).GetOverviewCount()
                             self._assert(len(ds.GetSubDatasets()) == 0 and
-                                         ovr_count == 0, 138,
+                                         ovr_count == 0, 'gpkg_2d_gridded_coverage#19',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                             (blockxsize, _) = \
                                 ds.GetRasterBand(1).GetBlockSize()
-                            self._assert(blockxsize == ds.RasterXSize, 139,
+                            self._assert(blockxsize == ds.RasterXSize, 'gpkg_2d_gridded_coverage#20',
                                          'Invalid tile %d in %s' %
                                          (id, table_name))
                         finally:
@@ -1161,7 +1164,7 @@ class GPKGChecker:
                         if not warn_gdal_not_available:
                             warn_gdal_not_available = True
                             self._log('GDAL not available. '
-                                      'Req 134-139 not tested')
+                                      'Req gpkg_2d_gridded_coverage#15 to gpkg_2d_gridded_coverage#19 not tested')
 
     def _check_gpkg_extensions(self, c):
 
@@ -1214,7 +1217,9 @@ class GPKGChecker:
                             'gpkg_metadata',
                             'gpkg_schema',
                             'gpkg_crs_wkt',
-                            'gpkg_elevation_tiles']
+                            'gpkg_elevation_tiles', #deprecated one
+                            'gpkg_2d_gridded_coverage'
+                            ]
         for geom_name in GPKGChecker.EXT_GEOM_TYPES:
             KNOWN_EXTENSIONS += ['gpkg_geom_' + geom_name]
 
@@ -1533,7 +1538,7 @@ class GPKGChecker:
 
             self._check_attributes(c)
 
-            self._check_tiled_gridded_elevation_data(c)
+            self._check_tiled_gridded_coverage_data(c)
 
             self._check_gpkg_extensions(c)
 

@@ -166,17 +166,11 @@ table does not support alpha channel (even if PNG8 format would potentially allo
 color table with transparency). So when selecting PNG8, non fully opaque tiles
 will be stored as 32-bit PNG.</p>
 
-<h4>Tiled gridded elevation data</h4>
+<h4>Tiled gridded coverage data</h4>
 
-<p><b>WARNING</b>: the tiled gridded extension
-<a href="http://geopackage.blogspot.com/2017/05/good-news-bad-news.html">
-has been delayed</a> by the OGC architecture
-board and will probably be subject to further changes. So interoperability with
-the final specification is not guaranteed (and unlikely).</p>
-
-<p>Since GeoPackage v1.2 and GDAL 2.2,
-<a href="http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data">
-tiled gridded elevation data</a> can be stored using
+<p>Since GDAL 2.3,
+<a href="http://docs.opengeospatial.org/is/17-066r1/17-066r1.html#27">
+tiled gridded coverage data</a> can be stored using
 PNG unsigned 16bit tiles (with potential offset and scaling so as to be able
 to represent floating point data) or TIFF 32-bit floating-point LZW compressed
 tiles.</p>
@@ -185,6 +179,13 @@ tiles.</p>
 When converting a GDAL Float32 dataset, TIFF tiles will be used by default, unless
 PNG is explicitly selected, in which case scaling and offsetting will be
 automatically computed for each tile.</p>
+
+<p><b>WARNING</b>: the <a href="http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data">tiled gridded extension</a>
+initially implemented in GDAL 2.2 was not officially adopted and had been later
+reworked by OGC. The adopted <a href="http://docs.opengeospatial.org/is/17-066r1/17-066r1.html#27">
+tiled gridded coverage data</a> has a few differences that will make GDAL 2.2
+datasets not be compliant with the final extension. GDAL 2.3 can open those
+GDAL 2.2-generated files.</p>
 
 <h3><a id="tiling_schemes">Tiling schemes</a></h3>
 
@@ -319,7 +320,17 @@ zoom level.</li>
 Resampling algorithm. Only used by CreateCopy() for TILING_SCHEME different from
 CUSTOM. Defaults to BILINEAR.</li>
 <li><b>PRECISION</b>=floating_point_value_in_vertical_units: Smallest significant value.
-Only used for tile gridded elevation data. Defaults to 1.</li>
+Only used for tile gridded coverage datasets. Defaults to 1.</li>
+<li><b>UOM</b>=string: (GDAL &gt;= 2.3) Unit of Measurement. Only used for
+tiled gridded coverage datasets. Also set through SetUnitType()</li>
+<li><b>FIELD_NAME</b>=string: (GDAL &gt;= 2.3) Field name. Only used for tiled
+gridded coverage datasets. Defaults to Height.</li>
+<li><b>QUANTITY_DEFINITION</b>=string: (GDAL &gt;= 2.3) Description of the
+field. Only used for tiled gridded coverage datasets. Defaults to Height.</li>
+<li><b>GRID_CELL_ENCODING</b>=grid-value-is-center/grid-value-is-area/
+grid-value-is-corner: (GDAL &gt;= 2.3) Grid cell encoding. Only used for
+tiled gridded coverage datasets. Defaults to grid-value-is-center, when
+AREA_OR_POINT metadata item is not set.</li>
 <li><b>VERSION</b>=AUTO/1.0/1.1/1.2: (GDAL &gt;= 2.2) Set GeoPackage version
 (for application_id and user_version fields). In AUTO mode, this will be equivalent
 to 1.2 starting with GDAL 2.3.</li>
