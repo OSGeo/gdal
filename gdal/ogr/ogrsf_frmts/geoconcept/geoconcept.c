@@ -1763,7 +1763,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
                                                           GCExportFileMetadata* Meta,
                                                           GCSubType* theSubType,
                                                           int i,
-                                                          const char** pszFields,
+                                                          const char** papszFields,
                                                           int nbtp,
                                                           GCDim d,
                                                           OGREnvelope* bbox
@@ -1834,13 +1834,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
      * displayed to represent the ponctual entity or angle of the text entity
      * NOT IMPLEMENTED
      */
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1863,13 +1863,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
      * More Graphics :
      * XP<>YP[<>ZP]Nr points=k[<>X<>Y[<>Z]]k...
      */
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1890,17 +1890,17 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       i++;
     }
-    np= atoi(pszFields[i]);
+    np= atoi(papszFields[i]);
     i++;
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]);
+      x= CPLAtof(papszFields[i]);
       i++;
-      y= CPLAtof(pszFields[i]);
+      y= CPLAtof(papszFields[i]);
       i++;
       if( d==v3D_GCIO || d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]);
+        z= CPLAtof(papszFields[i]);
         i++;
       }
       if( buildGeom )
@@ -1955,13 +1955,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
       }
     }
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1975,17 +1975,17 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       MergeOGREnvelope_GCIO(bbox,x,y);
     }
-    np= atoi(pszFields[i]);
+    np= atoi(papszFields[i]);
     i++;
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]);
+      x= CPLAtof(papszFields[i]);
       i++;
-      y= CPLAtof(pszFields[i]);
+      y= CPLAtof(papszFields[i]);
       i++;
       if( d==v3D_GCIO||d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]);
+        z= CPLAtof(papszFields[i]);
         i++;
       }
       if( buildGeom )
@@ -2016,7 +2016,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     /* additional ring : either holes, or islands */
     if( i < nbtp-1 )
     {
-      npo= atoi(pszFields[i]);
+      npo= atoi(papszFields[i]);
       i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
@@ -2032,13 +2032,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
             OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
           }
         }
-        x= CPLAtof(pszFields[i]);
+        x= CPLAtof(papszFields[i]);
         i++;
-        y= CPLAtof(pszFields[i]);
+        y= CPLAtof(papszFields[i]);
         i++;
         if( d==v3D_GCIO||d==v3DM_GCIO )
         {
-          z= CPLAtof(pszFields[i]);
+          z= CPLAtof(papszFields[i]);
           i++;
         }
         if( buildGeom )
@@ -2052,17 +2052,17 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         {
           MergeOGREnvelope_GCIO(bbox,x,y);
         }
-        np= atoi(pszFields[i]);
+        np= atoi(papszFields[i]);
         i++;
         for( ip= 1; ip<=np; ip++ )
         {
-          x= CPLAtof(pszFields[i]);
+          x= CPLAtof(papszFields[i]);
           i++;
-          y= CPLAtof(pszFields[i]);
+          y= CPLAtof(papszFields[i]);
           i++;
           if( d==v3D_GCIO||d==v3DM_GCIO )
           {
-            z= CPLAtof(pszFields[i]);
+            z= CPLAtof(papszFields[i]);
             i++;
           }
           if( buildGeom )
@@ -2174,7 +2174,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
                                                       )
 {
   GCExportFileMetadata* Meta;
-  char **pszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
+  char **papszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
   int whereClass, whereSubType, i, j, nbstf, nbf, nbtf, buildFeature;
   GCType* theClass;
   GCField* theField;
@@ -2227,7 +2227,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     bTokenBehaviour|= CSLT_HONOURSTRINGS;
   }
   CPLDebug("GEOCONCEPT","Cache=[%s] delim=[%s]", GetGCCache_GCIO(H), delim);
-  if( !(pszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
+  if( !(papszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
                                       delim,
                                       bTokenBehaviour)) )
   {
@@ -2236,16 +2236,16 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
               GetGCCurrentLinenum_GCIO(H) );
     return NULL;
   }
-  if( (nbtf= CSLCount(pszFields)) <= 5 )
+  if( (nbtf= CSLCount(papszFields)) <= 5 )
   {
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Missing fields (at least 5 are expected, %d found).\n",
               GetGCCurrentLinenum_GCIO(H), nbtf );
     return NULL;
   }
   /* Class */
-  if( (whereClass = _findTypeByName_GCIO(H,pszFields[1]))==-1 )
+  if( (whereClass = _findTypeByName_GCIO(H,papszFields[1]))==-1 )
   {
     if( CPLListCount(GetMetaTypes_GCIO(Meta))==0 )
     {
@@ -2257,15 +2257,15 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     {
       CPLError( CE_Failure, CPLE_AppDefined,
                 "Line %ld, Unknown type '%s'.\n",
-                GetGCCurrentLinenum_GCIO(H), pszFields[1] );
+                GetGCCurrentLinenum_GCIO(H), papszFields[1] );
     }
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
   if( theClass == NULL )
   {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
   }
   if( *theSubType )
@@ -2273,17 +2273,17 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     /* reading ... */
     if( !EQUAL(GetTypeName_GCIO(GetSubTypeType_GCIO(*theSubType)),GetTypeName_GCIO(theClass)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
   }
   /* Subclass */
-  if( (whereSubType= _findSubTypeByName_GCIO(theClass,pszFields[2]))==-1 )
+  if( (whereSubType= _findSubTypeByName_GCIO(theClass,papszFields[2]))==-1 )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Unknown subtype found '%s' for type '%s'.\n",
-              GetGCCurrentLinenum_GCIO(H), pszFields[2], pszFields[1] );
-    CSLDestroy(pszFields);
+              GetGCCurrentLinenum_GCIO(H), papszFields[2], papszFields[1] );
+    CSLDestroy(papszFields);
     return NULL;
   }
   if( *theSubType )
@@ -2292,7 +2292,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     if( psSubType == NULL ||
         !EQUAL(GetSubTypeName_GCIO(psSubType),GetSubTypeName_GCIO(*theSubType)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
   }
@@ -2309,7 +2309,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, missing mandatory field %s for type '%s'.\n",
               GetGCCurrentLinenum_GCIO(H), kName_GCIO, tdst );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   nbf= 4;
@@ -2333,16 +2333,16 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Total number of fields differs with type definition '%s' (%d found, at least %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, nbtf, 1+nbf+nbstf+1 );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
-  i= atoi(pszFields[nbf]);
+  i= atoi(papszFields[nbf]);
   if( i!=nbstf )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Number of user's fields differs with type definition '%s' (%d found, %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, i, nbstf );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   /*
@@ -2352,7 +2352,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( !(fd= OGR_FD_Create(tdst)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
 
@@ -2396,7 +2396,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
         }
         break;
       default          :
-        CSLDestroy(pszFields);
+        CSLDestroy(papszFields);
         OGR_FD_Destroy(fd);
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unknown Geoconcept type for '%s'.\n",
@@ -2408,7 +2408,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
       theField= GetSubTypeField_GCIO(*theSubType,i);
       if( !(fld= OGR_Fld_Create(GetFieldName_GCIO(theField),OFTString)) ) /* FIXME */
       {
-        CSLDestroy(pszFields);
+        CSLDestroy(papszFields);
         OGR_FD_Destroy(fd);
         return NULL;
       }
@@ -2427,10 +2427,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     {
       if( !GetSubTypeFeatureDefn_GCIO(*theSubType) )
         OGR_FD_Destroy(fd);
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
-    OGR_F_SetFID(f, atol(pszFields[0])); /* FID */
+    OGR_F_SetFID(f, atol(papszFields[0])); /* FID */
     if( OGR_F_GetFID(f)==OGRNullFID )
     {
       OGR_F_SetFID(f, GetGCCurrentLinenum_GCIO(H));
@@ -2438,10 +2438,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     for( i= 1 + nbf, j= 0; i<1 + nbf + nbstf; i++, j++ )
     {
       /*theField= GetSubTypeField_GCIO(*theSubType,i); */ /* FIXME?*/
-      if( pszFields[i][0]=='\0' )
+      if( papszFields[i][0]=='\0' )
         OGR_F_UnsetField(f,j);
       else
-        OGR_F_SetFieldString(f,j,pszFields[i]);
+        OGR_F_SetFieldString(f,j,papszFields[i]);
     }
   }
   else
@@ -2449,14 +2449,14 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     i= 1 + nbf + nbstf;
   }
   CPLDebug("GEOCONCEPT", "%d %d/%d/%d/%d\n", __LINE__, i, nbf, nbstf, nbtf);
-  if( !(g= _buildOGRGeometry_GCIO(Meta,*theSubType,i,(const char **)pszFields,nbtf,d,bbox)) )
+  if( !(g= _buildOGRGeometry_GCIO(Meta,*theSubType,i,(const char **)papszFields,nbtf,d,bbox)) )
   {
     /*
      * the Subclass is under reading via ReadNextFeature_GCIO
      */
     if( buildFeature )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
@@ -2465,12 +2465,12 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( OGR_F_SetGeometryDirectly(f,g)!=OGRERR_NONE )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
   }
-  CSLDestroy(pszFields);
+  CSLDestroy(papszFields);
 
   /* Assign definition : */
   if( !GetSubTypeFeatureDefn_GCIO(*theSubType) )
