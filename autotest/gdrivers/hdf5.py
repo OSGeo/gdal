@@ -463,6 +463,19 @@ def hdf5_13():
     return 'success'
 
 ###############################################################################
+# Test opening a HDF5 file contained within a ZIP file (or other vsi resource).
+
+def hdf5_14():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+    if gdaltest.hdf5_drv.GetMetadataItem('DCAP_VIRTUALIO') is None:
+        return 'skip'
+    ds = gdal.Open('/vsizip/data/u8be.zip/u8be.h5')
+    return 'success' if ds is not None else 'fail'
+
+
+###############################################################################
 #
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
@@ -501,7 +514,8 @@ gdaltest_list = [
     hdf5_10,
     hdf5_11,
     hdf5_12,
-    hdf5_13
+    hdf5_13,
+    hdf5_14
 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',

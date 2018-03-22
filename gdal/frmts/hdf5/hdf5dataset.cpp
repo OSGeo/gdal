@@ -42,6 +42,10 @@
 #include "hdf5.h"
 #include "hdf5dataset.h"
 
+#if H5_VERS_MAJOR > 1 || (H5_VERS_MAJOR == 1 && (H5_VERS_MINOR > 8 || (H5_VERS_MINOR == 8 && H5_VERS_RELEASE >=9)))
+#define HDF5_SUPPORTS_MEMORY_FILE
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -79,6 +83,9 @@ void GDALRegister_HDF5()
 
     GDALDriver *poDriver = new GDALDriver();
 
+#ifdef HDF5_SUPPORTS_MEMORY_FILE
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+#endif
     poDriver->SetDescription("HDF5");
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
@@ -103,10 +110,12 @@ void GDALRegister_HDF5()
 HDF5Dataset::HDF5Dataset() :
     hHDF5(-1),
     hGroupID(-1),
+    hFapl(0),
     papszSubDatasets(nullptr),
     bIsHDFEOS(FALSE),
     nDatasetType(-1),
     nSubDataCount(0),
+    pabyFileBuffer(nullptr),
     poH5RootGroup(nullptr),
     papszMetadata(nullptr),
     poH5CurrentObject(nullptr)
@@ -118,6 +127,10 @@ HDF5Dataset::HDF5Dataset() :
 HDF5Dataset::~HDF5Dataset()
 {
     CSLDestroy(papszMetadata);
+    if( pabyFileBuffer != nullptr )
+        CPLFree(pabyFileBuffer);
+    if( hFapl > 0 )
+        H5Pclose(hFapl);
     if( hGroupID > 0 )
         H5Gclose(hGroupID);
     if( hHDF5 > 0 )
@@ -304,7 +317,34 @@ GDALDataset *HDF5Dataset::Open( GDALOpenInfo *poOpenInfo )
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
-    poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    VSIStatBuf statBuf;
+    if (VSIStat(poOpenInfo->pszFilename, &statBuf) == 0 &&
+        VSI_ISREG(statBuf.st_mode))
+    {
+        poDS->hHDF5 = H5Fopen(poOpenInfo->pszFilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    }
+    else
+    {
+#ifndef HDF5_SUPPORTS_MEMORY_FILE
+        // HDF5 introduced H5Pset_file_image in version 1.8.9.
+        // So we can't open non-regular files.
+        delete poDS;
+        return nullptr;
+#else
+        // Not a regular file: ingest and use the HDF5 memory driver
+        vsi_l_offset filesz;
+        if (!VSIIngestFile(nullptr, poOpenInfo->pszFilename, &poDS->pabyFileBuffer, &filesz, -1))
+        {
+            delete poDS;
+            return nullptr;
+        }
+        poDS->hFapl = H5Pcreate(H5P_FILE_ACCESS);
+        H5Pset_fapl_core(poDS->hFapl, 64 * 1024, FALSE /* no backing store */);
+        H5Pset_file_image(poDS->hFapl, poDS->pabyFileBuffer, static_cast<size_t>(filesz));
+        poDS->hHDF5 = H5Fopen("GDAL", H5F_ACC_RDONLY, poDS->hFapl);
+#endif
+    }
+
     if( poDS->hHDF5 < 0 )
     {
         delete poDS;
