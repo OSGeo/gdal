@@ -274,6 +274,11 @@ L190:
     }
 
 L250:
+    if( jj == 0 )
+    {
+        *ier = 714;
+        goto L410;
+    }
     pimp = (iorigb - ntotbt[jj - 1]) / (real) iorigb * 100.f;
 /*     WRITE(KFILDO,252)PIMP,KBIT,JJ */
 /* 252  FORMAT(/' PERCENT IMPROVEMENT =',F6.1, */
