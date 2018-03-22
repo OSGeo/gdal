@@ -5,7 +5,6 @@
 OBJ = \
     png.obj \
     pngerror.obj \
-    pnggccrd.obj \
     pngget.obj \
     pngmem.obj \
     pngpread.obj \
@@ -15,7 +14,6 @@ OBJ = \
     pngrutil.obj \
     pngset.obj \
     pngtrans.obj \
-    pngvcrd.obj \
     pngwio.obj \
     pngwrite.obj \
     pngwtran.obj \
