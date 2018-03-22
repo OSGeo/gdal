@@ -3,19 +3,37 @@ environment:
   matrix:
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
     platform: x86
-    VS_VER: 2017
-    SDK: release-1911
-    MSVC_VER: 1911
   - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
     platform: x64
-    VS_VER: 2015
-    SDK: release-1900-x64
-    MSVC_VER: 1900
 
 shallow_clone: true
 
+cache:
+  - downloads -> appveyor.yml
+  - '%LOCALAPPDATA%\pip\Cache'
+  - C:\ProgramData\chocolatey\bin -> appveyor.yml
+  - C:\ProgramData\chocolatey\lib -> appveyor.yml
+
 init:
   - ps: |
+      if($env:platform -eq "x86")
+      {
+        $env:PATH="c:\Python27;c:\Python27\Scripts;$env:PATH"
+        $env:VS_VER=2017
+        $env:SDK="release-1911"
+        $env:MSVC_VER=1911
+        $env:ARCHITECTURE="x86"
+        $env:WIN64_ARG=""
+      }
+      else
+      {
+        $env:PATH="c:\Python27-x64;c:\Python27-x64\Scripts;$env:PATH"
+        $env:VS_VER=2015
+        $env:SDK="release-1900-x64"
+        $env:MSVC_VER=1900
+        $env:ARCHITECTURE="amd64"
+        $env:WIN64_ARG="WIN64=YES"
+      }
       function exec
       {
         param ( [ScriptBlock] $ScriptBlock )
@@ -33,25 +51,17 @@ install:
       Install-Module VSSetup -Scope CurrentUser
       # Install SWIG and VC for Python2.7 by Choco
       cinst -y --no-progress swig vcpython27
-      if($env:platform -eq "x86")
-      {
-        Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture x86
-        $env:WIN64_ARG=""
-        $env:PATH="c:\Python27;c:\Python27\Scripts;$env:PATH"
-      }
-      else
-      {
-        Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture amd64
-        $env:WIN64_ARG="WIN64=YES"
-        $env:PATH="c:\Python27-x64;c:\Python27-x64\Scripts;$env:PATH"
-      }
+      Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
       exec { pip install numpy }
       $env:SDK_ZIP="$env:SDK"+"-dev.zip"
       $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
-      New-Item -ItemType directory -Path "$env:APPVEYOR_BUILD_FOLDER\sdk"
-      cd $env:APPVEYOR_BUILD_FOLDER\sdk
-      appveyor DownloadFile "$env:SDK_URL"
-      exec { 7z x $env:SDK_ZIP }
+      if(-Not (Test-Path -Path downloads)) { mkdir downloads }
+      cd downloads
+      if(-Not (Test-Path -Path $env:SDK_ZIP )) { appveyor DownloadFile "$env:SDK_URL" }
+      cd ..
+      mkdir sdk
+      cd sdk
+      exec { 7z x ..\downloads\$env:SDK_ZIP }
       $env:SDK_PREFIX="$env:APPVEYOR_BUILD_FOLDER\sdk\$env:SDK"
       $env:SDK_INC="$env:SDK_PREFIX\include"
       $env:SDK_LIB="$env:SDK_PREFIX\lib"
