@@ -1538,6 +1538,9 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
     // Config option just for debug, and for example force set to NaN
     // which is not supported
     CPLString osDataNull = CPLGetConfigOption("GPKG_NODATA", "");
+    CPLString osUom;
+    CPLString osFieldName;
+    CPLString osGridCellEncoding;
     if( !bIsTiles )
     {
         char* pszSQL = sqlite3_mprintf(
@@ -1641,6 +1644,30 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         }
         if( pszPrecision )
             m_dfPrecision = CPLAtof(pszPrecision);
+        SQLResultFree(&oResult);
+
+        // Request those columns in a separate query, so as to keep
+        // compatibility with pre OGC 17-066r1 databases
+        pszSQL = sqlite3_mprintf(
+            "SELECT uom, field_name, grid_cell_encoding FROM "
+            "gpkg_2d_gridded_coverage_ancillary "
+            "WHERE tile_matrix_set_name = '%q'", pszTableName);
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        err = SQLQuery(hDB, pszSQL, &oResult);
+        CPLPopErrorHandler();
+        sqlite3_free(pszSQL);
+        if( err == OGRERR_NONE && oResult.nRowCount == 1 )
+        {
+            const char* pszUom = SQLResultGetValue(&oResult, 0, 0);
+            if( pszUom )
+                osUom = pszUom;
+            const char* pszFieldName = SQLResultGetValue(&oResult, 1, 0);
+            if( pszFieldName )
+                osFieldName = pszFieldName;
+            const char* pszGridCellEncoding = SQLResultGetValue(&oResult, 2, 0);
+            if( pszGridCellEncoding )
+                osGridCellEncoding = pszGridCellEncoding;
+        }
         SQLResultFree(&oResult);
     }
 
@@ -1778,6 +1805,8 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
         return false;
     }
 
+    auto poBand =
+        reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1));
     if( !osDataNull.empty() )
     {
         double dfGPKGNoDataValue = CPLAtof(osDataNull);
@@ -1796,14 +1825,42 @@ bool GDALGeoPackageDataset::OpenRaster( const char* pszTableName,
                 m_usGPKGNull = static_cast<GUInt16>(dfGPKGNoDataValue);
                 if( m_eDT == GDT_Int16 && m_usGPKGNull > 32767 )
                     dfGPKGNoDataValue = -32768.0;
-                reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
-                                SetNoDataValueInternal(dfGPKGNoDataValue);
+                poBand->SetNoDataValueInternal(dfGPKGNoDataValue);
             }
         }
         else
         {
-            reinterpret_cast<GDALGeoPackageRasterBand*>(GetRasterBand(1))->
-                SetNoDataValueInternal(static_cast<float>(dfGPKGNoDataValue));
+            poBand->SetNoDataValueInternal(
+                static_cast<float>(dfGPKGNoDataValue));
+        }
+    }
+    if( !osUom.empty() )
+    {
+        poBand->SetUnitTypeInternal(osUom);
+    }
+    if( !osFieldName.empty() )
+    {
+        GetRasterBand(1)->GDALRasterBand::SetDescription(osFieldName);
+    }
+    if( !osGridCellEncoding.empty() )
+    {
+        if( osGridCellEncoding == "grid-value-is-center" )
+        {
+            GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                            GDALMD_AOP_POINT);
+        }
+        else if( osGridCellEncoding == "grid-value-is-area" )
+        {
+            GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                            GDALMD_AOP_AREA);
+        }
+        else
+        {
+            GDALPamDataset::SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                            GDALMD_AOP_POINT);
+            GetRasterBand(1)->GDALRasterBand::SetMetadataItem(
+                                                        "GRID_CELL_ENCODING",
+                                                          osGridCellEncoding);
         }
     }
 
@@ -3080,6 +3137,9 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         return CE_Failure;
     m_bMetadataDirty = false;
 
+    bool bCanWriteAreaOrPoint = !m_bGridCellEncodingAsCO &&
+                (m_eTF == GPKG_TF_PNG_16BIT ||
+                 m_eTF == GPKG_TF_TIFF_32BIT_FLOAT);
     if( !m_osRasterTable.empty() )
     {
         const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
@@ -3104,6 +3164,32 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
             SQLCommand(hDB, pszSQL);
             sqlite3_free(pszSQL);
         }
+        if( bCanWriteAreaOrPoint )
+        {
+            const char* pszAreaOrPoint = GetMetadataItem(GDALMD_AREA_OR_POINT);
+            if( pszAreaOrPoint && EQUAL(pszAreaOrPoint, GDALMD_AOP_AREA) )
+            {
+                bCanWriteAreaOrPoint = false;
+                char* pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_2d_gridded_coverage_ancillary SET "
+                    "grid_cell_encoding = 'grid-value-is-area' WHERE "
+                    "lower(tile_matrix_set_name) = lower('%q')",
+                    m_osRasterTable.c_str());
+                SQLCommand(hDB, pszSQL);
+                sqlite3_free(pszSQL);
+            }
+            else if( pszAreaOrPoint && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT) )
+            {
+                bCanWriteAreaOrPoint = false;
+                char* pszSQL = sqlite3_mprintf(
+                    "UPDATE gpkg_2d_gridded_coverage_ancillary SET "
+                    "grid_cell_encoding = 'grid-value-is-center' WHERE "
+                    "lower(tile_matrix_set_name) = lower('%q')",
+                    m_osRasterTable.c_str());
+                SQLCommand(hDB, pszSQL);
+                sqlite3_free(pszSQL);
+            }
+        }
     }
 
     char** papszMDDup = nullptr;
@@ -3116,6 +3202,9 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         if( STARTS_WITH_CI(*papszIter, "ZOOM_LEVEL=") )
             continue;
         if( STARTS_WITH_CI(*papszIter, "GPKG_METADATA_ITEM_") )
+            continue;
+        if( !bCanWriteAreaOrPoint &&
+            STARTS_WITH_CI(*papszIter, GDALMD_AREA_OR_POINT) )
             continue;
         papszMDDup = CSLInsertString(papszMDDup, -1, *papszIter);
     }
@@ -3970,23 +4059,27 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
         if( CreateExtensionsTableIfNecessary() != OGRERR_NONE )
             return false;
 
-        // Requirement 105
+        // Req 1 /table-defs/coverage-ancillary
         osSQL =
             "CREATE TABLE gpkg_2d_gridded_coverage_ancillary ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
             "tile_matrix_set_name TEXT NOT NULL UNIQUE,"
             "datatype TEXT NOT NULL DEFAULT 'integer',"
             "scale REAL NOT NULL DEFAULT 1.0,"
             "offset REAL NOT NULL DEFAULT 0.0,"
             "precision REAL DEFAULT 1.0,"
             "data_null REAL,"
-            "CONSTRAINT fk_g2dgtct_name FOREIGN KEY('tile_matrix_set_name') "
-            "REFERENCES gpkg_tile_matrix_set ( table_name )"
+            "grid_cell_encoding TEXT DEFAULT 'grid-value-is-center',"
+            "uom TEXT,"
+            "field_name TEXT DEFAULT 'Height',"
+            "quantity_definition TEXT DEFAULT 'Height',"
+            "CONSTRAINT fk_g2dgtct_name FOREIGN KEY(tile_matrix_set_name) "
+            "REFERENCES gpkg_tile_matrix_set ( table_name ) "
             "CHECK (datatype in ('integer','float')))"
             ";"
-        // Requirement 106
+        // Requirement 2 /table-defs/tile-ancillary
             "CREATE TABLE gpkg_2d_gridded_tile_ancillary ("
-            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
             "tpudt_name TEXT NOT NULL,"
             "tpudt_id INTEGER NOT NULL,"
             "scale REAL NOT NULL DEFAULT 1.0,"
@@ -3999,51 +4092,67 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char** papszOptions)
             "REFERENCES gpkg_contents(table_name),"
             "UNIQUE (tpudt_name, tpudt_id))"
             ";"
-        // Requirement 110
+        // Requirement 6 /gpkg-extensions
             "INSERT INTO gpkg_extensions "
             "(table_name, column_name, extension_name, definition, scope) "
             "VALUES ('gpkg_2d_gridded_coverage_ancillary', NULL, "
-            "'gpkg_elevation_tiles', "
-            "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
+            "'gpkg_2d_gridded_coverage', "
+            "'http://docs.opengeospatial.org/is/17-066r1/17-066r1.html', "
             "'read-write')"
             ";"
-        // Requirement 110
+        // Requirement 6 /gpkg-extensions
             "INSERT INTO gpkg_extensions "
             "(table_name, column_name, extension_name, definition, scope) "
             "VALUES ('gpkg_2d_gridded_tile_ancillary', NULL, "
-            "'gpkg_elevation_tiles', "
-            "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
+             "'gpkg_2d_gridded_coverage', "
+            "'http://docs.opengeospatial.org/is/17-066r1/17-066r1.html', "
             "'read-write')"
             ";";
     }
 
-    // Requirement 110
+    // Requirement 6 /gpkg-extensions
     char* pszSQL = sqlite3_mprintf(
         "INSERT INTO gpkg_extensions "
         "(table_name, column_name, extension_name, definition, scope) "
         "VALUES ('%q', 'tile_data', "
-        "'gpkg_elevation_tiles', "
-        "'http://www.geopackage.org/spec/#extension_tiled_gridded_elevation_data', "
+         "'gpkg_2d_gridded_coverage', "
+        "'http://docs.opengeospatial.org/is/17-066r1/17-066r1.html', "
         "'read-write')", m_osRasterTable.c_str());
     osSQL += pszSQL;
     osSQL += ";";
     sqlite3_free(pszSQL);
 
-    // Requirement 111 and 112
+    // Requirement 7 /gpkg-2d-gridded-coverage-ancillary
+    // Requirement 8 /gpkg-2d-gridded-coverage-ancillary-set-name
+    // Requirement 9 /gpkg-2d-gridded-coverage-ancillary-datatype
     m_dfPrecision = CPLAtof(CSLFetchNameValueDef(papszOptions,
                                                       "PRECISION", "1"));
+    CPLString osGridCellEncoding(CSLFetchNameValueDef(
+                papszOptions, "GRID_CELL_ENCODING", "grid-value-is-center"));
+    m_bGridCellEncodingAsCO = 
+        CSLFetchNameValue(papszOptions, "GRID_CELL_ENCODING") != nullptr;
+    CPLString osUom(CSLFetchNameValueDef(papszOptions, "UOM", ""));
+    CPLString osFieldName(
+            CSLFetchNameValueDef(papszOptions, "FIELD_NAME", "Height"));
+    CPLString osQuantityDefinition(CSLFetchNameValueDef(
+                                papszOptions, "QUANTITY_DEFINITION", "Height"));
 
     pszSQL = sqlite3_mprintf(
         "INSERT INTO gpkg_2d_gridded_coverage_ancillary "
-        "(tile_matrix_set_name, datatype, scale, offset, precision) "
-        "VALUES ('%q', '%s', %.18g, %.18g, %.18g)",
+        "(tile_matrix_set_name, datatype, scale, offset, precision, "
+        "grid_cell_encoding, uom, field_name, quantity_definition) "
+        "VALUES ('%q', '%s', %.18g, %.18g, %.18g, %s, %s, %s, %s)",
         m_osRasterTable.c_str(),
         ( m_eTF == GPKG_TF_PNG_16BIT ) ? "integer" : "float",
-        m_dfScale, m_dfOffset, m_dfPrecision);
+        m_dfScale, m_dfOffset, m_dfPrecision,
+        ("'" + SQLEscapeLiteral(osGridCellEncoding) + "'").c_str(),
+        osUom.empty() ? "NULL" : ("'" + SQLEscapeLiteral(osUom) + "'").c_str(),
+        ("'" + SQLEscapeLiteral(osFieldName) + "'").c_str(),
+        ("'" + SQLEscapeLiteral(osQuantityDefinition) + "'").c_str());
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
-    // Requirement 108
+    // Requirement 3 /gpkg-spatial-ref-sys-row
     eErr = SQLQuery(hDB,
         "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id = 4979 LIMIT 2"
         , &oResultTable);
@@ -4116,13 +4225,28 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     const char* pszTilingScheme =
             CSLFetchNameValueDef(papszOptions, "TILING_SCHEME", "CUSTOM");
 
-    char** papszUpdatedOptions = CSLDuplicate(papszOptions);
+    CPLStringList apszUpdatedOptions(CSLDuplicate(papszOptions));
     if( CPLTestBool(CSLFetchNameValueDef(papszOptions, "APPEND_SUBDATASET", "NO")) &&
         CSLFetchNameValue(papszOptions, "RASTER_TABLE") == nullptr )
     {
         CPLString osBasename(CPLGetBasename(poSrcDS->GetDescription()));
-        papszUpdatedOptions = CSLSetNameValue(papszUpdatedOptions,
-                                              "RASTER_TABLE", osBasename);
+        apszUpdatedOptions.SetNameValue("RASTER_TABLE", osBasename);
+    }
+
+    const int nBands = poSrcDS->GetRasterCount();
+    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or "
+                 "4 (RGBA) band dataset supported");
+        return nullptr;
+    }
+
+    const char* pszUnitType = poSrcDS->GetRasterBand(1)->GetUnitType();
+    if( CSLFetchNameValue(papszOptions, "UOM") == nullptr &&
+        pszUnitType && !EQUAL(pszUnitType, "") )
+    {
+        apszUpdatedOptions.SetNameValue("UOM", pszUnitType);
     }
 
     if( EQUAL(pszTilingScheme, "CUSTOM") )
@@ -4134,20 +4258,9 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
         {
             poDS = poThisDriver->DefaultCreateCopy(
                 pszFilename, poSrcDS, bStrict,
-                papszUpdatedOptions, pfnProgress, pProgressData );
+                apszUpdatedOptions, pfnProgress, pProgressData );
         }
-        CSLDestroy(papszUpdatedOptions);
         return poDS;
-    }
-
-    const int nBands = poSrcDS->GetRasterCount();
-    if( nBands != 1 && nBands != 2 && nBands != 3 && nBands != 4 )
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Only 1 (Grey/ColorTable), 2 (Grey+Alpha), 3 (RGB) or "
-                 "4 (RGBA) band dataset supported");
-        CSLDestroy(papszUpdatedOptions);
-        return nullptr;
     }
 
     bool bFound = false;
@@ -4166,14 +4279,12 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     }
     if( !bFound )
     {
-        CSLDestroy(papszUpdatedOptions);
         return nullptr;
     }
 
     OGRSpatialReference oSRS;
     if( oSRS.importFromEPSG(nEPSGCode) != OGRERR_NONE )
     {
-        CSLDestroy(papszUpdatedOptions);
         return nullptr;
     }
     char* pszWKT = nullptr;
@@ -4183,7 +4294,6 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
             GDALCreateGenImgProjTransformer2( poSrcDS, nullptr, papszTO );
     if( hTransformArg == nullptr )
     {
-        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return nullptr;
@@ -4200,7 +4310,6 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
                                   &nXSize, &nYSize,
                                   adfExtent, 0 ) != CE_None )
     {
-        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         GDALDestroyGenImgProjTransformer( hTransformArg );
@@ -4275,7 +4384,6 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Could not find an appropriate zoom level");
-        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return nullptr;
@@ -4358,16 +4466,14 @@ GDALDataset* GDALGeoPackageDataset::CreateCopy( const char *pszFilename,
 
     GDALGeoPackageDataset* poDS = new GDALGeoPackageDataset();
     if( !(poDS->Create( pszFilename, nXSize, nYSize, nTargetBands, eDT,
-                        papszUpdatedOptions )) )
+                        apszUpdatedOptions )) )
     {
         delete poDS;
-        CSLDestroy(papszUpdatedOptions);
         CPLFree(pszWKT);
         CSLDestroy(papszTO);
         return nullptr;
     }
-    CSLDestroy(papszUpdatedOptions);
-    papszUpdatedOptions = nullptr;
+
     poDS->SetGeoTransform(adfGeoTransform);
     poDS->SetProjection(pszWKT);
     CPLFree(pszWKT);
@@ -5378,7 +5484,9 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
             "AND extension_name != 'gdal_aspatial' "
-            "AND extension_name != 'gpkg_elevation_tiles' "
+            "AND extension_name != 'gpkg_elevation_tiles' " // Old name before GPKG 1.2 approval
+            "AND extension_name != '2d_gridded_coverage' " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
+            "AND extension_name != 'gpkg_2d_gridded_coverage' " // Name in OGC 17-066r1 final
             "AND extension_name != 'gpkg_metadata' "
             "AND extension_name != 'gpkg_schema') "
 #ifdef WORKAROUND_SQLITE3_BUGS
@@ -5393,7 +5501,9 @@ void GDALGeoPackageDataset::CheckUnknownExtensions(bool bCheckRasterTable)
             "AND extension_name IS NOT NULL "
             "AND definition IS NOT NULL "
             "AND scope IS NOT NULL "
-            "AND extension_name != 'gpkg_elevation_tiles' "
+            "AND extension_name != 'gpkg_elevation_tiles' " // Old name before GPKG 1.2 approval
+            "AND extension_name != '2d_gridded_coverage' " // Old name after GPKG 1.2 and before OGC 17-066r1 finalization
+            "AND extension_name != 'gpkg_2d_gridded_coverage' " // Name in OGC 17-066r1 final
             "AND extension_name != 'gpkg_metadata' "
             "AND extension_name != 'gpkg_schema') "
 #ifdef WORKAROUND_SQLITE3_BUGS

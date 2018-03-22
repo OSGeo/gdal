@@ -3038,7 +3038,7 @@ def gpkg_38():
     return 'success'
 
 ###############################################################################
-# Test tile gridded elevation data
+# Test tile gridded coverage data
 
 def gpkg_39():
 
@@ -3068,13 +3068,37 @@ def gpkg_39():
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         return 'fail'
+    if ds.GetMetadataItem('AREA_OR_POINT') != 'Area':
+        gdaltest.post_reason('fail')
+        return 'fail'
     sql_lyr = ds.ExecuteSQL('SELECT scale, offset FROM gpkg_2d_gridded_tile_ancillary')
     f = sql_lyr.GetNextFeature()
     if f['scale'] != 1.0:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
+    if f['offset'] != 0.0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
     ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT grid_cell_encoding FROM gpkg_2d_gridded_coverage_ancillary')
+    f = sql_lyr.GetNextFeature()
+    if f['grid_cell_encoding'] != 'grid-value-is-area':
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL('SELECT metadata FROM gpkg_metadata')
+    f = sql_lyr.GetNextFeature()
+    if f is not None and f['metadata'].find('AREA_OR_POINT') >= 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     sql_lyr = ds.ExecuteSQL('PRAGMA application_id')
     f = sql_lyr.GetNextFeature()
     if f['application_id'] != 1196444487:
@@ -3096,6 +3120,43 @@ def gpkg_39():
         gdaltest.post_reason('fail')
         print(md)
         return 'fail'
+    ds = None
+
+    # From a AREA_OR_POINT=Point dataset
+    gdal.Translate('/vsimem/gpkg_39.gpkg', 'data/n43.dt0', format = 'GPKG')
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetRasterBand(1).GetUnitType() != 'm':
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetUnitType())
+        return 'fail'
+    ds = None
+
+    # Test GRID_CELL_ENCODING=grid-value-is-corner
+    gdal.Translate('/vsimem/gpkg_39.gpkg', 'data/byte.tif', format = 'GPKG',
+                   outputType = gdal.GDT_UInt16,
+                   creationOptions = ['GRID_CELL_ENCODING=grid-value-is-corner'])
+    ds = gdal.Open('/vsimem/gpkg_39.gpkg')
+    if ds.GetMetadataItem('AREA_OR_POINT') != 'Point':
+        gdaltest.post_reason('fail')
+        print(ds.GetMetadata())
+        return 'fail'
+    if ds.GetRasterBand(1).GetMetadataItem('GRID_CELL_ENCODING') != 'grid-value-is-corner':
+        gdaltest.post_reason('fail')
+        print(ds.GetRasterBand(1).GetMetadataItem())
+        return 'fail'
+
+    sql_lyr = ds.ExecuteSQL('SELECT metadata FROM gpkg_metadata')
+    f = sql_lyr.GetNextFeature()
+    if f is not None and f['metadata'].find('AREA_OR_POINT') >= 0:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+    ds.ReleaseResultSet(sql_lyr)
+
     ds = None
 
     # With nodata: statistics available
@@ -3818,6 +3879,25 @@ def gpkg_delete_raster_layer():
 
     return 'success'
 
+
+###############################################################################
+def gpkg_open_old_gpkg_elevation_tiles_extension():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    gdal.ErrorReset()
+    ds = gdal.Open('data/uint16-old-elevation-extension.gpkg')
+    if gdal.GetLastErrorMsg() != '':
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        return 'fail'
+
+    return 'success'
+
 ###############################################################################
 #
 
@@ -3889,6 +3969,7 @@ gdaltest_list = [
     gpkg_47,
     gpkg_48,
     gpkg_delete_raster_layer,
+    gpkg_open_old_gpkg_elevation_tiles_extension,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]

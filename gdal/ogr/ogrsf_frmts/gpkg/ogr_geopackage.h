@@ -110,6 +110,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
     bool                m_bIdentifierAsCO;
     CPLString           m_osDescription;
     bool                m_bDescriptionAsCO;
+    bool                m_bGridCellEncodingAsCO = false;
     bool                m_bHasReadMetadataFromStorage;
     bool                m_bMetadataDirty;
     char              **m_papszSubDatasets;
