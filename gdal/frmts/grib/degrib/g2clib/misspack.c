@@ -463,6 +463,17 @@ void misspack(g2float *fld,g2int ndpts,g2int idrsnum,g2int *idrstmpl,
         if (igmax != 0) {
            temp=(float)(log((double)(igmax+1))/alog2);
            nbitsgref=(g2int)ceil(temp);
+           if( nbitsgref < 0 || nbitsgref >= 31 )
+           {
+                free(ifld);
+                free(jfld);
+                free(ifldmiss);
+                free(gref);
+                free(gwidth);
+                free(glen);
+                *lcpack = -1;
+                return;
+           }
            // reset the ref values of any "missing only" groups.
            mtemp=(g2int)int_power(2.,nbitsgref);
            for ( j=0; j<ngroups; j++ ) {
