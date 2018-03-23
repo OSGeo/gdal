@@ -40,6 +40,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -1531,17 +1532,15 @@ int TABFile::WriteFeature(TABFeature *poFeature)
      * Write geometry to the .MAP file
      * The call to PrepareNewObj() takes care of the .ID file.
      *----------------------------------------------------------------*/
-    TABMAPObjHdr *poObjHdr =
+    std::unique_ptr<TABMAPObjHdr> poObjHdr(
         TABMAPObjHdr::NewObj(poFeature->ValidateMapInfoType(m_poMAPFile),
-                             nFeatureId);
+                             nFeatureId));
 
     if ( poObjHdr == nullptr || m_poMAPFile == nullptr )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
                  nFeatureId, m_pszFname);
-        if (poObjHdr)
-            delete poObjHdr;
         return -1;
     }
 
@@ -1577,22 +1576,18 @@ int TABFile::WriteFeature(TABFeature *poFeature)
         m_poCurFeature = NULL;
     }*/
 
-    if ( m_poMAPFile->PrepareNewObj(poObjHdr) != 0 ||
-         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr) != 0 ||
-         m_poMAPFile->CommitNewObj(poObjHdr) != 0 )
+    if ( m_poMAPFile->PrepareNewObj(poObjHdr.get()) != 0 ||
+         poFeature->WriteGeometryToMAPFile(m_poMAPFile, poObjHdr.get()) != 0 ||
+         m_poMAPFile->CommitNewObj(poObjHdr.get()) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Failed writing geometry for feature id %d in %s",
                  nFeatureId, m_pszFname);
-        if (poObjHdr)
-            delete poObjHdr;
         return -1;
     }
 
     m_nLastFeatureId = std::max(m_nLastFeatureId, nFeatureId);
     m_nCurFeatureId = nFeatureId;
-
-    delete poObjHdr;
 
     return 0;
 }
