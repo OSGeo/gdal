@@ -40,7 +40,20 @@ init:
         & $ScriptBlock 2>&1 | ForEach-Object -Process { "$_" }
         if ($LastExitCode -ne 0) { exit $LastExitCode }
       }
+    ## Accessing build worker via Remote Desktop for debug purpose
+    ## During the build you have full "administrator" access
+    ## to that VM and can access it via Remote Desktop (RDP).
+    ## You need to set password in a setup page.
+    ## https://www.appveyor.com/docs/how-to/rdp-to-build-worker/
+    #
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+    ## If you need to investigate worker on build finish uncomment here instead of above.
+    ## It pauses the build until a special "lock" file on VM desktop is deleted
+    #
+    #  on_failure:
+    #    - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 
 install:
   - ps: |
