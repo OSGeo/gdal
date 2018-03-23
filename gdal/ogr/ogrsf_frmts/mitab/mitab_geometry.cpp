@@ -221,6 +221,8 @@ int OGRPolygonLabelPoint(OGRPolygon *poPoly, OGRPoint *poLabelPoint)
         for( int j = 0; j < OGR_NUM_RINGS(poPoly); j++ )   // For each line.
         {
             OGRLinearRing *poRing = OGR_GET_RING(poPoly,j);
+            if( poRing->IsEmpty() )
+                continue;
             point1.x = poRing->getX(poRing->getNumPoints()-1);
             point1.y = poRing->getY(poRing->getNumPoints()-1);
 
