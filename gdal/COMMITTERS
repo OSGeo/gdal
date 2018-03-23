@@ -4,6 +4,21 @@ List of GDAL/OGR committers
 
 Folks who have agreed to RFC 3 terms:
 
+
+=================================
+Developers with github push rights
+==================================
+
+github nickname  Name/Contact                    Area of Interest
+===============  ============                    ================
+rouault          Even Rouault                    all
+                 even.rouault at spatialys.com
+
+
+===================
+Past SVN developers
+===================
+
 SVN Login(s)  Name/Contact                 Area of Interest
 ============  ============                 ================
 warmerda      Frank Warmerdam              all
@@ -188,9 +203,9 @@ lplesea       Lucian Plesea                mrf, wms
 atlight       Alan Thomas                  DXF
               athomas@thinkspatial.com.au
 
-===============
-Past developers
-===============
+===================
+Past CVS developers
+===================
 
 CVS Login(s)	Name			Email / Contact			Project
 ============	====			===============			=======
