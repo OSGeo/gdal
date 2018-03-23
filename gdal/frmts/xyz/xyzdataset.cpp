@@ -66,7 +66,8 @@ class XYZDataset : public GDALPamDataset
     double      dfMaxZ;
     bool        bEOF;
 
-    static int          IdentifyEx( GDALOpenInfo *, int&, int& nCommentLineCount );
+    static int          IdentifyEx( GDALOpenInfo *, int&, int& nCommentLineCount,
+                                    int& nXIndex, int& nYIndex, int& nZIndex );
 
   public:
                  XYZDataset();
@@ -504,7 +505,11 @@ XYZDataset::~XYZDataset()
 int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 {
     int bHasHeaderLine, nCommentLineCount;
-    return IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount);
+    int nXIndex;
+    int nYIndex;
+    int nZIndex;
+    return IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount,
+                      nXIndex, nYIndex, nZIndex);
 }
 
 /************************************************************************/
@@ -513,7 +518,8 @@ int XYZDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
                             int& bHasHeaderLine,
-                            int& nCommentLineCount)
+                            int& nCommentLineCount,
+                            int& nXIndex, int& nYIndex, int& nZIndex)
 
 {
     bHasHeaderLine = FALSE;
@@ -580,6 +586,7 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
         }
     }
 
+    int iStartLine = i;
     for( ; i < poOpenInfo->nHeaderBytes; i++ )
     {
         const char ch = pszData[i];
@@ -601,6 +608,40 @@ int XYZDataset::IdentifyEx( GDALOpenInfo * poOpenInfo,
             return FALSE;
         }
     }
+
+    nXIndex = -1;
+    nYIndex = -1;
+    nZIndex = -1;
+    if( bHasHeaderLine )
+    {
+        CPLString osHeaderLine;
+        osHeaderLine.assign(pszData + iStartLine, i - iStartLine);
+        char** papszTokens = CSLTokenizeString2( osHeaderLine, " ,\t;",
+                                                 CSLT_HONOURSTRINGS );
+        int nTokens = CSLCount(papszTokens);
+        for( i = 0; i < nTokens; i++ )
+        {
+            if (EQUAL(papszTokens[i], "x") ||
+                STARTS_WITH_CI(papszTokens[i], "lon") ||
+                STARTS_WITH_CI(papszTokens[i], "east"))
+                nXIndex = i;
+            else if (EQUAL(papszTokens[i], "y") ||
+                     STARTS_WITH_CI(papszTokens[i], "lat") ||
+                     STARTS_WITH_CI(papszTokens[i], "north"))
+                nYIndex = i;
+            else if (EQUAL(papszTokens[i], "z") ||
+                     STARTS_WITH_CI(papszTokens[i], "alt") ||
+                     EQUAL(papszTokens[i], "height"))
+                nZIndex = i;
+        }
+        CSLDestroy(papszTokens);
+        if( nXIndex >= 0 && nYIndex >= 0 && nZIndex >= 0)
+        {
+            delete poOpenInfoToDelete;
+            return TRUE;
+        }
+    }
+
     bool bHasFoundNewLine = false;
     bool bPrevWasSep = true;
     int nCols = 0;
@@ -656,7 +697,11 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
     int         bHasHeaderLine;
     int         nCommentLineCount = 0;
 
-    if (!IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount))
+    int nXIndex = -1;
+    int nYIndex = -1;
+    int nZIndex = -1;
+    if (!IdentifyEx(poOpenInfo, bHasHeaderLine, nCommentLineCount,
+                    nXIndex, nYIndex, nZIndex))
         return nullptr;
 
     CPLString osFilename(poOpenInfo->pszFilename);
@@ -685,9 +730,6 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             VSICreateBufferedReaderHandle(
                 reinterpret_cast<VSIVirtualHandle *>( fp ) ) );
 
-    int nXIndex = -1;
-    int nYIndex = -1;
-    int nZIndex = -1;
     int nMinTokens = 0;
 
     for( int i = 0; i < nCommentLineCount; i++ )
@@ -710,35 +752,6 @@ GDALDataset *XYZDataset::Open( GDALOpenInfo * poOpenInfo )
             VSIFCloseL(fp);
             return nullptr;
         }
-        char** papszTokens = CSLTokenizeString2( pszLine, " ,\t;",
-                                                 CSLT_HONOURSTRINGS );
-        int nTokens = CSLCount(papszTokens);
-        if (nTokens < 3)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "At line %d, found %d tokens. Expected 3 at least",
-                      1, nTokens);
-            CSLDestroy(papszTokens);
-            VSIFCloseL(fp);
-            return nullptr;
-        }
-        for( int i = 0; i < nTokens; i++ )
-        {
-            if (EQUAL(papszTokens[i], "x") ||
-                STARTS_WITH_CI(papszTokens[i], "lon") ||
-                STARTS_WITH_CI(papszTokens[i], "east"))
-                nXIndex = i;
-            else if (EQUAL(papszTokens[i], "y") ||
-                     STARTS_WITH_CI(papszTokens[i], "lat") ||
-                     STARTS_WITH_CI(papszTokens[i], "north"))
-                nYIndex = i;
-            else if (EQUAL(papszTokens[i], "z") ||
-                     STARTS_WITH_CI(papszTokens[i], "alt") ||
-                     EQUAL(papszTokens[i], "height"))
-                nZIndex = i;
-        }
-        CSLDestroy(papszTokens);
-        papszTokens = nullptr;
         if (nXIndex < 0 || nYIndex < 0 || nZIndex < 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
