@@ -35,6 +35,10 @@ cpl_config.h
 /x64
 /.vs
 /.vscode
+frmts/jpipkak/kdu_cache.cpp
+frmts/jpipkak/kdu_cache_wrapper.h
+frmts/msg/PublicDecompWT/
+frmts/msg/PublicDecompWT_all.h
 frmts/jpeg/libjpeg12/*.c
 frmts/jpeg/libjpeg12/*.h
 libgdal.a
@@ -80,6 +84,7 @@ swig/java/org/
 swig/java/osr_wrap.cpp
 swig/java/gnm_wrap.cpp
 swig/python/build
+swig/python/setup_vars.ini
 swig/perl/Const.bs
 swig/perl/GDAL.bs
 swig/perl/Makefile_Geo__GDAL
