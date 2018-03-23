@@ -17,10 +17,11 @@ GDAL - Geospatial Data Abstraction Library
 | Clang Static Analyzer    | [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_1&label=csa_part_1)](https://travis-ci.org/OSGeo/gdal) [![Build Status](http://badges.herokuapp.com/travis/OSGeo/gdal?branch=trunk&env=BUILD_NAME=csa_part_2&label=csa_part_2)](https://travis-ci.org/OSGeo/gdal) |
 | Coverity Scan            | [![Build Status](https://scan.coverity.com/projects/749/badge.svg?flat=1)](https://scan.coverity.com/projects/gdal) |
 
-GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats. This is a mirror of the GDAL Subversion repository.
+GDAL is an open source X/MIT licensed translator library for raster and vector geospatial data formats.
 
 * Main site: http://www.gdal.org - Developer and user docs, links to other resources
-* SVN repository: http://svn.osgeo.org/gdal
+* GIT repository: https://github.com/OSGeo/gdal
+* Bug tracker: https://github.com/OSGeo/gdal
 * Download: http://download.osgeo.org/gdal
-* Wiki: http://trac.osgeo.org/gdal - Bug tracking, various user and developer contributed documentation and hints
+* Wiki: http://trac.osgeo.org/gdal - Various user and developer contributed documentation and hints
 * Mailing list: http://lists.osgeo.org/mailman/listinfo/gdal-dev
