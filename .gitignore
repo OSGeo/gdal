@@ -3,3 +3,8 @@
 *.obj
 *.so
 *~
+gdal/frmts/jpipkak/kdu_cache.cpp
+gdal/frmts/jpipkak/kdu_cache_wrapper.h
+gdal/frmts/msg/PublicDecompWT/
+gdal/frmts/msg/PublicDecompWT_all.h
+gdal/swig/python/setup_vars.ini
