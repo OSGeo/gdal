@@ -4,7 +4,6 @@ List of GDAL/OGR committers
 
 Folks who have agreed to RFC 3 terms:
 
-
 ==================================
 Developers with github push rights
 ==================================
@@ -14,6 +13,18 @@ github nickname  Name/Contact                    Area of Interest
 rouault          Even Rouault                    all
                  even.rouault at spatialys.com
 
+warmerdam        Frank Warmerdam                 all
+                 warmerdam@pobox.com
+
+dmorissette      Daniel Morissette               mitab, avc, cpl
+                 dmorissette at mapgears.com
+
+hobu             Howard Butler                   swig/python, sde
+                 hobu.inc at gmail.com
+
+szekerest        Tamas Szekeres                  c# swig bindings
+                 szekerest at gmail.com
+
 ksshannon        Kyle Shannon                    lcp, netcdf, apps
                  kyle@pobox.com
 
@@ -22,6 +33,39 @@ avalentino       Antonio Valentino               SAR formats
 
 jef-n            Juergen E. Fischer              OGR: NAS
                  jef at norbit dot de
+
+ajolma           Ari Jolma                       perl bindings
+                 ari.jolma at gmail.com
+
+mloskot          Mateusz Loskot                  geojson, wince
+                 mateusz at loskot.net
+
+strezen          Andrey Kiselev                  HDF, geotiff, informix, core
+                 dron at ak4719.spb.edu
+
+pka              Pirmin Kalberer                 interlis
+                 pka at sourcepole.ch
+
+lucianpls        Lucian Plesea                   mrf, wms
+                 lplesea@esri.com
+
+atlight          Alan Thomas                     DXF
+                 athomas@thinkspatial.com.au
+
+avalentino       Antonio Valentino               SAR formats
+                 antonio.valentino@tiscali.it
+
+pramsey          Paul Ramsey                     OGR: FGDB, PostGIS
+                 pramsey@cleverelephant.ca
+
+etiennesky       Etienne Tourigny                netcdf, hdf
+                 etourigny.dev at gmail dot com
+
+rcoup            Robert Coup                     OGR: FGDB
+                 robert@coup.net.nz
+
+dzwarg           David Zwarg                     PostGIS Raster
+                 dzwarg@azavea.com
 
 ===================
 Past SVN developers
