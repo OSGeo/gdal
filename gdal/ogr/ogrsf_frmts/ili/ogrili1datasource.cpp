@@ -331,6 +331,12 @@ int OGRILI1DataSource::TestCapability( const char * pszCap )
 
 OGRLayer *OGRILI1DataSource::GetLayer( int iLayer )
 {
+  if( !poReader )
+  {
+      if( iLayer < 0 || iLayer >= nLayers )
+          return nullptr;
+      return papoLayers[iLayer];
+  }
   return poReader->GetLayer( iLayer );
 }
 
@@ -340,6 +346,12 @@ OGRLayer *OGRILI1DataSource::GetLayer( int iLayer )
 
 OGRILI1Layer *OGRILI1DataSource::GetLayerByName( const char* pszLayerName )
 {
+  if( !poReader )
+  {
+      return reinterpret_cast<OGRILI1Layer *>(
+          OGRDataSource::GetLayerByName(pszLayerName));
+  }
+
   return reinterpret_cast<OGRILI1Layer *>(
       poReader->GetLayerByName( pszLayerName ) );
 }
