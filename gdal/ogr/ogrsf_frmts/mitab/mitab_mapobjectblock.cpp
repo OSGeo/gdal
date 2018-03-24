@@ -516,8 +516,10 @@ int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
 
     if( !m_bLockCenter )
     {
-        m_nCenterX = (m_nMinX + m_nMaxX) /2;
-        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+        m_nCenterX = static_cast<int>(
+            (static_cast<GIntBig>(m_nMinX) + m_nMaxX) /2);
+        m_nCenterY = static_cast<int>(
+            (static_cast<GIntBig>(m_nMinY) + m_nMaxY) /2);
     }
 
     return 0;
@@ -558,8 +560,10 @@ void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
 
     if( !m_bLockCenter )
     {
-        m_nCenterX = (m_nMinX + m_nMaxX) /2;
-        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+        m_nCenterX = static_cast<int>(
+            (static_cast<GIntBig>(m_nMinX) + m_nMaxX) /2);
+        m_nCenterY = static_cast<int>(
+            (static_cast<GIntBig>(m_nMinY) + m_nMaxY) /2);
     }
 }
 
