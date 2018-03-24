@@ -39,6 +39,7 @@
 #include <ctime>
 
 #include <limits>
+#include <map>
 #include <new>
 #include <vector>
 
@@ -5556,35 +5557,16 @@ int OGR_F_Equal( OGRFeatureH hFeat, OGRFeatureH hOtherFeat )
 OGRErr OGRFeature::SetFrom( OGRFeature * poSrcFeature, int bForgiving )
 
 {
-/* -------------------------------------------------------------------- */
-/*      Retrieve the field ids by name.                                 */
-/* -------------------------------------------------------------------- */
-    int *panMap = static_cast<int *>(
-        VSI_MALLOC_VERBOSE( sizeof(int) * poSrcFeature->GetFieldCount() ) );
-    if( panMap == nullptr )
-        return OGRERR_FAILURE;
-    for( int iField = 0; iField < poSrcFeature->GetFieldCount(); iField++ )
+    const auto& oMap = poDefn->ComputeMapForSetFrom(
+        poSrcFeature->GetDefnRef(), CPL_TO_BOOL(bForgiving) );
+    if( oMap.empty() )
     {
-        panMap[iField] = GetFieldIndex(
-            poSrcFeature->GetFieldDefnRef(iField)->GetNameRef() );
-
-        if( panMap[iField] == -1 )
-        {
-            if( bForgiving )
-                continue;
-            else
-            {
-                VSIFree(panMap);
-                return OGRERR_FAILURE;
-            }
-        }
+        if( poSrcFeature->GetFieldCount() )
+            return OGRERR_FAILURE;
+        return SetFrom( poSrcFeature, nullptr, bForgiving );
     }
-
-    const OGRErr eErr = SetFrom( poSrcFeature, panMap, bForgiving );
-
-    VSIFree(panMap);
-
-    return eErr;
+    // FIXME when SetFrom() accepts a const int*
+    return SetFrom( poSrcFeature, const_cast<int*>(oMap.data()), bForgiving );
 }
 
 /************************************************************************/

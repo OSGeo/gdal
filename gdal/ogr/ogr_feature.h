@@ -35,6 +35,8 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <vector>
+
 /**
  * \file ogr_feature.h
  *
@@ -265,6 +267,9 @@ class CPL_DLL OGRFeatureDefn
 //! @cond Doxygen_Suppress
     void ReserveSpaceForFields(int nFieldCountIn);
 //! @endcond
+
+    std::vector<int>    ComputeMapForSetFrom( OGRFeatureDefn* poSrcFDefn,
+                                              bool bForgiving = true );
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );

@@ -1471,3 +1471,80 @@ int OGR_FD_IsSame( OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn )
     return reinterpret_cast<OGRFeatureDefn *>(hFDefn)->
         IsSame(reinterpret_cast<OGRFeatureDefn *>(hOtherFDefn));
 }
+
+/************************************************************************/
+/*                      ComputeMapForSetFrom()                          */
+/************************************************************************/
+
+/**
+ * \brief Compute the map from source to target field that can be passed to
+ * SetFrom().
+ *
+ * @param poSrcFDefn the feature definition of source features later passed to
+ * SetFrom()
+ *
+ * @param bForgiving true if the operation should continue despite lacking
+ * output fields matching some of the source fields.
+ *
+ * @return an array of size poSrcFDefn->GetFieldCount() if everything succeeds,
+ * or empty in case a source field definition was not found in the target layer
+ * and bForgiving == true.
+ *
+ * @since GDAL 2.3
+ */
+
+std::vector<int> OGRFeatureDefn::ComputeMapForSetFrom( OGRFeatureDefn* poSrcFDefn,
+                                                       bool bForgiving )
+{
+    std::map<CPLString, int> oMapNameToTargetFieldIndex;
+    std::map<CPLString, int> oMapNameToTargetFieldIndexUC;
+    for( int i = 0; i < GetFieldCount(); i++ )
+    {
+        const char* pszName = GetFieldDefn(i)->GetNameRef();
+        // In the insane case where there are several matches, arbitrarily
+        // decide for the first one (preserve past behaviour)
+        if( oMapNameToTargetFieldIndex.find(pszName) ==
+                                        oMapNameToTargetFieldIndex.end() )
+        {
+            oMapNameToTargetFieldIndex[pszName] = i;
+        }
+    }
+    std::vector<int> aoMapSrcToTargetIdx;
+    aoMapSrcToTargetIdx.resize(poSrcFDefn->GetFieldCount());
+    for( int i = 0; i < poSrcFDefn->GetFieldCount(); i++ )
+    {
+        const char* pszSrcName = poSrcFDefn->GetFieldDefn(i)->GetNameRef();
+        auto oIter = oMapNameToTargetFieldIndex.find(pszSrcName);
+        if( oIter == oMapNameToTargetFieldIndex.end() )
+        {
+            // Build case insensitive map only if needed
+            if( oMapNameToTargetFieldIndexUC.empty() )
+            {
+                for( int j = 0; j < GetFieldCount(); j++ )
+                {
+                    oMapNameToTargetFieldIndexUC[
+                        CPLString(GetFieldDefn(j)->GetNameRef()).toupper()] = j;
+                }
+            }
+            oIter = oMapNameToTargetFieldIndexUC.find(
+                CPLString(pszSrcName).toupper());
+            if( oIter == oMapNameToTargetFieldIndexUC.end() )
+            {
+                if( !bForgiving )
+                {
+                    return std::vector<int>();
+                }
+                aoMapSrcToTargetIdx[i] = -1;
+            }
+            else
+            {
+                aoMapSrcToTargetIdx[i] = oIter->second;
+            }
+        }
+        else
+        {
+            aoMapSrcToTargetIdx[i] = oIter->second;
+        }
+    }
+    return aoMapSrcToTargetIdx;
+}

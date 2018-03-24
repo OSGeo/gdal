@@ -200,12 +200,16 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         poFilterGeomBak = poFilterGeomBak->clone();
     poEditableLayer->SetSpatialFilter(nullptr);
 
+    auto aoMapSrcToTargetIdx = poCSVTmpLayer->GetLayerDefn()->
+        ComputeMapForSetFrom(poEditableLayer->GetLayerDefn(), true);
+    aoMapSrcToTargetIdx.push_back(-1); // add dummy entry to be sure that .data() is valid
+
     while( eErr == OGRERR_NONE &&
            (poFeature = poEditableLayer->GetNextFeature()) != nullptr )
     {
         OGRFeature *poNewFeature =
             new OGRFeature(poCSVTmpLayer->GetLayerDefn());
-        poNewFeature->SetFrom(poFeature);
+        poNewFeature->SetFrom(poFeature, aoMapSrcToTargetIdx.data(), true);
         if( bHasXY )
         {
             OGRGeometry *poGeom = poFeature->GetGeometryRef();
