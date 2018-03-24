@@ -145,10 +145,24 @@ Note: all the following are build options, not required.
 * ERMapper logo used with permissions.
 * "ru" subdirectory (Russian translations) by Andrey Kiselev.
 
+=== gdal/ogr/ogrsf_frmts/generic ===
+
+* Some files here (and elsewhere in OGR) copyright Softmap Inc (but MIT/X).
+
 === gdal/ogr/ogrsf_frmts/avc ===
 
 * Some copyright Daniel Morissette, MIT/X.
 * Included copy of dbfopen.h from Shapelib.  We really ought to reference the one in ../shape.
+
+=== gdal/ogr/ogrsf_frmts/csv ===
+
+* drv_*.html not copyright.
+
+=== gdal/ogr/ogrsf_frmts/dgn ===
+
+* Copyright Avenza Systems (MIT/X).
+* dgn_pge.cpp, dgn_pge.h, pge_test.cpp, vbe_pge.cpp: copyright Pacific Gas and Electric, all rights reserved!  (this has all been removed from trunk)
+* web/* docs lack any copyright message.  The isff.txt originally came from Intergraph and dgn.html is a reformatted version of that.  Perhaps these ought to move out of GDAL CVS tree - action: this has been removed from svn. (#1813)
 
 === gdal/ogr/ogrsf_frmts/dods ===
 
@@ -368,6 +382,11 @@ I have added this license to LICENSE.TXT to satisfy the credit requirement.
 === gdal/frmts/hdf5 ===
 
 * FrankW, clean.
+
+=== gdal/frmts/hfa ===
+
+* Mostly copyright Intergraph Corporation, clean.
+* hfacompress.cpp: Sam Gillingham, clean.
 
 === gdal/frmts/idrisi ===
 
