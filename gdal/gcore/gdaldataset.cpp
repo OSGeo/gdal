@@ -1268,6 +1268,7 @@ void GDALDataset::MarkAsShared()
     psStruct->pszDescription = CPLStrdup(GetDescription());
     if(CPLHashSetLookup(phSharedDatasetSet, psStruct) != nullptr)
     {
+        CPLFree(psStruct->pszDescription);
         CPLFree(psStruct);
         ReportError(CE_Failure, CPLE_AppDefined,
                     "An existing shared dataset already has this description. "
