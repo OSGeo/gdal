@@ -5,7 +5,7 @@ List of GDAL/OGR committers
 Folks who have agreed to RFC 3 terms:
 
 
-=================================
+==================================
 Developers with github push rights
 ==================================
 
@@ -13,7 +13,6 @@ github nickname  Name/Contact                    Area of Interest
 ===============  ============                    ================
 rouault          Even Rouault                    all
                  even.rouault at spatialys.com
-
 
 ksshannon        Kyle Shannon                    lcp, netcdf, apps
                  kyle@pobox.com
@@ -248,4 +247,4 @@ collinsb	Benjamin Collins        collinsb at mitre.org		gdal
 
 marit		Marit Jentoft-Nilson    jentoft-nilsen at agnes.gsfc.nasa.gov geotiff
 
-vgough  Valient Gough   vgough at remotesensing.org
+vgough		Valient Gough		vgough at remotesensing.org
