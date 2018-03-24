@@ -732,12 +732,15 @@ GBool TABFeature::ValidateCoordType(TABMAPFile *poMapFile)
         /* Test for max range < 65535 here instead of < 65536 to avoid
          * compressed coordinate overflows in some boundary situations
          */
-        if ((m_nXMax - m_nXMin) < 65535 && (m_nYMax-m_nYMin) < 65535)
+        if ((static_cast<GIntBig>(m_nXMax) - m_nXMin) < 65535 &&
+            (static_cast<GIntBig>(m_nYMax) - m_nYMin) < 65535)
         {
             bCompr = TRUE;
         }
-        m_nComprOrgX = (m_nXMin + m_nXMax) / 2;
-        m_nComprOrgY = (m_nYMin + m_nYMax) / 2;
+        m_nComprOrgX = static_cast<int>(
+            (static_cast<GIntBig>(m_nXMin) + m_nXMax) / 2);
+        m_nComprOrgY = static_cast<int>(
+            (static_cast<GIntBig>(m_nYMin) + m_nYMax) / 2);
     }
 
     /*-------------------------------------------------------------
