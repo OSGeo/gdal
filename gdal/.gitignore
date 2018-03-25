@@ -105,6 +105,7 @@ swig/csharp/osr
 swig/csharp/ogr
 swig/csharp/gdal
 swig/csharp/const
+fuzzers/libFuzzingEngine.a
 man/
 html/
 nmake.local*
