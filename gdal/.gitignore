@@ -101,6 +101,11 @@ swig/perl/gdalconst_wrap.c
 swig/perl/ogr_wrap.cpp
 swig/perl/osr_wrap.cpp
 swig/perl/pm_to_blib
+swig/perl/GNM.bs
+swig/perl/MYMETA.json
+swig/perl/MYMETA.yml
+swig/perl/Makefile_Geo__GNM
+swig/perl/gnm_wrap.cpp
 swig/csharp/osr
 swig/csharp/ogr
 swig/csharp/gdal
