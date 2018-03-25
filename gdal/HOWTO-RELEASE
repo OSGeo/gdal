@@ -60,10 +60,10 @@ Perl module maintainer to make a CPAN release.
    - Adding interfaces, bump CURRENT/AGE, set REVISION to 0.
    - Deleting interfaces / compatibility issues - bump CURRENT, others to zero.
 
-5) Prepare release overview in the NEWS file.  The Trac revision log for
-   trunk or the stable branch can be helpful.
+5) Prepare release overview in the NEWS file. For example, to get all changes
+   from v2.2.0 to current HEAD.
 
-    http://trac.osgeo.org/gdal/log/branches/1.4
+     git log v2.2.0..
 
   - commit new version to NEWS file.
 
@@ -74,13 +74,17 @@ Perl module maintainer to make a CPAN release.
 
 7) If this is a major release, prepare a branch.
 
-   svn copy https://svn.osgeo.org/gdal/trunk \
-            https://svn.osgeo.org/gdal/branches/1.5
+   git checkout master
+   git pull origin master
+   git checkout -b master release/2.3
+   git push origin release/2.3
 
-8) Tag the release set in SVN:
+8) Tag the release set in git:
 
-   svn copy https://svn.osgeo.org/gdal/branches/1.4 \
-            https://svn.osgeo.org/gdal/tags/1.4.1
+   git checkout release/2.3
+   git pull origin release/2.3
+   git tag -a -m "Create tag v2.3.0" v2.3.0
+   git push origin v2.3.0
 
 9) Create the source distributions using the mkgdaldist.sh script.  The
    argument should be the version number (i.e. 1.4.2). As our process involves
@@ -88,7 +92,7 @@ Perl module maintainer to make a CPAN release.
    information (after promotion to official release, filename renaming will have
    to be done)
 
-   % mkgdaldist.sh 1.4.2 -branch tags/1.4.2 -rc RC1
+   % mkgdaldist.sh 1.4.2 -branch v1.4.2 -rc RC1
 
 10) Create a snapshot of the documentation.
 
@@ -96,18 +100,6 @@ Perl module maintainer to make a CPAN release.
  % cd /var/www/gdal
  % ./gdal-web-refresh.sh
  % zip -r ~/gdal210doc.zip gdal-web/*.* gdal-web/java gdal-web/python
-
-11) Create a snapshot of autotest suite:
-
-  svn export http://svn.osgeo.org/gdal/branches/1.6/autotest gdalautotest-1.6.0
-  tar czvf gdalautotest-1.6.0.tar.gz gdalautotest-1.6.0
-  zip -r gdalautotest-1.6.0.zip gdalautotest-1.6.0
-
-11.5) If changes have been made in the frmts/grass or ogr/ogrsf_frmts/grass dir,
-      generate an up-to-date gdal-grass snapshot:
-
-  % cd frmts/grass
-  % make dist
 
 12) Publish the resulting files in download.osgeo.org/gdal/X.Y.Z (where X.Y.Z is the version number)
     and add a symlink from X.Y.Z to CURRENT (except for stable releases in a "old" branch).
