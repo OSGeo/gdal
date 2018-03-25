@@ -162,7 +162,9 @@ Some GDAL/OGR users and developers can also often be found in the
 GDAL bugs
 <a href="https://github.com/OSGeo/gdal/issues/new">can be reported</a>, and
 <a href="https://github.com/OSGeo/gdal/issues">can be
-listed</a> using Trac.<p>
+listed</a> using GitHub.<p>
+Bugs pre-dating GitHub migration can be found in
+<a href="http://trac.osgeo.org/gdal/report/1?sort=ticket&asc=0">Trac</a>.<p>
 
 \section index_bindings GDAL In Other Languages
 
