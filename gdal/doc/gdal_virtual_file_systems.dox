@@ -59,7 +59,7 @@ It is possible to chain multiple file system handlers.
 
 ogrinfo a shapefile in a zip file on the internet: 
 <pre>
-ogrinfo -ro -al -so /vsizip//vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip
+ogrinfo -ro -al -so /vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip
 </pre>
 
 ogrinfo a shapefile in a zip file on an ftp:
@@ -207,7 +207,7 @@ the URL of a remote resource.
 
 Example of ogrinfo a shapefile on the internet:
 <pre>
-ogrinfo -ro -al -so /vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.shp
+ogrinfo -ro -al -so /vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.shp
 </pre>
 
 Starting with GDAL 2.3, options can be passed in the filename with the

@@ -1795,13 +1795,13 @@ def ogr_shape_43():
     if drv is None:
         return 'skip'
 
-    conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
     if conn is None:
         print('cannot open URL')
         return 'skip'
     conn.close()
 
-    ds = ogr.Open('/vsizip//vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
+    ds = ogr.Open('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
     if ds is None:
         return 'fail'
 
@@ -1833,13 +1833,13 @@ def ogr_shape_44():
     if drv is None:
         return 'skip'
 
-    conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip')
+    conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip')
     if conn is None:
         print('cannot open URL')
         return 'skip'
     conn.close()
 
-    ds = ogr.Open('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/testshp')
+    ds = ogr.Open('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/testshp')
     if ds is None:
         return 'fail'
 

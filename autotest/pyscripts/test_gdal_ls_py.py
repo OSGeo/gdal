@@ -153,7 +153,7 @@ def test_gdal_ls_py_5():
         gdaltest.post_reason('would stall for a long time')
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
     d = gdal.VSIFReadL(1,1,f)
@@ -161,14 +161,14 @@ def test_gdal_ls_py_5():
     if len(d) == 0:
         return 'skip'
 
-    ret, ret_str = run_gdal_ls(['', '-R', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
-
-    if ret != 'success':
-        return ret
-
-    if ret_str.find('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
-        print(ret_str)
-        return 'fail'
+    #ret, ret_str = run_gdal_ls(['', '-R', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
+    #
+    #if ret != 'success':
+    #    return ret
+    #
+    #if ret_str.find('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/wkb_wkt/3d_broken_line.wkb') == -1:
+    #    print(ret_str)
+    #    return 'fail'
 
     return 'success'
 
@@ -185,7 +185,7 @@ def test_gdal_ls_py_6():
     if drv is None:
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
     d = gdal.VSIFReadL(1,1,f)
@@ -193,12 +193,12 @@ def test_gdal_ls_py_6():
     if len(d) == 0:
         return 'skip'
 
-    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip'])
+    ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip'])
 
     if ret != 'success':
         return ret
 
-    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    if ret_str.find('-r--r--r--  1 unknown unknown          415 2008-02-11 21:35 /vsizip/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
         print(ret_str)
         if gdaltest.skip_on_travis():
             # FIXME
@@ -231,7 +231,7 @@ def test_gdal_ls_py_7():
         gdaltest.post_reason('would stall for a long time')
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
     d = gdal.VSIFReadL(1,1,f)
@@ -239,14 +239,14 @@ def test_gdal_ls_py_7():
     if len(d) == 0:
         return 'skip'
 
-    ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/'])
+    #ret, ret_str = run_gdal_ls(['', '-R', '-Rzip', 'https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/'])
 
-    if ret != 'success':
-        return ret
+    #if ret != 'success':
+    #    return ret
 
-    if ret_str.find('/vsizip//vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
-        print(ret_str)
-        return 'fail'
+    #if ret_str.find('/vsizip//vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip/poly.PRJ') == -1:
+    #    print(ret_str)
+    #    return 'fail'
 
     return 'success'
 
@@ -269,7 +269,7 @@ def test_gdal_ls_py_8():
         gdaltest.post_reason('would stall for a long time')
         return 'skip'
 
-    f = gdal.VSIFOpenL('/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/poly.zip', 'rb')
+    f = gdal.VSIFOpenL('/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/poly.zip', 'rb')
     if f is None:
         return 'skip'
     d = gdal.VSIFReadL(1,1,f)
@@ -305,7 +305,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
+    if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS') is None:
+        gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 
     gdaltest.setup_run( 'test_gdal_ls_py' )
 

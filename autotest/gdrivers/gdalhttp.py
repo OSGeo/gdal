@@ -86,11 +86,11 @@ def http_2():
     if drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GTiff','/vsicurl/http://svn.osgeo.org/gdal/trunk/autotest/gcore/data/byte.tif',
+    tst = gdaltest.GDALTest( 'GTiff','/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
                              1, 4672, filename_absolute = 1 )
     ret = tst.testOpen()
     if ret == 'fail':
-        conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/gcore/data/byte.tif')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif')
         if conn is None:
             print('cannot open URL')
             return 'skip'
@@ -212,9 +212,9 @@ def http_5():
     if drv is None:
         return 'skip'
 
-    ds = gdal.Open('http://svn.osgeo.org/gdal/trunk/autotest/gdrivers/data/s4103.blx')
+    ds = gdal.Open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/s4103.blx')
     if ds is None:
-        conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/gdrivers/data/s4103.blx')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/data/s4103.blx')
         if conn is None:
             print('cannot open URL')
             return 'skip'
@@ -251,9 +251,9 @@ def http_6():
     if drv is None:
         return 'skip'
 
-    ds = ogr.Open('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/test.jml')
+    ds = ogr.Open('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/test.jml')
     if ds is None:
-        conn = gdaltest.gdalurlopen('http://svn.osgeo.org/gdal/trunk/autotest/ogr/data/test.jml')
+        conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/ogr/data/test.jml')
         if conn is None:
             print('cannot open URL')
             return 'skip'
