@@ -13,12 +13,15 @@ if test $rc != 0; then
     exit $rc;
 fi
 
+GITURL="https://github.com/OSGeo/gdal"
+
 if [ $# -lt 1 ] ; then
-  echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-rc n]"
+  echo "Usage: mkgdaldist.sh <version> [-date date] [-branch branch] [-rc n] [-url url]"
   echo " <version> - version number used in name of generated archive."
   echo " -date     - date of package generation, current date used if not provided"
   echo " -branch   - path to git branch or tag, master is used if not provided"
   echo " -rc       - gives a release candidate id to embed in filenames"
+  echo " -url      - git url, ${GITURL} if not provided"
   echo "Example: mkgdaldist.sh 2.2.4 -branch v2.2.4 -rc RC1"
   echo "or       mkgdaldist.sh 2.3.0beta1"
   exit
@@ -54,6 +57,12 @@ else
   RC=""
 fi
 
+if test "$2" = "-url"; then
+  GITURL=$3
+  shift
+  shift
+fi
+
 #
 # Checkout GDAL sources from the repository
 #
@@ -62,20 +71,19 @@ rm -rf dist_wrk
 mkdir dist_wrk
 cd dist_wrk
 
-GITURL="https://github.com/OSGeo/gdal"
-
 echo "Generating package '${GDAL_VERSION}' from '${BRANCH}' branch"
 echo
 
-git clone --depth 1 -b ${BRANCH} ${GITURL}
-cd gdal
+git clone -b ${BRANCH} --single-branch ${GITURL} gdal
 
 if [ \! -d gdal ] ; then
-	echo "svn checkout reported an error ... abandoning mkgdaldist"
+	echo "git clone reported an error ... abandoning mkgdaldist"
 	cd ..
 	rm -rf dist_wrk
 	exit
 fi
+
+cd gdal
 
 #
 # Make some updates and cleaning
@@ -90,6 +98,15 @@ fi
 
 echo "* Cleaning .gitignore under $PWD..."
 rm -f gdal/.gitignore
+
+echo "* Substituting \$Id\$..."
+for i in `find . -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.dox" \
+              -o -name "*.py" -o -name "*.i" -o -name "*.sh" -o -name "*.cs" \
+              -o -name "*.java" -o -name "*.m4" -o -name "*.xml" \
+              -o -name "*.xsd"`; do
+    ID="`basename $i` `git log -1 --format='%H %ai %aN' $i | sed 's/ +0000/Z/'`";
+    sed -i "s/\\\$Id\\\$/\\\$Id: ${ID} \\\$/" $i;
+done
 
 #
 # Generate man pages
