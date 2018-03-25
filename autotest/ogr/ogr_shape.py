@@ -1823,7 +1823,7 @@ def ogr_shape_43():
 ###############################################################################
 # Test /vsicurl/ on a directory
 
-def ogr_shape_44():
+def ogr_shape_44_DISABLED():
 
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -5383,7 +5383,7 @@ gdaltest_list = [
     ogr_shape_41,
     ogr_shape_42,
     ogr_shape_43,
-    ogr_shape_44,
+    #ogr_shape_44,
     ogr_shape_45,
     ogr_shape_46,
     ogr_shape_47,
