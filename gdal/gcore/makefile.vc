@@ -36,15 +36,19 @@ SQLITEDEF	=	-DSQLITE_ENABLED
 EXTRAFLAGS =	$(EXTRAFLAGS) -DHAVE_LIBXML2 $(LIBXML2_INC)
 !ENDIF
 
-default:	$(OBJ) $(RES) mdreader_dir $(SSSE3_OBJ)
+default:	gdal_version.h $(OBJ) $(RES) mdreader_dir $(SSSE3_OBJ)
+
+gdal_version.h: gdal_version.h.in
+	copy gdal_version.h.in gdal_version.h
 
 clean:
 	-del *.obj *.res
+	-del gdal_version.h
 	cd mdreader
 	$(MAKE) /f makefile.vc clean
 	cd ..
 
-Version.res:	
+Version.res:	gdal_version.h
 	rc -fo Version.res -r -I..\port -I..\ogr Version.rc
 
 gdal_misc.obj:	gdal_misc.cpp gdal_version.h

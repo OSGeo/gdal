@@ -34512,12 +34512,12 @@ if test "${with_gdal_ver+set}" = set; then :
   withval=$with_gdal_ver;
 fi
 
-GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h.in | awk '{print $4}'`
+GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h.in | awk '{print $4}'`
+GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h.in | awk '{print $4}'`
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking GDAL version information from gdal_version.h: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV" >&5
-$as_echo "checking GDAL version information from gdal_version.h: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking GDAL version information from gdal_version.h.in: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV" >&5
+$as_echo "checking GDAL version information from gdal_version.h.in: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV" >&6; }
 
 GDAL_VERSION_MAJOR="$GDAL_VERSION_MAJOR"
 

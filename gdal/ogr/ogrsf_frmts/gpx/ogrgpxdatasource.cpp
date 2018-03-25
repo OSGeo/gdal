@@ -550,7 +550,8 @@ int OGRGPXDataSource::Create( const char *pszFilename,
 /*     Output header of GPX file.                                       */
 /* -------------------------------------------------------------------- */
     PrintLine("<?xml version=\"1.0\"?>");
-    VSIFPrintfL(fpOutput, "<gpx version=\"1.1\" creator=\"GDAL " GDAL_RELEASE_NAME "\" ");
+    VSIFPrintfL(fpOutput, "<gpx version=\"1.1\" creator=\"GDAL %s\" ",
+                GDALVersionInfo("RELEASE_NAME"));
     VSIFPrintfL(fpOutput, "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
     if( bUseExtensions )
         VSIFPrintfL( fpOutput, "xmlns:%s=\"%s\" ",

@@ -41,6 +41,7 @@ frmts/msg/PublicDecompWT/
 frmts/msg/PublicDecompWT_all.h
 frmts/jpeg/libjpeg12/*.c
 frmts/jpeg/libjpeg12/*.h
+gcore/gdal_version.h
 libgdal.a
 libgdal.so
 libgdal.so.*

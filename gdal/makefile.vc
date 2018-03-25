@@ -101,6 +101,12 @@ clean:
 	-del *.ilk
 	-del *.pdb
 
+
+generate_gdal_version_h:
+	cd gcore
+	$(MAKE) /f makefile.vc gdal_version.h
+	cd ..
+
 port_dir:
 	cd port
 	$(MAKE) /f makefile.vc
@@ -111,14 +117,14 @@ ogr_min:
 	$(MAKE) /f makefile.vc ogr.lib
 	cd ..
 
-core_dir: port_dir
+core_dir: port_dir generate_gdal_version_h
 	cd gcore
 	$(MAKE) /f makefile.vc
 	cd ..\alg
 	$(MAKE) /f makefile.vc
 	cd ..
 
-frmts_dir:
+frmts_dir: generate_gdal_version_h
 	cd frmts
 	$(MAKE) /f makefile.vc
 	cd ..
@@ -138,7 +144,7 @@ apps_dir:   $(TARGET_LIB)
 	$(MAKE) /f makefile.vc
 	cd ..
 
-ogr_dir:      port_dir
+ogr_dir:      port_dir generate_gdal_version_h
 	cd frmts/iso8211
 	$(MAKE) /f makefile.vc
 	cd ..\sdts

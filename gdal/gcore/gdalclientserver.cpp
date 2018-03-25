@@ -1531,7 +1531,7 @@ static int GDALCheckServerVersion(GDALPipe* p)
     GDALPipeWrite(p, INSTR_GetGDALVersion);
     char bIsLSB = CPL_IS_LSB;
     GDALPipeWrite_nolength(p, 1, &bIsLSB);
-    GDALPipeWrite(p, GDAL_RELEASE_NAME);
+    GDALPipeWrite(p, GDALVersionInfo("RELEASE_NAME"));
     GDALPipeWrite(p, GDAL_VERSION_MAJOR);
     GDALPipeWrite(p, GDAL_VERSION_MINOR);
     GDALPipeWrite(p, GDAL_CLIENT_SERVER_PROTOCOL_MAJOR);
@@ -1577,7 +1577,7 @@ static int GDALCheckServerVersion(GDALPipe* p)
     CPLDebug("GDAL",
              "Client version : %s (%d.%d), "
              "Client protocol version = %d.%d",
-             GDAL_RELEASE_NAME, GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR,
+             GDALVersionInfo("RELEASE_NAME"), GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR,
              GDAL_CLIENT_SERVER_PROTOCOL_MAJOR,
              GDAL_CLIENT_SERVER_PROTOCOL_MINOR);
     if( nProtocolMajor != GDAL_CLIENT_SERVER_PROTOCOL_MAJOR )
@@ -1587,7 +1587,7 @@ static int GDALCheckServerVersion(GDALPipe* p)
                  "incompatible with GDAL client (GDAL version=%s, protocol version=%d.%d)",
                  pszVersion,
                  nProtocolMajor, nProtocolMinor,
-                 GDAL_RELEASE_NAME,
+                 GDALVersionInfo("RELEASE_NAME"),
                  GDAL_CLIENT_SERVER_PROTOCOL_MAJOR,
                  GDAL_CLIENT_SERVER_PROTOCOL_MINOR);
         CPLFree(pszVersion);
@@ -2144,7 +2144,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
 
             CPLFree(pszClientVersion);
 
-            GDALPipeWrite(p, GDAL_RELEASE_NAME);
+            GDALPipeWrite(p, GDALVersionInfo("RELEASE_NAME"));
             GDALPipeWrite(p, GDAL_VERSION_MAJOR);
             GDALPipeWrite(p, GDAL_VERSION_MINOR);
             GDALPipeWrite(p, GDAL_CLIENT_SERVER_PROTOCOL_MAJOR);

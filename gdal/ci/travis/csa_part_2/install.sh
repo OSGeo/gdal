@@ -6,6 +6,8 @@ set -e
 
 cd gdal
 
+make generate_gdal_version_h
+
 cd ogr
 scan-build -o scanbuildoutput -plist -v -enable-checker alpha.unix.cstring.OutOfBounds,alpha.unix.cstring.BufferOverlap make -j4
 cd ..

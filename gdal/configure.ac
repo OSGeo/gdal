@@ -4906,11 +4906,11 @@ dnl ---------------------------------------------------------------------------
 
 
 AC_ARG_WITH(gdal-ver,[  --with-gdal-ver=ARG   Override GDAL version ],,)
-GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h | awk '{print $4}'`
-GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h | awk '{print $4}'`
+GDAL_VERSION_MAJOR=`grep "#*define.GDAL_VERSION_MAJOR.*" gcore/gdal_version.h.in | awk '{print $4}'`
+GDAL_VERSION_MINOR=`grep "#*define.GDAL_VERSION_MINOR.*" gcore/gdal_version.h.in | awk '{print $4}'`
+GDAL_VERSION_REV=`grep "#*define.GDAL_VERSION_REV.*" gcore/gdal_version.h.in | awk '{print $4}'`
 
-AC_MSG_RESULT([checking GDAL version information from gdal_version.h: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV])
+AC_MSG_RESULT([checking GDAL version information from gdal_version.h.in: $GDAL_VERSION_MAJOR.$GDAL_VERSION_MINOR.$GDAL_VERSION_REV])
 
 AC_SUBST(GDAL_VERSION_MAJOR,    "$GDAL_VERSION_MAJOR")
 AC_SUBST(GDAL_VERSION_MINOR,    "$GDAL_VERSION_MINOR")
