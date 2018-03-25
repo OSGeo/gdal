@@ -86,7 +86,7 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
     double      dfNoDataValue;
 
   public:
-    SRTMHGTRasterBand(SRTMHGTDataset*, int);
+    SRTMHGTRasterBand(SRTMHGTDataset*, int, GDALDataType);
 
     virtual CPLErr IReadBlock(int, int, void*) override;
     virtual CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void* pImage) override;
@@ -99,16 +99,17 @@ class SRTMHGTRasterBand : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           SRTMHGTRasterBand()                            */
+/*                         SRTMHGTRasterBand()                          */
 /************************************************************************/
 
-SRTMHGTRasterBand::SRTMHGTRasterBand( SRTMHGTDataset* poDSIn, int nBandIn ) :
+SRTMHGTRasterBand::SRTMHGTRasterBand( SRTMHGTDataset* poDSIn, int nBandIn,
+                                      GDALDataType eDT ) :
     bNoDataSet(TRUE),
     dfNoDataValue(SRTMHG_NODATA_VALUE)
 {
     poDS = poDSIn;
     nBand = nBandIn;
-    eDataType = GDT_Int16;
+    eDataType = eDT;
     nBlockXSize = poDSIn->nRasterXSize;
     nBlockYSize = 1;
 }
@@ -125,10 +126,11 @@ CPLErr SRTMHGTRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 /* -------------------------------------------------------------------- */
 /*      Load the desired data into the working buffer.                  */
 /* -------------------------------------------------------------------- */
-  VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
-  VSIFReadL((unsigned char*)pImage, nBlockXSize, 2, poGDS->fpImage);
+  const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+  VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*nDTSize, SEEK_SET);
+  VSIFReadL((unsigned char*)pImage, nBlockXSize, nDTSize, poGDS->fpImage);
 #ifdef CPL_LSB
-  GDALSwapWords(pImage, 2, nBlockXSize, 2);
+  GDALSwapWords(pImage, nDTSize, nBlockXSize, nDTSize);
 #endif
 
   return CE_None;
@@ -145,20 +147,27 @@ CPLErr SRTMHGTRasterBand::IWriteBlock(int /*nBlockXOff*/, int nBlockYOff, void* 
     if( poGDS->eAccess != GA_Update )
         return CE_Failure;
 
-    VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*2, SEEK_SET);
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    VSIFSeekL(poGDS->fpImage, nBlockYOff*nBlockXSize*nDTSize, SEEK_SET);
 
 #ifdef CPL_LSB
-    memcpy(poGDS->panBuffer, pImage, nBlockXSize*sizeof(GInt16));
-    GDALSwapWords(poGDS->panBuffer, 2, nBlockXSize, 2);
-    VSIFWriteL( reinterpret_cast<unsigned char *>( poGDS->panBuffer ),
-                nBlockXSize, 2, poGDS->fpImage );
-#else
-    VSIFWriteL( reinterpret_cast<unsigned char *>( pImage ),
-                nBlockXSize, 2, poGDS->fpImage );
+    if( nDTSize > 1 )
+    {
+        memcpy(poGDS->panBuffer, pImage, nBlockXSize*nDTSize);
+        GDALSwapWords(poGDS->panBuffer, nDTSize, nBlockXSize, nDTSize);
+        VSIFWriteL( reinterpret_cast<unsigned char *>( poGDS->panBuffer ),
+                    nBlockXSize, nDTSize, poGDS->fpImage );
+    }
+    else
 #endif
+    {
+        VSIFWriteL( reinterpret_cast<unsigned char *>( pImage ),
+                    nBlockXSize, nDTSize, poGDS->fpImage );
+    }
 
     return CE_None;
 }
+
 /************************************************************************/
 /*                           GetNoDataValue()                           */
 /************************************************************************/
@@ -253,8 +262,12 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
   if( strlen(fileName) < 11 || fileName[7] != '.' )
     return FALSE;
+  CPLString osLCFilename(CPLString(fileName).tolower());
+  if( (osLCFilename[0] != 'n' && osLCFilename[0] != 's') ||
+      (osLCFilename[3] != 'e' && osLCFilename[3] != 'w') )
+      return FALSE;
   if( !STARTS_WITH(fileName, "/vsizip/") &&
-      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+      osLCFilename.endsWith(".hgt.zip") )
   {
     CPLString osNewName("/vsizip/");
     osNewName += poOpenInfo->pszFilename;
@@ -265,8 +278,22 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
     return Identify(&oOpenInfo);
   }
 
-  if( !EQUAL(fileName + strlen(fileName) - strlen(".hgt"), ".hgt") &&
-      !EQUAL(fileName + strlen(fileName) - strlen(".hgt.gz"), ".hgt.gz") )
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      osLCFilename.endsWith(".srtmswbd.raw.zip") )
+  {
+    CPLString osNewName("/vsizip/");
+    osNewName += poOpenInfo->pszFilename;
+    osNewName += "/";
+    osNewName += CPLString(fileName).substr(0, 7);
+    osNewName += ".raw";
+    GDALOpenInfo oOpenInfo(osNewName, GA_ReadOnly);
+    return Identify(&oOpenInfo);
+  }
+
+
+  if( !osLCFilename.endsWith(".hgt") &&
+      !osLCFilename.endsWith(".raw") &&
+      !osLCFilename.endsWith(".hgt.gz") )
     return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -277,7 +304,8 @@ int SRTMHGTDataset::Identify( GDALOpenInfo * poOpenInfo )
 
   if(VSIStatL(poOpenInfo->pszFilename, &fileStat) != 0)
       return FALSE;
-  if(fileStat.st_size != 3601 * 3601 * 2 &&
+  if(fileStat.st_size != 3601 * 3601 &&
+     fileStat.st_size != 3601 * 3601 * 2 &&
      fileStat.st_size != 1801 * 3601 * 2 &&
      fileStat.st_size != 1201 * 1201 * 2 )
       return FALSE;
@@ -295,14 +323,33 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
       return nullptr;
 
   const char* fileName = CPLGetFilename(poOpenInfo->pszFilename);
+  CPLString osLCFilename(CPLString(fileName).tolower());
   if( !STARTS_WITH(fileName, "/vsizip/") &&
-      EQUAL(fileName + strlen(fileName) - strlen(".hgt.zip"), ".hgt.zip") )
+      osLCFilename.endsWith(".hgt.zip") )
   {
       CPLString osFilename ("/vsizip/");
       osFilename += poOpenInfo->pszFilename;
       osFilename += "/";
       osFilename += CPLString(fileName).substr(0, 7);
       osFilename += ".hgt";
+      GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
+      GDALDataset* poDS = Open(&oOpenInfo);
+      if( poDS != nullptr )
+      {
+          // override description with the main one
+          poDS->SetDescription(poOpenInfo->pszFilename);
+      }
+      return poDS;
+  }
+
+  if( !STARTS_WITH(fileName, "/vsizip/") &&
+      osLCFilename.endsWith(".srtmswbd.raw.zip") )
+  {
+      CPLString osFilename("/vsizip/");
+      osFilename += poOpenInfo->pszFilename;
+      osFilename += "/";
+      osFilename += CPLString(fileName).substr(0, 7);
+      osFilename += ".raw";
       GDALOpenInfo oOpenInfo(osFilename, poOpenInfo->eAccess);
       GDALDataset* poDS = Open(&oOpenInfo);
       if( poDS != nullptr )
@@ -353,7 +400,12 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 
   int numPixels_x, numPixels_y;
 
+  GDALDataType eDT = GDT_Int16;
   switch (fileStat.st_size) {
+  case 3601 * 3601:
+    numPixels_x = numPixels_y = 3601;
+    eDT = GDT_Byte;
+    break;
   case 3601 * 3601 * 2:
     numPixels_x = numPixels_y = 3601;
     break;
@@ -371,7 +423,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 
   poDS->eAccess = poOpenInfo->eAccess;
 #ifdef CPL_LSB
-  if(poDS->eAccess == GA_Update)
+  if(poDS->eAccess == GA_Update && eDT == GDT_Int16)
   {
       poDS->panBuffer
           = reinterpret_cast<GInt16 *>( CPLMalloc(numPixels_x * sizeof(GInt16)) );
@@ -397,7 +449,7 @@ GDALDataset* SRTMHGTDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
-  SRTMHGTRasterBand* tmpBand = new SRTMHGTRasterBand(poDS, 1);
+  SRTMHGTRasterBand* tmpBand = new SRTMHGTRasterBand(poDS, 1, eDT);
   poDS->SetBand(1, tmpBand);
 
 /* -------------------------------------------------------------------- */

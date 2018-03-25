@@ -128,6 +128,31 @@ def srtmhgt_3():
     return 'success'
 
 ###############################################################################
+# Test reading from a .SRTMSWBD.raw.zip file (GRASS #3246)
+
+def srtmhgt_4():
+
+    f = gdal.VSIFOpenL('/vsizip//vsimem/N43W080.SRTMSWBD.raw.zip/N43W080.raw', 'wb')
+    if f is None:
+        return 'skip'
+    gdal.VSIFWriteL(' ' * (3601 * 3601), 1, 3601 * 3601, f)
+    gdal.VSIFCloseL(f)
+
+    ds = gdal.Open('/vsimem/N43W080.SRTMSWBD.raw.zip')
+    if ds is None:
+        gdaltest.post_reason('fail')
+        return 'fail'
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    gdal.Unlink('/vsimem/N43W080.SRTMSWBD.raw.zip')
+
+    if cs != 3636:
+        gdaltest.post_reason('Wrong checksum. Checksum found %d' % cs)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # Cleanup.
 
 def srtmhgt_cleanup():
@@ -144,6 +169,7 @@ gdaltest_list = [
     srtmhgt_1,
     srtmhgt_2,
     srtmhgt_3,
+    srtmhgt_4,
     srtmhgt_cleanup
     ]
 
