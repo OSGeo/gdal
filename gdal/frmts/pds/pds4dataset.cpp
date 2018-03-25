@@ -785,7 +785,9 @@ CPLErr PDS4Dataset::SetGeoTransform( double * padfTransform )
 
 {
     if( padfTransform[1] <= 0.0 ||
-        padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+        padfTransform[2] != 0.0 ||
+        padfTransform[4] != 0.0 ||
+        padfTransform[5] >= 0.0 )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform supported");
