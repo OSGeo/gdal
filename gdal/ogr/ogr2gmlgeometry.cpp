@@ -454,6 +454,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
                                         ppszText, pnLength, pnMaxLength,
                                         true, nullptr ) )
             {
+                CPLFree(pszElemOpen);
                 return false;
             }
 
