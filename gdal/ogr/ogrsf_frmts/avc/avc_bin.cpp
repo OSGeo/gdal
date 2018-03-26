@@ -1568,6 +1568,8 @@ int _AVCBinReadNextPCCoverageTxt(AVCRawBinFile *psFile, AVCTxt *psTxt,
     psTxt->f_1e2    = AVCRawBinReadFloat(psFile);
     psTxt->nSymbol  = AVCRawBinReadInt32(psFile);
     psTxt->numChars = AVCRawBinReadInt32(psFile);
+    if( psTxt->numChars < 0 )
+        return -1;
 
     /* In some cases, we may need to skip additional spaces after the
      * text string... more than should be required to simply align with
