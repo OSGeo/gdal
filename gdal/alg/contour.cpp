@@ -1460,9 +1460,10 @@ CPLErr OGRContourWriter( double dfLevel,
 {
     OGRContourWriterInfo *poInfo = static_cast<OGRContourWriterInfo *>(pInfo);
 
-    OGRFeatureH hFeat =
-        OGR_F_Create(
-            OGR_L_GetLayerDefn( static_cast<OGRLayerH>(poInfo->hLayer) ));
+    OGRFeatureDefnH hFDefn =
+        OGR_L_GetLayerDefn( static_cast<OGRLayerH>(poInfo->hLayer) );
+
+    OGRFeatureH hFeat = OGR_F_Create( hFDefn );
 
     if( poInfo->nIDField != -1 )
         OGR_F_SetFieldInteger( hFeat, poInfo->nIDField, poInfo->nNextID++ );
@@ -1470,18 +1471,22 @@ CPLErr OGRContourWriter( double dfLevel,
     if( poInfo->nElevField != -1 )
         OGR_F_SetFieldDouble( hFeat, poInfo->nElevField, dfLevel );
 
-    OGRGeometryH hGeom = OGR_G_CreateGeometry( wkbLineString );
+    const bool bHasZ = wkbHasZ(OGR_FD_GetGeomType(hFDefn));
+    OGRGeometryH hGeom = OGR_G_CreateGeometry(
+        bHasZ ? wkbLineString25D : wkbLineString );
 
     for( int iPoint = nPoints - 1; iPoint >= 0; iPoint-- )
     {
-        OGR_G_SetPoint( hGeom, iPoint,
-                        poInfo->adfGeoTransform[0]
+        const double dfX = poInfo->adfGeoTransform[0]
                         + poInfo->adfGeoTransform[1] * padfX[iPoint]
-                        + poInfo->adfGeoTransform[2] * padfY[iPoint],
-                        poInfo->adfGeoTransform[3]
+                        + poInfo->adfGeoTransform[2] * padfY[iPoint];
+        const double dfY = poInfo->adfGeoTransform[3]
                         + poInfo->adfGeoTransform[4] * padfX[iPoint]
-                        + poInfo->adfGeoTransform[5] * padfY[iPoint],
-                        dfLevel );
+                        + poInfo->adfGeoTransform[5] * padfY[iPoint];
+        if( bHasZ )
+            OGR_G_SetPoint( hGeom, iPoint, dfX, dfY, dfLevel );
+        else
+            OGR_G_SetPoint_2D( hGeom, iPoint, dfX, dfY );
     }
 
     OGR_F_SetGeometryDirectly( hFeat, hGeom );
