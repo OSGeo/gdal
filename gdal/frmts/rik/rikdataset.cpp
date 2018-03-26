@@ -183,7 +183,8 @@ RIKRasterBand::RIKRasterBand( RIKDataset *poDSIn, int nBandIn )
 /************************************************************************/
 
 static int GetNextLZWCode( int codeBits,
-                           GByte *blockData,
+                           const GByte *blockData,
+                           const GUInt32 blockSize,
                            GUInt32 &filePos,
                            GUInt32 &fileAlign,
                            int &bitsTaken )
@@ -203,6 +204,9 @@ static int GetNextLZWCode( int codeBits,
 
     while( bitsLeftToGo > 0 )
     {
+        if( filePos >= blockSize )
+            return -1;
+
         int tmp = blockData[filePos];
         tmp = tmp >> bitsTaken;
 
@@ -301,8 +305,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 #endif
         )
     {
-        for( GUInt32 i = 0; i < pixels; i++ )
-            reinterpret_cast<GByte *>( pImage )[i] = 0;
+        memset(pImage, 0, pixels);
         return CE_None;
     }
 
@@ -327,6 +330,7 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         VSIFree(blockData);
         return CE_Failure;
     }
+    memset(pImage, 0, pixels);
 
 /* -------------------------------------------------------------------- */
 /*      Read RLE block.                                                 */
@@ -355,24 +359,18 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
     else if( poRDS->options == 0x0b )
     {
+      try
+      {
         if( nBlockSize < 5 )
         {
-            CPLFree( blockData );
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "RIK decompression failed. "
-                      "Not enough bytes." );
-            return CE_Failure;
+            throw "Not enough bytes";
         }
 
         const bool LZW_HAS_CLEAR_CODE = !!(blockData[4] & 0x80);
         const int LZW_MAX_BITS = blockData[4] & 0x1f; // Max 13
         if( LZW_MAX_BITS > 13 )
         {
-            CPLFree( blockData );
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "RIK decompression failed. "
-                      "Invalid LZW_MAX_BITS." );
-            return CE_Failure;
+            throw "Invalid LZW_MAX_BITS";
         }
         const int LZW_BITS_PER_PIXEL = 8;
         const int LZW_OFFSET = 5;
@@ -407,8 +405,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         lineBreak += 3;
         lineBreak &= 0xfffffffc;
 
-        code = GetNextLZWCode( codeBits, blockData, filePos,
+        code = GetNextLZWCode( codeBits, blockData, nBlockSize, filePos,
                                fileAlign, bitsTaken );
+        if( code < 0 )
+        {
+            throw "Not enough bytes";
+        }
 
         OutputPixel( static_cast<GByte>( code ), pImage, poRDS->nBlockXSize,
                      lineBreak, imageLine, imagePos );
@@ -416,18 +418,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 
         while( imageLine >= 0 &&
                (imageLine || imagePos < poRDS->nBlockXSize) &&
-               filePos < nBlockSize ) try
+               filePos < nBlockSize )
         {
             lastCode = code;
-            code = GetNextLZWCode( codeBits, blockData,
+            code = GetNextLZWCode( codeBits, blockData, nBlockSize,
                                    filePos, fileAlign, bitsTaken );
-            if( VSIFEofL( poRDS->fp ) )
+            if( code < 0 )
             {
-                CPLFree( blockData );
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "RIK decompression failed. "
-                          "Read past end of file.\n" );
-                return CE_Failure;
+                throw "Not enough bytes";
             }
 
             if( LZW_HAS_CLEAR_CODE && code == LZW_CLEAR )
@@ -451,8 +449,12 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 filePos = fileAlign;
                 bitsTaken = 0;
 
-                code = GetNextLZWCode( codeBits, blockData,
+                code = GetNextLZWCode( codeBits, blockData, nBlockSize,
                                        filePos, fileAlign, bitsTaken );
+                if( code < 0 )
+                {
+                    throw "Not enough bytes";
+                }
 
                 if( code > lastAdded )
                 {
@@ -532,8 +534,9 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                 }
             }
         }
-        catch (const char *errStr)
-        {
+      }
+      catch (const char *errStr)
+      {
 #if RIK_ALLOW_BLOCK_ERRORS
                 CPLDebug( "RIK",
                           "LZW Decompress Failed: %s\n"
@@ -543,15 +546,14 @@ CPLErr RIKRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           " blocksize: %d\n",
                           errStr, blocks, nBlockIndex,
                           nBlockOffset, nBlockSize );
-                break;
 #else
                 CPLFree( blockData );
                 CPLError( CE_Failure, CPLE_AppDefined,
-                          "RIK decompression failed. "
-                          "Corrupt image block." );
+                          "RIK decompression failed: %s",
+                          errStr );
                 return CE_Failure;
 #endif
-        }
+      }
     }
 
 /* -------------------------------------------------------------------- */
