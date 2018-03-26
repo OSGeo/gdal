@@ -3890,6 +3890,118 @@ def ogr_geojson_68():
         return 'fail'
     return 'success'
 
+###############################################################################
+def ogr_geojson_id_field_and_id_type():
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', options = '-f GeoJSON -lco ID_TYPE=String -preserve_fid -limit 1 -fid 2')
+    got = read_file('/vsimem/out.json')
+    if got.find('"id": "2", "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', options = '-f GeoJSON -lco ID_TYPE=Integer -preserve_fid -limit 1 -fid 2')
+    got = read_file('/vsimem/out.json')
+    if got.find('"id": 2, "properties": { "AREA": 261752.781, "EAS_ID": 171, "PRFEDEA": "35043414" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format = 'GeoJSON', layerCreationOptions = ['ID_FIELD=EAS_ID'], limit = 1)
+    got = read_file('/vsimem/out.json')
+    if got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON')
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['ID_TYPE=String'])
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['ID_TYPE=Integer'])
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/out.json')
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format = 'GeoJSON', layerCreationOptions = ['ID_FIELD=EAS_ID', 'ID_TYPE=String'], limit = 1)
+    got = read_file('/vsimem/out.json')
+    if got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON')
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['ID_TYPE=String'])
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": "168", "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    src_ds = gdal.OpenEx('/vsimem/out.json', open_options = ['NATIVE_DATA=YES'])
+    gdal.VectorTranslate('/vsimem/out2.json', src_ds, format = 'GeoJSON', layerCreationOptions = ['ID_TYPE=Integer'])
+    src_ds = None
+    got = read_file('/vsimem/out2.json')
+    gdal.Unlink('/vsimem/out2.json')
+    if got.find('"id": 168, "properties": { "AREA": 215229.266, "PRFEDEA": "35043411" }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    gdal.Unlink('/vsimem/out.json')
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format = 'GeoJSON', layerCreationOptions = ['ID_FIELD=PRFEDEA'], limit = 1)
+    got = read_file('/vsimem/out.json')
+    gdal.Unlink('/vsimem/out.json')
+    if got.find('"id": "35043411", "properties": { "AREA": 215229.266, "EAS_ID": 168 }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    gdal.VectorTranslate('/vsimem/out.json', 'data/poly.shp', format = 'GeoJSON', layerCreationOptions = ['ID_FIELD=PRFEDEA', 'ID_TYPE=Integer'], limit = 1)
+    got = read_file('/vsimem/out.json')
+    gdal.Unlink('/vsimem/out.json')
+    if got.find('"id": 35043411, "properties": { "AREA": 215229.266, "EAS_ID": 168 }') < 0:
+        gdaltest.post_reason('fail')
+        print(got)
+        return 'fail'
+
+    return 'success'
 
 gdaltest_list = [
     ogr_geojson_1,
@@ -3960,6 +4072,7 @@ gdaltest_list = [
     ogr_geojson_66,
     ogr_geojson_67,
     ogr_geojson_68,
+    ogr_geojson_id_field_and_id_type,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':

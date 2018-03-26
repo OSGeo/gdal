@@ -76,6 +76,21 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer( const char* pszName,
     {
         oWriteOptions_.SetRFC7946Settings();
     }
+    oWriteOptions_.osIDField = CSLFetchNameValueDef(papszOptions, "ID_FIELD", "");
+    const char* pszIDFieldType = CSLFetchNameValue(papszOptions, "ID_TYPE");
+    if( pszIDFieldType )
+    {
+        if( EQUAL(pszIDFieldType, "String") )
+        {
+            oWriteOptions_.bForceIDFieldType = true;
+            oWriteOptions_.eForcedIDFieldType = OFTString;
+        }
+        else if( EQUAL(pszIDFieldType, "Integer") )
+        {
+            oWriteOptions_.bForceIDFieldType = true;
+            oWriteOptions_.eForcedIDFieldType = OFTInteger64;
+        }
+    }
 }
 
 /************************************************************************/

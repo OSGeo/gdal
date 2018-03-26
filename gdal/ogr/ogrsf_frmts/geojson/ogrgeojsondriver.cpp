@@ -656,6 +656,12 @@ void RegisterOGRGeoJSON()
 "  <Option name='RFC7946' type='boolean' description='Whether to use RFC 7946 standard. Otherwise GeoJSON 2008 initial version will be used' default='NO'/>"
 "  <Option name='WRITE_NAME' type='boolean' description='Whether to write a &quot;name&quot; property at feature collection level with layer name' default='YES'/>"
 "  <Option name='DESCRIPTION' type='string' description='(Long) description to write in a &quot;description&quot; property at feature collection level'/>"
+"  <Option name='ID_FIELD' type='string' description='Name of the source field that must be used as the id member of Feature features'/>"
+"  <Option name='ID_TYPE' type='string-select' description='Type of the id member of Feature features'>"
+"    <Value>AUTO</Value>"
+"    <Value>String</Value>"
+"    <Value>Integer</Value>"
+"  </Option>"
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );

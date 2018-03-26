@@ -534,8 +534,8 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
     bool bIdAlreadyWritten = false;
     const char* pszNativeMediaType = poFeature->GetNativeMediaType();
     json_object* poNativeGeom = nullptr;
-    json_object* poNativeId = nullptr;
     bool bHasProperties = true;
+    bool bWriteIdIfFoundInAttributes = true;
     if( pszNativeMediaType &&
         EQUAL(pszNativeMediaType, "application/vnd.geo+json") )
     {
@@ -573,17 +573,67 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
                 }
                 if( strcmp(it.key, "id") == 0 )
                 {
+                    const auto eType = json_object_get_type(it.val);
                     // See https://tools.ietf.org/html/rfc7946#section-3.2
                     if( oOptions.bHonourReservedRFC7946Members &&
-                        json_object_get_type(it.val) != json_type_string &&
-                        json_object_get_type(it.val) != json_type_int &&
-                        json_object_get_type(it.val) != json_type_double )
+                        !oOptions.bForceIDFieldType &&
+                        eType != json_type_string &&
+                        eType != json_type_int &&
+                        eType != json_type_double )
                     {
                         continue;
                     }
 
                     bIdAlreadyWritten = true;
-                    poNativeId = it.val;
+
+                    if( it.val &&
+                        oOptions.bForceIDFieldType &&
+                        oOptions.eForcedIDFieldType == OFTInteger64 )
+                    {
+                        if( eType != json_type_int )
+                        {
+                            json_object_object_add( poObj, it.key,
+                                json_object_new_int64(CPLAtoGIntBig(
+                                    json_object_get_string(it.val))));
+                            bWriteIdIfFoundInAttributes = false;
+                            continue;
+                        }
+                    }
+                    else if( it.val &&
+                             oOptions.bForceIDFieldType &&
+                             oOptions.eForcedIDFieldType == OFTString )
+                    {
+                        if( eType != json_type_string )
+                        {
+                            json_object_object_add( poObj, it.key,
+                                json_object_new_string(
+                                    json_object_get_string(it.val)));
+                            bWriteIdIfFoundInAttributes = false;
+                            continue;
+                        }
+                    }
+
+                    if( it.val != nullptr )
+                    {
+                        int nIdx = poFeature->GetFieldIndex("id");
+                        if( eType == json_type_string &&
+                            nIdx >= 0 &&
+                            poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTString &&
+                            strcmp(json_object_get_string(it.val),
+                                   poFeature->GetFieldAsString(nIdx)) == 0 )
+                        {
+                            bWriteIdIfFoundInAttributes = false;
+                        }
+                        else if ( eType == json_type_int &&
+                                nIdx >= 0 &&
+                                (poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger ||
+                                poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger64) &&
+                                json_object_get_int64(it.val) ==
+                                    poFeature->GetFieldAsInteger64(nIdx) )
+                        {
+                            bWriteIdIfFoundInAttributes = false;
+                        }
+                    }
                 }
 
                 // See https://tools.ietf.org/html/rfc7946#section-7.1
@@ -605,36 +655,45 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature,
 /* -------------------------------------------------------------------- */
 /*      Write FID if available                                          */
 /* -------------------------------------------------------------------- */
-    if( poFeature->GetFID() != OGRNullFID && !bIdAlreadyWritten )
+    if( !oOptions.osIDField.empty() )
     {
-        json_object_object_add( poObj, "id",
+        int nIdx = poFeature->GetFieldIndex(oOptions.osIDField);
+        if( nIdx >= 0 )
+        {
+            if( (oOptions.bForceIDFieldType &&
+                 oOptions.eForcedIDFieldType == OFTInteger64) ||
+                (!oOptions.bForceIDFieldType &&
+                 (poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger ||
+                  poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger64)) )
+            {
+                json_object_object_add( poObj, "id",
+                    json_object_new_int64(poFeature->GetFieldAsInteger64(nIdx)) );
+            }
+            else
+            {
+                json_object_object_add( poObj, "id",
+                    json_object_new_string(poFeature->GetFieldAsString(nIdx)) );
+            }
+        }
+    }
+    else if( poFeature->GetFID() != OGRNullFID && !bIdAlreadyWritten )
+    {
+        if( oOptions.bForceIDFieldType &&
+            oOptions.eForcedIDFieldType == OFTString )
+        {
+            json_object_object_add( poObj, "id", json_object_new_string(
+                CPLSPrintf(CPL_FRMT_GIB,poFeature->GetFID())) );
+        }
+        else
+        {
+            json_object_object_add( poObj, "id",
                                 json_object_new_int64(poFeature->GetFID()) );
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write feature attributes to GeoJSON "properties" object.        */
 /* -------------------------------------------------------------------- */
-    bool bWriteIdIfFoundInAttributes = true;
-    if( bIdAlreadyWritten && poNativeId != nullptr )
-    {
-        int nIdx = poFeature->GetFieldIndex("id");
-        if( json_object_get_type(poNativeId) == json_type_string &&
-            nIdx >= 0 &&
-            poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTString &&
-            strcmp(json_object_get_string(poNativeId), poFeature->GetFieldAsString(nIdx)) == 0 )
-        {
-            bWriteIdIfFoundInAttributes = false;
-        }
-        else if ( json_object_get_type(poNativeId) == json_type_int &&
-                  nIdx >= 0 &&
-                  (poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger ||
-                   poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger64) &&
-                  json_object_get_int64(poNativeId) == poFeature->GetFieldAsInteger64(nIdx) )
-        {
-            bWriteIdIfFoundInAttributes = false;
-        }
-    }
-
     if( bHasProperties )
     {
         json_object* poObjProps
@@ -715,17 +774,22 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
     CPLAssert( nullptr != poObjProps );
 
     OGRFeatureDefn* poDefn = poFeature->GetDefnRef();
-    for( int nField = 0; nField < poDefn->GetFieldCount(); ++nField )
+
+    const int nIDField = !oOptions.osIDField.empty() ?
+        poFeature->GetFieldIndex(oOptions.osIDField) : -1;
+
+    const int nFieldCount = poDefn->GetFieldCount();
+    for( int nField = 0; nField < nFieldCount; ++nField )
     {
-        if( !poFeature->IsFieldSet(nField) )
+        if( !poFeature->IsFieldSet(nField) || nField == nIDField )
         {
             continue;
         }
 
         OGRFieldDefn* poFieldDefn = poDefn->GetFieldDefn( nField );
         CPLAssert( nullptr != poFieldDefn );
-        OGRFieldType eType = poFieldDefn->GetType();
-        OGRFieldSubType eSubType = poFieldDefn->GetSubType();
+        const OGRFieldType eType = poFieldDefn->GetType();
+        const OGRFieldSubType eSubType = poFieldDefn->GetSubType();
 
         if( !bWriteIdIfFoundInAttributes &&
             strcmp(poFieldDefn->GetNameRef(), "id") == 0 )

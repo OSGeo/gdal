@@ -34,7 +34,7 @@
 #include <ogr_core.h>
 
 #include "cpl_json_header.h"
-
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
@@ -78,6 +78,9 @@ class OGRGeoJSONWriteOptions
         bool bPolygonRightHandRule;
         bool bCanPatchCoordinatesWithNativeData;
         bool bHonourReservedRFC7946Members;
+        CPLString osIDField;
+        bool bForceIDFieldType;
+        OGRFieldType eForcedIDFieldType;
 
         OGRGeoJSONWriteOptions():
             bWriteBBOX(false),
@@ -86,7 +89,9 @@ class OGRGeoJSONWriteOptions
             nSignificantFigures(-1),
             bPolygonRightHandRule(false),
             bCanPatchCoordinatesWithNativeData(true),
-            bHonourReservedRFC7946Members(false)
+            bHonourReservedRFC7946Members(false),
+            bForceIDFieldType(false),
+            eForcedIDFieldType(OFTString)
         {}
 
         void SetRFC7946Settings();
