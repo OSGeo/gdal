@@ -27,11 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
 #include "cpl_string.h"
-#include "ogr_spatialref.h"
 #include "cpl_minixml.h"
+#include "gdal_version.h"
+#include "gdal.h"
 #include "commonutils.h"
+#include "ogr_spatialref.h"
 #include <vector>
 
 CPL_CVSID("$Id$")

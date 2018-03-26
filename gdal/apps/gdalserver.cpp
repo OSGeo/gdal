@@ -32,6 +32,7 @@
 #endif
 
 #include "cpl_port.h"
+#include "gdal_version.h"
 #include "commonutils.h"
 
 #ifdef WIN32

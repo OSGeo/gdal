@@ -44,6 +44,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal.h"
 #include "gdal_pam.h"
+#include "gdal_version.h"
 #include "ogr_srs_api.h"
 #include "ograpispy.h"
 #ifdef HAVE_XERCES

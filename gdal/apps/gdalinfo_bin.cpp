@@ -27,6 +27,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "gdal_version.h"
 #include "gdal.h"
 #include "cpl_string.h"
 #include "cpl_multiproc.h"

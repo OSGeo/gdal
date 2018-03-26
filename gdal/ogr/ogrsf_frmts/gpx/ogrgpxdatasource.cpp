@@ -41,7 +41,6 @@
 #ifdef HAVE_EXPAT
 #  include "expat.h"
 #endif
-#include "gdal_version.h"
 #include "ogr_core.h"
 #include "ogr_expat.h"
 #include "ogr_spatialref.h"

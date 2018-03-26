@@ -42,6 +42,7 @@
 #include "cpl_error.h"
 #include "cpl_progress.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
