@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "commonutils.h"

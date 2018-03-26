@@ -59,7 +59,6 @@
 #include "cpl_time.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
-#include "gdal_version.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 

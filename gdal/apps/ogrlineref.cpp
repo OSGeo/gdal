@@ -31,6 +31,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "ogr_api.h"

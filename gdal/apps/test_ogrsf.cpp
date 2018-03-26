@@ -27,11 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_multiproc.h"
+#include "gdal_version.h"
 #include "ogr_api.h"
 #include "ogr_p.h"
+#include "ogrsf_frmts.h"
 #include "commonutils.h"
 
 #include <algorithm>

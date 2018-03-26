@@ -20,12 +20,15 @@ make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 cd ..
+
 cd swig/java
+cp java.opt java.opt.bak
 cat java.opt | sed "s/JAVA_HOME =.*/JAVA_HOME = \/usr\/lib\/jvm\/java-7-openjdk-amd64\//" > java.opt.tmp
 mv java.opt.tmp java.opt
 make
-git checkout java.opt
+mv java.opt.bak java.opt
 cd ../..
+
 cd swig/perl
 make generate
 make

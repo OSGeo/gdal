@@ -27,10 +27,11 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal.h"
-#include "gdal_alg.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
+#include "gdal.h"
+#include "gdal_alg.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
 #include "commonutils.h"

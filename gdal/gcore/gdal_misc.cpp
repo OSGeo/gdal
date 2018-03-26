@@ -28,7 +28,6 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "gdal.h"
 
 #include <cctype>
 #include <cerrno>
@@ -51,9 +50,10 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "gdal_version.h"
+#include "gdal.h"
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
-#include "gdal_version.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 #include "ogr_geos.h"

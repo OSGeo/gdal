@@ -29,6 +29,7 @@
 
 #include "commonutils.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "gdal.h"
 #include "gnm.h"
 #include "gnm_priv.h"

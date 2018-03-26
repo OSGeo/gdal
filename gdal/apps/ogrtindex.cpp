@@ -35,6 +35,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"
 #include "commonutils.h"

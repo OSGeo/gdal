@@ -29,7 +29,13 @@ ifeq ($(HAVE_GEOS),yes)
 CPPFLAGS 	:=	$(CPPFLAGS) -DHAVE_GEOS=1 $(GEOS_CFLAGS)
 endif
 
+GENERATE_GDAL_VERSION_H := $(shell ./generate_gdal_version_h.sh)
+
 default: mdreader-target $(OBJ:.o=.$(OBJ_EXT)) rasterio_ssse3.$(OBJ_EXT)
+
+.PHONY: generate_gdal_version_h
+
+generate_gdal_version_h: ;
 
 rasterio_ssse3.$(OBJ_EXT):   rasterio_ssse3.cpp
 	$(CXX) $(GDAL_INCLUDE) $(CXXFLAGS_NO_LTO_IF_SSSE3_NONDEFAULT) $(SSSE3FLAGS) $(CPPFLAGS) -c -o $@ $<
@@ -38,6 +44,7 @@ $(OBJ):	gdal_priv.h gdal_proxy.h
 
 clean: mdreader-clean
 	$(RM) *.o $(O_OBJ)
+	$(RM) -f gdal_version.h
 
 docs:
 	(cd ..; $(MAKE) docs)

@@ -27,6 +27,7 @@
  ****************************************************************************/
 
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
 #include "gdal_priv.h"

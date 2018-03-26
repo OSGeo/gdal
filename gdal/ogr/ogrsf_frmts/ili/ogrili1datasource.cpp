@@ -239,7 +239,7 @@ int OGRILI1DataSource::Create( const char *pszFilename,
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fpTransfer, "SCNT\n" );
     VSIFPrintfL( fpTransfer, "OGR/GDAL %s, INTERLIS Driver\n",
-                GDAL_RELEASE_NAME );
+                 GDALVersionInfo("RELEASE_NAME") );
     VSIFPrintfL( fpTransfer, "////\n" );
     VSIFPrintfL( fpTransfer, "MTID INTERLIS1\n" );
     const char* modelname = poImdReader->mainModelName.c_str();

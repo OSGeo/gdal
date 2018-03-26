@@ -29,8 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "gdal_priv.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
+#include "gdal_priv.h"
 #include "ogr_spatialref.h"
 #include "ogr_api.h"
 #include "ogrsf_frmts.h"

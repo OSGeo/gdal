@@ -40,6 +40,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "gdal_version.h"
 #include "gdal.h"
 #include "gdal_priv.h"
 #include "gdal_version.h"

@@ -72,30 +72,33 @@ lib-dependencies:	port-target core-target frmts-target ogr-target gnm-target app
 check-lib:	lib-dependencies
 	$(MAKE) $(LIBGDAL-yes)
 
-appslib-target:
+generate_gdal_version_h:
+	(cd gcore; $(MAKE) generate_gdal_version_h)
+
+appslib-target: generate_gdal_version_h
 	(cd apps; $(MAKE) appslib)
 
 port-target:
 	(cd port; $(MAKE))
 
-ogr-target:
+ogr-target: generate_gdal_version_h
 	(cd ogr; $(MAKE) lib )
 
 ifeq ($(GNM_ENABLED),yes)
-gnm-target:
+gnm-target: generate_gdal_version_h
 	(cd gnm; $(MAKE) lib )
 else
 gnm-target:	;
 endif
 
-core-target:
+core-target: generate_gdal_version_h
 	(cd gcore; $(MAKE))
 	(cd alg; $(MAKE))
 
-frmts-target:
+frmts-target: generate_gdal_version_h
 	(cd frmts; $(MAKE))
 
-ogr-all:
+ogr-all: generate_gdal_version_h
 	(cd ogr; $(MAKE) all)
 
 apps-target:	lib-target

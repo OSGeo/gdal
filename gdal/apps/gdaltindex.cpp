@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "gdal_version.h"
 #include "gdal.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"

@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include "commonutils.h"
+#include "gdal_version.h"
 #include "gnm.h"
 #include "gnm_priv.h"
 #include "ogr_p.h"

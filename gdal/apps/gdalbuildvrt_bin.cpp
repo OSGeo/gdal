@@ -29,6 +29,7 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 #include "commonutils.h"
+#include "gdal_version.h"
 #include "gdal_utils_priv.h"
 
 CPL_CVSID("$Id$")

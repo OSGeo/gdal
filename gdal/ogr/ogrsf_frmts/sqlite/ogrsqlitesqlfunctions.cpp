@@ -138,7 +138,8 @@ void OGR2SQLITE_ogr_version(sqlite3_context* pContext,
 {
     if( argc == 0 || sqlite3_value_type (argv[0]) != SQLITE_TEXT )
     {
-        sqlite3_result_text( pContext, GDAL_RELEASE_NAME, -1, SQLITE_STATIC );
+        sqlite3_result_text( pContext, GDALVersionInfo("RELEASE_NAME"), -1,
+                             SQLITE_TRANSIENT );
     }
     else
     {
