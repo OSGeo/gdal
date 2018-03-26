@@ -513,7 +513,8 @@ int AVCBinReadRewind(AVCBinFile *psFile)
          * Use AVCFileTXT for PC type, and AVCFileTX6 for V7 type.
          */
         if (psFile->eCoverType == AVCCoverWeird &&
-            psFile->eFileType == AVCFileTXT && ABS(sHeader.nPrecision) == 67)
+            psFile->eFileType == AVCFileTXT &&
+            (sHeader.nPrecision == 67 || sHeader.nPrecision == -67) )
         {
             /* TXT file will be processed as V7 TXT/TX6/TX7 */
             psFile->eFileType = AVCFileTX6;
