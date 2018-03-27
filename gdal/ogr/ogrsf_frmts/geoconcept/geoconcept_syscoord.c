@@ -372,7 +372,7 @@ static const GCSpheroidInfo GCSRSAPI_CALL1(*) _findSpheroid_GCSRS ( double a, do
   double e, p[]= {1e-10, 1e-8};
 
   /* f = 1 - sqrt(1 - e^2) */
-  e= 1.0/rf;
+  e= (rf == 0.0) ? 0.0 : 1.0/rf;
   e= sqrt(e*(2.0-e));
 ell_relax:
   for( iSpheroid= 0, ell= &(gk_asSpheroidList[0]);
