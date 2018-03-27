@@ -5242,7 +5242,7 @@ def tiff_write_125():
         ds.GetRasterBand(1).ReadBlock(0,0)
         gdal.PopErrorHandler()
 
-    gdaltest.tiff_drv.Delete('/vsimem/tiff_write_125.tif')
+    gdal.Unlink('/vsimem/tiff_write_125.tif')
 
     return 'success'
 
