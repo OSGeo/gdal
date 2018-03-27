@@ -627,3 +627,18 @@ void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd)
     else
         nVal += nAdd;
 }
+
+/**********************************************************************
+ *                           TABInt16Diff()
+ **********************************************************************/
+
+GInt16 TABInt16Diff(int a, int b)
+{
+    GIntBig nDiff = static_cast<GIntBig>(a) - b;
+    // Maybe we should error out instead of saturating ???
+    if( nDiff < -32768 )
+        return -32768;
+    if( nDiff > 32767 )
+        return 32767;
+    return static_cast<GInt16>(nDiff);
+}

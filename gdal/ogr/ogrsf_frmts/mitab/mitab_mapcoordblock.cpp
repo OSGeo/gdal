@@ -609,8 +609,8 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 {
 
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16((GInt16)(nX - m_nComprOrgX)) != 0 ||
-                         WriteInt16((GInt16)(nY - m_nComprOrgY)) != 0) ) )
+        (bCompressed && (WriteInt16(TABInt16Diff(nX, m_nComprOrgX)) != 0 ||
+                         WriteInt16(TABInt16Diff(nY, m_nComprOrgY)) != 0) ) )
     {
         return -1;
     }

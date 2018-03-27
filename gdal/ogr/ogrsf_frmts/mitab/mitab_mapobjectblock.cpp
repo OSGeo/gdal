@@ -1093,21 +1093,6 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
 }
 
 /**********************************************************************
- *                           GetInt16Diff()
- **********************************************************************/
-
-static GInt16 GetInt16Diff(int a, int b)
-{
-    GIntBig nDiff = static_cast<GIntBig>(a) - b;
-    // Maybe we should error out instead of saturating ???
-    if( nDiff < -32768 )
-        return -32768;
-    if( nDiff > 32767 )
-        return 32767;
-    return static_cast<GInt16>(nDiff);
-}
-
-/**********************************************************************
  *                   TABMAPObjPLine::WriteObj()
  *
  * Write Object information with the type+object id
@@ -1149,8 +1134,8 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     {
         // Region center/label point, relative to compr. coord. origin
         // No it's not relative to the Object block center
-        poObjBlock->WriteInt16(GetInt16Diff(m_nLabelX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nLabelY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 
         // Compressed coordinate origin (present only in compressed case!)
         poObjBlock->WriteInt32(m_nComprOrgX);
@@ -1167,10 +1152,10 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // MBR relative to PLINE origin (and not object block center)
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinY, m_nComprOrgY));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {
@@ -1769,17 +1754,17 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     {
         // Region center/label point, relative to compr. coord. origin
         // No it's not relative to the Object block center
-        poObjBlock->WriteInt16(GetInt16Diff(m_nLabelX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nLabelY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
         // MBR relative to object origin (and not object block center)
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinY, m_nComprOrgY));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {
@@ -2104,10 +2089,10 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinX, m_nComprOrgX));  // MBR
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMinY, m_nComprOrgY));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxX, m_nComprOrgX));
-        poObjBlock->WriteInt16(GetInt16Diff(m_nMaxY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));  // MBR
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {

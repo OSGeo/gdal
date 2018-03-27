@@ -61,5 +61,6 @@ const char *TABUnitIdToString(int nId);
 int   TABUnitIdFromString(const char *pszName);
 
 void TABSaturatedAdd(GInt32& nVal, GInt32 nAdd);
+GInt16 TABInt16Diff(int a, int b);
 
 #endif /* MITAB_UTILS_H_INCLUDED_ */
