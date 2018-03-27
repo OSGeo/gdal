@@ -92,7 +92,8 @@ def setup_run( name ):
 
 def git_status():
 
-    return runexternal('git status --porcelain .')
+    out, err = runexternal_out_and_err('git status --porcelain .')
+    return out
 
 ###############################################################################
 
