@@ -67,11 +67,14 @@ rcoup            Robert Coup                     OGR: FGDB
 dzwarg           David Zwarg                     PostGIS Raster
                  dzwarg@azavea.com
 
- IvanLucena      Ivan Lucena                     georaster, oci
+IvanLucena       Ivan Lucena                     georaster, oci
                  ivan.lucena at outlook.com
 
 BishopGIS        Dmitry Baryshnikov              core, sxf, cad, shp
                  bishop.dev at gmail dot com
+
+schwehr          Kurt Schwehr                    ocean related drivers, python
+                 schwehr@gmail.com
 
 ===================
 Past SVN developers
