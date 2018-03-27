@@ -104,7 +104,7 @@ def run_tests( test_list ):
     before_vsimem = gdal.ReadDirRecursive('/vsimem/')
     try:
         git_status_before = git_status()
-    except Exception as x:
+    except:
         git_status_before = ''
 
     set_time = start_time is None
@@ -180,7 +180,7 @@ def run_tests( test_list ):
 
     try:
         git_status_after = git_status()
-    except Exception as x:
+    except:
         git_status_after = ''
     if git_status_after != git_status_before:
         failure_counter = failure_counter + 1
