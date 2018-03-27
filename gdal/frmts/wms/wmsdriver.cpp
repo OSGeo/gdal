@@ -498,6 +498,8 @@ static CPLXMLNode* GDALWMSDatasetGetConfigFromArcGISJSON(const char* pszURL,
                                          (GByte*)pszContent,
                                          strlen(pszContent),
                                          FALSE);
+    VSIUnlink(osTmpFilename);
+
     const char* pszLine;
     int nTileWidth = -1;
     int nTileHeight = -1;
