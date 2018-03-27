@@ -3312,22 +3312,6 @@ static void ClearErrorState()
     CPLErrorReset();
 }
 
-static void StoreLastException()
-{
-    const char* pszLastErrorMessage =
-        CPLGetThreadLocalConfigOption("__last_error_message", NULL);
-    const char* pszLastErrorCode =
-        CPLGetThreadLocalConfigOption("__last_error_code", NULL);
-    if( pszLastErrorMessage != NULL && pszLastErrorCode != NULL )
-    {
-        CPLErrorSetState( CE_Failure,
-            static_cast<CPLErrorNum>(atoi(pszLastErrorCode)),
-            pszLastErrorMessage);
-    }
-}
-
-
-
 
 /* Return a PyObject* from a NULL terminated C String */
 static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
@@ -3354,45 +3338,6 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
   return PyString_FromString(pszStr);
 #endif
 }
-
-/* Return a NULL terminated c String from a PyObject */
-/* Result must be freed with GDALPythonFreeCStr */
-static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
-{
-  *pbToFree = 0;
-  if (PyUnicode_Check(pyObject))
-  {
-      char *pszStr;
-      char *pszNewStr;
-      Py_ssize_t nLen;
-      PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
-#if PY_VERSION_HEX >= 0x03000000
-      PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#else
-      PyString_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-#endif
-      pszNewStr = (char *) malloc(nLen+1);
-      memcpy(pszNewStr, pszStr, nLen+1);
-      Py_XDECREF(pyUTF8Str);
-      *pbToFree = 1;
-      return pszNewStr;
-  }
-  else
-  {
-#if PY_VERSION_HEX >= 0x03000000
-      return PyBytes_AsString(pyObject);
-#else
-      return PyString_AsString(pyObject);
-#endif
-  }
-}
-
-static void GDALPythonFreeCStr(void* ptr, int bToFree)
-{
-   if (bToFree)
-       free(ptr);
-}
-
 
 
 static PyObject *
