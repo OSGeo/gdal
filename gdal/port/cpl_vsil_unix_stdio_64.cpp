@@ -48,6 +48,12 @@
 // See this for hardening background info: https://wiki.debian.org/Hardening
 #undef _FORTIFY_SOURCE
 
+// 64 bit IO is only available on 32-bit android since API 24 / Android 7.0
+// See https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+#if defined(__ANDROID_API__) && __ANDROID_API__ >= 24
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #include "cpl_port.h"
 
 #if !defined(WIN32)
