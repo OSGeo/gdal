@@ -51,9 +51,9 @@ def do(sqlite3name, gdalname):
     db = ctypes.c_void_p(0)
     pdb = ctypes.pointer(db)
     if hasattr(sqlite_handle, 'sqlite3_open'):
-        ret = sqlite_handle.sqlite3_open(':memory:', pdb)
+        ret = sqlite_handle.sqlite3_open(':memory:'.encode('ascii'), pdb)
     elif hasattr(sqlite_handle, 'SPLite3_open'):
-        ret = sqlite_handle.SPLite3_open(':memory:', pdb)
+        ret = sqlite_handle.SPLite3_open(':memory:'.encode('ascii'), pdb)
     else:
         print('skip')
         sys.exit(0)
