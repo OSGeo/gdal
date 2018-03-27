@@ -576,7 +576,11 @@ def wcs_cleanup():
         os.remove( 'tmp/geoserver.wcs' )
     except:
         pass
-    shutil.rmtree( 'wcs_cache')
+
+    try:
+        shutil.rmtree('wcs_cache')
+    except:
+        pass
 
     return 'success'
 
