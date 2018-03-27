@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import glob
 import sys
 
 sys.path.append( '../pymod' )
@@ -627,42 +628,25 @@ def mrf_versioned():
 def mrf_cleanup():
 
     files = [
-'12bit_rose_extract.jpg.idx',
-'12bit_rose_extract.jpg.pjg',
-'12bit_rose_extract.jpg.tst',
-'12bit_rose_extract.jpg.tst.aux.xml',
-'byte.tif.idx',
-'byte.tif.lrc',
-'byte.tif.pjg',
-'byte.tif.ppg',
-'byte.tif.pzp',
-'byte.tif.til',
-'byte.tif.tst',
-'byte.tif.tst.aux.xml',
-'int16.tif.idx',
-'int16.tif.lrc',
-'int16.tif.ppg',
-'int16.tif.tst',
-'int16.tif.tst.aux.xml',
+'12bit_rose_extract.jpg.*',
+'byte.tif.*',
+'int16.tif.*',
 'out.idx',
 'out.mrf',
 'out.mrf.aux.xml',
 'out.ppg',
-'rgbsmall.tif.idx',
-'rgbsmall.tif.pjg',
-'rgbsmall.tif.tst',
-'rgbsmall.tif.tst.aux.xml',
-'small_world_pct.tif.idx',
-'small_world_pct.tif.ppg',
-'small_world_pct.tif.tst',
-'small_world_pct.tif.tst.aux.xml',
-'cloning.idx',
-'cloning.mrf',
-'cloning.mrf.aux.xml',
-'cloning.ppg' ]
+'rgbsmall.tif.*',
+'small_world_pct.tif.*',
+'float32.tif.*',
+'float64.tif.*',
+'int32.tif.*',
+'uint16.tif.*',
+'uint32.tif.*',
+'utmsmall.tif.*',
+'cloning.*' ]
 
-    for f in files:
-        gdal.Unlink('tmp/' + f)
+    for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
+        gdal.Unlink(f)
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')

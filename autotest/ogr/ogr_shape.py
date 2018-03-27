@@ -1581,6 +1581,9 @@ def ogr_shape_37():
         print('Wrong geometry : %s' % feat_read.GetGeometryRef().ExportToWkt())
         return 'fail'
 
+    ds = None
+    gdal.Unlink('data/poly.tar.gz.properties')
+
     return 'success'
 
 ###############################################################################

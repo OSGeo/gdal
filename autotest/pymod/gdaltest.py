@@ -593,9 +593,9 @@ class GDALTest:
 
         if new_filename is None:
             if vsimem:
-                new_filename = '/vsimem/' + self.filename + '.tst'
+                new_filename = '/vsimem/' + os.path.basename(self.filename) + '.tst'
             else:
-                new_filename = 'tmp/' + self.filename + '.tst'
+                new_filename = 'tmp/' + os.path.basename(self.filename) + '.tst'
 
         gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
         if interrupt_during_copy:
