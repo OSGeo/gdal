@@ -921,9 +921,12 @@ def ogr_wfs_getcapabilitiesfile():
     ds = ogr.Open('data/getcapabilities_wfs.xml')
 
     if ds is None:
+        gdal.Unlink('data/getcapabilities_wfs.gfs')
         return 'fail'
 
     ds = None
+
+    gdal.Unlink('data/getcapabilities_wfs.gfs')
 
     return 'success'
 
