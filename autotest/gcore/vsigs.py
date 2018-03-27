@@ -835,6 +835,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
             f = open_for_read('/vsigs/gs_fake_bucket/resource')
             if f is None:
                 gdaltest.post_reason('fail')
+                gdal.Unlink('/vsimem/service_account.json')
                 return 'fail'
             data = gdal.VSIFReadL(1, 4, f).decode('ascii')
             gdal.VSIFCloseL(f)
@@ -845,6 +846,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
                                 'http://127.0.0.1:8081/gs_fake_bucket/resource?Expires=1518442496&GoogleAccessId=CLIENT_EMAIL&Signature=b19I62KdqV51DpWGxhxGXLGJIA8MHvSJofwOygoeQuIxkM6PmmQFvJYTNWRt9zUVTUoVC0UHVB7ee5Z35NqDC8K4i0quu1hb8Js2B4h0W6OAupvyF3nSQ5D0OJmiSbomGMq0Ehyro5cqJ%2FU%2Fd8oAaKrGKVQScKfXoFrSJBbWkNs%3D'):
                 gdaltest.post_reason('fail')
                 print(signed_url)
+                gdal.Unlink('/vsimem/service_account.json')
                 return 'fail'
 
     except:
@@ -855,12 +857,12 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
         gdal.SetConfigOption('GO2A_NOW', None)
         gdal.SetConfigOption('GOOGLE_APPLICATION_CREDENTIALS', '')
 
+    gdal.Unlink('/vsimem/service_account.json')
+
     if data != 'foo':
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-
-    gdal.Unlink('/vsimem/service_account.json')
 
     return 'success'
 
