@@ -35,6 +35,10 @@ cpl_config.h
 /x64
 /.vs
 /.vscode
+frmts/jpipkak/kdu_cache.cpp
+frmts/jpipkak/kdu_cache_wrapper.h
+frmts/msg/PublicDecompWT/
+frmts/msg/PublicDecompWT_all.h
 frmts/jpeg/libjpeg12/*.c
 frmts/jpeg/libjpeg12/*.h
 libgdal.a
@@ -57,6 +61,8 @@ apps/gdalsrsinfo
 apps/gdaltindex
 apps/gdaltransform
 apps/gdalwarp
+apps/gnmanalyse
+apps/gnmmanage
 apps/nearblack
 apps/ogr2ogr
 apps/ogrinfo
@@ -65,6 +71,9 @@ apps/ogrtindex
 apps/testepsg
 apps/gdalserver
 apps/test_ogrsf
+apps/dumpoverviews
+apps/gdalwarpsimple
+apps/multireadtest
 swig/java/build
 swig/java/gdal.jar
 swig/java/gdal_wrap.cpp
@@ -76,7 +85,9 @@ swig/java/libosrjni.so
 swig/java/ogr_wrap.cpp
 swig/java/org/
 swig/java/osr_wrap.cpp
+swig/java/gnm_wrap.cpp
 swig/python/build
+swig/python/setup_vars.ini
 swig/perl/Const.bs
 swig/perl/GDAL.bs
 swig/perl/Makefile_Geo__GDAL
@@ -93,6 +104,11 @@ swig/perl/gdalconst_wrap.c
 swig/perl/ogr_wrap.cpp
 swig/perl/osr_wrap.cpp
 swig/perl/pm_to_blib
+swig/perl/GNM.bs
+swig/perl/MYMETA.json
+swig/perl/MYMETA.yml
+swig/perl/Makefile_Geo__GNM
+swig/perl/gnm_wrap.cpp
 swig/csharp/osr
 swig/csharp/ogr
 swig/csharp/gdal
@@ -102,3 +118,4 @@ html/
 nmake.local*
 *~
 *tmp
+.python-version
