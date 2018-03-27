@@ -2848,8 +2848,10 @@ def gpkg_33():
     # Force use of RGBA instead of color-table (the natural use case is WEBP)
     # but here we can test losslessly
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', 'NO')
-    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', get_georeferenced_ds_with_pct32(), options = ['TILE_FORMAT=PNG'])
+    src_ds = get_georeferenced_ds_with_pct32()
+    gdaltest.gpkg_dr.CreateCopy('/vsimem/tmp.gpkg', src_ds, options = ['TILE_FORMAT=PNG'])
     gdal.SetConfigOption('GPKG_PNG_SUPPORTS_CT', None)
+    gdal.Unlink(src_ds.GetDescription())
 
     ds = gdal.Open('/vsimem/tmp.gpkg')
     if check_tile_format(ds, 'PNG', 4, False) != 'success':
@@ -3436,6 +3438,7 @@ cellsize     60
     ds = None
 
     gdal.Unlink('/vsimem/gpkg_39.gpkg')
+    gdal.Unlink('/vsimem/gpkg_39.gpkg.aux.xml')
 
     return 'success'
 
@@ -3540,6 +3543,9 @@ def gpkg_41():
                         format = 'GPKG', creationOptions = [
                             'BLOCKXSIZE=500000000', 'BLOCKYSIZE=1' ])
     gdal.SetConfigOption('GPKG_ALLOW_CRAZY_SETTINGS', None)
+
+    gdal.Unlink('/vsimem/gpkg_41.gpkg')
+
     return 'success'
 
 ###############################################################################
@@ -3701,10 +3707,8 @@ def gpkg_cleanup():
     if gdaltest.gpkg_dr is None:
         return 'skip'
 
-    try:
-        gdal.Unlink('/vsimem/tmp.gpkg')
-    except:
-        pass
+    gdal.Unlink('/vsimem/tmp.gpkg')
+    gdal.Unlink('/vsimem/tmp.gpkg.aux.xml')
 
     gdal.SetConfigOption('GPKG_DEBUG', None)
 

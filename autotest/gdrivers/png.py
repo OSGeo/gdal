@@ -234,7 +234,9 @@ def png_11():
 
     tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
 
-    return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+    ret = tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+    gdal.Unlink('/vsimem/byte.tif.tst')
+    return ret
 
 ###############################################################################
 # Test optimized IRasterIO

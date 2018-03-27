@@ -151,6 +151,7 @@ def ograpispy_cleanup():
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/ograpispy_2.shp')
     except:
         pass
+    gdal.Unlink('/vsimem/test2.csv')
 
     return 'success'
 

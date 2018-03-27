@@ -1064,6 +1064,8 @@ def jpeg_26():
                                                 '/vsimem/jpeg_26.jpg', src_ds)
     if ds is not None:
         return 'fail'
+    gdal.Unlink('/vsimem/jpeg_26.jpg')
+
     return 'success'
 
 ###############################################################################

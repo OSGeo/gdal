@@ -566,6 +566,8 @@ def transformer_10():
         return 'fail'
 
     gdal.GetDriverByName('GTX').Delete('tmp/fake.gtx')
+    gdal.Unlink('/vsimem/dem.tif')
+    gdal.Unlink('/vsimem/dem.vrt')
 
     return 'success'
 
@@ -873,6 +875,7 @@ def transformer_15():
     gdal.Unlink('/vsimem/demE179.tif')
     gdal.Unlink('/vsimem/demW180.tif')
     gdal.Unlink('/vsimem/transformer_15_dem.tif')
+    gdal.Unlink('/vsimem/transformer_15_dem.vrt')
 
     return 'success'
 

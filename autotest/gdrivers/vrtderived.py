@@ -892,6 +892,7 @@ def vrtderived_14():
         print(hist)
         return 'fail'
 
+    ds = None
     gdal.GetDriverByName('VRT').Delete('/vsimem/vrtderived_14.vrt')
 
     return 'success'

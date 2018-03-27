@@ -378,6 +378,7 @@ def mrf_overview_external():
 
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
+    gdal.Unlink('/vsimem/out.mrf.ovr')
     gdal.Unlink('/vsimem/out.idx')
     gdal.Unlink('/vsimem/out.ppg')
     gdal.Unlink('/vsimem/out.til')
@@ -407,7 +408,7 @@ def mrf_lerc_nodata():
     gdal.Unlink('/vsimem/out.mrf')
     gdal.Unlink('/vsimem/out.mrf.aux.xml')
     gdal.Unlink('/vsimem/out.idx')
-    gdal.Unlink('/vsimem/out.ppg')
+    gdal.Unlink('/vsimem/out.lrc')
     gdal.Unlink('/vsimem/out.til')
 
     return 'success'

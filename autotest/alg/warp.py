@@ -1186,6 +1186,7 @@ def warp_30():
         gdaltest.post_reason('failed')
         return 'fail'
 
+    gdal.Unlink('/vsimem/warp_30.tif')
 
     return 'success'
 

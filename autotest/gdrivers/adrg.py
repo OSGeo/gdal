@@ -156,6 +156,7 @@ def adrg_copy_vsimem():
     ds = None
 
     drv.Delete( '/vsimem/ABCDEF01.GEN' )
+    gdal.Unlink( '/vsimem/TRANSH01.THF' )
 
     return 'success'
 

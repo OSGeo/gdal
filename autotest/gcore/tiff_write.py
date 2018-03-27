@@ -6153,6 +6153,7 @@ def tiff_write_136():
 
     gdal.Unlink('/vsimem/tiff_write_136_src.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif')
+    gdal.Unlink('/vsimem/tiff_write_136.tif.aux.xml')
 
     return 'success'
 

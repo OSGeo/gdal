@@ -80,6 +80,7 @@ def webp_3():
     cs1 = out_ds.GetRasterBand(1).Checksum()
     out_ds = None
     gdal.Unlink('/vsimem/webp_3.webp')
+    gdal.Unlink('/vsimem/webp_3.webp.aux.xml')
 
     # 21502 is for libwebp 0.3.0
     if cs1 != 21464 and cs1 != 21502 and cs1 != 21695 and cs1 != 21700:

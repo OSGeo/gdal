@@ -435,6 +435,13 @@ def kmlsuperoverlay_8():
 
 def  kmlsuperoverlay_cleanup():
 
+    gdal.Unlink('/vsimem/0/0/0.png')
+    gdal.Unlink('/vsimem/0/0/0.kml')
+    gdal.Unlink('/vsimem/0/0')
+    gdal.Unlink('/vsimem/0')
+    gdal.Unlink('/vsimem/kmlout.kml')
+    gdal.Unlink('/vsimem/kmlout.kmz')
+
     return 'success'
 
 
