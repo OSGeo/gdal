@@ -615,6 +615,9 @@ CPLErr RasterliteDataset::CreateOverviewLevel(const char * pszResampling,
 
     nLimitOvrCount = -1;
 
+    VSIUnlink(osTempFileName);
+    VSIUnlink((osTempFileName + ".aux.xml").c_str());
+
     if (eErr == CE_None)
         OGR_DS_ExecuteSQL(hDS, "COMMIT", nullptr, nullptr);
     else
