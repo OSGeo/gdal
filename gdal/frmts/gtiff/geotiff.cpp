@@ -10648,6 +10648,12 @@ static bool IsStandardColorInterpretation(GDALDataset* poSrcDS,
             }
         }
     }
+    else if( nPhotometric == PHOTOMETRIC_PALETTE )
+    {
+        bStardardColorInterp =
+            poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
+                GCI_PaletteIndex;
+    }
     else if( nPhotometric == PHOTOMETRIC_RGB )
     {
         int iStart = 0;
