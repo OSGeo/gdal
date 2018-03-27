@@ -3448,7 +3448,10 @@ OGRMVTWriterDataset::OGRMVTWriterDataset()
 
 OGRMVTWriterDataset::~OGRMVTWriterDataset()
 {
-    CreateOutput();
+    if( GetDescription()[0] != '\0' )
+    {
+        CreateOutput();
+    }
     if( m_hInsertStmt != nullptr )
     {
         sqlite3_finalize( m_hInsertStmt );
