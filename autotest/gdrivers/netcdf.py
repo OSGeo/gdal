@@ -1695,6 +1695,7 @@ def netcdf_45():
         return 'fail'
     gdal.Unlink('/vsimem/netcdf_45.csv')
     gdal.Unlink('/vsimem/netcdf_45.csvt')
+    gdal.Unlink('/vsimem/netcdf_45.prj')
 
     return 'success'
 
@@ -1766,6 +1767,7 @@ def netcdf_47():
         return 'fail'
     gdal.Unlink('/vsimem/netcdf_47.csv')
     gdal.Unlink('/vsimem/netcdf_47.csvt')
+    gdal.Unlink('/vsimem/netcdf_47.prj')
 
     return 'success'
 
@@ -1945,6 +1947,9 @@ def netcdf_51():
     gdal.Unlink('tmp/netcdf_51.nc')
     gdal.Unlink('tmp/netcdf_51.csv')
     gdal.Unlink('tmp/netcdf_51.csvt')
+    gdal.Unlink('/vsimem/netcdf_51.csv')
+    gdal.Unlink('/vsimem/netcdf_51.csvt')
+    gdal.Unlink('/vsimem/netcdf_51.prj')
 
     return 'success'
 
@@ -1992,6 +1997,9 @@ def netcdf_51_no_gdal_tags():
     gdal.Unlink('tmp/netcdf_51_no_gdal_tags.nc')
     gdal.Unlink('tmp/netcdf_51_no_gdal_tags.csv')
     gdal.Unlink('tmp/netcdf_51_no_gdal_tags.csvt')
+    gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.csv')
+    gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.csvt')
+    gdal.Unlink('/vsimem/netcdf_51_no_gdal_tags.prj')
 
     return 'success'
 
@@ -2072,6 +2080,9 @@ def netcdf_52():
     gdal.Unlink('tmp/netcdf_52.nc')
     gdal.Unlink('tmp/netcdf_52.csv')
     gdal.Unlink('tmp/netcdf_52.csvt')
+    gdal.Unlink('/vsimem/netcdf_52.csv')
+    gdal.Unlink('/vsimem/netcdf_52.csvt')
+    gdal.Unlink('/vsimem/netcdf_52.prj')
 
     return 'success'
 

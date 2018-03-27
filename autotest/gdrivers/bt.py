@@ -28,12 +28,12 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import sys
 from osgeo import osr
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
 
 ###############################################################################
@@ -98,12 +98,10 @@ def bt_6():
 
 def bt_cleanup():
 
-    try:
-        os.remove('tmp/int16.tif.prj')
-        os.remove('tmp/int32.tif.prj')
-        os.remove('tmp/float32.tif.prj')
-    except:
-        pass
+    gdal.Unlink('/vsimem/int16.tif.prj')
+    gdal.Unlink('tmp/int32.tif.prj')
+    gdal.Unlink('tmp/float32.tif.prj')
+
     return 'success'
 
 

@@ -82,6 +82,7 @@ def cals_3():
     tmp_ds = None
     out_ds = None
     gdal.Unlink('/vsimem/cals_2_tmp.cal')
+    gdal.Unlink('/vsimem/cals_2_tmp.cal.aux.xml')
     gdal.Unlink('/vsimem/cals_2.cal')
 
     return 'success'

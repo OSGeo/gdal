@@ -2860,6 +2860,7 @@ def tiff_read_one_band_from_two_bands():
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif')
+    gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands.tif.aux.xml')
     gdal.Unlink('/vsimem/tiff_read_one_band_from_two_bands_dst.tif')
 
     return 'success'

@@ -2171,6 +2171,7 @@ def nitf_67():
     ds = None
 
     gdal.Unlink('/vsimem/nitf_67.ntf')
+    gdal.Unlink('/vsimem/nitf_67.ntf.aux.xml')
 
     if cs != 4672:
         print(cs)

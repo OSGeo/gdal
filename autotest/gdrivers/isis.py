@@ -1015,6 +1015,7 @@ def isis_24():
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
+    gdal.Unlink('/vsimem/error.lbl')
 
     # Output file has same name as input file
     src_ds = gdal.Translate('/vsimem/out.tif', 'data/byte.tif')

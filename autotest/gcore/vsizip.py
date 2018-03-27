@@ -374,6 +374,8 @@ def vsizip_5():
         gdaltest.post_reason('bad content: '+res[10])
         return 'fail'
 
+    gdal.Unlink("/vsimem/bigdepthzip.zip")
+
     return 'success'
 
 ###############################################################################
@@ -577,9 +579,9 @@ def vsizip_12():
 
     content = gdal.ReadDir('/vsizip/vsimem/vsizip_12.zip')
 
-    gdal.Unlink('/vsizip/vsimem/vsizip_12_src1.zip')
-    gdal.Unlink('/vsizip/vsimem/vsizip_12_src2.zip')
-    gdal.Unlink('/vsizip/vsimem/vsizip_12.zip')
+    gdal.Unlink('/vsimem/vsizip_12_src1.zip')
+    gdal.Unlink('/vsimem/vsizip_12_src2.zip')
+    gdal.Unlink('/vsimem/vsizip_12.zip')
 
     if content != ['bar.baz']:
         gdaltest.post_reason('fail')
@@ -609,7 +611,7 @@ def vsizip_13():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    gdal.Unlink('/vsizip/vsimem/vsizip_13.zip')
+    gdal.Unlink('/vsimem/vsizip_13.zip')
 
     return 'success'
 

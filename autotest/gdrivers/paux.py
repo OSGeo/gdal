@@ -32,6 +32,7 @@ import sys
 
 sys.path.append( '../pymod' )
 
+from osgeo import gdal
 import gdaltest
 
 ###############################################################################
@@ -65,6 +66,7 @@ def paux_3():
 
 def paux_cleanup():
     gdaltest.clean_tmp()
+    gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
     return 'success'
 
 gdaltest_list = [

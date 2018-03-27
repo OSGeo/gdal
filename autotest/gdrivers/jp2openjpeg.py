@@ -1832,6 +1832,7 @@ def jp2openjpeg_38():
     crsdictionary = out_ds.GetMetadata_List("xml:CRSDictionary.gml")[0]
     out_ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_38.jp2')
+    gdal.Unlink('/vsimem/jp2openjpeg_38.jp2.aux.xml')
 
     do_validate = False
     try:

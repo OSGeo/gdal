@@ -6176,6 +6176,7 @@ def tiff_write_136():
 
     gdal.Unlink('/vsimem/tiff_write_136_src.tif')
     gdal.Unlink('/vsimem/tiff_write_136.tif')
+    gdal.Unlink('/vsimem/tiff_write_136.tif.aux.xml')
 
     return 'success'
 
@@ -7582,6 +7583,8 @@ def tiff_write_164():
         print(gt)
         return 'fail'
 
+    gdal.Unlink('/vsimem/test.tif')
+
     return 'success'
 
 ###############################################################################
@@ -7626,6 +7629,8 @@ def tiff_write_165():
         gdaltest.post_reason('fail')
         print(nd)
         return 'fail'
+
+    gdal.Unlink('/vsimem/test.tif')
 
     return 'success'
 

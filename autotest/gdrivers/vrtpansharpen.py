@@ -1721,6 +1721,9 @@ def vrtpansharpen_9():
         print(cs)
         return 'fail'
 
+    gdal.Unlink('/vsimem/small_world_pan_nodata.tif')
+    gdal.Unlink('/vsimem/small_world_nodata.tif')
+
     return 'success'
 
 ###############################################################################

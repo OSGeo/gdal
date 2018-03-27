@@ -1068,6 +1068,7 @@ def pds4_14():
 
     gdal.Unlink(template)
     gdal.Unlink(filename)
+    gdal.Unlink('/vsimem/test.img')
 
     return 'success'
 

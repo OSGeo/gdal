@@ -90,10 +90,22 @@ def setup_run( name ):
 
 ###############################################################################
 
+def git_status():
+
+    return runexternal('git status --porcelain .')
+
+###############################################################################
+
 def run_tests( test_list ):
     global success_counter, failure_counter, expected_failure_counter, blow_counter, skip_counter
     global reason, failure_summary, cur_name
     global start_time, end_time
+
+    before_vsimem = gdal.ReadDirRecursive('/vsimem/')
+    try:
+        git_status_before = git_status()
+    except Exception as x:
+        git_status_before = ''
 
     set_time = start_time is None
     if set_time:
@@ -154,6 +166,30 @@ def run_tests( test_list ):
 
     if set_time:
         end_time = time.time()
+
+    after_vsimem = gdal.ReadDirRecursive('/vsimem/')
+    if before_vsimem is None: before_vsimem = []
+    if after_vsimem is None: after_vsimem = []
+    if len(after_vsimem) > len(before_vsimem):
+        failure_counter = failure_counter + 1
+        print('Temporary /vsimem/ files remaining: %s' % str(after_vsimem))
+        if had_errors_this_script == 0:
+            failure_summary.append( 'Script: ' + cur_name )
+            had_errors_this_script = 1
+        failure_summary.append( '  /vsimem/ temporary files remaining' )
+
+    try:
+        git_status_after = git_status()
+    except Exception as x:
+        git_status_after = ''
+    if git_status_after != git_status_before:
+        failure_counter = failure_counter + 1
+        print('Temporary files remaining: %s' % str(git_status_after))
+        if had_errors_this_script == 0:
+            failure_summary.append( 'Script: ' + cur_name )
+            had_errors_this_script = 1
+        failure_summary.append( '  Temporary files remaining' )
+
 
 ###############################################################################
 

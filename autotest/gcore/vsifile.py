@@ -381,7 +381,8 @@ def vsifile_7():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.VSIFCloseL(fp)
-    gdal.Unlink('tmp/vsifile_7.bin')
+
+    gdal.Unlink('/vsimem/vsifile_7.bin')
 
     return 'success'
 
@@ -438,7 +439,7 @@ def vsifile_9():
 
     for i in range(10):
         gdal.Unlink('/vsimem/mydir/%d' % i)
-    gdal.Rmdir('/vsimem/newdir')
+    gdal.Rmdir('/vsimem/mydir')
 
     return 'success'
 

@@ -2266,6 +2266,7 @@ def ogr_csv_43():
     ds = None
 
     gdal.Unlink('/vsimem/ogr_csv_43.csv')
+    gdal.Unlink('/vsimem/ogr_csv_43.csvt')
     return 'success'
 
 ###############################################################################
