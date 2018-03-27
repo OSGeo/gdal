@@ -72,6 +72,9 @@ apps/ogrtindex
 apps/testepsg
 apps/gdalserver
 apps/test_ogrsf
+apps/dumpoverviews
+apps/gdalwarpsimple
+apps/multireadtest
 swig/java/build
 swig/java/gdal.jar
 swig/java/gdal_wrap.cpp
