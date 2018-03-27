@@ -148,12 +148,7 @@ OGRBoolean OGRMultiCurve::isCompatibleSubType(
 OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                OGRCurve* poCurve )
 {
-    OGRMultiCurve *poGeometry = dynamic_cast<OGRMultiCurve *>(poSelf);
-    if( poGeometry == nullptr )
-    {
-        return OGRERR_FAILURE;
-    }
-    return poGeometry->addGeometryDirectly(poCurve);
+    return poSelf->toMultiCurve()->addGeometryDirectly(poCurve);
 }
 /*! @endcond */
 
@@ -220,12 +215,7 @@ OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
 {
     for( int i = 0; i < poMC->nGeomCount; ++i )
     {
-        OGRCurve * const poCurve = dynamic_cast<OGRCurve *>(poMC->papoGeoms[i]);
-        if( poCurve == nullptr ) {
-            CPLError(
-                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
-            continue;
-        }
+        OGRCurve * const poCurve = poMC->papoGeoms[i]->toCurve();
         poMC->papoGeoms[i] = OGRCurve::CastToLineString( poCurve );
         if( poMC->papoGeoms[i] == nullptr )
         {
@@ -233,6 +223,7 @@ OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
             return nullptr;
         }
     }
-    return dynamic_cast<OGRMultiLineString *>(
-        TransferMembersAndDestroy(poMC, new OGRMultiLineString()) );
+    OGRMultiLineString* poMLS = new OGRMultiLineString();
+    TransferMembersAndDestroy(poMC, poMLS);
+    return poMLS;
 }

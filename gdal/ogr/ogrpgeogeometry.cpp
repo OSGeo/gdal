@@ -1419,15 +1419,16 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
 
     poGeom->closeRings();
 
-    OGRMultiPolygon *poMPoly;
+    OGRMultiPolygon *poMPoly = nullptr;
     OGRGeometry* poGeomToDelete = nullptr;
     if( eType == wkbMultiPolygon )
-        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeom);
+        poMPoly = poGeom->toMultiPolygon();
     else
     {
         poGeomToDelete =
                 OGRGeometryFactory::forceToMultiPolygon(poGeom->clone());
-        poMPoly = dynamic_cast<OGRMultiPolygon*>(poGeomToDelete);
+        if( poGeomToDelete )
+            poMPoly = poGeomToDelete->toMultiPolygon();
     }
     if( poMPoly == nullptr )
     {

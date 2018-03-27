@@ -151,10 +151,9 @@ void OGRGeometryCollection::empty()
 OGRGeometry *OGRGeometryCollection::clone() const
 
 {
-    OGRGeometryCollection *poNewGC = dynamic_cast<OGRGeometryCollection *>(
-        OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poNewGC == nullptr )
-        return nullptr;
+    OGRGeometryCollection *poNewGC =
+        OGRGeometryFactory::createGeometry(getGeometryType())->
+            toGeometryCollection();
     poNewGC->assignSpatialReference( getSpatialReference() );
     poNewGC->flags = flags;
 
@@ -1096,15 +1095,11 @@ void OGRGeometryCollection::closeRings()
 {
     for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
     {
-        if( wkbFlatten(papoGeoms[iGeom]->getGeometryType()) == wkbPolygon )
+        if( OGR_GT_IsSubClassOf(
+                     wkbFlatten(papoGeoms[iGeom]->getGeometryType()),
+                                wkbCurvePolygon ) )
         {
-            OGRPolygon *poPoly = dynamic_cast<OGRPolygon *>(papoGeoms[iGeom]);
-            if( poPoly == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRPolygon.");
-                return;
-            }
+            OGRCurvePolygon *poPoly = papoGeoms[iGeom]->toCurvePolygon();
             poPoly->closeRings();
         }
     }
@@ -1170,27 +1165,13 @@ double OGRGeometryCollection::get_Length() const
         const OGRwkbGeometryType eType = wkbFlatten(geom->getGeometryType());
         if( OGR_GT_IsCurve(eType) )
         {
-            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(geom);
-            if( poCurve == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
-                return 0.0;
-            }
+            const OGRCurve *poCurve = geom->toCurve();
             dfLength += poCurve->get_Length();
         }
         else if( OGR_GT_IsSubClassOf(eType, wkbMultiCurve) ||
                  eType == wkbGeometryCollection )
         {
-            OGRGeometryCollection *poColl =
-                dynamic_cast<OGRGeometryCollection *>(geom);
-            if( poColl == nullptr )
-            {
-                CPLError(
-                    CE_Fatal, CPLE_AppDefined,
-                    "dynamic_cast failed.  Expected OGRGeometryCollection.");
-                return 0.0;
-            }
+            const OGRGeometryCollection *poColl = geom->toGeometryCollection();
             dfLength += poColl->get_Length();
         }
     }
@@ -1223,30 +1204,18 @@ double OGRGeometryCollection::get_Area() const
         OGRwkbGeometryType eType = wkbFlatten(geom->getGeometryType());
         if( OGR_GT_IsSurface(eType) )
         {
-            OGRSurface *poSurface = dynamic_cast<OGRSurface *>(geom);
-            if( poSurface == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRSurface.");
-                return 0.0;
-            }
+            const OGRSurface *poSurface = geom->toSurface();
             dfArea += poSurface->get_Area();
         }
         else if( OGR_GT_IsCurve(eType) )
         {
-            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(geom);
-            if( poCurve == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
-                return 0.0;
-            }
+            const OGRCurve *poCurve = geom->toCurve();
             dfArea += poCurve->get_Area();
         }
         else if( OGR_GT_IsSubClassOf(eType, wkbMultiSurface) ||
                 eType == wkbGeometryCollection )
         {
-            dfArea += ((OGRGeometryCollection *) geom)->get_Area();
+            dfArea += geom->toGeometryCollection()->get_Area();
         }
     }
 

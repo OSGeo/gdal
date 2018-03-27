@@ -82,14 +82,7 @@ OGRCurveCollection::OGRCurveCollection( const OGRCurveCollection& other ) :
         {
             for( int i = 0; i < nCurveCount; i++ )
             {
-                OGRCurve *poCurve =
-                    dynamic_cast<OGRCurve *>(other.papoCurves[i]->clone());
-                if( poCurve == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRCurve.");
-                }
-                papoCurves[i] = poCurve;
+                papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
             }
         }
     }
@@ -135,15 +128,7 @@ OGRCurveCollection::operator=( const OGRCurveCollection& other )
             {
                 for( int i = 0; i < nCurveCount; i++ )
                 {
-                    OGRCurve *poCurve =
-                        dynamic_cast<OGRCurve *>(other.papoCurves[i]->clone());
-                    if( poCurve == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  Expected OGRCurve.");
-                    }
-
-                    papoCurves[i] = poCurve;
+                    papoCurves[i] = other.papoCurves[i]->clone()->toCurve();
                 }
             }
         }
@@ -310,12 +295,7 @@ OGRErr OGRCurveCollection::importBodyFromWkb(
 
             nDataOffset += nSubGeomBytesConsumedOut;
 
-            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poSubGeom);
-            if( poCurve == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
-            }
+            OGRCurve *poCurve = poSubGeom->toCurve();
             eErr = pfnAddCurveDirectlyFromWkb(poGeom, poCurve);
         }
         if( eErr != OGRERR_NONE )

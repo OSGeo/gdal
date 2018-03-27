@@ -106,10 +106,9 @@ OGRCurvePolygon& OGRCurvePolygon::operator=( const OGRCurvePolygon& other )
 OGRGeometry *OGRCurvePolygon::clone() const
 
 {
-    OGRCurvePolygon *poNewPolygon = dynamic_cast<OGRCurvePolygon *>(
-        OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poNewPolygon == nullptr )
-        return nullptr;
+    OGRCurvePolygon *poNewPolygon =
+        OGRGeometryFactory::createGeometry(getGeometryType())->
+            toCurvePolygon();
     poNewPolygon->assignSpatialReference( getSpatialReference() );
     poNewPolygon->flags = flags;
 
@@ -366,9 +365,7 @@ OGRErr  OGRCurvePolygon::removeRing(int iIndex, bool bDelete)
 OGRErr OGRCurvePolygon::addRing( OGRCurve * poNewRing )
 
 {
-    OGRCurve* poNewRingCloned = dynamic_cast<OGRCurve *>(poNewRing->clone());
-    if( poNewRingCloned == nullptr )
-        return OGRERR_FAILURE;
+    OGRCurve* poNewRingCloned = poNewRing->clone()->toCurve();
     OGRErr eErr = addRingDirectly(poNewRingCloned);
     if( eErr != OGRERR_NONE )
         delete poNewRingCloned;
@@ -456,13 +453,7 @@ int OGRCurvePolygon::WkbSize() const
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
-    OGRCurvePolygon* poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
-    if( poCP == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
-        return OGRERR_FAILURE;
-    }
+    OGRCurvePolygon* poCP = poSelf->toCurvePolygon();
     return poCP->addRingDirectlyInternal( poCurve, FALSE );
 }
 
@@ -522,13 +513,7 @@ OGRErr OGRCurvePolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                  OGRCurve* poCurve )
 {
-    OGRCurvePolygon *poCP = dynamic_cast<OGRCurvePolygon *>(poSelf);
-    if( poCP == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
-        return OGRERR_FAILURE;
-    }
+    OGRCurvePolygon *poCP = poSelf->toCurvePolygon();
     return poCP->addRingDirectly(poCurve);
 }
 
@@ -676,13 +661,7 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
     if( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
 
-    OGRCurvePolygon *poOPoly = dynamic_cast<OGRCurvePolygon *>(poOther);
-    if( poOPoly == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRCurvePolygon.");
-        return FALSE;
-    }
+    OGRCurvePolygon *poOPoly = poOther->toCurvePolygon();
     return oCC.Equals( &(poOPoly->oCC) );
 }
 
@@ -821,14 +800,7 @@ OGRBoolean OGRCurvePolygon::Contains( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
-        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
-        if( poPoint == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-            return FALSE;
-        }
-        return ContainsPoint(poPoint);
+        return ContainsPoint(poOtherGeom->toPoint());
     }
 
     return OGRGeometry::Contains(poOtherGeom);
@@ -844,14 +816,7 @@ OGRBoolean OGRCurvePolygon::Intersects( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbPoint )
     {
-        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poOtherGeom);
-        if( poPoint == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-            return FALSE;
-        }
-        return IntersectsPoint(poPoint);
+        return IntersectsPoint(poOtherGeom->toPoint());
     }
 
     return OGRGeometry::Intersects(poOtherGeom);
@@ -906,8 +871,7 @@ OGRPolygon* OGRCurvePolygon::CastToPolygon(OGRCurvePolygon* poCP)
 
 OGRPolygon* OGRCurvePolygon::CasterToPolygon(OGRSurface* poSurface)
 {
-    OGRCurvePolygon* poCurvePoly = dynamic_cast<OGRCurvePolygon*>(poSurface);
-    CPLAssert(poCurvePoly);
+    OGRCurvePolygon* poCurvePoly = poSurface->toCurvePolygon();
     return OGRCurvePolygon::CastToPolygon(poCurvePoly);
 }
 
@@ -922,9 +886,7 @@ OGRSurfaceCasterToPolygon OGRCurvePolygon::GetCasterToPolygon() const
 
 static OGRCurvePolygon* CasterToCurvePolygon(OGRSurface* poSurface)
 {
-    OGRCurvePolygon* poCurvePoly = dynamic_cast<OGRCurvePolygon*>(poSurface);
-    CPLAssert(poCurvePoly);
-    return poCurvePoly;
+    return poSurface->toCurvePolygon();
 }
 
 OGRSurfaceCasterToCurvePolygon OGRCurvePolygon::GetCasterToCurvePolygon() const

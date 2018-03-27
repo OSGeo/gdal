@@ -213,13 +213,12 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
                 const_cast<char **>(&pszInput), nullptr, &poGeom );
-            poSurface = dynamic_cast<OGRSurface*>(poGeom);
-            if( poSurface == nullptr )
+            if( poGeom == nullptr )
             {
-                delete poGeom;
                 eErr = OGRERR_CORRUPT_DATA;
                 break;
             }
+            poSurface = poGeom->toSurface();
         }
         else
         {
@@ -324,14 +323,7 @@ OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
 {
     for( int i = 0; i < poMS->nGeomCount; i++ )
     {
-        OGRSurface* poSurface = dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]);
-        if( poSurface == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRSurface.");
-            delete poMS;
-            return nullptr;
-        }
+        OGRSurface* poSurface = poMS->papoGeoms[i]->toSurface();
         poMS->papoGeoms[i] = OGRSurface::CastToPolygon(poSurface);
         if( poMS->papoGeoms[i] == nullptr )
         {
@@ -340,13 +332,7 @@ OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
         }
     }
 
-    OGRGeometryCollection *poGC =
-           TransferMembersAndDestroy(poMS, new OGRMultiPolygon());
-    OGRMultiPolygon* poMultiPolygon = dynamic_cast<OGRMultiPolygon *>(poGC);
-    if( poMultiPolygon == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRMultiPolygon.");
-    }
-    return poMultiPolygon;
+    OGRMultiPolygon* poMP = new OGRMultiPolygon();
+    TransferMembersAndDestroy(poMS, poMP);
+    return poMP;
 }

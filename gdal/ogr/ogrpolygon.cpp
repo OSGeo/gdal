@@ -922,9 +922,7 @@ OGRCurvePolygon* OGRPolygon::CastToCurvePolygon( OGRPolygon* poPoly )
 
 static OGRPolygon* CasterToPolygon(OGRSurface* poSurface)
 {
-    OGRPolygon* poPoly = dynamic_cast<OGRPolygon*>(poSurface);
-    CPLAssert(poPoly);
-    return poPoly;
+    return poSurface->toPolygon();
 }
 
 OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const
@@ -938,9 +936,7 @@ OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const
 
 OGRCurvePolygon* OGRPolygon::CasterToCurvePolygon(OGRSurface* poSurface)
 {
-    OGRPolygon* poPoly = dynamic_cast<OGRPolygon*>(poSurface);
-    CPLAssert(poPoly);
-    return OGRPolygon::CastToCurvePolygon(poPoly);
+    return OGRPolygon::CastToCurvePolygon(poSurface->toPolygon());
 }
 
 OGRSurfaceCasterToCurvePolygon OGRPolygon::GetCasterToCurvePolygon() const

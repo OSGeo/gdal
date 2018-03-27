@@ -196,15 +196,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
         int iFirstEdge = 0;  // Used after for.
         for( ; oEdgeConsumed[iFirstEdge]; iFirstEdge++ ) {}
 
-        OGRLineString *poLine =
-            dynamic_cast<OGRLineString *>(poLines->getGeometryRef(iFirstEdge));
-        if( poLine == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRLineString.");
-            return nullptr;
-        }
-
+        OGRLineString *poLine = poLines->getGeometryRef(iFirstEdge)->toLineString();
         oEdgeConsumed[iFirstEdge] = true;
         nRemainingEdges--;
 
@@ -249,14 +241,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
                 if( oEdgeConsumed[iEdge] )
                     continue;
 
-                poLine = dynamic_cast<OGRLineString *>(
-                    poLines->getGeometryRef(iEdge));
-                if( poLine == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRLineString.");
-                    return nullptr;
-                }
+                poLine = poLines->getGeometryRef(iEdge)->toLineString();
                 if( poLine->getNumPoints() < 2 )
                     continue;
 
@@ -281,15 +266,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
             // We found one within tolerance - add it.
             if( iBestEdge != -1 )
             {
-                poLine = dynamic_cast<OGRLineString *>(
-                    poLines->getGeometryRef(iBestEdge));
-                if( poLine == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRLineString.");
-                    return nullptr;
-                }
-
+                poLine = poLines->getGeometryRef(iBestEdge)->toLineString();
                 AddEdgeToRing( poRing, poLine, bReverse );
 
                 oEdgeConsumed[iBestEdge] = true;
