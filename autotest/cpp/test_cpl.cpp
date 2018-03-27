@@ -2414,4 +2414,30 @@ namespace tut
         CPLHTTPDestroyResult(psResult);
 
     }
+
+    // Test cpl::down_cast
+    template<>
+    template<>
+    void object::test<34>()
+    {
+        struct Base{
+            virtual ~Base() {}
+        };
+        struct Derived: public Base {};
+        Base b;
+        Derived d;
+        Base* p_b_d = &d;
+
+#ifdef wont_compile
+        struct OtherBase {};
+        OtherBase ob;
+        ensure_equals(cpl::down_cast<OtherBase*>(p_b_d), &ob);
+#endif
+#ifdef compile_with_warning
+        ensure_equals(cpl::down_cast<Base*>(p_b_d), p_b_d);
+#endif
+        ensure_equals(cpl::down_cast<Derived*>(p_b_d), &d);
+        ensure_equals(cpl::down_cast<Derived*>(static_cast<Base*>(nullptr)), static_cast<Derived*>(nullptr));
+    }
+
 } // namespace tut
