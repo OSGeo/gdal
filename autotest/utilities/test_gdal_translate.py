@@ -644,9 +644,9 @@ def test_gdal_translate_23():
     except:
         pass
 
+    gdal.Unlink('../gcore/data/byte.tif.aux.xml')
+
     return 'success'
-
-
 
 ###############################################################################
 # Test -srcwin option when partially outside

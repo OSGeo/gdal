@@ -985,6 +985,8 @@ def wms_cleanup():
     gdaltest.wms_ds = None
     gdaltest.clean_tmp()
 
+    shutil.rmtree('gdalwmscache')
+
     return 'success'
 
 

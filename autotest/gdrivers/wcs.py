@@ -34,6 +34,7 @@ import os
 import sys
 import numbers
 import re
+import shutil
 import urlparse
 try:
     from BaseHTTPServer import BaseHTTPRequestHandler
@@ -575,6 +576,7 @@ def wcs_cleanup():
         os.remove( 'tmp/geoserver.wcs' )
     except:
         pass
+    shutil.rmtree( 'wcs_cache')
 
     return 'success'
 

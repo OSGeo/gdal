@@ -432,6 +432,8 @@ def tiff_read_tgz_1():
             return 'fail'
     ds = None
 
+    gdal.Unlink('data/byte.tgz.properties')
+
     return 'success'
 
 ###############################################################################
@@ -444,6 +446,8 @@ def tiff_read_tgz_2():
             print('Expected checksum = %d. Got = %d' % (4672, ds.GetRasterBand(1).Checksum()))
             return 'fail'
     ds = None
+
+    gdal.Unlink('data/byte.tgz.properties')
 
     return 'success'
 

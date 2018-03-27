@@ -128,6 +128,10 @@ def test_gdalinfo_lib_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
+    ds = None
+
+    gdal.Unlink('../gdrivers/data/byte.tif.aux.xml')
+
     return 'success'
 
 ###############################################################################

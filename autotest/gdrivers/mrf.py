@@ -694,6 +694,12 @@ def mrf_cleanup():
 'out.ppg',
 'rgbsmall.tif.*',
 'small_world_pct.tif.*',
+'float32.tif.*',
+'float64.tif.*',
+'int32.tif.*',
+'uint16.tif.*',
+'uint32.tif.*',
+'utmsmall.tif.*',
 'cloning.*' ]
 
     for f in [fname for n in files for fname in glob.glob('tmp/' + n)]:
