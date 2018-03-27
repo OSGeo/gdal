@@ -789,9 +789,7 @@ OGRLineString* OGRLinearRing::CastToLineString( OGRLinearRing* poLR )
 
 OGRLineString* OGRLinearRing::CasterToLineString( OGRCurve* poCurve )
 {
-    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
-    CPLAssert(poLR);
-    return OGRLinearRing::CastToLineString(poLR);
+    return OGRLinearRing::CastToLineString(poCurve->toLinearRing());
 }
 
 OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
@@ -805,9 +803,7 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 
 static OGRLinearRing* CasterToLinearRing(OGRCurve* poCurve)
 {
-    OGRLinearRing* poLR = dynamic_cast<OGRLinearRing*>(poCurve);
-    CPLAssert(poLR);
-    return poLR;
+    return poCurve->toLinearRing();
 }
 
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const

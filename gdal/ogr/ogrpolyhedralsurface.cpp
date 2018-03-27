@@ -168,11 +168,9 @@ void OGRPolyhedralSurface::empty()
 
 OGRGeometry* OGRPolyhedralSurface::clone() const
 {
-    OGRPolyhedralSurface *poNewPS;
-    poNewPS = dynamic_cast<OGRPolyhedralSurface*>(
-                        OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poNewPS == nullptr )
-        return nullptr;
+    OGRPolyhedralSurface *poNewPS =
+        OGRGeometryFactory::createGeometry(getGeometryType())->
+            toPolyhedralSurface();
 
     poNewPS->assignSpatialReference(getSpatialReference());
     poNewPS->flags = flags;

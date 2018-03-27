@@ -225,13 +225,7 @@ static bool AddPoint( OGRGeometry *poGeometry,
     const OGRwkbGeometryType eType = wkbFlatten(poGeometry->getGeometryType());
     if( eType == wkbPoint )
     {
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeometry);
-        if( poPoint == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-            return false;
-        }
+        OGRPoint *poPoint = poGeometry->toPoint();
 
         if( !poPoint->IsEmpty() )
         {
@@ -250,13 +244,7 @@ static bool AddPoint( OGRGeometry *poGeometry,
     else if( eType == wkbLineString ||
              eType == wkbCircularString )
     {
-        OGRSimpleCurve *poCurve = dynamic_cast<OGRSimpleCurve *>(poGeometry);
-        if( poCurve == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRSimpleCurve.");
-            return false;
-        }
+        OGRSimpleCurve *poCurve = poGeometry->toSimpleCurve();
         if( nDimension == 3 )
             poCurve->addPoint(dfX, dfY, dfZ);
         else
@@ -653,10 +641,10 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
 /*      consequently ignored at all.                                    */
 /************************************************************************/
 
-static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
+static OGRPolygon *GML2FaceExtRing( const OGRGeometry *poGeom )
 {
-    OGRGeometryCollection *poColl =
-        dynamic_cast<OGRGeometryCollection *>(poGeom);
+    const OGRGeometryCollection *poColl =
+        dynamic_cast<const OGRGeometryCollection *>(poGeom);
     if( poColl == nullptr )
     {
         CPLError(CE_Fatal, CPLE_AppDefined,
@@ -673,7 +661,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
     for( int ig = 0; ig < iCount; ig++)
     {
         // A collection of Polygons is expected to be found.
-        OGRGeometry *poChild = poColl->getGeometryRef(ig);
+        const OGRGeometry *poChild = poColl->getGeometryRef(ig);
         if( poChild == nullptr)
         {
             bError = true;
@@ -681,13 +669,7 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
         }
         if( wkbFlatten( poChild->getGeometryType()) == wkbPolygon )
         {
-            OGRPolygon *poPg = dynamic_cast<OGRPolygon *>(poChild);
-            if( poPg == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRPolygon.");
-                return nullptr;
-            }
+            const OGRPolygon *poPg = poChild->toPolygon();
             if( poPg->getNumInteriorRings() > 0 )
                 iExterior++;
             else
@@ -704,21 +686,8 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
        if( iCount == 1 && iExterior == 0 && iInterior == 1)
         {
             // There is a single Polygon within the collection.
-            OGRPolygon *poPg =
-                dynamic_cast<OGRPolygon *>(poColl->getGeometryRef(0));
-            if( poPg == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRPolygon.");
-                return nullptr;
-            }
-            poPolygon = dynamic_cast<OGRPolygon *>(poPg->clone());
-            if( poPolygon == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRPolygon.");
-                return nullptr;
-            }
+            const OGRPolygon *poPg = poColl->getGeometryRef(0)->toPolygon();
+            poPolygon = poPg->clone()->toPolygon();
         }
         else
         {
@@ -727,24 +696,11 @@ static OGRPolygon *GML2FaceExtRing( OGRGeometry *poGeom )
                 // Searching the unique Polygon containing holes.
                 for( int ig = 0; ig < iCount; ig++ )
                 {
-                    OGRPolygon *poPg =
-                        dynamic_cast<OGRPolygon *>(poColl->getGeometryRef(ig));
-                    if( poPg == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  Expected OGRPolygon.");
-                        return nullptr;
-                    }
+                    const OGRPolygon *poPg =
+                        poColl->getGeometryRef(ig)->toPolygon();
                     if( poPg->getNumInteriorRings() > 0 )
                     {
-                        poPolygon = dynamic_cast<OGRPolygon *>(poPg->clone());
-                        if( poPolygon == nullptr )
-                        {
-                            CPLError(
-                                CE_Fatal, CPLE_AppDefined,
-                                "dynamic_cast failed.  Expected OGRPolygon.");
-                            return nullptr;
-                        }
+                        poPolygon = poPg->clone()->toPolygon();
                     }
                 }
             }
@@ -777,13 +733,7 @@ bool GML2OGRGeometry_AddToCompositeCurve( OGRCompoundCurve* poCC,
     // Crazy but allowed by GML: composite in composite.
     if( wkbFlatten(poGeom->getGeometryType()) == wkbCompoundCurve )
     {
-        OGRCompoundCurve* poCCChild = dynamic_cast<OGRCompoundCurve *>(poGeom);
-        if( poCCChild == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCompoundCurve.");
-            return false;
-        }
+        OGRCompoundCurve* poCCChild = poGeom->toCompoundCurve();
         while( poCCChild->getNumCurves() != 0 )
         {
             OGRCurve* poCurve = poCCChild->stealCurve(0);
@@ -802,14 +752,7 @@ bool GML2OGRGeometry_AddToCompositeCurve( OGRCompoundCurve* poCC,
         if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
             bChildrenAreAllLineString = false;
 
-        OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poGeom);
-        if( poCurve == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCurve.");
-            return false;
-        }
-
+        OGRCurve *poCurve = poGeom->toCurve();
         if( poCC->addCurveDirectly( poCurve ) != OGRERR_NONE )
         {
             return false;
@@ -848,13 +791,7 @@ bool GML2OGRGeometry_AddToMultiSurface( OGRMultiSurface* poMS,
     }
     else if( eType == wkbMultiPolygon || eType == wkbMultiSurface )
     {
-        OGRMultiSurface* poMS2 = dynamic_cast<OGRMultiSurface *>(poGeom);
-        if( poMS2 == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRMultiSurface.");
-            return false;
-        }
+        OGRMultiSurface* poMS2 = poGeom->toMultiSurface();
         for( int i = 0; i < poMS2->getNumGeometries(); i++ )
         {
             if( wkbFlatten(poMS2->getGeometryRef(i)->getGeometryType()) !=
@@ -1012,12 +949,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString &&
             !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
         {
-            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poGeom);
-            if( poCurve == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
-            }
+            OGRCurve *poCurve = poGeom->toCurve();
             poGeom = OGRCurve::CastToLinearRing(poCurve);
         }
 
@@ -1035,12 +967,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         }
 
         {
-            OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poGeom);
-            if( poCurve == nullptr )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRCurve.");
-            }
+            OGRCurve *poCurve = poGeom->toCurve();
             if( poCP->addRingDirectly(poCurve) != OGRERR_NONE )
             {
                 delete poCP;
@@ -1095,30 +1022,15 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         if( wkbFlatten(poGeom->getGeometryType()) ==
                             wkbLineString )
                         {
-                            OGRLineString* poLS =
-                                dynamic_cast<OGRLineString *>(poGeom);
-                            if( poLS == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRLineString.");
-                            }
+                            OGRLineString* poLS = poGeom->toLineString();
                             poGeom = OGRCurve::CastToLinearRing(poLS);
                         }
                         else
                         {
-                            OGRPolygon *poPolygon =
-                                dynamic_cast<OGRPolygon *>(poCP);
-                            if( poPolygon == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRPolygon.");
-                            }
                             // Might fail if some rings are not closed.
                             // We used to be tolerant about that with Polygon.
                             // but we have become stricter with CurvePolygon.
-                            poCP = OGRSurface::CastToCurvePolygon(poPolygon);
+                            poCP = OGRSurface::CastToCurvePolygon(poCP);
                             if( poCP == nullptr )
                             {
                                 delete poGeom;
@@ -1132,23 +1044,11 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 {
                     if( EQUAL(poGeom->getGeometryName(), "LINEARRING") )
                     {
-                        OGRCurve *poCurve = dynamic_cast<OGRCurve*>(poGeom);
-                        if( poCurve == nullptr )
-                        {
-                            CPLError(CE_Fatal, CPLE_AppDefined,
-                                     "dynamic_cast failed.  "
-                                     "Expected OGRCurve.");
-                        }
+                        OGRCurve *poCurve = poGeom->toCurve();
                         poGeom = OGRCurve::CastToLineString(poCurve);
                     }
                 }
-                OGRCurve *poCurve = dynamic_cast<OGRCurve*>(poGeom);
-                if( poCurve == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  "
-                             "Expected OGRCurve.");
-                }
+                OGRCurve *poCurve = poGeom->toCurve();
                 if( poCP->addRingDirectly(poCurve) != OGRERR_NONE )
                 {
                     delete poCP;
@@ -1369,13 +1269,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 
                 if( poCC == nullptr && poRing == nullptr )
                 {
-                    poRing = dynamic_cast<OGRCurve *>(poGeom);
-                    if( poRing == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  "
-                                 "Expected OGRCurve.");
-                    }
+                    poRing = poGeom->toCurve();
                 }
                 else
                 {
@@ -1399,14 +1293,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         {
                             OGRCurve* poPreviousCurve =
                                 poCC->getCurve(poCC->getNumCurves()-1);
-                            OGRLineString* poLS =
-                                dynamic_cast<OGRLineString *>(poGeom);
-                            if( poLS == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRLineString.");
-                            }
+                            OGRLineString* poLS = poGeom->toLineString();
                             if( poPreviousCurve->getNumPoints() >= 2 &&
                                 poLS->getNumPoints() >= 2 )
                             {
@@ -1448,22 +1335,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         if( poPreviousCurve->getGeometryType() ==
                             wkbLineString )
                         {
-                            OGRLineString* poLS =
-                                dynamic_cast<OGRLineString *>(poPreviousCurve);
-                            if( poLS == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRLineString.");
-                            }
-                            OGRCurve *poCurve =
-                                dynamic_cast<OGRCurve *>(poGeom);
-                            if( poCurve == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRCurve.");
-                            }
+                            OGRLineString* poLS = poPreviousCurve->toLineString();
+                            OGRCurve *poCurve = poGeom->toCurve();
+
                             if( poLS->getNumPoints() >= 2 &&
                                 poCurve->getNumPoints() >= 2 )
                             {
@@ -1504,12 +1378,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         }
                     }
 
-                    OGRCurve *poCurve = dynamic_cast<OGRCurve *>(poGeom);
-                    if( poCurve == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  Expected OGRCurve.");
-                    }
+                    OGRCurve *poCurve = poGeom->toCurve();
 
                     bool bIgnored = false;
                     if( !GML2OGRGeometry_AddToCompositeCurve( poCC,
@@ -2191,13 +2060,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                                 bReconstructTopology = true;
                                 OGRPolygon *poPolygon = new OGRPolygon();
                                 OGRLinearRing *poLinearRing =
-                                    dynamic_cast<OGRLinearRing *>(poRing);
-                                if( poLinearRing == nullptr )
-                                {
-                                    CPLError(CE_Fatal, CPLE_AppDefined,
-                                             "dynamic_cast failed.  "
-                                             "Expected OGRLinearRing.");
-                                }
+                                    poRing->toLinearRing();
                                 poPolygon->addRingDirectly(poLinearRing);
                                 poMS->addGeometryDirectly( poPolygon );
                             }
@@ -2257,8 +2120,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             OGRMultiPolygon* poMPoly =
                 wkbFlatten(poMS->getGeometryType()) == wkbMultiSurface
                 ? OGRMultiSurface::CastToMultiPolygon(poMS)
-                : dynamic_cast<OGRMultiPolygon *>(poMS);
-            CPLAssert(poMPoly);  // Should not fail.
+                : poMS->toMultiPolygon();
             const int nPolygonCount = poMPoly->getNumGeometries();
             OGRGeometry** papoPolygons = new OGRGeometry*[ nPolygonCount ];
             for( int i = 0; i < nPolygonCount; i++ )
@@ -2351,14 +2213,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 
                         if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
                         {
-                            OGRPoint *poPoint =
-                                dynamic_cast<OGRPoint *>(poGeom);
-                            if( poPoint == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRCPoint.");
-                            }
+                            OGRPoint *poPoint = poGeom->toPoint();
                             poMP->addGeometryDirectly( poPoint );
                         }
                         else
@@ -2649,14 +2504,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 
                 if( poCC == nullptr && poCurve == nullptr )
                 {
-                    poCurve = dynamic_cast<OGRCurve *>(poGeom);
-                    if( poCurve == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  Expected OGRCurve.");
-                    }
-
-                }
+                    poCurve = poGeom->toCurve();
+               }
                 else
                 {
                     if( poCC == nullptr )
@@ -2672,13 +2521,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         poCurve = nullptr;
                     }
 
-                    OGRCurve *poAsCurve = dynamic_cast<OGRCurve *>(poGeom);
-                    if( poAsCurve == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  Expected OGRCurve.");
-                    }
-
+                    OGRCurve *poAsCurve = poGeom->toCurve();
                     if( poCC->addCurveDirectly(poAsCurve) != OGRERR_NONE )
                     {
                         delete poGeom;
@@ -2807,12 +2650,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
 
             {
-                OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeom);
-                if( poPoint == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRPoint.");
-                }
+                OGRPoint *poPoint = poGeom->toPoint();
                 if( ( bNodeOrientation == bEdgeOrientation ) != bOrientation )
                     poPositiveNode = poPoint;
                 else
@@ -2857,12 +2695,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             }
 
             {
-                OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeom);
-                if( poPoint == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRPoint.");
-                }
+                OGRPoint *poPoint = poGeom->toPoint();
                 if( ( bNodeOrientation == bEdgeOrientation ) != bOrientation )
                     poNegativeNode = poPoint;
                 else
@@ -2918,13 +2751,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             delete poLineStringBeforeCast;
             return nullptr;
         }
-        OGRLineString *poLineString =
-            dynamic_cast<OGRLineString *>(poLineStringBeforeCast);
-        if( poLineString == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRLineString.");
-        }
+        OGRLineString *poLineString = poLineStringBeforeCast->toLineString();
 
         if( bGetSecondaryGeometry )
         {
@@ -3012,14 +2839,8 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                 if( bGetSecondaryGeometry &&
                      wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
                 {
-                    OGRMultiPoint *poMultiPoint =
-                        dynamic_cast<OGRMultiPoint *>(poGeom);
-                    if( poMultiPoint == nullptr )
-                    {
-                        CPLError(CE_Fatal, CPLE_AppDefined,
-                                 "dynamic_cast failed.  "
-                                 "Expected OGRMultiPoint.");
-                    }
+                    OGRMultiPoint *poMultiPoint = poGeom->toMultiPoint();
+
                     //TODO: TopoCurve geometries with more than one
                     //      directedEdge elements were not tested.
                     if( poMP->getNumGeometries() <= 0 ||
@@ -3209,13 +3030,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                         else if( wkbFlatten(poUnion->getGeometryType()) ==
                                  wkbMultiPolygon )
                         {
-                            poTS = dynamic_cast<OGRMultiPolygon *>(poUnion);
-                            if( poTS == nullptr )
-                            {
-                                CPLError(CE_Fatal, CPLE_AppDefined,
-                                         "dynamic_cast failed.  "
-                                         "Expected OGRMultiPolygon.");
-                            }
+                            poTS = poUnion->toMultiPolygon();
                         }
                         else
                         {
@@ -3305,19 +3120,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     return nullptr;
                 }
 
-                OGRLineString *poEdgeGeomLS =
-                    dynamic_cast<OGRLineString *>(poEdgeGeom);
-                if( poEdgeGeomLS == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                                "dynamic_cast failed.  "
-                                "Expected OGRLineString.");
-                    delete poEdgeGeom;
-                    delete poFaceGeom;
-                    delete poTS;
-                    return nullptr;
-                }
-
+                OGRLineString *poEdgeGeomLS = poEdgeGeom->toLineString();
                 if( !bFaceOrientation )
                 {
                     OGRLineString *poLS = poEdgeGeomLS;
@@ -3466,14 +3269,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                              wkbFlatten(poMS->getGeometryType()) ==
                              wkbMultiPolygon )
                     {
-                        OGRMultiPolygon *poMultiPoly =
-                            dynamic_cast<OGRMultiPolygon *>(poMS);
-                        if( poMultiPoly == nullptr )
-                        {
-                            CPLError(CE_Fatal, CPLE_AppDefined,
-                                     "dynamic_cast failed.  "
-                                     "Expected OGRMultiPolygon.");
-                        }
+                        OGRMultiPolygon *poMultiPoly = poMS->toMultiPolygon();
                         poMS = OGRMultiPolygon::CastToMultiSurface(poMultiPoly);
                         poResultPoly = poMS;
                     }

@@ -32,6 +32,7 @@
 #ifndef OGR_GEOMETRY_H_INCLUDED
 #define OGR_GEOMETRY_H_INCLUDED
 
+#include "cpl_conv.h"
 #include "cpl_json.h"
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
@@ -70,15 +71,19 @@ typedef void sfcgal_geometry_t;
 class OGRPoint;
 class OGRCurve;
 class OGRCompoundCurve;
+class OGRSimpleCurve;
 class OGRLinearRing;
 class OGRLineString;
+class OGRCircularString;
 class OGRSurface;
 class OGRCurvePolygon;
 class OGRPolygon;
+class OGRMultiPoint;
 class OGRMultiSurface;
 class OGRMultiPolygon;
 class OGRMultiCurve;
 class OGRMultiLineString;
+class OGRGeometryCollection;
 class OGRTriangle;
 class OGRPolyhedralSurface;
 class OGRTriangulatedSurface;
@@ -312,6 +317,197 @@ class CPL_DLL OGRGeometry
     static OGRGeometry* CastToIdentity( OGRGeometry* poGeom ) { return poGeom; }
     static OGRGeometry* CastToError( OGRGeometry* poGeom );
 //! @endcond
+
+    /** Down-cast to OGRPoint*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint. */
+    inline OGRPoint* toPoint()
+        { return cpl::down_cast<OGRPoint*>(this); }
+
+    /** Down-cast to OGRPoint*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint. */
+    inline const OGRPoint* toPoint() const
+        { return cpl::down_cast<const OGRPoint*>(this); }
+
+    /** Down-cast to OGRCurve*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve). */
+    inline OGRCurve* toCurve()
+        { return cpl::down_cast<OGRCurve*>(this); }
+
+    /** Down-cast to OGRCurve*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve). */
+    inline const OGRCurve* toCurve() const
+        { return cpl::down_cast<const OGRCurve*>(this); }
+
+    /** Down-cast to OGRSimpleCurve*.
+     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type. */
+    inline OGRSimpleCurve* toSimpleCurve()
+        { return cpl::down_cast<OGRSimpleCurve*>(this); }
+
+    /** Down-cast to OGRSimpleCurve*.
+     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type. */
+    inline const OGRSimpleCurve* toSimpleCurve() const
+        { return cpl::down_cast<const OGRSimpleCurve*>(this); }
+
+    /** Down-cast to OGRLineString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString. */
+    inline OGRLineString* toLineString()
+        { return cpl::down_cast<OGRLineString*>(this); }
+
+    /** Down-cast to OGRLineString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString. */
+    inline const OGRLineString* toLineString() const
+        { return cpl::down_cast<const OGRLineString*>(this); }
+
+    /** Down-cast to OGRLinearRing*.
+     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING"). */
+    inline OGRLinearRing* toLinearRing()
+        { return cpl::down_cast<OGRLinearRing*>(this); }
+
+    /** Down-cast to OGRLinearRing*.
+     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING"). */
+    inline const OGRLinearRing* toLinearRing() const
+        { return cpl::down_cast<const OGRLinearRing*>(this); }
+
+    /** Down-cast to OGRCircularString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString. */
+    inline OGRCircularString* toCircularString()
+        { return cpl::down_cast<OGRCircularString*>(this); }
+
+    /** Down-cast to OGRCircularString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString. */
+    inline const OGRCircularString* toCircularString() const
+        { return cpl::down_cast<const OGRCircularString*>(this); }
+
+    /** Down-cast to OGRCompoundCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve. */
+    inline OGRCompoundCurve* toCompoundCurve()
+        { return cpl::down_cast<OGRCompoundCurve*>(this); }
+
+    /** Down-cast to OGRCompoundCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve. */
+    inline const OGRCompoundCurve* toCompoundCurve() const
+        { return cpl::down_cast<const OGRCompoundCurve*>(this); }
+
+    /** Down-cast to OGRSurface*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface). */
+    inline OGRSurface* toSurface()
+        { return cpl::down_cast<OGRSurface*>(this); }
+
+    /** Down-cast to OGRSurface*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface). */
+    inline const OGRSurface* toSurface() const
+        { return cpl::down_cast<const OGRSurface*>(this); }
+
+    /** Down-cast to OGRPolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle. */
+    inline OGRPolygon* toPolygon()
+        { return cpl::down_cast<OGRPolygon*>(this); }
+
+    /** Down-cast to OGRPolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle. */
+    inline const OGRPolygon* toPolygon() const
+        { return cpl::down_cast<const OGRPolygon*>(this); }
+
+    /** Down-cast to OGRTriangle*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle. */
+    inline OGRTriangle* toTriangle()
+        { return cpl::down_cast<OGRTriangle*>(this); }
+
+    /** Down-cast to OGRTriangle*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle. */
+    inline const OGRTriangle* toTriangle() const
+        { return cpl::down_cast<const OGRTriangle*>(this); }
+
+    /** Down-cast to OGRCurvePolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle. */
+    inline OGRCurvePolygon* toCurvePolygon()
+        { return cpl::down_cast<OGRCurvePolygon*>(this); }
+
+    /** Down-cast to OGRCurvePolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle. */
+    inline const OGRCurvePolygon* toCurvePolygon() const
+        { return cpl::down_cast<const OGRCurvePolygon*>(this); }
+
+    /** Down-cast to OGRGeometryCollection*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection). */
+    inline OGRGeometryCollection* toGeometryCollection()
+        { return cpl::down_cast<OGRGeometryCollection*>(this); }
+
+    /** Down-cast to OGRGeometryCollection*.
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection). */
+    inline const OGRGeometryCollection* toGeometryCollection() const
+        { return cpl::down_cast<const OGRGeometryCollection*>(this); }
+
+    /** Down-cast to OGRMultiPoint*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint. */
+    inline OGRMultiPoint* toMultiPoint()
+        { return cpl::down_cast<OGRMultiPoint*>(this); }
+
+    /** Down-cast to OGRMultiPoint*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint. */
+    inline const OGRMultiPoint* toMultiPoint() const
+        { return cpl::down_cast<const OGRMultiPoint*>(this); }
+
+    /** Down-cast to OGRMultiLineString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString. */
+    inline OGRMultiLineString* toMultiLineString()
+        { return cpl::down_cast<OGRMultiLineString*>(this); }
+
+    /** Down-cast to OGRMultiLineString*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString. */
+    inline const OGRMultiLineString* toMultiLineString() const
+        { return cpl::down_cast<const OGRMultiLineString*>(this); }
+
+    /** Down-cast to OGRMultiPolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon. */
+    inline OGRMultiPolygon* toMultiPolygon()
+        { return cpl::down_cast<OGRMultiPolygon*>(this); }
+
+    /** Down-cast to OGRMultiPolygon*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon. */
+    inline const OGRMultiPolygon* toMultiPolygon() const
+        { return cpl::down_cast<const OGRMultiPolygon*>(this); }
+
+    /** Down-cast to OGRMultiCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types. */
+    inline OGRMultiCurve* toMultiCurve()
+        { return cpl::down_cast<OGRMultiCurve*>(this); }
+
+    /** Down-cast to OGRMultiCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types. */
+    inline const OGRMultiCurve* toMultiCurve() const
+        { return cpl::down_cast<const OGRMultiCurve*>(this); }
+
+    /** Down-cast to OGRMultiSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types. */
+    inline OGRMultiSurface* toMultiSurface()
+        { return cpl::down_cast<OGRMultiSurface*>(this); }
+
+    /** Down-cast to OGRMultiSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types. */
+    inline const OGRMultiSurface* toMultiSurface() const
+        { return cpl::down_cast<const OGRMultiSurface*>(this); }
+
+    /** Down-cast to OGRPolyhedralSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN. */
+    inline OGRPolyhedralSurface* toPolyhedralSurface()
+        { return cpl::down_cast<OGRPolyhedralSurface*>(this); }
+
+    /** Down-cast to OGRPolyhedralSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN. */
+    inline const OGRPolyhedralSurface* toPolyhedralSurface() const
+        { return cpl::down_cast<const OGRPolyhedralSurface*>(this); }
+
+    /** Down-cast to OGRTriangulatedSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN. */
+    inline OGRTriangulatedSurface* toTriangulatedSurface()
+        { return cpl::down_cast<OGRTriangulatedSurface*>(this); }
+
+    /** Down-cast to OGRTriangulatedSurface*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN. */
+    inline const OGRTriangulatedSurface* toTriangulatedSurface() const
+        { return cpl::down_cast<const OGRTriangulatedSurface*>(this); }
+
 };
 
 /************************************************************************/

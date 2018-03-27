@@ -222,15 +222,8 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbCircularStringM:
             case wkbCircularStringZM:
             {
-                OGRLineString *poLine = dynamic_cast<OGRLineString *>(
-                    const_cast<OGRGeometry *>(this));
-                if( poLine == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRLineString.");
-                    return;
-                }
-                fprintf( fp, "%d points\n", poLine->getNumPoints() );
+                const OGRSimpleCurve *poSC = toSimpleCurve();
+                fprintf( fp, "%d points\n", poSC->getNumPoints() );
                 break;
             }
             case wkbPolygon:
@@ -246,16 +239,8 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbCurvePolygonM:
             case wkbCurvePolygonZM:
             {
-                OGRCurvePolygon *poPoly = dynamic_cast<OGRCurvePolygon *>(
-                    const_cast<OGRGeometry *>(this));
-                if( poPoly == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  Expected OGRCurvePolygon.");
-                    return;
-                }
-
-                OGRCurve *poRing = poPoly->getExteriorRingCurve();
+                const OGRCurvePolygon *poPoly = toCurvePolygon();
+                const OGRCurve *poRing = poPoly->getExteriorRingCurve();
                 const int nRings = poPoly->getNumInteriorRings();
                 if( poRing == nullptr )
                 {
@@ -299,15 +284,7 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbCompoundCurveM:
             case wkbCompoundCurveZM:
             {
-                OGRCompoundCurve* poCC = dynamic_cast<OGRCompoundCurve *>(
-                    const_cast<OGRGeometry *>(this));
-                if( poCC == nullptr )
-                {
-                    CPLError(
-                        CE_Fatal, CPLE_AppDefined,
-                        "dynamic_cast failed.  Expected OGRCompoundCurve.");
-                    return;
-                }
+                const OGRCompoundCurve* poCC = toCompoundCurve();
                 if( poCC->getNumCurves() == 0 )
                 {
                     fprintf( fp, "empty");
@@ -351,20 +328,11 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbMultiSurfaceZM:
             case wkbGeometryCollectionZM:
             {
-                OGRGeometryCollection *poColl =
-                    dynamic_cast<OGRGeometryCollection *>(
-                        const_cast<OGRGeometry *>(this));
-                if( poColl == nullptr )
-                {
-                    CPLError(CE_Fatal, CPLE_AppDefined,
-                             "dynamic_cast failed.  "
-                             "Expected OGRGeometryCollection.");
-                    return;
-                }
+                const OGRGeometryCollection *poColl = toGeometryCollection();
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
                 for( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
                 {
-                    OGRGeometry *poChild = poColl->getGeometryRef(ig);
+                    const OGRGeometry *poChild = poColl->getGeometryRef(ig);
                     fprintf( fp, "%s", pszPrefix);
                     poChild->dumpReadable( fp, pszPrefix, papszOptions );
                 }
@@ -3027,10 +2995,8 @@ GEOSGeom OGRGeometry::exportToGEOS(
     {
         bool bCanConvertToMultiPoly = true;
         bool bMustConvertToMultiPoly = true;
-        OGRGeometryCollection* poGC = dynamic_cast<OGRGeometryCollection*>(
-                                                                poLinearGeom);
-        for( int iGeom = 0; poGC != nullptr && iGeom < poGC->getNumGeometries();
-             iGeom++ )
+        OGRGeometryCollection* poGC = poLinearGeom->toGeometryCollection();
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             OGRwkbGeometryType eSubGeomType =
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
@@ -5106,15 +5072,7 @@ OGRErr OGRGeometry::Centroid( OGRPoint *poPoint ) const
         if( poCentroidGeom != nullptr && getSpatialReference() != nullptr )
             poCentroidGeom->assignSpatialReference(getSpatialReference());
 
-        OGRPoint *poCentroid = dynamic_cast<OGRPoint *>(poCentroidGeom);
-        if( poCentroid == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-            delete poCentroidGeom;
-            freeGEOSContext( hGEOSCtxt );
-            return OGRERR_FAILURE;
-        }
+        OGRPoint *poCentroid = poCentroidGeom->toPoint();
 
         if( !poCentroid->IsEmpty() )
         {
@@ -6284,11 +6242,13 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
             eErr = OGRGeometryFactory::createFromWkt(
                 const_cast<char **>(&pszInput),
                 nullptr, &poGeom );
-            poCurve = dynamic_cast<OGRCurve *>(poGeom);
-            if( poCurve == nullptr )
+            if( poGeom == nullptr )
             {
-                delete poGeom;
                 eErr = OGRERR_CORRUPT_DATA;
+            }
+            else
+            {
+                poCurve = poGeom->toCurve();
             }
         }
         else
@@ -6970,11 +6930,9 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
     }
     if( eGType == wkbGeometryCollection || eGType == wkbMultiSurface )
     {
-        const OGRGeometryCollection *poGC =
-                            dynamic_cast<const OGRGeometryCollection *>(this);
+        const OGRGeometryCollection *poGC = toGeometryCollection();
         bool bIsSFCGALCompatible = false;
-        for( int iGeom = 0; poGC != nullptr &&
-                            iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
         {
             OGRwkbGeometryType eSubGeomType =
                 wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());

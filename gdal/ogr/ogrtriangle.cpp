@@ -263,8 +263,7 @@ OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
 
 OGRPolygon* OGRTriangle::CasterToPolygon(OGRSurface* poSurface)
 {
-    OGRTriangle* poTriangle = dynamic_cast<OGRTriangle*>(poSurface);
-    CPLAssert(poTriangle);
+    OGRTriangle* poTriangle = poSurface->toTriangle();
     OGRPolygon* poRet = new OGRPolygon( *poTriangle );
     delete poTriangle;
     return poRet;
@@ -280,7 +279,7 @@ OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const {
 
 OGRGeometry* OGRTriangle::CastToPolygon(OGRGeometry* poGeom)
 {
-    OGRGeometry* poRet = new OGRPolygon( *(OGRPolygon*)poGeom );
+    OGRGeometry* poRet = new OGRPolygon( *(poGeom->toPolygon()) );
     delete poGeom;
     return poRet;
 }
