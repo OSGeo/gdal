@@ -481,6 +481,9 @@ CPLErr RasterliteBand::IReadBlock( int nBlockXOff, int nBlockYOff, void * pImage
         OGR_F_Destroy(hFeat);
     }
 
+    VSIUnlink(osMemFileName.c_str());
+    VSIUnlink((osMemFileName + ".aux.xml").c_str());
+
     if (!bHasFoundTile)
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize * nDataTypeSize);
@@ -932,6 +935,7 @@ int RasterliteDataset::GetBlockParams(OGRLayerH hRasterLyr, int nLevelIn,
     }
 end:
     VSIUnlink(osMemFileName.c_str());
+    VSIUnlink((osMemFileName + ".aux.xml").c_str());
 
     OGR_F_Destroy(hFeat);
 

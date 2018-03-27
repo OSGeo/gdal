@@ -707,6 +707,9 @@ RasterliteCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
         }
     }
 
+    VSIUnlink(osTempFileName);
+    VSIUnlink((osTempFileName + ".aux.xml").c_str());
+
     if (eErr == CE_None)
         OGR_DS_ExecuteSQL(hDS, "COMMIT", NULL, NULL);
     else
