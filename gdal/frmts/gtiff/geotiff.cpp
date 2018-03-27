@@ -7369,6 +7369,8 @@ GTiffDataset::~GTiffDataset()
 
 {
     Finalize();
+    if( !osTmpFilename.empty() )
+        VSIUnlink(osTmpFilename);
 }
 
 /************************************************************************/
