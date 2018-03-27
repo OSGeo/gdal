@@ -4243,6 +4243,23 @@ def ogr_gml_82():
     return 'success'
 
 ###############################################################################
+
+def ogr_gml_gml2_write_geometry_error():
+
+    ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_83.gml')
+    lyr = ds.CreateLayer('test')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0), TIN EMPTY)'))
+    with gdaltest.error_handler():
+        lyr.CreateFeature(f)
+    ds = None
+
+    gdal.Unlink('/vsimem/ogr_gml_83.gml')
+    gdal.Unlink('/vsimem/ogr_gml_83.xsd')
+
+    return 'success'
+
+###############################################################################
 #  Cleanup
 
 def ogr_gml_cleanup():
@@ -4461,6 +4478,7 @@ gdaltest_list = [
     ogr_gml_80,
     ogr_gml_81,
     ogr_gml_82,
+    ogr_gml_gml2_write_geometry_error,
     ogr_gml_cleanup ]
 
 disabled_gdaltest_list = [
