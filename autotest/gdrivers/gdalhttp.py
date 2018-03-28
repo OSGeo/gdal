@@ -165,6 +165,10 @@ def http_4_old():
 
 def http_4():
 
+    # Too unreliable
+    if gdaltest.skip_on_travis():
+        return 'skip'
+
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
     except:
