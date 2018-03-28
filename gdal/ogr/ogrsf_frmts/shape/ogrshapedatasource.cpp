@@ -983,7 +983,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "REPACK ") )
     {
-        OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+        OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
             GetLayerByName( pszStatement + 7 ));
 
         if( poLayer != nullptr )
@@ -1009,7 +1009,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "RESIZE ") )
     {
-        OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+        OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
             GetLayerByName( pszStatement + 7 ));
 
         if( poLayer != nullptr )
@@ -1030,7 +1030,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "RECOMPUTE EXTENT ON ") )
     {
-        OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+        OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
             GetLayerByName( pszStatement + 20 ));
 
         if( poLayer != nullptr )
@@ -1051,7 +1051,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* ==================================================================== */
     if( STARTS_WITH_CI(pszStatement, "DROP SPATIAL INDEX ON ") )
     {
-        OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+        OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
             GetLayerByName( pszStatement + 22 ));
 
         if( poLayer != nullptr )
@@ -1078,7 +1078,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
             && EQUAL(papszTokens[1],"INDEX")
             && EQUAL(papszTokens[2],"ON") )
         {
-            OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+            OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
                 GetLayerByName(papszTokens[3]));
             if( poLayer != nullptr )
                 poLayer->InitializeIndexSupport( poLayer->GetFullName() );
@@ -1121,7 +1121,7 @@ OGRLayer * OGRShapeDataSource::ExecuteSQL( const char *pszStatement,
 /* -------------------------------------------------------------------- */
 /*      What layer are we operating on.                                 */
 /* -------------------------------------------------------------------- */
-    OGRShapeLayer *poLayer = dynamic_cast<OGRShapeLayer *>(
+    OGRShapeLayer *poLayer = cpl::down_cast<OGRShapeLayer *>(
         GetLayerByName(papszTokens[4]));
 
     if( poLayer == nullptr )
