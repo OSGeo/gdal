@@ -2022,7 +2022,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                     dfAngleEndForApprox += 360;
                 }
             }
-            OGRLineString* poLine = reinterpret_cast<OGRLineString*>(
+            OGRLineString* poLine =
               OGRGeometryFactory::approximateArcAngles(
                   pasCurves[i].u.EllipseByCenter.dfX,
                   pasCurves[i].u.EllipseByCenter.dfY,
@@ -2031,7 +2031,7 @@ static OGRCurve* OGRShapeCreateCompoundCurve( int nPartStartIdx,
                   dfSemiMinor,
                   dfRotationDeg,
                   dfAngleStartForApprox,
-                  dfAngleEndForApprox, 0 ) );
+                  dfAngleEndForApprox, 0 )->toLineString();
              if( poLine->getNumPoints() >= 2 )
              {
                 poLine->setPoint(0,
