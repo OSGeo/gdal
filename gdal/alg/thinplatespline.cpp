@@ -453,7 +453,10 @@ int VizGeorefSpline2D::solve()
     {
         _dx = x[1] - x[0];
         _dy = y[1] - y[0];
-        const double fact = 1.0 / ( _dx * _dx + _dy * _dy );
+        const double denom = _dx * _dx + _dy * _dy;
+        if( denom == 0.0 )
+            return 0;
+        const double fact = 1.0 / denom;
         _dx *= fact;
         _dy *= fact;
 
