@@ -392,15 +392,15 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
         const char* pszInputBefore = pszInput;
         pszInput = OGRWktReadToken( pszInput, szToken );
 
-        OGRSurface* poSurface;
+        OGRSurface* poSurface = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Do the import.                                                  */
     /* -------------------------------------------------------------------- */
         if (EQUAL(szToken,"("))
         {
-            OGRPolygon *poPolygon = reinterpret_cast<OGRPolygon*>(
-                  OGRGeometryFactory::createGeometry( getSubGeometryType() ));
+            OGRPolygon *poPolygon =  OGRGeometryFactory::createGeometry(
+                                            getSubGeometryType())->toPolygon();
             poSurface = poPolygon;
             pszInput = pszInputBefore;
             eErr = poPolygon->importFromWKTListOnly(
@@ -409,8 +409,8 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
         }
         else if (EQUAL(szToken, "EMPTY") )
         {
-            poSurface = reinterpret_cast<OGRSurface*>(
-                  OGRGeometryFactory::createGeometry( getSubGeometryType() ));
+            poSurface = OGRGeometryFactory::createGeometry(
+                            getSubGeometryType() )->toSurface();
         }
 
         /* We accept POLYGON() but this is an extension to the BNF, also */
@@ -421,7 +421,8 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
                     const_cast<char **>(&pszInput), nullptr, &poGeom );
-            poSurface = reinterpret_cast<OGRSurface*>(poGeom);
+            if( poGeom )
+                poSurface = poGeom->toSurface();
         }
         else
         {
