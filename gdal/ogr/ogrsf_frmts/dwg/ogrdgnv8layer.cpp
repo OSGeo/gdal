@@ -515,10 +515,12 @@ static void ProcessCurve(OGRFeature* poFeature, const CPLString& osPen,
 
     double dfStartParam, dfEndParam;
     OdResult eRes = curveElement->getStartParam(dfStartParam);
+    CPL_IGNORE_RET_VAL(eRes);
     CPLAssert(eRes == eOk );
     eRes = curveElement->getEndParam(dfEndParam);
+    CPL_IGNORE_RET_VAL(eRes);
     CPLAssert(eRes == eOk );
-    
+
     CPLString osStyle(osPen);
     bool bIsFilled = false;
     if( !ellipse.isNull() )
