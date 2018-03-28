@@ -1277,6 +1277,11 @@ L209:
     i__1 = *lx;
     for (l = 1; l <= i__1; ++l) {
 L210:
+        if( *ibit == 31 )
+        {
+            *ier = -1;
+            goto L900;
+        }
 	if (jmin[l] < ibxx2[*ibit]) {
 	    goto L220;
 	}
