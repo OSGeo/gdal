@@ -1479,6 +1479,21 @@ def ogr_csv_32():
             f.DumpReadable()
             return 'fail'
 
+    # Test Real -> Integer64 (https://github.com/OSGeo/gdal/issues/343)
+    gdal.FileFromMemBuffer('/vsimem/testtypeautodetect.csv',
+"""foo,bar
+1.2,
+1234567890123,""")
+    ds = gdal.OpenEx('/vsimem/testtypeautodetect.csv', gdal.OF_VECTOR, \
+        open_options = ['AUTODETECT_TYPE=YES'])
+    gdal.Unlink('/vsimem/testtypeautodetect.csv')
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    if f.GetField(0) != 1.2:
+        gdaltest.post_reason('fail')
+        f.DumpReadable()
+        return 'fail'
+
     return 'success'
 
 ###############################################################################

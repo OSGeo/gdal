@@ -1212,6 +1212,7 @@ char** OGRCSVLayer::AutodetectFieldTypes(char** papszOpenOptions, int nFieldCoun
                     else if ( aeFieldType[iField] == OFTReal )
                     {
                         if( eOGRFieldType != OFTInteger &&
+                            eOGRFieldType != OFTInteger64 &&
                             eOGRFieldType != OFTReal )
                         {
                             aeFieldType[iField] = OFTString;
