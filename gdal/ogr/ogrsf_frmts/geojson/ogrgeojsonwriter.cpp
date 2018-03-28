@@ -1095,8 +1095,7 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon,
     for( int i = 0; i < nCount; ++i )
     {
         poRing = poPolygon->getInteriorRing( i );
-        if( poRing == nullptr )
-            continue;
+        CPLAssert(poRing);
 
         poObjRing =
             OGRGeoJSONWriteRingCoords( poRing, false, oOptions );
@@ -1228,7 +1227,7 @@ json_object* OGRGeoJSONWriteGeometryCollection(
 
         json_object* poObjGeom =
             OGRGeoJSONWriteGeometry( poGeom, oOptions );
-        if( poGeom == nullptr )
+        if( poObjGeom == nullptr )
         {
             json_object_put(poObj);
             return nullptr;

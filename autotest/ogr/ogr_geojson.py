@@ -3005,42 +3005,6 @@ def ogr_geojson_53():
     return 'success'
 
 ###############################################################################
-
-def ogr_geojson_cleanup():
-
-    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
-
-    try:
-        if gdaltest.tests is not None:
-            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-            for i in range(len(gdaltest.tests)):
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
-                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
-                gdal.Unlink(fname)
-
-                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz.properties')
-                gdal.Unlink(fname)
-
-            gdal.PopErrorHandler()
-
-        gdaltest.tests = None
-    except:
-        pass
-
-    try:
-        os.remove('tmp/out_ogr_geojson_14.geojson')
-    except:
-        pass
-
-    for f in gdal.ReadDir('/vsimem/geojson'):
-        gdal.Unlink('/vsimem/geojson/' + f)
-
-    return 'success'
-
-###############################################################################
 # Test NULL type detection when first value is null
 
 def ogr_geojson_54():
@@ -4003,6 +3967,91 @@ def ogr_geojson_id_field_and_id_type():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geojson_geom_export_failure():
+
+    g = ogr.CreateGeometryFromWkt('POINT EMPTY')
+    geojson = g.ExportToJson()
+    if geojson is not None:
+        gdaltest.post_reason('fail')
+        print(geojson)
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(TIN EMPTY)')
+    geojson = json.loads(g.ExportToJson())
+    if geojson != { "type": "GeometryCollection", "geometries": None }:
+        gdaltest.post_reason('fail')
+        print(geojson)
+        return 'fail'
+
+    g = ogr.Geometry(ogr.wkbLineString)
+    g.AddPoint_2D( float('nan'), 0 )
+    with gdaltest.error_handler():
+        geojson = g.ExportToJson()
+    if geojson is not None:
+        gdaltest.post_reason('fail')
+        print(geojson)
+        return 'fail'
+
+    g = ogr.Geometry(ogr.wkbPolygon)
+    lr = ogr.Geometry(ogr.wkbLinearRing)
+    lr.AddPoint_2D(0,0)
+    lr.AddPoint_2D(0,1)
+    lr.AddPoint_2D(1,1)
+    lr.AddPoint_2D(0,0)
+    g.AddGeometry(lr)
+    lr = ogr.Geometry(ogr.wkbLinearRing)
+    lr.AddPoint_2D(0,0)
+    lr.AddPoint_2D(float('nan'),1)
+    lr.AddPoint_2D(1,1)
+    lr.AddPoint_2D(0,0)
+    g.AddGeometry(lr)
+    with gdaltest.error_handler():
+        geojson = g.ExportToJson()
+    if geojson is not None:
+        gdaltest.post_reason('fail')
+        print(geojson)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+
+def ogr_geojson_cleanup():
+
+    gdal.SetConfigOption('CPL_CURL_ENABLE_VSIMEM', None)
+
+    try:
+        if gdaltest.tests is not None:
+            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+            for i in range(len(gdaltest.tests)):
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
+                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
+                gdal.Unlink(fname)
+
+                fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz.properties')
+                gdal.Unlink(fname)
+
+            gdal.PopErrorHandler()
+
+        gdaltest.tests = None
+    except:
+        pass
+
+    try:
+        os.remove('tmp/out_ogr_geojson_14.geojson')
+    except:
+        pass
+
+    for f in gdal.ReadDir('/vsimem/geojson'):
+        gdal.Unlink('/vsimem/geojson/' + f)
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geojson_1,
     ogr_geojson_2,
@@ -4073,6 +4122,7 @@ gdaltest_list = [
     ogr_geojson_67,
     ogr_geojson_68,
     ogr_geojson_id_field_and_id_type,
+    ogr_geojson_geom_export_failure,
     ogr_geojson_cleanup ]
 
 if __name__ == '__main__':
