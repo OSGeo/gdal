@@ -921,7 +921,7 @@ json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
 /*                           OGRGeoJSONWriteGeometry                    */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
+json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry,
                                       int nCoordPrecision,
                                       int nSignificantFigures )
 {
@@ -931,7 +931,7 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
     return OGRGeoJSONWriteGeometry( poGeometry, oOptions );
 }
 
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
+json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry,
                                       const OGRGeoJSONWriteOptions& oOptions )
 {
     if( poGeometry == nullptr )
@@ -969,35 +969,33 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
     {
         poObjGeom =
             OGRGeoJSONWriteGeometryCollection(
-                static_cast<OGRGeometryCollection*>(poGeometry), oOptions );
+                poGeometry->toGeometryCollection(), oOptions );
         json_object_object_add( poObj, "geometries", poObjGeom);
     }
     else
     {
         if( wkbPoint == eFType )
             poObjGeom =
-                OGRGeoJSONWritePoint( static_cast<OGRPoint*>(poGeometry),
-                                      oOptions );
+                OGRGeoJSONWritePoint( poGeometry->toPoint(), oOptions );
         else if( wkbLineString == eFType )
             poObjGeom =
-                OGRGeoJSONWriteLineString(
-                    static_cast<OGRLineString*>(poGeometry), oOptions );
+                OGRGeoJSONWriteLineString(poGeometry->toLineString(),
+                                          oOptions );
         else if( wkbPolygon == eFType )
             poObjGeom =
-                OGRGeoJSONWritePolygon( static_cast<OGRPolygon*>(poGeometry),
-                                        oOptions );
+                OGRGeoJSONWritePolygon( poGeometry->toPolygon(), oOptions );
         else if( wkbMultiPoint == eFType )
             poObjGeom =
-                OGRGeoJSONWriteMultiPoint(
-                    static_cast<OGRMultiPoint*>(poGeometry), oOptions );
+                OGRGeoJSONWriteMultiPoint( poGeometry->toMultiPoint(),
+                                           oOptions );
         else if( wkbMultiLineString == eFType )
             poObjGeom =
                 OGRGeoJSONWriteMultiLineString(
-                    static_cast<OGRMultiLineString*>(poGeometry), oOptions );
+                    poGeometry->toMultiLineString(), oOptions );
         else if( wkbMultiPolygon == eFType )
             poObjGeom =
-                OGRGeoJSONWriteMultiPolygon(
-                    static_cast<OGRMultiPolygon*>(poGeometry), oOptions );
+                OGRGeoJSONWriteMultiPolygon(poGeometry->toMultiPolygon(),
+                                            oOptions );
         else
         {
             CPLDebug( "GeoJSON",
@@ -1023,7 +1021,7 @@ json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry,
 /*                           OGRGeoJSONWritePoint                       */
 /************************************************************************/
 
-json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint,
+json_object* OGRGeoJSONWritePoint( const OGRPoint* poPoint,
                                    const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poPoint );
@@ -1052,7 +1050,7 @@ json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint,
 /*                           OGRGeoJSONWriteLineString                  */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteLineString( OGRLineString* poLine,
+json_object* OGRGeoJSONWriteLineString( const OGRLineString* poLine,
                                         const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poLine );
@@ -1068,7 +1066,7 @@ json_object* OGRGeoJSONWriteLineString( OGRLineString* poLine,
 /*                           OGRGeoJSONWritePolygon                     */
 /************************************************************************/
 
-json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon,
+json_object* OGRGeoJSONWritePolygon( const OGRPolygon* poPolygon,
                                      const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poPolygon );
@@ -1077,7 +1075,7 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon,
     json_object* poObj = json_object_new_array();
 
     // Exterior ring.
-    OGRLinearRing* poRing = poPolygon->getExteriorRing();
+    const OGRLinearRing* poRing = poPolygon->getExteriorRing();
     if( poRing == nullptr )
         return poObj;
 
@@ -1115,7 +1113,7 @@ json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon,
 /*                           OGRGeoJSONWriteMultiPoint                  */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry,
+json_object* OGRGeoJSONWriteMultiPoint( const OGRMultiPoint* poGeometry,
                                         const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poGeometry );
@@ -1126,9 +1124,9 @@ json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry,
 
     for( int i = 0; i < poGeometry->getNumGeometries(); ++i )
     {
-        OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
+        const OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
         CPLAssert( nullptr != poGeom );
-        OGRPoint* poPoint = static_cast<OGRPoint*>(poGeom);
+        const OGRPoint* poPoint = poGeom->toPoint();
 
         json_object* poObjPoint =
             OGRGeoJSONWritePoint(poPoint, oOptions);
@@ -1148,7 +1146,7 @@ json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry,
 /*                           OGRGeoJSONWriteMultiLineString             */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry,
+json_object* OGRGeoJSONWriteMultiLineString( const OGRMultiLineString* poGeometry,
                                              const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poGeometry );
@@ -1158,9 +1156,9 @@ json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry,
 
     for( int i = 0; i < poGeometry->getNumGeometries(); ++i )
     {
-        OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
+        const OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
         CPLAssert( nullptr != poGeom );
-        OGRLineString* poLine = static_cast<OGRLineString*>(poGeom);
+        const OGRLineString* poLine = poGeom->toLineString();
 
         json_object* poObjLine =
             OGRGeoJSONWriteLineString( poLine, oOptions );
@@ -1180,7 +1178,7 @@ json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry,
 /*                           OGRGeoJSONWriteMultiPolygon                */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry,
+json_object* OGRGeoJSONWriteMultiPolygon( const OGRMultiPolygon* poGeometry,
                                           const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poGeometry );
@@ -1190,9 +1188,9 @@ json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry,
 
     for( int i = 0; i < poGeometry->getNumGeometries(); ++i )
     {
-        OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
+        const OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
         CPLAssert( nullptr != poGeom );
-        OGRPolygon* poPoly = static_cast<OGRPolygon*>(poGeom);
+        const OGRPolygon* poPoly = poGeom->toPolygon();
 
         json_object* poObjPoly =
             OGRGeoJSONWritePolygon( poPoly, oOptions );
@@ -1213,7 +1211,8 @@ json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry,
 /************************************************************************/
 
 json_object* OGRGeoJSONWriteGeometryCollection(
-    OGRGeometryCollection* poGeometry, const OGRGeoJSONWriteOptions& oOptions )
+    const OGRGeometryCollection* poGeometry,
+    const OGRGeoJSONWriteOptions& oOptions )
 {
     CPLAssert( nullptr != poGeometry );
 
@@ -1222,7 +1221,7 @@ json_object* OGRGeoJSONWriteGeometryCollection(
 
     for( int i = 0; i < poGeometry->getNumGeometries(); ++i )
     {
-        OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
+        const OGRGeometry* poGeom = poGeometry->getGeometryRef( i );
         CPLAssert( nullptr != poGeom );
 
         json_object* poObjGeom =
@@ -1289,7 +1288,7 @@ json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY,
 /*                           OGRGeoJSONWriteLineCoords                  */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine,
+json_object* OGRGeoJSONWriteLineCoords( const OGRLineString* poLine,
                                         const OGRGeoJSONWriteOptions& oOptions )
 {
     json_object* poObjPoint = nullptr;
@@ -1323,7 +1322,7 @@ json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine,
 /*                        OGRGeoJSONWriteRingCoords                     */
 /************************************************************************/
 
-json_object* OGRGeoJSONWriteRingCoords( OGRLinearRing* poLine,
+json_object* OGRGeoJSONWriteRingCoords( const OGRLinearRing* poLine,
                                         bool bIsExteriorRing,
                                         const OGRGeoJSONWriteOptions& oOptions )
 {

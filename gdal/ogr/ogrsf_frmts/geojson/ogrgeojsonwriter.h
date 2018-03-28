@@ -104,20 +104,20 @@ json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, const OGRGeoJSONWrit
 json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
                                         bool bWriteIdIfFoundInAttributes = true,
                                         const OGRGeoJSONWriteOptions& oOptions = OGRGeoJSONWriteOptions() );
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry, int nCoordPrecision, int nSignificantFigures );
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteLineString( OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteGeometryCollection( OGRGeometryCollection* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry, int nCoordPrecision, int nSignificantFigures );
+json_object* OGRGeoJSONWriteGeometry( const OGRGeometry* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWritePoint( const OGRPoint* poPoint, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteLineString( const OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWritePolygon( const OGRPolygon* poPolygon, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteMultiPoint( const OGRMultiPoint* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteMultiLineString( const OGRMultiLineString* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteMultiPolygon( const OGRMultiPolygon* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteGeometryCollection( const OGRGeometryCollection* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
 
 json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, const OGRGeoJSONWriteOptions& oOptions );
 json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, double const& fZ, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteRingCoords( OGRLinearRing* poLine, bool bIsExteriorRing, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteLineCoords( const OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
+json_object* OGRGeoJSONWriteRingCoords( const OGRLinearRing* poLine, bool bIsExteriorRing, const OGRGeoJSONWriteOptions& oOptions );
 #endif
 
 #endif /* OGR_GEOJSONWRITER_H_INCLUDED */
