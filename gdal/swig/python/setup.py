@@ -40,7 +40,7 @@ if 'CC' in os.environ and os.environ['CC'].strip().find(' ') >= 0:
 # Switches
 # ---------------------------------------------------------------------------
 
-HAVE_NUMPY=False
+HAVE_NUMPY = False
 HAVE_SETUPTOOLS = False
 BUILD_FOR_CHEESESHOP = False
 GNM_ENABLED = True
@@ -54,6 +54,7 @@ include_dirs = ['../../port', '../../gcore', '../../alg', '../../ogr/', '../../o
 library_dirs = ['../../.libs', '../../']
 libraries = ['gdal']
 
+
 # ---------------------------------------------------------------------------
 # Helper Functions
 # ---------------------------------------------------------------------------
@@ -64,6 +65,7 @@ def get_numpy_include():
         return numpy.get_include()
     else:
         return '.'
+
 
 # ---------------------------------------------------------------------------
 # Imports
@@ -121,11 +123,13 @@ else:
         extra['use_2to3_fixers'] = []
         extra['use_2to3_exclude_fixers'] = exclude_fixers
 
+
 class gdal_config_error(Exception): pass
 
 
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
+
 
 def fetch_config(option, gdal_config='gdal-config'):
 
@@ -163,8 +167,8 @@ except OSError, e:
 
     return r
 
+
 def supports_cxx11(compiler, compiler_flag = None):
-    import tempfile
     ret = False
     with open('gdal_python_cxx11_test.cpp', 'wt') as f:
         f.write("""
@@ -221,13 +225,14 @@ int main () { return 0; }""")
         os.unlink('gdal_python_cxx11_test.o')
     return ret
 
+
 class gdal_ext(build_ext):
 
     GDAL_CONFIG = 'gdal-config'
     user_options = build_ext.user_options[:]
     user_options.extend([
         ('gdal-config=', None,
-        "The name of the gdal-config binary and/or a full path to it"),
+         "The name of the gdal-config binary and/or a full path to it"),
     ])
 
     def initialize_options(self):
@@ -268,6 +273,8 @@ class gdal_ext(build_ext):
         build_ext.build_extensions(self)
 
     def finalize_options(self):
+        global include_dirs, library_dirs
+
         if self.include_dirs is None:
             self.include_dirs = include_dirs
         # Needed on recent MacOSX
@@ -373,7 +380,7 @@ if HAVE_NUMPY:
 
 packages = ["osgeo",]
 
-readme = str(open('README.txt','rb').read())
+readme = str(open('README.txt', 'rb').read())
 
 name = 'GDAL'
 version = gdal_version
@@ -383,7 +390,7 @@ maintainer = "Howard Butler"
 maintainer_email = "hobu.inc@gmail.com"
 description = "GDAL: Geospatial Data Abstraction Library"
 license = "MIT"
-url="http://www.gdal.org"
+url = "http://www.gdal.org"
 
 classifiers = [
         'Development Status :: 5 - Production/Stable',
@@ -406,44 +413,35 @@ if BUILD_FOR_CHEESESHOP:
 else:
     data_files = None
 
-exclude_package_data = {'':['GNUmakefile']}
+exclude_package_data = {'': ['GNUmakefile']}
+
+setup_kwargs = dict(
+    name=name,
+    version=gdal_version,
+    author=author,
+    author_email=author_email,
+    maintainer=maintainer,
+    maintainer_email=maintainer_email,
+    long_description=readme,
+    description=description,
+    license=license,
+    classifiers=classifiers,
+    py_modules=py_modules,
+    packages=packages,
+    url=url,
+    data_files=data_files,
+    ext_modules=ext_modules,
+    scripts=glob('scripts/*.py')
+)
 
 if HAVE_SETUPTOOLS:
-    setup( name = name,
-           version = gdal_version,
-           author = author,
-           author_email = author_email,
-           maintainer = maintainer,
-           maintainer_email = maintainer_email,
-           long_description = readme,
-           description = description,
-           license = license,
-           classifiers = classifiers,
-           py_modules = py_modules,
-           packages = packages,
-           url=url,
-           data_files = data_files,
-           zip_safe = False,
-           exclude_package_data = exclude_package_data,
-           cmdclass={'build_ext':gdal_ext},
-           ext_modules = ext_modules,
-           **extra )
+    setup(**setup_kwargs,
+          zip_safe=False,
+          exclude_package_data=exclude_package_data,
+          cmdclass={'build_ext': gdal_ext},
+          **extra)
 else:
-    setup( name = name,
-           version = gdal_version,
-           author = author,
-           author_email = author_email,
-           maintainer = maintainer,
-           maintainer_email = maintainer_email,
-           long_description = readme,
-           description = description,
-           license = license,
-           classifiers = classifiers,
-           py_modules = py_modules,
-           packages = packages,
-           data_files = data_files,
-           url=url,
-           cmdclass={'build_ext':gdal_ext,
-                     'build_py': build_py,
-                     'build_scripts': build_scripts},
-           ext_modules = ext_modules )
+    setup(**setup_kwargs,
+          cmdclass={'build_ext': gdal_ext,
+                    'build_py': build_py,
+                    'build_scripts': build_scripts})
