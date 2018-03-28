@@ -3231,8 +3231,38 @@ def test_ogr_geom_create_from_wkt_polyhedrasurface():
     assert g.ExportToWkt() == 'POLYHEDRALSURFACE Z (((0 0 0,0 0 1,0 1 1,0 1 0,0 0 0)))'
 
 ###############################################################################
-# cleanup
 
 
-def test_ogr_geom_cleanup():
-    pass
+def test_ogr_geom_makevalid():
+
+    if not ogrtest.have_geos():
+        pytest.skip()
+
+    g = ogr.CreateGeometryFromWkt('POINT (0 0)')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'POINT (0 0)'
+
+    g = ogr.CreateGeometryFromWkt('POINT EMPTY')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'POINT EMPTY'
+
+    g = ogr.CreateGeometryFromWkt('LINESTRING (0 0)')
+    with gdaltest.error_handler():
+        g = g.MakeValid()
+    assert not g
+
+    g = ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,0 1,1 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'CURVEPOLYGON ((0 0,0 1,1 0,0 0))'
+
+    # Invalid
+    g = ogr.CreateGeometryFromWkt('POLYGON ((0 0,10 10,0 10,10 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+
+    # Invalid
+    g = ogr.CreateGeometryFromWkt('CURVEPOLYGON ((0 0,10 10,0 10,10 0,0 0))')
+    g = g.MakeValid()
+    assert g is None or g.ExportToWkt() == 'MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))'
+
+    return 'success'

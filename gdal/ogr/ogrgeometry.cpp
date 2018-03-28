@@ -3510,6 +3510,124 @@ static OGRBoolean OGRGEOSBooleanPredicate(
 
 
 /************************************************************************/
+/*                            MakeValid()                               */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This method is the same as the C function OGR_G_MakeValid().
+ *
+ * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS >= 3.8 library, this function will return
+ * a clone of the input geometry if it is valid, or NULL if it is invalid
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 2.5
+ */
+OGRGeometry *OGRGeometry::MakeValid() const
+{
+#ifndef HAVE_GEOS
+    if( IsValid() )
+        return clone();
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS support not enabled." );
+    return nullptr;
+#elif GEOS_VERSION_MAJOR < 3 || \
+    (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 8)
+    if( IsValid() )
+        return clone();
+
+    CPLError( CE_Failure, CPLE_NotSupported,
+              "GEOS 3.8 or later needed for MakeValid." );
+    return nullptr;
+#else
+    if( IsSFCGALCompatible() )
+    {
+        if( IsValid() )
+            return clone();
+    }
+    else if( wkbFlatten(getGeometryType()) == wkbCurvePolygon )
+    {
+        GEOSContextHandle_t hGEOSCtxt = initGEOS_r( nullptr, nullptr );
+        OGRBoolean bIsValid = FALSE;
+        GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+        if( hGeosGeom )
+        {
+            bIsValid = GEOSisValid_r(hGEOSCtxt, hGeosGeom);
+            GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+        }
+        freeGEOSContext( hGEOSCtxt );
+        if( bIsValid )
+            return clone();
+    }
+
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    if( hGeosGeom != nullptr )
+    {
+        GEOSGeom hGEOSRet = GEOSMakeValid_r( hGEOSCtxt, hGeosGeom );
+        GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
+
+        if( hGEOSRet != nullptr )
+        {
+            poOGRProduct =
+                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGEOSRet);
+            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
+                poOGRProduct->assignSpatialReference(getSpatialReference());
+            poOGRProduct =
+                OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
+            GEOSGeom_destroy_r( hGEOSCtxt, hGEOSRet);
+        }
+    }
+    freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+#endif
+}
+
+/************************************************************************/
+/*                         OGR_G_MakeValid()                            */
+/************************************************************************/
+
+/**
+ * \brief Attempts to make an invalid geometry valid without losing vertices.
+ *
+ * Already-valid geometries are cloned without further intervention.
+ *
+ * This function is the same as the C++ method OGRGeometry::MakeValid().
+ *
+ * This function is built on the GEOS >= 3.8 library, check it for the definition
+ * of the geometry operation.
+ * If OGR is built without the GEOS >= 3.8 library, this function will return
+ * a clone of the input geometry if it is valid, or NULL if it is invalid
+ *
+ * @param hGeom The Geometry to make valid.
+ *
+ * @return a newly allocated geometry now owned by the caller, or NULL
+ * on failure.
+ *
+ * @since GDAL 2.5
+ */
+
+OGRGeometryH OGR_G_MakeValid( OGRGeometryH hGeom )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_MakeValid", nullptr );
+
+    return reinterpret_cast<OGRGeometryH>(
+        reinterpret_cast<OGRGeometry *>(hGeom)->MakeValid());
+}
+
+/************************************************************************/
 /*                             ConvexHull()                             */
 /************************************************************************/
 
