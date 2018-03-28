@@ -33,5 +33,9 @@ int main()
     const char szJUNK[] = "junk";
     LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szJUNK),
                            strlen(szJUNK));
+
+    const char szPOINT[] = "\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\xF0\x3F\x00\x00\x00\x00\x00\x00\x00\x40";
+    LLVMFuzzerTestOneInput(reinterpret_cast<const uint8_t*>(szPOINT),
+                           sizeof(szPOINT)-1);
     return 0;
 }

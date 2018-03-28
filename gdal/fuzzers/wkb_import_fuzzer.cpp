@@ -30,7 +30,9 @@
 #include <stdint.h>
 
 #include "ogr_api.h"
+#include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 
 extern "C" int LLVMFuzzerInitialize(int* argc, char*** argv);
 
@@ -47,7 +49,38 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     CPLPushErrorHandler(CPLQuietErrorHandler);
     OGR_G_CreateFromWkb( const_cast<unsigned char*>(buf), nullptr, &hGeom,
                          static_cast<int>(len) );
-    CPLPopErrorHandler();
+    if( hGeom )
+    {
+        const int nWKBSize = OGR_G_WkbSize(hGeom);
+        if( nWKBSize )
+        {
+            GByte* pabyWKB = new GByte[nWKBSize];
+            OGR_G_ExportToWkb(hGeom, wkbNDR, pabyWKB);
+            OGR_G_ExportToIsoWkb(hGeom, wkbNDR, pabyWKB);
+            delete[] pabyWKB;
+        }
+
+        char* pszWKT = nullptr;
+        OGR_G_ExportToWkt(hGeom, &pszWKT);
+        CPLFree(pszWKT);
+
+        pszWKT = nullptr;
+        OGR_G_ExportToIsoWkt(hGeom, &pszWKT);
+        CPLFree(pszWKT);
+
+        CPLFree(OGR_G_ExportToGML(hGeom));
+
+        char** papszOptions = CSLSetNameValue(nullptr, "FORMAT", "GML3");
+        CPLFree(OGR_G_ExportToGMLEx(hGeom, papszOptions));
+        CSLDestroy(papszOptions);
+
+        CPLDestroyXMLNode(OGR_G_ExportEnvelopeToGMLTree(hGeom));
+
+        CPLFree(OGR_G_ExportToKML(hGeom, nullptr));
+
+        CPLFree(OGR_G_ExportToJson(hGeom));
+    }
     OGR_G_DestroyGeometry(hGeom);
+    CPLPopErrorHandler();
     return 0;
 }
