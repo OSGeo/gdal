@@ -1186,11 +1186,9 @@ OGRErr OGRShapeLayer::ICreateFeature( OGRFeature *poFeature )
 
         if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
         {
-            OGRGeometryCollection *poGC =
-                            dynamic_cast<OGRGeometryCollection *>(poGeom);
+            const OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
             bool bIsMultiPatchCompatible = false;
-            for( int iGeom = 0; poGC != nullptr &&
-                                iGeom < poGC->getNumGeometries(); iGeom++ )
+            for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
             {
                 OGRwkbGeometryType eSubGeomType =
                     wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
