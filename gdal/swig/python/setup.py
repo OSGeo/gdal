@@ -415,6 +415,7 @@ else:
 
 exclude_package_data = {'': ['GNUmakefile']}
 
+
 setup_kwargs = dict(
     name=name,
     version=gdal_version,
@@ -431,17 +432,20 @@ setup_kwargs = dict(
     url=url,
     data_files=data_files,
     ext_modules=ext_modules,
-    scripts=glob('scripts/*.py')
+    scripts=glob('scripts/*.py'),
+    cmdclass={'build_ext': gdal_ext}
 )
 
+# This section can be greatly simplified with python >= 3.5 using **
 if HAVE_SETUPTOOLS:
-    setup(**setup_kwargs,
-          zip_safe=False,
-          exclude_package_data=exclude_package_data,
-          cmdclass={'build_ext': gdal_ext},
-          **extra)
+    for k, v in extra.items():
+        setup_kwargs[k] = v
+
+    setup_kwargs['zip_safe'] = False
+    setup_kwargs['exclude_package_data'] = exclude_package_data
+    setup(**setup_kwargs)
 else:
-    setup(**setup_kwargs,
-          cmdclass={'build_ext': gdal_ext,
-                    'build_py': build_py,
-                    'build_scripts': build_scripts})
+    setup_kwargs['cmdclass']['build_py'] = build_py
+    setup_kwargs['cmdclass']['build_scripts'] = build_scripts
+
+    setup(**setup_kwargs)
