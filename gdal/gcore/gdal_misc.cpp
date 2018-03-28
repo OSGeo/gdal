@@ -2745,6 +2745,68 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
 }
 
 /************************************************************************/
+/*                      StripIrrelevantOptions()                        */
+/************************************************************************/
+
+static void StripIrrelevantOptions(CPLXMLNode* psCOL, int nOptions)
+{
+    if( nOptions == 0 )
+        nOptions = GDAL_OF_RASTER;
+    if( (nOptions & GDAL_OF_RASTER) != 0 && (nOptions & GDAL_OF_VECTOR) != 0 )
+        return;
+
+    CPLXMLNode* psPrev = nullptr;
+    for( CPLXMLNode* psIter = psCOL->psChild; psIter; )
+    {
+        if( psIter->eType == CXT_Element )
+        {
+            CPLXMLNode* psScope = CPLGetXMLNode(psIter, "scope");
+            bool bStrip = false;
+            if( nOptions == GDAL_OF_RASTER &&
+                psScope && psScope->psChild &&
+                psScope->psChild->pszValue &&
+                EQUAL(psScope->psChild->pszValue, "vector") )
+            {
+                bStrip = true;
+            }
+            else if( nOptions == GDAL_OF_VECTOR &&
+                psScope && psScope->psChild &&
+                psScope->psChild->pszValue &&
+                EQUAL(psScope->psChild->pszValue, "raster") )
+            {
+                bStrip = true;
+            }
+            if( psScope )
+            {
+                CPLRemoveXMLChild(psIter, psScope);
+                CPLDestroyXMLNode(psScope);
+            }
+
+            CPLXMLNode* psNext = psIter->psNext;
+            if( bStrip )
+            {
+                if( psPrev )
+                    psPrev->psNext = psNext;
+                else if( psCOL->psChild == psIter )
+                    psCOL->psChild->psNext = psNext;
+                psIter->psNext = nullptr;
+                CPLDestroyXMLNode(psIter);
+                psIter = psNext;
+            }
+            else
+            {
+                psPrev = psIter;
+                psIter = psNext;
+            }
+        }
+        else
+        {
+            psIter = psIter->psNext;
+        }
+    }
+}
+
+/************************************************************************/
 /*                    GDALGeneralCmdLineProcessor()                     */
 /************************************************************************/
 
@@ -3165,6 +3227,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLParseXMLString(
                         CSLFetchNameValue( papszMD,
                                            GDAL_DMD_CREATIONOPTIONLIST ) );
+                StripIrrelevantOptions(psCOL, nOptions);
                 char *pszFormattedXML =
                     CPLSerializeXMLTree( psCOL );
 
@@ -3179,6 +3242,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLParseXMLString(
                         CSLFetchNameValue( papszMD,
                                            GDAL_DS_LAYER_CREATIONOPTIONLIST ) );
+                StripIrrelevantOptions(psCOL, nOptions);
                 char *pszFormattedXML =
                     CPLSerializeXMLTree( psCOL );
 
@@ -3198,6 +3262,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
                     CPLParseXMLString(
                         CSLFetchNameValue( papszMD,
                                            GDAL_DMD_OPENOPTIONLIST ) );
+                StripIrrelevantOptions(psCOL, nOptions);
                 char *pszFormattedXML =
                     CPLSerializeXMLTree( psCOL );
 

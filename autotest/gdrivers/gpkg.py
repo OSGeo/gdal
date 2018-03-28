@@ -3905,6 +3905,26 @@ def gpkg_open_old_gpkg_elevation_tiles_extension():
     return 'success'
 
 ###############################################################################
+def gpkg_GeneralCmdLineProcessor():
+
+    if gdaltest.gpkg_dr is None:
+        return 'skip'
+
+    import test_cli_utilities
+    if test_cli_utilities.get_gdalinfo_path() is not None and test_cli_utilities.get_ogrinfo_path() is not None:
+        ret_gdalinfo = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GPKG')
+        ret_ogrinfo = gdaltest.runexternal(test_cli_utilities.get_ogrinfo_path() + ' --format GPKG')
+        if ret_gdalinfo.find('<CreationOptionList>') < 0 or \
+           ret_ogrinfo.find('<CreationOptionList>') < 0 or \
+           ret_gdalinfo.find('scope=') >= 0 or \
+           ret_ogrinfo.find('scope=') >= 0:
+            print(ret_gdalinfo)
+            print(ret_ogrinfo)
+            return 'fail'
+
+    return 'success'
+
+###############################################################################
 #
 
 def gpkg_cleanup():
@@ -3974,6 +3994,7 @@ gdaltest_list = [
     gpkg_48,
     gpkg_delete_raster_layer,
     gpkg_open_old_gpkg_elevation_tiles_extension,
+    gpkg_GeneralCmdLineProcessor,
     gpkg_cleanup,
 ]
 #gdaltest_list = [ gpkg_init, gpkg_47, gpkg_cleanup ]
