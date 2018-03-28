@@ -87,11 +87,11 @@ OGRErr CPL_DLL OGRCreateFromShapeBin( GByte *pabyShape,
                               OGRGeometry **ppoGeom,
                               int nBytes );
 
-OGRErr CPL_DLL OGRWriteToShapeBin( OGRGeometry *poGeom,
+OGRErr CPL_DLL OGRWriteToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 
-OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
+OGRErr OGRCreateMultiPatch( const OGRGeometry *poGeom,
                             int bAllowSHPTTriangle,
                             int& nParts,
                             int*& panPartStart,
@@ -100,7 +100,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                             OGRRawPoint*& poPoints,
                             double*& padfZ );
 
-OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
+OGRErr CPL_DLL OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes );
 
