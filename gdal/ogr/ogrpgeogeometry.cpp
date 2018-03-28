@@ -40,6 +40,7 @@
 #include <cstring>
 #include <limits>
 #include <map>
+#include <memory>
 #include <set>
 #include <utility>
 #include <vector>
@@ -603,7 +604,7 @@ OGRGeometry* OGRCreateFromMultiPatch       ( int nParts,
 /*      Translate OGR geometry to a shapefile binary representation     */
 /************************************************************************/
 
-OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
+OGRErr OGRWriteToShapeBin( const OGRGeometry *poGeom,
                            GByte **ppabyShape,
                            int *pnBytes )
 {
@@ -641,7 +642,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbLineString )
     {
-        OGRLineString *poLine = (OGRLineString*)poGeom;
+        const OGRLineString *poLine = poGeom->toLineString();
         nPoints = poLine->getNumPoints();
         nParts = 1;
         nShpSize += 16 * nCoordDims;  // xy(z)(m) box.
@@ -653,8 +654,8 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbPolygon )
     {
-        poGeom->closeRings();
-        OGRPolygon *poPoly = (OGRPolygon*)poGeom;
+        std::unique_ptr<OGRPolygon> poPoly(poGeom->clone()->toPolygon());
+        poPoly->closeRings();
         nParts = poPoly->getNumInteriorRings() + 1;
         for( GUInt32 i = 0; i < nParts; i++ )
         {
@@ -672,10 +673,10 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiPoint )
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        const OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
         for( int i = 0; i < poMPoint->getNumGeometries(); i++ )
         {
-            OGRPoint *poPoint = (OGRPoint*)(poMPoint->getGeometryRef(i));
+            const OGRPoint *poPoint = poMPoint->getGeometryRef(i)->toPoint();
             if( poPoint->IsEmpty() )
                 continue;
             nPoints++;
@@ -687,11 +688,11 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiLineString )
     {
-        OGRMultiLineString *poMLine = (OGRMultiLineString*)poGeom;
+        const OGRMultiLineString *poMLine = poGeom->toMultiLineString();
         for( int i = 0; i < poMLine->getNumGeometries(); i++ )
         {
-            OGRLineString *poLine =
-                (OGRLineString*)(poMLine->getGeometryRef(i));
+            const OGRLineString *poLine =
+                poMLine->getGeometryRef(i)->toLineString();
             // Skip empties.
             if( poLine->IsEmpty() )
                 continue;
@@ -707,11 +708,12 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
     }
     else if( nOGRType == wkbMultiPolygon )
     {
-        poGeom->closeRings();
-        OGRMultiPolygon *poMPoly = (OGRMultiPolygon*)poGeom;
+        std::unique_ptr<OGRMultiPolygon> poMPoly(
+                                    poGeom->clone()->toMultiPolygon());
+        poMPoly->closeRings();
         for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
         {
-            OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
+            const OGRPolygon *poPoly = poMPoly->getGeometryRef(j)->toPolygon();
             int nRings = poPoly->getNumInteriorRings() + 1;
 
             // Skip empties.
@@ -721,7 +723,7 @@ OGRErr OGRWriteToShapeBin( OGRGeometry *poGeom,
             nParts += nRings;
             for( int i = 0; i < nRings; i++ )
             {
-                OGRLinearRing *poRing = i == 0
+                const OGRLinearRing *poRing = i == 0
                     ? poPoly->getExteriorRing()
                     : poPoly->getInteriorRing(i-1);
                 nPoints += poRing->getNumPoints();
@@ -1399,7 +1401,7 @@ id,WKT
 /*                         OGRCreateMultiPatch()                        */
 /************************************************************************/
 
-OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
+OGRErr OGRCreateMultiPatch( const OGRGeometry *poGeomConst,
                             int bAllowSHPTTriangle,
                             int& nParts,
                             int*& panPartStart,
@@ -1408,7 +1410,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
                             OGRRawPoint*& poPoints,
                             double*& padfZ )
 {
-    const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
+    const OGRwkbGeometryType eType = wkbFlatten(poGeomConst->getGeometryType());
     if( eType != wkbPolygon && eType != wkbTriangle &&
         eType != wkbMultiPolygon && eType != wkbMultiSurface &&
         eType != wkbTIN &&
@@ -1417,22 +1419,22 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
+    std::unique_ptr<OGRGeometry> poGeom(poGeomConst->clone());
     poGeom->closeRings();
 
     OGRMultiPolygon *poMPoly = nullptr;
-    OGRGeometry* poGeomToDelete = nullptr;
+    std::unique_ptr<OGRGeometry> poGeomToDelete;
     if( eType == wkbMultiPolygon )
         poMPoly = poGeom->toMultiPolygon();
     else
     {
-        poGeomToDelete =
-                OGRGeometryFactory::forceToMultiPolygon(poGeom->clone());
-        if( poGeomToDelete )
+        poGeomToDelete = std::unique_ptr<OGRGeometry>(
+                OGRGeometryFactory::forceToMultiPolygon(poGeom->clone()));
+        if( poGeomToDelete.get() )
             poMPoly = poGeomToDelete->toMultiPolygon();
     }
     if( poMPoly == nullptr )
     {
-        delete poGeomToDelete;
         return OGRERR_UNSUPPORTED_OPERATION;
     }
 
@@ -1445,7 +1447,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
     int nBeginLastPart = 0;
     for( int j = 0; j < poMPoly->getNumGeometries(); j++ )
     {
-        OGRPolygon *poPoly = (OGRPolygon*)(poMPoly->getGeometryRef(j));
+        OGRPolygon *poPoly = poMPoly->getGeometryRef(j)->toPolygon();
         int nRings = poPoly->getNumInteriorRings() + 1;
 
         // Skip empties.
@@ -1592,8 +1594,6 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
         nPoints = 3;
     }
 
-    delete poGeomToDelete;
-
     return OGRERR_NONE;
 }
 
@@ -1601,7 +1601,7 @@ OGRErr OGRCreateMultiPatch( OGRGeometry *poGeom,
 /*                   OGRWriteMultiPatchToShapeBin()                     */
 /************************************************************************/
 
-OGRErr OGRWriteMultiPatchToShapeBin( OGRGeometry *poGeom,
+OGRErr OGRWriteMultiPatchToShapeBin( const OGRGeometry *poGeom,
                                      GByte **ppabyShape,
                                      int *pnBytes )
 {
