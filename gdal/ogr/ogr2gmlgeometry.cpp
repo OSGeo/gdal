@@ -1115,6 +1115,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
+        // Free tag buffer.
+        CPLFree( pszElemOpen );
+
         for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
             const OGRGeometry *poMember = poGC->getGeometryRef( iMember );
@@ -1146,8 +1149,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
 
-        // Free tag buffer.
-        CPLFree( pszElemOpen );
     }
 
 /* -------------------------------------------------------------------- */
