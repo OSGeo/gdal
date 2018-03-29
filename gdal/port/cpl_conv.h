@@ -373,7 +373,9 @@ private:
 extern "C++"
 {
 
+#ifndef DOXYGEN_SKIP
 #include <type_traits> // for std::is_base_of
+#endif
 
 namespace cpl
 {
