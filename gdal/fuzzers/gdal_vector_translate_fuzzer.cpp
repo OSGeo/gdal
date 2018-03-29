@@ -94,12 +94,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             CSLDestroy(papszDrivers);
             if( hSrcDS != nullptr )
             {
+                CPLString osFullOutFilename("/vsimem/" + osOutFilename);
                 GDALDatasetH hOutDS = GDALVectorTranslate(
-                    ("/vsimem/" + osOutFilename).c_str(),
+                    osFullOutFilename.c_str(),
                     nullptr, 1, &hSrcDS, psOptions, nullptr);
-                if( hOutDS )
-                    GDALClose(hOutDS);
                 GDALClose(hSrcDS);
+                if( hOutDS )
+                {
+                    GDALDriverH hOutDrv = GDALGetDatasetDriver(hOutDS);
+                    GDALClose(hOutDS);
+
+                    // Try re-opening generated file
+                    GDALClose(
+                        GDALOpenEx(osFullOutFilename, GDAL_OF_VECTOR,
+                               nullptr, nullptr, nullptr));
+
+                    if( hOutDrv )
+                        GDALDeleteDataset(hOutDrv, osFullOutFilename);
+                }
             }
             GDALVectorTranslateOptionsFree(psOptions);
         }
