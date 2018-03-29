@@ -36,7 +36,7 @@ def Usage():
     print('Usage: gdal_mkdir filename')
     return -1
 
-def gdal_rm(argv, progress = None):
+def gdal_mkdir(argv, progress = None):
     filename = None
 
     argv = gdal.GeneralCmdLineProcessor( argv )
@@ -62,4 +62,4 @@ def gdal_rm(argv, progress = None):
     return ret
 
 if __name__ == '__main__':
-    sys.exit(gdal_rm(sys.argv))
+    sys.exit(gdal_mkdir(sys.argv))
