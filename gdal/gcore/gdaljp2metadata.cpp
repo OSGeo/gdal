@@ -953,14 +953,17 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 
     if( psOriginPoint != nullptr )
     {
-        poOriginGeometry = (OGRPoint *)
-            OGR_G_CreateFromGMLTree( psOriginPoint );
+        OGRGeometry* poGeom = reinterpret_cast<OGRGeometry*>(
+            OGR_G_CreateFromGMLTree( psOriginPoint ));
 
-        if( poOriginGeometry != nullptr
-            && wkbFlatten(poOriginGeometry->getGeometryType()) != wkbPoint )
+        if( poGeom != nullptr
+            && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            delete poOriginGeometry;
-            poOriginGeometry = nullptr;
+            poOriginGeometry = poGeom->toPoint();
+        }
+        else
+        {
+            delete poGeom;
         }
 
         // SRS?

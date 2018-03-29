@@ -1235,7 +1235,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         nDstXOff + nDestXOffVirtual + nDstXCount,
                         nDstYOff + nDestYOffVirtual,
                         nDstYOff + nDestYOffVirtual + nDstYCount,
-                        (GDALRasterBand *) hMEMBand,
+                        static_cast<GDALRasterBand *>(hMEMBand),
                         pszResampling,
                         bHasNoData, fNoDataValue,
                         GetColorTable(),
@@ -4306,8 +4306,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     VALIDATE_POINTER1( hSrcDS, "GDALDatasetCopyWholeRaster", CE_Failure );
     VALIDATE_POINTER1( hDstDS, "GDALDatasetCopyWholeRaster", CE_Failure );
 
-    GDALDataset *poSrcDS = (GDALDataset *) hSrcDS;
-    GDALDataset *poDstDS = (GDALDataset *) hDstDS;
+    GDALDataset *poSrcDS = static_cast<GDALDataset *>(hSrcDS);
+    GDALDataset *poDstDS = static_cast<GDALDataset *>(hDstDS);
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;

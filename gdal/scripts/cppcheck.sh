@@ -387,7 +387,7 @@ if grep "unreadVariable" ${LOG_FILE} | grep -v alg/internal_libqhull | \
 fi
 
 
-for whitelisted_dir in alg/ port/; do
+for whitelisted_dir in alg/ port/ gcore/; do
     if grep "cstyleCast" ${LOG_FILE} | grep $whitelisted_dir ; then
         echo "cstyleCast check failed"
         ret_code=1

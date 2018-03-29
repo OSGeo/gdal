@@ -178,7 +178,7 @@ GDALARGetNextUpdatedRegion(GDALAsyncReaderH hARIO, double dfTimeout,
                            int* pnBufXSize, int* pnBufYSize)
 {
     VALIDATE_POINTER1(hARIO, "GDALARGetNextUpdatedRegion", GARIO_ERROR);
-    return ((GDALAsyncReader *)hARIO)->GetNextUpdatedRegion(
+    return static_cast<GDALAsyncReader *>(hARIO)->GetNextUpdatedRegion(
         dfTimeout, pnBufXOff, pnBufYOff, pnBufXSize, pnBufYSize);
 }
 
@@ -235,7 +235,7 @@ int GDALAsyncReader::LockBuffer( double /* dfTimeout */ )
 int CPL_STDCALL GDALARLockBuffer(GDALAsyncReaderH hARIO, double dfTimeout )
 {
     VALIDATE_POINTER1(hARIO, "GDALARLockBuffer",FALSE);
-    return ((GDALAsyncReader *)hARIO)->LockBuffer( dfTimeout );
+    return static_cast<GDALAsyncReader *>(hARIO)->LockBuffer( dfTimeout );
 }
 
 /************************************************************************/
@@ -270,7 +270,7 @@ void GDALAsyncReader::UnlockBuffer()
 void CPL_STDCALL GDALARUnlockBuffer(GDALAsyncReaderH hARIO)
 {
     VALIDATE_POINTER0(hARIO, "GDALARUnlockBuffer");
-    ((GDALAsyncReader *)hARIO)->UnlockBuffer();
+    static_cast<GDALAsyncReader *>(hARIO)->UnlockBuffer();
 }
 
 /************************************************************************/

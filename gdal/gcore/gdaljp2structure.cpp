@@ -170,14 +170,14 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
 {
     GIntBig nBoxDataLength = oBox.GetDataLength();
     GByte* pabyBoxData = oBox.ReadBoxData();
-    GDALDriver* poVRTDriver = (GDALDriver*) GDALGetDriverByName("VRT");
+    GDALDriver* poVRTDriver = static_cast<GDALDriver*>(GDALGetDriverByName("VRT"));
     if( pabyBoxData && poVRTDriver)
     {
         CPLString osTmpFilename(CPLSPrintf("/vsimem/tmp_%p.tif", oBox.GetFILE()));
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename, pabyBoxData, nBoxDataLength, FALSE) ));
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GDALDataset* poDS = (GDALDataset*) GDALOpen(osTmpFilename, GA_ReadOnly);
+        GDALDataset* poDS = static_cast<GDALDataset*>(GDALOpen(osTmpFilename, GA_ReadOnly));
         CPLPopErrorHandler();
         // Reject GeoJP2 boxes with a TIFF with band_count > 1.
         if( poDS && poDS->GetRasterCount() > 1 )

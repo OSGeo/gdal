@@ -572,7 +572,7 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
 {
     VALIDATE_POINTER0( hDriver, "GDALDeregisterDriver" );
 
-    GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
+    GetGDALDriverManager()->DeregisterDriver( static_cast<GDALDriver *>(hDriver) );
 }
 
 /************************************************************************/

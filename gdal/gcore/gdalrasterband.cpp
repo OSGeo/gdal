@@ -1063,7 +1063,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALFlushRasterCache", CE_Failure );
 
-    return ((GDALRasterBand *) hBand)->FlushCache();
+    return static_cast<GDALRasterBand *>(hBand)->FlushCache();
 }
 
 /************************************************************************/

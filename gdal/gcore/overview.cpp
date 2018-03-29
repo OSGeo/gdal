@@ -3785,7 +3785,8 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviewCount; ++iOverview )
     {
-        GDALRasterBand *poOverview = (GDALRasterBand *)pahOverviews[iOverview];
+        GDALRasterBand *poOverview = static_cast<GDALRasterBand *>(
+            pahOverviews[iOverview]);
         double  dfOverviewMean, dfOverviewStdDev;
 
         const CPLErr eErr =
