@@ -1340,6 +1340,12 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
 
   if( (p= strstr(GetGCCache_GCIO(hGXT),kMetadataVERSION_GCIO))!=NULL )
   {
+    if( GetMetaVersion_GCIO(Meta) )
+    {
+        DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
+        return NULL;
+    }
+
     /* //$VERSION char* */
     p+= strlen(kMetadataVERSION_GCIO);
     while( isspace((unsigned char)*p) ) p++;
@@ -1434,6 +1440,13 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
   {
     int v, z;
     GCSysCoord* syscoord;
+
+    if( GetMetaSysCoord_GCIO(Meta) )
+    {
+        DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
+        return NULL;
+    }
+
     /* //$SYSCOORD {Type: int} [ ; { TimeZone: TimeZoneValue } ] */
     v= -1;
     z= -1;

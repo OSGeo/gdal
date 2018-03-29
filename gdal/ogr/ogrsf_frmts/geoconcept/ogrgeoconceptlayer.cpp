@@ -452,6 +452,8 @@ OGRErr OGRGeoconceptLayer::GetExtent( OGREnvelope* psExtent,
                                       CPL_UNUSED int bForce )
 {
     GCExtent* theExtent = GetSubTypeExtent_GCIO( _gcFeature );
+    if( !theExtent )
+        return OGRERR_FAILURE;
     psExtent->MinX= GetExtentULAbscissa_GCIO(theExtent);
     psExtent->MinY= GetExtentLROrdinate_GCIO(theExtent);
     psExtent->MaxX= GetExtentLRAbscissa_GCIO(theExtent);
