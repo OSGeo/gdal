@@ -5244,13 +5244,14 @@ bool VSIS3WriteHandle::UploadPart()
     }
     else
     {
-        const char* pszEtag = strstr(sWriteFuncHeaderData.pBuffer, "ETag: ");
-        if( pszEtag != nullptr )
+        CPLString osHeader(sWriteFuncHeaderData.pBuffer);
+        size_t nPos = osHeader.ifind("ETag: ");
+        if( nPos != std::string::npos )
         {
-            CPLString osEtag = pszEtag + strlen("ETag: ");
-            const size_t nPos = osEtag.find("\r");
-            if( nPos != std::string::npos )
-                osEtag.resize(nPos);
+            CPLString osEtag(osHeader.substr(nPos + strlen("ETag: ")));
+            const size_t nPosEOL = osEtag.find("\r");
+            if( nPosEOL != std::string::npos )
+                osEtag.resize(nPosEOL);
             CPLDebug(m_poFS->GetDebugKey(), "Etag for part %d is %s",
                      m_nPartNumber, osEtag.c_str());
             m_aosEtags.push_back(osEtag);
