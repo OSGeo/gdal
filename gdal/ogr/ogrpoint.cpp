@@ -721,13 +721,7 @@ OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
-    OGRPoint *poOPoint = dynamic_cast<OGRPoint *>(poOther);
-    if( poOPoint == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRPoint.");
-        return FALSE;
-    }
+    const auto poOPoint = poOther->toPoint();
     if( flags != poOPoint->flags )
         return FALSE;
 
@@ -778,14 +772,7 @@ OGRBoolean OGRPoint::Within( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
     {
-        const OGRCurvePolygon *poCurve =
-            dynamic_cast<const OGRCurvePolygon *>(poOtherGeom);
-        if( poCurve == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
-            return FALSE;
-        }
+        const auto poCurve = poOtherGeom->toCurvePolygon();
         return poCurve->Contains(this);
     }
 
@@ -802,14 +789,7 @@ OGRBoolean OGRPoint::Intersects( const OGRGeometry *poOtherGeom ) const
     if( !IsEmpty() && poOtherGeom != nullptr &&
         wkbFlatten(poOtherGeom->getGeometryType()) == wkbCurvePolygon )
     {
-        const OGRCurvePolygon *poCurve =
-            dynamic_cast<const OGRCurvePolygon *>(poOtherGeom);
-        if( poCurve == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
-            return FALSE;
-        }
+        const auto poCurve = poOtherGeom->toCurvePolygon();
         return poCurve->Intersects(this);
     }
 

@@ -140,6 +140,7 @@ namespace tut
         testSpatialReferenceLeakOnCopy<OGRPoint>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRLineString>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRLinearRing>(poSRS);
+        testSpatialReferenceLeakOnCopy<OGRCircularString>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRCompoundCurve>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRCurvePolygon>(poSRS);
         testSpatialReferenceLeakOnCopy<OGRPolygon>(poSRS);
@@ -776,6 +777,45 @@ namespace tut
         ensure_equals(pabyBuffer - abyBuffer, 8);
         pabyBufferRO = abyBuffer;
         ensure_equals(ReadFloat64(&pabyBufferRO, abyBuffer + 8), 1.25);
+    }
+
+    // Test OGRGeometry::toXXXXX()
+    template<>
+    template<>
+    void object::test<11>()
+    {
+        #define CONCAT(X,Y) X##Y
+        #define TEST_OGRGEOMETRY_TO(X) { \
+            CONCAT(OGR,X) o; \
+            OGRGeometry* poGeom = &o; \
+            ensure_equals( poGeom->CONCAT(to,X)(), &o ); }
+
+        TEST_OGRGEOMETRY_TO(Point);
+        TEST_OGRGEOMETRY_TO(LineString);
+        TEST_OGRGEOMETRY_TO(LinearRing);
+        TEST_OGRGEOMETRY_TO(CircularString);
+        TEST_OGRGEOMETRY_TO(CompoundCurve);
+        TEST_OGRGEOMETRY_TO(CurvePolygon);
+        TEST_OGRGEOMETRY_TO(Polygon);
+        TEST_OGRGEOMETRY_TO(GeometryCollection);
+        TEST_OGRGEOMETRY_TO(MultiSurface);
+        TEST_OGRGEOMETRY_TO(MultiPolygon);
+        TEST_OGRGEOMETRY_TO(MultiPoint);
+        TEST_OGRGEOMETRY_TO(MultiCurve);
+        TEST_OGRGEOMETRY_TO(MultiLineString);
+        TEST_OGRGEOMETRY_TO(Triangle);
+        TEST_OGRGEOMETRY_TO(PolyhedralSurface);
+        TEST_OGRGEOMETRY_TO(TriangulatedSurface);
+        {
+            OGRLineString o;
+            OGRGeometry* poGeom = &o;
+            ensure_equals( poGeom->toCurve(), &o );
+        }
+        {
+            OGRPolygon o;
+            OGRGeometry* poGeom = &o;
+            ensure_equals( poGeom->toSurface(), &o );
+        }
     }
 
 } // namespace tut

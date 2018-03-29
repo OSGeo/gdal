@@ -173,17 +173,9 @@ OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
 
 OGRMultiSurface* OGRMultiPolygon::CastToMultiSurface( OGRMultiPolygon* poMP )
 {
-    OGRGeometryCollection *poGC =
-        TransferMembersAndDestroy(poMP, new OGRMultiSurface());
-
-    OGRMultiSurface* poMultiSurface = dynamic_cast<OGRMultiSurface *>(poGC);
-    if( poMultiSurface == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRMultiSurface.");
-    }
-
-    return poMultiSurface;
+    OGRMultiSurface* poMS = new OGRMultiSurface();
+    TransferMembersAndDestroy(poMP, poMS);
+    return poMS;
 }
 
 

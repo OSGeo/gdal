@@ -835,8 +835,7 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
 
 OGRLineString* OGRCompoundCurve::CasterToLineString( OGRCurve* poCurve )
 {
-    OGRCompoundCurve* poCC = dynamic_cast<OGRCompoundCurve*>(poCurve);
-    CPLAssert(poCC);
+    OGRCompoundCurve* poCC = poCurve->toCompoundCurve();
     return OGRCompoundCurve::CastToLineString(poCC);
 }
 
@@ -850,8 +849,7 @@ OGRCurveCasterToLineString OGRCompoundCurve::GetCasterToLineString() const {
 
 OGRLinearRing* OGRCompoundCurve::CasterToLinearRing( OGRCurve* poCurve )
 {
-    OGRCompoundCurve* poCC = dynamic_cast<OGRCompoundCurve*>(poCurve);
-    CPLAssert(poCC);
+    OGRCompoundCurve* poCC = poCurve->toCompoundCurve();
     return OGRCompoundCurve::CastToLinearRing(poCC);
 }
 

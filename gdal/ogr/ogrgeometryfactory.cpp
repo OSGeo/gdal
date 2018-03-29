@@ -650,13 +650,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 
     if( eGeomType == wkbCurvePolygon )
     {
-        OGRCurvePolygon *poCurve = dynamic_cast<OGRCurvePolygon *>(poGeom);
-        if( poCurve == nullptr )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
-            return nullptr;
-        }
+        OGRCurvePolygon *poCurve = poGeom->toCurvePolygon();
 
         if( !poGeom->hasCurveGeometry(TRUE) )
             return OGRSurface::CastToPolygon(poCurve);
@@ -672,35 +666,37 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
         return OGRSurface::CastToPolygon((OGRSurface*)poGeom);
     }
 
-    if( OGR_GT_IsCurve(eGeomType) &&
-        ((OGRCurve*)poGeom)->getNumPoints() >= 3 &&
-        ((OGRCurve*)poGeom)->get_IsClosed() )
+    if( OGR_GT_IsCurve(eGeomType) )
     {
-        OGRPolygon *poPolygon = new OGRPolygon();
-        poPolygon->assignSpatialReference(poGeom->getSpatialReference());
+        OGRCurve* poCurve = poGeom->toCurve();
+        if( poCurve->getNumPoints() >= 3 &&
+            poCurve->get_IsClosed() )
+        {
+            OGRPolygon *poPolygon = new OGRPolygon();
+            poPolygon->assignSpatialReference(poGeom->getSpatialReference());
 
-        if( !poGeom->hasCurveGeometry(TRUE) )
-        {
-            poPolygon->addRingDirectly(
-                OGRCurve::CastToLinearRing((OGRCurve*)poGeom) );
+            if( !poGeom->hasCurveGeometry(TRUE) )
+            {
+                poPolygon->addRingDirectly(
+                    OGRCurve::CastToLinearRing(poCurve ));
+            }
+            else
+            {
+                OGRLineString* poLS = poCurve->CurveToLine();
+                poPolygon->addRingDirectly( OGRCurve::CastToLinearRing(poLS) );
+                delete poGeom;
+            }
+            return poPolygon;
         }
-        else
-        {
-            OGRLineString* poLS = ((OGRCurve*)poGeom)->CurveToLine();
-            poPolygon->addRingDirectly( OGRCurve::CastToLinearRing(poLS) );
-            delete poGeom;
-        }
-        return poPolygon;
     }
 
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
-        OGRPolyhedralSurface* poPS = reinterpret_cast<OGRPolyhedralSurface*>(
-                                                                       poGeom);
+        OGRPolyhedralSurface* poPS = poGeom->toPolyhedralSurface();
         if( poPS->getNumGeometries() == 1 )
         {
             poGeom = OGRSurface::CastToPolygon(
-              reinterpret_cast<OGRSurface*>(poPS->getGeometryRef(0)->clone()));
+              poPS->getGeometryRef(0)->clone()->toSurface());
             delete poPS;
             return poGeom;
         }
@@ -713,11 +709,11 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
 
     // Build an aggregated polygon from all the polygon rings in the container.
     OGRPolygon *poPolygon = new OGRPolygon();
-    OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+    OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
     if( poGeom->hasCurveGeometry() )
     {
         OGRGeometryCollection *poNewGC =
-            (OGRGeometryCollection *) poGC->getLinearGeometry();
+            poGC->getLinearGeometry()->toGeometryCollection();
         delete poGC;
         poGeom = poNewGC;
         poGC = poNewGC;
@@ -731,7 +727,7 @@ OGRGeometry *OGRGeometryFactory::forceToPolygon( OGRGeometry *poGeom )
             != wkbPolygon )
             continue;
 
-        OGRPolygon *poOldPoly = (OGRPolygon *) poGC->getGeometryRef(iGeom);
+        OGRPolygon *poOldPoly = poGC->getGeometryRef(iGeom)->toPolygon();
 
         if( poOldPoly->getExteriorRing() == nullptr )
             continue;
@@ -805,10 +801,13 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 /*      If this is already a MultiSurface with compatible content,      */
 /*      just cast                                                       */
 /* -------------------------------------------------------------------- */
-    if( eGeomType == wkbMultiSurface &&
-        !((OGRMultiSurface*)poGeom)->hasCurveGeometry(TRUE) )
+    if( eGeomType == wkbMultiSurface )
     {
-        return OGRMultiSurface::CastToMultiPolygon((OGRMultiSurface*)poGeom);
+        OGRMultiSurface* poMS = poGeom->toMultiSurface();
+        if( !poMS->hasCurveGeometry(TRUE) )
+        {
+            return OGRMultiSurface::CastToMultiPolygon(poMS);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -819,11 +818,11 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
         eGeomType == wkbMultiSurface )
     {
         bool bAllPoly = true;
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
         if( poGeom->hasCurveGeometry() )
         {
             OGRGeometryCollection *poNewGC =
-                (OGRGeometryCollection *) poGC->getLinearGeometry();
+                poGC->getLinearGeometry()->toGeometryCollection();
             delete poGC;
             poGeom = poNewGC;
             poGC = poNewGC;
@@ -860,8 +859,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
             else
             {
                 poSubGeom = forceToMultiPolygon( poSubGeom );
-                OGRMultiPolygon* poSubMP = dynamic_cast<OGRMultiPolygon*>(
-                                                                    poSubGeom);
+                OGRMultiPolygon* poSubMP = poSubGeom->toMultiPolygon();
                 while( poSubMP != nullptr && poSubMP->getNumGeometries() > 0 )
                 {
                     poMP->addGeometryDirectly( poSubMP->getGeometryRef(0) );
@@ -878,7 +876,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 
     if( eGeomType == wkbCurvePolygon )
     {
-        OGRPolygon* poPoly = ((OGRCurvePolygon*)poGeom)->CurvePolyToPoly();
+        OGRPolygon* poPoly = poGeom->toCurvePolygon()->CurvePolyToPoly();
         OGRMultiPolygon *poMP = new OGRMultiPolygon();
         poMP->assignSpatialReference(poGeom->getSpatialReference());
         poMP->addGeometryDirectly( poPoly );
@@ -892,7 +890,8 @@ OGRGeometry *OGRGeometryFactory::forceToMultiPolygon( OGRGeometry *poGeom )
 /* -------------------------------------------------------------------- */
     if( OGR_GT_IsSubClassOf(eGeomType, wkbPolyhedralSurface) )
     {
-        return OGRPolyhedralSurface::CastToMultiPolygon((OGRPolyhedralSurface*)poGeom);
+        return OGRPolyhedralSurface::CastToMultiPolygon(
+                                            poGeom->toPolyhedralSurface());
     }
 
     if( eGeomType == wkbTriangle )
@@ -1500,7 +1499,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
     {
         asPolyEx[i].nInitialIndex = i;
         asPolyEx[i].poGeometry = papoPolygons[i];
-        asPolyEx[i].poPolygon = dynamic_cast<OGRCurvePolygon*>(papoPolygons[i]);
+        asPolyEx[i].poPolygon = papoPolygons[i]->toCurvePolygon();
         papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
 
         OGRwkbGeometryType eType =
@@ -1521,8 +1520,8 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
             if( eType == wkbPolygon )
             {
                 asPolyEx[i].bIsCW =
-                    CPL_TO_BOOL(reinterpret_cast<OGRLinearRing*>(
-                        asPolyEx[i].poExteriorRing)->isClockwise());
+                    CPL_TO_BOOL(asPolyEx[i].poExteriorRing->
+                                        toLinearRing()->isClockwise());
                 asPolyEx[i].bIsPolygon = true;
             }
             else
@@ -1761,17 +1760,15 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     }
                     else if( asPolyEx[i].bIsPolygon &&
                              asPolyEx[j].bIsPolygon &&
-                             reinterpret_cast<OGRLinearRing*>(
-                                 asPolyEx[j].poExteriorRing)->
+                             asPolyEx[j].poExteriorRing->toLinearRing()->
                                      isPointOnRingBoundary(
                                          &asPolyEx[i].poAPoint, FALSE) )
                     {
                         OGRLinearRing* poLR_i =
-                            reinterpret_cast<OGRLinearRing*>(
-                                asPolyEx[i].poExteriorRing);
+                            asPolyEx[i].poExteriorRing->toLinearRing();
                         OGRLinearRing* poLR_j =
-                            reinterpret_cast<OGRLinearRing*>(
-                                asPolyEx[j].poExteriorRing);
+                            asPolyEx[j].poExteriorRing->toLinearRing();
+
                         // If the point of i is on the boundary of j, we will
                         // iterate over the other points of i.
                         const int nPoints = poLR_i->getNumPoints();
@@ -1840,8 +1837,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
                     // ring.
                     else if( asPolyEx[i].bIsPolygon &&
                              asPolyEx[j].bIsPolygon &&
-                             reinterpret_cast<OGRLinearRing*>(
-                                 asPolyEx[j].poExteriorRing)->
+                             asPolyEx[j].poExteriorRing->toLinearRing()->
                                      isPointInRing(&asPolyEx[i].poAPoint,
                                                    FALSE) )
                     {
@@ -2928,7 +2924,7 @@ static void RemovePoint(OGRGeometry* poGeom, OGRPoint* poPoint)
     {
         case wkbLineString:
         {
-            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            OGRLineString* poLS = poGeom->toLineString();
             const bool bIs3D = ( poLS->getCoordinateDimension() == 3 );
             int j = 0;
             for( int i = 0; i < poLS->getNumPoints(); i++ )
@@ -2957,7 +2953,7 @@ static void RemovePoint(OGRGeometry* poGeom, OGRPoint* poPoint)
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            OGRPolygon* poPoly = poGeom->toPolygon();
             if( poPoly->getExteriorRing() != nullptr )
             {
                 RemovePoint(poPoly->getExteriorRing(), poPoint);
@@ -2973,8 +2969,7 @@ static void RemovePoint(OGRGeometry* poGeom, OGRPoint* poPoint)
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGC =
-                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
             for( int i=0; i<poGC->getNumGeometries(); ++i )
             {
                 RemovePoint(poGC->getGeometryRef(i), poPoint);
@@ -3013,7 +3008,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
         {
             if( !bIsRing )
                 return;
-            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            OGRLineString* poLS = poGeom->toLineString();
             const int nNumPoints = poLS->getNumPoints();
             if( nNumPoints >= 4 )
             {
@@ -3082,7 +3077,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            OGRPolygon* poPoly = poGeom->toPolygon();
             if( poPoly->getExteriorRing() != nullptr )
             {
                 AlterPole(poPoly->getExteriorRing(), poPole, true);
@@ -3098,8 +3093,7 @@ static void AlterPole(OGRGeometry* poGeom, OGRPoint* poPole,
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGC =
-                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
             for( int i=0; i<poGC->getNumGeometries(); ++i )
             {
                 AlterPole(poGC->getGeometryRef(i), poPole);
@@ -3325,7 +3319,7 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
     {
         case wkbLineString:
         {
-            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            OGRLineString* poLS = poGeom->toLineString();
             const int nNumPoints = poLS->getNumPoints();
             for( int i = 0; i < nNumPoints-1; i++ )
             {
@@ -3394,7 +3388,7 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            OGRPolygon* poPoly = poGeom->toPolygon();
             if( poPoly->getExteriorRing() != nullptr )
             {
                 CollectPointsOnAntimeridian(poPoly->getExteriorRing(),
@@ -3412,8 +3406,7 @@ static void CollectPointsOnAntimeridian(OGRGeometry* poGeom,
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGC =
-                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
             for( int i=0; i<poGC->getNumGeometries(); ++i )
             {
                 CollectPointsOnAntimeridian(poGC->getGeometryRef(i),
@@ -3582,7 +3575,7 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
     {
         case wkbLineString:
         {
-            OGRLineString* poLS = reinterpret_cast<OGRLineString*>(poGeom);
+            OGRLineString* poLS = poGeom->toLineString();
             const double EPS = 1e-8;
             for( int i = 0; i < poLS->getNumPoints(); i++ )
             {
@@ -3615,7 +3608,7 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+            OGRPolygon* poPoly = poGeom->toPolygon();
             if( poPoly->getExteriorRing() != nullptr )
             {
                 SnapCoordsCloseToLatLongBounds(poPoly->getExteriorRing());
@@ -3631,8 +3624,7 @@ static void SnapCoordsCloseToLatLongBounds(OGRGeometry* poGeom)
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGC =
-                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+            OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
             for( int i=0; i<poGC->getNumGeometries(); ++i )
             {
                 SnapCoordsCloseToLatLongBounds(poGC->getGeometryRef(i));
@@ -3720,7 +3712,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
             wkbFlatten(poDstGeom->getGeometryType());
         if( eType == wkbPoint )
         {
-            OGRPoint* poDstPoint = reinterpret_cast<OGRPoint*>(poDstGeom);
+            OGRPoint* poDstPoint = poDstGeom->toPoint();
             if( poDstPoint->getX() > 180 )
             {
                 poDstPoint->setX(fmod(poDstPoint->getX() + 180, 360) - 180);
@@ -3749,8 +3741,7 @@ OGRGeometry* OGRGeometryFactory::transformWithOptions(
                     eNewType = wkbGeometryCollection;
 
                 OGRGeometry* poMultiGeom = createGeometry(eNewType);
-                OGRGeometryCollection* poMulti =
-                    reinterpret_cast<OGRGeometryCollection*>(poMultiGeom);
+                OGRGeometryCollection* poMulti = poMultiGeom->toGeometryCollection();
 
                 double dfDateLineOffset =
                     CPLAtofM(CSLFetchNameValueDef(papszOptions,
@@ -4202,10 +4193,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) &&
         eTargetType == wkbGeometryCollection )
     {
-        OGRGeometryCollection* poGC =
-                        dynamic_cast<OGRGeometryCollection*>(poGeom);
-        if( poGC == nullptr )
-            return poGeom;
+        OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
         return OGRGeometryCollection::CastToGeometryCollection(poGC);
     }
 
@@ -4225,7 +4213,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     }
     else if( eType == wkbMultiPolygon && eTargetType == wkbPolyhedralSurface )
     {
-        OGRMultiPolygon* poMP = reinterpret_cast<OGRMultiPolygon*>(poGeom);
+        OGRMultiPolygon* poMP = poGeom->toMultiPolygon();
         OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
         for( int i = 0; i < poMP->getNumGeometries(); ++i )
         {
@@ -4237,7 +4225,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbTIN && eTargetType == wkbPolyhedralSurface )
     {
         poGeom = OGRTriangulatedSurface::CastToPolyhedralSurface(
-                    (OGRTriangulatedSurface*)poGeom);
+                    poGeom->toTriangulatedSurface());
     }
     else if( eType == wkbCurvePolygon && eTargetType == wkbPolyhedralSurface )
     {
@@ -4259,7 +4247,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     }
     else if( eType == wkbPolygon && eTargetType == wkbTIN )
     {
-        OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+        OGRPolygon* poPoly = poGeom->toPolygon();
         OGRLinearRing* poLR = poPoly->getExteriorRing();
         if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                 poPoly->getNumInteriorRings() == 0) )
@@ -4276,11 +4264,10 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     }
     else if( eType == wkbMultiPolygon && eTargetType == wkbTIN )
     {
-        OGRMultiPolygon* poMP = reinterpret_cast<OGRMultiPolygon*>(poGeom);
+        OGRMultiPolygon* poMP = poGeom->toMultiPolygon();
         for( int i = 0; i < poMP->getNumGeometries(); ++i )
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
-                                                    poMP->getGeometryRef(i) );
+            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
             OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
@@ -4292,8 +4279,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
         for( int i = 0; i < poMP->getNumGeometries(); ++i )
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
-                                                    poMP->getGeometryRef(i) );
+            OGRPolygon* poPoly = poMP->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }
@@ -4302,11 +4288,10 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     }
     else if( eType == wkbPolyhedralSurface && eTargetType == wkbTIN )
     {
-        OGRPolyhedralSurface* poPS = reinterpret_cast<OGRPolyhedralSurface*>(poGeom);
+        OGRPolyhedralSurface* poPS = poGeom->toPolyhedralSurface();
         for( int i = 0; i < poPS->getNumGeometries(); ++i )
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
-                                                    poPS->getGeometryRef(i) );
+            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
             OGRLinearRing* poLR = poPoly->getExteriorRing();
             if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                   poPoly->getNumInteriorRings() == 0) )
@@ -4318,8 +4303,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         poTS->assignSpatialReference( poGeom->getSpatialReference() );
         for( int i = 0; i < poPS->getNumGeometries(); ++i )
         {
-            OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(
-                                                    poPS->getGeometryRef(i) );
+            OGRPolygon* poPoly = poPS->getGeometryRef(i)->toPolygon();
             OGRErr eErr = OGRERR_NONE;
             poTS->addGeometryDirectly( new OGRTriangle(*poPoly, eErr) );
         }
@@ -4329,7 +4313,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
 
     else if( eType == wkbPolygon && eTargetType == wkbTriangle )
     {
-        OGRPolygon* poPoly = reinterpret_cast<OGRPolygon*>(poGeom);
+        OGRPolygon* poPoly = poGeom->toPolygon();
         OGRLinearRing* poLR = poPoly->getExteriorRing();
         if( !(poLR != nullptr && poLR->getNumPoints() == 4 &&
                 poPoly->getNumInteriorRings() == 0) )
@@ -4371,19 +4355,19 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
         }
         poRet->assignSpatialReference(poGeom->getSpatialReference());
         if( eType == wkbLineString )
-            poGeom = OGRCurve::CastToLineString( (OGRCurve*)poGeom );
-        ((OGRGeometryCollection*)poRet)->addGeometryDirectly(poGeom);
+            poGeom = OGRCurve::CastToLineString( poGeom->toCurve() );
+        poRet->toGeometryCollection()->addGeometryDirectly(poGeom);
         return poRet;
     }
 
     const bool bIsCurve = CPL_TO_BOOL(OGR_GT_IsCurve(eType));
     if( bIsCurve && eTargetType == wkbCompoundCurve )
     {
-        return OGRCurve::CastToCompoundCurve((OGRCurve*)poGeom);
+        return OGRCurve::CastToCompoundCurve(poGeom->toCurve());
     }
     else if( bIsCurve && eTargetType == wkbCurvePolygon )
     {
-        OGRCurve* poCurve = (OGRCurve*)poGeom;
+        OGRCurve* poCurve = poGeom->toCurve();
         if( poCurve->getNumPoints() >= 3 && poCurve->get_IsClosed() )
         {
             OGRCurvePolygon* poCP = new OGRCurvePolygon();
@@ -4420,7 +4404,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( eType == wkbTriangle && eTargetType == wkbCurvePolygon )
     {
         return OGRSurface::CastToCurvePolygon(
-            reinterpret_cast<OGRSurface*>(OGRTriangle::CastToPolygon(poGeom)) );
+            OGRTriangle::CastToPolygon(poGeom)->toSurface() );
     }
     else if( eType == wkbPolygon && eTargetType == wkbCurvePolygon )
     {
@@ -4429,7 +4413,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     else if( OGR_GT_IsSubClassOf(eType, wkbCurvePolygon) &&
              eTargetType == wkbCompoundCurve )
     {
-        OGRCurvePolygon* poPoly = (OGRCurvePolygon*)poGeom;
+        OGRCurvePolygon* poPoly = poGeom->toCurvePolygon();
         if( poPoly->getNumInteriorRings() == 0 )
         {
             OGRCurve* poRet = poPoly->stealExteriorRingCurve();
@@ -4441,16 +4425,16 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
     }
     else if( eType == wkbMultiPolygon && eTargetType == wkbMultiSurface )
     {
-        return OGRMultiPolygon::CastToMultiSurface((OGRMultiPolygon*)poGeom);
+        return OGRMultiPolygon::CastToMultiSurface(poGeom->toMultiPolygon());
     }
     else if( eType == wkbMultiLineString && eTargetType == wkbMultiCurve )
     {
         return
-            OGRMultiLineString::CastToMultiCurve((OGRMultiLineString*)poGeom);
+            OGRMultiLineString::CastToMultiCurve(poGeom->toMultiLineString());
     }
     else if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) )
     {
-        OGRGeometryCollection* poGC = (OGRGeometryCollection*)poGeom;
+        OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
         if( poGC->getNumGeometries() == 1 )
         {
             OGRGeometry* poSubGeom = poGC->getGeometryRef(0);
@@ -4472,7 +4456,7 @@ OGRGeometry * OGRGeometryFactory::forceTo( OGRGeometry* poGeom,
              (OGR_GT_IsSubClassOf(eTargetType, wkbMultiSurface) ||
               OGR_GT_IsSubClassOf(eTargetType, wkbMultiCurve)) )
     {
-        OGRCurvePolygon* poCP = (OGRCurvePolygon*)poGeom;
+        OGRCurvePolygon* poCP = poGeom->toCurvePolygon();
         if( poCP->getNumInteriorRings() == 0 )
         {
             OGRCurve* poRing = poCP->getExteriorRingCurve();

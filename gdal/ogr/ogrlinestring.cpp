@@ -140,10 +140,8 @@ void OGRSimpleCurve::flattenTo2D()
 OGRGeometry *OGRSimpleCurve::clone() const
 
 {
-    OGRSimpleCurve *poCurve = dynamic_cast<OGRSimpleCurve *>(
-            OGRGeometryFactory::createGeometry(getGeometryType()));
-    if( poCurve == nullptr )
-        return nullptr;
+    OGRSimpleCurve *poCurve =
+        OGRGeometryFactory::createGeometry(getGeometryType())->toSimpleCurve();
 
     poCurve->assignSpatialReference( getSpatialReference() );
     poCurve->setPoints( nPointCount, paoPoints, padfZ, padfM );
@@ -2744,14 +2742,7 @@ OGRLineString* OGRLineString::CurveToLine(
     CPL_UNUSED double /* dfMaxAngleStepSizeDegrees */,
     CPL_UNUSED const char* const* /* papszOptions */ ) const
 {
-    // Downcast.
-    OGRLineString * poLineString = dynamic_cast<OGRLineString *>(clone());
-    if( poLineString == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRLineString.");
-    }
-    return poLineString;
+    return clone()->toLineString();
 }
 
 /************************************************************************/
@@ -2849,15 +2840,9 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
         delete poLS;
         return nullptr;
     }
-    // Downcast.
-    OGRLinearRing * poRing = dynamic_cast<OGRLinearRing *>(
-        TransferMembersAndDestroy(poLS, new OGRLinearRing()));
-    if( poRing == nullptr )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRLinearRing.");
-    }
-    return poRing;
+    OGRLinearRing* poLR = new OGRLinearRing();
+    TransferMembersAndDestroy(poLS, poLR);
+    return poLR;
 }
 
 //! @cond Doxygen_Suppress
@@ -2868,9 +2853,7 @@ OGRLinearRing* OGRLineString::CastToLinearRing( OGRLineString* poLS )
 
 static OGRLineString* CasterToLineString(OGRCurve* poCurve)
 {
-    OGRLineString* poLS = dynamic_cast<OGRLineString*>(poCurve);
-    CPLAssert(poLS);
-    return poLS;
+    return poCurve->toLineString();
 }
 
 OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const
@@ -2884,9 +2867,7 @@ OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const
 
 OGRLinearRing* OGRLineString::CasterToLinearRing(OGRCurve* poCurve)
 {
-    OGRLineString* poLS = dynamic_cast<OGRLineString*>(poCurve);
-    CPLAssert(poLS);
-    return OGRLineString::CastToLinearRing(poLS);
+    return OGRLineString::CastToLinearRing(poCurve->toLineString());
 }
 
 OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const

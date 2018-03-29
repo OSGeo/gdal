@@ -297,6 +297,8 @@ CPL_C_END
 //! @cond Doxygen_Suppress
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
 class CPL_DLL CPLLocaleC
 {
 public:
@@ -329,6 +331,7 @@ public:
 private:
     CPLThreadLocaleCPrivate* m_private;
 };
+}
 
 #endif /* def __cplusplus */
 //! @endcond
@@ -342,6 +345,8 @@ private:
 //! @cond Doxygen_Suppress
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
 class CPL_DLL CPLConfigOptionSetter
 {
 public:
@@ -358,9 +363,34 @@ private:
     char *m_pszOldValue;
     bool m_bRestoreOldValue;
 };
+}
 
 #endif /* def __cplusplus */
 //! @endcond
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+namespace cpl
+{
+    /** Use cpl::down_cast<Derived*>(pointer_to_base) as equivalent of
+     * static_cast<Derived*>(pointer_to_base) with safe checking in debug
+     * mode.
+     * 
+     * Only works if no virtual inheritance is involved.
+     * 
+     * @param f pointer to a base class
+     * @return pointer to a derived class
+     */
+    template<typename To, typename From> inline To down_cast(From* f)
+    {
+        CPLAssert(f == nullptr || dynamic_cast<To>(f) != nullptr);
+        return static_cast<To>(f);
+    }
+}
+}
+
+#endif /* def __cplusplus */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */

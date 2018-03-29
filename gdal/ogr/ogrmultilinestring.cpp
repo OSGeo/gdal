@@ -167,14 +167,7 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(
 
 OGRMultiCurve* OGRMultiLineString::CastToMultiCurve( OGRMultiLineString* poMLS )
 {
-    OGRMultiCurve *poMultiCurve = dynamic_cast<OGRMultiCurve *>(
-        TransferMembersAndDestroy(poMLS, new OGRMultiCurve()) );
-    if( poMultiCurve == nullptr )
-    {
-        CPLError( CE_Fatal, CPLE_AppDefined,
-                  "OGRMultiCurve dynamic_cast failed." );
-        return nullptr;
-    }
-
-    return poMultiCurve;
+    OGRMultiCurve* poMLC = new OGRMultiCurve();
+    TransferMembersAndDestroy(poMLS, poMLC);
+    return poMLC;
 }

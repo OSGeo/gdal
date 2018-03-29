@@ -37,6 +37,7 @@
 #include <cstring>
 #include <algorithm>
 #include <limits>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -394,7 +395,8 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 /*                         SHPWriteOGRObject()                          */
 /************************************************************************/
 static
-OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
+OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
+                          const OGRGeometry *poGeom,
                           bool bRewind, OGRwkbGeometryType eLayerGeomType )
 
 {
@@ -432,14 +434,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>( poGeom );
-        if( poPoint == nullptr )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected a point." );
-            return OGRERR_FAILURE;
-        }
-
+        const OGRPoint *poPoint = poGeom->toPoint();
         const double dfX = poPoint->getX();
         const double dfY = poPoint->getY();
         const double dfZ = poPoint->getZ();
@@ -499,20 +494,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         int iDstPoints = 0;
         for( int iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
         {
-            OGRPoint *poPoint =
-                dynamic_cast<OGRPoint *>(poMP->getGeometryRef(iPoint));
-            if( poPoint == nullptr )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "dynamic_cast failed.  "
-                          "Expected point within multi-point." );
-                CPLFree( padfX );
-                CPLFree( padfY );
-                CPLFree( padfZ );
-                CPLFree( padfM );
-                return OGRERR_FAILURE;
-            }
-
+            const OGRPoint *poPoint = poMP->getGeometryRef(iPoint)->toPoint();
             // Ignore POINT EMPTY.
             if( !poPoint->IsEmpty() )
             {
@@ -560,14 +542,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
               || hSHP->nShapeType == SHPT_ARCZ)
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        OGRLineString *poArc = dynamic_cast<OGRLineString *>(poGeom);
-        if( poArc == nullptr )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "dynamic_cast failed.  Expected line string for arc." );
-            return OGRERR_FAILURE;
-        }
-
+        const OGRLineString *poArc = poGeom->toLineString();
         double *padfX = static_cast<double *>(
             CPLMalloc(sizeof(double) * poArc->getNumPoints()));
         double *padfY = static_cast<double *>(
@@ -629,15 +604,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
-        OGRMultiLineString *poML =
-            dynamic_cast<OGRMultiLineString *>(poForcedGeom);
-        if( poML == nullptr )
-        {
-            delete poForcedGeom;
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "dynamic_cast failed.  Expected multi-line string." );
-            return OGRERR_FAILURE;
-        }
+        const OGRMultiLineString *poML = poForcedGeom->toMultiLineString();
 
         int *panRingStart = static_cast<int *>(
             CPLMalloc(sizeof(int) * poML->getNumGeometries()) );
@@ -654,14 +621,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
         for( int iGeom = 0; iGeom < poML->getNumGeometries(); iGeom++ )
         {
-            OGRLineString *poArc = dynamic_cast<OGRLineString *>(
-                poML->getGeometryRef(iGeom));
-            if( poArc == nullptr )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "dynamic_cast failed. Expected line string for arc.");
-                continue;
-            }
+            const OGRLineString *poArc = poML->getGeometryRef(iGeom)->toLineString();
             const int nNewPoints = poArc->getNumPoints();
 
             // Ignore LINESTRING EMPTY.
@@ -729,14 +689,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
-        OGRLinearRing **papoRings = nullptr;
+        const OGRLinearRing **papoRings = nullptr;
         int nRings = 0;
         const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-        OGRGeometry* poGeomToDelete = nullptr;
+        std::unique_ptr<OGRGeometry> poGeomToDelete;
 
         if( eType == wkbPolygon || eType == wkbTriangle )
         {
-            OGRPolygon* poPoly = (OGRPolygon *) poGeom;
+            const OGRPolygon* poPoly = poGeom->toPolygon();
 
             if( poPoly->getExteriorRing() == nullptr ||
                 poPoly->getExteriorRing()->IsEmpty() )
@@ -747,8 +707,8 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             else
             {
                 const int nSrcRings = poPoly->getNumInteriorRings()+1;
-                papoRings = static_cast<OGRLinearRing **>(
-                    CPLMalloc(sizeof(void*)*nSrcRings));
+                papoRings = static_cast<const OGRLinearRing **>(
+                    CPLMalloc(sizeof(const OGRLinearRing *)*nSrcRings));
                 for( int iRing = 0; iRing < nSrcRings; iRing++ )
                 {
                     if( iRing == 0 )
@@ -772,25 +732,24 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                  eType == wkbPolyhedralSurface ||
                  eType == wkbTIN)
         {
-            OGRMultiPolygon *poMultiPolygon = nullptr;
-            OGRGeometryCollection *poGC;
+            const OGRGeometryCollection *poGC;
             // for PolyhedralSurface and TIN
             if (eType == wkbPolyhedralSurface || eType == wkbTIN)
             {
-                poGeomToDelete = OGRGeometryFactory::forceTo(poGeom->clone(),
+                poGeomToDelete = std::unique_ptr<OGRGeometry>(
+                    OGRGeometryFactory::forceTo(poGeom->clone(),
                                                              wkbMultiPolygon,
-                                                             nullptr);
-                poMultiPolygon = dynamic_cast<OGRMultiPolygon*>(poGeomToDelete);
-                poGC = poMultiPolygon;
+                                                             nullptr));
+                poGC = poGeomToDelete->toGeometryCollection();
             }
 
             else
-                poGC = (OGRGeometryCollection *) poGeom;
+                poGC = poGeom->toGeometryCollection();
 
             for( int iGeom=0; poGC != nullptr &&
                               iGeom < poGC->getNumGeometries(); iGeom++ )
             {
-                OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
+                const OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
 
                 if( wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon )
                 {
@@ -802,7 +761,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
-                OGRPolygon* poPoly =  (OGRPolygon *) poSubGeom;
+                const OGRPolygon* poPoly = poSubGeom->toPolygon();
 
                 // Ignore POLYGON EMPTY.
                 if( poPoly->getExteriorRing() == nullptr ||
@@ -815,9 +774,9 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                     continue;
                 }
 
-                papoRings = static_cast<OGRLinearRing **>(
+                papoRings = static_cast<const OGRLinearRing **>(
                     CPLRealloc(papoRings,
-                               sizeof(void*) *
+                               sizeof(const OGRLinearRing *) *
                                (nRings+poPoly->getNumInteriorRings() + 1)) );
                 for( int iRing = 0;
                      iRing < poPoly->getNumInteriorRings()+1;
@@ -863,8 +822,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 SHPWriteObject( hSHP, iShape, psShape );
             SHPDestroyObject( psShape );
 
-            delete poGeomToDelete;
-
             if( nReturnedShapeID == -1 )
                 return OGRERR_FAILURE;
 
@@ -896,7 +853,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         nVertex = 0;
         for( int iRing = 0; iRing < nRings; iRing++ )
         {
-            OGRLinearRing *poRing = papoRings[iRing];
+            const OGRLinearRing *poRing = papoRings[iRing];
             panRingStart[iRing] = nVertex;
 
             for( int iPoint = 0; iPoint < poRing->getNumPoints(); iPoint++ )
@@ -928,8 +885,6 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         CPLFree( padfY );
         CPLFree( padfZ );
         CPLFree( padfM );
-
-        delete poGeomToDelete;
 
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
