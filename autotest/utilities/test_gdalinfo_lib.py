@@ -159,6 +159,21 @@ def test_gdalinfo_lib_7():
         return 'fail'
 
     return 'success'
+
+###############################################################################
+
+def test_gdalinfo_lib_nodatavalues():
+
+    ds = gdal.Translate('', '../gcore/data/byte.tif', options = '-of VRT -b 1 -b 1 -b 1 -mo "NODATA_VALUES=0 1 2"')
+    ret = gdal.Info(ds)
+    if ret.find('PER_DATASET NODATA') < 0:
+        gdaltest.post_reason('wrong value for mask flags.')
+        print(ret)
+        return 'fail'
+
+    return 'success'
+
+
 gdaltest_list = [
     test_gdalinfo_lib_1,
     test_gdalinfo_lib_2,
@@ -166,7 +181,8 @@ gdaltest_list = [
     test_gdalinfo_lib_4,
     test_gdalinfo_lib_5,
     test_gdalinfo_lib_6,
-    test_gdalinfo_lib_7
+    test_gdalinfo_lib_7,
+    test_gdalinfo_lib_nodatavalues,
     ]
 
 if __name__ == '__main__':

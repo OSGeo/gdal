@@ -1120,7 +1120,8 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
         }
 
         const int nMaskFlags = GDALGetMaskFlags( hBand );
-        if( (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 )
+        if( (nMaskFlags & (GMF_NODATA|GMF_ALL_VALID)) == 0 ||
+             nMaskFlags == (GMF_NODATA | GMF_PER_DATASET) )
         {
             GDALRasterBandH hMaskBand = GDALGetMaskBand(hBand) ;
             json_object *poMask = nullptr;
@@ -1167,16 +1168,7 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
                     Concat(osStr, psOptions->bStdoutOutput, "NODATA " );
                 }
             }
-            if( nMaskFlags & GMF_ALL_VALID )
-            {
-                if(bJson)
-                {
-                    json_object *poFlag = json_object_new_string( "ALL_VALID" );
-                    json_object_array_add( poFlags, poFlag );
-                }
-                else
-                    Concat(osStr, psOptions->bStdoutOutput, "ALL_VALID " );
-            }
+
             if(bJson)
                 json_object_object_add( poMask, "flags", poFlags );
             else
