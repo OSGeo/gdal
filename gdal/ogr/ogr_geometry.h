@@ -235,8 +235,8 @@ class CPL_DLL OGRGeometry
 
     // SFCGAL interfacing methods.
 //! @cond Doxygen_Suppress
-    static sfcgal_geometry_t* OGRexportToSFCGAL( OGRGeometry *poGeom );
-    static OGRGeometry* SFCGALexportToOGR( sfcgal_geometry_t* _geometry );
+    static sfcgal_geometry_t* OGRexportToSFCGAL( const OGRGeometry *poGeom );
+    static OGRGeometry* SFCGALexportToOGR( const sfcgal_geometry_t* _geometry );
 //! @endcond
     virtual void closeRings();
 

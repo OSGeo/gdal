@@ -4432,6 +4432,27 @@ def ogr_geom_remove_geometry():
     return 'success'
 
 ###############################################################################
+
+def ogr_geom_sfcgal():
+
+    if not ogrtest.have_sfcgal():
+        return 'skip'
+
+    g1 = ogr.CreateGeometryFromWkt('TIN EMPTY')
+
+    g2_poly = ogr.CreateGeometryFromWkt('POLYGON((0 0,0 1,1 1,0 0))')
+    g2 = g2_poly.GetGeometryRef(0)
+    g1.Distance(g2)
+
+    g2 = ogr.CreateGeometryFromWkt('CIRCULARSTRING EMPTY')
+    g1.Distance(g2)
+
+    g2 = ogr.CreateGeometryFromWkt('CURVEPOLYGON EMPTY')
+    g1.Distance(g2)
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -4503,6 +4524,7 @@ gdaltest_list = [
     ogr_geom_assignspatialref,
     ogr_geom_swapxy,
     ogr_geom_remove_geometry,
+    ogr_geom_sfcgal,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]

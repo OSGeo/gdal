@@ -36,6 +36,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -81,6 +82,24 @@ static void OGRGEOSWarningHandler(const char *fmt, ...)
     va_end(args);
 }
 #endif
+
+/************************************************************************/
+/*                           ToPointer()                                */
+/************************************************************************/
+
+inline OGRGeometry* ToPointer(OGRGeometryH hGeom)
+{
+    return reinterpret_cast<OGRGeometry *>(hGeom);
+}
+
+/************************************************************************/
+/*                           ToHandle()                                 */
+/************************************************************************/
+
+inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
+{
+    return reinterpret_cast<OGRGeometryH>(poGeom);
+}
 
 /************************************************************************/
 /*                            OGRGeometry()                             */
@@ -390,7 +409,7 @@ void OGR_G_DumpReadable( OGRGeometryH hGeom, FILE *fp, const char *pszPrefix )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_DumpReadable" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->dumpReadable( fp, pszPrefix );
+    ToPointer(hGeom)->dumpReadable( fp, pszPrefix );
 }
 
 /************************************************************************/
@@ -464,7 +483,7 @@ void OGR_G_AssignSpatialReference( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_AssignSpatialReference" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->
+    ToPointer(hGeom)->
         assignSpatialReference(reinterpret_cast<OGRSpatialReference *>(hSRS));
 }
 
@@ -568,8 +587,8 @@ int OGR_G_Intersects( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_Intersects", FALSE );
     VALIDATE_POINTER1( hOtherGeom, "OGR_G_Intersects", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
-        Intersects( reinterpret_cast<OGRGeometry *>(hOtherGeom) );
+    return ToPointer(hGeom)->
+        Intersects( ToPointer(hOtherGeom) );
 }
 
 //! @cond Doxygen_Suppress
@@ -579,8 +598,8 @@ int OGR_G_Intersect( OGRGeometryH hGeom, OGRGeometryH hOtherGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_Intersect", FALSE );
     VALIDATE_POINTER1( hOtherGeom, "OGR_G_Intersect", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
-        Intersects( reinterpret_cast<OGRGeometry *>(hOtherGeom));
+    return ToPointer(hGeom)->
+        Intersects( ToPointer(hOtherGeom));
 }
 //! @endcond
 
@@ -676,7 +695,7 @@ OGRErr OGR_G_TransformTo( OGRGeometryH hGeom, OGRSpatialReferenceH hSRS )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_TransformTo", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         transformTo(reinterpret_cast<OGRSpatialReference *>(hSRS));
 }
 
@@ -736,7 +755,7 @@ OGRErr OGR_G_Transform( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Transform", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         transform(reinterpret_cast<OGRCoordinateTransformation *>(hTransform));
 }
 
@@ -821,7 +840,7 @@ void CPL_DLL OGR_G_Segmentize( OGRGeometryH hGeom, double dfMaxLength )
                  "dfMaxLength must be strictly positive");
         return;
     }
-    reinterpret_cast<OGRGeometry *>(hGeom)->segmentize( dfMaxLength );
+    ToPointer(hGeom)->segmentize( dfMaxLength );
 }
 
 /************************************************************************/
@@ -847,7 +866,7 @@ int OGR_G_GetDimension( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetDimension", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->getDimension();
+    return ToPointer(hGeom)->getDimension();
 }
 
 /************************************************************************/
@@ -917,7 +936,7 @@ int OGR_G_GetCoordinateDimension( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetCoordinateDimension", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->getCoordinateDimension();
+    return ToPointer(hGeom)->getCoordinateDimension();
 }
 
 /************************************************************************/
@@ -943,7 +962,7 @@ int OGR_G_CoordinateDimension( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_CoordinateDimension", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->CoordinateDimension();
+    return ToPointer(hGeom)->CoordinateDimension();
 }
 
 /**
@@ -964,7 +983,7 @@ int OGR_G_Is3D( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Is3D", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->Is3D();
+    return ToPointer(hGeom)->Is3D();
 }
 
 /**
@@ -985,7 +1004,7 @@ int OGR_G_IsMeasured( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_IsMeasured", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->IsMeasured();
+    return ToPointer(hGeom)->IsMeasured();
 }
 
 /************************************************************************/
@@ -1086,7 +1105,7 @@ void OGR_G_SetCoordinateDimension( OGRGeometryH hGeom, int nNewDimension)
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetCoordinateDimension" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->
+    ToPointer(hGeom)->
         setCoordinateDimension(nNewDimension);
 }
 
@@ -1113,7 +1132,7 @@ void OGR_G_Set3D( OGRGeometryH hGeom, int bIs3D)
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_Set3D" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->set3D(bIs3D);
+    ToPointer(hGeom)->set3D(bIs3D);
 }
 
 /************************************************************************/
@@ -1140,7 +1159,7 @@ void OGR_G_SetMeasured( OGRGeometryH hGeom, int bIsMeasured )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetMeasured" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->setMeasured(bIsMeasured);
+    ToPointer(hGeom)->setMeasured(bIsMeasured);
 }
 
 /**
@@ -1208,8 +1227,8 @@ int OGR_G_Equals( OGRGeometryH hGeom, OGRGeometryH hOther )
         return 0;
     }
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
-        Equals(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hGeom)->
+        Equals(ToPointer(hOther));
 }
 
 //! @cond Doxygen_Suppress
@@ -1230,8 +1249,8 @@ int OGR_G_Equal( OGRGeometryH hGeom, OGRGeometryH hOther )
         return 0;
     }
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
-        Equals(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hGeom)->
+        Equals(ToPointer(hOther));
 }
 //! @endcond
 
@@ -1274,7 +1293,7 @@ int OGR_G_WkbSize( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_WkbSize", 0 );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->WkbSize();
+    return ToPointer(hGeom)->WkbSize();
 }
 
 /**
@@ -1306,7 +1325,7 @@ void OGR_G_GetEnvelope( OGRGeometryH hGeom, OGREnvelope *psEnvelope )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_GetEnvelope" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->getEnvelope( psEnvelope );
+    ToPointer(hGeom)->getEnvelope( psEnvelope );
 }
 
 /**
@@ -1342,7 +1361,7 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_GetEnvelope3D" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->getEnvelope( psEnvelope );
+    ToPointer(hGeom)->getEnvelope( psEnvelope );
 }
 
 
@@ -1436,7 +1455,7 @@ OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ImportFromWkb", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         importFromWkb( pabyData, nSize );
 }
 
@@ -1501,7 +1520,7 @@ OGRErr OGR_G_ExportToWkb( OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ExportToWkb", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         exportToWkb( eOrder, pabyDstBuffer );
 }
 
@@ -1539,7 +1558,7 @@ OGRErr OGR_G_ExportToIsoWkb( OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ExportToIsoWkb", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         exportToWkb( eOrder, pabyDstBuffer, wkbVariantIso );
 }
 
@@ -1592,7 +1611,7 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ImportFromWkt", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->importFromWkt( ppszSrcText );
+    return ToPointer(hGeom)->importFromWkt( ppszSrcText );
 }
 
 /************************************************************************/
@@ -1775,7 +1794,7 @@ OGRErr OGR_G_ExportToWkt( OGRGeometryH hGeom, char **ppszSrcText )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ExportToWkt", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->exportToWkt( ppszSrcText );
+    return ToPointer(hGeom)->exportToWkt( ppszSrcText );
 }
 
 /************************************************************************/
@@ -1808,7 +1827,7 @@ OGRErr OGR_G_ExportToIsoWkt( OGRGeometryH hGeom, char **ppszSrcText )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ExportToIsoWkt", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->
+    return ToPointer(hGeom)->
         exportToWkt( ppszSrcText, wkbVariantIso );
 }
 
@@ -1847,7 +1866,7 @@ OGRwkbGeometryType OGR_G_GetGeometryType( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryType", wkbUnknown );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryType();
+    return ToPointer(hGeom)->getGeometryType();
 }
 
 /**
@@ -1883,7 +1902,7 @@ const char *OGR_G_GetGeometryName( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetGeometryName", "" );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->getGeometryName();
+    return ToPointer(hGeom)->getGeometryName();
 }
 
 /**
@@ -1919,8 +1938,8 @@ OGRGeometryH OGR_G_Clone( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Clone", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hGeom)->clone());
+    return ToHandle(
+        ToPointer(hGeom)->clone());
 }
 
 /**
@@ -1957,7 +1976,7 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
     VALIDATE_POINTER1( hGeom, "OGR_G_GetSpatialReference", nullptr );
 
     return reinterpret_cast<OGRSpatialReferenceH>(
-        reinterpret_cast<OGRGeometry *>(hGeom)->getSpatialReference());
+        ToPointer(hGeom)->getSpatialReference());
 }
 
 /**
@@ -1992,7 +2011,7 @@ void OGR_G_Empty( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_Empty" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->empty();
+    ToPointer(hGeom)->empty();
 }
 
 /**
@@ -2028,7 +2047,7 @@ int OGR_G_IsEmpty( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_IsEmpty", TRUE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->IsEmpty();
+    return ToPointer(hGeom)->IsEmpty();
 }
 
 /************************************************************************/
@@ -2062,7 +2081,7 @@ OGRGeometry::IsValid() const
 #else
         sfcgal_init();
         sfcgal_geometry_t *poThis =
-            OGRGeometry::OGRexportToSFCGAL(const_cast<OGRGeometry *>(this));
+            OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
         {
             CPLError( CE_Failure, CPLE_IllegalArg,
@@ -2126,7 +2145,7 @@ int OGR_G_IsValid( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_IsValid", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->IsValid();
+    return ToPointer(hGeom)->IsValid();
 }
 
 /************************************************************************/
@@ -2198,7 +2217,7 @@ int OGR_G_IsSimple( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_IsSimple", TRUE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->IsSimple();
+    return ToPointer(hGeom)->IsSimple();
 }
 
 /************************************************************************/
@@ -2271,7 +2290,7 @@ int OGR_G_IsRing( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_IsRing", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hGeom)->IsRing();
+    return ToPointer(hGeom)->IsRing();
 }
 
 /************************************************************************/
@@ -2760,7 +2779,7 @@ OGRMergeGeometryTypesEx( OGRwkbGeometryType eMain,
 void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
 
 {
-    reinterpret_cast<OGRGeometry *>(hGeom)->flattenTo2D();
+    ToPointer(hGeom)->flattenTo2D();
 }
 
 /************************************************************************/
@@ -2803,7 +2822,7 @@ void OGR_G_FlattenTo2D( OGRGeometryH hGeom )
 char *OGRGeometry::exportToGML( const char* const * papszOptions ) const
 {
     return OGR_G_ExportToGMLEx(
-        reinterpret_cast<OGRGeometryH>(const_cast<OGRGeometry *>(this)),
+        ToHandle(const_cast<OGRGeometry *>(this)),
         const_cast<char **>(papszOptions));
 }
 
@@ -2826,7 +2845,7 @@ char *OGRGeometry::exportToGML( const char* const * papszOptions ) const
 char *OGRGeometry::exportToKML() const
 {
     return OGR_G_ExportToKML(
-        reinterpret_cast<OGRGeometryH>(const_cast<OGRGeometry *>(this)), nullptr);
+        ToHandle(const_cast<OGRGeometry *>(this)), nullptr);
 }
 
 /************************************************************************/
@@ -2848,7 +2867,7 @@ char *OGRGeometry::exportToKML() const
 char *OGRGeometry::exportToJson() const
 {
     OGRGeometry* poGeometry = const_cast<OGRGeometry*>(this);
-    return OGR_G_ExportToJson( reinterpret_cast<OGRGeometryH>(poGeometry) );
+    return OGR_G_ExportToJson( ToHandle(poGeometry) );
 }
 
 /************************************************************************/
@@ -3188,13 +3207,12 @@ double OGRGeometry::Distance( const OGRGeometry *poOtherGeom ) const
     #else
 
         sfcgal_geometry_t *poThis =
-            OGRGeometry::OGRexportToSFCGAL(const_cast<OGRGeometry *>(this));
+            OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return -1.0;
 
         sfcgal_geometry_t *poOther =
-            OGRGeometry::OGRexportToSFCGAL(
-                const_cast<OGRGeometry *>(poOtherGeom));
+            OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
             return -1.0;
 
@@ -3274,8 +3292,8 @@ double OGR_G_Distance( OGRGeometryH hFirst, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hFirst, "OGR_G_Distance", 0.0 );
 
-    return reinterpret_cast<OGRGeometry *>(hFirst)->
-        Distance(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hFirst)->
+        Distance(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -3326,12 +3344,12 @@ double OGRGeometry::Distance3D(
 
     sfcgal_init();
     sfcgal_geometry_t *poThis =
-        OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+        OGRGeometry::OGRexportToSFCGAL(this);
     if( poThis == nullptr )
         return -1.0;
 
     sfcgal_geometry_t *poOther =
-        OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+        OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
     if( poOther == nullptr )
     {
         sfcgal_geometry_delete(poThis);
@@ -3379,8 +3397,8 @@ double OGR_G_Distance3D( OGRGeometryH hFirst, OGRGeometryH hOther )
     VALIDATE_POINTER1( hFirst, "OGR_G_Distance3D", 0.0 );
 
     return
-        reinterpret_cast<OGRGeometry *>(hFirst)->
-            Distance3D(reinterpret_cast<OGRGeometry *>(hOther));
+        ToPointer(hFirst)->
+            Distance3D(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -3440,7 +3458,7 @@ OGRGeometry *OGRGeometry::ConvexHull() const
 #else
 
         sfcgal_geometry_t *poThis =
-            OGRGeometry::OGRexportToSFCGAL(const_cast<OGRGeometry *>(this));
+            OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return nullptr;
 
@@ -3522,8 +3540,8 @@ OGRGeometryH OGR_G_ConvexHull( OGRGeometryH hTarget )
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_ConvexHull", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hTarget)->ConvexHull());
+    return ToHandle(
+        ToPointer(hTarget)->ConvexHull());
 }
 
 /************************************************************************/
@@ -3629,8 +3647,8 @@ OGRGeometryH OGR_G_Boundary( OGRGeometryH hTarget )
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_Boundary", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hTarget)->Boundary());
+    return ToHandle(
+        ToPointer(hTarget)->Boundary());
 }
 
 /**
@@ -3645,8 +3663,8 @@ OGRGeometryH OGR_G_GetBoundary( OGRGeometryH hTarget )
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_GetBoundary", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hTarget)->Boundary());
+    return ToHandle(
+        ToPointer(hTarget)->Boundary());
 }
 
 /************************************************************************/
@@ -3762,8 +3780,8 @@ OGRGeometryH OGR_G_Buffer( OGRGeometryH hTarget, double dfDist, int nQuadSegs )
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_Buffer", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hTarget)->Buffer( dfDist, nQuadSegs ));
+    return ToHandle(
+        ToPointer(hTarget)->Buffer( dfDist, nQuadSegs ));
 }
 
 /************************************************************************/
@@ -3803,11 +3821,11 @@ OGRGeometry *OGRGeometry::Intersection(
 
     #else
 
-        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return nullptr;
 
-        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poThis == nullptr)
             return nullptr;
 
@@ -3901,9 +3919,9 @@ OGRGeometryH OGR_G_Intersection( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Intersection", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
-            Intersection(reinterpret_cast<OGRGeometry *>(hOther)));
+    return ToHandle(
+        ToPointer(hThis)->
+            Intersection(ToPointer(hOther)));
 }
 
 /************************************************************************/
@@ -3941,11 +3959,11 @@ OGRGeometry *OGRGeometry::Union(
 
     #else
 
-        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return nullptr;
 
-        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
             return nullptr;
 
@@ -4041,9 +4059,9 @@ OGRGeometryH OGR_G_Union( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Union", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
-          Union(reinterpret_cast<OGRGeometry *>(hOther)));
+    return ToHandle(
+        ToPointer(hThis)->
+          Union(ToPointer(hOther)));
 }
 
 /************************************************************************/
@@ -4124,8 +4142,8 @@ OGRGeometryH OGR_G_UnionCascaded( OGRGeometryH hThis )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_UnionCascaded", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-      reinterpret_cast<OGRGeometry *>(hThis)->UnionCascaded());
+    return ToHandle(
+      ToPointer(hThis)->UnionCascaded());
 }
 
 /************************************************************************/
@@ -4164,11 +4182,11 @@ OGRGeometry *OGRGeometry::Difference(
 
     #else
 
-        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return nullptr;
 
-        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
             return nullptr;
 
@@ -4264,9 +4282,9 @@ OGRGeometryH OGR_G_Difference( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Difference", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
-        Difference(reinterpret_cast<OGRGeometry *>(hOther)));
+    return ToHandle(
+        ToPointer(hThis)->
+        Difference(ToPointer(hOther)));
 }
 
 /************************************************************************/
@@ -4414,9 +4432,9 @@ OGRGeometryH OGR_G_SymDifference( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_SymDifference", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
-            SymDifference(reinterpret_cast<OGRGeometry *>(hOther)));
+    return ToHandle(
+        ToPointer(hThis)->
+            SymDifference(ToPointer(hOther)));
 }
 
 /**
@@ -4432,9 +4450,9 @@ OGRGeometryH OGR_G_SymmetricDifference( OGRGeometryH hThis,
 {
     VALIDATE_POINTER1( hThis, "OGR_G_SymmetricDifference", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
-        SymDifference(reinterpret_cast<OGRGeometry *>(hOther)));
+    return ToHandle(
+        ToPointer(hThis)->
+        SymDifference(ToPointer(hOther)));
 }
 
 /************************************************************************/
@@ -4514,8 +4532,8 @@ int OGR_G_Disjoint( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Disjoint", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-        Disjoint(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+        Disjoint(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4596,8 +4614,8 @@ int OGR_G_Touches( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Touches", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-        Touches(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+        Touches(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4634,11 +4652,11 @@ OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
 
     #else
 
-        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)this);
+        sfcgal_geometry_t *poThis = OGRGeometry::OGRexportToSFCGAL(this);
         if (poThis == nullptr)
             return FALSE;
 
-        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL((OGRGeometry *)poOtherGeom);
+        sfcgal_geometry_t *poOther = OGRGeometry::OGRexportToSFCGAL(poOtherGeom);
         if (poOther == nullptr)
             return FALSE;
 
@@ -4709,8 +4727,8 @@ int OGR_G_Crosses( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Crosses", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-      Crosses(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+      Crosses(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4790,8 +4808,8 @@ int OGR_G_Within( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Within", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-        Within(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+        Within(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4871,8 +4889,8 @@ int OGR_G_Contains( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Contains", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-      Contains(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+      Contains(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4954,8 +4972,8 @@ int OGR_G_Overlaps( OGRGeometryH hThis, OGRGeometryH hOther )
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Overlaps", FALSE );
 
-    return reinterpret_cast<OGRGeometry *>(hThis)->
-        Overlaps(reinterpret_cast<OGRGeometry *>(hOther));
+    return ToPointer(hThis)->
+        Overlaps(ToPointer(hOther));
 }
 
 /************************************************************************/
@@ -4991,7 +5009,7 @@ void OGR_G_CloseRings( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_CloseRings" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->closeRings();
+    ToPointer(hGeom)->closeRings();
 }
 
 /************************************************************************/
@@ -5130,20 +5148,17 @@ int OGR_G_Centroid( OGRGeometryH hGeom, OGRGeometryH hCentroidPoint )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_Centroid", OGRERR_FAILURE );
 
-    OGRGeometry *poGeom = reinterpret_cast<OGRGeometry *>(hGeom);
-    OGRPoint *poCentroid = reinterpret_cast<OGRPoint *>(hCentroidPoint);
-
-    if( poCentroid == nullptr )
+    OGRGeometry *poCentroidGeom = ToPointer(hCentroidPoint);
+    if( poCentroidGeom == nullptr )
         return OGRERR_FAILURE;
-
-    if( wkbFlatten(poCentroid->getGeometryType()) != wkbPoint )
+    if( wkbFlatten(poCentroidGeom->getGeometryType()) != wkbPoint )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Passed wrong geometry type as centroid argument." );
         return OGRERR_FAILURE;
     }
 
-    return poGeom->Centroid( poCentroid );
+    return ToPointer(hGeom)->Centroid( poCentroidGeom->toPoint() );
 }
 
 /************************************************************************/
@@ -5181,7 +5196,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
     return nullptr;
 #else
 
-    OGRGeometry* poThis = reinterpret_cast<OGRGeometry *>(hGeom);
+    OGRGeometry* poThis = ToPointer(hGeom);
 
     GEOSContextHandle_t hGEOSCtxt = OGRGeometry::createGEOSContext();
     GEOSGeom hThisGeosGeom = poThis->exportToGEOS(hGEOSCtxt);
@@ -5220,7 +5235,7 @@ OGRGeometryH OGR_G_PointOnSurface( OGRGeometryH hGeom )
                 assignSpatialReference(poThis->getSpatialReference());
 
         OGRGeometry::freeGEOSContext( hGEOSCtxt );
-        return reinterpret_cast<OGRGeometryH>(poInsidePointGeom);
+        return ToHandle(poInsidePointGeom);
     }
 
     OGRGeometry::freeGEOSContext( hGEOSCtxt );
@@ -5240,11 +5255,11 @@ OGRErr OGRGeometry::PointOnSurfaceInternal( OGRPoint * poPoint ) const
 
     OGRGeometryH hInsidePoint =
       OGR_G_PointOnSurface(
-          reinterpret_cast<OGRGeometryH>(const_cast<OGRGeometry *>(this)));
+          ToHandle(const_cast<OGRGeometry *>(this)));
     if( hInsidePoint == nullptr )
         return OGRERR_FAILURE;
 
-    OGRPoint *poInsidePoint = reinterpret_cast<OGRPoint *>(hInsidePoint);
+    OGRPoint *poInsidePoint = ToPointer(hInsidePoint)->toPoint();
     if( poInsidePoint->IsEmpty() )
     {
         poPoint->empty();
@@ -5343,8 +5358,8 @@ OGRGeometryH OGR_G_Simplify( OGRGeometryH hThis, double dTolerance )
 
 {
     VALIDATE_POINTER1( hThis, "OGR_G_Simplify", nullptr );
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->Simplify(dTolerance));
+    return ToHandle(
+        ToPointer(hThis)->Simplify(dTolerance));
 }
 
 /************************************************************************/
@@ -5433,8 +5448,8 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology( OGRGeometryH hThis,
 
 {
     VALIDATE_POINTER1( hThis, "OGR_G_SimplifyPreserveTopology", nullptr );
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
+    return ToHandle(
+        ToPointer(hThis)->
             SimplifyPreserveTopology(dTolerance));
 }
 
@@ -5538,8 +5553,8 @@ OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis,
 {
     VALIDATE_POINTER1( hThis, "OGR_G_DelaunayTriangulation", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hThis)->
+    return ToHandle(
+        ToPointer(hThis)->
             DelaunayTriangulation(dfTolerance, bOnlyEdges));
 }
 
@@ -5578,7 +5593,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
 {
     if (EQUAL(getGeometryName(), "TRIANGLE"))
     {
-        OGRPolygon *poPolygon = new OGRPolygon(*((OGRPolygon *)this));
+        OGRPolygon *poPolygon = new OGRPolygon(*toPolygon());
         return poPolygon;
     }
 
@@ -5590,10 +5605,10 @@ OGRGeometry *OGRGeometry::Polygonize() const
 
 #else
 
-    OGRGeometryCollection *poColl = nullptr;
+    const OGRGeometryCollection *poColl = nullptr;
     if( wkbFlatten(getGeometryType()) == wkbGeometryCollection ||
         wkbFlatten(getGeometryType()) == wkbMultiLineString )
-        poColl = (OGRGeometryCollection *)this;
+        poColl = toGeometryCollection();
     else
         return nullptr;
 
@@ -5608,7 +5623,7 @@ OGRGeometry *OGRGeometry::Polygonize() const
     for( int ig = 0; ig < iCount; ig++ )
     {
         GEOSGeom hGeosGeom = nullptr;
-        OGRGeometry *poChild = poColl->getGeometryRef(ig);
+        const OGRGeometry *poChild = poColl->getGeometryRef(ig);
         if( poChild == nullptr ||
             wkbFlatten(poChild->getGeometryType()) != wkbLineString )
             bError = true;
@@ -5681,8 +5696,8 @@ OGRGeometryH OGR_G_Polygonize( OGRGeometryH hTarget )
 {
     VALIDATE_POINTER1( hTarget, "OGR_G_Polygonize", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRGeometry *>(hTarget)->Polygonize());
+    return ToHandle(
+        ToPointer(hTarget)->Polygonize());
 }
 
 /************************************************************************/
@@ -5715,7 +5730,7 @@ void OGR_G_SwapXY( OGRGeometryH hGeom )
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SwapXY" );
 
-    reinterpret_cast<OGRGeometry *>(hGeom)->swapXY();
+    ToPointer(hGeom)->swapXY();
 }
 
 /************************************************************************/
@@ -6072,7 +6087,7 @@ OGRErr OGRGeometry::importPreambleFromWkb( const unsigned char * pabyData,
     int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
     if( !( nByteOrder == wkbXDR || nByteOrder == wkbNDR ) )
         return OGRERR_CORRUPT_DATA;
-    eByteOrder = (OGRwkbByteOrder) nByteOrder;
+    eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
 
 /* -------------------------------------------------------------------- */
 /*      Get the geometry feature type.                                  */
@@ -6314,13 +6329,13 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
 
 OGRwkbGeometryType OGR_GT_Flatten( OGRwkbGeometryType eType )
 {
-    eType = (OGRwkbGeometryType) (eType & (~wkb25DBitInternalUse));
+    eType = static_cast<OGRwkbGeometryType>(eType & (~wkb25DBitInternalUse));
     if( eType >= 1000 && eType < 2000 )  // ISO Z.
-        return (OGRwkbGeometryType) (eType - 1000);
+        return static_cast<OGRwkbGeometryType>(eType - 1000);
     if( eType >= 2000 && eType < 3000 )  // ISO M.
-        return (OGRwkbGeometryType) (eType - 2000);
+        return static_cast<OGRwkbGeometryType>(eType - 2000);
     if( eType >= 3000 && eType < 4000 )  // ISO ZM.
-        return (OGRwkbGeometryType) (eType - 3000);
+        return static_cast<OGRwkbGeometryType>(eType - 3000);
     return eType;
 }
 
@@ -6388,9 +6403,9 @@ OGRwkbGeometryType OGR_GT_SetZ( OGRwkbGeometryType eType )
     if( OGR_GT_HasZ(eType) || eType == wkbNone )
         return eType;
     if( eType <= wkbGeometryCollection )
-        return (OGRwkbGeometryType)(eType | wkb25DBitInternalUse);
+        return static_cast<OGRwkbGeometryType>(eType | wkb25DBitInternalUse);
     else
-        return (OGRwkbGeometryType)(eType + 1000);
+        return static_cast<OGRwkbGeometryType>(eType + 1000);
 }
 
 /************************************************************************/
@@ -6412,10 +6427,10 @@ OGRwkbGeometryType OGR_GT_SetM( OGRwkbGeometryType eType )
         return eType;
     if( eType & wkb25DBitInternalUse)
     {
-        eType = (OGRwkbGeometryType)(eType & ~wkb25DBitInternalUse);
-        eType = (OGRwkbGeometryType)(eType + 1000);
+        eType = static_cast<OGRwkbGeometryType>(eType & ~wkb25DBitInternalUse);
+        eType = static_cast<OGRwkbGeometryType>(eType + 1000);
     }
-    return (OGRwkbGeometryType)(eType + 2000);
+    return static_cast<OGRwkbGeometryType>(eType + 2000);
 }
 
 /************************************************************************/
@@ -6742,7 +6757,7 @@ OGRGeometry* OGRGeometry::CastToError(OGRGeometry* poGeom)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometry *poGeom)
+sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
 {
 #ifdef HAVE_SFCGAL
     sfcgal_init();
@@ -6753,45 +6768,24 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     if (EQUAL(poGeom->getGeometryName(), "LINEARRING"))
     {
         // cast it to LineString and get the WKT
-        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
+        std::unique_ptr<OGRLineString> poLS(OGRCurve::CastToLineString(poGeom->clone()->toCurve()));
+        if (poLS->exportToWkt(&buffer) == OGRERR_NONE)
         {
-            size_t length = 0;
-            while(buffer[length++] != '\0');
-            length--;
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
             free(buffer);
             return _geometry;
         }
         else
             return nullptr;
     }
-    else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING"))
+    else if (EQUAL(poGeom->getGeometryName(), "CIRCULARSTRING") ||
+             EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE") )
     {
-        // cast it to LineString and get the WKT
-        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
+        // convert it to LineString and get the WKT
+        std::unique_ptr<OGRLineString> poLS(OGRGeometryFactory::forceToLineString(poGeom->clone())->toLineString());
+        if (poLS->exportToWkt(&buffer) == OGRERR_NONE)
         {
-            size_t length = 0;
-            while(buffer[length++] != '\0');
-            length--;
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
-            free(buffer);
-            return _geometry;
-        }
-        else
-            return nullptr;
-    }
-    else if (EQUAL(poGeom->getGeometryName(), "COMPOUNDCURVE"))
-    {
-        // cast it to LineString and get the WKT
-        OGRLineString *poLineString = OGRCurve::CastToLineString((OGRCompoundCurve *)poGeom);
-        if (poLineString->exportToWkt(&buffer) == OGRERR_NONE)
-        {
-            size_t length = 0;
-            while(buffer[length++] != '\0');
-            length--;
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
             free(buffer);
             return _geometry;
         }
@@ -6800,14 +6794,11 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     }
     else if (EQUAL(poGeom->getGeometryName(), "CURVEPOLYGON"))
     {
-        // cast it to Polygon and get the WKT
-        OGRPolygon *poPolygon = (OGRPolygon *)OGRGeometryFactory::forceToPolygon((OGRCurvePolygon *)poGeom);
+        // convert it to Polygon and get the WKT
+        std::unique_ptr<OGRPolygon> poPolygon(OGRGeometryFactory::forceToPolygon(poGeom->clone()->toCurvePolygon())->toPolygon());
         if (poPolygon->exportToWkt(&buffer) == OGRERR_NONE)
         {
-            size_t length = 0;
-            while(buffer[length++] != '\0');
-            length--;
-            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+            sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
             free(buffer);
             return _geometry;
         }
@@ -6816,10 +6807,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
     }
     else if (poGeom->exportToWkt(&buffer) == OGRERR_NONE)
     {
-        size_t length = 0;
-        while(buffer[length++] != '\0');
-        length--;
-        sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,length);
+        sfcgal_geometry_t *_geometry = sfcgal_io_read_wkt(buffer,strlen(buffer));
         free(buffer);
         return _geometry;
     }
@@ -6838,7 +6826,7 @@ sfcgal_geometry_t* OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL OGRGeometr
 
 //! @cond Doxygen_Suppress
 OGRGeometry* OGRGeometry::SFCGALexportToOGR(
-    UNUSED_IF_NO_SFCGAL sfcgal_geometry_t* geometry )
+    UNUSED_IF_NO_SFCGAL const sfcgal_geometry_t* geometry )
 {
 #ifdef HAVE_SFCGAL
 
