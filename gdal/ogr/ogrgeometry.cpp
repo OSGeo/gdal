@@ -5436,15 +5436,15 @@ OGRGeometry *OGRGeometry::Polygonize() const
     else
         return nullptr;
 
-    int iCount = poColl->getNumGeometries();
+    const int nCount = poColl->getNumGeometries();
 
     OGRGeometry *poPolygsOGRGeom = nullptr;
     bool bError = false;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
 
-    GEOSGeom*hGeosGeomList = new GEOSGeom [iCount];
-    for( int ig = 0; ig < iCount; ig++ )
+    GEOSGeom* pahGeosGeomList = new GEOSGeom [nCount];
+    for( int ig = 0; ig < nCount; ig++ )
     {
         GEOSGeom hGeosGeom = nullptr;
         const OGRGeometry *poChild = poColl->getGeometryRef(ig);
@@ -5457,31 +5457,25 @@ OGRGeometry *OGRGeometry::Polygonize() const
             if( hGeosGeom == nullptr)
                 bError = true;
         }
-        *(hGeosGeomList + ig) = hGeosGeom;
+        pahGeosGeomList[ig] = hGeosGeom;
     }
 
     if( !bError )
     {
         GEOSGeom hGeosPolygs =
-            GEOSPolygonize_r(hGEOSCtxt, hGeosGeomList, iCount);
+            GEOSPolygonize_r(hGEOSCtxt, pahGeosGeomList, nCount);
 
-        if( hGeosPolygs != nullptr )
-        {
-            poPolygsOGRGeom =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosPolygs);
-            if( poPolygsOGRGeom != nullptr && getSpatialReference() != nullptr )
-                poPolygsOGRGeom->assignSpatialReference(getSpatialReference());
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosPolygs);
-        }
+        poPolygsOGRGeom = BuildGeometryFromGEOS(hGEOSCtxt, hGeosPolygs,
+                                               this, nullptr);
     }
 
-    for( int ig = 0; ig < iCount; ig++ )
+    for( int ig = 0; ig < nCount; ig++ )
     {
-        GEOSGeom hGeosGeom = *(hGeosGeomList + ig);
+        GEOSGeom hGeosGeom = pahGeosGeomList[ig];
         if( hGeosGeom != nullptr)
             GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
     }
-    delete [] hGeosGeomList;
+    delete [] pahGeosGeomList;
     freeGEOSContext( hGEOSCtxt );
 
     return poPolygsOGRGeom;
