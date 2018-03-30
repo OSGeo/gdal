@@ -890,6 +890,7 @@ namespace tut
             PointCounterConstVisitor oConstVisitor;
             poGeom->accept(&oConstVisitor);
             ensure_equals(oConstVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
+            delete poGeom;
         }
     }
 
