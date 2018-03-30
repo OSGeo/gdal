@@ -4724,7 +4724,7 @@ OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSWithin_r);
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSContains_r);
 #endif  // HAVE_GEOS
 }
 
