@@ -6785,7 +6785,7 @@ void OGRDefaultGeometryVisitor::visit(OGRLineString* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRLinearRing* poGeom)
 {
-    visit(static_cast<OGRLineString*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRCircularString* poGeom)
@@ -6805,22 +6805,22 @@ void OGRDefaultGeometryVisitor::visit(OGRCurvePolygon* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRPolygon* poGeom)
 {
-    visit(static_cast<OGRCurvePolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiPoint* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiLineString* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<OGRMultiSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRGeometryCollection* poGeom)
@@ -6839,17 +6839,17 @@ void OGRDefaultGeometryVisitor::visit(OGRCompoundCurve* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiCurve* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiSurface* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRTriangle* poGeom)
 {
-    visit(static_cast<OGRPolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRPolyhedralSurface* poGeom)
@@ -6861,7 +6861,7 @@ void OGRDefaultGeometryVisitor::visit(OGRPolyhedralSurface* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRTriangulatedSurface* poGeom)
 {
-    visit(static_cast<OGRPolyhedralSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 
@@ -6884,7 +6884,7 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRLineString* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRLinearRing* poGeom)
 {
-    visit(static_cast<const OGRLineString*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRCircularString* poGeom)
@@ -6904,22 +6904,22 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRCurvePolygon* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRPolygon* poGeom)
 {
-    visit(static_cast<const OGRCurvePolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiPoint* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiLineString* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<const OGRMultiSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRGeometryCollection* poGeom)
@@ -6938,17 +6938,17 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRCompoundCurve* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiCurve* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiSurface* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRTriangle* poGeom)
 {
-    visit(static_cast<const OGRPolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRPolyhedralSurface* poGeom)
@@ -6960,5 +6960,5 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRPolyhedralSurface* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRTriangulatedSurface* poGeom)
 {
-    visit(static_cast<const OGRPolyhedralSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }

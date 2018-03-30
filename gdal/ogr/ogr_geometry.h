@@ -1025,6 +1025,12 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual const char *getGeometryName() const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRSimpleCurve* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRSimpleCurve* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
@@ -1097,6 +1103,12 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     OGRBoolean isPointOnRingBoundary( const OGRPoint* pt,
                                       int bTestEnvelope = TRUE ) const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
+
+    /** Return pointer of this in upper class */
+    inline OGRLineString* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRLineString* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1189,6 +1201,12 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char* const* papszOptions = nullptr) const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRSimpleCurve* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRSimpleCurve* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
@@ -1634,6 +1652,12 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRLinearRing *stealInteriorRing(int);
 
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
+
+    /** Return pointer of this in upper class */
+    inline OGRCurvePolygon* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRCurvePolygon* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1684,6 +1708,12 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
     // New methods rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry.
     virtual OGRErr addRingDirectly( OGRCurve * poNewRing ) override;
+
+    /** Return pointer of this in upper class */
+    inline OGRPolygon* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRPolygon* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1840,6 +1870,11 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1889,6 +1924,11 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+        /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -2023,6 +2063,11 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
 
+    /** Return pointer of this in upper class */
+    inline OGRPolyhedralSurface* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRPolyhedralSurface* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -2063,6 +2108,11 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 
     // IGeometry methods.
     virtual int getDimension() const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -2113,6 +2163,11 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -2149,6 +2204,11 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
