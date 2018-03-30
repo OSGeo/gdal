@@ -1,0 +1,8 @@
+//$DELIMITER "tab"
+//$QUOTED-TEXT "no"
+//$CHARSET ANSI
+//$UNIT Distance:m
+//$FORMAT 2
+//$SYSCOORD {Type: 17};{TimeZone: 31}
+//$FIELDS Class=test;Subclass=test;Kind=4;Fields=Private#Identifier	Private#Class	Private#Subclass	Private#Name	Private#NbFields	id	Private#X	Private#Y	Private#Graphics
+-1	test	test	test	1	1	-10.00	-10.00	3	-10.00	-9.00	-9.00	-9.00	-10.00	-10.00	2	0.00	0.00	4	0.00	1.00	1.00	1.00	1.00	0.00	0.00	0.00	0.10	0.10	3	0.10	0.90	0.90	0.90	0.10	0.10
