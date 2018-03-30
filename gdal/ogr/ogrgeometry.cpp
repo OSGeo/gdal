@@ -5421,12 +5421,6 @@ OGRGeometryH OGR_G_DelaunayTriangulation( OGRGeometryH hThis,
 OGRGeometry *OGRGeometry::Polygonize() const
 
 {
-    if (EQUAL(getGeometryName(), "TRIANGLE"))
-    {
-        OGRPolygon *poPolygon = new OGRPolygon(*toPolygon());
-        return poPolygon;
-    }
-
 #ifndef HAVE_GEOS
 
     CPLError( CE_Failure, CPLE_NotSupported,
