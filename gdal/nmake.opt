@@ -161,8 +161,11 @@ SOFTWARNFLAGS= /wd4244 /wd4702 /wd4701 /wd4013 /wd4706 /wd4057 /wd4210 /wd4305
 !ENDIF
 
 # Linker debug options
-!IFDEF DEBUG
+!IFDEF WITH_PDB
 LDEBUG= /debug
+!IFNDEF DEBUG
+LDEBUG = $(LDEBUG) /OPT:REF,ICF
+!ENDIF
 !ENDIF
 
 # Uncomment the following if you are building for 64-bit windows
@@ -508,10 +511,12 @@ OCI_INCLUDE =	-I$(ORACLE_HOME)\oci\include
 # Uncomment for libdap >= 3.9
 #DODS_FLAGS = -DLIBDAP_39
 
+!IFNDEF GEOS_DIR
 # Uncomment for GEOS support (GEOS >= 3.1.0 required)
 #GEOS_DIR=C:/warmerda/geos
 #GEOS_CFLAGS = -I$(GEOS_DIR)/capi -I$(GEOS_DIR)/source/headers -DHAVE_GEOS
 #GEOS_LIB     = $(GEOS_DIR)/source/geos_c_i.lib
+!ENDIF
 
 # Uncomment for SOSI support
 #SOSI_PLUGIN = YES
@@ -604,7 +609,10 @@ MSVC_VLD_LIB=/LIBPATH:$(MSVC_VLD_DIR)/lib/Win32
 OGR_FLAG = -DOGR_ENABLED
 !ENDIF
 
-#LINKER_FLAGS =	/NODEFAULTLIB:LIBC 
+#LINKER_FLAGS =	/NODEFAULTLIB:LIBC
+!IFNDEF DEBUG
+EXTRA_LINKER_FLAGS = $(EXTRA_LINKER_FLAGS)
+!ENDIF 
 LINKER_FLAGS = $(EXTRA_LINKER_FLAGS) $(MSVC_VLD_LIB) $(LDEBUG)
 
 
