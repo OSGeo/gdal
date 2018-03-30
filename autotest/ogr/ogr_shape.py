@@ -5299,6 +5299,26 @@ def ogr_shape_109():
 
     return 'success'
 
+
+###############################################################################
+def ogr_shape_110_write_invalid_multipatch():
+
+    layer_name = 'ogr_shape_110'
+    filename = '/vsimem/' + layer_name + '.shp'
+    shape_drv = ogr.GetDriverByName('ESRI Shapefile')
+    ds = shape_drv.CreateDataSource(filename)
+    lyr = ds.CreateLayer(layer_name, options = ['SHPT=MULTIPATCH'])
+
+    # Create a shape
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(POINT(0 0))'))
+    lyr.CreateFeature(f)
+
+    ds = None
+    shape_drv.DeleteDataSource( filename )
+
+    return 'success'
+
 ###############################################################################
 def ogr_shape_cleanup():
 
@@ -5452,6 +5472,7 @@ gdaltest_list = [
     ogr_shape_107,
     ogr_shape_108,
     ogr_shape_109,
+    ogr_shape_110_write_invalid_multipatch,
     ogr_shape_cleanup ]
 
 # gdaltest_list = [ ogr_shape_107 ]
