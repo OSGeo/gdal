@@ -3131,6 +3131,7 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
     if (poGeom == nullptr)
         return;
     SetZVisitor visitor(dfZ);
+    poGeom->set3D(true);
     poGeom->accept(&visitor);
 }
 
