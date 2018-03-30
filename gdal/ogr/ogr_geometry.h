@@ -1840,6 +1840,9 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
     static OGRMultiPolygon* CastToMultiPolygon( OGRMultiSurface* poMS );
 };
 
@@ -2019,6 +2022,9 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
 
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
+
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRPolyhedralSurface *
         CastToPolyhedralSurface( OGRTriangulatedSurface* poTS );

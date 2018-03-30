@@ -6820,7 +6820,7 @@ void OGRDefaultGeometryVisitor::visit(OGRMultiLineString* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(static_cast<OGRMultiSurface*>(poGeom));
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRGeometryCollection* poGeom)
@@ -6849,7 +6849,7 @@ void OGRDefaultGeometryVisitor::visit(OGRMultiSurface* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRTriangle* poGeom)
 {
-    visit(static_cast<OGRCurvePolygon*>(poGeom));
+    visit(static_cast<OGRPolygon*>(poGeom));
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRPolyhedralSurface* poGeom)
@@ -6919,7 +6919,7 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRMultiLineString* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(static_cast<const OGRMultiSurface*>(poGeom));
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRGeometryCollection* poGeom)
@@ -6948,7 +6948,7 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRMultiSurface* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRTriangle* poGeom)
 {
-    visit(static_cast<const OGRCurvePolygon*>(poGeom));
+    visit(static_cast<const OGRPolygon*>(poGeom));
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRPolyhedralSurface* poGeom)
