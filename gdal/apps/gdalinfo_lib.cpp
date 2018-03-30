@@ -1386,13 +1386,13 @@ char *GDALInfo( GDALDatasetH hDataset, const GDALInfoOptions *psOptions )
             if( bJson )
             {
                 json_object *poRAT =
-                    (json_object*) GDALRATSerializeJSON( hRAT );
+                    static_cast<json_object*>(GDALRATSerializeJSON( hRAT ));
                 json_object_object_add( poJsonObject, "rat", poRAT );
             }
             else
             {
                 CPLXMLNode *psTree =
-                    ((GDALRasterAttributeTable *) hRAT)->Serialize();
+                    static_cast<GDALRasterAttributeTable *>(hRAT)->Serialize();
                 char *pszXMLText = CPLSerializeXMLTree( psTree );
                 CPLDestroyXMLNode( psTree );
                 Concat(osStr, psOptions->bStdoutOutput, "%s\n", pszXMLText );

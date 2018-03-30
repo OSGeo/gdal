@@ -149,7 +149,7 @@ inline void GDALCopyWord(const Tin tValueIn, Tout &tValueOut)
 template <class Tin>
 inline void GDALCopyWord(const Tin tValueIn, float &fValueOut)
 {
-    fValueOut = (float) tValueIn;
+    fValueOut = static_cast<float>(tValueIn);
 }
 
 template <class Tin>
@@ -349,7 +349,7 @@ static inline void GDALCopyXMMToInt32(const __m128i xmm, void* pDest)
     int n32 = _mm_cvtsi128_si32 (xmm);     // Extract lower 32 bit word
     memcpy(pDest, &n32, sizeof(n32));
 #else
-    *(int*)pDest = _mm_cvtsi128_si32 (xmm);
+    *static_cast<int*>(pDest) = _mm_cvtsi128_si32 (xmm);
 #endif
 }
 
@@ -359,7 +359,7 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void* pDest)
     GInt64 n64 = _mm_cvtsi128_si64 (xmm);   // Extract lower 64 bit word
     memcpy(pDest, &n64, sizeof(n64));
 #else
-    *(GInt64*)pDest = _mm_cvtsi128_si64 (xmm);
+    *static_cast<GInt64*>(pDest) = _mm_cvtsi128_si64 (xmm);
 #endif
 }
 
@@ -503,7 +503,7 @@ inline void GDALCopy8Words(const float* pValueIn, GUInt16* const &pValueOut)
     // Translate back to uint16 range (actually -32768==32768 in int16)
     xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
 #endif
-    _mm_storeu_si128( (__m128i*) pValueOut, xmm_i );
+    _mm_storeu_si128( reinterpret_cast<__m128i*>(pValueOut), xmm_i );
 }
 #endif
 

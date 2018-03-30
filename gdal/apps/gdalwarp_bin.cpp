@@ -356,7 +356,7 @@ static void Usage(const char* pszErrorMsg = nullptr)
 
 static GDALWarpAppOptionsForBinary *GDALWarpAppOptionsForBinaryNew(void)
 {
-    return (GDALWarpAppOptionsForBinary*) CPLCalloc(  1, sizeof(GDALWarpAppOptionsForBinary) );
+    return static_cast<GDALWarpAppOptionsForBinary*>(CPLCalloc(  1, sizeof(GDALWarpAppOptionsForBinary) ));
 }
 
 /************************************************************************/
@@ -484,9 +484,9 @@ MAIN_START(argc, argv)
     for(int i = 0; psOptionsForBinary->papszSrcFiles[i] != nullptr; i++)
     {
         nSrcCount++;
-        pahSrcDS = (GDALDatasetH *) CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount);
+        pahSrcDS = static_cast<GDALDatasetH *>(CPLRealloc(pahSrcDS, sizeof(GDALDatasetH) * nSrcCount));
         pahSrcDS[nSrcCount-1] = GDALOpenEx( psOptionsForBinary->papszSrcFiles[i], GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
-                                            (const char* const* )psOptionsForBinary->papszOpenOptions, nullptr );
+                                            psOptionsForBinary->papszOpenOptions, nullptr );
 
         if( pahSrcDS[nSrcCount-1] == nullptr )
             GDALExit(2);

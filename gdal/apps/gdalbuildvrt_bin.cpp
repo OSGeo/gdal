@@ -189,7 +189,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hOutDS = GDALBuildVRT(psOptionsForBinary->pszDstFilename,
                                        psOptionsForBinary->nSrcFiles,
                                        nullptr,
-                                       (const char* const*)psOptionsForBinary->papszSrcFiles,
+                                       psOptionsForBinary->papszSrcFiles,
                                        psOptions, &bUsageError);
     if( bUsageError )
         Usage();

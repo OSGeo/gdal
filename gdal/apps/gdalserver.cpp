@@ -169,7 +169,7 @@ static CPL_SOCKET CreateSocketAndBindAndListen(const char* pszService,
             continue;
 
         if (bind(nListenSocket, psResultsIter->ai_addr,
-                 (int)psResultsIter->ai_addrlen) != (int)SOCKET_ERROR)
+                 static_cast<int>(psResultsIter->ai_addrlen)) != static_cast<int>(SOCKET_ERROR))
         {
             if( pnFamily )   *pnFamily =   psResultsIter->ai_family;
             if( pnSockType ) *pnSockType = psResultsIter->ai_socktype;
@@ -457,8 +457,8 @@ static int RunServer(CPL_UNUSED const char* pszApplication,
         sockAddrUnix.sun_family = AF_UNIX;
         CPLStrlcpy(sockAddrUnix.sun_path, pszUnixSocketFilename, sizeof(sockAddrUnix.sun_path));
         unlink(sockAddrUnix.sun_path);
-        len = (int)(strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family));
-        if (bind(nListenSocket, (struct sockaddr *)&sockAddrUnix, len) == -1)
+        len = static_cast<int>(strlen(sockAddrUnix.sun_path) + sizeof(sockAddrUnix.sun_family));
+        if (bind(nListenSocket, reinterpret_cast<struct sockaddr *>(&sockAddrUnix), len) == -1)
         {
             perror("bind");
             closesocket(nListenSocket);

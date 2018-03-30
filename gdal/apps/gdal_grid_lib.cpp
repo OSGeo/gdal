@@ -339,26 +339,26 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
     switch (eType)
     {
     case wkbPoint:
-        return ProcessGeometry((OGRPoint *)poGeom, poClipSrc,
+        return ProcessGeometry(poGeom->toPoint(), poClipSrc,
             iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
     case wkbLinearRing:
     case wkbLineString:
         {
-            OGRLineString *poLS = (OGRLineString*)poGeom;
+            OGRLineString *poLS = poGeom->toLineString();
             OGRPoint point;
             for (int pointIndex = 0; pointIndex < poLS->getNumPoints(); pointIndex++)
             {
                 poLS->getPoint(pointIndex, &point);
-                ProcessCommonGeometry((OGRGeometry*)&point, poClipSrc,
+                ProcessCommonGeometry(&point, poClipSrc,
                     iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
             }
         }
         break;
     case wkbPolygon:
         {
-            OGRPolygon* poPoly = (OGRPolygon*)poGeom;
+            OGRPolygon* poPoly = poGeom->toPolygon();
             OGRLinearRing* poRing = poPoly->getExteriorRing();
-            ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
+            ProcessCommonGeometry(poRing, poClipSrc,
                 iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
 
             const int nRings = poPoly->getNumInteriorRings();
@@ -367,7 +367,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
                 for (int ir = 0; ir < nRings; ++ir)
                 {
                     poRing = poPoly->getInteriorRing(ir);
-                    ProcessCommonGeometry((OGRGeometry*)poRing, poClipSrc,
+                    ProcessCommonGeometry(poRing, poClipSrc,
                         iBurnField, dfBurnValue, dfIncreaseBurnValue, dfMultiplyBurnValue, adfX, adfY, adfZ);
                 }
             }
@@ -378,7 +378,7 @@ static void ProcessCommonGeometry(OGRGeometry* poGeom, OGRGeometry *poClipSrc,
     case wkbMultiLineString:
     case wkbGeometryCollection:
         {
-            OGRGeometryCollection* pOGRGeometryCollection = (OGRGeometryCollection*)poGeom;
+            OGRGeometryCollection* pOGRGeometryCollection = poGeom->toGeometryCollection();
             for (int i = 0; i < pOGRGeometryCollection->getNumGeometries(); ++i)
             {
                 ProcessCommonGeometry(pOGRGeometryCollection->getGeometryRef(i), poClipSrc,
@@ -442,7 +442,7 @@ static CPLErr ProcessLayer( OGRLayerH hSrcLayer, GDALDatasetH hDstDS,
 
     OGR_L_ResetReading( hSrcLayer );
 
-    while( (poFeat = (OGRFeature *)OGR_L_GetNextFeature( hSrcLayer )) != nullptr )
+    while( (poFeat = reinterpret_cast<OGRFeature*>(OGR_L_GetNextFeature( hSrcLayer ))) != nullptr )
     {
         OGRGeometry *poGeom = poFeat->GetGeometryRef();
         double  dfBurnValue = 0.0;
@@ -625,7 +625,7 @@ static OGRGeometryCollection* LoadGeometry( const char* pszDS,
                                             const char* pszLyr,
                                             const char* pszWhere )
 {
-    GDALDataset *poDS = (GDALDataset*) GDALOpen(pszDS, GA_ReadOnly);
+    GDALDataset *poDS = static_cast<GDALDataset*>(GDALOpen(pszDS, GA_ReadOnly));
     if ( poDS == nullptr )
         return nullptr;
 
@@ -864,7 +864,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         if( poLayer != nullptr )
         {
             // Custom layer will be rasterized in the first band.
-            eErr = ProcessLayer( (OGRLayerH)poLayer, hDstDS, psOptions->poSpatialFilter,
+            eErr = ProcessLayer( reinterpret_cast<OGRLayerH>(poLayer), hDstDS, psOptions->poSpatialFilter,
                           nXSize, nYSize, 1,
                           bIsXExtentSet, bIsYExtentSet,
                           dfXMin, dfXMax, dfYMin, dfYMax, psOptions->pszBurnAttribute,
@@ -902,7 +902,7 @@ GDALDatasetH GDALGrid( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         if ( psOptions->poSpatialFilter != nullptr )
-            OGR_L_SetSpatialFilter( hLayer, (OGRGeometryH)psOptions->poSpatialFilter );
+            OGR_L_SetSpatialFilter( hLayer, reinterpret_cast<OGRGeometryH>(psOptions->poSpatialFilter) );
 
         // Fetch the first meaningful SRS definition
         if ( !pszOutputSRS )
@@ -1054,11 +1054,11 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
         {
             for( int iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
+                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                              papszArgv[i+1]) )
                 {
-                    psOptions->eOutputType = (GDALDataType) iType;
+                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
                 }
             }
 

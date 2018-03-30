@@ -962,12 +962,12 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
                                             psDatasetProperties->nBlockYSize);
 
         VRTSourcedRasterBandH hVRTBand =
-                (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, iBand);
+                static_cast<VRTSourcedRasterBandH>(GDALGetRasterBand(hVRTDS, iBand));
 
         if (bHideNoData)
             GDALSetMetadataItem(hVRTBand,"HideNoDataValue","1",nullptr);
 
-        VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
+        VRTSourcedRasterBand* poVRTBand = static_cast<VRTSourcedRasterBand*>(hVRTBand);
 
         VRTSimpleSource* poSimpleSource;
         if (bAllowSrcNoData && psDatasetProperties->pabHasNoData[0])
@@ -981,7 +981,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDatasetH hVRTDS)
         if( pszResampling )
             poSimpleSource->SetResampling(pszResampling);
         poVRTBand->ConfigureSource( poSimpleSource,
-                                    (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                    static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
                                     FALSE,
                                     dfSrcXOff, dfSrcYOff,
                                     dfSrcXSize, dfSrcYSize,
@@ -1042,7 +1042,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
     else if (bHasDatasetMask)
     {
         GDALCreateDatasetMaskBand(hVRTDS, GMF_PER_DATASET);
-        poMaskVRTBand = (VRTSourcedRasterBand*)GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1));
+        poMaskVRTBand = static_cast<VRTSourcedRasterBand*>(GDALGetMaskBand(GDALGetRasterBand(hVRTDS, 1)));
     }
 
     for( int i = 0; ppszInputFilenames != nullptr && i < nInputFiles; i++ )
@@ -1086,7 +1086,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         }
         if (bHasDatasetMask && !bAddAlpha)
         {
-            ((GDALProxyPoolRasterBand*)((GDALProxyPoolDataset*)hProxyDS)->GetRasterBand(1))->
+            static_cast<GDALProxyPoolRasterBand*>(reinterpret_cast<GDALProxyPoolDataset*>(hProxyDS)->GetRasterBand(1))->
                     AddSrcMaskBandDescription  (GDT_Byte,
                                                 psDatasetProperties->nMaskBlockXSize,
                                                 psDatasetProperties->nMaskBlockYSize);
@@ -1095,11 +1095,11 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         for(int j=0;j<nBands;j++)
         {
             VRTSourcedRasterBandH hVRTBand =
-                    (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, j + 1);
+                    static_cast<VRTSourcedRasterBandH>(GDALGetRasterBand(hVRTDS, j + 1));
 
             /* Place the raster band at the right position in the VRT */
             int nSelBand = panBandList[j] - 1;
-            VRTSourcedRasterBand* poVRTBand = (VRTSourcedRasterBand*)hVRTBand;
+            VRTSourcedRasterBand* poVRTBand = static_cast<VRTSourcedRasterBand*>(hVRTBand);
 
             VRTSimpleSource* poSimpleSource;
             if (bAllowSrcNoData && psDatasetProperties->pabHasNoData[nSelBand])
@@ -1112,7 +1112,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             poVRTBand->ConfigureSource( poSimpleSource,
-                                        (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, nSelBand + 1),
+                                        static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), nSelBand + 1)),
                                         FALSE,
                                         dfSrcXOff, dfSrcYOff,
                                         dfSrcXSize, dfSrcYSize,
@@ -1125,11 +1125,11 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
         if (bAddAlpha)
         {
             VRTSourcedRasterBandH hVRTBand =
-                    (VRTSourcedRasterBandH)GDALGetRasterBand(hVRTDS, nBands + 1);
+                    static_cast<VRTSourcedRasterBandH>(GDALGetRasterBand(hVRTDS, nBands + 1));
             /* Little trick : we use an offset of 255 and a scaling of 0, so that in areas covered */
             /* by the source, the value of the alpha band will be 255, otherwise it will be 0 */
-            ((VRTSourcedRasterBand *) hVRTBand)->AddComplexSource(
-                                            (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+            static_cast<VRTSourcedRasterBand *>(hVRTBand)->AddComplexSource(
+                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
                                             dfSrcXOff, dfSrcYOff,
                                             dfSrcXSize, dfSrcYSize,
                                             dfDstXOff, dfDstYOff,
@@ -1142,7 +1142,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDatasetH hVRTDS)
             if( pszResampling )
                 poSimpleSource->SetResampling(pszResampling);
             poMaskVRTBand->ConfigureSource( poSimpleSource,
-                                            (GDALRasterBand*)GDALGetRasterBand((GDALDatasetH)hProxyDS, 1),
+                                            static_cast<GDALRasterBand*>(GDALGetRasterBand(static_cast<GDALDatasetH>(hProxyDS), 1)),
                                             TRUE,
                                             dfSrcXOff, dfSrcYOff,
                                             dfSrcXSize, dfSrcYSize,
@@ -1355,7 +1355,7 @@ GDALDataset* VRTBuilder::Build(GDALProgressFunc pfnProgress, void * pProgressDat
         CreateVRTNonSeparate(hVRTDS);
     }
 
-    return (GDALDataset*)hVRTDS;
+    return static_cast<GDALDataset*>(hVRTDS);
 }
 
 /************************************************************************/
@@ -1626,7 +1626,7 @@ GDALDatasetH GDALBuildVRT( const char *pszDest,
                         psOptions->papszOpenOptions);
 
     GDALDatasetH hDstDS =
-        (GDALDatasetH)oBuilder.Build(psOptions->pfnProgress, psOptions->pProgressData);
+        static_cast<GDALDatasetH>(oBuilder.Build(psOptions->pfnProgress, psOptions->pProgressData));
 
     GDALBuildVRTOptionsFree(psOptions);
 

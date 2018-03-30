@@ -509,7 +509,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 
         const double dfPosEndCorr = (dfPosEnd - dfStart) * dfSF;
 
-        OGRLineString *pLine = (OGRLineString*)IT->second->GetGeometryRef();
+        OGRLineString *pLine = IT->second->GetGeometryRef()->toLineString();
 
         OGRLineString *pSubLine =
             pLine->getSubLine(dfPosBegCorr, dfPosEndCorr, FALSE);
@@ -530,7 +530,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
         double dfSF = IT->second->GetFieldAsDouble(FIELD_SCALE_FACTOR);
         dfPosBegCorr *= dfSF;
 
-        OGRLineString *pLine = (OGRLineString*)IT->second->GetGeometryRef();
+        OGRLineString *pLine = IT->second->GetGeometryRef()->toLineString();
 
         OGRLineString *pSubLine =
             pLine->getSubLine(dfPosBegCorr, pLine->get_Length(), FALSE);
@@ -544,7 +544,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
 
         while( nCounter > 1 )
         {
-            pLine = (OGRLineString*)IT->second->GetGeometryRef();
+            pLine = IT->second->GetGeometryRef()->toLineString();
             pOutLine->addSubLineString(pLine);
             OGRFeature::DestroyFeature(IT->second);
             ++IT;
@@ -556,7 +556,7 @@ static OGRErr CreateSubline( OGRLayer* const poPkLayer,
         dfSF = IT->second->GetFieldAsDouble(FIELD_SCALE_FACTOR);
         dfPosEndCorr *= dfSF;
 
-        pLine = (OGRLineString*)IT->second->GetGeometryRef();
+        pLine = IT->second->GetGeometryRef()->toLineString();
 
         pSubLine = pLine->getSubLine(0, dfPosEndCorr, FALSE);
 
@@ -621,7 +621,7 @@ static OGRErr CreatePartsFromLineString(
         OGRGeometry* pGeom = pReperFeature->GetGeometryRef();
         if( nullptr != pGeom )
         {
-            OGRPoint* pPt = (OGRPoint*)pGeom->clone();
+            OGRPoint* pPt = pGeom->clone()->toPoint();
             if( !bQuiet )
             {
                 if( moRepers.find(dfReperPos) != moRepers.end() )
@@ -741,7 +741,7 @@ static OGRErr CreatePartsFromLineString(
                 if( pTransformPart->transformTo(&SpatRef) == OGRERR_NONE )
                 {
                     OGRLineString* pTransformPartLS =
-                        (OGRLineString*)pTransformPart;
+                        pTransformPart->toLineString();
                     dfLen = pTransformPartLS->get_Length();
                 }
 
@@ -869,7 +869,7 @@ static OGRErr CreatePartsFromLineString(
                 if( pTransformPart->transformTo(&SpatRef) == OGRERR_NONE )
                 {
                     OGRLineString* pTransformPartLS =
-                        (OGRLineString*)pTransformPart;
+                        pTransformPart->toLineString();
                     dfLen = pTransformPartLS->get_Length();
                 }
                 CURVE_DATA data = {
@@ -1060,11 +1060,11 @@ static OGRErr CreateParts(
                         pPathFeature->GetFID());
             }
 
-            OGRGeometryCollection* pGeomColl = (OGRGeometryCollection*)pGeom;
+            OGRGeometryCollection* pGeomColl = pGeom->toGeometryCollection();
             for( int i = 0; i < pGeomColl->getNumGeometries(); ++i )
             {
                 OGRLineString* pPath =
-                    (OGRLineString*)pGeomColl->getGeometryRef(i)->clone();
+                    pGeomColl->getGeometryRef(i)->clone()->toLineString();
                 pPath->assignSpatialReference(pGeomColl->getSpatialReference());
                 eRetCode = CreatePartsFromLineString(
                     pPath, poPkLayer, nMValField, dfStep, poOutLayer,
@@ -1078,17 +1078,15 @@ static OGRErr CreateParts(
                 }
             }
         }
-        else
+        else if( pGeom != nullptr &&
+            wkbFlatten(pGeom->getGeometryType()) == wkbLineString )
         {
-            if( nullptr != pGeom )
-            {
-                OGRLineString* pGeomClone = (OGRLineString*)pGeom->clone();
-                eRetCode = CreatePartsFromLineString(
-                    pGeomClone, poPkLayer, nMValField, dfStep, poOutLayer,
-                    bDisplayProgress, bQuiet, pszOutputSepFieldName,
-                    pszOutputSepFieldValue);
-                delete pGeomClone;
-            }
+            OGRLineString* pGeomClone = pGeom->clone()->toLineString();
+            eRetCode = CreatePartsFromLineString(
+                pGeomClone, poPkLayer, nMValField, dfStep, poOutLayer,
+                bDisplayProgress, bQuiet, pszOutputSepFieldName,
+                pszOutputSepFieldValue);
+            delete pGeomClone;
         }
 
         OGRFeature::DestroyFeature(pPathFeature);
@@ -1190,7 +1188,7 @@ static OGRErr GetPosition( OGRLayer* const poPkLayer,
                 dfMinDistance = dfCurrentDistance;
                 if( pCloserPart != nullptr )
                     delete pCloserPart;
-                pCloserPart = (OGRLineString*)pFeature->StealGeometry();
+                pCloserPart = pFeature->StealGeometry()->toLineString();
                 dfBeg = pFeature->GetFieldAsDouble(FIELD_START);
                 dfScale = pFeature->GetFieldAsDouble(FIELD_SCALE_FACTOR);
             }
@@ -1248,7 +1246,7 @@ static OGRErr GetCoordinates( OGRLayer* const poPkLayer,
         double dfPosCorr = dfPos - dfStart;
         const double dfSF = pFeature->GetFieldAsDouble(FIELD_SCALE_FACTOR);
         dfPosCorr *= dfSF;
-        OGRLineString *pLine = (OGRLineString*)pFeature->GetGeometryRef();
+        OGRLineString *pLine = pFeature->GetGeometryRef()->toLineString();
 
         OGRPoint pt;
         pLine->Value(dfPosCorr, &pt);

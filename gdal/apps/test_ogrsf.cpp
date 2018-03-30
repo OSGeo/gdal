@@ -736,7 +736,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         if( pszWKT != nullptr )
         {
             OGRGeometry* poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt((char**)&pszWKT, nullptr, &poGeom);
+            OGRGeometryFactory::createFromWkt(const_cast<char**>(&pszWKT), nullptr, &poGeom);
             poFeature->SetGeometryDirectly(poGeom);
         }
 
@@ -780,7 +780,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         if( pszWKT != nullptr )
         {
             OGRGeometry* poGeom = nullptr;
-            OGRGeometryFactory::createFromWkt((char **) &pszWKT, nullptr, &poGeom);
+            OGRGeometryFactory::createFromWkt(const_cast<char **>(&pszWKT), nullptr, &poGeom);
             poFeature->SetGeometryDirectly(poGeom);
         }
 
@@ -831,7 +831,7 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
             if( pszWKT != nullptr )
             {
                 OGRGeometry* poGeom = nullptr;
-                OGRGeometryFactory::createFromWkt((char**)&pszWKT, nullptr, &poGeom);
+                OGRGeometryFactory::createFromWkt(const_cast<char **>(&pszWKT), nullptr, &poGeom);
                 poFeature->SetGeometryDirectly(poGeom);
             }
             CPLErrorReset();
@@ -899,9 +899,9 @@ static int TestCreateLayer( GDALDriver* poDriver, OGRwkbGeometryType eGeomType )
         !EQUAL(poDriver->GetDescription(), "OGR_GMT") )
     {
         /* Reopen dataset */
-        poDS = LOG_ACTION((GDALDataset*)GDALOpenEx(osFilename,
+        poDS = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(osFilename,
                                                    GDAL_OF_VECTOR,
-                                                   nullptr, nullptr, nullptr));
+                                                   nullptr, nullptr, nullptr)));
         if( poDS != nullptr )
         {
             poLayer = LOG_ACTION(poDS->GetLayerByName(osLayerNameToTest));
@@ -3121,7 +3121,7 @@ static int TestOGRLayerIgnoreFields( OGRLayer* poLayer )
         papszIgnoredFields = CSLAddString(papszIgnoredFields, "OGR_GEOMETRY");
 
     OGRErr eErr =
-        LOG_ACTION(poLayer->SetIgnoredFields((const char**)papszIgnoredFields));
+        LOG_ACTION(poLayer->SetIgnoredFields(const_cast<const char**>(papszIgnoredFields)));
     CSLDestroy(papszIgnoredFields);
 
     if( eErr == OGRERR_FAILURE )
@@ -3548,8 +3548,8 @@ static int TestInterleavedReading( const char* pszDataSourceIn,
     OGRFeature* poFeature22 = nullptr;
 
     /* Check that we have 2 layers with at least 2 features */
-    GDALDataset* poDS = LOG_ACTION((GDALDataset*) GDALOpenEx(pszDataSourceIn,
-                            GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr));
+    GDALDataset* poDS = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(pszDataSourceIn,
+                            GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr)));
     if (poDS == nullptr)
     {
         if( bVerbose )
@@ -3575,10 +3575,10 @@ static int TestInterleavedReading( const char* pszDataSourceIn,
 
     /* Test normal reading */
     LOG_ACTION(GDALClose(poDS));
-    poDS = LOG_ACTION((GDALDataset*) GDALOpenEx(pszDataSourceIn,
-                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr));
-    poDS2 = LOG_ACTION((GDALDataset*) GDALOpenEx(pszDataSourceIn,
-                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr));
+    poDS = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(pszDataSourceIn,
+                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr)));
+    poDS2 = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(pszDataSourceIn,
+                                GDAL_OF_VECTOR, nullptr, papszOpenOptions, nullptr)));
     if (poDS == nullptr || poDS2 == nullptr)
     {
         if( bVerbose )
@@ -3797,8 +3797,8 @@ static int TestVirtualIO( GDALDataset * poDS )
     else
         pszVirtFile = osVirtPath;
     CPLDebug("test_ogrsf", "Trying to open %s", pszVirtFile);
-    GDALDataset* poDS2 = LOG_ACTION((GDALDataset*)GDALOpenEx(
-        pszVirtFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ));
+    GDALDataset* poDS2 = LOG_ACTION(static_cast<GDALDataset*>(GDALOpenEx(
+        pszVirtFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr )));
     if( poDS2 != nullptr )
     {
         if( poDS->GetDriver()->GetMetadataItem(GDAL_DCAP_VIRTUALIO) == nullptr )

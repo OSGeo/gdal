@@ -44,7 +44,7 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
                  const char * pszOutputType,
                  bool bPretty, bool bPrintSep );
 void PrintSRSOutputTypes( const OGRSpatialReference &oSRS,
-                          const char ** papszOutputTypes );
+                          const char * const * papszOutputTypes );
 
 /************************************************************************/
 /*                               Usage()                                */
@@ -303,13 +303,13 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
     /* try to open with GDAL */
     if( !STARTS_WITH(pszInput, "http://spatialreference.org/") )    {
         CPLDebug( "gdalsrsinfo", "trying to open with GDAL" );
-        poGDALDS = (GDALDataset *) GDALOpenEx( pszInput, 0, nullptr, nullptr, nullptr );
+        poGDALDS = static_cast<GDALDataset *>(GDALOpenEx( pszInput, 0, nullptr, nullptr, nullptr ));
     }
     if ( poGDALDS != nullptr ) {
         pszProjection = poGDALDS->GetProjectionRef( );
         if( pszProjection != nullptr && pszProjection[0] != '\0' )
         {
-            char* pszProjectionTmp = (char*) pszProjection;
+            char* pszProjectionTmp = const_cast<char*>(pszProjection);
             if( oSRS.importFromWkt( &pszProjectionTmp ) == OGRERR_NONE ) {
                 CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
                 bGotSRS = true;
@@ -481,10 +481,10 @@ CPLErr PrintSRS( const OGRSpatialReference &oSRS,
 /*      Print spatial reference in specified formats.                   */
 /************************************************************************/
 void PrintSRSOutputTypes( const OGRSpatialReference &oSRS,
-                          const char ** papszOutputTypes )
+                          const char * const * papszOutputTypes )
 
 {
-    int nOutputTypes = CSLCount((char**)papszOutputTypes);
+    int nOutputTypes = CSLCount(papszOutputTypes);
     printf( "\n" );
     for ( int i=0; i<nOutputTypes; i++ ) {
         PrintSRS( oSRS, papszOutputTypes[i], true, true );

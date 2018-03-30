@@ -862,7 +862,7 @@ template<class T, GradientAlg alg>
 static
 float GDALHillshadeAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
 
     // First Slope ...
     double x, y;
@@ -887,7 +887,7 @@ template<class T>
 static
 float GDALHillshadeAlg_same_res (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
 
     // First Slope ...
     /*x = (afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
@@ -938,7 +938,7 @@ int GDALHillshadeAlg_same_res_multisample( const T* pafThreeLineWin,
 {
     // Only valid for T == int
 
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
     const __m128d reg_fact_x = _mm_load1_pd(
                       &(psData->sin_az_mul_cos_alt_mul_z_mul_254_mul_inv_res));
     const __m128d reg_fact_y = _mm_load1_pd (
@@ -958,18 +958,18 @@ int GDALHillshadeAlg_same_res_multisample( const T* pafThreeLineWin,
         const T* secondLine = pafThreeLineWin + nLine2Off + j-1;
         const T* thirdLine  = pafThreeLineWin + nLine3Off + j-1;
 
-        __m128i firstLine0 = _mm_loadu_si128( (__m128i const*)firstLine );
-        __m128i firstLine1 = _mm_loadu_si128( (__m128i const*)(firstLine + 1) );
-        __m128i firstLine2 = _mm_loadu_si128( (__m128i const*)(firstLine + 2) );
-        __m128i thirdLine0 = _mm_loadu_si128( (__m128i const*)thirdLine );
-        __m128i thirdLine1 = _mm_loadu_si128( (__m128i const*)(thirdLine + 1) );
-        __m128i thirdLine2 = _mm_loadu_si128( (__m128i const*)(thirdLine + 2) );
+        __m128i firstLine0 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(firstLine) );
+        __m128i firstLine1 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(firstLine + 1) );
+        __m128i firstLine2 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(firstLine + 2) );
+        __m128i thirdLine0 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(thirdLine) );
+        __m128i thirdLine1 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(thirdLine + 1) );
+        __m128i thirdLine2 = _mm_loadu_si128( reinterpret_cast<__m128i const*>(thirdLine + 2) );
         __m128i accX = _mm_sub_epi32( firstLine0, thirdLine2);
         const __m128i six_minus_two = _mm_sub_epi32( thirdLine0, firstLine2 );
         __m128i accY = accX;
         const __m128i three_minus_five = _mm_sub_epi32(
-                          _mm_loadu_si128( (__m128i const*)secondLine ),
-                          _mm_loadu_si128( (__m128i const*)(secondLine+2) ) );
+                          _mm_loadu_si128( reinterpret_cast<__m128i const*>(secondLine) ),
+                          _mm_loadu_si128( reinterpret_cast<__m128i const*>(secondLine+2) ) );
         const __m128i one_minus_seven = _mm_sub_epi32( firstLine1, thirdLine1 );
         accX = _mm_add_epi32(accX, three_minus_five);
         accY = _mm_add_epi32(accY, one_minus_seven);
@@ -1036,7 +1036,7 @@ template<class T, GradientAlg alg>
 static
 float GDALHillshadeCombinedAlg (const T* afWin, float /*fDstNoDataValue*/, void* pData)
 {
-    GDALHillshadeAlgData* psData = (GDALHillshadeAlgData*)pData;
+    GDALHillshadeAlgData* psData = static_cast<GDALHillshadeAlgData*>(pData);
 
     // First Slope ...
     double x, y;
@@ -1134,7 +1134,7 @@ float GDALHillshadeMultiDirectionalAlg (const T* afWin,
                                         void* pData)
 {
     const GDALHillshadeMultiDirectionalAlgData* psData =
-                            (const GDALHillshadeMultiDirectionalAlgData*)pData;
+            static_cast<const GDALHillshadeMultiDirectionalAlgData*>(pData);
 
     // First Slope ...
     double x, y;
@@ -1230,7 +1230,7 @@ template<class T>
 static
 float GDALSlopeHornAlg( const T* afWin, float /*fDstNoDataValue*/, void* pData )
 {
-    GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
+    const GDALSlopeAlgData* psData = static_cast<const GDALSlopeAlgData*>(pData);
 
     const double dx = ((afWin[0] + afWin[3] + afWin[3] + afWin[6]) -
           (afWin[2] + afWin[5] + afWin[5] + afWin[8]))/psData->ewres;
@@ -1253,7 +1253,7 @@ float GDALSlopeZevenbergenThorneAlg( const T* afWin,
                                      float /*fDstNoDataValue*/,
                                      void* pData )
 {
-    GDALSlopeAlgData* psData = (GDALSlopeAlgData*)pData;
+    const GDALSlopeAlgData* psData = static_cast<const GDALSlopeAlgData*>(pData);
 
     const double dx = (afWin[3] - afWin[5]) / psData->ewres;
     const double dy = (afWin[7] - afWin[1]) / psData->nsres;
@@ -1294,7 +1294,7 @@ template<class T>
 static
 float GDALAspectAlg( const T* afWin, float fDstNoDataValue, void* pData )
 {
-    GDALAspectAlgData* psData = (GDALAspectAlgData*)pData;
+    const GDALAspectAlgData* psData = static_cast<const GDALAspectAlgData*>(pData);
 
     const double dx = ((afWin[2] + afWin[5] + afWin[5] + afWin[8]) -
           (afWin[0] + afWin[3] + afWin[3] + afWin[6]));
@@ -1333,7 +1333,7 @@ static
 float GDALAspectZevenbergenThorneAlg( const T* afWin, float fDstNoDataValue,
                                       void* pData )
 {
-    GDALAspectAlgData* psData = (GDALAspectAlgData*)pData;
+    const GDALAspectAlgData* psData = static_cast<const GDALAspectAlgData*>(pData);
 
     const double dx = afWin[5] - afWin[3];
     const double dy = afWin[7] - afWin[1];
@@ -1952,10 +1952,10 @@ GByte* GDALColorReliefPrecompute(GDALRasterBandH hSrcBand,
                                          i - nIndexOffset,
                                          eColorSelectionMode,
                                          &nR, &nG, &nB, &nA);
-                pabyPrecomputed[4 * i] = (GByte) nR;
-                pabyPrecomputed[4 * i + 1] = (GByte) nG;
-                pabyPrecomputed[4 * i + 2] = (GByte) nB;
-                pabyPrecomputed[4 * i + 3] = (GByte) nA;
+                pabyPrecomputed[4 * i] = static_cast<GByte>(nR);
+                pabyPrecomputed[4 * i + 1] = static_cast<GByte>(nG);
+                pabyPrecomputed[4 * i + 2] = static_cast<GByte>(nB);
+                pabyPrecomputed[4 * i + 3] = static_cast<GByte>(nA);
             }
         }
     }
@@ -2099,7 +2099,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                                               int nBlockYOff,
                                               void *pImage )
 {
-    GDALColorReliefDataset * poGDS = (GDALColorReliefDataset *) poDS;
+    GDALColorReliefDataset * poGDS = cpl::down_cast<GDALColorReliefDataset *>(poDS);
     const int nReqXSize =
         (nBlockXOff + 1) * nBlockXSize >= nRasterXSize
         ? nRasterXSize - nBlockXOff * nBlockXSize
@@ -2123,8 +2123,8 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                           nBlockYOff * nBlockYSize,
                           nReqXSize, nReqYSize,
                           (poGDS->panSourceBuf) ?
-                          (void*) poGDS->panSourceBuf :
-                          (void* )poGDS->pafSourceBuf,
+                          static_cast<void*>(poGDS->panSourceBuf) :
+                          static_cast<void*>(poGDS->pafSourceBuf),
                           nReqXSize, nReqYSize,
                           (poGDS->panSourceBuf) ? GDT_Int32 : GDT_Float32,
                           0, 0);
@@ -2143,7 +2143,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
             for( int x = 0; x < nReqXSize; x++ )
             {
                 const int nIndex = poGDS->panSourceBuf[j] + poGDS->nIndexOffset;
-                ((GByte*)pImage)[y * nBlockXSize + x] =
+                static_cast<GByte*>(pImage)[y * nBlockXSize + x] =
                     poGDS->pabyPrecomputed[4*nIndex + nBand-1];
                 j++;
             }
@@ -2164,8 +2164,8 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
                                         &anComponents[1],
                                         &anComponents[2],
                                         &anComponents[3]);
-                ((GByte*)pImage)[y * nBlockXSize + x] =
-                    (GByte) anComponents[nBand-1];
+                static_cast<GByte*>(pImage)[y * nBlockXSize + x] =
+                    static_cast<GByte>(anComponents[nBand-1]);
                 j++;
             }
         }
@@ -2176,7 +2176,7 @@ CPLErr GDALColorReliefRasterBand::IReadBlock( int nBlockXOff,
 
 GDALColorInterp GDALColorReliefRasterBand::GetColorInterpretation()
 {
-    return (GDALColorInterp)(GCI_RedBand + nBand - 1);
+    return static_cast<GDALColorInterp>(GCI_RedBand + nBand - 1);
 }
 
 static
@@ -2274,8 +2274,8 @@ CPLErr GDALColorRelief( GDALRasterBandH hSrcBand,
                                     0, i,
                                     nXSize, 1,
                                     panSourceBuf
-                                    ? (void*) panSourceBuf
-                                    : (void*) pafSourceBuf,
+                                    ? static_cast<void*>(panSourceBuf)
+                                    : static_cast<void*>(pafSourceBuf),
                                     nXSize, 1,
                                     panSourceBuf ? GDT_Int32 : GDT_Float32,
                                     0, 0);
@@ -2479,7 +2479,7 @@ CPLErr GDALGenerateVRTColorRelief( const char* pszDstFilename,
             "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n", iBand + 1) > 0;
         bOK &= VSIFPrintfL(
             fp, "    <ColorInterp>%s</ColorInterp>\n",
-            GDALGetColorInterpretationName((GDALColorInterp)(GCI_RedBand + iBand))) > 0;
+            GDALGetColorInterpretationName(static_cast<GDALColorInterp>(GCI_RedBand + iBand))) > 0;
         bOK &= VSIFPrintfL(
             fp, "    <ComplexSource>\n") > 0;
         bOK &= VSIFPrintfL(
@@ -2838,16 +2838,16 @@ GDALGeneric3x3RasterBand<T>::GDALGeneric3x3RasterBand(
 template<class T>
 void GDALGeneric3x3RasterBand<T>::InitWithNoData(void* pImage)
 {
-    GDALGeneric3x3Dataset<T> * poGDS = (GDALGeneric3x3Dataset<T> *) poDS;
+    auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
     if( eDataType == GDT_Byte )
     {
         for( int j = 0; j < nBlockXSize; j++ )
-            ((GByte*)pImage)[j] = (GByte) poGDS->dfDstNoDataValue;
+            static_cast<GByte*>(pImage)[j] = static_cast<GByte>(poGDS->dfDstNoDataValue);
     }
     else
     {
         for( int j = 0; j < nBlockXSize; j++ )
-            ((float*)pImage)[j] = static_cast<float>(poGDS->dfDstNoDataValue);
+            static_cast<float*>(pImage)[j] = static_cast<float>(poGDS->dfDstNoDataValue);
     }
 }
 
@@ -2856,7 +2856,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                                                 int nBlockYOff,
                                                 void *pImage )
 {
-    GDALGeneric3x3Dataset<T> * poGDS = (GDALGeneric3x3Dataset<T> *) poDS;
+    auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
 
     if( poGDS->bComputeAtEdges && nRasterXSize >= 2 && nRasterYSize >= 2 )
     {
@@ -2914,9 +2914,9 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                         poGDS->bComputeAtEdges);
 
                 if( eDataType == GDT_Byte )
-                    ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+                    static_cast<GByte*>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
                 else
-                    ((float*)pImage)[j] = fVal;
+                    static_cast<float*>(pImage)[j] = fVal;
             }
 
             return CE_None;
@@ -2978,9 +2978,9 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                         poGDS->bComputeAtEdges);
 
                 if( eDataType == GDT_Byte )
-                    ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+                    static_cast<GByte*>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
                 else
-                    ((float*)pImage)[j] = fVal;
+                    static_cast<float*>(pImage)[j] = fVal;
             }
 
             return CE_None;
@@ -3069,9 +3069,9 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                     poGDS->bComputeAtEdges);
 
             if( eDataType == GDT_Byte )
-                ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+                static_cast<GByte*>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
             else
-                ((float*)pImage)[j] = fVal;
+                static_cast<float*>(pImage)[j] = fVal;
         }
 
         j = nRasterXSize - 1;
@@ -3098,23 +3098,23 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                 poGDS->bComputeAtEdges);
 
         if( eDataType == GDT_Byte )
-            ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+            static_cast<GByte*>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
         else
-            ((float*)pImage)[j] = fVal;
+            static_cast<float*>(pImage)[j] = fVal;
     }
     else
     {
         if( eDataType == GDT_Byte )
         {
-            ((GByte*)pImage)[0] = (GByte) poGDS->dfDstNoDataValue;
+            static_cast<GByte*>(pImage)[0] = static_cast<GByte>(poGDS->dfDstNoDataValue);
             if( nBlockXSize > 1 )
-                ((GByte*)pImage)[nBlockXSize - 1] = (GByte) poGDS->dfDstNoDataValue;
+                static_cast<GByte*>(pImage)[nBlockXSize - 1] = static_cast<GByte>(poGDS->dfDstNoDataValue);
         }
         else
         {
-            ((float*)pImage)[0] = static_cast<float>(poGDS->dfDstNoDataValue);
+            static_cast<float*>(pImage)[0] = static_cast<float>(poGDS->dfDstNoDataValue);
             if( nBlockXSize > 1 )
-                ((float*)pImage)[nBlockXSize - 1] =
+                static_cast<float*>(pImage)[nBlockXSize - 1] =
                     static_cast<float>(poGDS->dfDstNoDataValue);
         }
     }
@@ -3145,9 +3145,9 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
                 poGDS->bComputeAtEdges);
 
         if( eDataType == GDT_Byte )
-            ((GByte*)pImage)[j] = (GByte) (fVal + 0.5);
+            static_cast<GByte*>(pImage)[j] = static_cast<GByte>(fVal + 0.5);
         else
-            ((float*)pImage)[j] = fVal;
+            static_cast<float*>(pImage)[j] = fVal;
     }
 
     return CE_None;
@@ -3156,7 +3156,7 @@ CPLErr GDALGeneric3x3RasterBand<T>::IReadBlock( int /*nBlockXOff*/,
 template<class T>
 double GDALGeneric3x3RasterBand<T>::GetNoDataValue( int* pbHasNoData )
 {
-    GDALGeneric3x3Dataset<T> * poGDS = (GDALGeneric3x3Dataset<T> *) poDS;
+    auto poGDS = cpl::down_cast<GDALGeneric3x3Dataset<T> *>(poDS);
     if( pbHasNoData )
         *pbHasNoData = poGDS->bDstHasNoData;
     return poGDS->dfDstNoDataValue;
@@ -3624,7 +3624,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                 GDALDEMProcessingOptionsFree(psOptionsToFree);
                 return nullptr;
             }
-            hIntermediateDataset = (GDALDatasetH)poDS;
+            hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
         }
         else
         {
@@ -3648,7 +3648,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                     GDALDEMProcessingOptionsFree(psOptionsToFree);
                     return nullptr;
                 }
-                hIntermediateDataset = (GDALDatasetH)poDS;
+                hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
             }
             else
             {
@@ -3668,7 +3668,7 @@ GDALDatasetH GDALDEMProcessing( const char *pszDest,
                     GDALDEMProcessingOptionsFree(psOptionsToFree);
                     return nullptr;
                 }
-                hIntermediateDataset = (GDALDatasetH)poDS;
+                hIntermediateDataset = static_cast<GDALDatasetH>(poDS);
             }
         }
 

@@ -347,7 +347,7 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     if( pszThisSourceSRS != nullptr && pszThisSourceSRS[0] != '\0' )
     {
         hSrcSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hSrcSRS, (char **)&pszThisSourceSRS ) != OGRERR_NONE )
+        if( OSRImportFromWkt( hSrcSRS, const_cast<char **>(&pszThisSourceSRS) ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot compute bounding box of cutline.");
@@ -378,7 +378,7 @@ static CPLErr CropToCutline( OGRGeometryH hCutline, char** papszTO,
     if ( pszThisTargetSRS != nullptr )
     {
         hDstSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hDstSRS, (char **)&pszThisTargetSRS ) != OGRERR_NONE )
+        if( OSRImportFromWkt( hDstSRS, const_cast<char **>(&pszThisTargetSRS) ) != OGRERR_NONE )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute bounding box of cutline.");
             OSRDestroySpatialReference(hSrcSRS);
@@ -1262,7 +1262,7 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 /*      Determine if we must work with the full-resolution source       */
 /*      dataset, or one of its overview level.                          */
 /* -------------------------------------------------------------------- */
-        GDALDataset* poSrcDS = (GDALDataset*) hSrcDS;
+        GDALDataset* poSrcDS = static_cast<GDALDataset*>(hSrcDS);
         GDALDataset* poSrcOvrDS = nullptr;
         int nOvCount = poSrcDS->GetRasterBand(1)->GetOverviewCount();
         if( psOptions->nOvLevel <= -2 && nOvCount > 0 )
@@ -2236,7 +2236,7 @@ GDALWarpCreateOutput( int nSrcCount, GDALDatasetH *pahSrcDS, const char *pszFile
             return nullptr;
         }
 
-        GDALTransformerInfo* psInfo = (GDALTransformerInfo*)hTransformArg;
+        GDALTransformerInfo* psInfo = static_cast<GDALTransformerInfo*>(hTransformArg);
 
 /* -------------------------------------------------------------------- */
 /*      Get approximate output definition.                              */
@@ -2727,7 +2727,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
     if( pszProjection != nullptr )
     {
         hRasterSRS = OSRNewSpatialReference(nullptr);
-        if( OSRImportFromWkt( hRasterSRS, (char **)&pszProjection ) != OGRERR_NONE )
+        if( OSRImportFromWkt( hRasterSRS, const_cast<char **>(&pszProjection) ) != OGRERR_NONE )
         {
             OSRDestroySpatialReference(hRasterSRS);
             hRasterSRS = nullptr;
@@ -2828,7 +2828,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
     const double dfMaxLengthInSpatUnits = GetMaximumSegmentLength(
                 reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
     OGRErr eErr = OGR_G_Transform( hMultiPolygon,
-                     (OGRCoordinateTransformationH) &oTransformer );
+                     reinterpret_cast<OGRCoordinateTransformationH>(&oTransformer) );
     const double dfInitialMaxLengthInPixels = GetMaximumSegmentLength(
                             reinterpret_cast<OGRGeometry*>(hMultiPolygon) );
 
@@ -2887,7 +2887,7 @@ TransformCutlineToSource( GDALDatasetH hSrcDS, OGRGeometryH hCutline,
                 CPLFree(pszWKT);
             }
             eErr = OGR_G_Transform( hMultiPolygon,
-                        (OGRCoordinateTransformationH) &oTransformer );
+                        reinterpret_cast<OGRCoordinateTransformationH>(&oTransformer) );
             if( eErr == OGRERR_NONE )
             {
                 const double dfMaxLengthInPixels = GetMaximumSegmentLength(
@@ -3254,11 +3254,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
+                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                              papszArgv[i+1]) )
                 {
-                    psOptions->eOutputType = (GDALDataType) iType;
+                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
                 }
             }
 
@@ -3277,11 +3277,11 @@ GDALWarpAppOptions *GDALWarpAppOptionsNew(char** papszArgv,
 
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
+                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                              papszArgv[i+1]) )
                 {
-                    psOptions->eWorkingType = (GDALDataType) iType;
+                    psOptions->eWorkingType = static_cast<GDALDataType>(iType);
                 }
             }
 

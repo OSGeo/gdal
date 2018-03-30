@@ -432,8 +432,13 @@ typedef enum
 #define wkb25DBit 0x80000000
 #endif
 
+#ifndef __cplusplus
 /** Return the 2D geometry type corresponding to the specified geometry type */
 #define wkbFlatten(x)  OGR_GT_Flatten((OGRwkbGeometryType)(x))
+#else
+/** Return the 2D geometry type corresponding to the specified geometry type */
+#define wkbFlatten(x)  OGR_GT_Flatten(static_cast<OGRwkbGeometryType>(x))
+#endif
 
 /** Return if the geometry type is a 3D geometry type
   * @since GDAL 2.0

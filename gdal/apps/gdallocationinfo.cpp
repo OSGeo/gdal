@@ -309,7 +309,7 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
     GDALDatasetH hSrcDS
         = GDALOpenEx( pszSrcFilename, GDAL_OF_RASTER, nullptr,
-                      (const char* const* )papszOpenOptions, nullptr );
+                      papszOpenOptions, nullptr );
     if( hSrcDS == nullptr )
         exit( 1 );
 

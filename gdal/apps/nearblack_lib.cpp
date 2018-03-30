@@ -518,7 +518,8 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
-        if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, nullptr, psOptions->pProgressData )) )
+        if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) /
+            static_cast<double>(nYSize), nullptr, psOptions->pProgressData )) )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);

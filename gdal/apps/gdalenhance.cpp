@@ -137,11 +137,11 @@ MAIN_START(argc, argv)
 
             for( iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
+                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                              argv[i+1]) )
                 {
-                    eOutputType = (GDALDataType) iType;
+                    eOutputType = static_cast<GDALDataType>(iType);
                 }
             }
 
@@ -416,7 +416,7 @@ MAIN_START(argc, argv)
                         GDALGetGCPProjection( hDataset ) );
     }
 
-    poVDS->SetMetadata( ((GDALDataset*)hDataset)->GetMetadata() );
+    poVDS->SetMetadata( static_cast<GDALDataset*>(hDataset)->GetMetadata() );
 
     for( iBand = 0; iBand < nBandCount; iBand++ )
     {
@@ -424,7 +424,7 @@ MAIN_START(argc, argv)
         GDALRasterBand  *poSrcBand;
         GDALDataType    eBandType;
 
-        poSrcBand = ((GDALDataset *) hDataset)->GetRasterBand(iBand+1);
+        poSrcBand = static_cast<GDALDataset*>(hDataset)->GetRasterBand(iBand+1);
 
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
@@ -438,7 +438,7 @@ MAIN_START(argc, argv)
 /*      Create this band.                                               */
 /* -------------------------------------------------------------------- */
         poVDS->AddBand( eBandType, nullptr );
-        poVRTBand = (VRTSourcedRasterBand *) poVDS->GetRasterBand( iBand+1 );
+        poVRTBand = cpl::down_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand( iBand+1 ));
 
 /* -------------------------------------------------------------------- */
 /*      Create a function based source with info on how to apply the    */
@@ -464,7 +464,7 @@ MAIN_START(argc, argv)
 /* -------------------------------------------------------------------- */
 /*      Write to the output file using CopyCreate().                    */
 /* -------------------------------------------------------------------- */
-    hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
+    hOutDS = GDALCreateCopy( hDriver, pszDest, static_cast<GDALDatasetH>(poVDS),
                              FALSE, papszCreateOptions,
                              pfnProgress, nullptr );
     if( hOutDS != nullptr )
@@ -594,7 +594,7 @@ static CPLErr EnhancerCallback( void *hCBData,
                                 void *pData )
 
 {
-    EnhanceCBInfo *psEInfo = (EnhanceCBInfo *) hCBData;
+    const EnhanceCBInfo *psEInfo = static_cast<const EnhanceCBInfo *>(hCBData);
 
     if( psEInfo->eWrkType != GDT_Byte )
     {
@@ -621,7 +621,7 @@ static CPLErr EnhancerCallback( void *hCBData,
     int nPixelCount = nXSize * nYSize;
     int iPixel;
     int bHaveNoData;
-    float fNoData = (float)psEInfo->poSrcBand->GetNoDataValue( &bHaveNoData );
+    float fNoData = static_cast<float>(psEInfo->poSrcBand->GetNoDataValue( &bHaveNoData ));
     double dfScale =
         psEInfo->nLUTBins / (psEInfo->dfScaleMax - psEInfo->dfScaleMin);
 
@@ -629,7 +629,7 @@ static CPLErr EnhancerCallback( void *hCBData,
     {
         if( bHaveNoData && pafSrcImage[iPixel] == fNoData )
         {
-            pabyOutImage[iPixel] = (GByte) fNoData;
+            pabyOutImage[iPixel] = static_cast<GByte>(fNoData);
             continue;
         }
 
@@ -638,9 +638,9 @@ static CPLErr EnhancerCallback( void *hCBData,
         iBin = std::max(0, std::min(psEInfo->nLUTBins - 1, iBin));
 
         if( psEInfo->panLUT )
-            pabyOutImage[iPixel] = (GByte) psEInfo->panLUT[iBin];
+            pabyOutImage[iPixel] = static_cast<GByte>(psEInfo->panLUT[iBin]);
         else
-            pabyOutImage[iPixel] = (GByte) iBin;
+            pabyOutImage[iPixel] = static_cast<GByte>(iBin);
     }
 
     CPLFree( pafSrcImage );

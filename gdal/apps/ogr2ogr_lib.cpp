@@ -475,7 +475,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
     if (pszWhere)
         poLyr->SetAttributeFilter(pszWhere);
 
-    OGRGeometry *poGeom = nullptr;
+    OGRMultiPolygon *poMP = nullptr;
     OGRFeature *poFeat = nullptr;
     while ((poFeat = poLyr->GetNextFeature()) != nullptr)
     {
@@ -485,25 +485,26 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
             const OGRwkbGeometryType eType =
                 wkbFlatten(poSrcGeom->getGeometryType());
 
-            if (poGeom == nullptr)
-                poGeom = OGRGeometryFactory::createGeometry( wkbMultiPolygon );
+            if (poMP == nullptr)
+                poMP = new OGRMultiPolygon();
 
             if( eType == wkbPolygon )
-                ((OGRGeometryCollection*)poGeom)->addGeometry( poSrcGeom );
+                poMP->addGeometry( poSrcGeom );
             else if( eType == wkbMultiPolygon )
             {
-                int nGeomCount = OGR_G_GetGeometryCount( (OGRGeometryH)poSrcGeom );
+                OGRMultiPolygon* poSrcMP = poSrcGeom->toMultiPolygon();
+                const int nGeomCount = poSrcMP->getNumGeometries();
 
                 for( int iGeom = 0; iGeom < nGeomCount; iGeom++ )
                 {
-                    ((OGRGeometryCollection*)poGeom)->addGeometry(
-                                ((OGRGeometryCollection*)poSrcGeom)->getGeometryRef(iGeom) );
+                    poMP->addGeometry(
+                        poSrcMP->getGeometryRef(iGeom) );
                 }
             }
             else
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "Geometry not of polygon type." );
-                OGRGeometryFactory::destroyGeometry(poGeom);
+                OGRGeometryFactory::destroyGeometry(poMP);
                 OGRFeature::DestroyFeature(poFeat);
                 if( pszSQL != nullptr )
                     poDS->ReleaseResultSet( poLyr );
@@ -519,7 +520,7 @@ static OGRGeometry* LoadGeometry( const char* pszDS,
         poDS->ReleaseResultSet( poLyr );
     GDALClose(poDS);
 
-    return poGeom;
+    return poMP;
 }
 
 /************************************************************************/
@@ -2010,7 +2011,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
     if( psOptions->bClipSrc && psOptions->pszClipSrcDS != nullptr)
     {
-        psOptions->hClipSrc = (OGRGeometryH) LoadGeometry(psOptions->pszClipSrcDS, psOptions->pszClipSrcSQL, psOptions->pszClipSrcLayer, psOptions->pszClipSrcWhere);
+        psOptions->hClipSrc = reinterpret_cast<OGRGeometryH>(LoadGeometry(psOptions->pszClipSrcDS, psOptions->pszClipSrcSQL, psOptions->pszClipSrcLayer, psOptions->pszClipSrcWhere));
         if (psOptions->hClipSrc == nullptr)
         {
             CPLError( CE_Failure,CPLE_IllegalArg, "cannot load source clip geometry");
@@ -2021,7 +2022,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     else if( psOptions->bClipSrc && psOptions->hClipSrc == nullptr )
     {
         if (psOptions->hSpatialFilter)
-            psOptions->hClipSrc = (OGRGeometryH)((OGRGeometry *)(psOptions->hSpatialFilter))->clone();
+            psOptions->hClipSrc = OGR_G_Clone(psOptions->hSpatialFilter);
         if (psOptions->hClipSrc == nullptr)
         {
             CPLError( CE_Failure, CPLE_IllegalArg, "-clipsrc must be used with -spat option or a\n"
@@ -2035,7 +2036,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
     if( psOptions->pszClipDstDS != nullptr)
     {
-        psOptions->hClipDst = (OGRGeometryH) LoadGeometry(psOptions->pszClipDstDS, psOptions->pszClipDstSQL, psOptions->pszClipDstLayer, psOptions->pszClipDstWhere);
+        psOptions->hClipDst = reinterpret_cast<OGRGeometryH>(LoadGeometry(psOptions->pszClipDstDS, psOptions->pszClipDstSQL, psOptions->pszClipDstLayer, psOptions->pszClipDstWhere));
         if (psOptions->hClipDst == nullptr)
         {
             CPLError( CE_Failure, CPLE_IllegalArg, "cannot load dest clip geometry");
@@ -2113,15 +2114,15 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
     if( bUpdate && poODS == nullptr )
     {
-        poODS = (GDALDataset*) GDALOpenEx( osDestFilename,
-                GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr, psOptions->papszDestOpenOptions, nullptr );
+        poODS = static_cast<GDALDataset*>(GDALOpenEx( osDestFilename,
+                GDAL_OF_UPDATE | GDAL_OF_VECTOR, nullptr, psOptions->papszDestOpenOptions, nullptr ));
 
         if( poODS == nullptr )
         {
             if (bOverwrite || bAppend)
             {
-                poODS = (GDALDataset*) GDALOpenEx( osDestFilename,
-                            GDAL_OF_VECTOR, nullptr, psOptions->papszDestOpenOptions, nullptr );
+                poODS = static_cast<GDALDataset*>(GDALOpenEx( osDestFilename,
+                            GDAL_OF_VECTOR, nullptr, psOptions->papszDestOpenOptions, nullptr ));
                 if (poODS == nullptr)
                 {
                     /* OK the datasource doesn't exist at all */
@@ -2386,7 +2387,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             return nullptr;
         }
         OGREnvelope sEnvelope;
-        ((OGRGeometry*)psOptions->hSpatialFilter)->getEnvelope(&sEnvelope);
+        OGR_G_GetEnvelope(psOptions->hSpatialFilter, &sEnvelope);
         if( oSpatSRS.SetFromUserInput( psOptions->pszSpatSRSDef ) != OGRERR_NONE )
         {
             CPLError( CE_Failure, CPLE_AppDefined, "Failed to process SRS definition: %s",
@@ -2463,8 +2464,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
     oTranslator.m_nCoordDim = psOptions->nCoordDim;
     oTranslator.m_eGeomOp = psOptions->eGeomOp;
     oTranslator.m_dfGeomOpParam = psOptions->dfGeomOpParam;
-    oTranslator.m_poClipSrc = (OGRGeometry *)psOptions->hClipSrc;
-    oTranslator.m_poClipDst = (OGRGeometry *)psOptions->hClipDst;
+    oTranslator.m_poClipSrc = reinterpret_cast<OGRGeometry*>(psOptions->hClipSrc);
+    oTranslator.m_poClipDst = reinterpret_cast<OGRGeometry*>(psOptions->hClipDst);
     oTranslator.m_bExplodeCollections = psOptions->bExplodeCollections;
     oTranslator.m_bNativeData = psOptions->bNativeData;
     oTranslator.m_nLimit = psOptions->nLimit;
@@ -2497,7 +2498,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
         OGRLayer *poResultSet =
             poDS->ExecuteSQL(
                 psOptions->pszSQLStatement,
-                (psOptions->pszGeomField == nullptr) ? (OGRGeometry*)psOptions->hSpatialFilter : nullptr,
+                (psOptions->pszGeomField == nullptr) ? reinterpret_cast<OGRGeometry*>(psOptions->hSpatialFilter) : nullptr,
                 psOptions->pszDialect);
 
         if( poResultSet != nullptr )
@@ -2506,7 +2507,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             {
                 int iGeomField = poResultSet->GetLayerDefn()->GetGeomFieldIndex(psOptions->pszGeomField);
                 if( iGeomField >= 0 )
-                    poResultSet->SetSpatialFilter( iGeomField, (OGRGeometry*)psOptions->hSpatialFilter );
+                    poResultSet->SetSpatialFilter( iGeomField, reinterpret_cast<OGRGeometry*>(psOptions->hSpatialFilter) );
                 else
                     CPLError( CE_Warning, CPLE_AppDefined, "Cannot find geometry field %s.",
                            psOptions->pszGeomField);
@@ -2538,8 +2539,9 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             OGRLayer* poPassedLayer = poResultSet;
             if (psOptions->bSplitListFields)
             {
-                poPassedLayer = new OGRSplitListFieldLayer(poPassedLayer, psOptions->nMaxSplitListSubFields);
-                int nRet = ((OGRSplitListFieldLayer*)poPassedLayer)->BuildLayerDefn(nullptr, nullptr);
+                auto poLayer = new OGRSplitListFieldLayer(poPassedLayer, psOptions->nMaxSplitListSubFields);
+                poPassedLayer = poLayer;
+                int nRet = poLayer->BuildLayerDefn(nullptr, nullptr);
                 if (!nRet)
                 {
                     delete poPassedLayer;
@@ -2731,7 +2733,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
 
                 ApplySpatialFilter(poLayer,
-                                   (OGRGeometry*)psOptions->hSpatialFilter,
+                                   reinterpret_cast<OGRGeometry*>(psOptions->hSpatialFilter),
                                    poSpatSRS, psOptions->pszGeomField,
                                    poSourceSRS );
 
@@ -2965,7 +2967,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                 }
             }
 
-            ApplySpatialFilter(poLayer, (OGRGeometry*)psOptions->hSpatialFilter, poSpatSRS, psOptions->pszGeomField, poSourceSRS);
+            ApplySpatialFilter(poLayer, reinterpret_cast<OGRGeometry*>(psOptions->hSpatialFilter), poSpatSRS, psOptions->pszGeomField, poSourceSRS);
 
             if (psOptions->bDisplayProgress)
             {
@@ -2995,7 +2997,8 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
             OGRLayer* poPassedLayer = poLayer;
             if (psOptions->bSplitListFields)
             {
-                poPassedLayer = new OGRSplitListFieldLayer(poPassedLayer, psOptions->nMaxSplitListSubFields);
+                auto poSLFLayer = new OGRSplitListFieldLayer(poPassedLayer, psOptions->nMaxSplitListSubFields);
+                poPassedLayer = poSLFLayer;
 
                 if (psOptions->bDisplayProgress && psOptions->nMaxSplitListSubFields != 1 &&
                     nCountLayersFeatures != 0)
@@ -3013,7 +3016,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
                     pProgressArg = nullptr;
                 }
 
-                int nRet = ((OGRSplitListFieldLayer*)poPassedLayer)->BuildLayerDefn(pfnProgress, pProgressArg);
+                int nRet = poSLFLayer->BuildLayerDefn(pfnProgress, pProgressArg);
                 if (!nRet)
                 {
                     delete poPassedLayer;
@@ -3096,7 +3099,7 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 
     GDALVectorTranslateOptionsFree(psOptions);
     if(nRetCode == 0)
-        return (GDALDatasetH) poODS;
+        return static_cast<GDALDatasetH>(poODS);
 
     if( hDstDS == nullptr ) GDALClose( poODS );
     return nullptr;
@@ -3112,14 +3115,14 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
     switch (wkbFlatten(poGeom->getGeometryType()))
     {
         case wkbPoint:
-            ((OGRPoint*)poGeom)->setZ(dfZ);
+            poGeom->toPoint()->setZ(dfZ);
             break;
 
         case wkbLineString:
         case wkbLinearRing:
         {
             int i;
-            OGRLineString* poLS = (OGRLineString*) poGeom;
+            OGRSimpleCurve* poLS = poGeom->toSimpleCurve();
             for(i=0;i<poLS->getNumPoints();i++)
                 poLS->setPoint(i, poLS->getX(i), poLS->getY(i), dfZ);
             break;
@@ -3128,7 +3131,7 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
         case wkbPolygon:
         {
             int i;
-            OGRPolygon* poPoly = (OGRPolygon*) poGeom;
+            OGRPolygon* poPoly = poGeom->toPolygon();
             SetZ(poPoly->getExteriorRing(), dfZ);
             for(i=0;i<poPoly->getNumInteriorRings();i++)
                 SetZ(poPoly->getInteriorRing(i), dfZ);
@@ -3140,7 +3143,7 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGeomColl = (OGRGeometryCollection*) poGeom;
+            OGRGeometryCollection* poGeomColl = poGeom->toGeometryCollection();
             for(int i=0;i<poGeomColl->getNumGeometries();i++)
                 SetZ(poGeomColl->getGeometryRef(i), dfZ);
             break;
@@ -3160,11 +3163,11 @@ static int ForceCoordDimension(int eGType, int nCoordDim)
     if( nCoordDim == 2 && eGType != wkbNone )
         return wkbFlatten(eGType);
     else if( nCoordDim == 3 && eGType != wkbNone )
-        return wkbSetZ(wkbFlatten((OGRwkbGeometryType)eGType));
+        return wkbSetZ(wkbFlatten(eGType));
     else if( nCoordDim == COORD_DIM_XYM && eGType != wkbNone )
-        return wkbSetM(wkbFlatten((OGRwkbGeometryType)eGType));
+        return wkbSetM(wkbFlatten(eGType));
     else if( nCoordDim == 4 && eGType != wkbNone )
-        return OGR_GT_SetModifier((OGRwkbGeometryType)eGType, TRUE, TRUE);
+        return OGR_GT_SetModifier(static_cast<OGRwkbGeometryType>(eGType), TRUE, TRUE);
     else
         return eGType;
 }
@@ -3313,8 +3316,8 @@ void DoFieldTypeConversion(GDALDataset* poDstDS, OGRFieldDefn& oFieldDefn,
             if( iType >= 0 && iSubType >= 0 )
             {
                 oFieldDefn.SetSubType(OFSTNone);
-                oFieldDefn.SetType((OGRFieldType)iType);
-                oFieldDefn.SetSubType((OGRFieldSubType)iSubType);
+                oFieldDefn.SetType(static_cast<OGRFieldType>(iType));
+                oFieldDefn.SetSubType(static_cast<OGRFieldSubType>(iSubType));
                 if( iType == OFTInteger )
                     oFieldDefn.SetWidth(0);
             }
@@ -3514,8 +3517,8 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 eGType = wkbNone;
             }
 
-            bool bHasZ = CPL_TO_BOOL(wkbHasZ((OGRwkbGeometryType)eGType));
-            eGType = ConvertType(m_eGeomTypeConversion, (OGRwkbGeometryType)eGType);
+            bool bHasZ = CPL_TO_BOOL(wkbHasZ(static_cast<OGRwkbGeometryType>(eGType)));
+            eGType = ConvertType(m_eGeomTypeConversion, static_cast<OGRwkbGeometryType>(eGType));
 
             if ( m_bExplodeCollections )
             {
@@ -3541,7 +3544,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             }
 
             if ( bHasZ || (iSrcZField >= 0 && eGType != wkbNone) )
-                eGType = wkbSetZ((OGRwkbGeometryType)eGType);
+                eGType = wkbSetZ(static_cast<OGRwkbGeometryType>(eGType));
         }
 
         eGType = ForceCoordDimension(eGType, m_nCoordDim);
@@ -3679,7 +3682,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
             poOutputSRSClone = poOutputSRS->Clone();
         }
         poDstLayer = m_poDstDS->CreateLayer( pszNewLayerName, poOutputSRSClone,
-                                           (OGRwkbGeometryType) eGCreateLayerType,
+                                           static_cast<OGRwkbGeometryType>(eGCreateLayerType),
                                            papszLCOTemp );
         CSLDestroy(papszLCOTemp);
 
@@ -3924,7 +3927,7 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                     papszIgnoredFields = CSLAddString(papszIgnoredFields, pszFieldName);
             }
             if (bUseIgnoredFields)
-                poSrcLayer->SetIgnoredFields((const char**)papszIgnoredFields);
+                poSrcLayer->SetIgnoredFields(const_cast<const char**>(papszIgnoredFields));
             CSLDestroy(papszIgnoredFields);
             CSLDestroy(papszWHEREUsedFields);
         }
@@ -4421,7 +4424,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
             if (poSrcGeometry &&
                 OGR_GT_IsSubClassOf(poSrcGeometry->getGeometryType(), wkbGeometryCollection) )
             {
-                nParts = ((OGRGeometryCollection*)poSrcGeometry)->getNumGeometries();
+                nParts = poSrcGeometry->toGeometryCollection()->getNumGeometries();
                 nIters = nParts;
                 if (nIters == 0)
                     nIters = 1;
@@ -4527,8 +4530,8 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 if (nParts > 0)
                 {
                     /* For -explodecollections, extract the iPart(th) of the geometry */
-                    OGRGeometry* poPart = ((OGRGeometryCollection*)poDstGeometry)->getGeometryRef(iPart);
-                    ((OGRGeometryCollection*)poDstGeometry)->removeGeometry(iPart, FALSE);
+                    OGRGeometry* poPart = poDstGeometry->toGeometryCollection()->getGeometryRef(iPart);
+                    poDstGeometry->toGeometryCollection()->removeGeometry(iPart, FALSE);
                     delete poDstGeometry;
                     poDstGeometry = poPart;
                 }
@@ -4658,7 +4661,7 @@ int LayerTranslator::Translate( OGRFeature* poFeatureIn,
                 if( eGType != GEOMTYPE_UNCHANGED )
                 {
                     poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry, (OGRwkbGeometryType)eGType);
+                            poDstGeometry, static_cast<OGRwkbGeometryType>(eGType));
                 }
                 else if( m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
                          m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
@@ -4777,7 +4780,7 @@ static void RemoveBOM(GByte* pabyData)
 {
     if( pabyData[0] == 0xEF && pabyData[1] == 0xBB && pabyData[2] == 0xBF )
     {
-        memmove(pabyData, pabyData + 3, strlen((const char*)pabyData + 3) + 1);
+        memmove(pabyData, pabyData + 3, strlen(reinterpret_cast<char*>(pabyData) + 3) + 1);
     }
 }
 
@@ -4950,7 +4953,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 VSIIngestFile( nullptr, papszArgv[i] + 1, &pabyRet, nullptr, 1024*1024) )
             {
                 RemoveBOM(pabyRet);
-                psOptions->pszSQLStatement = (char*)pabyRet;
+                psOptions->pszSQLStatement = reinterpret_cast<char*>(pabyRet);
             }
             else
             {
@@ -5006,7 +5009,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 }
             }
             if (psOptions->eGType != GEOMTYPE_UNCHANGED && psOptions->eGType != wkbNone && bIs3D)
-                psOptions->eGType = wkbSetZ((OGRwkbGeometryType)psOptions->eGType);
+                psOptions->eGType = wkbSetZ(static_cast<OGRwkbGeometryType>(psOptions->eGType));
 
             i++;
         }
@@ -5087,10 +5090,10 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
             oRing.addPoint( CPLAtof(papszArgv[i+3]), CPLAtof(papszArgv[i+2]) );
             oRing.addPoint( CPLAtof(papszArgv[i+1]), CPLAtof(papszArgv[i+2]) );
 
-            OGRPolygon* poSpatialFilter = (OGRPolygon*) OGRGeometryFactory::createGeometry(wkbPolygon);
+            OGRPolygon* poSpatialFilter = new OGRPolygon();
             poSpatialFilter->addRing( &oRing );
             OGR_G_DestroyGeometry(psOptions->hSpatialFilter);
-            psOptions->hSpatialFilter = (OGRGeometryH) poSpatialFilter;
+            psOptions->hSpatialFilter = reinterpret_cast<OGRGeometryH>(poSpatialFilter);
             i += 4;
         }
         else if( i+1 < nArgc && EQUAL(papszArgv[i],"-spat_srs") )
@@ -5112,7 +5115,7 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 VSIIngestFile( nullptr, papszArgv[i] + 1, &pabyRet, nullptr, 1024*1024) )
             {
                 RemoveBOM(pabyRet);
-                psOptions->pszWHERE = (char*)pabyRet;
+                psOptions->pszWHERE = reinterpret_cast<char*>(pabyRet);
             }
             else
             {
@@ -5239,16 +5242,17 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 oRing.addPoint( CPLAtof(papszArgv[i+3]), CPLAtof(papszArgv[i+2]) );
                 oRing.addPoint( CPLAtof(papszArgv[i+1]), CPLAtof(papszArgv[i+2]) );
 
-                psOptions->hClipSrc = (OGRGeometryH) OGRGeometryFactory::createGeometry(wkbPolygon);
-                ((OGRPolygon *) psOptions->hClipSrc)->addRing( &oRing );
+                OGRPolygon* poPoly = new OGRPolygon();
+                psOptions->hClipSrc = reinterpret_cast<OGRGeometryH>(poPoly);
+                poPoly->addRing( &oRing );
                 i += 4;
             }
             else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
                       STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
-                char* pszTmp = (char*) papszArgv[i+1];
-                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, (OGRGeometry **)&psOptions->hClipSrc);
+                char* pszTmp = reinterpret_cast<char*>(papszArgv[i+1]);
+                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, reinterpret_cast<OGRGeometry **>(&psOptions->hClipSrc));
                 if (psOptions->hClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -5314,16 +5318,17 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                 oRing.addPoint( CPLAtof(papszArgv[i+3]), CPLAtof(papszArgv[i+2]) );
                 oRing.addPoint( CPLAtof(papszArgv[i+1]), CPLAtof(papszArgv[i+2]) );
 
-                psOptions->hClipDst = (OGRGeometryH) OGRGeometryFactory::createGeometry(wkbPolygon);
-                ((OGRPolygon *) psOptions->hClipDst)->addRing( &oRing );
+                OGRPolygon* poPoly = new OGRPolygon();
+                psOptions->hClipDst = reinterpret_cast<OGRGeometryH>(poPoly);
+                poPoly->addRing( &oRing );
                 i += 4;
             }
             else if ((STARTS_WITH_CI(papszArgv[i+1], "POLYGON") ||
                       STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
-                char* pszTmp = (char*) papszArgv[i+1];
-                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, (OGRGeometry **)&psOptions->hClipDst);
+                char* pszTmp = reinterpret_cast<char*>(papszArgv[i+1]);
+                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, reinterpret_cast<OGRGeometry **>(&psOptions->hClipDst));
                 if (psOptions->hClipDst == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,

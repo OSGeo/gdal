@@ -241,7 +241,7 @@ MAIN_START(argc, argv)
     GDALDatasetH hDataset =
         GDALOpenEx(psOptionsForBinary->pszSource,
                    GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR, nullptr,
-                   (const char* const* )psOptionsForBinary->papszOpenOptions, nullptr);
+                   psOptionsForBinary->papszOpenOptions, nullptr);
 
     if( hDataset == nullptr )
     {
@@ -300,7 +300,7 @@ MAIN_START(argc, argv)
             osTemp = CPLFormFilename( osPath, osTemp, osExtension );
             strcpy( pszSubDest, osTemp.c_str() );
             hDataset = GDALOpenEx( pszSource, GDAL_OF_RASTER, nullptr,
-                           (const char* const* )psOptionsForBinary->papszOpenOptions, nullptr );
+                           psOptionsForBinary->papszOpenOptions, nullptr );
             CPLFree(pszSource);
             if( !psOptionsForBinary->bQuiet )
                 printf("Input file size is %d, %d\n", GDALGetRasterXSize(hDataset), GDALGetRasterYSize(hDataset));

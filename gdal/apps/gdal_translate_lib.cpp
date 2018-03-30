@@ -937,7 +937,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if( psOptions->nBandCount )
             {
                 nRawOutSize *= GDALGetDataTypeSizeBytes(
-                    ((GDALDataset *) hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
+                    static_cast<GDALDataset *>(hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
             }
             if( nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize) )
             {
@@ -1102,7 +1102,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         if( psOptions->nBandCount )
         {
             nRawOutSize *= GDALGetDataTypeSizeBytes(
-                ((GDALDataset *) hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
+                static_cast<GDALDataset *>(hSrcDataset)->GetRasterBand(1)->GetRasterDataType() );
         }
         if( nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize) )
         {
@@ -1122,7 +1122,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
 /*      Make a virtual clone.                                           */
 /* -------------------------------------------------------------------- */
-    VRTDataset *poVDS = (VRTDataset *) VRTCreate(nOXSize, nOYSize);
+    VRTDataset *poVDS = static_cast<VRTDataset *>(VRTCreate(nOXSize, nOYSize));
 
     if( psOptions->nGCPCount == 0 )
     {
@@ -1264,7 +1264,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 
     poVDS->SetMetadata( papszMetadata );
     CSLDestroy( papszMetadata );
-    AttachMetadata( (GDALDatasetH) poVDS, psOptions->papszMetadataOptions );
+    AttachMetadata( static_cast<GDALDatasetH>(poVDS), psOptions->papszMetadataOptions );
 
     const char* pszInterleave = GDALGetMetadataItem(hSrcDataset, "INTERLEAVE", "IMAGE_STRUCTURE");
     if (pszInterleave)
@@ -1343,7 +1343,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->nRGBExpand != 0)
     {
         GDALRasterBand *poSrcBand =
-            ((GDALDataset *) hSrcDataset)->
+            static_cast<GDALDataset*>(hSrcDataset)->
                 GetRasterBand(std::abs(psOptions->panBandList[0]));
         if (psOptions->panBandList[0] < 0)
             poSrcBand = poSrcBand->GetMaskBand();
@@ -1426,7 +1426,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
 
         GDALRasterBand *poSrcBand =
-            ((GDALDataset *) hSrcDataset)->GetRasterBand(std::abs(nSrcBand));
+            static_cast<GDALDataset*>(hSrcDataset)->GetRasterBand(std::abs(nSrcBand));
 
 /* -------------------------------------------------------------------- */
 /*      Select output data type to match source.                        */
@@ -1487,7 +1487,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
                     }
 
                     GInt32 nMin = atoi(pszMin);
-                    GUInt32 nMax = (GUInt32)strtoul(pszMax, nullptr, 10);
+                    GUInt32 nMax = static_cast<GUInt32>(strtoul(pszMax, nullptr, 10));
                     if( nMin < nDstMin || nMax > nDstMax )
                         bFilterOutStatsMetadata = true;
                 }
@@ -1505,7 +1505,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
 /* -------------------------------------------------------------------- */
         poVDS->AddBand( eBandType, nullptr );
         VRTSourcedRasterBand *poVRTBand =
-            (VRTSourcedRasterBand *) poVDS->GetRasterBand( i+1 );
+            static_cast<VRTSourcedRasterBand *>(poVDS->GetRasterBand( i+1 ));
         if (nSrcBand < 0)
         {
             poVRTBand->AddMaskBandSource(poSrcBand,
@@ -1690,7 +1690,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         }
         else if (psOptions->nRGBExpand != 0 && i < psOptions->nRGBExpand)
         {
-            poVRTBand->SetColorInterpretation( (GDALColorInterp) (GCI_RedBand + i) );
+            poVRTBand->SetColorInterpretation( static_cast<GDALColorInterp>(GCI_RedBand + i) );
         }
 
 /* -------------------------------------------------------------------- */
@@ -1796,7 +1796,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
             if (poVRTBand->CreateMaskBand(poSrcBand->GetMaskFlags()) == CE_None)
             {
                 VRTSourcedRasterBand* hMaskVRTBand =
-                    (VRTSourcedRasterBand*)poVRTBand->GetMaskBand();
+                    cpl::down_cast<VRTSourcedRasterBand*>(poVRTBand->GetMaskBand());
                 hMaskVRTBand->AddMaskBandSource(poSrcBand,
                                         psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
                                         psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
@@ -1821,12 +1821,12 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     if (psOptions->eMaskMode == MASK_USER)
     {
         GDALRasterBand *poSrcBand =
-            (GDALRasterBand*)GDALGetRasterBand(hSrcDataset,
-                                               std::abs(psOptions->nMaskBand));
+            static_cast<GDALRasterBand*>(GDALGetRasterBand(hSrcDataset,
+                                               std::abs(psOptions->nMaskBand)));
         if (poSrcBand && poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)
         {
-            VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
-                GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
+            VRTSourcedRasterBand* hMaskVRTBand = static_cast<VRTSourcedRasterBand*>(
+                GDALGetMaskBand(GDALGetRasterBand(static_cast<GDALDataset*>(poVDS), 1)));
             if (psOptions->nMaskBand > 0)
                 hMaskVRTBand->AddSimpleSource(poSrcBand,
                                         psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
@@ -1847,9 +1847,9 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     {
         if (poVDS->CreateMaskBand(GMF_PER_DATASET) == CE_None)
         {
-            VRTSourcedRasterBand* hMaskVRTBand = (VRTSourcedRasterBand*)
-                GDALGetMaskBand(GDALGetRasterBand((GDALDatasetH)poVDS, 1));
-            hMaskVRTBand->AddMaskBandSource((GDALRasterBand*)GDALGetRasterBand(hSrcDataset, 1),
+            VRTSourcedRasterBand* hMaskVRTBand = static_cast<VRTSourcedRasterBand*>(
+                GDALGetMaskBand(GDALGetRasterBand(static_cast<GDALDataset*>(poVDS), 1)));
+            hMaskVRTBand->AddMaskBandSource(static_cast<GDALRasterBand*>(GDALGetRasterBand(hSrcDataset, 1)),
                                         psOptions->adfSrcWin[0], psOptions->adfSrcWin[1],
                                         psOptions->adfSrcWin[2], psOptions->adfSrcWin[3],
                                         adfDstWin[0], adfDstWin[1],
@@ -1877,7 +1877,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
         psOptions->papszCreateOptions == nullptr )
     {
         poVDS->SetDescription(pszDest);
-        hOutDS = (GDALDatasetH) poVDS ;
+        hOutDS = static_cast<GDALDatasetH>(poVDS);
         if( !EQUAL(pszDest, "") )
         {
             hOutDS = GDALTranslateFlush(hOutDS);
@@ -1885,7 +1885,7 @@ GDALDatasetH GDALTranslate( const char *pszDest, GDALDatasetH hSrcDataset,
     }
     else
     {
-        hOutDS = GDALCreateCopy( hDriver, pszDest, (GDALDatasetH) poVDS,
+        hOutDS = GDALCreateCopy( hDriver, pszDest, static_cast<GDALDatasetH>(poVDS),
                                 psOptions->bStrict, psOptions->papszCreateOptions,
                                 psOptions->pfnProgress, psOptions->pProgressData );
         hOutDS = GDALTranslateFlush(hOutDS);
@@ -2113,11 +2113,11 @@ GDALTranslateOptions *GDALTranslateOptionsNew(char** papszArgv, GDALTranslateOpt
         {
             for( int iType = 1; iType < GDT_TypeCount; iType++ )
             {
-                if( GDALGetDataTypeName((GDALDataType)iType) != nullptr
-                    && EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if( GDALGetDataTypeName(static_cast<GDALDataType>(iType)) != nullptr
+                    && EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                              papszArgv[i+1]) )
                 {
-                    psOptions->eOutputType = (GDALDataType) iType;
+                    psOptions->eOutputType = static_cast<GDALDataType>(iType);
                 }
             }
 

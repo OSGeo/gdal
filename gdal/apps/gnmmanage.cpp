@@ -375,8 +375,9 @@ MAIN_START(nArgc, papszArgv)
 
         // open
 
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource, GDAL_OF_READONLY |
-                                    GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(
+            GDALOpenEx( pszDataSource, GDAL_OF_READONLY |
+                                    GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         GDALDriver         *poDriver = nullptr;
         if( poDS != nullptr )
@@ -409,7 +410,7 @@ MAIN_START(nArgc, papszArgv)
         if(nullptr != pszDescript)
             printf( "Network description: %s.\n", pszDescript );
 
-        char *pszProjection = (char*)poDS->GetProjectionRef();
+        char *pszProjection = const_cast<char*>(poDS->GetProjectionRef());
         OGRSpatialReferenceH hSRS = OSRNewSpatialReference(nullptr);
         if( OSRImportFromWkt( hSRS, &pszProjection ) == CE_None )
         {
@@ -522,8 +523,8 @@ MAIN_START(nArgc, papszArgv)
         if( !CPLFetchBool( papszMD, GDAL_DCAP_GNM, false ) )
             Usage("not a GNM driver");
 
-        poDS = (GNMNetwork*) poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
-                                              papszDSCO );
+        poDS = cpl::down_cast<GNMNetwork*>(poDriver->Create( pszPath, 0, 0, 0, GDT_Unknown,
+                                              papszDSCO ));
 
         if (nullptr == poDS)
         {
@@ -549,8 +550,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No input dataset name provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_READONLY | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_READONLY | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -558,8 +559,8 @@ MAIN_START(nArgc, papszArgv)
             goto exit;
         }
 
-        GDALDataset *poSrcDS = (GDALDataset*) GDALOpenEx(pszInputDataset,
-                          GDAL_OF_VECTOR | GDAL_OF_READONLY, nullptr, nullptr, nullptr );
+        GDALDataset *poSrcDS = static_cast<GDALDataset*>(GDALOpenEx(pszInputDataset,
+                          GDAL_OF_VECTOR | GDAL_OF_READONLY, nullptr, nullptr, nullptr ));
         if(nullptr == poSrcDS)
         {
             fprintf(stderr, "\nFAILURE: Can not open dataset at %s\n",
@@ -623,8 +624,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -662,8 +663,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -701,8 +702,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -739,8 +740,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -796,8 +797,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {
@@ -841,8 +842,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No dataset in input");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
 
         if(nullptr == poDS)
         {

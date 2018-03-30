@@ -506,8 +506,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("Invalid input from or to identificators");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
         if(nullptr == poDS)
         {
             fprintf( stderr, "\nFailed to open network at %s\n", pszDataSource);
@@ -541,8 +541,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("Invalid input from or to identificators");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
         if(nullptr == poDS)
         {
             fprintf( stderr, "\nFailed to open network at %s\n", pszDataSource);
@@ -581,8 +581,8 @@ MAIN_START(nArgc, papszArgv)
             Usage("No network dataset provided");
 
         // open
-        poDS = (GNMNetwork*) GDALOpenEx( pszDataSource,
-                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr );
+        poDS = cpl::down_cast<GNMNetwork*>(static_cast<GDALDataset*>(GDALOpenEx( pszDataSource,
+                             GDAL_OF_UPDATE | GDAL_OF_GNM, nullptr, nullptr, nullptr )));
         if(nullptr == poDS)
         {
             fprintf( stderr, "\nFailed to open network at %s\n", pszDataSource);
