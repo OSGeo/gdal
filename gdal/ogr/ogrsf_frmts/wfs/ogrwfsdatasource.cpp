@@ -1569,6 +1569,7 @@ int OGRWFSDataSource::Open( const char * pszFilename, int bUpdateIn,
                     while(psIter)
                     {
                         if (psIter->eType == CXT_Element &&
+                            psIter->psChild &&
                             EQUAL(psIter->pszValue, "OGRWFSLayer") &&
                             strcmp(CPLGetXMLValue(psIter, "name", ""), l_pszName) == 0)
                         {
