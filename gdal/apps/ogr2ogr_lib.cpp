@@ -3108,62 +3108,30 @@ GDALDatasetH GDALVectorTranslate( const char *pszDest, GDALDatasetH hDstDS, int 
 /************************************************************************/
 /*                               SetZ()                                 */
 /************************************************************************/
+
+namespace {
+class SetZVisitor: public OGRDefaultGeometryVisitor
+{
+        double m_dfZ;
+
+    public:
+        explicit SetZVisitor(double dfZ): m_dfZ(dfZ) {}
+
+        using OGRDefaultGeometryVisitor::visit;
+
+        void visit(OGRPoint* poPoint) override
+        {
+            poPoint->setZ(m_dfZ);
+        }
+};
+}
+
 static void SetZ (OGRGeometry* poGeom, double dfZ )
 {
     if (poGeom == nullptr)
         return;
-    switch (wkbFlatten(poGeom->getGeometryType()))
-    {
-        case wkbPoint:
-            poGeom->toPoint()->setZ(dfZ);
-            break;
-
-        case wkbLineString:
-        case wkbLinearRing:
-        case wkbCircularString:
-        {
-            int i;
-            OGRSimpleCurve* poLS = poGeom->toSimpleCurve();
-            for(i=0;i<poLS->getNumPoints();i++)
-                poLS->setPoint(i, poLS->getX(i), poLS->getY(i), dfZ);
-            break;
-        }
-
-        case wkbCompoundCurve:
-        {
-            OGRCompoundCurve* poCC = poGeom->toCompoundCurve();
-            for(int i=0;i<poCC->getNumCurves();i++)
-                SetZ(poCC->getCurve(i), dfZ);
-            break;
-        }
-
-        case wkbCurvePolygon:
-        case wkbPolygon:
-        {
-            int i;
-            OGRCurvePolygon* poPoly = poGeom->toCurvePolygon();
-            SetZ(poPoly->getExteriorRingCurve(), dfZ);
-            for(i=0;i<poPoly->getNumInteriorRings();i++)
-                SetZ(poPoly->getInteriorRingCurve(i), dfZ);
-            break;
-        }
-
-        case wkbMultiPoint:
-        case wkbMultiLineString:
-        case wkbMultiPolygon:
-        case wkbMultiSurface:
-        case wkbMultiCurve:
-        case wkbGeometryCollection:
-        {
-            OGRGeometryCollection* poGeomColl = poGeom->toGeometryCollection();
-            for(int i=0;i<poGeomColl->getNumGeometries();i++)
-                SetZ(poGeomColl->getGeometryRef(i), dfZ);
-            break;
-        }
-
-        default:
-            break;
-    }
+    SetZVisitor visitor(dfZ);
+    poGeom->accept(&visitor);
 }
 
 /************************************************************************/

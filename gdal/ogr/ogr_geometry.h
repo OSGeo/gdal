@@ -97,6 +97,154 @@ typedef OGRCurvePolygon* (*OGRSurfaceCasterToCurvePolygon)(OGRSurface*);
 typedef OGRMultiPolygon* (*OGRPolyhedralSurfaceCastToMultiPolygon)(OGRPolyhedralSurface*);
 //! @endcond
 
+/** OGRGeometry visitor interface.
+ * @since GDAL 2.3
+ */
+class CPL_DLL IOGRGeometryVisitor
+{
+    public:
+        /** Destructor/ */
+        virtual ~IOGRGeometryVisitor() = default;
+
+        /** Visit OGRPoint. */
+        virtual void visit(OGRPoint*) = 0;
+        /** Visit OGRLineString. */
+        virtual void visit(OGRLineString*) = 0;
+        /** Visit OGRLinearRing. */
+        virtual void visit(OGRLinearRing*) = 0;
+        /** Visit OGRPolygon. */
+        virtual void visit(OGRPolygon*) = 0;
+        /** Visit OGRMultiPoint. */
+        virtual void visit(OGRMultiPoint*) = 0;
+        /** Visit OGRMultiLineString. */
+        virtual void visit(OGRMultiLineString*) = 0;
+        /** Visit OGRMultiPolygon. */
+        virtual void visit(OGRMultiPolygon*) = 0;
+        /** Visit OGRGeometryCollection. */
+        virtual void visit(OGRGeometryCollection*) = 0;
+        /** Visit OGRCircularString. */
+        virtual void visit(OGRCircularString*) = 0;
+        /** Visit OGRCompoundCurve. */
+        virtual void visit(OGRCompoundCurve*) = 0;
+        /** Visit OGRCurvePolygon. */
+        virtual void visit(OGRCurvePolygon*) = 0;
+        /** Visit OGRMultiCurve. */
+        virtual void visit(OGRMultiCurve*) = 0;
+        /** Visit OGRMultiSurface. */
+        virtual void visit(OGRMultiSurface*) = 0;
+        /** Visit OGRTriangle. */
+        virtual void visit(OGRTriangle*) = 0;
+        /** Visit OGRPolyhedralSurface. */
+        virtual void visit(OGRPolyhedralSurface*) = 0;
+        /** Visit OGRTriangulatedSurface. */
+        virtual void visit(OGRTriangulatedSurface*) = 0;
+};
+
+/** OGRGeometry visitor default implementation.
+ *
+ * This default implementation will recurse down to calling
+ * visit(OGRPoint*) on each point.
+ *
+ * @since GDAL 2.3
+ */
+class CPL_DLL OGRDefaultGeometryVisitor: public IOGRGeometryVisitor
+{
+        void _visit(OGRSimpleCurve* poGeom);
+
+    public:
+
+        void visit(OGRPoint*) override {}
+        void visit(OGRLineString*) override;
+        void visit(OGRLinearRing*) override;
+        void visit(OGRPolygon*) override;
+        void visit(OGRMultiPoint*) override;
+        void visit(OGRMultiLineString*) override;
+        void visit(OGRMultiPolygon*) override;
+        void visit(OGRGeometryCollection*) override;
+        void visit(OGRCircularString*) override;
+        void visit(OGRCompoundCurve*) override;
+        void visit(OGRCurvePolygon*) override;
+        void visit(OGRMultiCurve*) override;
+        void visit(OGRMultiSurface*) override;
+        void visit(OGRTriangle*) override;
+        void visit(OGRPolyhedralSurface*) override;
+        void visit(OGRTriangulatedSurface*) override;
+};
+
+/** OGRGeometry visitor interface.
+ * @since GDAL 2.3
+ */
+class CPL_DLL IOGRConstGeometryVisitor
+{
+    public:
+        /** Destructor/ */
+        virtual ~IOGRConstGeometryVisitor() = default;
+
+        /** Visit OGRPoint. */
+        virtual void visit(const OGRPoint*) = 0;
+        /** Visit OGRLineString. */
+        virtual void visit(const OGRLineString*) = 0;
+        /** Visit OGRLinearRing. */
+        virtual void visit(const OGRLinearRing*) = 0;
+        /** Visit OGRPolygon. */
+        virtual void visit(const OGRPolygon*) = 0;
+        /** Visit OGRMultiPoint. */
+        virtual void visit(const OGRMultiPoint*) = 0;
+        /** Visit OGRMultiLineString. */
+        virtual void visit(const OGRMultiLineString*) = 0;
+        /** Visit OGRMultiPolygon. */
+        virtual void visit(const OGRMultiPolygon*) = 0;
+        /** Visit OGRGeometryCollection. */
+        virtual void visit(const OGRGeometryCollection*) = 0;
+        /** Visit OGRCircularString. */
+        virtual void visit(const OGRCircularString*) = 0;
+        /** Visit OGRCompoundCurve. */
+        virtual void visit(const OGRCompoundCurve*) = 0;
+        /** Visit OGRCurvePolygon. */
+        virtual void visit(const OGRCurvePolygon*) = 0;
+        /** Visit OGRMultiCurve. */
+        virtual void visit(const OGRMultiCurve*) = 0;
+        /** Visit OGRMultiSurface. */
+        virtual void visit(const OGRMultiSurface*) = 0;
+        /** Visit OGRTriangle. */
+        virtual void visit(const OGRTriangle*) = 0;
+        /** Visit OGRPolyhedralSurface. */
+        virtual void visit(const OGRPolyhedralSurface*) = 0;
+        /** Visit OGRTriangulatedSurface. */
+        virtual void visit(const OGRTriangulatedSurface*) = 0;
+};
+
+/** OGRGeometry visitor default implementation.
+ *
+ * This default implementation will recurse down to calling
+ * visit(const OGRPoint*) on each point.
+ *
+ * @since GDAL 2.3
+ */
+class CPL_DLL OGRDefaultConstGeometryVisitor: public IOGRConstGeometryVisitor
+{
+        void _visit(const OGRSimpleCurve* poGeom);
+
+    public:
+
+        void visit(const OGRPoint*) override {}
+        void visit(const OGRLineString*) override;
+        void visit(const OGRLinearRing*) override;
+        void visit(const OGRPolygon*) override;
+        void visit(const OGRMultiPoint*) override;
+        void visit(const OGRMultiLineString*) override;
+        void visit(const OGRMultiPolygon*) override;
+        void visit(const OGRGeometryCollection*) override;
+        void visit(const OGRCircularString*) override;
+        void visit(const OGRCompoundCurve*) override;
+        void visit(const OGRCurvePolygon*) override;
+        void visit(const OGRMultiCurve*) override;
+        void visit(const OGRMultiSurface*) override;
+        void visit(const OGRTriangle*) override;
+        void visit(const OGRPolyhedralSurface*) override;
+        void visit(const OGRTriangulatedSurface*) override;
+};
+
 /************************************************************************/
 /*                             OGRGeometry                              */
 /************************************************************************/
@@ -180,6 +328,12 @@ class CPL_DLL OGRGeometry
 
     OGRGeometry& operator=( const OGRGeometry& other );
 
+    /** Returns if two geometries are equal. */
+    bool operator==( const OGRGeometry& other ) const { return CPL_TO_BOOL(Equals(&other)); }
+
+    /** Returns if two geometries are different. */
+    bool operator!=( const OGRGeometry& other ) const { return !CPL_TO_BOOL(Equals(&other)); }
+
     // Standard IGeometry.
     virtual int getDimension() const = 0;
     virtual int getCoordinateDimension() const;
@@ -222,6 +376,12 @@ class CPL_DLL OGRGeometry
     virtual char * exportToKML() const;
     virtual char * exportToJson() const;
 
+    /** Accept a visitor. */
+    virtual void accept(IOGRGeometryVisitor* visitor) = 0;
+
+    /** Accept a visitor. */
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const = 0;
+
     static GEOSContextHandle_t createGEOSContext();
     static void freeGEOSContext( GEOSContextHandle_t hGEOSCtxt );
     virtual GEOSGeom exportToGEOS( GEOSContextHandle_t hGEOSCtxt )
@@ -254,7 +414,7 @@ class CPL_DLL OGRGeometry
 
     // ISpatialRelation
     virtual OGRBoolean  Intersects( const OGRGeometry * ) const;
-    virtual OGRBoolean  Equals( OGRGeometry * ) const = 0;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const = 0;
     virtual OGRBoolean  Disjoint( const OGRGeometry * ) const;
     virtual OGRBoolean  Touches( const OGRGeometry * ) const;
     virtual OGRBoolean  Crosses( const OGRGeometry * ) const;
@@ -592,7 +752,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
         { m = mIn; flags |= (OGR_G_NOT_EMPTY_POINT | OGR_G_MEASURED); }
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const override;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const override;
     virtual OGRBoolean  Intersects( const OGRGeometry * ) const override;
     virtual OGRBoolean  Within( const OGRGeometry * ) const override;
 
@@ -601,6 +761,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
     virtual void flattenTo2D() override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
 };
@@ -763,7 +925,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     double      getM( int i ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const override;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const override;
 
     // non standard.
     virtual void setCoordinateDimension( int nDimension ) override;
@@ -863,6 +1025,8 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual const char *getGeometryName() const override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
 
 /************************************************************************/
@@ -933,6 +1097,8 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     OGRBoolean isPointOnRingBoundary( const OGRPoint* pt,
                                       int bTestEnvelope = TRUE ) const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     // IWks Interface - Note this isn't really a first class object
     // for the purposes of WKB form.  These methods always fail since this
@@ -1023,6 +1189,8 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char* const* papszOptions = nullptr) const override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
 
 /************************************************************************/
@@ -1087,7 +1255,7 @@ class CPL_DLL OGRCurveCollection
     OGRErr          exportToWkb( const OGRGeometry* poGeom, OGRwkbByteOrder,
                                  unsigned char *,
                                  OGRwkbVariant eWkbVariant ) const;
-    OGRBoolean      Equals(OGRCurveCollection *poOCC) const;
+    OGRBoolean      Equals(const OGRCurveCollection *poOCC) const;
     void            setCoordinateDimension( OGRGeometry* poGeom,
                                             int nNewDimension );
     void            set3D( OGRGeometry* poGeom, OGRBoolean bIs3D );
@@ -1194,7 +1362,7 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual double get_Area() const override;
 
     // ISpatialRelation.
-    virtual OGRBoolean  Equals( OGRGeometry * ) const override;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const override;
 
     // ICompoundCurve method.
     int             getNumCurves() const;
@@ -1224,6 +1392,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char* const* papszOptions = nullptr) const override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
 };
@@ -1351,7 +1521,7 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
         const char* const* papszOptions = nullptr ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const override;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const override;
     virtual OGRBoolean  Intersects( const OGRGeometry * ) const override;
     virtual OGRBoolean  Contains( const OGRGeometry * ) const override;
 
@@ -1374,6 +1544,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     OGRCurve *stealExteriorRingCurve();
 
     OGRErr removeRing( int iIndex, bool bDelete = true );
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void        swapXY() override;
 };
@@ -1466,6 +1638,8 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRLinearRing *stealInteriorRing(int);
 
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void closeRings() override;
 };
@@ -1514,6 +1688,8 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
     // New methods rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry.
     virtual OGRErr addRingDirectly( OGRCurve * poNewRing ) override;
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
 //! @cond Doxygen_Suppress
     static OGRGeometry* CastToPolygon( OGRGeometry* poGeom );
@@ -1605,7 +1781,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     const OGRGeometry *getGeometryRef( int ) const;
 
     // ISpatialRelation
-    virtual OGRBoolean  Equals( OGRGeometry * ) const override;
+    virtual OGRBoolean  Equals( const OGRGeometry * ) const override;
 
     // Non standard
     virtual void setCoordinateDimension( int nDimension ) override;
@@ -1620,6 +1796,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     void closeRings() override;
 
     virtual void swapXY() override;
+
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRGeometryCollection* CastToGeometryCollection(
         OGRGeometryCollection* poSrc );
@@ -1715,6 +1894,9 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
     static OGRMultiSurface* CastToMultiSurface( OGRMultiPolygon* poMP );
 };
 
@@ -1782,7 +1964,7 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
 
     virtual void flattenTo2D() override;
     virtual OGRErr transform( OGRCoordinateTransformation* ) override;
-    virtual OGRBoolean Equals( OGRGeometry* ) const override;
+    virtual OGRBoolean Equals( const OGRGeometry* ) const override;
     virtual double get_Area() const override;
     virtual OGRErr PointOnSurface( OGRPoint* ) const override;
 
@@ -1801,6 +1983,9 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void setMeasured( OGRBoolean bIsMeasured ) override;
     virtual void swapXY() override;
     OGRErr removeGeometry( int iIndex, int bDelete = TRUE );
+
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     virtual void    assignSpatialReference( OGRSpatialReference * poSR ) override;
 };
@@ -1880,6 +2065,9 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     // IGeometry methods.
     virtual int getDimension() const override;
 
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
     // Non-standard.
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
@@ -1926,6 +2114,9 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
+
     static OGRMultiLineString* CastToMultiLineString(OGRMultiCurve* poMC);
 };
 
@@ -1959,6 +2150,9 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
+    virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
     static OGRMultiCurve* CastToMultiCurve( OGRMultiLineString* poMLS );
 };

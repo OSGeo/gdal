@@ -571,7 +571,7 @@ OGRBoolean OGRCurveCollection::IsEmpty() const
 /*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean OGRCurveCollection::Equals( OGRCurveCollection *poOCC ) const
+OGRBoolean OGRCurveCollection::Equals( const OGRCurveCollection *poOCC ) const
 {
     if( getNumCurves() != poOCC->getNumCurves() )
         return FALSE;

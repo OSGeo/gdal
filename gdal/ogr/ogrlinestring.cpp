@@ -2335,7 +2335,7 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRSimpleCurve::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther == this )
@@ -2349,7 +2349,7 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 
     // TODO(schwehr): Test the SRS.
 
-    OGRSimpleCurve *poOLine = (OGRSimpleCurve *) poOther;
+    auto poOLine = poOther->toSimpleCurve();
     if( getNumPoints() != poOLine->getNumPoints() )
         return FALSE;
 

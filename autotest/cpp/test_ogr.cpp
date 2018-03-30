@@ -818,4 +818,79 @@ namespace tut
         }
     }
 
+    // Test geometry visitor
+    template<>
+    template<>
+    void object::test<12>()
+    {
+        static const struct {
+            const char* pszWKT;
+            int nExpectedPointCount;
+        } asTests[] = {
+            { "POINT(0 0)", 1},
+            { "LINESTRING(0 0)", 1},
+            { "POLYGON((0 0),(0 0))", 2},
+            { "MULTIPOINT(0 0)", 1},
+            { "MULTILINESTRING((0 0))", 1},
+            { "MULTIPOLYGON(((0 0)))", 1},
+            { "GEOMETRYCOLLECTION(POINT(0 0))", 1},
+            { "CIRCULARSTRING(0 0,1 1,0 0)", 3},
+            { "COMPOUNDCURVE((0 0,1 1))", 2},
+            { "CURVEPOLYGON((0 0,1 1,1 0,0 0))", 4},
+            { "MULTICURVE((0 0))", 1},
+            { "MULTISURFACE(((0 0)))", 1},
+            { "TRIANGLE((0 0,0 1,1 1,0 0))", 4},
+            { "POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0)))", 4},
+            { "TIN(((0 0,0 1,1 1,0 0)))", 4},
+        };
+
+        class PointCounterVisitor: public OGRDefaultGeometryVisitor
+        {
+                int m_nPoints = 0;
+
+            public:
+                PointCounterVisitor() {}
+
+                using OGRDefaultGeometryVisitor::visit;
+
+                void visit(OGRPoint*) override
+                {
+                    m_nPoints++;
+                }
+
+                int getNumPoints() const { return m_nPoints; }
+        };
+
+
+        class PointCounterConstVisitor: public OGRDefaultConstGeometryVisitor
+        {
+                int m_nPoints = 0;
+
+            public:
+                PointCounterConstVisitor() {}
+
+                using OGRDefaultConstGeometryVisitor::visit;
+
+                void visit(const OGRPoint*) override
+                {
+                    m_nPoints++;
+                }
+
+                int getNumPoints() const { return m_nPoints; }
+        };
+
+        for( size_t i = 0; i < CPL_ARRAYSIZE(asTests); i++ )
+        {
+            OGRGeometry* poGeom = nullptr;
+            char* pszWKT = const_cast<char*>(asTests[i].pszWKT);
+            OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+            PointCounterVisitor oVisitor;
+            poGeom->accept(&oVisitor);
+            ensure_equals(oVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
+            PointCounterConstVisitor oConstVisitor;
+            poGeom->accept(&oConstVisitor);
+            ensure_equals(oConstVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
+        }
+    }
+
 } // namespace tut

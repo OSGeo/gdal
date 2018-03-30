@@ -1028,7 +1028,7 @@ void OGRGeometryCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRGeometryCollection::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther == this )
@@ -1040,7 +1040,7 @@ OGRBoolean OGRGeometryCollection::Equals( OGRGeometry * poOther ) const
     if( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
 
-    OGRGeometryCollection *poOGC = (OGRGeometryCollection *) poOther;
+    auto poOGC = poOther->toGeometryCollection();
     if( getNumGeometries() != poOGC->getNumGeometries() )
         return FALSE;
 

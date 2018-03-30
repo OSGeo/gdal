@@ -724,7 +724,7 @@ OGRwkbGeometryType OGRPolyhedralSurface::getSubGeometryType() const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRPolyhedralSurface::Equals(OGRGeometry * poOther) const
+OGRBoolean OGRPolyhedralSurface::Equals(const OGRGeometry * poOther) const
 {
 
     if( poOther == this )
@@ -736,7 +736,7 @@ OGRBoolean OGRPolyhedralSurface::Equals(OGRGeometry * poOther) const
     if ( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
 
-    OGRPolyhedralSurface *poOMP = (OGRPolyhedralSurface *) poOther;
+    auto poOMP = poOther->toPolyhedralSurface();
     if( oMP.getNumGeometries() != poOMP->oMP.getNumGeometries() )
         return FALSE;
 
