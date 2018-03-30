@@ -3421,7 +3421,97 @@ static OGRGeometry* OGRGeometryRebuildCurves( const OGRGeometry* poGeom,
     }
     return poOGRProduct;
 }
-#endif
+
+/************************************************************************/
+/*                       BuildGeometryFromGEOS()                        */
+/************************************************************************/
+
+static OGRGeometry* BuildGeometryFromGEOS( GEOSContextHandle_t hGEOSCtxt,
+                                           GEOSGeom hGeosProduct,
+                                           const OGRGeometry* poSelf,
+                                           const OGRGeometry* poOtherGeom )
+{
+    OGRGeometry* poOGRProduct = nullptr;
+    if( hGeosProduct != nullptr )
+    {
+        poOGRProduct =
+            OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
+        if( poOGRProduct != nullptr &&
+            poSelf->getSpatialReference() != nullptr &&
+            (poOtherGeom == nullptr ||
+             (poOtherGeom->getSpatialReference() != nullptr &&
+              poOtherGeom->getSpatialReference()->
+                IsSame(poSelf->getSpatialReference()))) )
+        {
+            poOGRProduct->assignSpatialReference(poSelf->getSpatialReference());
+        }
+        poOGRProduct =
+            OGRGeometryRebuildCurves(poSelf, poOtherGeom, poOGRProduct);
+        GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
+    }
+    return poOGRProduct;
+}
+
+/************************************************************************/
+/*                     BuildGeometryFromTwoGeoms()                      */
+/************************************************************************/
+
+static OGRGeometry* BuildGeometryFromTwoGeoms(
+    const OGRGeometry* poSelf,
+    const OGRGeometry* poOtherGeom,
+    GEOSGeometry* (*pfnGEOSFunction_r)(GEOSContextHandle_t,
+                                       const GEOSGeometry*,
+                                       const GEOSGeometry*) )
+{
+    OGRGeometry *poOGRProduct = nullptr;
+
+    GEOSContextHandle_t hGEOSCtxt = poSelf->createGEOSContext();
+    GEOSGeom hThisGeosGeom = poSelf->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
+    {
+        GEOSGeom hGeosProduct = pfnGEOSFunction_r(
+            hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
+
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             poSelf, poOtherGeom);
+    }
+    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
+    poSelf->freeGEOSContext( hGEOSCtxt );
+
+    return poOGRProduct;
+}
+
+/************************************************************************/
+/*                       OGRGEOSBooleanPredicate()                      */
+/************************************************************************/
+
+static OGRBoolean OGRGEOSBooleanPredicate(
+    const OGRGeometry* poSelf,
+    const OGRGeometry* poOtherGeom,
+    char (*pfnGEOSFunction_r)(GEOSContextHandle_t,
+                                       const GEOSGeometry*,
+                                       const GEOSGeometry*) )
+{
+    OGRBoolean bResult = FALSE;
+
+    GEOSContextHandle_t hGEOSCtxt = poSelf->createGEOSContext();
+    GEOSGeom hThisGeosGeom = poSelf->exportToGEOS(hGEOSCtxt);
+    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
+    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
+    {
+        bResult = pfnGEOSFunction_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
+    }
+    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
+    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
+    poSelf->freeGEOSContext( hGEOSCtxt );
+
+    return bResult;
+}
+
+#endif // HAVE_GEOS
+
 
 /************************************************************************/
 /*                             ConvexHull()                             */
@@ -3494,16 +3584,8 @@ OGRGeometry *OGRGeometry::ConvexHull() const
             GEOSGeom hGeosHull = GEOSConvexHull_r( hGEOSCtxt, hGeosGeom );
             GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
 
-            if( hGeosHull != nullptr )
-            {
-                poOGRProduct =
-                    OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosHull);
-                if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                    poOGRProduct->assignSpatialReference(getSpatialReference());
-                poOGRProduct =
-                    OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-                GEOSGeom_destroy_r( hGEOSCtxt, hGeosHull);
-            }
+            poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosHull,
+                                                 this, nullptr);
         }
         freeGEOSContext( hGEOSCtxt );
 
@@ -3587,15 +3669,8 @@ OGRGeometry *OGRGeometry::Boundary() const
         GEOSGeom hGeosProduct = GEOSBoundary_r( hGEOSCtxt, hGeosGeom );
         GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
 
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            poOGRProduct = OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext( hGEOSCtxt );
 
@@ -3723,15 +3798,8 @@ OGRGeometry *OGRGeometry::Buffer( UNUSED_IF_NO_GEOS double dfDist,
             GEOSBuffer_r( hGEOSCtxt, hGeosGeom, dfDist, nQuadSegs );
         GEOSGeom_destroy_r( hGEOSCtxt, hGeosGeom );
 
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            poOGRProduct = OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext(hGEOSCtxt);
 
@@ -3855,36 +3923,7 @@ OGRGeometry *OGRGeometry::Intersection(
         return nullptr;
 
     #else
-
-        OGRGeometry *poOGRProduct = nullptr;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-        {
-            GEOSGeom hGeosProduct = GEOSIntersection_r(
-                hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-
-            if( hGeosProduct != nullptr )
-            {
-                poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-                if( poOGRProduct != nullptr && getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
-                {
-                    poOGRProduct->assignSpatialReference(getSpatialReference());
-                }
-                poOGRProduct = OGRGeometryRebuildCurves(this, poOtherGeom, poOGRProduct);
-                GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-            }
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return poOGRProduct;
-
+        return BuildGeometryFromTwoGeoms(this, poOtherGeom, GEOSIntersection_r);
     #endif /* HAVE_GEOS */
     }
 }
@@ -3997,36 +4036,7 @@ OGRGeometry *OGRGeometry::Union(
         return nullptr;
 
     #else
-
-        OGRGeometry *poOGRProduct = nullptr;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-        {
-            GEOSGeom hGeosProduct =
-                GEOSUnion_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-
-            if( hGeosProduct != nullptr )
-            {
-                poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-                if( poOGRProduct != nullptr && getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
-                {
-                    poOGRProduct->assignSpatialReference(getSpatialReference());
-                }
-                poOGRProduct = OGRGeometryRebuildCurves(this, poOtherGeom, poOGRProduct);
-                GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-            }
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return poOGRProduct;
-
+        return BuildGeometryFromTwoGeoms(this, poOtherGeom, GEOSUnion_r);
     #endif /* HAVE_GEOS */
     }
 }
@@ -4101,15 +4111,8 @@ OGRGeometry *OGRGeometry::UnionCascaded() const
         GEOSGeom hGeosProduct = GEOSUnionCascaded_r(hGEOSCtxt, hThisGeosGeom);
         GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
 
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            poOGRProduct = OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext( hGEOSCtxt );
 
@@ -4219,36 +4222,7 @@ OGRGeometry *OGRGeometry::Difference(
         return nullptr;
 
     #else
-
-        OGRGeometry *poOGRProduct = nullptr;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-        if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-        {
-            GEOSGeom hGeosProduct =
-                GEOSDifference_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-
-            if( hGeosProduct != nullptr )
-            {
-                poOGRProduct = OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-                if( poOGRProduct != nullptr && getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference() != nullptr &&
-                    poOtherGeom->getSpatialReference()->IsSame(getSpatialReference()) )
-                {
-                    poOGRProduct->assignSpatialReference(getSpatialReference());
-                }
-                poOGRProduct = OGRGeometryRebuildCurves(this, poOtherGeom, poOGRProduct);
-                GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-            }
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return poOGRProduct;
-
+        return BuildGeometryFromTwoGeoms(this, poOtherGeom, GEOSDifference_r);
     #endif /* HAVE_GEOS */
     }
 }
@@ -4348,39 +4322,7 @@ OGRGeometry::SymDifference(
     return nullptr;
 
 #else
-
-    OGRGeometry *poOGRProduct = nullptr;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        GEOSGeom hGeosProduct =
-            GEOSSymDifference_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct);
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr &&
-                poOtherGeom->getSpatialReference() != nullptr &&
-                poOtherGeom->getSpatialReference()->
-                    IsSame(getSpatialReference()) )
-            {
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            }
-            poOGRProduct =
-                OGRGeometryRebuildCurves(this, poOtherGeom, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return poOGRProduct;
-
+    return BuildGeometryFromTwoGeoms(this, poOtherGeom, GEOSSymDifference_r);
 #endif  // HAVE_GEOS
 }
 
@@ -4487,22 +4429,7 @@ OGRGeometry::Disjoint( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-
-    OGRBoolean bResult = FALSE;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        bResult = GEOSDisjoint_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return bResult;
-
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSDisjoint_r);
 #endif  // HAVE_GEOS
 }
 
@@ -4568,23 +4495,7 @@ OGRGeometry::Touches( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-
-    OGRBoolean bResult = FALSE;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        bResult = GEOSTouches_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return bResult;
-
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSTouches_r);
 #endif  // HAVE_GEOS
 }
 
@@ -4680,23 +4591,7 @@ OGRGeometry::Crosses( UNUSED_PARAMETER const OGRGeometry *poOtherGeom ) const
         return FALSE;
 
     #else
-
-        OGRBoolean bResult = FALSE;
-
-        GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-        GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-        GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-
-        if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-        {
-            bResult = GEOSCrosses_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-        }
-        GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-        freeGEOSContext( hGEOSCtxt );
-
-        return bResult;
-
+        return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSCrosses_r);
     #endif /* HAVE_GEOS */
     }
 }
@@ -4763,22 +4658,7 @@ OGRGeometry::Within( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-
-    OGRBoolean bResult = FALSE;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        bResult = GEOSWithin_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return bResult;
-
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSWithin_r);
 #endif  // HAVE_GEOS
 }
 
@@ -4844,22 +4724,7 @@ OGRGeometry::Contains( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-
-    OGRBoolean bResult = FALSE;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        bResult = GEOSContains_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return bResult;
-
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSWithin_r);
 #endif  // HAVE_GEOS
 }
 
@@ -4926,22 +4791,7 @@ OGRGeometry::Overlaps( UNUSED_IF_NO_GEOS const OGRGeometry *poOtherGeom ) const
     return FALSE;
 
 #else
-
-    OGRBoolean bResult = FALSE;
-
-    GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hThisGeosGeom = exportToGEOS(hGEOSCtxt);
-    GEOSGeom hOtherGeosGeom = poOtherGeom->exportToGEOS(hGEOSCtxt);
-    if( hThisGeosGeom != nullptr && hOtherGeosGeom != nullptr )
-    {
-        bResult = GEOSOverlaps_r( hGEOSCtxt, hThisGeosGeom, hOtherGeosGeom );
-    }
-    GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-    GEOSGeom_destroy_r( hGEOSCtxt, hOtherGeosGeom );
-    freeGEOSContext( hGEOSCtxt );
-
-    return bResult;
-
+    return OGRGEOSBooleanPredicate(this, poOtherGeom, GEOSOverlaps_r);
 #endif  // HAVE_GEOS
 }
 
@@ -5316,15 +5166,8 @@ OGRGeometry *OGRGeometry::Simplify( UNUSED_IF_NO_GEOS double dTolerance ) const
         GEOSGeom hGeosProduct =
             GEOSSimplify_r( hGEOSCtxt, hThisGeosGeom, dTolerance );
         GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct );
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            poOGRProduct = OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext( hGEOSCtxt );
     return poOGRProduct;
@@ -5404,15 +5247,8 @@ OGRGeometry *OGRGeometry::SimplifyPreserveTopology(
             GEOSTopologyPreserveSimplify_r( hGEOSCtxt, hThisGeosGeom,
                                             dTolerance );
         GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct );
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            poOGRProduct = OGRGeometryRebuildCurves(this, nullptr, poOGRProduct);
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext( hGEOSCtxt );
     return poOGRProduct;
@@ -5507,14 +5343,8 @@ OGRGeometry *OGRGeometry::DelaunayTriangulation( double dfTolerance,
             GEOSDelaunayTriangulation_r( hGEOSCtxt, hThisGeosGeom, dfTolerance,
                                          bOnlyEdges );
         GEOSGeom_destroy_r( hGEOSCtxt, hThisGeosGeom );
-        if( hGeosProduct != nullptr )
-        {
-            poOGRProduct =
-                OGRGeometryFactory::createFromGEOS(hGEOSCtxt, hGeosProduct );
-            if( poOGRProduct != nullptr && getSpatialReference() != nullptr )
-                poOGRProduct->assignSpatialReference(getSpatialReference());
-            GEOSGeom_destroy_r( hGEOSCtxt, hGeosProduct );
-        }
+        poOGRProduct = BuildGeometryFromGEOS(hGEOSCtxt, hGeosProduct,
+                                             this, nullptr);
     }
     freeGEOSContext( hGEOSCtxt );
     return poOGRProduct;
