@@ -3120,6 +3120,7 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
 
         case wkbLineString:
         case wkbLinearRing:
+        case wkbCircularString:
         {
             int i;
             OGRSimpleCurve* poLS = poGeom->toSimpleCurve();
@@ -3128,19 +3129,30 @@ static void SetZ (OGRGeometry* poGeom, double dfZ )
             break;
         }
 
+        case wkbCompoundCurve:
+        {
+            OGRCompoundCurve* poCC = poGeom->toCompoundCurve();
+            for(int i=0;i<poCC->getNumCurves();i++)
+                SetZ(poCC->getCurve(i), dfZ);
+            break;
+        }
+
+        case wkbCurvePolygon:
         case wkbPolygon:
         {
             int i;
-            OGRPolygon* poPoly = poGeom->toPolygon();
-            SetZ(poPoly->getExteriorRing(), dfZ);
+            OGRCurvePolygon* poPoly = poGeom->toCurvePolygon();
+            SetZ(poPoly->getExteriorRingCurve(), dfZ);
             for(i=0;i<poPoly->getNumInteriorRings();i++)
-                SetZ(poPoly->getInteriorRing(i), dfZ);
+                SetZ(poPoly->getInteriorRingCurve(i), dfZ);
             break;
         }
 
         case wkbMultiPoint:
         case wkbMultiLineString:
         case wkbMultiPolygon:
+        case wkbMultiSurface:
+        case wkbMultiCurve:
         case wkbGeometryCollection:
         {
             OGRGeometryCollection* poGeomColl = poGeom->toGeometryCollection();
