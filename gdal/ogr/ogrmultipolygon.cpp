@@ -150,15 +150,6 @@ OGRMultiPolygon::hasCurveGeometry( int /* bLookForNonLinear */ ) const
 }
 
 /************************************************************************/
-/*                            PointOnSurface()                          */
-/************************************************************************/
-
-OGRErr OGRMultiPolygon::PointOnSurface( OGRPoint * poPoint ) const
-{
-    return PointOnSurfaceInternal(poPoint);
-}
-
-/************************************************************************/
 /*                          CastToMultiSurface()                        */
 /************************************************************************/
 

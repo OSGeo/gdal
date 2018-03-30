@@ -1417,7 +1417,8 @@ class CPL_DLL OGRSurface : public OGRGeometry
 
   public:
     virtual double      get_Area() const = 0;
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const = 0;
+    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const
+                                { return PointOnSurfaceInternal(poPoint); }
 //! @cond Doxygen_Suppress
     static OGRPolygon*      CastToPolygon(OGRSurface* poSurface);
     static OGRCurvePolygon* CastToCurvePolygon(OGRSurface* poSurface);
@@ -1494,7 +1495,6 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     // ISurface Interface
     virtual double      get_Area() const override;
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const override;
 
     // IWks Interface
     virtual int WkbSize() const override;
@@ -1605,10 +1605,6 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char* const* papszOptions = nullptr) const override;
-
-    // ISurface Interface.
-    virtual OGRErr        PointOnSurface( OGRPoint * poPoint )
-        const override;
 
     // IWks Interface.
     virtual int WkbSize() const override;
@@ -1886,9 +1882,6 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
         const override;
-
-    // IMultiSurface methods
-    virtual OGRErr      PointOnSurface( OGRPoint * poPoint ) const override;
 
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )

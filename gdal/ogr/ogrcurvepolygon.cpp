@@ -616,16 +616,6 @@ OGRCurvePolygon::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                           PointOnSurface()                           */
-/************************************************************************/
-
-OGRErr OGRCurvePolygon::PointOnSurface( OGRPoint *poPoint ) const
-
-{
-    return PointOnSurfaceInternal(poPoint);
-}
-
-/************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
 
