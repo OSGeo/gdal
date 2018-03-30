@@ -6785,7 +6785,7 @@ void OGRDefaultGeometryVisitor::visit(OGRLineString* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRLinearRing* poGeom)
 {
-    _visit(poGeom);
+    visit(static_cast<OGRLineString*>(poGeom));
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRCircularString* poGeom)
@@ -6884,7 +6884,7 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRLineString* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRLinearRing* poGeom)
 {
-    _visit(poGeom);
+    visit(static_cast<const OGRLineString*>(poGeom));
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRCircularString* poGeom)
