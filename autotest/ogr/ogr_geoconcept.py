@@ -229,6 +229,53 @@ def ogr_gxt_3():
 
     return 'success'
 
+###############################################################################
+#
+
+def ogr_gxt_multipolygon_singlepart_nohole():
+
+    ds = ogr.Open('data/geoconcept_multipolygon_singlepart_nohole.txt')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))',
+                                      max_error = 0.000000001 ) != 0:
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def ogr_gxt_multipolygon_singlepart_hole():
+
+    ds = ogr.Open('data/geoconcept_multipolygon_singlepart_hole.txt')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
+                                      max_error = 0.000000001 ) != 0:
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
+def ogr_gxt_multipolygon_twoparts_second_with_hole():
+
+    ds = ogr.Open('data/geoconcept_multipolygon_twoparts_second_with_hole.txt')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))',
+                                      max_error = 0.000000001 ) != 0:
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
 
 ###############################################################################
 #
@@ -247,6 +294,9 @@ gdaltest_list = [
     ogr_gxt_1,
     ogr_gxt_2,
     ogr_gxt_3,
+    ogr_gxt_multipolygon_singlepart_nohole,
+    ogr_gxt_multipolygon_singlepart_hole,
+    ogr_gxt_multipolygon_twoparts_second_with_hole,
     ogr_gxt_cleanup,
     None ]
 

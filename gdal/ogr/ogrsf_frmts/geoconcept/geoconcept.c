@@ -1946,6 +1946,10 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
     Lpo= e= NULL;
     outer= ring= NULL;
+    if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) + 1 > nbtp )
+    {
+        goto onError;
+    }
     if( buildGeom )
     {
       if( !(outer= OGR_G_CreateGeometry(wkbPolygon)) )
@@ -1990,6 +1994,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     }
     np= atoi(papszFields[i]);
     i++;
+    if( np < 0 ||
+        (np > 0 &&
+         i + (GIntBig)(2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) * np > nbtp) )
+    {
+        OGR_G_DestroyGeometry(outer);
+        OGR_G_DestroyGeometry(ring);
+        goto onError;
+    }
     for( ip= 1; ip<=np; ip++ )
     {
       x= CPLAtof(papszFields[i]);
@@ -2033,6 +2045,10 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
       i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
+        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) > nbtp )
+        {
+            goto onError;
+        }
         if( buildGeom )
         {
           if( !(ring= OGR_G_CreateGeometry(wkbLinearRing)) )
@@ -2069,6 +2085,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         i++;
         for( ip= 1; ip<=np; ip++ )
         {
+          if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) > nbtp )
+          {
+              OGR_G_DestroyGeometry(ring);
+              goto onError;
+          }
           x= CPLAtof(papszFields[i]);
           i++;
           y= CPLAtof(papszFields[i]);
@@ -2092,14 +2113,21 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         }
         if( buildGeom )
         {
-          /* is the ring of hole or another polygon ? */
-          for( ilpo= 0; ilpo<CPLListCount(Lpo); ilpo++)
+          /* is the ring a hole or another polygon ? */
+          const int nListCount = CPLListCount(Lpo);
+          for( ilpo= 0; ilpo<nListCount; ilpo++)
           {
             if( (e= CPLListGet(Lpo,ilpo)) )
             {
               if( (outer= (OGRGeometryH)CPLListGetData(e)) )
               {
-                if( OGR_G_Contains(outer,ring) )
+                OGRGeometryH hPolyRing = OGR_G_CreateGeometry(wkbPolygon);
+                int bRes;
+                OGR_G_AddGeometryDirectly(hPolyRing, ring);
+                bRes = OGR_G_Contains(outer,hPolyRing) ;
+                OGR_G_RemoveGeometry(hPolyRing, 0, FALSE);
+                OGR_G_DestroyGeometry(hPolyRing);
+                if( bRes )
                 {
                   OGR_G_AddGeometryDirectly(outer,ring);
                   ring= NULL;
@@ -2108,7 +2136,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
               }
             }
           }
-          if( !ring )
+          if( ring )
           {
             /* new polygon */
             if( !(outer= OGR_G_CreateGeometry(wkbPolygon)) )
