@@ -309,24 +309,44 @@ int CPLODBCSession::RollbackTransaction()
 /*                                                                      */
 /*      Test if a return code indicates failure, return TRUE if that    */
 /*      is the case. Also update error text.                            */
+/*                                                                      */
+/*      Error messages are in the following format:                     */
+/*          [SQLSTATE]MessageText(NativeError)                          */
+/*      Multiple error messages are delimited by ",".                   */
 /************************************************************************/
 
 int CPLODBCSession::Failed( int nRetCode, HSTMT hStmt )
 
 {
-    SQLCHAR achSQLState[SQL_MAX_MESSAGE_LENGTH];
-    SQLINTEGER nNativeError;
-    SQLSMALLINT nTextLength=0;
-
     m_szLastError[0] = '\0';
 
     if( nRetCode == SQL_SUCCESS || nRetCode == SQL_SUCCESS_WITH_INFO )
         return FALSE;
 
-    SQLError( m_hEnv, m_hDBC, hStmt, achSQLState, &nNativeError,
-              (SQLCHAR *) m_szLastError, sizeof(m_szLastError)-1, 
-              &nTextLength );
-    m_szLastError[nTextLength] = '\0';
+    CPLString osErrorMsg;
+    SQLRETURN nDiagRetCode = SQL_SUCCESS;
+    for(SQLSMALLINT nRecNum = 1; nDiagRetCode == SQL_SUCCESS; ++nRecNum)
+    {
+        // SQLState is 5 characters long, plus a terminating zero.
+        SQLCHAR achSQLState[5 + 1] = { '\0' };
+        SQLCHAR achCurErrMsg[SQL_MAX_MESSAGE_LENGTH] = { '\0' };
+        SQLSMALLINT nTextLength = 0;
+        SQLINTEGER nNativeError;
+
+        nDiagRetCode = SQLGetDiagRec( SQL_HANDLE_STMT, hStmt, nRecNum, achSQLState,
+                &nNativeError, (SQLCHAR *) achCurErrMsg, sizeof(achCurErrMsg)-1,
+                &nTextLength );
+        if (nDiagRetCode == SQL_SUCCESS)
+        {
+            achCurErrMsg[nTextLength] = '\0';
+            osErrorMsg +=
+                CPLString().Printf("%s[%5s]%s(%d)",
+                    (osErrorMsg.empty() ? "" : ", "), achSQLState,
+                    achCurErrMsg, nNativeError);
+        }
+    }
+    strncpy(m_szLastError, osErrorMsg.c_str(), sizeof(m_szLastError) - 1);
+    m_szLastError[sizeof(m_szLastError) - 1] = '\0';
 
     if( nRetCode == SQL_ERROR && m_bInTransaction )
         RollbackTransaction();
