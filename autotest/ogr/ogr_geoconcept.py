@@ -250,6 +250,9 @@ def ogr_gxt_multipolygon_singlepart_nohole():
 
 def ogr_gxt_multipolygon_singlepart_hole():
 
+    if not ogrtest.have_geos():
+        return 'skip'
+
     ds = ogr.Open('data/geoconcept_multipolygon_singlepart_hole.txt')
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
@@ -265,6 +268,9 @@ def ogr_gxt_multipolygon_singlepart_hole():
 #
 
 def ogr_gxt_multipolygon_twoparts_second_with_hole():
+
+    if not ogrtest.have_geos():
+        return 'skip'
 
     ds = ogr.Open('data/geoconcept_multipolygon_twoparts_second_with_hole.txt')
     lyr = ds.GetLayer(0)
