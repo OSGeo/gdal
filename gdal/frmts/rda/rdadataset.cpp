@@ -259,7 +259,8 @@ GDALRDADataset::GDALRDADataset() :
     m_osClientId(CPLGetConfigOption("GBDX_CLIENT_ID", "")),
     m_osClientSecret(CPLGetConfigOption("GBDX_CLIENT_SECRET", "")),
     m_osUserName(CPLGetConfigOption("GBDX_USERNAME", "")),
-    m_osUserPassword(CPLGetConfigOption("GBDX_PASSWORD", ""))
+    m_osUserPassword(CPLGetConfigOption("GBDX_PASSWORD", "")),
+    m_osNativeTileFileFormat(CPLGetConfigOption("RDA_NATIVE_FORMAT", "tif"))
 {
 }
 
@@ -1030,11 +1031,7 @@ bool GDALRDADataset::ReadImageMetadata()
     m_osImageId = GetJsonString(poObj, "imageId", true, bError);
     m_osProfileName = GetJsonString(poObj, "profileName", false,
                                     bNonFatalError);
-    m_osNativeTileFileFormat = GetJsonString(poObj, "nativeTileFileFormat",
-                                            false, bNonFatalError);
-    m_osNativeTileFileFormat = m_osNativeTileFileFormat.tolower();
-    if( m_osNativeTileFileFormat.empty() )
-        m_osNativeTileFileFormat = "tif";
+
     m_nTileXOffset = GetJsonInt64(poObj, "tileXOffset", true, bError);
     m_nTileYOffset = GetJsonInt64(poObj, "tileYOffset", true, bError);
     m_nNumXTiles = std::max<GIntBig>(0,

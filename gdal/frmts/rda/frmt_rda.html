@@ -50,13 +50,6 @@ OR
     </li>
 
     <li>
-        <pre>"options": {"delete-on-close": false}</pre>
-        can be added to
-        the JSon document to request that cached tiles and metadata are not destroyed
-        at dataset closing. The default, if not specified, is true.
-    </li>
-
-    <li>
         <pre>"options": {"max-connections": 32}</pre>
         can be added to
         the JSon document to request that cached tiles be fetched using a maximum number of
@@ -135,8 +128,7 @@ user_password = value (required)
     ~/.gdal/rda_cache/{graph-id}/{node-id}, and deleted on dataset closing,
     unless
 <pre>"options": {"delete-on-close": false}</pre>
-is found in the
-dataset name.</p>
+is found in the dataset name.</p>
 
 
 <h2>Open Options</h2>
