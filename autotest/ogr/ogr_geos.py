@@ -609,6 +609,33 @@ def ogr_geos_DelaunayTriangulation():
 
     return 'success'
 
+###############################################################################
+
+def ogr_geos_polygonize():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    g = ogr.CreateGeometryFromWkt( 'MULTILINESTRING((0 0,0 1,1 1),(1 1,0 0))' )
+    got = g.Polygonize()
+    if got.ExportToWkt() != 'GEOMETRYCOLLECTION (POLYGON ((0 0,0 1,1 1,0 0)))':
+        gdaltest.post_reason('Got: %s' % got.ExportToWkt())
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt( 'POINT EMPTY' )
+    got = g.Polygonize()
+    if got is not None:
+        gdaltest.post_reason('Got: %s' % got.ExportToWkt())
+        return 'fail'
+
+    g = ogr.CreateGeometryFromWkt( 'GEOMETRYCOLLECTION(POINT EMPTY)' )
+    got = g.Polygonize()
+    if got is not None:
+        gdaltest.post_reason('Got: %s' % got.ExportToWkt())
+        return 'fail'
+
+    return 'success'
+
 gdaltest_list = [
     ogr_geos_union,
     ogr_geos_intersection,
@@ -637,7 +664,9 @@ gdaltest_list = [
     ogr_geos_isvalid_true,
     ogr_geos_isvalid_false,
     ogr_geos_pointonsurface,
-    ogr_geos_DelaunayTriangulation ]
+    ogr_geos_DelaunayTriangulation,
+    ogr_geos_polygonize,
+]
 
 if __name__ == '__main__':
 

@@ -5178,6 +5178,9 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_SimplifyPreserveTopology(OGRGeom
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_DelaunayTriangulation(OGRGeometryShadow *self,double dfTolerance=0.0,int bOnlyEdges=FALSE){
     return (OGRGeometryShadow*) OGR_G_DelaunayTriangulation(self, dfTolerance, bOnlyEdges);
   }
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Polygonize(OGRGeometryShadow *self){
+    return (OGRGeometryShadow*) OGR_G_Polygonize(self);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_Boundary(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_Boundary(self);
   }
@@ -26498,6 +26501,46 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Geometry_Polygonize(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:Geometry_Polygonize",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_Polygonize" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_Polygonize(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Geometry_Boundary(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
@@ -35004,6 +35047,36 @@ static PyMethodDef SwigMethods[] = {
 		"error occurs.\n"
 		"\n"
 		"OGR 2.1 \n"
+		""},
+	 { (char *)"Geometry_Polygonize", _wrap_Geometry_Polygonize, METH_VARARGS, (char *)"\n"
+		"Geometry_Polygonize(Geometry self) -> Geometry\n"
+		"\n"
+		"OGRGeometryH\n"
+		"OGR_G_Polygonize(OGRGeometryH hTarget)\n"
+		"\n"
+		"Polygonizes a set of sparse edges.\n"
+		"\n"
+		"A new geometry object is created and returned containing a collection\n"
+		"of reassembled Polygons: NULL will be returned if the input collection\n"
+		"doesn't corresponds to a MultiLinestring, or when reassembling Edges\n"
+		"into Polygons is impossible due to topological inconsistencies.\n"
+		"\n"
+		"This function is the same as the C++ method OGRGeometry::Polygonize().\n"
+		"\n"
+		"This function is built on the GEOS library, check it for the\n"
+		"definition of the geometry operation. If OGR is built without the GEOS\n"
+		"library, this function will always fail, issuing a CPLE_NotSupported\n"
+		"error.\n"
+		"\n"
+		"Parameters:\n"
+		"-----------\n"
+		"\n"
+		"hTarget:  The Geometry to be polygonized.\n"
+		"\n"
+		"a handle to a newly allocated geometry now owned by the caller, or\n"
+		"NULL on failure.\n"
+		"\n"
+		"OGR 1.9.0 \n"
 		""},
 	 { (char *)"Geometry_Boundary", _wrap_Geometry_Boundary, METH_VARARGS, (char *)"\n"
 		"Geometry_Boundary(Geometry self) -> Geometry\n"

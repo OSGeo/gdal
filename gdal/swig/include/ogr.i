@@ -2943,6 +2943,11 @@ public:
     return (OGRGeometryShadow*) OGR_G_DelaunayTriangulation(self, dfTolerance, bOnlyEdges);
   }
 
+  %newobject Polygonize;
+  OGRGeometryShadow* Polygonize() {
+    return (OGRGeometryShadow*) OGR_G_Polygonize(self);
+  }
+
   %newobject Boundary;
   OGRGeometryShadow* Boundary() {
     return (OGRGeometryShadow*) OGR_G_Boundary(self);

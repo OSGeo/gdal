@@ -6523,6 +6523,40 @@ class Geometry(_object):
         return _ogr.Geometry_DelaunayTriangulation(self, *args, **kwargs)
 
 
+    def Polygonize(self, *args):
+        """
+        Polygonize(Geometry self) -> Geometry
+
+        OGRGeometryH
+        OGR_G_Polygonize(OGRGeometryH hTarget)
+
+        Polygonizes a set of sparse edges.
+
+        A new geometry object is created and returned containing a collection
+        of reassembled Polygons: NULL will be returned if the input collection
+        doesn't corresponds to a MultiLinestring, or when reassembling Edges
+        into Polygons is impossible due to topological inconsistencies.
+
+        This function is the same as the C++ method OGRGeometry::Polygonize().
+
+        This function is built on the GEOS library, check it for the
+        definition of the geometry operation. If OGR is built without the GEOS
+        library, this function will always fail, issuing a CPLE_NotSupported
+        error.
+
+        Parameters:
+        -----------
+
+        hTarget:  The Geometry to be polygonized.
+
+        a handle to a newly allocated geometry now owned by the caller, or
+        NULL on failure.
+
+        OGR 1.9.0 
+        """
+        return _ogr.Geometry_Polygonize(self, *args)
+
+
     def Boundary(self, *args):
         """
         Boundary(Geometry self) -> Geometry
