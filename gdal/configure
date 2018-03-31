@@ -5197,7 +5197,7 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  CXX_WFLAGS="$CXX_WFLAGS -std=gnu89"
+  C_WFLAGS="$C_WFLAGS -std=gnu89"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else

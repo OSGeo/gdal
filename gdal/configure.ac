@@ -116,7 +116,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[#if defined(__clang__) || !defined(__GNUC__)
     #error "not gcc"
     #endif]])],
-  [CXX_WFLAGS="$CXX_WFLAGS -std=gnu89"]
+  [C_WFLAGS="$C_WFLAGS -std=gnu89"]
   [AC_MSG_RESULT([yes])],
   [AC_MSG_RESULT([no])])
 CFLAGS=$SAVED_CFLAGS
