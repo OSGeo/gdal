@@ -1086,15 +1086,15 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        setPoint( int, double, double, double );
     void        setPointM( int, double, double, double );
     void        setPoint( int, double, double, double, double );
-    void        setPoints( int, OGRRawPoint *, double * = nullptr );
-    void        setPointsM( int, OGRRawPoint *, double * );
-    void        setPoints( int, OGRRawPoint *, double *, double * );
-    void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZIn = nullptr );
-    void        setPointsM( int, double * padfX, double * padfY,
-                            double *padfMIn = nullptr );
-    void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZIn, double *padfMIn );
+    void        setPoints( int, const OGRRawPoint *, const double * = nullptr );
+    void        setPointsM( int, const OGRRawPoint *, const double * );
+    void        setPoints( int, const OGRRawPoint *, const double *, const double * );
+    void        setPoints( int, const double * padfX, const double * padfY,
+                           const double *padfZIn = nullptr );
+    void        setPointsM( int, const double * padfX, const double * padfY,
+                            const double *padfMIn = nullptr );
+    void        setPoints( int, const double * padfX, const double * padfY,
+                           const double *padfZIn, const double *padfMIn );
     void        addPoint( const OGRPoint * );
     void        addPoint( double, double );
     void        addPoint( double, double, double );
