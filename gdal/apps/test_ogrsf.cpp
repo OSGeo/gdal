@@ -1282,15 +1282,13 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
     int bRet = TRUE;
     GIntBig nFC = 0;
     GIntBig nClaimedFC = LOG_ACTION(poLayer->GetFeatureCount());
-    OGRFeature  *poFeature;
     bool bWarnAboutSRS = false;
     OGRFeatureDefn* poLayerDefn = LOG_ACTION(poLayer->GetLayerDefn());
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
 
-    poLayer->ResetReading();
     CPLErrorReset();
 
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    for( auto&& poFeature: poLayer )
     {
         nFC++;
 
@@ -1342,8 +1340,6 @@ static int TestOGRLayerFeatureCount( GDALDataset* poDS, OGRLayer *poLayer,
                 CPLFree(pszFeatureSRSWKT);
             }
         }
-
-        DestroyFeatureAndNullify(poFeature);
     }
 
     /* mapogr.cpp doesn't like errors after GetNextFeature() */
@@ -1872,19 +1868,15 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /* -------------------------------------------------------------------- */
 /*      Verify that we can find the target feature.                     */
 /* -------------------------------------------------------------------- */
-    LOG_ACTION(poLayer->ResetReading());
-
     bool bFound = false;
     GIntBig nIterCount = 0;
-    OGRFeature *poFeature = nullptr;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    for( auto&& poFeature: poLayer )
     {
         if( poFeature->Equal(poTargetFeature) )
         {
             bFound = true;
         }
         nIterCount ++;
-        DestroyFeatureAndNullify(poFeature);
     }
 
     if( !bFound )
@@ -1947,22 +1939,17 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
 /* -------------------------------------------------------------------- */
 /*      Verify that we can NOT find the target feature.                 */
 /* -------------------------------------------------------------------- */
-    LOG_ACTION(poLayer->ResetReading());
-
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    OGRFeatureUniquePtr poUniquePtrFeature;
+    for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeature->Equal(poTargetFeature) )
+        if( poFeatureIter->Equal(poTargetFeature) )
         {
-            DestroyFeatureAndNullify(poFeature);
+            poUniquePtrFeature.swap(poFeatureIter);
             break;
-        }
-        else
-        {
-            DestroyFeatureAndNullify(poFeature);
         }
     }
 
-    if( poFeature != nullptr )
+    if( poUniquePtrFeature != nullptr )
     {
         bRet = FALSE;
         printf("ERROR: Spatial filter (%d) failed to eliminate"
@@ -1982,8 +1969,8 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     }
 
     // Check that GetFeature() ignores the spatial filter
-    poFeature = LOG_ACTION(poLayer->GetFeature(poTargetFeature->GetFID()));
-    if( poFeature == nullptr || !poFeature->Equal(poTargetFeature) )
+    poUniquePtrFeature.reset(LOG_ACTION(poLayer->GetFeature(poTargetFeature->GetFID())));
+    if( poUniquePtrFeature == nullptr || !poUniquePtrFeature->Equal(poTargetFeature) )
     {
         bRet = FALSE;
         printf("ERROR: Spatial filter has been taken into account "
@@ -1994,23 +1981,19 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
         printf("INFO: Spatial filter is ignored by GetFeature() "
                "as expected.\n");
     }
-    if( poFeature != nullptr )
-        DestroyFeatureAndNullify(poFeature);
 
     if( bRet )
     {
-        LOG_ACTION(poLayer->ResetReading());
-        while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+        poUniquePtrFeature.reset();
+        for( auto&& poFeatureIter: poLayer )
         {
-            if( poFeature->Equal(poTargetFeature) )
+            if( poFeatureIter->Equal(poTargetFeature) )
             {
-                DestroyFeatureAndNullify(poFeature);
+                poUniquePtrFeature.swap(poFeatureIter);
                 break;
             }
-            else
-                DestroyFeatureAndNullify(poFeature);
         }
-        if( poFeature != nullptr )
+        if( poUniquePtrFeature != nullptr )
         {
             bRet = FALSE;
             printf("ERROR: Spatial filter has not been restored correctly "
@@ -2037,13 +2020,11 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     oInfinityFilter.addRing(&oRing);
 
     LOG_ACTION(poLayer->SetSpatialFilter(iGeomField, &oInfinityFilter));
-    LOG_ACTION(poLayer->ResetReading());
     int nCountInf = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
+        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
             nCountInf ++;
-        delete poFeature;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2062,13 +2043,11 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     oHugeFilter.addRing(&oRing);
 
     LOG_ACTION(poLayer->SetSpatialFilter(iGeomField, &oHugeFilter));
-    LOG_ACTION(poLayer->ResetReading());
     int nCountHuge = 0;
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
+        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
             nCountHuge ++;
-        delete poFeature;
     }
 
 /* -------------------------------------------------------------------- */
@@ -2077,12 +2056,10 @@ static int TestSpatialFilter( OGRLayer *poLayer, int iGeomField )
     LOG_ACTION(poLayer->SetSpatialFilter(nullptr));
 
     int nExpected = 0;
-    poLayer->ResetReading();
-    while( (poFeature = LOG_ACTION(poLayer->GetNextFeature())) != nullptr )
+    for( auto&& poFeatureIter: poLayer )
     {
-        if( poFeature->GetGeomFieldRef(iGeomField) != nullptr )
+        if( poFeatureIter->GetGeomFieldRef(iGeomField) != nullptr )
             nExpected ++;
-        delete poFeature;
     }
     LOG_ACTION(poLayer->ResetReading());
 

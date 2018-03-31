@@ -518,6 +518,59 @@ void     CPL_DLL OGR_L_SetSpatialFilterRectEx( OGRLayerH, int iGeomField,
 OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
+
+/*! @cond Doxygen_Suppress */
+#ifdef __cplusplus
+#define OGR_API_NULL nullptr
+#else
+#define OGR_API_NULL NULL
+#endif
+
+/*! @endcond */
+
+/** Conveniency macro to iterate over features of a layer.
+ *
+ * Typical usage is:
+ * <pre>
+ * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
+ * {
+ *      // do something, including continue, break;
+ *      // do not explicitly destroy the feature
+ * }
+ * OGR_FOR_EACH_FEATURE_END(hFeat)
+ * </pre>
+ *
+ * In C++, you might want to use instead range-based loop:
+ * <pre>
+ * for( auto&& poFeature: poLayer )
+ * {
+ * }
+ * </pre>
+ *
+ * @param hFeat variable name for OGRFeatureH. The variable will be declared
+ *              inside the macro body.
+ * @param hLayer layer to iterate over.
+ *
+ * @since GDAL 2.3
+ */
+#define OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer) \
+    { \
+        OGRFeatureH hFeat = OGR_API_NULL; \
+        OGR_L_ResetReading(hLayer); \
+        while( true) \
+        { \
+            if( hFeat ) \
+                OGR_F_Destroy(hFeat); \
+            hFeat = OGR_L_GetNextFeature(hLayer); \
+            if( !hFeat ) \
+                break;
+
+/** End of iterator. */
+#define OGR_FOR_EACH_FEATURE_END(hFeat) \
+        } \
+        OGR_F_Destroy(hFeat); \
+    }
+
 OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, GIntBig );
 OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, GIntBig )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH ) CPL_WARN_UNUSED_RESULT;

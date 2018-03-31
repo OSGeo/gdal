@@ -36,6 +36,8 @@
 #include "ogr_featurestyle.h"
 #include "gdal_priv.h"
 
+#include <memory>
+
 /**
  * \file ogrsf_frmts.h
  *
@@ -68,7 +70,26 @@ class OGRSFDriver;
 class CPL_DLL OGRLayer : public GDALMajorObject
 {
   private:
+    struct Private;
+    std::unique_ptr<Private> m_poPrivate;
+
     void         ConvertGeomsIfNecessary( OGRFeature *poFeature );
+
+    class CPL_DLL FeatureIterator
+    {
+            struct Private;
+            std::unique_ptr<Private> m_poPrivate;
+        public:
+            FeatureIterator(OGRLayer* poLayer, bool bStart);
+            FeatureIterator(FeatureIterator&& oOther);
+            ~FeatureIterator();
+            OGRFeatureUniquePtr& operator*();
+            FeatureIterator& operator++();
+            bool operator!=(const FeatureIterator& it) const;
+    };
+
+    friend FeatureIterator CPL_DLL begin(OGRLayer* poLayer);
+    friend FeatureIterator CPL_DLL end(OGRLayer* poLayer);
 
   protected:
 //! @cond Doxygen_Suppress
@@ -92,6 +113,21 @@ class CPL_DLL OGRLayer : public GDALMajorObject
   public:
     OGRLayer();
     virtual     ~OGRLayer();
+
+    /** Return begin of feature iterator.
+     *
+     * Using this iterator for standard range-based loops is safe, but
+     * due to implementation limitations, you shouldn't try to access
+     * (dereference) more than one iterator step at a time, since the
+     * std::unique_ptr&lt;OGRFeature&gt; reference is reused.
+     *
+     * Only one iterator per layer can be active at a time.
+     * @since GDAL 2.3
+     */
+    FeatureIterator begin();
+
+    /** Return end of feature iterator. */
+    FeatureIterator end();
 
     virtual OGRGeometry *GetSpatialFilter();
     virtual void        SetSpatialFilter( OGRGeometry * );
@@ -222,6 +258,21 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     GIntBig              m_nFeaturesRead;
 //! @endcond
 };
+
+/** Return begin of feature iterator.
+ *
+ * Using this iterator for standard range-based loops is safe, but
+ * due to implementation limitations, you shouldn't try to access
+ * (dereference) more than one iterator step at a time, since the
+ * std::unique_ptr&lt;OGRFeature&gt; reference is reused.
+ *
+ * Only one iterator per layer can be active at a time.
+ * @since GDAL 2.3
+ */
+OGRLayer::FeatureIterator CPL_DLL begin(OGRLayer* poLayer);
+
+/** Return end of feature iterator. */
+OGRLayer::FeatureIterator CPL_DLL end(OGRLayer* poLayer);
 
 /************************************************************************/
 /*                            OGRDataSource                             */

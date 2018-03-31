@@ -36,11 +36,17 @@
 
 CPL_CVSID("$Id$")
 
+struct OGRLayer::Private
+{
+    bool         m_bInFeatureIterator = false;
+};
+
 /************************************************************************/
 /*                              OGRLayer()                              */
 /************************************************************************/
 
 OGRLayer::OGRLayer() :
+    m_poPrivate(new Private()),
     m_bFilterIsEnvelope(FALSE),
     m_poFilterGeom(nullptr),
     m_pPreparedFilterGeom(nullptr),
@@ -4418,4 +4424,137 @@ OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
     VALIDATE_POINTER1( pLayerResult, "OGR_L_Erase", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)pLayerInput)->Erase( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                  OGRLayer::FeatureIterator::Private                  */
+/************************************************************************/
+
+struct OGRLayer::FeatureIterator::Private
+{
+    OGRFeatureUniquePtr m_poFeature;
+    OGRLayer* m_poLayer = nullptr;
+    bool m_bError = false;
+    bool m_bEOF = true;
+};
+
+/************************************************************************/
+/*                OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::FeatureIterator(OGRLayer* poLayer, bool bStart):
+    m_poPrivate(new OGRLayer::FeatureIterator::Private())
+{
+    m_poPrivate->m_poLayer = poLayer;
+    if( bStart )
+    {
+        if( m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Only one feature iterator can be "
+                        "active at a time");
+            m_poPrivate->m_bError = true;
+        }
+        else
+        {
+            m_poPrivate->m_poLayer->ResetReading();
+            m_poPrivate->m_poFeature.reset(m_poPrivate->m_poLayer->GetNextFeature());
+            m_poPrivate->m_bEOF = m_poPrivate->m_poFeature == nullptr;
+            m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator = true;
+        }
+    }
+}
+
+/************************************************************************/
+/*                OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::FeatureIterator(OGRLayer::FeatureIterator&& oOther)
+{
+    m_poPrivate->m_poFeature.swap(oOther.m_poPrivate->m_poFeature);
+    oOther.m_poPrivate->m_poFeature.reset();
+
+    m_poPrivate->m_poLayer = oOther.m_poPrivate->m_poLayer;
+    oOther.m_poPrivate->m_poLayer = nullptr;
+
+    m_poPrivate->m_bError = oOther.m_poPrivate->m_bError;
+    oOther.m_poPrivate->m_bError = true;
+
+    m_poPrivate->m_bEOF = oOther.m_poPrivate->m_bEOF;
+    oOther.m_poPrivate->m_bEOF = true;
+}
+
+/************************************************************************/
+/*               ~OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::~FeatureIterator()
+{
+    if( !m_poPrivate->m_bError && m_poPrivate->m_poLayer)
+        m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator = false;
+}
+
+/************************************************************************/
+/*                              operator*()                             */
+/************************************************************************/
+
+OGRFeatureUniquePtr& OGRLayer::FeatureIterator::operator*()
+{
+    return m_poPrivate->m_poFeature;
+}
+
+/************************************************************************/
+/*                              operator++()                            */
+/************************************************************************/
+
+OGRLayer::FeatureIterator& OGRLayer::FeatureIterator::operator++()
+{
+    m_poPrivate->m_poFeature.reset(m_poPrivate-> m_poLayer->GetNextFeature());
+    m_poPrivate->m_bEOF = m_poPrivate->m_poFeature == nullptr;
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator!=()                             */
+/************************************************************************/
+
+bool OGRLayer::FeatureIterator::operator!=(const OGRLayer::FeatureIterator& it) const
+{
+    return m_poPrivate->m_bEOF != it.m_poPrivate->m_bEOF;
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+OGRLayer::FeatureIterator OGRLayer::begin()
+{
+    return {this, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+OGRLayer::FeatureIterator OGRLayer::end()
+{
+    return {this, false};
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+OGRLayer::FeatureIterator begin(OGRLayer* poLayer)
+{
+    return poLayer->begin();
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+OGRLayer::FeatureIterator end(OGRLayer* poLayer)
+{
+    return poLayer->end();
 }
