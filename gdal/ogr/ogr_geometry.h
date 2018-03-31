@@ -37,6 +37,8 @@
 #include "ogr_core.h"
 #include "ogr_spatialref.h"
 
+#include <memory>
+
 /**
  * \file ogr_geometry.h
  *
