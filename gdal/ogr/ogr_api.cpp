@@ -133,28 +133,18 @@ void OGR_G_SetPointCount( OGRGeometryH hGeom, int nNewPointCount )
 }
 
 /************************************************************************/
-/*                             OGR_G_GetX()                             */
+/*                        OGR_G_Get_Component()                         */
 /************************************************************************/
-/**
- * \brief Fetch the x coordinate of a point from a geometry.
- *
- * @param hGeom handle to the geometry from which to get the x coordinate.
- * @param i point to get the x coordinate.
- * @return the X coordinate of this point.
- */
-
-double OGR_G_GetX( OGRGeometryH hGeom, int i )
-
+template<typename Getter>
+static double OGR_G_Get_Component( OGRGeometryH hGeom, int i )
 {
-    VALIDATE_POINTER1( hGeom, "OGR_G_GetX", 0 );
-
     switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
     {
       case wkbPoint:
       {
           if( i == 0 )
           {
-              return ToPointer(hGeom)->toPoint()->getX();
+              return Getter::get(ToPointer(hGeom)->toPoint());
           }
           else
           {
@@ -173,7 +163,7 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
               CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
               return 0.0;
           }
-          return poSC->getX( i );
+          return Getter::get(poSC, i );
       }
 
       default:
@@ -181,6 +171,29 @@ double OGR_G_GetX( OGRGeometryH hGeom, int i )
                    "Incompatible geometry for operation");
           return 0.0;
     }
+}
+
+/************************************************************************/
+/*                             OGR_G_GetX()                             */
+/************************************************************************/
+/**
+ * \brief Fetch the x coordinate of a point from a geometry.
+ *
+ * @param hGeom handle to the geometry from which to get the x coordinate.
+ * @param i point to get the x coordinate.
+ * @return the X coordinate of this point.
+ */
+
+double OGR_G_GetX( OGRGeometryH hGeom, int i )
+
+{
+    VALIDATE_POINTER1( hGeom, "OGR_G_GetX", 0 );
+    struct Getter
+    {
+        static double get(const OGRPoint* poPoint) { return poPoint->getX(); }
+        static double get(const OGRSimpleCurve* poSC, int l_i) { return poSC->getX(l_i); }
+    };
+    return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
 /************************************************************************/
@@ -198,40 +211,12 @@ double OGR_G_GetY( OGRGeometryH hGeom, int i )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetY", 0 );
-
-    switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
+    struct Getter
     {
-      case wkbPoint:
-      {
-          if( i == 0 )
-          {
-              return ToPointer(hGeom)->toPoint()->getY();
-          }
-          else
-          {
-              CPLError(CE_Failure, CPLE_NotSupported,
-                       "Only i == 0 is supported");
-              return 0.0;
-          }
-      }
-
-      case wkbLineString:
-      case wkbCircularString:
-      {
-          OGRSimpleCurve* poSC = ToPointer(hGeom)->toSimpleCurve();
-          if( i < 0 || i >= poSC->getNumPoints() )
-          {
-              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
-              return 0.0;
-          }
-          return poSC->getY( i );
-      }
-
-      default:
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Incompatible geometry for operation");
-        return 0.0;
-    }
+        static double get(const OGRPoint* poPoint) { return poPoint->getY(); }
+        static double get(const OGRSimpleCurve* poSC, int l_i) { return poSC->getY(l_i); }
+    };
+    return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
 /************************************************************************/
@@ -249,40 +234,12 @@ double OGR_G_GetZ( OGRGeometryH hGeom, int i )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetZ", 0 );
-
-    switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
+    struct Getter
     {
-      case wkbPoint:
-      {
-          if( i == 0 )
-          {
-              return ToPointer(hGeom)->toPoint()->getZ();
-          }
-          else
-          {
-              CPLError(CE_Failure, CPLE_NotSupported,
-                       "Only i == 0 is supported");
-              return 0.0;
-          }
-      }
-
-      case wkbLineString:
-      case wkbCircularString:
-      {
-          OGRSimpleCurve* poSC = ToPointer(hGeom)->toSimpleCurve();
-          if( i < 0 || i >= poSC->getNumPoints() )
-          {
-              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
-              return 0.0;
-          }
-          return poSC->getZ( i );
-      }
-
-      default:
-          CPLError(CE_Failure, CPLE_NotSupported,
-                   "Incompatible geometry for operation");
-          return 0.0;
-    }
+        static double get(const OGRPoint* poPoint) { return poPoint->getZ(); }
+        static double get(const OGRSimpleCurve* poSC, int l_i) { return poSC->getZ(l_i); }
+    };
+    return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
 /************************************************************************/
@@ -300,40 +257,12 @@ double OGR_G_GetM( OGRGeometryH hGeom, int i )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_GetM", 0 );
-
-    switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
+    struct Getter
     {
-      case wkbPoint:
-      {
-          if( i == 0 )
-          {
-              return ToPointer(hGeom)->toPoint()->getM();
-          }
-          else
-          {
-              CPLError(CE_Failure, CPLE_NotSupported,
-                       "Only i == 0 is supported");
-              return 0.0;
-          }
-      }
-
-      case wkbLineString:
-      case wkbCircularString:
-      {
-          OGRSimpleCurve* poSC = ToPointer(hGeom)->toSimpleCurve();
-          if( i < 0 || i >= poSC->getNumPoints() )
-          {
-              CPLError(CE_Failure, CPLE_NotSupported, "Index out of bounds");
-              return 0.0;
-          }
-          return poSC->getM( i );
-      }
-
-      default:
-          CPLError(CE_Failure, CPLE_NotSupported,
-                   "Incompatible geometry for operation");
-          return 0.0;
-    }
+        static double get(const OGRPoint* poPoint) { return poPoint->getM(); }
+        static double get(const OGRSimpleCurve* poSC, int l_i) { return poSC->getM(l_i); }
+    };
+    return OGR_G_Get_Component<Getter>(hGeom, i);
 }
 
 /************************************************************************/
@@ -638,9 +567,9 @@ void OGR_G_GetPointZM( OGRGeometryH hGeom, int i,
  */
 
 void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
-                              void* pabyX, int nXStride,
-                              void* pabyY, int nYStride,
-                              void* pabyZ, int nZStride )
+                              const void* pabyX, int nXStride,
+                              const void* pabyY, int nYStride,
+                              const void* pabyZ, int nZStride )
 
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPoints" );
@@ -652,9 +581,9 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
         return;
     }
 
-    double * const padfX = static_cast<double *>(pabyX);
-    double * const padfY = static_cast<double *>(pabyY);
-    double * const padfZ = static_cast<double *>(pabyZ);
+    const double * const padfX = static_cast<const double *>(pabyX);
+    const double * const padfY = static_cast<const double *>(pabyY);
+    const double * const padfZ = static_cast<const double *>(pabyZ);
 
     switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
     {
@@ -687,14 +616,14 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
           // TODO(schwehr): Create pasX and pasY.
           for( int i = 0; i < nPointsIn; ++i )
           {
-            const double x = *reinterpret_cast<double *>(
-                reinterpret_cast<char *>(pabyX) + i * nXStride);
-            const double y = *reinterpret_cast<double *>(
-                reinterpret_cast<char *>(pabyY) + i * nYStride);
+            const double x = *reinterpret_cast<const double *>(
+                static_cast<const char *>(pabyX) + i * nXStride);
+            const double y = *reinterpret_cast<const double *>(
+                static_cast<const char *>(pabyY) + i * nYStride);
             if( pabyZ )
             {
-                const double z = *reinterpret_cast<double *>(
-                    reinterpret_cast<char *>(pabyZ) + i * nZStride);
+                const double z = *reinterpret_cast<const double *>(
+                    static_cast<const char *>(pabyZ) + i * nZStride);
                 poSC->setPoint( i, x, y, z );
             }
             else
@@ -723,38 +652,42 @@ void CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
  *
  * @param hGeom handle to the geometry to set the coordinates.
  * @param nPointsIn number of points being passed in padfX and padfY.
- * @param pabyX list of X coordinates (double values) of points being assigned.
- * @param nXStride the number of bytes between 2 elements of pabyX.
- * @param pabyY list of Y coordinates (double values) of points being assigned.
- * @param nYStride the number of bytes between 2 elements of pabyY.
- * @param pabyZ list of Z coordinates (double values) of points being assigned
+ * @param pX list of X coordinates (double values) of points being assigned.
+ * @param nXStride the number of bytes between 2 elements of pX.
+ * @param pY list of Y coordinates (double values) of points being assigned.
+ * @param nYStride the number of bytes between 2 elements of pY.
+ * @param pZ list of Z coordinates (double values) of points being assigned
  * (if not NULL, upgrades the geometry to have Z coordinate).
- * @param nZStride the number of bytes between 2 elements of pabyZ.
- * @param pabyM list of M coordinates (double values) of points being assigned
+ * @param nZStride the number of bytes between 2 elements of pZ.
+ * @param pM list of M coordinates (double values) of points being assigned
  * (if not NULL, upgrades the geometry to have M coordinate).
- * @param nMStride the number of bytes between 2 elements of pabyM.
+ * @param nMStride the number of bytes between 2 elements of pM.
  */
 
 void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
-                                void* pabyX, int nXStride,
-                                void* pabyY, int nYStride,
-                                void* pabyZ, int nZStride,
-                                void* pabyM, int nMStride )
+                                const void* pX, int nXStride,
+                                const void* pY, int nYStride,
+                                const void* pZ, int nZStride,
+                                const void* pM, int nMStride )
 
 {
     VALIDATE_POINTER0( hGeom, "OGR_G_SetPointsZM" );
 
-    if( pabyX == nullptr || pabyY == nullptr )
+    if( pX == nullptr || pY == nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "pabyX == NULL || pabyY == NULL");
         return;
     }
 
-    double * const padfX = static_cast<double *>(pabyX);
-    double * const padfY = static_cast<double *>(pabyY);
-    double * const padfZ = static_cast<double *>(pabyZ);
-    double * const padfM = static_cast<double *>(pabyM);
+    const double * const padfX = static_cast<const double *>(pX);
+    const double * const padfY = static_cast<const double *>(pY);
+    const double * const padfZ = static_cast<const double *>(pZ);
+    const double * const padfM = static_cast<const double *>(pM);
+    const char * const pabyX = static_cast<const char *>(pX);
+    const char * const pabyY = static_cast<const char *>(pY);
+    const char * const pabyZ = static_cast<const char *>(pZ);
+    const char * const pabyM = static_cast<const char *>(pM);
 
     switch( wkbFlatten(ToPointer(hGeom)->getGeometryType()) )
     {
@@ -795,15 +728,14 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
         {
           poSC->setNumPoints( nPointsIn );
 
-          // TODO(schwehr): Create pasX and pasY.
           if( !pabyZ && !pabyM )
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  const double x = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyX) + i * nXStride);
-                  const double y = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyY) + i * nYStride);
+                  const double x = *reinterpret_cast<const double *>(
+                      pabyX + i * nXStride);
+                  const double y = *reinterpret_cast<const double *>(
+                      pabyY + i * nYStride);
                   poSC->setPoint( i, x, y );
               }
           }
@@ -811,12 +743,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  const double x = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyX) + i * nXStride);
-                  const double y = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyY) + i * nYStride);
-                  const double z = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
+                  const double x = *reinterpret_cast<const double *>(
+                      pabyX + i * nXStride);
+                  const double y = *reinterpret_cast<const double *>(
+                      pabyY + i * nYStride);
+                  const double z = *reinterpret_cast<const double *>(
+                      pabyZ + i * nZStride);
                   poSC->setPoint( i, x, y, z );
               }
           }
@@ -824,12 +756,12 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  const double x = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyX) + i * nXStride);
-                  const double y = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyY) + i * nYStride);
-                  const double m = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyM) + i * nMStride);
+                  const double x = *reinterpret_cast<const double *>(
+                      pabyX + i * nXStride);
+                  const double y = *reinterpret_cast<const double *>(
+                      pabyY + i * nYStride);
+                  const double m = *reinterpret_cast<const double *>(
+                      pabyM + i * nMStride);
                   poSC->setPointM( i, x, y, m );
               }
           }
@@ -837,14 +769,14 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
           {
               for( int i = 0; i < nPointsIn; ++i )
               {
-                  const double x = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyX) + i * nXStride);
-                  const double y = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyY) + i * nYStride);
-                  const double z = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyZ) + i * nZStride);
-                  const double m = *reinterpret_cast<double *>(
-                      reinterpret_cast<char *>(pabyM) + i * nMStride);
+                  const double x = *reinterpret_cast<const double *>(
+                      pabyX + i * nXStride);
+                  const double y = *reinterpret_cast<const double *>(
+                      pabyY + i * nYStride);
+                  const double z = *reinterpret_cast<const double *>(
+                      pabyZ + i * nZStride);
+                  const double m = *reinterpret_cast<const double *>(
+                      pabyM + i * nMStride);
                   poSC->setPoint( i, x, y, z, m );
               }
           }

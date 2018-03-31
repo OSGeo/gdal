@@ -812,12 +812,60 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual int IntersectsPoint( const OGRPoint* p ) const;
     virtual double get_AreaOfCurveSegments() const = 0;
 
+    private:
+
+      class ConstIterator
+      {
+          OGRPoint m_oPoint;
+          std::unique_ptr<OGRPointIterator> m_poIterator;
+
+        public:
+            ConstIterator(const OGRCurve* poSelf, bool bStart)
+            {
+                if( bStart )
+                {
+                    m_poIterator.reset(poSelf->getPointIterator());
+                    if( !m_poIterator->getNextPoint(&m_oPoint) )
+                        m_poIterator.reset();
+                }
+            }
+
+            const OGRPoint& operator*() const
+            {
+                return m_oPoint;
+            }
+
+            ConstIterator& operator++()
+            {
+                if( !m_poIterator->getNextPoint(&m_oPoint) )
+                    m_poIterator.reset();
+                return *this;
+            }
+
+            bool operator!=(const ConstIterator& it) const
+                { return m_poIterator.get() != it.m_poIterator.get(); }
+      };
+
   public:
     ~OGRCurve() override;
 
 //! @cond Doxygen_Suppress
     OGRCurve& operator=( const OGRCurve& other );
 //! @endcond
+
+    /** Type of child elements. */
+    typedef OGRPoint ChildType;
+
+    /** Return begin of a point iterator.
+     *
+     * Using this iterator for standard range-based loops is safe, but
+     * due to implementation limitations, you shouldn't try to access
+     * (dereference) more than one iterator step at a time, since you will get
+     * a reference to the same OGRPoint& object.
+     */
+    ConstIterator begin() const { return ConstIterator(this, true); }
+    /** Return end of a point iterator. */
+    ConstIterator end() const { return ConstIterator(this, false); }
 
     // ICurve methods
     virtual double get_Length() const = 0;
@@ -835,6 +883,16 @@ class CPL_DLL OGRCurve : public OGRGeometry
     virtual OGRPointIterator* getPointIterator() const = 0;
     virtual OGRBoolean IsConvex() const;
     virtual double get_Area() const = 0;
+
+    /** Down-cast to OGRSimpleCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString or wkbCircularString. */
+    inline OGRSimpleCurve* toSimpleCurve()
+        { return cpl::down_cast<OGRSimpleCurve*>(this); }
+
+    /** Down-cast to OGRSimpleCurve*.
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString or wkbCircularString. */
+    inline const OGRSimpleCurve* toSimpleCurve() const
+        { return cpl::down_cast<const OGRSimpleCurve*>(this); }
 
     static OGRCompoundCurve* CastToCompoundCurve( OGRCurve* puCurve );
     static OGRLineString*    CastToLineString( OGRCurve* poCurve );
@@ -882,10 +940,98 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 OGRSimpleCurve();
                 OGRSimpleCurve( const OGRSimpleCurve& other );
 
+  private:
+      class Iterator
+      {
+            bool m_bUpdateChecked;
+            OGRPoint m_oPoint;
+            OGRSimpleCurve* m_poSelf;
+            int m_nPos;
+
+            void update()
+            {
+                if( !m_bUpdateChecked )
+                {
+                    OGRPoint oPointBefore;
+                    m_poSelf->getPoint(m_nPos, &oPointBefore);
+                    if( oPointBefore != m_oPoint )
+                        m_poSelf->setPoint(m_nPos, &m_oPoint);
+                    m_bUpdateChecked = true;
+                }
+            }
+
+        public:
+            Iterator(OGRSimpleCurve* poSelf, int nPos) :
+                m_bUpdateChecked(true), m_poSelf(poSelf), m_nPos(nPos) {}
+
+            ~Iterator()
+            {
+                update();
+            }
+
+            OGRPoint& operator*()
+            {
+                update();
+                m_poSelf->getPoint(m_nPos, &m_oPoint);
+                m_bUpdateChecked = false;
+                return m_oPoint;
+            }
+            Iterator& operator++()
+            {
+                update();
+                ++m_nPos;
+                return *this;
+            }
+            bool operator!=(const Iterator& it) const { return m_nPos != it.m_nPos; }
+      };
+
+      class ConstIterator
+      {
+          mutable OGRPoint m_oPoint;
+          const OGRSimpleCurve* m_poSelf;
+          int m_nPos;
+
+        public:
+            ConstIterator(const OGRSimpleCurve* poSelf, int nPos) :
+                m_poSelf(poSelf), m_nPos(nPos) {}
+
+            const OGRPoint& operator*() const
+            {
+                m_poSelf->getPoint(m_nPos, &m_oPoint);
+                return m_oPoint;
+            }
+            ConstIterator& operator++() { ++m_nPos; return *this; }
+            bool operator!=(const ConstIterator& it) const { return m_nPos != it.m_nPos; }
+      };
+
   public:
     ~OGRSimpleCurve() override;
 
     OGRSimpleCurve& operator=( const OGRSimpleCurve& other );
+
+    /** Type of child elements. */
+    typedef OGRPoint ChildType;
+
+    /** Return begin of point iterator. 
+     *
+     * Using this iterator for standard range-based loops is safe, but
+     * due to implementation limitations, you shouldn't try to access
+     * (dereference) more than one iterator step at a time, since you will get
+     * a reference to the same OGRPoint& object.
+     */
+    Iterator begin() { return Iterator(this, 0); }
+    /** Return end of point iterator. */
+    Iterator end() { return Iterator(this, nPointCount); }
+    /** Return begin of point iterator.
+     *
+     * Using this iterator for standard range-based loops is safe, but
+     * due to implementation limitations, you shouldn't try to access
+     * (dereference) more than one iterator step at a time, since you will get
+     * a reference to the same OGRPoint& object.
+     */
+    ConstIterator begin() const { return ConstIterator(this, 0); }
+    /** Return end of point iterator. */
+    ConstIterator end() const { return ConstIterator(this, nPointCount); }
 
     // IWks Interface.
     virtual int WkbSize() const override;
@@ -940,15 +1086,15 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        setPoint( int, double, double, double );
     void        setPointM( int, double, double, double );
     void        setPoint( int, double, double, double, double );
-    void        setPoints( int, OGRRawPoint *, double * = nullptr );
-    void        setPointsM( int, OGRRawPoint *, double * );
-    void        setPoints( int, OGRRawPoint *, double *, double * );
-    void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZIn = nullptr );
-    void        setPointsM( int, double * padfX, double * padfY,
-                            double *padfMIn = nullptr );
-    void        setPoints( int, double * padfX, double * padfY,
-                           double *padfZIn, double *padfMIn );
+    void        setPoints( int, const OGRRawPoint *, const double * = nullptr );
+    void        setPointsM( int, const OGRRawPoint *, const double * );
+    void        setPoints( int, const OGRRawPoint *, const double *, const double * );
+    void        setPoints( int, const double * padfX, const double * padfY,
+                           const double *padfZIn = nullptr );
+    void        setPointsM( int, const double * padfX, const double * padfY,
+                            const double *padfMIn = nullptr );
+    void        setPoints( int, const double * padfX, const double * padfY,
+                           const double *padfZIn, const double *padfMIn );
     void        addPoint( const OGRPoint * );
     void        addPoint( double, double );
     void        addPoint( double, double, double );
@@ -1025,6 +1171,12 @@ class CPL_DLL OGRLineString : public OGRSimpleCurve
     // Non-standard from OGRGeometry.
     virtual OGRwkbGeometryType getGeometryType() const override;
     virtual const char *getGeometryName() const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRSimpleCurve* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRSimpleCurve* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
@@ -1097,6 +1249,12 @@ class CPL_DLL OGRLinearRing : public OGRLineString
     OGRBoolean isPointOnRingBoundary( const OGRPoint* pt,
                                       int bTestEnvelope = TRUE ) const;
     virtual OGRErr  transform( OGRCoordinateTransformation *poCT ) override;
+
+    /** Return pointer of this in upper class */
+    inline OGRLineString* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRLineString* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1189,6 +1347,12 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     virtual OGRGeometry* getLinearGeometry(
         double dfMaxAngleStepSizeDegrees = 0,
         const char* const* papszOptions = nullptr) const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRSimpleCurve* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRSimpleCurve* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 };
@@ -1225,6 +1389,18 @@ class CPL_DLL OGRCurveCollection
                ~OGRCurveCollection();
 
     OGRCurveCollection& operator=(const OGRCurveCollection& other);
+
+    /** Type of child elements. */
+    typedef OGRCurve ChildType;
+
+    /** Return begin of curve iterator. */
+    OGRCurve** begin() { return papoCurves; }
+    /** Return end of curve iterator. */
+    OGRCurve** end() { return papoCurves + nCurveCount; }
+    /** Return begin of curve iterator. */
+    const OGRCurve* const* begin() const { return papoCurves; }
+    /** Return end of curve iterator. */
+    const OGRCurve* const* end() const { return papoCurves + nCurveCount; }
 
     void            empty(OGRGeometry* poGeom);
     OGRBoolean      IsEmpty() const;
@@ -1326,6 +1502,18 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     ~OGRCompoundCurve() override;
 
     OGRCompoundCurve& operator=( const OGRCompoundCurve& other );
+
+    /** Type of child elements. */
+    typedef OGRCurve ChildType;
+
+    /** Return begin of curve iterator. */
+    ChildType** begin() { return oCC.begin(); }
+    /** Return end of curve iterator. */
+    ChildType** end() { return oCC.end(); }
+    /** Return begin of curve iterator. */
+    const ChildType* const * begin() const { return oCC.begin(); }
+    /** Return end of curve iterator. */
+    const ChildType* const * end() const { return oCC.end(); }
 
     // IWks Interface
     virtual int WkbSize() const override;
@@ -1478,6 +1666,18 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
 
     OGRCurvePolygon& operator=( const OGRCurvePolygon& other );
 
+    /** Type of child elements. */
+    typedef OGRCurve ChildType;
+
+    /** Return begin of curve iterator. */
+    ChildType** begin() { return oCC.begin(); }
+    /** Return end of curve iterator. */
+    ChildType** end() { return oCC.end(); }
+    /** Return begin of curve iterator. */
+    const ChildType* const * begin() const { return oCC.begin(); }
+    /** Return end of curve iterator. */
+    const ChildType* const * end() const { return oCC.end(); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -1595,6 +1795,18 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
     OGRPolygon& operator=(const OGRPolygon& other);
 
+    /** Type of child elements. */
+    typedef OGRLinearRing ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(oCC.begin()); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(oCC.end()); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(oCC.begin()); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(oCC.end()); }
+
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -1634,6 +1846,12 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRLinearRing *stealInteriorRing(int);
 
     OGRBoolean IsPointOnSurface( const OGRPoint * ) const;
+
+    /** Return pointer of this in upper class */
+    inline OGRCurvePolygon* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRCurvePolygon* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1684,6 +1902,12 @@ class CPL_DLL OGRTriangle : public OGRPolygon
 
     // New methods rewritten from OGRPolygon/OGRCurvePolygon/OGRGeometry.
     virtual OGRErr addRingDirectly( OGRCurve * poNewRing ) override;
+
+    /** Return pointer of this in upper class */
+    inline OGRPolygon* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRPolygon* toUpperClass() const { return this; }
+
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
 
@@ -1731,6 +1955,18 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     ~OGRGeometryCollection() override;
 
     OGRGeometryCollection& operator=( const OGRGeometryCollection& other );
+
+    /** Type of child elements. */
+    typedef OGRGeometry ChildType;
+
+    /** Return begin of sub-geometry iterator. */
+    ChildType** begin() { return papoGeoms; }
+    /** Return end of sub-geometry iterator. */
+    ChildType** end() { return papoGeoms + nGeomCount; }
+    /** Return begin of sub-geometry iterator. */
+    const ChildType* const* begin() const { return papoGeoms; }
+    /** Return end of sub-geometry iterator. */
+    const ChildType* const* end() const { return papoGeoms + nGeomCount; }
 
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
@@ -1823,6 +2059,18 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
 
     OGRMultiSurface& operator=( const OGRMultiSurface& other );
 
+    /** Type of child elements. */
+    typedef OGRSurface ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -1839,6 +2087,11 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -1880,6 +2133,18 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 
     OGRMultiPolygon& operator=(const OGRMultiPolygon& other);
 
+    /** Type of child elements. */
+    typedef OGRPolygon ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -1889,6 +2154,11 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+        /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -1932,6 +2202,18 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     OGRPolyhedralSurface( const OGRPolyhedralSurface &poGeom );
     ~OGRPolyhedralSurface() override;
     OGRPolyhedralSurface& operator=(const OGRPolyhedralSurface& other);
+
+    /** Type of child elements. */
+    typedef OGRPolygon ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return oMP.begin(); }
+    /** Return end of iterator */
+    ChildType** end() { return oMP.end(); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return oMP.begin(); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return oMP.end(); }
 
     // IWks Interface.
     virtual int WkbSize() const override;
@@ -2016,12 +2298,29 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     OGRTriangulatedSurface( const OGRTriangulatedSurface &other );
     ~OGRTriangulatedSurface();
 
+    /** Type of child elements. */
+    typedef OGRTriangle ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(oMP.begin()); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(oMP.end()); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(oMP.begin()); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(oMP.end()); }
+
     OGRTriangulatedSurface& operator=( const OGRTriangulatedSurface& other );
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
 
     // IWks Interface.
     virtual OGRErr addGeometry( const OGRGeometry * ) override;
+
+    /** Return pointer of this in upper class */
+    inline OGRPolyhedralSurface* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRPolyhedralSurface* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -2054,6 +2353,18 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 
     OGRMultiPoint& operator=(const OGRMultiPoint& other);
 
+    /** Type of child elements. */
+    typedef OGRPoint ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2063,6 +2374,11 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 
     // IGeometry methods.
     virtual int getDimension() const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -2099,6 +2415,18 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
 
     OGRMultiCurve& operator=( const OGRMultiCurve& other );
 
+    /** Type of child elements. */
+    typedef OGRCurve ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2112,6 +2440,11 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     // Non-standard.
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }
@@ -2140,6 +2473,18 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 
     OGRMultiLineString& operator=( const OGRMultiLineString& other );
 
+    /** Type of child elements. */
+    typedef OGRLineString ChildType;
+
+    /** Return begin of iterator */
+    ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
+    /** Return end of iterator */
+    ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
+    /** Return begin of iterator */
+    const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
+    /** Return end of iterator */
+    const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
+
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
@@ -2149,6 +2494,11 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     // Non standard
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
+
+    /** Return pointer of this in upper class */
+    inline OGRGeometryCollection* toUpperClass() { return this; }
+    /** Return pointer of this in upper class */
+    inline const OGRGeometryCollection* toUpperClass() const { return this; }
 
     virtual void accept(IOGRGeometryVisitor* visitor) override { visitor->visit(this); }
     virtual void accept(IOGRConstGeometryVisitor* visitor) const override { visitor->visit(this); }

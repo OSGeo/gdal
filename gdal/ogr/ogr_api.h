@@ -232,14 +232,14 @@ void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
 void   CPL_DLL OGR_G_AddPointM( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPointZM( OGRGeometryH, double, double, double, double );
 void   CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
-                                void* pabyX, int nXStride,
-                                void* pabyY, int nYStride,
-                                void* pabyZ, int nZStride );
+                                const void* pabyX, int nXStride,
+                                const void* pabyY, int nYStride,
+                                const void* pabyZ, int nZStride );
 void   CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
-                                  void* pabyX, int nXStride,
-                                  void* pabyY, int nYStride,
-                                  void* pabyZ, int nZStride,
-                                  void* pabyM, int nMStride );
+                                  const void* pabyX, int nXStride,
+                                  const void* pabyY, int nYStride,
+                                  const void* pabyZ, int nZStride,
+                                  const void* pabyM, int nMStride );
 void   CPL_DLL OGR_G_SwapXY( OGRGeometryH hGeom );
 
 /* Methods for getting/setting rings and members collections */

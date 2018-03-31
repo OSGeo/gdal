@@ -221,14 +221,12 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             case wkbPolyhedralSurfaceZM:
             case wkbTINZM:
             {
-                int ig;
-                OGRPolyhedralSurface* poPS = (OGRPolyhedralSurface *)this;
+                const OGRPolyhedralSurface* poPS = toPolyhedralSurface();
                 fprintf( fp, "%d geometries:\n", poPS->getNumGeometries() );
-                for ( ig = 0; ig < poPS->getNumGeometries(); ig++)
+                for( auto&& poSubGeom: *poPS)
                 {
-                    const OGRGeometry *poChild = poPS->getGeometryRef(ig);
                     fprintf( fp, "%s", pszPrefix);
-                    poChild->dumpReadable( fp, pszPrefix, papszOptions );
+                    poSubGeom->dumpReadable( fp, pszPrefix, papszOptions );
                 }
                 break;
             }
@@ -349,11 +347,10 @@ void OGRGeometry::dumpReadable( FILE * fp, const char * pszPrefix,
             {
                 const OGRGeometryCollection *poColl = toGeometryCollection();
                 fprintf( fp, "%d geometries:\n", poColl->getNumGeometries() );
-                for( int ig = 0; ig < poColl->getNumGeometries(); ig++ )
+                for( auto&& poSubGeom: *poColl)
                 {
-                    const OGRGeometry *poChild = poColl->getGeometryRef(ig);
                     fprintf( fp, "%s", pszPrefix);
-                    poChild->dumpReadable( fp, pszPrefix, papszOptions );
+                    poSubGeom->dumpReadable( fp, pszPrefix, papszOptions );
                 }
                 break;
             }
@@ -6738,10 +6735,10 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
     {
         const OGRGeometryCollection *poGC = toGeometryCollection();
         bool bIsSFCGALCompatible = false;
-        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( auto&& poSubGeom: *poGC )
         {
             OGRwkbGeometryType eSubGeomType =
-                wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
+                wkbFlatten(poSubGeom->getGeometryType());
             if( eSubGeomType == wkbTIN ||
                 eSubGeomType == wkbPolyhedralSurface )
             {
@@ -6766,15 +6763,9 @@ OGRBoolean OGRGeometry::IsSFCGALCompatible() const
 
 void OGRDefaultGeometryVisitor::_visit(OGRSimpleCurve* poGeom)
 {
-    const int nNumPoints = poGeom->getNumPoints();
-    for(int i=0;i<nNumPoints;i++)
+    for( auto&& oPoint: *poGeom )
     {
-        OGRPoint p;
-        poGeom->getPoint(i, &p);
-        OGRPoint pBefore(p);
-        p.accept(this);
-        if( p != pBefore )
-            poGeom->setPoint(i, &p);
+        oPoint.accept(this);
     }
 }
 
@@ -6785,7 +6776,7 @@ void OGRDefaultGeometryVisitor::visit(OGRLineString* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRLinearRing* poGeom)
 {
-    visit(static_cast<OGRLineString*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRCircularString* poGeom)
@@ -6795,85 +6786,75 @@ void OGRDefaultGeometryVisitor::visit(OGRCircularString* poGeom)
 
 void OGRDefaultGeometryVisitor::visit(OGRCurvePolygon* poGeom)
 {
-    auto poSub = poGeom->getExteriorRingCurve();
-    if( poSub )
-        poSub->accept(this);
-    const int nInteriorRings = poGeom->getNumInteriorRings();
-    for(int i = 0; i < nInteriorRings; i++ )
-        poGeom->getInteriorRingCurve(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRPolygon* poGeom)
 {
-    visit(static_cast<OGRCurvePolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiPoint* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiLineString* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<OGRMultiSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRGeometryCollection* poGeom)
 {
-    const int nParts = poGeom->getNumGeometries();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getGeometryRef(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRCompoundCurve* poGeom)
 {
-    const int nParts = poGeom->getNumCurves();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getCurve(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiCurve* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRMultiSurface* poGeom)
 {
-    visit(static_cast<OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRTriangle* poGeom)
 {
-    visit(static_cast<OGRPolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRPolyhedralSurface* poGeom)
 {
-    const int nParts = poGeom->getNumGeometries();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getGeometryRef(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultGeometryVisitor::visit(OGRTriangulatedSurface* poGeom)
 {
-    visit(static_cast<OGRPolyhedralSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 
 
 void OGRDefaultConstGeometryVisitor::_visit(const OGRSimpleCurve* poGeom)
 {
-    const int nNumPoints = poGeom->getNumPoints();
-    for(int i=0;i<nNumPoints;i++)
+    for( auto&& oPoint: *poGeom )
     {
-        OGRPoint p;
-        poGeom->getPoint(i, &p);
-        p.accept(this);
+        oPoint.accept(this);
     }
 }
 
@@ -6884,7 +6865,7 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRLineString* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRLinearRing* poGeom)
 {
-    visit(static_cast<const OGRLineString*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRCircularString* poGeom)
@@ -6894,71 +6875,64 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRCircularString* poGeom)
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRCurvePolygon* poGeom)
 {
-    auto poSub = poGeom->getExteriorRingCurve();
-    if( poSub )
-        poSub->accept(this);
-    const int nInteriorRings = poGeom->getNumInteriorRings();
-    for(int i = 0; i < nInteriorRings; i++ )
-        poGeom->getInteriorRingCurve(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRPolygon* poGeom)
 {
-    visit(static_cast<const OGRCurvePolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiPoint* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiLineString* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiPolygon* poGeom)
 {
-    visit(static_cast<const OGRMultiSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRGeometryCollection* poGeom)
 {
-    const int nParts = poGeom->getNumGeometries();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getGeometryRef(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRCompoundCurve* poGeom)
 {
-    const int nParts = poGeom->getNumCurves();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getCurve(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiCurve* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRMultiSurface* poGeom)
 {
-    visit(static_cast<const OGRGeometryCollection*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRTriangle* poGeom)
 {
-    visit(static_cast<const OGRPolygon*>(poGeom));
+    visit(poGeom->toUpperClass());
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRPolyhedralSurface* poGeom)
 {
-    const int nParts = poGeom->getNumGeometries();
-    for(int i = 0; i < nParts; i++ )
-        poGeom->getGeometryRef(i)->accept(this);
+    for( auto&& poSubGeom: *poGeom )
+        poSubGeom->accept(this);
 }
 
 void OGRDefaultConstGeometryVisitor::visit(const OGRTriangulatedSurface* poGeom)
 {
-    visit(static_cast<const OGRPolyhedralSurface*>(poGeom));
+    visit(poGeom->toUpperClass());
 }

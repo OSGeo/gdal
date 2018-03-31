@@ -818,6 +818,52 @@ namespace tut
         }
     }
 
+    template<typename T> void TestIterator(T& obj,
+                                           int nExpectedPointCount)
+    {
+        int nCount = 0;
+        for( auto&& elt: obj )
+        {
+            nCount ++;
+            CPL_IGNORE_RET_VAL(elt);
+        }
+        ensure_equals(nCount, nExpectedPointCount);
+
+        nCount = 0;
+        const T& const_obj(obj);
+        for( auto&& elt: const_obj)
+        {
+            nCount ++;
+            CPL_IGNORE_RET_VAL(elt);
+        }
+        ensure_equals(nCount, nExpectedPointCount);
+    };
+
+    template<typename T> void TestIterator(const char* pszWKT = nullptr,
+                                           int nExpectedPointCount = 0)
+    {
+        T obj;
+        if( pszWKT )
+        {
+            char* pszNonConstWKT = const_cast<char*>(pszWKT);
+            obj.importFromWkt(&pszNonConstWKT);
+        }
+        TestIterator(obj, nExpectedPointCount);
+    };
+
+    template<typename Concrete, typename Abstract> void TestIterator(
+                                           const char* pszWKT = nullptr,
+                                           int nExpectedPointCount = 0)
+    {
+        Concrete obj;
+        if( pszWKT )
+        {
+            char* pszNonConstWKT = const_cast<char*>(pszWKT);
+            obj.importFromWkt(&pszNonConstWKT);
+        }
+        TestIterator<Abstract>(obj, nExpectedPointCount);
+    };
+
     // Test geometry visitor
     template<>
     template<>
@@ -892,6 +938,40 @@ namespace tut
             ensure_equals(oConstVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
             delete poGeom;
         }
+
+        TestIterator<OGRLineString>();
+        TestIterator<OGRLineString>("LINESTRING(0 0)", 1);
+        TestIterator<OGRLineString, OGRCurve>("LINESTRING(0 0)", 1);
+        TestIterator<OGRLinearRing>();
+        TestIterator<OGRCircularString>();
+        TestIterator<OGRCircularString>("CIRCULARSTRING(0 0,1 1,0 0)", 3);
+        TestIterator<OGRCircularString, OGRCurve>("CIRCULARSTRING(0 0,1 1,0 0)", 3);
+        TestIterator<OGRCompoundCurve>();
+        TestIterator<OGRCompoundCurve>("COMPOUNDCURVE((0 0,1 1))", 1);
+        TestIterator<OGRCompoundCurve, OGRCurve>("COMPOUNDCURVE((0 0,1 1),CIRCULARSTRING(1 1,2 2,3 3))", 4);
+        TestIterator<OGRCompoundCurve>("COMPOUNDCURVE(CIRCULARSTRING EMPTY)", 1);
+        TestIterator<OGRCurvePolygon>();
+        TestIterator<OGRCurvePolygon>("CURVEPOLYGON((0 0,1 1,1 0,0 0))", 1);
+        TestIterator<OGRPolygon>();
+        TestIterator<OGRPolygon>("POLYGON((0 0,1 1,1 0,0 0))", 1);
+        TestIterator<OGRGeometryCollection>();
+        TestIterator<OGRGeometryCollection>("GEOMETRYCOLLECTION(POINT(0 0))", 1);
+        TestIterator<OGRMultiSurface>();
+        TestIterator<OGRMultiSurface>("MULTISURFACE(((0 0)))", 1);
+        TestIterator<OGRMultiPolygon>();
+        TestIterator<OGRMultiPolygon>("MULTIPOLYGON(((0 0)))", 1);
+        TestIterator<OGRMultiPoint>();
+        TestIterator<OGRMultiPoint>("MULTIPOINT(0 0)", 1);
+        TestIterator<OGRMultiCurve>();
+        TestIterator<OGRMultiCurve>("MULTICURVE((0 0))", 1);
+        TestIterator<OGRMultiLineString>();
+        TestIterator<OGRMultiLineString>("MULTILINESTRING((0 0))", 1);
+        TestIterator<OGRTriangle>();
+        TestIterator<OGRTriangle>("TRIANGLE((0 0,0 1,1 1,0 0))", 1);
+        TestIterator<OGRPolyhedralSurface>();
+        TestIterator<OGRPolyhedralSurface>("POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0)))", 1);
+        TestIterator<OGRTriangulatedSurface>();
+        TestIterator<OGRTriangulatedSurface>("TIN(((0 0,0 1,1 1,0 0)))", 1);
     }
 
 } // namespace tut

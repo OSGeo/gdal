@@ -144,9 +144,9 @@ int OGRCurveCollection::WkbSize() const
 {
     int nSize = 9;
 
-    for( int i = 0; i < nCurveCount; i++ )
+    for( auto&& poSubGeom: *this )
     {
-        nSize += papoCurves[i]->WkbSize();
+        nSize += poSubGeom->WkbSize();
     }
 
     return nSize;
@@ -475,12 +475,12 @@ OGRErr OGRCurveCollection::exportToWkb( const OGRGeometry* poGeom,
 /* ==================================================================== */
 /*      Serialize each of the Geoms.                                    */
 /* ==================================================================== */
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        papoCurves[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset,
+        poSubGeom->exportToWkb( eByteOrder, pabyData + nOffset,
                                         eWkbVariant );
 
-        nOffset += papoCurves[iGeom]->WkbSize();
+        nOffset += poSubGeom->WkbSize();
     }
 
     return OGRERR_NONE;
@@ -494,9 +494,9 @@ void OGRCurveCollection::empty( OGRGeometry* poGeom )
 {
     if( papoCurves != nullptr )
     {
-        for( int i = 0; i < nCurveCount; i++ )
+        for( auto&& poSubGeom: *this )
         {
-            delete papoCurves[i];
+            delete poSubGeom;
         }
         CPLFree( papoCurves );
     }
@@ -559,9 +559,9 @@ void OGRCurveCollection::getEnvelope( OGREnvelope3D * psEnvelope ) const
 
 OGRBoolean OGRCurveCollection::IsEmpty() const
 {
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        if( !papoCurves[iGeom]->IsEmpty() )
+        if( !poSubGeom->IsEmpty() )
             return FALSE;
     }
     return TRUE;
@@ -594,9 +594,9 @@ OGRBoolean OGRCurveCollection::Equals( const OGRCurveCollection *poOCC ) const
 void OGRCurveCollection::setCoordinateDimension( OGRGeometry* poGeom,
                                                  int nNewDimension )
 {
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        papoCurves[iGeom]->setCoordinateDimension( nNewDimension );
+        poSubGeom->setCoordinateDimension( nNewDimension );
     }
 
     poGeom->OGRGeometry::setCoordinateDimension( nNewDimension );
@@ -604,9 +604,9 @@ void OGRCurveCollection::setCoordinateDimension( OGRGeometry* poGeom,
 
 void OGRCurveCollection::set3D( OGRGeometry* poGeom, OGRBoolean bIs3D )
 {
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        papoCurves[iGeom]->set3D( bIs3D );
+        poSubGeom->set3D( bIs3D );
     }
 
     poGeom->OGRGeometry::set3D( bIs3D );
@@ -615,9 +615,9 @@ void OGRCurveCollection::set3D( OGRGeometry* poGeom, OGRBoolean bIs3D )
 void OGRCurveCollection::setMeasured( OGRGeometry* poGeom,
                                       OGRBoolean bIsMeasured )
 {
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        papoCurves[iGeom]->setMeasured( bIsMeasured );
+        poSubGeom->setMeasured( bIsMeasured );
     }
 
     poGeom->OGRGeometry::setMeasured( bIsMeasured );
@@ -630,9 +630,9 @@ void OGRCurveCollection::setMeasured( OGRGeometry* poGeom,
 void OGRCurveCollection::assignSpatialReference( OGRGeometry* poGeom,
                                                  OGRSpatialReference * poSR )
 {
-    for( int iGeom = 0; iGeom < nCurveCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        papoCurves[iGeom]->assignSpatialReference( poSR );
+        poSubGeom->assignSpatialReference( poSR );
     }
     poGeom->OGRGeometry::assignSpatialReference( poSR );
 }
@@ -724,8 +724,10 @@ OGRErr OGRCurveCollection::transform( OGRGeometry* poGeom,
 
 void OGRCurveCollection::flattenTo2D(OGRGeometry* poGeom)
 {
-    for( int i = 0; i < nCurveCount; i++ )
-        papoCurves[i]->flattenTo2D();
+    for( auto&& poSubGeom: *this )
+    {
+        poSubGeom->flattenTo2D();
+    }
 
     poGeom->setCoordinateDimension(2);
 }
@@ -736,8 +738,10 @@ void OGRCurveCollection::flattenTo2D(OGRGeometry* poGeom)
 
 void OGRCurveCollection::segmentize(double dfMaxLength)
 {
-    for( int i = 0; i < nCurveCount; i++ )
-        papoCurves[i]->segmentize(dfMaxLength);
+    for( auto&& poSubGeom: *this )
+    {
+        poSubGeom->segmentize(dfMaxLength);
+    }
 }
 
 /************************************************************************/
@@ -746,8 +750,10 @@ void OGRCurveCollection::segmentize(double dfMaxLength)
 
 void OGRCurveCollection::swapXY()
 {
-    for( int i = 0; i < nCurveCount; i++ )
-        papoCurves[i]->swapXY();
+    for( auto&& poSubGeom: *this )
+    {
+        poSubGeom->swapXY();
+    }
 }
 
 /************************************************************************/
@@ -756,9 +762,9 @@ void OGRCurveCollection::swapXY()
 
 OGRBoolean OGRCurveCollection::hasCurveGeometry(int bLookForNonLinear) const
 {
-    for( int i = 0; i < nCurveCount; i++ )
+    for( auto&& poSubGeom: *this )
     {
-        if( papoCurves[i]->hasCurveGeometry(bLookForNonLinear) )
+        if( poSubGeom->hasCurveGeometry(bLookForNonLinear) )
             return TRUE;
     }
     return FALSE;
