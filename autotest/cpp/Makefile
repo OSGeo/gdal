@@ -119,7 +119,8 @@ test_include_from_c_file:
 	for HEADER_FILE in cpl_atomic_ops.h cpl_conv.h cpl_csv.h cpl_error.h cpl_hash_set.h cpl_list.h cpl_minixml.h cpl_port.h cpl_progress.h cpl_quad_tree.h cpl_vsi.h gdal_alg.h gdal_version.h gdal.h ogr_api.h ogr_core.h ogr_srs_api.h; do \
 		echo "#include \"$$HEADER_FILE\"" > tmp_include_from_c_file.c; \
 		$(CC) $(CFLAGS) -c tmp_include_from_c_file.c; \
-		$(RM) -f tmp_include_from_c_file.*; \
+		rm -f tmp_include_from_c_file.*; \
+		rm -f .libs/tmp_include_from_c_file.*; \
 	done; \
 	$(CC) $(CFLAGS) -c test_include_from_c_file.c
 
@@ -127,7 +128,8 @@ test_include_from_cpp_file:
 	for HEADER_FILE in cpl_atomic_ops.h cpl_conv.h cpl_csv.h cpl_error.h cpl_hash_set.h cpl_list.h cpl_minixml.h cpl_port.h cpl_progress.h cpl_quad_tree.h cpl_vsi.h gdal_alg.h gdal_version.h gdal.h ogr_api.h ogr_core.h ogr_srs_api.h ogr_feature.h ogr_geometry.h ogrsf_frmts.h ogr_spatialref.h; do \
 		echo "#include \"$$HEADER_FILE\"" > tmp_include_from_cpp_file.cpp; \
 		$(CXX) $(CXXFLAGS) -c tmp_include_from_cpp_file.cpp; \
-		$(RM) -f tmp_include_from_cpp_file.*; \
+		rm -f tmp_include_from_cpp_file.*; \
+		rm -f .libs/tmp_include_from_cpp_file.*; \
 	done; \
 	$(CXX) $(CXXFLAGS) -c test_c_include_from_cpp_file.cpp
 
@@ -137,7 +139,8 @@ test_include_from_cpp_file_with_extern_c:
 		echo "#include \"$$HEADER_FILE\"" >> test_include_from_cpp_file_with_extern_c.cpp; \
 		echo "}" >> test_include_from_cpp_file_with_extern_c.cpp; \
 		$(CXX) $(CXXFLAGS) -c test_include_from_cpp_file_with_extern_c.cpp; \
-		$(RM) -f test_include_from_cpp_file_with_extern_c.*; \
+		rm -f test_include_from_cpp_file_with_extern_c.*; \
+		rm -f .libs/test_include_from_cpp_file_with_extern_c.*; \
 	done
 
 clean:
