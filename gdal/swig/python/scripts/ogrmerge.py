@@ -81,6 +81,8 @@ def GetExtension(filename):
 def GetOutputDriversFor(filename):
     drv_list = []
     ext = GetExtension(filename)
+    if ext.lower() == 'vrt':
+        return [ 'VRT' ]
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
