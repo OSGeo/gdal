@@ -404,18 +404,16 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
         else if( ORA_GTYPE_MATCH(nGType,ORA_GTYPE_POLYGON) )
         {
             CPLAssert(wkbFlatten(poGeom->getGeometryType()) == wkbLineString );
-            poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
+            poPolygon->addRingDirectly( poGeom->toLinearRing() );
         }
         else
         {
             CPLAssert( poCollection != nullptr );
             if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
             {
-                int  i;
-                OGRMultiPoint *poMP = (OGRMultiPoint *) poGeom;
-
-                for( i = 0; i < poMP->getNumGeometries(); i++ )
-                    poCollection->addGeometry( poMP->getGeometryRef(i) );
+                OGRMultiPoint *poMP = poGeom->toMultiPoint();
+                for( auto&& poPoint: *poMP )
+                    poCollection->addGeometry(poPoint);
                 delete poMP;
             }
             else if( nEType % 1000 == 3 )
@@ -434,7 +432,7 @@ OGRGeometry *OGROCILayer::TranslateGeometry()
                 }
 
                 if( poPolygon != nullptr )
-                    poPolygon->addRingDirectly( (OGRLinearRing *) poGeom );
+                    poPolygon->addRingDirectly( poGeom->toLinearRing() );
                 else
                 {
                     CPLAssert( poPolygon != nullptr );

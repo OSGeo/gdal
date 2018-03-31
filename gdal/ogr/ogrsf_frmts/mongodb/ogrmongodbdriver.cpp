@@ -1541,8 +1541,9 @@ void OGRMongoDBLayer::SerializeGeometry(BSONObjBuilder& b,
         wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
         BSONArrayBuilder arrayBuilder;
-        arrayBuilder.append( ((OGRPoint*)poGeom)->getX() );
-        arrayBuilder.append( ((OGRPoint*)poGeom)->getY() );
+        OGRPoint* poPoint = poGeom->toPoint();
+        arrayBuilder.append( poPoint->getX() );
+        arrayBuilder.append( poPoint->getY() );
         b.append( pszJSonField, arrayBuilder.arr() );
     }
     else

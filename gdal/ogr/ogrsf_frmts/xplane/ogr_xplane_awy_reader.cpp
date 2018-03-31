@@ -306,8 +306,8 @@ static int EqualAirwayIntersectionFeatureFunc(
     if (strcmp(feature1->GetFieldAsString(0),
                feature2->GetFieldAsString(0)) == 0)
     {
-        OGRPoint* point1 = (OGRPoint*) feature1->GetGeometryRef();
-        OGRPoint* point2 = (OGRPoint*) feature2->GetGeometryRef();
+        OGRPoint* point1 = feature1->GetGeometryRef()->toPoint();
+        OGRPoint* point2 = feature2->GetGeometryRef()->toPoint();
         return
             point1->getX() == point2->getX() &&
             point1->getY() == point2->getY();

@@ -1332,18 +1332,17 @@ void OGRXPlaneAptReader::ParsePavement()
         }
         else
         {
-            OGRGeometryCollection* poGeomCollection
-                = reinterpret_cast<OGRGeometryCollection*>(poGeom);
-            for(int i=0;i<poGeomCollection->getNumGeometries();i++)
+            OGRGeometryCollection* poGeomCollection =
+                poGeom->toGeometryCollection();
+            for( auto&& poSubGeom: *poGeomCollection )
             {
-                OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
                 if (poSubGeom->getGeometryType() == wkbPolygon &&
-                    ((OGRPolygon*)poSubGeom)->getExteriorRing()->getNumPoints() >= 4)
+                    poSubGeom->toPolygon()->getExteriorRing()->getNumPoints() >= 4)
                 {
                     poPavementLayer->AddFeature(osAptICAO, osPavementName,
                                                 RunwaySurfaceEnumeration.GetText(eSurfaceCode),
                                                 dfSmoothness, dfTextureHeading,
-                                                (OGRPolygon*)poSubGeom);
+                                                poSubGeom->toPolygon());
                 }
             }
         }
@@ -1379,16 +1378,15 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
         }
         else
         {
-            OGRGeometryCollection* poGeomCollection
-                = reinterpret_cast<OGRGeometryCollection*>(poGeom);
-            for(int i=0;i<poGeomCollection->getNumGeometries();i++)
+            OGRGeometryCollection* poGeomCollection =
+                poGeom->toGeometryCollection();
+            for( auto&& poSubGeom: *poGeomCollection )
             {
-                OGRGeometry* poSubGeom = poGeomCollection->getGeometryRef(i);
                 if (poSubGeom->getGeometryType() == wkbPolygon &&
-                    ((OGRPolygon*)poSubGeom)->getExteriorRing()->getNumPoints() >= 4)
+                    poSubGeom->toPolygon()->getExteriorRing()->getNumPoints() >= 4)
                 {
                     poAPTBoundaryLayer->AddFeature(osAptICAO, osBoundaryName,
-                                            (OGRPolygon*)poSubGeom);
+                                            poSubGeom->toPolygon());
                 }
             }
         }
@@ -2104,7 +2102,7 @@ OGRFeature* OGRXPlaneRunwayThresholdLayer::
         = poFeature->GetFieldAsDouble("displaced_threshold_m");
     const double dfTrueHeading = poFeature->GetFieldAsDouble("true_heading_deg");
     poFeature->SetField("is_displaced", true);
-    OGRPoint* poPoint = (OGRPoint*)poFeature->GetGeometryRef();
+    OGRPoint* poPoint = poFeature->GetGeometryRef()->toPoint();
     double dfLatDisplaced = 0.0;
     double dfLonDisplaced = 0.0;
     OGR_GreatCircle_ExtendPosition(poPoint->getY(), poPoint->getX(),

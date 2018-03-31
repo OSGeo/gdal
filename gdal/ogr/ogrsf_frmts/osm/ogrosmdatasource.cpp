@@ -2370,7 +2370,7 @@ OGRGeometry* OGROSMDataSource::BuildMultiPolygon(OSMRelation* psRelation,
                                                         nullptr );
         if( hPoly != nullptr && OGR_G_GetGeometryType(hPoly) == wkbPolygon )
         {
-            OGRPolygon* poSuperPoly = (OGRPolygon* ) hPoly;
+            OGRPolygon* poSuperPoly = reinterpret_cast<OGRGeometry*>(hPoly)->toPolygon();
             for( unsigned int i = 0;
                  i < 1 + (unsigned int)poSuperPoly->getNumInteriorRings();
                  i++ )

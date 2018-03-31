@@ -121,8 +121,9 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
 
     /* check coordinates */
     if (m_nGeometryType == wkbPoint) {
-        const double x = ((OGRPoint *) poGeom)->getX();
-        const double y = ((OGRPoint *) poGeom)->getY();
+        auto poPoint = poGeom->toPoint();
+        const double x = poPoint->getX();
+        const double y = poPoint->getY();
         if (x > -430000 || x < -910000 ||
             y > -930000 || y < -1230000) {
             CPLDebug("OGR-VFK", "%s: invalid point fid = " CPL_FRMT_GIB,
@@ -133,7 +134,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
 
     /* check degenerated polygons */
     if (m_nGeometryType == wkbPolygon) {
-        OGRLinearRing *poRing = ((OGRPolygon *) poGeom)->getExteriorRing();
+        OGRLinearRing *poRing = poGeom->toPolygon()->getExteriorRing();
         if (!poRing || poRing->getNumPoints() < 3) {
             CPLDebug("OGR-VFK", "%s: invalid polygon fid = " CPL_FRMT_GIB,
                      m_poDataBlock->GetName(), m_nFID);
@@ -150,9 +151,10 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
 
             OGRGeometry *poGeomCurved = nullptr;
             if (EQUAL(ftype, "15") || EQUAL(ftype, "16")) {         /* -> circle or arc */
-                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                auto poLS = poGeom->toLineString();
+                const int npoints = poLS->getNumPoints();
                 for (int i = 0; i < npoints; i++) {
-                    ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                    poLS->getPoint(i, &pt);
                     poGeomString.addPoint(&pt);
                 }
                 if (EQUAL(ftype, "15")) {
@@ -174,7 +176,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
 
                     for( int i = 0; i < npoints; i++ )
                     {
-                        ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                        poLS->getPoint(i, &pt);
                         x[i] = pt.getX();
                         y[i] = pt.getY();
                     }
@@ -203,7 +205,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                     poGeomString.addPoint(&pt);
 
                     /* add last point */
-                    ((OGRLineString *) poGeom)->getPoint(0, &pt);
+                    poLS->getPoint(0, &pt);
                     poGeomString.addPoint(&pt);
                 }
             }
@@ -218,7 +220,8 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                 }
                 else
                 {
-                    ((OGRLineString *) poGeom)->getPoint(0, &pt);
+                    auto poLS = poGeom->toLineString();
+                    poLS->getPoint(0, &pt);
                     const double c_x = pt.getX();
                     const double c_y = pt.getY();
 
@@ -249,10 +252,11 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                 }
             }
             else if (EQUAL(ftype, "11")) {                          /* curve */
-                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                auto poLS = poGeom->toLineString();
+                const int npoints = poLS->getNumPoints();
                 if (npoints > 2) { /* circular otherwise line string */
                     for (int i = 0; i < npoints; i++) {
-                        ((OGRLineString *) poGeom)->getPoint(i, &pt);
+                        poLS->getPoint(i, &pt);
                         poGeomString.addPoint(&pt);
                     }
                 }
@@ -268,7 +272,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                          m_poDataBlock->GetName(), ftype,
                          npoints, m_nFID);
                 if (npoints > 1)
-                    m_paGeom = (OGRGeometry *) poGeomCurved->clone();
+                    m_paGeom = poGeomCurved->clone();
                 delete poGeomCurved;
             }
         }
@@ -276,7 +280,8 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
         if (!m_paGeom) {
             /* check degenerated linestrings */
             if (m_nGeometryType == wkbLineString) {
-                const int npoints = ((OGRLineString *) poGeom)->getNumPoints();
+                auto poLS = poGeom->toLineString();
+                const int npoints = poLS->getNumPoints();
                 if (npoints < 2) {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "%s: invalid linestring (%d vertices) fid = " CPL_FRMT_GIB,
@@ -286,7 +291,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
             }
 
             if( m_bValid )
-                m_paGeom = (OGRGeometry *) poGeom->clone(); /* make copy */
+                m_paGeom = poGeom->clone(); /* make copy */
         }
     }
 
@@ -615,7 +620,7 @@ bool VFKFeature::LoadGeometryLineStringSBP()
         {
             continue;
         }
-        OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+        OGRPoint *pt = poPoint->GetGeometry()->toPoint();
         OGRLine.addPoint(pt);
 
         poLine = (VFKFeature *) m_poDataBlock->GetNextFeature();

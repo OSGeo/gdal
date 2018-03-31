@@ -124,7 +124,7 @@ OGROCIWritableLayer::TranslateElementGroup( OGRGeometry *poGeometry )
     {
       case wkbPoint:
       {
-          OGRPoint *poPoint = (OGRPoint *) poGeometry;
+          OGRPoint *poPoint = poGeometry->toPoint();
 
           PushElemInfo( nOrdinalCount+1, 1, 1 );
 
@@ -138,7 +138,7 @@ OGROCIWritableLayer::TranslateElementGroup( OGRGeometry *poGeometry )
 
       case wkbLineString:
       {
-          OGRLineString *poLine = (OGRLineString *) poGeometry;
+          OGRLineString *poLine = poGeometry->toLineString();
           int  iVert;
 
           PushElemInfo( nOrdinalCount+1, 2, 1 );
@@ -155,7 +155,7 @@ OGROCIWritableLayer::TranslateElementGroup( OGRGeometry *poGeometry )
 
       case wkbPolygon:
       {
-          OGRPolygon *poPoly = (OGRPolygon *) poGeometry;
+          OGRPolygon *poPoly = poGeometry->toPolygon();
           int iRing;
 
           for( iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
@@ -429,7 +429,7 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
     {
 #ifdef notdef
         char szResult[1024];
-        OGRPoint *poPoint = (OGRPoint *) poGeometry;
+        OGRPoint *poPoint = poGeometry->toPoint();
 
         if( nDimension == 2 )
             CPLsprintf( szResult,
@@ -471,16 +471,13 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
 /* ==================================================================== */
     else if( wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint )
     {
-        OGRMultiPoint *poMP = (OGRMultiPoint *) poGeometry;
-        int  iVert;
+        OGRMultiPoint *poMP = poGeometry->toMultiPoint();
 
         *pnGType = nDimension*1000 + 5;
         PushElemInfo( 1, 1, poMP->getNumGeometries() );
 
-        for( iVert = 0; iVert < poMP->getNumGeometries(); iVert++ )
+        for( auto&& poPoint: *poMP )
         {
-            OGRPoint *poPoint = (OGRPoint *)poMP->getGeometryRef( iVert );
-
             PushOrdinal( poPoint->getX() );
             PushOrdinal( poPoint->getY() );
             if( nDimension == 3 )
@@ -518,11 +515,9 @@ OGRErr OGROCIWritableLayer::TranslateToSDOGeometry( OGRGeometry * poGeometry,
 /* -------------------------------------------------------------------- */
 /*      Translate each child in turn.                                   */
 /* -------------------------------------------------------------------- */
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
-        int  iChild;
-
-        for( iChild = 0; iChild < poGC->getNumGeometries(); iChild++ )
-            TranslateElementGroup( poGC->getGeometryRef(iChild) );
+        OGRGeometryCollection *poGC = poGeometry->toGeometryCollection();
+        for( auto&& poMember: *poGC )
+            TranslateElementGroup( poMember );
 
         return OGRERR_NONE;
     }

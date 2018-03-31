@@ -1018,7 +1018,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature( OGRFeature *poFeature )
 
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
         {
-            OGRPoint *poPoint = (OGRPoint *) poGeometry;
+            OGRPoint *poPoint = poGeometry->toPoint();
 
             if( nDimension == 2 )
                 CPLsnprintf( szSDO_GEOMETRY, sizeof(szSDO_GEOMETRY),
@@ -1904,7 +1904,7 @@ OGRErr OGROCITableLayer::BoundCreateFeature( OGRFeature *poFeature )
         /* special more efficient case for simple points */
         if( wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
         {
-            OGRPoint *poPoint = (OGRPoint *) poGeometry;
+            OGRPoint *poPoint = poGeometry->toPoint();
             double dfValue;
 
             psInd->sdo_point._atomic = OCI_IND_NOTNULL;

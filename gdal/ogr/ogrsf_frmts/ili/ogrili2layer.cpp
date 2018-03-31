@@ -148,7 +148,7 @@ static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
     }
 }
 
-static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
+static int OGR2ILIGeometryAppend( const OGRGeometry *poGeometry, VSILFILE* fp,
                                   const char *attrname, CPLString iliGeomType )
 {
 #ifdef DEBUG_VERBOSE
@@ -162,7 +162,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
     if( poGeometry->getGeometryType() == wkbPoint ||
         poGeometry->getGeometryType() == wkbPoint25D )
     {
-        OGRPoint *poPoint = reinterpret_cast<OGRPoint *>( poGeometry );
+        const OGRPoint *poPoint = poGeometry->toPoint();
 
         VSIFPrintfL(fp, "<%s>\n", attrname);
         VSIFPrintfL(fp, "<COORD>");
@@ -196,7 +196,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
     else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon      *poPolygon = (OGRPolygon *) poGeometry;
+        const OGRPolygon      *poPolygon = poGeometry->toPolygon();
 
         if (attrname) VSIFPrintfL(fp, "<%s>\n", attrname);
         if( iliGeomType == "Surface" || iliGeomType == "Area" )
@@ -206,17 +206,8 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
             VSIFPrintfL(fp, "<BOUNDARY>\n");
         }
 
-        if( poPolygon->getExteriorRing() != nullptr )
+        for( auto&& poRing: *poPolygon )
         {
-            if( !OGR2ILIGeometryAppend( poPolygon->getExteriorRing(), fp,
-                                        nullptr, "" ) )
-                return FALSE;
-        }
-
-        for( int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++ )
-        {
-            OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
-
             if( !OGR2ILIGeometryAppend( poRing, fp, nullptr, "" ) )
                 return FALSE;
         }
@@ -237,7 +228,7 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiPoint
              || wkbFlatten(poGeometry->getGeometryType()) == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
+        const OGRGeometryCollection *poGC = poGeometry->toGeometryCollection();
 
 #if 0
         // TODO: Why were these all blank?
@@ -254,10 +245,8 @@ static int OGR2ILIGeometryAppend( OGRGeometry *poGeometry, VSILFILE* fp,
         {
         }
 #endif
-        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( auto&& poMember: *poGC )
         {
-            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
-
             if( !OGR2ILIGeometryAppend( poMember, fp, nullptr, "" ) )
                 return FALSE;
         }

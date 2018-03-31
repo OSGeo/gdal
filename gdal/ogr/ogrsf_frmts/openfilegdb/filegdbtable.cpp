@@ -2390,7 +2390,7 @@ class ZMultiPointSetter
 
         void set(int i, double dfZ)
         {
-            ((OGRPoint*)poMPoint->getGeometryRef(i))->setZ(dfZ);
+            poMPoint->getGeometryRef(i)->toPoint()->setZ(dfZ);
         }
 };
 
@@ -2463,7 +2463,7 @@ class MMultiPointSetter
 
         void set(int i, double dfM)
         {
-            ((OGRPoint*)poMPoint->getGeometryRef(i))->setM(dfM);
+            poMPoint->getGeometryRef(i)->toPoint()->setM(dfM);
         }
 };
 

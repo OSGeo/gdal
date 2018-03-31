@@ -1056,7 +1056,7 @@ int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1100,7 +1100,7 @@ double TABPoint::GetX()
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1124,7 +1124,7 @@ double TABPoint::GetY()
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1168,7 +1168,7 @@ void TABPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1385,7 +1385,7 @@ int TABFontPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1687,7 +1687,7 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint *)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -1820,7 +1820,7 @@ int TABPolyline::GetNumParts()
         /*-------------------------------------------------------------
          * Multiple polyline
          *------------------------------------------------------------*/
-        OGRMultiLineString *poMultiLine = (OGRMultiLineString *)poGeom;
+        OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
         numParts = poMultiLine->getNumGeometries();
     }
 
@@ -1844,18 +1844,18 @@ OGRLineString *TABPolyline::GetPartRef(int nPartIndex)
         /*-------------------------------------------------------------
          * Simple polyline
          *------------------------------------------------------------*/
-        return (OGRLineString *)poGeom;
+        return poGeom->toLineString();
     }
     else if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
     {
         /*-------------------------------------------------------------
          * Multiple polyline
          *------------------------------------------------------------*/
-        OGRMultiLineString *poMultiLine = (OGRMultiLineString *)poGeom;
+        OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
         if (nPartIndex >= 0 &&
             nPartIndex < poMultiLine->getNumGeometries())
         {
-            return (OGRLineString*)poMultiLine->getGeometryRef(nPartIndex);
+            return poMultiLine->getGeometryRef(nPartIndex)->toLineString();
         }
         else
             return nullptr;
@@ -1885,7 +1885,7 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
         /*-------------------------------------------------------------
          * Simple polyline
          *------------------------------------------------------------*/
-        OGRLineString *poLine = (OGRLineString*)poGeom;
+        OGRLineString *poLine = poGeom->toLineString();
         if ( TAB_REGION_PLINE_REQUIRES_V800(1, poLine->getNumPoints()) )
         {
             m_nMapInfoType = TAB_GEOM_V800_MULTIPLINE;
@@ -1921,7 +1921,7 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
          * Multiple polyline... validate all components
          *------------------------------------------------------------*/
         GInt32 numPointsTotal = 0;
-        OGRMultiLineString *poMultiLine = (OGRMultiLineString *)poGeom;
+        OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
         int numLines = poMultiLine->getNumGeometries();
 
         m_nMapInfoType = TAB_GEOM_MULTIPLINE;
@@ -1938,7 +1938,7 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
                 numPointsTotal = 0;
                 break;
             }
-            OGRLineString *poLine = (OGRLineString *)poGeom;
+            OGRLineString *poLine = poGeom->toLineString();
             numPointsTotal += poLine->getNumPoints();
         }
 
@@ -2341,7 +2341,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     if ((m_nMapInfoType == TAB_GEOM_LINE ||
          m_nMapInfoType == TAB_GEOM_LINE_C ) &&
         poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString &&
-        (poLine = (OGRLineString*)poGeom)->getNumPoints() == 2)
+        (poLine = poGeom->toLineString())->getNumPoints() == 2)
     {
         /*=============================================================
          * LINE (2 vertices)
@@ -2373,7 +2373,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         /*-------------------------------------------------------------
          * Process geometry first...
          *------------------------------------------------------------*/
-        poLine = (OGRLineString*)poGeom;
+        poLine = poGeom->toLineString();
         const int numPoints = poLine->getNumPoints();
         CPLAssert(numPoints <= TAB_REGION_PLINE_300_MAX_VERTICES);
 
@@ -2476,7 +2476,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
         GInt32 numLines = 1;
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
         {
-            poMultiLine = (OGRMultiLineString*)poGeom;
+            poMultiLine = poGeom->toMultiLineString();
             numLines = poMultiLine->getNumGeometries();
         }
         // else
@@ -2513,7 +2513,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
             {
-                poLine = (OGRLineString*)poGeom;
+                poLine = poGeom->toLineString();
                 const GInt32 numPoints = poLine->getNumPoints();
                 poLine->getEnvelope(&sEnvelope);
 
@@ -2560,7 +2560,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
             if( poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
             {
-                poLine = (OGRLineString*)poGeom;
+                poLine = poGeom->toLineString();
                 GInt32 numPoints = poLine->getNumPoints();
 
                 for( int i = 0; nStatus == 0 && i<numPoints; i++ )
@@ -2682,7 +2682,7 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
         /*-------------------------------------------------------------
          * Generate output for simple polyline
          *------------------------------------------------------------*/
-        poLine = (OGRLineString*)poGeom;
+        poLine = poGeom->toLineString();
         numPoints = poLine->getNumPoints();
         fprintf(fpOut, "PLINE %d\n", numPoints);
         for(i=0; i<numPoints; i++)
@@ -2694,7 +2694,7 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
          * Generate output for multiple polyline
          *------------------------------------------------------------*/
         int iLine, numLines;
-        poMultiLine = (OGRMultiLineString*)poGeom;
+        poMultiLine = poGeom->toMultiLineString();
         numLines = poMultiLine->getNumGeometries();
         fprintf(fpOut, "PLINE MULTIPLE %d\n", numLines);
         for(iLine=0; iLine < numLines; iLine++)
@@ -2702,7 +2702,7 @@ void TABPolyline::DumpMIF(FILE *fpOut /*=NULL*/)
             poGeom = poMultiLine->getGeometryRef(iLine);
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
             {
-                poLine = (OGRLineString*)poGeom;
+                poLine = poGeom->toLineString();
                 numPoints = poLine->getNumPoints();
                 fprintf(fpOut, " %d\n", numPoints);
                 for(i=0; i<numPoints; i++)
@@ -2755,13 +2755,13 @@ int TABPolyline::GetCenter( double &dX, double &dY )
         OGRGeometry *poGeom = GetGeometryRef();
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
         {
-            poLine = (OGRLineString *)poGeom;
+            poLine = poGeom->toLineString();
         }
         else if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
         {
-            OGRMultiLineString *poMultiLine = (OGRMultiLineString*)poGeom;
+            OGRMultiLineString *poMultiLine = poGeom->toMultiLineString();
             if (poMultiLine->getNumGeometries() > 0)
-                poLine = (OGRLineString *)poMultiLine->getGeometryRef(0);
+                poLine = poMultiLine->getGeometryRef(0)->toLineString();
         }
 
         if (poLine && poLine->getNumPoints() > 0)
@@ -3401,19 +3401,10 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
         /*-------------------------------------------------------------
          * Calculate total number of rings...
          *------------------------------------------------------------*/
-        OGRPolygon      *poPolygon=nullptr;
-        OGRMultiPolygon *poMultiPolygon = nullptr;
-
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
         {
-            poMultiPolygon = (OGRMultiPolygon *)poGeom;
-            for(int iPoly=0; iPoly<poMultiPolygon->getNumGeometries(); iPoly++)
+            for( auto&& poPolygon: *(poGeom->toMultiPolygon()) )
             {
-                // We are guaranteed that all parts are OGRPolygons
-                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
-                if (poPolygon  == nullptr)
-                    continue;
-
                 numRingsTotal += poPolygon->getNumInteriorRings()+1;
 
                 if (ppasSecHdrs && poMapFile)
@@ -3426,7 +3417,7 @@ int TABRegion::ComputeNumRings(TABMAPCoordSecHdr **ppasSecHdrs,
         }
         else
         {
-            poPolygon = (OGRPolygon*)poGeom;
+            OGRPolygon* poPolygon = poGeom->toPolygon();
             numRingsTotal = poPolygon->getNumInteriorRings()+1;
 
             if (ppasSecHdrs && poMapFile)
@@ -3561,7 +3552,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
 
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
         {
-            poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            poMultiPolygon = poGeom->toMultiPolygon();
             numOGRPolygons = poMultiPolygon->getNumGeometries();
         }
         else
@@ -3577,9 +3568,9 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
         {
             OGRPolygon *poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
             else
-                poPolygon = (OGRPolygon*)poGeom;
+                poPolygon = poGeom->toPolygon();
 
             int numIntRings = poPolygon->getNumInteriorRings();
 
@@ -3623,7 +3614,7 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
         {
-            poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            poMultiPolygon = poGeom->toMultiPolygon();
             numOGRPolygons = poMultiPolygon->getNumGeometries();
         }
         else
@@ -3639,9 +3630,9 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
         {
             OGRPolygon* poPolygon = nullptr;
             if (poMultiPolygon)
-                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(iPoly);
+                poPolygon = poMultiPolygon->getGeometryRef(iPoly)->toPolygon();
             else
-                poPolygon = (OGRPolygon*)poGeom;
+                poPolygon = poGeom->toPolygon();
 
             int numIntRings = poPolygon->getNumInteriorRings();
 
@@ -3772,13 +3763,13 @@ int TABRegion::GetCenter( double &dX, double &dY )
 
         if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon)
         {
-            OGRMultiPolygon *poMultiPolygon = (OGRMultiPolygon *)poGeom;
+            OGRMultiPolygon *poMultiPolygon = poGeom->toMultiPolygon();
             if (poMultiPolygon->getNumGeometries() > 0)
-                poPolygon = (OGRPolygon*)poMultiPolygon->getGeometryRef(0);
+                poPolygon = poMultiPolygon->getGeometryRef(0)->toPolygon();
         }
         else if (wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
         {
-            poPolygon = (OGRPolygon*)poGeom;
+            poPolygon = poGeom->toPolygon();
         }
 
         OGRPoint oLabelPoint;
@@ -4236,7 +4227,7 @@ void TABRectangle::DumpMIF(FILE *fpOut /*=NULL*/)
          * Generate rectangle output as a region
          * We could also output as a RECT or ROUNDRECT in a real MIF generator
          *------------------------------------------------------------*/
-        OGRPolygon *poPolygon = (OGRPolygon*)poGeom;
+        OGRPolygon *poPolygon = poGeom->toPolygon();
         int numIntRings = poPolygon->getNumInteriorRings();
         fprintf(fpOut, "REGION %d\n", numIntRings+1);
         // In this loop, iRing=-1 for the outer ring.
@@ -4642,7 +4633,7 @@ void TABEllipse::DumpMIF(FILE *fpOut /*=NULL*/)
          * Generate ellipse output as a region
          * We could also output as an ELLIPSE in a real MIF generator
          *------------------------------------------------------------*/
-        OGRPolygon *poPolygon = (OGRPolygon*)poGeom;
+        OGRPolygon *poPolygon = poGeom->toPolygon();
         int numIntRings = poPolygon->getNumInteriorRings();
         fprintf(fpOut, "REGION %d\n", numIntRings+1);
         // In this loop, iRing=-1 for the outer ring.
@@ -4813,7 +4804,7 @@ int TABArc::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
          * In this case we have to reconstruct the arc inside a temporary
          * geometry object in order to find its real MBR.
          *------------------------------------------------------------*/
-        OGRPoint *poPoint = (OGRPoint *)poGeom;
+        OGRPoint *poPoint = poGeom->toPoint();
         m_dCenterX = poPoint->getX();
         m_dCenterY = poPoint->getY();
 
@@ -5176,7 +5167,7 @@ void TABArc::DumpMIF(FILE *fpOut /*=NULL*/)
          * Generate arc output as a simple polyline
          * We could also output as an ELLIPSE in a real MIF generator
          *------------------------------------------------------------*/
-        OGRLineString *poLine = (OGRLineString*)poGeom;
+        OGRLineString *poLine = poGeom->toLineString();
         const int numPoints = poLine->getNumPoints();
         fprintf(fpOut, "PLINE %d\n", numPoints);
         for( int i = 0; i < numPoints; i++ )
@@ -5554,7 +5545,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint*)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -5819,7 +5810,7 @@ int TABText::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
     OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
     {
-        OGRPoint *poPoint = (OGRPoint *)poGeom;
+        OGRPoint *poPoint = poGeom->toPoint();
 
         const double dX0 = poPoint->getX();
         const double dY0 = poPoint->getY();
@@ -6253,7 +6244,7 @@ void TABText::DumpMIF(FILE *fpOut /*=NULL*/)
         /*-------------------------------------------------------------
          * Generate output for text object
          *------------------------------------------------------------*/
-        OGRPoint *poPoint = (OGRPoint*)poGeom;
+        OGRPoint *poPoint = poGeom->toPoint();
 
         fprintf(fpOut, "TEXT \"%s\" %.15g %.15g\n", m_pszString?m_pszString:"",
                 poPoint->getX(), poPoint->getY());
@@ -6353,7 +6344,7 @@ TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
 
         if (poMPoint->getNumGeometries() > TAB_MULTIPOINT_650_MAX_VERTICES)
             m_nMapInfoType = TAB_GEOM_V800_MULTIPOINT;
@@ -6548,7 +6539,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
     OGRGeometry *poGeom = GetGeometryRef();
     OGRMultiPoint *poMPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
-        poMPoint = (OGRMultiPoint*)poGeom;
+        poMPoint = poGeom->toMultiPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -6580,7 +6571,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
-            OGRPoint *poPoint = (OGRPoint*)poGeom;
+            OGRPoint *poPoint = poGeom->toPoint();
 
             poMapFile->Coordsys2Int(poPoint->getX(), poPoint->getY(), nX, nY);
             if (iPoint == 0)
@@ -6656,13 +6647,13 @@ int TABMultiPoint::GetXY( int i, double &dX, double &dY )
     OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
 
         if (i >= 0 && i < poMPoint->getNumGeometries() &&
             (poGeom = poMPoint->getGeometryRef(i)) != nullptr &&
             wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            OGRPoint *poPoint = (OGRPoint*)poGeom;
+            OGRPoint *poPoint = poGeom->toPoint();
 
             dX = poPoint->getX();
             dY = poPoint->getY();
@@ -6693,7 +6684,7 @@ int TABMultiPoint::GetNumPoints()
     OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
-        OGRMultiPoint *poMPoint = (OGRMultiPoint*)poGeom;
+        OGRMultiPoint *poMPoint = poGeom->toMultiPoint();
 
         return poMPoint->getNumGeometries();
     }
@@ -6779,7 +6770,7 @@ void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRMultiPoint *poMPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
-        poMPoint = (OGRMultiPoint*)poGeom;
+        poMPoint = poGeom->toMultiPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -6798,7 +6789,7 @@ void TABMultiPoint::DumpMIF(FILE *fpOut /*=NULL*/)
 
         if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
         {
-            OGRPoint *poPoint = (OGRPoint*)poGeom;
+            OGRPoint *poPoint = poGeom->toPoint();
             fprintf(fpOut, "  %.15g %.15g\n", poPoint->getX(), poPoint->getY() );
         }
         else

@@ -248,7 +248,7 @@ OGRErr GTMWaypointLayer::ICreateFeature (OGRFeature *poFeature)
     case wkbPoint:
     case wkbPoint25D:
     {
-        OGRPoint* point = (OGRPoint*)poGeom;
+        OGRPoint* point = poGeom->toPoint();
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(lat, lon);

@@ -820,7 +820,7 @@ int VFKDataBlock::LoadGeometryLineStringSBP()
         VFKFeature *poPoint = poDataBlockPoints->GetFeature(idxId, id);
         if (!poPoint)
             continue;
-        OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+        OGRPoint *pt = poPoint->GetGeometry()->toPoint();
         oOGRLine.addPoint(pt);
     }
     /* add last line */

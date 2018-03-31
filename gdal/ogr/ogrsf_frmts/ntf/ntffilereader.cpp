@@ -2187,13 +2187,13 @@ int NTFFileReader::FormPolygonFromCache( OGRFeature * poFeature )
 /* -------------------------------------------------------------------- */
 /*      Assemble into a polygon geometry.                               */
 /* -------------------------------------------------------------------- */
-    OGRPolygon *poPoly = (OGRPolygon *)
+    OGRGeometry* poGeom = reinterpret_cast<OGRGeometry*>(
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oLines, FALSE, FALSE, 0.1,
-                                  nullptr );
+                                  nullptr ));
 
-    poFeature->SetGeometryDirectly( poPoly );
+    poFeature->SetGeometryDirectly( poGeom );
 
     oLines.removeGeometry( -1, FALSE );
 
-    return poPoly != nullptr;
+    return poGeom != nullptr;
 }

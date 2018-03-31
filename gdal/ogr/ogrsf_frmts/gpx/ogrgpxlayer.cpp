@@ -860,7 +860,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                                 if( poFeature->IsFieldSetAndNotNull( iField ) )
                                 {
                                     double val =  poFeature->GetFieldAsDouble( iField);
-                                    ((OGRPoint*)poFeature->GetGeometryRef())->setZ(val);
+                                    poFeature->GetGeometryRef()->toPoint()->setZ(val);
                                     poFeature->GetGeometryRef()->setCoordinateDimension(3);
                                 }
                                 break;

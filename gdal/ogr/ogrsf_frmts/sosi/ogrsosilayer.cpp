@@ -247,22 +247,14 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         case L_BUEP:  {  /* curve, interpolated from circular arc */
             oGType = wkbLineString;
 
-            OGRLineString *poCurve = (OGRLineString*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
-            if (poCurve == nullptr) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "Curve %li was not initialized.", oNextSerial.lNr);
-                return nullptr;
-            }
+            OGRLineString *poCurve = poParent->papoBuiltGeometries[oNextSerial.lNr]->toLineString();
             poGeom = poCurve->clone();
             break;
         }
         case L_TEKST: {  /* text */
             oGType = wkbMultiPoint;
 
-            OGRMultiPoint *poMP = (OGRMultiPoint*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
-            if (poMP == nullptr) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "Tekst %li was not initialized.", oNextSerial.lNr);
-                return nullptr;
-            }
+            OGRMultiPoint *poMP = poParent->papoBuiltGeometries[oNextSerial.lNr]->toMultiPoint();
             poGeom = poMP->clone();
             break;
         }
@@ -272,11 +264,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
         }
         case L_PUNKT: {  /* point */
             oGType = wkbPoint;
-            OGRPoint *poPoint = (OGRPoint*)(poParent->papoBuiltGeometries[oNextSerial.lNr]);
-            if (poPoint == nullptr) {
-                CPLError( CE_Fatal, CPLE_AppDefined, "Point %li was not initialized.", oNextSerial.lNr);
-                return nullptr;
-            }
+            OGRPoint *poPoint = poParent->papoBuiltGeometries[oNextSerial.lNr]->toPoint();
             poGeom = poPoint->clone();
             break;
         }

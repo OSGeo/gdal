@@ -2615,13 +2615,13 @@ int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeome
         case wkbLineString:
         case wkbLinearRing:
         {
-            int nPoints = ((OGRLineString*)poGeometry)->getNumPoints();
+            int nPoints = poGeometry->toLineString()->getNumPoints();
             return nPoints >= 2;
         }
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
+            const OGRPolygon* poPoly = poGeometry->toPolygon();
             if (poPoly->getExteriorRing() != nullptr)
             {
                 if (!CanBeCompressedSpatialiteGeometry(poPoly->getExteriorRing()))
@@ -2642,7 +2642,7 @@ int OGRSQLiteLayer::CanBeCompressedSpatialiteGeometry(const OGRGeometry *poGeome
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*) poGeometry;
+            const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
             int nParts = poGeomCollection->getNumGeometries();
             for(int i=0;i<nParts;i++)
             {
@@ -2675,7 +2675,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         case wkbLineString:
         case wkbLinearRing:
         {
-            int nPoints = ((OGRLineString*)poGeometry)->getNumPoints();
+            int nPoints = poGeometry->toLineString()->getNumPoints();
             int nDimension = 2;
             int nPointsDouble = nPoints;
             int nPointsFloat = 0;
@@ -2703,7 +2703,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         case wkbPolygon:
         {
             int nSize = 4;
-            OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
+            const OGRPolygon* poPoly = poGeometry->toPolygon();
             bUseComprGeom = bUseComprGeom && !bSpatialite2D && CanBeCompressedSpatialiteGeometry(poGeometry);
             if (poPoly->getExteriorRing() != nullptr)
             {
@@ -2724,7 +2724,7 @@ int OGRSQLiteLayer::ComputeSpatiaLiteGeometrySize(const OGRGeometry *poGeometry,
         case wkbGeometryCollection:
         {
             int nSize = 4;
-            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*) poGeometry;
+            const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
             int nParts = poGeomCollection->getNumGeometries();
             for(int i=0;i<nParts;i++)
                 nSize += 5 + ComputeSpatiaLiteGeometrySize(poGeomCollection->getGeometryRef(i),
@@ -2919,7 +2919,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
     {
         case wkbPoint:
         {
-            OGRPoint* poPoint = (OGRPoint*) poGeometry;
+            const OGRPoint* poPoint = poGeometry->toPoint();
             double x = poPoint->getX();
             double y = poPoint->getY();
             memcpy(pabyData, &x, 8);
@@ -2966,7 +2966,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
         case wkbLineString:
         case wkbLinearRing:
         {
-            OGRLineString* poLineString = (OGRLineString*) poGeometry;
+            const OGRLineString* poLineString = poGeometry->toLineString();
             int nTotalSize = 4;
             int nPointCount = poLineString->getNumPoints();
             memcpy(pabyData, &nPointCount, 4);
@@ -3075,7 +3075,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = (OGRPolygon*) poGeometry;
+            const OGRPolygon* poPoly = poGeometry->toPolygon();
             int nParts = 0;
             int nTotalSize = 4;
             if (poPoly->getExteriorRing() != nullptr)
@@ -3113,7 +3113,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
         case wkbMultiPolygon:
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGeomCollection = (OGRGeometryCollection*) poGeometry;
+            const OGRGeometryCollection* poGeomCollection = poGeometry->toGeometryCollection();
             int nTotalSize = 4;
             int nParts = poGeomCollection->getNumGeometries();
             memcpy(pabyData, &nParts, 4);
@@ -3125,7 +3125,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(const OGRGeometry *poGeomet
                 pabyData[nTotalSize] = 0x69;
                 nTotalSize ++;
 
-                OGRGeometry* poPart = poGeomCollection->getGeometryRef(i);
+                const OGRGeometry* poPart = poGeomCollection->getGeometryRef(i);
                 if( OGR_GT_IsSubClassOf(poPart->getGeometryType(),
                                         wkbGeometryCollection) )
                 {
