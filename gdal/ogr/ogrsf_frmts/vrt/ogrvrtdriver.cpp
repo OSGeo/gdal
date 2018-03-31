@@ -100,10 +100,18 @@ static GDALDataset *OGRVRTDriverOpen( GDALOpenInfo* poOpenInfo )
     else
     {
         VSIStatBufL sStatBuf;
-        if ( VSIStatL( poOpenInfo->pszFilename, &sStatBuf ) != 0 ||
-             sStatBuf.st_size > 1024 * 1024 )
+        if( VSIStatL(poOpenInfo->pszFilename, &sStatBuf) != 0 )
         {
-            CPLDebug( "VRT", "Unreasonable long file, not likely really VRT" );
+            return NULL;
+        }
+        if( sStatBuf.st_size > 10 * 1024 * 1024 &&
+            !CPLTestBool(
+                    CPLGetConfigOption("OGR_VRT_FORCE_LOADING", "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                    "Suscipicously long VRT file. If you really want to "
+                    "open it, define OGR_VRT_FORCE_LOADING=YES as "
+                    "configuration option");
             return NULL;
         }
 
