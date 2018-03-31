@@ -542,23 +542,15 @@ static int GCIOAPI_CALL _findFieldByName_GCIO (
 
   if( fields )
   {
-    CPLList* e;
-    int n, i;
-    if( (n= CPLListCount(fields))>0 )
+    int i = 0;
+    CPLList* psIter = fields;
+    for(; psIter; psIter = psIter->psNext, i++ )
     {
-      for( i= 0; i<n; i++)
-      {
-        if( (e= CPLListGet(fields,i)) )
+        theField= (GCField*)psIter->pData;
+        if( EQUAL(GetFieldName_GCIO(theField),name) )
         {
-          if( (theField= (GCField*)CPLListGetData(e)) )
-          {
-            if( EQUAL(GetFieldName_GCIO(theField),name) )
-            {
               return i;
-            }
-          }
         }
-      }
     }
   }
   return -1;
