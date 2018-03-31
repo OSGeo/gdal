@@ -942,6 +942,7 @@ namespace tut
         TestIterator<OGRLineString>();
         TestIterator<OGRLineString>("LINESTRING(0 0)", 1);
         TestIterator<OGRLineString, OGRCurve>("LINESTRING(0 0)", 1);
+        TestIterator<OGRLineString, OGRCurve>();
         TestIterator<OGRLinearRing>();
         TestIterator<OGRCircularString>();
         TestIterator<OGRCircularString>("CIRCULARSTRING(0 0,1 1,0 0)", 3);
