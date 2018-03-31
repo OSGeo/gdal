@@ -107,6 +107,9 @@ AX_CHECK_COMPILE_FLAG([-Wfloat-conversion], [C_WFLAGS="$C_WFLAGS -Wfloat-convers
 dnl clang >= 3.2
 AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_WFLAGS="$C_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync" CXX_WFLAGS="$CXX_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
+dnl gnu89 is a reasonable target to get MSVC compatibility.
+AX_CHECK_COMPILE_FLAG([-std=gnu89], [C_WFLAGS="$C_WFLAGS -std=gnu89"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+
 dnl C++ specific stuff
 
 AC_LANG_PUSH([C++])
