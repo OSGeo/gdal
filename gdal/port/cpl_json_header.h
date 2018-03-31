@@ -39,14 +39,15 @@
 #define json_object_object_foreachC(obj,iter) \
  for(iter.entry = json_object_get_object(obj)->head; (iter.entry ? (iter.key = (char*)iter.entry->k, iter.val = (struct json_object*)iter.entry->v, iter.entry) : nullptr) != nullptr; iter.entry = iter.entry->next)
 
-
-#include <memory>
-
 /*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 extern "C++"
 {
+#ifndef DOXYGEN_SKIP
+#include <memory>
+#endif
+
 struct JsonObjectReleaser
 {
     void operator()(json_object* poObj) const { json_object_put(poObj); }
