@@ -1256,7 +1256,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !osCreated.empty() )
         poDS->GDALDataset::SetMetadataItem("CREATED", osCreated);
 
-    // Instanciate RAT
+    // Instantiate RAT
     if( !osRatNames.empty() && !osRatTypes.empty() && !osRatValues.empty() )
     {
         CPLStringList aosRatNames(CSLTokenizeString2(osRatNames, ":", 0));
