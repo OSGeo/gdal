@@ -5208,9 +5208,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     SetMetaHeightFormat_GCIO(GetGCMeta_GCIO(H), hCS);
   }
 
-  switch( OGR_G_GetGeometryType(poGeom) ) {
+  switch( wkbFlatten(OGR_G_GetGeometryType(poGeom)) ) {
   case wkbPoint                 :
-  case wkbPoint25D              :
     if( !_writePoint_GCIO(h,quotes,delim,
                             OGR_G_GetX(poGeom,0),
                             OGR_G_GetY(poGeom,0),
@@ -5223,7 +5222,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbLineString            :
-  case wkbLineString25D         :
     if( !_writeLine_GCIO(h,quotes,delim,
                            poGeom,
                            vLine_GCIO,
@@ -5236,7 +5234,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbPolygon               :
-  case wkbPolygon25D            :
     if( !_writePolygon_GCIO(h,quotes,delim,
                               poGeom,
                               GetSubTypeDim_GCIO(theSubType),
@@ -5247,17 +5244,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
       return WRITEERROR_GCIO;
     }
     break;
-  case wkbMultiPoint            :
-  case wkbMultiPoint25D         :
-  case wkbMultiLineString       :
-  case wkbMultiLineString25D    :
-  case wkbMultiPolygon          :
-  case wkbMultiPolygon25D       :
-  case wkbUnknown               :
-  case wkbGeometryCollection    :
-  case wkbGeometryCollection25D :
-  case wkbNone                  :
-  case wkbLinearRing            :
   default                       :
     CPLError( CE_Warning, CPLE_AppDefined,
               "Geometry type %d not supported in Geoconcept, feature skipped.\n",
