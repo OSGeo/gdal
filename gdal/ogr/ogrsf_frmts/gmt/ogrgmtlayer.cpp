@@ -312,7 +312,7 @@ bool OGRGmtLayer::ReadLine()
 
     for( size_t i = 0; i < osLine.length(); i++ )
     {
-        if( osLine[i] == '@' )
+        if( osLine[i] == '@' && i + 2 <= osLine.size() )
         {
             bool bInQuotes = false;
 
