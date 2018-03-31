@@ -4043,17 +4043,20 @@ TargetLayerInfo* SetupTargetLayer::Setup(OGRLayer* poSrcLayer,
                 }
                 else
                 {
-                    const char* pszNewFieldName =
-                        poDstFDefn->GetFieldDefn(nDstFieldCount)->GetNameRef();
-                    if( bHasRenamed && poDstFDefn != nullptr )
+                    if( poDstFDefn != nullptr )
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Field '%s' already exists. Renaming it as '%s'",
-                                 poSrcFieldDefn->GetNameRef(), pszNewFieldName);
+                        const char* pszNewFieldName =
+                            poDstFDefn->GetFieldDefn(nDstFieldCount)->GetNameRef();
+                        if( bHasRenamed )
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                    "Field '%s' already exists. Renaming it as '%s'",
+                                    poSrcFieldDefn->GetNameRef(), pszNewFieldName);
+                        }
+                        oSetDstFieldNames.insert(CPLString(pszNewFieldName).toupper());
                     }
 
                     panMap[iField] = nDstFieldCount;
-                    oSetDstFieldNames.insert(CPLString(pszNewFieldName).toupper());
                     nDstFieldCount ++;
                 }
             }
