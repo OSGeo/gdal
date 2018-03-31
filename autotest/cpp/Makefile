@@ -6,7 +6,7 @@ CPPFLAGS:=$(filter-out -DGDAL_COMPILATION,$(CPPFLAGS))
 
 CFLAGS += -I. -Itut $(GDAL_INCLUDE)
 
-PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_c_include_from_cpp_file test_include_from_cpp_file_with_extern_c
+PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testdestroy testmultithreadedwriting test_include_from_c_file test_include_from_cpp_file test_include_from_cpp_file_with_extern_c
 
 all: $(PROGS)
 
@@ -124,20 +124,20 @@ test_include_from_c_file:
 	$(CC) $(CFLAGS) -c test_include_from_c_file.c
 
 test_include_from_cpp_file:
-	for HEADER_FILE in cpl_atomic_ops.h cpl_conv.h cpl_csv.h cpl_error.h cpl_hash_set.h cpl_list.h cpl_minixml.h cpl_port.h cpl_progress.h cpl_quad_tree.h cpl_vsi.h gdal_alg.h gdal_version.h gdal.h ogr_api.h ogr_core.h ogr_srs_api.h; do \
+	for HEADER_FILE in cpl_atomic_ops.h cpl_conv.h cpl_csv.h cpl_error.h cpl_hash_set.h cpl_list.h cpl_minixml.h cpl_port.h cpl_progress.h cpl_quad_tree.h cpl_vsi.h gdal_alg.h gdal_version.h gdal.h ogr_api.h ogr_core.h ogr_srs_api.h ogr_feature.h ogr_geometry.h ogrsf_frmts.h ogr_spatialref.h; do \
 		echo "#include \"$$HEADER_FILE\"" > tmp_include_from_cpp_file.cpp; \
 		$(CXX) $(CXXFLAGS) -c tmp_include_from_cpp_file.cpp; \
 		$(RM) -f tmp_include_from_cpp_file.*; \
 	done; \
-	$(CXX) $(CXXFLAGS) -c test_include_from_cpp_file.cpp
+	$(CXX) $(CXXFLAGS) -c test_c_include_from_cpp_file.cpp
 
 test_include_from_cpp_file_with_extern_c:
 	for HEADER_FILE in cpl_atomic_ops.h cpl_conv.h cpl_csv.h cpl_error.h cpl_hash_set.h cpl_list.h cpl_minixml.h cpl_port.h cpl_progress.h cpl_quad_tree.h cpl_vsi.h gdal_alg.h gdal_version.h gdal.h ogr_api.h ogr_core.h ogr_srs_api.h; do \
-		echo "extern \"C\" {" > tmp_include_from_cpp_file.cpp; \
-		echo "#include \"$$HEADER_FILE\"" >> tmp_include_from_cpp_file.cpp; \
-		echo "}" >> tmp_include_from_cpp_file.cpp; \
-		$(CXX) $(CXXFLAGS) -c tmp_include_from_cpp_file.cpp; \
-		$(RM) -f tmp_include_from_cpp_file.*; \
+		echo "extern \"C\" {" > test_include_from_cpp_file_with_extern_c.cpp; \
+		echo "#include \"$$HEADER_FILE\"" >> test_include_from_cpp_file_with_extern_c.cpp; \
+		echo "}" >> test_include_from_cpp_file_with_extern_c.cpp; \
+		$(CXX) $(CXXFLAGS) -c test_include_from_cpp_file_with_extern_c.cpp; \
+		$(RM) -f test_include_from_cpp_file_with_extern_c.*; \
 	done
 
 clean:
