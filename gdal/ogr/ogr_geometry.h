@@ -748,6 +748,18 @@ class CPL_DLL OGRGeometry
 
 };
 
+//! @cond Doxygen_Suppress
+struct CPL_DLL OGRGeometryUniquePtrDeleter
+{
+    void operator()(OGRGeometry*) const;
+};
+//! @endcond
+
+/** Unique pointer type for OGRGeometry.
+ * @since GDAL 2.3
+ */
+typedef std::unique_ptr<OGRGeometry, OGRGeometryUniquePtrDeleter> OGRGeometryUniquePtr;
+
 /************************************************************************/
 /*                               OGRPoint                               */
 /************************************************************************/
@@ -2679,5 +2691,17 @@ int OGRPreparedGeometryIntersects( const OGRPreparedGeometry* poPreparedGeom,
                                    const OGRGeometry* poOtherGeom );
 int OGRPreparedGeometryContains( const OGRPreparedGeometry* poPreparedGeom,
                                  const OGRGeometry* poOtherGeom );
+
+//! @cond Doxygen_Suppress
+struct CPL_DLL OGRPreparedGeometryUniquePtrDeleter
+{
+    void operator()(OGRPreparedGeometry*) const;
+};
+//! @endcond
+
+/** Unique pointer type for OGRPreparedGeometry.
+ * @since GDAL 2.3
+ */
+typedef std::unique_ptr<OGRPreparedGeometry, OGRPreparedGeometryUniquePtrDeleter> OGRPreparedGeometryUniquePtr;
 
 #endif /* ndef OGR_GEOMETRY_H_INCLUDED */

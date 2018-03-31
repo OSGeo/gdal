@@ -6936,3 +6936,25 @@ void OGRDefaultConstGeometryVisitor::visit(const OGRTriangulatedSurface* poGeom)
 {
     visit(poGeom->toUpperClass());
 }
+
+/************************************************************************/
+/*                     OGRGeometryUniquePtrDeleter                      */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRGeometryUniquePtrDeleter::operator()(OGRGeometry* poGeom) const
+{
+    delete poGeom;
+}
+//! @endcond
+
+/************************************************************************/
+/*                  OGRPreparedGeometryUniquePtrDeleter                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRPreparedGeometryUniquePtrDeleter::operator()(OGRPreparedGeometry* poPreparedGeom) const
+{
+    OGRDestroyPreparedGeometry(poPreparedGeom);
+}
+//! @endcond
