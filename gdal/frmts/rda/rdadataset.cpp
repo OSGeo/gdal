@@ -101,7 +101,7 @@ class GDALRDADataset: public GDALDataset
         bool      m_bAdviseRead = true;
         CPLString m_osImageId;
         CPLString m_osProfileName;
-        CPLString m_osNativeTileFileFormat;
+        CPLString m_osRequestTileFileFormat;
         int64_t   m_nTileXOffset = 0;
         int64_t   m_nTileYOffset = 0;
         int64_t   m_nNumXTiles = 0;
@@ -259,7 +259,8 @@ GDALRDADataset::GDALRDADataset() :
     m_osClientId(CPLGetConfigOption("GBDX_CLIENT_ID", "")),
     m_osClientSecret(CPLGetConfigOption("GBDX_CLIENT_SECRET", "")),
     m_osUserName(CPLGetConfigOption("GBDX_USERNAME", "")),
-    m_osUserPassword(CPLGetConfigOption("GBDX_PASSWORD", ""))
+    m_osUserPassword(CPLGetConfigOption("GBDX_PASSWORD", "")),
+    m_osRequestTileFileFormat(CPLGetConfigOption("RDA_REQUEST_FORMAT", "tif"))
 {
 }
 
@@ -1030,11 +1031,7 @@ bool GDALRDADataset::ReadImageMetadata()
     m_osImageId = GetJsonString(poObj, "imageId", true, bError);
     m_osProfileName = GetJsonString(poObj, "profileName", false,
                                     bNonFatalError);
-    m_osNativeTileFileFormat = GetJsonString(poObj, "nativeTileFileFormat",
-                                            false, bNonFatalError);
-    m_osNativeTileFileFormat = m_osNativeTileFileFormat.tolower();
-    if( m_osNativeTileFileFormat.empty() )
-        m_osNativeTileFileFormat = "tif";
+
     m_nTileXOffset = GetJsonInt64(poObj, "tileXOffset", true, bError);
     m_nTileYOffset = GetJsonInt64(poObj, "tileYOffset", true, bError);
     m_nNumXTiles = std::max<GIntBig>(0,
@@ -1587,7 +1584,7 @@ CPLString GDALRDADataset::ConstructTileFetchURL(const CPLString& baseUrl,
     else if(m_osType == RDADatasetType::TEMPLATE)
     {
         retVal += "/template/" + m_osTemplateId + "/tile/";
-        CPLString tosDiscardPath= "." + m_osNativeTileFileFormat;
+        CPLString tosDiscardPath= "." + m_osRequestTileFileFormat;
         CPLString tosSubPath = subPath ;
         tosSubPath.erase((tosSubPath.begin()+tosSubPath.find(tosDiscardPath)),
                          tosSubPath.end());
@@ -1703,7 +1700,7 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
             osSubPath += "/";
             osSubPath += CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nTileY));
             osSubPath += ".";
-            osSubPath += m_osNativeTileFileFormat;
+            osSubPath += m_osRequestTileFileFormat;
             CPLString osCachedFilename(GetDatasetCacheDir() + "/" + osSubPath);
             VSIStatBufL sStat;
             if( VSIStatL(osCachedFilename, &sStat) == 0 )
@@ -1744,7 +1741,7 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
                 osSubPath += CPLSPrintf(CPL_FRMT_GIB,
                                         static_cast<GIntBig>(nTileY));
                 osSubPath += ".";
-                osSubPath += m_osNativeTileFileFormat;
+                osSubPath += m_osRequestTileFileFormat;
                 CPLString osCachedFilename(
                     GetDatasetCacheDir() + "/" + osSubPath);
                 CacheFile( osCachedFilename,
@@ -1785,7 +1782,7 @@ GDALRDADataset::GetTiles(
         osSubPath += "/";
         osSubPath += CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nTileY));
         osSubPath += ".";
-        osSubPath += m_osNativeTileFileFormat;
+        osSubPath += m_osRequestTileFileFormat;
         CPLString osCachedFilename(GetDatasetCacheDir() + "/" + osSubPath);
         VSIStatBufL sStat;
         if( VSIStatL(osCachedFilename, &sStat) == 0 )
@@ -1842,7 +1839,7 @@ GDALRDADataset::GetTiles(
                                                 this,
                                                 static_cast<int>(nTileX),
                                                 static_cast<int>(nTileY)));
-                osTmpMemFile += m_osNativeTileFileFormat;
+                osTmpMemFile += m_osRequestTileFileFormat;
                 GByte* pabyData = pasResults[i]->pabyData;
                 pasResults[i]->pabyData = nullptr;
                 VSIFCloseL(VSIFileFromMemBuffer(osTmpMemFile, pabyData,
@@ -1874,7 +1871,7 @@ GDALRDADataset::GetTiles(
                         osSubPath += CPLSPrintf(CPL_FRMT_GIB,
                                                 static_cast<GIntBig>(nTileY));
                         osSubPath += ".";
-                        osSubPath += m_osNativeTileFileFormat;
+                        osSubPath += m_osRequestTileFileFormat;
                         CPLString osCachedFilename(
                             GetDatasetCacheDir() + "/" + osSubPath);
                         CacheFile( osCachedFilename, pabyData,
