@@ -481,192 +481,268 @@ class CPL_DLL OGRGeometry
 //! @endcond
 
     /** Down-cast to OGRPoint*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint.
+     * @since GDAL 2.3
+     */
     inline OGRPoint* toPoint()
         { return cpl::down_cast<OGRPoint*>(this); }
 
     /** Down-cast to OGRPoint*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint.
+     * @since GDAL 2.3
+     */
     inline const OGRPoint* toPoint() const
         { return cpl::down_cast<const OGRPoint*>(this); }
 
     /** Down-cast to OGRCurve*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve).
+     * @since GDAL 2.3
+     */
     inline OGRCurve* toCurve()
         { return cpl::down_cast<OGRCurve*>(this); }
 
     /** Down-cast to OGRCurve*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbCurve).
+     * @since GDAL 2.3
+     */
     inline const OGRCurve* toCurve() const
         { return cpl::down_cast<const OGRCurve*>(this); }
 
     /** Down-cast to OGRSimpleCurve*.
-     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type. */
+     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type.
+     * @since GDAL 2.3
+     */
     inline OGRSimpleCurve* toSimpleCurve()
         { return cpl::down_cast<OGRSimpleCurve*>(this); }
 
     /** Down-cast to OGRSimpleCurve*.
-     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type. */
+     * Implies prior checking that getGeometryType() is wkbLineString, wkbCircularString or a derived type.
+     * @since GDAL 2.3
+     */
     inline const OGRSimpleCurve* toSimpleCurve() const
         { return cpl::down_cast<const OGRSimpleCurve*>(this); }
 
     /** Down-cast to OGRLineString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString.
+     * @since GDAL 2.3
+     */
     inline OGRLineString* toLineString()
         { return cpl::down_cast<OGRLineString*>(this); }
 
     /** Down-cast to OGRLineString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbLineString.
+     * @since GDAL 2.3
+     */
     inline const OGRLineString* toLineString() const
         { return cpl::down_cast<const OGRLineString*>(this); }
 
     /** Down-cast to OGRLinearRing*.
-     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING"). */
+     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING").
+     * @since GDAL 2.3
+     */
     inline OGRLinearRing* toLinearRing()
         { return cpl::down_cast<OGRLinearRing*>(this); }
 
     /** Down-cast to OGRLinearRing*.
-     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING"). */
+     * Implies prior checking that EQUAL(getGeometryName(), "LINEARRING").
+     * @since GDAL 2.3
+     */
     inline const OGRLinearRing* toLinearRing() const
         { return cpl::down_cast<const OGRLinearRing*>(this); }
 
     /** Down-cast to OGRCircularString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString.
+     * @since GDAL 2.3
+     */
     inline OGRCircularString* toCircularString()
         { return cpl::down_cast<OGRCircularString*>(this); }
 
     /** Down-cast to OGRCircularString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCircularString.
+     * @since GDAL 2.3
+     */
     inline const OGRCircularString* toCircularString() const
         { return cpl::down_cast<const OGRCircularString*>(this); }
 
     /** Down-cast to OGRCompoundCurve*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve.
+     * @since GDAL 2.3
+     */
     inline OGRCompoundCurve* toCompoundCurve()
         { return cpl::down_cast<OGRCompoundCurve*>(this); }
 
     /** Down-cast to OGRCompoundCurve*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCompoundCurve.
+     * @since GDAL 2.3
+     */
     inline const OGRCompoundCurve* toCompoundCurve() const
         { return cpl::down_cast<const OGRCompoundCurve*>(this); }
 
     /** Down-cast to OGRSurface*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface).
+     * @since GDAL 2.3
+     */
     inline OGRSurface* toSurface()
         { return cpl::down_cast<OGRSurface*>(this); }
 
     /** Down-cast to OGRSurface*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbSurface).
+     * @since GDAL 2.3
+     */
     inline const OGRSurface* toSurface() const
         { return cpl::down_cast<const OGRSurface*>(this); }
 
     /** Down-cast to OGRPolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline OGRPolygon* toPolygon()
         { return cpl::down_cast<OGRPolygon*>(this); }
 
     /** Down-cast to OGRPolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolygon or wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline const OGRPolygon* toPolygon() const
         { return cpl::down_cast<const OGRPolygon*>(this); }
 
     /** Down-cast to OGRTriangle*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline OGRTriangle* toTriangle()
         { return cpl::down_cast<OGRTriangle*>(this); }
 
     /** Down-cast to OGRTriangle*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline const OGRTriangle* toTriangle() const
         { return cpl::down_cast<const OGRTriangle*>(this); }
 
     /** Down-cast to OGRCurvePolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline OGRCurvePolygon* toCurvePolygon()
         { return cpl::down_cast<OGRCurvePolygon*>(this); }
 
     /** Down-cast to OGRCurvePolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbCurvePolygon or wkbPolygon or wkbTriangle.
+     * @since GDAL 2.3
+     */
     inline const OGRCurvePolygon* toCurvePolygon() const
         { return cpl::down_cast<const OGRCurvePolygon*>(this); }
 
     /** Down-cast to OGRGeometryCollection*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection).
+     * @since GDAL 2.3
+     */
     inline OGRGeometryCollection* toGeometryCollection()
         { return cpl::down_cast<OGRGeometryCollection*>(this); }
 
     /** Down-cast to OGRGeometryCollection*.
-     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection). */
+     * Implies prior checking that OGR_GT_IsSubClass(getGeometryType(), wkbGeometryCollection).
+     * @since GDAL 2.3
+     */
     inline const OGRGeometryCollection* toGeometryCollection() const
         { return cpl::down_cast<const OGRGeometryCollection*>(this); }
 
     /** Down-cast to OGRMultiPoint*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint.
+     * @since GDAL 2.3
+     */
     inline OGRMultiPoint* toMultiPoint()
         { return cpl::down_cast<OGRMultiPoint*>(this); }
 
     /** Down-cast to OGRMultiPoint*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPoint.
+     * @since GDAL 2.3
+     */
     inline const OGRMultiPoint* toMultiPoint() const
         { return cpl::down_cast<const OGRMultiPoint*>(this); }
 
     /** Down-cast to OGRMultiLineString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString.
+     * @since GDAL 2.3
+     */
     inline OGRMultiLineString* toMultiLineString()
         { return cpl::down_cast<OGRMultiLineString*>(this); }
 
     /** Down-cast to OGRMultiLineString*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiLineString.
+     * @since GDAL 2.3
+     */
     inline const OGRMultiLineString* toMultiLineString() const
         { return cpl::down_cast<const OGRMultiLineString*>(this); }
 
     /** Down-cast to OGRMultiPolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon.
+     * @since GDAL 2.3
+     */
     inline OGRMultiPolygon* toMultiPolygon()
         { return cpl::down_cast<OGRMultiPolygon*>(this); }
 
     /** Down-cast to OGRMultiPolygon*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiPolygon.
+     * @since GDAL 2.3
+     */
     inline const OGRMultiPolygon* toMultiPolygon() const
         { return cpl::down_cast<const OGRMultiPolygon*>(this); }
 
     /** Down-cast to OGRMultiCurve*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types.
+     * @since GDAL 2.3
+     */
     inline OGRMultiCurve* toMultiCurve()
         { return cpl::down_cast<OGRMultiCurve*>(this); }
 
     /** Down-cast to OGRMultiCurve*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiCurve and derived types.
+     * @since GDAL 2.3
+     */
     inline const OGRMultiCurve* toMultiCurve() const
         { return cpl::down_cast<const OGRMultiCurve*>(this); }
 
     /** Down-cast to OGRMultiSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types.
+     * @since GDAL 2.3
+     */
     inline OGRMultiSurface* toMultiSurface()
         { return cpl::down_cast<OGRMultiSurface*>(this); }
 
     /** Down-cast to OGRMultiSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbMultiSurface and derived types.
+     * @since GDAL 2.3
+     */
     inline const OGRMultiSurface* toMultiSurface() const
         { return cpl::down_cast<const OGRMultiSurface*>(this); }
 
     /** Down-cast to OGRPolyhedralSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN.
+     * @since GDAL 2.3
+     */
     inline OGRPolyhedralSurface* toPolyhedralSurface()
         { return cpl::down_cast<OGRPolyhedralSurface*>(this); }
 
     /** Down-cast to OGRPolyhedralSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPolyhedralSurface or wkbTIN.
+     * @since GDAL 2.3
+     */
     inline const OGRPolyhedralSurface* toPolyhedralSurface() const
         { return cpl::down_cast<const OGRPolyhedralSurface*>(this); }
 
     /** Down-cast to OGRTriangulatedSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN.
+     * @since GDAL 2.3
+     */
     inline OGRTriangulatedSurface* toTriangulatedSurface()
         { return cpl::down_cast<OGRTriangulatedSurface*>(this); }
 
     /** Down-cast to OGRTriangulatedSurface*.
-     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN. */
+     * Implies prior checking that wkbFlatten(getGeometryType()) == wkbTIN.
+     * @since GDAL 2.3
+     */
     inline const OGRTriangulatedSurface* toTriangulatedSurface() const
         { return cpl::down_cast<const OGRTriangulatedSurface*>(this); }
 
@@ -845,6 +921,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
+     * @since GDAL 2.3
      */
     ConstIterator begin() const;
     /** Return end of a point iterator. */
@@ -966,6 +1043,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
+     * @since GDAL 2.3
      */
     Iterator begin();
     /** Return end of point iterator. */
@@ -976,6 +1054,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
+     * @since GDAL 2.3
      */
     ConstIterator begin() const;
     /** Return end of point iterator. */
@@ -1341,11 +1420,15 @@ class CPL_DLL OGRCurveCollection
     /** Type of child elements. */
     typedef OGRCurve ChildType;
 
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     OGRCurve** begin() { return papoCurves; }
     /** Return end of curve iterator. */
     OGRCurve** end() { return papoCurves + nCurveCount; }
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     const OGRCurve* const* begin() const { return papoCurves; }
     /** Return end of curve iterator. */
     const OGRCurve* const* end() const { return papoCurves + nCurveCount; }
@@ -1454,11 +1537,15 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     /** Type of child elements. */
     typedef OGRCurve ChildType;
 
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return oCC.begin(); }
     /** Return end of curve iterator. */
     ChildType** end() { return oCC.end(); }
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const * begin() const { return oCC.begin(); }
     /** Return end of curve iterator. */
     const ChildType* const * end() const { return oCC.end(); }
@@ -1617,11 +1704,15 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     /** Type of child elements. */
     typedef OGRCurve ChildType;
 
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return oCC.begin(); }
     /** Return end of curve iterator. */
     ChildType** end() { return oCC.end(); }
-    /** Return begin of curve iterator. */
+    /** Return begin of curve iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const * begin() const { return oCC.begin(); }
     /** Return end of curve iterator. */
     const ChildType* const * end() const { return oCC.end(); }
@@ -1746,11 +1837,15 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     /** Type of child elements. */
     typedef OGRLinearRing ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(oCC.begin()); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(oCC.end()); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(oCC.begin()); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(oCC.end()); }
@@ -1907,11 +2002,15 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     /** Type of child elements. */
     typedef OGRGeometry ChildType;
 
-    /** Return begin of sub-geometry iterator. */
+    /** Return begin of sub-geometry iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return papoGeoms; }
     /** Return end of sub-geometry iterator. */
     ChildType** end() { return papoGeoms + nGeomCount; }
-    /** Return begin of sub-geometry iterator. */
+    /** Return begin of sub-geometry iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return papoGeoms; }
     /** Return end of sub-geometry iterator. */
     const ChildType* const* end() const { return papoGeoms + nGeomCount; }
@@ -2010,11 +2109,15 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     /** Type of child elements. */
     typedef OGRSurface ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
@@ -2084,11 +2187,15 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
     /** Type of child elements. */
     typedef OGRPolygon ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
@@ -2154,11 +2261,15 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     /** Type of child elements. */
     typedef OGRPolygon ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return oMP.begin(); }
     /** Return end of iterator */
     ChildType** end() { return oMP.end(); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return oMP.begin(); }
     /** Return end of iterator */
     const ChildType* const* end() const { return oMP.end(); }
@@ -2249,11 +2360,15 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
     /** Type of child elements. */
     typedef OGRTriangle ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(oMP.begin()); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(oMP.end()); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(oMP.begin()); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(oMP.end()); }
@@ -2304,11 +2419,15 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     /** Type of child elements. */
     typedef OGRPoint ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
@@ -2366,11 +2485,15 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     /** Type of child elements. */
     typedef OGRCurve ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
@@ -2424,11 +2547,15 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
     /** Type of child elements. */
     typedef OGRLineString ChildType;
 
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     ChildType** begin() { return reinterpret_cast<ChildType**>(papoGeoms); }
     /** Return end of iterator */
     ChildType** end() { return reinterpret_cast<ChildType**>(papoGeoms + nGeomCount); }
-    /** Return begin of iterator */
+    /** Return begin of iterator.
+     * @since GDAL 2.3
+     */
     const ChildType* const* begin() const { return reinterpret_cast<const ChildType* const*>(papoGeoms); }
     /** Return end of iterator */
     const ChildType* const* end() const { return reinterpret_cast<const ChildType* const*>(papoGeoms + nGeomCount); }
