@@ -108,7 +108,18 @@ dnl clang >= 3.2
 AX_CHECK_COMPILE_FLAG([-Wdocumentation -Wno-documentation-deprecated-sync], [C_WFLAGS="$C_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync" CXX_WFLAGS="$CXX_WFLAGS -Wdocumentation -Wno-documentation-deprecated-sync"],,[$ERROR_ON_UNKNOWN_OPTIONS])
 
 dnl gnu89 is a reasonable target to get MSVC compatibility.
-AX_CHECK_COMPILE_FLAG([-std=gnu89], [C_WFLAGS="$C_WFLAGS -std=gnu89"],,[$ERROR_ON_UNKNOWN_OPTIONS])
+dnl but only apply it with gcc, since clang will throw a lot of warnings
+SAVED_CFLAGS=$CFLAGS
+CFLAGS="$CFLAGS $ERROR_ON_UNKNOWN_OPTIONS -std=gnu89"
+AC_MSG_CHECKING([if -std=gnu89 can be enabled])
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[#if defined(__clang__) || !defined(__GNUC__)
+    #error "not gcc"
+    #endif]])],
+  [CXX_WFLAGS="$CXX_WFLAGS -std=gnu89"]
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])])
+CFLAGS=$SAVED_CFLAGS
 
 dnl C++ specific stuff
 
