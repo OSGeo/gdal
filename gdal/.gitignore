@@ -89,6 +89,7 @@ swig/java/osr_wrap.cpp
 swig/java/gnm_wrap.cpp
 swig/python/build
 swig/python/setup_vars.ini
+swig/python/record.txt
 swig/perl/Const.bs
 swig/perl/GDAL.bs
 swig/perl/Makefile_Geo__GDAL
@@ -115,6 +116,11 @@ swig/csharp/ogr
 swig/csharp/gdal
 swig/csharp/const
 fuzzers/libFuzzingEngine.a
+fuzzers/tests/test_gdal_fuzzer
+fuzzers/tests/test_ogr_fuzzer
+fuzzers/tests/test_osr_set_from_user_input_fuzzer
+fuzzers/tests/test_wkb_import_fuzzer
+fuzzers/tests/test_wkt_import_fuzzer
 man/
 html/
 nmake.local*
