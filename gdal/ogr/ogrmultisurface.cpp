@@ -321,11 +321,10 @@ OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
 
 OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
 {
-    for( int i = 0; i < poMS->nGeomCount; i++ )
+    for( auto&& poSubGeom: *poMS )
     {
-        OGRSurface* poSurface = poMS->papoGeoms[i]->toSurface();
-        poMS->papoGeoms[i] = OGRSurface::CastToPolygon(poSurface);
-        if( poMS->papoGeoms[i] == nullptr )
+        poSubGeom = OGRSurface::CastToPolygon(poSubGeom);
+        if( poSubGeom == nullptr )
         {
             delete poMS;
             return nullptr;

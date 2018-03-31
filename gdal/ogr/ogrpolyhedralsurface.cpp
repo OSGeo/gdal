@@ -132,8 +132,10 @@ OGRwkbGeometryType OGRPolyhedralSurface::getGeometryType() const
 int OGRPolyhedralSurface::WkbSize() const
 {
     int nSize = 9;
-    for( int i = 0; i < oMP.nGeomCount; i++ )
-        nSize += oMP.papoGeoms[i]->WkbSize();
+    for( auto&& poSubGeom: *this )
+    {
+        nSize += poSubGeom->WkbSize();
+    }
     return nSize;
 }
 
@@ -154,8 +156,10 @@ void OGRPolyhedralSurface::empty()
 {
     if( oMP.papoGeoms != nullptr )
     {
-        for( int i = 0; i < oMP.nGeomCount; i++ )
-            delete oMP.papoGeoms[i];
+        for( auto&& poSubGeom: *this )
+        {
+            delete poSubGeom;
+        }
         CPLFree(oMP.papoGeoms);
     }
     oMP.nGeomCount = 0;
@@ -175,10 +179,10 @@ OGRGeometry* OGRPolyhedralSurface::clone() const
     poNewPS->assignSpatialReference(getSpatialReference());
     poNewPS->flags = flags;
 
-    for( int i = 0; i < oMP.nGeomCount; i++ )
+    for( auto&& poSubGeom: *this )
     {
         if( poNewPS->oMP._addGeometryWithExpectedSubGeometryType(
-                      oMP.papoGeoms[i], getSubGeometryType()) != OGRERR_NONE )
+                      poSubGeom, getSubGeometryType()) != OGRERR_NONE )
         {
             delete poNewPS;
             return nullptr;
@@ -338,11 +342,11 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
     int nOffset = 9;
 
     // serialize each of the geometries
-    for( int iGeom = 0; iGeom < oMP.nGeomCount; iGeom++ )
+    for( auto&& poSubGeom: *this )
     {
-        oMP.papoGeoms[iGeom]->exportToWkb( eByteOrder, pabyData + nOffset,
+        poSubGeom->exportToWkb( eByteOrder, pabyData + nOffset,
                                            wkbVariantIso );
-        nOffset += oMP.papoGeoms[iGeom]->WkbSize();
+        nOffset += poSubGeom->WkbSize();
     }
 
     return OGRERR_NONE;
