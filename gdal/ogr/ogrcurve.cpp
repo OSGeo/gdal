@@ -451,3 +451,188 @@ void OGRPointIterator::destroy( OGRPointIterator* poIter )
 {
     delete poIter;
 }
+
+/************************************************************************/
+/*                     OGRSimpleCurve::Iterator                         */
+/************************************************************************/
+
+struct OGRSimpleCurve::Iterator::Private
+{
+    bool m_bUpdateChecked = true;
+    OGRPoint m_oPoint;
+    OGRSimpleCurve* m_poSelf = nullptr;
+    int m_nPos = 0;
+};
+
+void OGRSimpleCurve::Iterator::update()
+{
+    if( !m_poPrivate->m_bUpdateChecked )
+    {
+        OGRPoint oPointBefore;
+        m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &oPointBefore);
+        if( oPointBefore != m_poPrivate->m_oPoint )
+        {
+            m_poPrivate->m_poSelf->setPoint(m_poPrivate->m_nPos,
+                                            &m_poPrivate->m_oPoint);
+        }
+        m_poPrivate->m_bUpdateChecked = true;
+    }
+}
+
+OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
+    m_poPrivate(new Private())
+{
+    m_poPrivate->m_poSelf = poSelf;
+    m_poPrivate->m_nPos = nPos;
+}
+
+OGRSimpleCurve::Iterator::Iterator(Iterator&& oOther):
+    m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
+OGRSimpleCurve::Iterator::~Iterator()
+{
+    update();
+}
+
+OGRPoint& OGRSimpleCurve::Iterator::operator*()
+{
+    update();
+    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_bUpdateChecked = false;
+    return m_poPrivate->m_oPoint;
+}
+
+OGRSimpleCurve::Iterator& OGRSimpleCurve::Iterator::operator++()
+{
+    update();
+    ++m_poPrivate->m_nPos;
+    return *this;
+}
+
+bool OGRSimpleCurve::Iterator::operator!=(const Iterator& it) const
+{
+    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+}
+
+OGRSimpleCurve::Iterator OGRSimpleCurve::begin()
+{
+    return {this, 0};
+}
+
+OGRSimpleCurve::Iterator OGRSimpleCurve::end()
+{
+    return {this, nPointCount};
+}
+
+/************************************************************************/
+/*                  OGRSimpleCurve::ConstIterator                       */
+/************************************************************************/
+
+struct OGRSimpleCurve::ConstIterator::Private
+{
+    mutable OGRPoint m_oPoint;
+    const OGRSimpleCurve* m_poSelf = nullptr;
+    int m_nPos = 0;
+};
+
+OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int nPos):
+    m_poPrivate(new Private())
+{
+    m_poPrivate->m_poSelf = poSelf;
+    m_poPrivate->m_nPos = nPos;
+}
+
+OGRSimpleCurve::ConstIterator::ConstIterator(ConstIterator&& oOther):
+    m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
+OGRSimpleCurve::ConstIterator::~ConstIterator()
+{
+}
+
+const OGRPoint& OGRSimpleCurve::ConstIterator::operator*() const
+{
+    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    return m_poPrivate->m_oPoint;
+}
+
+OGRSimpleCurve::ConstIterator& OGRSimpleCurve::ConstIterator::operator++()
+{
+    ++m_poPrivate->m_nPos;
+    return *this;
+}
+
+bool OGRSimpleCurve::ConstIterator::operator!=(const ConstIterator& it) const
+{
+    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+}
+
+OGRSimpleCurve::ConstIterator OGRSimpleCurve::begin() const
+{
+    return {this, 0};
+}
+
+OGRSimpleCurve::ConstIterator OGRSimpleCurve::end() const
+{
+    return {this, nPointCount};
+}
+
+/************************************************************************/
+/*                     OGRCurve::ConstIterator                          */
+/************************************************************************/
+
+struct OGRCurve::ConstIterator::Private
+{
+    OGRPoint m_oPoint;
+    std::unique_ptr<OGRPointIterator> m_poIterator;
+};
+
+OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
+    m_poPrivate(new Private())
+{
+    if( bStart )
+    {
+        m_poPrivate->m_poIterator.reset(poSelf->getPointIterator());
+        if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+            m_poPrivate->m_poIterator.reset();
+    }
+}
+
+OGRCurve::ConstIterator::ConstIterator(ConstIterator&& oOther) :
+    m_poPrivate(std::move(oOther.m_poPrivate))
+{
+}
+
+OGRCurve::ConstIterator::~ConstIterator()
+{
+}
+
+const OGRPoint& OGRCurve::ConstIterator::operator*() const
+{
+    return m_poPrivate->m_oPoint;
+}
+
+OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator++()
+{
+    if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+        m_poPrivate->m_poIterator.reset();
+    return *this;
+}
+
+bool OGRCurve::ConstIterator::operator!=(const ConstIterator& it) const
+{
+    return m_poPrivate->m_poIterator.get() != it.m_poPrivate->m_poIterator.get();
+}
+
+OGRCurve::ConstIterator OGRCurve::begin() const
+{
+    return {this, true};
+}
+
+OGRCurve::ConstIterator OGRCurve::end() const
+{
+    return {this, false};
+}

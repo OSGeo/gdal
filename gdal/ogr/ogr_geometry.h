@@ -816,37 +816,18 @@ class CPL_DLL OGRCurve : public OGRGeometry
 
     private:
 
-      class ConstIterator
-      {
-          OGRPoint m_oPoint;
-          std::unique_ptr<OGRPointIterator> m_poIterator;
-
-        public:
-            ConstIterator(const OGRCurve* poSelf, bool bStart)
-            {
-                if( bStart )
-                {
-                    m_poIterator.reset(poSelf->getPointIterator());
-                    if( !m_poIterator->getNextPoint(&m_oPoint) )
-                        m_poIterator.reset();
-                }
-            }
-
-            const OGRPoint& operator*() const
-            {
-                return m_oPoint;
-            }
-
-            ConstIterator& operator++()
-            {
-                if( !m_poIterator->getNextPoint(&m_oPoint) )
-                    m_poIterator.reset();
-                return *this;
-            }
-
-            bool operator!=(const ConstIterator& it) const
-                { return m_poIterator.get() != it.m_poIterator.get(); }
-      };
+        class CPL_DLL ConstIterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+            public:
+                ConstIterator(const OGRCurve* poSelf, bool bStart);
+                ConstIterator(ConstIterator&& oOther);
+                ~ConstIterator();
+                const OGRPoint& operator*() const;
+                ConstIterator& operator++();
+                bool operator!=(const ConstIterator& it) const;
+        };
 
   public:
     ~OGRCurve() override;
@@ -865,9 +846,9 @@ class CPL_DLL OGRCurve : public OGRGeometry
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
      */
-    ConstIterator begin() const { return ConstIterator(this, true); }
+    ConstIterator begin() const;
     /** Return end of a point iterator. */
-    ConstIterator end() const { return ConstIterator(this, false); }
+    ConstIterator end() const;
 
     // ICurve methods
     virtual double get_Length() const = 0;
@@ -943,68 +924,33 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 OGRSimpleCurve( const OGRSimpleCurve& other );
 
   private:
-      class Iterator
-      {
-            bool m_bUpdateChecked;
-            OGRPoint m_oPoint;
-            OGRSimpleCurve* m_poSelf;
-            int m_nPos;
+        class CPL_DLL Iterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+                void update();
+            public:
+                Iterator(OGRSimpleCurve* poSelf, int nPos);
+                Iterator(Iterator&& oOther);
+                ~Iterator();
+                OGRPoint& operator*();
+                Iterator& operator++();
+                bool operator!=(const Iterator& it) const;
+        };
 
-            void update()
-            {
-                if( !m_bUpdateChecked )
-                {
-                    OGRPoint oPointBefore;
-                    m_poSelf->getPoint(m_nPos, &oPointBefore);
-                    if( oPointBefore != m_oPoint )
-                        m_poSelf->setPoint(m_nPos, &m_oPoint);
-                    m_bUpdateChecked = true;
-                }
-            }
+        class CPL_DLL ConstIterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+            public:
+                ConstIterator(const OGRSimpleCurve* poSelf, int nPos);
+                ConstIterator(ConstIterator&& oOther);
+                ~ConstIterator();
+                const OGRPoint& operator*() const;
+                ConstIterator& operator++();
+                bool operator!=(const ConstIterator& it) const;
+        };
 
-        public:
-            Iterator(OGRSimpleCurve* poSelf, int nPos) :
-                m_bUpdateChecked(true), m_poSelf(poSelf), m_nPos(nPos) {}
-
-            ~Iterator()
-            {
-                update();
-            }
-
-            OGRPoint& operator*()
-            {
-                update();
-                m_poSelf->getPoint(m_nPos, &m_oPoint);
-                m_bUpdateChecked = false;
-                return m_oPoint;
-            }
-            Iterator& operator++()
-            {
-                update();
-                ++m_nPos;
-                return *this;
-            }
-            bool operator!=(const Iterator& it) const { return m_nPos != it.m_nPos; }
-      };
-
-      class ConstIterator
-      {
-          mutable OGRPoint m_oPoint;
-          const OGRSimpleCurve* m_poSelf;
-          int m_nPos;
-
-        public:
-            ConstIterator(const OGRSimpleCurve* poSelf, int nPos) :
-                m_poSelf(poSelf), m_nPos(nPos) {}
-
-            const OGRPoint& operator*() const
-            {
-                m_poSelf->getPoint(m_nPos, &m_oPoint);
-                return m_oPoint;
-            }
-            ConstIterator& operator++() { ++m_nPos; return *this; }
-            bool operator!=(const ConstIterator& it) const { return m_nPos != it.m_nPos; }
-      };
 
   public:
     ~OGRSimpleCurve() override;
@@ -1021,9 +967,9 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
      */
-    Iterator begin() { return Iterator(this, 0); }
+    Iterator begin();
     /** Return end of point iterator. */
-    Iterator end() { return Iterator(this, nPointCount); }
+    Iterator end();
     /** Return begin of point iterator.
      *
      * Using this iterator for standard range-based loops is safe, but
@@ -1031,9 +977,9 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
      * (dereference) more than one iterator step at a time, since you will get
      * a reference to the same OGRPoint& object.
      */
-    ConstIterator begin() const { return ConstIterator(this, 0); }
+    ConstIterator begin() const;
     /** Return end of point iterator. */
-    ConstIterator end() const { return ConstIterator(this, nPointCount); }
+    ConstIterator end() const;
 
     // IWks Interface.
     virtual int WkbSize() const override;
