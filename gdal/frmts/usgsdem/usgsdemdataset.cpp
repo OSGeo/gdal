@@ -790,11 +790,7 @@ int USGSDEMDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
-        return nullptr;
-
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == nullptr)
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -802,7 +798,8 @@ GDALDataset *USGSDEMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     USGSDEMDataset *poDS = new USGSDEMDataset();
 
-    poDS->fp = fp;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the file.                                                  */

@@ -490,15 +490,14 @@ void E00GRIDDataset::Rewind(void * ptr)
 GDALDataset *E00GRIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Find dataset characteristics                                    */
 /* -------------------------------------------------------------------- */
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == nullptr)
-        return nullptr;
+    VSILFILE* fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     if (poOpenInfo->eAccess == GA_Update)
     {

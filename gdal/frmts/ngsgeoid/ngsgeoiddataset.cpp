@@ -324,7 +324,7 @@ int NGSGEOIDDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
     if (poOpenInfo->eAccess == GA_Update)
@@ -335,15 +335,12 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    VSILFILE* fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if (fp == nullptr)
-        return nullptr;
-
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     NGSGEOIDDataset *poDS = new NGSGEOIDDataset();
-    poDS->fp = fp;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     int nRows = 0, nCols = 0;
     GetHeaderInfo( poOpenInfo->pabyHeader,

@@ -723,7 +723,7 @@ static void FillString( char* szBuffer, size_t nBufferSize, void* pSrcBuffer )
 GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -740,13 +740,8 @@ GDALDataset *IRISDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     IRISDataset *poDS = new IRISDataset();
-
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( poDS->fp == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */

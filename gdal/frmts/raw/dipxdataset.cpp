@@ -176,7 +176,7 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      First we check to see if the file has the expected header       */
 /*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 256 )
+    if( poOpenInfo->nHeaderBytes < 256 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( CPL_LSBWORD32(*( reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader + 0 )))
@@ -190,26 +190,11 @@ GDALDataset *DIPExDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszAccess = nullptr;
-
-    if( poOpenInfo->eAccess == GA_Update )
-        pszAccess = "r+b";
-    else
-        pszAccess = "rb";
-
     DIPExDataset *poDS = new DIPExDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, pszAccess );
-    if( poDS->fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to open `%s' with access `%s' failed.\n",
-                  poOpenInfo->pszFilename, pszAccess );
-        delete poDS;
-        return nullptr;
-    }
-
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header information.                                    */

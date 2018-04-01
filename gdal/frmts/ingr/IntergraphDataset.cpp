@@ -87,7 +87,7 @@ IntergraphDataset::~IntergraphDataset()
 
 GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    if( poOpenInfo->nHeaderBytes < 1024 )
+    if( poOpenInfo->nHeaderBytes < 1024 || poOpenInfo->fpL == nullptr )
     {
         return nullptr;
     }
@@ -169,22 +169,8 @@ GDALDataset *IntergraphDataset::Open( GDALOpenInfo *poOpenInfo )
     // We need to scan around the file, so we open it now.
     // --------------------------------------------------------------------
 
-    VSILFILE *fp = nullptr;
-
-    if( poOpenInfo->eAccess == GA_ReadOnly  )
-    {
-        fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    }
-    else
-    {
-        fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-    }
-
-    if( fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed, "%s", VSIStrerror( errno ) );
-        return nullptr;
-    }
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     // --------------------------------------------------------------------
     // Get Format Type from the tile directory

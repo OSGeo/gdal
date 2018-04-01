@@ -836,7 +836,7 @@ int GSAGDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
     {
         return nullptr;
     }
@@ -854,25 +854,9 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     GSAGDataset *poDS = new GSAGDataset( szEOL );
-
-/* -------------------------------------------------------------------- */
-/*      Open file with large file API.                                  */
-/* -------------------------------------------------------------------- */
-
     poDS->eAccess = poOpenInfo->eAccess;
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-
-    if( poDS->fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */

@@ -105,7 +105,7 @@ int KRODataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -113,20 +113,8 @@ GDALDataset *KRODataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     KRODataset *poDS = new KRODataset();
     poDS->eAccess = poOpenInfo->eAccess;
-
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the file header.                                           */

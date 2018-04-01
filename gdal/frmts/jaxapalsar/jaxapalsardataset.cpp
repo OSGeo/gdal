@@ -471,7 +471,7 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
 /************************************************************************/
 
 int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
-    if ( poOpenInfo->nHeaderBytes < 360 )
+    if ( poOpenInfo->nHeaderBytes < 360 || poOpenInfo->fpL == nullptr )
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
@@ -481,10 +481,6 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
     }
 
-    VSILFILE *fpL = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fpL == nullptr )
-        return FALSE;
-
     /* Check that this is a volume directory file */
     int nRecordSeq = 0;
     int nRecordSubtype = 0;
@@ -493,16 +489,16 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
     int nThirdSubtype = 0;
     int nLengthRecord = 0;
 
-    VSIFSeekL(fpL, 0, SEEK_SET);
+    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
 
-    READ_WORD(fpL, nRecordSeq);
-    READ_BYTE(fpL, nRecordSubtype);
-    READ_BYTE(fpL, nRecordType);
-    READ_BYTE(fpL, nSecondSubtype);
-    READ_BYTE(fpL, nThirdSubtype);
-    READ_WORD(fpL, nLengthRecord);
+    READ_WORD(poOpenInfo->fpL, nRecordSeq);
+    READ_BYTE(poOpenInfo->fpL, nRecordSubtype);
+    READ_BYTE(poOpenInfo->fpL, nRecordType);
+    READ_BYTE(poOpenInfo->fpL, nSecondSubtype);
+    READ_BYTE(poOpenInfo->fpL, nThirdSubtype);
+    READ_WORD(poOpenInfo->fpL, nLengthRecord);
 
-    VSIFCloseL( fpL );
+    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
 
     /* Check that we have the right record */
     if ( nRecordSeq == 1 && nRecordSubtype == 192 && nRecordType == 192 &&

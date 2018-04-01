@@ -200,7 +200,7 @@ int GTXDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -209,20 +209,8 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
     GTXDataset *poDS = new GTXDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
-
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
@@ -285,13 +273,18 @@ GDALDataset *GTXDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->nRasterYSize )
         eDT = GDT_Float64;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+    if( poDS->nRasterXSize > INT_MAX / nDTSize )
+    {
+        delete poDS;
+        return nullptr;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information object.                                 */
 /* -------------------------------------------------------------------- */
     GTXRasterBand *poBand = new GTXRasterBand(
         poDS, 1, poDS->fpImage,
-        (poDS->nRasterYSize-1) * poDS->nRasterXSize*nDTSize + 40,
+        static_cast<vsi_l_offset>(poDS->nRasterYSize-1) * poDS->nRasterXSize*nDTSize + 40,
         nDTSize, poDS->nRasterXSize * -nDTSize,
         eDT,
         !CPL_IS_LSB );

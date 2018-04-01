@@ -213,7 +213,7 @@ int TILDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -265,12 +265,8 @@ GDALDataset *TILDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Try to load and parse the .TIL file.                            */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-
-    if( fp == nullptr )
-    {
-        return nullptr;
-    }
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     CPLKeywordParser oParser;
 

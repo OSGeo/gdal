@@ -146,16 +146,8 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->nRasterXSize = nPixels;
     poDS->nRasterYSize = nLines;
-
-/* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo.     */
-/* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header information in the second record.               */

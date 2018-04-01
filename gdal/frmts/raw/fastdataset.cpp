@@ -611,7 +611,7 @@ static long USGSEllipsoidToCode( const char* pszMnemonic )
 GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( poOpenInfo->nHeaderBytes < 1024)
+    if( poOpenInfo->nHeaderBytes < 1024 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !EQUALN((const char *) poOpenInfo->pabyHeader + 52,
@@ -625,12 +625,8 @@ GDALDataset *FASTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     FASTDataset *poDS = new FASTDataset();
 
-    poDS->fpHeader = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpHeader == nullptr)
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpHeader = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->pszFilename = poOpenInfo->pszFilename;
     poDS->pszDirname = CPLStrdup( CPLGetDirname( poOpenInfo->pszFilename ) );

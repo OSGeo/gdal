@@ -630,7 +630,7 @@ int EpsilonDataset::Identify(GDALOpenInfo* poOpenInfo)
 
 GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -641,9 +641,8 @@ GDALDataset* EpsilonDataset::Open(GDALOpenInfo* poOpenInfo)
         return nullptr;
     }
 
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == nullptr)
-        return nullptr;
+    VSILFILE* fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     EpsilonDataset* poDS = new EpsilonDataset();
     poDS->fp = fp;

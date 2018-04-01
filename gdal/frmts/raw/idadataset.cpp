@@ -959,23 +959,9 @@ GDALDataset *IDADataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create the band.                                                */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-    {
-        poDS->fpRaw = poOpenInfo->fpL;
-        poOpenInfo->fpL = nullptr;
-    }
-    else
-    {
-        poDS->fpRaw = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-        poDS->eAccess = GA_Update;
-        if( poDS->fpRaw == nullptr )
-        {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                      "Failed to open %s for write access.",
-                      poOpenInfo->pszFilename );
-            return nullptr;
-        }
-    }
+    poDS->eAccess = poOpenInfo->eAccess;
+    poDS->fpRaw = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->SetBand( 1, new IDARasterBand( poDS, poDS->fpRaw,
                                          poDS->nRasterXSize ) );
