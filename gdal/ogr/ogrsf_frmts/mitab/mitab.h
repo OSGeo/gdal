@@ -48,7 +48,7 @@
 #  define ROUND_INT(dX) ((int)((dX) < 0.0 ? (dX)-0.5 : (dX)+0.5 ))
 #endif
 
-#define MITAB_AREA(x1, y1, x2, y2)  ((double)((x2)-(x1))*(double)((y2)-(y1)))
+#define MITAB_AREA(x1, y1, x2, y2)  ((static_cast<double>(x2)-(x1))*(static_cast<double>(y2)-(y1)))
 
 class TABFeature;
 
