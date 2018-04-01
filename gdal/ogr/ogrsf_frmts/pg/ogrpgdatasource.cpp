@@ -2669,7 +2669,7 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
     virtual OGRFeature *GetNextFeature() override;
 
     virtual CPLString   GetFromClauseForGetExtent() override { CPLAssert(false); return ""; }
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) override { poGFldDefn->nSRSId = -1; }
+    virtual void        ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn) override { poGFldDefn->nSRSId = -1; }
 };
 
 /************************************************************************/

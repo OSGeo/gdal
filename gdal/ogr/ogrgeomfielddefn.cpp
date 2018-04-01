@@ -76,7 +76,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn( const char * pszNameIn,
  * @since GDAL 1.11
  */
 
-OGRGeomFieldDefn::OGRGeomFieldDefn( OGRGeomFieldDefn *poPrototype )
+OGRGeomFieldDefn::OGRGeomFieldDefn( const OGRGeomFieldDefn *poPrototype )
 
 {
     Initialize( poPrototype->GetNameRef(), poPrototype->GetType() );
@@ -432,7 +432,7 @@ void OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int ignore )
  * @since GDAL 1.11
  */
 
-OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef()
+OGRSpatialReference* OGRGeomFieldDefn::GetSpatialRef() const
 {
     return poSRS;
 }
@@ -533,7 +533,7 @@ void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn,
  * @since GDAL 1.11
  */
 
-int OGRGeomFieldDefn::IsSame( OGRGeomFieldDefn * poOtherFieldDefn )
+int OGRGeomFieldDefn::IsSame( const OGRGeomFieldDefn * poOtherFieldDefn ) const
 {
     if( !(strcmp(GetNameRef(), poOtherFieldDefn->GetNameRef()) == 0 &&
                  GetType() == poOtherFieldDefn->GetType() &&

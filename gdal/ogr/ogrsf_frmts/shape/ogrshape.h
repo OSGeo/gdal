@@ -72,8 +72,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
 {
     char* pszFullName;
-    bool  bSRSSet;
-    CPLString osPrjFile;
+    mutable bool  bSRSSet;
+    mutable CPLString osPrjFile;
 
     public:
         OGRShapeGeomFieldDefn( const char* pszFullNameIn,
@@ -88,7 +88,7 @@ class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
 
         virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
 
-        virtual OGRSpatialReference* GetSpatialRef() override;
+        virtual OGRSpatialReference* GetSpatialRef() const override;
 
         const CPLString& GetPrjFilename() const { return osPrjFile; }
 };

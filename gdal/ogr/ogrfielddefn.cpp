@@ -81,7 +81,7 @@ OGRFieldDefn::OGRFieldDefn( const char * pszNameIn, OGRFieldType eTypeIn ) :
  * @param poPrototype the field definition to clone.
  */
 
-OGRFieldDefn::OGRFieldDefn( OGRFieldDefn *poPrototype ) :
+OGRFieldDefn::OGRFieldDefn( const OGRFieldDefn *poPrototype ) :
     pszName(CPLStrdup(poPrototype->GetNameRef())),
     eType(poPrototype->GetType()),
     eJustify(poPrototype->GetJustify()),

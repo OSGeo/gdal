@@ -2083,7 +2083,7 @@ OGRErr OGRShapeLayer::AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef()
+OGRSpatialReference *OGRShapeGeomFieldDefn::GetSpatialRef() const
 
 {
     if( bSRSSet )

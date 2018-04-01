@@ -1136,13 +1136,13 @@ double TABPoint::GetY()
 }
 
 /**********************************************************************
- *                   TABPoint::GetStyleString()
+ *                   TABPoint::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABPoint::GetStyleString()
+const char *TABPoint::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -1500,13 +1500,13 @@ void TABFontPoint::SetSymbolAngle(double dAngle)
 }
 
 /**********************************************************************
- *                   TABFontPoint::GetStyleString()
+ *                   TABFontPoint::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABFontPoint::GetStyleString()
+const char *TABFontPoint::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -1724,13 +1724,13 @@ int TABCustomPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 }
 
 /**********************************************************************
- *                   TABCustomPoint::GetStyleString()
+ *                   TABCustomPoint::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABCustomPoint::GetStyleString()
+const char *TABCustomPoint::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -2643,13 +2643,13 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 }
 
 /**********************************************************************
- *                   TABPolyline::GetStyleString()
+ *                   TABPolyline::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABPolyline::GetStyleString()
+const char *TABPolyline::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -3653,13 +3653,13 @@ GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 }
 
 /**********************************************************************
- *                   TABRegion::GetStyleString()
+ *                   TABRegion::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABRegion::GetStyleString()
+const char *TABRegion::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -4166,13 +4166,13 @@ int TABRectangle::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 }
 
 /**********************************************************************
- *                   TABRectangle::GetStyleString()
+ *                   TABRectangle::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABRectangle::GetStyleString()
+const char *TABRectangle::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -4578,13 +4578,13 @@ int TABEllipse::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
 }
 
 /**********************************************************************
- *                   TABEllipse::GetStyleString()
+ *                   TABEllipse::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABEllipse::GetStyleString()
+const char *TABEllipse::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -5123,13 +5123,13 @@ void TABArc::SetEndAngle(double dAngle)
 }
 
 /**********************************************************************
- *                   TABArc::GetStyleString()
+ *                   TABArc::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABArc::GetStyleString()
+const char *TABArc::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -5677,7 +5677,7 @@ int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
  * Returned string is a reference to the internal string buffer and should
  * not be modified or freed by the caller.
  **********************************************************************/
-const char *TABText::GetTextString()
+const char *TABText::GetTextString() const
 {
     if (m_pszString == nullptr)
         return "";
@@ -5705,7 +5705,7 @@ void TABText::SetTextString(const char *pszNewStr)
  *
  * Return text angle in degrees.
  **********************************************************************/
-double TABText::GetTextAngle()
+double TABText::GetTextAngle() const
 {
     return m_dAngle;
 }
@@ -5725,7 +5725,7 @@ void TABText::SetTextAngle(double dAngle)
  *
  * Return text height in Y axis coord. units of the text box before rotation.
  **********************************************************************/
-double TABText::GetTextBoxHeight()
+double TABText::GetTextBoxHeight() const
 {
     return m_dHeight;
 }
@@ -5746,7 +5746,7 @@ void TABText::SetTextBoxHeight(double dHeight)
  * the multiline case.  This should not matter when the user PROPERLY sets
  * the value.
  **********************************************************************/
-double TABText::GetTextBoxWidth()
+double TABText::GetTextBoxWidth() const
 {
     if (m_dWidth == 0.0 && m_pszString)
     {
@@ -5864,7 +5864,7 @@ int TABText::UpdateMBR(TABMAPFile * poMapFile /*=NULL*/)
  *
  * Return background color.
  **********************************************************************/
-GInt32 TABText::GetFontBGColor()
+GInt32 TABText::GetFontBGColor() const
 {
     return m_rgbBackground;
 }
@@ -5879,7 +5879,7 @@ void TABText::SetFontBGColor(GInt32 rgbColor)
  *
  * Return outline color.
  **********************************************************************/
-GInt32 TABText::GetFontOColor()
+GInt32 TABText::GetFontOColor() const
 {
     return m_rgbOutline;
 }
@@ -5894,7 +5894,7 @@ void TABText::SetFontOColor(GInt32 rgbColor)
  *
  * Return shadow color.
  **********************************************************************/
-GInt32 TABText::GetFontSColor()
+GInt32 TABText::GetFontSColor() const
 {
     return m_rgbShadow;
 }
@@ -5909,7 +5909,7 @@ void TABText::SetFontSColor(GInt32 rgbColor)
  *
  * Return foreground color.
  **********************************************************************/
-GInt32 TABText::GetFontFGColor()
+GInt32 TABText::GetFontFGColor() const
 {
     return m_rgbForeground;
 }
@@ -5924,7 +5924,7 @@ void TABText::SetFontFGColor(GInt32 rgbColor)
  *
  * Return text justification.  Default is TABTJLeft
  **********************************************************************/
-TABTextJust TABText::GetTextJustification()
+TABTextJust TABText::GetTextJustification() const
 {
     TABTextJust eJust = TABTJLeft;
 
@@ -5952,7 +5952,7 @@ void TABText::SetTextJustification(TABTextJust eJustification)
  *
  * Return text vertical spacing factor.  Default is TABTSSingle
  **********************************************************************/
-TABTextSpacing TABText::GetTextSpacing()
+TABTextSpacing TABText::GetTextSpacing() const
 {
     TABTextSpacing eSpacing = TABTSSingle;
 
@@ -5980,7 +5980,7 @@ void TABText::SetTextSpacing(TABTextSpacing eSpacing)
  *
  * Return text line (arrow) type.  Default is TABTLNoLine
  **********************************************************************/
-TABTextLineType TABText::GetTextLineType()
+TABTextLineType TABText::GetTextLineType() const
 {
     TABTextLineType eLine = TABTLNoLine;
 
@@ -6010,7 +6010,7 @@ void TABText::SetTextLineType(TABTextLineType eLineType)
  * or FALSE otherwise.  See enum TABFontStyle for the list of styles
  * that can be queried on.
  **********************************************************************/
-GBool TABText::QueryFontStyle(TABFontStyle eStyleToQuery)
+GBool TABText::QueryFontStyle(TABFontStyle eStyleToQuery) const
 {
     return (m_nFontStyle & (int)eStyleToQuery) ? TRUE: FALSE;
 }
@@ -6037,7 +6037,7 @@ void TABText::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
  * This also has the effect of shifting all the other style values > 0x100
  * by 1 byte.
  **********************************************************************/
-int TABText::GetFontStyleMIFValue()
+int TABText::GetFontStyleMIFValue() const
 {
     // The conversion is simply to remove bit 0x100 from the value and shift
     // down all values past this bit.
@@ -6052,37 +6052,37 @@ void TABText:: SetFontStyleMIFValue(int nStyle, GBool bBGColorSet)
         ToggleFontStyle(TABFSBox, TRUE);
 }
 
-int TABText::IsFontBGColorUsed()
+int TABText::IsFontBGColorUsed() const
 {
     // Font BG color is used only when BOX is set.
     return QueryFontStyle(TABFSBox);
 }
 
-int TABText::IsFontOColorUsed()
+int TABText::IsFontOColorUsed() const
 {
     // Font outline color is used only when HALO is set.
     return QueryFontStyle(TABFSHalo);
 }
 
-int TABText::IsFontSColorUsed()
+int TABText::IsFontSColorUsed() const
 {
     // Font shadow color is used only when Shadow is set.
     return QueryFontStyle(TABFSShadow);
 }
 
-int TABText::IsFontBold()
+int TABText::IsFontBold() const
 {
     // Font bold is used only when Bold is set.
     return QueryFontStyle(TABFSBold);
 }
 
-int TABText::IsFontItalic()
+int TABText::IsFontItalic() const
 {
     // Font italic is used only when Italic is set.
     return QueryFontStyle(TABFSItalic);
 }
 
-int TABText::IsFontUnderline()
+int TABText::IsFontUnderline() const
 {
     // Font underline is used only when Underline is set.
     return QueryFontStyle(TABFSUnderline);
@@ -6095,7 +6095,7 @@ int TABText::IsFontUnderline()
  * but it's really more easy to put it here.  This fct return a complete
  * string for the representation with the string to display
  **********************************************************************/
-const char *TABText::GetLabelStyleString()
+const char *TABText::GetLabelStyleString() const
 {
     const char *pszStyle = nullptr;
     int nStringLen = static_cast<int>(strlen(GetTextString()));
@@ -6209,13 +6209,13 @@ const char *TABText::GetLabelStyleString()
 }
 
 /**********************************************************************
- *                   TABText::GetStyleString()
+ *                   TABText::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABText::GetStyleString()
+const char *TABText::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -6697,13 +6697,13 @@ int TABMultiPoint::GetNumPoints()
 }
 
 /**********************************************************************
- *                   TABMultiPoint::GetStyleString()
+ *                   TABMultiPoint::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABMultiPoint::GetStyleString()
+const char *TABMultiPoint::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -7882,13 +7882,13 @@ int    TABCollection::SetMultiPointDirectly(TABMultiPoint *poMpoint)
 }
 
 /**********************************************************************
- *                   TABCollection::GetStyleString()
+ *                   TABCollection::GetStyleString() const
  *
  * Return style string for this feature.
  *
  * Style String is built only once during the first call to GetStyleString().
  **********************************************************************/
-const char *TABCollection::GetStyleString()
+const char *TABCollection::GetStyleString() const
 {
     if (m_pszStyleString == nullptr)
     {
@@ -8099,7 +8099,7 @@ ITABFeaturePen::ITABFeaturePen() :
  * even when the pen width was actually set in points.
  **********************************************************************/
 
-GByte ITABFeaturePen::GetPenWidthPixel()
+GByte ITABFeaturePen::GetPenWidthPixel() const
 {
     return m_sPenDef.nPixelWidth;
 }
@@ -8113,7 +8113,7 @@ void  ITABFeaturePen::SetPenWidthPixel(GByte val)
     m_sPenDef.nPointWidth = 0;
 }
 
-double ITABFeaturePen::GetPenWidthPoint()
+double ITABFeaturePen::GetPenWidthPoint() const
 {
     // We store point width internally as tenths of points
     return m_sPenDef.nPointWidth/10.0;
@@ -8134,7 +8134,7 @@ void  ITABFeaturePen::SetPenWidthPoint(double val)
  * for a pen width in pixels, or a value from 11 to 2047 for a pen
  * width in points = 10 + (point_width*10)
  **********************************************************************/
-int     ITABFeaturePen::GetPenWidthMIF()
+int     ITABFeaturePen::GetPenWidthMIF() const
 {
     return ( m_sPenDef.nPointWidth > 0?
              (m_sPenDef.nPointWidth+10): m_sPenDef.nPixelWidth );
@@ -8159,7 +8159,7 @@ void ITABFeaturePen::SetPenWidthMIF( int val )
  *
  *  Return a PEN() string. All representations info for the pen are here.
  **********************************************************************/
-const char *ITABFeaturePen::GetPenStyleString()
+const char *ITABFeaturePen::GetPenStyleString() const
 {
     const char *pszStyle = nullptr;
     int    nOGRStyle  = 0;
@@ -8517,7 +8517,7 @@ ITABFeatureBrush::ITABFeatureBrush() :
  *
  *  Return a Brush() string. All representations info for the Brush are here.
  **********************************************************************/
-const char *ITABFeatureBrush::GetBrushStyleString()
+const char *ITABFeatureBrush::GetBrushStyleString() const
 {
     const char *pszStyle = nullptr;
     int    nOGRStyle  = 0;
@@ -8747,7 +8747,7 @@ ITABFeatureSymbol::ITABFeatureSymbol() :
  *
  *  Return a Symbol() string. All representations info for the Symbol are here.
  **********************************************************************/
-const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle)
+const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle) const
 {
     const char *pszStyle = nullptr;
     int    nOGRStyle  = 1;
