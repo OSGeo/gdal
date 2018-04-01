@@ -917,6 +917,9 @@ class CPL_DLL OGRCurve : public OGRGeometry
                 bool operator!=(const ConstIterator& it) const;
         };
 
+        friend inline ConstIterator begin(const OGRCurve*);
+        friend inline ConstIterator end(const OGRCurve*);
+
   public:
     ~OGRCurve() override;
 
@@ -970,6 +973,13 @@ class CPL_DLL OGRCurve : public OGRGeometry
     static OGRLineString*    CastToLineString( OGRCurve* poCurve );
     static OGRLinearRing*    CastToLinearRing( OGRCurve* poCurve );
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRCurve::begin() const */
+inline OGRCurve::ConstIterator begin(const OGRCurve* poCurve) { return poCurve->begin(); }
+/** @see OGRCurve::end() const */
+inline OGRCurve::ConstIterator end(const OGRCurve* poCurve) { return poCurve->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                             OGRSimpleCurve                           */
@@ -1027,6 +1037,9 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 bool operator!=(const Iterator& it) const;
         };
 
+        friend inline Iterator begin(OGRSimpleCurve*);
+        friend inline Iterator end(OGRSimpleCurve*);
+
         class CPL_DLL ConstIterator
         {
                 struct Private;
@@ -1040,6 +1053,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 bool operator!=(const ConstIterator& it) const;
         };
 
+        friend inline ConstIterator begin(const OGRSimpleCurve*);
+        friend inline ConstIterator end(const OGRSimpleCurve*);
 
   public:
     ~OGRSimpleCurve() override;
@@ -1161,6 +1176,18 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
 
     virtual void        swapXY() override;
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRSimpleCurve::begin() */
+inline OGRSimpleCurve::Iterator begin(OGRSimpleCurve* poCurve) { return poCurve->begin(); }
+/** @see OGRSimpleCurve::end() */
+inline OGRSimpleCurve::Iterator end(OGRSimpleCurve* poCurve) { return poCurve->end(); }
+
+/** @see OGRSimpleCurve::begin() const */
+inline OGRSimpleCurve::ConstIterator begin(const OGRSimpleCurve* poCurve) { return poCurve->begin(); }
+/** @see OGRSimpleCurve::end() const */
+inline OGRSimpleCurve::ConstIterator end(const OGRSimpleCurve* poCurve) { return poCurve->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                            OGRLineString                             */
@@ -1633,6 +1660,18 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual void        swapXY() override;
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRCompoundCurve::begin() const */
+inline const OGRCompoundCurve::ChildType* const * begin(const OGRCompoundCurve* poCurve) { return poCurve->begin(); }
+/** @see OGRCompoundCurve::end() const */
+inline const OGRCompoundCurve::ChildType* const * end(const OGRCompoundCurve* poCurve) { return poCurve->end(); }
+
+/** @see OGRCompoundCurve::begin() */
+inline OGRCompoundCurve::ChildType** begin(OGRCompoundCurve* poCurve) { return poCurve->begin(); }
+/** @see OGRCompoundCurve::end() */
+inline OGRCompoundCurve::ChildType** end(OGRCompoundCurve* poCurve) { return poCurve->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                              OGRSurface                              */
 /************************************************************************/
@@ -1801,6 +1840,18 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual void        swapXY() override;
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRCurvePolygon::begin() const */
+inline const OGRCurvePolygon::ChildType* const * begin(const OGRCurvePolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRCurvePolygon::end() const */
+inline const OGRCurvePolygon::ChildType* const * end(const OGRCurvePolygon* poGeom) { return poGeom->end(); }
+
+/** @see OGRCurvePolygon::begin() */
+inline OGRCurvePolygon::ChildType** begin(OGRCurvePolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRCurvePolygon::end() */
+inline OGRCurvePolygon::ChildType** end(OGRCurvePolygon* poGeom) { return poGeom->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                              OGRPolygon                              */
 /************************************************************************/
@@ -1912,6 +1963,18 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
 
     virtual void closeRings() override;
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRPolygon::begin() const */
+inline const OGRPolygon::ChildType* const * begin(const OGRPolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRPolygon::end() const */
+inline const OGRPolygon::ChildType* const * end(const OGRPolygon* poGeom) { return poGeom->end(); }
+
+/** @see OGRPolygon::begin() */
+inline OGRPolygon::ChildType** begin(OGRPolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRPolygon::end() */
+inline OGRPolygon::ChildType** end(OGRPolygon* poGeom) { return poGeom->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                              OGRTriangle                             */
@@ -2095,6 +2158,18 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
         OGRGeometryCollection* poSrc );
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRGeometryCollection::begin() const */
+inline const OGRGeometryCollection::ChildType* const * begin(const OGRGeometryCollection* poGeom) { return poGeom->begin(); }
+/** @see OGRGeometryCollection::end() const */
+inline const OGRGeometryCollection::ChildType* const * end(const OGRGeometryCollection* poGeom) { return poGeom->end(); }
+
+/** @see OGRGeometryCollection::begin() */
+inline OGRGeometryCollection::ChildType** begin(OGRGeometryCollection* poGeom) { return poGeom->begin(); }
+/** @see OGRGeometryCollection::end() */
+inline OGRGeometryCollection::ChildType** end(OGRGeometryCollection* poGeom) { return poGeom->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                          OGRMultiSurface                             */
 /************************************************************************/
@@ -2161,6 +2236,18 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
 
     static OGRMultiPolygon* CastToMultiPolygon( OGRMultiSurface* poMS );
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRMultiSurface::begin() const */
+inline const OGRMultiSurface::ChildType* const * begin(const OGRMultiSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiSurface::end() const */
+inline const OGRMultiSurface::ChildType* const * end(const OGRMultiSurface* poGeom) { return poGeom->end(); }
+
+/** @see OGRMultiSurface::begin() */
+inline OGRMultiSurface::ChildType** begin(OGRMultiSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiSurface::end() */
+inline OGRMultiSurface::ChildType** end(OGRMultiSurface* poGeom) { return poGeom->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                           OGRMultiPolygon                            */
@@ -2232,6 +2319,18 @@ class CPL_DLL OGRMultiPolygon : public OGRMultiSurface
 
     static OGRMultiSurface* CastToMultiSurface( OGRMultiPolygon* poMP );
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRMultiPolygon::begin() const */
+inline const OGRMultiPolygon::ChildType* const * begin(const OGRMultiPolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiPolygon::end() const */
+inline const OGRMultiPolygon::ChildType* const * end(const OGRMultiPolygon* poGeom) { return poGeom->end(); }
+
+/** @see OGRMultiPolygon::begin() */
+inline OGRMultiPolygon::ChildType** begin(OGRMultiPolygon* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiPolygon::end() */
+inline OGRMultiPolygon::ChildType** end(OGRMultiPolygon* poGeom) { return poGeom->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                         OGRPolyhedralSurface                         */
@@ -2339,6 +2438,18 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual void    assignSpatialReference( OGRSpatialReference * poSR ) override;
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRPolyhedralSurface::begin() const */
+inline const OGRPolyhedralSurface::ChildType* const * begin(const OGRPolyhedralSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRPolyhedralSurface::end() const */
+inline const OGRPolyhedralSurface::ChildType* const * end(const OGRPolyhedralSurface* poGeom) { return poGeom->end(); }
+
+/** @see OGRPolyhedralSurface::begin() */
+inline OGRPolyhedralSurface::ChildType** begin(OGRPolyhedralSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRPolyhedralSurface::end() */
+inline OGRPolyhedralSurface::ChildType** end(OGRPolyhedralSurface* poGeom) { return poGeom->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                        OGRTriangulatedSurface                        */
 /************************************************************************/
@@ -2404,6 +2515,18 @@ class CPL_DLL OGRTriangulatedSurface : public OGRPolyhedralSurface
         CastToPolyhedralSurface( OGRTriangulatedSurface* poTS );
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRTriangulatedSurface::begin() const */
+inline const OGRTriangulatedSurface::ChildType* const * begin(const OGRTriangulatedSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRTriangulatedSurface::end() const */
+inline const OGRTriangulatedSurface::ChildType* const * end(const OGRTriangulatedSurface* poGeom) { return poGeom->end(); }
+
+/** @see OGRTriangulatedSurface::begin() */
+inline OGRTriangulatedSurface::ChildType** begin(OGRTriangulatedSurface* poGeom) { return poGeom->begin(); }
+/** @see OGRTriangulatedSurface::end() */
+inline OGRTriangulatedSurface::ChildType** end(OGRTriangulatedSurface* poGeom) { return poGeom->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                            OGRMultiPoint                             */
 /************************************************************************/
@@ -2466,6 +2589,18 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     virtual OGRBoolean hasCurveGeometry( int bLookForNonLinear = FALSE )
         const override;
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRMultiPoint::begin() const */
+inline const OGRMultiPoint::ChildType* const * begin(const OGRMultiPoint* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiPoint::end() const */
+inline const OGRMultiPoint::ChildType* const * end(const OGRMultiPoint* poGeom) { return poGeom->end(); }
+
+/** @see OGRMultiPoint::begin() */
+inline OGRMultiPoint::ChildType** begin(OGRMultiPoint* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiPoint::end() */
+inline OGRMultiPoint::ChildType** end(OGRMultiPoint* poGeom) { return poGeom->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                          OGRMultiCurve                               */
@@ -2535,6 +2670,18 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     static OGRMultiLineString* CastToMultiLineString(OGRMultiCurve* poMC);
 };
 
+//! @cond Doxygen_Suppress
+/** @see OGRMultiCurve::begin() const */
+inline const OGRMultiCurve::ChildType* const * begin(const OGRMultiCurve* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiCurve::end() const */
+inline const OGRMultiCurve::ChildType* const * end(const OGRMultiCurve* poGeom) { return poGeom->end(); }
+
+/** @see OGRMultiCurve::begin() */
+inline OGRMultiCurve::ChildType** begin(OGRMultiCurve* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiCurve::end() */
+inline OGRMultiCurve::ChildType** end(OGRMultiCurve* poGeom) { return poGeom->end(); }
+//! @endcond
+
 /************************************************************************/
 /*                          OGRMultiLineString                          */
 /************************************************************************/
@@ -2592,6 +2739,18 @@ class CPL_DLL OGRMultiLineString : public OGRMultiCurve
 
     static OGRMultiCurve* CastToMultiCurve( OGRMultiLineString* poMLS );
 };
+
+//! @cond Doxygen_Suppress
+/** @see OGRMultiLineString::begin() const */
+inline const OGRMultiLineString::ChildType* const * begin(const OGRMultiLineString* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiLineString::end() const */
+inline const OGRMultiLineString::ChildType* const * end(const OGRMultiLineString* poGeom) { return poGeom->end(); }
+
+/** @see OGRMultiLineString::begin() */
+inline OGRMultiLineString::ChildType** begin(OGRMultiLineString* poGeom) { return poGeom->begin(); }
+/** @see OGRMultiLineString::end() */
+inline OGRMultiLineString::ChildType** end(OGRMultiLineString* poGeom) { return poGeom->end(); }
+//! @endcond
 
 /************************************************************************/
 /*                          OGRGeometryFactory                          */

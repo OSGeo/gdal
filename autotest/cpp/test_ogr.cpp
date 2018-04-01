@@ -818,7 +818,7 @@ namespace tut
         }
     }
 
-    template<typename T> void TestIterator(T& obj,
+    template<typename T> void TestIterator(T* obj,
                                            int nExpectedPointCount)
     {
         int nCount = 0;
@@ -830,7 +830,7 @@ namespace tut
         ensure_equals(nCount, nExpectedPointCount);
 
         nCount = 0;
-        const T& const_obj(obj);
+        const T* const_obj(obj);
         for( auto&& elt: const_obj)
         {
             nCount ++;
@@ -839,19 +839,7 @@ namespace tut
         ensure_equals(nCount, nExpectedPointCount);
     };
 
-    template<typename T> void TestIterator(const char* pszWKT = nullptr,
-                                           int nExpectedPointCount = 0)
-    {
-        T obj;
-        if( pszWKT )
-        {
-            char* pszNonConstWKT = const_cast<char*>(pszWKT);
-            obj.importFromWkt(&pszNonConstWKT);
-        }
-        TestIterator(obj, nExpectedPointCount);
-    };
-
-    template<typename Concrete, typename Abstract> void TestIterator(
+    template<typename Concrete, typename Abstract = Concrete> void TestIterator(
                                            const char* pszWKT = nullptr,
                                            int nExpectedPointCount = 0)
     {
@@ -861,7 +849,7 @@ namespace tut
             char* pszNonConstWKT = const_cast<char*>(pszWKT);
             obj.importFromWkt(&pszNonConstWKT);
         }
-        TestIterator<Abstract>(obj, nExpectedPointCount);
+        TestIterator<Abstract>(&obj, nExpectedPointCount);
     };
 
     // Test geometry visitor

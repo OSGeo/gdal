@@ -88,8 +88,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
             bool operator!=(const FeatureIterator& it) const;
     };
 
-    friend FeatureIterator CPL_DLL begin(OGRLayer* poLayer);
-    friend FeatureIterator CPL_DLL end(OGRLayer* poLayer);
+    friend inline FeatureIterator begin(OGRLayer* poLayer);
+    friend inline FeatureIterator end(OGRLayer* poLayer);
 
   protected:
 //! @cond Doxygen_Suppress
@@ -268,11 +268,14 @@ class CPL_DLL OGRLayer : public GDALMajorObject
  *
  * Only one iterator per layer can be active at a time.
  * @since GDAL 2.3
+ * @see OGRLayer::begin()
  */
-OGRLayer::FeatureIterator CPL_DLL begin(OGRLayer* poLayer);
+inline OGRLayer::FeatureIterator begin(OGRLayer* poLayer) { return poLayer->begin(); }
 
-/** Return end of feature iterator. */
-OGRLayer::FeatureIterator CPL_DLL end(OGRLayer* poLayer);
+/** Return end of feature iterator.
+ * @see OGRLayer::end()
+ */
+inline OGRLayer::FeatureIterator end(OGRLayer* poLayer) { return poLayer->end(); }
 
 /************************************************************************/
 /*                            OGRDataSource                             */

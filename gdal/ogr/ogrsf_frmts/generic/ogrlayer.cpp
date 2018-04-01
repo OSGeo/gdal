@@ -4343,21 +4343,3 @@ OGRLayer::FeatureIterator OGRLayer::end()
 {
     return {this, false};
 }
-
-/************************************************************************/
-/*                                 begin()                              */
-/************************************************************************/
-
-OGRLayer::FeatureIterator begin(OGRLayer* poLayer)
-{
-    return poLayer->begin();
-}
-
-/************************************************************************/
-/*                                  end()                               */
-/************************************************************************/
-
-OGRLayer::FeatureIterator end(OGRLayer* poLayer)
-{
-    return poLayer->end();
-}
