@@ -27,7 +27,7 @@
       <tab type="user" url="http://trac.osgeo.org/gdal/wiki/DownloadSource" title="Source"/>
       <tab type="user" url="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries" title="Binaries"/>
     </tab>
-    <tab type="user" url="http://trac.osgeo.org/gdal/report/1?sort=ticket&amp;asc=0" title="Issue Tracker"/>
+    <tab type="user" url="https://github.com/OSGeo/gdal/issues/" title="Issue Tracker"/>
     <!-- end GDAL customization -->
     
   </navindex>    
