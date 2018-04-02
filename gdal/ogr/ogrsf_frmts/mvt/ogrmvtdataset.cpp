@@ -1151,8 +1151,7 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
     // intersection a multipolygon and a polygon
     if( eInGeomType == wkbGeometryCollection )
     {
-        OGRGeometryCollection* poGC =
-            static_cast<OGRGeometryCollection*>(poGeom);
+        OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
         OGRGeometry* poTargetSingleGeom = nullptr;
         OGRGeometryCollection* poTargetGC = nullptr;
         OGRwkbGeometryType ePartGeom;
@@ -1169,18 +1168,16 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
         {
             ePartGeom = wkbPolygon;
         }
-        for(int i=0; i < poGC->getNumGeometries(); ++i)
+        for( auto&& poSubGeom: poGC )
         {
-            OGRGeometry* poSubGeom = poGC->getGeometryRef(i);
             if( poSubGeom->getGeometryType() == ePartGeom )
             {
                 if( poTargetSingleGeom != nullptr )
                 {
                     if( poTargetGC == nullptr )
                     {
-                        poTargetGC = static_cast<OGRGeometryCollection*>(
-                            OGRGeometryFactory::createGeometry(
-                                OGR_GT_GetCollection(ePartGeom)));
+                        poTargetGC = OGRGeometryFactory::createGeometry(
+                                OGR_GT_GetCollection(ePartGeom))->toGeometryCollection();
                         poGeom = poTargetGC;
                         poTargetGC->addGeometryDirectly(poTargetSingleGeom);
                     }
@@ -1204,8 +1201,9 @@ void OGRMVTLayer::SanitizeClippedGeometry(OGRGeometry*& poGeom)
     // Wrap single into multi if requested by the layer geometry type
     if( OGR_GT_GetCollection(eInGeomType) == eLayerGeomType )
     {
-        OGRGeometryCollection* poGC = static_cast<OGRGeometryCollection*>(
-            OGRGeometryFactory::createGeometry(eLayerGeomType));
+        OGRGeometryCollection* poGC =
+            OGRGeometryFactory::createGeometry(eLayerGeomType)->
+                toGeometryCollection();
         poGC->addGeometryDirectly(poGeom);
         poGeom = poGC;
         return;
@@ -3630,12 +3628,12 @@ bool OGRMVTWriterDataset::EncodeRepairedOuterRing(
     OGRPolygon* poPoly = nullptr;
     if( poFixedGeom->getGeometryType() == wkbMultiPolygon )
     {
-        OGRMultiPolygon* poMP = static_cast<OGRMultiPolygon*>(poFixedGeom.get());
-        poPoly = static_cast<OGRPolygon*>(poMP->getGeometryRef(0));
+        OGRMultiPolygon* poMP = poFixedGeom.get()->toMultiPolygon();
+        poPoly = poMP->getGeometryRef(0)->toPolygon();
     }
     else if( poFixedGeom->getGeometryType() == wkbPolygon )
     {
-        poPoly = static_cast<OGRPolygon*>(poFixedGeom.get());
+        poPoly = poFixedGeom.get()->toPolygon();
     }
     if( !poPoly )
         return false;
@@ -3868,7 +3866,7 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                     if( poSimplified->getGeometryType() == wkbPolygon )
                     {
                         OGRPolygon* poSimplifiedPoly =
-                            static_cast<OGRPolygon*>(poSimplified.get());
+                            poSimplified.get()->toPolygon();
                         return EncodePolygon(poGPBFeature,
                                             poSimplifiedPoly,
                                             dfTopX, dfTopY, dfTileDim,
@@ -3878,13 +3876,10 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
 #ifdef likely_not_possible
                     else if( poSimplified->getGeometryType() == wkbMultiPolygon )
                     {
-                        OGRMultiPolygon* poMP =
-                            static_cast<OGRMultiPolygon*>(poSimplified.get());
+                        OGRMultiPolygon* poMP = poSimplified.get()->toMultiPolygon();
                         bool bRet = true;
-                        for( int j = 0; j < poMP->getNumGeometries(); j++ )
+                        for( auto&& poSimplifiedPoly: poMP )
                         {
-                            OGRPolygon* poSimplifiedPoly =
-                                static_cast<OGRPolygon*>(poMP->getGeometryRef(j));
                             double dfTempArea = 0.0;
                             bRet |= EncodePolygon(poGPBFeature,
                                             poSimplifiedPoly,
@@ -4009,7 +4004,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     {
         if( eGeomToEncodeType == wkbPoint )
         {
-            OGRPoint* poPoint = static_cast<OGRPoint*>(poIntersection);
+            OGRPoint* poPoint = poIntersection->toPoint();
             int nX, nY;
             double dfX = poPoint->getX();
             double dfY = poPoint->getY();
@@ -4023,19 +4018,17 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         else if( eGeomToEncodeType == wkbMultiPoint ||
                  eGeomToEncodeType == wkbGeometryCollection )
         {
-            OGRGeometryCollection* poGC =
-                dynamic_cast<OGRGeometryCollection*>(poIntersection);
+            OGRGeometryCollection* poGC = poIntersection->toGeometryCollection();
             std::set<std::pair<int,int>> oSetUniqueCoords;
             poGPBFeature->addGeometry(
                 GetCmdCountCombined(knCMD_MOVETO, 0) ); // To be modified later
             int nLastX = 0;
             int nLastY = 0;
-            for( int i = 0; i < poGC->getNumGeometries(); i++ )
+            for( auto&& poSubGeom: poGC )
             {
-                OGRGeometry* poSubGeom = poGC->getGeometryRef(i);
                 if( poSubGeom->getGeometryType() == wkbPoint )
                 {
-                    OGRPoint* poPoint = static_cast<OGRPoint*>(poSubGeom);
+                    OGRPoint* poPoint = poSubGeom->toPoint();
                     int nX, nY;
                     double dfX = poPoint->getX();
                     double dfY = poPoint->getY();
@@ -4069,8 +4062,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
 
         if( eGeomToEncodeType == wkbLineString )
         {
-            OGRLineString* poLS =
-                static_cast<OGRLineString*>(poGeomToEncode);
+            OGRLineString* poLS = poGeomToEncode->toLineString();
             int nLastX = 0;
             int nLastY = 0;
             OGRLineString oOutLS;
@@ -4084,17 +4076,14 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         else if( eGeomToEncodeType == wkbMultiLineString ||
                  eGeomToEncodeType == wkbGeometryCollection )
         {
-            OGRGeometryCollection* poGC =
-                dynamic_cast<OGRGeometryCollection*>(poGeomToEncode);
+            OGRGeometryCollection* poGC = poGeomToEncode->toGeometryCollection();
             int nLastX = 0;
             int nLastY = 0;
-            for( int i = 0; i < poGC->getNumGeometries(); i++ )
+            for( auto&& poSubGeom: poGC )
             {
-                OGRGeometry* poSubGeom = poGC->getGeometryRef(i);
                 if( poSubGeom->getGeometryType() == wkbLineString )
                 {
-                    OGRLineString* poLS =
-                        static_cast<OGRLineString*>(poSubGeom);
+                    OGRLineString* poLS = poSubGeom->toLineString();
                     OGRLineString oOutLS;
                     bool bSubGeomOK = EncodeLineString(
                                      poGPBFeature.get(), poLS, &oOutLS,
@@ -4113,8 +4102,7 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
     {
         if( eGeomToEncodeType == wkbPolygon )
         {
-            OGRPolygon* poPoly =
-                static_cast<OGRPolygon*>(poGeomToEncode);
+            OGRPolygon* poPoly = poGeomToEncode->toPolygon();
             int nLastX = 0;
             int nLastY = 0;
             bGeomOK = EncodePolygon(poGPBFeature.get(), poPoly,
@@ -4125,17 +4113,14 @@ OGRErr OGRMVTWriterDataset::PreGenerateForTileReal(
         else if( eGeomToEncodeType == wkbMultiPolygon ||
                  eGeomToEncodeType == wkbGeometryCollection )
         {
-            OGRGeometryCollection* poGC =
-                dynamic_cast<OGRGeometryCollection*>(poGeomToEncode);
+            OGRGeometryCollection* poGC = poGeomToEncode->toGeometryCollection();
             int nLastX = 0;
             int nLastY = 0;
-            for( int i = 0; i < poGC->getNumGeometries(); i++ )
+            for( auto&& poSubGeom: poGC )
             {
-                OGRGeometry* poSubGeom = poGC->getGeometryRef(i);
                 if( poSubGeom->getGeometryType() == wkbPolygon )
                 {
-                    OGRPolygon* poPoly =
-                        static_cast<OGRPolygon*>(poSubGeom);
+                    OGRPolygon* poPoly = poSubGeom->toPolygon();
                     double dfPartArea = 0.0;
                     bGeomOK |= EncodePolygon(
                                   poGPBFeature.get(), poPoly,

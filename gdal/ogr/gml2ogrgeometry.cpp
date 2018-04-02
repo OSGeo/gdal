@@ -1105,7 +1105,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString &&
             !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
         {
-            poGeom = OGRCurve::CastToLinearRing((OGRCurve*)poGeom);
+            poGeom = OGRCurve::CastToLinearRing(poGeom->toCurve());
         }
 
         if( poGeom == nullptr || !EQUAL(poGeom->getGeometryName(), "LINEARRING") )
@@ -1116,7 +1116,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
 
         OGRTriangle *poTriangle = new OGRTriangle();
 
-        if( poTriangle->addRingDirectly( (OGRCurve*)poGeom ) != OGRERR_NONE )
+        if( poTriangle->addRingDirectly( poGeom->toCurve() ) != OGRERR_NONE )
         {
             delete poTriangle;
             delete poGeom;

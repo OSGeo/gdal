@@ -186,7 +186,6 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         }
     }
 
-    OGRFeature *poFeature = nullptr;
     poEditableLayer->ResetReading();
 
     // Disable all filters.
@@ -204,32 +203,32 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
         ComputeMapForSetFrom(poEditableLayer->GetLayerDefn(), true);
     aoMapSrcToTargetIdx.push_back(-1); // add dummy entry to be sure that .data() is valid
 
-    while( eErr == OGRERR_NONE &&
-           (poFeature = poEditableLayer->GetNextFeature()) != nullptr )
+    for( auto&& poFeature: poEditableLayer )
     {
+        if( eErr != OGRERR_NONE )
+            break;
         OGRFeature *poNewFeature =
             new OGRFeature(poCSVTmpLayer->GetLayerDefn());
-        poNewFeature->SetFrom(poFeature, aoMapSrcToTargetIdx.data(), true);
+        poNewFeature->SetFrom(poFeature.get(), aoMapSrcToTargetIdx.data(), true);
         if( bHasXY )
         {
             OGRGeometry *poGeom = poFeature->GetGeometryRef();
             if( poGeom != nullptr &&
                 wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
             {
+                auto poPoint = poGeom->toPoint();
                 poNewFeature->SetField(m_poCSVLayer->GetXField(),
-                                       static_cast<OGRPoint *>(poGeom)->getX());
+                                       poPoint->getX());
                 poNewFeature->SetField(m_poCSVLayer->GetYField(),
-                                       static_cast<OGRPoint *>(poGeom)->getY());
+                                       poPoint->getY());
                 if( bHasZ )
                 {
                     poNewFeature->SetField(
-                        m_poCSVLayer->GetZField(),
-                        static_cast<OGRPoint *>(poGeom)->getZ());
+                        m_poCSVLayer->GetZField(), poPoint->getZ());
                 }
             }
         }
         eErr = poCSVTmpLayer->CreateFeature(poNewFeature);
-        delete poFeature;
         delete poNewFeature;
     }
     delete poCSVTmpLayer;

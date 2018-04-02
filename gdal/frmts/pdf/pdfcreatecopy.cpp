@@ -595,7 +595,7 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
         OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
         if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
-            OGRLineString* poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
+            OGRLineString* poLS = poGeom->toPolygon()->getExteriorRing();
             double adfGeoTransformInv[6];
             if( poLS != nullptr && poLS->getNumPoints() == 5 &&
                 GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv) )
@@ -1237,7 +1237,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
         OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
         if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
-            OGRLineString* poLS = ((OGRPolygon*)poGeom)->getExteriorRing();
+            OGRLineString* poLS = poGeom->toPolygon()->getExteriorRing();
             double adfGeoTransformInv[6];
             if( poLS != nullptr && poLS->getNumPoints() >= 5 &&
                 GDALInvGeoTransform(adfGeoTransform, adfGeoTransformInv) )

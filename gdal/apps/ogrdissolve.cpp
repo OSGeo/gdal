@@ -211,7 +211,7 @@ MAIN_START(nArgc, papszArgv)
             oRing.addPoint( CPLAtof(papszArgv[iArg+1]), CPLAtof(papszArgv[iArg+2]) );
 
             poSpatialFilter = new OGRPolygon();
-            ((OGRPolygon *) poSpatialFilter)->addRing( &oRing );
+            poSpatialFilter->toPolygon()->addRing( &oRing );
             iArg += 4;
         }
         else if( EQUAL(papszArgv[iArg],"-where") && papszArgv[iArg+1] != NULL )
@@ -658,31 +658,30 @@ GeometriesList* FlattenGeometries(GeometriesList* input) {
                 OGRwkbGeometryType iGType = buffer->getGeometryType();
 
                 if (iGType == wkbPolygon) {
-                        OGRPolygon* geom = (OGRPolygon*)buffer;
-                        output->push_back((OGRGeometry*)geom);
-                CPLDebug(   "CollectGeometries",
-                            "Collapsing wkbPolygon geometries......"
-                            );
+                    output->push_back(buffer);
+                    CPLDebug(   "CollectGeometries",
+                                "Collapsing wkbPolygon geometries......"
+                                );
                 }
                 if (iGType == wkbMultiPolygon) {
-                        OGRMultiPolygon* geom = (OGRMultiPolygon*)buffer;
-                        for (int i=0; i< geom->getNumGeometries(); i++) {
-                            OGRPolygon* g = (OGRPolygon*)geom->getGeometryRef(i);
-                            output->push_back((OGRGeometry*)g);
-                        }
+                    OGRMultiPolygon* geom = buffer->toMultiPolygon();
+                    for (int i=0; i< geom->getNumGeometries(); i++) {
+                        OGRPolygon* g = geom->getGeometryRef(i)->toPolygon();
+                        output->push_back((OGRGeometry*)g);
+                    }
 
-                CPLDebug(   "CollectGeometries",
-                            "Collapsing wkbMultiPolygon geometries......"
-                            );
+                    CPLDebug(   "CollectGeometries",
+                                "Collapsing wkbMultiPolygon geometries......"
+                                );
                 }
                 if (iGType == wkbGeometryCollection)
                 {
-                    OGRGeometryCollection* geom = (OGRGeometryCollection*)buffer;
+                    OGRGeometryCollection* geom = buffer->toGeometryCollection();
                     GeometriesList* collection = new GeometriesList;
                     GeometriesList::const_iterator g_i;
                     for (int i=0; i< geom->getNumGeometries(); i++)
                     {
-                        OGRGeometry* g = (OGRGeometry*)geom->getGeometryRef(i);
+                        OGRGeometry* g = geom->getGeometryRef(i);
                         collection->push_back(g);
                     }
                     GeometriesList* collapsed = FlattenGeometries(collection);

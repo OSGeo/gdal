@@ -237,8 +237,7 @@ OGRGeometry* GML_BuildOGRGeometryFromList(
                             wkbFlatten(poSubGeom->getGeometryType()) ==
                                 wkbPolygon)
                     {
-                        OGRGeometryCollection *poGeomColl =
-                            static_cast<OGRGeometryCollection *>(poGeom);
+                        OGRMultiPolygon *poGeomColl = poGeom->toMultiPolygon();
                         poGeomColl->addGeometryDirectly(poSubGeom);
                     }
                     else if(bTryToMakeMultipolygons &&
@@ -247,15 +246,10 @@ OGRGeometry* GML_BuildOGRGeometryFromList(
                             wkbFlatten(poSubGeom->getGeometryType()) ==
                                 wkbMultiPolygon)
                     {
-                        OGRGeometryCollection *poGeomColl =
-                            static_cast<OGRGeometryCollection *>(poGeom);
-                        OGRGeometryCollection *poGeomColl2 =
-                            static_cast<OGRGeometryCollection *>(poSubGeom);
-                        int nCount = poGeomColl2->getNumGeometries();
-                        for(int j = 0; j < nCount; j++)
+                        OGRMultiPolygon *poGeomColl = poGeom->toMultiPolygon();
+                        for( auto&& poMember: poSubGeom->toMultiPolygon() ) 
                         {
-                            poGeomColl->addGeometry(
-                                poGeomColl2->getGeometryRef(j));
+                            poGeomColl->addGeometry(poMember);
                         }
                         delete poSubGeom;
                     }

@@ -688,8 +688,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         }
 
         if( poLinearRing )
-            reinterpret_cast<OGRPolygon *>(
-                poGeom)->addRingDirectly(poLinearRing);
+            poGeom->toPolygon()->addRingDirectly(poLinearRing);
     }
     else if (sName_.compare("MultiGeometry") == 0)
     {

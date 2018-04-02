@@ -2180,8 +2180,7 @@ bool GMLASWriter::WriteFieldRegular(
                 wkbFlatten(poGeom->getGeometryType()) ==
                                                         wkbGeometryCollection )
             {
-                OGRGeometryCollection* poGC =
-                            reinterpret_cast<OGRGeometryCollection*>(poGeom);
+                OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
                 for(int j=0; j<poGC->getNumGeometries(); ++j)
                 {
                     if( dfGMLVersion >= 3.2 )

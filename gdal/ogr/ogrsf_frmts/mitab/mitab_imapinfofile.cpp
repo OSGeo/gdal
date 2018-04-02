@@ -301,7 +301,7 @@ TABFeature* IMapInfoFile::CreateTABFeature(OGRFeature *poFeature)
       case wkbMultiPoint:
       {
           OGRErr eStatus = OGRERR_NONE;
-          OGRGeometryCollection *poColl = (OGRGeometryCollection*)poGeom;
+          OGRGeometryCollection *poColl = poGeom->toGeometryCollection();
           OGRFeature *poTmpFeature = poFeature->Clone();
 
           for( int i = 0;

@@ -1032,14 +1032,12 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
         OGRErr eErr = OGRERR_NONE;
-
-        for( int iGeom = 0;
-             eErr == OGRERR_NONE && iGeom < poGC->getNumGeometries();
-             iGeom++ )
+        for( auto&& poMember: poGeom->toMultiPolygon() )
         {
-            eErr = WriteHATCH( poFeature, poGC->getGeometryRef( iGeom ) );
+            eErr = WriteHATCH( poFeature, poMember );
+            if( eErr != OGRERR_NONE )
+                break;
         }
 
         return eErr;
@@ -1300,11 +1298,11 @@ OGRErr OGRDXFWriterLayer::ICreateFeature( OGRFeature *poFeature )
     // Explode geometry collections into multiple entities.
     else if( eGType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *)
-            poFeature->StealGeometry();
-        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        OGRGeometryCollection *poGC =
+            poFeature->StealGeometry()->toGeometryCollection();
+        for( auto&& poMember: poGC )
         {
-            poFeature->SetGeometry( poGC->getGeometryRef(iGeom) );
+            poFeature->SetGeometry( poMember );
 
             OGRErr eErr = CreateFeature( poFeature );
 

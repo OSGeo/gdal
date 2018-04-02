@@ -2264,7 +2264,7 @@ OGRErr OGRCSVLayer::ICreateFeature( OGRFeature *poNewFeature )
         OGRGeometry *poGeom = poNewFeature->GetGeometryRef();
         if( poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            OGRPoint *poPoint = static_cast<OGRPoint *>(poGeom);
+            OGRPoint *poPoint = poGeom->toPoint();
             char szBuffer[75] = {};
             if( eGeometryFormat == OGR_CSV_GEOM_AS_XYZ )
                 OGRMakeWktCoordinate(szBuffer, poPoint->getX(), poPoint->getY(),

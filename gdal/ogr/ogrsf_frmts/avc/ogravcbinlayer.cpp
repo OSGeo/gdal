@@ -312,8 +312,8 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
     }
 
     OGRErr eErr;
-    OGRPolygon *poPolygon
-      = reinterpret_cast<OGRPolygon *>(
+    OGRGeometry *poPolygon
+      = reinterpret_cast<OGRGeometry *>(
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,
                                   0.0, &eErr ) );
     if( poPolygon != nullptr )

@@ -217,17 +217,14 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
             wkbFlatten( poInteriorGeom->getGeometryType() );
         if( interiorGeomType == wkbPolygon )
         {
-            ((OGRPolygon*)poExteriorGeom)->
-                addRing(((OGRPolygon*)poInteriorGeom)->getExteriorRing());
+            poExteriorGeom->toPolygon()->
+                addRing(poInteriorGeom->toPolygon()->getExteriorRing());
         }
         else if( interiorGeomType == wkbMultiPolygon )
         {
-            const int numGeom = ((OGRMultiPolygon*)poInteriorGeom)->getNumGeometries();
-            for( int i = 0; i < numGeom; ++i )
+            for( auto&& poInteriorPolygon: poInteriorGeom->toMultiPolygon() )
             {
-                OGRPolygon* poInteriorPolygon =
-                    (OGRPolygon*)((OGRMultiPolygon*)poInteriorGeom)->getGeometryRef(i);
-                ((OGRPolygon*)poExteriorGeom)->addRing( poInteriorPolygon->getExteriorRing() );
+                poExteriorGeom->toPolygon()->addRing( poInteriorPolygon->getExteriorRing() );
             }
         }
         else
@@ -356,7 +353,7 @@ OGRErr OGRCreateFromGeomedia( GByte *pabyGeom,
                 {
                     OGRPolygon* poPoly = new OGRPolygon();
                     OGRLinearRing* poRing = new OGRLinearRing();
-                    poRing->addSubLineString((OGRLineString*)poSubGeom);
+                    poRing->addSubLineString(poSubGeom->toLineString());
                     poPoly->addRingDirectly(poRing);
                     delete poSubGeom;
                     poSubGeom = poPoly;

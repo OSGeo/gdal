@@ -1155,11 +1155,11 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
         CPLCreateXMLNode(psTopoCurve, CXT_Element, "directedEdge");
     CPLXMLNode *psEdge = CPLCloneXMLTree((CPLXMLNode *)psNode);
     CPLAddXMLChild(psDirEdge, psEdge);
-    OGRGeometryCollection *poColl = static_cast<OGRGeometryCollection *>(
-        GML2OGRGeometry_XMLNode(psTopoCurve, FALSE));
+    OGRGeometry *poTopoCurve = GML2OGRGeometry_XMLNode(psTopoCurve, FALSE);
     CPLDestroyXMLNode(psTopoCurve);
-    if( poColl != nullptr )
+    if( poTopoCurve != nullptr )
     {
+        OGRGeometryCollection* poColl = poTopoCurve->toGeometryCollection();
         const int iCount = poColl->getNumGeometries();
         if( iCount == 1 )
         {
@@ -1167,7 +1167,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
             int type = wkbFlatten(poChild->getGeometryType());
             if( type == wkbLineString )
             {
-                OGRLineString *poLine = static_cast<OGRLineString *>(poChild);
+                OGRLineString *poLine = poChild->toLineString();
                 const int iPoints = poLine->getNumPoints();
                 if( iPoints >= 2 )
                 {
@@ -1189,7 +1189,7 @@ static void gmlHugeFileNodeCoords( struct huge_tag *pItem,
                 }
             }
         }
-        delete poColl;
+        delete poTopoCurve;
     }
 
     // Searching the <directedNode> sub-tags.

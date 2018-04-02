@@ -2971,8 +2971,8 @@ void GMLASReader::ProcessGeometry(CPLXMLNode* psRoot)
                 if( poPrevGeom->getGeometryType() ==
                                         wkbGeometryCollection )
                 {
-                    reinterpret_cast<OGRGeometryCollection*>(
-                        poPrevGeom)->addGeometryDirectly(poGeom);
+                    poPrevGeom->toGeometryCollection()->
+                                        addGeometryDirectly(poGeom);
                     poGeom = poPrevGeom;
                 }
                 else

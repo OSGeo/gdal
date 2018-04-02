@@ -314,8 +314,7 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
 
     OGRFeatureDefn *poDefn = poMultiPoint->GetDefnRef();
     OGRFeature  *poPoint = new OGRFeature( poDefn );
-    OGRMultiPoint *poMPGeom
-        = static_cast<OGRMultiPoint *>( poMultiPoint->GetGeometryRef() );
+    OGRMultiPoint *poMPGeom = poMultiPoint->GetGeometryRef()->toMultiPoint();
 
     poPoint->SetFID( poMultiPoint->GetFID() );
 
@@ -324,9 +323,8 @@ OGRFeature *S57Reader::NextPendingMultiPoint()
         poPoint->SetField( i, poMultiPoint->GetRawFieldRef(i) );
     }
 
-    OGRPoint *poSrcPoint
-        = static_cast<OGRPoint *>( poMPGeom->getGeometryRef( iPointOffset++ ) );
-    CPLAssert( poSrcPoint != nullptr );
+    OGRPoint *poSrcPoint = poMPGeom->getGeometryRef( iPointOffset )->toPoint();
+    iPointOffset++;
     poPoint->SetGeometry( poSrcPoint );
 
     if( (nOptionFlags & S57M_ADD_SOUNDG_DEPTH) )
@@ -2434,7 +2432,7 @@ void S57Reader::AssembleAreaGeometry( DDFRecord * poFRecord,
 /* -------------------------------------------------------------------- */
     OGRErr eErr;
 
-    OGRPolygon  *poPolygon = reinterpret_cast<OGRPolygon *>(
+    OGRGeometry  *poPolygon = reinterpret_cast<OGRGeometry *>(
         OGRBuildPolygonFromEdges( reinterpret_cast<OGRGeometryH>( poLines ),
                                   TRUE, FALSE, 0.0, &eErr ) );
     if( eErr != OGRERR_NONE )

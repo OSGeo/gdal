@@ -1288,8 +1288,8 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
 
         if (poCenter == nullptr && poMLS != nullptr && poMLS->getNumGeometries() == 2)
         {
-            OGRLineString* poLS1 = (OGRLineString* )poMLS->getGeometryRef(0);
-            OGRLineString* poLS2 = (OGRLineString* )poMLS->getGeometryRef(1);
+            OGRLineString* poLS1 = poMLS->getGeometryRef(0)->toLineString();
+            OGRLineString* poLS2 = poMLS->getGeometryRef(1)->toLineString();
 
             // Recognize points as written by GDAL (ogr-sym-0: cross (+) ).
             if (poLS1->getNumPoints() == 2 && poLS2->getNumPoints() == 2 &&
@@ -1418,11 +1418,11 @@ OGRGeometry* PDFDataset::BuildGeometry(std::vector<double>& oCoords,
 
         int bIsValidGeometry;
         if (nPolys == 2 &&
-            ((OGRPolygon*)papoPoly[0])->getNumInteriorRings() == 0 &&
-            ((OGRPolygon*)papoPoly[1])->getNumInteriorRings() == 0)
+            papoPoly[0]->toPolygon()->getNumInteriorRings() == 0 &&
+            papoPoly[1]->toPolygon()->getNumInteriorRings() == 0)
         {
-            OGRLinearRing* poRing0 = ((OGRPolygon*)papoPoly[0])->getExteriorRing();
-            OGRLinearRing* poRing1 = ((OGRPolygon*)papoPoly[1])->getExteriorRing();
+            OGRLinearRing* poRing0 = papoPoly[0]->toPolygon()->getExteriorRing();
+            OGRLinearRing* poRing1 = papoPoly[1]->toPolygon()->getExteriorRing();
             if (poRing0->getNumPoints() == poRing1->getNumPoints())
             {
                 int bSameRing = TRUE;

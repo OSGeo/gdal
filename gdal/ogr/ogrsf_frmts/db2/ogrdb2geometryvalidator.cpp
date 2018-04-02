@@ -368,7 +368,7 @@ int OGRDB2GeometryValidator::ValidateMultiPolygon(OGRMultiPolygon* poGeom)
             continue;
         }
 
-        if (!ValidatePolygon((OGRPolygon*)poPolygon))
+        if (!ValidatePolygon(poPolygon->toPolygon()))
         {
             // non valid polygon
             if (!poGeometries)
@@ -455,27 +455,27 @@ int OGRDB2GeometryValidator::ValidateGeometry(OGRGeometry* poGeom)
     {
     case wkbPoint:
     case wkbPoint25D:
-        return ValidatePoint((OGRPoint*)poGeom);
+        return ValidatePoint(poGeom->toPoint());
     case wkbLineString:
     case wkbLineString25D:
-        return ValidateLineString((OGRLineString*)poGeom);
+        return ValidateLineString(poGeom->toLineString());
     case wkbPolygon:
     case wkbPolygon25D:
-        return ValidatePolygon((OGRPolygon*)poGeom);
+        return ValidatePolygon(poGeom->toPolygon());
     case wkbMultiPoint:
     case wkbMultiPoint25D:
-        return ValidateMultiPoint((OGRMultiPoint*)poGeom);
+        return ValidateMultiPoint(poGeom->toMultiPoint());
     case wkbMultiLineString:
     case wkbMultiLineString25D:
-        return ValidateMultiLineString((OGRMultiLineString*)poGeom);
+        return ValidateMultiLineString(poGeom->toMultiLineString());
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
-        return ValidateMultiPolygon((OGRMultiPolygon*)poGeom);
+        return ValidateMultiPolygon(poGeom->toMultiPolygon());
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
-        return ValidateGeometryCollection((OGRGeometryCollection*)poGeom);
+        return ValidateGeometryCollection(poGeom->toGeometryCollection());
     case wkbLinearRing:
-        return ValidateLinearRing((OGRLinearRing*)poGeom);
+        return ValidateLinearRing(poGeom->toLinearRing());
     default:
         return FALSE;
     }

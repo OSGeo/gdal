@@ -361,29 +361,31 @@ void OGRIDFDataSource::Parse()
             poLinkLyr->ResetReading();
             OGRSpatialReference* poSRS =
                 poLinkLyr->GetLayerDefn()->GetGeomFieldDefn(0)->GetSpatialRef();
-            OGRFeature* poFeat = nullptr;
-            while( (poFeat = poLinkLyr->GetNextFeature()) != nullptr )
+            for( auto&& poFeat: poLinkLyr )
             {
                 GIntBig nLinkID = poFeat->GetFieldAsInteger64(iLinkID);
                 std::map<GIntBig, OGRLineString*>::iterator
                     oMapLinkCoordinateIter = oMapLinkCoordinate.find(nLinkID);
-                OGRLineString* poLS = (OGRLineString*)poFeat->GetGeometryRef();
-                if( poLS != nullptr && oMapLinkCoordinateIter != oMapLinkCoordinate.end() )
+                OGRGeometry* poGeom = poFeat->GetGeometryRef();
+                if( poGeom && oMapLinkCoordinateIter != oMapLinkCoordinate.end() )
                 {
-                    OGRLineString* poLSIntermediate = oMapLinkCoordinateIter->second;
-                    OGRLineString* poLSNew = new OGRLineString();
-                    poLSNew->addPoint(poLS->getX(0), poLS->getY(0));
-                    for(int i=0;i<poLSIntermediate->getNumPoints();i++)
+                    OGRLineString* poLS = poGeom->toLineString();
+                    if( poLS )
                     {
-                        poLSNew->addPoint(poLSIntermediate->getX(i),
-                                          poLSIntermediate->getY(i));
+                        OGRLineString* poLSIntermediate = oMapLinkCoordinateIter->second;
+                        OGRLineString* poLSNew = new OGRLineString();
+                        poLSNew->addPoint(poLS->getX(0), poLS->getY(0));
+                        for(int i=0;i<poLSIntermediate->getNumPoints();i++)
+                        {
+                            poLSNew->addPoint(poLSIntermediate->getX(i),
+                                            poLSIntermediate->getY(i));
+                        }
+                        poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
+                        poLSNew->assignSpatialReference(poSRS);
+                        poFeat->SetGeometryDirectly(poLSNew);
+                        CPL_IGNORE_RET_VAL(poLinkLyr->SetFeature(poFeat.get()));
                     }
-                    poLSNew->addPoint(poLS->getX(1), poLS->getY(1));
-                    poLSNew->assignSpatialReference(poSRS);
-                    poFeat->SetGeometryDirectly(poLSNew);
-                    CPL_IGNORE_RET_VAL(poLinkLyr->SetFeature(poFeat));
                 }
-                delete poFeat;
             }
             poLinkLyr->ResetReading();
         }
@@ -1238,6 +1240,7 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
     {
         if( i > 0)
             bOK &= VSIFPrintfL(m_fpL, "; ") > 0;
+        auto poGeom = poFeature->GetGeometryRef();
         if( poFeature->IsFieldSetAndNotNull(i) )
         {
             const OGRFieldType eType = m_poFeatureDefn->GetFieldDefn(i)->GetType();
@@ -1256,10 +1259,9 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
             }
         }
         else if( i == m_iLongitudeVDV452 &&
-                 poFeature->GetGeometryRef() != nullptr &&
-                 poFeature->GetGeometryRef()->getGeometryType() == wkbPoint )
+                 poGeom != nullptr && poGeom->getGeometryType() == wkbPoint )
         {
-            OGRPoint* poPoint = static_cast<OGRPoint*>(poFeature->GetGeometryRef());
+            OGRPoint* poPoint = poGeom->toPoint();
             const double dfDeg = poPoint->getX();
             const double dfAbsDeg = fabs(dfDeg);
             const int nDeg = static_cast<int>(dfAbsDeg);
@@ -1273,10 +1275,9 @@ OGRErr OGRVDVWriterLayer::ICreateFeature(OGRFeature* poFeature)
             bOK &= VSIFPrintfL(m_fpL, "%03d%02d%02d%03d", nDeg, nMin, nSec, nMS) > 0;
         }
         else if( i == m_iLatitudeVDV452 &&
-                 poFeature->GetGeometryRef() != nullptr &&
-                 poFeature->GetGeometryRef()->getGeometryType() == wkbPoint )
+                 poGeom != nullptr && poGeom->getGeometryType() == wkbPoint )
         {
-            OGRPoint* poPoint = static_cast<OGRPoint*>(poFeature->GetGeometryRef());
+            OGRPoint* poPoint = poGeom->toPoint();
             const double dfDeg = poPoint->getY();
             const double dfAbsDeg = fabs(dfDeg);
             const int nDeg = static_cast<int>(dfAbsDeg);

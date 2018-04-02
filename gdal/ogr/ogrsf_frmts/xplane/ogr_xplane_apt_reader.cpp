@@ -1328,7 +1328,7 @@ void OGRXPlaneAptReader::ParsePavement()
             poPavementLayer->AddFeature(osAptICAO, osPavementName,
                                         RunwaySurfaceEnumeration.GetText(eSurfaceCode),
                                         dfSmoothness, dfTextureHeading,
-                                        reinterpret_cast<OGRPolygon*>(poGeom) );
+                                        poGeom->toPolygon() );
         }
         else
         {
@@ -1374,7 +1374,7 @@ void OGRXPlaneAptReader::ParseAPTBoundary()
         {
              poAPTBoundaryLayer->AddFeature(
                  osAptICAO, osBoundaryName,
-                 reinterpret_cast<OGRPolygon *>(poGeom) );
+                 poGeom->toPolygon() );
         }
         else
         {

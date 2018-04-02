@@ -179,10 +179,11 @@ int OGRMSSQLGeometryValidator::ValidateLinearRing(OGRLinearRing * poGeom)
                       "Linear ring has only 2 distinct points constructing linestring geometry instead." );
 
             // create a linestring
-            poValidGeometry = new OGRLineString();
-            ((OGRLineString*)poValidGeometry)->setNumPoints( 2 );
-            ((OGRLineString*)poValidGeometry)->addPoint(poPoint0);
-            ((OGRLineString*)poValidGeometry)->addPoint(poPoint1);
+            OGRLineString* poLS = new OGRLineString();
+            poValidGeometry = poLS;
+            poLS->setNumPoints( 2 );
+            poLS->addPoint(poPoint0);
+            poLS->addPoint(poPoint1);
         }
         else if (poPoint0 != nullptr)
         {

@@ -249,7 +249,7 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
     case wkbLineString25D:
     {
         WriteFeatureAttributes(poFeature);
-        OGRLineString* line = reinterpret_cast<OGRLineString *>(poGeom);
+        OGRLineString* line = poGeom->toLineString();
         for(int i = 0; i < line->getNumPoints(); ++i)
         {
             double lat = line->getY(i);
@@ -267,12 +267,10 @@ OGRErr GTMTrackLayer::ICreateFeature (OGRFeature *poFeature)
     case wkbMultiLineString:
     case wkbMultiLineString25D:
     {
-        int nGeometries = ((OGRGeometryCollection*)poGeom)->getNumGeometries ();
-        for(int j = 0; j < nGeometries; ++j)
+        for( auto&& line: poGeom->toMultiLineString() )
         {
             WriteFeatureAttributes(poFeature);
-            OGRLineString* line = (OGRLineString*) ( ((OGRGeometryCollection*)poGeom)->getGeometryRef(j) );
-            int n = (line) ? line->getNumPoints() : 0;
+            int n = line->getNumPoints();
             for(int i = 0; i < n; ++i)
             {
                 double lat = line->getY(i);

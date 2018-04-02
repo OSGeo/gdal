@@ -615,12 +615,7 @@ FeaturePtr feat2kml(
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        const OGRPoint* const poOgrPoint = dynamic_cast<OGRPoint *>(poOgrGeom);
-        if( poOgrPoint == nullptr )
-        {
-          CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-          return nullptr;
-        }
+        const OGRPoint* const poOgrPoint = poOgrGeom->toPoint();
         ModelPtr model = poKmlFactory->CreateModel();
 
         LocationPtr location = poKmlFactory->CreateLocation();
@@ -783,13 +778,7 @@ FeaturePtr feat2kml(
         const PlacemarkPtr poKmlPlacemark = poKmlFactory->CreatePlacemark();
         poKmlFeature = poKmlPlacemark;
 
-        const OGRPoint* const poOgrPoint = dynamic_cast<OGRPoint *>(poOgrGeom);
-              if( poOgrPoint == nullptr )
-        {
-          CPLError(CE_Failure, CPLE_AppDefined, "dynamic_cast failed.");
-          return nullptr;
-        }
-
+        const OGRPoint* const poOgrPoint = poOgrGeom->toPoint();
         camera = poKmlFactory->CreateCamera();
         camera->set_latitude(poOgrPoint->getY());
         camera->set_longitude(poOgrPoint->getX());

@@ -2176,7 +2176,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGRGeometry *poGeom = GetGeometryRef();
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint)
     {
-        OGRMultiPoint *poMultiPoint = (OGRMultiPoint*)poGeom;
+        OGRMultiPoint *poMultiPoint = poGeom->toMultiPoint();
         const int nNumPoints = poMultiPoint->getNumGeometries();
 
         fp->WriteLine("MultiPoint %d\n", nNumPoints);

@@ -187,7 +187,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                 }
                 OGRGeometry *geom = poParent->papoBuiltGeometries[nRefNr];
                 if (geom->getGeometryType() == wkbLineString) {
-                  OGRLineString *poCurve = (OGRLineString*)geom;
+                  OGRLineString *poCurve = geom->toLineString();
                   if (nRefStatus == LC_MED_DIG) {         /* clockwise */
                     poOuter->addSubLineString(poCurve);
                   } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */
@@ -223,7 +223,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature() {
                     }
                     OGRGeometry *geom = poParent->papoBuiltGeometries[nRefNr];
                     if (geom->getGeometryType() == wkbLineString) {
-                      OGRLineString *poCurve = (OGRLineString*)geom;
+                      OGRLineString *poCurve = geom->toLineString();
                       if (nRefStatus == LC_MED_DIG) {         /* clockwise */
                         poInner->addSubLineString(poCurve);
                       } else if (nRefStatus == LC_MOT_DIG) {  /* counter-clockwise */

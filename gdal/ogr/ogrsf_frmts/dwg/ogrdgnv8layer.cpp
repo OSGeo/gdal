@@ -638,12 +638,12 @@ bool IsContiguous( const std::vector<tPairFeatureHoleFlag>& oVectorSubElts,
                 (eType == wkbCircularString ||
                  eType == wkbLineString) )
             {
-                OGRCurve* poCurve = static_cast<OGRCurve*>(poGeom);
+                OGRCurve* poCurve = poGeom->toCurve();
                 if( poCurve->getNumPoints() >= 2 )
                 {
                     OGRPoint oStartPoint;
                     poCurve->StartPoint( &oStartPoint );
-                   
+
                     if( bLastPointValid )
                     {
                         if( !AlmostEqual(oStartPoint.getX(),
@@ -823,8 +823,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 const OGRwkbGeometryType eType =
                     wkbFlatten(poGeom->getGeometryType());
                 if( (eType == wkbPolygon || eType == wkbCurvePolygon) &&
-                    static_cast<OGRCurvePolygon*>(poGeom)->
-                                                getNumInteriorRings() == 0 )
+                    poGeom->toCurvePolygon()->getNumInteriorRings() == 0 )
                 {
                     if( eType == wkbCurvePolygon )
                         bHasCurve = true;
@@ -850,23 +849,22 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                     poCP = new OGRCurvePolygon();
                 else
                     poCP = new OGRPolygon();
-                poCP->addRing(
-                    static_cast<OGRCurvePolygon*>(poExterior)->getExteriorRingCurve() );
+                poCP->addRing(poExterior->toCurvePolygon()->getExteriorRingCurve() );
                 for( size_t i = 0; i < oVector.size(); i++ )
                 {
                     OGRFeature* poFeat = oVector[i].first;
                     OGRGeometry* poGeom = poFeat->GetGeometryRef();
                     if( poGeom != poExterior )
                     {
-                        poCP->addRing(
-                            static_cast<OGRCurvePolygon*>(poGeom)->getExteriorRingCurve() );
+                        poCP->addRing(poGeom->toCurvePolygon()->
+                                            getExteriorRingCurve() );
                     }
                     delete poFeat;
                 }
                 oVector.clear();
                 poFeature->SetGeometryDirectly(poCP);
                 poFeature->SetStyleString( ConsiderBrush(element, osPen) );
-            }                
+            }
         }
         if( bDestroyFeature )
         {
@@ -1127,7 +1125,7 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                                         wkbFlatten(poGeom->getGeometryType());
                         if( eType == wkbCircularString || eType == wkbLineString )
                         {
-                            poCC->addCurve( static_cast<OGRCurve*>(poGeom),
+                            poCC->addCurve( poGeom->toCurve(),
                                             CONTIGUITY_TOLERANCE );
                         }
                     }
@@ -1214,13 +1212,12 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                                     wkbFlatten(poGeom->getGeometryType());
                         if( poCC != nullptr )
                         {
-                            poCC->addCurve( static_cast<OGRCurve*>(poGeom),
+                            poCC->addCurve( poGeom->toCurve(),
                                             CONTIGUITY_TOLERANCE );
                         }
                         else if( eType == wkbLineString )
                         {
-                            poLR->addSubLineString(
-                                static_cast<OGRLineString*>(poGeom),
+                            poLR->addSubLineString(poGeom->toLineString(),
                                 poLR->getNumPoints() == 0 ? 0 : 1 );
                         }
                     }
@@ -1228,8 +1225,8 @@ std::vector<tPairFeatureHoleFlag> OGRDGNV8Layer::ProcessElement(
                 }
 
                 poCP->addRingDirectly( ( bHasCurves ) ?
-                    static_cast<OGRCurve*>(poCC) :
-                    static_cast<OGRCurve*>(poLR) );
+                    poCC->toCurve() :
+                    poLR->toCurve() );
 
                 poFeature->SetGeometryDirectly( poCP );
             }
@@ -1861,7 +1858,7 @@ void OGRDGNV8Layer::AddToComplexCurve( OGRFeature* poFeature,
         }
         else if( eType == wkbCircularString )
         {
-            OGRCircularString* poCS = static_cast<OGRCircularString*>(poCurve);
+            OGRCircularString* poCS = poCurve->toCircularString();
             AddToComplexCurve(poFeature, poCS, complexCurve);
         }
         else
@@ -1924,14 +1921,14 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateShape( OGRFeature* poFeature,
     OGRwkbGeometryType eType = wkbFlatten(poCurve->getGeometryType());
     if( eType == wkbLineString )
     {
-        OGRLineString* poLS = static_cast<OGRLineString*>(poCurve);
+        OGRLineString* poLS = poCurve->toLineString();
         element = CreateShapeFromLS(poLS, bIsHole);
     }
     else if( eType == wkbCircularString )
     {
         OdDgComplexShapePtr complexShape = OdDgComplexShape::createObject();
         complexShape->setHbitFlag(bIsHole);
-        OGRCircularString* poCS = static_cast<OGRCircularString*>(poCurve);
+        OGRCircularString* poCS = poCurve->toCircularString();
         AddToComplexCurve(poFeature, poCS, complexShape);
         element = complexShape;
     }
@@ -1939,7 +1936,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateShape( OGRFeature* poFeature,
     {
         OdDgComplexShapePtr complexShape = OdDgComplexShape::createObject();
         complexShape->setHbitFlag(bIsHole);
-        OGRCompoundCurve* poCC = static_cast<OGRCompoundCurve*>(poCurve);
+        OGRCompoundCurve* poCC = poCurve->toCompoundCurve();
         AddToComplexCurve( poFeature, poCC, complexShape );
         element = complexShape;
     }
@@ -2030,7 +2027,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
 
     if( eFType == wkbPoint )
     {
-        OGRPoint *poPoint = static_cast<OGRPoint *>( poGeom );
+        OGRPoint *poPoint = poGeom->toPoint();
         const char *pszText = poFeature->GetFieldAsString("Text");
         const char *pszStyle = poFeature->GetStyleString();
 
@@ -2066,7 +2063,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
     }
     else if( eFType == wkbLineString )
     {
-        OGRLineString* poLS = static_cast<OGRLineString *>( poGeom );
+        OGRLineString* poLS = poGeom->toLineString();
         if( poLS->getNumPoints() == 2 &&
             (nType == 0 || nType == OdDgElement::kTypeLine) )
         {
@@ -2138,7 +2135,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
     }
     else if( eFType == wkbCircularString )
     {
-        OGRCircularString* poCS = static_cast<OGRCircularString*>(poGeom);
+        OGRCircularString* poCS = poGeom->toCircularString();
         double R, cx, cy;
         if( IsFullCircle(poCS, cx, cy, R) && !OGR_GT_HasZ(eType) )
         {
@@ -2194,14 +2191,14 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
     }
     else if( eFType == wkbCompoundCurve )
     {
-        OGRCompoundCurve* poCC = static_cast<OGRCompoundCurve*>(poGeom);
+        OGRCompoundCurve* poCC = poGeom->toCompoundCurve();
         OdDgComplexCurvePtr complexCurve = OdDgComplexString::createObject();
         element = complexCurve;
         AddToComplexCurve( poFeature, poCC, complexCurve );
     }
     else if( eFType == wkbCurvePolygon || eFType == wkbPolygon )
     {
-        OGRCurvePolygon* poPoly = static_cast<OGRCurvePolygon*>(poGeom);
+        OGRCurvePolygon* poPoly = poGeom->toCurvePolygon();
         if( poPoly->getNumInteriorRings() == 0 &&
             poPoly->getExteriorRingCurve() == nullptr )
         {
@@ -2230,7 +2227,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
                     OGRCurve* poCurve = (iRing < 0 ) ?
                             poPoly->getExteriorRingCurve() :
                            poPoly->getInteriorRingCurve(iRing);
-                                                         
+
                     OdDgGraphicsElementPtr shape = CreateShape(
                         poFeature, poCurve, iRing >= 0);
                     AttachCommonAttributes(poFeature, shape);
@@ -2259,14 +2256,15 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateGraphicsElement(
     }
     else if( OGR_GT_IsSubClassOf( eFType, wkbGeometryCollection ) )
     {
-        OGRGeometryCollection* poGC =
-                static_cast<OGRGeometryCollection*>(poGeom);
+        OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
         OdDgCellHeader2dPtr pCell = OdDgCellHeader2d::createObject(); 
         element = pCell;
-        for( int i = 0; !pCell.isNull() && i < poGC->getNumGeometries(); ++i )
+        if( !pCell.isNull() )
         {
-            pCell->add(CreateGraphicsElement( poFeature,
-                                              poGC->getGeometryRef(i) ));
+            for( auto&& poMember: poGC )
+            {
+                pCell->add(CreateGraphicsElement( poFeature, poMember ));
+            }
         }
     }
     else

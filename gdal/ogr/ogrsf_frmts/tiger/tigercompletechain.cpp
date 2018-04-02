@@ -740,12 +740,13 @@ OGRErr TigerCompleteChain::CreateFeature( OGRFeature *poFeature )
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
-    OGRLineString *poLine = (OGRLineString *) poFeature->GetGeometryRef();
+    OGRGeometry *poGeom = poFeature->GetGeometryRef();
 
-    if( poLine == nullptr
-        || (poLine->getGeometryType() != wkbLineString
-            && poLine->getGeometryType() != wkbLineString25D) )
+    if( poGeom == nullptr
+        || (poGeom->getGeometryType() != wkbLineString
+            && poGeom->getGeometryType() != wkbLineString25D) )
         return OGRERR_FAILURE;
+    OGRLineString* poLine = poGeom->toLineString();
 
     /* -------------------------------------------------------------------- */
     /*      Write basic data record ("RT1")                                 */

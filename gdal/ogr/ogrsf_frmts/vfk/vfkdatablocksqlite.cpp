@@ -574,8 +574,8 @@ int VFKDataBlockSQLite::LoadGeometryPolygon()
             int i = 1;
             for (VFKFeatureSQLiteList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
                  iHp != eHp; ++iHp, ++i) {
-                const OGRLineString *pLine = (OGRLineString *) (*iHp)->GetGeometry();
-                if (pLine && AppendLineToRing(&poRingList, pLine, bNewRing)) {
+                auto pGeom = (*iHp)->GetGeometry();
+                if (pGeom && AppendLineToRing(&poRingList, pGeom->toLineString(), bNewRing)) {
                     bFound = true;
                     poLineList.erase(iHp);
                     break;

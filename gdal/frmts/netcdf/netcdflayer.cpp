@@ -1103,7 +1103,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
                 Get1DVarAsDouble(m_nZVarID, m_nZVarNCDFType, anIndex[0],
                                  m_uZVarNoData, &bZIsNoData);
             if( !bZIsNoData )
-                ((OGRPoint *)poGeom)->setZ(dfZ);
+                poGeom->toPoint()->setZ(dfZ);
         }
     }
     else if( m_nWKTVarID >= 0 )
@@ -1226,7 +1226,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
         OGRGeometry *poGeom = poProfileToLookup->GetGeometryRef();
         if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            ((OGRPoint *)poGeom)->setZ(0);
+            poGeom->toPoint()->setZ(0);
         }
 
         size_t nProfileIdx = 0;
@@ -1247,7 +1247,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
                 if( poGeom != nullptr &&
                     wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
                 {
-                    ((OGRPoint *)poGeom)->setZ(0);
+                    poGeom->toPoint()->setZ(0);
                 }
                 if( poIterFeature->Equal(poProfileToLookup) )
                 {
@@ -1575,8 +1575,9 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
     {
         if( m_osProfileDimName.empty() || nMainDimId == m_nProfileDimID )
         {
-            double dfX = static_cast<OGRPoint *>(poGeom)->getX();
-            double dfY = static_cast<OGRPoint *>(poGeom)->getY();
+            auto poPoint = poGeom->toPoint();
+            double dfX = poPoint->getX();
+            double dfY = poPoint->getY();
 
             int status;
 
@@ -1615,7 +1616,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             (m_osProfileDimName.empty() || nMainDimId == m_nRecordDimID) )
         {
             int status;
-            double dfZ = static_cast<OGRPoint *>(poGeom)->getZ();
+            double dfZ = poGeom->toPoint()->getZ();
             if( m_nZVarNCDFType == NC_DOUBLE )
                 status =
                     nc_put_var1_double(m_nLayerCDFId, m_nZVarID, anIndex, &dfZ);

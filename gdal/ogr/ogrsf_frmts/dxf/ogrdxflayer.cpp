@@ -1376,7 +1376,7 @@ OGRDXFFeature *OGRDXFLayer::TranslatePOLYLINE()
                 poLR->setPoint(iPoint,papoPoints[startPoint]);
 
                 OGRPolygon *poPolygon = new OGRPolygon();
-                poPolygon->addRing((OGRCurve *)poLR);
+                poPolygon->addRing(poLR);
 
                 poPS->addGeometryDirectly(poPolygon);
             }
@@ -1718,11 +1718,11 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
 /* -------------------------------------------------------------------- */
 /*      Create geometry                                                 */
 /* -------------------------------------------------------------------- */
-    OGRLineString *poCircle = reinterpret_cast<OGRLineString *>(
+    OGRLineString *poCircle =
         OGRGeometryFactory::approximateArcAngles( dfX1, dfY1, dfZ1,
                                                   dfRadius, dfRadius, 0.0,
                                                   0.0, 360.0,
-                                                  0.0 ) );
+                                                  0.0 )->toLineString();
 
     const int nPoints = poCircle->getNumPoints();
 
@@ -1743,8 +1743,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateCIRCLE()
         poSurface->addGeometryDirectly( poBase1 );
 
         // Create and add the top base
-        OGRLinearRing *poRing2 = reinterpret_cast<OGRLinearRing *>(
-            poRing1->clone() );
+        OGRLinearRing *poRing2 = poRing1->clone()->toLinearRing();
 
         OGRDXFInsertTransformer oTransformer;
         oTransformer.dfZOffset = dfThickness;
