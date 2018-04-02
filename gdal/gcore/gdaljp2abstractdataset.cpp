@@ -539,9 +539,9 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
             {
                 char* apszOpenOptions[2] = {
                     const_cast<char *>( "FORCE_SRS_DETECTION=YES" ), nullptr };
-                GDALDataset* poTmpDS = static_cast<GDALDataset *>(
-                    GDALOpenEx( osGMLTmpFile, GDAL_OF_VECTOR, nullptr,
-                                apszOpenOptions, nullptr ) );
+                GDALDataset* poTmpDS = GDALDataset::OpenEx(
+                                osGMLTmpFile, GDAL_OF_VECTOR, nullptr,
+                                apszOpenOptions, nullptr );
                 if( poTmpDS )
                 {
                     int nLayers = poTmpDS->GetLayerCount();
@@ -618,8 +618,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                 CPLSPrintf("/vsimem/gmljp2/%p/my.kml", this) );
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
-            GDALDataset * const poTmpDS = static_cast<GDALDataset *>(
-                GDALOpenEx( osKMLTmpFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ) );
+            GDALDataset * const poTmpDS = GDALDataset::OpenEx(
+                osKMLTmpFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr );
             if( poTmpDS )
             {
                 int nLayers = poTmpDS->GetLayerCount();

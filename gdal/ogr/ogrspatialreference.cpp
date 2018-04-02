@@ -65,7 +65,7 @@ CPL_CVSID("$Id$")
 
 inline OGRSpatialReference* ToPointer(OGRSpatialReferenceH hSRS)
 {
-    return reinterpret_cast<OGRSpatialReference*>(hSRS);
+    return OGRSpatialReference::FromHandle(hSRS);
 }
 
 /************************************************************************/
@@ -74,7 +74,7 @@ inline OGRSpatialReference* ToPointer(OGRSpatialReferenceH hSRS)
 
 inline OGRSpatialReferenceH ToHandle(OGRSpatialReference* poSRS)
 {
-    return reinterpret_cast<OGRSpatialReferenceH>(poSRS);
+    return OGRSpatialReference::ToHandle(poSRS);
 }
 
 /************************************************************************/
@@ -6095,8 +6095,7 @@ OGRSpatialReference::GetAuthorityName( const char *pszTargetKey ) const
     if( pszTargetKey == nullptr )
         poNode = poRoot;
     else
-        poNode = const_cast<OGRSpatialReference *>(this)->
-            GetAttrNode( pszTargetKey );
+        poNode = GetAttrNode( pszTargetKey );
 
     if( poNode == nullptr )
         return nullptr;
@@ -7919,7 +7918,7 @@ const char *OGRSpatialReference::GetExtension( const char *pszTargetKey,
 /* -------------------------------------------------------------------- */
     const OGR_SRSNode *poNode = pszTargetKey == nullptr
         ? poRoot
-        : const_cast<OGRSpatialReference *>(this)->GetAttrNode( pszTargetKey );
+        : GetAttrNode( pszTargetKey );
 
     if( poNode == nullptr )
         return nullptr;
@@ -7971,8 +7970,7 @@ OGRErr OGRSpatialReference::SetExtension( const char *pszTargetKey,
     if( pszTargetKey == nullptr )
         poNode = poRoot;
     else
-        poNode =
-            const_cast<OGRSpatialReference *>(this)->GetAttrNode(pszTargetKey);
+        poNode = GetAttrNode(pszTargetKey);
 
     if( poNode == nullptr )
         return OGRERR_FAILURE;
@@ -8066,13 +8064,12 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
 /* -------------------------------------------------------------------- */
 /*      Find the target node.                                           */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poNode = nullptr;
+    const OGR_SRSNode *poNode = nullptr;
 
     if( pszTargetKey == nullptr )
         poNode = poRoot;
     else
-        poNode =
-            const_cast<OGRSpatialReference *>(this)->GetAttrNode(pszTargetKey);
+        poNode = GetAttrNode(pszTargetKey);
 
     if( poNode == nullptr )
         return nullptr;
@@ -8080,12 +8077,12 @@ OGRSpatialReference::GetAxis( const char *pszTargetKey, int iAxis,
 /* -------------------------------------------------------------------- */
 /*      Find desired child AXIS.                                        */
 /* -------------------------------------------------------------------- */
-    OGR_SRSNode *poAxis = nullptr;
+    const OGR_SRSNode *poAxis = nullptr;
     const int nChildCount = poNode->GetChildCount();
 
     for( int iChild = 0; iChild < nChildCount; iChild++ )
     {
-        OGR_SRSNode *poChild = poNode->GetChild( iChild );
+        const OGR_SRSNode *poChild = poNode->GetChild( iChild );
 
         if( !EQUAL(poChild->GetValue(), "AXIS") )
             continue;

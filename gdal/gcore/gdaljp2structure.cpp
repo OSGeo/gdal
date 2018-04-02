@@ -177,7 +177,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename, pabyBoxData, nBoxDataLength, FALSE) ));
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GDALDataset* poDS = static_cast<GDALDataset*>(GDALOpen(osTmpFilename, GA_ReadOnly));
+        GDALDataset* poDS = GDALDataset::FromHandle(GDALOpen(osTmpFilename, GA_ReadOnly));
         CPLPopErrorHandler();
         // Reject GeoJP2 boxes with a TIFF with band_count > 1.
         if( poDS && poDS->GetRasterCount() > 1 )

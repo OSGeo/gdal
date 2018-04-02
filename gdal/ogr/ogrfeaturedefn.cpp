@@ -95,7 +95,7 @@ OGRFeatureDefn::OGRFeatureDefn( const char * pszName ) :
 OGRFeatureDefnH OGR_FD_Create( const char *pszName )
 
 {
-    return reinterpret_cast<OGRFeatureDefnH>(new OGRFeatureDefn(pszName));
+    return OGRFeatureDefn::ToHandle(new OGRFeatureDefn(pszName));
 }
 
 /************************************************************************/
@@ -145,7 +145,7 @@ OGRFeatureDefn::~OGRFeatureDefn()
 void OGR_FD_Destroy( OGRFeatureDefnH hDefn )
 
 {
-    delete reinterpret_cast<OGRFeatureDefn *>(hDefn);
+    delete OGRFeatureDefn::FromHandle(hDefn);
 }
 
 /************************************************************************/
@@ -180,7 +180,7 @@ void OGRFeatureDefn::Release()
 void OGR_FD_Release( OGRFeatureDefnH hDefn )
 
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->Release();
+    OGRFeatureDefn::FromHandle(hDefn)->Release();
 }
 
 /************************************************************************/
@@ -266,7 +266,7 @@ const char * OGRFeatureDefn::GetName()
 const char *OGR_FD_GetName( OGRFeatureDefnH hDefn )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetName();
+    return OGRFeatureDefn::FromHandle(hDefn)->GetName();
 }
 
 /************************************************************************/
@@ -308,7 +308,7 @@ int OGR_FD_GetFieldCount( OGRFeatureDefnH hDefn )
         OGRAPISpy_FD_GetFieldCount(hDefn);
 #endif
 
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetFieldCount();
+    return OGRFeatureDefn::FromHandle(hDefn)->GetFieldCount();
 }
 
 /************************************************************************/
@@ -366,8 +366,8 @@ OGRFieldDefnH OGR_FD_GetFieldDefn( OGRFeatureDefnH hDefn, int iField )
 
 {
     OGRFieldDefnH hFieldDefnH =
-        reinterpret_cast<OGRFieldDefnH>(
-            reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetFieldDefn(iField));
+        OGRFieldDefn::ToHandle(
+            OGRFeatureDefn::FromHandle(hDefn)->GetFieldDefn(iField));
 
 #ifdef OGRAPISPY_ENABLED
     if( bOGRAPISpyEnabled )
@@ -445,8 +445,8 @@ void OGRFeatureDefn::AddFieldDefn( OGRFieldDefn * poNewDefn )
 void OGR_FD_AddFieldDefn( OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField )
 
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->
-        AddFieldDefn( reinterpret_cast<OGRFieldDefn *>(hNewField));
+    OGRFeatureDefn::FromHandle(hDefn)->
+        AddFieldDefn( OGRFieldDefn::FromHandle(hNewField));
 }
 
 /************************************************************************/
@@ -514,7 +514,7 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn( int iField )
 OGRErr OGR_FD_DeleteFieldDefn( OGRFeatureDefnH hDefn, int iField )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->DeleteFieldDefn(iField);
+    return OGRFeatureDefn::FromHandle(hDefn)->DeleteFieldDefn(iField);
 }
 
 /************************************************************************/
@@ -592,7 +592,7 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns( int* panMap )
 OGRErr OGR_FD_ReorderFieldDefns( OGRFeatureDefnH hDefn, int* panMap )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->ReorderFieldDefns(panMap);
+    return OGRFeatureDefn::FromHandle(hDefn)->ReorderFieldDefns(panMap);
 }
 
 /************************************************************************/
@@ -637,7 +637,7 @@ int OGR_FD_GetGeomFieldCount( OGRFeatureDefnH hDefn )
         OGRAPISpy_FD_GetGeomFieldCount(hDefn);
 #endif
 
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetGeomFieldCount();
+    return OGRFeatureDefn::FromHandle(hDefn)->GetGeomFieldCount();
 }
 
 /************************************************************************/
@@ -696,8 +696,8 @@ OGRGeomFieldDefnH OGR_FD_GetGeomFieldDefn( OGRFeatureDefnH hDefn,
 
 {
     OGRGeomFieldDefnH hGeomField =
-        reinterpret_cast<OGRGeomFieldDefnH>(
-            reinterpret_cast<OGRFeatureDefn *>(hDefn)->
+        OGRGeomFieldDefn::ToHandle(
+            OGRFeatureDefn::FromHandle(hDefn)->
                 GetGeomFieldDefn(iGeomField));
 
 #ifdef OGRAPISPY_ENABLED
@@ -774,8 +774,8 @@ void OGR_FD_AddGeomFieldDefn( OGRFeatureDefnH hDefn,
                               OGRGeomFieldDefnH hNewGeomField )
 
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->AddGeomFieldDefn(
-        reinterpret_cast<OGRGeomFieldDefn *>(hNewGeomField));
+    OGRFeatureDefn::FromHandle(hDefn)->AddGeomFieldDefn(
+        OGRGeomFieldDefn::FromHandle(hNewGeomField));
 }
 
 /************************************************************************/
@@ -847,7 +847,7 @@ OGRErr OGRFeatureDefn::DeleteGeomFieldDefn( int iGeomField )
 OGRErr OGR_FD_DeleteGeomFieldDefn( OGRFeatureDefnH hDefn, int iGeomField )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->
+    return OGRFeatureDefn::FromHandle(hDefn)->
         DeleteGeomFieldDefn(iGeomField);
 }
 
@@ -910,7 +910,7 @@ int OGR_FD_GetGeomFieldIndex( OGRFeatureDefnH hDefn,
         OGRAPISpy_FD_GetGeomFieldIndex(hDefn, pszGeomFieldName);
 #endif
 
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->
+    return OGRFeatureDefn::FromHandle(hDefn)->
         GetGeomFieldIndex(pszGeomFieldName);
 }
 
@@ -968,7 +968,7 @@ OGRwkbGeometryType OGR_FD_GetGeomType( OGRFeatureDefnH hDefn )
 
 {
     OGRwkbGeometryType eType =
-        reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetGeomType();
+        OGRFeatureDefn::FromHandle(hDefn)->GetGeomType();
     if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
     {
         eType = OGR_GT_GetLinear(eType);
@@ -1042,7 +1042,7 @@ void OGRFeatureDefn::SetGeomType( OGRwkbGeometryType eNewType )
 void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
 
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->SetGeomType(eType);
+    OGRFeatureDefn::FromHandle(hDefn)->SetGeomType(eType);
 }
 
 /************************************************************************/
@@ -1081,7 +1081,7 @@ void OGR_FD_SetGeomType( OGRFeatureDefnH hDefn, OGRwkbGeometryType eType )
 int OGR_FD_Reference( OGRFeatureDefnH hDefn )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->Reference();
+    return OGRFeatureDefn::FromHandle(hDefn)->Reference();
 }
 
 /************************************************************************/
@@ -1115,7 +1115,7 @@ int OGR_FD_Reference( OGRFeatureDefnH hDefn )
 int OGR_FD_Dereference( OGRFeatureDefnH hDefn )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->Dereference();
+    return OGRFeatureDefn::FromHandle(hDefn)->Dereference();
 }
 
 /************************************************************************/
@@ -1150,7 +1150,7 @@ int OGR_FD_Dereference( OGRFeatureDefnH hDefn )
 int OGR_FD_GetReferenceCount( OGRFeatureDefnH hDefn )
 
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetReferenceCount();
+    return OGRFeatureDefn::FromHandle(hDefn)->GetReferenceCount();
 }
 
 /************************************************************************/
@@ -1210,7 +1210,7 @@ int OGR_FD_GetFieldIndex( OGRFeatureDefnH hDefn, const char *pszFieldName )
 #endif
 
     return
-        reinterpret_cast<OGRFeatureDefn *>(hDefn)->GetFieldIndex(pszFieldName);
+        OGRFeatureDefn::FromHandle(hDefn)->GetFieldIndex(pszFieldName);
 }
 
 /************************************************************************/
@@ -1260,7 +1260,7 @@ int OGRFeatureDefn::IsGeometryIgnored()
 
 int OGR_FD_IsGeometryIgnored( OGRFeatureDefnH hDefn )
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->IsGeometryIgnored();
+    return OGRFeatureDefn::FromHandle(hDefn)->IsGeometryIgnored();
 }
 
 /************************************************************************/
@@ -1308,7 +1308,7 @@ void OGRFeatureDefn::SetGeometryIgnored( int bIgnore )
 
 void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->SetGeometryIgnored( bIgnore );
+    OGRFeatureDefn::FromHandle(hDefn)->SetGeometryIgnored( bIgnore );
 }
 
 /************************************************************************/
@@ -1342,7 +1342,7 @@ void OGR_FD_SetGeometryIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 
 int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
 {
-    return reinterpret_cast<OGRFeatureDefn *>(hDefn)->IsStyleIgnored();
+    return OGRFeatureDefn::FromHandle(hDefn)->IsStyleIgnored();
 }
 
 /************************************************************************/
@@ -1376,7 +1376,7 @@ int OGR_FD_IsStyleIgnored( OGRFeatureDefnH hDefn )
 
 void OGR_FD_SetStyleIgnored( OGRFeatureDefnH hDefn, int bIgnore )
 {
-    reinterpret_cast<OGRFeatureDefn *>(hDefn)->SetStyleIgnored(bIgnore);
+    OGRFeatureDefn::FromHandle(hDefn)->SetStyleIgnored(bIgnore);
 }
 
 /************************************************************************/
@@ -1468,8 +1468,8 @@ int OGR_FD_IsSame( OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn )
     VALIDATE_POINTER1( hFDefn, "OGR_FD_IsSame", FALSE );
     VALIDATE_POINTER1( hOtherFDefn, "OGR_FD_IsSame", FALSE );
 
-    return reinterpret_cast<OGRFeatureDefn *>(hFDefn)->
-        IsSame(reinterpret_cast<OGRFeatureDefn *>(hOtherFDefn));
+    return OGRFeatureDefn::FromHandle(hFDefn)->
+        IsSame(OGRFeatureDefn::FromHandle(hOtherFDefn));
 }
 
 /************************************************************************/

@@ -130,8 +130,8 @@ OGRFeatureH OGR_F_Create( OGRFeatureDefnH hDefn )
 
 {
     VALIDATE_POINTER1( hDefn, "OGR_F_Create", nullptr );
-    return reinterpret_cast<OGRFeatureH>(
-        OGRFeature::CreateFeature(reinterpret_cast<OGRFeatureDefn *>(hDefn)));
+    return OGRFeature::ToHandle(
+        OGRFeature::CreateFeature(OGRFeatureDefn::FromHandle(hDefn)));
 }
 
 /************************************************************************/
@@ -220,7 +220,7 @@ OGRFeature::~OGRFeature()
 void OGR_F_Destroy( OGRFeatureH hFeat )
 
 {
-    delete reinterpret_cast<OGRFeature *>(hFeat);
+    delete OGRFeature::FromHandle(hFeat);
 }
 
 /************************************************************************/
@@ -319,8 +319,8 @@ OGRFeatureDefnH OGR_F_GetDefnRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetDefnRef", nullptr );
 
-    return reinterpret_cast<OGRFeatureDefnH>(
-        reinterpret_cast<OGRFeature *>(hFeat)->GetDefnRef());
+    return OGRFeatureDefn::ToHandle(
+        OGRFeature::FromHandle(hFeat)->GetDefnRef());
 }
 
 /************************************************************************/
@@ -392,8 +392,8 @@ OGRErr OGR_F_SetGeometryDirectly( OGRFeatureH hFeat, OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometryDirectly", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-        SetGeometryDirectly(reinterpret_cast<OGRGeometry *>(hGeom));
+    return OGRFeature::FromHandle(hFeat)->
+        SetGeometryDirectly(OGRGeometry::FromHandle(hGeom));
 }
 
 /************************************************************************/
@@ -463,8 +463,8 @@ OGRErr OGR_F_SetGeometry( OGRFeatureH hFeat, OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeometry", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-        SetGeometry(reinterpret_cast<OGRGeometry *>(hGeom));
+    return OGRFeature::FromHandle(hFeat)->
+        SetGeometry(OGRGeometry::FromHandle(hGeom));
 }
 
 /************************************************************************/
@@ -547,8 +547,8 @@ OGRGeometryH OGR_F_StealGeometry( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_StealGeometry", nullptr );
 
-    return reinterpret_cast<OGRGeometryH>(
-        reinterpret_cast<OGRFeature *>(hFeat)->StealGeometry());
+    return OGRGeometry::ToHandle(
+        OGRFeature::FromHandle(hFeat)->StealGeometry());
 }
 
 /************************************************************************/
@@ -598,7 +598,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeometryRef", nullptr );
 
-    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = OGRFeature::FromHandle(hFeat);
     OGRGeometry* poGeom = poFeature->GetGeometryRef();
 
     if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != nullptr &&
@@ -612,7 +612,7 @@ OGRGeometryH OGR_F_GetGeometryRef( OGRFeatureH hFeat )
         poGeom = poFeature->GetGeometryRef();
     }
 
-    return reinterpret_cast<OGRGeometryH>(poGeom);
+    return OGRGeometry::ToHandle(poGeom);
 }
 
 /************************************************************************/
@@ -686,7 +686,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldRef", nullptr );
 
-    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = OGRFeature::FromHandle(hFeat);
     OGRGeometry* poGeom = poFeature->GetGeomFieldRef(iField);
 
     if( !OGRGetNonLinearGeometriesEnabledFlag() && poGeom != nullptr &&
@@ -700,7 +700,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef( OGRFeatureH hFeat, int iField )
         poGeom = poFeature->GetGeomFieldRef(iField);
     }
 
-    return reinterpret_cast<OGRGeometryH>(poGeom);
+    return OGRGeometry::ToHandle(poGeom);
 }
 
 /************************************************************************/
@@ -777,8 +777,8 @@ OGRErr OGR_F_SetGeomFieldDirectly( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomFieldDirectly", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-        SetGeomFieldDirectly(iField, reinterpret_cast<OGRGeometry *>(hGeom));
+    return OGRFeature::FromHandle(hFeat)->
+        SetGeomFieldDirectly(iField, OGRGeometry::FromHandle(hGeom));
 }
 
 /************************************************************************/
@@ -854,8 +854,8 @@ OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetGeomField", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-        SetGeomField(iField, reinterpret_cast<OGRGeometry *>(hGeom));
+    return OGRFeature::FromHandle(hFeat)->
+        SetGeomField(iField, OGRGeometry::FromHandle(hGeom));
 }
 
 /************************************************************************/
@@ -911,8 +911,8 @@ OGRFeatureH OGR_F_Clone( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_Clone", nullptr );
 
-    return reinterpret_cast<OGRFeatureH>(
-        reinterpret_cast<OGRFeature *>(hFeat)->Clone());
+    return OGRFeature::ToHandle(
+        OGRFeature::FromHandle(hFeat)->Clone());
 }
 
 /************************************************************************/
@@ -1021,7 +1021,7 @@ int OGR_F_GetFieldCount( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldCount", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldCount();
+    return OGRFeature::FromHandle(hFeat)->GetFieldCount();
 }
 
 /************************************************************************/
@@ -1062,7 +1062,7 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldDefnRef", nullptr );
 
-    OGRFeature *poFeat = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature *poFeat = OGRFeature::FromHandle(hFeat);
 
     if( i < 0 || i >= poFeat->GetFieldCount() )
     {
@@ -1113,7 +1113,7 @@ int OGR_F_GetFieldIndex( OGRFeatureH hFeat, const char *pszName )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldIndex", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldIndex( pszName );
+    return OGRFeature::FromHandle(hFeat)->GetFieldIndex( pszName );
 }
 
 /************************************************************************/
@@ -1156,7 +1156,7 @@ int OGR_F_GetGeomFieldCount( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldCount", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetGeomFieldCount();
+    return OGRFeature::FromHandle(hFeat)->GetGeomFieldCount();
 }
 
 /************************************************************************/
@@ -1203,7 +1203,7 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef( OGRFeatureH hFeat, int i )
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldDefnRef", nullptr );
 
     return reinterpret_cast<OGRGeomFieldDefnH>(
-        reinterpret_cast<OGRFeature *>(hFeat)->GetGeomFieldDefnRef(i));
+        OGRFeature::FromHandle(hFeat)->GetGeomFieldDefnRef(i));
 }
 
 /************************************************************************/
@@ -1252,7 +1252,7 @@ int OGR_F_GetGeomFieldIndex( OGRFeatureH hFeat, const char *pszName )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetGeomFieldIndex", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetGeomFieldIndex( pszName );
+    return OGRFeature::FromHandle(hFeat)->GetGeomFieldIndex( pszName );
 }
 
 /************************************************************************/
@@ -1293,7 +1293,7 @@ int OGRFeature::IsFieldSet( int iField )
                 return FALSE;
 
             return OGR_G_Area(
-                reinterpret_cast<OGRGeometryH>(papoGeometries[0])) != 0.0;
+                OGRGeometry::ToHandle(papoGeometries[0])) != 0.0;
 
           default:
             return FALSE;
@@ -1325,7 +1325,7 @@ int OGR_F_IsFieldSet( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSet", 0 );
 
-    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = OGRFeature::FromHandle(hFeat);
 
     if( iField < 0 || iField >= poFeature->GetFieldCount() )
     {
@@ -1404,7 +1404,7 @@ void OGR_F_UnsetField( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_UnsetField" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->UnsetField( iField );
+    OGRFeature::FromHandle(hFeat)->UnsetField( iField );
 }
 
 
@@ -1461,7 +1461,7 @@ int OGR_F_IsFieldNull( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldNull", 0 );
 
-    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = OGRFeature::FromHandle(hFeat);
 
     if( iField < 0 || iField >= poFeature->GetFieldCount() )
     {
@@ -1525,7 +1525,7 @@ int OGR_F_IsFieldSetAndNotNull( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_IsFieldSetAndNotNull", 0 );
 
-    OGRFeature* poFeature = reinterpret_cast<OGRFeature *>(hFeat);
+    OGRFeature* poFeature = OGRFeature::FromHandle(hFeat);
 
     if( iField < 0 || iField >= poFeature->GetFieldCount() )
     {
@@ -1608,7 +1608,7 @@ void OGR_F_SetFieldNull( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldNull" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetFieldNull( iField );
+    OGRFeature::FromHandle(hFeat)->SetFieldNull( iField );
 }
 
 /************************************************************************/
@@ -1649,7 +1649,7 @@ OGRField *OGR_F_GetRawFieldRef( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetRawFieldRef", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetRawFieldRef( iField );
+    return OGRFeature::FromHandle(hFeat)->GetRawFieldRef( iField );
 }
 
 /************************************************************************/
@@ -1713,7 +1713,7 @@ int OGRFeature::GetFieldAsInteger( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0;
             return static_cast<int>(
-                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
+                OGR_G_Area(OGRGeometry::ToHandle(papoGeometries[0])));
 
         default:
             return 0;
@@ -1787,7 +1787,7 @@ int OGR_F_GetFieldAsInteger( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsInteger(iField);
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsInteger(iField);
 }
 
 /************************************************************************/
@@ -1840,7 +1840,7 @@ GIntBig OGRFeature::GetFieldAsInteger64( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0;
             return static_cast<int>(
-                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
+                OGR_G_Area(OGRGeometry::ToHandle(papoGeometries[0])));
 
         default:
             return 0;
@@ -1908,7 +1908,7 @@ GIntBig OGR_F_GetFieldAsInteger64( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger64", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsInteger64(iField);
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsInteger64(iField);
 }
 
 /************************************************************************/
@@ -1958,7 +1958,7 @@ double OGRFeature::GetFieldAsDouble( int iField )
             if( GetGeomFieldCount() == 0 || papoGeometries[0] == nullptr )
                 return 0.0;
             return
-                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0]));
+                OGR_G_Area(OGRGeometry::ToHandle(papoGeometries[0]));
 
         default:
             return 0.0;
@@ -2021,7 +2021,7 @@ double OGR_F_GetFieldAsDouble( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDouble", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsDouble(iField);
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsDouble(iField);
 }
 
 /************************************************************************/
@@ -2174,7 +2174,7 @@ const char *OGRFeature::GetFieldAsString( int iField )
 
             CPLsnprintf(
                 szTempBuffer, TEMP_BUFFER_SIZE, "%.16g",
-                OGR_G_Area(reinterpret_cast<OGRGeometryH>(papoGeometries[0])));
+                OGR_G_Area(OGRGeometry::ToHandle(papoGeometries[0])));
             m_pszTmpFieldValue = VSI_STRDUP_VERBOSE( szTempBuffer );
             if( m_pszTmpFieldValue == nullptr )
                 return "";
@@ -2481,7 +2481,7 @@ const char *OGR_F_GetFieldAsString( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsString", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsString(iField);
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsString(iField);
 }
 
 /************************************************************************/
@@ -2567,7 +2567,7 @@ const int *OGR_F_GetFieldAsIntegerList( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsIntegerList", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
+    return OGRFeature::FromHandle(hFeat)->
         GetFieldAsIntegerList(iField, pnCount);
 }
 
@@ -2653,7 +2653,7 @@ const GIntBig *OGR_F_GetFieldAsInteger64List( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsInteger64List", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
+    return OGRFeature::FromHandle(hFeat)->
         GetFieldAsInteger64List(iField, pnCount);
 }
 
@@ -2736,7 +2736,7 @@ const double *OGR_F_GetFieldAsDoubleList( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDoubleList", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
+    return OGRFeature::FromHandle(hFeat)->
         GetFieldAsDoubleList(iField, pnCount);
 }
 
@@ -2820,7 +2820,7 @@ char **OGR_F_GetFieldAsStringList( OGRFeatureH hFeat, int iField )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsStringList", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFieldAsStringList(iField);
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsStringList(iField);
 }
 
 /************************************************************************/
@@ -2894,7 +2894,7 @@ GByte *OGR_F_GetFieldAsBinary( OGRFeatureH hFeat, int iField, int *pnBytes )
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsBinary", nullptr );
     VALIDATE_POINTER1( pnBytes, "OGR_F_GetFieldAsBinary", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
+    return OGRFeature::FromHandle(hFeat)->
         GetFieldAsBinary(iField, pnBytes);
 }
 
@@ -3028,7 +3028,7 @@ int OGR_F_GetFieldAsDateTime( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTime", 0 );
 
     float fSecond = 0.0f;
-    const bool bRet = CPL_TO_BOOL(reinterpret_cast<OGRFeature *>(hFeat)->
+    const bool bRet = CPL_TO_BOOL(OGRFeature::FromHandle(hFeat)->
         GetFieldAsDateTime( iField,
                             pnYear, pnMonth, pnDay,
                             pnHour, pnMinute, &fSecond,
@@ -3072,7 +3072,7 @@ int OGR_F_GetFieldAsDateTimeEx( OGRFeatureH hFeat, int iField,
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFieldAsDateTimeEx", 0 );
 
     return
-        reinterpret_cast<OGRFeature *>(hFeat)->
+        OGRFeature::FromHandle(hFeat)->
             GetFieldAsDateTime(iField,
                                pnYear, pnMonth, pnDay,
                                pnHour, pnMinute, pfSecond,
@@ -3337,7 +3337,7 @@ void OGR_F_SetFieldInteger( OGRFeatureH hFeat, int iField, int nValue )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldInteger" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, nValue );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, nValue );
 }
 
 /************************************************************************/
@@ -3494,7 +3494,7 @@ void OGR_F_SetFieldInteger64( OGRFeatureH hFeat, int iField, GIntBig nValue )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldInteger64" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, nValue );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, nValue );
 }
 
 /************************************************************************/
@@ -3647,7 +3647,7 @@ void OGR_F_SetFieldDouble( OGRFeatureH hFeat, int iField, double dfValue )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDouble" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, dfValue );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, dfValue );
 }
 
 /************************************************************************/
@@ -3962,7 +3962,7 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldString" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, pszValue );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, pszValue );
 }
 
 /************************************************************************/
@@ -4115,7 +4115,7 @@ void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldIntegerList" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetField( iField, nCount, panValues );
 }
 
@@ -4262,7 +4262,7 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldInteger64List" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField(iField, nCount, panValues);
+    OGRFeature::FromHandle(hFeat)->SetField(iField, nCount, panValues);
 }
 
 /************************************************************************/
@@ -4394,7 +4394,7 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDoubleList" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField(iField, nCount, padfValues);
+    OGRFeature::FromHandle(hFeat)->SetField(iField, nCount, padfValues);
 }
 
 /************************************************************************/
@@ -4538,7 +4538,7 @@ void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldStringList" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, papszValues );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, papszValues );
 }
 
 /************************************************************************/
@@ -4622,7 +4622,7 @@ void OGR_F_SetFieldBinary( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldBinary" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, nBytes, pabyData );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, nBytes, pabyData );
 }
 
 /************************************************************************/
@@ -4757,7 +4757,7 @@ void OGR_F_SetFieldDateTime( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTime" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetField( iField, nYear, nMonth, nDay,
                   nHour, nMinute, static_cast<float>(nSecond), nTZFlag );
 }
@@ -4798,7 +4798,7 @@ void OGR_F_SetFieldDateTimeEx( OGRFeatureH hFeat, int iField,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDateTimeEx" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetField( iField, nYear, nMonth, nDay,
                   nHour, nMinute, fSecond, nTZFlag );
 }
@@ -5070,7 +5070,7 @@ void OGR_F_SetFieldRaw( OGRFeatureH hFeat, int iField, OGRField *psValue )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldRaw" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetField( iField, psValue );
+    OGRFeature::FromHandle(hFeat)->SetField( iField, psValue );
 }
 
 /************************************************************************/
@@ -5197,7 +5197,7 @@ void OGR_F_DumpReadable( OGRFeatureH hFeat, FILE *fpOut )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_DumpReadable" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->DumpReadable( fpOut );
+    OGRFeature::FromHandle(hFeat)->DumpReadable( fpOut );
 }
 
 /************************************************************************/
@@ -5235,7 +5235,7 @@ GIntBig OGR_F_GetFID( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetFID", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetFID();
+    return OGRFeature::FromHandle(hFeat)->GetFID();
 }
 
 /************************************************************************/
@@ -5290,7 +5290,7 @@ OGRErr OGR_F_SetFID( OGRFeatureH hFeat, GIntBig nFID )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_SetFID", OGRERR_FAILURE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->SetFID(nFID);
+    return OGRFeature::FromHandle(hFeat)->SetFID(nFID);
 }
 
 /************************************************************************/
@@ -5525,8 +5525,8 @@ int OGR_F_Equal( OGRFeatureH hFeat, OGRFeatureH hOtherFeat )
     VALIDATE_POINTER1( hFeat, "OGR_F_Equal", 0 );
     VALIDATE_POINTER1( hOtherFeat, "OGR_F_Equal", 0 );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-        Equal( reinterpret_cast<OGRFeature *>(hOtherFeat) );
+    return OGRFeature::FromHandle(hFeat)->
+        Equal( OGRFeature::FromHandle(hOtherFeat) );
 }
 
 /************************************************************************/
@@ -5603,8 +5603,8 @@ OGRErr OGR_F_SetFrom( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
     VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
 
     return
-        reinterpret_cast<OGRFeature *>(hFeat)->
-            SetFrom( reinterpret_cast<OGRFeature *>(hOtherFeat),
+        OGRFeature::FromHandle(hFeat)->
+            SetFrom( OGRFeature::FromHandle(hOtherFeat),
                      bForgiving );
 }
 
@@ -5743,8 +5743,8 @@ OGRErr OGR_F_SetFromWithMap( OGRFeatureH hFeat, OGRFeatureH hOtherFeat,
     VALIDATE_POINTER1( hOtherFeat, "OGR_F_SetFrom", OGRERR_FAILURE );
     VALIDATE_POINTER1( panMap, "OGR_F_SetFrom", OGRERR_FAILURE);
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
-      SetFrom( reinterpret_cast<OGRFeature *>(hOtherFeat),
+    return OGRFeature::FromHandle(hFeat)->
+      SetFrom( OGRFeature::FromHandle(hOtherFeat),
                  panMap, bForgiving );
 }
 
@@ -5964,7 +5964,7 @@ const char *OGR_F_GetStyleString( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleString", nullptr );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->GetStyleString();
+    return OGRFeature::FromHandle(hFeat)->GetStyleString();
 }
 
 /************************************************************************/
@@ -6017,7 +6017,7 @@ void OGR_F_SetStyleString( OGRFeatureH hFeat, const char *pszStyle )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleString" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetStyleString(pszStyle);
+    OGRFeature::FromHandle(hFeat)->SetStyleString(pszStyle);
 }
 
 /************************************************************************/
@@ -6063,7 +6063,7 @@ void OGR_F_SetStyleStringDirectly( OGRFeatureH hFeat, char *pszStyle )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleStringDirectly" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetStyleStringDirectly(pszStyle);
+    OGRFeature::FromHandle(hFeat)->SetStyleStringDirectly(pszStyle);
 }
 
 //************************************************************************/
@@ -6215,7 +6215,7 @@ OGRStyleTableH OGR_F_GetStyleTable( OGRFeatureH hFeat )
     VALIDATE_POINTER1( hFeat, "OGR_F_GetStyleTable", nullptr );
 
     return reinterpret_cast<OGRStyleTableH>(
-        reinterpret_cast<OGRFeature *>(hFeat)->GetStyleTable());
+        OGRFeature::FromHandle(hFeat)->GetStyleTable());
 }
 
 /************************************************************************/
@@ -6228,7 +6228,7 @@ void OGR_F_SetStyleTableDirectly( OGRFeatureH hFeat,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTableDirectly" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetStyleTableDirectly(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
@@ -6243,7 +6243,7 @@ void OGR_F_SetStyleTable( OGRFeatureH hFeat,
     VALIDATE_POINTER0( hFeat, "OGR_F_SetStyleTable" );
     VALIDATE_POINTER0( hStyleTable, "OGR_F_SetStyleTable" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetStyleTable(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
@@ -6348,7 +6348,7 @@ void OGR_F_FillUnsetWithDefault( OGRFeatureH hFeat,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_FillUnsetWithDefault" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         FillUnsetWithDefault( bNotNullableOnly, papszOptions );
 }
 
@@ -6502,7 +6502,7 @@ int OGR_F_Validate( OGRFeatureH hFeat, int nValidateFlags, int bEmitError )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_Validate", FALSE );
 
-    return reinterpret_cast<OGRFeature *>(hFeat)->
+    return OGRFeature::FromHandle(hFeat)->
         Validate( nValidateFlags, bEmitError );
 }
 
@@ -6574,7 +6574,7 @@ const char *OGR_F_GetNativeData( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeData", nullptr );
 
-    return reinterpret_cast<const OGRFeature *>(hFeat)->GetNativeData();
+    return OGRFeature::FromHandle(hFeat)->GetNativeData();
 }
 
 /************************************************************************/
@@ -6624,7 +6624,7 @@ const char *OGR_F_GetNativeMediaType( OGRFeatureH hFeat )
 {
     VALIDATE_POINTER1( hFeat, "OGR_F_GetNativeMediaType", nullptr );
 
-    return reinterpret_cast<const OGRFeature *>(hFeat)->GetNativeMediaType();
+    return OGRFeature::FromHandle(hFeat)->GetNativeMediaType();
 }
 
 /************************************************************************/
@@ -6680,7 +6680,7 @@ void OGR_F_SetNativeData( OGRFeatureH hFeat, const char* pszNativeData )
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeData" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->SetNativeData(pszNativeData);
+    OGRFeature::FromHandle(hFeat)->SetNativeData(pszNativeData);
 }
 
 /************************************************************************/
@@ -6738,7 +6738,7 @@ void OGR_F_SetNativeMediaType( OGRFeatureH hFeat,
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetNativeMediaType" );
 
-    reinterpret_cast<OGRFeature *>(hFeat)->
+    OGRFeature::FromHandle(hFeat)->
         SetNativeMediaType(pszNativeMediaType);
 }
 

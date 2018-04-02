@@ -96,7 +96,7 @@ typedef enum
 const GIntBig TOTAL_FEATURES_NOT_INIT = -2;
 const GIntBig TOTAL_FEATURES_UNKNOWN = -1;
 
-class GDALDatasetPrivate
+class GDALDataset::Private
 {
   public:
     CPLMutex *hMutex;
@@ -113,7 +113,7 @@ class GDALDatasetPrivate
     GIntBig nTotalFeatures;
     OGRLayer *poCurrentLayer;
 
-    GDALDatasetPrivate() :
+    Private() :
         hMutex(nullptr),
         eStateReadWriteMutex(RW_MUTEX_STATE_UNKNOWN),
         nCurrentLayerIdx(0),
@@ -269,7 +269,7 @@ void GDALDataset::Init(bool bForceCachedIOIn)
     bForceCachedIO = bForceCachedIOIn;
 
     m_poStyleTable = nullptr;
-    m_hPrivateData = new(std::nothrow) GDALDatasetPrivate;
+    m_poPrivate = new(std::nothrow) Private;
 }
 //! @endcond
 
@@ -377,11 +377,9 @@ GDALDataset::~GDALDataset()
         m_poStyleTable = nullptr;
     }
 
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate != nullptr && psPrivate->hMutex != nullptr )
-        CPLDestroyMutex(psPrivate->hMutex);
-    delete psPrivate;
+    if( m_poPrivate != nullptr && m_poPrivate->hMutex != nullptr )
+        CPLDestroyMutex(m_poPrivate->hMutex);
+    delete m_poPrivate;
 
     CSLDestroy(papszOpenOptions);
 }
@@ -446,9 +444,7 @@ void GDALDataset::FlushCache()
     // cppcheck-suppress knownConditionTrueFalse
     if( nLayers > 0 )
     {
-        GDALDatasetPrivate *psPrivate =
-            static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-        CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : nullptr);
+        CPLMutexHolderD(m_poPrivate ? &(m_poPrivate->hMutex) : nullptr);
         for( int i = 0; i < nLayers; ++i )
         {
             OGRLayer *poLayer = GetLayer(i);
@@ -476,7 +472,7 @@ void CPL_STDCALL GDALFlushCache( GDALDatasetH hDS )
 {
     VALIDATE_POINTER0(hDS, "GDALFlushCache");
 
-    static_cast<GDALDataset *>(hDS)->FlushCache();
+    GDALDataset::FromHandle(hDS)->FlushCache();
 }
 
 /************************************************************************/
@@ -607,7 +603,7 @@ CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset,
 {
     VALIDATE_POINTER1(hDataset, "GDALAddBand", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDataset)->AddBand(eType, papszOptions);
+    return GDALDataset::FromHandle(hDataset)->AddBand(eType, papszOptions);
 }
 
 /************************************************************************/
@@ -710,7 +706,7 @@ int CPL_STDCALL GDALGetRasterXSize( GDALDatasetH hDataset )
 {
     VALIDATE_POINTER1(hDataset, "GDALGetRasterXSize", 0);
 
-    return static_cast<GDALDataset *>(hDataset)->GetRasterXSize();
+    return GDALDataset::FromHandle(hDataset)->GetRasterXSize();
 }
 
 /************************************************************************/
@@ -744,7 +740,7 @@ int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 {
     VALIDATE_POINTER1(hDataset, "GDALGetRasterYSize", 0);
 
-    return static_cast<GDALDataset *>(hDataset)->GetRasterYSize();
+    return GDALDataset::FromHandle(hDataset)->GetRasterYSize();
 }
 
 /************************************************************************/
@@ -796,8 +792,8 @@ GDALRasterBandH CPL_STDCALL GDALGetRasterBand( GDALDatasetH hDS, int nBandId )
 {
     VALIDATE_POINTER1(hDS, "GDALGetRasterBand", nullptr);
 
-    return static_cast<GDALRasterBandH>(
-        static_cast<GDALDataset *>(hDS)->GetRasterBand(nBandId));
+    return GDALRasterBand::ToHandle(
+        GDALDataset::FromHandle(hDS)->GetRasterBand(nBandId));
 }
 
 /************************************************************************/
@@ -829,7 +825,7 @@ int CPL_STDCALL GDALGetRasterCount( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetRasterCount", 0);
 
-    return static_cast<GDALDataset *>(hDS)->GetRasterCount();
+    return GDALDataset::FromHandle(hDS)->GetRasterCount();
 }
 
 /************************************************************************/
@@ -871,7 +867,7 @@ const char * CPL_STDCALL GDALGetProjectionRef( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetProjectionRef", nullptr);
 
-    return static_cast<GDALDataset *>(hDS)->GetProjectionRef();
+    return GDALDataset::FromHandle(hDS)->GetProjectionRef();
 }
 
 /************************************************************************/
@@ -918,7 +914,7 @@ CPLErr CPL_STDCALL GDALSetProjection( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, "GDALSetProjection", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)->SetProjection(pszProjection);
+    return GDALDataset::FromHandle(hDS)->SetProjection(pszProjection);
 }
 
 /************************************************************************/
@@ -984,7 +980,7 @@ CPLErr CPL_STDCALL GDALGetGeoTransform( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, "GDALGetGeoTransform", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)->GetGeoTransform(padfTransform);
+    return GDALDataset::FromHandle(hDS)->GetGeoTransform(padfTransform);
 }
 
 /************************************************************************/
@@ -1033,7 +1029,7 @@ GDALSetGeoTransform( GDALDatasetH hDS, double *padfTransform )
 {
     VALIDATE_POINTER1(hDS, "GDALSetGeoTransform", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)->SetGeoTransform(padfTransform);
+    return GDALDataset::FromHandle(hDS)->SetGeoTransform(padfTransform);
 }
 
 /************************************************************************/
@@ -1074,7 +1070,7 @@ GDALGetInternalHandle( GDALDatasetH hDS, const char * pszRequest )
 {
     VALIDATE_POINTER1(hDS, "GDALGetInternalHandle", nullptr);
 
-    return static_cast<GDALDataset *>(hDS)->GetInternalHandle(pszRequest);
+    return GDALDataset::FromHandle(hDS)->GetInternalHandle(pszRequest);
 }
 
 /************************************************************************/
@@ -1108,7 +1104,7 @@ GDALDriverH CPL_STDCALL GDALGetDatasetDriver( GDALDatasetH hDataset )
     VALIDATE_POINTER1(hDataset, "GDALGetDatasetDriver", nullptr);
 
     return static_cast<GDALDriverH>(
-        static_cast<GDALDataset *>(hDataset)->GetDriver());
+        GDALDataset::FromHandle(hDataset)->GetDriver());
 }
 
 /************************************************************************/
@@ -1142,7 +1138,7 @@ int CPL_STDCALL GDALReferenceDataset( GDALDatasetH hDataset )
 {
     VALIDATE_POINTER1(hDataset, "GDALReferenceDataset", 0);
 
-    return static_cast<GDALDataset *>(hDataset)->Reference();
+    return GDALDataset::FromHandle(hDataset)->Reference();
 }
 
 /************************************************************************/
@@ -1177,7 +1173,7 @@ int CPL_STDCALL GDALDereferenceDataset( GDALDatasetH hDataset )
 {
     VALIDATE_POINTER1(hDataset, "GDALDereferenceDataset", 0);
 
-    return static_cast<GDALDataset *>(hDataset)->Dereference();
+    return GDALDataset::FromHandle(hDataset)->Dereference();
 }
 
 
@@ -1219,7 +1215,7 @@ int CPL_STDCALL GDALReleaseDataset( GDALDatasetH hDataset )
 {
     VALIDATE_POINTER1(hDataset, "GDALReleaseDataset", 0);
 
-    return static_cast<GDALDataset *>(hDataset)->ReleaseRef();
+    return GDALDataset::FromHandle(hDataset)->ReleaseRef();
 }
 
 /************************************************************************/
@@ -1311,7 +1307,7 @@ int CPL_STDCALL GDALGetGCPCount( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetGCPCount", 0);
 
-    return static_cast<GDALDataset *>(hDS)->GetGCPCount();
+    return GDALDataset::FromHandle(hDS)->GetGCPCount();
 }
 
 /************************************************************************/
@@ -1346,7 +1342,7 @@ const char * CPL_STDCALL GDALGetGCPProjection( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetGCPProjection", nullptr);
 
-    return static_cast<GDALDataset *>(hDS)->GetGCPProjection();
+    return GDALDataset::FromHandle(hDS)->GetGCPProjection();
 }
 
 /************************************************************************/
@@ -1379,7 +1375,7 @@ const GDAL_GCP * CPL_STDCALL GDALGetGCPs( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetGCPs", nullptr);
 
-    return static_cast<GDALDataset *>(hDS)->GetGCPs();
+    return GDALDataset::FromHandle(hDS)->GetGCPs();
 }
 
 /************************************************************************/
@@ -1441,7 +1437,7 @@ CPLErr CPL_STDCALL GDALSetGCPs( GDALDatasetH hDS, int nGCPCount,
 {
     VALIDATE_POINTER1(hDS, "GDALSetGCPs", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)
+    return GDALDataset::FromHandle(hDS)
         ->SetGCPs(nGCPCount, pasGCPList, pszGCPProjection);
 }
 
@@ -1540,7 +1536,7 @@ CPLErr CPL_STDCALL GDALBuildOverviews( GDALDatasetH hDataset,
 {
     VALIDATE_POINTER1(hDataset, "GDALBuildOverviews", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDataset)
+    return GDALDataset::FromHandle(hDataset)
         ->BuildOverviews(pszResampling, nOverviews, panOverviewList, nListBands,
                          panBandList, pfnProgress, pProgressData);
 }
@@ -2116,7 +2112,7 @@ GDALDatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetRasterIO", CE_Failure);
 
-    GDALDataset *poDS = static_cast<GDALDataset *>(hDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
 
     return poDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                           nBufXSize, nBufYSize, eBufType, nBandCount,
@@ -2145,7 +2141,7 @@ CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetRasterIOEx", CE_Failure);
 
-    GDALDataset *poDS = static_cast<GDALDataset *>(hDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
 
     return poDS->RasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
                           nBufXSize, nBufYSize, eBufType, nBandCount,
@@ -2238,7 +2234,7 @@ int CPL_STDCALL GDALGetAccess( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetAccess", 0);
 
-    return static_cast<GDALDataset *>(hDS)->GetAccess();
+    return GDALDataset::FromHandle(hDS)->GetAccess();
 }
 
 /************************************************************************/
@@ -2346,7 +2342,7 @@ GDALDatasetAdviseRead( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetAdviseRead", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)
+    return GDALDataset::FromHandle(hDS)
         ->AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT,
                      nBandCount, panBandMap, papszOptions);
 }
@@ -2437,7 +2433,7 @@ char ** CPL_STDCALL GDALGetFileList( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALGetFileList", nullptr);
 
-    return static_cast<GDALDataset *>(hDS)->GetFileList();
+    return GDALDataset::FromHandle(hDS)->GetFileList();
 }
 
 /************************************************************************/
@@ -2514,7 +2510,7 @@ CPLErr CPL_STDCALL GDALCreateDatasetMaskBand( GDALDatasetH hDS, int nFlags )
 {
     VALIDATE_POINTER1(hDS, "GDALCreateDatasetMaskBand", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDS)->CreateMaskBand(nFlags);
+    return GDALDataset::FromHandle(hDS)->CreateMaskBand(nFlags);
 }
 
 /************************************************************************/
@@ -3061,7 +3057,7 @@ void CPL_STDCALL GDALClose( GDALDatasetH hDS )
     if( hDS == nullptr )
         return;
 
-    GDALDataset *poDS = static_cast<GDALDataset *>(hDS);
+    GDALDataset *poDS = GDALDataset::FromHandle(hDS);
 
     if (poDS->GetShared())
     {
@@ -3352,7 +3348,7 @@ GDALBeginAsyncReader( GDALDatasetH hDS, int nXOff, int nYOff,
 {
     VALIDATE_POINTER1(hDS, "GDALDataset", nullptr);
     return static_cast<GDALAsyncReaderH>(
-        static_cast<GDALDataset *>(hDS)->BeginAsyncReader(
+        GDALDataset::FromHandle(hDS)->BeginAsyncReader(
             nXOff, nYOff, nXSize, nYSize, pBuf, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
             papszOptions));
@@ -3396,7 +3392,7 @@ void CPL_STDCALL GDALEndAsyncReader( GDALDatasetH hDS,
 {
     VALIDATE_POINTER0(hDS, "GDALDataset");
     VALIDATE_POINTER0(hAsyncReaderH, "GDALAsyncReader");
-    static_cast<GDALDataset *>(hDS)
+    GDALDataset::FromHandle(hDS)
         ->EndAsyncReader(static_cast<GDALAsyncReader *>(hAsyncReaderH));
 }
 
@@ -3633,8 +3629,8 @@ void GDALDatasetReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer )
 {
     VALIDATE_POINTER0(hDS, "GDALDatasetReleaseResultSet");
 
-    static_cast<GDALDataset *>(hDS)
-        ->ReleaseResultSet(reinterpret_cast<OGRLayer *>(hLayer));
+    GDALDataset::FromHandle(hDS)
+        ->ReleaseResultSet(OGRLayer::FromHandle(hLayer));
 }
 
 /************************************************************************/
@@ -3657,7 +3653,7 @@ int GDALDatasetGetLayerCount( GDALDatasetH hDS )
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetH", 0);
 
-    return static_cast<GDALDataset *>(hDS)->GetLayerCount();
+    return GDALDataset::FromHandle(hDS)->GetLayerCount();
 }
 
 /************************************************************************/
@@ -3685,8 +3681,8 @@ OGRLayerH GDALDatasetGetLayer( GDALDatasetH hDS, int iLayer )
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetGetLayer", nullptr);
 
-    return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->GetLayer(iLayer));
+    return OGRLayer::ToHandle(
+        GDALDataset::FromHandle(hDS)->GetLayer(iLayer));
 }
 
 /************************************************************************/
@@ -3714,8 +3710,8 @@ OGRLayerH GDALDatasetGetLayerByName( GDALDatasetH hDS, const char *pszName )
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetGetLayerByName", nullptr);
 
-    return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->GetLayerByName(pszName));
+    return OGRLayer::ToHandle(
+        GDALDataset::FromHandle(hDS)->GetLayerByName(pszName));
 }
 
 /************************************************************************/
@@ -3744,7 +3740,7 @@ OGRErr GDALDatasetDeleteLayer( GDALDatasetH hDS, int iLayer )
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetH", OGRERR_INVALID_HANDLE);
 
-    return static_cast<GDALDataset *>(hDS)->DeleteLayer(iLayer);
+    return GDALDataset::FromHandle(hDS)->DeleteLayer(iLayer);
 }
 
 /************************************************************************/
@@ -3912,9 +3908,9 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
                  "Name was NULL in GDALDatasetCreateLayer");
         return nullptr;
     }
-    return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->CreateLayer(
-            pszName, reinterpret_cast<OGRSpatialReference *>(hSpatialRef),
+    return OGRLayer::ToHandle(
+        GDALDataset::FromHandle(hDS)->CreateLayer(
+            pszName, OGRSpatialReference::FromHandle(hSpatialRef),
             eGType, papszOptions));
 }
 
@@ -3953,9 +3949,9 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
     VALIDATE_POINTER1(hSrcLayer, "GDALDatasetCopyLayer", nullptr);
     VALIDATE_POINTER1(pszNewName, "GDALDatasetCopyLayer", nullptr);
 
-    return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->CopyLayer(
-            reinterpret_cast<OGRLayer *>(hSrcLayer), pszNewName, papszOptions));
+    return OGRLayer::ToHandle(
+        GDALDataset::FromHandle(hDS)->CopyLayer(
+            OGRLayer::FromHandle(hSrcLayer), pszNewName, papszOptions));
 }
 
 /************************************************************************/
@@ -4005,9 +4001,9 @@ OGRLayerH GDALDatasetExecuteSQL( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetExecuteSQL", nullptr);
 
-    return reinterpret_cast<OGRLayerH>(
-        static_cast<GDALDataset *>(hDS)->ExecuteSQL(
-            pszStatement, reinterpret_cast<OGRGeometry *>(hSpatialFilter),
+    return OGRLayer::ToHandle(
+        GDALDataset::FromHandle(hDS)->ExecuteSQL(
+            pszStatement, OGRGeometry::FromHandle(hSpatialFilter),
             pszDialect));
 }
 
@@ -4033,7 +4029,7 @@ OGRStyleTableH GDALDatasetGetStyleTable( GDALDatasetH hDS )
     VALIDATE_POINTER1(hDS, "OGR_DS_GetStyleTable", nullptr);
 
     return reinterpret_cast<OGRStyleTableH>(
-        static_cast<GDALDataset *>(hDS)->GetStyleTable());
+        GDALDataset::FromHandle(hDS)->GetStyleTable());
 }
 
 /************************************************************************/
@@ -4062,7 +4058,7 @@ void GDALDatasetSetStyleTableDirectly( GDALDatasetH hDS,
 {
     VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTableDirectly");
 
-    static_cast<GDALDataset *>(hDS)
+    GDALDataset::FromHandle(hDS)
         ->SetStyleTableDirectly(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
@@ -4091,7 +4087,7 @@ void GDALDatasetSetStyleTable( GDALDatasetH hDS, OGRStyleTableH hStyleTable )
     VALIDATE_POINTER0(hDS, "OGR_DS_SetStyleTable");
     VALIDATE_POINTER0(hStyleTable, "OGR_DS_SetStyleTable");
 
-    static_cast<GDALDataset *>(hDS)
+    GDALDataset::FromHandle(hDS)
         ->SetStyleTable(reinterpret_cast<OGRStyleTable *>(hStyleTable));
 }
 
@@ -4174,9 +4170,7 @@ In GDAL 1.X, this method used to be in the OGRDataSource class.
 int GDALDataset::GetSummaryRefCount() const
 
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : nullptr);
+    CPLMutexHolderD(m_poPrivate ? &(m_poPrivate->hMutex) : nullptr);
     int nSummaryCount = nRefCount;
     GDALDataset *poUseThis = const_cast<GDALDataset *>(this);
 
@@ -4432,7 +4426,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 CPLFree(panMap);
                 if(nullptr != poCT)
                     OCTDestroyCoordinateTransformation(
-                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
 
@@ -4456,7 +4450,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                     OGRFeature::DestroyFeature(poFeature);
                     CPLFree(panMap);
                     OCTDestroyCoordinateTransformation(
-                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                        OGRCoordinateTransformation::ToHandle(poCT));
                     return poDstLayer;
                 }
             }
@@ -4472,7 +4466,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
                 CPLFree(panMap);
                 if(nullptr != poCT)
                     OCTDestroyCoordinateTransformation(
-                        reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
 
@@ -4589,7 +4583,7 @@ OGRLayer *GDALDataset::CopyLayer( OGRLayer *poSrcLayer,
 
     if(nullptr != poCT)
         OCTDestroyCoordinateTransformation(
-            reinterpret_cast<OGRCoordinateTransformationH>(poCT));
+            OGRCoordinateTransformation::ToHandle(poCT));
 
     CPLFree(panMap);
 
@@ -4651,9 +4645,7 @@ OGRErr GDALDataset::DeleteLayer( CPL_UNUSED int iLayer )
 OGRLayer *GDALDataset::GetLayerByName( const char *pszName )
 
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    CPLMutexHolderD(psPrivate ? &(psPrivate->hMutex) : nullptr);
+    CPLMutexHolderD(m_poPrivate ? &(m_poPrivate->hMutex) : nullptr);
 
     if ( ! pszName )
         return nullptr;
@@ -5679,7 +5671,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
         if( psTableDef->data_source != nullptr )
         {
-            poTableDS = reinterpret_cast<GDALDataset *>(
+            poTableDS = GDALDataset::FromHandle(
                 OGROpenShared(psTableDef->data_source, FALSE, nullptr));
             if( poTableDS == nullptr )
             {
@@ -5745,7 +5737,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
         if( psTableDef->data_source != nullptr )
         {
-            poTableDS = reinterpret_cast<GDALDataset *>(
+            poTableDS = GDALDataset::FromHandle(
                 OGROpenShared(psTableDef->data_source, FALSE, nullptr));
             CPLAssert(poTableDS != nullptr);
             poTableDS->Dereference();
@@ -5867,7 +5859,7 @@ GDALDataset::BuildParseInfo(swq_select *psSelectInfo,
 
         if( psTableDef->data_source != nullptr )
         {
-            poTableDS = reinterpret_cast<GDALDataset *>(
+            poTableDS = GDALDataset::FromHandle(
                 OGROpenShared(psTableDef->data_source, FALSE, nullptr));
             CPLAssert(poTableDS != nullptr);
             poTableDS->Dereference();
@@ -6087,17 +6079,15 @@ OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) { return nullptr; }
 */
 void GDALDataset::ResetReading()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( !psPrivate )
+    if( !m_poPrivate )
         return;
-    psPrivate->nCurrentLayerIdx = 0;
-    psPrivate->nLayerCount = -1;
-    psPrivate->poCurrentLayer = nullptr;
-    psPrivate->nFeatureReadInLayer = 0;
-    psPrivate->nFeatureReadInDataset = 0;
-    psPrivate->nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
-    psPrivate->nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
+    m_poPrivate->nCurrentLayerIdx = 0;
+    m_poPrivate->nLayerCount = -1;
+    m_poPrivate->poCurrentLayer = nullptr;
+    m_poPrivate->nFeatureReadInLayer = 0;
+    m_poPrivate->nFeatureReadInDataset = 0;
+    m_poPrivate->nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
+    m_poPrivate->nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
 }
 
 /************************************************************************/
@@ -6121,7 +6111,7 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
 {
     VALIDATE_POINTER0(hDS, "GDALDatasetResetReading");
 
-    return static_cast<GDALDataset *>(hDS)->ResetReading();
+    return GDALDataset::FromHandle(hDS)->ResetReading();
 }
 
 /************************************************************************/
@@ -6181,9 +6171,7 @@ OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData )
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( !psPrivate || psPrivate->nCurrentLayerIdx < 0 )
+    if( !m_poPrivate || m_poPrivate->nCurrentLayerIdx < 0 )
     {
         if( ppoBelongingLayer != nullptr )
             *ppoBelongingLayer = nullptr;
@@ -6194,90 +6182,90 @@ OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
         return nullptr;
     }
 
-    if ( psPrivate->poCurrentLayer == nullptr &&
+    if ( m_poPrivate->poCurrentLayer == nullptr &&
          (pdfProgressPct != nullptr || pfnProgress != nullptr) )
     {
-        if( psPrivate->nLayerCount < 0 )
+        if( m_poPrivate->nLayerCount < 0 )
         {
-            psPrivate->nLayerCount = GetLayerCount();
+            m_poPrivate->nLayerCount = GetLayerCount();
         }
 
-        if( psPrivate->nTotalFeatures == TOTAL_FEATURES_NOT_INIT )
+        if( m_poPrivate->nTotalFeatures == TOTAL_FEATURES_NOT_INIT )
         {
-            psPrivate->nTotalFeatures = 0;
-            for(int i = 0; i < psPrivate->nLayerCount; i++)
+            m_poPrivate->nTotalFeatures = 0;
+            for(int i = 0; i < m_poPrivate->nLayerCount; i++)
             {
                 OGRLayer *poLayer = GetLayer(i);
                 if( poLayer == nullptr ||
                     !poLayer->TestCapability(OLCFastFeatureCount) )
                 {
-                    psPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
+                    m_poPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
                     break;
                 }
                 GIntBig nCount = poLayer->GetFeatureCount(FALSE);
                 if( nCount < 0 )
                 {
-                    psPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
+                    m_poPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
                     break;
                 }
-                psPrivate->nTotalFeatures += nCount;
+                m_poPrivate->nTotalFeatures += nCount;
             }
         }
     }
 
     while( true )
     {
-        if( psPrivate->poCurrentLayer == nullptr )
+        if( m_poPrivate->poCurrentLayer == nullptr )
         {
-            psPrivate->poCurrentLayer = GetLayer(psPrivate->nCurrentLayerIdx);
-            if( psPrivate->poCurrentLayer == nullptr )
+            m_poPrivate->poCurrentLayer = GetLayer(m_poPrivate->nCurrentLayerIdx);
+            if( m_poPrivate->poCurrentLayer == nullptr )
             {
-                psPrivate->nCurrentLayerIdx = -1;
+                m_poPrivate->nCurrentLayerIdx = -1;
                 if( ppoBelongingLayer != nullptr )
                     *ppoBelongingLayer = nullptr;
                 if( pdfProgressPct != nullptr )
                     *pdfProgressPct = 1.0;
                 return nullptr;
             }
-            psPrivate->poCurrentLayer->ResetReading();
-            psPrivate->nFeatureReadInLayer = 0;
-            if( psPrivate->nTotalFeatures < 0 && pdfProgressPct != nullptr )
+            m_poPrivate->poCurrentLayer->ResetReading();
+            m_poPrivate->nFeatureReadInLayer = 0;
+            if( m_poPrivate->nTotalFeatures < 0 && pdfProgressPct != nullptr )
             {
-                if( psPrivate->poCurrentLayer->TestCapability(
+                if( m_poPrivate->poCurrentLayer->TestCapability(
                         OLCFastFeatureCount) )
-                    psPrivate->nTotalFeaturesInLayer =
-                        psPrivate->poCurrentLayer->GetFeatureCount(FALSE);
+                    m_poPrivate->nTotalFeaturesInLayer =
+                        m_poPrivate->poCurrentLayer->GetFeatureCount(FALSE);
                 else
-                    psPrivate->nTotalFeaturesInLayer = 0;
+                    m_poPrivate->nTotalFeaturesInLayer = 0;
             }
         }
-        OGRFeature *poFeature = psPrivate->poCurrentLayer->GetNextFeature();
+        OGRFeature *poFeature = m_poPrivate->poCurrentLayer->GetNextFeature();
         if( poFeature == nullptr )
         {
-            psPrivate->nCurrentLayerIdx++;
-            psPrivate->poCurrentLayer = nullptr;
+            m_poPrivate->nCurrentLayerIdx++;
+            m_poPrivate->poCurrentLayer = nullptr;
             continue;
         }
 
-        psPrivate->nFeatureReadInLayer++;
-        psPrivate->nFeatureReadInDataset++;
+        m_poPrivate->nFeatureReadInLayer++;
+        m_poPrivate->nFeatureReadInDataset++;
         if( pdfProgressPct != nullptr || pfnProgress != nullptr )
         {
             double dfPct = 0.0;
-            if( psPrivate->nTotalFeatures > 0 )
+            if( m_poPrivate->nTotalFeatures > 0 )
             {
-                dfPct = 1.0 * psPrivate->nFeatureReadInDataset /
-                        psPrivate->nTotalFeatures;
+                dfPct = 1.0 * m_poPrivate->nFeatureReadInDataset /
+                        m_poPrivate->nTotalFeatures;
             }
             else
             {
                 dfPct =
-                    1.0 * psPrivate->nCurrentLayerIdx / psPrivate->nLayerCount;
-                if( psPrivate->nTotalFeaturesInLayer > 0 )
+                    1.0 * m_poPrivate->nCurrentLayerIdx / m_poPrivate->nLayerCount;
+                if( m_poPrivate->nTotalFeaturesInLayer > 0 )
                 {
-                    dfPct += 1.0 * psPrivate->nFeatureReadInLayer /
-                             psPrivate->nTotalFeaturesInLayer /
-                             psPrivate->nLayerCount;
+                    dfPct += 1.0 * m_poPrivate->nFeatureReadInLayer /
+                             m_poPrivate->nTotalFeaturesInLayer /
+                             m_poPrivate->nLayerCount;
                 }
             }
             if( pdfProgressPct )
@@ -6287,7 +6275,7 @@ OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
         }
 
         if( ppoBelongingLayer != nullptr )
-            *ppoBelongingLayer = psPrivate->poCurrentLayer;
+            *ppoBelongingLayer = m_poPrivate->poCurrentLayer;
         return poFeature;
     }
 }
@@ -6351,8 +6339,8 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature( GDALDatasetH hDS,
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetGetNextFeature", nullptr);
 
-    return reinterpret_cast<OGRFeatureH>(
-        reinterpret_cast<GDALDataset *>(hDS)
+    return OGRFeature::ToHandle(
+        GDALDataset::FromHandle(hDS)
             ->GetNextFeature((OGRLayer **)phBelongingLayer, pdfProgressPct,
                              pfnProgress, pProgressData));
 }
@@ -6451,7 +6439,7 @@ int GDALDatasetTestCapability( GDALDatasetH hDS, const char *pszCap )
     VALIDATE_POINTER1(hDS, "GDALDatasetTestCapability", 0);
     VALIDATE_POINTER1(pszCap, "GDALDatasetTestCapability", 0);
 
-    return static_cast<GDALDataset *>(hDS)->TestCapability(pszCap);
+    return GDALDataset::FromHandle(hDS)->TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -6573,7 +6561,7 @@ OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
         OGRAPISpy_Dataset_StartTransaction(hDS, bForce);
 #endif
 
-    return static_cast<GDALDataset *>(hDS)->StartTransaction(bForce);
+    return GDALDataset::FromHandle(hDS)->StartTransaction(bForce);
 }
 
 /************************************************************************/
@@ -6628,7 +6616,7 @@ OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
         OGRAPISpy_Dataset_CommitTransaction(hDS);
 #endif
 
-    return static_cast<GDALDataset *>(hDS)->CommitTransaction();
+    return GDALDataset::FromHandle(hDS)->CommitTransaction();
 }
 
 /************************************************************************/
@@ -6680,7 +6668,7 @@ OGRErr GDALDatasetRollbackTransaction( GDALDatasetH hDS )
         OGRAPISpy_Dataset_RollbackTransaction(hDS);
 #endif
 
-    return static_cast<GDALDataset *>(hDS)->RollbackTransaction();
+    return GDALDataset::FromHandle(hDS)->RollbackTransaction();
 }
 
 /************************************************************************/
@@ -6690,11 +6678,9 @@ OGRErr GDALDatasetRollbackTransaction( GDALDatasetH hDS )
 //! @cond Doxygen_Suppress
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate != nullptr && eAccess == GA_Update )
+    if( m_poPrivate != nullptr && eAccess == GA_Update )
     {
-        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
+        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
         {
             // In case dead-lock would occur, which is not impossible,
             // this can be used to prevent it, but at the risk of other
@@ -6702,15 +6688,15 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
             if(CPLTestBool(
                    CPLGetConfigOption("GDAL_ENABLE_READ_WRITE_MUTEX", "YES")))
             {
-                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
+                m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_ALLOWED;
             }
             else
             {
-                psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+                m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
             }
         }
-        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
-            (eRWFlag == GF_Write || psPrivate->hMutex != nullptr) )
+        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_ALLOWED &&
+            (eRWFlag == GF_Write || m_poPrivate->hMutex != nullptr) )
         {
             // There should be no race related to creating this mutex since
             // it should be first created through IWriteBlock() / IRasterIO()
@@ -6720,9 +6706,9 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
                      "[Thread " CPL_FRMT_GIB "] Acquiring RW mutex for %s",
                      CPLGetPID(), GetDescription());
 #endif
-            CPLCreateOrAcquireMutex(&(psPrivate->hMutex), 1000.0);
+            CPLCreateOrAcquireMutex(&(m_poPrivate->hMutex), 1000.0);
             // Not sure if we can have recursive calls, so...
-            psPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]++;
+            m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]++;
             return TRUE;
         }
     }
@@ -6735,12 +6721,10 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 
 void GDALDataset::LeaveReadWrite()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate )
+    if( m_poPrivate )
     {
-        psPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]--;
-        CPLReleaseMutex(psPrivate->hMutex);
+        m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]--;
+        CPLReleaseMutex(m_poPrivate->hMutex);
 #ifdef DEBUG_VERBOSE
         CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] Releasing RW mutex for %s",
                  CPLGetPID(), GetDescription());
@@ -6754,11 +6738,9 @@ void GDALDataset::LeaveReadWrite()
 
 void GDALDataset::InitRWLock()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate )
+    if( m_poPrivate )
     {
-        if( psPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
+        if( m_poPrivate->eStateReadWriteMutex == RW_MUTEX_STATE_UNKNOWN )
         {
             if( EnterReadWrite(GF_Write) )
                 LeaveReadWrite();
@@ -6776,11 +6758,9 @@ void GDALDataset::InitRWLock()
 // to disable it.
 void GDALDataset::DisableReadWriteMutex()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate )
+    if( m_poPrivate )
     {
-        psPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
+        m_poPrivate->eStateReadWriteMutex = RW_MUTEX_STATE_DISABLED;
     }
 }
 
@@ -6790,23 +6770,21 @@ void GDALDataset::DisableReadWriteMutex()
 
 void GDALDataset::TemporarilyDropReadWriteLock()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate && psPrivate->hMutex )
+    if( m_poPrivate && m_poPrivate->hMutex )
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] "
                  "Temporarily drop RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
-        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
-        const int nCount = psPrivate->oMapThreadToMutexTakenCount[CPLGetPID()];
+        CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
+        const int nCount = m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()];
 #ifdef DEBUG_EXTRA
-        psPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()] = nCount;
+        m_poPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()] = nCount;
 #endif
         for(int i = 0; i < nCount + 1; i++)
         {
-            CPLReleaseMutex(psPrivate->hMutex);
+            CPLReleaseMutex(m_poPrivate->hMutex);
         }
     }
 }
@@ -6817,26 +6795,24 @@ void GDALDataset::TemporarilyDropReadWriteLock()
 
 void GDALDataset::ReacquireReadWriteLock()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate && psPrivate->hMutex )
+    if( m_poPrivate && m_poPrivate->hMutex )
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] "
                  "Reacquire temporarily dropped RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
-        CPLAcquireMutex(psPrivate->hMutex, 1000.0);
-        const int nCount = psPrivate->oMapThreadToMutexTakenCount[CPLGetPID()];
+        CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
+        const int nCount = m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()];
 #ifdef DEBUG_EXTRA
         CPLAssert(nCount ==
-                  psPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()]);
+                  m_poPrivate->oMapThreadToMutexTakenCountSaved[CPLGetPID()]);
 #endif
         if( nCount == 0 )
-            CPLReleaseMutex(psPrivate->hMutex);
+            CPLReleaseMutex(m_poPrivate->hMutex);
         for(int i = 0; i < nCount - 1; i++)
         {
-            CPLAcquireMutex(psPrivate->hMutex, 1000.0);
+            CPLAcquireMutex(m_poPrivate->hMutex, 1000.0);
         }
     }
 }
@@ -6847,11 +6823,9 @@ void GDALDataset::ReacquireReadWriteLock()
 
 int GDALDataset::AcquireMutex()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate == nullptr )
+    if( m_poPrivate == nullptr )
         return 0;
-    return CPLCreateOrAcquireMutex(&(psPrivate->hMutex), 1000.0);
+    return CPLCreateOrAcquireMutex(&(m_poPrivate->hMutex), 1000.0);
 }
 
 /************************************************************************/
@@ -6860,9 +6834,7 @@ int GDALDataset::AcquireMutex()
 
 void GDALDataset::ReleaseMutex()
 {
-    GDALDatasetPrivate *psPrivate =
-        static_cast<GDALDatasetPrivate *>(m_hPrivateData);
-    if( psPrivate )
-        CPLReleaseMutex(psPrivate->hMutex);
+    if( m_poPrivate )
+        CPLReleaseMutex(m_poPrivate->hMutex);
 }
 //! @endcond

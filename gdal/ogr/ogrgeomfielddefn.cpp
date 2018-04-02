@@ -105,7 +105,7 @@ OGRGeomFieldDefnH OGR_GFld_Create( const char *pszName,
 
 {
   return
-      reinterpret_cast<OGRGeomFieldDefnH>(new OGRGeomFieldDefn(pszName, eType));
+      OGRGeomFieldDefn::ToHandle(new OGRGeomFieldDefn(pszName, eType));
 }
 
 /************************************************************************/
@@ -154,7 +154,7 @@ void OGR_GFld_Destroy( OGRGeomFieldDefnH hDefn )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_Destroy" );
 
-    delete reinterpret_cast<OGRGeomFieldDefn *>(hDefn);
+    delete OGRGeomFieldDefn::FromHandle(hDefn);
 }
 
 /************************************************************************/
@@ -201,7 +201,7 @@ void OGR_GFld_SetName( OGRGeomFieldDefnH hDefn, const char *pszName )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetName" );
 
-    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetName(pszName);
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetName(pszName);
 }
 
 /************************************************************************/
@@ -245,7 +245,7 @@ const char *OGR_GFld_GetNameRef( OGRGeomFieldDefnH hDefn )
         OGRAPISpy_GFld_GetXXXX(hDefn, "GetNameRef");
 #endif
 
-    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetNameRef();
+    return OGRGeomFieldDefn::FromHandle(hDefn)->GetNameRef();
 }
 
 /************************************************************************/
@@ -289,7 +289,7 @@ OGRwkbGeometryType OGR_GFld_GetType( OGRGeomFieldDefnH hDefn )
 #endif
 
     OGRwkbGeometryType eType =
-        reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetType();
+        OGRGeomFieldDefn::FromHandle(hDefn)->GetType();
     if( OGR_GT_IsNonLinear(eType) && !OGRGetNonLinearGeometriesEnabledFlag() )
     {
         eType = OGR_GT_GetLinear(eType);
@@ -340,7 +340,7 @@ void OGR_GFld_SetType( OGRGeomFieldDefnH hDefn, OGRwkbGeometryType eType )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetType" );
 
-    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetType(eType);
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetType(eType);
 }
 
 /************************************************************************/
@@ -378,7 +378,7 @@ int OGR_GFld_IsIgnored( OGRGeomFieldDefnH hDefn )
 {
     VALIDATE_POINTER1( hDefn, "OGR_GFld_IsIgnored", FALSE );
 
-    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->IsIgnored();
+    return OGRGeomFieldDefn::FromHandle(hDefn)->IsIgnored();
 }
 
 /************************************************************************/
@@ -416,7 +416,7 @@ void OGR_GFld_SetIgnored( OGRGeomFieldDefnH hDefn, int ignore )
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetIgnored" );
 
-    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetIgnored(ignore);
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetIgnored(ignore);
 }
 
 /************************************************************************/
@@ -464,7 +464,7 @@ OGRSpatialReferenceH OGR_GFld_GetSpatialRef( OGRGeomFieldDefnH hDefn )
 #endif
 
     return reinterpret_cast<OGRSpatialReferenceH>(
-        reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->GetSpatialRef());
+        OGRGeomFieldDefn::FromHandle(hDefn)->GetSpatialRef());
 }
 
 /************************************************************************/
@@ -516,7 +516,7 @@ void OGR_GFld_SetSpatialRef( OGRGeomFieldDefnH hDefn,
 {
     VALIDATE_POINTER0( hDefn, "OGR_GFld_SetSpatialRef" );
 
-    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->
+    OGRGeomFieldDefn::FromHandle(hDefn)->
         SetSpatialRef(reinterpret_cast<OGRSpatialReference *>(hSRS));
 }
 
@@ -595,7 +595,7 @@ int OGRGeomFieldDefn::IsSame( OGRGeomFieldDefn * poOtherFieldDefn )
 
 int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 {
-    return reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->IsNullable();
+    return OGRGeomFieldDefn::FromHandle(hDefn)->IsNullable();
 }
 
 /************************************************************************/
@@ -641,5 +641,5 @@ int OGR_GFld_IsNullable( OGRGeomFieldDefnH hDefn )
 
 void OGR_GFld_SetNullable( OGRGeomFieldDefnH hDefn, int bNullableIn )
 {
-    reinterpret_cast<OGRGeomFieldDefn *>(hDefn)->SetNullable(bNullableIn);
+    OGRGeomFieldDefn::FromHandle(hDefn)->SetNullable(bNullableIn);
 }
