@@ -2037,7 +2037,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
       i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
-        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) > nbtp )
+        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) + 1) > nbtp )
         {
             goto onError;
         }
