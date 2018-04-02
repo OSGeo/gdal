@@ -519,13 +519,6 @@ OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
 
-/*! @cond Doxygen_Suppress */
-#ifdef __cplusplus
-#define OGR_API_NULL nullptr
-#else
-#define OGR_API_NULL NULL
-#endif
-
 /*! @endcond */
 
 /** Conveniency macro to iterate over features of a layer.
@@ -534,8 +527,9 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
  * <pre>
  * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
  * {
- *      // do something, including continue, break;
- *      // do not explicitly destroy the feature
+ *      // Do something, including continue, break;
+ *      // Do not explicitly destroy the feature (unless you use return or goto
+ *      // outside of the loop, in which case use OGR_F_Destroy(hFeat))
  * }
  * OGR_FOR_EACH_FEATURE_END(hFeat)
  * </pre>
@@ -555,7 +549,7 @@ OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
  */
 #define OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer) \
     { \
-        OGRFeatureH hFeat = OGR_API_NULL; \
+        OGRFeatureH hFeat = CPL_NULLPTR; \
         OGR_L_ResetReading(hLayer); \
         while( true) \
         { \
