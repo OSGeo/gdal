@@ -50,7 +50,7 @@ static CPLString OSR_GDS( char **papszNV, const char * pszField,
 
 class AIGRasterBand;
 
-class CPL_DLL AIGDataset : public GDALPamDataset
+class AIGDataset : public GDALPamDataset
 {
     friend class AIGRasterBand;
 

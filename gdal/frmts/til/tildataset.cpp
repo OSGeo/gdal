@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class CPL_DLL TILDataset : public GDALPamDataset
+class TILDataset : public GDALPamDataset
 {
     VRTDataset *poVRTDS;
     std::vector<GDALDataset *> apoTileDS;
