@@ -34,7 +34,7 @@
 
 class OGRILI1DataSource;
 
-class CPL_DLL IILI1Reader
+class IILI1Reader
 {
 public:
     virtual     ~IILI1Reader();

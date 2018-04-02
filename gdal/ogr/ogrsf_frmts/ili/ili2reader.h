@@ -39,7 +39,7 @@
 #include "imdreader.h"
 #include <list>
 
-class CPL_DLL IILI2Reader
+class IILI2Reader
 {
 public:
     virtual     ~IILI2Reader();
