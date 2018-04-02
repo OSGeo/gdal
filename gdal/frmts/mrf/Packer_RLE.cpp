@@ -61,8 +61,11 @@ inline static int run_length(const Byte *s, int max_count)
   return max_count;
 }
 
+static void ret_now_debug()
+{
+}
 
-#define RET_NOW return static_cast<size_t>(next - reinterpret_cast<Byte *>(obuf))
+#define RET_NOW do { ret_now_debug(); return static_cast<size_t>(next - reinterpret_cast<Byte *>(obuf)); } while(0)
 
 //
 // C compress function, returns compressed size
@@ -109,7 +112,7 @@ static size_t toYarn(const char *ibuffer, char *obuf, size_t len, Byte CODE = 0x
 
 // Check that another input byte can be read, return now otherwise
 // Adjusts the input length too
-#define CHECK_INPUT if (--ilen == 0) RET_NOW
+#define CHECK_INPUT if (ilen == 0) RET_NOW
 // Reads a byte and adjust the input pointer
 #define NEXT_BYTE UC(*ibuffer++)
 
@@ -123,14 +126,15 @@ static size_t fromYarn(const char *ibuffer, size_t ilen, char *obuf, size_t olen
   while (ilen > 0 && olen > 0) {
     // It is safe to read and write one byte
     Byte b = NEXT_BYTE;
+    ilen--;
     if (b != CODE) { // Copy single chars
       *next++ = b;
-      ilen--;
       olen--;
     }
     else { // Marker found, which type of sequence is it?
       CHECK_INPUT;
       b = NEXT_BYTE;
+      ilen--;
       if (b == 0) { // Emit one code
         *next++ = CODE;
         olen--;
@@ -142,9 +146,11 @@ static size_t fromYarn(const char *ibuffer, size_t ilen, char *obuf, size_t olen
           if (3 == b) { // Second byte of high count
             CHECK_INPUT;
             run += 256 * NEXT_BYTE;
+            ilen--;
           }
           CHECK_INPUT;
           run += NEXT_BYTE;
+          ilen--;
         }
         else { // Single byte count
           run = b;
@@ -153,7 +159,9 @@ static size_t fromYarn(const char *ibuffer, size_t ilen, char *obuf, size_t olen
         // Write the sequence out, after checking
         if (olen < run) RET_NOW;
         CHECK_INPUT;
-        memset(next, NEXT_BYTE, run);
+        b = NEXT_BYTE;
+        ilen--;
+        memset(next, b, run);
 
         next += run;
         olen -= run;
