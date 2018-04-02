@@ -1081,7 +1081,7 @@ int BMPDataset::Identify( GDALOpenInfo *poOpenInfo )
 
 GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -1089,16 +1089,8 @@ GDALDataset *BMPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     BMPDataset *poDS = new BMPDataset();
     poDS->eAccess = poOpenInfo->eAccess;
-
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-    if ( !poDS->fp )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     VSIStatBufL sStat;
     if (VSIStatL(poOpenInfo->pszFilename, &sStat) != 0)

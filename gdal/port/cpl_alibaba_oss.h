@@ -43,7 +43,7 @@
 #include <map>
 #include "cpl_aws.h"
 
-class VSIOSSHandleHelper: public IVSIS3LikeHandleHelper
+class VSIOSSHandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osSecretAccessKey;

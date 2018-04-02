@@ -75,7 +75,7 @@ void VSIStdoutSetRedirection( VSIWriteFunction pFct, FILE* stream )
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIStdoutFilesystemHandler final : public VSIFilesystemHandler
 {
   public:
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -91,7 +91,7 @@ class VSIStdoutFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdoutHandle CPL_FINAL : public VSIVirtualHandle
+class VSIStdoutHandle final : public VSIVirtualHandle
 {
     vsi_l_offset      m_nOffset;
 
@@ -241,7 +241,7 @@ int VSIStdoutFilesystemHandler::Stat( const char * /* pszFilename */,
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIStdoutRedirectFilesystemHandler final : public VSIFilesystemHandler
 {
   public:
     VSIVirtualHandle *Open( const char *pszFilename,
@@ -257,7 +257,7 @@ class VSIStdoutRedirectFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdoutRedirectHandle CPL_FINAL : public VSIVirtualHandle
+class VSIStdoutRedirectHandle final : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poHandle;
   public:

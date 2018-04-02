@@ -1255,7 +1255,8 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
                               RMFDataset* poParentDS,
                               vsi_l_offset nNextHeaderOffset )
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || 
+        (poParentDS == nullptr && poOpenInfo->fpL == nullptr) )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -1265,10 +1266,8 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
 
     if( poParentDS == nullptr )
     {
-        if( poOpenInfo->eAccess == GA_ReadOnly )
-            poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-        else
-            poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
+        poDS->fp = poOpenInfo->fpL;
+        poOpenInfo->fpL = nullptr;
         poDS->nHeaderOffset = 0;
         poDS->poParentDS = nullptr;
     }
@@ -1279,12 +1278,6 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo * poOpenInfo,
         poDS->nHeaderOffset = nNextHeaderOffset;
     }
     poDS->eAccess = poOpenInfo->eAccess;
-
-    if( !poDS->fp )
-    {
-        delete poDS;
-        return nullptr;
-    }
 
 #define RMF_READ_SHORT(ptr, value, offset)                              \
 do {                                                                    \

@@ -41,7 +41,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class CPL_DLL MAPDataset : public GDALDataset
+class MAPDataset : public GDALDataset
 {
     GDALDataset *poImageDS;
 

@@ -233,7 +233,7 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      least one "\n#keyword" type signature in the first chunk of     */
 /*      the file.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( poOpenInfo->nHeaderBytes < 50 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     bool bFoundKeyword = false;
@@ -270,9 +270,8 @@ GDALDataset *GXFDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      we also now verify that there is a #GRID keyword before         */
 /*      passing it off to GXFOpen().  We check in the first 50K.        */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( fp == nullptr )
-        return nullptr;
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     const size_t BIGBUFSIZE = 50000;
     char *pszBigBuf = (char *) CPLMalloc(BIGBUFSIZE);

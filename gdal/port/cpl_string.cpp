@@ -2253,6 +2253,8 @@ char *CPLUnescapeString( const char *pszInput, int *pnLength, int nScheme )
             if( pszInput[iIn] == '\\' )
             {
                 ++iIn;
+                if( pszInput[iIn] == '\0' )
+                    break;
                 if( pszInput[iIn] == 'n' )
                     pszOutput[iOut++] = '\n';
                 else if( pszInput[iIn] == '0' )

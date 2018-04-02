@@ -312,7 +312,7 @@ bool OGRGmtLayer::ReadLine()
 
     for( size_t i = 0; i < osLine.length(); i++ )
     {
-        if( osLine[i] == '@' )
+        if( osLine[i] == '@' && i + 2 <= osLine.size() )
         {
             bool bInQuotes = false;
 
@@ -450,15 +450,17 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
         if( osLine[0] == '>' )
         {
-            if( poGeom != nullptr
-                && wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon )
+            OGRwkbGeometryType eType = wkbUnknown;
+            if( poGeom )
+                eType = wkbFlatten(poGeom->getGeometryType());
+            if( eType == wkbMultiPolygon )
             {
-                OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
+                OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
                 if( ScanAheadForHole() )
                 {
                     // Add a hole to the current polygon.
-                    ((OGRPolygon *) poMP->getGeometryRef(
-                        poMP->getNumGeometries()-1 ))->
+                    poMP->getGeometryRef(
+                        poMP->getNumGeometries()-1 )->toPolygon()->
                         addRingDirectly( new OGRLinearRing() );
                 }
                 else if( !NextIsFeature() )
@@ -472,21 +474,18 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != nullptr
-                     && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
+            else if( eType == wkbPolygon)
             {
                 if( ScanAheadForHole() )
-                    ((OGRPolygon *)poGeom)->
+                    poGeom->toPolygon()->
                         addRingDirectly( new OGRLinearRing() );
                 else
                     break; /* done geometry */
             }
-            else if( poGeom != nullptr
-                     && (wkbFlatten(poGeom->getGeometryType())
-                         == wkbMultiLineString)
+            else if( eType == wkbMultiLineString
                      && !NextIsFeature() )
             {
-                ((OGRMultiLineString *) poGeom)->
+                poGeom->toMultiLineString()->
                     addGeometryDirectly( new OGRLineString() );
             }
             else if( poGeom != nullptr )
@@ -529,19 +528,22 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         break;
 
                       case wkbPolygon:
-                        poGeom = new OGRPolygon();
-                        reinterpret_cast<OGRPolygon *>(poGeom)->addRingDirectly(
+                      {
+                        OGRPolygon* poPoly = new OGRPolygon();
+                        poGeom = poPoly;
+                        poPoly->addRingDirectly(
                             new OGRLinearRing() );
                         break;
+                      }
 
                       case wkbMultiPolygon:
                       {
                           OGRPolygon *poPoly = new OGRPolygon();
                           poPoly->addRingDirectly( new OGRLinearRing() );
 
-                          poGeom = new OGRMultiPolygon();
-                          reinterpret_cast<OGRMultiPolygon *>(poGeom)->
-                              addGeometryDirectly( poPoly );
+                          OGRMultiPolygon* poMP = new OGRMultiPolygon();
+                          poGeom = poMP;
+                          poMP->addGeometryDirectly( poPoly );
                       }
                       break;
 
@@ -550,10 +552,12 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                         break;
 
                       case wkbMultiLineString:
-                        poGeom = new OGRMultiLineString();
-                        reinterpret_cast<OGRMultiLineString *>(poGeom)->
-                            addGeometryDirectly(new OGRLineString() );
+                      {
+                        OGRMultiLineString* poMLS = new OGRMultiLineString();
+                        poGeom = poMLS;
+                        poMLS->addGeometryDirectly(new OGRLineString() );
                         break;
+                      }
 
                       case wkbPoint:
                       case wkbUnknown:
@@ -566,20 +570,24 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                 switch( wkbFlatten(poGeom->getGeometryType()) )
                 {
                   case wkbPoint:
-                    reinterpret_cast<OGRPoint *>(poGeom)->setX( dfX );
-                    reinterpret_cast<OGRPoint *>(poGeom)->setY( dfY );
+                  {
+                    OGRPoint* poPoint = poGeom->toPoint();
+                    poPoint->setX( dfX );
+                    poPoint->setY( dfY );
                     if( nDim == 3 )
-                        reinterpret_cast<OGRPoint *>(poGeom)->setZ( dfZ );
+                        poPoint->setZ( dfZ );
                     break;
+                  }
 
                   case wkbLineString:
+                  {
+                    OGRLineString* poLS = poGeom->toLineString();
                     if( nDim == 3 )
-                        reinterpret_cast<OGRLineString *>(poGeom)->
-                            addPoint( dfX, dfY, dfZ);
+                        poLS->addPoint( dfX, dfY, dfZ);
                     else
-                        reinterpret_cast<OGRLineString *>(poGeom)->
-                            addPoint( dfX, dfY );
+                        poLS->addPoint( dfX, dfY );
                     break;
+                  }
 
                   case wkbPolygon:
                   case wkbMultiPolygon:
@@ -589,12 +597,12 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
                       if( wkbFlatten(poGeom->getGeometryType())
                           == wkbMultiPolygon )
                       {
-                          OGRMultiPolygon *poMP = (OGRMultiPolygon *) poGeom;
-                          poPoly = (OGRPolygon*) poMP->getGeometryRef(
-                              poMP->getNumGeometries() - 1 );
+                          OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
+                          poPoly = poMP->getGeometryRef(
+                              poMP->getNumGeometries() - 1 )->toPolygon();
                       }
                       else
-                          poPoly = reinterpret_cast<OGRPolygon *>(poGeom);
+                          poPoly = poGeom->toPolygon();
 
                       OGRLinearRing *poRing = nullptr;
                       if( poPoly->getNumInteriorRings() == 0 )
@@ -612,9 +620,9 @@ OGRFeature *OGRGmtLayer::GetNextRawFeature()
 
                   case wkbMultiLineString:
                   {
-                      OGRMultiLineString *poML = (OGRMultiLineString *) poGeom;
-                      OGRLineString *poLine = reinterpret_cast<OGRLineString *>(
-                          poML->getGeometryRef( poML->getNumGeometries() -1 ) );
+                      OGRMultiLineString *poML = poGeom->toMultiLineString();
+                      OGRLineString *poLine = poML->getGeometryRef(
+                          poML->getNumGeometries() -1 )->toLineString();
 
                       if( nDim == 3 )
                           poLine->addPoint( dfX, dfY, dfZ );

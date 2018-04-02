@@ -1175,7 +1175,7 @@ int PDSDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( strstr(reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
@@ -1188,13 +1188,11 @@ GDALDataset *PDSDataset::Open( GDALOpenInfo * poOpenInfo )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Open and parse the keyword header.  Sometimes there is stuff    */
+/*      Parse the keyword header.  Sometimes there is stuff             */
 /*      before the PDS_VERSION_ID, which we want to ignore.             */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( fpQube == nullptr )
-        return nullptr;
+    VSILFILE *fpQube = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     PDSDataset *poDS = new PDSDataset();
     poDS->SetDescription( poOpenInfo->pszFilename );

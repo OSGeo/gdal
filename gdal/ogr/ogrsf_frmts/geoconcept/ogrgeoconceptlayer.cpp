@@ -222,11 +222,9 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
     }
 
     OGRwkbGeometryType eGt = poGeom->getGeometryType();
-    switch( eGt ) {
+    switch( wkbFlatten(eGt) ) {
     case wkbPoint                 :
-    case wkbPoint25D              :
     case wkbMultiPoint            :
-    case wkbMultiPoint25D         :
       if( GetSubTypeKind_GCIO(_gcFeature)==vUnknownItemType_GCIO )
       {
         SetSubTypeKind_GCIO(_gcFeature,vPoint_GCIO);
@@ -240,9 +238,7 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
       }
       break;
     case wkbLineString            :
-    case wkbLineString25D         :
     case wkbMultiLineString       :
-    case wkbMultiLineString25D    :
       if( GetSubTypeKind_GCIO(_gcFeature)==vUnknownItemType_GCIO )
       {
         SetSubTypeKind_GCIO(_gcFeature,vLine_GCIO);
@@ -257,9 +253,7 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
       }
       break;
     case wkbPolygon               :
-    case wkbPolygon25D            :
     case wkbMultiPolygon          :
-    case wkbMultiPolygon25D       :
       if( GetSubTypeKind_GCIO(_gcFeature)==vUnknownItemType_GCIO )
       {
         SetSubTypeKind_GCIO(_gcFeature,vPoly_GCIO);
@@ -273,11 +267,6 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
         return OGRERR_FAILURE;
       }
       break;
-    case wkbUnknown               :
-    case wkbGeometryCollection    :
-    case wkbGeometryCollection25D :
-    case wkbNone                  :
-    case wkbLinearRing            :
     default                       :
       CPLError( CE_Warning, CPLE_AppDefined,
                 "Geometry type %s not supported in Geoconcept, "
@@ -300,35 +289,17 @@ OGRErr OGRGeoconceptLayer::ICreateFeature( OGRFeature* poFeature )
     int nbGeom = 0;
     bool isSingle = false;
 
-    switch( eGt ) {
+    switch( wkbFlatten(eGt) ) {
     case wkbPoint                 :
-    case wkbPoint25D              :
+    case wkbLineString            :
+    case wkbPolygon               :
       nbGeom = 1;
       isSingle = true;
       break;
     case wkbMultiPoint            :
-    case wkbMultiPoint25D         :
-      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
-      isSingle = false;
-      break;
-    case wkbLineString            :
-    case wkbLineString25D         :
-      nbGeom = 1;
-      isSingle = true;
-      break;
     case wkbMultiLineString       :
-    case wkbMultiLineString25D    :
-      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
-      isSingle = false;
-      break;
-    case wkbPolygon               :
-    case wkbPolygon25D            :
-      nbGeom = 1;
-      isSingle = true;
-      break;
     case wkbMultiPolygon          :
-    case wkbMultiPolygon25D       :
-      nbGeom = ((OGRGeometryCollection*)poGeom)->getNumGeometries();
+      nbGeom = poGeom->toGeometryCollection()->getNumGeometries();
       isSingle = false;
       break;
     default                       :

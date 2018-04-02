@@ -229,12 +229,11 @@ OGRMultiPolygon* OGRTriangulatedSurface::CastToMultiPolygonImpl(
     OGRMultiPolygon *poMultiPolygon = new OGRMultiPolygon();
     poMultiPolygon->assignSpatialReference(poTS->getSpatialReference());
 
-    for (int i = 0; i < poTS->oMP.nGeomCount; i++)
+    for( auto&& poSubGeom: *poTS )
     {
-        OGRTriangle *geom = poTS->oMP.papoGeoms[i]->toTriangle();
-        poTS->oMP.papoGeoms[i] = nullptr;
-        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
+        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poMultiPolygon->addGeometryDirectly(poPolygon);
+        poSubGeom = nullptr;
     }
     delete poTS;
 
@@ -262,12 +261,11 @@ OGRPolyhedralSurface* OGRTriangulatedSurface::CastToPolyhedralSurface(
 {
     OGRPolyhedralSurface* poPS = new OGRPolyhedralSurface();
     poPS->assignSpatialReference(poTS->getSpatialReference());
-    for (int i = 0; i < poTS->oMP.nGeomCount; i++)
+    for( auto&& poSubGeom: *poTS )
     {
-        OGRTriangle *geom = poTS->oMP.papoGeoms[i]->toTriangle();
-        poTS->oMP.papoGeoms[i] = nullptr;
-        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(geom);
+        OGRPolygon *poPolygon = OGRSurface::CastToPolygon(poSubGeom);
         poPS->oMP.addGeometryDirectly(poPolygon);
+        poSubGeom = nullptr;
     }
     delete poTS;
     return poPS;

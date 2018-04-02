@@ -331,27 +331,17 @@ int ELASDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *ELASDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
         return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    const char *pszAccess = poOpenInfo->eAccess == GA_Update ? "r+b" : "rb";
 
     ELASDataset *poDS = new ELASDataset();
-
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, pszAccess );
-    if( poDS->fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Attempt to open `%s' with access `%s' failed.\n",
-                  poOpenInfo->pszFilename, pszAccess );
-        delete poDS;
-        return nullptr;
-    }
-
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header information.                                    */

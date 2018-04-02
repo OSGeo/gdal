@@ -476,7 +476,7 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
-        OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
+        const OGRMultiPoint   *poMP = poGeom->toMultiPoint();
         double *padfX = static_cast<double *>(
             CPLMalloc(sizeof(double) * poMP->getNumGeometries()));
         double *padfY = static_cast<double *>(

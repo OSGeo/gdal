@@ -821,32 +821,30 @@ int ERSDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *ERSDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
-/*      Open the .ers file, and read the first line.                    */
+/*      Read the first line.                                            */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpERS = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
 
-    if( fpERS == nullptr )
-        return nullptr;
-
-    CPLReadLineL( fpERS );
+    CPLReadLineL( poOpenInfo->fpL );
 
 /* -------------------------------------------------------------------- */
 /*      Now ingest the rest of the file as a tree of header nodes.      */
 /* -------------------------------------------------------------------- */
     ERSHdrNode *poHeader = new ERSHdrNode();
 
-    if( !poHeader->ParseChildren( fpERS ) )
+    if( !poHeader->ParseChildren( poOpenInfo->fpL ) )
     {
         delete poHeader;
-        VSIFCloseL( fpERS );
+        VSIFCloseL( poOpenInfo->fpL );
+        poOpenInfo->fpL = nullptr;
         return nullptr;
     }
 
-    VSIFCloseL( fpERS );
+    VSIFCloseL( poOpenInfo->fpL );
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have the minimum required information from this header?   */

@@ -145,16 +145,23 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 212 )
+    if( poOpenInfo->nHeaderBytes < 212 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if(! STARTS_WITH_CI( reinterpret_cast<char *>( poOpenInfo->pabyHeader ),
                          "BEGIN_USGS_DOQ_HEADER" ) )
         return nullptr;
 
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == nullptr)
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The DOQ2 driver does not support update access to existing "
+                  "datasets." );
         return nullptr;
+    }
 
     int nLineCount = 0;
     int nBytesPerPixel = 0;
@@ -176,10 +183,10 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     char **papszMetadata = nullptr;
 
     /* read and discard the first line */
-    CPL_IGNORE_RET_VAL(CPLReadLineL( fp ));
+    CPL_IGNORE_RET_VAL(CPLReadLineL( poOpenInfo->fpL ));
 
     const char *pszLine = nullptr;
-    while( (pszLine = CPLReadLineL( fp )) != nullptr )
+    while( (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr )
     {
         nLineCount++;
 
@@ -329,7 +336,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         || nBytesPerPixel < 0 )
     {
         CSLDestroy( papszMetadata );
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
 
@@ -343,7 +349,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
                   "DOQ Data Type (%d) is not a supported configuration.",
                   nBandTypes );
         CSLDestroy( papszMetadata );
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
 
@@ -356,7 +361,6 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The DOQ2 driver does not support update access to existing"
                   " datasets." );
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
         return nullptr;
     }
 /* -------------------------------------------------------------------- */
@@ -371,7 +375,8 @@ GDALDataset *DOQ2Dataset::Open( GDALOpenInfo * poOpenInfo )
     CSLDestroy( papszMetadata );
     papszMetadata = nullptr;
 
-    poDS->fpImage = fp;
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Compute layout of data.                                         */

@@ -546,7 +546,7 @@ int NWT_GRDDataset::Identify(GDALOpenInfo * poOpenInfo) {
 /*                                Open()                                */
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
-    if (!Identify(poOpenInfo))
+    if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     /* -------------------------------------------------------------------- */
@@ -556,11 +556,12 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
 
     NWT_GRDDataset *poDS = new NWT_GRDDataset();
 
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
+
     if (poOpenInfo->eAccess == GA_Update) {
-        poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
         nBandsToCreate = 1;
     } else {
-        poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
         nBandsToCreate = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "BAND_COUNT", "4"));
         if( nBandsToCreate != 1 && nBandsToCreate != 4 )
         {
@@ -569,11 +570,6 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo * poOpenInfo) {
             return nullptr;
         }
     }
-    if (poDS->fp == nullptr) {
-        delete poDS;
-        return nullptr;
-    }
-
     poDS->eAccess = poOpenInfo->eAccess;
 
     /* -------------------------------------------------------------------- */

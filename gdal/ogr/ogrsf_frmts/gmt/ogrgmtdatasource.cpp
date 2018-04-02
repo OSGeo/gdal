@@ -197,9 +197,9 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
         if( poSRS->exportToProj4( &pszValue ) == OGRERR_NONE )
         {
             VSIFPrintfL( fp, "# @Jp\"%s\"\n", pszValue );
-            CPLFree( pszValue );
-            pszValue = nullptr;
         }
+        CPLFree( pszValue );
+        pszValue = nullptr;
 
         if( poSRS->exportToWkt( &pszValue ) == OGRERR_NONE )
         {
@@ -207,10 +207,9 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
                                                    CPLES_BackslashQuotable );
 
             VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
-            CPLFree( pszValue );
             CPLFree( pszEscapedWkt );
-            pszValue = nullptr;
         }
+        CPLFree( pszValue );
     }
 
 /* -------------------------------------------------------------------- */

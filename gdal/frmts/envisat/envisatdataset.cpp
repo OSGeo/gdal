@@ -843,7 +843,7 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Check the header.                                               */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 8 )
+    if( poOpenInfo->nHeaderBytes < 8 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "PRODUCT=") )
@@ -980,12 +980,8 @@ GDALDataset *EnvisatDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-    poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try to collect GCPs.                                            */

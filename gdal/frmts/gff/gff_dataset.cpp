@@ -204,7 +204,7 @@ int GFFDataset::Identify( GDALOpenInfo *poOpenInfo )
 GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 {
     /* Check that the dataset is indeed a GSAT File Format (GFF) file */
-    if (!GFFDataset::Identify(poOpenInfo))
+    if (!GFFDataset::Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -220,12 +220,8 @@ GDALDataset *GFFDataset::Open( GDALOpenInfo *poOpenInfo )
 
     GFFDataset *poDS = new GFFDataset();
 
-    poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( poDS->fp == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     /* Check the endianness of the file */
     VSIFSeekL(poDS->fp,54,SEEK_SET);

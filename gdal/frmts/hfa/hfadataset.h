@@ -49,7 +49,7 @@
 
 class HFARasterBand;
 
-class HFADataset CPL_FINAL : public GDALPamDataset
+class HFADataset final : public GDALPamDataset
 {
     friend class HFARasterBand;
 
@@ -132,7 +132,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HFARasterBand CPL_FINAL : public GDALPamRasterBand
+class HFARasterBand final : public GDALPamRasterBand
 {
     friend class HFADataset;
     friend class HFARasterAttributeTable;
@@ -209,7 +209,7 @@ class HFAAttributeField
     bool              bConvertColors;  // Map 0-1 floats to 0-255 ints.
 };
 
-class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
+class HFARasterAttributeTable final : public GDALRasterAttributeTable
 {
   private:
     HFAHandle   hHFA;

@@ -818,4 +818,190 @@ namespace tut
         }
     }
 
+    template<typename T> void TestIterator(T* obj,
+                                           int nExpectedPointCount)
+    {
+        int nCount = 0;
+        for( auto&& elt: obj )
+        {
+            nCount ++;
+            CPL_IGNORE_RET_VAL(elt);
+        }
+        ensure_equals(nCount, nExpectedPointCount);
+
+        nCount = 0;
+        const T* const_obj(obj);
+        for( auto&& elt: const_obj)
+        {
+            nCount ++;
+            CPL_IGNORE_RET_VAL(elt);
+        }
+        ensure_equals(nCount, nExpectedPointCount);
+    };
+
+    template<typename Concrete, typename Abstract = Concrete> void TestIterator(
+                                           const char* pszWKT = nullptr,
+                                           int nExpectedPointCount = 0)
+    {
+        Concrete obj;
+        if( pszWKT )
+        {
+            char* pszNonConstWKT = const_cast<char*>(pszWKT);
+            obj.importFromWkt(&pszNonConstWKT);
+        }
+        TestIterator<Abstract>(&obj, nExpectedPointCount);
+    };
+
+    // Test geometry visitor
+    template<>
+    template<>
+    void object::test<12>()
+    {
+        static const struct {
+            const char* pszWKT;
+            int nExpectedPointCount;
+        } asTests[] = {
+            { "POINT(0 0)", 1},
+            { "LINESTRING(0 0)", 1},
+            { "POLYGON((0 0),(0 0))", 2},
+            { "MULTIPOINT(0 0)", 1},
+            { "MULTILINESTRING((0 0))", 1},
+            { "MULTIPOLYGON(((0 0)))", 1},
+            { "GEOMETRYCOLLECTION(POINT(0 0))", 1},
+            { "CIRCULARSTRING(0 0,1 1,0 0)", 3},
+            { "COMPOUNDCURVE((0 0,1 1))", 2},
+            { "CURVEPOLYGON((0 0,1 1,1 0,0 0))", 4},
+            { "MULTICURVE((0 0))", 1},
+            { "MULTISURFACE(((0 0)))", 1},
+            { "TRIANGLE((0 0,0 1,1 1,0 0))", 4},
+            { "POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0)))", 4},
+            { "TIN(((0 0,0 1,1 1,0 0)))", 4},
+        };
+
+        class PointCounterVisitor: public OGRDefaultGeometryVisitor
+        {
+                int m_nPoints = 0;
+
+            public:
+                PointCounterVisitor() {}
+
+                using OGRDefaultGeometryVisitor::visit;
+
+                void visit(OGRPoint*) override
+                {
+                    m_nPoints++;
+                }
+
+                int getNumPoints() const { return m_nPoints; }
+        };
+
+
+        class PointCounterConstVisitor: public OGRDefaultConstGeometryVisitor
+        {
+                int m_nPoints = 0;
+
+            public:
+                PointCounterConstVisitor() {}
+
+                using OGRDefaultConstGeometryVisitor::visit;
+
+                void visit(const OGRPoint*) override
+                {
+                    m_nPoints++;
+                }
+
+                int getNumPoints() const { return m_nPoints; }
+        };
+
+        for( size_t i = 0; i < CPL_ARRAYSIZE(asTests); i++ )
+        {
+            OGRGeometry* poGeom = nullptr;
+            char* pszWKT = const_cast<char*>(asTests[i].pszWKT);
+            OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+            PointCounterVisitor oVisitor;
+            poGeom->accept(&oVisitor);
+            ensure_equals(oVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
+            PointCounterConstVisitor oConstVisitor;
+            poGeom->accept(&oConstVisitor);
+            ensure_equals(oConstVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
+            delete poGeom;
+        }
+
+        TestIterator<OGRLineString>();
+        TestIterator<OGRLineString>("LINESTRING(0 0)", 1);
+        TestIterator<OGRLineString, OGRCurve>("LINESTRING(0 0)", 1);
+        TestIterator<OGRLineString, OGRCurve>();
+        TestIterator<OGRLinearRing>();
+        TestIterator<OGRCircularString>();
+        TestIterator<OGRCircularString>("CIRCULARSTRING(0 0,1 1,0 0)", 3);
+        TestIterator<OGRCircularString, OGRCurve>("CIRCULARSTRING(0 0,1 1,0 0)", 3);
+        TestIterator<OGRCompoundCurve>();
+        TestIterator<OGRCompoundCurve>("COMPOUNDCURVE((0 0,1 1))", 1);
+        TestIterator<OGRCompoundCurve, OGRCurve>("COMPOUNDCURVE((0 0,1 1),CIRCULARSTRING(1 1,2 2,3 3))", 4);
+        TestIterator<OGRCompoundCurve>("COMPOUNDCURVE(CIRCULARSTRING EMPTY)", 1);
+        TestIterator<OGRCurvePolygon>();
+        TestIterator<OGRCurvePolygon>("CURVEPOLYGON((0 0,1 1,1 0,0 0))", 1);
+        TestIterator<OGRPolygon>();
+        TestIterator<OGRPolygon>("POLYGON((0 0,1 1,1 0,0 0))", 1);
+        TestIterator<OGRGeometryCollection>();
+        TestIterator<OGRGeometryCollection>("GEOMETRYCOLLECTION(POINT(0 0))", 1);
+        TestIterator<OGRMultiSurface>();
+        TestIterator<OGRMultiSurface>("MULTISURFACE(((0 0)))", 1);
+        TestIterator<OGRMultiPolygon>();
+        TestIterator<OGRMultiPolygon>("MULTIPOLYGON(((0 0)))", 1);
+        TestIterator<OGRMultiPoint>();
+        TestIterator<OGRMultiPoint>("MULTIPOINT(0 0)", 1);
+        TestIterator<OGRMultiCurve>();
+        TestIterator<OGRMultiCurve>("MULTICURVE((0 0))", 1);
+        TestIterator<OGRMultiLineString>();
+        TestIterator<OGRMultiLineString>("MULTILINESTRING((0 0))", 1);
+        TestIterator<OGRTriangle>();
+        TestIterator<OGRTriangle>("TRIANGLE((0 0,0 1,1 1,0 0))", 1);
+        TestIterator<OGRPolyhedralSurface>();
+        TestIterator<OGRPolyhedralSurface>("POLYHEDRALSURFACE(((0 0,0 1,1 1,0 0)))", 1);
+        TestIterator<OGRTriangulatedSurface>();
+        TestIterator<OGRTriangulatedSurface>("TIN(((0 0,0 1,1 1,0 0)))", 1);
+    }
+
+    // Test feature iterator
+    template<>
+    template<>
+    void object::test<13>()
+    {
+        std::unique_ptr<GDALDataset> poDS (static_cast<GDALDataset*>(
+            GDALOpenEx("data/poly.shp", GDAL_OF_VECTOR, nullptr, nullptr, nullptr)));
+        OGRLayer* poLayer = poDS->GetLayer(0);
+        GIntBig nExpectedFID = 0;
+        for( auto&& poFeature: poLayer )
+        {
+            ensure_equals( poFeature->GetFID(), nExpectedFID );
+            nExpectedFID ++;
+        }
+        ensure_equals(nExpectedFID, 10);
+
+        nExpectedFID = 0;
+        OGR_FOR_EACH_FEATURE_BEGIN(hFeat, reinterpret_cast<OGRLayerH>(poLayer))
+        {
+            if( nExpectedFID == 0 )
+            {
+                nExpectedFID = 1;
+                continue;
+            }
+            ensure_equals( OGR_F_GetFID(hFeat), nExpectedFID );
+            nExpectedFID ++;
+            if( nExpectedFID == 5 )
+                break;
+        }
+        OGR_FOR_EACH_FEATURE_END(hFeat)
+        ensure_equals(nExpectedFID, 5);
+
+        auto&& oIter = poLayer->begin();
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        // Only one feature iterator can be active at a time
+        auto&& oIter2 = poLayer->begin();
+        CPLPopErrorHandler();
+        ensure( !(oIter2 != poLayer->end()) );
+        ensure( oIter != poLayer->end() );
+    }
+
 } // namespace tut

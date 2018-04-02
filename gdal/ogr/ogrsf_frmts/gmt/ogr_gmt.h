@@ -120,22 +120,4 @@ class OGRGmtDataSource : public OGRDataSource
     int                 TestCapability( const char * ) override;
 };
 
-/************************************************************************/
-/*                             OGRGmtDriver                             */
-/************************************************************************/
-
-class OGRGmtDriver : public OGRSFDriver
-{
-  public:
-                virtual ~OGRGmtDriver();
-
-    const char *GetName() override;
-    OGRDataSource *Open( const char *, int ) override;
-
-    virtual OGRDataSource *CreateDataSource( const char *pszName,
-                                             char ** = nullptr ) override;
-
-    int                 TestCapability( const char * ) override;
-};
-
 #endif /* ndef OGRGMT_H_INCLUDED */

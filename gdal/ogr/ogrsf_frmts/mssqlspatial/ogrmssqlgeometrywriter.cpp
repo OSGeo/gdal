@@ -320,44 +320,44 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
         WriteByte(ShapeType(iShape++), ST_POINT);
         WriteByte(FigureAttribute(iFigure), 0x01);
         WriteInt32(PointOffset(iFigure), iPoint);
-        WritePoint((OGRPoint*)poGeom);
+        WritePoint(poGeom->toPoint());
         ++iFigure;
         break;
 
     case wkbLineString:
     case wkbLineString25D:
         WriteByte(ShapeType(iShape++), ST_LINESTRING);
-        WriteLineString((OGRLineString*)poGeom);
+        WriteLineString(poGeom->toLineString());
         break;
 
     case wkbPolygon:
     case wkbPolygon25D:
         WriteByte(ShapeType(iShape++), ST_POLYGON);
-        WritePolygon((OGRPolygon*)poGeom);
+        WritePolygon(poGeom->toPolygon());
         break;
 
     case wkbMultiPoint:
     case wkbMultiPoint25D:
         WriteByte(ShapeType(iShape++), ST_MULTIPOINT);
-        WriteGeometryCollection((OGRGeometryCollection*)poGeom, iParent);
+        WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbMultiLineString:
     case wkbMultiLineString25D:
         WriteByte(ShapeType(iShape++), ST_MULTILINESTRING);
-        WriteGeometryCollection((OGRGeometryCollection*)poGeom, iParent);
+        WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
         WriteByte(ShapeType(iShape++), ST_MULTIPOLYGON);
-        WriteGeometryCollection((OGRGeometryCollection*)poGeom, iParent);
+        WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
         WriteByte(ShapeType(iShape++), ST_GEOMETRYCOLLECTION);
-        WriteGeometryCollection((OGRGeometryCollection*)poGeom, iParent);
+        WriteGeometryCollection(poGeom->toGeometryCollection(), iParent);
         break;
 
     default:
@@ -371,7 +371,6 @@ void OGRMSSQLGeometryWriter::WriteGeometry(OGRGeometry* poGeom, int iParent)
 
 void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
 {
-    int i;
     switch (poGeom->getGeometryType())
     {
     case wkbPoint:
@@ -383,16 +382,15 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
     case wkbLineString:
     case wkbLineString25D:
         ++nNumFigures;
-        nNumPoints += ((OGRLineString*)poGeom)->getNumPoints();
+        nNumPoints += poGeom->toLineString()->getNumPoints();
         break;
 
     case wkbPolygon:
     case wkbPolygon25D:
         {
-            OGRPolygon* g = (OGRPolygon*)poGeom;
-            TrackGeometry(g->getExteriorRing());
-            for (i = 0; i < g->getNumInteriorRings(); i++)
-                TrackGeometry(g->getInteriorRing(i));
+            OGRPolygon* g = poGeom->toPolygon();
+            for( auto&& poIter: *g )
+                TrackGeometry(poIter);
         }
         break;
 
@@ -405,10 +403,10 @@ void OGRMSSQLGeometryWriter::TrackGeometry(OGRGeometry* poGeom)
     case wkbGeometryCollection:
     case wkbGeometryCollection25D:
         {
-            OGRGeometryCollection* g = (OGRGeometryCollection*)poGeom;
-            for (i = 0; i < g->getNumGeometries(); i++)
+            OGRGeometryCollection* g = poGeom->toGeometryCollection();
+            for( auto&& poMember: *g )
             {
-                TrackGeometry(g->getGeometryRef(i));
+                TrackGeometry(poMember);
                 ++nNumShapes;
             }
         }
@@ -435,7 +433,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     if (nNumPoints == 1 && (geomType == wkbPoint || geomType == wkbPoint25D))
     {
         /* writing a single point */
-        OGRPoint* g = (OGRPoint*)poGeom2;
+        OGRPoint* g = poGeom2->toPoint();
         WriteInt32(0, nSRSId);
         WriteByte(4, 0x01);
         WriteByte(5, chProps);
@@ -457,7 +455,7 @@ OGRErr OGRMSSQLGeometryWriter::WriteSqlGeometry(unsigned char* pszBuffer, int nB
     else if (nNumPoints == 2 && (geomType == wkbLineString || geomType == wkbLineString25D))
     {
         /* writing a single line */
-        OGRLineString* g = (OGRLineString*)poGeom2;
+        OGRLineString* g = poGeom2->toLineString();
         WriteInt32(0, nSRSId);
         WriteByte(4, 0x01);
         WriteByte(5, chProps);

@@ -891,8 +891,9 @@ void OGRSimpleCurve::addPointM( double x, double y, double m )
  * @param padfMIn the M values that go with the points.
  */
 
-void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
-                                 double * padfMIn )
+void OGRSimpleCurve::setPointsM( int nPointsIn,
+                                 const OGRRawPoint * paoPointsIn,
+                                 const double * padfMIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
@@ -940,8 +941,10 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, OGRRawPoint * paoPointsIn,
  * @param padfMIn the M values that go with the points.
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                                double * padfZIn, double * padfMIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const OGRRawPoint * paoPointsIn,
+                                const double * padfZIn,
+                                const double * padfMIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
@@ -1002,8 +1005,9 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * @param padfZIn the Z values that go with the points (optional, may be NULL).
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
-                               double * padfZIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const OGRRawPoint * paoPointsIn,
+                                const double * padfZIn )
 
 {
     setNumPoints( nPointsIn, FALSE );
@@ -1051,8 +1055,10 @@ void OGRSimpleCurve::setPoints( int nPointsIn, OGRRawPoint * paoPointsIn,
  * NULL for 2D objects).
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                                double * padfZIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const double * padfX,
+                                const double * padfY,
+                                const double * padfZIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1102,8 +1108,10 @@ void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
  * @param padfMIn list of M coordinates of points being assigned.
  */
 
-void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
-                                 double * padfMIn )
+void OGRSimpleCurve::setPointsM( int nPointsIn,
+                                 const double * padfX,
+                                 const double * padfY,
+                                 const double * padfMIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -1154,8 +1162,11 @@ void OGRSimpleCurve::setPointsM( int nPointsIn, double * padfX, double * padfY,
  * @param padfMIn list of M coordinates of points being assigned.
  */
 
-void OGRSimpleCurve::setPoints( int nPointsIn, double * padfX, double * padfY,
-                                double * padfZIn, double * padfMIn )
+void OGRSimpleCurve::setPoints( int nPointsIn,
+                                const double * padfX,
+                                const double * padfY,
+                                const double * padfZIn,
+                                const double * padfMIn )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2335,7 +2346,7 @@ void OGRSimpleCurve::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRSimpleCurve::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther == this )
@@ -2349,7 +2360,7 @@ OGRBoolean OGRSimpleCurve::Equals( OGRGeometry * poOther ) const
 
     // TODO(schwehr): Test the SRS.
 
-    OGRSimpleCurve *poOLine = (OGRSimpleCurve *) poOther;
+    auto poOLine = poOther->toSimpleCurve();
     if( getNumPoints() != poOLine->getNumPoints() )
         return FALSE;
 
@@ -2617,7 +2628,7 @@ void OGRSimpleCurve::swapXY()
 /*                       OGRSimpleCurvePointIterator                    */
 /************************************************************************/
 
-class OGRSimpleCurvePointIterator: public OGRPointIterator
+class OGRSimpleCurvePointIterator final: public OGRPointIterator
 {
         const OGRSimpleCurve* poSC;
         int                   iCurPoint;

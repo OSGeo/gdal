@@ -247,7 +247,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should be of the same Point geometry as the existing ones in the layer.");
             return OGRERR_FAILURE;
         }
-        OGRPoint *poPoint=(OGRPoint*)poGeom;
+        OGRPoint *poPoint=poGeom->toPoint();
         GIntBig nFID=poFeature->GetFID();
         poHeader->paadfCoords[0][nFID]=poPoint->getX();
         poHeader->paadfCoords[1][nFID]=poPoint->getY();
@@ -270,7 +270,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should be of the same Polygon geometry as the existing ones in the layer.");
             return OGRERR_FAILURE;
         }
-        OGRLinearRing *poLinearRing=((OGRPolygon*)poGeom)->getExteriorRing();
+        OGRLinearRing *poLinearRing=poGeom->toPolygon()->getExteriorRing();
         if (poLinearRing->getNumPoints()!=poHeader->nPointsPerElement+1) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should have the same number of vertices %d as the existing ones in the layer.",poHeader->nPointsPerElement);
             return OGRERR_FAILURE;
@@ -309,7 +309,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should be of the same Point geometry as the existing ones in the layer.");
             return OGRERR_FAILURE;
         }
-        OGRPoint *poPoint=(OGRPoint*)poGeom;
+        OGRPoint *poPoint=poGeom->toPoint();
         poFeature->SetFID(poHeader->nPoints);
         CPLDebug("Selafin","CreateFeature(%d,%f,%f)",poHeader->nPoints,poPoint->getX(),poPoint->getY());
         // Change the header to add the new feature
@@ -326,7 +326,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
         }
 
         // Now we check that we have the right number of vertices, or if this number was not defined yet (0), we define it at once
-        OGRLinearRing *poLinearRing=((OGRPolygon*)poGeom)->getExteriorRing();
+        OGRLinearRing *poLinearRing=poGeom->toPolygon()->getExteriorRing();
         poFeature->SetFID(poHeader->nElements);
         CPLDebug("Selafin","CreateFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",poFeature->GetFID(),poLinearRing->getX(0),poLinearRing->getY(0),poLinearRing->getX(1),poLinearRing->getY(1),poLinearRing->getX(2),poLinearRing->getY(2));   //!< This is not safe as we can't be sure there are at least three vertices in the linear ring, but we can assume that for a debug mode
         int nNum=poLinearRing->getNumPoints();

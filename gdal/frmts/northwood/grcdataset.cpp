@@ -331,7 +331,7 @@ int NWT_GRCDataset::Identify( GDALOpenInfo * poOpenInfo )
 
 GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -339,12 +339,8 @@ GDALDataset *NWT_GRCDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     NWT_GRCDataset *poDS = new NWT_GRCDataset();
 
-    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fp == nullptr)
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */

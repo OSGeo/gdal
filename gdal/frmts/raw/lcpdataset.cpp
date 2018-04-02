@@ -201,7 +201,7 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify that this is a FARSITE LCP file                          */
 /* -------------------------------------------------------------------- */
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -217,12 +217,9 @@ GDALDataset *LCPDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fpImage == nullptr)
-        return nullptr;
-
     LCPDataset  *poDS = new LCPDataset();
-    poDS->fpImage = fpImage;
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header and extract some information.                   */

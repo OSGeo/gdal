@@ -578,7 +578,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Verify that this is some form of binterr file.                  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 256)
+    if( poOpenInfo->nHeaderBytes < 256 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !STARTS_WITH((const char *) poOpenInfo->pabyHeader, "binterr") )
@@ -789,24 +789,9 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->bGeoTransformValid = TRUE;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Re-open the file with the desired access.                       */
-/* -------------------------------------------------------------------- */
-
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->fpImage == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within BT driver.\n",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
-    }
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects                                 */

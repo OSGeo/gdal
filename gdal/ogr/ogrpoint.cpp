@@ -712,7 +712,7 @@ void OGRPoint::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRPoint::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther== this )

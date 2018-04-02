@@ -213,11 +213,10 @@ OGRBoolean OGRMultiCurve::hasCurveGeometry( int bLookForNonLinear ) const
 
 OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
 {
-    for( int i = 0; i < poMC->nGeomCount; ++i )
+    for( auto&& poSubGeom: *poMC )
     {
-        OGRCurve * const poCurve = poMC->papoGeoms[i]->toCurve();
-        poMC->papoGeoms[i] = OGRCurve::CastToLineString( poCurve );
-        if( poMC->papoGeoms[i] == nullptr )
+        poSubGeom = OGRCurve::CastToLineString( poSubGeom );
+        if( poSubGeom == nullptr )
         {
             delete poMC;
             return nullptr;

@@ -37,7 +37,7 @@
 #include "cpl_aws.h"
 #include <map>
 
-class VSIAzureBlobHandleHelper: public IVSIS3LikeHandleHelper
+class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osEndpoint;

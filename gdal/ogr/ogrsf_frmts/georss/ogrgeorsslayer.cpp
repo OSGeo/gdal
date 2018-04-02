@@ -1570,7 +1570,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
         {
             case wkbPoint:
             {
-                OGRPoint* poPoint = (OGRPoint*)poGeom;
+                OGRPoint* poPoint = poGeom->toPoint();
                 const double x = poPoint->getX();
                 const double y = poPoint->getY();
                 if( eGeomDialect == GEORSS_GML )
@@ -1616,7 +1616,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
             case wkbLineString:
             {
-                OGRLineString* poLineString = (OGRLineString*)poGeom;
+                OGRLineString* poLineString = poGeom->toLineString();
                 if( eGeomDialect == GEORSS_GML )
                 {
                     VSIFPrintfL(fp, "      <georss:where><gml:LineString");
@@ -1659,7 +1659,7 @@ OGRErr OGRGeoRSSLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
             case wkbPolygon:
             {
-                OGRPolygon* poPolygon = (OGRPolygon*)poGeom;
+                OGRPolygon* poPolygon = poGeom->toPolygon();
                 OGRLineString* poLineString = poPolygon->getExteriorRing();
                 if( poLineString == nullptr )
                     break;

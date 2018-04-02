@@ -306,8 +306,8 @@ static int EqualAirwayIntersectionFeatureFunc(
     if (strcmp(feature1->GetFieldAsString(0),
                feature2->GetFieldAsString(0)) == 0)
     {
-        OGRPoint* point1 = (OGRPoint*) feature1->GetGeometryRef();
-        OGRPoint* point2 = (OGRPoint*) feature2->GetGeometryRef();
+        OGRPoint* point1 = feature1->GetGeometryRef()->toPoint();
+        OGRPoint* point2 = feature2->GetGeometryRef()->toPoint();
         return
             point1->getX() == point2->getX() &&
             point1->getY() == point2->getY();
@@ -338,7 +338,7 @@ static unsigned long HashAirwayIntersectionFeatureFunc(const void* _feature)
 {
     OGRFeature* feature = reinterpret_cast<OGRFeature *>(
         const_cast<void *>(_feature));
-    OGRPoint* point = reinterpret_cast<OGRPoint *>( feature->GetGeometryRef() );
+    OGRPoint* point = feature->GetGeometryRef()->toPoint();
     unsigned long hash = CPLHashSetHashStr(
         reinterpret_cast<unsigned char*>(const_cast<char *>(
             feature->GetFieldAsString(0))));

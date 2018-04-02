@@ -616,16 +616,6 @@ OGRCurvePolygon::getLinearGeometry( double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                           PointOnSurface()                           */
-/************************************************************************/
-
-OGRErr OGRCurvePolygon::PointOnSurface( OGRPoint *poPoint ) const
-
-{
-    return PointOnSurfaceInternal(poPoint);
-}
-
-/************************************************************************/
 /*                            getEnvelope()                             */
 /************************************************************************/
 
@@ -649,7 +639,7 @@ void OGRCurvePolygon::getEnvelope( OGREnvelope3D * psEnvelope ) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
+OGRBoolean OGRCurvePolygon::Equals( const OGRGeometry * poOther ) const
 
 {
     if( poOther == this )
@@ -661,8 +651,7 @@ OGRBoolean OGRCurvePolygon::Equals( OGRGeometry * poOther ) const
     if( IsEmpty() && poOther->IsEmpty() )
         return TRUE;
 
-    OGRCurvePolygon *poOPoly = poOther->toCurvePolygon();
-    return oCC.Equals( &(poOPoly->oCC) );
+    return oCC.Equals( &(poOther->toCurvePolygon()->oCC) );
 }
 
 /************************************************************************/

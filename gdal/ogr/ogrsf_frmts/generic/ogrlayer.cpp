@@ -36,11 +36,17 @@
 
 CPL_CVSID("$Id$")
 
+struct OGRLayer::Private
+{
+    bool         m_bInFeatureIterator = false;
+};
+
 /************************************************************************/
 /*                              OGRLayer()                              */
 /************************************************************************/
 
 OGRLayer::OGRLayer() :
+    m_poPrivate(new Private()),
     m_bFilterIsEnvelope(FALSE),
     m_poFilterGeom(nullptr),
     m_pPreparedFilterGeom(nullptr),
@@ -169,14 +175,11 @@ GIntBig OGRLayer::GetFeatureCount( int bForce )
     if( !bForce )
         return -1;
 
-    ResetReading();
-
     GIntBig nFeatureCount = 0;
-    OGRFeature *poFeature = nullptr;
-    while( (poFeature = GetNextFeature()) != nullptr )
+    for( auto&& poFeature: *this )
     {
-        nFeatureCount++;
-        delete poFeature;
+        CPL_IGNORE_RET_VAL(poFeature.get());
+        nFeatureCount ++;
     }
     ResetReading();
 
@@ -257,9 +260,7 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
     OGREnvelope oEnv;
     bool bExtentSet = false;
 
-    ResetReading();
-    OGRFeature *poFeature = nullptr;
-    while( (poFeature = GetNextFeature()) != nullptr )
+    for( auto&& poFeature: *this )
     {
         OGRGeometry *poGeom = poFeature->GetGeomFieldRef(iGeomField);
         if (poGeom == nullptr || poGeom->IsEmpty())
@@ -287,7 +288,6 @@ OGRErr OGRLayer::GetExtentInternal(int iGeomField, OGREnvelope *psExtent, int bF
             if (oEnv.MaxY > psExtent->MaxY)
                 psExtent->MaxY = oEnv.MaxY;
         }
-        delete poFeature;
     }
     ResetReading();
 
@@ -453,15 +453,14 @@ OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
     SetAttributeFilter(nullptr);
     SetSpatialFilter(0, nullptr);
 
-    ResetReading();
-
-    OGRFeature *poFeature = nullptr;
-    while( (poFeature = GetNextFeature()) != nullptr )
+    OGRFeatureUniquePtr poFeature;
+    for( auto&& poFeatureIter: *this )
     {
-        if( poFeature->GetFID() == nFID )
+        if( poFeatureIter->GetFID() == nFID )
+        {
+            poFeature.swap(poFeatureIter);
             break;
-        else
-            delete poFeature;
+        }
     }
 
     /* Restore filters */
@@ -470,7 +469,7 @@ OGRFeature *OGRLayer::GetFeature( GIntBig nFID )
     SetSpatialFilter(iOldGeomFieldFilter, poOldFilterGeom);
     delete poOldFilterGeom;
 
-    return poFeature;
+    return poFeature.release();
 }
 
 /************************************************************************/
@@ -1300,7 +1299,7 @@ int OGRLayer::InstallFilter( OGRGeometry * poFilter )
     if( wkbFlatten(m_poFilterGeom->getGeometryType()) != wkbPolygon )
         return TRUE;
 
-    OGRPolygon *poPoly = (OGRPolygon *) m_poFilterGeom;
+    OGRPolygon *poPoly = m_poFilterGeom->toPolygon();
 
     if( poPoly->getNumInteriorRings() != 0 )
         return TRUE;
@@ -1403,7 +1402,7 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
             {
                 case wkbPolygon:
                 {
-                    OGRPolygon* poPoly = (OGRPolygon* )poGeometry;
+                    OGRPolygon* poPoly = poGeometry->toPolygon();
                     OGRLinearRing* poRing = poPoly->getExteriorRing();
                     if (poRing != nullptr && poPoly->getNumInteriorRings() == 0)
                     {
@@ -1413,7 +1412,7 @@ int OGRLayer::FilterGeometry( OGRGeometry *poGeometry )
                 }
 
                 case wkbLineString:
-                    poLS = (OGRLineString* )poGeometry;
+                    poLS = poGeometry->toLineString();
                     break;
 
                 default:
@@ -2092,8 +2091,7 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
         }
     }
 
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -2101,7 +2099,6 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -2118,22 +2115,19 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                     || x_env.MaxY < sEnvelopeMethod.MinY
                     || sEnvelopeMethod.MaxX < x_env.MinX
                     || sEnvelopeMethod.MaxY < x_env.MinY) {
-                    delete x;
                     continue;
                 }
             } else {
-                delete x;
                 continue;
             }
         }
 
         // set up the filter for method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -2141,46 +2135,39 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRPreparedGeometry* x_prepared_geom = nullptr;
+        OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom = OGRCreatePreparedGeometry(x_geom);
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
             if (!x_prepared_geom) {
-                delete x;
                 goto done;
             }
         }
 
-        pLayerMethod->ResetReading();
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
-            OGRGeometry *z_geom = nullptr;
+            if (!y_geom) continue;
+            OGRGeometryUniquePtr z_geom;
 
             if (x_prepared_geom) {
                 CPLErrorReset();
                 ret = OGRERR_NONE;
-                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom, y_geom))
+                if (bPretestContainment && OGRPreparedGeometryContains(x_prepared_geom.get(), y_geom))
                 {
                     if (CPLGetLastErrorType() == CE_None)
-                        z_geom = y_geom->clone();
+                        z_geom.reset(y_geom->clone());
                 }
-                else if (!(OGRPreparedGeometryIntersects(x_prepared_geom, y_geom)))
+                else if (!(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom)))
                 {
                     if (CPLGetLastErrorType() == CE_None) {
-                        delete y;
                         continue;
                     }
                 }
                 if (CPLGetLastErrorType() != CE_None) {
-                    delete y;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        OGRDestroyPreparedGeometry(x_prepared_geom);
-                        delete x;
                         goto done;
                     } else {
                         CPLErrorReset();
@@ -2191,14 +2178,10 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
             }
             if (!z_geom) {
                 CPLErrorReset();
-                z_geom = x_geom->Intersection(y_geom);
+                z_geom.reset(x_geom->Intersection(y_geom));
                 if (CPLGetLastErrorType() != CE_None || z_geom == nullptr) {
-                    delete z_geom;
-                    delete y;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        OGRDestroyPreparedGeometry(x_prepared_geom);
-                        delete x;
                         goto done;
                     } else {
                         CPLErrorReset();
@@ -2211,24 +2194,19 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                      (x_geom->getDimension() == y_geom->getDimension() &&
                       z_geom->getDimension() < x_geom->getDimension())))
                 {
-                    delete z_geom;
-                    delete y;
                     continue;
                 }
             }
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
-            z->SetFieldsFrom(y, mapMethod);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
+            z->SetFieldsFrom(y.get(), mapMethod);
             if (bPromoteToMulti)
-                z_geom = promote_to_multi(z_geom);
-            z->SetGeometryDirectly(z_geom);
-            delete y;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                z_geom.reset(promote_to_multi(z_geom.release()));
+            z->SetGeometryDirectly(z_geom.release());
+            ret = pLayerResult->CreateFeature(z.get());
+
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
-                    OGRDestroyPreparedGeometry(x_prepared_geom);
-                    delete x;
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -2236,9 +2214,6 @@ OGRErr OGRLayer::Intersection( OGRLayer *pLayerMethod,
                 }
             }
         }
-
-        OGRDestroyPreparedGeometry(x_prepared_geom);
-        delete x;
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -2459,8 +2434,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
     }
 
     // add features based on input layer
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -2468,7 +2442,6 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -2477,11 +2450,10 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
 
         // set up the filter on method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -2489,38 +2461,31 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRPreparedGeometry* x_prepared_geom = nullptr;
+        OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom = OGRCreatePreparedGeometry(x_geom);
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
             if (!x_prepared_geom) {
-                delete x;
                 goto done;
             }
         }
 
-        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
-        pLayerMethod->ResetReading();
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        OGRGeometryUniquePtr x_geom_diff(x_geom->clone()); // this will be the geometry of the result feature
+        for( auto&& y: pLayerMethod) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) { continue;}
 
             CPLErrorReset();
-            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom, y_geom))) {
+            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom))) {
                 if (CPLGetLastErrorType() == CE_None) {
-                    delete y;
                     continue;
                 }
             }
             if (CPLGetLastErrorType() != CE_None) {
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete y;
-                    delete x;
-                    OGRDestroyPreparedGeometry(x_prepared_geom);
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -2529,14 +2494,10 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             }
 
             CPLErrorReset();
-            OGRGeometry *poIntersection = x_geom->Intersection(y_geom);
+            OGRGeometryUniquePtr poIntersection(x_geom->Intersection(y_geom));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr) {
-                delete poIntersection;
-                delete y;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete x;
-                    OGRDestroyPreparedGeometry(x_prepared_geom);
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -2549,49 +2510,35 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                  (x_geom->getDimension() == y_geom->getDimension() &&
                   poIntersection->getDimension() < x_geom->getDimension())) )
             {
-                delete poIntersection;
-                delete y;
+                // ok
             }
             else
             {
-                OGRFeature *z = new OGRFeature(poDefnResult);
-                z->SetFieldsFrom(x, mapInput);
-                z->SetFieldsFrom(y, mapMethod);
+                OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+                z->SetFieldsFrom(x.get(), mapInput);
+                z->SetFieldsFrom(y.get(), mapMethod);
                 if( bPromoteToMulti )
-                    poIntersection = promote_to_multi(poIntersection);
-                z->SetGeometryDirectly(poIntersection);
+                    poIntersection.reset(promote_to_multi(poIntersection.release()));
+                z->SetGeometryDirectly(poIntersection.release());
 
                 if (x_geom_diff) {
                     CPLErrorReset();
-                    OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
+                    OGRGeometryUniquePtr x_geom_diff_new(x_geom_diff->Difference(y_geom));
                     if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == nullptr) {
-                        delete x_geom_diff_new;
                         if (!bSkipFailures) {
                             ret = OGRERR_FAILURE;
-                            delete y;
-                            delete z;
-                            delete x;
-                            delete x_geom_diff;
-                            OGRDestroyPreparedGeometry(x_prepared_geom);
                             goto done;
                         } else {
                             CPLErrorReset();
                         }
                     } else {
-                        delete x_geom_diff;
-                        x_geom_diff = x_geom_diff_new;
+                        x_geom_diff.swap(x_geom_diff_new);
                     }
                 }
 
-                delete y;
-                ret = pLayerResult->CreateFeature(z);
-                delete z;
+                ret = pLayerResult->CreateFeature(z.get());
                 if (ret != OGRERR_NONE) {
                     if (!bSkipFailures) {
-                        delete x;
-                        if (x_geom_diff)
-                            delete x_geom_diff;
-                        OGRDestroyPreparedGeometry(x_prepared_geom);
                         goto done;
                     } else {
                         CPLErrorReset();
@@ -2600,24 +2547,20 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 }
             }
         }
-
-        OGRDestroyPreparedGeometry(x_prepared_geom);
+        x_prepared_geom.reset();
 
         if( x_geom_diff == nullptr || x_geom_diff->IsEmpty() )
         {
-            delete x_geom_diff;
-            delete x;
+            // ok
         }
         else
         {
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
             if( bPromoteToMulti )
-                x_geom_diff = promote_to_multi(x_geom_diff);
-            z->SetGeometryDirectly(x_geom_diff);
-            delete x;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            z->SetGeometryDirectly(x_geom_diff.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -2631,8 +2574,7 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
 
     // restore filter on method layer and add features based on it
     pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
-    pLayerMethod->ResetReading();
-    while (OGRFeature *x = pLayerMethod->GetNextFeature()) {
+    for( auto&& x: pLayerMethod ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -2640,7 +2582,6 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -2649,11 +2590,10 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
 
         // set up the filter on input layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
+        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -2661,54 +2601,43 @@ OGRErr OGRLayer::Union( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
-        ResetReading();
-        while (OGRFeature *y = GetNextFeature()) {
+        OGRGeometryUniquePtr x_geom_diff(x_geom->clone()); // this will be the geometry of the result feature
+        for( auto&& y: this ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) { continue;}
 
             if (x_geom_diff) {
                 CPLErrorReset();
-                OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
+                OGRGeometryUniquePtr x_geom_diff_new(x_geom_diff->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == nullptr) {
-                    delete x_geom_diff_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        delete x;
-                        delete y;
-                        delete x_geom_diff;
                         goto done;
                     } else {
                         CPLErrorReset();
                         ret = OGRERR_NONE;
                     }
                 } else {
-                    delete x_geom_diff;
-                    x_geom_diff = x_geom_diff_new;
+                    x_geom_diff.swap(x_geom_diff_new);
                 }
             }
-            delete y;
         }
 
         if( x_geom_diff == nullptr || x_geom_diff->IsEmpty() )
         {
-            delete x_geom_diff;
-            delete x;
+            // ok
         }
         else
         {
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapMethod);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapMethod);
             if( bPromoteToMulti )
-                x_geom_diff = promote_to_multi(x_geom_diff);
-            z->SetGeometryDirectly(x_geom_diff);
-            delete x;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            z->SetGeometryDirectly(x_geom_diff.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -2922,8 +2851,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
     poDefnResult = pLayerResult->GetLayerDefn();
 
     // add features based on input layer
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -2931,7 +2859,6 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -2940,11 +2867,10 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
 
         // set up the filter on method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -2952,53 +2878,38 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
-        pLayerMethod->ResetReading();
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        OGRGeometryUniquePtr geom(x_geom->clone()); // this will be the geometry of the result feature
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) {continue;}
             if (geom) {
                 CPLErrorReset();
-                OGRGeometry *geom_new = geom->Difference(y_geom);
+                OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr) {
-                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        delete geom;
-                        delete y;
-                        delete x;
                         goto done;
                     } else {
                         CPLErrorReset();
                         ret = OGRERR_NONE;
                     }
                 } else {
-                    delete geom;
-                    geom = geom_new;
+                    geom.swap(geom_new);
                 }
             }
-            delete y;
             if (geom && geom->IsEmpty()) break;
         }
 
-        OGRFeature *z = nullptr;
         if (geom && !geom->IsEmpty()) {
-            z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
             if( bPromoteToMulti )
-                geom = promote_to_multi(geom);
-            z->SetGeometryDirectly(geom);
-        } else {
-            if (geom) delete geom;
-        }
-        delete x;
-        if (z) {
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                geom.reset(promote_to_multi(geom.release()));
+            z->SetGeometryDirectly(geom.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -3012,8 +2923,7 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
 
     // restore filter on method layer and add features based on it
     pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
-    pLayerMethod->ResetReading();
-    while (OGRFeature *x = pLayerMethod->GetNextFeature()) {
+    for( auto&& x: pLayerMethod ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -3021,7 +2931,6 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -3030,11 +2939,10 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
 
         // set up the filter on input layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x);
+        OGRGeometry *x_geom = set_filter_from(this, pGeometryInputFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -3042,53 +2950,38 @@ OGRErr OGRLayer::SymDifference( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
-        ResetReading();
-        while (OGRFeature *y = GetNextFeature()) {
+        OGRGeometryUniquePtr geom(x_geom->clone()); // this will be the geometry of the result feature
+        for( auto&& y: this ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) continue;
             if (geom) {
                 CPLErrorReset();
-                OGRGeometry *geom_new = geom->Difference(y_geom);
+                OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr) {
-                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        delete geom;
-                        delete y;
-                        delete x;
                         goto done;
                     } else {
                         CPLErrorReset();
                         ret = OGRERR_NONE;
                     }
                 } else {
-                    delete geom;
-                    geom = geom_new;
+                    geom.swap(geom_new);
                 }
             }
-            delete y;
             if (geom == nullptr || geom->IsEmpty()) break;
         }
 
-        OGRFeature *z = nullptr;
         if (geom && !geom->IsEmpty()) {
-            z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapMethod);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapMethod);
             if( bPromoteToMulti )
-                geom = promote_to_multi(geom);
-            z->SetGeometryDirectly(geom);
-        } else {
-            if (geom) delete geom;
-        }
-        delete x;
-        if (z) {
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                geom.reset(promote_to_multi(geom.release()));
+            z->SetGeometryDirectly(geom.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -3307,8 +3200,7 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
     poDefnResult = pLayerResult->GetLayerDefn();
 
     // split the features in input layer to the result layer
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -3316,7 +3208,6 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -3325,11 +3216,10 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
 
         // set up the filter on method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -3337,38 +3227,32 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRPreparedGeometry* x_prepared_geom = nullptr;
+        OGRPreparedGeometryUniquePtr x_prepared_geom;
         if (bUsePreparedGeometries) {
-            x_prepared_geom = OGRCreatePreparedGeometry(x_geom);
+            x_prepared_geom.reset(OGRCreatePreparedGeometry(x_geom));
             if (!x_prepared_geom) {
-                delete x;
                 goto done;
             }
         }
 
-        OGRGeometry *x_geom_diff = x_geom->clone(); // this will be the geometry of the result feature
-        pLayerMethod->ResetReading();
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        OGRGeometryUniquePtr x_geom_diff(x_geom->clone()); // this will be the geometry of the result feature
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom)
+                continue;
 
             CPLErrorReset();
-            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom, y_geom))) {
+            if (x_prepared_geom && !(OGRPreparedGeometryIntersects(x_prepared_geom.get(), y_geom))) {
                 if (CPLGetLastErrorType() == CE_None) {
-                    delete y;
                     continue;
                 }
             }
             if (CPLGetLastErrorType() != CE_None) {
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete x;
-                    delete x_geom_diff;
-                    OGRDestroyPreparedGeometry(x_prepared_geom);
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -3377,15 +3261,10 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             }
 
             CPLErrorReset();
-            OGRGeometry* poIntersection = x_geom->Intersection(y_geom);
+            OGRGeometryUniquePtr poIntersection(x_geom->Intersection(y_geom));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr) {
-                delete poIntersection;
-                delete y;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete x;
-                    delete x_geom_diff;
-                    OGRDestroyPreparedGeometry(x_prepared_geom);
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -3397,45 +3276,33 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
                       (x_geom->getDimension() == y_geom->getDimension() &&
                        poIntersection->getDimension() < x_geom->getDimension())) )
             {
-                delete poIntersection;
-                delete y;
+                /* ok*/
             }
             else
             {
-                OGRFeature *z = new OGRFeature(poDefnResult);
-                z->SetFieldsFrom(x, mapInput);
-                z->SetFieldsFrom(y, mapMethod);
+                OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+                z->SetFieldsFrom(x.get(), mapInput);
+                z->SetFieldsFrom(y.get(), mapMethod);
                 if( bPromoteToMulti )
-                    poIntersection = promote_to_multi(poIntersection);
-                z->SetGeometryDirectly(poIntersection);
+                    poIntersection.reset(promote_to_multi(poIntersection.release()));
+                z->SetGeometryDirectly(poIntersection.release());
                 if (x_geom_diff) {
                     CPLErrorReset();
-                    OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
+                    OGRGeometryUniquePtr x_geom_diff_new(x_geom_diff->Difference(y_geom));
                     if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == nullptr) {
                         if (!bSkipFailures) {
                             ret = OGRERR_FAILURE;
-                            delete z;
-                            delete y;
-                            delete x;
-                            delete x_geom_diff;
-                            OGRDestroyPreparedGeometry(x_prepared_geom);
                             goto done;
                         } else {
                             CPLErrorReset();
                         }
                     } else {
-                        delete x_geom_diff;
-                        x_geom_diff = x_geom_diff_new;
+                        x_geom_diff.swap(x_geom_diff_new);
                     }
                 }
-                delete y;
-                ret = pLayerResult->CreateFeature(z);
-                delete z;
+                ret = pLayerResult->CreateFeature(z.get());
                 if (ret != OGRERR_NONE) {
                     if (!bSkipFailures) {
-                        delete x;
-                        delete x_geom_diff;
-                        OGRDestroyPreparedGeometry(x_prepared_geom);
                         goto done;
                     } else {
                         CPLErrorReset();
@@ -3445,23 +3312,20 @@ OGRErr OGRLayer::Identity( OGRLayer *pLayerMethod,
             }
         }
 
-        OGRDestroyPreparedGeometry(x_prepared_geom);
+        x_prepared_geom.reset();
 
         if( x_geom_diff == nullptr || x_geom_diff->IsEmpty() )
         {
-            delete x_geom_diff;
-            delete x;
+            /* ok */
         }
         else
         {
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
             if( bPromoteToMulti )
-                x_geom_diff = promote_to_multi(x_geom_diff);
-            z->SetGeometryDirectly(x_geom_diff);
-            delete x;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            z->SetGeometryDirectly(x_geom_diff.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -3668,8 +3532,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
     poDefnResult = pLayerResult->GetLayerDefn();
 
     // add clipped features from the input layer
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -3677,7 +3540,6 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -3686,11 +3548,10 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
 
         // set up the filter on method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -3698,53 +3559,42 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *x_geom_diff = x_geom->clone(); //this will be the geometry of a result feature
-        pLayerMethod->ResetReading();
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        OGRGeometryUniquePtr x_geom_diff(x_geom->clone()); //this will be the geometry of a result feature
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) continue;
             if (x_geom_diff) {
                 CPLErrorReset();
-                OGRGeometry *x_geom_diff_new = x_geom_diff->Difference(y_geom);
+                OGRGeometryUniquePtr x_geom_diff_new(x_geom_diff->Difference(y_geom));
                 if (CPLGetLastErrorType() != CE_None || x_geom_diff_new == nullptr) {
-                    delete x_geom_diff_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        delete y;
-                        delete x;
-                        delete x_geom_diff;
                         goto done;
                     } else {
                         CPLErrorReset();
                         ret = OGRERR_NONE;
                     }
                 } else {
-                    delete x_geom_diff;
-                    x_geom_diff = x_geom_diff_new;
+                    x_geom_diff.swap(x_geom_diff_new);
                 }
             }
-            delete y;
         }
 
         if( x_geom_diff == nullptr || x_geom_diff->IsEmpty() )
         {
-            delete x_geom_diff;
-            delete x;
+            /* ok */
         }
         else
         {
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
             if( bPromoteToMulti )
-                x_geom_diff = promote_to_multi(x_geom_diff);
-            z->SetGeometryDirectly(x_geom_diff);
-            delete x;
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                x_geom_diff.reset(promote_to_multi(x_geom_diff.release()));
+            z->SetGeometryDirectly(x_geom_diff.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
                     goto done;
@@ -3758,8 +3608,7 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
 
     // restore the original filter and add features from the update layer
     pLayerMethod->SetSpatialFilter(pGeometryMethodFilter);
-    pLayerMethod->ResetReading();
-    while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+    for( auto&& y: pLayerMethod ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -3767,21 +3616,18 @@ OGRErr OGRLayer::Update( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete y;
                     goto done;
                 }
             }
             progress_counter += 1.0;
         }
 
-        OGRGeometry *y_geom = y->GetGeometryRef();
-        if (!y_geom) {delete y; continue;}
-        OGRFeature *z = new OGRFeature(poDefnResult);
-        if (mapMethod) z->SetFieldsFrom(y, mapMethod);
-        z->SetGeometry(y_geom);
-        delete y;
-        ret = pLayerResult->CreateFeature(z);
-        delete z;
+        OGRGeometry *y_geom = y->StealGeometry();
+        if (!y_geom) continue;
+        OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+        if (mapMethod) z->SetFieldsFrom(y.get(), mapMethod);
+        z->SetGeometryDirectly(y_geom);
+        ret = pLayerResult->CreateFeature(z.get());
         if (ret != OGRERR_NONE) {
             if (!bSkipFailures) {
                 goto done;
@@ -3969,8 +3815,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
 
     poDefnResult = pLayerResult->GetLayerDefn();
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -3978,7 +3823,6 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -3987,11 +3831,10 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
 
         // set up the filter on method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -3999,51 +3842,40 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *geom = nullptr; // this will be the geometry of the result feature
-        pLayerMethod->ResetReading();
+        OGRGeometryUniquePtr geom; // this will be the geometry of the result feature
         // incrementally add area from y to geom
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) continue;
             if (!geom) {
-                geom = y_geom->clone();
+                geom.reset(y_geom->clone());
             } else {
                 CPLErrorReset();
-                OGRGeometry *geom_new = geom->Union(y_geom);
+                OGRGeometryUniquePtr geom_new(geom->Union(y_geom));
                 if (CPLGetLastErrorType() != CE_None || geom_new == nullptr) {
-                    delete geom_new;
                     if (!bSkipFailures) {
                         ret = OGRERR_FAILURE;
-                        delete y;
-                        delete x;
-                        delete geom;
                         goto done;
                     } else {
                         CPLErrorReset();
                         ret = OGRERR_NONE;
                     }
                 } else {
-                    delete geom;
-                    geom = geom_new;
+                    geom.swap(geom_new);
                 }
             }
-            delete y;
         }
 
         // possibly add a new feature with area x intersection sum of y
         if (geom) {
             CPLErrorReset();
-            OGRGeometry* poIntersection = x_geom->Intersection(geom);
+            OGRGeometryUniquePtr poIntersection(x_geom->Intersection(geom.get()));
             if (CPLGetLastErrorType() != CE_None || poIntersection == nullptr) {
-                delete poIntersection;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete geom;
-                    delete x;
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -4052,13 +3884,12 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
             }
             else if( !poIntersection->IsEmpty() )
             {
-                OGRFeature *z = new OGRFeature(poDefnResult);
-                z->SetFieldsFrom(x, mapInput);
+                OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+                z->SetFieldsFrom(x.get(), mapInput);
                 if( bPromoteToMulti )
-                    poIntersection = promote_to_multi(poIntersection);
-                z->SetGeometryDirectly(poIntersection);
-                ret = pLayerResult->CreateFeature(z);
-                delete z;
+                    poIntersection.reset(promote_to_multi(poIntersection.release()));
+                z->SetGeometryDirectly(poIntersection.release());
+                ret = pLayerResult->CreateFeature(z.get());
                 if (ret != OGRERR_NONE) {
                     if (!bSkipFailures) {
                         goto done;
@@ -4068,11 +3899,7 @@ OGRErr OGRLayer::Clip( OGRLayer *pLayerMethod,
                     }
                 }
             }
-            else
-                delete poIntersection;
-            delete geom;
         }
-        delete x;
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -4245,8 +4072,7 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
     if (ret != OGRERR_NONE) goto done;
     poDefnResult = pLayerResult->GetLayerDefn();
 
-    ResetReading();
-    while (OGRFeature *x = GetNextFeature()) {
+    for( auto&& x: this ) {
 
         if (pfnProgress) {
             double p = progress_counter/progress_max;
@@ -4254,7 +4080,6 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                 if (!pfnProgress(p, "", pProgressArg)) {
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     ret = OGRERR_FAILURE;
-                    delete x;
                     goto done;
                 }
             }
@@ -4263,11 +4088,10 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
 
         // set up the filter on the method layer
         CPLErrorReset();
-        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x);
+        OGRGeometry *x_geom = set_filter_from(pLayerMethod, pGeometryMethodFilter, x.get());
         if (CPLGetLastErrorType() != CE_None) {
             if (!bSkipFailures) {
                 ret = OGRERR_FAILURE;
-                delete x;
                 goto done;
             } else {
                 CPLErrorReset();
@@ -4275,53 +4099,43 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
             }
         }
         if (!x_geom) {
-            delete x;
             continue;
         }
 
-        OGRGeometry *geom = x_geom->clone(); // this will be the geometry of the result feature
-        pLayerMethod->ResetReading();
+        OGRGeometryUniquePtr geom(x_geom->clone()); // this will be the geometry of the result feature
         // incrementally erase y from geom
-        while (OGRFeature *y = pLayerMethod->GetNextFeature()) {
+        for( auto&& y: pLayerMethod ) {
             OGRGeometry *y_geom = y->GetGeometryRef();
-            if (!y_geom) {delete y; continue;}
+            if (!y_geom) continue;
             CPLErrorReset();
-            OGRGeometry *geom_new = geom->Difference(y_geom);
+            OGRGeometryUniquePtr geom_new(geom->Difference(y_geom));
             if (CPLGetLastErrorType() != CE_None || geom_new == nullptr) {
-                delete geom_new;
                 if (!bSkipFailures) {
                     ret = OGRERR_FAILURE;
-                    delete x;
-                    delete y;
                     goto done;
                 } else {
                     CPLErrorReset();
                     ret = OGRERR_NONE;
                 }
             } else {
-                delete geom;
-                geom = geom_new;
+                geom.swap(geom_new);
                 if (geom->IsEmpty())
                 {
-                    delete y;
                     break;
                 }
             }
-            delete y;
         }
 
         // add a new feature if there is remaining area
         if (!geom->IsEmpty()) {
-            OGRFeature *z = new OGRFeature(poDefnResult);
-            z->SetFieldsFrom(x, mapInput);
+            OGRFeatureUniquePtr z(new OGRFeature(poDefnResult));
+            z->SetFieldsFrom(x.get(), mapInput);
             if( bPromoteToMulti )
-                geom = promote_to_multi(geom);
-            z->SetGeometryDirectly(geom);
-            ret = pLayerResult->CreateFeature(z);
-            delete z;
+                geom.reset(promote_to_multi(geom.release()));
+            z->SetGeometryDirectly(geom.release());
+            ret = pLayerResult->CreateFeature(z.get());
             if (ret != OGRERR_NONE) {
                 if (!bSkipFailures) {
-                    delete x;
                     goto done;
                 } else {
                     CPLErrorReset();
@@ -4329,11 +4143,6 @@ OGRErr OGRLayer::Erase( OGRLayer *pLayerMethod,
                 }
             }
         }
-        else
-        {
-            delete geom;
-        }
-        delete x;
     }
     if (pfnProgress && !pfnProgress(1.0, "", pProgressArg)) {
       CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
@@ -4418,4 +4227,119 @@ OGRErr OGR_L_Erase( OGRLayerH pLayerInput,
     VALIDATE_POINTER1( pLayerResult, "OGR_L_Erase", OGRERR_INVALID_HANDLE );
 
     return ((OGRLayer *)pLayerInput)->Erase( (OGRLayer *)pLayerMethod, (OGRLayer *)pLayerResult, papszOptions, pfnProgress, pProgressArg );
+}
+
+/************************************************************************/
+/*                  OGRLayer::FeatureIterator::Private                  */
+/************************************************************************/
+
+struct OGRLayer::FeatureIterator::Private
+{
+    OGRFeatureUniquePtr m_poFeature;
+    OGRLayer* m_poLayer = nullptr;
+    bool m_bError = false;
+    bool m_bEOF = true;
+};
+
+/************************************************************************/
+/*                OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::FeatureIterator(OGRLayer* poLayer, bool bStart):
+    m_poPrivate(new OGRLayer::FeatureIterator::Private())
+{
+    m_poPrivate->m_poLayer = poLayer;
+    if( bStart )
+    {
+        if( m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                        "Only one feature iterator can be "
+                        "active at a time");
+            m_poPrivate->m_bError = true;
+        }
+        else
+        {
+            m_poPrivate->m_poLayer->ResetReading();
+            m_poPrivate->m_poFeature.reset(m_poPrivate->m_poLayer->GetNextFeature());
+            m_poPrivate->m_bEOF = m_poPrivate->m_poFeature == nullptr;
+            m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator = true;
+        }
+    }
+}
+
+/************************************************************************/
+/*                OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::FeatureIterator(OGRLayer::FeatureIterator&& oOther)
+{
+    m_poPrivate->m_poFeature.swap(oOther.m_poPrivate->m_poFeature);
+    oOther.m_poPrivate->m_poFeature.reset();
+
+    m_poPrivate->m_poLayer = oOther.m_poPrivate->m_poLayer;
+    oOther.m_poPrivate->m_poLayer = nullptr;
+
+    m_poPrivate->m_bError = oOther.m_poPrivate->m_bError;
+    oOther.m_poPrivate->m_bError = true;
+
+    m_poPrivate->m_bEOF = oOther.m_poPrivate->m_bEOF;
+    oOther.m_poPrivate->m_bEOF = true;
+}
+
+/************************************************************************/
+/*               ~OGRLayer::FeatureIterator::FeatureIterator()          */
+/************************************************************************/
+
+OGRLayer::FeatureIterator::~FeatureIterator()
+{
+    if( !m_poPrivate->m_bError && m_poPrivate->m_poLayer)
+        m_poPrivate->m_poLayer->m_poPrivate->m_bInFeatureIterator = false;
+}
+
+/************************************************************************/
+/*                              operator*()                             */
+/************************************************************************/
+
+OGRFeatureUniquePtr& OGRLayer::FeatureIterator::operator*()
+{
+    return m_poPrivate->m_poFeature;
+}
+
+/************************************************************************/
+/*                              operator++()                            */
+/************************************************************************/
+
+OGRLayer::FeatureIterator& OGRLayer::FeatureIterator::operator++()
+{
+    m_poPrivate->m_poFeature.reset(m_poPrivate-> m_poLayer->GetNextFeature());
+    m_poPrivate->m_bEOF = m_poPrivate->m_poFeature == nullptr;
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator!=()                             */
+/************************************************************************/
+
+bool OGRLayer::FeatureIterator::operator!=(const OGRLayer::FeatureIterator& it) const
+{
+    return m_poPrivate->m_bEOF != it.m_poPrivate->m_bEOF;
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+OGRLayer::FeatureIterator OGRLayer::begin()
+{
+    return {this, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+OGRLayer::FeatureIterator OGRLayer::end()
+{
+    return {this, false};
 }

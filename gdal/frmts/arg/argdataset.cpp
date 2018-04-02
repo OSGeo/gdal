@@ -202,9 +202,11 @@ char **ARGDataset::GetFileList()
 
 int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (!EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "arg")) {
         return FALSE;
     }
+#endif
 
     json_object *pJSONObject = GetJsonObject(poOpenInfo->pszFilename);
     if (pJSONObject == nullptr) {
@@ -222,9 +224,19 @@ int ARGDataset::Identify( GDALOpenInfo *poOpenInfo )
 /************************************************************************/
 GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 {
-    if ( !Identify( poOpenInfo ) )
+    if ( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The ARG driver does not support update access to existing"
+                  " datasets." );
+        return nullptr;
+    }
 /* -------------------------------------------------------------------- */
 /*      Check metadata settings in JSON.                                */
 /* -------------------------------------------------------------------- */
@@ -343,7 +355,7 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
         return nullptr;
     }
 
-    // get the xmax of the bounding box
+    // get the xmax of the bounding boxfpL
     const double dfXmax = GetJsonValueDbl(pJSONObject, "xmax");
     if (CPLIsNan(dfXmax)) {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -492,14 +504,8 @@ GDALDataset *ARGDataset::Open( GDALOpenInfo *poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Assume ownership of the file handled from the GDALOpenInfo.     */
 /* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpImage == nullptr)
-    {
-        delete poDS;
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "Could not open dataset '%s'", poOpenInfo->pszFilename);
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->adfGeoTransform[0] = dfXmin;
     poDS->adfGeoTransform[1] = dfCellwidth;

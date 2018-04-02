@@ -119,7 +119,7 @@ public:
                             const char* pszHeaderPrefix);
 };
 
-class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
+class VSIS3HandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osSecretAccessKey;

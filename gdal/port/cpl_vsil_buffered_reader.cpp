@@ -54,7 +54,7 @@ constexpr int MAX_BUFFER_SIZE = 65536;
 
 CPL_CVSID("$Id$")
 
-class VSIBufferedReaderHandle CPL_FINAL : public VSIVirtualHandle
+class VSIBufferedReaderHandle final : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
     GByte*            pabyBuffer;

@@ -89,7 +89,7 @@ typedef struct
 
 class OGRGeoPackageTableLayer;
 
-class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public GDALGPKGMBTilesLikePseudoDataset
+class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class GDALGeoPackageRasterBand;
     friend class OGRGeoPackageTableLayer;
@@ -321,7 +321,7 @@ class GDALGeoPackageDataset CPL_FINAL : public OGRSQLiteBaseDataSource, public G
 /*                        GDALGeoPackageRasterBand                      */
 /************************************************************************/
 
-class GDALGeoPackageRasterBand CPL_FINAL: public GDALGPKGMBTilesLikeRasterBand
+class GDALGeoPackageRasterBand final: public GDALGPKGMBTilesLikeRasterBand
 {
         bool                    m_bStatsComputed;
 
@@ -390,7 +390,7 @@ class OGRGeoPackageLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
 /*                        OGRGeoPackageTableLayer                       */
 /************************************************************************/
 
-class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
+class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 {
     char*                       m_pszTableName;
     bool                        m_bIsTable;
@@ -577,7 +577,7 @@ class OGRGeoPackageTableLayer CPL_FINAL : public OGRGeoPackageLayer
 /*                         OGRGeoPackageSelectLayer                     */
 /************************************************************************/
 
-class OGRGeoPackageSelectLayer CPL_FINAL : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
+class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer, public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour* poBehaviour;
 

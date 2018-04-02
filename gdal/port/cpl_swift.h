@@ -37,7 +37,7 @@
 #include "cpl_aws.h"
 #include <map>
 
-class VSISwiftHandleHelper: public IVSIS3LikeHandleHelper
+class VSISwiftHandleHelper final: public IVSIS3LikeHandleHelper
 {
         CPLString m_osURL;
         CPLString m_osStorageURL;

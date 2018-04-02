@@ -47,7 +47,7 @@ CPL_CVSID("$Id$")
 /*                        GDALHashSetBandBlockCache                     */
 /* ******************************************************************** */
 
-class GDALHashSetBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
+class GDALHashSetBandBlockCache final : public GDALAbstractBandBlockCache
 {
     struct BlockComparator
     {

@@ -1480,7 +1480,7 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
     // The file should have at least 5 header bytes
     // and hf_w, hf_b, and hf_data tags.
 
-    if( poOpenInfo->nHeaderBytes < 5+13+13+16 )
+    if( poOpenInfo->nHeaderBytes < 5+13+13+16 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !LevellerDataset::Identify(poOpenInfo))
@@ -1498,20 +1498,8 @@ GDALDataset *LevellerDataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->m_version = version;
 
-    // Reopen for large file access.
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->m_fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within Leveller driver.",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
-    }
+    poDS->m_fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */

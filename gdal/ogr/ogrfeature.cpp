@@ -6831,3 +6831,14 @@ void OGR_RawField_SetNull( OGRField* puField )
     puField->Set.nMarker2 = OGRNullMarker;
     puField->Set.nMarker3 = OGRNullMarker;
 }
+
+/************************************************************************/
+/*                     OGRFeatureUniquePtrDeleter                       */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRFeatureUniquePtrDeleter::operator()(OGRFeature* poFeature) const
+{
+    delete poFeature;
+}
+//! @endcond

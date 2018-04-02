@@ -590,7 +590,7 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
 /*                            JPGMaskBand()                             */
 /************************************************************************/
 
-JPGMaskBand::JPGMaskBand( JPGDataset *poDSIn )
+JPGMaskBand::JPGMaskBand( JPGDatasetCommon *poDSIn )
 
 {
     poDS = poDSIn;
@@ -610,7 +610,7 @@ JPGMaskBand::JPGMaskBand( JPGDataset *poDSIn )
 
 CPLErr JPGMaskBand::IReadBlock( int /* nBlockX */, int nBlockY, void *pImage )
 {
-    JPGDataset *poJDS = static_cast<JPGDataset *>(poDS);
+    JPGDatasetCommon *poJDS = cpl::down_cast<JPGDatasetCommon *>(poDS);
 
     // Make sure the mask is loaded and decompressed.
     poJDS->DecompressMask();
@@ -848,7 +848,7 @@ GDALRasterBand *JPGRasterBand::GetMaskBand()
     {
         if( poGDS->poMaskBand == nullptr )
             poGDS->poMaskBand =
-                new JPGMaskBand(static_cast<JPGDataset *>(poDS));
+                new JPGMaskBand(poGDS);
 
         return poGDS->poMaskBand;
     }

@@ -355,7 +355,7 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      We assume the user is pointing to the header (.pcb) file.       */
 /*      Does this appear to be a pcb file?                              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE )
+    if( poOpenInfo->nHeaderBytes < ERD_HEADER_SIZE || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !STARTS_WITH_CI( reinterpret_cast<char *>(poOpenInfo->pabyHeader),
@@ -370,20 +370,8 @@ GDALDataset *LANDataset::Open( GDALOpenInfo * poOpenInfo )
     LANDataset *poDS = new LANDataset();
 
     poDS->eAccess = poOpenInfo->eAccess;
-
-/* -------------------------------------------------------------------- */
-/*      Adopt the openinfo file pointer for use with this file.         */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-
-    if( poDS->fpImage == nullptr )
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to byte swap the headers to local machine order?     */

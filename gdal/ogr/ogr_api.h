@@ -232,14 +232,14 @@ void   CPL_DLL OGR_G_AddPoint_2D( OGRGeometryH, double, double );
 void   CPL_DLL OGR_G_AddPointM( OGRGeometryH, double, double, double );
 void   CPL_DLL OGR_G_AddPointZM( OGRGeometryH, double, double, double, double );
 void   CPL_DLL OGR_G_SetPoints( OGRGeometryH hGeom, int nPointsIn,
-                                void* pabyX, int nXStride,
-                                void* pabyY, int nYStride,
-                                void* pabyZ, int nZStride );
+                                const void* pabyX, int nXStride,
+                                const void* pabyY, int nYStride,
+                                const void* pabyZ, int nZStride );
 void   CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
-                                  void* pabyX, int nXStride,
-                                  void* pabyY, int nYStride,
-                                  void* pabyZ, int nZStride,
-                                  void* pabyM, int nMStride );
+                                  const void* pabyX, int nXStride,
+                                  const void* pabyY, int nYStride,
+                                  const void* pabyZ, int nZStride,
+                                  const void* pabyM, int nMStride );
 void   CPL_DLL OGR_G_SwapXY( OGRGeometryH hGeom );
 
 /* Methods for getting/setting rings and members collections */
@@ -518,6 +518,53 @@ void     CPL_DLL OGR_L_SetSpatialFilterRectEx( OGRLayerH, int iGeomField,
 OGRErr CPL_DLL OGR_L_SetAttributeFilter( OGRLayerH, const char * );
 void   CPL_DLL OGR_L_ResetReading( OGRLayerH );
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature( OGRLayerH ) CPL_WARN_UNUSED_RESULT;
+
+/*! @endcond */
+
+/** Conveniency macro to iterate over features of a layer.
+ *
+ * Typical usage is:
+ * <pre>
+ * OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer)
+ * {
+ *      // Do something, including continue, break;
+ *      // Do not explicitly destroy the feature (unless you use return or goto
+ *      // outside of the loop, in which case use OGR_F_Destroy(hFeat))
+ * }
+ * OGR_FOR_EACH_FEATURE_END(hFeat)
+ * </pre>
+ *
+ * In C++, you might want to use instead range-based loop:
+ * <pre>
+ * for( auto&& poFeature: poLayer )
+ * {
+ * }
+ * </pre>
+ *
+ * @param hFeat variable name for OGRFeatureH. The variable will be declared
+ *              inside the macro body.
+ * @param hLayer layer to iterate over.
+ *
+ * @since GDAL 2.3
+ */
+#define OGR_FOR_EACH_FEATURE_BEGIN(hFeat, hLayer) \
+    { \
+        OGRFeatureH hFeat = CPL_NULLPTR; \
+        OGR_L_ResetReading(hLayer); \
+        while( true) \
+        { \
+            if( hFeat ) \
+                OGR_F_Destroy(hFeat); \
+            hFeat = OGR_L_GetNextFeature(hLayer); \
+            if( !hFeat ) \
+                break;
+
+/** End of iterator. */
+#define OGR_FOR_EACH_FEATURE_END(hFeat) \
+        } \
+        OGR_F_Destroy(hFeat); \
+    }
+
 OGRErr CPL_DLL OGR_L_SetNextByIndex( OGRLayerH, GIntBig );
 OGRFeatureH CPL_DLL OGR_L_GetFeature( OGRLayerH, GIntBig )  CPL_WARN_UNUSED_RESULT;
 OGRErr CPL_DLL OGR_L_SetFeature( OGRLayerH, OGRFeatureH ) CPL_WARN_UNUSED_RESULT;

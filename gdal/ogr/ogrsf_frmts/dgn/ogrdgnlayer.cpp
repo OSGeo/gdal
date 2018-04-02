@@ -687,7 +687,7 @@ OGRFeature *OGRDGNLayer::ElementToFeature( DGNElemCore *psElement, int nRecLevel
           OGRGeometry *poGeom = nullptr;
 
           if( psElement->type == DGNT_COMPLEX_SHAPE_HEADER )
-              poGeom = reinterpret_cast<OGRPolygon *>(
+              poGeom = reinterpret_cast<OGRGeometry *>(
                   OGRBuildPolygonFromEdges(
                       reinterpret_cast<OGRGeometryH>( &oChildren ),
                       TRUE, TRUE, 100000, nullptr ) );
@@ -933,8 +933,7 @@ DGNElemCore **OGRDGNLayer::LineStringToElementGroup( OGRLineString *poLS,
 DGNElemCore **OGRDGNLayer::TranslateLabel( OGRFeature *poFeature )
 
 {
-    OGRPoint *poPoint
-        = reinterpret_cast<OGRPoint *>( poFeature->GetGeometryRef() );
+    OGRPoint *poPoint = poFeature->GetGeometryRef()->toPoint();
     const char *pszText = poFeature->GetFieldAsString( "Text" );
 
     OGRStyleMgr oMgr;
@@ -1059,7 +1058,7 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
 
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
     {
-        OGRPoint *poPoint = reinterpret_cast<OGRPoint *>( poGeom );
+        OGRPoint *poPoint = poGeom->toPoint();
         const char *pszText = poFeature->GetFieldAsString("Text");
 
         if( (pszText == nullptr || strlen(pszText) == 0)
@@ -1084,13 +1083,12 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
     }
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        papsGroup = LineStringToElementGroup(
-            reinterpret_cast<OGRLineString *>( poGeom ),
+        papsGroup = LineStringToElementGroup( poGeom->toLineString(),
             DGNT_LINE_STRING );
     }
     else if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
     {
-        OGRPolygon *poPoly = reinterpret_cast<OGRPolygon *>( poGeom );
+        OGRPolygon *poPoly = poGeom->toPolygon();
 
         DGNElemCore **papsGroupExt = LineStringToElementGroup(
                 poPoly->getExteriorRing(), DGNT_SHAPE);

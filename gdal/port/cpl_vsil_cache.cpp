@@ -95,7 +95,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSICachedFile CPL_FINAL : public VSIVirtualHandle
+class VSICachedFile final : public VSIVirtualHandle
 {
   public:
     VSICachedFile( VSIVirtualHandle *poBaseHandle,

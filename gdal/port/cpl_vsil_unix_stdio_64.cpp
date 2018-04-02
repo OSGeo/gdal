@@ -139,7 +139,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIUnixStdioFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
 {
 #ifdef VSI_COUNT_BYTES_READ
     vsi_l_offset  nTotalBytesRead;
@@ -176,7 +176,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIUnixStdioHandle CPL_FINAL : public VSIVirtualHandle
+class VSIUnixStdioHandle final : public VSIVirtualHandle
 {
     FILE          *fp;
     vsi_l_offset  m_nOffset;

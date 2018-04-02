@@ -95,7 +95,7 @@ int XPMDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( poOpenInfo->eAccess == GA_Update )
@@ -109,9 +109,8 @@ GDALDataset *XPMDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Read the whole file into a memory strings.                      */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( fp == nullptr )
-        return nullptr;
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     if( VSIFSeekL( fp, 0, SEEK_END ) != 0 )
     {

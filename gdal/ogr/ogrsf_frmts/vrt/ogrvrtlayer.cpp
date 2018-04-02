@@ -1805,19 +1805,20 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
                 }
                 else
                 {
+                    auto poPoint = poGeom->toPoint();
                     poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomXField,
-                                        ((OGRPoint *)poGeom)->getX());
+                                        poPoint->getX());
                     poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomYField,
-                                        ((OGRPoint *)poGeom)->getY());
+                                        poPoint->getY());
                     if( apoGeomFieldProps[i]->iGeomZField != -1 )
                     {
                         poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomZField,
-                                            ((OGRPoint *)poGeom)->getZ());
+                                            poPoint->getZ());
                     }
                     if( apoGeomFieldProps[i]->iGeomMField != -1 )
                     {
                         poSrcFeat->SetField(apoGeomFieldProps[i]->iGeomMField,
-                                            ((OGRPoint *)poGeom)->getM());
+                                            poPoint->getM());
                     }
                 }
             }

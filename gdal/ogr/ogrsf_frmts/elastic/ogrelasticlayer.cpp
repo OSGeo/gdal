@@ -1763,7 +1763,7 @@ CPLString OGRElasticLayer::BuildMap() {
 /*                       BuildGeoJSONGeometry()                         */
 /************************************************************************/
 
-static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
+static void BuildGeoJSONGeometry(json_object* geometry, const OGRGeometry* poGeom)
 {
     const int nPrecision = 10;
     double dfEps = pow(10.0, -(double)nPrecision);
@@ -1785,7 +1785,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
     {
         case wkbPoint:
         {
-            OGRPoint* poPoint = (OGRPoint*)poGeom;
+            const OGRPoint* poPoint = poGeom->toPoint();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
             json_object_array_add(coordinates, json_object_new_double_with_precision(poPoint->getX(), nPrecision));
@@ -1795,7 +1795,7 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbLineString:
         {
-            OGRLineString* poLS = (OGRLineString*)poGeom;
+            const OGRLineString* poLS = poGeom->toLineString();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
             for(int i=0;i<poLS->getNumPoints();i++)
@@ -1810,14 +1810,13 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbPolygon:
         {
-            OGRPolygon* poPoly = (OGRPolygon*)poGeom;
+            const OGRPolygon* poPoly = poGeom->toPolygon();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
-            for(int i=0;i<1+poPoly->getNumInteriorRings();i++)
+            for( auto&& poLS: *poPoly )
             {
                 json_object *ring = json_object_new_array();
                 json_object_array_add(coordinates, ring);
-                OGRLineString* poLS = (i==0)?poPoly->getExteriorRing():poPoly->getInteriorRing(i-1);
                 for(int j=0;j<poLS->getNumPoints();j++)
                 {
                     if( j > 0 && fabs(poLS->getX(j) - poLS->getX(j-1)) < dfEps &&
@@ -1834,14 +1833,13 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbMultiPoint:
         {
-            OGRMultiPoint* poMP = (OGRMultiPoint*)poGeom;
+            const OGRMultiPoint* poMP = poGeom->toMultiPoint();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
-            for(int i=0;i<poMP->getNumGeometries();i++)
+            for( auto&& poPoint: *poMP )
             {
                 json_object *point = json_object_new_array();
                 json_object_array_add(coordinates, point);
-                OGRPoint* poPoint = (OGRPoint*) poMP->getGeometryRef(i);
                 json_object_array_add(point, json_object_new_double_with_precision(poPoint->getX(), nPrecision));
                 json_object_array_add(point, json_object_new_double_with_precision(poPoint->getY(), nPrecision));
             }
@@ -1850,20 +1848,19 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbMultiLineString:
         {
-            OGRMultiLineString* poMLS = (OGRMultiLineString*)poGeom;
+            const OGRMultiLineString* poMLS = poGeom->toMultiLineString();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
-            for(int i=0;i<poMLS->getNumGeometries();i++)
+            for( auto&& poLS: *poMLS )
             {
                 json_object *ls = json_object_new_array();
                 json_object_array_add(coordinates, ls);
-                OGRLineString* poLS = (OGRLineString*) poMLS->getGeometryRef(i);
-                for(int j=0;j<poLS->getNumPoints();j++)
+                for( auto&& oPoint: *poLS )
                 {
                     json_object *point = json_object_new_array();
                     json_object_array_add(ls, point);
-                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getX(j), nPrecision));
-                    json_object_array_add(point, json_object_new_double_with_precision(poLS->getY(j), nPrecision));
+                    json_object_array_add(point, json_object_new_double_with_precision(oPoint.getX(), nPrecision));
+                    json_object_array_add(point, json_object_new_double_with_precision(oPoint.getY(), nPrecision));
                 }
             }
             break;
@@ -1871,19 +1868,17 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbMultiPolygon:
         {
-            OGRMultiPolygon* poMP = (OGRMultiPolygon*)poGeom;
+            const OGRMultiPolygon* poMP = poGeom->toMultiPolygon();
             json_object *coordinates = json_object_new_array();
             json_object_object_add(geometry, "coordinates", coordinates);
-            for(int i=0;i<poMP->getNumGeometries();i++)
+            for( auto&& poPoly: *poMP )
             {
                 json_object *poly = json_object_new_array();
                 json_object_array_add(coordinates, poly);
-                OGRPolygon* poPoly = (OGRPolygon*) poMP->getGeometryRef(i);
-                for(int j=0;j<1+poPoly->getNumInteriorRings();j++)
+                for( auto&& poLS: *poPoly )
                 {
                     json_object *ring = json_object_new_array();
                     json_object_array_add(poly, ring);
-                    OGRLineString* poLS = (j==0)?poPoly->getExteriorRing():poPoly->getInteriorRing(j-1);
                     for(int k=0;k<poLS->getNumPoints();k++)
                     {
                         if( k > 0 && fabs(poLS->getX(k)- poLS->getX(k-1)) < dfEps &&
@@ -1901,14 +1896,14 @@ static void BuildGeoJSONGeometry(json_object* geometry, OGRGeometry* poGeom)
 
         case wkbGeometryCollection:
         {
-            OGRGeometryCollection* poGC = (OGRGeometryCollection*)poGeom;
+            const OGRGeometryCollection* poGC = poGeom->toGeometryCollection();
             json_object *geometries = json_object_new_array();
             json_object_object_add(geometry, "geometries", geometries);
-            for(int i=0;i<poGC->getNumGeometries();i++)
+            for( auto&& poSubGeom: *poGC )
             {
                 json_object *subgeom = json_object_new_object();
                 json_object_array_add(geometries, subgeom);
-                BuildGeoJSONGeometry(subgeom, poGC->getGeometryRef(i));
+                BuildGeoJSONGeometry(subgeom, poSubGeom);
             }
             break;
         }

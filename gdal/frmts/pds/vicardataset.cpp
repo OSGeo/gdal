@@ -182,16 +182,11 @@ GDALDataset *VICARDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like a VICAR dataset?                            */
 /* -------------------------------------------------------------------- */
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file API.                         */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( fpQube == nullptr )
-        return nullptr;
+    VSILFILE *fpQube = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     VICARDataset *poDS = new VICARDataset();
     if( ! poDS->oKeywords.Ingest( fpQube, poOpenInfo->pabyHeader ) ) {

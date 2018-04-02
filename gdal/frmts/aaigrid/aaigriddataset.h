@@ -77,7 +77,7 @@ typedef enum
 
 class AAIGRasterBand;
 
-class CPL_DLL AAIGDataset : public GDALPamDataset
+class AAIGDataset : public GDALPamDataset
 {
     friend class AAIGRasterBand;
 

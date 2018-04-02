@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
 /*                        GDALArrayBandBlockCache                       */
 /* ******************************************************************** */
 
-class GDALArrayBandBlockCache CPL_FINAL : public GDALAbstractBandBlockCache
+class GDALArrayBandBlockCache final : public GDALAbstractBandBlockCache
 {
     bool              bSubBlockingActive;
     int               nSubBlocksPerRow;

@@ -690,6 +690,9 @@ int GRASSASCIIDataset::ParseHeader(const char *pszHeader,
 GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
                                       GridFormat eFormat )
 {
+    if( poOpenInfo->fpL == nullptr )
+        return nullptr;
+
     // Create a corresponding GDALDataset.
     AAIGDataset *poDS = nullptr;
 
@@ -727,16 +730,8 @@ GDALDataset *AAIGDataset::CommonOpen( GDALOpenInfo *poOpenInfo,
         return nullptr;
     }
 
-    // Open file with large file API.
-    poDS->fp = VSIFOpenL(poOpenInfo->pszFilename, "r");
-    if( poDS->fp == nullptr )
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "VSIFOpenL(%s) failed unexpectedly.",
-                 poOpenInfo->pszFilename);
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     // Find the start of real data.
     int nStartOfData = 0;

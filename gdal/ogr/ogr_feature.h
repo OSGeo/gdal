@@ -35,6 +35,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <memory>
 #include <vector>
 
 /**
@@ -489,6 +490,18 @@ class CPL_DLL OGRFeature
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeature)
 };
+
+//! @cond Doxygen_Suppress
+struct CPL_DLL OGRFeatureUniquePtrDeleter
+{
+    void operator()(OGRFeature*) const;
+};
+//! @endcond
+
+/** Unique pointer type for OGRFeature.
+ * @since GDAL 2.3
+ */
+typedef std::unique_ptr<OGRFeature, OGRFeatureUniquePtrDeleter> OGRFeatureUniquePtr;
 
 /************************************************************************/
 /*                           OGRFeatureQuery                            */

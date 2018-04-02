@@ -727,7 +727,7 @@ int VSICryptFileHeader::WriteToFile( VSIVirtualHandle* fp,
 /*                          VSICryptFileHandle                          */
 /************************************************************************/
 
-class VSICryptFileHandle CPL_FINAL : public VSIVirtualHandle
+class VSICryptFileHandle final : public VSIVirtualHandle
 {
   private:
         CPLString           osBaseFilename;
@@ -1415,7 +1415,7 @@ int VSICryptFileHandle::Close()
 /*                   VSICryptFilesystemHandler                          */
 /************************************************************************/
 
-class VSICryptFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSICryptFilesystemHandler final : public VSIFilesystemHandler
 {
 public:
     VSICryptFilesystemHandler();

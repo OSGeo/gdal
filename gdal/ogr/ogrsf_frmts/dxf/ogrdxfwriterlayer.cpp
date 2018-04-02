@@ -278,7 +278,7 @@ OGRErr OGRDXFWriterLayer::WriteINSERT( OGRFeature *poFeature )
     {
         // We don't have an OCS; we will just assume that the location of
         // the geometry (in WCS) is the correct insertion point.
-        OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+        OGRPoint *poPoint = poFeature->GetGeometryRef()->toPoint();
 
         WriteValue( 10, poPoint->getX() );
         if( !WriteValue( 20, poPoint->getY() ) )
@@ -364,7 +364,7 @@ OGRErr OGRDXFWriterLayer::WritePOINT( OGRFeature *poFeature )
     }
     delete poTool;
 
-    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    OGRPoint *poPoint = poFeature->GetGeometryRef()->toPoint();
 
     WriteValue( 10, poPoint->getX() );
     if( !WriteValue( 20, poPoint->getY() ) )
@@ -604,7 +604,7 @@ OGRErr OGRDXFWriterLayer::WriteTEXT( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Write the location.                                             */
 /* -------------------------------------------------------------------- */
-    OGRPoint *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    OGRPoint *poPoint = poFeature->GetGeometryRef()->toPoint();
 
     WriteValue( 10, poPoint->getX() + dfDx );
     if( !WriteValue( 20, poPoint->getY() + dfDy ) )
@@ -698,7 +698,7 @@ static double IsLineTypeProportional( const std::vector<double>& adfA,
 /************************************************************************/
 
 OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
-                                         OGRGeometry *poGeom )
+                                         const OGRGeometry *poGeom )
 
 {
 /* -------------------------------------------------------------------- */
@@ -716,14 +716,13 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPolygon
         || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
+        const OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
         OGRErr eErr = OGRERR_NONE;
-
-        for( int iGeom = 0;
-             eErr == OGRERR_NONE && iGeom < poGC->getNumGeometries();
-             iGeom++ )
+        for( auto&& poMember: *poGC )
         {
-            eErr = WritePOLYLINE( poFeature, poGC->getGeometryRef( iGeom ) );
+            eErr = WritePOLYLINE( poFeature, poMember );
+            if( eErr != OGRERR_NONE )
+                break;
         }
 
         return eErr;
@@ -735,15 +734,13 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon
         || wkbFlatten(poGeom->getGeometryType()) == wkbTriangle)
     {
-        OGRPolygon *poPoly = (OGRPolygon *) poGeom;
-        OGRErr eErr;
-
-        eErr = WritePOLYLINE( poFeature, poPoly->getExteriorRing() );
-        for( int iGeom = 0;
-             eErr == OGRERR_NONE && iGeom < poPoly->getNumInteriorRings();
-             iGeom++ )
+        const OGRPolygon *poPoly = poGeom->toPolygon();
+        OGRErr eErr = OGRERR_NONE;
+        for( auto&& poRing: *poPoly )
         {
-            eErr = WritePOLYLINE( poFeature, poPoly->getInteriorRing(iGeom) );
+            eErr = WritePOLYLINE( poFeature, poRing );
+            if( eErr != OGRERR_NONE )
+                break;
         }
 
         return eErr;
@@ -755,7 +752,7 @@ OGRErr OGRDXFWriterLayer::WritePOLYLINE( OGRFeature *poFeature,
     if( wkbFlatten(poGeom->getGeometryType()) != wkbLineString )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    OGRLineString *poLS = (OGRLineString *) poGeom;
+    const OGRLineString *poLS = poGeom->toLineString();
 
 /* -------------------------------------------------------------------- */
 /*      Write as a lightweight polygon,                                 */
@@ -1181,16 +1178,12 @@ OGRErr OGRDXFWriterLayer::WriteHATCH( OGRFeature *poFeature,
 /* -------------------------------------------------------------------- */
 /*      Process the loops (rings).                                      */
 /* -------------------------------------------------------------------- */
-    OGRPolygon *poPoly = (OGRPolygon *) poGeom;
+    OGRPolygon *poPoly = poGeom->toPolygon();
 
     WriteValue( 91, poPoly->getNumInteriorRings() + 1 );
 
-    for( int iRing = -1; iRing < poPoly->getNumInteriorRings(); iRing++ )
+    for( auto&& poLR: *poPoly )
     {
-        OGRLinearRing *poLR = iRing == -1
-            ? poPoly->getExteriorRing()
-            : poPoly->getInteriorRing( iRing );
-
         WriteValue( 92, 2 ); // Polyline
         WriteValue( 72, 0 ); // has bulge
         WriteValue( 73, 1 ); // is closed

@@ -2128,7 +2128,7 @@ FileGDBGeomField::FileGDBGeomField( FileGDBTable* poParentIn ) :
 /*                      FileGDBOGRGeometryConverterImpl                 */
 /************************************************************************/
 
-class FileGDBOGRGeometryConverterImpl CPL_FINAL : public FileGDBOGRGeometryConverter
+class FileGDBOGRGeometryConverterImpl final : public FileGDBOGRGeometryConverter
 {
         const FileGDBGeomField      *poGeomField;
         GUInt32                     *panPointCount;
@@ -2390,7 +2390,7 @@ class ZMultiPointSetter
 
         void set(int i, double dfZ)
         {
-            ((OGRPoint*)poMPoint->getGeometryRef(i))->setZ(dfZ);
+            poMPoint->getGeometryRef(i)->toPoint()->setZ(dfZ);
         }
 };
 
@@ -2463,7 +2463,7 @@ class MMultiPointSetter
 
         void set(int i, double dfM)
         {
-            ((OGRPoint*)poMPoint->getGeometryRef(i))->setM(dfM);
+            poMPoint->getGeometryRef(i)->toPoint()->setM(dfM);
         }
 };
 

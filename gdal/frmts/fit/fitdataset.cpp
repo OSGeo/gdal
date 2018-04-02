@@ -861,7 +861,7 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
 
-    if( poOpenInfo->nHeaderBytes < 5 )
+    if( poOpenInfo->nHeaderBytes < 5 || poOpenInfo->fpL == nullptr)
         return nullptr;
 
     if( !STARTS_WITH_CI((const char *) poOpenInfo->pabyHeader, "IT01") &&
@@ -881,21 +881,9 @@ GDALDataset *FITDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     FITDataset *poDS = new FITDataset();
     DeleteGuard<FITDataset> guard( poDS );
-
-    // Re-open file for large file (64bit) access.
-    if ( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-
-    if ( !poDS->fp )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s with FIT driver.\n",
-                  poOpenInfo->pszFilename );
-        return nullptr;
-    }
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->info = new FITinfo;
     FITinfo *info = poDS->info;

@@ -1634,7 +1634,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a valid ceos leader record?              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < CEOS_HEADER_LENGTH )
+    if( poOpenInfo->nHeaderBytes < CEOS_HEADER_LENGTH || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( (poOpenInfo->pabyHeader[4] != 0x3f
@@ -1661,12 +1661,8 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( fp == nullptr )
-        return nullptr;
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */

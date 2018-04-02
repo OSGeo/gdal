@@ -109,7 +109,7 @@ OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
 
 {
     char        szRecord[OGR_TIGER_RECBUF_LEN];
-    OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
+    OGRPoint    *poPoint = poFeature->GetGeometryRef()->toPoint();
 
     if( !SetWriteModule( m_pszFileCode, psRTInfo->nRecordLength+2, poFeature ) )
         return OGRERR_FAILURE;

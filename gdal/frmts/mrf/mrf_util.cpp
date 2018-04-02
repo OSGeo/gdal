@@ -590,6 +590,7 @@ void GDALRegister_mrf()
     driver->SetDescription("MRF");
     driver->SetMetadataItem(GDAL_DMD_LONGNAME, "Meta Raster Format");
     driver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "frmt_marfa.html");
+    driver->SetMetadataItem(GDAL_DMD_EXTENSION, "mrf");
     driver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
 #if GDAL_VERSION_MAJOR >= 2

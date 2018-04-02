@@ -59,6 +59,7 @@ class NDFDataset : public RawDataset
     char **GetFileList(void) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
+    static int Identify( GDALOpenInfo * );
 };
 
 /************************************************************************/
@@ -153,6 +154,21 @@ char **NDFDataset::GetFileList()
 }
 
 /************************************************************************/
+/*                            Identify()                                */
+/************************************************************************/
+
+int NDFDataset::Identify( GDALOpenInfo * poOpenInfo )
+
+{
+/* -------------------------------------------------------------------- */
+/*      The user must select the header file (i.e. .H1).                */
+/* -------------------------------------------------------------------- */
+    return poOpenInfo->nHeaderBytes >= 50 &&
+           (STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=2")
+            || STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=0")) ;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -162,23 +178,25 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      The user must select the header file (i.e. .H1).                */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 50 )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
-    if( !STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=2")
-        && !STARTS_WITH_CI(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ), "NDF_REVISION=0") )
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
+    {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The NDF driver does not support update access to existing"
+                  " datasets." );
         return nullptr;
-
+    }
 /* -------------------------------------------------------------------- */
 /*      Read and process the header into a local name/value             */
 /*      stringlist.  We just take off the trailing semicolon.  The      */
 /*      keyword is already separated from the value by an equal         */
 /*      sign.                                                           */
 /* -------------------------------------------------------------------- */
-
-    VSILFILE* fp = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (fp == nullptr)
-        return nullptr;
 
     const char *pszLine = nullptr;
     const int nHeaderMax = 1000;
@@ -187,7 +205,7 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLMalloc( sizeof(char *) * (nHeaderMax+1) ) );
 
     while( nHeaderLines < nHeaderMax
-           && (pszLine = CPLReadLineL( fp )) != nullptr
+           && (pszLine = CPLReadLineL( poOpenInfo->fpL )) != nullptr
            && !EQUAL(pszLine,"END_OF_HDR;") )
     {
         if( strstr(pszLine,"=") == nullptr )
@@ -200,8 +218,8 @@ GDALDataset *NDFDataset::Open( GDALOpenInfo * poOpenInfo )
         papszHeader[nHeaderLines++] = pszFixed;
         papszHeader[nHeaderLines] = nullptr;
     }
-    CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-    fp = nullptr;
+    CPL_IGNORE_RET_VAL(VSIFCloseL(poOpenInfo->fpL));
+    poOpenInfo->fpL = nullptr;
 
     if( CSLFetchNameValue( papszHeader, "PIXELS_PER_LINE" ) == nullptr
         || CSLFetchNameValue( papszHeader, "LINES_PER_DATA_FILE" ) == nullptr
@@ -435,6 +453,7 @@ void GDALRegister_NDF()
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#NDF" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
+    poDriver->pfnIdentify = NDFDataset::Identify;
     poDriver->pfnOpen = NDFDataset::Open;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );

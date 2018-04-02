@@ -1014,7 +1014,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     // The file should have at least 32 header bytes
-    if( poOpenInfo->nHeaderBytes < 32 )
+    if( poOpenInfo->nHeaderBytes < 32 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     if( !EQUALN(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ),
@@ -1025,22 +1025,9 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     TerragenDataset *poDS = new TerragenDataset();
-
-    // Reopen for large file access.
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->m_fp == nullptr )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within Terragen driver.\n",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return nullptr;
-    }
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->m_fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the file.                                                  */

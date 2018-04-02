@@ -800,8 +800,9 @@ OGRFeature *OGRSEGUKOOALineLayer::GetNextRawFeature()
                 return poFeature;
             }
 
-            OGRPoint* poPoint =
-                (OGRPoint*) poNextBaseFeature->GetGeometryRef();
+            OGRGeometry* poGeom =
+                poNextBaseFeature->GetGeometryRef();
+            OGRPoint* poPoint = poGeom ? poGeom->toPoint(): nullptr;
             if (poPoint != nullptr)
             {
                 if (poFeature == nullptr)

@@ -536,7 +536,7 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 /*      First we check to see if the file has the expected header       */
 /*      bytes.                                                          */
 /* -------------------------------------------------------------------- */
-    if(poOpenInfo->nHeaderBytes < 12)
+    if(poOpenInfo->nHeaderBytes < 12 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
     ImageRec tmpImage;
@@ -573,23 +573,8 @@ GDALDataset* SGIDataset::Open(GDALOpenInfo* poOpenInfo)
 /* -------------------------------------------------------------------- */
     SGIDataset* poDS = new SGIDataset();
     poDS->eAccess = poOpenInfo->eAccess;
-
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file api.                         */
-/* -------------------------------------------------------------------- */
-    if( poDS->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    else
-        poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb+");
-    if(poDS->fpImage == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_OpenFailed,
-                 "VSIFOpenL(%s) failed unexpectedly in sgidataset.cpp\n%s",
-                 poOpenInfo->pszFilename,
-                 VSIStrerror( errno ) );
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read pre-image data after ensuring the file is rewound.         */

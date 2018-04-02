@@ -58,6 +58,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
                                           int bUpdate )
 
 {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 /* -------------------------------------------------------------------- */
 /*      We will only consider .gxt and .txt files.                      */
 /* -------------------------------------------------------------------- */
@@ -66,6 +67,7 @@ OGRDataSource *OGRGeoconceptDriver::Open( const char* pszFilename,
     {
         return nullptr;
     }
+#endif
 
     OGRGeoconceptDataSource  *poDS = new OGRGeoconceptDataSource();
 

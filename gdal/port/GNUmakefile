@@ -69,8 +69,35 @@ $(OBJ): cpl_vsi_virtual.h
 clean:
 	$(RM) *.o $(O_OBJ)
 
+INST_H_FILES = \
+	cpl_atomic_ops.h \
+	cpl_config_extras.h \
+	cpl_config.h \
+	cpl_conv.h \
+	cpl_csv.h \
+	cpl_error.h \
+	cpl_hash_set.h \
+	cpl_http.h \
+	cplkeywordparser.h \
+	cpl_list.h \
+	cpl_minixml.h \
+	cpl_minizip_ioapi.h \
+	cpl_minizip_unzip.h \
+	cpl_minizip_zip.h \
+	cpl_multiproc.h \
+	cpl_odbc.h \
+	cpl_port.h \
+	cpl_progress.h \
+	cpl_quad_tree.h \
+	cpl_spawn.h \
+	cpl_string.h \
+	cpl_time.h \
+	cpl_virtualmem.h \
+	cpl_vsi.h \
+	cpl_vsi_virtual.h
+
 install:
-	for f in *.h ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
+	for f in $(INST_H_FILES) ; do $(INSTALL_DATA) $$f $(DESTDIR)$(INST_INCLUDE) ; done
 
 xmlreformat:	xmlreformat.o
 	$(CXX) $(CXXFLAGS) xmlreformat.o $(CONFIG_LIBS) -o xmlreformat

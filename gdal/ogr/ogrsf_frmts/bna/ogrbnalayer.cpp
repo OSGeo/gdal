@@ -329,7 +329,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         case wkbPoint:
         case wkbPoint25D:
         {
-            OGRPoint* point = (OGRPoint*)poGeom;
+            OGRPoint* point = poGeom->toPoint();
             WriteFeatureAttributes(fp, poFeature);
             CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "1"));
             CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", partialEol));
@@ -341,7 +341,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         case wkbPolygon:
         case wkbPolygon25D:
         {
-            OGRPolygon* polygon = (OGRPolygon*)poGeom;
+            OGRPolygon* polygon = poGeom->toPolygon();
             OGRLinearRing* ring = polygon->getExteriorRing();
             if (ring == nullptr)
             {
@@ -443,14 +443,12 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         case wkbMultiPolygon:
         case wkbMultiPolygon25D:
         {
-            OGRMultiPolygon* multipolygon = (OGRMultiPolygon*)poGeom;
-            int N = multipolygon->getNumGeometries();
+            OGRMultiPolygon* multipolygon = poGeom->toMultiPolygon();
             int nBNAPoints = 0;
             double firstX = 0.0;
             double firstY = 0.0;
-            for( int i = 0; i < N; i++ )
+            for( auto&& polygon: *multipolygon )
             {
-                OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
                 OGRLinearRing* ring = polygon->getExteriorRing();
                 if (ring == nullptr)
                     continue;
@@ -477,9 +475,9 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
             WriteFeatureAttributes(fp, poFeature);
             CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%d", nBNAPoints));
             int nbPair = 0;
-            for(int i=0;i<N;i++)
+            bool bFirst = true;
+            for( auto&& polygon: *multipolygon )
             {
-                OGRPolygon* polygon = (OGRPolygon*)multipolygon->getGeometryRef(i);
                 OGRLinearRing* ring = polygon->getExteriorRing();
                 if (ring == nullptr)
                     continue;
@@ -492,12 +490,13 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
                     WriteCoord(fp, ring->getX(j), ring->getY(j));
                     nbPair++;
                 }
-                if (i != 0)
+                if (!bFirst)
                 {
                     CPL_IGNORE_RET_VAL(VSIFPrintfL( fp, "%s", ((nbPair % nbPairPerLine) == 0) ? partialEol : " "));
                     WriteCoord(fp, firstX, firstY);
                     nbPair++;
                 }
+                bFirst = false;
                 for(int j=0;j<nInteriorRings;j++)
                 {
                     ring = polygon->getInteriorRing(j);
@@ -520,7 +519,7 @@ OGRErr OGRBNALayer::ICreateFeature( OGRFeature *poFeature )
         case wkbLineString:
         case wkbLineString25D:
         {
-            OGRLineString* line = (OGRLineString*)poGeom;
+            OGRLineString* line = poGeom->toLineString();
             int n = line->getNumPoints();
             if (n < 2)
             {

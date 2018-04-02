@@ -542,23 +542,15 @@ static int GCIOAPI_CALL _findFieldByName_GCIO (
 
   if( fields )
   {
-    CPLList* e;
-    int n, i;
-    if( (n= CPLListCount(fields))>0 )
+    int i = 0;
+    CPLList* psIter = fields;
+    for(; psIter; psIter = psIter->psNext, i++ )
     {
-      for( i= 0; i<n; i++)
-      {
-        if( (e= CPLListGet(fields,i)) )
+        theField= (GCField*)psIter->pData;
+        if( EQUAL(GetFieldName_GCIO(theField),name) )
         {
-          if( (theField= (GCField*)CPLListGetData(e)) )
-          {
-            if( EQUAL(GetFieldName_GCIO(theField),name) )
-            {
               return i;
-            }
-          }
         }
-      }
     }
   }
   return -1;
@@ -2045,7 +2037,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
       i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
-        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) > nbtp )
+        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) + 1) > nbtp )
         {
             goto onError;
         }
@@ -5208,9 +5200,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     SetMetaHeightFormat_GCIO(GetGCMeta_GCIO(H), hCS);
   }
 
-  switch( OGR_G_GetGeometryType(poGeom) ) {
+  switch( wkbFlatten(OGR_G_GetGeometryType(poGeom)) ) {
   case wkbPoint                 :
-  case wkbPoint25D              :
     if( !_writePoint_GCIO(h,quotes,delim,
                             OGR_G_GetX(poGeom,0),
                             OGR_G_GetY(poGeom,0),
@@ -5223,7 +5214,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbLineString            :
-  case wkbLineString25D         :
     if( !_writeLine_GCIO(h,quotes,delim,
                            poGeom,
                            vLine_GCIO,
@@ -5236,7 +5226,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbPolygon               :
-  case wkbPolygon25D            :
     if( !_writePolygon_GCIO(h,quotes,delim,
                               poGeom,
                               GetSubTypeDim_GCIO(theSubType),
@@ -5247,17 +5236,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
       return WRITEERROR_GCIO;
     }
     break;
-  case wkbMultiPoint            :
-  case wkbMultiPoint25D         :
-  case wkbMultiLineString       :
-  case wkbMultiLineString25D    :
-  case wkbMultiPolygon          :
-  case wkbMultiPolygon25D       :
-  case wkbUnknown               :
-  case wkbGeometryCollection    :
-  case wkbGeometryCollection25D :
-  case wkbNone                  :
-  case wkbLinearRing            :
   default                       :
     CPLError( CE_Warning, CPLE_AppDefined,
               "Geometry type %d not supported in Geoconcept, feature skipped.\n",

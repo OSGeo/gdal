@@ -439,7 +439,7 @@ class TABMAPObjHdrWithCoord : public TABMAPObjHdr
      */
 };
 
-class TABMAPObjNone CPL_FINAL : public TABMAPObjHdr
+class TABMAPObjNone final : public TABMAPObjHdr
 {
   public:
 
@@ -497,7 +497,7 @@ class TABMAPObjFontPoint: public TABMAPObjPoint
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjCustomPoint CPL_FINAL : public TABMAPObjPoint
+class TABMAPObjCustomPoint final : public TABMAPObjPoint
 {
   public:
     GByte m_nUnknown_;
@@ -517,7 +517,7 @@ class TABMAPObjCustomPoint CPL_FINAL : public TABMAPObjPoint
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjLine CPL_FINAL : public TABMAPObjHdr
+class TABMAPObjLine final : public TABMAPObjHdr
 {
   public:
     GInt32      m_nX1;
@@ -541,7 +541,7 @@ class TABMAPObjLine CPL_FINAL : public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjPLine CPL_FINAL : public TABMAPObjHdrWithCoord
+class TABMAPObjPLine final : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_numLineSections;  /* MULTIPLINE/REGION only. Not in PLINE */
@@ -571,7 +571,7 @@ class TABMAPObjPLine CPL_FINAL : public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjRectEllipse CPL_FINAL : public TABMAPObjHdr
+class TABMAPObjRectEllipse final : public TABMAPObjHdr
 {
   public:
     GInt32      m_nCornerWidth;   /* For rounded rect only */
@@ -593,7 +593,7 @@ class TABMAPObjRectEllipse CPL_FINAL : public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjArc CPL_FINAL : public TABMAPObjHdr
+class TABMAPObjArc final : public TABMAPObjHdr
 {
   public:
     GInt32      m_nStartAngle;
@@ -621,7 +621,7 @@ class TABMAPObjArc CPL_FINAL : public TABMAPObjHdr
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
+class TABMAPObjText final : public TABMAPObjHdrWithCoord
 {
   public:
     /* String and its len stored in the nCoordPtr and nCoordSize */
@@ -669,7 +669,7 @@ class TABMAPObjText CPL_FINAL : public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjMultiPoint CPL_FINAL : public TABMAPObjHdrWithCoord
+class TABMAPObjMultiPoint final : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_nNumPoints;
@@ -695,7 +695,7 @@ class TABMAPObjMultiPoint CPL_FINAL : public TABMAPObjHdrWithCoord
     virtual int ReadObj(TABMAPObjectBlock *) override;
 };
 
-class TABMAPObjCollection CPL_FINAL : public TABMAPObjHdrWithCoord
+class TABMAPObjCollection final : public TABMAPObjHdrWithCoord
 {
   public:
     GInt32      m_nRegionDataSize;
@@ -885,7 +885,7 @@ class TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Header Blocks
  *--------------------------------------------------------------------*/
 
-class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
+class TABMAPHeaderBlock final : public TABRawBinBlock
 {
     void        InitMembersWithDefaultValues();
     void        UpdatePrecision();
@@ -978,7 +978,7 @@ class TABMAPHeaderBlock CPL_FINAL : public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Index Blocks (Type 01)
  *--------------------------------------------------------------------*/
 
-class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
+class TABMAPIndexBlock final : public TABRawBinBlock
 {
   protected:
     int         m_numEntries;
@@ -1090,7 +1090,7 @@ class TABMAPIndexBlock CPL_FINAL : public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Object data Blocks (Type 02)
  *--------------------------------------------------------------------*/
 
-class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
+class TABMAPObjectBlock final : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 4 bytes header */
@@ -1165,7 +1165,7 @@ class TABMAPObjectBlock CPL_FINAL : public TABRawBinBlock
  * Class to handle Read/Write operation on .MAP Coordinate Blocks (Type 03)
  *--------------------------------------------------------------------*/
 
-class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
+class TABMAPCoordBlock final : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */
@@ -1248,7 +1248,7 @@ class TABMAPCoordBlock CPL_FINAL : public TABRawBinBlock
  * of Tool definitions in memory.
  *--------------------------------------------------------------------*/
 
-class TABMAPToolBlock CPL_FINAL : public TABRawBinBlock
+class TABMAPToolBlock final : public TABRawBinBlock
 {
   protected:
     int         m_numDataBytes; /* Excluding first 8 bytes header */

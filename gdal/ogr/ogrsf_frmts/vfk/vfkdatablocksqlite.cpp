@@ -294,9 +294,9 @@ int VFKDataBlockSQLite::LoadGeometryLineStringSBP()
                 (VFKFeatureSQLite *) poDataBlockPoints->GetFeature("ID", id);
             if( poPoint )
             {
-                OGRPoint *pt = (OGRPoint *) poPoint->GetGeometry();
+                OGRGeometry *pt = poPoint->GetGeometry();
                 if (pt) {
-                    oOGRLine.addPoint(pt);
+                    oOGRLine.addPoint(pt->toPoint());
                 }
                 else
                 {

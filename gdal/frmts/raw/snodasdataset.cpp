@@ -241,12 +241,17 @@ int SNODASDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo)|| poOpenInfo->fpL == nullptr )
         return nullptr;
 
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fp == nullptr )
+/* -------------------------------------------------------------------- */
+/*      Confirm the requested access is supported.                      */
+/* -------------------------------------------------------------------- */
+    if( poOpenInfo->eAccess == GA_Update )
     {
+        CPLError( CE_Failure, CPLE_NotSupported,
+                  "The SNODAS driver does not support update access to existing"
+                  " datasets." );
         return nullptr;
     }
 
@@ -287,7 +292,7 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
     int nStopSecond = -1;
 
     const char *pszLine = nullptr;
-    while( (pszLine = CPLReadLine2L( fp, 256, nullptr )) != nullptr )
+    while( (pszLine = CPLReadLine2L( poOpenInfo->fpL, 256, nullptr )) != nullptr )
     {
         char** papszTokens =
             CSLTokenizeStringComplex( pszLine, ":", TRUE, FALSE );
@@ -402,7 +407,8 @@ GDALDataset *SNODASDataset::Open( GDALOpenInfo * poOpenInfo )
         CSLDestroy( papszTokens );
     }
 
-    CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
+    CPL_IGNORE_RET_VAL(VSIFCloseL( poOpenInfo->fpL ));
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Did we get the required keywords?  If not we return with        */

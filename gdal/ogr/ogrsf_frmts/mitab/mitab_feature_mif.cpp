@@ -465,7 +465,7 @@ int TABPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint*)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -543,7 +543,7 @@ int TABFontPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint*)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -622,7 +622,7 @@ int TABCustomPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPoint *poPoint = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
-        poPoint = (OGRPoint*)poGeom;
+        poPoint = poGeom->toPoint();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -913,7 +913,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
         /*-------------------------------------------------------------
          * Simple polyline
          *------------------------------------------------------------*/
-        poLine = (OGRLineString*)poGeom;
+        poLine = poGeom->toLineString();
         nNumPoints = poLine->getNumPoints();
         if (nNumPoints == 2)
         {
@@ -936,7 +936,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
          * Multiple polyline... validate all components
          *------------------------------------------------------------*/
         int iLine, numLines;
-        poMultiLine = (OGRMultiLineString*)poGeom;
+        poMultiLine = poGeom->toMultiLineString();
         numLines = poMultiLine->getNumGeometries();
 
         fp->WriteLine("PLINE MULTIPLE %d\n", numLines);
@@ -946,7 +946,7 @@ int TABPolyline::WriteGeometryToMIFFile(MIDDATAFile *fp)
             poGeom = poMultiLine->getGeometryRef(iLine);
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbLineString)
             {
-                poLine = (OGRLineString*)poGeom;
+                poLine = poGeom->toLineString();
                 nNumPoints = poLine->getNumPoints();
 
                 fp->WriteLine("  %d\n",nNumPoints);
@@ -1421,7 +1421,7 @@ int TABRectangle::WriteGeometryToMIFFile(MIDDATAFile *fp)
     OGRGeometry *poGeom = GetGeometryRef();
     OGRPolygon *poPolygon = nullptr;
     if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon)
-        poPolygon = (OGRPolygon*)poGeom;
+        poPolygon = poGeom->toPolygon();
     else
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
@@ -2189,7 +2189,7 @@ int TABMultiPoint::WriteGeometryToMIFFile(MIDDATAFile *fp)
             poGeom = poMultiPoint->getGeometryRef(iPoint);
             if (poGeom && wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
             {
-                OGRPoint *poPoint = (OGRPoint*)poGeom;
+                OGRPoint *poPoint = poGeom->toPoint();
                 fp->WriteLine("%.15g %.15g\n",poPoint->getX(),poPoint->getY());
             }
             else

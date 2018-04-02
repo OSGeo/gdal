@@ -566,11 +566,11 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
                     if(psCoord != nullptr)
                     {
                         if( psCoord->bHasZ )
-                            ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
+                            poGeom->toLineString()->addPoint(psCoord->dfLongitude,
                                                                psCoord->dfLatitude,
                                                                psCoord->dfAltitude);
                         else
-                            ((OGRLineString*)poGeom)->addPoint(psCoord->dfLongitude,
+                            poGeom->toLineString()->addPoint(psCoord->dfLongitude,
                                                                psCoord->dfLatitude);
                         delete psCoord;
                     }
@@ -635,7 +635,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             return poGeom;
         }
 
-        ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+        poGeom->toPolygon()->addRingDirectly(poLinearRing);
         poLinearRing = nullptr;
 
         //*********************************
@@ -649,7 +649,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
             if((*pvpoChildren_)[nCount2]->sName_.compare("innerBoundaryIs") == 0)
             {
                 if (poLinearRing)
-                    ((OGRPolygon*)poGeom)->addRingDirectly(poLinearRing);
+                    poGeom->toPolygon()->addRingDirectly(poLinearRing);
                 poLinearRing = nullptr;
 
                 if ((*pvpoChildren_)[nCount2]->pvpoChildren_->empty())
@@ -705,7 +705,7 @@ OGRGeometry* KMLNode::getGeometry(Nodetype eType)
         {
             OGRGeometry* poSubGeom = (*pvpoChildren_)[nCount]->getGeometry();
             if (poSubGeom)
-                ((OGRGeometryCollection*)poGeom)->addGeometryDirectly(poSubGeom);
+                poGeom->toGeometryCollection()->addGeometryDirectly(poSubGeom);
         }
     }
 

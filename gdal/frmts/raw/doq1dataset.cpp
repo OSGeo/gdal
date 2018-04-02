@@ -195,7 +195,7 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 212 )
+    if( poOpenInfo->nHeaderBytes < 212 || poOpenInfo->fpL == nullptr )
         return nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -255,12 +255,8 @@ GDALDataset *DOQ1Dataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
 
-    poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if (poDS->fpImage == nullptr)
-    {
-        delete poDS;
-        return nullptr;
-    }
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Compute layout of data.                                         */

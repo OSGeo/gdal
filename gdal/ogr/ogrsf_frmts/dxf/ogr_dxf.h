@@ -675,7 +675,7 @@ class OGRDXFWriterLayer : public OGRLayer
     OGRErr              WriteCore( OGRFeature* );
     OGRErr              WritePOINT( OGRFeature* );
     OGRErr              WriteTEXT( OGRFeature* );
-    OGRErr              WritePOLYLINE( OGRFeature*, OGRGeometry* = nullptr );
+    OGRErr              WritePOLYLINE( OGRFeature*, const OGRGeometry* = nullptr );
     OGRErr              WriteHATCH( OGRFeature*, OGRGeometry* = nullptr );
     OGRErr              WriteINSERT( OGRFeature* );
 

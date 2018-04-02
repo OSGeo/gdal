@@ -505,7 +505,7 @@ void OGR2SQLITE_ogr_geocode_reverse(sqlite3_context* pContext,
         OGRGeometry* poGeom = OGR2SQLITE_GetGeom(pContext, argc, argv, nullptr);
         if( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
         {
-            OGRPoint* poPoint = (OGRPoint*) poGeom;
+            OGRPoint* poPoint = poGeom->toPoint();
             dfLon = poPoint->getX();
             dfLat = poPoint->getY();
             delete poGeom;

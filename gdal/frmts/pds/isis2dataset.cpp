@@ -203,16 +203,11 @@ GDALDataset *ISIS2Dataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this look like a CUBE or an IMAGE Primary Data Object?     */
 /* -------------------------------------------------------------------- */
-    if( !Identify( poOpenInfo ) )
+    if( !Identify( poOpenInfo ) || poOpenInfo->fpL == nullptr )
         return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file API.                         */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fpQube = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( fpQube == nullptr )
-        return nullptr;
+    VSILFILE *fpQube = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     ISIS2Dataset *poDS = new ISIS2Dataset();
 

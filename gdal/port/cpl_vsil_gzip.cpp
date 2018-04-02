@@ -146,7 +146,7 @@ typedef struct
     vsi_l_offset  out;
 } GZipSnapshot;
 
-class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
+class VSIGZipHandle final : public VSIVirtualHandle
 {
     VSIVirtualHandle* m_poBaseHandle;
 #ifdef DEBUG
@@ -217,7 +217,7 @@ class VSIGZipHandle CPL_FINAL : public VSIVirtualHandle
     void              UnsetCanSaveInfo() { m_bCanSaveInfo = false; }
 };
 
-class VSIGZipFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIGZipFilesystemHandler final : public VSIFilesystemHandler
 {
     CPLMutex* hMutex;
     VSIGZipHandle* poHandleLastGZipFile;
@@ -1194,7 +1194,7 @@ int VSIGZipHandle::Close()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIGZipWriteHandle CPL_FINAL : public VSIVirtualHandle
+class VSIGZipWriteHandle final : public VSIVirtualHandle
 {
     VSIVirtualHandle*  m_poBaseHandle;
     z_stream           sStream;
@@ -1837,7 +1837,7 @@ void VSIInstallGZipFileHandler()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
+class VSIZipEntryFileOffset final : public VSIArchiveEntryFileOffset
 {
 public:
         unz_file_pos m_file_pos;
@@ -1855,7 +1855,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipReader CPL_FINAL : public VSIArchiveReader
+class VSIZipReader final : public VSIArchiveReader
 {
   private:
     unzFile unzF;
@@ -1999,7 +1999,7 @@ int VSIZipReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
 
 class VSIZipWriteHandle;
 
-class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
+class VSIZipFilesystemHandler final : public VSIArchiveFilesystemHandler
 {
     std::map<CPLString, VSIZipWriteHandle*> oMapZipWriteHandles;
     VSIVirtualHandle *OpenForWrite_unlocked( const char *pszFilename,
@@ -2033,7 +2033,7 @@ class VSIZipFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIZipWriteHandle CPL_FINAL : public VSIVirtualHandle
+class VSIZipWriteHandle final : public VSIVirtualHandle
 {
    VSIZipFilesystemHandler *m_poFS;
    void                    *m_hZIP;

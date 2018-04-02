@@ -379,7 +379,7 @@ OGRCompoundCurve::CurveToLine( double dfMaxAngleStepSizeDegrees,
 /*                               Equals()                                */
 /************************************************************************/
 
-OGRBoolean OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
+OGRBoolean OGRCompoundCurve::Equals( const OGRGeometry *poOther ) const
 {
     if( poOther == this )
         return TRUE;
@@ -387,8 +387,7 @@ OGRBoolean OGRCompoundCurve::Equals( OGRGeometry *poOther ) const
     if( poOther->getGeometryType() != getGeometryType() )
         return FALSE;
 
-    OGRCompoundCurve *poOCC = (OGRCompoundCurve *) poOther;
-    return oCC.Equals(&(poOCC->oCC));
+    return oCC.Equals(&(poOther->toCompoundCurve()->oCC));
 }
 
 /************************************************************************/
@@ -596,28 +595,28 @@ OGRErr OGRCompoundCurve::addCurveDirectlyInternal( OGRCurve* poCurve,
             return OGRERR_FAILURE;
         }
 
-        OGRPoint end;
+        OGRPoint oEnd;
         OGRPoint start;
-        oCC.papoCurves[oCC.nCurveCount-1]->EndPoint(&end);
+        oCC.papoCurves[oCC.nCurveCount-1]->EndPoint(&oEnd);
         poCurve->StartPoint(&start);
-        if( fabs(end.getX() - start.getX()) > dfToleranceEps ||
-            fabs(end.getY() - start.getY()) > dfToleranceEps ||
-            fabs(end.getZ() - start.getZ()) > dfToleranceEps )
+        if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
+            fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
+            fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
         {
             poCurve->EndPoint(&start);
-            if( fabs(end.getX() - start.getX()) > dfToleranceEps ||
-                fabs(end.getY() - start.getY()) > dfToleranceEps ||
-                fabs(end.getZ() - start.getZ()) > dfToleranceEps )
+            if( fabs(oEnd.getX() - start.getX()) > dfToleranceEps ||
+                fabs(oEnd.getY() - start.getY()) > dfToleranceEps ||
+                fabs(oEnd.getZ() - start.getZ()) > dfToleranceEps )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Non contiguous curves");
                 return OGRERR_FAILURE;
             }
 
             CPLDebug("GML", "reversing curve");
-            ((OGRSimpleCurve*)poCurve)->reversePoints();
+            poCurve->toSimpleCurve()->reversePoints();
         }
         // Patch so that it matches exactly.
-        ((OGRSimpleCurve*)poCurve)->setPoint(0, &end);
+        poCurve->toSimpleCurve()->setPoint(0, &oEnd);
     }
 
     return oCC.addCurveDirectly(this, poCurve, bNeedRealloc);
@@ -704,7 +703,7 @@ int OGRCompoundCurve::getNumPoints() const
 /*                      OGRCompoundCurvePointIterator                   */
 /************************************************************************/
 
-class OGRCompoundCurvePointIterator: public OGRPointIterator
+class OGRCompoundCurvePointIterator final: public OGRPointIterator
 {
         const OGRCompoundCurve *poCC;
         int                     iCurCurve;

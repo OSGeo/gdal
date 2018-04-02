@@ -860,7 +860,7 @@ void OGRGPXLayer::endElementCbk(const char *pszName)
                                 if( poFeature->IsFieldSetAndNotNull( iField ) )
                                 {
                                     double val =  poFeature->GetFieldAsDouble( iField);
-                                    ((OGRPoint*)poFeature->GetGeometryRef())->setZ(val);
+                                    poFeature->GetGeometryRef()->toPoint()->setZ(val);
                                     poFeature->GetGeometryRef()->setCoordinateDimension(3);
                                 }
                                 break;
@@ -1484,7 +1484,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             return OGRERR_FAILURE;
         }
 
-        OGRPoint* point = reinterpret_cast<OGRPoint*>(poGeom);
+        OGRPoint* point = poGeom->toPoint();
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);
@@ -1528,24 +1528,21 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbLineString:
             case wkbLineString25D:
             {
-                line = reinterpret_cast<OGRLineString *>(poGeom);
+                line = poGeom->toLineString();
                 break;
             }
 
             case wkbMultiLineString:
             case wkbMultiLineString25D:
             {
-                int nGeometries = reinterpret_cast<OGRGeometryCollection *>(
-                    poGeom)->getNumGeometries ();
+                int nGeometries = poGeom->toMultiLineString()->getNumGeometries ();
                 if (nGeometries == 0)
                 {
                     line = nullptr;
                 }
                 else if (nGeometries == 1)
                 {
-                    line = reinterpret_cast<OGRLineString *>(
-                        reinterpret_cast<OGRGeometryCollection*>(
-                            poGeom)->getGeometryRef(0) );
+                    line = poGeom->toMultiLineString()->getGeometryRef(0)->toLineString();
                 }
                 else
                 {
@@ -1618,7 +1615,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbLineString:
             case wkbLineString25D:
             {
-                OGRLineString* line = reinterpret_cast<OGRLineString *>(poGeom);
+                OGRLineString* line = poGeom->toLineString();
                 int n = line->getNumPoints();
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
@@ -1649,16 +1646,10 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
             case wkbMultiLineString:
             case wkbMultiLineString25D:
             {
-                const int nGeometries
-                    = static_cast<OGRGeometryCollection*>(poGeom)->
-                        getNumGeometries();
                 poDS->PrintLine("<trk>");
                 WriteFeatureAttributes(poFeatureIn);
-                for( int j = 0; j < nGeometries; j++ )
+                for( auto&& line: poGeom->toMultiLineString() )
                 {
-                    OGRLineString* line = reinterpret_cast<OGRLineString *>(
-                        reinterpret_cast<OGRGeometryCollection *>(
-                            poGeom)->getGeometryRef(j) );
                     const int n = (line) ? line->getNumPoints() : 0;
                     poDS->PrintLine("  <trkseg>");
                     for( int i=0; i<n; i++ )
@@ -1752,7 +1743,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
 
         poDS->nLastRteId = poFeatureIn->GetFieldAsInteger(FLD_ROUTE_FID);
 
-        OGRPoint* point = reinterpret_cast<OGRPoint *>(poGeom);
+        OGRPoint* point = poGeom->toPoint();
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);
@@ -1842,7 +1833,7 @@ OGRErr OGRGPXLayer::ICreateFeature( OGRFeature *poFeatureIn )
         poDS->nLastTrkId = poFeatureIn->GetFieldAsInteger(FLD_TRACK_FID);
         poDS->nLastTrkSegId = poFeatureIn->GetFieldAsInteger(FLD_TRACK_SEG_ID);
 
-        OGRPoint* point = reinterpret_cast<OGRPoint*>(poGeom);
+        OGRPoint* point = poGeom->toPoint();
         double lat = point->getY();
         double lon = point->getX();
         CheckAndFixCoordinatesValidity(&lat, &lon);

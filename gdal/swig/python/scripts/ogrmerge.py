@@ -81,6 +81,8 @@ def GetExtension(filename):
 def GetOutputDriversFor(filename):
     drv_list = []
     ext = GetExtension(filename)
+    if ext.lower() == 'vrt':
+        return [ 'VRT' ]
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
@@ -352,6 +354,10 @@ def process(argv, progress=None, progress_arg=None):
 
         vrt_filename = '/vsimem/_ogrmerge_.vrt'
     else:
+        if gdal.VSIStatL(dst_filename) and not overwrite_ds:
+            print('ERROR: Destination dataset already exists, ' +
+                    'but -overwrite_ds are specified')
+            return 1
         vrt_filename = dst_filename
 
     f = gdal.VSIFOpenL(vrt_filename, 'wb')
