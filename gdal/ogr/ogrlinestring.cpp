@@ -2628,7 +2628,7 @@ void OGRSimpleCurve::swapXY()
 /*                       OGRSimpleCurvePointIterator                    */
 /************************************************************************/
 
-class OGRSimpleCurvePointIterator: public OGRPointIterator
+class OGRSimpleCurvePointIterator final: public OGRPointIterator
 {
         const OGRSimpleCurve* poSC;
         int                   iCurPoint;

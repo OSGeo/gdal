@@ -703,7 +703,7 @@ int OGRCompoundCurve::getNumPoints() const
 /*                      OGRCompoundCurvePointIterator                   */
 /************************************************************************/
 
-class OGRCompoundCurvePointIterator: public OGRPointIterator
+class OGRCompoundCurvePointIterator final: public OGRPointIterator
 {
         const OGRCompoundCurve *poCC;
         int                     iCurCurve;

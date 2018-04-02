@@ -40,7 +40,7 @@
 
 CPL_CVSID("$Id$")
 
-class OGRGenSQLGeomFieldDefn: public OGRGeomFieldDefn
+class OGRGenSQLGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
         explicit OGRGenSQLGeomFieldDefn(OGRGeomFieldDefn* poGeomFieldDefn) :

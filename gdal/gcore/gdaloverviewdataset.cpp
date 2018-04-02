@@ -55,7 +55,7 @@ class GDALOverviewBand;
 /*                          GDALOverviewDataset                         */
 /* ******************************************************************** */
 
-class GDALOverviewDataset : public GDALDataset
+class GDALOverviewDataset final: public GDALDataset
 {
   private:
     friend class GDALOverviewBand;
@@ -108,7 +108,7 @@ class GDALOverviewDataset : public GDALDataset
 /*                           GDALOverviewBand                           */
 /* ******************************************************************** */
 
-class GDALOverviewBand : public GDALProxyRasterBand
+class GDALOverviewBand final: public GDALProxyRasterBand
 {
   protected:
     friend class GDALOverviewDataset;

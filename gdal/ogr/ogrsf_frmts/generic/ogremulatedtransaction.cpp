@@ -35,7 +35,7 @@ CPL_CVSID("$Id$")
 
 class OGRDataSourceWithTransaction;
 
-class OGRLayerWithTransaction: public OGRLayerDecorator
+class OGRLayerWithTransaction final: public OGRLayerDecorator
 {
     protected:
         friend class OGRDataSourceWithTransaction;
@@ -67,7 +67,7 @@ class OGRLayerWithTransaction: public OGRLayerDecorator
     virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
 };
 
-class OGRDataSourceWithTransaction : public OGRDataSource
+class OGRDataSourceWithTransaction final: public OGRDataSource
 {
   protected:
     OGRDataSource *m_poBaseDataSource;

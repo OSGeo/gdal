@@ -76,7 +76,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class OGRMILayerAttrIndex : public OGRLayerAttrIndex
+class OGRMILayerAttrIndex final: public OGRLayerAttrIndex
 {
 public:
     TABINDFile  *poINDFile;

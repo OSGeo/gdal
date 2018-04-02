@@ -462,7 +462,7 @@ static void MyChdirRootDirectory()
 /*                       GDALClientDataset                              */
 /************************************************************************/
 
-class GDALClientDataset: public GDALPamDataset
+class GDALClientDataset final: public GDALPamDataset
 {
     GDALServerSpawnedProcess                         *ssp;
     GDALPipe                                         *p;
@@ -565,7 +565,7 @@ class GDALClientDataset: public GDALPamDataset
 /*                       GDALClientRasterBand                           */
 /************************************************************************/
 
-class GDALClientRasterBand : public GDALPamRasterBand
+class GDALClientRasterBand final: public GDALPamRasterBand
 {
     friend class GDALClientDataset;
 
