@@ -499,6 +499,12 @@ int VizGeorefSpline2D::solve()
     const double SSyy = sumy2 - sumy * sumy / _nof_points;
     const double SSxy = sumxy - sumx * sumy / _nof_points;
 
+    if( SSxx * SSyy == 0.0 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Degenerate system. Computation aborted.");
+        return 0;
+    }
     if( delx < 0.001 * dely || dely < 0.001 * delx ||
         fabs ( SSxy * SSxy / ( SSxx * SSyy ) ) > 0.99 )
     {
