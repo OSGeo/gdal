@@ -182,8 +182,8 @@ typedef struct
 #define INIT_RASTERIO_EXTRA_ARG(s)  \
     do { (s).nVersion = RASTERIO_EXTRA_ARG_CURRENT_VERSION; \
          (s).eResampleAlg = GRIORA_NearestNeighbour; \
-         (s).pfnProgress = NULL_OR_NULLPTR; \
-         (s).pProgressData = NULL_OR_NULLPTR; \
+         (s).pfnProgress = CPL_NULLPTR; \
+         (s).pProgressData = CPL_NULLPTR; \
          (s).bFloatingPointWindowValidity = FALSE; } while(0)
 
 /*! Types of color interpretation for raster bands. */

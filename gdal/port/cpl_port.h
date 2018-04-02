@@ -1157,9 +1157,9 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 
 /*! @cond Doxygen_Suppress */
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-#define NULL_OR_NULLPTR nullptr
+#define CPL_NULLPTR nullptr
 #else
-#define NULL_OR_NULLPTR NULL
+#define CPL_NULLPTR NULL
 #endif
 /*! @endcond */
 
