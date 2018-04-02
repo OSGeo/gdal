@@ -865,7 +865,7 @@ int CPLODBCStatement::Fetch( int nOrientation, int nOffset )
 
         if( Failed( nRetCode ) )
         {
-            if ( nRetCode == SQL_NO_DATA )
+            if ( nRetCode != SQL_NO_DATA )
             {
                 CPLError( CE_Failure, CPLE_AppDefined, "%s",
                           m_poSession->GetLastError() );
