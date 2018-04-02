@@ -54,7 +54,7 @@
 /*                        OGRGenSQLResultsLayer                         */
 /************************************************************************/
 
-class CPL_DLL OGRGenSQLResultsLayer : public OGRLayer
+class OGRGenSQLResultsLayer final: public OGRLayer
 {
   private:
     GDALDataset *poSrcDS;
