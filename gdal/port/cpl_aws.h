@@ -146,7 +146,7 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
                                      CPLString& osRegion,
                                      CPLString& osCredentials);
 
-        static bool GetConfiguration(char** papszOptions,
+        static bool GetConfiguration(CSLConstList papszOptions,
                                      CPLString& osSecretAccessKey,
                                      CPLString& osAccessKeyId,
                                      CPLString& osSessionToken,
@@ -168,7 +168,7 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         static VSIS3HandleHelper* BuildFromURI(const char* pszURI,
                                                const char* pszFSPrefix,
                                                bool bAllowNoObject,
-                                               char** papszOptions = nullptr);
+                                               CSLConstList papszOptions = nullptr);
         static CPLString BuildURL(const CPLString& osEndpoint,
                                   const CPLString& osBucket,
                                   const CPLString& osObjectKey,
@@ -197,7 +197,7 @@ class VSIS3HandleHelper: public IVSIS3LikeHandleHelper
         void SetRequestPayer(const CPLString &osStr);
         void SetVirtualHosting(bool b);
 
-        CPLString GetSignedURL(char** papszOptions);
+        CPLString GetSignedURL(CSLConstList papszOptions);
 
         static void CleanMutex();
         static void ClearCache();

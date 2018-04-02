@@ -305,7 +305,7 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreate( GDALDriverH hDriver, const char * pszFilename,
             int nXSize, int nYSize, int nBands, GDALDataType eBandType,
-            char ** papszOptions )
+            CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1( hDriver, "GDALCreate", nullptr );
@@ -313,7 +313,8 @@ GDALCreate( GDALDriverH hDriver, const char * pszFilename,
     return
         static_cast<GDALDriver *>(hDriver)->Create( pszFilename,
                                                     nXSize, nYSize, nBands,
-                                                    eBandType, papszOptions );
+                                                    eBandType,
+                                                    const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/
@@ -937,7 +938,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
                                          const char * pszFilename,
                                          GDALDatasetH hSrcDS,
-                                         int bStrict, char ** papszOptions,
+                                         int bStrict, CSLConstList papszOptions,
                                          GDALProgressFunc pfnProgress,
                                          void * pProgressData )
 
@@ -947,7 +948,8 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
 
     return static_cast<GDALDriver *>(hDriver)->
         CreateCopy( pszFilename, static_cast<GDALDataset *>(hSrcDS),
-                    bStrict, papszOptions, pfnProgress, pProgressData );
+                    bStrict, const_cast<char**>(papszOptions),
+                    pfnProgress, pProgressData );
 }
 
 /************************************************************************/
@@ -1519,7 +1521,7 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
  */
 
 int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
-                                             char** papszCreationOptions )
+                                             CSLConstList papszCreationOptions )
 {
     VALIDATE_POINTER1( hDriver, "GDALValidateCreationOptions", FALSE );
     const char *pszOptionList =
@@ -1528,7 +1530,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
     CPLString osDriver;
     osDriver.Printf("driver %s",
                     static_cast<GDALDriver *>(hDriver)->GetDescription());
-    char** papszOptionsToValidate = papszCreationOptions;
+    CSLConstList papszOptionsToValidate = papszCreationOptions;
     char** papszOptionsToFree = nullptr;
     if( CSLFetchNameValue( papszCreationOptions, "APPEND_SUBDATASET") )
     {
@@ -1540,7 +1542,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
     const bool bRet = CPL_TO_BOOL(
         GDALValidateOptions(
             pszOptionList,
-            const_cast<const char* const*>(papszOptionsToValidate),
+            papszOptionsToValidate,
             "creation option",
             osDriver ) );
     CSLDestroy(papszOptionsToFree);
@@ -1940,7 +1942,7 @@ int GDALValidateOptions( const char* pszOptionList,
 
 GDALDriverH CPL_STDCALL
 GDALIdentifyDriver( const char * pszFilename,
-                    char **papszFileList )
+                    CSLConstList papszFileList )
 
 {
     return GDALIdentifyDriverEx( pszFilename, 0, nullptr, papszFileList );

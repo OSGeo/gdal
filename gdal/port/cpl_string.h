@@ -64,16 +64,12 @@ char CPL_DLL **CSLAddString(char **papszStrList,
                             const char *pszNewString) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLAddStringMayFail(
     char **papszStrList, const char *pszNewString) CPL_WARN_UNUSED_RESULT;
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-  int CPL_DLL CSLCount(const char * const *papszStrList);
-#else
-  int CPL_DLL CSLCount(char **papszStrList);
-#endif
-const char CPL_DLL *CSLGetField( char **, int );
+int CPL_DLL CSLCount(CSLConstList papszStrList);
+const char CPL_DLL *CSLGetField( CSLConstList, int );
 void CPL_DLL CPL_STDCALL CSLDestroy(char **papszStrList);
-char CPL_DLL **CSLDuplicate(char **papszStrList) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL **CSLDuplicate(CSLConstList papszStrList) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLMerge( char **papszOrig,
-                         char **papszOverride ) CPL_WARN_UNUSED_RESULT;
+                         CSLConstList papszOverride ) CPL_WARN_UNUSED_RESULT;
 
 char CPL_DLL **CSLTokenizeString(const char *pszString ) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLTokenizeStringComplex(
@@ -96,44 +92,27 @@ char CPL_DLL **CSLTokenizeString2( const char *pszString,
 /** Flag for CSLTokenizeString2() to strip trailaing spaces */
 #define CSLT_STRIPENDSPACES     0x0020
 
-int CPL_DLL CSLPrint(char **papszStrList, FILE *fpOut);
+int CPL_DLL CSLPrint(CSLConstList papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 char CPL_DLL **CSLLoad2(
     const char *pszFname, int nMaxLines, int nMaxCols,
-    const char * const * papszOptions) CPL_WARN_UNUSED_RESULT;
-#else
-char CPL_DLL **CSLLoad2(
-    const char *pszFname, int nMaxLines, int nMaxCols,
-    char **papszOptions) CPL_WARN_UNUSED_RESULT;
-#endif
-int CPL_DLL CSLSave(char **papszStrList, const char *pszFname);
+    CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+int CPL_DLL CSLSave(CSLConstList papszStrList, const char *pszFname);
 
 char CPL_DLL **CSLInsertStrings(char **papszStrList, int nInsertAtLineNo,
-                         char **papszNewLines) CPL_WARN_UNUSED_RESULT;
+                        CSLConstList papszNewLines) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLInsertString(char **papszStrList, int nInsertAtLineNo,
                                const char *pszNewLine) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL **CSLRemoveStrings(
     char **papszStrList, int nFirstLineToDelete,
     int nNumToRemove, char ***ppapszRetStrings) CPL_WARN_UNUSED_RESULT;
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
-int CPL_DLL CSLFindString( const char * const *papszList,
-                           const char *pszTarget );
-int CPL_DLL CSLFindStringCaseSensitive( const char * const *papszList,
+int CPL_DLL CSLFindString( CSLConstList papszList, const char *pszTarget );
+int CPL_DLL CSLFindStringCaseSensitive( CSLConstList papszList,
                                         const char *pszTarget );
-int CPL_DLL CSLPartialFindString( const char * const *papszHaystack,
+int CPL_DLL CSLPartialFindString( CSLConstList papszHaystack,
                                   const char *pszNeedle );
-#else
-// Present non-const to C code that does not like passing non-const to const.
-// Should be ABI compatible with the const versions.
-int CPL_DLL CSLFindString( char **papszList, const char *pszTarget );
-int CPL_DLL CSLFindStringCaseSensitive( char * const *papszList,
-                                        const char *pszTarget );
-int CPL_DLL CSLPartialFindString( char * const *papszHaystack,
-                                  const char *pszNeedle );
-#endif
-int CPL_DLL CSLFindName(char **papszStrList, const char *pszName);
-int CPL_DLL CSLFetchBoolean( char **papszStrList, const char *pszKey,
+int CPL_DLL CSLFindName(CSLConstList papszStrList, const char *pszName);
+int CPL_DLL CSLFetchBoolean( CSLConstList papszStrList, const char *pszKey,
                              int bDefault );
 
 /* TODO: Deprecate CSLTestBoolean.  Remove in GDAL 3.x. */
@@ -152,7 +131,7 @@ int CPL_DLL CPLTestBoolean( const char *pszValue );
 extern "C++" {
 #endif
 bool CPL_DLL CPLTestBool( const char *pszValue );
-bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
+bool CPL_DLL CPLFetchBool( CSLConstList papszStrList, const char *pszKey,
                            bool bDefault );
 #ifdef DEBUG_BOOL
 }
@@ -163,24 +142,14 @@ bool CPL_DLL CPLFetchBool( const char * const *papszStrList, const char *pszKey,
 const char CPL_DLL *
       CPLParseNameValue( const char *pszNameValue, char **ppszKey );
 
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 const char CPL_DLL *
-      CSLFetchNameValue( const char * const *papszStrList, const char *pszName);
+      CSLFetchNameValue( CSLConstList papszStrList, const char *pszName);
 const char CPL_DLL *
-      CSLFetchNameValueDef( const char * const *papszStrList,
+      CSLFetchNameValueDef( CSLConstList papszStrList,
                             const char *pszName,
                             const char *pszDefault );
-#else
-const char CPL_DLL *
-      CSLFetchNameValue( char **papszStrList, const char *pszName);
-const char CPL_DLL *
-      CSLFetchNameValueDef( char **papszStrList,
-                            const char *pszName,
-                            const char *pszDefault );
-#endif
-
 char CPL_DLL **
-      CSLFetchNameValueMultiple(char **papszStrList, const char *pszName);
+      CSLFetchNameValueMultiple(CSLConstList papszStrList, const char *pszName);
 char CPL_DLL **
       CSLAddNameValue(char **papszStrList,
                       const char *pszName,
@@ -489,6 +458,8 @@ class CPL_DLL CPLStringList
   public:
     CPLStringList();
     CPLStringList( char **papszList, int bTakeOwnership=TRUE );
+    // cppcheck-suppress noExplicitConstructor
+    CPLStringList( CSLConstList papszList );
     CPLStringList( const CPLStringList& oOther );
     ~CPLStringList();
 
@@ -534,6 +505,8 @@ class CPL_DLL CPLStringList
       return Assign( papszListIn, TRUE ); }
     /** Assignment operator */
     CPLStringList &operator=(const CPLStringList& oOther);
+    /** Assignment operator */
+    CPLStringList &operator=(CSLConstList papszListIn);
 
     /** Return string at specified index */
     char * operator[](int i);
@@ -549,9 +522,9 @@ class CPL_DLL CPLStringList
         return FetchNameValue(pszKey); }
 
     /** Return list. Ownership remains to the object */
-    char **List() { return papszList; }
+    char** List() { return papszList; }
     /** Return list. Ownership remains to the object */
-    char **List() const { return papszList; }
+    CSLConstList List() const { return papszList; }
     char **StealList();
 
     CPLStringList &Sort();
@@ -560,6 +533,8 @@ class CPL_DLL CPLStringList
 
     /** Return lists */
     operator char**(void) { return List(); }
+    /** Return lists */
+    operator CSLConstList(void) const { return List(); }
 };
 
 #ifdef GDAL_COMPILATION

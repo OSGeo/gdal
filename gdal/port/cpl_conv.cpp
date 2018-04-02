@@ -649,7 +649,7 @@ const char *CPLReadLineL(VSILFILE *fp) { return CPLReadLine2L(fp, -1, nullptr); 
  */
 
 const char *CPLReadLine2L( VSILFILE *fp, int nMaxCars,
-                           CPL_UNUSED const char *const *papszOptions )
+                           CPL_UNUSED CSLConstList papszOptions )
 
 {
 /* -------------------------------------------------------------------- */
@@ -2744,11 +2744,11 @@ int CPLMoveFile( const char *pszNewPath, const char *pszOldPath )
 
 /** Create a symbolic link */
 #ifdef WIN32
-int CPLSymlink( const char *, const char *, char ** ) { return -1; }
+int CPLSymlink( const char *, const char *, CSLConstList ) { return -1; }
 #else
 int CPLSymlink( const char *pszOldPath,
                 const char *pszNewPath,
-                char** /* papszOptions */ )
+                CSLConstList /* papszOptions */ )
 {
     return symlink(pszOldPath, pszNewPath);
 }

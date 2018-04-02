@@ -695,7 +695,7 @@ static CPLVirtualMem* GDALGetVirtualMem( GDALDatasetH hDS,
                                          size_t nCacheSize,
                                          size_t nPageSizeHint,
                                          int bSingleThreadUsage,
-                                         char ** /*papszOptions*/ )
+                                         CSLConstList /*papszOptions*/ )
 {
     CPLVirtualMem* view = nullptr;
     GDALVirtualMem* psParams = nullptr;
@@ -961,7 +961,7 @@ CPLVirtualMem* GDALDatasetGetVirtualMem( GDALDatasetH hDS,
                                          size_t nCacheSize,
                                          size_t nPageSizeHint,
                                          int bSingleThreadUsage,
-                                         char **papszOptions )
+                                         CSLConstList papszOptions )
 {
     return GDALGetVirtualMem( hDS, nullptr, eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               nBufXSize, nBufYSize, eBufType,
@@ -1086,7 +1086,7 @@ CPLVirtualMem* GDALRasterBandGetVirtualMem( GDALRasterBandH hBand,
                                             size_t nCacheSize,
                                             size_t nPageSizeHint,
                                             int bSingleThreadUsage,
-                                            char **papszOptions )
+                                            CSLConstList papszOptions )
 {
     return GDALGetVirtualMem( nullptr, hBand, eRWFlag, nXOff, nYOff,
                               nXSize, nYSize,
@@ -1337,7 +1337,7 @@ static CPLVirtualMem* GDALGetTiledVirtualMem(
     GDALTileOrganization eTileOrganization,
     size_t nCacheSize,
     int bSingleThreadUsage,
-    char ** /* papszOptions */ )
+    CSLConstList /* papszOptions */ )
 {
     CPLVirtualMem* view;
     GDALTiledVirtualMem* psParams;
@@ -1552,7 +1552,7 @@ CPLVirtualMem* GDALDatasetGetTiledVirtualMem(
     GDALTileOrganization eTileOrganization,
     size_t nCacheSize,
     int bSingleThreadUsage,
-    char **papszOptions )
+    CSLConstList papszOptions )
 {
     return GDALGetTiledVirtualMem( hDS, nullptr, eRWFlag, nXOff, nYOff,
                                    nXSize, nYSize, nTileXSize, nTileYSize,
@@ -1664,7 +1664,7 @@ CPLVirtualMem* GDALRasterBandGetTiledVirtualMem( GDALRasterBandH hBand,
                                                  GDALDataType eBufType,
                                                  size_t nCacheSize,
                                                  int bSingleThreadUsage,
-                                                 char **papszOptions )
+                                                 CSLConstList papszOptions )
 {
     return GDALGetTiledVirtualMem( nullptr, hBand, eRWFlag, nXOff, nYOff,
                                    nXSize, nYSize, nTileXSize, nTileYSize,

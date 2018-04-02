@@ -202,7 +202,7 @@ void VSIOSSHandleHelper::RebuildURL()
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIOSSHandleHelper::GetConfiguration(char **papszOptions,
+bool VSIOSSHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                           CPLString& osSecretAccessKey,
                                           CPLString& osAccessKeyId)
 {
@@ -237,7 +237,7 @@ bool VSIOSSHandleHelper::GetConfiguration(char **papszOptions,
 VSIOSSHandleHelper* VSIOSSHandleHelper::BuildFromURI( const char* pszURI,
                                                       const char* pszFSPrefix,
                                                       bool bAllowNoObject,
-                                                      char** papszOptions )
+                                                      CSLConstList papszOptions )
 {
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
@@ -397,7 +397,7 @@ void VSIOSSHandleHelper::SetEndpoint( const CPLString &osStr )
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-CPLString VSIOSSHandleHelper::GetSignedURL(char** papszOptions)
+CPLString VSIOSSHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
     GIntBig nStartDate = static_cast<GIntBig>(time(nullptr));
     const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");

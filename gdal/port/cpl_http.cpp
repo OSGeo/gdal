@@ -451,7 +451,7 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
-CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
+CPLHTTPResult *CPLHTTPFetch( const char *pszURL, CSLConstList papszOptions )
 {
     return CPLHTTPFetchEx( pszURL, papszOptions, nullptr, nullptr, nullptr, nullptr);
 }
@@ -467,7 +467,7 @@ CPLHTTPResult *CPLHTTPFetch( const char *pszURL, char **papszOptions )
  * @return              A CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled.
  */
-CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+CPLHTTPResult *CPLHTTPFetchEx( const char *pszURL, CSLConstList papszOptions,
                              GDALProgressFunc pfnProgress, void *pProgressArg,
                              CPLHTTPFetchWriteFunc pfnWrite, void *pWriteArg )
 
@@ -936,7 +936,7 @@ class CPLHTTPErrorBuffer
 CPLHTTPResult **CPLHTTPMultiFetch( const char * const * papszURL,
                                    int nURLCount,
                                    int nMaxSimultaneous,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
 {
 #ifndef HAVE_CURL
     (void) papszURL;

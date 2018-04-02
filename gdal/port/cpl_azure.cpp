@@ -220,7 +220,7 @@ CPLString AzureCSGetParameter(const CPLString& osStr, const char* pszKey,
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIAzureBlobHandleHelper::GetConfiguration(char** papszOptions,
+bool VSIAzureBlobHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                                 bool& bUseHTTPS,
                                                 CPLString& osEndpoint,
                                                 CPLString& osStorageAccount,
@@ -294,7 +294,7 @@ bool VSIAzureBlobHandleHelper::GetConfiguration(char** papszOptions,
 
 VSIAzureBlobHandleHelper* VSIAzureBlobHandleHelper::BuildFromURI( const char* pszURI,
                                                     const char* /*pszFSPrefix*/,
-                                                    char** papszOptions )
+                                                    CSLConstList papszOptions )
 {
     bool bUseHTTPS = true;
     CPLString osStorageAccount;
@@ -390,7 +390,7 @@ VSIAzureBlobHandleHelper::GetCurlHeaders( const CPLString& osVerb,
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-CPLString VSIAzureBlobHandleHelper::GetSignedURL(char** papszOptions)
+CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
     CPLString osStartDate(CPLGetAWS_SIGN4_Timestamp());
     const char* pszStartDate = CSLFetchNameValue(papszOptions, "START_DATE");

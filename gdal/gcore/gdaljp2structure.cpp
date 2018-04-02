@@ -1350,7 +1350,7 @@ static
 void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       VSILFILE* fp,
                                       GDALJP2Box* poParentBox,
-                                      char** papszOptions,
+                                      CSLConstList papszOptions,
                                       int nRecLevel,
                                       vsi_l_offset nFileOrParentBoxSize)
 {
@@ -1573,7 +1573,7 @@ constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
  */
 
 CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
-                                     char** papszOptions)
+                                     CSLConstList papszOptions)
 {
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == nullptr )
