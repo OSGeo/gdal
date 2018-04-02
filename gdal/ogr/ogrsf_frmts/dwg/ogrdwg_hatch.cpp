@@ -149,7 +149,7 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
 
         oSmoothPolyline.Close();
 
-        OGRLineString *poLS = (OGRLineString *) oSmoothPolyline.Tesselate();
+        OGRLineString *poLS = oSmoothPolyline.Tesselate()->toLineString();
         poGC->addGeometryDirectly( poLS );
 
         return OGRERR_NONE;
@@ -192,11 +192,11 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAngle += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *)
+            OGRLineString *poLS =
                 OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poCircArc->radius(), poCircArc->radius(), 0.0,
-                    dfStartAngle, dfEndAngle, 0.0 );
+                    dfStartAngle, dfEndAngle, 0.0 )->toLineString();
 
             poGC->addGeometryDirectly( poLS );
         }
@@ -224,13 +224,13 @@ static OGRErr DWGCollectBoundaryLoop( OdDbHatchPtr poHatch, int iLoop,
                 dfEndAng += 360.0;
             }
 
-            OGRLineString *poLS = (OGRLineString *)
+            OGRLineString *poLS =
                 OGRGeometryFactory::approximateArcAngles(
                     oCenter.x, oCenter.y, 0.0,
                     poArc->majorRadius(), poArc->minorRadius(), dfRotation,
                     OGRDWGLayer::AngleCorrect(dfStartAng,dfRatio),
                     OGRDWGLayer::AngleCorrect(dfEndAng,dfRatio),
-                    0.0 );
+                    0.0 )->toLineString();
             poGC->addGeometryDirectly( poLS );
         }
         else

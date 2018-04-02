@@ -7756,7 +7756,7 @@ int    TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
     }
     else if (wkbFlatten(poThisGeom->getGeometryType())==wkbGeometryCollection)
     {
-         poGeomColl = (OGRGeometryCollection *)poThisGeom;
+         poGeomColl = poThisGeom->toGeometryCollection();
     }
     else
     {

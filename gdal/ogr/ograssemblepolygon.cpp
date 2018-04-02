@@ -146,12 +146,9 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     OGRGeometry* poGeom = reinterpret_cast<OGRGeometry *>(hLines);
     if( wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
-
-        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( auto&& poMember: poGeom->toGeometryCollection() )
         {
-            if( wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType())
-                != wkbLineString )
+            if( wkbFlatten(poMember->getGeometryType()) != wkbLineString )
             {
                 if( peErr != nullptr )
                     *peErr = OGRERR_FAILURE;
@@ -174,7 +171,7 @@ OGRGeometryH OGRBuildPolygonFromEdges( OGRGeometryH hLines,
     }
 
     bool bSuccess = true;
-    OGRGeometryCollection *poLines = (OGRGeometryCollection *) hLines;
+    OGRGeometryCollection *poLines = poGeom->toGeometryCollection();
     std::vector<OGRLinearRing*> aoRings;
 
 /* -------------------------------------------------------------------- */

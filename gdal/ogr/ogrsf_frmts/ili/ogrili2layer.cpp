@@ -133,7 +133,7 @@ static const char* d2str(double val)
     return CPLSPrintf("%.3f", val );
 }
 
-static void AppendCoordinateList( OGRLineString *poLine, VSILFILE* fp )
+static void AppendCoordinateList( const OGRLineString *poLine, VSILFILE* fp )
 {
     const bool b3D = CPL_TO_BOOL(wkbHasZ(poLine->getGeometryType()));
 
@@ -184,7 +184,7 @@ static int OGR2ILIGeometryAppend( const OGRGeometry *poGeometry, VSILFILE* fp,
         VSIFPrintfL(fp, "<POLYLINE>\n");
         // unclipped polyline, add one sequence
         // VSIFPrintfL(fp, "<SEGMENTS>\n");
-        AppendCoordinateList( (OGRLineString *) poGeometry, fp );
+        AppendCoordinateList( poGeometry->toLineString(), fp );
         // VSIFPrintfL(fp, "</SEGMENTS>\n");
         VSIFPrintfL(fp, "</POLYLINE>\n");
         if (attrname) VSIFPrintfL(fp, "</%s>\n", attrname);

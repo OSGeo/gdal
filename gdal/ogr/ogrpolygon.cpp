@@ -220,7 +220,7 @@ OGRLinearRing *OGRPolygon::getInteriorRing( int iRing )
     if( iRing < 0 || iRing >= oCC.nCurveCount-1 )
         return nullptr;
 
-    return (OGRLinearRing*) oCC.papoCurves[iRing+1];
+    return oCC.papoCurves[iRing+1]->toLinearRing();
 }
 
 /**
@@ -661,7 +661,7 @@ OGRErr OGRPolygon::exportToWkt( char ** ppszDstText,
     OGRErr eErr;
     for( int iRing = 0; iRing < oCC.nCurveCount; iRing++ )
     {
-        OGRLinearRing* poLR = (OGRLinearRing*) oCC.papoCurves[iRing];
+        OGRLinearRing* poLR = oCC.papoCurves[iRing]->toLinearRing();
         //poLR->setFlags( getFlags() );
         poLR->set3D(Is3D());
         poLR->setMeasured(IsMeasured());

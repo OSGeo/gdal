@@ -448,21 +448,21 @@ OGREnvelope3D OGRGeoJSONGetBBox( OGRGeometry* poGeometry,
         const OGRwkbGeometryType eType =
                         wkbFlatten(poGeometry->getGeometryType());
         if( OGR_GT_IsSubClassOf(eType, wkbGeometryCollection) &&
-            reinterpret_cast<OGRGeometryCollection*>(poGeometry)->
-                                            getNumGeometries() >= 2 &&
+            poGeometry->toGeometryCollection()->getNumGeometries() >= 2 &&
             fabs(sEnvelope.MinX - (-180.0)) < EPS &&
             fabs(sEnvelope.MaxX - 180.0) < EPS )
         {
-            OGRGeometryCollection* poGC =
-                reinterpret_cast<OGRGeometryCollection*>(poGeometry);
+            OGRGeometryCollection* poGC = poGeometry->toGeometryCollection();
             double dfWestLimit = -180.0;
             double dfEastLimit = 180.0;
             bool bWestLimitIsInit = false;
             bool bEastLimitIsInit = false;
-            for( int i=0; i < poGC->getNumGeometries(); ++i )
+            for( auto&& poMember: poGC )
             {
                 OGREnvelope sEnvelopePart;
-                poGC->getGeometryRef(i)->getEnvelope(&sEnvelopePart);
+                if( poMember->IsEmpty() )
+                    continue;
+                poMember->getEnvelope(&sEnvelopePart);
                 const bool bTouchesMinus180 =
                             fabs(sEnvelopePart.MinX - (-180.0)) < EPS;
                 const bool bTouchesPlus180 =

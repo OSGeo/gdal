@@ -2994,7 +2994,7 @@ GEOSGeom OGRGeometry::exportToGEOS(
         static_cast<unsigned char *>(CPLMalloc(nDataSize));
     if (eType == wkbTriangle)
     {
-        OGRPolygon poPolygon(*((OGRPolygon *)poLinearGeom));
+        OGRPolygon poPolygon(*(poLinearGeom->toPolygon()));
         if( poPolygon.exportToWkb( wkbNDR, pabyData ) == OGRERR_NONE )
             hGeom = GEOSGeomFromWKB_buf_r( hGEOSCtxt, pabyData, nDataSize );
     }

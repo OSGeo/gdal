@@ -266,8 +266,7 @@ bool IVFKFeature::SetGeometry( OGRGeometry *poGeom, const char *ftype )
                 poGeomCurved = poGeomString.CurveToLine();
 
             if (poGeomCurved) {
-                const int npoints =
-                    ((OGRLineString *) poGeomCurved)->getNumPoints();
+                const int npoints = poGeomCurved->toLineString()->getNumPoints();
                 CPLDebug("OGR-VFK", "%s: curve (type=%s) to linestring (npoints=%d) fid = " CPL_FRMT_GIB,
                          m_poDataBlock->GetName(), ftype,
                          npoints, m_nFID);

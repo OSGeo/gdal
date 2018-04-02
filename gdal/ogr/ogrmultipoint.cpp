@@ -198,10 +198,8 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
         snprintf( *ppszDstText, nMaxString, "%s (", getGeometryName() );
 
     bool bMustWriteComma = false;
-    for( int i = 0; i < getNumGeometries(); i++ )
+    for( auto&& poPoint: this )
     {
-        OGRPoint *poPoint = (OGRPoint *) getGeometryRef( i );
-
         if( poPoint->IsEmpty() )
         {
             CPLDebug("OGR",

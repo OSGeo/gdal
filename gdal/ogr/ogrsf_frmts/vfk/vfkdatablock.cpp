@@ -988,8 +988,8 @@ int VFKDataBlock::LoadGeometryPolygon()
             bFound = false;
             for (VFKFeatureList::iterator iHp = poLineList.begin(), eHp = poLineList.end();
                  iHp != eHp; ++iHp) {
-                const OGRLineString *pLine = (OGRLineString *) (*iHp)->GetGeometry();
-                if (pLine && AppendLineToRing(&poRingList, pLine, bNewRing)) {
+                auto pGeom = (*iHp)->GetGeometry();
+                if (pGeom && AppendLineToRing(&poRingList, pGeom->toLineString(), bNewRing)) {
                     bFound = true;
                     poLineList.erase(iHp);
                     break;

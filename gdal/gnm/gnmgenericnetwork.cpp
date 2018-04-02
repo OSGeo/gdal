@@ -869,11 +869,9 @@ void GNMGenericNetwork::ConnectPointsByMultiline(GIntBig nFID,
 {
     VALIDATE_POINTER0(poMultiLineString,
                                  "GNMGenericNetwork::ConnectPointsByMultiline");
-    for(int i = 0; i < poMultiLineString->getNumGeometries(); ++i)
+    for(auto&& poLineString: poMultiLineString)
     {
-        const OGRLineString* poLinestring =
-                (OGRLineString*)poMultiLineString->getGeometryRef(i);
-        ConnectPointsByLine(nFID, poLinestring, paPointLayers, dfTolerance,
+        ConnectPointsByLine(nFID, poLineString, paPointLayers, dfTolerance,
                             dfCost, dfInvCost, eDir);
     }
 }

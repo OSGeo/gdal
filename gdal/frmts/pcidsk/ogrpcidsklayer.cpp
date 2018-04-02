@@ -704,7 +704,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 
         else if( wkbFlatten(poGeometry->getGeometryType()) == wkbPoint )
         {
-            OGRPoint *poPoint = reinterpret_cast<OGRPoint *>( poGeometry );
+            OGRPoint *poPoint = poGeometry->toPoint();
 
             aoVertices.resize(1);
             aoVertices[0].x = poPoint->getX();
@@ -714,7 +714,7 @@ OGRErr OGRPCIDSKLayer::ISetFeature( OGRFeature *poFeature )
 
         else if( wkbFlatten(poGeometry->getGeometryType()) == wkbLineString )
         {
-            OGRLineString *poLS = reinterpret_cast<OGRLineString *>( poGeometry );
+            OGRLineString *poLS = poGeometry->toLineString();
             unsigned int i;
 
             aoVertices.resize(poLS->getNumPoints());

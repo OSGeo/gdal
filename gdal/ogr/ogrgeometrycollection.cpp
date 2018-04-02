@@ -549,7 +549,7 @@ OGRErr OGRGeometryCollection::importFromWkbInternal( const unsigned char * pabyD
             if( poSubGeom == nullptr )
                 eErr = OGRERR_FAILURE;
             else
-                eErr = ((OGRGeometryCollection*)poSubGeom)->
+                eErr = poSubGeom->toGeometryCollection()->
                         importFromWkbInternal( pabySubData, nSize,
                                                nRecLevel + 1, eWkbVariant,
                                                nSubGeomBytesConsumed );
@@ -753,9 +753,9 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
     /* -------------------------------------------------------------------- */
         if( STARTS_WITH_CI(szToken, "GEOMETRYCOLLECTION") )
         {
-            poGeom = new OGRGeometryCollection();
-            eErr = ((OGRGeometryCollection*)poGeom)->
-                        importFromWktInternal( (char **) &pszInput,
+            OGRGeometryCollection* poGC = new OGRGeometryCollection();
+            poGeom = poGC;
+            eErr = poGC->importFromWktInternal( (char **) &pszInput,
                                                nRecLevel + 1 );
         }
         else
@@ -1318,8 +1318,9 @@ OGRGeometry* OGRGeometryCollection::getLinearGeometry(
     double dfMaxAngleStepSizeDegrees,
     const char* const* papszOptions ) const
 {
-    OGRGeometryCollection* poGC = (OGRGeometryCollection*)
-        OGRGeometryFactory::createGeometry(OGR_GT_GetLinear(getGeometryType()));
+    OGRGeometryCollection* poGC =
+        OGRGeometryFactory::createGeometry(
+            OGR_GT_GetLinear(getGeometryType()))->toGeometryCollection();
     if( poGC == nullptr )
         return nullptr;
     poGC->assignSpatialReference( getSpatialReference() );
@@ -1340,8 +1341,9 @@ OGRGeometry* OGRGeometryCollection::getLinearGeometry(
 OGRGeometry* OGRGeometryCollection::getCurveGeometry(
     const char* const* papszOptions) const
 {
-    OGRGeometryCollection* poGC = (OGRGeometryCollection*)
-        OGRGeometryFactory::createGeometry(OGR_GT_GetCurve(getGeometryType()));
+    OGRGeometryCollection* poGC =
+        OGRGeometryFactory::createGeometry(
+            OGR_GT_GetCurve(getGeometryType()))->toGeometryCollection();
     if( poGC == nullptr )
         return nullptr;
     poGC->assignSpatialReference( getSpatialReference() );

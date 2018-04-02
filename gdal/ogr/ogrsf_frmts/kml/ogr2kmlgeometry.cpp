@@ -247,7 +247,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( poGeometry->getGeometryType() == wkbPoint )
     {
-        OGRPoint* poPoint = static_cast<OGRPoint*>(poGeometry);
+        OGRPoint* poPoint = poGeometry->toPoint();
 
         if (poPoint->getCoordinateDimension() == 0)
         {
@@ -278,7 +278,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbPoint25D )
     {
         char szCoordinate[256] = { 0 };
-        OGRPoint *poPoint = static_cast<OGRPoint*>(poGeometry);
+        OGRPoint *poPoint = poGeometry->toPoint();
 
         MakeKMLCoordinate( szCoordinate, sizeof(szCoordinate),
                            poPoint->getX(), poPoint->getY(), poPoint->getZ(),
@@ -326,7 +326,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode);
         }
 
-        AppendCoordinateList( reinterpret_cast<OGRLineString *>(poGeometry),
+        AppendCoordinateList( poGeometry->toLineString(),
                               ppszText, pnLength, pnMaxLength );
 
         if( bRing )
@@ -343,7 +343,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
     else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon* poPolygon = static_cast<OGRPolygon*>(poGeometry);
+        OGRPolygon* poPolygon = poGeometry->toPolygon();
 
         AppendString( ppszText, pnLength, pnMaxLength, "<Polygon>" );
 
@@ -396,8 +396,7 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
              || wkbFlatten(poGeometry->getGeometryType()) ==
                 wkbGeometryCollection )
     {
-        OGRGeometryCollection* poGC =
-            static_cast<OGRGeometryCollection*>(poGeometry);
+        OGRGeometryCollection* poGC = poGeometry->toGeometryCollection();
 
         AppendString( ppszText, pnLength, pnMaxLength, "<MultiGeometry>" );
 
@@ -407,10 +406,8 @@ static bool OGR2KMLGeometryAppend( OGRGeometry *poGeometry,
         //    AppendString( ppszText, pnLength, pnMaxLength, szAltitudeMode);
         //}
 
-        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
+        for( auto&& poMember: poGC )
         {
-            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
-
             if( !OGR2KMLGeometryAppend( poMember, ppszText, pnLength,
                                         pnMaxLength, szAltitudeMode ) )
             {

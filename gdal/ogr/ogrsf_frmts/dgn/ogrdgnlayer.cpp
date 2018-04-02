@@ -1143,12 +1143,9 @@ OGRErr OGRDGNLayer::CreateFeatureWithGeom( OGRFeature *poFeature,
              || wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString
              || wkbFlatten(poGeom->getGeometryType()) == wkbGeometryCollection)
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeom;
-
-        for( int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++ )
+        for( auto&& poMember: poGeom->toGeometryCollection() )
         {
-            OGRErr eErr = CreateFeatureWithGeom( poFeature,
-                                                 poGC->getGeometryRef(iGeom) );
+            OGRErr eErr = CreateFeatureWithGeom( poFeature, poMember );
             if( eErr != OGRERR_NONE )
                 return eErr;
         }

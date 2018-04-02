@@ -263,11 +263,11 @@ void DXFSmoothPolyline::EmitArc(
     if( fabs(ogrArcEndAngle - ogrArcStartAngle) <= 361.0 )
     {
         OGRLineString* poArcpoLS =
-            (OGRLineString*)OGRGeometryFactory::approximateArcAngles(
+            OGRGeometryFactory::approximateArcAngles(
                 ogrArcCenter.x, ogrArcCenter.y, dfZ,
                 ogrArcRadius, ogrArcRadius, ogrArcRotation,
                 ogrArcStartAngle, ogrArcEndAngle,
-                0.0);
+                0.0)->toLineString();
 
         poLS->addSubLineString(poArcpoLS);
 

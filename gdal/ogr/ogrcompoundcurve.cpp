@@ -140,7 +140,7 @@ int OGRCompoundCurve::WkbSize() const
 OGRErr OGRCompoundCurve::addCurveDirectlyFromWkb( OGRGeometry* poSelf,
                                                   OGRCurve* poCurve )
 {
-    OGRCompoundCurve* poCC = (OGRCompoundCurve*)poSelf;
+    OGRCompoundCurve* poCC = poSelf->toCompoundCurve();
     return poCC->addCurveDirectlyInternal( poCurve, 1e-14, FALSE );
 }
 
@@ -191,7 +191,7 @@ OGRErr OGRCompoundCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                   OGRCurve* poCurve )
 {
-    return ((OGRCompoundCurve*)poSelf)->addCurveDirectly(poCurve);
+    return poSelf->toCompoundCurve()->addCurveDirectly(poCurve);
 }
 
 /************************************************************************/
@@ -526,7 +526,7 @@ OGRCurve* OGRCompoundCurve::stealCurve( int iCurve )
 
 OGRErr OGRCompoundCurve::addCurve( OGRCurve* poCurve, double dfToleranceEps )
 {
-    OGRCurve* poClonedCurve = (OGRCurve*)poCurve->clone();
+    OGRCurve* poClonedCurve = poCurve->clone()->toCurve();
     const OGRErr eErr = addCurveDirectly( poClonedCurve, dfToleranceEps );
     if( eErr != OGRERR_NONE )
         delete poClonedCurve;
@@ -770,7 +770,7 @@ OGRLineString* OGRCompoundCurve::CastToLineString( OGRCompoundCurve* poCC )
 
     if( poCC->oCC.nCurveCount == 1 )
     {
-        OGRLineString* poLS = (OGRLineString*) poCC->oCC.papoCurves[0];
+        OGRLineString* poLS = poCC->oCC.papoCurves[0]->toLineString();
         poLS->assignSpatialReference(poCC->getSpatialReference());
         poCC->oCC.papoCurves[0] = nullptr;
         delete poCC;
@@ -823,7 +823,7 @@ OGRLinearRing* OGRCompoundCurve::CastToLinearRing( OGRCompoundCurve* poCC )
     }
 
     OGRLinearRing* poLR =
-        (OGRLinearRing *) poCC->CurveToLineInternal(0, nullptr, TRUE);
+        poCC->CurveToLineInternal(0, nullptr, TRUE)->toLinearRing();
     delete poCC;
     return poLR;
 }
