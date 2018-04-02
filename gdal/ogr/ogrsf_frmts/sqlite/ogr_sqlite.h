@@ -163,7 +163,7 @@ enum OGRSpatialiteGeomType
 /*                        OGRSQLiteGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
+class OGRSQLiteGeomFieldDefn final : public OGRGeomFieldDefn
 {
     public:
         OGRSQLiteGeomFieldDefn( const char* pszNameIn, int iGeomColIn ) :
@@ -189,7 +189,7 @@ class OGRSQLiteGeomFieldDefn CPL_FINAL : public OGRGeomFieldDefn
 /*                        OGRSQLiteFeatureDefn                          */
 /************************************************************************/
 
-class OGRSQLiteFeatureDefn CPL_FINAL : public OGRFeatureDefn
+class OGRSQLiteFeatureDefn final : public OGRFeatureDefn
 {
     public:
         explicit OGRSQLiteFeatureDefn( const char * pszName = nullptr ) :
@@ -665,7 +665,7 @@ class OGRSQLiteSelectLayer : public OGRSQLiteLayer, public IOGRSQLiteSelectLayer
 /*                   OGRSQLiteSingleFeatureLayer                        */
 /************************************************************************/
 
-class OGRSQLiteSingleFeatureLayer CPL_FINAL : public OGRLayer
+class OGRSQLiteSingleFeatureLayer final : public OGRLayer
 {
   private:
     int                 nVal;
@@ -760,7 +760,7 @@ class OGRSQLiteBaseDataSource : public GDALPamDataset
 /*                         OGRSQLiteDataSource                          */
 /************************************************************************/
 
-class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
+class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 {
     OGRSQLiteLayer    **papoLayers;
     int                 nLayers;
@@ -908,7 +908,7 @@ class OGRSQLiteDataSource CPL_FINAL : public OGRSQLiteBaseDataSource
 /*                           RL2RasterBand                              */
 /************************************************************************/
 
-class RL2RasterBand CPL_FINAL: public GDALPamRasterBand
+class RL2RasterBand final: public GDALPamRasterBand
 {
     bool            m_bHasNoData;
     double          m_dfNoDataValue;

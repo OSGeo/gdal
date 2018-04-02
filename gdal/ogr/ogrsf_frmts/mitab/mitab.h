@@ -195,7 +195,7 @@ class IMapInfoFile : public OGRLayer
  * class to open a TAB dataset and read/write features from/to it.
  *
  *--------------------------------------------------------------------*/
-class TABFile CPL_FINAL : public IMapInfoFile
+class TABFile final : public IMapInfoFile
 {
   private:
     char        *m_pszFname;
@@ -355,7 +355,7 @@ class TABFile CPL_FINAL : public IMapInfoFile
  *       of 2 TABFiles linked through an indexed field of integer type.
  *       It is unclear if any other type of views could exist anyways.
  *--------------------------------------------------------------------*/
-class TABView CPL_FINAL : public IMapInfoFile
+class TABView final : public IMapInfoFile
 {
   private:
     char        *m_pszFname;
@@ -481,7 +481,7 @@ class TABView CPL_FINAL : public IMapInfoFile
  *
  * TABSeamless are supported for read access only.
  *--------------------------------------------------------------------*/
-class TABSeamless CPL_FINAL : public IMapInfoFile
+class TABSeamless final : public IMapInfoFile
 {
   private:
     char        *m_pszFname;
@@ -601,7 +601,7 @@ class TABSeamless CPL_FINAL : public IMapInfoFile
  * class to open a (MID/MIF) dataset and read/write features from/to it.
  *
  *--------------------------------------------------------------------*/
-class MIFFile CPL_FINAL : public IMapInfoFile
+class MIFFile final : public IMapInfoFile
 {
   private:
     char        *m_pszFname;
@@ -1108,7 +1108,7 @@ class TABPoint: public TABFeature,
  * The symbol number refers to a character code in the specified Windows
  * Font (e.g. "Windings").
  *--------------------------------------------------------------------*/
-class TABFontPoint CPL_FINAL : public TABPoint,
+class TABFontPoint final : public TABPoint,
                     public ITABFeatureFont
 {
   protected:
@@ -1162,7 +1162,7 @@ class TABFontPoint CPL_FINAL : public TABPoint,
  * directory (e.g. "arrow.BMP").  The symbol number has no meaning for
  * this symbol type.
  *--------------------------------------------------------------------*/
-class TABCustomPoint CPL_FINAL : public TABPoint,
+class TABCustomPoint final : public TABPoint,
                       public ITABFeatureFont
 {
   protected:
@@ -1214,7 +1214,7 @@ class TABCustomPoint CPL_FINAL : public TABPoint,
  *
  * Feature geometry can be either a OGRLineString or a OGRMultiLineString
  *--------------------------------------------------------------------*/
-class TABPolyline CPL_FINAL : public TABFeature,
+class TABPolyline final : public TABFeature,
                    public ITABFeaturePen
 {
   private:
@@ -1281,7 +1281,7 @@ class TABPolyline CPL_FINAL : public TABFeature,
  * inside MapInfo files.  However, when writing features, OGRPolygons with
  * multiple rings will be accepted without problem.
  *--------------------------------------------------------------------*/
-class TABRegion CPL_FINAL : public TABFeature,
+class TABRegion final : public TABFeature,
                  public ITABFeaturePen,
                  public ITABFeatureBrush
 {
@@ -1348,7 +1348,7 @@ class TABRegion CPL_FINAL : public TABFeature,
  *
  * Feature geometry will be OGRPolygon
  *--------------------------------------------------------------------*/
-class TABRectangle CPL_FINAL : public TABFeature,
+class TABRectangle final : public TABFeature,
                     public ITABFeaturePen,
                     public ITABFeatureBrush
 {
@@ -1407,7 +1407,7 @@ class TABRectangle CPL_FINAL : public TABFeature,
  * and the center of the MBR is used as the center of the ellipse...
  * (i.e. the polygon vertices themselves will be ignored).
  *--------------------------------------------------------------------*/
-class TABEllipse CPL_FINAL : public TABFeature,
+class TABEllipse final : public TABFeature,
                   public ITABFeaturePen,
                   public ITABFeatureBrush
 {
@@ -1465,7 +1465,7 @@ class TABEllipse CPL_FINAL : public TABFeature,
  * When an arc is read, the returned geometry is an OGRLineString
  * representing the arc with 2 degrees line segments.
  *--------------------------------------------------------------------*/
-class TABArc CPL_FINAL : public TABFeature,
+class TABArc final : public TABFeature,
               public ITABFeaturePen
 {
   private:
@@ -1525,7 +1525,7 @@ class TABArc CPL_FINAL : public TABFeature,
  * are required in a valid text feature and MUST be set.
  * Text angle and other styles are optional.
  *--------------------------------------------------------------------*/
-class TABText CPL_FINAL : public TABFeature,
+class TABText final : public TABFeature,
                public ITABFeatureFont,
                public ITABFeaturePen
 {
@@ -1630,7 +1630,7 @@ class TABText CPL_FINAL : public TABFeature,
  * The symbol number is in the range [31..67], with 31=None and corresponds
  * to one of the 35 predefined "Old MapInfo Symbols"
  *--------------------------------------------------------------------*/
-class TABMultiPoint CPL_FINAL : public TABFeature,
+class TABMultiPoint final : public TABFeature,
                      public ITABFeatureSymbol
 {
   private:
@@ -1695,7 +1695,7 @@ class TABMultiPoint CPL_FINAL : public TABFeature,
  * unless OGRFeature::SetGeometry*() are made virtual in OGR.
  *
  *--------------------------------------------------------------------*/
-class TABCollection CPL_FINAL : public TABFeature,
+class TABCollection final : public TABFeature,
                      public ITABFeatureSymbol
 {
   private:
@@ -1758,7 +1758,7 @@ class TABCollection CPL_FINAL : public TABFeature,
  * correspond to any MapInfo type... it's just used to dump info about
  * feature types that are not implemented yet.
  *--------------------------------------------------------------------*/
-class TABDebugFeature CPL_FINAL : public TABFeature
+class TABDebugFeature final : public TABFeature
 {
   private:
     GByte       m_abyBuf[512];

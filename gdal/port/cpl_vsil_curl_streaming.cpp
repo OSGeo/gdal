@@ -1734,7 +1734,7 @@ public:
 /*                       VSIS3StreamingFSHandler                        */
 /************************************************************************/
 
-class VSIS3StreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+class VSIS3StreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -1799,7 +1799,7 @@ void VSIS3StreamingFSHandler::UpdateHandleFromMap(
 /*                          VSIS3LikeStreamingHandle                    */
 /************************************************************************/
 
-class VSIS3LikeStreamingHandle CPL_FINAL: public VSICurlStreamingHandle
+class VSIS3LikeStreamingHandle final: public VSICurlStreamingHandle
 {
     IVSIS3LikeHandleHelper* m_poS3HandleHelper;
 
@@ -1894,7 +1894,7 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError( const char* pszErrorMsg,
 /*                       VSIGSStreamingFSHandler                        */
 /************************************************************************/
 
-class VSIGSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+class VSIGSStreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
   protected:
     CPLString GetFSPrefix() override { return "/vsigs_streaming/"; }
@@ -1929,7 +1929,7 @@ VSIGSStreamingFSHandler::CreateFileHandle( const char* pszURL )
 /*                      VSIAzureStreamingFSHandler                      */
 /************************************************************************/
 
-class VSIAzureStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+class VSIAzureStreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
   protected:
     CPLString GetFSPrefix() override { return "/vsiaz_streaming/"; }
@@ -1964,7 +1964,7 @@ VSIAzureStreamingFSHandler::CreateFileHandle( const char* pszURL )
 /*                       VSIOSSStreamingFSHandler                        */
 /************************************************************************/
 
-class VSIOSSStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+class VSIOSSStreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
     std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
 
@@ -2047,7 +2047,7 @@ VSIOSSStreamingFSHandler::CreateFileHandle( const char* pszURL )
 /*                      VSISwiftStreamingFSHandler                      */
 /************************************************************************/
 
-class VSISwiftStreamingFSHandler CPL_FINAL: public IVSIS3LikeStreamingFSHandler
+class VSISwiftStreamingFSHandler final: public IVSIS3LikeStreamingFSHandler
 {
   protected:
     CPLString GetFSPrefix() override { return "/vsiswift_streaming/"; }

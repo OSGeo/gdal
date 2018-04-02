@@ -4769,7 +4769,7 @@ class IVSIS3LikeFSHandler: public VSICurlFilesystemHandler
 /*                         VSIS3FSHandler                               */
 /************************************************************************/
 
-class VSIS3FSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 {
     std::map< CPLString, VSIS3UpdateParams > oMapBucketsToS3Params;
 
@@ -4836,7 +4836,7 @@ class IVSIS3LikeHandle:  public VSICurlHandle
 /*                            VSIS3Handle                               */
 /************************************************************************/
 
-class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
+class VSIS3Handle final : public IVSIS3LikeHandle
 {
     VSIS3HandleHelper* m_poS3HandleHelper;
 
@@ -4859,7 +4859,7 @@ class VSIS3Handle CPL_FINAL : public IVSIS3LikeHandle
 /*                            VSIS3WriteHandle                          */
 /************************************************************************/
 
-class VSIS3WriteHandle CPL_FINAL : public VSIVirtualHandle
+class VSIS3WriteHandle final : public VSIVirtualHandle
 {
     IVSIS3LikeFSHandler     *m_poFS;
     CPLString           m_osFilename;
@@ -6462,7 +6462,7 @@ bool VSIS3Handle::CanRestartOnError(const char* pszErrorMsg,
 /*                         VSIGSFSHandler                               */
 /************************************************************************/
 
-class VSIGSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 {
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
@@ -6493,7 +6493,7 @@ class VSIGSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 /*                            VSIGSHandle                               */
 /************************************************************************/
 
-class VSIGSHandle CPL_FINAL : public IVSIS3LikeHandle
+class VSIGSHandle final : public IVSIS3LikeHandle
 {
     VSIGSHandleHelper* m_poHandleHelper;
 
@@ -6707,7 +6707,7 @@ struct curl_slist* VSIGSHandle::GetCurlHeaders( const CPLString& osVerb,
 /*                       VSIAzureFSHandler                              */
 /************************************************************************/
 
-class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 {
   protected:
     VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
@@ -6751,7 +6751,7 @@ class VSIAzureFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
 /*                          VSIAzureHandle                              */
 /************************************************************************/
 
-class VSIAzureHandle CPL_FINAL : public VSICurlHandle
+class VSIAzureHandle final : public VSICurlHandle
 {
     VSIAzureBlobHandleHelper* m_poHandleHelper;
 
@@ -6793,7 +6793,7 @@ VSICurlHandle* VSIAzureFSHandler::CreateFileHandle(const char* pszFilename)
 /*                          VSIAzureWriteHandle                         */
 /************************************************************************/
 
-class VSIAzureWriteHandle CPL_FINAL : public VSIVirtualHandle
+class VSIAzureWriteHandle final : public VSIVirtualHandle
 {
     VSIAzureFSHandler  *m_poFS;
     CPLString           m_osFilename;
@@ -7587,7 +7587,7 @@ bool VSIAzureHandle::IsDirectoryFromExists( const char* /*pszVerb*/,
 /*                         VSIOSSFSHandler                              */
 /************************************************************************/
 
-class VSIOSSFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
 {
     std::map< CPLString, VSIOSSUpdateParams > oMapBucketsToOSSParams;
 
@@ -7626,7 +7626,7 @@ public:
 /*                            VSIOSSHandle                              */
 /************************************************************************/
 
-class VSIOSSHandle CPL_FINAL : public IVSIS3LikeHandle
+class VSIOSSHandle final : public IVSIS3LikeHandle
 {
     VSIOSSHandleHelper* m_poHandleHelper;
 
@@ -7893,7 +7893,7 @@ bool VSIOSSHandle::CanRestartOnError(const char* pszErrorMsg,
 /*                         VSISwiftFSHandler                            */
 /************************************************************************/
 
-class VSISwiftFSHandler CPL_FINAL : public IVSIS3LikeFSHandler
+class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 {
 protected:
         VSICurlHandle* CreateFileHandle( const char* pszFilename ) override;
@@ -7930,7 +7930,7 @@ public:
 /*                            VSISwiftHandle                              */
 /************************************************************************/
 
-class VSISwiftHandle CPL_FINAL : public IVSIS3LikeHandle
+class VSISwiftHandle final : public IVSIS3LikeHandle
 {
     VSISwiftHandleHelper* m_poHandleHelper;
 

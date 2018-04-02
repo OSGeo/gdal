@@ -69,7 +69,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /*                         OGRShapeGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
+class OGRShapeGeomFieldDefn final: public OGRGeomFieldDefn
 {
     char* pszFullName;
     bool  bSRSSet;
@@ -99,7 +99,7 @@ class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
 
 class OGRShapeDataSource;
 
-class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
+class OGRShapeLayer final: public OGRAbstractProxiedLayer
 {
     OGRShapeDataSource  *poDS;
 
@@ -254,7 +254,7 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
 /*                          OGRShapeDataSource                          */
 /************************************************************************/
 
-class OGRShapeDataSource CPL_FINAL: public OGRDataSource
+class OGRShapeDataSource final: public OGRDataSource
 {
     OGRShapeLayer     **papoLayers;
     int                 nLayers;

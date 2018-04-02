@@ -117,7 +117,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
+class VSIMemHandle final : public VSIVirtualHandle
 {
   public:
     VSIMemFile    *poFile;
@@ -151,7 +151,7 @@ class VSIMemHandle CPL_FINAL : public VSIVirtualHandle
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIMemFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIMemFilesystemHandler final : public VSIFilesystemHandler
 {
   public:
     std::map<CPLString, VSIMemFile*> oFileList;

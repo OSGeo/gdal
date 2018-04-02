@@ -62,7 +62,7 @@ constexpr int BUFFER_SIZE = 2 * HALF_BUFFER_SIZE;
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarEntryFileOffset CPL_FINAL : public VSIArchiveEntryFileOffset
+class VSITarEntryFileOffset final : public VSIArchiveEntryFileOffset
 {
 public:
         GUIntBig m_nOffset;
@@ -95,7 +95,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarReader CPL_FINAL : public VSIArchiveReader
+class VSITarReader final : public VSIArchiveReader
 {
     private:
         VSILFILE* fp;
@@ -431,7 +431,7 @@ int VSITarReader::GotoFileOffset( VSIArchiveEntryFileOffset* pOffset )
 /* ==================================================================== */
 /************************************************************************/
 
-class VSITarFilesystemHandler CPL_FINAL : public VSIArchiveFilesystemHandler
+class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
 {
 public:
     const char* GetPrefix() override { return "/vsitar"; }

@@ -78,7 +78,7 @@ static bool FileGDBOGRDateToDoubleDate( const OGRField* psField,
 /*                        FileGDBTrivialIterator                        */
 /************************************************************************/
 
-class FileGDBTrivialIterator CPL_FINAL : public FileGDBIterator
+class FileGDBTrivialIterator final : public FileGDBIterator
 {
         FileGDBIterator            *poParentIter;
         FileGDBTable               *poTable;
@@ -110,7 +110,7 @@ class FileGDBTrivialIterator CPL_FINAL : public FileGDBIterator
 /*                        FileGDBNotIterator                            */
 /************************************************************************/
 
-class FileGDBNotIterator CPL_FINAL : public FileGDBIterator
+class FileGDBNotIterator final : public FileGDBIterator
 {
         FileGDBIterator            *poIterBase;
         FileGDBTable               *poTable;
@@ -132,7 +132,7 @@ class FileGDBNotIterator CPL_FINAL : public FileGDBIterator
 /*                        FileGDBAndIterator                            */
 /************************************************************************/
 
-class FileGDBAndIterator CPL_FINAL : public FileGDBIterator
+class FileGDBAndIterator final : public FileGDBIterator
 {
         FileGDBIterator             *poIter1;
         FileGDBIterator             *poIter2;
@@ -153,7 +153,7 @@ class FileGDBAndIterator CPL_FINAL : public FileGDBIterator
 /*                        FileGDBOrIterator                             */
 /************************************************************************/
 
-class FileGDBOrIterator CPL_FINAL : public FileGDBIterator
+class FileGDBOrIterator final : public FileGDBIterator
 {
         FileGDBIterator             *poIter1;
         FileGDBIterator             *poIter2;
@@ -184,7 +184,7 @@ constexpr int MAX_CAR_COUNT_STR = 80;
 constexpr int MAX_UTF8_LEN_STR = 4 * MAX_CAR_COUNT_STR;
 constexpr int FGDB_PAGE_SIZE = 4096;
 
-class FileGDBIndexIterator CPL_FINAL : public FileGDBIterator
+class FileGDBIndexIterator final : public FileGDBIterator
 {
         FileGDBTable        *poParent;
         bool                 bAscending;

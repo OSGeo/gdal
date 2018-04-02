@@ -55,7 +55,7 @@ CPL_CVSID("$Id$")
 #undef GetDiskFreeSpace
 #endif
 
-class VSIWin32FilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
 {
 public:
     // TODO(schwehr): Fix Open call to remove the need for this using call.
@@ -82,7 +82,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIWin32Handle CPL_FINAL : public VSIVirtualHandle
+class VSIWin32Handle final : public VSIVirtualHandle
 {
   public:
     HANDLE       hFile;
