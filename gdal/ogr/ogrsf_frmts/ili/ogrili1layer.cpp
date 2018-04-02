@@ -263,7 +263,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbLineString
              || poGeometry->getGeometryType() == wkbLineString25D )
     {
-        AppendCoordinateList( reinterpret_cast<OGRLineString *>(poGeometry),
+        AppendCoordinateList( poGeometry->toLineString(),
                               poDS );
     }
 
@@ -273,18 +273,9 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbPolygon
              || poGeometry->getGeometryType() == wkbPolygon25D )
     {
-        OGRPolygon *poPolygon = reinterpret_cast<OGRPolygon *>(poGeometry);
-
-        if( poPolygon->getExteriorRing() != nullptr )
+        OGRPolygon *poPolygon = poGeometry->toPolygon();
+        for( auto&& poRing: poPolygon )
         {
-            if( !GeometryAppend( poPolygon->getExteriorRing() ) )
-                return FALSE;
-        }
-
-        for( int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++ )
-        {
-            OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
-
             if( !GeometryAppend( poRing ) )
                 return FALSE;
         }
@@ -300,7 +291,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiCurve
              || wkbFlatten(poGeometry->getGeometryType()) == wkbMultiCurveZ )
     {
-        OGRGeometryCollection *poGC = (OGRGeometryCollection *) poGeometry;
+        OGRGeometryCollection *poGC = poGeometry->toGeometryCollection();
 
 #if 0
         // TODO: Why this large NOP block?
@@ -318,9 +309,8 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
         }
 #endif
 
-        for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
+        for( auto&& poMember: poGC )
         {
-            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
             if( !GeometryAppend( poMember ) )
                 return FALSE;
         }
@@ -328,7 +318,7 @@ int OGRILI1Layer::GeometryAppend( OGRGeometry *poGeometry )
     else if( poGeometry->getGeometryType() == wkbCompoundCurve
              || poGeometry->getGeometryType() == wkbCompoundCurveZ )
     {
-        AppendCoumpoundCurve( reinterpret_cast<OGRCompoundCurve *>(poGeometry),
+        AppendCoumpoundCurve( poGeometry->toCompoundCurve(),
                               poDS );
     } else {
         CPLError( CE_Warning, CPLE_AppDefined,
@@ -366,7 +356,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             // 2D Point
             if( poGeometry->getGeometryType() == wkbPoint )
             {
-                OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
+                OGRPoint *poPoint = poGeometry->toPoint();
 
                 VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getX()) );
@@ -376,7 +366,7 @@ OGRErr OGRILI1Layer::ICreateFeature( OGRFeature *poFeature ) {
             // 3D Point
             else if( poGeometry->getGeometryType() == wkbPoint25D )
             {
-                OGRPoint *poPoint = reinterpret_cast<OGRPoint *>(poGeometry);
+                OGRPoint *poPoint = poGeometry->toPoint();
 
                 VSIFPrintfL( fp, " %s",
                             d2str(poPoint->getX()) );
@@ -525,10 +515,8 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
             OGRMultiCurve *curves = dynamic_cast<OGRMultiCurve *>(poGeom);
             if( curves )
             {
-                for (int i=0; i<curves->getNumGeometries(); i++)
+                for (auto&& curve: curves )
                 {
-                    OGRCurve* curve = reinterpret_cast<OGRCurve*>(
-                                                    curves->getGeometryRef(i));
                     if( !curve->IsEmpty() )
                         oMapFeatureToGeomSet[feature].push_back(curve);
                 }
@@ -587,11 +575,10 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                                         wkbFlatten(curve->getGeometryType());
                         if( eCurveType == wkbCompoundCurve )
                         {
-                            OGRCompoundCurve* poCCSub =
-                                    reinterpret_cast<OGRCompoundCurve*>(curve);
-                            for( int i=0; i < poCCSub->getNumCurves(); ++i )
+                            OGRCompoundCurve* poCCSub = curve->toCompoundCurve();
+                            for( auto&& subCurve: poCCSub )
                             {
-                                poCC->addCurve(poCCSub->getCurve(i));
+                                poCC->addCurve(subCurve);
                             }
                         }
                         else
@@ -613,10 +600,7 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         if( eCurveType == wkbLineString ||
                             eCurveType == wkbCircularString )
                         {
-                            OGRSimpleCurve* poSC =
-                              reinterpret_cast<OGRSimpleCurve*>(
-                                  (reinterpret_cast<OGRSimpleCurve*>(curve))
-                                                                    ->clone());
+                            OGRSimpleCurve* poSC = curve->clone()->toSimpleCurve();
                             poSC->reversePoints();
                             poCC->addCurveDirectly( poSC );
                         }
@@ -624,14 +608,11 @@ void OGRILI1Layer::JoinSurfaceLayer( OGRILI1Layer* poSurfaceLineLayer,
                         {
                             // Reverse the order of the elements of the
                             // compound curve
-                            OGRCompoundCurve* poCCSub =
-                                    reinterpret_cast<OGRCompoundCurve*>(curve);
+                            OGRCompoundCurve* poCCSub = curve->toCompoundCurve();
                             for( int i=poCCSub->getNumCurves()-1; i >= 0; --i )
                             {
-                                OGRSimpleCurve* poSC =
-                                    reinterpret_cast<OGRSimpleCurve*>(
-                                        (reinterpret_cast<OGRSimpleCurve*>(
-                                            poCCSub->getCurve(i)))->clone());
+                                OGRSimpleCurve* poSC = poCCSub->getCurve(i)->
+                                    clone()->toSimpleCurve();
                                 poSC->reversePoints();
                                 poCC->addCurveDirectly(poSC);
                             }

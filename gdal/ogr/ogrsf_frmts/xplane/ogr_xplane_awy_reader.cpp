@@ -338,7 +338,7 @@ static unsigned long HashAirwayIntersectionFeatureFunc(const void* _feature)
 {
     OGRFeature* feature = reinterpret_cast<OGRFeature *>(
         const_cast<void *>(_feature));
-    OGRPoint* point = reinterpret_cast<OGRPoint *>( feature->GetGeometryRef() );
+    OGRPoint* point = feature->GetGeometryRef()->toPoint();
     unsigned long hash = CPLHashSetHashStr(
         reinterpret_cast<unsigned char*>(const_cast<char *>(
             feature->GetFieldAsString(0))));
