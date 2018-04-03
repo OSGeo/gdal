@@ -1841,10 +1841,7 @@ OGRErr OGRSpatialReference::morphToESRI()
       }
       if( pszGcsName != nullptr )
       {
-        if( RemapGeogCSName(this, pszGcsName) < 0 )
-        {
-          return OGRERR_CORRUPT_DATA;
-        }
+        RemapGeogCSName(this, pszGcsName);
       }
 
       // Specific processing and remapping
