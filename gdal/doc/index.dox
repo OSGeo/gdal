@@ -172,4 +172,8 @@ The list of bindings of GDAL in other languages is maintained on the
 <a href="http://trac.osgeo.org/gdal/#GDALOGRInOtherLanguages">GDAL
 Wiki</a>.
 
+\section index_citing Citing GDAL/OGR in publications
+
+Please refer to the <a href="https://github.com/OSGeo/gdal/blob/master/CITATION">CITATION</a> file.
+
 */

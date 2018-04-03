@@ -10,12 +10,12 @@ SHELL    =   @SHELL@
 HAVE_LIBTOOL	=	@HAVE_LIBTOOL@
 LIBTOOL	=	@LIBTOOL@
 ifeq ($(HAVE_LIBTOOL),yes)
-LIBTOOL_COMPILE_CC =	$(LIBTOOL) --mode=compile --tag=CC
-LIBTOOL_COMPILE_CXX =	$(LIBTOOL) --mode=compile --tag=CXX
-LIBTOOL_LINK	=	$(LIBTOOL) --mode=link
-LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install
+LIBTOOL_COMPILE_CC =	$(LIBTOOL) --mode=compile --silent --tag=CC
+LIBTOOL_COMPILE_CXX =	$(LIBTOOL) --mode=compile --silent --tag=CXX
+LIBTOOL_LINK	=	$(LIBTOOL) --mode=link --silent
+LIBTOOL_INSTALL	=	$(LIBTOOL) --mode=install --silent
 LIBTOOL_FINISH	=	$(LIBTOOL) --mode=finish --silent
-LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean
+LIBTOOL_CLEAN	=	$(LIBTOOL) --mode=clean --silent
 OBJ_EXT = lo
 else
 LIBTOOL_FINISH	=	@BINTRUE@

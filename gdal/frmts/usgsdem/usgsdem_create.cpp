@@ -1250,7 +1250,7 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
     psWInfo->utmzone = SrcoSRS.GetUTMZone(&bNorth);
     if (psWInfo->utmzone)
     {
-        if (DstoSRS.SetUTM(psWInfo->utmzone) != OGRERR_NONE)
+        if (DstoSRS.SetUTM(psWInfo->utmzone, bNorth) != OGRERR_NONE)
         {
             CPLError( CE_Failure, CPLE_AppDefined,
               "DEM Default Setup: Failed to set utm zone of destination" );
@@ -1259,6 +1259,8 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
              */
             return FALSE;
         }
+        if( !bNorth )
+            psWInfo->utmzone = -psWInfo->utmzone;
     }
 
     /* export the projection to sWInfo */

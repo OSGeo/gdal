@@ -1832,6 +1832,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
   if( gt==wkbPoint )
   {
+    if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) > nbtp )
+    {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+    }
     /*
      * More Graphics :
      * Angle
@@ -1864,6 +1869,12 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
   if( gt==wkbLineString )
   {
+    if( i + 2 * (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) + 1 > nbtp )
+    {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+    }
+
     /*
      * More Graphics :
      * XP<>YP[<>ZP]Nr points=k[<>X<>Y[<>Z]]k...
@@ -1899,6 +1910,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     i++;
     for( ip= 1; ip<=np; ip++ )
     {
+      if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) > nbtp )
+      {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+      }
       x= CPLAtof(papszFields[i]);
       i++;
       y= CPLAtof(papszFields[i]);

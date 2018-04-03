@@ -376,6 +376,27 @@ static void GDALWarpAppOptionsForBinaryFree( GDALWarpAppOptionsForBinary* psOpti
 }
 
 /************************************************************************/
+/*                          WarpTermProgress()                          */
+/************************************************************************/
+
+static int gnSrcCount = 0;
+
+static int CPL_STDCALL WarpTermProgress( double dfProgress,
+                                         const char * pszMessage,
+                                         void*)
+{
+    static CPLString osLastMsg;
+    static int iSrc = -1;
+    if( pszMessage != osLastMsg )
+    {
+        printf("%s : ", pszMessage);
+        osLastMsg = pszMessage;
+        iSrc ++;
+    }
+    return GDALTermProgress(dfProgress * gnSrcCount - iSrc, nullptr, nullptr);
+}
+
+/************************************************************************/
 /*                      ErrorHandlerAccumulator()                       */
 /************************************************************************/
 
@@ -576,7 +597,8 @@ MAIN_START(argc, argv)
 
     if( !(psOptionsForBinary->bQuiet) )
     {
-        GDALWarpAppOptionsSetProgress(psOptions, GDALTermProgress, nullptr);
+        gnSrcCount = nSrcCount;
+        GDALWarpAppOptionsSetProgress(psOptions, WarpTermProgress, nullptr);
     }
 
     int bUsageError = FALSE;
