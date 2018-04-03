@@ -90,10 +90,12 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
                 osGeometryType = papszKeyedValues[iKey] + 1;
             if( papszKeyedValues[iKey][0] == 'R' )
                 osRegion = papszKeyedValues[iKey] + 1;
-            if( papszKeyedValues[iKey][0] == 'J' )
+            if( papszKeyedValues[iKey][0] == 'J' &&
+                papszKeyedValues[iKey][1] != 0 &&
+                papszKeyedValues[iKey][2] != 0 )
             {
                 CPLString osArg = papszKeyedValues[iKey] + 2;
-                if( osArg[0] == '"' && osArg.back() == '"' )
+                if( osArg[0] == '"' && osArg.size() >= 2 && osArg.back() == '"' )
                 {
                     osArg = osArg.substr(1,osArg.length()-2);
                     char *pszArg = CPLUnescapeString(osArg, NULL,
