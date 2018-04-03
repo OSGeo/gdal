@@ -117,8 +117,6 @@ def rda_failed_authentication():
     # invalid characters in env variable
     with gdaltest.config_options({'GBDX_AUTH_URL': '\\',
                                   'GBDX_RDA_API_URL': '\\',
-                                  'GBDX_CLIENT_ID': '\\',
-                                  'GBDX_CLIENT_SECRET': '\\',
                                   'GBDX_USERNAME': 'user_name',
                                   'GBDX_PASSWORD': 'password'}):
         with gdaltest.error_handler():
@@ -129,8 +127,6 @@ def rda_failed_authentication():
 
     # invalid URL
     with gdaltest.config_options({'GBDX_AUTH_URL': '/vsimem/auth_url',
-                                  'GBDX_CLIENT_ID': 'client_id',
-                                  'GBDX_CLIENT_SECRET': 'client_secret',
                                   'GBDX_USERNAME': 'user_name',
                                   'GBDX_PASSWORD': 'password'}):
         with gdaltest.error_handler():
@@ -144,8 +140,6 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -159,8 +153,6 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 200, {}, 'invalid_json')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -174,8 +166,6 @@ def rda_failed_authentication():
     handler.add('POST', '/auth_url', 200, {}, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL':  '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -203,8 +193,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -221,8 +209,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -239,8 +225,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -255,8 +239,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -294,8 +276,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -333,8 +313,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -372,8 +350,6 @@ def rda_error_metadata():
     with webserver.install_http_handler(handler):
         with gdaltest.config_options({'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
                                     'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-                                    'GBDX_CLIENT_ID': 'client_id',
-                                    'GBDX_CLIENT_SECRET': 'client_secret',
                                     'GBDX_USERNAME': 'user_name',
                                     'GBDX_PASSWORD': 'password'}):
             with gdaltest.error_handler():
@@ -432,8 +408,6 @@ def rda_graph_nominal():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -756,8 +730,6 @@ def rda_read_gbdx_config():
     gdal.FileFromMemBuffer('/vsimem/.gbdx-config', """
 [gbdx]
 auth_url = 127.0.0.1:%d/auth_url
-client_id = client_id
-client_secret = client_secret
 user_name = user_name
 user_password = password
 idaho_api_url = 127.0.0.1:%d/rda_api
@@ -818,8 +790,6 @@ def rda_download_queue():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -901,8 +871,6 @@ def rda_rpc():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1011,8 +979,6 @@ def rda_real_cache_dir():
         'RDA_CACHE_DIR': '',
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1101,8 +1067,6 @@ def rda_real_expired_authentication():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
@@ -1163,9 +1127,7 @@ def rda_bad_tile():
     config_options = {
         'GBDX_AUTH_URL': '127.0.0.1:%d/auth_url' % gdaltest.webserver_port,
         'GBDX_RDA_API_URL':  '127.0.0.1:%d/rda_api' % gdaltest.webserver_port,
-        'GBDX_CLIENT_ID': 'client_id',
-        'GBDX_CLIENT_SECRET': 'client_secret',
-        'GBDX_USERNAME': 'user_name',
+         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
 

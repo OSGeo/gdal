@@ -19,8 +19,7 @@
     supported.
 <p>
 
-    Orthorectified (with geotransform) and raw (Level-1B with RPCs) datasets are
-    supported.
+    Any valid graph or template is supported via the DigitalGlobe RDA REST API.
 <p>
 
     There is no support for overviews.
@@ -66,8 +65,8 @@ OR
 
 <h2>Authentication</h2>
 
-<p>Access to the API requires an authentication token. For that, 4 parameters
-    (client_id, client_secret, username, password) must be provided to the driver.
+<p>Access to the API requires an authentication token. For that, 2 parameters
+    (username, password) must be provided to the driver.
     They can be retrieved from the below configuration options, or from the
     ~/.gbdx-config file.</p>
 
@@ -85,14 +84,6 @@ The following configuration options are available :
     <li><b>GBDX_RDA_API_URL</b>=value: To specify the RDA API endpoint.
         Defaults to https://rda.geobigdata.io/v1. If not specified, the
         rda_api_url parameter from ~/.gbdx-config will be used if it exists.
-    </li>
-    <li><b>GBDX_CLIENT_ID</b>=value: To specify the OAuth client id needed to get
-        to an authentication token. If not specified, the
-        client_id parameter from ~/.gbdx-config must be set.
-    </li>
-    <li><b>GBDX_CLIENT_SECRET</b>=value: To specify the OAuth client secret needed to get
-        to an authentication token. If not specified, the
-        client_secret parameter from ~/.gbdx-config must be set.
     </li>
     <li><b>GBDX_USERNAME</b>=value: To specify the OAuth user name needed to get
         to an authentication token. If not specified, the
@@ -114,8 +105,6 @@ The following configuration options are available :
 [gbdx]
 auth_url = https://geobigdata.io/auth/v1/oauth/token/ (optional)
 rda_api_url = https://rda.geobigdata.io/v1 (optional)
-client_id = value (required)
-client_secret = value (required)
 user_name = value (required)
 user_password = value (required)
 </pre>

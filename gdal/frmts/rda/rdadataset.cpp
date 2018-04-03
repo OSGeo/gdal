@@ -83,8 +83,6 @@ class GDALRDADataset: public GDALDataset
 
         CPLString m_osAuthURL;
         CPLString m_osRDAAPIURL;
-        CPLString m_osClientId;
-        CPLString m_osClientSecret;
         CPLString m_osUserName;
         CPLString m_osUserPassword;
 
@@ -256,8 +254,6 @@ GDALRDADataset::GDALRDADataset() :
                         "https://geobigdata.io/auth/v1/oauth/token/")),
     m_osRDAAPIURL(CPLGetConfigOption("GBDX_RDA_API_URL",
                         "https://rda.geobigdata.io/v1")),
-    m_osClientId(CPLGetConfigOption("GBDX_CLIENT_ID", "")),
-    m_osClientSecret(CPLGetConfigOption("GBDX_CLIENT_SECRET", "")),
     m_osUserName(CPLGetConfigOption("GBDX_USERNAME", "")),
     m_osUserPassword(CPLGetConfigOption("GBDX_PASSWORD", "")),
     m_osRequestTileFileFormat(CPLGetConfigOption("RDA_REQUEST_FORMAT", "tif"))
@@ -404,10 +400,6 @@ bool GDALRDADataset::ReadConfiguration()
                     else if( strcmp(pszKey, "rda_api_url") == 0 ||
                              strcmp(pszKey, "idaho_api_url") == 0 )
                         m_osRDAAPIURL = pszValue;
-                    else if( strcmp(pszKey, "client_id") == 0 )
-                        m_osClientId = pszValue;
-                    else if( strcmp(pszKey, "client_secret") == 0 )
-                        m_osClientSecret = pszValue;
                     else if( strcmp(pszKey, "user_name") == 0 )
                         m_osUserName = pszValue;
                     else if( strcmp(pszKey, "user_password") == 0 )
@@ -432,18 +424,6 @@ bool GDALRDADataset::ReadConfiguration()
                  "Missing GBDX_PASSWORD / user_password");
         bOK = false;
     }
-    if( m_osClientId.empty() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing GBDX_CLIENT_ID / client_id");
-        bOK = false;
-    }
-    if( m_osClientSecret.empty() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing GBDX_CLIENT_SECRET / client_secret");
-        bOK = false;
-    }
     if( !bOK )
         return false;
 
@@ -459,34 +439,17 @@ bool GDALRDADataset::ReadConfiguration()
                  "GBDX_RDA_API_URL / rda_url contains an unexpected escape "
                  "character '\\'");
     }
-    if( m_osClientId.find('\\') != std::string::npos )
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "GBDX_CLIENT_ID / client_id contains an unexpected escape "
-                 "character '\\'");
-    }
-    if( m_osClientSecret.find('\\') != std::string::npos )
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "GBDX_CLIENT_SECRET / client_secret contains an "
-                 "unexpected escape "
-                 "character '\\'");
-    }
 #ifdef DEBUG_VERBOSE
     CPLDebug("RDA",
              "Using\n"
              "      GBDX_AUTH_URL=%s\n"
              "      GBDX_RDA_API_URL=%s\n"
              "      GBDX_USERNAME=%s\n"
-             "      GBDX_PASSWORD=%s\n"
-             "      GBDX_CLIENT_ID=%s\n"
-             "      GBDX_CLIENT_SECRET=%s",
+             "      GBDX_PASSWORD=%s\n",
              m_osAuthURL.c_str(),
              m_osRDAAPIURL.c_str(),
              m_osUserName.c_str(),
-             m_osUserPassword.c_str(),
-             m_osClientId.c_str(),
-             m_osClientSecret.c_str());
+             m_osUserPassword.c_str());
 #endif
 
     return true;
@@ -547,19 +510,10 @@ bool GDALRDADataset::GetAuthorization()
     osPostContent += "grant_type=password&username=" + URLEscape(m_osUserName);
     osPostContent += "&password=" + URLEscape(m_osUserPassword);
 
-    CPLString osKeyStr( m_osClientId + ":" + m_osClientSecret );
-    char* pszB64 = CPLBase64Encode( static_cast<int>(osKeyStr.size()),
-                        reinterpret_cast<const GByte*>(osKeyStr.c_str()));
-    CPLString osAuthorization( "Authorization: Basic " );
-    osAuthorization += pszB64;
-    CPLFree(pszB64);
-
     char** papszOptions = nullptr;
     papszOptions = CSLSetNameValue(papszOptions, "POSTFIELDS",
                                    osPostContent.c_str());
     CPLString osHeaders("Content-Type: application/x-www-form-urlencoded");
-    osHeaders += "\n";
-    osHeaders += osAuthorization;
     papszOptions = CSLSetNameValue(papszOptions, "HEADERS", osHeaders.c_str());
     CPLHTTPResult* psResult = CPLHTTPFetch( m_osAuthURL, papszOptions);
     CSLDestroy(papszOptions);
