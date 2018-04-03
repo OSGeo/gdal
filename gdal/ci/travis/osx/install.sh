@@ -17,7 +17,7 @@ cd ..
 # build GDAL
 cd gdal
 CC="ccache gcc" CXX="ccache g++" ./configure --prefix=$HOME/install-gdal --enable-debug --with-jpeg12 --with-geotiff=internal --with-png=internal --with-static-proj4=$HOME/install-proj --with-sqlite3=/usr/local/opt/sqlite
-make USER_DEFS="-Wextra -Werror" -j3 -s
+make USER_DEFS="-Wextra -Werror" -j3
 cd apps
 make USER_DEFS="-Wextra -Werror" test_ogrsf
 echo "Show which shared libs got used:"
