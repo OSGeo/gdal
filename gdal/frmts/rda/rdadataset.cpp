@@ -1067,7 +1067,7 @@ bool GDALRDADataset::ReadImageMetadata()
     m_nMaxTileX = GetJsonInt64(poObj, "maxTileX", true, bError);
     m_nMaxTileY = GetJsonInt64(poObj, "maxTileY", true, bError);
     m_osColorInterpretation = GetJsonString(poObj,
-                                        "colorInterpretation", true, bError);
+                                        "colorInterpretation", false, bNonFatalError);
     int64_t nXStart = m_nMinX - m_nMinTileX * m_nTileXSize;
     if( nXStart < 0 || nXStart >= m_nTileXSize )
     {
@@ -1546,14 +1546,18 @@ GDALColorInterp GDALRDARasterBand::GetColorInterpretation()
 
     if( nBand <= 5 )
     {
-        for( size_t i = 0; i < CPL_ARRAYSIZE(asColorInterpretations); i++ )
+        if (!poGDS->m_osColorInterpretation.empty())
         {
-            if( EQUAL(poGDS->m_osColorInterpretation,
-                      asColorInterpretations[i].pszName) )
+            for( size_t i = 0; i < CPL_ARRAYSIZE(asColorInterpretations); i++ )
             {
-                return asColorInterpretations[i].aeInter[nBand-1];
+                if( EQUAL(poGDS->m_osColorInterpretation,
+                        asColorInterpretations[i].pszName) )
+                {
+                    return asColorInterpretations[i].aeInter[nBand-1];
+                }
             }
         }
+        
     }
 
     return GCI_Undefined;
