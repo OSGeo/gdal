@@ -286,6 +286,25 @@ def ogr_gxt_multipolygon_twoparts_second_with_hole():
 ###############################################################################
 #
 
+def ogr_gxt_line():
+
+    if not ogrtest.have_geos():
+        return 'skip'
+
+    ds = ogr.Open('data/line.gxt')
+    lyr = ds.GetLayer(0)
+    feat = lyr.GetNextFeature()
+
+    if ogrtest.check_feature_geometry(feat,'LINESTRING (440720 3751320,441920 3750120)',
+                                      max_error = 0.000000001 ) != 0:
+        feat.DumpReadable()
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+#
+
 def ogr_gxt_cleanup():
 
     gdaltest.gxt_ds = None
@@ -303,6 +322,7 @@ gdaltest_list = [
     ogr_gxt_multipolygon_singlepart_nohole,
     ogr_gxt_multipolygon_singlepart_hole,
     ogr_gxt_multipolygon_twoparts_second_with_hole,
+    ogr_gxt_line,
     ogr_gxt_cleanup,
     None ]
 
