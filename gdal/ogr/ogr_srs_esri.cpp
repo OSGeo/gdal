@@ -1322,6 +1322,12 @@ int RemapGeogCSName( OGRSpatialReference* pOgr, const char *pszGeogCSName )
     if( ret < 0 )
     {
         const char* pszProjCS = pOgr->GetAttrValue( "PROJCS" );
+        if (pszProjCS == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RemapGeogCSName: PROJCS does not exist.");
+            return ret;
+        }
         ret = RemapNamesBasedOnTwo(
             pOgr, pszProjCS, pszGeogCSName,
             const_cast<char**>(apszGcsNameMappingBasedOnProjCS),
