@@ -1099,9 +1099,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             return nullptr;
         }
 
-        if( !psOptions->bQuiet )
-            printf( "Processing input file %s.\n", GDALGetDescription(hSrcDS) );
-
 /* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
 /* -------------------------------------------------------------------- */
@@ -3582,7 +3579,7 @@ void GDALWarpAppOptionsFree( GDALWarpAppOptions *psOptions )
 /**
  * Set a progress function.
  *
- * @param psOptions the options struct for GDALWarpApp().
+ * @param psOptions the options struct for GDALWarp().
  * @param pfnProgress the progress callback.
  * @param pProgressData the user data for the progress callback.
  *
@@ -3599,13 +3596,32 @@ void GDALWarpAppOptionsSetProgress( GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
+/*                    GDALWarpAppOptionsSetQuiet()                      */
+/************************************************************************/
+
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALWarp().
+ * @param bQuiet whether GDALWarp() should emit messages on stdout.
+ *
+ * @since GDAL 2.3
+ */
+
+void GDALWarpAppOptionsSetQuiet( GDALWarpAppOptions *psOptions,
+                                 bool bQuiet )
+{
+    psOptions->bQuiet = bQuiet;
+}
+
+/************************************************************************/
 /*                 GDALWarpAppOptionsSetWarpOption()                    */
 /************************************************************************/
 
 /**
  * Set a warp option
  *
- * @param psOptions the options struct for GDALWarpApp().
+ * @param psOptions the options struct for GDALWarp().
  * @param pszKey key.
  * @param pszValue value.
  *
