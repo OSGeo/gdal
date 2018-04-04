@@ -2206,7 +2206,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 /*                          GetSpatialRef()                             */
 /************************************************************************/
 
-OGRSpatialReference* OGRPGGeomFieldDefn::GetSpatialRef()
+OGRSpatialReference* OGRPGGeomFieldDefn::GetSpatialRef() const
 {
     if( poLayer == nullptr )
         return nullptr;

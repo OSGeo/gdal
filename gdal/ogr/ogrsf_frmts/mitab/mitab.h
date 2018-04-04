@@ -849,14 +849,15 @@ class ITABFeaturePen
   public:
     ITABFeaturePen();
     ~ITABFeaturePen() {}
-    int         GetPenDefIndex() {return m_nPenDefIndex;}
+    int         GetPenDefIndex() const {return m_nPenDefIndex;}
     TABPenDef  *GetPenDefRef() {return &m_sPenDef;}
+    const TABPenDef  *GetPenDefRef() const {return &m_sPenDef;}
 
-    GByte       GetPenWidthPixel();
-    double      GetPenWidthPoint();
-    int         GetPenWidthMIF();
-    GByte       GetPenPattern() {return m_sPenDef.nLinePattern;}
-    GInt32      GetPenColor()   {return m_sPenDef.rgbColor;}
+    GByte       GetPenWidthPixel() const;
+    double      GetPenWidthPoint() const;
+    int         GetPenWidthMIF() const;
+    GByte       GetPenPattern() const {return m_sPenDef.nLinePattern;}
+    GInt32      GetPenColor() const   {return m_sPenDef.rgbColor;}
 
     void        SetPenWidthPixel(GByte val);
     void        SetPenWidthPoint(double val);
@@ -865,7 +866,7 @@ class ITABFeaturePen
     void        SetPenPattern(GByte val) {m_sPenDef.nLinePattern=val;}
     void        SetPenColor(GInt32 clr)  {m_sPenDef.rgbColor = clr;}
 
-    const char *GetPenStyleString();
+    const char *GetPenStyleString() const;
     void        SetPenFromStyleString(const char *pszStyleString);
 
     void        DumpPenDef(FILE *fpOut = nullptr);
@@ -879,13 +880,14 @@ class ITABFeatureBrush
   public:
     ITABFeatureBrush();
     ~ITABFeatureBrush() {}
-    int         GetBrushDefIndex() {return m_nBrushDefIndex;}
+    int         GetBrushDefIndex() const {return m_nBrushDefIndex;}
     TABBrushDef *GetBrushDefRef() {return &m_sBrushDef;}
+    const TABBrushDef *GetBrushDefRef() const {return &m_sBrushDef;}
 
-    GInt32      GetBrushFGColor()     {return m_sBrushDef.rgbFGColor;}
-    GInt32      GetBrushBGColor()     {return m_sBrushDef.rgbBGColor;}
-    GByte       GetBrushPattern()     {return m_sBrushDef.nFillPattern;}
-    GByte       GetBrushTransparent() {return m_sBrushDef.bTransparentFill;}
+    GInt32      GetBrushFGColor() const     {return m_sBrushDef.rgbFGColor;}
+    GInt32      GetBrushBGColor() const     {return m_sBrushDef.rgbBGColor;}
+    GByte       GetBrushPattern() const     {return m_sBrushDef.nFillPattern;}
+    GByte       GetBrushTransparent() const {return m_sBrushDef.bTransparentFill;}
 
     void        SetBrushFGColor(GInt32 clr)  { m_sBrushDef.rgbFGColor = clr;}
     void        SetBrushBGColor(GInt32 clr)  { m_sBrushDef.rgbBGColor = clr;}
@@ -893,7 +895,7 @@ class ITABFeatureBrush
     void        SetBrushTransparent(GByte val)
                                           {m_sBrushDef.bTransparentFill=val;}
 
-    const char *GetBrushStyleString();
+    const char *GetBrushStyleString() const;
     void        SetBrushFromStyleString(const char *pszStyleString);
 
     void        DumpBrushDef(FILE *fpOut = nullptr);
@@ -907,10 +909,11 @@ class ITABFeatureFont
   public:
     ITABFeatureFont();
     ~ITABFeatureFont() {}
-    int         GetFontDefIndex() {return m_nFontDefIndex;}
+    int         GetFontDefIndex() const {return m_nFontDefIndex;}
     TABFontDef *GetFontDefRef() {return &m_sFontDef;}
+    const TABFontDef *GetFontDefRef() const {return &m_sFontDef;}
 
-    const char *GetFontNameRef() {return m_sFontDef.szFontName;}
+    const char *GetFontNameRef() const {return m_sFontDef.szFontName;}
 
     void        SetFontName(const char *pszName);
 
@@ -925,18 +928,19 @@ class ITABFeatureSymbol
   public:
     ITABFeatureSymbol();
     ~ITABFeatureSymbol() {}
-    int         GetSymbolDefIndex() {return m_nSymbolDefIndex;}
+    int         GetSymbolDefIndex() const {return m_nSymbolDefIndex;}
     TABSymbolDef *GetSymbolDefRef() {return &m_sSymbolDef;}
+    const TABSymbolDef *GetSymbolDefRef() const {return &m_sSymbolDef;}
 
-    GInt16      GetSymbolNo()    {return m_sSymbolDef.nSymbolNo;}
-    GInt16      GetSymbolSize()  {return m_sSymbolDef.nPointSize;}
-    GInt32      GetSymbolColor() {return m_sSymbolDef.rgbColor;}
+    GInt16      GetSymbolNo() const    {return m_sSymbolDef.nSymbolNo;}
+    GInt16      GetSymbolSize() const  {return m_sSymbolDef.nPointSize;}
+    GInt32      GetSymbolColor() const {return m_sSymbolDef.rgbColor;}
 
     void        SetSymbolNo(GInt16 val)     { m_sSymbolDef.nSymbolNo = val;}
     void        SetSymbolSize(GInt16 val)   { m_sSymbolDef.nPointSize = val;}
     void        SetSymbolColor(GInt32 clr)  { m_sSymbolDef.rgbColor = clr;}
 
-    const char *GetSymbolStyleString(double dfAngle = 0.0);
+    const char *GetSymbolStyleString(double dfAngle = 0.0) const;
     void        SetSymbolFromStyleString(const char *pszStyleString);
 
     void        DumpSymbolDef(FILE *fpOut = nullptr);
@@ -1090,7 +1094,7 @@ class TABPoint: public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 };
@@ -1133,7 +1137,7 @@ class TABFontPoint final : public TABPoint,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
     void        ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStatus);
@@ -1144,7 +1148,7 @@ class TABFontPoint final : public TABPoint,
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;}
 
     // GetSymbolAngle(): Return angle in degrees counterclockwise
-    double      GetSymbolAngle()        {return m_dAngle;}
+    double      GetSymbolAngle() const {return m_dAngle;}
     void        SetSymbolAngle(double dAngle);
 };
 
@@ -1189,7 +1193,7 @@ class TABCustomPoint final : public TABPoint,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     const char *GetSymbolNameRef()      { return GetFontNameRef(); }
     void        SetSymbolName(const char *pszName) {SetFontName(pszName);}
@@ -1250,7 +1254,7 @@ class TABPolyline final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
@@ -1324,7 +1328,7 @@ class TABRegion final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
@@ -1374,7 +1378,7 @@ class TABRectangle final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
@@ -1433,7 +1437,7 @@ class TABEllipse final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
@@ -1493,7 +1497,7 @@ class TABArc final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
@@ -1534,7 +1538,7 @@ class TABText final : public TABFeature,
 
     double      m_dAngle;
     double      m_dHeight;
-    double      m_dWidth;
+    mutable double      m_dWidth;
     double      m_dfLineEndX;
     double      m_dfLineEndY;
     GBool       m_bLineEndSet;
@@ -1548,7 +1552,7 @@ class TABText final : public TABFeature,
     GInt16      m_nTextAlignment;       // Justification/Vert.Spacing/arrow
     GInt16      m_nFontStyle;           // Bold/italic/underlined/shadow/...
 
-    const char *GetLabelStyleString();
+    const char *GetLabelStyleString() const;
 
     virtual int UpdateMBR(TABMAPFile *poMapFile = nullptr) override;
 
@@ -1571,24 +1575,24 @@ class TABText final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 
-    const char *GetTextString();
-    double      GetTextAngle();
-    double      GetTextBoxHeight();
-    double      GetTextBoxWidth();
-    GInt32      GetFontFGColor();
-    GInt32      GetFontBGColor();
-    GInt32      GetFontOColor();
-    GInt32      GetFontSColor();
+    const char *GetTextString() const;
+    double      GetTextAngle() const;
+    double      GetTextBoxHeight() const;
+    double      GetTextBoxWidth() const;
+    GInt32      GetFontFGColor() const;
+    GInt32      GetFontBGColor() const;
+    GInt32      GetFontOColor() const;
+    GInt32      GetFontSColor() const;
     void        GetTextLineEndPoint(double &dX, double &dY);
 
-    TABTextJust GetTextJustification();
-    TABTextSpacing  GetTextSpacing();
-    TABTextLineType GetTextLineType();
-    GBool       QueryFontStyle(TABFontStyle eStyleToQuery);
+    TABTextJust GetTextJustification() const;
+    TABTextSpacing  GetTextSpacing() const;
+    TABTextLineType GetTextLineType() const;
+    GBool       QueryFontStyle(TABFontStyle eStyleToQuery) const;
 
     void        SetTextString(const char *pszStr);
     void        SetTextAngle(double dAngle);
@@ -1605,15 +1609,15 @@ class TABText final : public TABFeature,
     void        SetTextLineType(TABTextLineType eLineType);
     void        ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStatus);
 
-    int         GetFontStyleMIFValue();
+    int         GetFontStyleMIFValue() const;
     void        SetFontStyleMIFValue(int nStyle, GBool bBGColorSet=FALSE);
-    GBool       IsFontBGColorUsed();
-    GBool       IsFontOColorUsed();
-    GBool       IsFontSColorUsed();
-    GBool       IsFontBold();
-    GBool       IsFontItalic();
-    GBool       IsFontUnderline();
-    int         GetFontStyleTABValue()           {return m_nFontStyle;}
+    GBool       IsFontBGColorUsed() const;
+    GBool       IsFontOColorUsed() const;
+    GBool       IsFontSColorUsed() const;
+    GBool       IsFontBold() const;
+    GBool       IsFontItalic() const;
+    GBool       IsFontUnderline() const;
+    int         GetFontStyleTABValue() const {return m_nFontStyle;}
     void        SetFontStyleTABValue(int nStyle){m_nFontStyle=(GInt16)nStyle;}
 };
 
@@ -1665,7 +1669,7 @@ class TABMultiPoint final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 };
@@ -1738,7 +1742,7 @@ class TABCollection final : public TABFeature,
     virtual int ReadGeometryFromMIFFile(MIDDATAFile *fp) override;
     virtual int WriteGeometryToMIFFile(MIDDATAFile *fp) override;
 
-    virtual const char *GetStyleString() override;
+    virtual const char *GetStyleString() const override;
 
     virtual void DumpMIF(FILE *fpOut = nullptr) override;
 

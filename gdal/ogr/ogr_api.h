@@ -463,7 +463,7 @@ GIntBig CPL_DLL OGR_F_GetFID( OGRFeatureH );
 OGRErr CPL_DLL OGR_F_SetFID( OGRFeatureH, GIntBig );
 void   CPL_DLL OGR_F_DumpReadable( OGRFeatureH, FILE * );
 OGRErr CPL_DLL OGR_F_SetFrom( OGRFeatureH, OGRFeatureH, int );
-OGRErr CPL_DLL OGR_F_SetFromWithMap( OGRFeatureH, OGRFeatureH, int , int * );
+OGRErr CPL_DLL OGR_F_SetFromWithMap( OGRFeatureH, OGRFeatureH, int , const int * );
 
 const char CPL_DLL *OGR_F_GetStyleString( OGRFeatureH );
 void   CPL_DLL OGR_F_SetStyleString( OGRFeatureH, const char * );
