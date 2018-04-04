@@ -4299,7 +4299,7 @@ static void GDALCopyWholeRasterGetSwathSize(
  */
 
 CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
-    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, char **papszOptions,
+    GDALDatasetH hSrcDS, GDALDatasetH hDstDS, CSLConstList papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData )
 
 {

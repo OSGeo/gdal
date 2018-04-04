@@ -1072,7 +1072,7 @@ void CPLFreeXMLSchema( CPLXMLSchemaPtr pSchema )
 
 int CPLValidateXML( const char* pszXMLFilename,
                     const char* pszXSDFilename,
-                    CPL_UNUSED char** papszOptions )
+                    CPL_UNUSED CSLConstList papszOptions )
 {
     char szHeader[2048] = {};  // TODO(schwehr): Get this off of the stack.
     CPLString osTmpXSDFilename;
@@ -1246,7 +1246,7 @@ int CPLValidateXML( const char* pszXMLFilename,
 
 int CPLValidateXML( const char* /* pszXMLFilename */,
                     const char* /* pszXSDFilename */,
-                    char** /* papszOptions */ )
+                    CSLConstList /* papszOptions */ )
 {
     CPLError( CE_Failure, CPLE_NotSupported,
               "%s not implemented due to missing libxml2 support",

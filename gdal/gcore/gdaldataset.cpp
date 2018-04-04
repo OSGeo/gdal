@@ -602,12 +602,13 @@ CPLErr GDALDataset::AddBand( CPL_UNUSED GDALDataType eType,
  */
 
 CPLErr CPL_STDCALL GDALAddBand( GDALDatasetH hDataset,
-                                GDALDataType eType, char **papszOptions )
+                                GDALDataType eType, CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1(hDataset, "GDALAddBand", CE_Failure);
 
-    return static_cast<GDALDataset *>(hDataset)->AddBand(eType, papszOptions);
+    return static_cast<GDALDataset *>(hDataset)->AddBand(eType,
+                                            const_cast<char**>(papszOptions));
 }
 
 /************************************************************************/
@@ -2341,14 +2342,15 @@ CPLErr CPL_STDCALL
 GDALDatasetAdviseRead( GDALDatasetH hDS,
                        int nXOff, int nYOff, int nXSize, int nYSize,
                        int nBufXSize, int nBufYSize, GDALDataType eDT,
-                       int nBandCount, int *panBandMap,char **papszOptions )
+                       int nBandCount, int *panBandMap,
+                       CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetAdviseRead", CE_Failure);
 
     return static_cast<GDALDataset *>(hDS)
         ->AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eDT,
-                     nBandCount, panBandMap, papszOptions);
+                     nBandCount, panBandMap, const_cast<char**>(papszOptions));
 }
 
 /************************************************************************/
@@ -3347,7 +3349,7 @@ GDALBeginAsyncReader( GDALDatasetH hDS, int nXOff, int nYOff,
                       int nBandCount, int* panBandMap,
                       int nPixelSpace, int nLineSpace,
                       int nBandSpace,
-                      char **papszOptions )
+                      CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1(hDS, "GDALDataset", nullptr);
@@ -3355,7 +3357,7 @@ GDALBeginAsyncReader( GDALDatasetH hDS, int nXOff, int nYOff,
         static_cast<GDALDataset *>(hDS)->BeginAsyncReader(
             nXOff, nYOff, nXSize, nYSize, pBuf, nBufXSize, nBufYSize, eBufType,
             nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
-            papszOptions));
+            const_cast<char**>(papszOptions)));
 }
 
 /************************************************************************/
@@ -3901,7 +3903,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
                               const char * pszName,
                               OGRSpatialReferenceH hSpatialRef,
                               OGRwkbGeometryType eGType,
-                              char ** papszOptions )
+                              CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetCreateLayer", nullptr);
@@ -3915,7 +3917,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
     return reinterpret_cast<OGRLayerH>(
         static_cast<GDALDataset *>(hDS)->CreateLayer(
             pszName, reinterpret_cast<OGRSpatialReference *>(hSpatialRef),
-            eGType, papszOptions));
+            eGType, const_cast<char**>(papszOptions)));
 }
 
 /************************************************************************/
@@ -3946,7 +3948,7 @@ OGRLayerH GDALDatasetCreateLayer( GDALDatasetH hDS,
 */
 OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
                                 OGRLayerH hSrcLayer, const char *pszNewName,
-                                char **papszOptions )
+                                CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1(hDS, "OGR_DS_CopyGDALDatasetCopyLayerLayer", nullptr);
@@ -3955,7 +3957,8 @@ OGRLayerH GDALDatasetCopyLayer( GDALDatasetH hDS,
 
     return reinterpret_cast<OGRLayerH>(
         static_cast<GDALDataset *>(hDS)->CopyLayer(
-            reinterpret_cast<OGRLayer *>(hSrcLayer), pszNewName, papszOptions));
+            reinterpret_cast<OGRLayer *>(hSrcLayer), pszNewName,
+            const_cast<char**>(papszOptions)));
 }
 
 /************************************************************************/

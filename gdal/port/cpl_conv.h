@@ -86,13 +86,8 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( VSILFILE * );
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
-                                   const char * const * papszOptions );
-#else
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
-                                   char** papszOptions );
-#endif
+                                   CSLConstList papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      Convert ASCII string to floating point number                  */
@@ -239,7 +234,7 @@ int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLCopyTree( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
-int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, char** papszOptions );
+int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, CSLConstList papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      ZIP Creation.                                                   */
@@ -271,7 +266,7 @@ void CPL_DLL *CPLZLibInflate( const void* ptr, size_t nBytes,
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
                            const char* pszXSDFilename,
-                           char** papszOptions);
+                           CSLConstList papszOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Locale handling. Prevents parallel executions of setlocale().   */

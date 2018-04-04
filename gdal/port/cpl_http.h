@@ -92,8 +92,8 @@ typedef size_t (*CPLHTTPFetchWriteFunc)(void *pBuffer, size_t nSize, size_t nMem
 /*! @endcond */
 
 int CPL_DLL   CPLHTTPEnabled( void );
-CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, char **papszOptions);
-CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
+CPLHTTPResult CPL_DLL *CPLHTTPFetch( const char *pszURL, CSLConstList papszOptions);
+CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL,CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressArg,
                                        CPLHTTPFetchWriteFunc pfnWrite,
@@ -101,7 +101,7 @@ CPLHTTPResult CPL_DLL *CPLHTTPFetchEx( const char *pszURL, char **papszOptions,
 CPLHTTPResult CPL_DLL **CPLHTTPMultiFetch( const char * const * papszURL,
                                            int nURLCount,
                                            int nMaxSimultaneous,
-                                           char **papszOptions);
+                                           CSLConstList papszOptions);
 
 void CPL_DLL  CPLHTTPCleanup( void );
 void CPL_DLL  CPLHTTPDestroyResult( CPLHTTPResult *psResult );
@@ -126,10 +126,10 @@ char  CPL_DLL **GOA2GetAccessTokenFromServiceAccount(
                                         const char* pszPrivateKey,
                                         const char* pszClientEmail,
                                         const char* pszScope,
-                                        char** papszAdditionalClaims,
-                                        char** papszOptions);
+                                        CSLConstList papszAdditionalClaims,
+                                        CSLConstList papszOptions);
 
-char CPL_DLL **GOA2GetAccessTokenFromCloudEngineVM( char** papszOptions );
+char CPL_DLL **GOA2GetAccessTokenFromCloudEngineVM( CSLConstList papszOptions );
 
 CPL_C_END
 
@@ -169,16 +169,16 @@ class GOA2Manager
             SERVICE_ACCOUNT
         } AuthMethod;
 
-        bool SetAuthFromGCE( char** papszOptions );
+        bool SetAuthFromGCE( CSLConstList papszOptions );
         bool SetAuthFromRefreshToken( const char* pszRefreshToken,
                                       const char* pszClientId,
                                       const char* pszClientSecret,
-                                      char** papszOptions );
+                                      CSLConstList papszOptions );
         bool SetAuthFromServiceAccount(const char* pszPrivateKey,
                                        const char* pszClientEmail,
                                        const char* pszScope,
-                                       char** papszAdditionalClaims,
-                                       char** papszOptions );
+                                       CSLConstList papszAdditionalClaims,
+                                       CSLConstList papszOptions );
 
         /** Returns the authentication method. */
         AuthMethod GetAuthMethod() const { return m_eMethod; }

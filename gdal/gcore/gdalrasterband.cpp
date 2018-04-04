@@ -1596,13 +1596,13 @@ CPLErr GDALRasterBand::SetCategoryNames( char ** /*papszNames*/ )
  */
 
 CPLErr CPL_STDCALL
-GDALSetRasterCategoryNames( GDALRasterBandH hBand, char ** papszNames )
+GDALSetRasterCategoryNames( GDALRasterBandH hBand, CSLConstList papszNames )
 
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterCategoryNames", CE_Failure );
 
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return poBand->SetCategoryNames( papszNames );
+    return poBand->SetCategoryNames( const_cast<char**>(papszNames) );
 }
 
 /************************************************************************/
@@ -3703,14 +3703,14 @@ CPLErr CPL_STDCALL
 GDALRasterAdviseRead( GDALRasterBandH hBand,
                       int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize,
-                      GDALDataType eDT, char **papszOptions )
+                      GDALDataType eDT, CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1( hBand, "GDALRasterAdviseRead", CE_Failure );
 
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
     return poBand->AdviseRead( nXOff, nYOff, nXSize, nYSize,
-        nBufXSize, nBufYSize, eDT, papszOptions );
+        nBufXSize, nBufYSize, eDT, const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/
@@ -6660,14 +6660,15 @@ CPLVirtualMem * GDALGetVirtualMemAuto( GDALRasterBandH hBand,
                                        GDALRWFlag eRWFlag,
                                        int *pnPixelSpace,
                                        GIntBig *pnLineSpace,
-                                       char **papszOptions )
+                                       CSLConstList papszOptions )
 {
     VALIDATE_POINTER1( hBand, "GDALGetVirtualMemAuto", nullptr );
 
     GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
 
     return poBand->GetVirtualMemAuto( eRWFlag, pnPixelSpace,
-                                      pnLineSpace, papszOptions );
+                                      pnLineSpace,
+                                      const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/

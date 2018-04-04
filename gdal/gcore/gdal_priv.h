@@ -1541,7 +1541,7 @@ void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
 GIntBig GDALGetResponsiblePIDForCurrentThread();
 
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
-                                  char **papszSiblingFiles, int nFlags );
+                                  CSLConstList papszSiblingFiles, int nFlags );
 
 CPLErr EXIFExtractMetadata(char**& papszMetadata,
                            void *fpL, int nOffset,

@@ -33,6 +33,7 @@
 #define CPL_VSI_H_INCLUDED
 
 #include "cpl_port.h"
+
 /**
  * \file cpl_vsi.h
  *
@@ -214,7 +215,7 @@ int CPL_DLL     VSIHasOptimizedReadMultiRange( const char* pszPath );
 
 const char CPL_DLL *VSIGetActualURL( const char* pszFilename );
 
-char CPL_DLL *VSIGetSignedURL( const char* pszFilename, char** papszOptions );
+char CPL_DLL *VSIGetSignedURL( const char* pszFilename, CSLConstList papszOptions );
 
 const char CPL_DLL *VSIGetFileSystemOptions( const char* pszFilename );
 

@@ -315,14 +315,14 @@ CPLErr GDALMajorObject::SetMetadata( char ** papszMetadataIn,
  */
 
 CPLErr CPL_STDCALL
-GDALSetMetadata( GDALMajorObjectH hObject, char **papszMD,
+GDALSetMetadata( GDALMajorObjectH hObject, CSLConstList papszMD,
                  const char *pszDomain )
 
 {
     VALIDATE_POINTER1( hObject, "GDALSetMetadata", CE_Failure );
 
     return static_cast<GDALMajorObject *>(hObject)->
-        SetMetadata( papszMD, pszDomain );
+        SetMetadata( const_cast<char**>(papszMD), pszDomain );
 }
 
 /************************************************************************/

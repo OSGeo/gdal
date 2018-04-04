@@ -907,7 +907,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAWSConfigFiles(
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIS3HandleHelper::GetConfiguration(char** papszOptions,
+bool VSIS3HandleHelper::GetConfiguration(CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
                                          CPLString& osSessionToken,
@@ -1001,7 +1001,7 @@ void VSIS3HandleHelper::ClearCache()
 VSIS3HandleHelper* VSIS3HandleHelper::BuildFromURI( const char* pszURI,
                                                     const char* pszFSPrefix,
                                                     bool bAllowNoObject,
-                                                    char** papszOptions )
+                                                    CSLConstList papszOptions )
 {
     CPLString osSecretAccessKey;
     CPLString osAccessKeyId;
@@ -1358,7 +1358,7 @@ void VSIS3HandleHelper::SetVirtualHosting( bool b )
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-CPLString VSIS3HandleHelper::GetSignedURL(char** papszOptions)
+CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
     CPLString osXAMZDate = CSLFetchNameValueDef(papszOptions, "START_DATE",
                                     CPLGetConfigOption("AWS_TIMESTAMP", ""));

@@ -78,6 +78,25 @@ CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership )
 /*                           CPLStringList()                            */
 /************************************************************************/
 
+/**
+ * CPLStringList constructor.
+ * 
+ * The input list is copied.
+ *
+ * @param papszListIn the NULL terminated list of strings to ingest.
+ */
+
+CPLStringList::CPLStringList( CSLConstList papszListIn )
+
+{
+    Initialize();
+    Assign( CSLDuplicate(papszListIn) );
+}
+
+/************************************************************************/
+/*                           CPLStringList()                            */
+/************************************************************************/
+
 //! Copy constructor
 CPLStringList::CPLStringList( const CPLStringList &oOther )
 
@@ -107,6 +126,21 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
         // might surprise the client developer.
         MakeOurOwnCopy();
         bIsSorted = oOther.bIsSorted;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             operator=()                              */
+/************************************************************************/
+
+CPLStringList &CPLStringList::operator=( CSLConstList papszListIn )
+{
+    if( papszListIn != papszList )
+    {
+        Assign( CSLDuplicate(papszListIn) );
+        bIsSorted = false;
     }
 
     return *this;

@@ -326,7 +326,7 @@ bool VSIGSHandleHelper::GetConfigurationFromConfigFile(
 /*                        GetConfiguration()                            */
 /************************************************************************/
 
-bool VSIGSHandleHelper::GetConfiguration(char** papszOptions,
+bool VSIGSHandleHelper::GetConfiguration(CSLConstList papszOptions,
                                          CPLString& osSecretAccessKey,
                                          CPLString& osAccessKeyId,
                                          CPLString& osHeaderFile,
@@ -696,7 +696,7 @@ bool VSIGSHandleHelper::GetConfiguration(char** papszOptions,
 
 VSIGSHandleHelper* VSIGSHandleHelper::BuildFromURI( const char* pszURI,
                                                     const char* /*pszFSPrefix*/,
-                                                    char** papszOptions )
+                                                    CSLConstList papszOptions )
 {
     // pszURI == bucket/object
     const CPLString osBucketObject( pszURI );
@@ -804,7 +804,7 @@ void VSIGSHandleHelper::ClearCache()
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-CPLString VSIGSHandleHelper::GetSignedURL(char** papszOptions)
+CPLString VSIGSHandleHelper::GetSignedURL(CSLConstList papszOptions)
 {
     if( !((!m_osAccessKeyId.empty() && !m_osSecretAccessKey.empty()) ||
           m_oManager.GetAuthMethod() == GOA2Manager::SERVICE_ACCOUNT) )

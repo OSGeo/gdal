@@ -1301,7 +1301,7 @@ GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList
 
 CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
                                   const char *pszExt,
-                                  char **papszSiblingFiles,
+                                  CSLConstList papszSiblingFiles,
                                   int /* nFlags */ )
 
 {
@@ -3348,7 +3348,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /*                          _FetchDblFromMD()                           */
 /************************************************************************/
 
-static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
+static bool _FetchDblFromMD( CSLConstList papszMD, const char *pszKey,
                              double *padfTarget, int nCount, double dfDefault )
 
 {
@@ -3399,7 +3399,7 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
  * @param psRPC (output) Pointer to structure to hold the RPC values.
  * @return TRUE in case of success. FALSE in case of failure.
  */
-int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
+int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
 
 {
     if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == nullptr )

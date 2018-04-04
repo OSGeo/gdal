@@ -47,7 +47,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
         CPLString m_osStorageKey;
         bool      m_bUseHTTPS;
 
-        static bool     GetConfiguration(char** papszOptions,
+        static bool     GetConfiguration(CSLConstList papszOptions,
                                          bool& bUseHTTPS,
                                          CPLString& osEndpoint,
                                          CPLString& osStorageAccount,
@@ -72,7 +72,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 
         static VSIAzureBlobHandleHelper* BuildFromURI(const char* pszURI,
                                                       const char* pszFSPrefix,
-                                                      char** papszOptions = nullptr);
+                                                      CSLConstList papszOptions = nullptr);
 
         struct curl_slist* GetCurlHeaders(const CPLString& osVerbosVerb,
                                           const struct curl_slist* psExistingHeaders,
@@ -81,7 +81,7 @@ class VSIAzureBlobHandleHelper final: public IVSIS3LikeHandleHelper
 
         const CPLString& GetURL() const override { return m_osURL; }
 
-        CPLString GetSignedURL(char** papszOptions);
+        CPLString GetSignedURL(CSLConstList papszOptions);
 };
 
 
