@@ -2543,7 +2543,8 @@ int CPLUnlinkTree( const char *pszPath )
 
         for( int i = 0; papszItems != nullptr && papszItems[i] != nullptr; i++ )
         {
-            if( EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
+            if( papszItems[i][0] == '\0' ||
+                EQUAL(papszItems[i], ".") || EQUAL(papszItems[i], "..") )
                 continue;
 
             const std::string osSubPath =
