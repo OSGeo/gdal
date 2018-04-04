@@ -571,11 +571,11 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     /** @see GDALOpenEx().
      * @since GDAL 2.3
      */
-    static GDALDataset* OpenEx( const char* pszFilename,
-                                 unsigned int nOpenFlags = 0,
-                                 const char* const* papszAllowedDrivers = nullptr,
-                                 const char* const* papszOpenOptions = nullptr,
-                                 const char* const* papszSiblingFiles = nullptr )
+    static GDALDataset* Open( const char* pszFilename,
+                              unsigned int nOpenFlags = 0,
+                              const char* const* papszAllowedDrivers = nullptr,
+                              const char* const* papszOpenOptions = nullptr,
+                              const char* const* papszSiblingFiles = nullptr )
     {
         return FromHandle(GDALOpenEx(pszFilename, nOpenFlags,
                                       papszAllowedDrivers,

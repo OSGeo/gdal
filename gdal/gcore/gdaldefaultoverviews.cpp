@@ -239,7 +239,7 @@ void GDALDefaultOverviews::OverviewScan()
 
         if( bExists )
         {
-           poODS = GDALDataset::OpenEx(
+           poODS = GDALDataset::Open(
                 osOvrFilename,
                 GDAL_OF_RASTER |
                 (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),
@@ -324,7 +324,7 @@ void GDALDefaultOverviews::OverviewScan()
             }
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poODS = GDALDataset::OpenEx(osOvrFilename,
+            poODS = GDALDataset::Open(osOvrFilename,
                 GDAL_OF_RASTER | (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE: 0));
             CPLPopErrorHandler();
         }
@@ -596,7 +596,7 @@ GDALDefaultOverviews::BuildOverviews(
     else if( poODS->GetAccess() == GA_ReadOnly )
     {
         GDALClose( poODS );
-        poODS = GDALDataset::OpenEx(
+        poODS = GDALDataset::Open(
             osOvrFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE);
         if( poODS == nullptr )
             return CE_Failure;
@@ -753,7 +753,7 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( eErr == CE_None )
         {
-            poODS = GDALDataset::OpenEx(
+            poODS = GDALDataset::Open(
                 osOvrFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE );
             if( poODS == nullptr )
                 eErr = CE_Failure;
@@ -1152,7 +1152,7 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    poMaskDS = GDALDataset::OpenEx(
+    poMaskDS = GDALDataset::Open(
                     osMskFilename,
                     GDAL_OF_RASTER |
                     (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),

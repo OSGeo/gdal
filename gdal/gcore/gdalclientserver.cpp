@@ -2240,7 +2240,7 @@ static int GDALServerLoopInternal(GDALServerInstance* poSrvInstance,
             if( poSrcDS != nullptr )
                 poDS = poSrcDS;
             else if( poDS == nullptr && pszFilename != nullptr )
-                poDS = GDALDataset::OpenEx(pszFilename,
+                poDS = GDALDataset::Open(pszFilename,
                                                  ((nAccess == GA_Update) ? GDAL_OF_UPDATE : 0) | GDAL_OF_SHARED,
                                                  nullptr,
                                                  papszOpenOptions,
