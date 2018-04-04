@@ -97,7 +97,7 @@ const char * CPL_STDCALL GDALGetDescription( GDALMajorObjectH hObject )
 {
     VALIDATE_POINTER1( hObject, "GDALGetDescription", nullptr );
 
-    return static_cast<GDALMajorObject *>(hObject)->GetDescription();
+    return GDALMajorObject::FromHandle(hObject)->GetDescription();
 }
 
 /************************************************************************/
@@ -139,7 +139,7 @@ void CPL_STDCALL GDALSetDescription( GDALMajorObjectH hObject,
 {
     VALIDATE_POINTER0( hObject, "GDALSetDescription" );
 
-    static_cast<GDALMajorObject *>(hObject)->SetDescription( pszNewDesc );
+    GDALMajorObject::FromHandle(hObject)->SetDescription( pszNewDesc );
 }
 
 /************************************************************************/
@@ -221,7 +221,7 @@ GDALGetMetadataDomainList( GDALMajorObjectH hObject )
 {
     VALIDATE_POINTER1( hObject, "GetMetadataDomainList", nullptr );
 
-    return static_cast<GDALMajorObject *>(hObject)->GetMetadataDomainList();
+    return GDALMajorObject::FromHandle(hObject)->GetMetadataDomainList();
 }
 
 /************************************************************************/
@@ -268,7 +268,7 @@ GDALGetMetadata( GDALMajorObjectH hObject, const char * pszDomain )
 {
     VALIDATE_POINTER1( hObject, "GDALGetMetadata", nullptr );
 
-    return static_cast<GDALMajorObject *>(hObject)->GetMetadata(pszDomain);
+    return GDALMajorObject::FromHandle(hObject)->GetMetadata(pszDomain);
 }
 
 /************************************************************************/
@@ -321,7 +321,7 @@ GDALSetMetadata( GDALMajorObjectH hObject, CSLConstList papszMD,
 {
     VALIDATE_POINTER1( hObject, "GDALSetMetadata", CE_Failure );
 
-    return static_cast<GDALMajorObject *>(hObject)->
+    return GDALMajorObject::FromHandle(hObject)->
         SetMetadata( const_cast<char**>(papszMD), pszDomain );
 }
 
@@ -365,7 +365,7 @@ const char * CPL_STDCALL GDALGetMetadataItem( GDALMajorObjectH hObject,
 {
     VALIDATE_POINTER1( hObject, "GDALGetMetadataItem", nullptr );
 
-    return static_cast<GDALMajorObject *>(hObject)->
+    return GDALMajorObject::FromHandle(hObject)->
         GetMetadataItem( pszName, pszDomain);
 }
 
@@ -419,7 +419,7 @@ GDALSetMetadataItem( GDALMajorObjectH hObject,
 {
     VALIDATE_POINTER1( hObject, "GDALSetMetadataItem", CE_Failure );
 
-    return static_cast<GDALMajorObject *>(hObject)->
+    return GDALMajorObject::FromHandle(hObject)->
         SetMetadataItem( pszName, pszValue, pszDomain );
 }
 

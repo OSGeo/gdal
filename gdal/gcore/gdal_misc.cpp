@@ -1016,7 +1016,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     GDALRasterBand *poBand;
 
-    poBand = static_cast<GDALRasterBand *>(GDALGetRasterSampleOverview( hBand, nSamples ));
+    poBand = GDALRasterBand::FromHandle(GDALGetRasterSampleOverview( hBand, nSamples ));
     CPLAssert( nullptr != poBand );
 
 /* -------------------------------------------------------------------- */
@@ -3495,9 +3495,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             /* when auxiliary file cannot be opened (#3269) */
             CPLTurnFailureIntoWarning(TRUE);
             if( poDependentDS != nullptr && poDependentDS->GetShared() )
-                poODS = static_cast<GDALDataset *>(GDALOpenShared( osAuxFilename, eAccess ));
+                poODS = GDALDataset::FromHandle(GDALOpenShared( osAuxFilename, eAccess ));
             else
-                poODS = static_cast<GDALDataset *>(GDALOpen( osAuxFilename, eAccess ));
+                poODS = GDALDataset::FromHandle(GDALOpen( osAuxFilename, eAccess ));
             CPLTurnFailureIntoWarning(FALSE);
         }
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -3592,9 +3592,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 /* when auxiliary file cannot be opened (#3269) */
                 CPLTurnFailureIntoWarning(TRUE);
                 if( poDependentDS != nullptr && poDependentDS->GetShared() )
-                    poODS = static_cast<GDALDataset *>(GDALOpenShared( osAuxFilename, eAccess ));
+                    poODS = GDALDataset::FromHandle(GDALOpenShared( osAuxFilename, eAccess ));
                 else
-                    poODS = static_cast<GDALDataset *>(GDALOpen( osAuxFilename, eAccess ));
+                    poODS = GDALDataset::FromHandle(GDALOpen( osAuxFilename, eAccess ));
                 CPLTurnFailureIntoWarning(FALSE);
             }
             CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));

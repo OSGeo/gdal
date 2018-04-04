@@ -1235,7 +1235,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
                         nDstXOff + nDestXOffVirtual + nDstXCount,
                         nDstYOff + nDestYOffVirtual,
                         nDstYOff + nDestYOffVirtual + nDstYCount,
-                        static_cast<GDALRasterBand *>(hMEMBand),
+                        GDALRasterBand::FromHandle(hMEMBand),
                         pszResampling,
                         bHasNoData, fNoDataValue,
                         GetColorTable(),
@@ -4306,8 +4306,8 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(
     VALIDATE_POINTER1( hSrcDS, "GDALDatasetCopyWholeRaster", CE_Failure );
     VALIDATE_POINTER1( hDstDS, "GDALDatasetCopyWholeRaster", CE_Failure );
 
-    GDALDataset *poSrcDS = static_cast<GDALDataset *>(hSrcDS);
-    GDALDataset *poDstDS = static_cast<GDALDataset *>(hDstDS);
+    GDALDataset *poSrcDS = GDALDataset::FromHandle(hSrcDS);
+    GDALDataset *poDstDS = GDALDataset::FromHandle(hDstDS);
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -4634,8 +4634,8 @@ CPLErr CPL_STDCALL GDALRasterBandCopyWholeRaster(
     VALIDATE_POINTER1( hSrcBand, "GDALRasterBandCopyWholeRaster", CE_Failure );
     VALIDATE_POINTER1( hDstBand, "GDALRasterBandCopyWholeRaster", CE_Failure );
 
-    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>( hSrcBand );
-    GDALRasterBand *poDstBand = static_cast<GDALRasterBand *>( hDstBand );
+    GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
+    GDALRasterBand *poDstBand = GDALRasterBand::FromHandle( hDstBand );
     CPLErr eErr = CE_None;
 
     if( pfnProgress == nullptr )

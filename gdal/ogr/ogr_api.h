@@ -49,12 +49,17 @@ CPL_C_START
 /* -------------------------------------------------------------------- */
 /*      Geometry related functions (ogr_geometry.h)                     */
 /* -------------------------------------------------------------------- */
+#ifndef DEFINEH_OGRGeometryH
+/*! @cond Doxygen_Suppress */
+#define DEFINEH_OGRGeometryH
+/*! @endcond */
 #ifdef DEBUG
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
 /** Opaque type for a geometyr */
 typedef void *OGRGeometryH;
 #endif
+#endif /* DEFINEH_OGRGeometryH */
 
 #ifndef DEFINED_OGRSpatialReferenceH
 /*! @cond Doxygen_Suppress */
@@ -71,7 +76,7 @@ typedef void *OGRSpatialReferenceH;
 typedef void *OGRCoordinateTransformationH;
 #endif
 
-#endif
+#endif /* DEFINED_OGRSpatialReferenceH */
 
 struct _CPLXMLNode;
 
@@ -278,6 +283,10 @@ int CPL_DLL OGRGetNonLinearGeometriesEnabledFlag(void);
 /*      Feature related (ogr_feature.h)                                 */
 /* -------------------------------------------------------------------- */
 
+#ifndef DEFINE_OGRFeatureH
+/*! @cond Doxygen_Suppress */
+#define DEFINE_OGRFeatureH
+/*! @endcond */
 #ifdef DEBUG
 typedef struct OGRFieldDefnHS   *OGRFieldDefnH;
 typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
@@ -295,6 +304,7 @@ typedef void *OGRStyleTableH;
 #endif
 /** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
 typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
+#endif /* DEFINE_OGRFeatureH */
 
 /* OGRFieldDefn */
 

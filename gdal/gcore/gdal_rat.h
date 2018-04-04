@@ -273,6 +273,18 @@ public:
     virtual GDALColorTable *TranslateToColorTable( int nEntryCount = -1 );
 
     virtual void          DumpReadable( FILE * = nullptr );
+
+    /** Convert a GDALRasterAttributeTable* to a GDALRasterAttributeTableH.
+     * @since GDAL 2.3
+     */
+    static inline GDALRasterAttributeTableH ToHandle(GDALRasterAttributeTable* poRAT)
+        { return static_cast<GDALRasterAttributeTableH>(poRAT); }
+
+    /** Convert a GDALRasterAttributeTableH to a GDALRasterAttributeTable*.
+     * @since GDAL 2.3
+     */
+    static inline GDALRasterAttributeTable* FromHandle(GDALRasterAttributeTableH hRAT)
+        { return static_cast<GDALRasterAttributeTable*>(hRAT); }
 };
 
 /************************************************************************/

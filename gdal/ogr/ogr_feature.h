@@ -44,6 +44,29 @@
  * Simple feature classes.
  */
 
+#ifndef DEFINE_OGRFeatureH
+/*! @cond Doxygen_Suppress */
+#define DEFINE_OGRFeatureH
+/*! @endcond */
+#ifdef DEBUG
+typedef struct OGRFieldDefnHS   *OGRFieldDefnH;
+typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
+typedef struct OGRFeatureHS     *OGRFeatureH;
+typedef struct OGRStyleTableHS *OGRStyleTableH;
+#else
+/** Opaque type for a field definition (OGRFieldDefn) */
+typedef void *OGRFieldDefnH;
+/** Opaque type for a feature definition (OGRFeatureDefn) */
+typedef void *OGRFeatureDefnH;
+/** Opaque type for a feature (OGRFeature) */
+typedef void *OGRFeatureH;
+/** Opaque type for a style table (OGRStyleTable) */
+typedef void *OGRStyleTableH;
+#endif
+/** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
+typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
+#endif /* DEFINE_OGRFeatureH */
+
 /************************************************************************/
 /*                             OGRFieldDefn                             */
 /************************************************************************/
@@ -119,6 +142,17 @@ class CPL_DLL OGRFieldDefn
 
     int                 IsSame( const OGRFieldDefn * ) const;
 
+    /** Convert a OGRFieldDefn* to a OGRFieldDefnH.
+    * @since GDAL 2.3
+    */
+    static inline OGRFieldDefnH ToHandle(OGRFieldDefn* poFieldDefn)
+        { return reinterpret_cast<OGRFieldDefnH>(poFieldDefn); }
+
+    /** Convert a OGRFieldDefnH to a OGRFieldDefn*.
+    * @since GDAL 2.3
+    */
+    static inline OGRFieldDefn* FromHandle(OGRFieldDefnH hFieldDefn)
+        { return reinterpret_cast<OGRFieldDefn*>(hFieldDefn); }
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
@@ -179,6 +213,17 @@ public:
 
         int                 IsSame( const OGRGeomFieldDefn * ) const;
 
+        /** Convert a OGRGeomFieldDefn* to a OGRGeomFieldDefnH.
+        * @since GDAL 2.3
+        */
+        static inline OGRGeomFieldDefnH ToHandle(OGRGeomFieldDefn* poGeomFieldDefn)
+            { return reinterpret_cast<OGRGeomFieldDefnH>(poGeomFieldDefn); }
+
+        /** Convert a OGRGeomFieldDefnH to a OGRGeomFieldDefn*.
+        * @since GDAL 2.3
+        */
+        static inline OGRGeomFieldDefn* FromHandle(OGRGeomFieldDefnH hGeomFieldDefn)
+            { return reinterpret_cast<OGRGeomFieldDefn*>(hGeomFieldDefn); }
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
@@ -276,6 +321,18 @@ class CPL_DLL OGRFeatureDefn
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
+
+    /** Convert a OGRFeatureDefn* to a OGRFeatureDefnH.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureDefnH ToHandle(OGRFeatureDefn* poFeatureDefn)
+        { return reinterpret_cast<OGRFeatureDefnH>(poFeatureDefn); }
+
+    /** Convert a OGRFeatureDefnH to a OGRFeatureDefn*.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureDefn* FromHandle(OGRFeatureDefnH hFeatureDefn)
+        { return reinterpret_cast<OGRFeatureDefn*>(hFeatureDefn); }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
@@ -497,6 +554,18 @@ class CPL_DLL OGRFeature
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );
+
+    /** Convert a OGRFeature* to a OGRFeatureH.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureH ToHandle(OGRFeature* poFeature)
+        { return reinterpret_cast<OGRFeatureH>(poFeature); }
+
+    /** Convert a OGRFeatureH to a OGRFeature*.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeature* FromHandle(OGRFeatureH hFeature)
+        { return reinterpret_cast<OGRFeature*>(hFeature); }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeature)
