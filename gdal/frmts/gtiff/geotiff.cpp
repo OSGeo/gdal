@@ -103,6 +103,8 @@
 CPL_CVSID("$Id$")
 
 static bool bGlobalInExternalOvr = false;
+static std::mutex gMutexThreadPool;
+CPLWorkerThreadPool *gpoCompressThreadPool = nullptr;
 
 // Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
 #if TIFFLIB_VERSION >= 20120922
@@ -7431,7 +7433,15 @@ int GTiffDataset::Finalize()
     // Destroy compression pool.
     if( poCompressThreadPool )
     {
-        delete poCompressThreadPool;
+        poCompressThreadPool->WaitCompletion();
+
+        // Save thread pool for later reuse.
+        {
+            std::lock_guard<std::mutex> oLock(gMutexThreadPool);
+            delete gpoCompressThreadPool;
+            gpoCompressThreadPool = poCompressThreadPool;
+            poCompressThreadPool = nullptr;
+        }
 
         for( int i = 0; i < static_cast<int>(asCompressionJobs.size()); ++i )
         {
@@ -8424,13 +8434,32 @@ void GTiffDataset::InitCompressionThreads( char** papszOptions )
             else
             {
                 CPLDebug("GTiff", "Using %d threads for compression", nThreads);
-                poCompressThreadPool = new CPLWorkerThreadPool();
-                if( !poCompressThreadPool->Setup(nThreads, nullptr, nullptr) )
+
+                // Try to reuse previously created thread pool
                 {
-                    delete poCompressThreadPool;
-                    poCompressThreadPool = nullptr;
+                    std::lock_guard<std::mutex> oLock(gMutexThreadPool);
+                    if( gpoCompressThreadPool &&
+                        gpoCompressThreadPool->GetThreadCount() == nThreads )
+                    {
+                        poCompressThreadPool = gpoCompressThreadPool;
+                    }
+                    else
+                    {
+                        delete gpoCompressThreadPool;
+                    }
+                    gpoCompressThreadPool = nullptr;
                 }
-                else
+
+                if( poCompressThreadPool == nullptr )
+                {
+                    poCompressThreadPool = new CPLWorkerThreadPool();
+                    if( !poCompressThreadPool->Setup(nThreads, nullptr, nullptr) )
+                    {
+                        delete poCompressThreadPool;
+                        poCompressThreadPool = nullptr;
+                    }
+                }
+                if( poCompressThreadPool != nullptr )
                 {
                     // Add a margin of an extra job w.r.t thread number
                     // so as to optimize compression time (enables the main
@@ -18572,6 +18601,9 @@ void GDALDeregister_GTiff( GDALDriver * )
 #if defined(LIBGEOTIFF_VERSION) && LIBGEOTIFF_VERSION > 1150
     GTIFDeaccessCSV();
 #endif
+
+    delete gpoCompressThreadPool;
+    gpoCompressThreadPool = nullptr;
 }
 
 /************************************************************************/
