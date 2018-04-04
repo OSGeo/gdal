@@ -17121,6 +17121,21 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     }
 
     poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
+
+    if( !bGeoTIFF )
+    {
+        // Copy georeferencing info to PAM if the profile is not GeoTIFF
+        poDS->GDALPamDataset::SetProjection(poDS->GetProjectionRef());
+        double adfGeoTransform[6];
+        if( poDS->GetGeoTransform(adfGeoTransform) == CE_None )
+        {
+            poDS->GDALPamDataset::SetGeoTransform(adfGeoTransform);
+        }
+        poDS->GDALPamDataset::SetGCPs(poDS->GetGCPCount(),
+                                      poDS->GetGCPs(),
+                                      poDS->GetGCPProjection());
+    }
+
     poDS->papszCreationOptions = CSLDuplicate( papszOptions );
     poDS->bDontReloadFirstBlock = l_bDontReloadFirstBlock;
 

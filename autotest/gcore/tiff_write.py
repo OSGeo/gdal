@@ -476,9 +476,6 @@ def tiff_write_15():
     ds = None
 
     ds = gdal.Open( 'tmp/tw_15.tif' )
-    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
-        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
-        return 'fail'
 
     md = ds.GetMetadata()
     if 'test' not in md:
@@ -492,17 +489,13 @@ def tiff_write_15():
 
     ds = None
 
-    try:
-        os.remove( 'tmp/tw_15.tif.aux.xml' )
-    except:
-        try:
-            os.stat( 'tmp/tw_15.tif.aux.xml' )
-        except:
-            gdaltest.post_reason( 'No .aux.xml file.' )
-            return 'fail'
-            pass
+    gdal.Unlink('tmp/tw_15.tif.aux.xml')
 
     ds = gdal.Open( 'tmp/tw_15.tif' )
+
+    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
+        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
+        return 'fail'
 
     md = ds.GetMetadata()
     if 'test' in md:
@@ -2274,6 +2267,7 @@ def tiff_write_60():
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
+        gdal.Unlink( 'tmp/tiff_write_60.tif.aux.xml' )
 
         ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
