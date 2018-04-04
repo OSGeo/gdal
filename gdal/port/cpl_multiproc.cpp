@@ -1991,25 +1991,31 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     psInfo->bInitDone = false;
     pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
     psInfo->sMutex = sMutex;
-    if( pthread_cond_init(&(psInfo->sCond), nullptr) != 0 )
     {
-        CPLFree( psInfo );
-        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
-        return nullptr;
+        int err = pthread_cond_init(&(psInfo->sCond), nullptr);
+        if( err != 0 )
+        {
+            CPLFree( psInfo );
+            fprintf(stderr, "CPLCreateJoinableThread() failed: %s.\n",
+                    strerror(err));
+            return nullptr;
+        }
     }
 #endif
 
     pthread_attr_t hThreadAttr;
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
-    if( pthread_create( &(psInfo->hThread), &hThreadAttr,
-                        CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
+    int err = pthread_create( &(psInfo->hThread), &hThreadAttr,
+                        CPLStdCallThreadJacket, (void *) psInfo );
+    if( err != 0 )
     {
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
         pthread_cond_destroy(&(psInfo->sCond));
 #endif
         CPLFree( psInfo );
-        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
+        fprintf(stderr, "CPLCreateJoinableThread() failed: %s.\n",
+                strerror(err));
         return nullptr;
     }
 
