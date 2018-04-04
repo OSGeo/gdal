@@ -2797,7 +2797,7 @@ GDALRegenerateOverviews( GDALRasterBandH hSrcBand,
                          GDALProgressFunc pfnProgress, void * pProgressData )
 
 {
-    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>( hSrcBand );
+    GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
     GDALRasterBand **papoOvrBands =
         reinterpret_cast<GDALRasterBand **>( pahOvrBands );
 
@@ -3629,7 +3629,7 @@ GDALComputeBandStats( GDALRasterBandH hSrcBand,
 {
     VALIDATE_POINTER1( hSrcBand, "GDALComputeBandStats", CE_Failure );
 
-    GDALRasterBand *poSrcBand = static_cast<GDALRasterBand *>( hSrcBand );
+    GDALRasterBand *poSrcBand = GDALRasterBand::FromHandle( hSrcBand );
 
     if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
@@ -3785,7 +3785,7 @@ GDALOverviewMagnitudeCorrection( GDALRasterBandH hBaseBand,
 /* -------------------------------------------------------------------- */
     for( int iOverview = 0; iOverview < nOverviewCount; ++iOverview )
     {
-        GDALRasterBand *poOverview = static_cast<GDALRasterBand *>(
+        GDALRasterBand *poOverview = GDALRasterBand::FromHandle(
             pahOverviews[iOverview]);
         double  dfOverviewMean, dfOverviewStdDev;
 

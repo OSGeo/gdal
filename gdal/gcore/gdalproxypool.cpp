@@ -953,11 +953,11 @@ GDALProxyPoolDatasetH GDALProxyPoolDatasetCreate(const char* pszSourceDatasetDes
                                                  const char * pszProjectionRef,
                                                  double * padfGeoTransform)
 {
-    return (GDALProxyPoolDatasetH)
+    return reinterpret_cast<GDALProxyPoolDatasetH>(
            new GDALProxyPoolDataset(pszSourceDatasetDescription,
                                     nRasterXSize, nRasterYSize,
                                     eAccess, bShared,
-                                    pszProjectionRef, padfGeoTransform);
+                                    pszProjectionRef, padfGeoTransform));
 }
 
 /************************************************************************/

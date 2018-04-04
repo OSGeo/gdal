@@ -125,7 +125,7 @@ bool GDALArrayBandBlockCache::Init()
 
         if (poBand->nBlocksPerRow < INT_MAX / poBand->nBlocksPerColumn)
         {
-            u.papoBlocks = reinterpret_cast<GDALRasterBlock **>(
+            u.papoBlocks = static_cast<GDALRasterBlock **>(
                 VSICalloc( sizeof(void*),
                            poBand->nBlocksPerRow * poBand->nBlocksPerColumn ) );
             if( u.papoBlocks == nullptr )
@@ -152,7 +152,7 @@ bool GDALArrayBandBlockCache::Init()
 
         if (nSubBlocksPerRow < INT_MAX / nSubBlocksPerColumn)
         {
-            u.papapoBlocks = reinterpret_cast<GDALRasterBlock ***>(
+            u.papapoBlocks = static_cast<GDALRasterBlock ***>(
                 VSICalloc( sizeof(void*),
                            nSubBlocksPerRow * nSubBlocksPerColumn ) );
             if( u.papapoBlocks == nullptr )
@@ -221,7 +221,7 @@ CPLErr GDALArrayBandBlockCache::AdoptBlock( GDALRasterBlock * poBlock )
             const int nSubGridSize =
                 sizeof(GDALRasterBlock*) * SUBBLOCK_SIZE * SUBBLOCK_SIZE;
 
-            u.papapoBlocks[nSubBlock] = reinterpret_cast<GDALRasterBlock **>(
+            u.papapoBlocks[nSubBlock] = static_cast<GDALRasterBlock **>(
                 VSICalloc(1, nSubGridSize) );
             if( u.papapoBlocks[nSubBlock] == nullptr )
             {
