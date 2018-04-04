@@ -69,6 +69,7 @@ class GDALAsyncReader;
 #include <map>
 #include <limits>
 #include <cmath>
+#include <memory>
 #include "ogr_core.h"
 
 //! @cond Doxygen_Suppress
@@ -667,6 +668,21 @@ private:
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALDataset)
 };
+
+//! @cond Doxygen_Suppress
+struct CPL_DLL GDALDatasetUniquePtrDeleter
+{
+    void operator()(GDALDataset* poDataset) const
+        { GDALClose(poDataset); }
+};
+//! @endcond
+
+/** Unique pointer type for GDALDataset.
+ * Appropriate for use on datasets open in non-shared mode and onto which
+ * reference counter has not been manually modified.
+ * @since GDAL 2.3
+ */
+typedef std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter> GDALDatasetUniquePtr;
 
 /* ******************************************************************** */
 /*                           GDALRasterBlock                            */
