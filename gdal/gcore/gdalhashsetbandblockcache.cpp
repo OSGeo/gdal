@@ -243,25 +243,20 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock = nullptr;
     while( true )
     {
+        GDALRasterBlock* poBlock;
         {
             CPLLockHolderOptionalLockD( hLock );
             auto oIter = m_oSet.find(&oBlockForLookup);
             if( oIter != m_oSet.end() )
                 poBlock = *oIter;
             else
-                poBlock = nullptr;
+                return nullptr;
         }
-        if( poBlock == nullptr )
-            return nullptr;
         if( poBlock->TakeLock()  )
-            break;
+            return poBlock;
     }
-
-    poBlock->Touch();
-    return poBlock;
 }
 
 //! @endcond
