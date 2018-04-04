@@ -878,15 +878,9 @@ void GDALRasterBlock::Touch_unlocked()
     if( poNewest == this )
         return;
 
-    // In theory, we should not try to touch a block that has been detached.
+    // We should not try to touch a block that has been detached.
+    // If that happen, corruption has already occurred.
     CPLAssert(bMustDetach);
-    if( !bMustDetach )
-    {
-        if( pData )
-            nCacheUsed += GetEffectiveBlockSize(GetBlockSize());
-
-        bMustDetach = true;
-    }
 
     if( poOldest == this )
         poOldest = this->poPrevious;
