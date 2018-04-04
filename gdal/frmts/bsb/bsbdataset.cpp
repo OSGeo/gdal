@@ -1,4 +1,4 @@
-/******************************************************************************
+    /******************************************************************************
  *
  * Project:  BSB Reader
  * Purpose:  BSBDataset implementation for BSB format.
@@ -848,8 +848,7 @@ static int BSBIsSRSOK(const char *pszWKT)
 
     if( pszWKT != NULL && pszWKT[0] != '\0' )
     {
-        char* pszTmpWKT = (char*)pszWKT;
-        oSRS.importFromWkt( &pszTmpWKT );
+        oSRS.importFromWkt( pszWKT );
 
         oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );
         oSRS_NAD83.SetWellKnownGeogCS( "NAD83" );

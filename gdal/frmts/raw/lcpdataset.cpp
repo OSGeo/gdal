@@ -1206,7 +1206,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
     }
     else if( !EQUAL( pszWkt, "" ) )
     {
-        oSrcSRS.importFromWkt( (char**)&pszWkt );
+        oSrcSRS.importFromWkt( pszWkt );
         OGRSpatialReference oDstSRS;
         oDstSRS.importFromEPSG( 4269 );
         OGRCoordinateTransformation *poCT
@@ -1625,7 +1625,7 @@ GDALDataset *LCPDataset::CreateCopy( const char * pszFilename,
         fp = VSIFOpenL( pszPrjFilename, "wt" );
         if (fp != nullptr)
         {
-            oSRS.importFromWkt( (char **) &pszOriginalProjection );
+            oSRS.importFromWkt( pszOriginalProjection );
             oSRS.morphToESRI();
             char *pszESRIProjection = nullptr;
             oSRS.exportToWkt( &pszESRIProjection );

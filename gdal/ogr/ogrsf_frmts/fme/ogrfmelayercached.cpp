@@ -1,4 +1,4 @@
-/******************************************************************************
+    /******************************************************************************
  *
  * Project:  FMEObjects Translator
  * Purpose:  Implementation of the OGRFMELayerCached class.  This is the
@@ -421,10 +421,10 @@ int OGRFMELayerCached::InitializeFromXML( CPLXMLNode *psLayer )
 /* -------------------------------------------------------------------- */
     if( CPLGetXMLNode( psLayer, "SRS" ) != NULL )
     {
-        char *pszSRS = (char *) CPLGetXMLValue( psLayer, "SRS", "" );
+        const char *pszSRS = CPLGetXMLValue( psLayer, "SRS", "" );
         OGRSpatialReference oSRS;
 
-        if( oSRS.importFromWkt( &pszSRS ) == OGRERR_NONE )
+        if( oSRS.importFromWkt( pszSRS ) == OGRERR_NONE )
         {
             if( poSpatialRef != NULL )
                 delete poSpatialRef;

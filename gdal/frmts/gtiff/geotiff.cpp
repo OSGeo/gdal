@@ -12442,8 +12442,7 @@ void GTiffDataset::LookForProjection()
             {
                 OGRSpatialReference oSRS;
 
-                char *pszWKT = pszProjection;
-                oSRS.importFromWkt( &pszWKT );
+                oSRS.importFromWkt( pszProjection );
 
                 char* pszVertUnit = nullptr;
                 oSRS.GetTargetLinearUnits("COMPD_CS|VERT_CS", &pszVertUnit);

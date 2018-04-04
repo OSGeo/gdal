@@ -481,14 +481,13 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS( int nId )
     hResult = nullptr;
 
     poSRS = new OGRSpatialReference();
-    char* pszWKTOri = pszWKT;
-    if( pszWKT == nullptr || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+    if( pszWKT == nullptr || poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
     {
         delete poSRS;
         poSRS = nullptr;
     }
 
-    CPLFree(pszWKTOri);
+    CPLFree(pszWKT);
 
 /* -------------------------------------------------------------------- */
 /*      Add to the cache.                                               */

@@ -722,8 +722,7 @@ OGRErr BAGDataset::ParseWKTFromXML( const char *pszISOXML )
         return OGRERR_FAILURE;
     }
 
-    char *pszWKT = const_cast<char *>(pszSRCodeString);
-    if( oSRS.importFromWkt(&pszWKT) != OGRERR_NONE )
+    if( oSRS.importFromWkt(pszSRCodeString) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed parsing WKT string \"%s\".", pszSRCodeString);

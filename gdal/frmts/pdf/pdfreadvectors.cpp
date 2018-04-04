@@ -297,7 +297,7 @@ void PDFDataset::ExploreTree(GDALPDFObject* poObj,
             if (l_pszWKT && l_pszWKT[0] != '\0')
             {
                 poSRS = new OGRSpatialReference();
-                poSRS->importFromWkt((char**) &l_pszWKT);
+                poSRS->importFromWkt(l_pszWKT);
             }
 
             OGRPDFLayer* poLayer =
@@ -1628,7 +1628,7 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject* poContents,
                     if (l_pszWKT && l_pszWKT[0] != '\0')
                     {
                         poSRS = new OGRSpatialReference();
-                        poSRS->importFromWkt((char**) &l_pszWKT);
+                        poSRS->importFromWkt(l_pszWKT);
                     }
 
                     poLayer =

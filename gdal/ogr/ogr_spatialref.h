@@ -198,6 +198,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToMICoordSys( char ** ) const;
 
     OGRErr      importFromWkt( char ** );
+    OGRErr      importFromWkt( const char* );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromEPSGA( int );

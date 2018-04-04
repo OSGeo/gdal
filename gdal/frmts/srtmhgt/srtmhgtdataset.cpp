@@ -499,8 +499,7 @@ GDALDataset * SRTMHGTDataset::CreateCopy( const char * pszFilename,
 /*      Checks the input SRS                                            */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference ogrsr_input;
-    char* c = const_cast<char *>( poSrcDS->GetProjectionRef() );
-    ogrsr_input.importFromWkt(&c);
+    ogrsr_input.importFromWkt(poSrcDS->GetProjectionRef());
 
     OGRSpatialReference ogrsr_wgs84;
     ogrsr_wgs84.SetWellKnownGeogCS( "WGS84" );

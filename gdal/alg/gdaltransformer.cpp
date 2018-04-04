@@ -2385,7 +2385,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 /*      Ingest the SRS definitions.                                     */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSrcSRS;
-    if( oSrcSRS.importFromWkt( (char **) &pszSrcWKT ) != OGRERR_NONE )
+    if( oSrcSRS.importFromWkt( pszSrcWKT ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",
@@ -2394,7 +2394,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
     }
 
     OGRSpatialReference oDstSRS;
-    if( oDstSRS.importFromWkt( (char **) &pszDstWKT ) != OGRERR_NONE )
+    if( oDstSRS.importFromWkt( pszDstWKT ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",

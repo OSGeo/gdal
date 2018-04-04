@@ -1806,7 +1806,7 @@ void OGRCouchDBTableLayer::LoadMetadata()
     if (pszSRS != nullptr)
     {
         poSRS = new OGRSpatialReference();
-        if (poSRS->importFromWkt((char**)&pszSRS) != OGRERR_NONE)
+        if (poSRS->importFromWkt(pszSRS) != OGRERR_NONE)
         {
             delete poSRS;
             poSRS = nullptr;

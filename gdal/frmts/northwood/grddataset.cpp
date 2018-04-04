@@ -506,8 +506,7 @@ const char *NWT_GRDDataset::GetProjectionRef() {
 
 CPLErr NWT_GRDDataset::SetProjection( const char *pszProjection ) {
     OGRSpatialReference oSpatialRef;
-    char *pszTmp = const_cast<char*>(pszProjection);
-    oSpatialRef.importFromWkt( &pszTmp );
+    oSpatialRef.importFromWkt( pszProjection );
     char *psTABProj = MITABSpatialRef2CoordSys( &oSpatialRef );
     strncpy( pGrd->cMICoordSys, psTABProj, sizeof(pGrd->cMICoordSys) -1 );
     pGrd->cMICoordSys[255] = '\0';

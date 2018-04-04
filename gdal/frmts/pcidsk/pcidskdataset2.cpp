@@ -1361,9 +1361,8 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
     double *padfPrjParams = nullptr;
 
     OGRSpatialReference oSRS;
-    char *pszWKTWork = const_cast<char *>( pszWKT );
 
-    if( ! (oSRS.importFromWkt( &pszWKTWork ) == OGRERR_NONE
+    if( ! (oSRS.importFromWkt(pszWKT ) == OGRERR_NONE
         && oSRS.exportToPCI( &pszGeosys, &pszUnits,
                              &padfPrjParams ) == OGRERR_NONE ) )
     {

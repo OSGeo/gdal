@@ -730,9 +730,8 @@ void ROIPACDataset::FlushCache( void )
 /* -------------------------------------------------------------------- */
     if ( pszProjection != nullptr )
     {
-        char *pszProjectionTmp = pszProjection;
         OGRSpatialReference oSRS;
-        if( oSRS.importFromWkt( &pszProjectionTmp ) == OGRERR_NONE )
+        if( oSRS.importFromWkt( pszProjection ) == OGRERR_NONE )
         {
             int bNorth = FALSE;
             int iUTMZone = oSRS.GetUTMZone( &bNorth );

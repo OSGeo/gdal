@@ -121,10 +121,8 @@ OGRGmtLayer::OGRGmtLayer( const char * pszFilename, int bUpdateIn ) :
 /* -------------------------------------------------------------------- */
     if( osWKT.length() )
     {
-        char *pszWKT = const_cast<char *>(osWKT.c_str());
-
         poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
+        if( poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;

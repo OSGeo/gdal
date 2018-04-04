@@ -610,9 +610,9 @@ GDALDataset *ARGDataset::CreateCopy( const char *pszFilename,
     double adfTransform[6];
     poSrcDS->GetGeoTransform( adfTransform );
 
-    char *pszWKT = const_cast<char *>(poSrcDS->GetProjectionRef());
+    const char *pszWKT = poSrcDS->GetProjectionRef();
     OGRSpatialReference oSRS;
-    OGRErr nErr = oSRS.importFromWkt(&pszWKT);
+    OGRErr nErr = oSRS.importFromWkt(pszWKT);
     if (nErr != OGRERR_NONE) {
         CPLError( CE_Failure, CPLE_NotSupported,
               "Cannot import spatial reference WKT from source dataset.");

@@ -325,7 +325,7 @@ CPLErr OGRMSSQLSpatialTableLayer::Initialize( const char *pszSchema,
     {
         /* Process srtext directly if specified */
         poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( (char**)&pszSRText ) != OGRERR_NONE )
+        if( poSRS->importFromWkt( pszSRText ) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;

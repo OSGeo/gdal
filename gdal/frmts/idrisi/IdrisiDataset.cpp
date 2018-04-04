@@ -2833,7 +2833,7 @@ CPLErr IdrisiDataset::Wkt2GeoReference( const char *pszProjString,
             }
 
     OGRSpatialReference oSRS;
-    oSRS.importFromWkt( (char **) &pszProjString );
+    oSRS.importFromWkt( pszProjString );
 
     // -----------------------------------------------------
     //  Local => Plane + Linear Unit

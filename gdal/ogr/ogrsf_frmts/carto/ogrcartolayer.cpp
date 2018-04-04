@@ -447,8 +447,7 @@ OGRSpatialReference* OGRCARTOLayer::GetSRS(const char* pszGeomCol,
     {
         const char* pszSRTEXT = json_object_get_string(poSRTEXT);
         l_poSRS = new OGRSpatialReference();
-        char* pszTmp = (char* )pszSRTEXT;
-        if( l_poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+        if( l_poSRS->importFromWkt(pszSRTEXT) != OGRERR_NONE )
         {
             delete l_poSRS;
             l_poSRS = nullptr;

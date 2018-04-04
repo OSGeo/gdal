@@ -1689,10 +1689,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
             if( ppszWKT != nullptr && *ppszWKT != nullptr
                 && STARTS_WITH_CI(*ppszWKT, "PROJCS") )
             {
-                char *pszSrcWKT = *ppszWKT;
-
                 OGRSpatialReference oSRS;
-                oSRS.importFromWkt( &pszSrcWKT );
+                oSRS.importFromWkt( *ppszWKT );
 
                 OGRSpatialReference oSRSGeogCS;
                 oSRSGeogCS.CopyGeogCSFrom( &oSRS );
