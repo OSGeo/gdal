@@ -1117,14 +1117,14 @@ void GDALRasterBlock::DestroyRBMutex()
 /************************************************************************/
 
 /**
- * Take a lock
+ * Take a lock and Touch().
  *
  * Should only be used by GDALArrayBandBlockCache::TryGetLockedBlockRef()
  * and GDALHashSetBandBlockCache::TryGetLockedBlockRef()
  *
- * @return TRUE if the lock has been successfully acquired. If FALSE, this
- *         should be reattempted after fetching again from the raster band
- *         block storage.
+ * @return TRUE if the lock has been successfully acquired. If FALSE, the
+ *         block is being evicted by another thread, and so should be
+ *         considered as invalid.
  */
 
 int GDALRasterBlock::TakeLock()
@@ -1136,6 +1136,9 @@ int GDALRasterBlock::TakeLock()
             CPLGetConfigOption("GDAL_RB_TRYGET_SLEEP_AFTER_TAKE_LOCK", "0")));
     if( nLockVal == 0 )
     {
+        // The block is being evicted by GDALRasterBlock::Internalize()
+        // or FlushCacheBlock()
+
 #ifdef DEBUG
         CPLDebug(
             "GDAL",
@@ -1143,13 +1146,7 @@ int GDALRasterBlock::TakeLock()
             "reacquire it.",
             reinterpret_cast<void *>(CPLGetPID()), nXOff, nYOff, poBand );
 #endif
-        // The block is being evicted by GDALRasterBlock::Internalize()
-        // or FlushCacheBlock(), so wait for this to be done before trying
-        // again.
         DropLock();
-
-        // wait for the block having been unreferenced
-        TAKE_LOCK;
 
         return FALSE;
     }

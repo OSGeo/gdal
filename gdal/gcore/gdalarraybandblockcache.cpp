@@ -441,8 +441,6 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
                                                                  int nYBlockOff )
 
 {
-    GDALRasterBlock *poBlock;
-
 /* -------------------------------------------------------------------- */
 /*      Simple case for single level caches.                            */
 /* -------------------------------------------------------------------- */
@@ -450,14 +448,10 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
     {
         const int nBlockIndex = nXBlockOff + nYBlockOff * poBand->nBlocksPerRow;
 
-        while( true )
-        {
-            poBlock = u.papoBlocks[nBlockIndex];
-            if( poBlock == nullptr )
-                return nullptr;
-            if( poBlock->TakeLock() )
-                break;
-        }
+        GDALRasterBlock* poBlock = u.papoBlocks[nBlockIndex];
+        if( poBlock == nullptr || !poBlock->TakeLock() )
+            return nullptr;
+        return poBlock;
     }
     else
     {
@@ -477,17 +471,11 @@ GDALRasterBlock *GDALArrayBandBlockCache::TryGetLockedBlockRef( int nXBlockOff,
         const int nBlockInSubBlock = WITHIN_SUBBLOCK(nXBlockOff)
             + WITHIN_SUBBLOCK(nYBlockOff) * SUBBLOCK_SIZE;
 
-        while( true )
-        {
-            poBlock = papoSubBlockGrid[nBlockInSubBlock];
-            if( poBlock == nullptr )
-                return nullptr;
-            if( poBlock->TakeLock() )
-                break;
-        }
+        GDALRasterBlock* poBlock = papoSubBlockGrid[nBlockInSubBlock];
+        if( poBlock == nullptr || !poBlock->TakeLock() )
+            return nullptr;
+        return poBlock;
     }
-
-    return poBlock;
 }
 
 //! @endcond
