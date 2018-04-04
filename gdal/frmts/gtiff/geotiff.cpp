@@ -8419,6 +8419,10 @@ bool GTiffDataset::WriteEncodedStrip( uint32 strip, GByte* pabyData,
 
 void GTiffDataset::InitCompressionThreads( char** papszOptions )
 {
+    // Raster == tile, then no need for threads
+    if( nBlockXSize == nRasterXSize && nBlockYSize == nRasterYSize )
+        return;
+
     const char* pszValue = CSLFetchNameValue( papszOptions, "NUM_THREADS" );
     if( pszValue == nullptr )
         pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);

@@ -6230,7 +6230,7 @@ def tiff_write_137():
 
     # Ask data immediately while the block is compressed
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
-                            options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
+                            options = ['BLOCKYSIZE=3999', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
     ds.WriteRaster(0,0,1,1,'A')
     ds.FlushCache()
     val = ds.ReadRaster(0,0,1,1).decode('ascii')
@@ -6241,6 +6241,22 @@ def tiff_write_137():
     ds = None
 
     gdal.Unlink('/vsimem/tiff_write_137_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_137.tif')
+
+    # Test NUM_THREADS with raster == tile
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
+        options = ['BLOCKYSIZE=20', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+    src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
     gdal.Unlink('/vsimem/tiff_write_137.tif')
 
     return 'success'
