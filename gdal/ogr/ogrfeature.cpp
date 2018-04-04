@@ -1149,12 +1149,6 @@ OGRFieldDefnH OGR_F_GetFieldDefnRef( OGRFeatureH hFeat, int i )
 
     OGRFeature *poFeat = OGRFeature::FromHandle(hFeat);
 
-    if( i < 0 || i >= poFeat->GetFieldCount() )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid index : %d", i);
-        return nullptr;
-    }
-
     return OGRFieldDefn::ToHandle(poFeat->GetFieldDefnRef(i));
 }
 
