@@ -7578,6 +7578,9 @@ void GTiffDataset::FillEmptyTiles()
                 if( WriteEncodedTileOrStrip( iBlock, pabyData, FALSE
                                                                 ) != CE_None )
                     break;
+
+                WaitCompletionForBlock(iBlock);
+
                 vsi_l_offset nOffset = 0;
                 bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
 #ifdef DEBUG
