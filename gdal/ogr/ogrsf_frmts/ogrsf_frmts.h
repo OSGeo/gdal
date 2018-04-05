@@ -81,7 +81,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
             std::unique_ptr<Private> m_poPrivate;
         public:
             FeatureIterator(OGRLayer* poLayer, bool bStart);
-            FeatureIterator(FeatureIterator&& oOther);
+            FeatureIterator(FeatureIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
             ~FeatureIterator();
             OGRFeatureUniquePtr& operator*();
             FeatureIterator& operator++();
