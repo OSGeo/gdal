@@ -1,6 +1,34 @@
+Setting development environment (Unix)
+======================================
+
+Install all required development packages: GNU make, g++, ...
+
+Build:
+
+```
+cd gdal
+./configure [options]
+make -j8 -s
+cd apps; make -s test_ogrsf; cd ..
+```
+
+Run command line utilities (without installing):
+```
+. scripts/setdevenv.sh
+gdalinfo --version
+```
+
+Run autotest suite:
+```
+cd ../autotest
+python run_test.py
+```
+
+Git workflows with GDAL
+=======================
+
 This is not a git tutorial or reference manual by any means. This just collects
 a few best practice for git usage for GDAL developement.
-
 
 Commit message
 --------------
