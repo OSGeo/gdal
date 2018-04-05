@@ -1329,7 +1329,8 @@ OGRGeometry* OGRGeometryCollection::getLinearGeometry(
         OGRGeometry* poSubGeom =
             papoGeoms[iGeom]->getLinearGeometry(dfMaxAngleStepSizeDegrees,
                                                 papszOptions);
-        poGC->addGeometryDirectly( poSubGeom );
+        if( poGC->addGeometryDirectly(poSubGeom) != OGRERR_NONE )
+            delete poSubGeom;
     }
     return poGC;
 }
