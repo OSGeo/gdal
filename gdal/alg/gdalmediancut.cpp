@@ -385,7 +385,7 @@ GDALComputeMedianCutPCTInternal(
             // will be limited and using a hashmap, rather than a full table
             // will be more efficient.
             histogram = nullptr;
-            psHashHistogram = (HashHistogram*)panHistogram;
+            psHashHistogram = reinterpret_cast<HashHistogram*>(panHistogram);
             memset(psHashHistogram,
                    0xFF,
                    sizeof(HashHistogram) * PRIME_FOR_65536);
