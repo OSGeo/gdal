@@ -122,13 +122,13 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
             {
             }
 
-        virtual OGRSpatialReference* GetSpatialRef() override;
+        virtual OGRSpatialReference* GetSpatialRef() const override;
 
         void UnsetLayer() { poLayer = nullptr; }
 
-        int nSRSId;
-        int GeometryTypeFlags;
-        PostgisType   ePostgisType;
+        mutable int nSRSId;
+        mutable int GeometryTypeFlags;
+        mutable PostgisType   ePostgisType;
 };
 
 /************************************************************************/
@@ -238,7 +238,7 @@ class OGRPGLayer : public OGRLayer
 
     OGRPGDataSource    *GetDS() { return poDS; }
 
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) = 0;
+    virtual void        ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn) = 0;
 };
 
 /************************************************************************/
@@ -396,7 +396,7 @@ public:
     void                SetDeferredCreation(int bDeferredCreationIn, CPLString osCreateTable);
     OGRErr              RunDeferredCreationIfNecessary();
 
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) override;
+    virtual void        ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn) override;
 };
 
 /************************************************************************/
@@ -434,7 +434,7 @@ class OGRPGResultLayer : public OGRPGLayer
 
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) override;
+    virtual void        ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn) override;
 };
 
 /************************************************************************/

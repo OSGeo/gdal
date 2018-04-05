@@ -354,13 +354,13 @@ GDALDataset *MAPDataset::Open( GDALOpenInfo * poOpenInfo )
         else /* Convert the geographic coordinates to projected coordinates */
         {
             OGRCoordinateTransformation *poTransform = nullptr;
-            char *pszWKT = poDS->pszWKT;
+            const char *pszWKT = poDS->pszWKT;
 
             if ( pszWKT != nullptr )
             {
                 OGRSpatialReference oSRS;
                 OGRSpatialReference *poLatLong = nullptr;
-                if ( OGRERR_NONE == oSRS.importFromWkt ( &pszWKT ))
+                if ( OGRERR_NONE == oSRS.importFromWkt ( pszWKT ))
                     poLatLong = oSRS.CloneGeogCS();
                 if ( poLatLong )
                     poTransform = OGRCreateCoordinateTransformation( poLatLong, &oSRS );

@@ -2175,9 +2175,9 @@ OGRSpatialReference *OGRPGDataSource::FetchSRS( int nId )
         && PQresultStatus(hResult) == PGRES_TUPLES_OK
         && PQntuples(hResult) == 1 )
     {
-        char *pszWKT = PQgetvalue(hResult,0,0);
+        const char *pszWKT = PQgetvalue(hResult,0,0);
         poSRS = new OGRSpatialReference();
-        if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+        if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;
@@ -2669,7 +2669,7 @@ class OGRPGNoResetResultLayer : public OGRPGLayer
     virtual OGRFeature *GetNextFeature() override;
 
     virtual CPLString   GetFromClauseForGetExtent() override { CPLAssert(false); return ""; }
-    virtual void        ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn) override { poGFldDefn->nSRSId = -1; }
+    virtual void        ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn) override { poGFldDefn->nSRSId = -1; }
 };
 
 /************************************************************************/

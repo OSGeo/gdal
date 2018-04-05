@@ -457,8 +457,7 @@ OGRSpatialReference* OGRAmigoCloudLayer::GetSRS(const char* pszGeomCol,
     {
         const char* pszSRTEXT = json_object_get_string(poSRTEXT);
         poSRS = new OGRSpatialReference();
-        char* pszTmp = (char* )pszSRTEXT;
-        if( poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+        if( poSRS->importFromWkt(pszSRTEXT) != OGRERR_NONE )
         {
             delete poSRS;
             poSRS = nullptr;

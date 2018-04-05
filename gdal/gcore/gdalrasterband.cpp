@@ -417,7 +417,7 @@ GDALRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 {
     VALIDATE_POINTER1( hBand, "GDALRasterIO", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
@@ -446,7 +446,7 @@ GDALRasterIOEx( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 {
     VALIDATE_POINTER1( hBand, "GDALRasterIOEx", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return( poBand->RasterIO( eRWFlag, nXOff, nYOff, nXSize, nYSize,
                               pData, nBufXSize, nBufYSize, eBufType,
@@ -585,7 +585,7 @@ CPLErr CPL_STDCALL GDALReadBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 {
     VALIDATE_POINTER1( hBand, "GDALReadBlock", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return( poBand->ReadBlock( nXOff, nYOff, pData ) );
 }
 
@@ -741,7 +741,7 @@ CPLErr CPL_STDCALL GDALWriteBlock( GDALRasterBandH hBand, int nXOff, int nYOff,
 {
     VALIDATE_POINTER1( hBand, "GDALWriteBlock", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand *>( hBand );
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle( hBand );
     return( poBand->WriteBlock( nXOff, nYOff, pData ) );
 }
 
@@ -819,7 +819,7 @@ CPLErr CPL_STDCALL GDALGetActualBlockSize( GDALRasterBandH hBand,
 {
     VALIDATE_POINTER1( hBand, "GDALGetActualBlockSize", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand *>( hBand );
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle( hBand );
     return( poBand->GetActualBlockSize( nXBlockOff, nYBlockOff, pnXValid, pnYValid ) );
 }
 
@@ -856,7 +856,7 @@ GDALDataType CPL_STDCALL GDALGetRasterDataType( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterDataType", GDT_Unknown );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetRasterDataType();
 }
 
@@ -923,7 +923,7 @@ GDALGetBlockSize( GDALRasterBandH hBand, int * pnXSize, int * pnYSize )
 {
     VALIDATE_POINTER0( hBand, "GDALGetBlockSize" );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     poBand->GetBlockSize( pnXSize, pnYSize );
 }
 
@@ -1063,7 +1063,7 @@ CPLErr CPL_STDCALL GDALFlushRasterCache( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALFlushRasterCache", CE_Failure );
 
-    return static_cast<GDALRasterBand *>(hBand)->FlushCache();
+    return GDALRasterBand::FromHandle(hBand)->FlushCache();
 }
 
 /************************************************************************/
@@ -1466,7 +1466,7 @@ CPLErr CPL_STDCALL GDALFillRaster(
 {
     VALIDATE_POINTER1( hBand, "GDALFillRaster", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->Fill(dfRealValue, dfImaginaryValue);
 }
 
@@ -1503,7 +1503,7 @@ GDALAccess CPL_STDCALL GDALGetRasterAccess( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterAccess", GA_ReadOnly );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetAccess();
 }
 
@@ -1549,7 +1549,7 @@ char ** CPL_STDCALL GDALGetRasterCategoryNames( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterCategoryNames", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetCategoryNames();
 }
 
@@ -1596,13 +1596,13 @@ CPLErr GDALRasterBand::SetCategoryNames( char ** /*papszNames*/ )
  */
 
 CPLErr CPL_STDCALL
-GDALSetRasterCategoryNames( GDALRasterBandH hBand, char ** papszNames )
+GDALSetRasterCategoryNames( GDALRasterBandH hBand, CSLConstList papszNames )
 
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterCategoryNames", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return poBand->SetCategoryNames( papszNames );
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->SetCategoryNames( const_cast<char**>(papszNames) );
 }
 
 /************************************************************************/
@@ -1650,7 +1650,7 @@ GDALGetRasterNoDataValue( GDALRasterBandH hBand, int *pbSuccess )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterNoDataValue", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetNoDataValue( pbSuccess );
 }
 
@@ -1718,7 +1718,7 @@ GDALSetRasterNoDataValue( GDALRasterBandH hBand, double dfValue )
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterNoDataValue", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetNoDataValue( dfValue );
 }
 
@@ -1766,7 +1766,7 @@ GDALDeleteRasterNoDataValue( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALDeleteRasterNoDataValue", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->DeleteNoDataValue();
 }
 
@@ -1859,7 +1859,7 @@ GDALGetRasterMaximum( GDALRasterBandH hBand, int *pbSuccess )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterMaximum", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetMaximum( pbSuccess );
 }
 
@@ -1948,7 +1948,7 @@ GDALGetRasterMinimum( GDALRasterBandH hBand, int *pbSuccess )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterMinimum", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetMinimum( pbSuccess );
 }
 
@@ -1991,7 +1991,7 @@ GDALGetRasterColorInterpretation( GDALRasterBandH hBand )
     VALIDATE_POINTER1( hBand, "GDALGetRasterColorInterpretation",
                        GCI_Undefined );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetColorInterpretation();
 }
 
@@ -2040,7 +2040,7 @@ GDALSetRasterColorInterpretation( GDALRasterBandH hBand,
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterColorInterpretation", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetColorInterpretation(eColorInterp);
 }
 
@@ -2081,8 +2081,8 @@ GDALColorTableH CPL_STDCALL GDALGetRasterColorTable( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterColorTable", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return (GDALColorTableH)poBand->GetColorTable();
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return GDALColorTable::ToHandle(poBand->GetColorTable());
 }
 
 /************************************************************************/
@@ -2134,8 +2134,8 @@ GDALSetRasterColorTable( GDALRasterBandH hBand, GDALColorTableH hCT )
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterColorTable", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return poBand->SetColorTable( static_cast<GDALColorTable*>(hCT) );
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return poBand->SetColorTable( GDALColorTable::FromHandle(hCT) );
 }
 
 /************************************************************************/
@@ -2178,7 +2178,7 @@ int CPL_STDCALL GDALHasArbitraryOverviews( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALHasArbitraryOverviews", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->HasArbitraryOverviews();
 }
 
@@ -2218,7 +2218,7 @@ int CPL_STDCALL GDALGetOverviewCount( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetOverviewCount", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetOverviewCount();
 }
 
@@ -2260,8 +2260,8 @@ GDALRasterBandH CPL_STDCALL GDALGetOverview( GDALRasterBandH hBand, int i )
 {
     VALIDATE_POINTER1( hBand, "GDALGetOverview", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return (GDALRasterBandH) poBand->GetOverview(i);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return GDALRasterBand::ToHandle(poBand->GetOverview(i));
 }
 
 /************************************************************************/
@@ -2334,10 +2334,10 @@ GDALGetRasterSampleOverview( GDALRasterBandH hBand, int nDesiredSamples )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterSampleOverview", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return /* (GDALRasterBandH) */
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return GDALRasterBand::ToHandle(
         poBand->GetRasterSampleOverview(
-            nDesiredSamples < 0 ? 0 : static_cast<GUIntBig>(nDesiredSamples) );
+            nDesiredSamples < 0 ? 0 : static_cast<GUIntBig>(nDesiredSamples) ));
 }
 
 /************************************************************************/
@@ -2357,9 +2357,9 @@ GDALGetRasterSampleOverviewEx( GDALRasterBandH hBand, GUIntBig nDesiredSamples )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterSampleOverviewEx", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return (GDALRasterBandH)
-        poBand->GetRasterSampleOverview( nDesiredSamples );
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return GDALRasterBand::ToHandle(
+        poBand->GetRasterSampleOverview( nDesiredSamples ));
 }
 
 /************************************************************************/
@@ -2456,7 +2456,7 @@ double CPL_STDCALL GDALGetRasterOffset( GDALRasterBandH hBand, int *pbSuccess )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterOffset", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetOffset( pbSuccess );
 }
 
@@ -2506,7 +2506,7 @@ GDALSetRasterOffset( GDALRasterBandH hBand, double dfNewOffset )
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterOffset", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetOffset( dfNewOffset );
 }
 
@@ -2559,7 +2559,7 @@ double CPL_STDCALL GDALGetRasterScale( GDALRasterBandH hBand, int *pbSuccess )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterScale", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetScale( pbSuccess );
 }
 
@@ -2610,7 +2610,7 @@ GDALSetRasterScale( GDALRasterBandH hBand, double dfNewOffset )
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterScale", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetScale( dfNewOffset );
 }
 
@@ -2652,7 +2652,7 @@ const char * CPL_STDCALL GDALGetRasterUnitType( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterUnitType", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetUnitType();
 }
 
@@ -2705,7 +2705,7 @@ CPLErr CPL_STDCALL GDALSetRasterUnitType( GDALRasterBandH hBand, const char *psz
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterUnitType", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetUnitType(pszNewValue);
 }
 
@@ -2742,7 +2742,7 @@ int CPL_STDCALL GDALGetRasterBandXSize( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterBandXSize", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetXSize();
 }
 
@@ -2779,7 +2779,7 @@ int CPL_STDCALL GDALGetRasterBandYSize( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterBandYSize", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetYSize();
 }
 
@@ -2821,7 +2821,7 @@ int CPL_STDCALL GDALGetBandNumber( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetBandNumber", 0 );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetBand();
 }
 
@@ -2862,7 +2862,7 @@ GDALDatasetH CPL_STDCALL GDALGetBandDataset( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetBandDataset", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return (GDALDatasetH) poBand->GetDataset();
 }
 
@@ -3355,7 +3355,7 @@ GDALGetRasterHistogram( GDALRasterBandH hBand,
     VALIDATE_POINTER1( hBand, "GDALGetRasterHistogram", CE_Failure );
     VALIDATE_POINTER1( panHistogram, "GDALGetRasterHistogram", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     GUIntBig* panHistogramTemp = static_cast<GUIntBig *>(
         VSIMalloc2(sizeof(GUIntBig), nBuckets) );
@@ -3421,7 +3421,7 @@ GDALGetRasterHistogramEx( GDALRasterBandH hBand,
     VALIDATE_POINTER1( hBand, "GDALGetRasterHistogramEx", CE_Failure );
     VALIDATE_POINTER1( panHistogram, "GDALGetRasterHistogramEx", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return poBand->GetHistogram( dfMin, dfMax, nBuckets, panHistogram,
                                  bIncludeOutOfRange, bApproxOK,
@@ -3552,7 +3552,7 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogram(
     VALIDATE_POINTER1( pnBuckets, "GDALGetDefaultHistogram", CE_Failure );
     VALIDATE_POINTER1( ppanHistogram, "GDALGetDefaultHistogram", CE_Failure );
 
-    GDALRasterBand * const poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand * const poBand = GDALRasterBand::FromHandle(hBand);
     GUIntBig* panHistogramTemp = nullptr;
     CPLErr eErr = poBand->GetDefaultHistogram( pdfMin, pdfMax,
         pnBuckets, &panHistogramTemp, bForce, pfnProgress, pProgressData );
@@ -3623,7 +3623,7 @@ CPLErr CPL_STDCALL GDALGetDefaultHistogramEx(
     VALIDATE_POINTER1( pnBuckets, "GDALGetDefaultHistogram", CE_Failure );
     VALIDATE_POINTER1( ppanHistogram, "GDALGetDefaultHistogram", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetDefaultHistogram( pdfMin, pdfMax,
         pnBuckets, ppanHistogram, bForce, pfnProgress, pProgressData );
 }
@@ -3703,14 +3703,14 @@ CPLErr CPL_STDCALL
 GDALRasterAdviseRead( GDALRasterBandH hBand,
                       int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize,
-                      GDALDataType eDT, char **papszOptions )
+                      GDALDataType eDT, CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1( hBand, "GDALRasterAdviseRead", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->AdviseRead( nXOff, nYOff, nXSize, nYSize,
-        nBufXSize, nBufYSize, eDT, papszOptions );
+        nBufXSize, nBufYSize, eDT, const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/
@@ -3833,7 +3833,7 @@ CPLErr CPL_STDCALL GDALGetRasterStatistics(
 {
     VALIDATE_POINTER1( hBand, "GDALGetRasterStatistics", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetStatistics(
         bApproxOK, bForce, pdfMin, pdfMax, pdfMean, pdfStdDev );
 }
@@ -5263,7 +5263,7 @@ CPLErr CPL_STDCALL GDALComputeRasterStatistics(
 {
     VALIDATE_POINTER1( hBand, "GDALComputeRasterStatistics", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return poBand->ComputeStatistics(
         bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev,
@@ -5336,7 +5336,7 @@ CPLErr CPL_STDCALL GDALSetRasterStatistics(
 {
     VALIDATE_POINTER1( hBand, "GDALSetRasterStatistics", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetStatistics( dfMin, dfMax, dfMean, dfStdDev );
 }
 
@@ -5712,7 +5712,7 @@ GDALComputeRasterMinMax( GDALRasterBandH hBand, int bApproxOK,
 {
     VALIDATE_POINTER0( hBand, "GDALComputeRasterMinMax" );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     poBand->ComputeRasterMinMax( bApproxOK, adfMinMax );
 }
 
@@ -5761,7 +5761,7 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogram( GDALRasterBandH hBand,
 {
     VALIDATE_POINTER1( hBand, "GDALSetDefaultHistogram", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     GUIntBig* panHistogramTemp = static_cast<GUIntBig *>(
         VSIMalloc2(sizeof(GUIntBig), nBuckets) );
@@ -5806,7 +5806,7 @@ CPLErr CPL_STDCALL GDALSetDefaultHistogramEx( GDALRasterBandH hBand,
 {
     VALIDATE_POINTER1( hBand, "GDALSetDefaultHistogramEx", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->SetDefaultHistogram( dfMin, dfMax, nBuckets, panHistogram );
 }
 
@@ -5847,8 +5847,8 @@ GDALRasterAttributeTableH CPL_STDCALL GDALGetDefaultRAT( GDALRasterBandH hBand)
 {
     VALIDATE_POINTER1( hBand, "GDALGetDefaultRAT", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
-    return (GDALRasterAttributeTableH) poBand->GetDefaultRAT();
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
+    return GDALRasterAttributeTable::ToHandle(poBand->GetDefaultRAT());
 }
 
 /************************************************************************/
@@ -5900,10 +5900,10 @@ CPLErr CPL_STDCALL GDALSetDefaultRAT( GDALRasterBandH hBand,
 {
     VALIDATE_POINTER1( hBand, "GDALSetDefaultRAT", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return poBand->SetDefaultRAT(
-        static_cast<GDALRasterAttributeTable *>(hRAT) );
+        GDALRasterAttributeTable::FromHandle(hRAT) );
 }
 
 /************************************************************************/
@@ -6140,7 +6140,7 @@ GDALRasterBandH CPL_STDCALL GDALGetMaskBand( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetMaskBand", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetMaskBand();
 }
 
@@ -6230,7 +6230,7 @@ int CPL_STDCALL GDALGetMaskFlags( GDALRasterBandH hBand )
 {
     VALIDATE_POINTER1( hBand, "GDALGetMaskFlags", GMF_ALL_VALID );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->GetMaskFlags();
 }
 
@@ -6319,7 +6319,7 @@ CPLErr CPL_STDCALL GDALCreateMaskBand( GDALRasterBandH hBand, int nFlags )
 {
     VALIDATE_POINTER1( hBand, "GDALCreateMaskBand", CE_Failure );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
     return poBand->CreateMaskBand( nFlags );
 }
 
@@ -6634,7 +6634,7 @@ CPLVirtualMem  *GDALRasterBand::GetVirtualMemAuto( GDALRWFlag eRWFlag,
     const bool bSingleThreadUsage =
         CPLTestBool( CSLFetchNameValueDef( papszOptions,
                                            "SINGLE_THREAD", "FALSE" ) );
-    return GDALRasterBandGetVirtualMem( /* (GDALRasterBandH) */ this,
+    return GDALRasterBandGetVirtualMem( GDALRasterBand::ToHandle(this),
                                         eRWFlag,
                                         0, 0, nRasterXSize, nRasterYSize,
                                         nRasterXSize, nRasterYSize,
@@ -6660,14 +6660,15 @@ CPLVirtualMem * GDALGetVirtualMemAuto( GDALRasterBandH hBand,
                                        GDALRWFlag eRWFlag,
                                        int *pnPixelSpace,
                                        GIntBig *pnLineSpace,
-                                       char **papszOptions )
+                                       CSLConstList papszOptions )
 {
     VALIDATE_POINTER1( hBand, "GDALGetVirtualMemAuto", nullptr );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return poBand->GetVirtualMemAuto( eRWFlag, pnPixelSpace,
-                                      pnLineSpace, papszOptions );
+                                      pnLineSpace,
+                                      const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/
@@ -6763,7 +6764,7 @@ int CPL_STDCALL GDALGetDataCoverageStatus( GDALRasterBandH hBand,
     VALIDATE_POINTER1( hBand, "GDALGetDataCoverageStatus",
                        GDAL_DATA_COVERAGE_STATUS_UNIMPLEMENTED );
 
-    GDALRasterBand *poBand = static_cast<GDALRasterBand*>(hBand);
+    GDALRasterBand *poBand = GDALRasterBand::FromHandle(hBand);
 
     return poBand->GetDataCoverageStatus( nXOff, nYOff, nXSize, nYSize,
                                           nMaskFlagStop, pdfDataPct );

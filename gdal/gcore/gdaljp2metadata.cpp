@@ -1291,11 +1291,10 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
 /*      Try do determine a PCS or GCS code we can use.                  */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    char *pszWKTCopy = (char *) pszProjection;
     nEPSGCode = 0;
     bNeedAxisFlip = FALSE;
 
-    if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
+    if( oSRS.importFromWkt( pszProjection ) != OGRERR_NONE )
         return FALSE;
 
     if( oSRS.IsProjected() )

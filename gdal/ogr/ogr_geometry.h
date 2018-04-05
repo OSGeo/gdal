@@ -45,6 +45,18 @@
  * Simple feature geometry classes.
  */
 
+/*! @cond Doxygen_Suppress */
+#ifndef DEFINEH_OGRGeometryH
+#define DEFINEH_OGRGeometryH
+#ifdef DEBUG
+typedef struct OGRGeometryHS *OGRGeometryH;
+#else
+typedef void *OGRGeometryH;
+#endif
+#endif /* DEFINEH_OGRGeometryH */
+/*! @endcond */
+
+
 /**
  * Simple container for a position.
  */
@@ -479,6 +491,18 @@ class CPL_DLL OGRGeometry
     static OGRGeometry* CastToIdentity( OGRGeometry* poGeom ) { return poGeom; }
     static OGRGeometry* CastToError( OGRGeometry* poGeom );
 //! @endcond
+
+    /** Convert a OGRGeometry* to a OGRGeometryH.
+     * @since GDAL 2.3
+     */
+    static inline OGRGeometryH ToHandle(OGRGeometry* poGeom)
+        { return reinterpret_cast<OGRGeometryH>(poGeom); }
+
+    /** Convert a OGRGeometryH to a OGRGeometry*.
+     * @since GDAL 2.3
+     */
+    static inline OGRGeometry* FromHandle(OGRGeometryH hGeom)
+        { return reinterpret_cast<OGRGeometry*>(hGeom); }
 
     /** Down-cast to OGRPoint*.
      * Implies prior checking that wkbFlatten(getGeometryType()) == wkbPoint.

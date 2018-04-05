@@ -96,6 +96,16 @@ def visoss_1():
 
     gdal.SetConfigOption('OSS_ACCESS_KEY_ID', 'OSS_ACCESS_KEY_ID')
 
+    return 'success'
+
+def visoss_real_test():
+
+    if not gdaltest.built_against_curl():
+        return 'skip'
+
+    if gdaltest.skip_on_travis():
+        return 'skip'
+
     # ERROR 1: The OSS Access Key Id you provided does not exist in our records.
     gdal.ErrorReset()
     with gdaltest.error_handler():
@@ -1412,6 +1422,7 @@ def visoss_cleanup():
 
 gdaltest_list = [ visoss_init,
                   visoss_1,
+                  visoss_real_test,
                   visoss_start_webserver,
                   visoss_2,
                   visoss_3,

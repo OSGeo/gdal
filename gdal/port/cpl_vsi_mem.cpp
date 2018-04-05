@@ -511,6 +511,8 @@ VSIMemFilesystemHandler::Open( const char *pszFilename,
     CPLMutexHolder oHolder( &hMutex );
     CPLString osFilename = pszFilename;
     NormalizePath( osFilename );
+    if( osFilename.empty() )
+        return nullptr;
 
     vsi_l_offset nMaxLength = GUINTBIG_MAX;
     const size_t iPos = osFilename.find("||maxlength=");
@@ -939,6 +941,8 @@ VSILFILE *VSIFileFromMemBuffer( const char *pszFilename,
 
     CPLString osFilename = pszFilename;
     VSIMemFilesystemHandler::NormalizePath( osFilename );
+    if( osFilename.empty() )
+        return nullptr;
 
     VSIMemFile *poFile = new VSIMemFile;
 

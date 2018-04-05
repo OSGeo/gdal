@@ -1016,7 +1016,7 @@ GDALGetRandomRasterSample( GDALRasterBandH hBand, int nSamples,
 
     GDALRasterBand *poBand;
 
-    poBand = static_cast<GDALRasterBand *>(GDALGetRasterSampleOverview( hBand, nSamples ));
+    poBand = GDALRasterBand::FromHandle(GDALGetRasterSampleOverview( hBand, nSamples ));
     CPLAssert( nullptr != poBand );
 
 /* -------------------------------------------------------------------- */
@@ -1301,7 +1301,7 @@ GDAL_GCP * CPL_STDCALL GDALDuplicateGCPs( int nCount, const GDAL_GCP *pasGCPList
 
 CPLString GDALFindAssociatedFile( const char *pszBaseFilename,
                                   const char *pszExt,
-                                  char **papszSiblingFiles,
+                                  CSLConstList papszSiblingFiles,
                                   int /* nFlags */ )
 
 {
@@ -1689,10 +1689,8 @@ int CPL_STDCALL GDALLoadTabFile( const char *pszFilename,
             if( ppszWKT != nullptr && *ppszWKT != nullptr
                 && STARTS_WITH_CI(*ppszWKT, "PROJCS") )
             {
-                char *pszSrcWKT = *ppszWKT;
-
                 OGRSpatialReference oSRS;
-                oSRS.importFromWkt( &pszSrcWKT );
+                oSRS.importFromWkt( *ppszWKT );
 
                 OGRSpatialReference oSRSGeogCS;
                 oSRSGeogCS.CopyGeogCSFrom( &oSRS );
@@ -3348,7 +3346,7 @@ GDALGeneralCmdLineProcessor( int nArgc, char ***ppapszArgv, int nOptions )
 /*                          _FetchDblFromMD()                           */
 /************************************************************************/
 
-static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
+static bool _FetchDblFromMD( CSLConstList papszMD, const char *pszKey,
                              double *padfTarget, int nCount, double dfDefault )
 
 {
@@ -3399,7 +3397,7 @@ static bool _FetchDblFromMD( char **papszMD, const char *pszKey,
  * @param psRPC (output) Pointer to structure to hold the RPC values.
  * @return TRUE in case of success. FALSE in case of failure.
  */
-int CPL_STDCALL GDALExtractRPCInfo( char **papszMD, GDALRPCInfo *psRPC )
+int CPL_STDCALL GDALExtractRPCInfo( CSLConstList papszMD, GDALRPCInfo *psRPC )
 
 {
     if( CSLFetchNameValue( papszMD, RPC_LINE_NUM_COEFF ) == nullptr )
@@ -3495,9 +3493,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
             /* when auxiliary file cannot be opened (#3269) */
             CPLTurnFailureIntoWarning(TRUE);
             if( poDependentDS != nullptr && poDependentDS->GetShared() )
-                poODS = static_cast<GDALDataset *>(GDALOpenShared( osAuxFilename, eAccess ));
+                poODS = GDALDataset::FromHandle(GDALOpenShared( osAuxFilename, eAccess ));
             else
-                poODS = static_cast<GDALDataset *>(GDALOpen( osAuxFilename, eAccess ));
+                poODS = GDALDataset::FromHandle(GDALOpen( osAuxFilename, eAccess ));
             CPLTurnFailureIntoWarning(FALSE);
         }
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
@@ -3592,9 +3590,9 @@ GDALDataset *GDALFindAssociatedAuxFile( const char *pszBasename,
                 /* when auxiliary file cannot be opened (#3269) */
                 CPLTurnFailureIntoWarning(TRUE);
                 if( poDependentDS != nullptr && poDependentDS->GetShared() )
-                    poODS = static_cast<GDALDataset *>(GDALOpenShared( osAuxFilename, eAccess ));
+                    poODS = GDALDataset::FromHandle(GDALOpenShared( osAuxFilename, eAccess ));
                 else
-                    poODS = static_cast<GDALDataset *>(GDALOpen( osAuxFilename, eAccess ));
+                    poODS = GDALDataset::FromHandle(GDALOpen( osAuxFilename, eAccess ));
                 CPLTurnFailureIntoWarning(FALSE);
             }
             CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));

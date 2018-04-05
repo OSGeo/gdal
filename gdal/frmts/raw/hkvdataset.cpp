@@ -495,9 +495,8 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
     {
         // Pass copies of projection info, not originals (pointers get updated
         // by importFromWkt).
-        char *pszPtemp = pszProjection;
         OGRSpatialReference oUTM;
-        oUTM.importFromWkt(&pszPtemp);
+        oUTM.importFromWkt(pszProjection);
 
         OGR_SRSNode* poGEOGCS = oUTM.GetAttrNode("GEOGCS");
         if( poGEOGCS )
@@ -506,8 +505,7 @@ CPLErr HKVDataset::SetGeoTransform( double * padfTransform )
             poGEOGCS->exportToWkt(&pszGCPProj);
 
             OGRSpatialReference oLL;
-            char* pszGCPtemp = pszGCPProj;
-            oLL.importFromWkt(&pszGCPtemp);
+            oLL.importFromWkt(pszGCPProj);
             CPLFree(pszGCPProj);
             poTransform = OGRCreateCoordinateTransformation( &oUTM, &oLL );
             if( poTransform == nullptr )

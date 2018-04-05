@@ -3397,9 +3397,8 @@ void netCDFDataset::SetProjectionFromVar( int nVarId, bool bReadSRSOnly )
             {
                 // Use the SRS from GDAL if it doesn't conflict with the one
                 // from CF.
-                char *pszProjectionGDAL = (char *)pszWKT;
                 OGRSpatialReference oSRSGDAL;
-                oSRSGDAL.importFromWkt(&pszProjectionGDAL);
+                oSRSGDAL.importFromWkt(pszWKT);
                 // Set datum to unknown or else datums will not match, see bug
                 // #4281.
                 if( oSRSGDAL.GetAttrNode("DATUM") )
@@ -4075,9 +4074,8 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
     GDALDatasetH hDS_Y = nullptr;
     GDALRasterBandH hBand_Y = nullptr;
 
-    char *pszWKT = (char *)pszProjection;
     OGRSpatialReference oSRS;
-    oSRS.importFromWkt(&pszWKT);
+    oSRS.importFromWkt(pszProjection);
 
     if( oSRS.IsProjected() )
         bIsProjected = true;
@@ -4479,9 +4477,8 @@ CPLErr netCDFDataset::AddProjectionVars( bool bDefsOnly,
             OGRSpatialReference *poLatLonSRS = nullptr;
             OGRCoordinateTransformation *poTransform = nullptr;
 
-            char *pszWKT2 = (char *)pszProjection;
             OGRSpatialReference oSRS2;
-            oSRS2.importFromWkt(&pszWKT2);
+            oSRS2.importFromWkt(pszProjection);
 
             size_t startX[1];
             size_t countX[1];
@@ -7267,8 +7264,7 @@ GDALDataset *netCDFDataset::Open( GDALOpenInfo *poOpenInfo )
                 if( poDS->pszProjection != nullptr )
                 {
                     poSRS = new OGRSpatialReference();
-                    char *pszWKT = poDS->pszProjection;
-                    if( poSRS->importFromWkt(&pszWKT) != OGRERR_NONE )
+                    if( poSRS->importFromWkt(poDS->pszProjection) != OGRERR_NONE )
                     {
                         delete poSRS;
                         poSRS = nullptr;

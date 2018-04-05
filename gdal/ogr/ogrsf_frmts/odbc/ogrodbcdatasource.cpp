@@ -506,11 +506,11 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
 
             while ( oSRSList.Fetch() )
             {
-                char *pszSRID = (char *) oSRSList.GetColData( pszSRIDCol );
+                const char *pszSRID = oSRSList.GetColData( pszSRIDCol );
                 if ( !pszSRID )
                     continue;
 
-                char *pszSRText = (char *) oSRSList.GetColData( pszSRTextCol );
+                const char *pszSRText = oSRSList.GetColData( pszSRTextCol );
 
                 if ( pszSRText )
                 {
@@ -525,7 +525,7 @@ int OGRODBCDataSource::Open( const char * pszNewName, int bUpdate,
                     }
                     panSRID[nKnownSRID] = atoi( pszSRID );
                     papoSRS[nKnownSRID] = new OGRSpatialReference();
-                    if ( papoSRS[nKnownSRID]->importFromWkt( &pszSRText )
+                    if ( papoSRS[nKnownSRID]->importFromWkt( pszSRText )
                          != OGRERR_NONE )
                     {
                         delete papoSRS[nKnownSRID];

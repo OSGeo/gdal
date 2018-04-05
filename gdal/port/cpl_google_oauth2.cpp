@@ -328,7 +328,7 @@ static char** GOA2ProcessResponse(CPLHTTPResult *psResult)
 static char** GOA2GetAccessTokenEx(const char *pszRefreshToken,
                                    const char* pszClientId,
                                    const char* pszClientSecret,
-                                   char** /*papszOptions*/)
+                                   CSLConstList /*papszOptions*/)
 {
 
 /* -------------------------------------------------------------------- */
@@ -415,7 +415,7 @@ char *GOA2GetAccessToken( const char *pszRefreshToken,
  * @since GDAL 2.3
  */
 
-char **GOA2GetAccessTokenFromCloudEngineVM( char** papszOptions )
+char **GOA2GetAccessTokenFromCloudEngineVM( CSLConstList papszOptions )
 {
     CPLStringList oOptions;
 
@@ -459,8 +459,8 @@ char **GOA2GetAccessTokenFromCloudEngineVM( char** papszOptions )
 char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
                                         const char* pszClientEmail,
                                         const char* pszScope,
-                                        char** papszAdditionalClaims,
-                                        char** papszOptions)
+                                        CSLConstList papszAdditionalClaims,
+                                        CSLConstList papszOptions)
 {
     CPL_IGNORE_RET_VAL(papszOptions);
 
@@ -488,7 +488,7 @@ char** GOA2GetAccessTokenFromServiceAccount(const char* pszPrivateKey,
     osClaim += ", \"exp\": ";
     osClaim += CPLSPrintf(CPL_FRMT_GIB, now +
                     atoi(CPLGetConfigOption("GOA2_EXPIRATION_DELAY", "3600")));
-    for( char** papszIter = papszAdditionalClaims;
+    for( CSLConstList papszIter = papszAdditionalClaims;
                     papszIter && *papszIter; ++papszIter )
     {
         char* pszKey = nullptr;
@@ -571,10 +571,10 @@ GOA2Manager::GOA2Manager() :
  * @param papszOptions NULL terminated list of options.
  * @return true in case of success (no network access is done at this stage)
  */
-bool GOA2Manager::SetAuthFromGCE( char** papszOptions )
+bool GOA2Manager::SetAuthFromGCE( CSLConstList papszOptions )
 {
     m_eMethod = GCE;
-    m_aosOptions = CPLStringList(papszOptions, FALSE);
+    m_aosOptions = papszOptions;
     return true;
 }
 
@@ -599,7 +599,7 @@ bool GOA2Manager::SetAuthFromGCE( char** papszOptions )
 bool GOA2Manager::SetAuthFromRefreshToken( const char* pszRefreshToken,
                                            const char* pszClientId,
                                            const char* pszClientSecret,
-                                           char** papszOptions )
+                                           CSLConstList papszOptions )
 {
     if( pszRefreshToken == nullptr )
     {
@@ -611,7 +611,7 @@ bool GOA2Manager::SetAuthFromRefreshToken( const char* pszRefreshToken,
     m_osRefreshToken = pszRefreshToken;
     m_osClientId = pszClientId ? pszClientId : "";
     m_osClientSecret = pszClientSecret ? pszClientSecret : "";
-    m_aosOptions = CPLStringList(papszOptions, FALSE);
+    m_aosOptions = papszOptions;
     return true;
 }
 
@@ -635,8 +635,8 @@ bool GOA2Manager::SetAuthFromRefreshToken( const char* pszRefreshToken,
 bool GOA2Manager::SetAuthFromServiceAccount(const char* pszPrivateKey,
                                             const char* pszClientEmail,
                                             const char* pszScope,
-                                            char** papszAdditionalClaims,
-                                            char** papszOptions )
+                                            CSLConstList papszAdditionalClaims,
+                                            CSLConstList papszOptions )
 {
     if( pszPrivateKey == nullptr || EQUAL(pszPrivateKey, "") )
     {
@@ -660,8 +660,8 @@ bool GOA2Manager::SetAuthFromServiceAccount(const char* pszPrivateKey,
     m_osPrivateKey = pszPrivateKey;
     m_osClientEmail = pszClientEmail;
     m_osScope = pszScope;
-    m_aosAdditionalClaims = CPLStringList(papszAdditionalClaims, FALSE);
-    m_aosOptions = CPLStringList(papszOptions, FALSE);
+    m_aosAdditionalClaims = papszAdditionalClaims;
+    m_aosOptions = papszOptions;
     return true;
 }
 

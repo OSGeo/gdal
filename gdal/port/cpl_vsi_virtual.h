@@ -112,7 +112,7 @@ public:
     virtual int HasOptimizedReadMultiRange(const char* /* pszPath */) { return FALSE; }
     virtual const char* GetActualURL(const char* /*pszFilename*/) { return nullptr; }
     virtual const char* GetOptions() { return nullptr; }
-    virtual char* GetSignedURL(const char* /*pszFilename*/, char** /* papszOptions */) { return nullptr; }
+    virtual char* GetSignedURL(const char* /*pszFilename*/, CSLConstList /* papszOptions */) { return nullptr; }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 

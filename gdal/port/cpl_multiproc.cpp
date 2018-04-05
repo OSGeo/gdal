@@ -95,14 +95,14 @@ struct _CPLLock
 
 #if defined(__x86_64)
 #define GCC_CPUID(level, a, b, c, d)            \
-  __asm__ ("xchgq %%rbx, %q1\n"                 \
+  __asm__ volatile ("xchgq %%rbx, %q1\n"                 \
            "cpuid\n"                            \
            "xchgq %%rbx, %q1"                   \
        : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
        : "0" (level))
 #else
 #define GCC_CPUID(level, a, b, c, d)            \
-  __asm__ ("xchgl %%ebx, %1\n"                  \
+  __asm__ volatile ("xchgl %%ebx, %1\n"                  \
            "cpuid\n"                            \
            "xchgl %%ebx, %1"                    \
        : "=a" (a), "=r" (b), "=c" (c), "=d" (d) \
@@ -1991,25 +1991,31 @@ CPLJoinableThread* CPLCreateJoinableThread( CPLThreadFunc pfnMain,
     psInfo->bInitDone = false;
     pthread_mutex_t sMutex = PTHREAD_MUTEX_INITIALIZER;
     psInfo->sMutex = sMutex;
-    if( pthread_cond_init(&(psInfo->sCond), nullptr) != 0 )
     {
-        CPLFree( psInfo );
-        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
-        return nullptr;
+        int err = pthread_cond_init(&(psInfo->sCond), nullptr);
+        if( err != 0 )
+        {
+            CPLFree( psInfo );
+            fprintf(stderr, "CPLCreateJoinableThread() failed: %s.\n",
+                    strerror(err));
+            return nullptr;
+        }
     }
 #endif
 
     pthread_attr_t hThreadAttr;
     pthread_attr_init( &hThreadAttr );
     pthread_attr_setdetachstate( &hThreadAttr, PTHREAD_CREATE_JOINABLE );
-    if( pthread_create( &(psInfo->hThread), &hThreadAttr,
-                        CPLStdCallThreadJacket, (void *) psInfo ) != 0 )
+    int err = pthread_create( &(psInfo->hThread), &hThreadAttr,
+                        CPLStdCallThreadJacket, (void *) psInfo );
+    if( err != 0 )
     {
 #ifdef CHECK_THREAD_CAN_ALLOCATE_TLS
         pthread_cond_destroy(&(psInfo->sCond));
 #endif
         CPLFree( psInfo );
-        fprintf(stderr, "CPLCreateJoinableThread() failed.\n");
+        fprintf(stderr, "CPLCreateJoinableThread() failed: %s.\n",
+                strerror(err));
         return nullptr;
     }
 

@@ -702,9 +702,7 @@ GDALDataset *KmlSuperOverlayCreateCopy( const char * pszFilename,
     {
         OGRSpatialReference poDsUTM;
 
-        char* projStr = (char*)poSrcDS->GetProjectionRef();
-
-        if (poDsUTM.importFromWkt(&projStr) == OGRERR_NONE)
+        if (poDsUTM.importFromWkt(poSrcDS->GetProjectionRef()) == OGRERR_NONE)
         {
             if (poDsUTM.IsProjected())
             {

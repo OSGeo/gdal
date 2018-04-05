@@ -198,6 +198,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr      exportToMICoordSys( char ** ) const;
 
     OGRErr      importFromWkt( char ** );
+    OGRErr      importFromWkt( const char* );
     OGRErr      importFromProj4( const char * );
     OGRErr      importFromEPSG( int );
     OGRErr      importFromEPSGA( int );
@@ -601,6 +602,19 @@ class CPL_DLL OGRSpatialReference
         const char* pszUnitsName, const char* pszCSName = nullptr );
 
     static OGRSpatialReference* GetWGS84SRS();
+
+    /** Convert a OGRSpatialReference* to a OGRSpatialReferenceH.
+     * @since GDAL 2.3
+     */
+    static inline OGRSpatialReferenceH ToHandle(OGRSpatialReference* poSRS)
+        { return reinterpret_cast<OGRSpatialReferenceH>(poSRS); }
+
+    /** Convert a OGRSpatialReferenceH to a OGRSpatialReference*.
+     * @since GDAL 2.3
+     */
+    static inline OGRSpatialReference* FromHandle(OGRSpatialReferenceH hSRS)
+        { return reinterpret_cast<OGRSpatialReference*>(hSRS); }
+
 };
 
 /************************************************************************/
@@ -678,6 +692,18 @@ public:
     virtual int TransformEx( int nCount,
                              double *x, double *y, double *z = nullptr,
                              int *pabSuccess = nullptr ) = 0;
+
+    /** Convert a OGRCoordinateTransformation* to a OGRCoordinateTransformationH.
+     * @since GDAL 2.3
+     */
+    static inline OGRCoordinateTransformationH ToHandle(OGRCoordinateTransformation* poCT)
+        { return reinterpret_cast<OGRCoordinateTransformationH>(poCT); }
+
+    /** Convert a OGRCoordinateTransformationH to a OGRCoordinateTransformation*.
+     * @since GDAL 2.3
+     */
+    static inline OGRCoordinateTransformation* FromHandle(OGRCoordinateTransformationH hCT)
+        { return reinterpret_cast<OGRCoordinateTransformation*>(hCT); }
 };
 
 OGRCoordinateTransformation CPL_DLL *

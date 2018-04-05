@@ -614,8 +614,10 @@ def basic_test_16():
         return 'fail'
 
     gdal.ErrorReset()
+    gdal.Translate('/vsimem/temp.tif', 'data/byte.tif', options = '-co BLOCKYSIZE=10')
     with gdaltest.error_handler():
-        gdal.OpenEx('data/byte.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
+        gdal.OpenEx('/vsimem/temp.tif', gdal.OF_UPDATE, open_options=['@NUM_THREADS=INVALID'])
+    gdal.Unlink('/vsimem/temp.tif')
     if gdal.GetLastErrorMsg() != 'Invalid value for NUM_THREADS: INVALID':
         gdaltest.post_reason('fail')
         print(gdal.GetLastErrorMsg())

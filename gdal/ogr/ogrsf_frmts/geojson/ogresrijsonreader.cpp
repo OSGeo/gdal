@@ -1013,10 +1013,9 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
             if( poObjWkt == nullptr )
                 return nullptr;
 
-            char* pszWKT =
-                const_cast<char*>(json_object_get_string( poObjWkt ));
+            const char* pszWKT = json_object_get_string( poObjWkt );
             poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->importFromWkt( &pszWKT ) ||
+            if( OGRERR_NONE != poSRS->importFromWkt( pszWKT ) ||
                 poSRS->morphFromESRI() != OGRERR_NONE )
             {
                 delete poSRS;

@@ -1162,8 +1162,7 @@ GDALDataset * AAIGDataset::CreateCopy(
         if (fp != nullptr)
         {
             OGRSpatialReference oSRS;
-            // TODO(schwehr): importFromWkt should be const for the args.
-            oSRS.importFromWkt(const_cast<char **>(&pszOriginalProjection));
+            oSRS.importFromWkt(pszOriginalProjection);
             oSRS.morphToESRI();
             char *pszESRIProjection = nullptr;
             oSRS.exportToWkt(&pszESRIProjection);

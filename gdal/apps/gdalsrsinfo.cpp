@@ -1,4 +1,4 @@
-/******************************************************************************
+    /******************************************************************************
  *
  * Project:  GDAL Utilities
  * Purpose:  Command line application to list info about a given CRS.
@@ -309,8 +309,7 @@ bool FindSRS( const char *pszInput, OGRSpatialReference &oSRS )
         pszProjection = poGDALDS->GetProjectionRef( );
         if( pszProjection != nullptr && pszProjection[0] != '\0' )
         {
-            char* pszProjectionTmp = const_cast<char*>(pszProjection);
-            if( oSRS.importFromWkt( &pszProjectionTmp ) == OGRERR_NONE ) {
+            if( oSRS.importFromWkt( pszProjection ) == OGRERR_NONE ) {
                 CPLDebug( "gdalsrsinfo", "got SRS from GDAL" );
                 bGotSRS = true;
             }

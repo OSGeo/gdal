@@ -3172,7 +3172,6 @@ int ECWTranslateFromWKT( const char *pszWKT,
 
 {
     OGRSpatialReference oSRS;
-    char *pszWKTIn = (char *) pszWKT;
 
     strcpy( pszProjection, "RAW" );
     strcpy( pszDatum, "RAW" );
@@ -3181,7 +3180,7 @@ int ECWTranslateFromWKT( const char *pszWKT,
     if( pszWKT == nullptr || strlen(pszWKT) == 0 )
         return FALSE;
 
-    oSRS.importFromWkt( &pszWKTIn );
+    oSRS.importFromWkt( pszWKT );
 
     if( oSRS.IsLocal() )
         return TRUE;

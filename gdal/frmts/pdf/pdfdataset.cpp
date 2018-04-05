@@ -6334,8 +6334,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject* poMeasure,
 
     if (!bSRSOK)
     {
-        char* pszWktTemp = pszWKT;
-        if (oSRS.importFromWkt(&pszWktTemp) != OGRERR_NONE)
+        if (oSRS.importFromWkt(pszWKT) != OGRERR_NONE)
         {
             CPLFree(pszWKT);
             pszWKT = nullptr;

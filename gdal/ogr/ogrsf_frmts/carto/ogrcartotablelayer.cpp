@@ -235,8 +235,7 @@ OGRFeatureDefn * OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object
                         if( pszSRText != nullptr )
                         {
                             l_poSRS = new OGRSpatialReference();
-                            char* pszTmp = (char* )pszSRText;
-                            if( l_poSRS->importFromWkt(&pszTmp) != OGRERR_NONE )
+                            if( l_poSRS->importFromWkt(pszSRText) != OGRERR_NONE )
                             {
                                 delete l_poSRS;
                                 l_poSRS = nullptr;

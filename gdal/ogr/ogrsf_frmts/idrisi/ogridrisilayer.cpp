@@ -60,8 +60,7 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
     if (pszWTKString)
     {
         poSRS = new OGRSpatialReference();
-        char* pszTmp = const_cast<char *>(pszWTKString);
-        poSRS->importFromWkt(&pszTmp);
+        poSRS->importFromWkt(pszWTKString);
     }
 
     SetDescription( poFeatureDefn->GetName() );

@@ -1279,7 +1279,7 @@ AVCBinFile *_AVCBinReadOpenPrj(const char *pszPath, const char *pszName)
     pszFname = (char*)CPLMalloc(strlen(pszPath)+strlen(pszName)+1);
     snprintf(pszFname, strlen(pszPath)+strlen(pszName)+1, "%s%s", pszPath, pszName);
 
-    papszPrj = CSLLoad(pszFname);
+    papszPrj = CSLLoad2(pszFname, 50, 160, nullptr);
 
     CPLFree(pszFname);
 

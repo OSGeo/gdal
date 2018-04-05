@@ -1696,10 +1696,10 @@ OGRFMEDataSource::FME2OGRSpatialRef( const char *pszCoordsys )
     poSession->coordSysManager()->getCoordSysAsOGCDef(
         pszCoordsys, *poOGCDef );
 
-    char *pszWKT = (char *) poOGCDef->data();
+    const char *pszWKT = poOGCDef->data();
     OGRSpatialReference oSRS;
 
-    if( oSRS.importFromWkt( &pszWKT ) == OGRERR_NONE )
+    if( oSRS.importFromWkt( pszWKT ) == OGRERR_NONE )
     {
         poSession->destroyString( poOGCDef );
         return oSRS.Clone();

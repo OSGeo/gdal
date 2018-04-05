@@ -539,7 +539,7 @@ CPLErr IDADataset::SetProjection( const char *pszWKTIn )
 {
     OGRSpatialReference oSRS;
 
-    oSRS.importFromWkt( const_cast<char **>( &pszWKTIn ) );
+    oSRS.importFromWkt( pszWKTIn );
 
     if( !oSRS.IsGeographic() && !oSRS.IsProjected() )
         GDALPamDataset::SetProjection( pszWKTIn );

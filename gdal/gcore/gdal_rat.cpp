@@ -165,7 +165,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsDouble(
 {
     VALIDATE_POINTER1( hRAT, "GDALRATValuesIOAsDouble", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         ValuesIO(eRWFlag, iField, iStartRow, iLength, pdfData);
 }
 
@@ -227,7 +227,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsInteger(
 {
     VALIDATE_POINTER1( hRAT, "GDALRATValuesIOAsInteger", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         ValuesIO(eRWFlag, iField, iStartRow, iLength, pnData);
 }
 
@@ -287,13 +287,14 @@ CPLErr GDALRasterAttributeTable::ValuesIO(
  */
 CPLErr CPL_STDCALL GDALRATValuesIOAsString(
     GDALRasterAttributeTableH hRAT, GDALRWFlag eRWFlag,
-    int iField, int iStartRow, int iLength, char **papszStrList )
+    int iField, int iStartRow, int iLength, CSLConstList papszStrList )
 
 {
     VALIDATE_POINTER1( hRAT, "GDALRATValuesIOAsString", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
-        ValuesIO(eRWFlag, iField, iStartRow, iLength, papszStrList);
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
+        ValuesIO(eRWFlag, iField, iStartRow, iLength,
+        const_cast<char**>(papszStrList));
 }
 
 /************************************************************************/
@@ -333,7 +334,7 @@ GDALRATSetRowCount( GDALRasterAttributeTableH hRAT, int nNewCount )
 {
     VALIDATE_POINTER0( hRAT, "GDALRATSetRowCount" );
 
-    static_cast<GDALRasterAttributeTable *>(hRAT)->SetRowCount( nNewCount );
+    GDALRasterAttributeTable::FromHandle(hRAT)->SetRowCount( nNewCount );
 }
 
 /************************************************************************/
@@ -379,7 +380,7 @@ GDALRATGetRowOfValue( GDALRasterAttributeTableH hRAT, double dfValue )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetRowOfValue", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetRowOfValue( dfValue );
 }
 
@@ -460,7 +461,7 @@ CPLErr CPL_STDCALL GDALRATCreateColumn( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATCreateColumn", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         CreateColumn( pszFieldName, eFieldType, eFieldUsage );
 }
 
@@ -506,7 +507,7 @@ GDALRATSetLinearBinning( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATSetLinearBinning", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         SetLinearBinning( dfRow0Min, dfBinSize );
 }
 
@@ -551,7 +552,7 @@ GDALRATGetLinearBinning( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetLinearBinning", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetLinearBinning( pdfRow0Min, pdfBinSize );
 }
 
@@ -911,8 +912,8 @@ GDALRATInitializeFromColorTable( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATInitializeFromColorTable", CE_Failure );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
-        InitializeFromColorTable( static_cast<GDALColorTable *>(hCT) );
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
+        InitializeFromColorTable( GDALColorTable::FromHandle(hCT) );
 }
 
 /************************************************************************/
@@ -1017,7 +1018,7 @@ GDALRATTranslateToColorTable( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATTranslateToColorTable", nullptr );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         TranslateToColorTable( nEntryCount );
 }
 
@@ -1068,7 +1069,7 @@ GDALRATDumpReadable( GDALRasterAttributeTableH hRAT, FILE *fp )
 {
     VALIDATE_POINTER0( hRAT, "GDALRATDumpReadable" );
 
-    static_cast<GDALRasterAttributeTable *>(hRAT)->DumpReadable( fp );
+    GDALRasterAttributeTable::FromHandle(hRAT)->DumpReadable( fp );
 }
 
 /* \class GDALDefaultRasterAttributeTable
@@ -1149,7 +1150,7 @@ GDALDestroyRasterAttributeTable( GDALRasterAttributeTableH hRAT )
 
 {
     if( hRAT != nullptr )
-        delete static_cast<GDALRasterAttributeTable *>(hRAT);
+        delete GDALRasterAttributeTable::FromHandle(hRAT);
 }
 
 /************************************************************************/
@@ -1198,7 +1199,7 @@ int CPL_STDCALL GDALRATGetColumnCount( GDALRasterAttributeTableH hRAT )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetColumnCount", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->GetColumnCount();
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetColumnCount();
 }
 
 /************************************************************************/
@@ -1237,7 +1238,7 @@ const char *CPL_STDCALL GDALRATGetNameOfCol( GDALRasterAttributeTableH hRAT,
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetNameOfCol", nullptr );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->GetNameOfCol( iCol );
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetNameOfCol( iCol );
 }
 
 /************************************************************************/
@@ -1279,7 +1280,7 @@ GDALRATGetUsageOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetUsageOfCol", GFU_Generic );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->GetUsageOfCol( iCol );
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetUsageOfCol( iCol );
 }
 
 /************************************************************************/
@@ -1320,7 +1321,7 @@ GDALRATGetTypeOfCol( GDALRasterAttributeTableH hRAT, int iCol )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetTypeOfCol", GFT_Integer );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->GetTypeOfCol( iCol );
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetTypeOfCol( iCol );
 }
 
 /************************************************************************/
@@ -1360,7 +1361,7 @@ GDALRATGetColOfUsage( GDALRasterAttributeTableH hRAT, GDALRATFieldUsage eUsage )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetColOfUsage", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetColOfUsage( eUsage );
 }
 
@@ -1389,7 +1390,7 @@ GDALRATGetRowCount( GDALRasterAttributeTableH hRAT )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetRowCount", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->GetRowCount();
+    return GDALRasterAttributeTable::FromHandle(hRAT)->GetRowCount();
 }
 
 /************************************************************************/
@@ -1456,7 +1457,7 @@ GDALRATGetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsString", nullptr );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetValueAsString(iRow, iField);
 }
 
@@ -1515,7 +1516,7 @@ GDALRATGetValueAsInt( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsInt", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetValueAsInt( iRow, iField );
 }
 
@@ -1574,7 +1575,7 @@ GDALRATGetValueAsDouble( GDALRasterAttributeTableH hRAT, int iRow, int iField )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATGetValueAsDouble", 0 );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         GetValueAsDouble(iRow,iField);
 }
 
@@ -1681,7 +1682,7 @@ GDALRATSetValueAsString( GDALRasterAttributeTableH hRAT, int iRow, int iField,
 {
     VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsString" );
 
-    static_cast<GDALRasterAttributeTable *>(hRAT)->
+    GDALRasterAttributeTable::FromHandle(hRAT)->
         SetValue( iRow, iField, pszValue );
 }
 
@@ -1750,7 +1751,7 @@ GDALRATSetValueAsInt( GDALRasterAttributeTableH hRAT, int iRow, int iField,
 {
     VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsInt" );
 
-    static_cast<GDALRasterAttributeTable *>(hRAT)->
+    GDALRasterAttributeTable::FromHandle(hRAT)->
         SetValue( iRow, iField, nValue);
 }
 
@@ -1819,7 +1820,7 @@ GDALRATSetValueAsDouble( GDALRasterAttributeTableH hRAT, int iRow, int iField,
 {
     VALIDATE_POINTER0( hRAT, "GDALRATSetValueAsDouble" );
 
-    static_cast<GDALRasterAttributeTable *>(hRAT)->
+    GDALRasterAttributeTable::FromHandle(hRAT)->
         SetValue( iRow, iField, dfValue );
 }
 
@@ -1850,7 +1851,7 @@ GDALRATChangesAreWrittenToFile( GDALRasterAttributeTableH hRAT )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATChangesAreWrittenToFile", FALSE );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->
+    return GDALRasterAttributeTable::FromHandle(hRAT)->
         ChangesAreWrittenToFile();
 }
 
@@ -2037,7 +2038,7 @@ GDALRATClone( GDALRasterAttributeTableH hRAT )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATClone", nullptr );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->Clone();
+    return GDALRasterAttributeTable::FromHandle(hRAT)->Clone();
 }
 
 /************************************************************************/
@@ -2056,5 +2057,5 @@ GDALRATSerializeJSON( GDALRasterAttributeTableH hRAT )
 {
     VALIDATE_POINTER1( hRAT, "GDALRATSerializeJSON", nullptr );
 
-    return static_cast<GDALRasterAttributeTable *>(hRAT)->SerializeJSON();
+    return GDALRasterAttributeTable::FromHandle(hRAT)->SerializeJSON();
 }

@@ -746,8 +746,8 @@ GCSysCoord GCSRSAPI_CALL1(*) OGRSpatialReference2SysCoord_GCSRS ( OGRSpatialRefe
   datum= _findDatum_GCSRS(p[0], p[1], p[2], GetInfoSpheroidSemiMajor_GCSRS(ell), f);
   if( GetInfoDatumID_GCSRS(datum)==-1 )
   {
-    CPLDebug("GEOCONCEPT", "Unsupported datum : %.4f %.4f; %.4f %.4f %.10f",
-             p[0], p[1], p[2], a, 1.0/rf);
+    CPLDebug("GEOCONCEPT", "Unsupported datum : %.4f %.4f; %.4f a=%.4f rf=%.10f",
+             p[0], p[1], p[2], a, rf);
     goto onError;
   }
   /* FIXME : WGS 84 and GRS 80 assimilation by Geoconcept : */

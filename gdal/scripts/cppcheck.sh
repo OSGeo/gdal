@@ -2,12 +2,28 @@
 # Note: tested with cppcheck 1.72 as shipped with Ubuntu 16.04
 # as well as with cppcheck 1.76.1
 
+
+SCRIPT_DIR=`dirname $0`
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=`pwd`
+        ;;
+    *)
+        SCRIPT_DIR=`pwd`"/"`dirname $0`
+        ;;
+esac
+GDAL_ROOT=$SCRIPT_DIR/..
+cd $GDAL_ROOT
+
+
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
 echo "" > ${LOG_FILE}
 for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
-    echo "Running cppcheck on $dirname... (can be long)"
-    if ! cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
+    printf "Running cppcheck on $dirname (can be long): "
+    cppcheck --inline-suppr --template='{file}:{line},{severity},{id},{message}' \
         --enable=all --inconclusive --std=posix -UAFL_FRIENDLY -UANDROID \
         -UCOMPAT_WITH_ICC_CONVERSION_CHECK -DDEBUG -UDEBUG_BOOL -DHAVE_CXX11=1 \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
@@ -39,7 +55,15 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -i gdalasyncread.cpp \
         -i gdaltorture.cpp \
         $dirname \
-        -j 8 >>${LOG_FILE} 2>&1 ; then
+        -j $(nproc) >>${LOG_FILE} 2>&1 &
+    # Display some progress to avoid Travis-CI killing the job after 10 minutes
+    PID=$!
+    while kill -0 $PID 2>/dev/null; do
+        printf "."
+        sleep 1
+    done
+    echo " done"
+    if ! wait $PID; then
         echo "cppcheck failed"
         exit 1
     fi

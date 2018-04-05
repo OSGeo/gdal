@@ -3568,10 +3568,8 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
 /* -------------------------------------------------------------------- */
 /*      Translate into a spatial reference.                             */
 /* -------------------------------------------------------------------- */
-            char *pszWKT = (char *) osWKT.c_str();
-
             poSRS = new OGRSpatialReference();
-            if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+            if( poSRS->importFromWkt( osWKT.c_str() ) != OGRERR_NONE )
             {
                 delete poSRS;
                 poSRS = nullptr;
@@ -3619,7 +3617,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             const char* pszProj4Text = papszRow[0];
             const char* pszAuthName = papszRow[1];
             int nAuthSRID = (papszRow[2] != nullptr) ? atoi(papszRow[2]) : 0;
-            char* pszWKT = (pszSRTEXTColName != nullptr) ? (char*) papszRow[3] : nullptr;
+            const char* pszWKT = (pszSRTEXTColName != nullptr) ? papszRow[3] : nullptr;
 
             poSRS = new OGRSpatialReference();
 
@@ -3632,7 +3630,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS( int nId )
             }
             /* Then from WKT string */
             else if( pszWKT != nullptr &&
-                     poSRS->importFromWkt( &pszWKT ) == OGRERR_NONE )
+                     poSRS->importFromWkt( pszWKT ) == OGRERR_NONE )
             {
                 /* Do nothing */
             }

@@ -144,7 +144,7 @@ char **CSLAddStringMayFail( char **papszStrList, const char *pszNewString )
  *
  * @return the number of entries.
  */
-int CSLCount( const char * const *papszStrList )
+int CSLCount( CSLConstList papszStrList )
 {
     if( !papszStrList )
         return 0;
@@ -170,7 +170,7 @@ int CSLCount( const char * const *papszStrList )
  *
  * The returned pointer should not be freed, and doesn't necessarily last long.
  */
-const char *CSLGetField( char ** papszStrList, int iField )
+const char *CSLGetField( CSLConstList papszStrList, int iField )
 
 {
     if( papszStrList == nullptr || iField < 0 )
@@ -225,14 +225,14 @@ void CPL_STDCALL CSLDestroy( char **papszStrList )
  * @return newly allocated copy.
  */
 
-char **CSLDuplicate( char **papszStrList )
+char **CSLDuplicate( CSLConstList papszStrList )
 {
     const int nLines = CSLCount(papszStrList);
 
     if( nLines == 0 )
         return nullptr;
 
-    char **papszSrc = papszStrList;
+    CSLConstList papszSrc = papszStrList;
 
     char **papszNewList = static_cast<char **>(
         CPLMalloc( (nLines + 1) * sizeof(char*) ) );
@@ -265,7 +265,7 @@ char **CSLDuplicate( char **papszStrList )
  * @return updated list.
  */
 
-char **CSLMerge( char **papszOrig, char **papszOverride )
+char **CSLMerge( char **papszOrig, CSLConstList papszOverride )
 
 {
     if( papszOrig == nullptr && papszOverride != nullptr )
@@ -314,7 +314,7 @@ char **CSLMerge( char **papszOrig, char **papszOverride )
  */
 
 char **CSLLoad2( const char *pszFname, int nMaxLines, int nMaxCols,
-                 const char * const * papszOptions )
+                 CSLConstList papszOptions )
 {
     VSILFILE *fp = VSIFOpenL(pszFname, "rb");
 
@@ -409,7 +409,7 @@ char **CSLLoad( const char *pszFname )
  * be written.
  */
 
-int CSLSave( char **papszStrList, const char *pszFname )
+int CSLSave( CSLConstList papszStrList, const char *pszFname )
 {
     if( papszStrList == nullptr )
         return 0;
@@ -458,7 +458,7 @@ int CSLSave( char **papszStrList, const char *pszFname )
  *
  * Returns the number of lines printed.
  */
-int CSLPrint( char **papszStrList, FILE *fpOut )
+int CSLPrint( CSLConstList papszStrList, FILE *fpOut )
 {
     if( !papszStrList )
         return 0;
@@ -495,7 +495,7 @@ int CSLPrint( char **papszStrList, FILE *fpOut )
  */
 
 char **CSLInsertStrings( char **papszStrList, int nInsertAtLineNo,
-                         char **papszNewLines )
+                         CSLConstList papszNewLines )
 {
     if( papszNewLines == nullptr )
         return papszStrList;  // Nothing to do!
@@ -521,19 +521,21 @@ char **CSLInsertStrings( char **papszStrList, int nInsertAtLineNo,
     if( nInsertAtLineNo == -1 || nInsertAtLineNo > nSrcLines )
         nInsertAtLineNo = nSrcLines;
 
-    char **ppszSrc = papszStrList + nSrcLines;
-    char **ppszDst = papszStrList + nDstLines;
-
-    for( int i = nSrcLines; i >= nInsertAtLineNo; --i )
     {
-        *ppszDst = *ppszSrc;
-        --ppszDst;
-        --ppszSrc;
+        char **ppszSrc = papszStrList + nSrcLines;
+        char **ppszDst = papszStrList + nDstLines;
+
+        for( int i = nSrcLines; i >= nInsertAtLineNo; --i )
+        {
+            *ppszDst = *ppszSrc;
+            --ppszDst;
+            --ppszSrc;
+        }
     }
 
     // Copy the strings to the list.
-    ppszSrc = papszNewLines;
-    ppszDst = papszStrList + nInsertAtLineNo;
+    CSLConstList ppszSrc = papszNewLines;
+    char** ppszDst = papszStrList + nInsertAtLineNo;
 
     for( ; *ppszSrc != nullptr; ++ppszSrc, ++ppszDst )
     {
@@ -665,7 +667,7 @@ char **CSLRemoveStrings( char **papszStrList, int nFirstLineToDelete,
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLFindString( const char * const * papszList, const char * pszTarget )
+int CSLFindString( CSLConstList papszList, const char * pszTarget )
 
 {
     if( papszList == nullptr )
@@ -699,7 +701,7 @@ int CSLFindString( const char * const * papszList, const char * pszTarget )
  * @since GDAL 2.0
  */
 
-int CSLFindStringCaseSensitive( const char * const * papszList,
+int CSLFindStringCaseSensitive( CSLConstList papszList,
                                 const char * pszTarget )
 
 {
@@ -732,7 +734,7 @@ int CSLFindStringCaseSensitive( const char * const * papszList,
  * @return the index of the string within the list or -1 on failure.
  */
 
-int CSLPartialFindString( const char * const *papszHaystack,
+int CSLPartialFindString( CSLConstList papszHaystack,
                           const char * pszNeedle )
 {
     if( papszHaystack == nullptr || pszNeedle == nullptr )
@@ -1595,7 +1597,7 @@ int CPLTestBoolean( const char *pszValue )
  * @return true or false
  */
 
-bool CPLFetchBool( const char * const *papszStrList, const char *pszKey,
+bool CPLFetchBool( CSLConstList papszStrList, const char *pszKey,
                    bool bDefault )
 
 {
@@ -1630,7 +1632,7 @@ bool CPLFetchBool( const char * const *papszStrList, const char *pszKey,
  * @return TRUE or FALSE
  */
 
-int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
+int CSLFetchBoolean( CSLConstList papszStrList, const char *pszKey, int bDefault )
 
 {
     return CPLFetchBool( papszStrList, pszKey, CPL_TO_BOOL(bDefault) );
@@ -1641,7 +1643,7 @@ int CSLFetchBoolean( char **papszStrList, const char *pszKey, int bDefault )
 /************************************************************************/
 
 /** Same as CSLFetchNameValue() but return pszDefault in case of no match */
-const char *CSLFetchNameValueDef( const char * const *papszStrList,
+const char *CSLFetchNameValueDef( CSLConstList papszStrList,
                                   const char *pszName,
                                   const char *pszDefault )
 
@@ -1669,7 +1671,7 @@ const char *CSLFetchNameValueDef( const char * const *papszStrList,
  * Returns NULL if the name is not found.
  */
 
-const char *CSLFetchNameValue( const char * const *papszStrList,
+const char *CSLFetchNameValue( CSLConstList papszStrList,
                                const char *pszName )
 {
     if( papszStrList == nullptr || pszName == nullptr )
@@ -1703,7 +1705,7 @@ const char *CSLFetchNameValue( const char * const *papszStrList,
  * matching the given key.
  */
 
-int CSLFindName( char **papszStrList, const char *pszName )
+int CSLFindName( CSLConstList papszStrList, const char *pszName )
 {
     if( papszStrList == nullptr || pszName == nullptr )
         return -1;
@@ -1796,7 +1798,7 @@ const char *CPLParseNameValue( const char *pszNameValue, char **ppszKey )
  * Returns NULL if the name is not found.
  */
 
-char **CSLFetchNameValueMultiple( char **papszStrList, const char *pszName )
+char **CSLFetchNameValueMultiple( CSLConstList papszStrList, const char *pszName )
 {
     if( papszStrList == nullptr || pszName == nullptr )
         return nullptr;

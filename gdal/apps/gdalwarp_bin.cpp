@@ -599,6 +599,7 @@ MAIN_START(argc, argv)
     {
         gnSrcCount = nSrcCount;
         GDALWarpAppOptionsSetProgress(psOptions, WarpTermProgress, nullptr);
+        GDALWarpAppOptionsSetQuiet(psOptions, false);
     }
 
     int bUsageError = FALSE;

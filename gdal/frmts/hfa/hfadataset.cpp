@@ -3291,14 +3291,13 @@ CPLErr HFADataset::WriteProjection()
 
 {
     OGRSpatialReference oSRS;
-    char *pszP = pszProjection;
     bool bPEStringStored = false;
 
     bGeoDirty = false;
 
     const bool bHaveSRS =
         pszProjection != nullptr && strlen(pszProjection) > 0 &&
-        oSRS.importFromWkt(&pszP) == OGRERR_NONE;
+        oSRS.importFromWkt(pszProjection) == OGRERR_NONE;
 
     // Initialize projection and datum.
     Eprj_Datum sDatum;

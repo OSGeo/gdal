@@ -69,6 +69,7 @@ class GDALAsyncReader;
 #include <map>
 #include <limits>
 #include <cmath>
+#include <memory>
 #include "ogr_core.h"
 
 //! @cond Doxygen_Suppress
@@ -156,6 +157,18 @@ class CPL_DLL GDALMajorObject
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" );
+
+    /** Convert a GDALMajorObject* to a GDALMajorObjectH.
+     * @since GDAL 2.3
+     */
+    static inline GDALMajorObjectH ToHandle(GDALMajorObject* poMajorObject)
+        { return static_cast<GDALMajorObjectH>(poMajorObject); }
+
+    /** Convert a GDALMajorObjectH to a GDALMajorObject*.
+     * @since GDAL 2.3
+     */
+    static inline GDALMajorObject* FromHandle(GDALMajorObjectH hMajorObject)
+        { return static_cast<GDALMajorObject*>(hMajorObject); }
 };
 
 /* ******************************************************************** */
@@ -544,8 +557,36 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     char **GetMetadataDomainList() override;
 
+    /** Convert a GDALDataset* to a GDALDatasetH.
+     * @since GDAL 2.3
+     */
+    static inline GDALDatasetH ToHandle(GDALDataset* poDS)
+        { return static_cast<GDALDatasetH>(poDS); }
+
+    /** Convert a GDALDatasetH to a GDALDataset*.
+     * @since GDAL 2.3
+     */
+    static inline GDALDataset* FromHandle(GDALDatasetH hDS)
+        { return static_cast<GDALDataset*>(hDS); }
+
+    /** @see GDALOpenEx().
+     * @since GDAL 2.3
+     */
+    static GDALDataset* Open( const char* pszFilename,
+                              unsigned int nOpenFlags = 0,
+                              const char* const* papszAllowedDrivers = nullptr,
+                              const char* const* papszOpenOptions = nullptr,
+                              const char* const* papszSiblingFiles = nullptr )
+    {
+        return FromHandle(GDALOpenEx(pszFilename, nOpenFlags,
+                                      papszAllowedDrivers,
+                                      papszOpenOptions,
+                                      papszSiblingFiles));
+    }
+
 private:
-    void           *m_hPrivateData;
+    class Private;
+    Private *m_poPrivate;
 
     OGRLayer*       BuildLayerFromSelectInfo(swq_select* psSelectInfo,
                                              OGRGeometry *poSpatialFilter,
@@ -627,6 +668,21 @@ private:
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALDataset)
 };
+
+//! @cond Doxygen_Suppress
+struct CPL_DLL GDALDatasetUniquePtrDeleter
+{
+    void operator()(GDALDataset* poDataset) const
+        { GDALClose(poDataset); }
+};
+//! @endcond
+
+/** Unique pointer type for GDALDataset.
+ * Appropriate for use on datasets open in non-shared mode and onto which
+ * reference counter has not been manually modified.
+ * @since GDAL 2.3
+ */
+typedef std::unique_ptr<GDALDataset, GDALDatasetUniquePtrDeleter> GDALDatasetUniquePtr;
 
 /* ******************************************************************** */
 /*                           GDALRasterBlock                            */
@@ -772,6 +828,19 @@ public:
     void          SetColorEntry( int, const GDALColorEntry * );
     int           CreateColorRamp( int, const GDALColorEntry * ,
                                    int, const GDALColorEntry * );
+
+    /** Convert a GDALColorTable* to a GDALRasterBandH.
+     * @since GDAL 2.3
+     */
+    static inline GDALColorTableH ToHandle(GDALColorTable* poCT)
+        { return static_cast<GDALColorTableH>(poCT); }
+
+    /** Convert a GDALColorTableH to a GDALColorTable*.
+     * @since GDAL 2.3
+     */
+    static inline GDALColorTable* FromHandle(GDALColorTableH hCT)
+        { return static_cast<GDALColorTable*>(hCT); }
+
 };
 
 /* ******************************************************************** */
@@ -1049,6 +1118,18 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void ReportError(CPLErr eErrClass, CPLErrorNum err_no, const char *fmt, ...)  CPL_PRINT_FUNC_FORMAT (4, 5);
 
+    /** Convert a GDALRasterBand* to a GDALRasterBandH.
+     * @since GDAL 2.3
+     */
+    static inline GDALRasterBandH ToHandle(GDALRasterBand* poBand)
+        { return static_cast<GDALRasterBandH>(poBand); }
+
+    /** Convert a GDALRasterBandH to a GDALRasterBand*.
+     * @since GDAL 2.3
+     */
+    static inline GDALRasterBand* FromHandle(GDALRasterBandH hBand)
+        { return static_cast<GDALRasterBand*>(hBand); }
+
 private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterBand)
 };
@@ -1258,6 +1339,19 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr       DefaultCopyFiles( const char * pszNewName,
                                           const char * pszOldName );
 //! @endcond
+
+    /** Convert a GDALDriver* to a GDALDriverH.
+     * @since GDAL 2.3
+     */
+    static inline GDALDriverH ToHandle(GDALDriver* poDriver)
+        { return static_cast<GDALDriverH>(poDriver); }
+
+    /** Convert a GDALDriverH to a GDALDriver*.
+     * @since GDAL 2.3
+     */
+    static inline GDALDriver* FromHandle(GDALDriverH hDriver)
+        { return static_cast<GDALDriver*>(hDriver); }
+
 private:
     CPL_DISALLOW_COPY_ASSIGN(GDALDriver)
 };
@@ -1541,7 +1635,7 @@ void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID);
 GIntBig GDALGetResponsiblePIDForCurrentThread();
 
 CPLString GDALFindAssociatedFile( const char *pszBasename, const char *pszExt,
-                                  char **papszSiblingFiles, int nFlags );
+                                  CSLConstList papszSiblingFiles, int nFlags );
 
 CPLErr EXIFExtractMetadata(char**& papszMetadata,
                            void *fpL, int nOffset,

@@ -487,7 +487,7 @@ OGRSpatialReference *OGRIDBTableLayer::GetSpatialRef()
                     delete poSRS;
                 }
                 poSRS = new OGRSpatialReference();
-                if ( poSRS->importFromWkt( (char **)&wkt ) != OGRERR_NONE )
+                if ( poSRS->importFromWkt( wkt ) != OGRERR_NONE )
                 {
                     CPLError( CE_Warning, CPLE_AppDefined,
                               "Error parse srs wkt: %s", wkt );

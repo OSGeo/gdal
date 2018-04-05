@@ -4801,7 +4801,7 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
 
     const char* GetOptions() override;
 
-    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
+    char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 };
 
 /************************************************************************/
@@ -5897,7 +5897,7 @@ const char* VSIS3FSHandler::GetOptions()
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-char* VSIS3FSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+char* VSIS3FSHandler::GetSignedURL(const char* pszFilename, CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -6486,7 +6486,7 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
 
     const char* GetOptions() override;
 
-    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
+    char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 };
 
 /************************************************************************/
@@ -6624,7 +6624,7 @@ const char* VSIGSFSHandler::GetOptions()
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-char* VSIGSFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+char* VSIGSFSHandler::GetSignedURL(const char* pszFilename, CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -6739,7 +6739,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     const char* GetOptions() override;
 
-    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
+    char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 
     char** GetFileList( const char *pszFilename,
                         int nMaxFiles,
@@ -7505,7 +7505,7 @@ const char* VSIAzureFSHandler::GetOptions()
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-char* VSIAzureFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+char* VSIAzureFSHandler::GetSignedURL(const char* pszFilename, CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
@@ -7619,7 +7619,7 @@ public:
         void UpdateHandleFromMap(
             IVSIS3LikeHandleHelper * poHandleHelper ) override;
 
-    char* GetSignedURL( const char* pszFilename, char** papszOptions ) override;
+    char* GetSignedURL( const char* pszFilename, CSLConstList papszOptions ) override;
 };
 
 /************************************************************************/
@@ -7727,7 +7727,7 @@ const char* VSIOSSFSHandler::GetOptions()
 /*                           GetSignedURL()                             */
 /************************************************************************/
 
-char* VSIOSSFSHandler::GetSignedURL(const char* pszFilename, char** papszOptions )
+char* VSIOSSFSHandler::GetSignedURL(const char* pszFilename, CSLConstList papszOptions )
 {
     if( !STARTS_WITH_CI(pszFilename, GetFSPrefix()) )
         return nullptr;
