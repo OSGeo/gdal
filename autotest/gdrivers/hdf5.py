@@ -463,7 +463,83 @@ def hdf5_13():
     return 'success'
 
 ###############################################################################
-#
+# Test complex data subsets
+
+def hdf_14():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'data/complex.h5' )
+    sds_lists = ds.GetMetadata('SUBDATASETS')
+
+    if len(sds_list) != 3:
+        print(sds_list)
+        gdaltest.post_reason( 'Did not get expected complex subdataset count.' )
+        return 'fail'
+
+    if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/complex.h5"://f16' \
+        or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/complex.h5"://f32' \
+        or sds_list['SUBDATASET_3_NAME'] != 'HDF5:"data/complex.h5"://f64':
+            print(sds_list)
+            gdaltest.post_reason('did not get expected subdatasets.')
+            return 'fail'
+
+    ds = None
+
+    if gdaltest.is_file_open('data/complex.h5'):
+        gdaltest.post_reason( 'file still opened.' )
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
+# Confirm complex subset data access and checksum
+# Start with Float32
+def hdf5_15():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"data/complex.h5"://f32' )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 523:
+        gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+
+    return 'success'
+
+#Repeat for Float64
+def hdf5_16():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"data/complex.h5"://f64' )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 511:
+        gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+
+    return 'success'
+
+#Repeat for Float16
+def hdf5_17():
+
+    if gdaltest.hdf5_drv is None:
+        return 'skip'
+
+    ds = gdal.Open( 'HDF5:"data/complex.h5"://f16' )
+
+    cs = ds.GetRasterBand(1).Checksum()
+    if cs != 412:
+        gdaltest.post_reason( 'did not get expected checksum' )
+        return 'fail'
+
+    return 'success'
+
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
         self.downloadURL = downloadURL
@@ -501,7 +577,11 @@ gdaltest_list = [
     hdf5_10,
     hdf5_11,
     hdf5_12,
-    hdf5_13
+    hdf5_13,
+    hdf5_14,
+    hdf5_15,
+    hdf5_16,
+    hdf5_17
 ]
 
 hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
