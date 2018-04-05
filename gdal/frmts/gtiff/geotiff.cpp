@@ -17154,7 +17154,7 @@ GTiffDataset::CreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 
     poDS->CloneInfo( poSrcDS, nCloneInfoFlags );
 
-    if( !bGeoTIFF )
+    if( !bGeoTIFF && (poDS->GetPamFlags() & GPF_DISABLED) == 0 )
     {
         // Copy georeferencing info to PAM if the profile is not GeoTIFF
         poDS->GDALPamDataset::SetProjection(poDS->GetProjectionRef());
