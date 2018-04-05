@@ -35,7 +35,9 @@
 #include "ogr_featurestyle.h"
 #include "ogr_geometry.h"
 
+#include <exception>
 #include <memory>
+#include <string>
 #include <vector>
 
 /**
@@ -374,6 +376,196 @@ class CPL_DLL OGRFeature
     explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
 
+    /** Field value. */
+    class CPL_DLL FieldValue
+    {
+        friend class OGRFeature;
+        struct Private;
+        std::unique_ptr<Private> m_poPrivate;
+
+        FieldValue(OGRFeature* poFeature, int iFieldIndex);
+        FieldValue(const OGRFeature* poFeature, int iFieldIndex);
+
+      public:
+//! @cond Doxygen_Suppress
+        ~FieldValue();
+//! @endcond
+
+        /** Set a field value from another one. */
+        FieldValue& operator= (const FieldValue& oOther);
+        /** Set an integer value to the field. */
+        FieldValue& operator= (int nVal);
+        /** Set an integer value to the field. */
+        FieldValue& operator= (GIntBig nVal);
+        /** Set a real value to the field. */
+        FieldValue& operator= (double  dfVal);
+        /** Set a string value to the field. */
+        FieldValue& operator= (const char *pszVal);
+        /** Set a string value to the field. */
+        FieldValue& operator= (const std::string& osVal);
+        /** Set an array of integer to the field. */
+        FieldValue& operator= (const std::vector<int>& oArray);
+        /** Set an array of big integer to the field. */
+        FieldValue& operator= (const std::vector<GIntBig>& oArray);
+        /** Set an array of double to the field. */
+        FieldValue& operator= (const std::vector<double>& oArray);
+        /** Set an array of strings to the field. */
+        FieldValue& operator= (const std::vector<std::string>& oArray);
+        /** Set an array of strings to the field. */
+        FieldValue& operator= (CSLConstList papszValues);
+        /** Set a null value to the field. */
+        void SetNull();
+        /** Unset the field. */
+        void clear();
+        /** Unset the field. */
+        void Unset() { clear(); }
+        /** Set date time value/ */
+        void SetDateTime(int nYear, int nMonth, int nDay,
+                         int nHour=0, int nMinute=0, float fSecond=0.f,
+                         int nTZFlag = 0 );
+
+        /** Return field index. */
+        int GetIndex() const;
+        /** Return field definition. */
+        const OGRFieldDefn* GetDefn() const;
+        /** Return field name. */
+        const char* GetName() const { return GetDefn()->GetNameRef(); }
+        /** Return field type. */
+        OGRFieldType GetType() const { return GetDefn()->GetType(); }
+        /** Return field subtype. */
+        OGRFieldSubType GetSubType() const { return GetDefn()->GetSubType(); }
+
+        /** Return whether the field value is unset/empty. */
+        // cppcheck-suppress functionStatic
+        bool empty() const { return IsUnset(); }
+
+        /** Return whether the field value is unset/empty. */
+        // cppcheck-suppress functionStatic
+        bool IsUnset() const;
+
+        /** Return whether the field value is null. */
+        // cppcheck-suppress functionStatic
+        bool IsNull() const;
+
+        /** Return the raw field value */
+        const OGRField *GetRawValue() const;
+
+        /** Return the integer value.
+            * Only use that method if and only if GetType() == OFTInteger.
+            */
+        // cppcheck-suppress functionStatic
+        int GetInteger() const  { return GetRawValue()->Integer; }
+
+        /** Return the 64-bit integer value.
+            * Only use that method if and only if GetType() == OFTInteger64.
+            */
+        // cppcheck-suppress functionStatic
+        GIntBig GetInteger64() const  { return GetRawValue()->Integer64; }
+
+        /** Return the double value.
+            * Only use that method if and only if GetType() == OFTReal.
+            */
+        // cppcheck-suppress functionStatic
+        double GetDouble() const  { return GetRawValue()->Real; }
+
+        /** Return the string value.
+            * Only use that method if and only if GetType() == OFTString.
+            */
+        // cppcheck-suppress functionStatic
+        const char* GetString() const { return GetRawValue()->String; }
+
+        /** Return the date/time/datetime value. */
+        bool GetDateTime( int *pnYear, int *pnMonth,
+                            int *pnDay,
+                            int *pnHour, int *pnMinute,
+                            float *pfSecond,
+                            int *pnTZFlag ) const;
+
+        /** Return the field value as integer, with potential conversion */
+        operator int () const { return GetAsInteger(); }
+        /** Return the field value as 64-bit integer, with potential conversion */
+        operator GIntBig() const { return GetAsInteger64(); }
+        /** Return the field value as double, with potential conversion */
+        operator double () const { return GetAsDouble(); }
+        /** Return the field value as string, with potential conversion */
+        operator const char*() const { return GetAsString(); }
+        /** Return the field value as integer list, with potential conversion */
+        operator const std::vector<int>& () const { return GetAsIntegerList(); }
+        /** Return the field value as 64-bit integer list, with potential conversion */
+        operator const std::vector<GIntBig>& () const { return GetAsInteger64List(); }
+        /** Return the field value as double list, with potential conversion */
+        operator const std::vector<double>& () const { return GetAsDoubleList(); }
+        /** Return the field value as string list, with potential conversion */
+        operator const std::vector<std::string>& () const { return GetAsStringList(); }
+        /** Return the field value as string list, with potential conversion */
+        operator CSLConstList () const;
+
+        /** Return the field value as integer, with potential conversion */
+        int GetAsInteger() const;
+        /** Return the field value as 64-bit integer, with potential conversion */
+        GIntBig GetAsInteger64() const;
+        /** Return the field value as double, with potential conversion */
+        double GetAsDouble() const;
+        /** Return the field value as string, with potential conversion */
+        const char* GetAsString() const;
+        /** Return the field value as integer list, with potential conversion */
+        const std::vector<int>& GetAsIntegerList() const;
+        /** Return the field value as 64-bit integer list, with potential conversion */
+        const std::vector<GIntBig>& GetAsInteger64List() const;
+        /** Return the field value as double list, with potential conversion */
+        const std::vector<double>& GetAsDoubleList() const;
+        /** Return the field value as string list, with potential conversion */
+        const std::vector<std::string>& GetAsStringList() const;
+    };
+
+    /** Field value iterator class. */
+    class CPL_DLL ConstFieldIterator
+    {
+        friend class OGRFeature;
+        struct Private;
+        std::unique_ptr<Private> m_poPrivate;
+
+        ConstFieldIterator(const OGRFeature* poSelf, int nPos);
+
+      public:
+//! @cond Doxygen_Suppress
+        ConstFieldIterator(ConstFieldIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+        ~ConstFieldIterator();
+        const FieldValue& operator*() const;
+        ConstFieldIterator& operator++();
+        bool operator!=(const ConstFieldIterator& it) const;
+//! @endcond
+    };
+
+    /** Return begin of field value iterator.
+     *
+     * Using this iterator for standard range-based loops is safe, but
+     * due to implementation limitations, you shouldn't try to access
+     * (dereference) more than one iterator step at a time, since you will get
+     * a reference to the same object (FieldValue) at each iteration step.
+     *
+     * <pre>
+     * for( auto&& oField: poFeature )
+     * {
+     *      std::cout << oField.GetIndex() << "," << oField.GetName()<< ": " << oField.GetAsString() << std::endl;
+     * }
+     * </pre>
+     *
+     * @since GDAL 2.3
+     */
+    ConstFieldIterator begin() const;
+    /** Return end of field value iterator. */
+    ConstFieldIterator end() const;
+
+    const FieldValue operator[](int iField) const;
+    FieldValue operator[](int iField);
+
+    /** Exception raised by operator[](const char*) when a field is not found. */
+    class FieldNotFoundException: public std::exception {};
+
+    const FieldValue operator[](const char* pszFieldName) const;
+    FieldValue operator[](const char* pszFieldName);
+
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
     const OGRFeatureDefn     *GetDefnRef() const { return poDefn; }
 
@@ -475,11 +667,11 @@ class CPL_DLL OGRFeature
     void                SetField( int i, GIntBig nValue );
     void                SetField( int i, double dfValue );
     void                SetField( int i, const char * pszValue );
-    void                SetField( int i, int nCount, int * panValues );
+    void                SetField( int i, int nCount, const int * panValues );
     void                SetField( int i, int nCount,
                                   const GIntBig * panValues );
-    void                SetField( int i, int nCount, double * padfValues );
-    void                SetField( int i, char ** papszValues );
+    void                SetField( int i, int nCount, const double * padfValues );
+    void                SetField( int i, const char * const * papszValues );
     void                SetField( int i, OGRField * puValue );
     void                SetField( int i, int nCount, GByte * pabyBinary );
     void                SetField( int i, int nYear, int nMonth, int nDay,
@@ -495,15 +687,15 @@ class CPL_DLL OGRFeature
     void                SetField( const char *pszFName, const char * pszValue )
                            { SetField( GetFieldIndex(pszFName), pszValue ); }
     void                SetField( const char *pszFName, int nCount,
-                                  int * panValues )
+                                  const int * panValues )
                          { SetField(GetFieldIndex(pszFName),nCount,panValues); }
     void                SetField( const char *pszFName, int nCount,
                                   const GIntBig * panValues )
                          { SetField(GetFieldIndex(pszFName),nCount,panValues); }
     void                SetField( const char *pszFName, int nCount,
-                                  double * padfValues )
+                                  const double * padfValues )
                          {SetField(GetFieldIndex(pszFName),nCount,padfValues); }
-    void                SetField( const char *pszFName, char ** papszValues )
+    void                SetField( const char *pszFName, const char * const * papszValues )
                            { SetField( GetFieldIndex(pszFName), papszValues); }
     void                SetField( const char *pszFName, OGRField * puValue )
                            { SetField( GetFieldIndex(pszFName), puValue ); }
@@ -584,6 +776,19 @@ struct CPL_DLL OGRFeatureUniquePtrDeleter
  * @since GDAL 2.3
  */
 typedef std::unique_ptr<OGRFeature, OGRFeatureUniquePtrDeleter> OGRFeatureUniquePtr;
+
+//! @cond Doxygen_Suppress
+/** @see OGRFeature::begin() const */
+inline OGRFeature::ConstFieldIterator begin(const OGRFeature* poFeature) { return poFeature->begin(); }
+/** @see OGRFeature::end() const */
+inline OGRFeature::ConstFieldIterator end(const OGRFeature* poFeature) { return poFeature->end(); }
+
+/** @see OGRFeature::begin() const */
+inline OGRFeature::ConstFieldIterator begin(const OGRFeatureUniquePtr& poFeature) { return poFeature->begin(); }
+/** @see OGRFeature::end() const */
+inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr& poFeature) { return poFeature->end(); }
+
+//! @endcond
 
 /************************************************************************/
 /*                           OGRFeatureQuery                            */

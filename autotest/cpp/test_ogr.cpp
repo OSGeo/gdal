@@ -1033,4 +1033,243 @@ namespace tut
         }
     }
 
+    // Test field iterator
+    template<>
+    template<>
+    void object::test<14>()
+    {
+        OGRFeatureDefn* poFeatureDefn = new OGRFeatureDefn();
+        poFeatureDefn->Reference();
+        {
+            OGRFieldDefn oFieldDefn("str_field", OFTString);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int_field", OFTInteger);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64_field", OFTInteger64);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("double_field", OFTReal);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("null_field", OFTReal);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("unset_field", OFTReal);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("dt_field", OFTDateTime);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("strlist_field", OFTStringList);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("intlist_field", OFTIntegerList);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("int64list_field", OFTInteger64List);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        {
+            OGRFieldDefn oFieldDefn("doublelist_field", OFTRealList);
+            poFeatureDefn->AddFieldDefn(&oFieldDefn);
+        }
+        OGRFeature oFeature(poFeatureDefn);
+
+        {
+            OGRFeature oFeatureTmp(poFeatureDefn);
+            oFeatureTmp[0] = "bar";
+            ensure_equals( oFeatureTmp[0].GetString(), "bar" );
+            {
+                auto&& x= oFeatureTmp[0];
+                x = x;
+                ensure_equals( oFeatureTmp[0].GetString(), "bar" );
+            }
+            {
+                oFeatureTmp[0] = oFeatureTmp[0];
+                ensure_equals( oFeatureTmp[0].GetString(), "bar" );
+            }
+            {
+                auto&& x= oFeatureTmp[0];
+                x = "baz";
+                ensure_equals( x.GetString(), "baz" );
+            }
+            oFeatureTmp["str_field"] = std::string("foo");
+            oFeatureTmp["int_field"] = 123;
+            oFeatureTmp["int64_field"] = oFeatureTmp["int_field"];
+            ensure_equals( oFeatureTmp["int64_field"].GetInteger(), 123 );
+            oFeatureTmp["int64_field"] = static_cast<GIntBig>(1234567890123);
+            oFeatureTmp["double_field"] = 123.45;
+            oFeatureTmp["null_field"].SetNull();
+            oFeatureTmp["unset_field"].clear();
+            oFeatureTmp["unset_field"].Unset();
+            oFeatureTmp["dt_field"].SetDateTime(2018, 4, 5, 12, 34, 56.75f, 0);
+            oFeatureTmp["strlist_field"] = CPLStringList().List();
+            oFeatureTmp["strlist_field"] = std::vector<std::string>();
+            oFeatureTmp["strlist_field"] = std::vector<std::string>{ "foo", "bar" };
+            oFeatureTmp["strlist_field"] = static_cast<CSLConstList>(oFeatureTmp["strlist_field"]);
+            ensure_equals( CSLCount(static_cast<CSLConstList>(oFeatureTmp["strlist_field"])), 2 );
+            oFeatureTmp["intlist_field"] = std::vector<int>();
+            oFeatureTmp["intlist_field"] = std::vector<int>{ 12, 34 };
+            oFeatureTmp["int64list_field"] = std::vector<GIntBig>();
+            oFeatureTmp["int64list_field"] = std::vector<GIntBig>{ 1234567890123,34 };
+            oFeatureTmp["doublelist_field"] = std::vector<double>();
+            oFeatureTmp["doublelist_field"] = std::vector<double>{ 12.25,56.75 };
+
+            for( auto&& oField: oFeatureTmp )
+            {
+                oFeature[oField.GetIndex()] = oField;
+            }
+        }
+
+        {
+            int x = oFeature[1];
+            ensure_equals( x, 123 );
+        }
+        {
+            int x = oFeature["int_field"];
+            ensure_equals( x, 123 );
+        }
+        {
+            GIntBig x = oFeature["int64_field"];
+            ensure_equals( x, static_cast<GIntBig>(1234567890123) );
+        }
+        {
+            double x = oFeature["double_field"];
+            ensure_equals( x, 123.45 );
+        }
+        {
+            const char* x = oFeature["str_field"];
+            ensure_equals( x, "foo" );
+        }
+        bool bExceptionHit = false;
+        try
+        {
+            oFeature["inexisting_field"];
+        }
+        catch( const OGRFeature::FieldNotFoundException& )
+        {
+            bExceptionHit = true;
+        }
+        ensure(bExceptionHit);
+
+        int iIter = 0;
+        const OGRFeature* poConstFeature = &oFeature;
+        for( auto&& oField: *poConstFeature )
+        {
+            ensure_equals( oField.GetIndex(), iIter );
+            ensure_equals( oField.GetDefn(), poFeatureDefn->GetFieldDefn(iIter) );
+            ensure_equals( CPLString(oField.GetName()), CPLString(oField.GetDefn()->GetNameRef()) );
+            ensure_equals( oField.GetType(), oField.GetDefn()->GetType() );
+            ensure_equals( oField.GetSubType(), oField.GetDefn()->GetSubType() );
+            if( iIter == 0 )
+            {
+                ensure_equals( oField.IsUnset(), false );
+                ensure_equals( oField.IsNull(), false );
+                ensure_equals( CPLString(oField.GetRawValue()->String), CPLString("foo") );
+                ensure_equals( CPLString(oField.GetString()), CPLString("foo") );
+                ensure_equals( CPLString(oField.GetAsString()), CPLString("foo") );
+            }
+            else if( iIter == 1 )
+            {
+                ensure_equals( oField.GetRawValue()->Integer, 123 );
+                ensure_equals( oField.GetInteger(), 123 );
+                ensure_equals( oField.GetAsInteger(), 123 );
+                ensure_equals( oField.GetAsInteger64(), 123 );
+                ensure_equals( oField.GetAsDouble(), 123.0 );
+                ensure_equals( CPLString(oField.GetAsString()), CPLString("123") );
+            }
+            else if( iIter == 2 )
+            {
+                ensure_equals( oField.GetRawValue()->Integer64, 1234567890123 );
+                ensure_equals( oField.GetInteger64(), 1234567890123 );
+                ensure_equals( oField.GetAsInteger(), 2147483647 );
+                ensure_equals( oField.GetAsInteger64(), 1234567890123 );
+                ensure_equals( oField.GetAsDouble(), 1234567890123.0 );
+                ensure_equals( CPLString(oField.GetAsString()), CPLString("1234567890123") );
+            }
+            else if( iIter == 3 )
+            {
+                ensure_equals( oField.GetRawValue()->Real, 123.45 );
+                ensure_equals( oField.GetDouble(), 123.45 );
+                ensure_equals( oField.GetAsInteger(), 123 );
+                ensure_equals( oField.GetAsInteger64(), 123 );
+                ensure_equals( oField.GetAsDouble(), 123.45 );
+                ensure_equals( CPLString(oField.GetAsString()), CPLString("123.45") );
+            }
+            else if( iIter == 4 )
+            {
+                ensure_equals( oField.IsUnset(), false );
+                ensure_equals( oField.IsNull(), true );
+            }
+            else if( iIter == 5 )
+            {
+                ensure_equals( oField.IsUnset(), true );
+                ensure_equals( oField.empty(), true );
+                ensure_equals( oField.IsNull(), false );
+            }
+            else if( iIter == 6 )
+            {
+                int nYear, nMonth, nDay, nHour, nMin, nTZFlag;
+                float fSec;
+                ensure_equals( oField.GetDateTime(&nYear, &nMonth, &nDay,
+                                                  &nHour, &nMin, &fSec,
+                                                  &nTZFlag), true );
+                ensure_equals( nYear, 2018 );
+                ensure_equals( nMonth, 4 );
+                ensure_equals( nDay, 5 );
+                ensure_equals( nHour, 12 );
+                ensure_equals( nMin, 34 );
+                ensure_equals( fSec, 56.75f );
+                ensure_equals( nTZFlag, 0 );
+            }
+            else if( iIter == 7 )
+            {
+                std::vector<std::string> oExpected{ std::string("foo"),
+                                                    std::string("bar") };
+                decltype(oExpected) oGot = oField;
+                ensure_equals( oGot.size(), oExpected.size() );
+                for( size_t i = 0; i < oExpected.size(); i++ )
+                    ensure_equals( oGot[i], oExpected[i] );
+            }
+            else if( iIter == 8 )
+            {
+                std::vector<int> oExpected{ 12, 34 };
+                decltype(oExpected) oGot = oField;
+                ensure_equals( oGot.size(), oExpected.size() );
+                for( size_t i = 0; i < oExpected.size(); i++ )
+                    ensure_equals( oGot[i], oExpected[i] );
+            }
+            else if( iIter == 9 )
+            {
+                std::vector<GIntBig> oExpected{ 1234567890123, 34 };
+                decltype(oExpected) oGot = oField;
+                ensure_equals( oGot.size(), oExpected.size() );
+                for( size_t i = 0; i < oExpected.size(); i++ )
+                    ensure_equals( oGot[i], oExpected[i] );
+            }
+            else if( iIter == 10 )
+            {
+                std::vector<double> oExpected{ 12.25, 56.75 };
+                decltype(oExpected) oGot = oField;
+                ensure_equals( oGot.size(), oExpected.size() );
+                for( size_t i = 0; i < oExpected.size(); i++ )
+                    ensure_equals( oGot[i], oExpected[i] );
+            }
+            iIter ++;
+
+        }
+        poFeatureDefn->Release();
+    }
+
 } // namespace tut
