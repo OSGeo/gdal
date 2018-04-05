@@ -4351,8 +4351,6 @@ CPLErr GTiffRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                     % nRasterYSize));
     }
 
-    poGDS->WaitCompletionForBlock(nBlockId);
-
 /* -------------------------------------------------------------------- */
 /*      Handle the case of a strip or tile that doesn't exist yet.      */
 /*      Just set to zeros and return.                                   */
@@ -7886,8 +7884,6 @@ void GTiffDataset::FillEmptyTiles()
                                                                 ) != CE_None )
                     break;
 
-                WaitCompletionForBlock(iBlock);
-
                 vsi_l_offset nOffset = 0;
                 bool b = IsBlockAvailable( iBlock, &nOffset, &nRawSize);
 #ifdef DEBUG
@@ -9000,8 +8996,6 @@ CPLErr GTiffDataset::LoadBlockBuf( int nBlockId, bool bReadFromDisk )
         memset( pabyBlockBuf, 0, nBlockBufSize );
     }
 
-    WaitCompletionForBlock(nBlockId);
-
 /* -------------------------------------------------------------------- */
 /*      If we don't have this block already loaded, and we know it      */
 /*      doesn't yet exist on disk, just zero the memory buffer and      */
@@ -9454,6 +9448,8 @@ bool GTiffDataset::IsBlockAvailable( int nBlockId,
 {
     if( pbErrOccurred )
         *pbErrOccurred = false;
+
+    WaitCompletionForBlock(nBlockId);
 
 #if defined(INTERNAL_LIBTIFF) && defined(DEFER_STRILE_LOAD)
     // Optimization to avoid fetching the whole Strip/TileCounts and
