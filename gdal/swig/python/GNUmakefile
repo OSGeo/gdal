@@ -61,6 +61,8 @@ generate: ${WRAPPERS} gdal_array_wrap.cpp
 	# Unused assigned variable
 	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed 's/module_head = \&swig_module;/\/\*module_head = \&swig_module;\*\//' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
 	for i in gdal_wrap.cpp; do sed 's/result = (CPLErr)\(.*\);/CPL_IGNORE_RET_VAL(result = (CPLErr)\1);/' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; done
+	# SWIG defect fixed per https://github.com/swig/swig/commit/b0e29fbdf31bb94b11cb8a7cc830b4a76467afa3#diff-ba23eb3671d250e6a62261f19f653dd2R93
+	for i in gdal_wrap.cpp gdalconst_wrap.c ogr_wrap.cpp osr_wrap.cpp gdal_array_wrap.cpp gnm_wrap.cpp; do if test -f ${SWIGOUTPUTDIR}/$$i; then sed 's/obj = PyUnicode_AsUTF8String(obj);/obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;/' ${SWIGOUTPUTDIR}/$$i  > ${SWIGOUTPUTDIR}/$$i.tmp; mv -f ${SWIGOUTPUTDIR}/$$i.tmp ${SWIGOUTPUTDIR}/$$i; fi; done
 
 build: extensions/gdal_wrap.cpp
 	rm -f setup_vars.ini

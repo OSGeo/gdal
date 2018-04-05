@@ -66,6 +66,8 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       char *pszNewStr;
       Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+      if( pyUTF8Str == NULL )
+        return NULL;
 #if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else
