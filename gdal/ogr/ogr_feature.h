@@ -67,6 +67,8 @@ typedef void *OGRStyleTableH;
 typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
 #endif /* DEFINE_OGRFeatureH */
 
+class OGRStyleTable;
+
 /************************************************************************/
 /*                             OGRFieldDefn                             */
 /************************************************************************/

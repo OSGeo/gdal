@@ -119,7 +119,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
      * Using this iterator for standard range-based loops is safe, but
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since the
-     * std::unique_ptr&lt;OGRFeature&gt; reference is reused.
+     * OGRFeatureUniquePtr reference is reused.
      *
      * Only one iterator per layer can be active at a time.
      * @since GDAL 2.3

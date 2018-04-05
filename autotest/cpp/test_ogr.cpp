@@ -963,45 +963,74 @@ namespace tut
         TestIterator<OGRTriangulatedSurface>("TIN(((0 0,0 1,1 1,0 0)))", 1);
     }
 
-    // Test feature iterator
+    // Test layer, dataset-feature and layer-feature iterators
     template<>
     template<>
     void object::test<13>()
     {
-        std::unique_ptr<GDALDataset> poDS (static_cast<GDALDataset*>(
-            GDALOpenEx("data/poly.shp", GDAL_OF_VECTOR, nullptr, nullptr, nullptr)));
-        OGRLayer* poLayer = poDS->GetLayer(0);
-        GIntBig nExpectedFID = 0;
-        for( auto&& poFeature: poLayer )
-        {
-            ensure_equals( poFeature->GetFID(), nExpectedFID );
-            nExpectedFID ++;
-        }
-        ensure_equals(nExpectedFID, 10);
+        GDALDatasetUniquePtr poDS(
+            GDALDataset::Open("data/poly.shp", GDAL_OF_VECTOR));
+        ensure( poDS != nullptr );
 
-        nExpectedFID = 0;
-        OGR_FOR_EACH_FEATURE_BEGIN(hFeat, reinterpret_cast<OGRLayerH>(poLayer))
         {
-            if( nExpectedFID == 0 )
+            GIntBig nExpectedFID = 0;
+            for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
             {
-                nExpectedFID = 1;
-                continue;
+                ensure_equals( oFeatureLayerPair.feature->GetFID(), nExpectedFID );
+                nExpectedFID ++;
+                ensure_equals( oFeatureLayerPair.layer, poDS->GetLayer(0) );
             }
-            ensure_equals( OGR_F_GetFID(hFeat), nExpectedFID );
-            nExpectedFID ++;
-            if( nExpectedFID == 5 )
-                break;
+            ensure_equals(nExpectedFID, 10);
         }
-        OGR_FOR_EACH_FEATURE_END(hFeat)
-        ensure_equals(nExpectedFID, 5);
 
-        auto&& oIter = poLayer->begin();
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-        // Only one feature iterator can be active at a time
-        auto&& oIter2 = poLayer->begin();
-        CPLPopErrorHandler();
-        ensure( !(oIter2 != poLayer->end()) );
-        ensure( oIter != poLayer->end() );
+        ensure_equals( poDS->GetLayers().size(), 1U );
+        ensure_equals( poDS->GetLayers()[0], poDS->GetLayer(0) );
+        ensure_equals( poDS->GetLayers()[static_cast<size_t>(0)], poDS->GetLayer(0) );
+        ensure_equals( poDS->GetLayers()["poly"], poDS->GetLayer(0) );
+
+        for( auto&& poLayer: poDS->GetLayers() )
+        {
+            GIntBig nExpectedFID = 0;
+            for( auto&& poFeature: poLayer )
+            {
+                ensure_equals( poFeature->GetFID(), nExpectedFID );
+                nExpectedFID ++;
+            }
+            ensure_equals(nExpectedFID, 10);
+
+            nExpectedFID = 0;
+            for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
+            {
+                ensure_equals( oFeatureLayerPair.feature->GetFID(), nExpectedFID );
+                nExpectedFID ++;
+                ensure_equals( oFeatureLayerPair.layer, poLayer );
+            }
+            ensure_equals(nExpectedFID, 10);
+
+            nExpectedFID = 0;
+            OGR_FOR_EACH_FEATURE_BEGIN(hFeat, reinterpret_cast<OGRLayerH>(poLayer))
+            {
+                if( nExpectedFID == 0 )
+                {
+                    nExpectedFID = 1;
+                    continue;
+                }
+                ensure_equals( OGR_F_GetFID(hFeat), nExpectedFID );
+                nExpectedFID ++;
+                if( nExpectedFID == 5 )
+                    break;
+            }
+            OGR_FOR_EACH_FEATURE_END(hFeat)
+            ensure_equals(nExpectedFID, 5);
+
+            auto&& oIter = poLayer->begin();
+            CPLPushErrorHandler(CPLQuietErrorHandler);
+            // Only one feature iterator can be active at a time
+            auto&& oIter2 = poLayer->begin();
+            CPLPopErrorHandler();
+            ensure( !(oIter2 != poLayer->end()) );
+            ensure( oIter != poLayer->end() );
+        }
     }
 
 } // namespace tut
