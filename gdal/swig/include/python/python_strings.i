@@ -30,6 +30,7 @@
 %{
 
 /* Return a PyObject* from a NULL terminated C String */
+static PyObject* GDALPythonObjectFromCStr(const char *pszStr) CPL_UNUSED;
 static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 {
   const unsigned char* pszIter = (const unsigned char*) pszStr;
@@ -57,6 +58,7 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 
 /* Return a NULL terminated c String from a PyObject */
 /* Result must be freed with GDALPythonFreeCStr */
+static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree) CPL_UNUSED;
 static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
 {
   *pbToFree = 0;
@@ -89,6 +91,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
   }
 }
 
+static void GDALPythonFreeCStr(void* ptr, int bToFree) CPL_UNUSED;
 static void GDALPythonFreeCStr(void* ptr, int bToFree)
 {
    if (bToFree)

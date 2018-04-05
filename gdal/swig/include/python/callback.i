@@ -14,6 +14,10 @@ typedef struct {
 /*                          PyProgressProxy()                           */
 /************************************************************************/
 
+
+static int CPL_STDCALL
+PyProgressProxy( double dfComplete, const char *pszMessage, void *pData ) CPL_UNUSED;
+
 static int CPL_STDCALL
 PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
 

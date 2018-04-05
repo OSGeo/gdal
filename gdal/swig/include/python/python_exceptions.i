@@ -110,6 +110,8 @@ static void ClearErrorState()
     CPLErrorReset();
 }
 
+static void StoreLastException() CPL_UNUSED;
+
 static void StoreLastException()
 {
     const char* pszLastErrorMessage =
