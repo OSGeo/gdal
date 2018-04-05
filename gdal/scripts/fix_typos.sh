@@ -29,6 +29,20 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+SCRIPT_DIR=`dirname $0`
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=`pwd`
+        ;;
+    *)
+        SCRIPT_DIR=`pwd`"/"`dirname $0`
+        ;;
+esac
+GDAL_ROOT=$SCRIPT_DIR/..
+cd $GDAL_ROOT
+
 if ! test -d fix_typos; then
     # Get our fork of codespell that adds --words-white-list and full filename support for -S option
     mkdir fix_typos

@@ -2,6 +2,22 @@
 # Note: tested with cppcheck 1.72 as shipped with Ubuntu 16.04
 # as well as with cppcheck 1.76.1
 
+
+SCRIPT_DIR=`dirname $0`
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=`pwd`
+        ;;
+    *)
+        SCRIPT_DIR=`pwd`"/"`dirname $0`
+        ;;
+esac
+GDAL_ROOT=$SCRIPT_DIR/..
+cd $GDAL_ROOT
+
+
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
 echo "" > ${LOG_FILE}
