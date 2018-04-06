@@ -2121,8 +2121,18 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the segment.                                             */
 /* -------------------------------------------------------------------- */
-    const int nSegNum = poFile->CreateSegment( pszLayerName, "",
+    int nSegNum;
+    try
+    {
+        nSegNum = poFile->CreateSegment( pszLayerName, "",
                                              PCIDSK::SEG_VEC, 0L );
+    }
+    catch( const PCIDSKException& ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", ex.what() );
+        return nullptr;
+    }
     PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
     PCIDSK::PCIDSKVectorSegment *poVecSeg =
         dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );

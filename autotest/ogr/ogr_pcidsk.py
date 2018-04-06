@@ -299,6 +299,25 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
 
     return 'success'
 
+###############################################################################
+def ogr_pcidsk_too_many_layers():
+
+    if ogr.GetDriverByName('PCIDSK') is None:
+        return 'skip'
+
+    tmpfile = '/vsimem/tmp.pix'
+    ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
+    for i in range(1023):
+        ds.CreateLayer('foo%d' % i)
+    with gdaltest.error_handler():
+        if ds.CreateLayer('foo') is not None:
+            return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
+
+    return 'success'
+
 
 ###############################################################################
 # Check a polygon layer
@@ -373,6 +392,7 @@ gdaltest_list = [
     ogr_pcidsk_4,
     ogr_pcidsk_5,
     ogr_pcidsk_add_field_to_non_empty_layer,
+    ogr_pcidsk_too_many_layers,
     ogr_pcidsk_online_1,
     ogr_pcidsk_online_2,
     ogr_pcidsk_cleanup ]
