@@ -1151,6 +1151,16 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
     LoadHeader();
 
 /* -------------------------------------------------------------------- */
+/*      If we have existing features, we should go through adding       */
+/*      this new field.                                                 */
+/* -------------------------------------------------------------------- */
+    if( shape_count > 0 )
+    {
+        return ThrowPCIDSKException( "Support for adding fields in populated layers "
+                              "has not yet been implemented." );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      If no default is provided, use the obvious value.               */
 /* -------------------------------------------------------------------- */
     if( default_value == nullptr )
@@ -1207,16 +1217,6 @@ void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
     vh.field_defaults.push_back( *default_value );
 
     vh.WriteFieldDefinitions();
-
-/* -------------------------------------------------------------------- */
-/*      If we have existing features, we should go through adding       */
-/*      this new field.                                                 */
-/* -------------------------------------------------------------------- */
-    if( shape_count > 0 )
-    {
-        return ThrowPCIDSKException( "Support for adding fields in populated layers "
-                              "has not yet been implemented." );
-    }
 }
 
 /************************************************************************/
