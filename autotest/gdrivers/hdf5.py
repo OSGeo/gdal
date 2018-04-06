@@ -465,13 +465,13 @@ def hdf5_13():
 ###############################################################################
 # Test complex data subsets
 
-def hdf_14():
+def hdf5_14():
 
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
     ds = gdal.Open( 'data/complex.h5' )
-    sds_lists = ds.GetMetadata('SUBDATASETS')
+    sds_list = ds.GetMetadata('SUBDATASETS')
 
     if len(sds_list) != 3:
         print(sds_list)
