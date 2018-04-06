@@ -141,46 +141,87 @@ HDF5Dataset::~HDF5Dataset()
 /************************************************************************/
 GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
 {
-    if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
-        return GDT_Byte;
-    else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
-        return GDT_Byte;
-    else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
-        return GDT_Byte;
-    else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )
-        return GDT_Int16;
-    else if( H5Tequal(H5T_NATIVE_USHORT, TypeID) )
-        return GDT_UInt16;
-    else if( H5Tequal(H5T_NATIVE_INT,    TypeID) )
-        return GDT_Int32;
-    else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
-        return GDT_UInt32;
-    else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
+    //Check for native types first
+    if (H5Tget_class(TypeID) != H5T_COMPOUND)
     {
+
+        if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
+            return GDT_Byte;
+        else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
+            return GDT_Byte;
+        else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
+            return GDT_Byte;
+        else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )
+            return GDT_Int16;
+        else if( H5Tequal(H5T_NATIVE_USHORT, TypeID) )
+            return GDT_UInt16;
+        else if( H5Tequal(H5T_NATIVE_INT,    TypeID) )
+            return GDT_Int32;
+        else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
+            return GDT_UInt32;
+        else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
+        {
 #if SIZEOF_UNSIGNED_LONG == 4
-        return GDT_Int32;
+            return GDT_Int32;
 #else
-        return GDT_Unknown;
+            return GDT_Unknown;
 #endif
+        }
+        else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
+        {
+#if SIZEOF_UNSIGNED_LONG == 4
+            return GDT_UInt32;
+#else
+            return GDT_Unknown;
+#endif
+        }
+        else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
+            return GDT_Float32;
+        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
+            return GDT_Float64;
+        else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
+            return GDT_Unknown;
+        else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
+            return GDT_Unknown;
+        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
+            return GDT_Unknown;
     }
-    else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
+    else  //Parse compound type to determine if data is complex
     {
+        //For complex the compound type must contain 2 elements
+        if ( H5Tget_nmembers(TypeID) != 2 )
+            return GDT_Unknown;
+
+        //For complex the native types of both elements should be the same
+        if ( H5Tequal( H5Tget_member_type(TypeID,0), H5Tget_member_type(TypeID,1)) <= 0 )
+            return GDT_Unknown;
+
+        //Check the native types to determine CInt16, CFloat32 or CFloat64
+        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
+        GDALDataType eDataType = GDT_Unknown;
+
+        if ( H5Tequal(H5T_NATIVE_SHORT, ElemTypeID) )
+            eDataType = GDT_CInt16;
+        else if ( H5Tequal(H5T_NATIVE_INT, ElemTypeID) )
+            eDataType = GDT_CInt32;
+        else if ( H5Tequal(H5T_NATIVE_LONG, ElemTypeID) )
+        {
 #if SIZEOF_UNSIGNED_LONG == 4
-        return GDT_UInt32;
+            eDataType = GDT_CInt32;
 #else
-        return GDT_Unknown;
+            eDataType = GDT_Unknown;
 #endif
+        }
+        else if ( H5Tequal(H5T_NATIVE_FLOAT, ElemTypeID) )
+            eDataType = GDT_CFloat32;
+        else if ( H5Tequal(H5T_NATIVE_DOUBLE, ElemTypeID) )
+            eDataType = GDT_CFloat64;
+
+        //Close the data type
+        H5Tclose(ElemTypeID);
+
+        return eDataType;
     }
-    else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
-        return GDT_Float32;
-    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-        return GDT_Float64;
-    else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
-        return GDT_Unknown;
-    else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
-        return GDT_Unknown;
-    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-        return GDT_Unknown;
 
     return GDT_Unknown;
 }
@@ -192,34 +233,78 @@ GDALDataType HDF5Dataset::GetDataType(hid_t TypeID)
 /************************************************************************/
 const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 {
-    if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
-        return "8-bit character";
-    else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
-        return "8-bit signed character";
-    else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
-        return "8-bit unsigned character";
-    else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )
-        return "16-bit integer";
-    else if( H5Tequal(H5T_NATIVE_USHORT, TypeID) )
-        return "16-bit unsigned integer";
-    else if( H5Tequal(H5T_NATIVE_INT,    TypeID) )
-        return "32-bit integer";
-    else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
-        return "32-bit unsigned integer";
-    else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
-        return "32/64-bit integer";
-    else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
-        return "32/64-bit unsigned integer";
-    else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
-        return "32-bit floating-point";
-    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-        return "64-bit floating-point";
-    else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
-        return "64-bit integer";
-    else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
-        return "64-bit unsigned integer";
-    else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
-        return "64-bit floating-point";
+    //Check for native types first
+    if (H5Tget_class(TypeID) != H5T_COMPOUND)
+    {
+        if( H5Tequal(H5T_NATIVE_CHAR,        TypeID) )
+            return "8-bit character";
+        else if( H5Tequal(H5T_NATIVE_SCHAR,  TypeID) )
+            return "8-bit signed character";
+        else if( H5Tequal(H5T_NATIVE_UCHAR,  TypeID) )
+            return "8-bit unsigned character";
+        else if( H5Tequal(H5T_NATIVE_SHORT,  TypeID) )
+            return "16-bit integer";
+        else if( H5Tequal(H5T_NATIVE_USHORT, TypeID) )
+            return "16-bit unsigned integer";
+        else if( H5Tequal(H5T_NATIVE_INT,    TypeID) )
+            return "32-bit integer";
+        else if( H5Tequal(H5T_NATIVE_UINT,   TypeID) )
+            return "32-bit unsigned integer";
+        else if( H5Tequal(H5T_NATIVE_LONG,   TypeID) )
+            return "32/64-bit integer";
+        else if( H5Tequal(H5T_NATIVE_ULONG,  TypeID) )
+            return "32/64-bit unsigned integer";
+        else if( H5Tequal(H5T_NATIVE_FLOAT,  TypeID) )
+            return "32-bit floating-point";
+        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
+            return "64-bit floating-point";
+        else if( H5Tequal(H5T_NATIVE_LLONG,  TypeID) )
+            return "64-bit integer";
+        else if( H5Tequal(H5T_NATIVE_ULLONG, TypeID) )
+            return "64-bit unsigned integer";
+        else if( H5Tequal(H5T_NATIVE_DOUBLE, TypeID) )
+            return "64-bit floating-point";
+    }
+    else
+    {
+        //For complex the compound type must contain 2 elements
+        if ( H5Tget_nmembers(TypeID) != 2 )
+            return "Unknown";
+
+        //For complex the native types of both elements should be the same
+        if ( H5Tequal( H5Tget_member_type(TypeID,0), H5Tget_member_type(TypeID,1)) <= 0 )
+            return "Unknown";
+
+        //Check the native types to determine CInt16, CFloat32 or CFloat64
+        hid_t ElemTypeID = H5Tget_member_type(TypeID, 0);
+        
+        if ( H5Tequal(H5T_NATIVE_SHORT, ElemTypeID) )
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 16-bit integer";
+        }
+        else if ( H5Tequal(H5T_NATIVE_INT, ElemTypeID) )
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 32-bit integer";
+        }
+        else if ( H5Tequal(H5T_NATIVE_LONG, ElemTypeID) )
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 32/64-bit integer";
+        }
+        else if ( H5Tequal(H5T_NATIVE_FLOAT, ElemTypeID) )
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 32-bit floating-point";
+        }
+        else if ( H5Tequal(H5T_NATIVE_DOUBLE, ElemTypeID) )
+        {
+            H5Tclose(ElemTypeID);
+            return "complex, 64-bit floating-point";
+        }
+    }
+
 
     return "Unknown";
 }
