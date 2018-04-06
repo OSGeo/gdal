@@ -473,7 +473,7 @@ def hdf5_14():
     ds = gdal.Open( 'data/complex.h5' )
     sds_list = ds.GetMetadata('SUBDATASETS')
 
-    if len(sds_list) != 3:
+    if len(sds_list) != 6:
         print(sds_list)
         gdaltest.post_reason( 'Did not get expected complex subdataset count.' )
         return 'fail'
