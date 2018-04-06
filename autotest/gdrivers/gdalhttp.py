@@ -273,6 +273,26 @@ def http_6():
 
     return 'success'
 
+
+###############################################################################
+
+def http_test_ssl_verifystatus():
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    with gdaltest.config_option('GDAL_HTTP_SSL_VERIFYSTATUS', 'YES'):
+        with gdaltest.error_handler():
+            # For now this URL doesn't support OCSP stapling...
+            gdal.OpenEx('https://google.com', allowed_drivers = ['HTTP'])
+    last_err = gdal.GetLastErrorMsg()
+    if last_err.find('No OCSP response received') < 0 and last_err.find('libcurl too old') < 0:
+        print(last_err)
+        return 'fail'
+
+    return 'success'
+
+
 ###############################################################################
 #
 
@@ -290,7 +310,10 @@ gdaltest_list = [ http_1,
                   http_4,
                   http_5,
                   http_6,
+                  http_test_ssl_verifystatus,
                   http_cleanup ]
+
+# gdaltest_list = [ http_test_ssl_verifystatus ]
 
 if __name__ == '__main__':
 

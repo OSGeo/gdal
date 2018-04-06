@@ -316,7 +316,8 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "CURL_CA_BUNDLE", "CAINFO" },
     { "SSL_CERT_FILE", "CAINFO" },
     { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
-    { "GDAL_HTTP_CAPATH", "CAPATH" }
+    { "GDAL_HTTP_CAPATH", "CAPATH" },
+    { "GDAL_HTTP_SSL_VERIFYSTATUS", "SSL_VERIFYSTATUS" },
 };
 
 char** CPLHTTPGetOptionsFromEnv()
@@ -436,17 +437,22 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  *     Support for HTTP/2 requires curl 7.33 or later, built against nghttp2.
  *     "2TLS" means that HTTP/2 will be attempted for HTTPS connections only. Whereas
  *     "2" means that HTTP/2 will be attempted for HTTP or HTTPS.</li>
+ * <li>SSL_VERIFYSTATUS=YES/NO (GDAL >= 2.3, and curl >= 7.41): determines whether
+ *     the status of the server cert using the "Certificate Status Request" TLS
+ *     extension (aka. OCSP stapling) should be checked. If this option is enabled
+ *     but the server does not support the TLS extension, the verification will fail. 
+ *     Default to NO.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION values are searched in the configuration
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS values are searched in the configuration
  * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
- * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION
+ * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -1487,6 +1493,23 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
     {
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
+
+    // Enable OCSP stapling if requested.
+    const char *pszSSLVerifyStatus =
+                    CSLFetchNameValue( papszOptions, "SSL_VERIFYSTATUS" );
+    if( pszSSLVerifyStatus == nullptr )
+        pszSSLVerifyStatus = CPLGetConfigOption("GDAL_HTTP_SSL_VERIFYSTATUS", "NO");
+    if( CPLTestBool( pszSSLVerifyStatus) )
+    {
+    // 7.41.0
+#if LIBCURL_VERSION_NUM >= 0x72900
+        curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYSTATUS, 1L);
+#else
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "GDAL_HTTP_SSL_VERIFYSTATUS requested, but libcurl too old "
+                 "to support it.");
+#endif
     }
 
     // Custom path to SSL certificates.

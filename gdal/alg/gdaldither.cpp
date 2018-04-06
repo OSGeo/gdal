@@ -68,10 +68,10 @@
 #ifdef USE_SSE2
 
 #include <emmintrin.h>
-#define CAST_PCT(x) ((GByte*)x)
+#define CAST_PCT(x) reinterpret_cast<GByte*>(x)
 #define ALIGN_INT_ARRAY_ON_16_BYTE(x) \
-    ( (((GUIntptr_t)(x) % 16) != 0 ) \
-      ? (int*)((GByte*)(x) + 16 - ((GUIntptr_t)(x) % 16)) \
+    ( ((reinterpret_cast<GUIntptr_t>(x) % 16) != 0 ) \
+      ? reinterpret_cast<int*>(reinterpret_cast<GByte*>(x) + 16 - (reinterpret_cast<GUIntptr_t>(x) % 16)) \
       : (x) )
 #else
 #define CAST_PCT(x) x
@@ -319,7 +319,7 @@ int GDALDitherRGB2PCTInternal(
             // If the image is small enough, then the number of colors
             // will be limited and using a hashmap, rather than a full table
             // will be more efficient.
-            psColorIndexMap = (ColorIndex*)pasDynamicColorMap;
+            psColorIndexMap = reinterpret_cast<ColorIndex*>(pasDynamicColorMap);
             memset(psColorIndexMap, 0xFF, sizeof(ColorIndex) * PRIME_FOR_65536);
         }
         else
@@ -602,20 +602,20 @@ static int FindNearestColor( int nColors, int *panPCT,
 
     for( int iColor = 0; iColor < nColors; iColor+=8 )
     {
-        const __m128i pctColor = _mm_load_si128((__m128i*)&panPCT[iColor]);
-        const __m128i pctColor2 = _mm_load_si128((__m128i*)&panPCT[iColor+4]);
+        const __m128i pctColor = _mm_load_si128(reinterpret_cast<__m128i*>(&panPCT[iColor]));
+        const __m128i pctColor2 = _mm_load_si128(reinterpret_cast<__m128i*>(&panPCT[iColor+4]));
 
         _mm_store_si128(
-            (__m128i*)anDistance,
+            reinterpret_cast<__m128i*>(anDistance),
             _mm_sad_epu8(_mm_and_si128(pctColor, mask_low), thisColor_low));
         _mm_store_si128(
-            (__m128i*)(anDistance+4),
+            reinterpret_cast<__m128i*>(anDistance+4),
             _mm_sad_epu8(_mm_and_si128(pctColor, mask_high), thisColor_high));
         _mm_store_si128(
-            (__m128i*)(anDistance+8),
+            reinterpret_cast<__m128i*>(anDistance+8),
             _mm_sad_epu8(_mm_and_si128(pctColor2, mask_low), thisColor_low));
         _mm_store_si128(
-            (__m128i*)(anDistance+12),
+            reinterpret_cast<__m128i*>(anDistance+12),
             _mm_sad_epu8(_mm_and_si128(pctColor2, mask_high), thisColor_high));
 
         if( anDistance[0] < nBestDist )
