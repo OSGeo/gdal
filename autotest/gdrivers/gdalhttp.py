@@ -297,6 +297,31 @@ def http_test_ssl_verifystatus():
 
     return 'success'
 
+###############################################################################
+
+def http_test_use_capi_store():
+
+    if gdal.GetDriverByName( 'HTTP' ) is None:
+        return 'skip'
+
+    if sys.platform != 'win32':
+        with gdaltest.error_handler():
+            return http_test_use_capi_store_sub()
+
+    import test_py_scripts
+    ret = test_py_scripts.run_py_script_as_external_script('.', 'gdalhttp', ' -use_capi_store', display_live_on_parent_stdout = True)
+
+    if ret.find('Failed:    0') == -1:
+        return 'fail'
+
+    return 'success'
+
+def http_test_use_capi_store_sub():
+
+    with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
+        gdal.OpenEx('https://google.com', allowed_drivers = ['HTTP'])
+
+    return 'success'
 
 ###############################################################################
 #
@@ -316,13 +341,17 @@ gdaltest_list = [ http_1,
                   http_5,
                   http_6,
                   http_test_ssl_verifystatus,
+                  http_test_use_capi_store,
                   http_cleanup ]
 
-# gdaltest_list = [ http_test_ssl_verifystatus ]
+# gdaltest_list = [ http_test_use_capi_store ]
 
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'http' )
+
+    if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
+        gdaltest_list = [ http_test_use_capi_store_sub ]
 
     gdaltest.run_tests( gdaltest_list )
 

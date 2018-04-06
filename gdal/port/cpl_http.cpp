@@ -34,7 +34,9 @@
 #include <cstring>
 
 #include <algorithm>
+#include <array>
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -52,6 +54,14 @@
 
 #ifdef HAVE_OPENSSL_CRYPTO
 #include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/engine.h>
+#include <openssl/x509v3.h>
+
+#if defined(WIN32)
+#include <wincrypt.h>
+#endif
+
 #endif
 
 #ifdef HAVE_SIGACTION
@@ -71,6 +81,18 @@ static CPLMutex *hSessionMapMutex = nullptr;
 static bool bHasCheckVersion = false;
 static bool bSupportGZip = false;
 static bool bSupportHTTP2 = false;
+#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+static std::vector<X509*> *poWindowsCertificateList = nullptr;
+
+#if ( OPENSSL_VERSION_NUMBER < 0x10100000L )
+#define EVP_PKEY_get0_RSA(x)            (x->pkey.rsa)
+#define EVP_PKEY_get0_DSA(x)            (x->pkey.dsa)
+#define X509_get_extension_flags(x)     (x->ex_flags)
+#define X509_get_key_usage(x)           (x->ex_kusage)
+#define X509_get_extended_key_usage(x)  (x->ex_xkusage)
+#endif
+
+#endif // defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
 
 #if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
 
@@ -127,6 +149,139 @@ static void CPLOpenSSLCleanup()
 }
 
 #endif
+
+#if defined(WIN32) && defined (HAVE_OPENSSL_CRYPTO)
+
+/************************************************************************/
+/*                    CPLWindowsCertificateListCleanup()                */
+/************************************************************************/
+
+static void CPLWindowsCertificateListCleanup()
+{
+    if( poWindowsCertificateList )
+    {
+        for( auto&& pX509: *poWindowsCertificateList )
+        {
+            X509_free(pX509);
+        }
+        delete poWindowsCertificateList;
+        poWindowsCertificateList = nullptr;
+    }
+}
+
+/************************************************************************/
+/*                       LoadCAPICertificates()                         */
+/************************************************************************/
+
+static
+CPLErr LoadCAPICertificates(const char *pszName,
+                            std::vector<X509*> *poCertificateList)
+{
+    CPLAssert(pszName);
+    CPLAssert(poCertificateList);
+
+    HCERTSTORE pCertStore = CertOpenSystemStore(
+        reinterpret_cast<HCRYPTPROV_LEGACY>(nullptr), pszName);
+    if( pCertStore == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLLoadCAPICertificates(): Unable open system "
+                 "certificate store %s.", pszName);
+        return CE_Failure;
+    }
+
+    PCCERT_CONTEXT pCertificate = CertEnumCertificatesInStore( pCertStore, nullptr );
+    while( pCertificate != nullptr )
+    {
+        X509 *pX509 = d2i_X509( nullptr,
+                                const_cast<unsigned char const **>(&pCertificate->pbCertEncoded),
+                                pCertificate->cbCertEncoded );
+        if( pX509 == nullptr )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "CPLLoadCAPICertificates(): CertEnumCertificatesInStore() "
+                     "returned a null certificate, skipping." );
+        }
+        else
+        {
+#ifdef DEBUG_VERBOSE
+            char szSubject[256] = {0};
+            CPLString osSubject;
+            X509_NAME *pName = X509_get_subject_name( pX509 );
+            if( pName )
+            {
+                X509_NAME_oneline(pName, szSubject, sizeof(szSubject));
+                osSubject = szSubject;
+            }
+            if( !osSubject.empty() )
+                 CPLDebug("HTTP", "SSL Certificate: %s", osSubject.c_str());
+#endif
+            poCertificateList->push_back(pX509);
+        }
+        pCertificate = CertEnumCertificatesInStore(pCertStore, pCertificate);
+    }
+    CertCloseStore(pCertStore, 0);
+    return CE_None;
+}
+
+/************************************************************************/
+/*                       CPL_ssl_ctx_callback()                         */
+/************************************************************************/
+
+// Load certificates from Windows Crypto API store.
+static
+CURLcode CPL_ssl_ctx_callback(CURL *pCurl, void *pSSL, void *)
+{
+    SSL_CTX *pSSL_CTX = static_cast<SSL_CTX*>(pSSL);
+    if( pSSL_CTX == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                  "CPL_ssl_ctx_callback(): OpenSSL context pointer is NULL.");
+        return CURLE_ABORTED_BY_CALLBACK;
+    }
+
+    static std::mutex goMutex;
+    {
+        std::lock_guard<std::mutex> oLock(goMutex);
+        if( poWindowsCertificateList == nullptr )
+        {
+            poWindowsCertificateList = new std::vector<X509*>();
+            if( !poWindowsCertificateList )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "CPL_ssl_ctx_callback(): Unable to allocate "
+                         "structure to hold certificates.");
+                return CURLE_FAILED_INIT;
+            }
+
+            const std::array<const char*, 3> aszStores
+                                            {{"CA", "AuthRoot", "ROOT"}};
+            for( auto&& pszStore: aszStores )
+            {
+                if( LoadCAPICertificates(pszStore, poWindowsCertificateList)
+                        == CE_Failure )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "CPL_ssl_ctx_callback(): Unable to load certificates "
+                             "from '%s' store.", pszStore);
+                    return CURLE_FAILED_INIT;
+                }
+            }
+
+            CPLDebug("HTTP",
+                     "Loading %d certificates from Windows store.",
+                     poWindowsCertificateList->size());
+        }
+    }
+
+    X509_STORE *pX509Store = SSL_CTX_get_cert_store(pSSL_CTX);
+    for( X509 *x509 : *poWindowsCertificateList )
+        X509_STORE_add_cert(pX509Store, x509);
+
+    return CURLE_OK;
+}
+
+#endif // defined(WIN32) && defined (HAVE_OPENSSL_CRYPTO)
 
 /************************************************************************/
 /*                       CheckCurlFeatures()                            */
@@ -318,6 +473,7 @@ constexpr TupleEnvVarOptionName asAssocEnvVarOptionName[] =
     { "GDAL_HTTP_HEADER_FILE", "HEADER_FILE" },
     { "GDAL_HTTP_CAPATH", "CAPATH" },
     { "GDAL_HTTP_SSL_VERIFYSTATUS", "SSL_VERIFYSTATUS" },
+    { "GDAL_HTTP_USE_CAPI_STORE", "USE_CAPI_STORE" },
 };
 
 char** CPLHTTPGetOptionsFromEnv()
@@ -442,17 +598,21 @@ static void CPLHTTPEmitFetchDebug(const char* pszURL,
  *     extension (aka. OCSP stapling) should be checked. If this option is enabled
  *     but the server does not support the TLS extension, the verification will fail. 
  *     Default to NO.</li>
+ * <li>USE_CAPI_STORE=YES/NO (GDAL >= 2.3, Windows only): whether CA certificates from
+ *     the Windows certificate store. Defaults to NO.</li>
  * </ul>
  *
  * Alternatively, if not defined in the papszOptions arguments, the
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, PROXYUSERPWD, PROXYAUTH, NETRC,
- * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS values are searched in the configuration
+ * MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION, SSL_VERIFYSTATUS, USE_CAPI_STORE
+ * values are searched in the configuration
  * options respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
  * GDAL_HTTP_NETRC, GDAL_HTTP_MAX_RETRY, GDAL_HTTP_RETRY_DELAY,
- * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS
+ * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
+ * GDAL_HTTP_USE_CAPI_STORE
  *
  * @return a CPLHTTPResult* structure that must be freed by
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
@@ -1495,6 +1655,21 @@ void* CPLHTTPSetOptions(void *pcurl, const char * const* papszOptions)
         curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
     }
 
+    const char* pszUseCAPIStore = CSLFetchNameValue( papszOptions, "USE_CAPI_STORE" );
+    if( pszUseCAPIStore == nullptr )
+         pszUseCAPIStore = CPLGetConfigOption("GDAL_HTTP_USE_CAPI_STORE", "NO");
+    if( CPLTestBool( pszUseCAPIStore ) )
+    {
+#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO) && LIBCURL_VERSION_NUM >= 0x70B00
+        // Use certificates from Windows certificate store; requires crypt32.lib, OpenSSL crypto and ssl libraries.
+        curl_easy_setopt(http_handle, CURLOPT_SSL_CTX_FUNCTION, *CPL_ssl_ctx_callback);
+#else
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "GDAL_HTTP_USE_CAPI_STORE requested, but libcurl too old, "
+                 "non-Windows platform or OpenSSL missing.");
+#endif
+    }
+
     // Enable OCSP stapling if requested.
     const char *pszSSLVerifyStatus =
                     CSLFetchNameValue( papszOptions, "SSL_VERIFYSTATUS" );
@@ -1730,6 +1905,13 @@ void CPLHTTPCleanup()
     // Not quite a safe sequence.
     CPLDestroyMutex( hSessionMapMutex );
     hSessionMapMutex = nullptr;
+
+#if defined(WIN32) && defined(HAVE_OPENSSL_CRYPTO)
+    // This cleanup must be absolutely done before CPLOpenSSLCleanup()
+    // for some unknown reason, but otherwise X509_free() in
+    // CPLWindowsCertificateListCleanup() will crash.
+    CPLWindowsCertificateListCleanup();
+#endif
 
 #if defined(HAVE_OPENSSL_CRYPTO) && OPENSSL_VERSION_NUMBER < 0x10100000
     CPLOpenSSLCleanup();
