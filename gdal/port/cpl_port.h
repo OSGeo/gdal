@@ -1030,7 +1030,7 @@ CPL_C_END
 /*! @endcond */
 #endif
 
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+#if defined(__cplusplus)
 /** Returns the size of C style arrays. */
 #define CPL_ARRAYSIZE(array) \
   ((sizeof(array) / sizeof(*(array))) / \
