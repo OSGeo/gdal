@@ -753,13 +753,13 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
       (eSrcType == GDT_UInt32 ? \
           reinterpret_cast<const GUInt32*>(papoSource)[ii] : \
       (eSrcType == GDT_CInt16 ? \
-          reinterpret_cast<const GInt16*>(papoSource)[ii * 2] : \
+          reinterpret_cast<const GInt16*>(papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CInt32 ? \
-          reinterpret_cast<const GInt32*>(papoSource)[ii * 2] : \
+          reinterpret_cast<const GInt32*>(papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CFloat32 ? \
-          reinterpret_cast<const float*>(papoSource)[ii * 2] : \
+          reinterpret_cast<const float*>(papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CFloat64 ? \
-          reinterpret_cast<const double*>(papoSource)[ii * 2] : 0)))))))))))
+          reinterpret_cast<const double*>(papoSource)[(ii) * 2] : 0)))))))))))
 #else
 /**
  * SRCVAL - Macro which may be used by pixel functions to obtain
@@ -781,13 +781,13 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
       (eSrcType == GDT_UInt32 ? \
           ((GUInt32 *)papoSource)[ii] : \
       (eSrcType == GDT_CInt16 ? \
-          ((GInt16 *)papoSource)[ii * 2] : \
+          ((GInt16 *)papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CInt32 ? \
-          ((GInt32 *)papoSource)[ii * 2] : \
+          ((GInt32 *)papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CFloat32 ? \
-          ((float *)papoSource)[ii * 2] : \
+          ((float *)papoSource)[(ii) * 2] : \
       (eSrcType == GDT_CFloat64 ? \
-          ((double *)papoSource)[ii * 2] : 0)))))))))))
+          ((double *)papoSource)[(ii) * 2] : 0)))))))))))
 #endif
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
