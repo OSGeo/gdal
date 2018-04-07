@@ -2308,6 +2308,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     // among bands.
     if( !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nDataSize,
                         nPixelOffset, nLineOffset, nHeaderSize, nBandOffset,
                         poDS->fpImage) )
     {

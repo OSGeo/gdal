@@ -714,6 +714,7 @@ GDALDataset *ISCEDataset::Open( GDALOpenInfo *poOpenInfo )
 
     if( !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nDTSize,
                         nPixelOffset, nLineOffset, 0, nBandOffset,
                         poDS->fpImage) )
     {

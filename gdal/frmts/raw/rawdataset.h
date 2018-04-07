@@ -177,6 +177,7 @@ public:
 #ifdef GDAL_COMPILATION
 
 bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
+                                int nDTSize,
                                 int nPixelOffset,
                                 int nLineOffset,
                                 vsi_l_offset nHeaderSize,

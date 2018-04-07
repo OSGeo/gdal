@@ -243,6 +243,7 @@ CPLErr VRTRawRasterBand::SetRawLink( const char *pszFilename,
 
     if( !RAWDatasetCheckMemoryUsage(
                         nRasterXSize, nRasterYSize, 1,
+                        GDALGetDataTypeSizeBytes(GetRasterDataType()),
                         nPixelOffset, nLineOffset, nImageOffset, 0,
                         reinterpret_cast<VSILFILE*>(fp)) )
     {
