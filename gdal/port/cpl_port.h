@@ -1088,8 +1088,10 @@ class MSVCPedanticBool
 
         bool operator== (const bool& other) const { return b == other; }
         bool operator!= (const bool& other) const { return b != other; }
+        bool operator< (const bool& other) const { return b < other; }
         bool operator== (const MSVCPedanticBool& other) const { return b == other.b; }
         bool operator!= (const MSVCPedanticBool& other) const { return b != other.b; }
+        bool operator< (const MSVCPedanticBool& other) const { return b < other.b; }
 
         bool operator! () const { return !b; }
         operator bool() const { return b; }
