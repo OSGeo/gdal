@@ -905,19 +905,20 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
         else if(m_osType == RDADatasetType::TEMPLATE)
         {
             osURL += "/template/" + m_osTemplateId + "/metadata";
-            osURL += m_osParams.size()>0 ? "?": "";
+            int nCountOptions = 0;
             if(!m_osNodeId.empty())
             {
-                osURL += "nodeId="+m_osNodeId+"&";
+                osURL += "?nodeId="+m_osNodeId;
+                nCountOptions = 1;
             }
             for (auto tup : m_osParams)
             {
-                osURL += std::get<0>(tup)+"="+std::get<1>(tup)+"&";
-            }
-            //remove trailing &
-            if(osURL.endsWith("&") ==0 )
-            {
-                osURL.erase((osURL.begin() + osURL.size()-1), osURL.end());
+                if (nCountOptions == 0)
+                    osURL += "?";
+                else
+                    osURL += "&";
+                osURL += std::get<0>(tup)+"="+std::get<1>(tup);
+                nCountOptions ++;
             }
         }
         else
