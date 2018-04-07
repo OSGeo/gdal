@@ -159,7 +159,7 @@ GatherFeaturePoints( GDALDataset* poDataset, int* panBands,
 
     // Prepare integral image.
     GDALIntegralImage *poImg = new GDALIntegralImage();
-    poImg->Initialize((const double**)padfImg, nHeight, nWidth);
+    poImg->Initialize(const_cast<const double**>(padfImg), nHeight, nWidth);
 
     // Get feature points.
     GDALSimpleSURF *poSurf = new GDALSimpleSURF(nOctaveStart, nOctaveEnd);

@@ -303,10 +303,10 @@ static const V2DF v2_one = { 1.0, 1.0 };
 static const V2DF v2_const1023_mul_2pow20 =
     { 1023.0 * 1048576, 1023.0 * 1048576 };
 
-#define GET_HIGH_WORD(hx,x) memcpy(&hx, ((char*)&x+4),4)
-#define SET_HIGH_WORD(x,hx) memcpy(((char*)&x+4), &hx,4)
+#define GET_HIGH_WORD(hx,x) memcpy(&hx, reinterpret_cast<char*>(&x)+4,4)
+#define SET_HIGH_WORD(x,hx) memcpy(reinterpret_cast<char*>(&x)+4, &hx,4)
 
-#define MAKE_WIDE_CST(x) ((((long long)(x)) << 32) | (x))
+#define MAKE_WIDE_CST(x) (((static_cast<long long>(x)) << 32) | (x))
 constexpr long long cst_expmask = MAKE_WIDE_CST(0xfff00000);
 constexpr long long cst_0x95f64 = MAKE_WIDE_CST(0x00095f64);
 constexpr long long cst_0x100000 = MAKE_WIDE_CST(0x00100000);
@@ -602,12 +602,12 @@ int VizGeorefSpline2D::solve()
 
 #endif
 
-    double* adfRHS = (double*) VSICalloc( _nof_eqs * _nof_vars, sizeof(double) );
+    double* adfRHS = static_cast<double*>(VSICalloc( _nof_eqs * _nof_vars, sizeof(double) ));
     for( int iRHS = 0; iRHS < _nof_vars; iRHS++ )
         for( int iRow = 0; iRow < _nof_eqs; iRow++ )
             adfRHS[iRow * _nof_vars + iRHS] = rhs[iRHS][iRow];
 
-    double* adfCoef = (double*) VSICalloc( _nof_eqs * _nof_vars, sizeof(double) );
+    double* adfCoef = static_cast<double*>(VSICalloc( _nof_eqs * _nof_vars, sizeof(double) ));
 
     if( !GDALLinearSystemSolve( _nof_eqs, _nof_vars, _AA, adfRHS, adfCoef ) )
     {

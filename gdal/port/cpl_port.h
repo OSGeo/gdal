@@ -293,7 +293,11 @@ typedef GUIntBig GUIntptr_t;
 typedef unsigned int  GUIntptr_t;
 #endif
 
+#ifdef __cplusplus
+#define CPL_IS_ALIGNED(ptr, quant) ((reinterpret_cast<GUIntptr_t>(static_cast<const void*>(ptr)) % (quant)) == 0)
+#else
 #define CPL_IS_ALIGNED(ptr, quant) (((GUIntptr_t)(ptr) % (quant)) == 0)
+#endif
 
 #endif
 

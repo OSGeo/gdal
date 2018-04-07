@@ -1883,8 +1883,8 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
 
             pfnGDALGridMethod = GDALGridNearestNeighbor;
             bCreateQuadTree = (nPoints > 100 &&
-                (((GDALGridNearestNeighborOptions *)poOptions)->dfRadius1 ==
-                ((GDALGridNearestNeighborOptions *)poOptions)->dfRadius2));
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius1 ==
+                static_cast<const GDALGridNearestNeighborOptions *>(poOptions)->dfRadius2);
             break;
         }
         case GGA_MetricMinimum:
@@ -2008,11 +2008,11 @@ GDALGridContextCreate( GDALGridAlgorithm eAlgorithm, const void *poOptions,
     if( eAlgorithm == GGA_InverseDistanceToAPowerNearestNeighbor )
     {
         const double dfPower =
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->dfPower;
+            static_cast<const GDALGridInverseDistanceToAPowerNearestNeighborOptions*>(poOptions)->dfPower;
         psContext->sExtraParameters.dfPowerDiv2PreComp = dfPower / 2;
 
         const double dfRadius =
-            ((GDALGridInverseDistanceToAPowerNearestNeighborOptions *)poOptions)->dfRadius;
+            static_cast<const GDALGridInverseDistanceToAPowerNearestNeighborOptions*>(poOptions)->dfRadius;
         psContext->sExtraParameters.dfRadiusPower2PreComp = pow ( dfRadius, 2 );
         psContext->sExtraParameters.dfRadiusPower4PreComp = pow ( dfRadius, 4 );
     }

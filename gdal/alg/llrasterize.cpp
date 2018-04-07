@@ -43,7 +43,7 @@ CPL_CVSID("$Id$")
 
 static int llCompareInt(const void *a, const void *b)
 {
-    return (*(const int *)a) - (*(const int *)b);
+    return *static_cast<const int*>(a) - *static_cast<const int*>(b);
 }
 
 /************************************************************************/
@@ -294,7 +294,7 @@ void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
             double dfVariant = 0.0;
             double dfVariant1 = 0.0;
             if( padfVariant != nullptr &&
-                ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
+                static_cast<GDALRasterizeInfo *>(pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
             {
                 dfVariant = padfVariant[n + j - 1];
@@ -413,7 +413,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
             double dfVariant = 0.0;
             double dfVariantEnd = 0.0;
             if( padfVariant != nullptr &&
-                ((GDALRasterizeInfo *)pCBData)->eBurnValueSource !=
+                static_cast<GDALRasterizeInfo *>(pCBData)->eBurnValueSource !=
                     GBV_UserBurnValue )
             {
                 dfVariant = padfVariant[n + j - 1];
@@ -446,7 +446,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
 
                 const int iX = static_cast<int>(floor(dfXEnd));
                 int iY = static_cast<int>(floor(dfY));
-                int iYEnd = (int) floor(dfYEnd);
+                int iYEnd = static_cast<int>(floor(dfYEnd));
 
                 if( iX < 0 || iX >= nRasterXSize )
                     continue;
@@ -489,7 +489,7 @@ GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
 
                 int iX = static_cast<int>(floor(dfX));
                 const int iY = static_cast<int>(floor(dfY));
-                int iXEnd = (int) floor(dfXEnd);
+                int iXEnd = static_cast<int>(floor(dfXEnd));
 
                 if( iY < 0 || iY >= nRasterYSize )
                     continue;

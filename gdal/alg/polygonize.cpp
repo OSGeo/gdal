@@ -88,7 +88,7 @@ void RPolygon::Dump() const
     {
         const std::vector<int> &anString = aanXY[iString];
 
-        /*ok*/printf( "  String %d:\n", (int) iString );
+        /*ok*/printf( "  String %d:\n", static_cast<int>(iString) );
         for( size_t iVert = 0; iVert < anString.size(); iVert += 2 )
         {
             /*ok*/printf( "    (%d,%d)\n", anString[iVert], anString[iVert+1] );

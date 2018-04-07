@@ -55,7 +55,7 @@ static inline __m128i GDALCopyInt16ToXMM(const void* ptr)
     memcpy(&s, ptr, 2);
     return _mm_cvtsi32_si128(s);
 #else
-    return _mm_cvtsi32_si128(*(unsigned short*)(ptr));
+    return _mm_cvtsi32_si128(*static_cast<const unsigned short*>(ptr));
 #endif
 }
 
@@ -66,7 +66,7 @@ static inline __m128i GDALCopyInt32ToXMM(const void* ptr)
     memcpy(&i, ptr, 4);
     return _mm_cvtsi32_si128(i);
 #else
-    return _mm_cvtsi32_si128(*(GInt32*)(ptr));
+    return _mm_cvtsi32_si128(*static_cast<const GInt32*>(ptr));
 #endif
 }
 
@@ -77,7 +77,7 @@ static inline __m128i GDALCopyInt64ToXMM(const void* ptr)
     memcpy(&i, ptr, 8);
     return _mm_cvtsi64_si128(i);
 #else
-    return _mm_cvtsi64_si128(*(GInt64*)(ptr));
+    return _mm_cvtsi64_si128(*static_cast<const GInt64*>(ptr));
 #endif
 }
 
@@ -365,7 +365,7 @@ class XMMReg2Double
     inline void Store2Val(float* ptr) const
     {
         __m128i xmm_i = _mm_castps_si128( _mm_cvtpd_ps(xmm) );
-        GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
+        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<GInt64*>(ptr));
     }
 
     inline void Store2Val(unsigned char* ptr) const
@@ -375,7 +375,7 @@ class XMMReg2Double
         //                  or X X X X 0 B 0 A
         tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
         tmp = _mm_packus_epi16(tmp, tmp);
-        GDALCopyXMMToInt16(tmp, (GInt16*)ptr);
+        GDALCopyXMMToInt16(tmp, reinterpret_cast<GInt16*>(ptr));
     }
 
     inline void Store2Val(unsigned short* ptr) const
@@ -384,7 +384,7 @@ class XMMReg2Double
         // X X X X 0 B 0 A --> 0 X X X X 0 B 0  (srli)
         //                  or X X X X 0 B 0 A
         tmp = _mm_or_si128(tmp, _mm_srli_si128(tmp, 2));
-        GDALCopyXMMToInt32(tmp, (GInt32*)ptr);
+        GDALCopyXMMToInt32(tmp, reinterpret_cast<GInt32*>(ptr));
 
         //ptr[0] = (GUInt16)_mm_extract_epi16(tmp, 0);
         //ptr[1] = (GUInt16)_mm_extract_epi16(tmp, 2);
@@ -392,7 +392,7 @@ class XMMReg2Double
 
     inline void StoreMask(unsigned char* ptr) const
     {
-        _mm_storeu_si128( (__m128i*)ptr, _mm_castpd_si128(xmm) );
+        _mm_storeu_si128( reinterpret_cast<__m128i*>(ptr), _mm_castpd_si128(xmm) );
     }
 
     inline operator double () const

@@ -207,7 +207,7 @@ GDAL_CG_Create( int nWidth, int nHeight, int bNoDataSet, double dfNoDataValue,
         poCG->SetNoData( dfNoDataValue );
 
     poCG->SetContourLevels( dfContourInterval, dfContourBase );
-    return (GDALContourGeneratorH) poCG;
+    return reinterpret_cast<GDALContourGeneratorH>(poCG);
 }
 
 /************************************************************************/

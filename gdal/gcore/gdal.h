@@ -732,6 +732,35 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 
+#ifdef __cplusplus
+/**
+ * SRCVAL - Macro which may be used by pixel functions to obtain
+ *          a pixel from a source buffer.
+ */
+#define SRCVAL(papoSource, eSrcType, ii) \
+      (eSrcType == GDT_Byte ? \
+          reinterpret_cast<const GByte*>(papoSource)[ii] : \
+      (eSrcType == GDT_Float32 ? \
+          reinterpret_cast<const float*>(papoSource)[ii] : \
+      (eSrcType == GDT_Float64 ? \
+          reinterpret_cast<const double*>(papoSource)[ii] : \
+      (eSrcType == GDT_Int32 ? \
+          reinterpret_cast<const GInt32*>(papoSource)[ii] : \
+      (eSrcType == GDT_UInt16 ? \
+          reinterpret_cast<const GUInt16*>(papoSource)[ii] : \
+      (eSrcType == GDT_Int16 ? \
+          reinterpret_cast<const GInt16*>(papoSource)[ii] : \
+      (eSrcType == GDT_UInt32 ? \
+          reinterpret_cast<const GUInt32*>(papoSource)[ii] : \
+      (eSrcType == GDT_CInt16 ? \
+          reinterpret_cast<const GInt16*>(papoSource)[ii * 2] : \
+      (eSrcType == GDT_CInt32 ? \
+          reinterpret_cast<const GInt32*>(papoSource)[ii * 2] : \
+      (eSrcType == GDT_CFloat32 ? \
+          reinterpret_cast<const float*>(papoSource)[ii * 2] : \
+      (eSrcType == GDT_CFloat64 ? \
+          reinterpret_cast<const double*>(papoSource)[ii * 2] : 0)))))))))))
+#else
 /**
  * SRCVAL - Macro which may be used by pixel functions to obtain
  *          a pixel from a source buffer.
@@ -759,6 +788,7 @@ OGRErr CPL_DLL GDALDatasetRollbackTransaction(GDALDatasetH hDS);
           ((float *)papoSource)[ii * 2] : \
       (eSrcType == GDT_CFloat64 ? \
           ((double *)papoSource)[ii * 2] : 0)))))))))))
+#endif
 
 /** Type of functions to pass to GDALAddDerivedBandPixelFunc.
  * @since GDAL 2.2 */

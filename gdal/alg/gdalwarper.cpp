@@ -580,7 +580,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
         if( !CPL_IS_ALIGNED(pafMask, 16) )
         {
-            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+            pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
                                                     inv_alpha_max;
             if( pafMask[iPixel] >= 1.0f )
                 pafMask[iPixel] = 1.0f;
@@ -599,17 +599,17 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         for( ; iPixel + 6*4-1 < nPixels; iPixel+=6*4 )
         {
             __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 0) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 0) )) );
             __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 1) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 1) )) );
             __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 2) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 2) )) );
             __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 3) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 3) )) );
             __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 4) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 4) )) );
             __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 5) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 5) )) );
             xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
             xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
             xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
@@ -648,7 +648,7 @@ GDALWarpSrcAlphaMasker( void *pMaskFuncArg,
         }
         for(; iPixel < nPixels; iPixel++ )
         {
-            pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+            pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
                                                       inv_alpha_max;
             if( pafMask[iPixel] >= 1.0f )
                 pafMask[iPixel] = 1.0f;
@@ -880,7 +880,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
             if( !CPL_IS_ALIGNED(pafMask, 16) )
             {
-                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
                                                           inv_alpha_max;
                 pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
                 iPixel ++;
@@ -894,21 +894,21 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             for( ; iPixel + 31 < nPixels; iPixel+=32 )
             {
                 __m128 xmm_mask0 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 0) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 0) )) );
                 __m128 xmm_mask1 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 1) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 1) )) );
                 __m128 xmm_mask2 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 2) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 2) )) );
                 __m128 xmm_mask3 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 3) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 3) )) );
                 __m128 xmm_mask4 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 4) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 4) )) );
                 __m128 xmm_mask5 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 5) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 5) )) );
                 __m128 xmm_mask6 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 6) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 6) )) );
                 __m128 xmm_mask7 = _mm_cvtepi32_ps( _mm_and_si128(xmm_i_mask,
-                    _mm_load_si128( (__m128i *)(pafMask + iPixel + 4 * 7) )) );
+                    _mm_load_si128( reinterpret_cast<__m128i *>(pafMask + iPixel + 4 * 7) )) );
                 xmm_mask0 = _mm_mul_ps(xmm_mask0, xmm_inverse_alpha_max);
                 xmm_mask1 = _mm_mul_ps(xmm_mask1, xmm_inverse_alpha_max);
                 xmm_mask2 = _mm_mul_ps(xmm_mask2, xmm_inverse_alpha_max);
@@ -936,7 +936,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             }
             for(; iPixel < nPixels; iPixel++ )
             {
-                pafMask[iPixel] = (((GUInt32*)pafMask)[iPixel] & mask) *
+                pafMask[iPixel] = (reinterpret_cast<GUInt32*>(pafMask)[iPixel] & mask) *
                                                         inv_alpha_max;
                 pafMask[iPixel] = std::min( 1.0f, pafMask[iPixel] );
             }
@@ -988,7 +988,7 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
             // the alignment of malloc() being 16 byte
             if( !CPL_IS_ALIGNED(pafMask, 16) )
             {
-                ((int*)pafMask)[iPixel] =
+                reinterpret_cast<int*>(pafMask)[iPixel] =
                     static_cast<int>(pafMask[iPixel] * cst_alpha_max);
                 iPixel++;
             }
@@ -1013,25 +1013,25 @@ GDALWarpDstAlphaMasker( void *pMaskFuncArg, int nBandCount,
                 xmm_mask6 = _mm_mul_ps(xmm_mask6, xmm_alpha_max);
                 xmm_mask7 = _mm_mul_ps(xmm_mask7, xmm_alpha_max);
                  // Truncate to int.
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 0),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 0),
                                 _mm_cvttps_epi32(xmm_mask0));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 1),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 1),
                                 _mm_cvttps_epi32(xmm_mask1));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 2),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 2),
                                 _mm_cvttps_epi32(xmm_mask2));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 3),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 3),
                                 _mm_cvttps_epi32(xmm_mask3));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 4),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 4),
                                 _mm_cvttps_epi32(xmm_mask4));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 5),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 5),
                                 _mm_cvttps_epi32(xmm_mask5));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 6),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 6),
                                 _mm_cvttps_epi32(xmm_mask6));
-                _mm_store_si128((__m128i*)(pafMask + iPixel + 4 * 7),
+                _mm_store_si128(reinterpret_cast<__m128i*>(pafMask + iPixel + 4 * 7),
                                 _mm_cvttps_epi32(xmm_mask7));
             }
             for( ; iPixel < nPixels; iPixel++ )
-                ((int*)pafMask)[iPixel] =
+                reinterpret_cast<int*>(pafMask)[iPixel] =
                   static_cast<int>(pafMask[iPixel] * cst_alpha_max);
 
             // Write data.
@@ -1249,7 +1249,7 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
     CPLFree( psOptions->papSrcPerBandValidityMaskFuncArg );
 
     if( psOptions->hCutline != nullptr )
-        OGR_G_DestroyGeometry( (OGRGeometryH) psOptions->hCutline );
+        OGR_G_DestroyGeometry( reinterpret_cast<OGRGeometryH>(psOptions->hCutline) );
 
     CPLFree( psOptions );
 }
@@ -1257,7 +1257,7 @@ void CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions *psOptions )
 #define COPY_MEM(target,type,count)                                     \
    do { if( (psSrcOptions->target) != nullptr && (count) != 0 )            \
    {                                                                    \
-       (psDstOptions->target) = (type *) CPLMalloc(sizeof(type)*(count)); \
+       (psDstOptions->target) = static_cast<type *>(CPLMalloc(sizeof(type)*(count))); \
        memcpy( (psDstOptions->target), (psSrcOptions->target),          \
                sizeof(type) * (count) );                                \
    } \
@@ -1296,7 +1296,7 @@ GDALCloneWarpOptions( const GDALWarpOptions *psSrcOptions )
 
     if( psSrcOptions->hCutline != nullptr )
         psDstOptions->hCutline =
-            OGR_G_Clone( (OGRGeometryH) psSrcOptions->hCutline );
+            OGR_G_Clone( reinterpret_cast<OGRGeometryH>(psSrcOptions->hCutline) );
     psDstOptions->dfCutlineBlendDist = psSrcOptions->dfCutlineBlendDist;
 
     return psDstOptions;
@@ -1760,7 +1760,7 @@ GDALSerializeWarpOptions( const GDALWarpOptions *psWO )
     if( psWO->hCutline != nullptr )
     {
         char *pszWKT = nullptr;
-        if( OGR_G_ExportToWkt( (OGRGeometryH) psWO->hCutline, &pszWKT )
+        if( OGR_G_ExportToWkt( reinterpret_cast<OGRGeometryH>(psWO->hCutline), &pszWKT )
             == OGRERR_NONE )
         {
             CPLCreateXMLElementAndValue( psTree, "Cutline", pszWKT );
@@ -1888,7 +1888,7 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
         psWO->hSrcDS = GDALOpenEx(
             pszValue, GDAL_OF_SHARED | GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
             nullptr,
-            (const char* const* )papszOpenOptions, nullptr );
+            papszOpenOptions, nullptr );
         CSLDestroy(papszOpenOptions);
     }
 
@@ -1998,8 +1998,9 @@ GDALWarpOptions * CPL_STDCALL GDALDeserializeWarpOptions( CPLXMLNode *psTree )
     const char *pszWKT = CPLGetXMLValue( psTree, "Cutline", nullptr );
     if( pszWKT )
     {
-        OGR_G_CreateFromWkt( (char **) &pszWKT, nullptr,
-                             (OGRGeometryH *) (&psWO->hCutline) );
+        char* pszWKTTemp = const_cast<char*>(pszWKT);
+        OGR_G_CreateFromWkt( &pszWKTTemp, nullptr,
+                             reinterpret_cast<OGRGeometryH *>(&psWO->hCutline) );
     }
 
     psWO->dfCutlineBlendDist =

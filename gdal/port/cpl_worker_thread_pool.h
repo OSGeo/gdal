@@ -101,7 +101,7 @@ class CPL_DLL CPLWorkerThreadPool
         void WaitCompletion(int nMaxRemainingJobs = 0);
 
         /** Return the number of threads setup */
-        int GetThreadCount() const { return (int)aWT.size(); }
+        int GetThreadCount() const { return static_cast<int>(aWT.size()); }
 };
 
 #endif // CPL_WORKER_THREAD_POOL_H_INCLUDED_
