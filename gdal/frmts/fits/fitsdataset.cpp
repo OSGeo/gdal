@@ -227,7 +227,11 @@ static bool isIgnorableFITSHeader(const char* name) {
 /************************************************************************/
 
 FITSDataset::FITSDataset():
-    hFITS(nullptr)
+    hFITS(nullptr),
+    gdalDataType(GDT_Unknown),
+    fitsDataType(0),
+    isExistingFile(false),
+    highestOffsetWritten(0)
 {}
 
 /************************************************************************/
