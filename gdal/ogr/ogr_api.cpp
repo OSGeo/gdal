@@ -726,60 +726,66 @@ void CPL_DLL OGR_G_SetPointsZM( OGRGeometryH hGeom, int nPointsIn,
         }
         else
         {
-          poSC->setNumPoints( nPointsIn );
+            poSC->setNumPoints( nPointsIn );
 
-          if( !pabyZ && !pabyM )
-          {
-              for( int i = 0; i < nPointsIn; ++i )
-              {
-                  const double x = *reinterpret_cast<const double *>(
-                      pabyX + i * nXStride);
-                  const double y = *reinterpret_cast<const double *>(
-                      pabyY + i * nYStride);
-                  poSC->setPoint( i, x, y );
-              }
-          }
-          else if( pabyZ && !pabyM )
-          {
-              for( int i = 0; i < nPointsIn; ++i )
-              {
-                  const double x = *reinterpret_cast<const double *>(
-                      pabyX + i * nXStride);
-                  const double y = *reinterpret_cast<const double *>(
-                      pabyY + i * nYStride);
-                  const double z = *reinterpret_cast<const double *>(
-                      pabyZ + i * nZStride);
-                  poSC->setPoint( i, x, y, z );
-              }
-          }
-          else if( !pabyZ && pabyM )
-          {
-              for( int i = 0; i < nPointsIn; ++i )
-              {
-                  const double x = *reinterpret_cast<const double *>(
-                      pabyX + i * nXStride);
-                  const double y = *reinterpret_cast<const double *>(
-                      pabyY + i * nYStride);
-                  const double m = *reinterpret_cast<const double *>(
-                      pabyM + i * nMStride);
-                  poSC->setPointM( i, x, y, m );
-              }
-          }
-          else
-          {
-              for( int i = 0; i < nPointsIn; ++i )
-              {
-                  const double x = *reinterpret_cast<const double *>(
-                      pabyX + i * nXStride);
-                  const double y = *reinterpret_cast<const double *>(
-                      pabyY + i * nYStride);
-                  const double z = *reinterpret_cast<const double *>(
-                      pabyZ + i * nZStride);
-                  const double m = *reinterpret_cast<const double *>(
-                      pabyM + i * nMStride);
-                  poSC->setPoint( i, x, y, z, m );
-              }
-          }
+            if( !pabyM )
+            {
+                if( !pabyZ )
+                {
+                    for( int i = 0; i < nPointsIn; ++i )
+                    {
+                        const double x = *reinterpret_cast<const double *>(
+                            pabyX + i * nXStride);
+                        const double y = *reinterpret_cast<const double *>(
+                            pabyY + i * nYStride);
+                        poSC->setPoint( i, x, y );
+                    }
+                }
+                else
+                {
+                    for( int i = 0; i < nPointsIn; ++i )
+                    {
+                        const double x = *reinterpret_cast<const double *>(
+                            pabyX + i * nXStride);
+                        const double y = *reinterpret_cast<const double *>(
+                            pabyY + i * nYStride);
+                        const double z = *reinterpret_cast<const double *>(
+                            pabyZ + i * nZStride);
+                        poSC->setPoint( i, x, y, z );
+                    }
+                }
+            }
+            else
+            {
+                if( !pabyZ )
+                {
+                    for( int i = 0; i < nPointsIn; ++i )
+                    {
+                        const double x = *reinterpret_cast<const double *>(
+                            pabyX + i * nXStride);
+                        const double y = *reinterpret_cast<const double *>(
+                            pabyY + i * nYStride);
+                        const double m = *reinterpret_cast<const double *>(
+                            pabyM + i * nMStride);
+                        poSC->setPointM( i, x, y, m );
+                    }
+                }
+                else
+                {
+                    for( int i = 0; i < nPointsIn; ++i )
+                    {
+                        const double x = *reinterpret_cast<const double *>(
+                            pabyX + i * nXStride);
+                        const double y = *reinterpret_cast<const double *>(
+                            pabyY + i * nYStride);
+                        const double z = *reinterpret_cast<const double *>(
+                            pabyZ + i * nZStride);
+                        const double m = *reinterpret_cast<const double *>(
+                            pabyM + i * nMStride);
+                        poSC->setPoint( i, x, y, z, m );
+                    }
+                }
+            }
         }
         break;
       }

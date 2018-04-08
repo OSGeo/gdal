@@ -112,7 +112,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     this->poColorTable = NULL;
 
     if (this->nOverview == -1 || this->nOverview == 0)
-        this->nOverviews = GetOverviewCount();
+        this->nOverviews = SDERasterBand::GetOverviewCount();
     else
         this->nOverviews = 0;
 
@@ -122,7 +122,7 @@ SDERasterBand::SDERasterBand(   SDEDataset *poDS,
     else {
         this->papoOverviews = NULL;
     }
-    this->eDataType = GetRasterDataType();
+    this->eDataType = SDERasterBand::GetRasterDataType();
 
     // nSDERasterType is set by GetRasterDataType
     this->dfDepth = MorphESRIRasterDepth(nSDERasterType);

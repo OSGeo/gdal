@@ -36,7 +36,7 @@
 /*                         OGRIdrisiLayer                               */
 /************************************************************************/
 
-class OGRIdrisiLayer : public OGRLayer
+class OGRIdrisiLayer final: public OGRLayer
 {
 protected:
     OGRFeatureDefn*    poFeatureDefn;
@@ -87,7 +87,7 @@ protected:
 /*                        OGRIdrisiDataSource                           */
 /************************************************************************/
 
-class OGRIdrisiDataSource : public OGRDataSource
+class OGRIdrisiDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -112,7 +112,7 @@ class OGRIdrisiDataSource : public OGRDataSource
 /*                         OGRIdrisiDriver                              */
 /************************************************************************/
 
-class OGRIdrisiDriver : public OGRSFDriver
+class OGRIdrisiDriver final: public OGRSFDriver
 {
   public:
     virtual ~OGRIdrisiDriver();

@@ -78,7 +78,7 @@ protected:
 /*                      OGRHTFPolygonLayer                              */
 /************************************************************************/
 
-class OGRHTFPolygonLayer : public OGRHTFLayer
+class OGRHTFPolygonLayer final: public OGRHTFLayer
 {
 protected:
     virtual OGRFeature *       GetNextRawFeature() override;
@@ -93,7 +93,7 @@ protected:
 /*                      OGRHTFSoundingLayer                             */
 /************************************************************************/
 
-class OGRHTFSoundingLayer : public OGRHTFLayer
+class OGRHTFSoundingLayer final: public OGRHTFLayer
 {
 private:
     bool                       bHasFPK;
@@ -121,7 +121,7 @@ protected:
 /*                          OGRHTFMetadataLayer                         */
 /************************************************************************/
 
-class OGRHTFMetadataLayer : public OGRLayer
+class OGRHTFMetadataLayer final: public OGRLayer
 {
 protected:
     OGRFeatureDefn        *poFeatureDefn;
@@ -146,7 +146,7 @@ protected:
 /*                           OGRHTFDataSource                           */
 /************************************************************************/
 
-class OGRHTFDataSource : public OGRDataSource
+class OGRHTFDataSource final: public OGRDataSource
 {
     char*               pszName;
 

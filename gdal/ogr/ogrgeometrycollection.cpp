@@ -78,9 +78,16 @@ OGRGeometryCollection::OGRGeometryCollection(
     nGeomCount(0),
     papoGeoms(nullptr)
 {
-    for( int i = 0; i < other.nGeomCount; i++ )
+    // Do not use addGeometry() as it is virtual.
+    papoGeoms = static_cast<OGRGeometry **>(
+        VSI_CALLOC_VERBOSE(sizeof(void*), other.nGeomCount));
+    if( papoGeoms )
     {
-        addGeometry( other.papoGeoms[i] );
+        nGeomCount = other.nGeomCount;
+        for( int i = 0; i < other.nGeomCount; i++ )
+        {
+            papoGeoms[i] = other.papoGeoms[i]->clone();
+        }
     }
 }
 
@@ -91,7 +98,7 @@ OGRGeometryCollection::OGRGeometryCollection(
 OGRGeometryCollection::~OGRGeometryCollection()
 
 {
-    empty();
+    OGRGeometryCollection::empty();
 }
 
 /************************************************************************/

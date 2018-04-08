@@ -67,7 +67,7 @@ OGRMySQLLayer::~OGRMySQLLayer()
                   poFeatureDefn->GetName() );
     }
 
-    ResetReading();
+    OGRMySQLLayer::ResetReading();
 
     CPLFree( pszGeomColumn );
     CPLFree( pszGeomColumnTable );

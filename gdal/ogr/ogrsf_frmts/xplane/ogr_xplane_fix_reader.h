@@ -37,7 +37,7 @@
 /*                           OGRXPlaneFIXLayer                          */
 /************************************************************************/
 
-class OGRXPlaneFIXLayer : public OGRXPlaneLayer
+class OGRXPlaneFIXLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneFIXLayer();
@@ -50,7 +50,7 @@ class OGRXPlaneFIXLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneFixReader                         */
 /************************************************************************/
 
-class OGRXPlaneFixReader : public OGRXPlaneReader
+class OGRXPlaneFixReader final: public OGRXPlaneReader
 {
     private:
         OGRXPlaneFIXLayer*       poFIXLayer;

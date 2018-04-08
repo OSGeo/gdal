@@ -149,9 +149,9 @@ int GDALMRFDataset::CloseDependentDatasets()
 GDALMRFDataset::~GDALMRFDataset()
 
 {   // Make sure everything gets written
-    FlushCache();
+    GDALMRFDataset::FlushCache();
 
-    CloseDependentDatasets();
+    GDALMRFDataset::CloseDependentDatasets();
 
     if (ifp.FP)
         VSIFCloseL(ifp.FP);

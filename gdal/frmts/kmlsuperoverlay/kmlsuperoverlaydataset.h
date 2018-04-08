@@ -53,7 +53,7 @@ class LinkedDataset
         CPLString      osSubFilename;
 };
 
-class KmlSuperOverlayReadDataset : public GDALDataset
+class KmlSuperOverlayReadDataset final: public GDALDataset
 {
     friend class        KmlSuperOverlayRasterBand;
 
@@ -108,7 +108,7 @@ class KmlSuperOverlayReadDataset : public GDALDataset
 /*                     KmlSuperOverlayRasterBand                        */
 /************************************************************************/
 
-class KmlSuperOverlayRasterBand: public GDALRasterBand
+class KmlSuperOverlayRasterBand final: public GDALRasterBand
 {
     public:
                     KmlSuperOverlayRasterBand( KmlSuperOverlayReadDataset* poDS,

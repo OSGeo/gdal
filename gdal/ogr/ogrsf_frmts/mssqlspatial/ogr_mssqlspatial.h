@@ -292,7 +292,7 @@ typedef union {
 
 } BCPData;
 
-class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
+class OGRMSSQLSpatialTableLayer final: public OGRMSSQLSpatialLayer
 {
     int                 bUpdateAccess;
     int                 bLaunderColumnNames;
@@ -391,7 +391,7 @@ class OGRMSSQLSpatialTableLayer : public OGRMSSQLSpatialLayer
 /*                      OGRMSSQLSpatialSelectLayer                      */
 /************************************************************************/
 
-class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
+class OGRMSSQLSpatialSelectLayer final: public OGRMSSQLSpatialLayer
 {
     char                *pszBaseStatement;
 
@@ -421,7 +421,7 @@ class OGRMSSQLSpatialSelectLayer : public OGRMSSQLSpatialLayer
 /*                           OGRODBCDataSource                          */
 /************************************************************************/
 
-class OGRMSSQLSpatialDataSource : public OGRDataSource
+class OGRMSSQLSpatialDataSource final: public OGRDataSource
 {
     OGRMSSQLSpatialTableLayer    **papoLayers;
     int                 nLayers;

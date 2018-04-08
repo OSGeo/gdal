@@ -98,7 +98,7 @@ VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize)
 VRTDataset::~VRTDataset()
 
 {
-    FlushCache();
+    VRTDataset::FlushCache();
     CPLFree( m_pszProjection );
 
     CPLFree( m_pszGCPProjection );

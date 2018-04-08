@@ -2232,9 +2232,9 @@ CPLErr GDALColorRelief( GDALRasterBandH hSrcBand,
         pafSourceBuf = static_cast<float *>(
             VSI_MALLOC2_VERBOSE(sizeof(float), nXSize));
     GByte* pabyDestBuf1 = static_cast<GByte *>(VSI_MALLOC2_VERBOSE(4, nXSize));
-    GByte* pabyDestBuf2 =  pabyDestBuf1 + nXSize;
-    GByte* pabyDestBuf3 =  pabyDestBuf2 + nXSize;
-    GByte* pabyDestBuf4 =  pabyDestBuf3 + nXSize;
+    GByte* pabyDestBuf2 =  pabyDestBuf1 ? pabyDestBuf1 + nXSize : nullptr;
+    GByte* pabyDestBuf3 =  pabyDestBuf2 ? pabyDestBuf2 + nXSize : nullptr;
+    GByte* pabyDestBuf4 =  pabyDestBuf3 ? pabyDestBuf3 + nXSize : nullptr;
 
     if( (pabyPrecomputed != nullptr && panSourceBuf == nullptr) ||
         (pabyPrecomputed == nullptr && pafSourceBuf == nullptr) ||

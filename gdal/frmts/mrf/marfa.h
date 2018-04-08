@@ -296,7 +296,7 @@ enum { SAMPLING_ERR, SAMPLING_Avg, SAMPLING_Near };
 
 GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level = 0);
 
-class GDALMRFDataset : public GDALPamDataset {
+class GDALMRFDataset final: public GDALPamDataset {
     friend class GDALMRFRasterBand;
     friend GDALMRFRasterBand *newMRFRasterBand(GDALMRFDataset *, const ILImage &, int, int level);
 
@@ -738,7 +738,7 @@ protected:
  * Stand alone definition of a derived band, used in access to a specific level in an MRF
  *
  */
-class GDALMRFLRasterBand : public GDALPamRasterBand {
+class GDALMRFLRasterBand final: public GDALPamRasterBand {
 public:
     explicit GDALMRFLRasterBand(GDALMRFRasterBand *b) {
         pBand = b;

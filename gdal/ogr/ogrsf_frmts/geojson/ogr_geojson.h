@@ -54,7 +54,7 @@ char* OGRGeoJSONDriverStealStoredContent( const char* pszSource );
 
 class OGRGeoJSONReader;
 
-class OGRGeoJSONLayer : public OGRMemLayer
+class OGRGeoJSONLayer final: public OGRMemLayer
 {
     friend class OGRGeoJSONDataSource;
 
@@ -123,7 +123,7 @@ class OGRGeoJSONLayer : public OGRMemLayer
 /*                         OGRGeoJSONWriteLayer                         */
 /************************************************************************/
 
-class OGRGeoJSONWriteLayer : public OGRLayer
+class OGRGeoJSONWriteLayer final: public OGRLayer
 {
   public:
     OGRGeoJSONWriteLayer( const char* pszName,
@@ -168,7 +168,7 @@ class OGRGeoJSONWriteLayer : public OGRLayer
 /*                           OGRGeoJSONDataSource                       */
 /************************************************************************/
 
-class OGRGeoJSONDataSource : public OGRDataSource
+class OGRGeoJSONDataSource final: public OGRDataSource
 {
   public:
     OGRGeoJSONDataSource();

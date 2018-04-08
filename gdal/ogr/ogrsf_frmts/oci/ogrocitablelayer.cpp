@@ -99,7 +99,7 @@ OGROCITableLayer::OGROCITableLayer( OGROCIDataSource *poDSIn,
 
     nDefaultStringSize = 4000;
 
-    ResetReading();
+    OGROCITableLayer::ResetReading();
 }
 
 /************************************************************************/
@@ -111,7 +111,7 @@ OGROCITableLayer::~OGROCITableLayer()
 {
     int   i;
 
-    SyncToDisk();
+    OGROCITableLayer::SyncToDisk();
 
     CPLFree( panWriteFIDs );
     if( papWriteFields != nullptr )

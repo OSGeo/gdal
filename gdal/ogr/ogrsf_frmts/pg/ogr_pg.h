@@ -109,7 +109,7 @@ typedef struct
 /*                         OGRPGGeomFieldDefn                           */
 /************************************************************************/
 
-class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
+class OGRPGGeomFieldDefn final: public OGRGeomFieldDefn
 {
     protected:
         OGRPGLayer* poLayer;
@@ -135,7 +135,7 @@ class OGRPGGeomFieldDefn : public OGRGeomFieldDefn
 /*                          OGRPGFeatureDefn                            */
 /************************************************************************/
 
-class OGRPGFeatureDefn : public OGRFeatureDefn
+class OGRPGFeatureDefn: public OGRFeatureDefn
 {
     public:
         explicit OGRPGFeatureDefn( const char * pszName = nullptr ) :
@@ -245,7 +245,7 @@ class OGRPGLayer : public OGRLayer
 /*                           OGRPGTableLayer                            */
 /************************************************************************/
 
-class OGRPGTableLayer : public OGRPGLayer
+class OGRPGTableLayer final: public OGRPGLayer
 {
     int                 bUpdateAccess;
 
@@ -403,7 +403,7 @@ public:
 /*                           OGRPGResultLayer                           */
 /************************************************************************/
 
-class OGRPGResultLayer : public OGRPGLayer
+class OGRPGResultLayer final: public OGRPGLayer
 {
     void                BuildFullQueryStatement();
 
@@ -440,7 +440,7 @@ class OGRPGResultLayer : public OGRPGLayer
 /************************************************************************/
 /*                           OGRPGDataSource                            */
 /************************************************************************/
-class OGRPGDataSource : public OGRDataSource
+class OGRPGDataSource final: public OGRDataSource
 {
     typedef struct
     {

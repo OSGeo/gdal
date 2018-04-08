@@ -46,7 +46,7 @@ CPL_CVSID("$Id$")
 /*                        OGRPGTableFeatureDefn                         */
 /************************************************************************/
 
-class OGRPGTableFeatureDefn : public OGRPGFeatureDefn
+class OGRPGTableFeatureDefn final: public OGRPGFeatureDefn
 {
     private:
         OGRPGTableLayer *poLayer;

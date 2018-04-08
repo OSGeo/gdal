@@ -118,7 +118,7 @@ OGRPDSLayer::OGRPDSLayer( CPLString osTableIDIn,
         poFeatureDefn->SetGeomType( wkbPoint );
     }
 
-    ResetReading();
+    OGRPDSLayer::ResetReading();
 }
 
 /************************************************************************/

@@ -61,7 +61,7 @@ FGdbBaseLayer::~FGdbBaseLayer()
         m_pFeatureDefn = nullptr;
     }
 
-    CloseGDBObjects();
+    FGdbBaseLayer::CloseGDBObjects();
 
     if (m_pSRS)
     {
@@ -155,7 +155,7 @@ FGdbLayer::FGdbLayer():
 
 FGdbLayer::~FGdbLayer()
 {
-    CloseGDBObjects();
+    FGdbLayer::CloseGDBObjects();
 
     if (m_pOGRFilterGeometry)
     {

@@ -253,7 +253,7 @@ PostGISRasterDataset::~PostGISRasterDataset() {
     // referencing the bands of the source holders.
     // Otherwise this would go wrong because
     // of the deleting the source holders just below.
-    CloseDependentDatasets();
+    PostGISRasterDataset::CloseDependentDatasets();
 
     if (papoSourcesHolders)
     {

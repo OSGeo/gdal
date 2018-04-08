@@ -203,8 +203,7 @@ int     TABMAPIndexBlock::CommitToFile()
      *----------------------------------------------------------------*/
     for(int i=0; nStatus == 0 && i<m_numEntries; i++)
     {
-        if (nStatus == 0)
-            nStatus = WriteNextEntry(&(m_asEntries[i]));
+        nStatus = WriteNextEntry(&(m_asEntries[i]));
     }
 
     /*-----------------------------------------------------------------

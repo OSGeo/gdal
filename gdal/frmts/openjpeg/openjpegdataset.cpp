@@ -193,7 +193,7 @@ static OPJ_OFF_T JP2OpenJPEGDataset_Skip(OPJ_OFF_T nBytes, void * pUserData)
 
 class JP2OpenJPEGRasterBand;
 
-class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
+class JP2OpenJPEGDataset final: public GDALJP2AbstractDataset
 {
     friend class JP2OpenJPEGRasterBand;
 
@@ -290,7 +290,7 @@ class JP2OpenJPEGDataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JP2OpenJPEGRasterBand : public GDALPamRasterBand
+class JP2OpenJPEGRasterBand final: public GDALPamRasterBand
 {
     friend class JP2OpenJPEGDataset;
     int             bPromoteTo8Bit;
@@ -1436,7 +1436,7 @@ JP2OpenJPEGDataset::~JP2OpenJPEGDataset()
             VSIFCloseL( fp );
     }
 
-    CloseDependentDatasets();
+    JP2OpenJPEGDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

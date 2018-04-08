@@ -251,7 +251,7 @@ OGRODSDataSource::OGRODSDataSource() :
 OGRODSDataSource::~OGRODSDataSource()
 
 {
-    FlushCache();
+    OGRODSDataSource::FlushCache();
 
     CPLFree( pszName );
 

@@ -501,7 +501,7 @@ OGRSEGP1Layer::OGRSEGP1Layer( const char* pszFilename,
         poFeatureDefn->AddFieldDefn( &oField );
     }
 
-    ResetReading();
+    OGRSEGP1Layer::ResetReading();
 }
 
 /************************************************************************/

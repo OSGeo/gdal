@@ -71,7 +71,7 @@ OGROCILayer::~OGROCILayer()
                   poFeatureDefn->GetName() );
     }
 
-    ResetReading();
+    OGROCILayer::ResetReading();
 
     CPLFree( pszGeomName );
     pszGeomName = nullptr;

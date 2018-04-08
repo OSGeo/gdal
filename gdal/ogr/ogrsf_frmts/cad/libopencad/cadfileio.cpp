@@ -38,8 +38,6 @@ CADFileIO::CADFileIO( const char * pszFileName ) :
 
 CADFileIO::~CADFileIO()
 {
-    if( IsOpened() )
-        Close();
 }
 
 bool CADFileIO::IsOpened() const

@@ -55,7 +55,7 @@ typedef enum
     SPI_INVALID,
 } SPIState;
 
-class OGROpenFileGDBLayer : public OGRLayer
+class OGROpenFileGDBLayer final: public OGRLayer
 {
     friend class OGROpenFileGDBGeomFieldDefn;
     friend class OGROpenFileGDBFeatureDefn;
@@ -150,7 +150,7 @@ public:
 /*                       OGROpenFileGDBDataSource                       */
 /************************************************************************/
 
-class OGROpenFileGDBDataSource : public OGRDataSource
+class OGROpenFileGDBDataSource final: public OGRDataSource
 {
   char                          *m_pszName;
   CPLString                      m_osDirName;

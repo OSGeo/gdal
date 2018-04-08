@@ -197,9 +197,9 @@ class FileGDBIndexIterator final : public FileGDBIterator
         FileGDBSQLOp         eOp;
         OGRField             sValue;
 
-        int                  iFirstPageIdx[MAX_DEPTH],
-                             iLastPageIdx[MAX_DEPTH],
-                             iCurPageIdx[MAX_DEPTH];
+        int                  iFirstPageIdx[MAX_DEPTH];
+        int                  iLastPageIdx[MAX_DEPTH];
+        int                  iCurPageIdx[MAX_DEPTH];
         GUInt32              nSubPagesCount[MAX_DEPTH];
         GUInt32              nLastPageAccessed[MAX_DEPTH];
 
@@ -684,12 +684,20 @@ FileGDBIndexIterator::FileGDBIndexIterator( FileGDBTable* poParentIn,
   panSortedRows(nullptr),
   nStrLen(0)
 {
-    memset(iFirstPageIdx, 0xFF, MAX_DEPTH * sizeof(int));
-    memset(iLastPageIdx, 0xFF, MAX_DEPTH * sizeof(int));
-    memset(iCurPageIdx, 0xFF, MAX_DEPTH * sizeof(int));
-    memset(nSubPagesCount, 0, MAX_DEPTH * sizeof(int));
-    memset(nLastPageAccessed, 0, MAX_DEPTH * sizeof(int));
+    memset(&iFirstPageIdx, 0xFF, sizeof(iFirstPageIdx));
+    memset(&iLastPageIdx, 0xFF, sizeof(iFirstPageIdx));
+    memset(&iCurPageIdx, 0xFF, sizeof(iCurPageIdx));
+    memset(&nSubPagesCount, 0, sizeof(nSubPagesCount));
+    memset(&nLastPageAccessed, 0, sizeof(nLastPageAccessed));
     memset(&sValue, 0, sizeof(sValue));
+    memset(&asUTF16Str, 0, sizeof(asUTF16Str));
+    memset(&szUUID, 0, sizeof(szUUID));
+    memset(&abyPage, 0, sizeof(abyPage));
+    memset(&abyPageFeature, 0, sizeof(abyPageFeature));
+    memset(&sMin, 0, sizeof(sMin));
+    memset(&sMax, 0, sizeof(sMax));
+    memset(&szMin, 0, sizeof(szMin));
+    memset(&szMax, 0, sizeof(szMax));
 }
 
 /************************************************************************/

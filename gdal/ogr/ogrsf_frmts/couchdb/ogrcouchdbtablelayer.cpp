@@ -81,7 +81,10 @@ OGRCouchDBTableLayer::~OGRCouchDBTableLayer()
 
 {
     if( bMustWriteMetadata )
-        WriteMetadata();
+    {
+        OGRCouchDBTableLayer::GetLayerDefn();
+        OGRCouchDBTableLayer::WriteMetadata();
+    }
 
     for(int i=0;i<(int)aoTransactionFeatures.size();i++)
     {
@@ -1947,8 +1950,6 @@ void OGRCouchDBTableLayer::LoadMetadata()
 
 void OGRCouchDBTableLayer::WriteMetadata()
 {
-    GetLayerDefn();
-
     CPLString osURI;
     osURI = "/";
     osURI += osEscapedName;

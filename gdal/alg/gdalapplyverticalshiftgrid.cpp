@@ -51,7 +51,7 @@ CPL_CVSID("$Id$")
 /*                        GDALApplyVSGDataset                           */
 /************************************************************************/
 
-class GDALApplyVSGDataset: public GDALDataset
+class GDALApplyVSGDataset final: public GDALDataset
 {
         friend class GDALApplyVSGRasterBand;
 
@@ -83,7 +83,7 @@ class GDALApplyVSGDataset: public GDALDataset
 /*                       GDALApplyVSGRasterBand                         */
 /************************************************************************/
 
-class GDALApplyVSGRasterBand: public GDALRasterBand
+class GDALApplyVSGRasterBand final: public GDALRasterBand
 {
         friend class GDALApplyVSGDataset;
 
@@ -131,7 +131,7 @@ GDALApplyVSGDataset::GDALApplyVSGDataset( GDALDataset* poSrcDataset,
 
 GDALApplyVSGDataset::~GDALApplyVSGDataset()
 {
-    CloseDependentDatasets();
+    GDALApplyVSGDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

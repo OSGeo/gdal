@@ -7397,7 +7397,7 @@ int GTiffDataset::Finalize()
 /* -------------------------------------------------------------------- */
     if( CPLTestBool(CPLGetConfigOption( "ESRI_XML_PAM", "NO" )) )
     {
-        char **papszESRIMD = GetMetadata("xml:ESRI");
+        char **papszESRIMD = GTiffDataset::GetMetadata("xml:ESRI");
         if( papszESRIMD )
         {
             GDALPamDataset::SetMetadata( papszESRIMD, "xml:ESRI");
@@ -10799,9 +10799,9 @@ void GTiffDataset::WriteGeoTIFFInfo()
     bool bPixelIsPoint = false;
     bool bPointGeoIgnore = false;
 
-    if( GetMetadataItem( GDALMD_AREA_OR_POINT )
-        && EQUAL(GetMetadataItem(GDALMD_AREA_OR_POINT),
-                 GDALMD_AOP_POINT) )
+    const char* pszAreaOrPoint =
+        GTiffDataset::GetMetadataItem( GDALMD_AREA_OR_POINT );
+    if( pszAreaOrPoint && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT) )
     {
         bPixelIsPoint = true;
         bPointGeoIgnore =

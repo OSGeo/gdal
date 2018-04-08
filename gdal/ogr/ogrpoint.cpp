@@ -51,10 +51,9 @@ CPL_CVSID("$Id$")
  * \brief Create an empty point.
  */
 
-OGRPoint::OGRPoint()
+OGRPoint::OGRPoint(): x(0.0), y(0.0), z(0.0), m(0.0)
 
 {
-    empty();
     flags = 0;
 }
 

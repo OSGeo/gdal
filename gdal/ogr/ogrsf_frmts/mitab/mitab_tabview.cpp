@@ -83,7 +83,7 @@ TABView::TABView() :
  **********************************************************************/
 TABView::~TABView()
 {
-    Close();
+    TABView::Close();
 }
 
 GIntBig TABView::GetFeatureCount (int bForce)

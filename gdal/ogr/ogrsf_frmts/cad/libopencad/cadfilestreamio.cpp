@@ -36,6 +36,8 @@ CADFileStreamIO::CADFileStreamIO( const char * pszFilePath ) : CADFileIO( pszFil
 
 CADFileStreamIO::~CADFileStreamIO()
 {
+    if( CADFileStreamIO::IsOpened() )
+        CADFileStreamIO::Close();
 }
 
 const char * CADFileStreamIO::ReadLine()

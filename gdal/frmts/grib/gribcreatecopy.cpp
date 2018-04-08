@@ -1246,7 +1246,11 @@ static GDALDataset* WrapArrayAsMemDataset(int nXSize, int nYSize,
     {
          GByte* pabyData = reinterpret_cast<GByte*>(pData);
         int nRet = CPLPrintPointer(szDataPointer,
-            (eReducedDT == GDT_Byte) ? pabyData + 1 - CPL_IS_LSB : pabyData,
+#ifdef CPL_LSB
+            pabyData,
+#else
+            (eReducedDT == GDT_Byte) ? pabyData + 1 : pabyData,
+#endif
             sizeof(szDataPointer));
         szDataPointer[nRet] = 0;
     }

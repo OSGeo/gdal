@@ -481,14 +481,14 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer( GDALDataset *poSrcDSIn,
 /*      if there is one.                                                */
 /* -------------------------------------------------------------------- */
     if( poSpatFilter != nullptr )
-        SetSpatialFilter( 0, poSpatFilter );
+        OGRGenSQLResultsLayer::SetSpatialFilter( 0, poSpatFilter );
 
-    ResetReading();
+    OGRGenSQLResultsLayer::ResetReading();
 
     FindAndSetIgnoredFields();
 
     if( !bForwardWhereToSourceLayer )
-        SetAttributeFilter( pszWHEREIn );
+        OGRGenSQLResultsLayer::SetAttributeFilter( pszWHEREIn );
 }
 
 /************************************************************************/
@@ -505,7 +505,7 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
                   poDefn->GetName() );
     }
 
-    ClearFilters();
+    OGRGenSQLResultsLayer::ClearFilters();
 
 /* -------------------------------------------------------------------- */
 /*      Free various datastructures.                                    */

@@ -214,7 +214,7 @@ OGRXLSXDataSource::OGRXLSXDataSource() :
 OGRXLSXDataSource::~OGRXLSXDataSource()
 
 {
-    FlushCache();
+    OGRXLSXDataSource::FlushCache();
 
     CPLFree( pszName );
 

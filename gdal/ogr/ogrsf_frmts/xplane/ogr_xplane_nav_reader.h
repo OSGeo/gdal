@@ -37,7 +37,7 @@
 /*                           OGRXPlaneILSLayer                          */
 /************************************************************************/
 
-class OGRXPlaneILSLayer : public OGRXPlaneLayer
+class OGRXPlaneILSLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneILSLayer();
@@ -57,7 +57,7 @@ class OGRXPlaneILSLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneVORLayer                          */
 /************************************************************************/
 
-class OGRXPlaneVORLayer : public OGRXPlaneLayer
+class OGRXPlaneVORLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneVORLayer();
@@ -76,7 +76,7 @@ class OGRXPlaneVORLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneNDBLayer                          */
 /************************************************************************/
 
-class OGRXPlaneNDBLayer : public OGRXPlaneLayer
+class OGRXPlaneNDBLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneNDBLayer();
@@ -94,7 +94,7 @@ class OGRXPlaneNDBLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneGSLayer                          */
 /************************************************************************/
 
-class OGRXPlaneGSLayer : public OGRXPlaneLayer
+class OGRXPlaneGSLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneGSLayer();
@@ -114,7 +114,7 @@ class OGRXPlaneGSLayer : public OGRXPlaneLayer
 /*                          OGRXPlaneMarkerLayer                        */
 /************************************************************************/
 
-class OGRXPlaneMarkerLayer : public OGRXPlaneLayer
+class OGRXPlaneMarkerLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneMarkerLayer();
@@ -131,7 +131,7 @@ class OGRXPlaneMarkerLayer : public OGRXPlaneLayer
 /*                         OGRXPlaneDMEILSLayer                         */
 /************************************************************************/
 
-class OGRXPlaneDMEILSLayer : public OGRXPlaneLayer
+class OGRXPlaneDMEILSLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneDMEILSLayer();
@@ -150,7 +150,7 @@ class OGRXPlaneDMEILSLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneDMELayer                          */
 /************************************************************************/
 
-class OGRXPlaneDMELayer : public OGRXPlaneLayer
+class OGRXPlaneDMELayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneDMELayer();
@@ -183,7 +183,7 @@ enum
 /*                           OGRXPlaneNavReader                         */
 /************************************************************************/
 
-class OGRXPlaneNavReader : public OGRXPlaneReader
+class OGRXPlaneNavReader final: public OGRXPlaneReader
 {
     private:
         OGRXPlaneILSLayer*    poILSLayer;

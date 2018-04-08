@@ -74,7 +74,7 @@ typedef struct
 /*                          OGRSEGYLayer                                */
 /************************************************************************/
 
-class OGRSEGYLayer: public OGRLayer
+class OGRSEGYLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     bool               bEOF;
@@ -105,7 +105,7 @@ class OGRSEGYLayer: public OGRLayer
 /*                        OGRSEGYHeaderLayer                            */
 /************************************************************************/
 
-class OGRSEGYHeaderLayer: public OGRLayer
+class OGRSEGYHeaderLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     bool               bEOF;
@@ -134,7 +134,7 @@ class OGRSEGYHeaderLayer: public OGRLayer
 /*                          OGRSEGYDataSource                           */
 /************************************************************************/
 
-class OGRSEGYDataSource : public OGRDataSource
+class OGRSEGYDataSource final: public OGRDataSource
 {
     char*               pszName;
 

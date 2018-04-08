@@ -107,7 +107,7 @@ OGRSVGLayer::OGRSVGLayer( const char* pszFilename,
         return;
     }
 
-    ResetReading();
+    OGRSVGLayer::ResetReading();
 }
 
 /************************************************************************/

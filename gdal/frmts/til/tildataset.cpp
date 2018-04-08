@@ -45,7 +45,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class TILDataset : public GDALPamDataset
+class TILDataset final : public GDALPamDataset
 {
     VRTDataset *poVRTDS;
     std::vector<GDALDataset *> apoTileDS;
@@ -71,7 +71,7 @@ class TILDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TILRasterBand : public GDALPamRasterBand
+class TILRasterBand final: public GDALPamRasterBand
 {
     friend class TILDataset;
 
@@ -161,7 +161,7 @@ TILDataset::TILDataset() :
 TILDataset::~TILDataset()
 
 {
-    CloseDependentDatasets();
+    TILDataset::CloseDependentDatasets();
     CSLDestroy(papszMetadataFiles);
 }
 

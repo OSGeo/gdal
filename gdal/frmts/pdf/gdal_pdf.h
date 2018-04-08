@@ -71,7 +71,7 @@
 
 class PDFDataset;
 
-class OGRPDFLayer : public OGRMemLayer
+class OGRPDFLayer final: public OGRMemLayer
 {
     PDFDataset       *poDS;
     int               bGeomTypeSet;
@@ -96,7 +96,7 @@ public:
 
 class PDFWritableVectorDataset;
 
-class OGRPDFWritableLayer : public OGRMemLayer
+class OGRPDFWritableLayer final: public OGRMemLayer
 {
     PDFWritableVectorDataset       *poDS;
 
@@ -180,7 +180,7 @@ class ObjectAutoFree;
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PODOFO) || defined(HAVE_PDFIUM)
 
-class PDFDataset : public GDALPamDataset
+class PDFDataset final: public GDALPamDataset
 {
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
@@ -416,7 +416,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class PDFRasterBand : public GDALPamRasterBand
+class PDFRasterBand: public GDALPamRasterBand
 {
     friend class PDFDataset;
 
@@ -451,7 +451,7 @@ class PDFRasterBand : public GDALPamRasterBand
 /*                          PDFWritableDataset                          */
 /************************************************************************/
 
-class PDFWritableVectorDataset : public GDALDataset
+class PDFWritableVectorDataset final: public GDALDataset
 {
         char**              papszOptions;
 

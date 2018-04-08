@@ -294,7 +294,7 @@ class OGRSQLiteLayer : public OGRLayer, public IOGRSQLiteGetSpatialWhere
                         OGRSQLiteLayer();
     virtual             ~OGRSQLiteLayer();
 
-    virtual void        Finalize();
+    void                Finalize();
 
     virtual void        ResetReading() override;
     virtual OGRFeature *GetNextRawFeature();

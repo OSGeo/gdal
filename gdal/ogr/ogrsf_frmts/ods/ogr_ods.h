@@ -47,7 +47,7 @@ namespace OGRODS {
 
 class OGRODSDataSource;
 
-class OGRODSLayer : public OGRMemLayer
+class OGRODSLayer final: public OGRMemLayer
 {
     OGRODSDataSource* poDS;
     bool              bUpdated;
@@ -124,7 +124,7 @@ typedef struct
     int               nBeginDepth;
 } HandlerState;
 
-class OGRODSDataSource : public GDALDataset
+class OGRODSDataSource final: public GDALDataset
 {
     char*               pszName;
     bool                bUpdatable;

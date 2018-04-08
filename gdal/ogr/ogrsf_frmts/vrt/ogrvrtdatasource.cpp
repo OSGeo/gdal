@@ -146,7 +146,7 @@ OGRVRTDataSource::~OGRVRTDataSource()
 {
     CPLFree(pszName);
 
-    CloseDependentDatasets();
+    OGRVRTDataSource::CloseDependentDatasets();
 
     CPLFree(paeLayerType);
 

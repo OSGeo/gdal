@@ -820,7 +820,7 @@ PCIDSK2Dataset::PCIDSK2Dataset() :
 #endif
 PCIDSK2Dataset::~PCIDSK2Dataset()
 {
-    FlushCache();
+    PCIDSK2Dataset::FlushCache();
 
     while( !apoLayers.empty() )
     {

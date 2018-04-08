@@ -374,7 +374,7 @@ int OGRMSSQLSpatialTableLayer::FetchSRSId()
 
 OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 {
-    GetLayerDefn();
+    OGRMSSQLSpatialTableLayer::GetLayerDefn();
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 
@@ -430,7 +430,7 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateSpatialIndex()
 
 void OGRMSSQLSpatialTableLayer::DropSpatialIndex()
 {
-    GetLayerDefn();
+    OGRMSSQLSpatialTableLayer::GetLayerDefn();
 
     CPLODBCStatement oStatement( poDS->GetSession() );
 

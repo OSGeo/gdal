@@ -80,7 +80,7 @@ class PNGRasterBand;
 #pragma warning( disable : 4324 )
 #endif
 
-class PNGDataset : public GDALPamDataset
+class PNGDataset final: public GDALPamDataset
 {
     friend class PNGRasterBand;
 
@@ -187,7 +187,7 @@ class PNGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class PNGRasterBand : public GDALPamRasterBand
+class PNGRasterBand final: public GDALPamRasterBand
 {
     friend class PNGDataset;
 

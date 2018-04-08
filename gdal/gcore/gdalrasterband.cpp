@@ -111,7 +111,7 @@ void GDALRasterBand::Init(int bForceCachedIOIn)
 GDALRasterBand::~GDALRasterBand()
 
 {
-    FlushCache();
+    GDALRasterBand::FlushCache();
 
     delete poBandBlockCache;
 

@@ -919,7 +919,7 @@ RMFDataset::RMFDataset() :
 
 RMFDataset::~RMFDataset()
 {
-    FlushCache();
+    RMFDataset::FlushCache();
 
     CPLFree( paiTiles );
     CPLFree( pszProjection );

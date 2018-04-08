@@ -50,7 +50,7 @@ class OGRPCIDSKLayer;
 /*                              PCIDSK2Dataset                           */
 /************************************************************************/
 
-class PCIDSK2Dataset : public GDALPamDataset
+class PCIDSK2Dataset final: public GDALPamDataset
 {
     friend class PCIDSK2Band;
 
@@ -109,7 +109,7 @@ class PCIDSK2Dataset : public GDALPamDataset
 /*                             PCIDSK2Band                              */
 /************************************************************************/
 
-class PCIDSK2Band : public GDALPamRasterBand
+class PCIDSK2Band final: public GDALPamRasterBand
 {
     friend class PCIDSK2Dataset;
 
@@ -162,7 +162,7 @@ class PCIDSK2Band : public GDALPamRasterBand
 /*                             OGRPCIDSKLayer                              */
 /************************************************************************/
 
-class OGRPCIDSKLayer : public OGRLayer
+class OGRPCIDSKLayer final: public OGRLayer
 {
     PCIDSK::PCIDSKVectorSegment *poVecSeg;
     PCIDSK::PCIDSKSegment       *poSeg;

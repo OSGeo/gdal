@@ -49,7 +49,7 @@ public:
   TImage() : data_(nullptr) {}
   TImage(const TImage& tImg) : data_(nullptr) { *this = tImg;  }
   virtual ~TImage() {
-      clear();
+      TImage::clear();
   }
 
   /// assignment

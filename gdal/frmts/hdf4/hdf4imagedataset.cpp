@@ -95,7 +95,7 @@ enum HDF4EOSProduct
 
 constexpr int N_COLOR_ENTRIES = 256;
 
-class HDF4ImageDataset : public HDF4Dataset
+class HDF4ImageDataset final: public HDF4Dataset
 {
     friend class HDF4ImageRasterBand;
 
@@ -179,7 +179,7 @@ class HDF4ImageDataset : public HDF4Dataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HDF4ImageRasterBand : public GDALPamRasterBand
+class HDF4ImageRasterBand final: public GDALPamRasterBand
 {
     friend class HDF4ImageDataset;
 
@@ -817,7 +817,7 @@ HDF4ImageDataset::~HDF4ImageDataset()
 {
     CPLMutexHolderD(&hHDF4Mutex);
 
-    FlushCache();
+    HDF4ImageDataset::FlushCache();
 
     CPLFree( pszFilename );
     if( iSDS != FAIL )

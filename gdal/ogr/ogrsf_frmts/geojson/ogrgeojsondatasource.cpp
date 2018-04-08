@@ -85,8 +85,8 @@ OGRGeoJSONDataSource::OGRGeoJSONDataSource() :
 
 OGRGeoJSONDataSource::~OGRGeoJSONDataSource()
 {
-    FlushCache();
-    Clear();
+    OGRGeoJSONDataSource::FlushCache();
+    OGRGeoJSONDataSource::Clear();
 }
 
 /************************************************************************/

@@ -91,7 +91,7 @@ class OGRVRTGeomFieldProps
 
 class OGRVRTDataSource;
 
-class OGRVRTLayer : public OGRLayer
+class OGRVRTLayer final: public OGRLayer
 {
   protected:
     OGRVRTDataSource*   poDS;
@@ -213,7 +213,7 @@ typedef enum
     OGR_VRT_OTHER_LAYER,
 } OGRLayerType;
 
-class OGRVRTDataSource : public OGRDataSource
+class OGRVRTDataSource final: public OGRDataSource
 {
     OGRLayer          **papoLayers;
     OGRLayerType       *paeLayerType;

@@ -58,7 +58,7 @@ typedef struct
     int nItems;
 } FieldDesc;
 
-class OGRPDSLayer : public OGRLayer
+class OGRPDSLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
 
@@ -107,7 +107,7 @@ class OGRPDSLayer : public OGRLayer
 /*                           OGRPDSDataSource                           */
 /************************************************************************/
 
-class OGRPDSDataSource : public OGRDataSource
+class OGRPDSDataSource final: public OGRDataSource
 {
     char*               pszName;
 

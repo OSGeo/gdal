@@ -47,10 +47,10 @@ CPLString OGRAMIGOCLOUDEscapeLiteral(const char* pszStr);
 std::string OGRAMIGOCLOUDJsonEncode(const std::string &value);
 
 /************************************************************************/
-/*                      OGRAmigoCloudGeomFieldDefn                         */
+/*                      OGRAmigoCloudGeomFieldDefn                      */
 /************************************************************************/
 
-class OGRAmigoCloudGeomFieldDefn: public OGRGeomFieldDefn
+class OGRAmigoCloudGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
         int nSRID;
@@ -142,7 +142,7 @@ class OGRAmigoCloudLayer : public OGRLayer
 /*                        OGRAmigoCloudTableLayer                          */
 /************************************************************************/
 
-class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
+class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 {
     CPLString           osTableName;
     CPLString           osName;
@@ -210,7 +210,7 @@ class OGRAmigoCloudTableLayer : public OGRAmigoCloudLayer
 /*                       OGRAmigoCloudResultLayer                          */
 /************************************************************************/
 
-class OGRAmigoCloudResultLayer : public OGRAmigoCloudLayer
+class OGRAmigoCloudResultLayer final: public OGRAmigoCloudLayer
 {
         OGRFeature          *poFirstFeature;
 
@@ -231,7 +231,7 @@ class OGRAmigoCloudResultLayer : public OGRAmigoCloudLayer
 /*                           OGRAmigoCloudDataSource                       */
 /************************************************************************/
 
-class OGRAmigoCloudDataSource : public OGRDataSource
+class OGRAmigoCloudDataSource final: public OGRDataSource
 {
         char*               pszName;
         char*               pszProjectId;
