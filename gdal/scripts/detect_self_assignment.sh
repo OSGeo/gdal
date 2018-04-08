@@ -1,5 +1,19 @@
 #!/bin/bash
 
+SCRIPT_DIR=`dirname $0`
+case $SCRIPT_DIR in
+    "/"*)
+        ;;
+    ".")
+        SCRIPT_DIR=`pwd`
+        ;;
+    *)
+        SCRIPT_DIR=`pwd`"/"`dirname $0`
+        ;;
+esac
+GDAL_ROOT=$SCRIPT_DIR/..
+cd $GDAL_ROOT
+
 ret_code=0
 
 # This catches a bit more than gcc -Winit-self and clang -Wself-assign (https://trac.osgeo.org/gdal/ticket/6196)

@@ -526,7 +526,7 @@ OGRSpatialReference *OGRIngresDataSource::FetchSRS( int nId )
     }
 
      poSRS = new OGRSpatialReference();
-     if( pszWKT == NULL || poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+     if( pszWKT == NULL || poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
      {
          delete poSRS;
          poSRS = NULL;

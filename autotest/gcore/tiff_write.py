@@ -476,9 +476,6 @@ def tiff_write_15():
     ds = None
 
     ds = gdal.Open( 'tmp/tw_15.tif' )
-    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
-        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
-        return 'fail'
 
     md = ds.GetMetadata()
     if 'test' not in md:
@@ -492,17 +489,13 @@ def tiff_write_15():
 
     ds = None
 
-    try:
-        os.remove( 'tmp/tw_15.tif.aux.xml' )
-    except:
-        try:
-            os.stat( 'tmp/tw_15.tif.aux.xml' )
-        except:
-            gdaltest.post_reason( 'No .aux.xml file.' )
-            return 'fail'
-            pass
+    gdal.Unlink('tmp/tw_15.tif.aux.xml')
 
     ds = gdal.Open( 'tmp/tw_15.tif' )
+
+    if ds.GetGeoTransform() != (0.0,1.0,0.0,0.0,0.0,1.0):
+        gdaltest.post_reason( 'Got wrong geotransform, profile ignored?' )
+        return 'fail'
 
     md = ds.GetMetadata()
     if 'test' in md:
@@ -2274,6 +2267,7 @@ def tiff_write_60():
         gt = (0.0, 1.0, 0.0, 50.0, 0.0, -1.0 )
         ds.SetGeoTransform(gt)
         ds = None
+        gdal.Unlink( 'tmp/tiff_write_60.tif.aux.xml' )
 
         ds = gdal.Open('tmp/tiff_write_60.tif')
         if ds.GetGeoTransform() != gt:
@@ -6236,7 +6230,7 @@ def tiff_write_137():
 
     # Ask data immediately while the block is compressed
     ds = gdaltest.tiff_drv.Create('/vsimem/tiff_write_137.tif', 4000, 4000, \
-                            options = ['BLOCKYSIZE=4000', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
+                            options = ['BLOCKYSIZE=3999', 'COMPRESS=DEFLATE', 'NUM_THREADS=4'])
     ds.WriteRaster(0,0,1,1,'A')
     ds.FlushCache()
     val = ds.ReadRaster(0,0,1,1).decode('ascii')
@@ -6247,6 +6241,22 @@ def tiff_write_137():
     ds = None
 
     gdal.Unlink('/vsimem/tiff_write_137_src.tif')
+    gdal.Unlink('/vsimem/tiff_write_137.tif')
+
+    # Test NUM_THREADS with raster == tile
+    src_ds = gdal.Open('data/byte.tif')
+    ds = gdaltest.tiff_drv.CreateCopy('/vsimem/tiff_write_137.tif', src_ds, \
+        options = ['BLOCKYSIZE=20', 'COMPRESS=DEFLATE', 'NUM_THREADS=ALL_CPUS'])
+    src_ds = None
+    ds = None
+    ds = gdal.Open('/vsimem/tiff_write_137.tif')
+    cs = ds.GetRasterBand(1).Checksum()
+    ds = None
+    if cs != 4672:
+        gdaltest.post_reason('fail')
+        print(cs)
+        print(expected_cs)
+        return 'fail'
     gdal.Unlink('/vsimem/tiff_write_137.tif')
 
     return 'success'

@@ -874,6 +874,7 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+WARN_OLD_STYLE_CAST
 NO_LOGICAL_OP_FLAG
 NO_NON_VIRTUAL_DTOR_FLAG
 NO_SIGN_COMPARE
@@ -5362,6 +5363,44 @@ else
   :
 fi
 
+as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Wold-style-cast" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Wold-style-cast" >&5
+$as_echo_n "checking whether C++ compiler accepts -Wold-style-cast... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CXXFLAGS
+  CXXFLAGS="$CXXFLAGS $ERROR_ON_UNKNOWN_OPTIONS -Wold-style-cast"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CXXFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  WARN_OLD_STYLE_CAST="-Wold-style-cast"
+else
+  :
+fi
+
+
 
 as_CACHEVAR=`$as_echo "ax_cv_check_cxxflags_$ERROR_ON_UNKNOWN_OPTIONS_-Woverloaded-virtual" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C++ compiler accepts -Woverloaded-virtual" >&5
@@ -7181,6 +7220,8 @@ NO_SIGN_COMPARE=$NO_SIGN_COMPARE
 NO_NON_VIRTUAL_DTOR_FLAG=$NO_NON_VIRTUAL_DTOR_FLAG
 
 NO_LOGICAL_OP_FLAG=$NO_LOGICAL_OP_FLAG
+
+WARN_OLD_STYLE_CAST=$WARN_OLD_STYLE_CAST
 
 
 ac_ext=c

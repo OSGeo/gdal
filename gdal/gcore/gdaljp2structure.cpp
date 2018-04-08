@@ -177,7 +177,7 @@ static void DumpGeoTIFFBox(CPLXMLNode* psBox,
         CPL_IGNORE_RET_VAL(VSIFCloseL(VSIFileFromMemBuffer(
             osTmpFilename, pabyBoxData, nBoxDataLength, FALSE) ));
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GDALDataset* poDS = static_cast<GDALDataset*>(GDALOpen(osTmpFilename, GA_ReadOnly));
+        GDALDataset* poDS = GDALDataset::FromHandle(GDALOpen(osTmpFilename, GA_ReadOnly));
         CPLPopErrorHandler();
         // Reject GeoJP2 boxes with a TIFF with band_count > 1.
         if( poDS && poDS->GetRasterCount() > 1 )
@@ -1350,7 +1350,7 @@ static
 void GDALGetJPEG2000StructureInternal(CPLXMLNode* psParent,
                                       VSILFILE* fp,
                                       GDALJP2Box* poParentBox,
-                                      char** papszOptions,
+                                      CSLConstList papszOptions,
                                       int nRecLevel,
                                       vsi_l_offset nFileOrParentBoxSize)
 {
@@ -1573,7 +1573,7 @@ constexpr unsigned char jp2_box_jp[] = {0x6a,0x50,0x20,0x20}; /* 'jP  ' */
  */
 
 CPLXMLNode* GDALGetJPEG2000Structure(const char* pszFilename,
-                                     char** papszOptions)
+                                     CSLConstList papszOptions)
 {
     VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
     if( fp == nullptr )

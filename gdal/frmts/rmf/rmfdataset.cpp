@@ -1011,9 +1011,7 @@ CPLErr RMFDataset::WriteHeader()
     if( pszProjection && !EQUAL( pszProjection, "" ) )
     {
         OGRSpatialReference oSRS;
-        char *pszProj = pszProjection;
-
-        if( oSRS.importFromWkt( &pszProj ) == OGRERR_NONE )
+        if( oSRS.importFromWkt( pszProjection ) == OGRERR_NONE )
         {
             long iProjection = 0;
             long iDatum = 0;

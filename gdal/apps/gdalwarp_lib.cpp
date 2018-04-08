@@ -1030,6 +1030,42 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Create global progress function.                                */
+/* -------------------------------------------------------------------- */
+    struct Progress
+    {
+        GDALProgressFunc pfnExternalProgress;
+        void* pExternalProgressData;
+        int iSrc;
+        int nSrcCount;
+        GDALDatasetH *pahSrcDS;
+
+        int Do(double dfComplete)
+        {
+            CPLString osMsg;
+            osMsg.Printf("Processing %s [%d/%d]",
+                         GDALGetDescription(pahSrcDS[iSrc]),
+                         iSrc + 1,
+                         nSrcCount);
+            return pfnExternalProgress( (iSrc + dfComplete ) / nSrcCount,
+                                        osMsg.c_str(),
+                                        pExternalProgressData );
+        }
+
+        static int CPL_STDCALL ProgressFunc(double dfComplete,
+                                            const char *, void* pThis)
+        {
+            return static_cast<Progress*>(pThis)->Do(dfComplete);
+        }
+    };
+
+    Progress oProgress;
+    oProgress.pfnExternalProgress = psOptions->pfnProgress;
+    oProgress.pExternalProgressData = psOptions->pProgressData;
+    oProgress.nSrcCount = nSrcCount;
+    oProgress.pahSrcDS = pahSrcDS;
+
+/* -------------------------------------------------------------------- */
 /*      Loop over all source files, processing each in turn.            */
 /* -------------------------------------------------------------------- */
     for( int iSrc = 0; iSrc < nSrcCount; iSrc++ )
@@ -1048,6 +1084,9 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             return nullptr;
         }
 
+        oProgress.iSrc = iSrc;
+        oProgress.Do(0);
+
 /* -------------------------------------------------------------------- */
 /*      Check that there's at least one raster band                     */
 /* -------------------------------------------------------------------- */
@@ -1059,9 +1098,6 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
             GDALReleaseDataset(hDstDS);
             return nullptr;
         }
-
-        if( !psOptions->bQuiet )
-            printf( "Processing input file %s.\n", GDALGetDescription(hSrcDS) );
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a source alpha band?                                 */
@@ -1396,8 +1432,11 @@ GDALDatasetH GDALWarp( const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         psWO->pfnTransformer = pfnTransformer;
         psWO->pTransformerArg = hTransformArg;
 
-        psWO->pfnProgress = psOptions->pfnProgress;
-        psWO->pProgressArg = psOptions->pProgressData;
+        if( !bVRT )
+        {
+            psWO->pfnProgress = Progress::ProgressFunc;
+            psWO->pProgressArg = &oProgress;
+        }
 
         if( psOptions->dfWarpMemoryLimit != 0.0 )
             psWO->dfWarpMemoryLimit = psOptions->dfWarpMemoryLimit;
@@ -3540,7 +3579,7 @@ void GDALWarpAppOptionsFree( GDALWarpAppOptions *psOptions )
 /**
  * Set a progress function.
  *
- * @param psOptions the options struct for GDALWarpApp().
+ * @param psOptions the options struct for GDALWarp().
  * @param pfnProgress the progress callback.
  * @param pProgressData the user data for the progress callback.
  *
@@ -3557,13 +3596,32 @@ void GDALWarpAppOptionsSetProgress( GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
+/*                    GDALWarpAppOptionsSetQuiet()                      */
+/************************************************************************/
+
+/**
+ * Set a progress function.
+ *
+ * @param psOptions the options struct for GDALWarp().
+ * @param bQuiet whether GDALWarp() should emit messages on stdout.
+ *
+ * @since GDAL 2.3
+ */
+
+void GDALWarpAppOptionsSetQuiet( GDALWarpAppOptions *psOptions,
+                                 bool bQuiet )
+{
+    psOptions->bQuiet = bQuiet;
+}
+
+/************************************************************************/
 /*                 GDALWarpAppOptionsSetWarpOption()                    */
 /************************************************************************/
 
 /**
  * Set a warp option
  *
- * @param psOptions the options struct for GDALWarpApp().
+ * @param psOptions the options struct for GDALWarp().
  * @param pszKey key.
  * @param pszValue value.
  *

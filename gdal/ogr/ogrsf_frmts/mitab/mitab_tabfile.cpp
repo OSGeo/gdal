@@ -434,6 +434,9 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
             m_poDefn->SetGeomType( wkbPoint );
         else if( numPoints == 0 && numLines > 0 && numRegions == 0 )
             m_poDefn->SetGeomType( wkbLineString );
+        else if( m_eAccessMode == TABRead && numPoints == 0 && numLines == 0 && numRegions == 0 )
+            /* No geometries present; this is an aspatial dataset */
+            m_poDefn->SetGeomType( wkbNone );
         else {
             /* we leave it unknown indicating a mixture */
         }
@@ -507,7 +510,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     CPLFree(pszTmpFname);
     pszTmpFname = nullptr;
 
-    if( m_poDefn != nullptr && m_eAccessMode != TABWrite )
+    if( m_poDefn != nullptr && m_eAccessMode != TABWrite && m_poDefn->GetGeomFieldCount() != 0 )
         m_poDefn->GetGeomFieldDefn(0)->SetSpatialRef(GetSpatialRef());
 
     return 0;
@@ -2386,7 +2389,8 @@ OGRErr TABFile::GetExtent (OGREnvelope *psExtent,
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 
-    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != nullptr)
+    if (m_poMAPFile && (poHeader=m_poMAPFile->GetHeaderBlock()) != nullptr &&
+        GetGeomType() != wkbNone)
     {
         double dX0 = 0.0;
         double dX1 = 0.0;

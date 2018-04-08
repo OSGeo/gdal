@@ -157,18 +157,14 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
 
     CPLErr eGlobalErr = poBand->eFlushBlockErr;
 
-    std::vector<GDALRasterBlock*> apoBlocks;
+    std::set<GDALRasterBlock*, BlockComparator> oOldSet;
     {
         CPLLockHolderOptionalLockD( hLock );
-        apoBlocks.reserve( m_oSet.size() );
-        for( const auto& poBlock: m_oSet )
-        {
-            apoBlocks.push_back(poBlock);
-        }
-        m_oSet.clear();
+        oOldSet = std::move(m_oSet);
+        CPLAssert(m_oSet.empty());
     }
 
-    for( auto& poBlock: apoBlocks )
+    for( auto& poBlock: oOldSet )
     {
         if( poBlock->DropLockForRemovalFromStorage() )
         {
@@ -243,22 +239,16 @@ GDALRasterBlock *GDALHashSetBandBlockCache::TryGetLockedBlockRef(
 
 {
     GDALRasterBlock oBlockForLookup(nXBlockOff, nYBlockOff);
-    GDALRasterBlock* poBlock = nullptr;
-    while( true )
+    GDALRasterBlock* poBlock;
     {
-        {
-            CPLLockHolderOptionalLockD( hLock );
-            auto oIter = m_oSet.find(&oBlockForLookup);
-            if( oIter != m_oSet.end() )
-                poBlock = *oIter;
-        }
-        if( poBlock == nullptr )
+        CPLLockHolderOptionalLockD( hLock );
+        auto oIter = m_oSet.find(&oBlockForLookup);
+        if( oIter == m_oSet.end() )
             return nullptr;
-        if( poBlock->TakeLock()  )
-            break;
+        poBlock = *oIter;
     }
-
-    poBlock->Touch();
+    if( !poBlock->TakeLock()  )
+        return nullptr;
     return poBlock;
 }
 

@@ -739,6 +739,29 @@ def ogr_basic_16():
 
     return 'success'
 
+def ogr_basic_invalid_unicode():
+
+    if sys.version_info >= (3,0,0):
+        val = '\udcfc'
+    else:
+        exec("val = u'\\udcfc'")
+
+    try:
+        ogr.Open(val)
+    except:
+        pass
+
+    data_source = ogr.GetDriverByName('Memory').CreateDataSource('')
+    layer = data_source.CreateLayer("test")
+    layer.CreateField(ogr.FieldDefn('attr', ogr.OFTString))
+    feature = ogr.Feature(layer.GetLayerDefn())
+    try:
+        feature.SetField('attr', val)
+    except:
+        pass
+
+    return 'success'
+
 ###############################################################################
 # cleanup
 
@@ -765,6 +788,7 @@ gdaltest_list = [
     ogr_basic_14,
     ogr_basic_15,
     ogr_basic_16,
+    ogr_basic_invalid_unicode,
     ogr_basic_cleanup ]
 
 #gdaltest_list = [ ogr_basic_13 ]

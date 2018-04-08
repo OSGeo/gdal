@@ -345,7 +345,7 @@ static void RPCTransformPoint( const GDALRPCTransformInfo *psRPCTransformInfo,
     double adfTermsWithMargin[20+1] = {};
     // Make padfTerms aligned on 16-byte boundary for SSE2 aligned loads.
     double* padfTerms =
-        adfTermsWithMargin + (((GUIntptr_t)adfTermsWithMargin) % 16) / 8;
+        adfTermsWithMargin + (reinterpret_cast<GUIntptr_t>(adfTermsWithMargin) % 16) / 8;
 
     // Avoid dateline issues.
     double diffLong = dfLong - psRPCTransformInfo->sRPC.dfLONG_OFF;
@@ -797,7 +797,7 @@ void *GDALCreateRPCTransformer( GDALRPCInfo *psRPCInfo, int bReversed,
     // loads.
     psTransform->padfCoeffs =
         psTransform->adfDoubles +
-        (((GUIntptr_t)psTransform->adfDoubles) % 16) / 8;
+        (reinterpret_cast<GUIntptr_t>(psTransform->adfDoubles) % 16) / 8;
     memcpy(psTransform->padfCoeffs,
            psRPCInfo->adfLINE_NUM_COEFF,
            20 * sizeof(double));
@@ -2089,7 +2089,7 @@ CPLXMLNode *GDALSerializeRPCTransformer( void *pTransformArg )
     VALIDATE_POINTER1( pTransformArg, "GDALSerializeRPCTransformer", nullptr );
 
     GDALRPCTransformInfo *psInfo =
-        (GDALRPCTransformInfo *)(pTransformArg);
+        static_cast<GDALRPCTransformInfo *>(pTransformArg);
 
     CPLXMLNode *psTree = CPLCreateXMLNode(nullptr, CXT_Element, "RPCTransformer");
 

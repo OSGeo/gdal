@@ -750,7 +750,7 @@ QHULL_SETTING = INTERNAL
 
 # OpenSSL stuff (needed if using curl in multithreaded way, with OpenSSL backend)
 # OPENSSL_INC = -Ic:/install-openssl/include
-# OPENSSL_LIB = c:/instal-oppenssl/lib/ssleay32.lib
+# OPENSSL_LIB = c:/instal-openssl/lib/ssleay32.lib c:/instal-openssl/lib/libeay32.lib crypt32.lib
 
 # Comment out to disable MRF support.
 MRF_SETTING=yes

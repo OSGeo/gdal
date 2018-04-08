@@ -433,8 +433,7 @@ void OGRMDBLayer::LookupSRID( int nSRID )
 /* -------------------------------------------------------------------- */
     poSRS = new OGRSpatialReference();
 
-    char* pszSRTextPtr = pszSRText;
-    if( poSRS->importFromWkt( &pszSRTextPtr ) != OGRERR_NONE )
+    if( poSRS->importFromWkt( pszSRText ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "importFromWKT() failed on SRS '%s'.",

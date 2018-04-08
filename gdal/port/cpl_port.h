@@ -293,7 +293,11 @@ typedef GUIntBig GUIntptr_t;
 typedef unsigned int  GUIntptr_t;
 #endif
 
+#ifdef __cplusplus
+#define CPL_IS_ALIGNED(ptr, quant) ((reinterpret_cast<GUIntptr_t>(static_cast<const void*>(ptr)) % (quant)) == 0)
+#else
 #define CPL_IS_ALIGNED(ptr, quant) (((GUIntptr_t)(ptr) % (quant)) == 0)
+#endif
 
 #endif
 
@@ -1084,8 +1088,10 @@ class MSVCPedanticBool
 
         bool operator== (const bool& other) const { return b == other; }
         bool operator!= (const bool& other) const { return b != other; }
+        bool operator< (const bool& other) const { return b < other; }
         bool operator== (const MSVCPedanticBool& other) const { return b == other.b; }
         bool operator!= (const MSVCPedanticBool& other) const { return b != other.b; }
+        bool operator< (const MSVCPedanticBool& other) const { return b < other.b; }
 
         bool operator! () const { return !b; }
         operator bool() const { return b; }
@@ -1162,5 +1168,20 @@ inline bool operator!= (const bool& one, const MSVCPedanticBool& other) { return
 #define CPL_NULLPTR NULL
 #endif
 /*! @endcond */
+
+/* This typedef is for C functions that take char** as argument, but */
+/* with the semantics of a const list. In C, char** is not implicitly cast to */
+/* const char* const*, contrary to C++. So when seen for C++, it is OK */
+/* to expose the prototyes as const char* const*, but for C we keep the */
+/* historical definition to avoid warnings. */
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+/** Type of a constant null-terminated list of nul terminated strings.
+ * Seen as char** from C and const char* const* from C++ */
+typedef const char* const* CSLConstList;
+#else
+/** Type of a constant null-terminated list of nul terminated strings.
+ * Seen as char** from C and const char* const* from C++ */
+typedef char** CSLConstList;
+#endif
 
 #endif /* ndef CPL_BASE_H_INCLUDED */

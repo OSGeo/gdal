@@ -2109,8 +2109,7 @@ GDALDataset *OGRSQLiteDriverCreateCopy( const char* pszName,
         if( pszProjectionRef != nullptr && !EQUAL(pszProjectionRef, "") )
         {
             OGRSpatialReference oSRS;
-            char* pszTmp = const_cast<char*>(pszProjectionRef);
-            if( oSRS.importFromWkt(&pszTmp) == OGRERR_NONE )
+            if( oSRS.importFromWkt(pszProjectionRef) == OGRERR_NONE )
             {
                 nSRSId = poDS->FetchSRSId( &oSRS );
             }

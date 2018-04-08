@@ -159,7 +159,7 @@ typedef struct
 
 char **VSIReadDirRecursive( const char *pszPathIn )
 {
-    CPLStringList oFiles = nullptr;
+    CPLStringList oFiles;
     char **papszFiles = nullptr;
     VSIStatBufL psStatBuf;
     CPLString osTemp1;
@@ -777,7 +777,7 @@ const char* VSIGetActualURL( const char* pszFilename )
  * @since GDAL 2.3
  */
 
-char* VSIGetSignedURL( const char* pszFilename, char** papszOptions )
+char* VSIGetSignedURL( const char* pszFilename, CSLConstList papszOptions )
 {
     VSIFilesystemHandler *poFSHandler =
         VSIFileManager::GetHandler( pszFilename );

@@ -73,7 +73,7 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
 
         void UnsetLayer() { m_poLayer = nullptr; }
 
-        virtual OGRSpatialReference* GetSpatialRef() override
+        virtual OGRSpatialReference* GetSpatialRef() const override
         {
             if( poSRS )
                 return poSRS;
@@ -89,7 +89,19 @@ class OGROpenFileGDBGeomFieldDefn: public OGRGeomFieldDefn
 class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
 {
         OGROpenFileGDBLayer* m_poLayer;
-        int m_bHasBuildFieldDefn;
+        mutable int m_bHasBuildFieldDefn;
+
+        void LazyGeomInit() const
+        {
+            /* FileGDB v9 case */
+            if( !m_bHasBuildFieldDefn &&
+                m_poLayer != nullptr && m_poLayer->m_eGeomType != wkbNone &&
+                m_poLayer->m_osDefinition.empty() )
+            {
+                m_bHasBuildFieldDefn = TRUE;
+                (void) m_poLayer->BuildLayerDefinition();
+            }
+        }
 
     public:
         OGROpenFileGDBFeatureDefn( OGROpenFileGDBLayer* poLayer,
@@ -109,7 +121,7 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             m_poLayer = nullptr;
         }
 
-        virtual int GetFieldCount() override
+        virtual int GetFieldCount() const override
         {
             if( nFieldCount )
                 return nFieldCount;
@@ -121,29 +133,21 @@ class OGROpenFileGDBFeatureDefn: public OGRFeatureDefn
             return nFieldCount;
         }
 
-        virtual int GetGeomFieldCount() override
+        virtual int GetGeomFieldCount() const override
         {
-            /* FileGDB v9 case */
-            if( !m_bHasBuildFieldDefn &&
-                m_poLayer != nullptr && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.empty() )
-            {
-                m_bHasBuildFieldDefn = TRUE;
-                (void) m_poLayer->BuildLayerDefinition();
-            }
+            LazyGeomInit();
             return nGeomFieldCount;
         }
 
         virtual OGRGeomFieldDefn* GetGeomFieldDefn( int i ) override
         {
-            /* FileGDB v9 case */
-            if( !m_bHasBuildFieldDefn &&
-                m_poLayer != nullptr && m_poLayer->m_eGeomType != wkbNone &&
-                m_poLayer->m_osDefinition.empty() )
-            {
-                m_bHasBuildFieldDefn = TRUE;
-                (void) m_poLayer->BuildLayerDefinition();
-            }
+            LazyGeomInit();
+            return OGRFeatureDefn::GetGeomFieldDefn(i);
+        }
+
+        virtual const OGRGeomFieldDefn* GetGeomFieldDefn( int i ) const override
+        {
+            LazyGeomInit();
             return OGRFeatureDefn::GetGeomFieldDefn(i);
         }
 };

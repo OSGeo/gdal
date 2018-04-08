@@ -1,4 +1,4 @@
-/******************************************************************************
+    /******************************************************************************
  *
  * Project:  GDAL ECW Driver
  * Purpose:  ECW CreateCopy method implementation.
@@ -293,11 +293,10 @@ CPLErr  GDALECWCompressor::PrepareCoverageBox(
 /*      Try do determine a PCS or GCS code we can use.                  */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSRS;
-    char *pszWKTCopy = (char *) pszWKT;
     int nEPSGCode = 0;
     char szSRSName[100];
 
-    if( oSRS.importFromWkt( &pszWKTCopy ) != OGRERR_NONE )
+    if( oSRS.importFromWkt( pszWKT ) != OGRERR_NONE )
         return CE_Failure;
 
     if( oSRS.IsProjected() )

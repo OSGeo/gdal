@@ -669,8 +669,7 @@ GDALDataset *BTDataset::Open( GDALOpenInfo * poOpenInfo )
 
             pszBuffer[nBytes] = '\0';
 
-            char *pszBufPtr = pszBuffer;
-            if( oSRS.importFromWkt( &pszBufPtr ) != OGRERR_NONE )
+            if( oSRS.importFromWkt( pszBuffer ) != OGRERR_NONE )
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
                           "Unable to parse .prj file, "

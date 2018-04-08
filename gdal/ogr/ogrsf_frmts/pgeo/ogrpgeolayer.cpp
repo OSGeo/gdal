@@ -360,7 +360,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 /*      Check that it isn't just a GUID.  We don't know how to          */
 /*      translate those.                                                */
 /* -------------------------------------------------------------------- */
-    char *pszSRText = (char *) oStmt.GetColData(0);
+    const char *pszSRText = oStmt.GetColData(0);
 
     if( pszSRText[0] == '{' )
     {
@@ -373,7 +373,7 @@ void OGRPGeoLayer::LookupSRID( int nSRID )
 /* -------------------------------------------------------------------- */
     poSRS = new OGRSpatialReference();
 
-    if( poSRS->importFromWkt( &pszSRText ) != OGRERR_NONE )
+    if( poSRS->importFromWkt( pszSRText ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "importFromWKT() failed on SRS '%s'.",

@@ -2214,10 +2214,9 @@ CPLErr NITFDataset::SetProjection(const char* _pszProjection)
 {
     int    bNorth;
     OGRSpatialReference oSRS, oSRS_WGS84;
-    char *pszWKT = const_cast<char *>( _pszProjection );
 
-    if( pszWKT != nullptr )
-        oSRS.importFromWkt( &pszWKT );
+    if( _pszProjection != nullptr )
+        oSRS.importFromWkt( _pszProjection );
     else
         return CE_Failure;
 
@@ -4359,9 +4358,9 @@ NITFDataset::NITFCreateCopy(
 /* -------------------------------------------------------------------- */
 /*      Do we have lat/long georeferencing information?                 */
 /* -------------------------------------------------------------------- */
-    char *pszWKT = const_cast<char *>( poSrcDS->GetProjectionRef() );
+    const char *pszWKT = poSrcDS->GetProjectionRef();
     if( pszWKT == nullptr || pszWKT[0] == '\0' )
-        pszWKT = const_cast<char *>( poSrcDS->GetGCPProjection() );
+        pszWKT = poSrcDS->GetGCPProjection();
 
     double adfGeoTransform[6];
     bool bWriteGeoTransform = false;
@@ -4372,7 +4371,7 @@ NITFDataset::NITFCreateCopy(
 
     if( pszWKT != nullptr && pszWKT[0] != '\0' )
     {
-        oSRS.importFromWkt( &pszWKT );
+        oSRS.importFromWkt( pszWKT );
 
         /* NITF is only WGS84 */
         oSRS_WGS84.SetWellKnownGeogCS( "WGS84" );

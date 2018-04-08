@@ -1881,6 +1881,8 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 
             return pszProjection;
         }
+        CPLFree(pszProjection);
+        pszProjection = nullptr;
     }
 
     CPLPopErrorHandler();
@@ -1891,11 +1893,9 @@ const char* GeoRasterDataset::GetProjectionRef( void )
 
     poGeoRaster->QueryWKText();
 
-    char* pszWKText = CPLStrdup( poGeoRaster->sWKText );
-
-    if( ! ( oSRS.importFromWkt( &pszWKText ) == OGRERR_NONE && oSRS.GetRoot() ) )
+    if( ! ( oSRS.importFromWkt( poGeoRaster->sWKText ) == OGRERR_NONE && oSRS.GetRoot() ) )
     {
-        return pszWKText;
+        return poGeoRaster->sWKText;
     }
 
     // ----------------------------------------------------------------
@@ -2045,9 +2045,7 @@ CPLErr GeoRasterDataset::SetProjection( const char *pszProjString )
 {
     OGRSpatialReference oSRS;
 
-    char* pszWKT = CPLStrdup( pszProjString );
-
-    OGRErr eOGRErr = oSRS.importFromWkt( &pszWKT );
+    OGRErr eOGRErr = oSRS.importFromWkt( pszProjString );
 
     if( eOGRErr != OGRERR_NONE )
     {

@@ -103,7 +103,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
     char *pszWKT = const_cast<char *>(osClipRectWKT.c_str());
 
     OGRGeometryFactory::createFromWkt( &pszWKT, nullptr,
-                                       (OGRGeometry**) (&poClipRect) );
+                                       reinterpret_cast<OGRGeometry**>(&poClipRect) );
 
     if( poClipRect )
     {

@@ -10,23 +10,24 @@ PROGS = gdal_unit_test testperfcopywords testcopywords testclosedondestroydm tes
 
 all: $(PROGS)
 
-test check:
+test check: all
 	make quick_test
 	./testperfcopywords
 
-quick_test:
+quick_test: gdal_unit_test testcopywords testclosedondestroydm testthreadcond testvirtualmem testblockcache testblockcachewrite testblockcachelimits testmultithreadedwriting testdestroy
 	./gdal_unit_test
 	./testcopywords
 	./testclosedondestroydm
 	./testthreadcond
 	./testvirtualmem
-	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
-	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
-	./testblockcache -check -co TILED=YES -migrate
-	./testblockcache -check -memdriver
+	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_CACHEMAX 100
+	./testblockcache -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN  --config GDAL_CACHEMAX 100
+	./testblockcache -check -co TILED=YES -migrate --config GDAL_CACHEMAX 100
+	./testblockcache -check -memdriver --config GDAL_CACHEMAX 100
 	./testblockcachewrite --debug ON
-	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES
-	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN
+	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES  --config GDAL_CACHEMAX 100
+	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK,GDAL -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES -threads 2 --config GDAL_CACHEMAX 100
+	./testblockcache --config GDAL_BAND_BLOCK_CACHE HASHSET -check -co TILED=YES --debug TEST,LOCK -loops 3 --config GDAL_RB_LOCK_DEBUG_CONTENTION YES --config GDAL_RB_LOCK_TYPE SPIN --config GDAL_CACHEMAX 100
 	./testblockcachelimits --debug ON
 	./testmultithreadedwriting
 	./testdestroy

@@ -116,7 +116,7 @@ void CPL_STDCALL GDALDestroyDriver( GDALDriverH hDriver )
 
 {
     if( hDriver != nullptr )
-        delete static_cast<GDALDriver *>(hDriver);
+        delete GDALDriver::FromHandle(hDriver);
 }
 
 /************************************************************************/
@@ -305,15 +305,16 @@ GDALDataset * GDALDriver::Create( const char * pszFilename,
 GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreate( GDALDriverH hDriver, const char * pszFilename,
             int nXSize, int nYSize, int nBands, GDALDataType eBandType,
-            char ** papszOptions )
+            CSLConstList papszOptions )
 
 {
     VALIDATE_POINTER1( hDriver, "GDALCreate", nullptr );
 
     return
-        static_cast<GDALDriver *>(hDriver)->Create( pszFilename,
+        GDALDriver::FromHandle(hDriver)->Create( pszFilename,
                                                     nXSize, nYSize, nBands,
-                                                    eBandType, papszOptions );
+                                                    eBandType,
+                                                    const_cast<char**>(papszOptions) );
 }
 
 /************************************************************************/
@@ -937,7 +938,7 @@ GDALDataset *GDALDriver::CreateCopy( const char * pszFilename,
 GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
                                          const char * pszFilename,
                                          GDALDatasetH hSrcDS,
-                                         int bStrict, char ** papszOptions,
+                                         int bStrict, CSLConstList papszOptions,
                                          GDALProgressFunc pfnProgress,
                                          void * pProgressData )
 
@@ -945,9 +946,10 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy( GDALDriverH hDriver,
     VALIDATE_POINTER1( hDriver, "GDALCreateCopy", nullptr );
     VALIDATE_POINTER1( hSrcDS, "GDALCreateCopy", nullptr );
 
-    return static_cast<GDALDriver *>(hDriver)->
-        CreateCopy( pszFilename, static_cast<GDALDataset *>(hSrcDS),
-                    bStrict, papszOptions, pfnProgress, pProgressData );
+    return GDALDriver::FromHandle(hDriver)->
+        CreateCopy( pszFilename, GDALDataset::FromHandle(hSrcDS),
+                    bStrict, const_cast<char**>(papszOptions),
+                    pfnProgress, pProgressData );
 }
 
 /************************************************************************/
@@ -994,7 +996,7 @@ CPLErr GDALDriver::QuietDelete( const char *pszName )
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
     GDALDriver * const poDriver =
-        static_cast<GDALDriver *>( GDALIdentifyDriver( pszName, nullptr ) );
+        GDALDriver::FromHandle( GDALIdentifyDriver( pszName, nullptr ) );
     CPLPopErrorHandler();
 
     if( poDriver == nullptr )
@@ -1051,8 +1053,7 @@ CPLErr GDALDriver::Delete( const char * pszFilename )
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = static_cast<GDALDataset *>(
-        GDALOpenEx(pszFilename, 0, nullptr, nullptr, nullptr) );
+    GDALDatasetH hDS = GDALOpenEx(pszFilename, 0, nullptr, nullptr, nullptr);
 
     if( hDS == nullptr )
     {
@@ -1123,7 +1124,7 @@ CPLErr CPL_STDCALL GDALDeleteDataset( GDALDriverH hDriver,
         return CE_Failure;
     }
 
-    return static_cast<GDALDriver *>(hDriver)->Delete( pszFilename );
+    return GDALDriver::FromHandle(hDriver)->Delete( pszFilename );
 }
 
 /************************************************************************/
@@ -1141,8 +1142,7 @@ CPLErr GDALDriver::DefaultRename( const char * pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = static_cast<GDALDataset *>(
-        GDALOpen(pszOldName, GA_ReadOnly) );
+    GDALDatasetH hDS = GDALOpen(pszOldName, GA_ReadOnly);
 
     if( hDS == nullptr )
     {
@@ -1252,7 +1252,7 @@ CPLErr CPL_STDCALL GDALRenameDataset( GDALDriverH hDriver,
         return CE_Failure;
     }
 
-    return static_cast<GDALDriver *>(hDriver)->Rename( pszNewName, pszOldName );
+    return GDALDriver::FromHandle(hDriver)->Rename( pszNewName, pszOldName );
 }
 
 /************************************************************************/
@@ -1270,8 +1270,7 @@ CPLErr GDALDriver::DefaultCopyFiles( const char *pszNewName,
 /* -------------------------------------------------------------------- */
 /*      Collect file list.                                              */
 /* -------------------------------------------------------------------- */
-    GDALDatasetH hDS = static_cast<GDALDataset *>(
-        GDALOpen(pszOldName,GA_ReadOnly) );
+    GDALDatasetH hDS = GDALOpen(pszOldName,GA_ReadOnly);
 
     if( hDS == nullptr )
     {
@@ -1378,7 +1377,7 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles( GDALDriverH hDriver,
         return CE_Failure;
     }
 
-    return static_cast<GDALDriver *>(hDriver)->
+    return GDALDriver::FromHandle(hDriver)->
         CopyFiles( pszNewName, pszOldName );
 }
 
@@ -1404,7 +1403,7 @@ const char * CPL_STDCALL GDALGetDriverShortName( GDALDriverH hDriver )
 {
     VALIDATE_POINTER1( hDriver, "GDALGetDriverShortName", nullptr );
 
-    return static_cast<GDALDriver *>(hDriver)->GetDescription();
+    return GDALDriver::FromHandle(hDriver)->GetDescription();
 }
 
 /************************************************************************/
@@ -1427,7 +1426,7 @@ const char * CPL_STDCALL GDALGetDriverLongName( GDALDriverH hDriver )
     VALIDATE_POINTER1( hDriver, "GDALGetDriverLongName", nullptr );
 
     const char *pszLongName =
-        static_cast<GDALDriver *>(hDriver)->
+        GDALDriver::FromHandle(hDriver)->
             GetMetadataItem( GDAL_DMD_LONGNAME );
 
     if( pszLongName == nullptr )
@@ -1457,7 +1456,7 @@ const char * CPL_STDCALL GDALGetDriverHelpTopic( GDALDriverH hDriver )
 {
     VALIDATE_POINTER1( hDriver, "GDALGetDriverHelpTopic", nullptr );
 
-    return static_cast<GDALDriver *>(hDriver)->
+    return GDALDriver::FromHandle(hDriver)->
         GetMetadataItem( GDAL_DMD_HELPTOPIC );
 }
 
@@ -1483,7 +1482,7 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
     VALIDATE_POINTER1( hDriver, "GDALGetDriverCreationOptionList", nullptr );
 
     const char *pszOptionList =
-        static_cast<GDALDriver *>(hDriver)->
+        GDALDriver::FromHandle(hDriver)->
             GetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST );
 
     if( pszOptionList == nullptr )
@@ -1519,16 +1518,16 @@ const char * CPL_STDCALL GDALGetDriverCreationOptionList( GDALDriverH hDriver )
  */
 
 int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
-                                             char** papszCreationOptions )
+                                             CSLConstList papszCreationOptions )
 {
     VALIDATE_POINTER1( hDriver, "GDALValidateCreationOptions", FALSE );
     const char *pszOptionList =
-        static_cast<GDALDriver *>(hDriver)->GetMetadataItem(
+        GDALDriver::FromHandle(hDriver)->GetMetadataItem(
             GDAL_DMD_CREATIONOPTIONLIST );
     CPLString osDriver;
     osDriver.Printf("driver %s",
-                    static_cast<GDALDriver *>(hDriver)->GetDescription());
-    char** papszOptionsToValidate = papszCreationOptions;
+                    GDALDriver::FromHandle(hDriver)->GetDescription());
+    CSLConstList papszOptionsToValidate = papszCreationOptions;
     char** papszOptionsToFree = nullptr;
     if( CSLFetchNameValue( papszCreationOptions, "APPEND_SUBDATASET") )
     {
@@ -1540,7 +1539,7 @@ int CPL_STDCALL GDALValidateCreationOptions( GDALDriverH hDriver,
     const bool bRet = CPL_TO_BOOL(
         GDALValidateOptions(
             pszOptionList,
-            const_cast<const char* const*>(papszOptionsToValidate),
+            papszOptionsToValidate,
             "creation option",
             osDriver ) );
     CSLDestroy(papszOptionsToFree);
@@ -1555,11 +1554,11 @@ int GDALValidateOpenOptions( GDALDriverH hDriver,
                              const char* const* papszOpenOptions)
 {
     VALIDATE_POINTER1( hDriver, "GDALValidateOpenOptions", FALSE );
-    const char *pszOptionList = static_cast<GDALDriver *>(hDriver)->
+    const char *pszOptionList = GDALDriver::FromHandle(hDriver)->
         GetMetadataItem( GDAL_DMD_OPENOPTIONLIST );
     CPLString osDriver;
     osDriver.Printf("driver %s",
-                    static_cast<GDALDriver *>(hDriver)->GetDescription());
+                    GDALDriver::FromHandle(hDriver)->GetDescription());
     return GDALValidateOptions( pszOptionList, papszOpenOptions,
                                 "open option",
                                 osDriver );
@@ -1940,7 +1939,7 @@ int GDALValidateOptions( const char* pszOptionList,
 
 GDALDriverH CPL_STDCALL
 GDALIdentifyDriver( const char * pszFilename,
-                    char **papszFileList )
+                    CSLConstList papszFileList )
 
 {
     return GDALIdentifyDriverEx( pszFilename, 0, nullptr, papszFileList );

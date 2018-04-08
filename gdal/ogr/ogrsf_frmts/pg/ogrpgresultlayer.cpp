@@ -353,7 +353,7 @@ void OGRPGResultLayer::SetSpatialFilter( int iGeomField, OGRGeometry * poGeomIn 
 /*                            ResolveSRID()                             */
 /************************************************************************/
 
-void OGRPGResultLayer::ResolveSRID(OGRPGGeomFieldDefn* poGFldDefn)
+void OGRPGResultLayer::ResolveSRID(const OGRPGGeomFieldDefn* poGFldDefn)
 
 {
     /* We have to get the SRID of the geometry column, so to be able */

@@ -637,9 +637,8 @@ DTEDCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* -------------------------------------------------------------------- */
 /*      Checks the input SRS                                            */
 /* -------------------------------------------------------------------- */
-    char* c = (char*)poSrcDS->GetProjectionRef();
     OGRSpatialReference ogrsr_input;
-    ogrsr_input.importFromWkt(&c);
+    ogrsr_input.importFromWkt(poSrcDS->GetProjectionRef());
     OGRSpatialReference ogrsr_wgs84;
     ogrsr_wgs84.SetWellKnownGeogCS( "WGS84" );
     if ( ogrsr_input.IsSameGeogCS(&ogrsr_wgs84) == FALSE)

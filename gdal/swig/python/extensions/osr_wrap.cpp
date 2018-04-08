@@ -3312,6 +3312,8 @@ static void ClearErrorState()
     CPLErrorReset();
 }
 
+static void StoreLastException() CPL_UNUSED;
+
 static void StoreLastException()
 {
     const char* pszLastErrorMessage =
@@ -3330,6 +3332,7 @@ static void StoreLastException()
 
 
 /* Return a PyObject* from a NULL terminated C String */
+static PyObject* GDALPythonObjectFromCStr(const char *pszStr) CPL_UNUSED;
 static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 {
   const unsigned char* pszIter = (const unsigned char*) pszStr;
@@ -3357,6 +3360,7 @@ static PyObject* GDALPythonObjectFromCStr(const char *pszStr)
 
 /* Return a NULL terminated c String from a PyObject */
 /* Result must be freed with GDALPythonFreeCStr */
+static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree) CPL_UNUSED;
 static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
 {
   *pbToFree = 0;
@@ -3366,6 +3370,8 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
       char *pszNewStr;
       Py_ssize_t nLen;
       PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObject);
+      if( pyUTF8Str == NULL )
+        return NULL;
 #if PY_VERSION_HEX >= 0x03000000
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else
@@ -3387,6 +3393,7 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
   }
 }
 
+static void GDALPythonFreeCStr(void* ptr, int bToFree) CPL_UNUSED;
 static void GDALPythonFreeCStr(void* ptr, int bToFree)
 {
    if (bToFree)
@@ -3486,7 +3493,7 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
            TODO(bhy) More detailed explanation */
         return SWIG_RuntimeError;
     }
-    obj = PyUnicode_AsUTF8String(obj);
+    obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;
     PyBytes_AsStringAndSize(obj, &cstr, &len);
     if(alloc) *alloc = SWIG_NEWOBJ;
 #else
@@ -3535,7 +3542,7 @@ SWIG_AsCharPtrAndSize(PyObject *obj, char** cptr, size_t* psize, int *alloc)
       if (!alloc && cptr) {
         return SWIG_RuntimeError;
       }
-      obj = PyUnicode_AsUTF8String(obj);
+      obj = PyUnicode_AsUTF8String(obj); if (!obj) return SWIG_TypeError;
       if (PyString_AsStringAndSize(obj, &cstr, &len) != -1) {
         if (cptr) {
           if (alloc) *alloc = SWIG_NEWOBJ;
@@ -8276,6 +8283,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_FindMatches(PyObject *SWIGUNUSEDPARM
           char *pszStr;
           Py_ssize_t nLen;
           PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+          if( !pyUTF8Str )
+          {
+            Py_DECREF(pyObj);
+            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+            SWIG_fail;
+          }
 #if PY_VERSION_HEX >= 0x03000000
           PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else
@@ -13874,6 +13887,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromESRI(PyObject *SWIGUNUSEDP
         char *pszStr;
         Py_ssize_t nLen;
         PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+        if( !pyUTF8Str )
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+          SWIG_fail;
+        }
 #if PY_VERSION_HEX >= 0x03000000
         PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else
@@ -14551,6 +14570,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ImportFromOzi(PyObject *SWIGUNUSEDPA
         char *pszStr;
         Py_ssize_t nLen;
         PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+        if( !pyUTF8Str )
+        {
+          Py_DECREF(pyObj);
+          PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+          SWIG_fail;
+        }
 #if PY_VERSION_HEX >= 0x03000000
         PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else
@@ -15716,6 +15741,12 @@ SWIGINTERN PyObject *_wrap_SpatialReference_ConvertToOtherProjection(PyObject *S
           char *pszStr;
           Py_ssize_t nLen;
           PyObject* pyUTF8Str = PyUnicode_AsUTF8String(pyObj);
+          if( !pyUTF8Str )
+          {
+            Py_DECREF(pyObj);
+            PyErr_SetString(PyExc_TypeError,"invalid Unicode sequence");
+            SWIG_fail;
+          }
 #if PY_VERSION_HEX >= 0x03000000
           PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
 #else

@@ -239,11 +239,11 @@ void GDALDefaultOverviews::OverviewScan()
 
         if( bExists )
         {
-           poODS = static_cast<GDALDataset *>( GDALOpenEx(
+           poODS = GDALDataset::Open(
                 osOvrFilename,
                 GDAL_OF_RASTER |
                 (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),
-                nullptr, nullptr, papszInitSiblingFiles ) );
+                nullptr, nullptr, papszInitSiblingFiles );
         }
     }
 
@@ -324,7 +324,8 @@ void GDALDefaultOverviews::OverviewScan()
             }
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            poODS = static_cast<GDALDataset *>(GDALOpen(osOvrFilename, poDS->GetAccess()));
+            poODS = GDALDataset::Open(osOvrFilename,
+                GDAL_OF_RASTER | (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE: 0));
             CPLPopErrorHandler();
         }
     }
@@ -595,8 +596,8 @@ GDALDefaultOverviews::BuildOverviews(
     else if( poODS->GetAccess() == GA_ReadOnly )
     {
         GDALClose( poODS );
-        poODS = static_cast<GDALDataset *>(
-            GDALOpen( osOvrFilename, GA_Update ));
+        poODS = GDALDataset::Open(
+            osOvrFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE);
         if( poODS == nullptr )
             return CE_Failure;
     }
@@ -752,8 +753,8 @@ GDALDefaultOverviews::BuildOverviews(
 
         if( eErr == CE_None )
         {
-            poODS = static_cast<GDALDataset *>(
-                GDALOpen( osOvrFilename, GA_Update ) );
+            poODS = GDALDataset::Open(
+                osOvrFilename, GDAL_OF_RASTER | GDAL_OF_UPDATE );
             if( poODS == nullptr )
                 eErr = CE_Failure;
         }
@@ -1151,11 +1152,11 @@ int GDALDefaultOverviews::HaveMaskFile( char ** papszSiblingFiles,
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    poMaskDS = static_cast<GDALDataset *>(
-        GDALOpenEx( osMskFilename,
+    poMaskDS = GDALDataset::Open(
+                    osMskFilename,
                     GDAL_OF_RASTER |
                     (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),
-                    nullptr, nullptr, papszInitSiblingFiles ));
+                    nullptr, nullptr, papszInitSiblingFiles );
     CPLAssert( poMaskDS != poDS );
 
     if( poMaskDS == nullptr )

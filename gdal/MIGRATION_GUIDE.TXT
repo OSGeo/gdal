@@ -19,6 +19,39 @@ GDAL now requires a C++11 compatible compiler. External code using GDAL C++ API
 will also need to enable at least C++11 compilation mode, if the compiler
 defaults to C++98/C++03.
 
+3) Stricter const-ness in OGRGeomFieldDefn, OGRFeatureDefn and OGRFeature
+   classes, impacting out-of-tree drivers that subclass them.
+
+   The following methods are now const qualified:
+
+     OGRGeomFieldDefn class:
+        virtual OGRSpatialReference* GetSpatialRef() const
+
+     OGRFeatureDefn class:
+        virtual const char* GetName() const
+        virtual int GetFieldCount() const
+        virtual int GetFieldIndex(const char*) const
+        virtual int GetGeomFieldCount() const
+        virtual int GetGeomFieldIndex(const char*) const
+        virtual OGRwkbGeometryType GetGeomType() const
+        virtual OGRFeatureDefn* Clone() const
+        virtual int IsGeometryIgnored() const
+        virtual int IsSame(const OGRFeatureDefn*) const // argument is const now too
+
+     OGRFeature class:
+        virtual OGRBoolean Equal(const OGRFeature*) const // argument is const now too
+        virtual const char* GetStyleString() const
+        virtual OGRStyleTable* GetStyleTable() const
+
+    The following virtual methods, offering const alternatives to their
+    non-const equivalent methods, should be overloaded if the non-const
+    method is overloaded.
+
+     OGRFeatureDefn class:
+        virtual const OGRFieldDefn* GetFieldDefn(int) const
+        virtual const OGRGeomFieldDefn* GetGeomFieldDefn(int) const
+
+
 MIGRATION GUIDE FROM GDAL 2.1 to GDAL 2.2
 -----------------------------------------
 

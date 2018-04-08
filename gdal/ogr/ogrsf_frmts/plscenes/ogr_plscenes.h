@@ -97,7 +97,7 @@ class OGRPLScenesDataV1FeatureDefn: public OGRFeatureDefn
                             OGRFeatureDefn(pszName), m_poLayer(poLayer) {}
        ~OGRPLScenesDataV1FeatureDefn() {}
 
-       virtual int GetFieldCount() override;
+       virtual int GetFieldCount() const override;
 
        void DropRefToLayer() { m_poLayer = nullptr; }
 };

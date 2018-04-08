@@ -246,6 +246,18 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     const char          *GetAttrQueryString() const { return m_pszAttrQueryString; }
 //! @endcond
 
+    /** Convert a OGRLayer* to a OGRLayerH.
+     * @since GDAL 2.3
+     */
+    static inline OGRLayerH ToHandle(OGRLayer* poLayer)
+        { return reinterpret_cast<OGRLayerH>(poLayer); }
+
+    /** Convert a OGRLayerH to a OGRLayer*.
+     * @since GDAL 2.3
+     */
+    static inline OGRLayer* FromHandle(OGRLayerH hLayer)
+        { return reinterpret_cast<OGRLayer*>(hLayer); }
+
  protected:
 //! @cond Doxygen_Suppress
     OGRStyleTable       *m_poStyleTable;

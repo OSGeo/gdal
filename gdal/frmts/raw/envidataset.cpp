@@ -1,4 +1,4 @@
-/******************************************************************************
+    /******************************************************************************
  *
  * Project:  ENVI .hdr Driver
  * Purpose:  Implementation of ENVI .hdr labelled raw raster support.
@@ -661,10 +661,7 @@ void ENVIDataset::WriteProjectionInfo()
 
     // Ingest WKT.
     OGRSpatialReference oSRS;
-
-    char *pszProj = pszProjection;
-
-    if( oSRS.importFromWkt(&pszProj) != OGRERR_NONE )
+    if( oSRS.importFromWkt(pszProjection) != OGRERR_NONE )
         return;
 
     // Try to translate the datum and get major/minor ellipsoid values.
@@ -2311,6 +2308,7 @@ GDALDataset *ENVIDataset::Open( GDALOpenInfo *poOpenInfo )
     // among bands.
     if( !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nDataSize,
                         nPixelOffset, nLineOffset, nHeaderSize, nBandOffset,
                         poDS->fpImage) )
     {

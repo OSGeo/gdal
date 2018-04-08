@@ -1204,8 +1204,8 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS( int nId )
             if ( oStmt.GetColData( 0 ) )
             {
                 poSRS = new OGRSpatialReference();
-                char* pszWKT = (char*)oStmt.GetColData( 0 );
-                if( poSRS->importFromWkt( &pszWKT ) != OGRERR_NONE )
+                const char* pszWKT = oStmt.GetColData( 0 );
+                if( poSRS->importFromWkt( pszWKT ) != OGRERR_NONE )
                 {
                     delete poSRS;
                     poSRS = nullptr;

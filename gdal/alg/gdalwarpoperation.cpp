@@ -504,8 +504,9 @@ CPLErr GDALWarpOperation::Initialize( const GDALWarpOptions *psNewOptions )
     CPLErr eErr = CE_None;
     if( pszCutlineWKT && psOptions->hCutline == nullptr )
     {
-        if( OGR_G_CreateFromWkt( (char **) &pszCutlineWKT, nullptr,
-                                 (OGRGeometryH *) &(psOptions->hCutline) )
+        char* pszWKTTmp = const_cast<char*>(pszCutlineWKT);
+        if( OGR_G_CreateFromWkt( &pszWKTTmp, nullptr,
+                    reinterpret_cast<OGRGeometryH *>(&(psOptions->hCutline)) )
             != OGRERR_NONE )
         {
             eErr = CE_Failure;
@@ -948,7 +949,8 @@ typedef struct
 static void ChunkThreadMain( void *pThreadData )
 
 {
-    volatile ChunkThreadData* psData = (volatile ChunkThreadData*) pThreadData;
+    volatile ChunkThreadData* psData =
+        static_cast<volatile ChunkThreadData*>(pThreadData);
 
     GDALWarpChunk *pasChunkInfo = psData->pasChunkInfo;
 
@@ -1036,14 +1038,15 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(
 /*      information for each region.                                    */
 /* -------------------------------------------------------------------- */
     ChunkThreadData volatile asThreadData[2] = {};
-    memset((void*)&asThreadData, 0, sizeof(asThreadData));
+    memset(reinterpret_cast<void*>(
+        const_cast<ChunkThreadData(*)[2]>(&asThreadData)), 0, sizeof(asThreadData));
     asThreadData[0].poOperation = this;
     asThreadData[0].hIOMutex = hIOMutex;
     asThreadData[1].poOperation = this;
     asThreadData[1].hIOMutex = hIOMutex;
 
     double dfPixelsProcessed = 0.0;
-    double dfTotalPixels = nDstXSize*(double)nDstYSize;
+    double dfTotalPixels = static_cast<double>(nDstXSize)*nDstYSize;
 
     CPLErr eErr = CE_None;
     for( int iChunk = 0; iChunk < nChunkListCount+1; iChunk++ )
@@ -1783,7 +1786,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 
 
     for( int i = 0; i < psOptions->nBandCount && eErr == CE_None; i++ )
-        oWK.papabySrcImage[i] = ((GByte *) oWK.papabySrcImage[0])
+        oWK.papabySrcImage[i] = reinterpret_cast<GByte *>(oWK.papabySrcImage[0])
             + nWordSize * (nSrcXSize * nSrcYSize + WARP_EXTRA_ELTS) * i;
 
     if( eErr == CE_None && nSrcXSize > 0 && nSrcYSize > 0 )

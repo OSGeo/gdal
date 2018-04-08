@@ -836,8 +836,7 @@ GDALDataset* HF2Dataset::CreateCopy( const char * pszFilename,
     if (pszProjectionRef != nullptr && pszProjectionRef[0] != '\0')
     {
         OGRSpatialReference oSRS;
-        char* pszTemp = (char*) pszProjectionRef;
-        if (oSRS.importFromWkt(&pszTemp) == OGRERR_NONE)
+        if (oSRS.importFromWkt(pszProjectionRef) == OGRERR_NONE)
         {
             const char* pszValue = nullptr;
             if( oSRS.GetAuthorityName( "GEOGCS|DATUM" ) != nullptr

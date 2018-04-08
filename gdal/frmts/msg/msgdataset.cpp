@@ -284,9 +284,8 @@ GDALDataset *MSGDataset::Open( GDALOpenInfo * poOpenInfo )
     char *pszLLTemp = nullptr;
 
     (poDS->oSRS.GetAttrNode("GEOGCS"))->exportToWkt(&pszLLTemp);
-    char *pszLLTemp_bak = pszLLTemp; // importFromWkt() changes the pointer
-    poDS->oLL.importFromWkt(&pszLLTemp);
-    CPLFree( pszLLTemp_bak );
+    poDS->oLL.importFromWkt(pszLLTemp);
+    CPLFree( pszLLTemp );
 
     poDS->poTransform = OGRCreateCoordinateTransformation( &(poDS->oSRS), &(poDS->oLL) );
 

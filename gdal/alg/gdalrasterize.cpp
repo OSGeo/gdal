@@ -82,7 +82,7 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
     {
         for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            unsigned char nBurnValue = (unsigned char)
+            unsigned char nBurnValue = static_cast<unsigned char>
                 ( psInfo->padfBurnValue[iBand] +
                   ( (psInfo->eBurnValueSource == GBV_UserBurnValue)?
                              0 : dfVariant ) );
@@ -112,7 +112,7 @@ void gvBurnScanline( void *pCBData, int nY, int nXStart, int nXEnd,
                              0 : dfVariant ) );
 
             double *padfInsert =
-                ((double *) psInfo->pabyChunkBuf)
+                (reinterpret_cast<double *>(psInfo->pabyChunkBuf))
                 + iBand * psInfo->nXSize * psInfo->nYSize
                 + nY * psInfo->nXSize + nXStart;
 
@@ -164,14 +164,14 @@ void gvBurnPoint( void *pCBData, int nY, int nX, double dfVariant )
             else if( dfVal < 0.0 )
                 *pbyInsert = 0;
             else
-                *pbyInsert = (unsigned char)( dfVal );
+                *pbyInsert = static_cast<unsigned char>( dfVal );
         }
     }
     else if( psInfo->eType == GDT_Float64 )
     {
         for( int iBand = 0; iBand < psInfo->nBands; iBand++ )
         {
-            double *pdfInsert = (double *) psInfo->pabyChunkBuf
+            double *pdfInsert = reinterpret_cast<double *>(psInfo->pabyChunkBuf)
                                 + iBand * psInfo->nXSize * psInfo->nYSize
                                 + nY * psInfo->nXSize + nX;
 
@@ -869,7 +869,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
             return CE_Failure;
         }
 
-        int * panSuccessTransform = (int *) CPLCalloc(sizeof(int), 2);
+        int * panSuccessTransform = static_cast<int *>(CPLCalloc(sizeof(int), 2));
 
 /* -------------------------------------------------------------------- */
 /*      loop over the vectorial geometries                              */
@@ -957,7 +957,7 @@ CPLErr GDALRasterizeGeometries( GDALDatasetH hDS,
                 }
             }
 
-            if( !pfnProgress(iShape / (double) nGeomCount, "", pProgressArg ) )
+            if( !pfnProgress(iShape / static_cast<double>(nGeomCount), "", pProgressArg ) )
             {
                 CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
                 eErr = CE_Failure;

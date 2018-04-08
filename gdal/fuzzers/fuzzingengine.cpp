@@ -36,6 +36,8 @@ int LLVMFuzzerTestOneInput(const void *buf, size_t len);
 int LLVMFuzzerInitialize(int* argc, char*** argv);
 }
 
+template<class T> static void CPL_IGNORE_RET_VAL(T) {}
+
 static void Usage(int, char* argv[])
 {
     fprintf(stderr, "%s [--help] [-repeat N] filename.\n", argv[0]);
@@ -97,7 +99,7 @@ int main(int argc, char* argv[])
         fclose(f);
         exit(1);
     }
-    fread(buf, nLen, 1, f);
+    CPL_IGNORE_RET_VAL(fread(buf, nLen, 1, f));
     fclose(f);
     for( int i = 0; i < nLoops; i++ )
     {

@@ -53,10 +53,24 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     pszStr[len] = '\0';
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
-    OSRSetFromUserInput( hSRS, pszStr );
-    CPLPopErrorHandler();
+    OGRErr eErr = OSRSetFromUserInput( hSRS, pszStr );
 
     CPLFree(pszStr);
+
+    if( eErr == OGRERR_NONE )
+    {
+        OGRSpatialReferenceH hSRSClone = OSRClone( hSRS );
+        OSRMorphFromESRI( hSRSClone );
+        OSRDestroySpatialReference( hSRSClone );
+    }
+
+    if( eErr == OGRERR_NONE )
+    {
+        OGRSpatialReferenceH hSRSClone = OSRClone( hSRS );
+        OSRMorphToESRI( hSRSClone );
+        OSRDestroySpatialReference( hSRSClone );
+    }
+    CPLPopErrorHandler();
 
     OSRDestroySpatialReference( hSRS );
 

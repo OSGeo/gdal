@@ -4453,6 +4453,15 @@ def ogr_geom_sfcgal():
     return 'success'
 
 ###############################################################################
+
+def ogr_geom_cannot_add_triangle_to_multisurface():
+
+    g = ogr.Geometry(ogr.wkbMultiSurface)
+    if g.AddGeometry(ogr.Geometry(ogr.wkbTriangle)) == 0:
+        return 'fail'
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_geom_cleanup():
@@ -4525,6 +4534,7 @@ gdaltest_list = [
     ogr_geom_swapxy,
     ogr_geom_remove_geometry,
     ogr_geom_sfcgal,
+    ogr_geom_cannot_add_triangle_to_multisurface,
     ogr_geom_cleanup ]
 
 # gdaltest_list = [ ogr_geom_triangle_ps_tin_conversion ]

@@ -809,6 +809,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     if( nBits < 0 &&
         !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nItemSize,
                         nPixelOffset, nLineOffset, 0, nBandOffset,
                         poDS->fpImage) )
     {

@@ -539,9 +539,9 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
             {
                 char* apszOpenOptions[2] = {
                     const_cast<char *>( "FORCE_SRS_DETECTION=YES" ), nullptr };
-                GDALDataset* poTmpDS = static_cast<GDALDataset *>(
-                    GDALOpenEx( osGMLTmpFile, GDAL_OF_VECTOR, nullptr,
-                                apszOpenOptions, nullptr ) );
+                GDALDatasetUniquePtr poTmpDS(GDALDataset::Open(
+                                osGMLTmpFile, GDAL_OF_VECTOR, nullptr,
+                                apszOpenOptions, nullptr ));
                 if( poTmpDS )
                 {
                     int nLayers = poTmpDS->GetLayerCount();
@@ -559,7 +559,6 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                                        ++nLayersAtCC, poSrcLyr->GetName());
                         poMemDS->CopyLayer(poSrcLyr, pszLayerName, nullptr);
                     }
-                    GDALClose(poTmpDS);
 
                     // If there was no schema, a .gfs might have been generated.
                     VSIUnlink(CPLSPrintf("/vsimem/gmljp2/%p/my.gfs", this));
@@ -618,8 +617,8 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                 CPLSPrintf("/vsimem/gmljp2/%p/my.kml", this) );
             CPLSerializeXMLTreeToFile(psKML, osKMLTmpFile);
 
-            GDALDataset * const poTmpDS = static_cast<GDALDataset *>(
-                GDALOpenEx( osKMLTmpFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ) );
+            GDALDatasetUniquePtr poTmpDS(GDALDataset::Open(
+                osKMLTmpFile, GDAL_OF_VECTOR, nullptr, nullptr, nullptr ));
             if( poTmpDS )
             {
                 int nLayers = poTmpDS->GetLayerCount();
@@ -634,7 +633,6 @@ void GDALJP2AbstractDataset::LoadVectorLayers( int bOpenRemoteResources )
                                    ++nAnnotations, poSrcLyr->GetName());
                     poMemDS->CopyLayer(poSrcLyr, pszLayerName, nullptr);
                 }
-                GDALClose(poTmpDS);
             }
             else
             {

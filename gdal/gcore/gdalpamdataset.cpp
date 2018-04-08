@@ -250,7 +250,7 @@ CPLXMLNode *GDALPamDataset::SerializeToXML( const char *pszUnused )
     for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
     {
         GDALPamRasterBand * const poBand =
-            reinterpret_cast<GDALPamRasterBand *>(
+            cpl::down_cast<GDALPamRasterBand *>(
                 GetRasterBand(iBand+1) );
 
         if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
@@ -328,7 +328,7 @@ void GDALPamDataset::PamInitialize()
         if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
             continue;
 
-        reinterpret_cast<GDALPamRasterBand *>(poBand)->PamInitialize();
+        cpl::down_cast<GDALPamRasterBand *>(poBand)->PamInitialize();
     }
 }
 
@@ -466,8 +466,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
             if (pszESRI_WKT)
             {
                 OGRSpatialReference* poSRS = new OGRSpatialReference(nullptr);
-                char* pszTmp = (char*)pszESRI_WKT;
-                if (poSRS->importFromWkt(&pszTmp) == OGRERR_NONE &&
+                if (poSRS->importFromWkt(pszESRI_WKT) == OGRERR_NONE &&
                     poSRS->morphFromESRI() == OGRERR_NONE)
                 {
                     char* pszWKT = nullptr;
@@ -500,7 +499,7 @@ CPLErr GDALPamDataset::XMLInit( CPLXMLNode *psTree, const char *pszUnused )
         if( nBand < 1 || nBand > GetRasterCount() )
             continue;
 
-        GDALPamRasterBand *poBand = reinterpret_cast<GDALPamRasterBand *>(
+        GDALPamRasterBand *poBand = cpl::down_cast<GDALPamRasterBand *>(
             GetRasterBand(nBand) );
 
         if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )
@@ -992,7 +991,7 @@ CPLErr GDALPamDataset::CloneInfo( GDALDataset *poSrcDS, int nCloneFlags )
     {
         for( int iBand = 0; iBand < GetRasterCount(); iBand++ )
         {
-            GDALPamRasterBand *poBand = reinterpret_cast<GDALPamRasterBand *>(
+            GDALPamRasterBand *poBand = cpl::down_cast<GDALPamRasterBand *>(
                 GetRasterBand(iBand+1) );
 
             if( poBand == nullptr || !(poBand->GetMOFlags() & GMO_PAM_CLASS) )

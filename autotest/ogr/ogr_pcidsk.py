@@ -273,6 +273,53 @@ def ogr_pcidsk_5():
     return 'success'
 
 ###############################################################################
+def ogr_pcidsk_add_field_to_non_empty_layer():
+
+    if ogr.GetDriverByName('PCIDSK') is None:
+        return 'skip'
+
+    tmpfile = '/vsimem/tmp.pix'
+    ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
+    lyr = ds.CreateLayer('foo')
+    lyr.CreateField( ogr.FieldDefn('foo', ogr.OFTString) )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar'
+    lyr.CreateFeature(f)
+    f = None
+    with gdaltest.error_handler():
+        if lyr.CreateField( ogr.FieldDefn('bar', ogr.OFTString) ) == 0:
+            return 'fail'
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f['foo'] = 'bar2'
+    lyr.CreateFeature(f)
+    f = None
+    ds = None
+
+    ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
+
+    return 'success'
+
+###############################################################################
+def ogr_pcidsk_too_many_layers():
+
+    if ogr.GetDriverByName('PCIDSK') is None:
+        return 'skip'
+
+    tmpfile = '/vsimem/tmp.pix'
+    ds = ogr.GetDriverByName('PCIDSK').CreateDataSource(tmpfile)
+    for i in range(1023):
+        ds.CreateLayer('foo%d' % i)
+    with gdaltest.error_handler():
+        if ds.CreateLayer('foo') is not None:
+            return 'fail'
+    ds = None
+
+    ogr.GetDriverByName('PCIDSK').DeleteDataSource(tmpfile)
+
+    return 'success'
+
+
+###############################################################################
 # Check a polygon layer
 
 def ogr_pcidsk_online_1():
@@ -344,6 +391,8 @@ gdaltest_list = [
     ogr_pcidsk_3,
     ogr_pcidsk_4,
     ogr_pcidsk_5,
+    ogr_pcidsk_add_field_to_non_empty_layer,
+    ogr_pcidsk_too_many_layers,
     ogr_pcidsk_online_1,
     ogr_pcidsk_online_2,
     ogr_pcidsk_cleanup ]

@@ -2174,6 +2174,13 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         {
             papszDriverOptions = CSLSetNameValue(
                 papszDriverOptions, "COMPRESS", "LZW");
+            if( nBlockXSize * nBlockYSize <= 512 * 512 )
+            {
+                // If tile is not too big, create it as single-strip TIFF
+                papszDriverOptions = CSLSetNameValue(
+                    papszDriverOptions, "BLOCKYSIZE",
+                    CPLSPrintf("%d", nBlockYSize));
+            }
         }
 #ifdef DEBUG
         VSIStatBufL sStat;

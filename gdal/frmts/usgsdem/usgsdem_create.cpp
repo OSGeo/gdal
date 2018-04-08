@@ -1212,10 +1212,8 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
                                             "NAD83" };
 
     /* get the source dataset's projection */
-    char *sourceWkt
-        = const_cast<char *>( psWInfo->poSrcDS->GetProjectionRef() );
-    char **readSourceWkt = &sourceWkt;
-    if (SrcoSRS.importFromWkt(readSourceWkt) != OGRERR_NONE)
+    const char *sourceWkt = psWInfo->poSrcDS->GetProjectionRef();
+    if (SrcoSRS.importFromWkt(sourceWkt) != OGRERR_NONE)
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "DEM Default Setup: Importing source dataset projection failed" );

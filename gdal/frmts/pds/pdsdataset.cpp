@@ -1025,15 +1025,15 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
             nPixelOffset = (CPLSM(nItemSize) * CPLSM(l_nBands)).v();
             nBandOffset = nItemSize;
             nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
-                * record_bytes;
+            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
+                * CPLSM(record_bytes)).v();
         }
         else if( eLayout == PDS_BSQ )
         {
             nPixelOffset = nItemSize;
             nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes )
-                * record_bytes;
+            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes ))
+                * CPLSM(record_bytes)).v();
             nBandOffset = (CPLSM(nLineOffset) * CPLSM(nRows)
                 + CPLSM(nSuffixLines) * (CPLSM(nCols) + CPLSM(nSuffixItems)) * CPLSM(nSuffixBytes)).v();
         }
@@ -1042,8 +1042,8 @@ int PDSDataset::ParseImage( CPLString osPrefix, CPLString osFilenamePrefix )
             nPixelOffset = nItemSize;
             nBandOffset = (CPLSM(nItemSize) * CPLSM(nCols)).v();
             nLineOffset = (CPLSM(nBandOffset) * CPLSM(nCols)).v();
-            nLineOffset = DIV_ROUND_UP(nLineOffset, record_bytes)
-                * record_bytes;
+            nLineOffset = (CPLSM(DIV_ROUND_UP(nLineOffset, record_bytes))
+                * CPLSM(record_bytes)).v();
         }
     }
     catch( const CPLSafeIntOverflow& )

@@ -988,14 +988,13 @@ CPLErr ILWISDataset::WriteProjection()
 {
     OGRSpatialReference oSRS;
     OGRSpatialReference *poGeogSRS = nullptr;
-    char                *pszP = pszProjection;
 
     std::string csFileName = CPLResetExtension(osFileName, "csy" );
     std::string pszBaseName = std::string(CPLGetBasename( osFileName ));
     //std::string pszPath = std::string(CPLGetPath( osFileName ));
     bool bProjection = ((pszProjection != nullptr) && (strlen(pszProjection)>0));
     bool bHaveSRS;
-    if( bProjection && (oSRS.importFromWkt( &pszP ) == OGRERR_NONE) )
+    if( bProjection && (oSRS.importFromWkt( pszProjection ) == OGRERR_NONE) )
     {
         bHaveSRS = true;
     }

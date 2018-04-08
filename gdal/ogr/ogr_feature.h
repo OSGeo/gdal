@@ -44,6 +44,29 @@
  * Simple feature classes.
  */
 
+#ifndef DEFINE_OGRFeatureH
+/*! @cond Doxygen_Suppress */
+#define DEFINE_OGRFeatureH
+/*! @endcond */
+#ifdef DEBUG
+typedef struct OGRFieldDefnHS   *OGRFieldDefnH;
+typedef struct OGRFeatureDefnHS *OGRFeatureDefnH;
+typedef struct OGRFeatureHS     *OGRFeatureH;
+typedef struct OGRStyleTableHS *OGRStyleTableH;
+#else
+/** Opaque type for a field definition (OGRFieldDefn) */
+typedef void *OGRFieldDefnH;
+/** Opaque type for a feature definition (OGRFeatureDefn) */
+typedef void *OGRFeatureDefnH;
+/** Opaque type for a feature (OGRFeature) */
+typedef void *OGRFeatureH;
+/** Opaque type for a style table (OGRStyleTable) */
+typedef void *OGRStyleTableH;
+#endif
+/** Opaque type for a geometry field definition (OGRGeomFieldDefn) */
+typedef struct OGRGeomFieldDefnHS *OGRGeomFieldDefnH;
+#endif /* DEFINE_OGRFeatureH */
+
 /************************************************************************/
 /*                             OGRFieldDefn                             */
 /************************************************************************/
@@ -79,11 +102,11 @@ class CPL_DLL OGRFieldDefn
 
   public:
                         OGRFieldDefn( const char *, OGRFieldType );
-               explicit OGRFieldDefn( OGRFieldDefn * );
+               explicit OGRFieldDefn( const OGRFieldDefn * );
                         ~OGRFieldDefn();
 
     void                SetName( const char * );
-    const char         *GetNameRef() { return pszName; }
+    const char         *GetNameRef() const { return pszName; }
 
     OGRFieldType        GetType() const { return eType; }
     void                SetType( OGRFieldType eTypeIn );
@@ -119,6 +142,17 @@ class CPL_DLL OGRFieldDefn
 
     int                 IsSame( const OGRFieldDefn * ) const;
 
+    /** Convert a OGRFieldDefn* to a OGRFieldDefnH.
+    * @since GDAL 2.3
+    */
+    static inline OGRFieldDefnH ToHandle(OGRFieldDefn* poFieldDefn)
+        { return reinterpret_cast<OGRFieldDefnH>(poFieldDefn); }
+
+    /** Convert a OGRFieldDefnH to a OGRFieldDefn*.
+    * @since GDAL 2.3
+    */
+    static inline OGRFieldDefn* FromHandle(OGRFieldDefnH hFieldDefn)
+        { return reinterpret_cast<OGRFieldDefn*>(hFieldDefn); }
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFieldDefn)
 };
@@ -147,10 +181,10 @@ protected:
 //! @cond Doxygen_Suppress
         char                *pszName;
         OGRwkbGeometryType   eGeomType; /* all values possible except wkbNone */
-        OGRSpatialReference* poSRS;
+        mutable OGRSpatialReference* poSRS;
 
         int                 bIgnore;
-        int                 bNullable;
+        mutable int         bNullable;
 
         void                Initialize( const char *, OGRwkbGeometryType );
 //! @endcond
@@ -158,16 +192,16 @@ protected:
 public:
                             OGRGeomFieldDefn( const char *pszNameIn,
                                               OGRwkbGeometryType eGeomTypeIn );
-                  explicit OGRGeomFieldDefn( OGRGeomFieldDefn * );
+                  explicit OGRGeomFieldDefn( const OGRGeomFieldDefn * );
         virtual            ~OGRGeomFieldDefn();
 
         void                SetName( const char * );
-        const char         *GetNameRef() { return pszName; }
+        const char         *GetNameRef() const { return pszName; }
 
         OGRwkbGeometryType  GetType() const { return eGeomType; }
         void                SetType( OGRwkbGeometryType eTypeIn );
 
-        virtual OGRSpatialReference* GetSpatialRef();
+        virtual OGRSpatialReference* GetSpatialRef() const;
         void                 SetSpatialRef( OGRSpatialReference* poSRSIn );
 
         int                 IsIgnored() const { return bIgnore; }
@@ -177,8 +211,19 @@ public:
         void                SetNullable( int bNullableIn )
             { bNullable = bNullableIn; }
 
-        int                 IsSame( OGRGeomFieldDefn * );
+        int                 IsSame( const OGRGeomFieldDefn * ) const;
 
+        /** Convert a OGRGeomFieldDefn* to a OGRGeomFieldDefnH.
+        * @since GDAL 2.3
+        */
+        static inline OGRGeomFieldDefnH ToHandle(OGRGeomFieldDefn* poGeomFieldDefn)
+            { return reinterpret_cast<OGRGeomFieldDefnH>(poGeomFieldDefn); }
+
+        /** Convert a OGRGeomFieldDefnH to a OGRGeomFieldDefn*.
+        * @since GDAL 2.3
+        */
+        static inline OGRGeomFieldDefn* FromHandle(OGRGeomFieldDefnH hGeomFieldDefn)
+            { return reinterpret_cast<OGRGeomFieldDefn*>(hGeomFieldDefn); }
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRGeomFieldDefn)
 };
@@ -213,11 +258,11 @@ class CPL_DLL OGRFeatureDefn
 //! @cond Doxygen_Suppress
     volatile int nRefCount;
 
-    int         nFieldCount;
-    OGRFieldDefn **papoFieldDefn;
+    mutable int         nFieldCount;
+    mutable OGRFieldDefn **papoFieldDefn;
 
-    int                nGeomFieldCount;
-    OGRGeomFieldDefn **papoGeomFieldDefn;
+    mutable int                nGeomFieldCount;
+    mutable OGRGeomFieldDefn **papoGeomFieldDefn;
 
     char        *pszFeatureClassName;
 
@@ -229,51 +274,65 @@ class CPL_DLL OGRFeatureDefn
     virtual    ~OGRFeatureDefn();
 
     void                 SetName( const char* pszName );
-    virtual const char  *GetName();
+    virtual const char  *GetName() const;
 
-    virtual int         GetFieldCount();
+    virtual int         GetFieldCount() const;
     virtual OGRFieldDefn *GetFieldDefn( int i );
-    virtual int         GetFieldIndex( const char * );
+    virtual const OGRFieldDefn *GetFieldDefn( int i ) const;
+    virtual int         GetFieldIndex( const char * ) const;
 
     virtual void        AddFieldDefn( OGRFieldDefn * );
     virtual OGRErr      DeleteFieldDefn( int iField );
     virtual OGRErr      ReorderFieldDefns( int* panMap );
 
-    virtual int         GetGeomFieldCount();
+    virtual int         GetGeomFieldCount() const;
     virtual OGRGeomFieldDefn *GetGeomFieldDefn( int i );
-    virtual int         GetGeomFieldIndex( const char * );
+    virtual const OGRGeomFieldDefn *GetGeomFieldDefn( int i ) const;
+    virtual int         GetGeomFieldIndex( const char * ) const;
 
     virtual void        AddGeomFieldDefn( OGRGeomFieldDefn *,
                                           int bCopy = TRUE );
     virtual OGRErr      DeleteGeomFieldDefn( int iGeomField );
 
-    virtual OGRwkbGeometryType GetGeomType();
+    virtual OGRwkbGeometryType GetGeomType() const;
     virtual void        SetGeomType( OGRwkbGeometryType );
 
-    virtual OGRFeatureDefn *Clone();
+    virtual OGRFeatureDefn *Clone() const;
 
     int         Reference() { return CPLAtomicInc(&nRefCount); }
     int         Dereference() { return CPLAtomicDec(&nRefCount); }
-    int         GetReferenceCount() { return nRefCount; }
+    int         GetReferenceCount() const { return nRefCount; }
     void        Release();
 
-    virtual int         IsGeometryIgnored();
+    virtual int         IsGeometryIgnored() const;
     virtual void        SetGeometryIgnored( int bIgnore );
     virtual int         IsStyleIgnored() const { return bIgnoreStyle; }
     virtual void        SetStyleIgnored( int bIgnore )
         { bIgnoreStyle = bIgnore; }
 
-    virtual int         IsSame( OGRFeatureDefn * poOtherFeatureDefn );
+    virtual int         IsSame( const OGRFeatureDefn * poOtherFeatureDefn ) const;
 
 //! @cond Doxygen_Suppress
     void ReserveSpaceForFields(int nFieldCountIn);
 //! @endcond
 
-    std::vector<int>    ComputeMapForSetFrom( OGRFeatureDefn* poSrcFDefn,
-                                              bool bForgiving = true );
+    std::vector<int>    ComputeMapForSetFrom( const OGRFeatureDefn* poSrcFDefn,
+                                              bool bForgiving = true ) const;
 
     static OGRFeatureDefn  *CreateFeatureDefn( const char *pszName = nullptr );
     static void         DestroyFeatureDefn( OGRFeatureDefn * );
+
+    /** Convert a OGRFeatureDefn* to a OGRFeatureDefnH.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureDefnH ToHandle(OGRFeatureDefn* poFeatureDefn)
+        { return reinterpret_cast<OGRFeatureDefnH>(poFeatureDefn); }
+
+    /** Convert a OGRFeatureDefnH to a OGRFeatureDefn*.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureDefn* FromHandle(OGRFeatureDefnH hFeatureDefn)
+        { return reinterpret_cast<OGRFeatureDefn*>(hFeatureDefn); }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
@@ -302,103 +361,112 @@ class CPL_DLL OGRFeature
 
   protected:
 //! @cond Doxygen_Suppress
-    char                *m_pszStyleString;
-    OGRStyleTable       *m_poStyleTable;
-    char                *m_pszTmpFieldValue;
+    mutable char        *m_pszStyleString;
+    mutable OGRStyleTable *m_poStyleTable;
+    mutable char        *m_pszTmpFieldValue;
 //! @endcond
 
-    bool                CopySelfTo( OGRFeature *poNew );
+    bool                CopySelfTo( OGRFeature *poNew ) const;
 
   public:
     explicit            OGRFeature( OGRFeatureDefn * );
     virtual            ~OGRFeature();
 
     OGRFeatureDefn     *GetDefnRef() { return poDefn; }
+    const OGRFeatureDefn     *GetDefnRef() const { return poDefn; }
 
     OGRErr              SetGeometryDirectly( OGRGeometry * );
     OGRErr              SetGeometry( const OGRGeometry * );
     OGRGeometry        *GetGeometryRef();
+    const OGRGeometry  *GetGeometryRef() const;
     OGRGeometry        *StealGeometry() CPL_WARN_UNUSED_RESULT;
 
     int                 GetGeomFieldCount() const
                                 { return poDefn->GetGeomFieldCount(); }
     OGRGeomFieldDefn   *GetGeomFieldDefnRef( int iField )
                                 { return poDefn->GetGeomFieldDefn(iField); }
-    int                 GetGeomFieldIndex( const char * pszName )
+    const OGRGeomFieldDefn   *GetGeomFieldDefnRef( int iField ) const
+                                { return poDefn->GetGeomFieldDefn(iField); }
+    int                 GetGeomFieldIndex( const char * pszName ) const
                                 { return poDefn->GetGeomFieldIndex(pszName); }
 
     OGRGeometry*        GetGeomFieldRef( int iField );
+    const OGRGeometry*  GetGeomFieldRef( int iField ) const;
     OGRGeometry*        StealGeometry( int iField );
     OGRGeometry*        GetGeomFieldRef( const char* pszFName );
+    const OGRGeometry*  GetGeomFieldRef( const char* pszFName ) const;
     OGRErr              SetGeomFieldDirectly( int iField, OGRGeometry * );
     OGRErr              SetGeomField( int iField, const OGRGeometry * );
 
-    OGRFeature         *Clone() CPL_WARN_UNUSED_RESULT;
-    virtual OGRBoolean  Equal( OGRFeature * poFeature );
+    OGRFeature         *Clone() const CPL_WARN_UNUSED_RESULT;
+    virtual OGRBoolean  Equal( const OGRFeature * poFeature ) const;
 
     int                 GetFieldCount() const
         { return poDefn->GetFieldCount(); }
-    OGRFieldDefn       *GetFieldDefnRef( int iField ) const
+    const OGRFieldDefn *GetFieldDefnRef( int iField ) const
                                       { return poDefn->GetFieldDefn(iField); }
-    int                 GetFieldIndex( const char * pszName )
+    OGRFieldDefn       *GetFieldDefnRef( int iField )
+                                      { return poDefn->GetFieldDefn(iField); }
+    int                 GetFieldIndex( const char * pszName ) const
                                       { return poDefn->GetFieldIndex(pszName); }
 
-    int                 IsFieldSet( int iField );
+    int                 IsFieldSet( int iField ) const;
 
     void                UnsetField( int iField );
 
-    bool                IsFieldNull( int iField );
+    bool                IsFieldNull( int iField ) const;
 
     void                SetFieldNull( int iField );
 
-    bool                IsFieldSetAndNotNull( int iField );
+    bool                IsFieldSetAndNotNull( int iField ) const;
 
     OGRField           *GetRawFieldRef( int i ) { return pauFields + i; }
+    const OGRField     *GetRawFieldRef( int i ) const { return pauFields + i; }
 
-    int                 GetFieldAsInteger( int i );
-    GIntBig             GetFieldAsInteger64( int i );
-    double              GetFieldAsDouble( int i );
-    const char         *GetFieldAsString( int i );
-    const int          *GetFieldAsIntegerList( int i, int *pnCount );
-    const GIntBig      *GetFieldAsInteger64List( int i, int *pnCount );
-    const double       *GetFieldAsDoubleList( int i, int *pnCount );
-    char              **GetFieldAsStringList( int i );
-    GByte              *GetFieldAsBinary( int i, int *pnCount );
+    int                 GetFieldAsInteger( int i ) const;
+    GIntBig             GetFieldAsInteger64( int i ) const;
+    double              GetFieldAsDouble( int i ) const;
+    const char         *GetFieldAsString( int i ) const;
+    const int          *GetFieldAsIntegerList( int i, int *pnCount ) const;
+    const GIntBig      *GetFieldAsInteger64List( int i, int *pnCount ) const;
+    const double       *GetFieldAsDoubleList( int i, int *pnCount ) const;
+    char              **GetFieldAsStringList( int i ) const;
+    GByte              *GetFieldAsBinary( int i, int *pnCount ) const;
     int                 GetFieldAsDateTime( int i,
                                             int *pnYear, int *pnMonth,
                                             int *pnDay,
                                             int *pnHour, int *pnMinute,
                                             int *pnSecond,
-                                            int *pnTZFlag );
+                                            int *pnTZFlag ) const;
     int                 GetFieldAsDateTime( int i,
                                             int *pnYear, int *pnMonth,
                                             int *pnDay,
                                             int *pnHour, int *pnMinute,
                                             float *pfSecond,
-                                            int *pnTZFlag );
-    char               *GetFieldAsSerializedJSon( int i );
+                                            int *pnTZFlag ) const;
+    char               *GetFieldAsSerializedJSon( int i ) const;
 
-    int                 GetFieldAsInteger( const char *pszFName )
+    int                 GetFieldAsInteger( const char *pszFName )  const
                       { return GetFieldAsInteger( GetFieldIndex(pszFName) ); }
-    GIntBig             GetFieldAsInteger64( const char *pszFName )
+    GIntBig             GetFieldAsInteger64( const char *pszFName )  const
                       { return GetFieldAsInteger64( GetFieldIndex(pszFName) ); }
-    double              GetFieldAsDouble( const char *pszFName )
+    double              GetFieldAsDouble( const char *pszFName )  const
                       { return GetFieldAsDouble( GetFieldIndex(pszFName) ); }
-    const char         *GetFieldAsString( const char *pszFName )
+    const char         *GetFieldAsString( const char *pszFName )  const
                       { return GetFieldAsString( GetFieldIndex(pszFName) ); }
     const int          *GetFieldAsIntegerList( const char *pszFName,
-                                               int *pnCount )
+                                               int *pnCount )  const
                       { return GetFieldAsIntegerList( GetFieldIndex(pszFName),
                                                       pnCount ); }
     const GIntBig      *GetFieldAsInteger64List( const char *pszFName,
-                                               int *pnCount )
+                                               int *pnCount )  const
                       { return GetFieldAsInteger64List( GetFieldIndex(pszFName),
                                                       pnCount ); }
     const double       *GetFieldAsDoubleList( const char *pszFName,
-                                              int *pnCount )
+                                              int *pnCount )  const
                       { return GetFieldAsDoubleList( GetFieldIndex(pszFName),
                                                      pnCount ); }
-    char              **GetFieldAsStringList( const char *pszFName )
+    char              **GetFieldAsStringList( const char *pszFName )  const
                       { return GetFieldAsStringList(GetFieldIndex(pszFName)); }
 
     void                SetField( int i, int nValue );
@@ -448,33 +516,33 @@ class CPL_DLL OGRFeature
     GIntBig             GetFID() const { return nFID; }
     virtual OGRErr      SetFID( GIntBig nFIDIn );
 
-    void                DumpReadable( FILE *, char** papszOptions = nullptr );
+    void                DumpReadable( FILE *, char** papszOptions = nullptr ) const;
 
-    OGRErr              SetFrom( OGRFeature *, int = TRUE );
-    OGRErr              SetFrom( OGRFeature *, int *, int = TRUE );
-    OGRErr              SetFieldsFrom( OGRFeature *, int *, int = TRUE );
+    OGRErr              SetFrom( const OGRFeature *, int = TRUE );
+    OGRErr              SetFrom( const OGRFeature *, const int *, int = TRUE );
+    OGRErr              SetFieldsFrom( const OGRFeature *, const int *, int = TRUE );
 
 //! @cond Doxygen_Suppress
     OGRErr              RemapFields( OGRFeatureDefn *poNewDefn,
-                                     int *panRemapSource );
+                                     const int *panRemapSource );
     void                AppendField();
     OGRErr              RemapGeomFields( OGRFeatureDefn *poNewDefn,
-                                     int *panRemapSource );
+                                         const int *panRemapSource );
 //! @endcond
 
     int                 Validate( int nValidateFlags,
-                                  int bEmitError );
+                                  int bEmitError ) const;
     void                FillUnsetWithDefault( int bNotNullableOnly,
                                               char** papszOptions );
 
-    virtual const char *GetStyleString();
+    virtual const char *GetStyleString() const;
     virtual void        SetStyleString( const char * );
     virtual void        SetStyleStringDirectly( char * );
 
     /** Return style table.
      * @return style table.
      */
-    virtual OGRStyleTable *GetStyleTable() { return m_poStyleTable; }
+    virtual OGRStyleTable *GetStyleTable() const { return m_poStyleTable; } /* f.i.x.m.e: add a const qualifier for return type */
     virtual void        SetStyleTable( OGRStyleTable *poStyleTable );
     virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable );
 
@@ -486,6 +554,18 @@ class CPL_DLL OGRFeature
 
     static OGRFeature  *CreateFeature( OGRFeatureDefn * );
     static void         DestroyFeature( OGRFeature * );
+
+    /** Convert a OGRFeature* to a OGRFeatureH.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeatureH ToHandle(OGRFeature* poFeature)
+        { return reinterpret_cast<OGRFeatureH>(poFeature); }
+
+    /** Convert a OGRFeatureH to a OGRFeature*.
+     * @since GDAL 2.3
+     */
+    static inline OGRFeature* FromHandle(OGRFeatureH hFeature)
+        { return reinterpret_cast<OGRFeature*>(hFeature); }
 
   private:
     CPL_DISALLOW_COPY_ASSIGN(OGRFeature)

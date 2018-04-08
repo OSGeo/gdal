@@ -277,7 +277,7 @@ static CPLErr GWKGenericMonoThread( GDALWarpKernel *poWK,
 
 static void GWKThreadInitTransformer(void* pData)
 {
-    GWKJobStruct* psJob = (GWKJobStruct*)pData;
+    GWKJobStruct* psJob = static_cast<GWKJobStruct*>(pData);
     if( psJob->pTransformerArg == nullptr )
         psJob->pTransformerArg =
             GDALCloneTransformer(psJob->pTransformerArgInit);
@@ -517,7 +517,7 @@ static CPLErr GWKRun( GDALWarpKernel *poWK,
         else
             psThreadData->pasThreadJob[i].pfnProgress = nullptr;
         psThreadData->poThreadPool->SubmitJob( pfnFunc,
-                                   (void*) &psThreadData->pasThreadJob[i] );
+                            static_cast<void*>(&psThreadData->pasThreadJob[i]) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1328,7 +1328,7 @@ static void GWKOverlayDensity( GDALWarpKernel *poWK, int iDstOffset,
     if( dfDensity < 0.0001 || poWK->pafDstDensity == nullptr )
         return;
 
-    poWK->pafDstDensity[iDstOffset] = (float)
+    poWK->pafDstDensity[iDstOffset] =  static_cast<float>
         ( 1.0 - (1.0 - dfDensity) * (1.0 - poWK->pafDstDensity[iDstOffset]) );
 }
 
@@ -1343,12 +1343,12 @@ template<class T, EMULATED_BOOL is_signed> struct sGWKRoundValueT
 
 template<class T> struct sGWKRoundValueT<T, true> /* signed */
 {
-    static T eval(double dfValue) { return (T)floor(dfValue + 0.5); }
+    static T eval(double dfValue) { return static_cast<T>(floor(dfValue + 0.5)); }
 };
 
 template<class T> struct sGWKRoundValueT<T, false> /* unsigned */
 {
-    static T eval(double dfValue) { return (T)(dfValue + 0.5); }
+    static T eval(double dfValue) { return static_cast<T>(dfValue + 0.5); }
 };
 
 template<class T> static T GWKRoundValueT(double dfValue)
@@ -1358,7 +1358,7 @@ template<class T> static T GWKRoundValueT(double dfValue)
 
 template<> float GWKRoundValueT<float>(double dfValue)
 {
-    return (float)dfValue;
+    return static_cast<float>(dfValue);
 }
 
 #ifdef notused
@@ -1385,7 +1385,7 @@ static CPL_INLINE T GWKClampValueT(double dfValue)
 
 template<> float GWKClampValueT<float>(double dfValue)
 {
-    return (float)dfValue;
+    return static_cast<float>(dfValue);
 }
 
 #ifdef notused
@@ -1513,53 +1513,53 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
             break;
 
           case GDT_Int16:
-            dfDstReal = ((GInt16 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GInt16 *>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_UInt16:
-            dfDstReal = ((GUInt16 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GUInt16*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_Int32:
-            dfDstReal = ((GInt32 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GInt32*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_UInt32:
-            dfDstReal = ((GUInt32 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GUInt32*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_Float32:
-            dfDstReal = ((float *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<float*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_Float64:
-            dfDstReal = ((double *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<double*>(pabyDst)[iDstOffset];
             dfDstImag = 0.0;
             break;
 
           case GDT_CInt16:
-            dfDstReal = ((GInt16 *) pabyDst)[iDstOffset*2];
-            dfDstImag = ((GInt16 *) pabyDst)[iDstOffset*2+1];
+            dfDstReal = reinterpret_cast<GInt16*>(pabyDst)[iDstOffset*2];
+            dfDstImag = reinterpret_cast<GInt16*>(pabyDst)[iDstOffset*2+1];
             break;
 
           case GDT_CInt32:
-            dfDstReal = ((GInt32 *) pabyDst)[iDstOffset*2];
-            dfDstImag = ((GInt32 *) pabyDst)[iDstOffset*2+1];
+            dfDstReal = reinterpret_cast<GInt32*>(pabyDst)[iDstOffset*2];
+            dfDstImag = reinterpret_cast<GInt32*>(pabyDst)[iDstOffset*2+1];
             break;
 
           case GDT_CFloat32:
-            dfDstReal = ((float *) pabyDst)[iDstOffset*2];
-            dfDstImag = ((float *) pabyDst)[iDstOffset*2+1];
+            dfDstReal = reinterpret_cast<float*>(pabyDst)[iDstOffset*2];
+            dfDstImag = reinterpret_cast<float*>(pabyDst)[iDstOffset*2+1];
             break;
 
           case GDT_CFloat64:
-            dfDstReal = ((double *) pabyDst)[iDstOffset*2];
-            dfDstImag = ((double *) pabyDst)[iDstOffset*2+1];
+            dfDstReal = reinterpret_cast<double*>(pabyDst)[iDstOffset*2];
+            dfDstImag = reinterpret_cast<double*>(pabyDst)[iDstOffset*2+1];
             break;
 
           default:
@@ -1633,28 +1633,28 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_Float32:
-        ((float *) pabyDst)[iDstOffset] = static_cast<float>(dfReal);
+        reinterpret_cast<float*>(pabyDst)[iDstOffset] = static_cast<float>(dfReal);
         break;
 
       case GDT_Float64:
-        ((double *) pabyDst)[iDstOffset] = dfReal;
+        reinterpret_cast<double*>(pabyDst)[iDstOffset] = dfReal;
         break;
 
       case GDT_CInt16:
       {
         typedef GInt16 T;
         if( dfReal < static_cast<double>(std::numeric_limits<T>::min()) )
-            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
         else if( dfReal > static_cast<double>(std::numeric_limits<T>::max()) )
-            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
         else
-            ((T *) pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
         if( dfImag < static_cast<double>(std::numeric_limits<T>::min()) )
-            ((T *) pabyDst)[iDstOffset*2+1] =  std::numeric_limits<T>::min();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] =  std::numeric_limits<T>::min();
         else if( dfImag > static_cast<double>(std::numeric_limits<T>::max()) )
-            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
         else
-            ((T *) pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
         break;
       }
 
@@ -1662,28 +1662,28 @@ static bool GWKSetPixelValue( GDALWarpKernel *poWK, int iBand,
       {
         typedef GInt32 T;
         if( dfReal < static_cast<double>(std::numeric_limits<T>::min()) )
-            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = std::numeric_limits<T>::min();
         else if( dfReal > static_cast<double>(std::numeric_limits<T>::max()) )
-            ((T *) pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = std::numeric_limits<T>::max();
         else
-            ((T *) pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2] = static_cast<T>(floor(dfReal+0.5));
         if( dfImag < static_cast<double>(std::numeric_limits<T>::min()) )
-            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::min();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::min();
         else if( dfImag > static_cast<double>(std::numeric_limits<T>::max()) )
-            ((T *) pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] = std::numeric_limits<T>::max();
         else
-            ((T *) pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
+            reinterpret_cast<T*>(pabyDst)[iDstOffset*2+1] = static_cast<T>(floor(dfImag+0.5));
         break;
       }
 
       case GDT_CFloat32:
-        ((float *) pabyDst)[iDstOffset*2] = (float) dfReal;
-        ((float *) pabyDst)[iDstOffset*2+1] = (float) dfImag;
+        reinterpret_cast<float*>(pabyDst)[iDstOffset*2] =  static_cast<float>(dfReal);
+        reinterpret_cast<float*>(pabyDst)[iDstOffset*2+1] = static_cast<float>(dfImag);
         break;
 
       case GDT_CFloat64:
-        ((double *) pabyDst)[iDstOffset*2] = (double) dfReal;
-        ((double *) pabyDst)[iDstOffset*2+1] = (double) dfImag;
+        reinterpret_cast<double*>(pabyDst)[iDstOffset*2] = dfReal;
+        reinterpret_cast<double*>(pabyDst)[iDstOffset*2+1] = dfImag;
         break;
 
       default:
@@ -1737,27 +1737,27 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
             break;
 
           case GDT_Int16:
-            dfDstReal = ((GInt16 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GInt16*>(pabyDst)[iDstOffset];
             break;
 
           case GDT_UInt16:
-            dfDstReal = ((GUInt16 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GUInt16*>(pabyDst)[iDstOffset];
             break;
 
           case GDT_Int32:
-            dfDstReal = ((GInt32 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GInt32*>(pabyDst)[iDstOffset];
             break;
 
           case GDT_UInt32:
-            dfDstReal = ((GUInt32 *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<GUInt32*>(pabyDst)[iDstOffset];
             break;
 
           case GDT_Float32:
-            dfDstReal = ((float *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<float*>(pabyDst)[iDstOffset];
             break;
 
           case GDT_Float64:
-            dfDstReal = ((double *) pabyDst)[iDstOffset];
+            dfDstReal = reinterpret_cast<double*>(pabyDst)[iDstOffset];
             break;
 
           default:
@@ -1805,11 +1805,11 @@ static bool GWKSetPixelValueReal( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_Float32:
-        ((float *) pabyDst)[iDstOffset] = static_cast<float>(dfReal);
+        reinterpret_cast<float*>(pabyDst)[iDstOffset] = static_cast<float>(dfReal);
         break;
 
       case GDT_Float64:
-        ((double *) pabyDst)[iDstOffset] = dfReal;
+        reinterpret_cast<double*>(pabyDst)[iDstOffset] = dfReal;
         break;
 
       default:
@@ -1850,53 +1850,53 @@ static bool GWKGetPixelValue( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_Int16:
-        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GInt16*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_UInt16:
-        *pdfReal = ((GUInt16 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GUInt16*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_Int32:
-        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GInt32*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_UInt32:
-        *pdfReal = ((GUInt32 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GUInt32*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_Float32:
-        *pdfReal = ((float *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<float*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_Float64:
-        *pdfReal = ((double *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<double*>(pabySrc)[iSrcOffset];
         *pdfImag = 0.0;
         break;
 
       case GDT_CInt16:
-        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset*2];
-        *pdfImag = ((GInt16 *) pabySrc)[iSrcOffset*2+1];
+        *pdfReal = reinterpret_cast<GInt16*>(pabySrc)[iSrcOffset*2];
+        *pdfImag = reinterpret_cast<GInt16*>(pabySrc)[iSrcOffset*2+1];
         break;
 
       case GDT_CInt32:
-        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset*2];
-        *pdfImag = ((GInt32 *) pabySrc)[iSrcOffset*2+1];
+        *pdfReal = reinterpret_cast<GInt32*>(pabySrc)[iSrcOffset*2];
+        *pdfImag = reinterpret_cast<GInt32*>(pabySrc)[iSrcOffset*2+1];
         break;
 
       case GDT_CFloat32:
-        *pdfReal = ((float *) pabySrc)[iSrcOffset*2];
-        *pdfImag = ((float *) pabySrc)[iSrcOffset*2+1];
+        *pdfReal = reinterpret_cast<float*>(pabySrc)[iSrcOffset*2];
+        *pdfImag = reinterpret_cast<float*>(pabySrc)[iSrcOffset*2+1];
         break;
 
       case GDT_CFloat64:
-        *pdfReal = ((double *) pabySrc)[iSrcOffset*2];
-        *pdfImag = ((double *) pabySrc)[iSrcOffset*2+1];
+        *pdfReal = reinterpret_cast<double*>(pabySrc)[iSrcOffset*2];
+        *pdfImag = reinterpret_cast<double*>(pabySrc)[iSrcOffset*2+1];
         break;
 
       default:
@@ -1925,7 +1925,7 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
 
     if( poWK->papanBandSrcValid != nullptr
         && poWK->papanBandSrcValid[iBand] != nullptr
-        && !((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
+        && ((poWK->papanBandSrcValid[iBand][iSrcOffset>>5]
               & (0x01 << (iSrcOffset & 0x1f)))) )
     {
         *pdfDensity = 0.0;
@@ -1939,27 +1939,27 @@ static bool GWKGetPixelValueReal( GDALWarpKernel *poWK, int iBand,
         break;
 
       case GDT_Int16:
-        *pdfReal = ((GInt16 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GInt16*>(pabySrc)[iSrcOffset];
         break;
 
       case GDT_UInt16:
-        *pdfReal = ((GUInt16 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GUInt16*>(pabySrc)[iSrcOffset];
         break;
 
       case GDT_Int32:
-        *pdfReal = ((GInt32 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GInt32*>(pabySrc)[iSrcOffset];
         break;
 
       case GDT_UInt32:
-        *pdfReal = ((GUInt32 *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<GUInt32*>(pabySrc)[iSrcOffset];
         break;
 
       case GDT_Float32:
-        *pdfReal = ((float *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<float*>(pabySrc)[iSrcOffset];
         break;
 
       case GDT_Float64:
-        *pdfReal = ((double *) pabySrc)[iSrcOffset];
+        *pdfReal = reinterpret_cast<double*>(pabySrc)[iSrcOffset];
         break;
 
       default:
@@ -2057,7 +2057,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
     {
         case GDT_Byte:
         {
-            GByte* pSrc = (GByte*) poWK->papabySrcImage[iBand];
+            GByte* pSrc = reinterpret_cast<GByte*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2069,7 +2069,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_Int16:
         {
-            GInt16* pSrc = (GInt16*) poWK->papabySrcImage[iBand];
+            GInt16* pSrc = reinterpret_cast<GInt16*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2081,7 +2081,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
          case GDT_UInt16:
          {
-            GUInt16* pSrc = (GUInt16*) poWK->papabySrcImage[iBand];
+            GUInt16* pSrc = reinterpret_cast<GUInt16*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2093,7 +2093,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_Int32:
         {
-            GInt32* pSrc = (GInt32*) poWK->papabySrcImage[iBand];
+            GInt32* pSrc = reinterpret_cast<GInt32*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2105,7 +2105,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_UInt32:
         {
-            GUInt32* pSrc = (GUInt32*) poWK->papabySrcImage[iBand];
+            GUInt32* pSrc = reinterpret_cast<GUInt32*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2117,7 +2117,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_Float32:
         {
-            float* pSrc = (float*) poWK->papabySrcImage[iBand];
+            float* pSrc = reinterpret_cast<float*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2129,7 +2129,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
        case GDT_Float64:
        {
-            double* pSrc = (double*) poWK->papabySrcImage[iBand];
+            double* pSrc = reinterpret_cast<double*>(poWK->papabySrcImage[iBand]);
             pSrc += iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2141,7 +2141,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_CInt16:
         {
-            GInt16* pSrc = (GInt16*) poWK->papabySrcImage[iBand];
+            GInt16* pSrc = reinterpret_cast<GInt16*>(poWK->papabySrcImage[iBand]);
             pSrc += 2 * iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2156,7 +2156,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_CInt32:
         {
-            GInt32* pSrc = (GInt32*) poWK->papabySrcImage[iBand];
+            GInt32* pSrc = reinterpret_cast<GInt32*>(poWK->papabySrcImage[iBand]);
             pSrc += 2 * iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2171,7 +2171,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_CFloat32:
         {
-            float* pSrc = (float*) poWK->papabySrcImage[iBand];
+            float* pSrc = reinterpret_cast<float*>(poWK->papabySrcImage[iBand]);
             pSrc += 2 * iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -2186,7 +2186,7 @@ static bool GWKGetPixelRow( GDALWarpKernel *poWK, int iBand,
 
         case GDT_CFloat64:
         {
-            double* pSrc = (double*) poWK->papabySrcImage[iBand];
+            double* pSrc = reinterpret_cast<double*>(poWK->papabySrcImage[iBand]);
             pSrc += 2 * iSrcOffset;
             for( int i = 0; i < nSrcLen; i += 2 )
             {
@@ -3523,8 +3523,8 @@ static bool GWKResampleOptimizedLanczos( GDALWarpKernel *poWK, int iBand,
     double dfAccumulatorImag = 0.0;
     double dfAccumulatorDensity = 0.0;
     double dfAccumulatorWeight = 0.0;
-    const int     iSrcX = (int) floor( dfSrcX - 0.5 );
-    const int     iSrcY = (int) floor( dfSrcY - 0.5 );
+    const int     iSrcX = static_cast<int>(floor( dfSrcX - 0.5 ));
+    const int     iSrcY = static_cast<int>(floor( dfSrcY - 0.5 ));
     const int     iSrcOffset = iSrcX + iSrcY * nSrcXSize;
     const double  dfDeltaX = dfSrcX - 0.5 - iSrcX;
     const double  dfDeltaY = dfSrcY - 0.5 - iSrcY;
@@ -4124,7 +4124,7 @@ static bool GWKResampleNoMasks_SSE2_T( GDALWarpKernel *poWK, int iBand,
         }
         if( i == iMax )
         {
-            dfAccumulatorLocal += (double)pSrcBand[i+iSampJ] * padfWeight[iC];
+            dfAccumulatorLocal += static_cast<double>(pSrcBand[i+iSampJ]) * padfWeight[iC];
         }
 
         // Calculate the Y weight.
@@ -6120,7 +6120,7 @@ static void GWKAverageOrModeThread( void* pData)
 
                         if( iMaxInd != -1 )
                         {
-                            dfValueReal = (float)iMaxInd;
+                            dfValueReal = iMaxInd;
                             dfBandDensity = 1;
                             bHasFoundDensity = true;
                         }

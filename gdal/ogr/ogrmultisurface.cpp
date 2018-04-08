@@ -138,7 +138,9 @@ const char * OGRMultiSurface::getGeometryName() const
 OGRBoolean
 OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
-    return OGR_GT_IsSurface(eGeomType);
+    OGRwkbGeometryType eFlattenGeomType = wkbFlatten(eGeomType);
+    return eFlattenGeomType == wkbPolygon ||
+           eFlattenGeomType == wkbCurvePolygon;
 }
 
 /************************************************************************/

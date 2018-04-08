@@ -1361,9 +1361,8 @@ CPLErr PCIDSK2Dataset::SetProjection( const char *pszWKT )
     double *padfPrjParams = nullptr;
 
     OGRSpatialReference oSRS;
-    char *pszWKTWork = const_cast<char *>( pszWKT );
 
-    if( ! (oSRS.importFromWkt( &pszWKTWork ) == OGRERR_NONE
+    if( ! (oSRS.importFromWkt(pszWKT ) == OGRERR_NONE
         && oSRS.exportToPCI( &pszGeosys, &pszUnits,
                              &padfPrjParams ) == OGRERR_NONE ) )
     {
@@ -2122,8 +2121,18 @@ PCIDSK2Dataset::ICreateLayer( const char * pszLayerName,
 /* -------------------------------------------------------------------- */
 /*      Create the segment.                                             */
 /* -------------------------------------------------------------------- */
-    const int nSegNum = poFile->CreateSegment( pszLayerName, "",
+    int nSegNum;
+    try
+    {
+        nSegNum = poFile->CreateSegment( pszLayerName, "",
                                              PCIDSK::SEG_VEC, 0L );
+    }
+    catch( const PCIDSKException& ex )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                    "%s", ex.what() );
+        return nullptr;
+    }
     PCIDSK::PCIDSKSegment *poSeg = poFile->GetSegment( nSegNum );
     PCIDSK::PCIDSKVectorSegment *poVecSeg =
         dynamic_cast<PCIDSK::PCIDSKVectorSegment*>( poSeg );

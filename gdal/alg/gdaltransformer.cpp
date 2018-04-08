@@ -2385,7 +2385,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
 /*      Ingest the SRS definitions.                                     */
 /* -------------------------------------------------------------------- */
     OGRSpatialReference oSrcSRS;
-    if( oSrcSRS.importFromWkt( (char **) &pszSrcWKT ) != OGRERR_NONE )
+    if( oSrcSRS.importFromWkt( pszSrcWKT ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",
@@ -2394,7 +2394,7 @@ void *GDALCreateReprojectionTransformer( const char *pszSrcWKT,
     }
 
     OGRSpatialReference oDstSRS;
-    if( oDstSRS.importFromWkt( (char **) &pszDstWKT ) != OGRERR_NONE )
+    if( oDstSRS.importFromWkt( pszDstWKT ) != OGRERR_NONE )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Failed to import coordinate system `%s'.",
@@ -2454,7 +2454,7 @@ void GDALDestroyReprojectionTransformer( void *pTransformArg )
         return;
 
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     if( psInfo->poForwardTransform )
         delete psInfo->poForwardTransform;
@@ -2485,7 +2485,7 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
 
 {
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
     int bSuccess;
 
     if( bDstToSrc )
@@ -2508,7 +2508,7 @@ GDALSerializeReprojectionTransformer( void *pTransformArg )
 {
     CPLXMLNode *psTree;
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ReprojectionTransformer" );
 
@@ -2643,7 +2643,8 @@ GDALSerializeApproxTransformer( void *pTransformArg )
 
 {
     CPLXMLNode *psTree;
-    ApproxTransformInfo *psInfo = (ApproxTransformInfo *) pTransformArg;
+    ApproxTransformInfo *psInfo =
+        static_cast<ApproxTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ApproxTransformer" );
 
@@ -3492,7 +3493,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
             while( psList )
             {
                 TransformDeserializerInfo* psInfo =
-                            (TransformDeserializerInfo*)psList->pData;
+                    static_cast<TransformDeserializerInfo *>(psList->pData);
                 if( strcmp(psInfo->pszTransformName, psTree->pszValue) == 0 )
                 {
                     *ppfnFunc = psInfo->pfnTransformerFunc;
