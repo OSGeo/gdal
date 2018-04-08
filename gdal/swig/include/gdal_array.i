@@ -375,11 +375,11 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 /*      data type.                                                      */
 /* -------------------------------------------------------------------- */
 
-    if( psArray->nd < 2 || psArray->nd > 3 )
+    if( PyArray_NDIM(psArray) < 2 || PyArray_NDIM(psArray) > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return NULL;
     }
 
@@ -455,7 +455,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
     npy_intp nPixelOffset;
     npy_intp nLineOffset;
 
-    if( psArray->nd == 3 )
+    if( PyArray_NDIM(psArray) == 3 )
     {
         if( psArray->dimensions[0] > INT_MAX ||
             psArray->dimensions[1] > INT_MAX ||
@@ -587,16 +587,16 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                             void* callback_data = NULL) {
 
     GDALDataType ntype  = (GDALDataType)buf_type;
-    if( psArray->nd < 2 || psArray->nd > 3 )
+    if( PyArray_NDIM(psArray) < 2 || PyArray_NDIM(psArray) > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.\n",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return CE_Failure;
     }
 
-    int xdim = ( psArray->nd == 2) ? 1 : 2;
-    int ydim = ( psArray->nd == 2) ? 0 : 1;
+    int xdim = ( PyArray_NDIM(psArray) == 2) ? 1 : 2;
+    int ydim = ( PyArray_NDIM(psArray) == 2) ? 0 : 1;
 
     if( psArray->dimensions[xdim] > INT_MAX ||
         psArray->dimensions[ydim] > INT_MAX )
@@ -647,11 +647,11 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                          void* callback_data = NULL )
 {
     GDALDataType ntype  = (GDALDataType)buf_type;
-    if( psArray->nd != 3 )
+    if( PyArray_NDIM(psArray) != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return CE_Failure;
     }
 
