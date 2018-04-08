@@ -779,7 +779,8 @@ void OGR2SQLITE_ST_GeomFromText(sqlite3_context* pContext,
         sqlite3_result_null (pContext);
         return;
     }
-    const char* pszWKT = sqlite3_value_text( argv[0] );
+    const char* pszWKT =
+        reinterpret_cast<const char*>(sqlite3_value_text( argv[0] ));
 
     int nSRID = -1;
     if( argc == 2 && sqlite3_value_type (argv[1]) == SQLITE_INTEGER )
