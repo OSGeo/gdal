@@ -218,7 +218,7 @@ int main () { return 0; }""")
             try:
                 compiler.compile([f.name], extra_postargs=extra_postargs)
                 ret = True
-            except:
+            except CompileError:
                 pass
     os.unlink('gdal_python_cxx11_test.cpp')
     if os.path.exists('gdal_python_cxx11_test.o'):
