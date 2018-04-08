@@ -107,7 +107,6 @@ class OGRSelafinLayer : public OGRLayer {
 class OGRSelafinDataSource : public OGRDataSource {
     private:
         char *pszName;
-        char *pszLockName;
         OGRSelafinLayer **papoLayers;
         Range poRange;
         int nLayers;

@@ -217,7 +217,6 @@ size_t Range::getSize() const {
 
 OGRSelafinDataSource::OGRSelafinDataSource() :
     pszName(nullptr),
-    pszLockName(nullptr),
     papoLayers(nullptr),
     nLayers(0),
     bUpdate(false),
