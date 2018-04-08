@@ -1831,6 +1831,10 @@ VSIFileManager *VSIFileManager::Get()
                 {
                     CPLMutexHolder oHolder( &hVSIFileManagerMutex );
                 }
+                // This construct to avoid a lock is highly questionable
+                // and could probably fail with out-of-order CPU execution
+                // so the cppcheck warning is probably quite relevant.
+                // cppcheck-suppress identicalInnerCondition
                 if( nConstructerPID != 0 )
                 {
                     VSIDebug1( "nConstructerPID != 0: %d", nConstructerPID);

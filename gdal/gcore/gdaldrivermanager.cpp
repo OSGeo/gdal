@@ -100,7 +100,7 @@ GDALDriverManager * GetGDALDriverManager()
     if( poDM == nullptr )
     {
         CPLMutexHolderD( &hDMMutex );
-
+        // cppcheck-suppress identicalInnerCondition
         if( poDM == nullptr )
             poDM = new GDALDriverManager();
     }
