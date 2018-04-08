@@ -436,7 +436,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                     break;
                 case MSSQLGEOMETRY_WKB:
                 case MSSQLGEOMETRY_WKBZM:
-                    eErr = OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
+                    eErr = OGRGeometryFactory::createFromWkb(pszGeomText,
                                                       nullptr, &poGeom, nLength);
                     break;
                 case MSSQLGEOMETRY_WKT:

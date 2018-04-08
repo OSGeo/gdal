@@ -1370,11 +1370,11 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
+OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
                                    int nSize, OGRwkbVariant eWkbVariant )
 {
     int nBytesConsumedOutIgnored = -1;
-    return importFromWkb( const_cast<const unsigned char*>(pabyData),
+    return importFromWkb( pabyData,
                           nSize, eWkbVariant, nBytesConsumedOutIgnored );
 }
 
@@ -1429,13 +1429,13 @@ OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
  */
 
 OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
-                            unsigned char *pabyData, int nSize )
+                            const void *pabyData, int nSize )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ImportFromWkb", OGRERR_FAILURE );
 
     return OGRGeometry::FromHandle(hGeom)->
-        importFromWkb( pabyData, nSize );
+        importFromWkb( static_cast<const GByte*>(pabyData), nSize );
 }
 
 /**

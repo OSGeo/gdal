@@ -291,7 +291,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
             int nLength = poStmt->GetColDataLength( iField );
 
             eErr =
-                OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
+                OGRGeometryFactory::createFromWkb(pszGeomText,
                                                   nullptr, &poGeom, nLength);
         }
 

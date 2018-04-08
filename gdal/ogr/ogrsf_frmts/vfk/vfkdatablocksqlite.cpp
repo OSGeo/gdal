@@ -982,7 +982,7 @@ bool VFKDataBlockSQLite::LoadGeometryFromDB()
         const int nBytes = sqlite3_column_bytes(hStmt, 0);
         OGRGeometry *poGeometry = nullptr;
         if (nBytes > 0 &&
-            OGRGeometryFactory::createFromWkb((GByte*) sqlite3_column_blob(hStmt, 0),
+            OGRGeometryFactory::createFromWkb(sqlite3_column_blob(hStmt, 0),
                                               nullptr, &poGeometry, nBytes) == OGRERR_NONE) {
             nGeometriesCount++;
             if (!poFeature->SetGeometry(poGeometry)) {
