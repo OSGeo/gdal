@@ -3767,15 +3767,15 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
 /*      data type.                                                      */
 /* -------------------------------------------------------------------- */
 
-    if( psArray->nd < 2 || psArray->nd > 3 )
+    if( PyArray_NDIM(psArray) < 2 || PyArray_NDIM(psArray) > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return NULL;
     }
 
-    switch( psArray->descr->type_num )
+    switch( PyArray_DESCR(psArray)->type_num )
     {
       case NPY_CDOUBLE:
         eType = GDT_CFloat64;
@@ -3819,7 +3819,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to access numpy arrays of typecode `%c'.",
-                  psArray->descr->type );
+                  PyArray_DESCR(psArray)->type );
         return NULL;
     }
 
@@ -3847,39 +3847,39 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
     npy_intp nPixelOffset;
     npy_intp nLineOffset;
 
-    if( psArray->nd == 3 )
+    if( PyArray_NDIM(psArray) == 3 )
     {
-        if( psArray->dimensions[0] > INT_MAX ||
-            psArray->dimensions[1] > INT_MAX ||
-            psArray->dimensions[2] > INT_MAX ||
-            !GDALCheckBandCount(static_cast<int>(psArray->dimensions[0]), 0) )
+        if( PyArray_DIMS(psArray)[0] > INT_MAX ||
+            PyArray_DIMS(psArray)[1] > INT_MAX ||
+            PyArray_DIMS(psArray)[2] > INT_MAX ||
+            !GDALCheckBandCount(static_cast<int>(PyArray_DIMS(psArray)[0]), 0) )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too big array dimensions");
             delete poDS;
             return NULL;
         }
-        nBands = static_cast<int>(psArray->dimensions[0]);
-        nBandOffset = psArray->strides[0];
-        poDS->nRasterXSize = static_cast<int>(psArray->dimensions[2]);
-        nPixelOffset = psArray->strides[2];
-        poDS->nRasterYSize = static_cast<int>(psArray->dimensions[1]);
-        nLineOffset = psArray->strides[1];
+        nBands = static_cast<int>(PyArray_DIMS(psArray)[0]);
+        nBandOffset = PyArray_STRIDES(psArray)[0];
+        poDS->nRasterXSize = static_cast<int>(PyArray_DIMS(psArray)[2]);
+        nPixelOffset = PyArray_STRIDES(psArray)[2];
+        poDS->nRasterYSize = static_cast<int>(PyArray_DIMS(psArray)[1]);
+        nLineOffset = PyArray_STRIDES(psArray)[1];
     }
     else
     {
-        if( psArray->dimensions[0] > INT_MAX ||
-            psArray->dimensions[1] > INT_MAX )
+        if( PyArray_DIMS(psArray)[0] > INT_MAX ||
+            PyArray_DIMS(psArray)[1] > INT_MAX )
         {
             delete poDS;
             return NULL;
         }
         nBands = 1;
         nBandOffset = 0;
-        poDS->nRasterXSize = static_cast<int>(psArray->dimensions[1]);
-        nPixelOffset = psArray->strides[1];
-        poDS->nRasterYSize = static_cast<int>(psArray->dimensions[0]);
-        nLineOffset = psArray->strides[0];
+        poDS->nRasterXSize = static_cast<int>(PyArray_DIMS(psArray)[1]);
+        nPixelOffset = PyArray_STRIDES(psArray)[1];
+        poDS->nRasterYSize = static_cast<int>(PyArray_DIMS(psArray)[0]);
+        nLineOffset = PyArray_STRIDES(psArray)[0];
     }
 
 /* -------------------------------------------------------------------- */
@@ -3890,7 +3890,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
         poDS->SetBand( iBand+1,
                        (GDALRasterBand *)
                        MEMCreateRasterBandEx( poDS, iBand+1,
-                                (GByte *) psArray->data + nBandOffset*iBand,
+                                (GByte *) PyArray_DATA(psArray) + nBandOffset*iBand,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
     }
@@ -4136,19 +4136,19 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                             void* callback_data = NULL) {
 
     GDALDataType ntype  = (GDALDataType)buf_type;
-    if( psArray->nd < 2 || psArray->nd > 3 )
+    if( PyArray_NDIM(psArray) < 2 || PyArray_NDIM(psArray) > 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.\n",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return CE_Failure;
     }
 
-    int xdim = ( psArray->nd == 2) ? 1 : 2;
-    int ydim = ( psArray->nd == 2) ? 0 : 1;
+    int xdim = ( PyArray_NDIM(psArray) == 2) ? 1 : 2;
+    int ydim = ( PyArray_NDIM(psArray) == 2) ? 0 : 1;
 
-    if( psArray->dimensions[xdim] > INT_MAX ||
-        psArray->dimensions[ydim] > INT_MAX )
+    if( PyArray_DIMS(psArray)[xdim] > INT_MAX ||
+        PyArray_DIMS(psArray)[ydim] > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Too big array dimensions");
@@ -4156,10 +4156,10 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
     int nxsize, nysize;
     GSpacing pixel_space, line_space;
-    nxsize = static_cast<int>(psArray->dimensions[xdim]);
-    nysize = static_cast<int>(psArray->dimensions[ydim]);
-    pixel_space = psArray->strides[xdim];
-    line_space = psArray->strides[ydim];
+    nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
+    nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
+    pixel_space = PyArray_STRIDES(psArray)[xdim];
+    line_space = PyArray_STRIDES(psArray)[ydim];
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -4181,7 +4181,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
 
     return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
-                          psArray->data, nxsize, nysize,
+                          PyArray_DATA(psArray), nxsize, nysize,
                           ntype, pixel_space, line_space, &sExtraArg );
   }
 
@@ -4194,19 +4194,19 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                          void* callback_data = NULL )
 {
     GDALDataType ntype  = (GDALDataType)buf_type;
-    if( psArray->nd != 3 )
+    if( PyArray_NDIM(psArray) != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Illegal numpy array rank %d.",
-                  psArray->nd );
+                  PyArray_NDIM(psArray) );
         return CE_Failure;
     }
 
     int xdim = 2;
     int ydim = 1;
-    if( psArray->dimensions[xdim] > INT_MAX ||
-        psArray->dimensions[ydim] > INT_MAX ||
-        psArray->dimensions[0] > INT_MAX )
+    if( PyArray_DIMS(psArray)[xdim] > INT_MAX ||
+        PyArray_DIMS(psArray)[ydim] > INT_MAX ||
+        PyArray_DIMS(psArray)[0] > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                     "Too big array dimensions");
@@ -4215,9 +4215,9 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
 
     int bandsize, nxsize, nysize;
     GIntBig pixel_space, line_space, band_space;
-    nxsize = static_cast<int>(psArray->dimensions[xdim]);
-    nysize = static_cast<int>(psArray->dimensions[ydim]);
-    bandsize = static_cast<int>(psArray->dimensions[0]);
+    nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
+    nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
+    bandsize = static_cast<int>(PyArray_DIMS(psArray)[0]);
     if( bandsize != GDALGetRasterCount(ds) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
@@ -4225,9 +4225,9 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                   bandsize, GDALGetRasterCount(ds) );
         return CE_Failure;
     }
-    pixel_space = psArray->strides[xdim];
-    line_space = psArray->strides[ydim];
-    band_space = psArray->strides[0];
+    pixel_space = PyArray_STRIDES(psArray)[xdim];
+    line_space = PyArray_STRIDES(psArray)[ydim];
+    band_space = PyArray_STRIDES(psArray)[0];
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -4236,7 +4236,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.pProgressData = callback_data;
 
     return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
-                                   psArray->data, nxsize, nysize,
+                                   PyArray_DATA(psArray), nxsize, nysize,
                                    ntype,
                                    bandsize, NULL,
                                    pixel_space, line_space, band_space, &sExtraArg );
@@ -4337,7 +4337,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     {
         pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
         if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength,
-                        (int*)PyArray_DATA(pOutArray)) != CE_None)
+                        (int*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
         {
             Py_DECREF(pOutArray);
             Py_RETURN_NONE;
@@ -4347,7 +4347,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     {
         pOutArray = PyArray_SimpleNew(1, &dims, NPY_DOUBLE);
         if( GDALRATValuesIOAsDouble(poRAT, GF_Read, nField, nStart, nLength,
-                        (double*)PyArray_DATA(pOutArray)) != CE_None)
+                        (double*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
         {
             Py_DECREF(pOutArray);
             Py_RETURN_NONE;
@@ -4403,13 +4403,13 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                 // we use strncpy so that we don't go over nMaxLen
                 // which we would if the null char is copied
                 // (which we don't want as numpy 'knows' to interpret the string as nMaxLen long)
-                strncpy((char*)PyArray_GETPTR1(pOutArray, n), papszStringList[n], nMaxLen);
+                strncpy((char*)PyArray_GETPTR1((PyArrayObject *) pOutArray, n), papszStringList[n], nMaxLen);
             }
         }
         else
         {
             // so there isn't rubbish in the 1 char strings
-            PyArray_FILLWBYTE(pOutArray, 0);
+            PyArray_FILLWBYTE((PyArrayObject *) pOutArray, 0);
         }
 
         // free strings
@@ -5462,7 +5462,11 @@ SWIGINTERN PyObject *_wrap_VirtualMemGetArray(PyObject *SWIGUNUSEDPARM(self), Py
     }
     
     /* Keep a reference to the VirtualMem object */
-    ar->base = obj0;
+#if NPY_API_VERSION >= 0x00000007
+    PyArray_SetBaseObject(ar, obj0);
+#else
+    PyArray_BASE(ar) = obj0;
+#endif
     Py_INCREF(obj0);
     Py_DECREF(resultobj);
     resultobj = (PyObject*) ar;
