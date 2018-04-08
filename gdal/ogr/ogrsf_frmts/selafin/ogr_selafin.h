@@ -115,8 +115,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         Selafin::Header *poHeader;
         CPLString osDefaultSelafinName;
         OGRSpatialReference *poSpatialRef;
-        int TakeLock(const char *pszFilename);
-        void ReleaseLock();
+
     public:
         OGRSelafinDataSource();
         virtual ~OGRSelafinDataSource();

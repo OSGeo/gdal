@@ -236,7 +236,6 @@ OGRSelafinDataSource::~OGRSelafinDataSource() {
     for( int i = 0; i < nLayers; i++ ) delete papoLayers[i];
     CPLFree( papoLayers );
     CPLFree( pszName );
-    ReleaseLock();
     delete poHeader;
     if (poSpatialRef!=nullptr) poSpatialRef->Release();
 }
@@ -334,44 +333,6 @@ int OGRSelafinDataSource::Open( const char * pszFilename, int bUpdateIn,
 }
 
 /************************************************************************/
-/*                              TakeLock()                              */
-/************************************************************************/
-int OGRSelafinDataSource::TakeLock(CPL_UNUSED const char *pszFilename) {
-#ifdef notdef
-    // Ideally, we should implement a locking mechanism for Selafin layers because different layers share the same header and file on disk. If two layers are modified at the same time,
-    // this would most likely result in data corruption. However, locking the data source causes other problems in QGis which always tries to open the datasource twice, a first time
-    // in Update mode, and the second time for the layer inside in Read-only mode (because the lock is taken), and layers therefore can't be changed in QGis.
-    // For now, this procedure is deactivated and a warning message is issued when a datasource is opened in update mode.
-    //CPLDebug("Selafin","TakeLock(%s)",pszFilename);
-    if (pszLockName!=0) CPLFree(pszLockName);
-    size_t nLen=strlen(pszFilename)+4;
-    pszLockName=(char*)CPLMalloc(sizeof(char)*nLen);
-    CPLStrlcpy(pszLockName,pszFilename,nLen-3);
-    CPLStrlcat(pszLockName,"~~~",nLen);
-    VSILFILE *fpLock = VSIFOpenL(pszLockName, "rb+");
-    // This is not thread-safe but I'm not quite sure how to open a file in exclusive mode and in a portable way
-    if (fpLock!=NULL) {
-        VSIFCloseL(fpLock);
-        return 0;
-    }
-    fpLock=VSIFOpenL(pszLockName,"wb");
-    VSIFCloseL(fpLock);
-#endif
-    return 1;
-}
-
-/************************************************************************/
-/*                            ReleaseLock()                             */
-/************************************************************************/
-void OGRSelafinDataSource::ReleaseLock() {
-#ifdef notdef
-    if (pszLockName==0) return;
-    VSIUnlink(pszLockName);
-    CPLFree(pszLockName);
-#endif
-}
-
-/************************************************************************/
 /*                              OpenTable()                             */
 /************************************************************************/
 int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
@@ -383,17 +344,6 @@ int OGRSelafinDataSource::OpenTable(const char * pszFilename) {
     VSILFILE *fp = nullptr;
     if( bUpdate )
     {
-        // We have to implement this locking feature for write access because
-        // the same file may hold several layers, and some programs (like QGIS)
-        // open each layer in a single datasource, so the same file might be
-        // opened several times for write access.
-        if (TakeLock(pszFilename)==0) {
-            CPLError(CE_Failure, CPLE_OpenFailed,
-                     "Failed to open %s for write access, "
-                     "lock file found %s.",
-                     pszFilename, pszLockName);
-            return FALSE;
-        }
         fp = VSIFOpenExL( pszFilename, "rb+", true );
     }
     else
