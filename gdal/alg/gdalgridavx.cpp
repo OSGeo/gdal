@@ -52,7 +52,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     void* hExtraParamsIn )
 {
     size_t i = 0;
-    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParamsIn;
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters*>(hExtraParamsIn);
     const float* pafX = psExtraParams->pafX;
     const float* pafY = psExtraParams->pafY;
     const float* pafZ = psExtraParams->pafZ;
@@ -101,13 +101,13 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
     for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
-        __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps((float*)pafX + i), ymm_x);           /* rx = pafX[i] - fXPoint */
-        __m256 ymm_ry = _mm256_sub_ps(_mm256_load_ps((float*)pafY + i), ymm_y);           /* ry = pafY[i] - fYPoint */
+        __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps(const_cast<float*>(pafX) + i), ymm_x);           /* rx = pafX[i] - fXPoint */
+        __m256 ymm_ry = _mm256_sub_ps(_mm256_load_ps(const_cast<float*>(pafY) + i), ymm_y);           /* ry = pafY[i] - fYPoint */
         __m256 ymm_r2 = _mm256_add_ps(_mm256_mul_ps(ymm_rx, ymm_rx),              /* r2 = rx * rx + ry * ry */
                                    _mm256_mul_ps(ymm_ry, ymm_ry));
         __m256 ymm_invr2 = _mm256_rcp_ps(ymm_r2);                              /* invr2 = 1.0f / r2 */
         ymm_nominator = _mm256_add_ps(ymm_nominator,                           /* nominator += invr2 * pafZ[i] */
-                            _mm256_mul_ps(ymm_invr2, _mm256_load_ps((float*)pafZ + i)));
+                            _mm256_mul_ps(ymm_invr2, _mm256_load_ps(const_cast<float*>(pafZ) + i)));
         ymm_denominator = _mm256_add_ps(ymm_denominator, ymm_invr2);           /* denominator += invr2 */
         mask = _mm256_movemask_ps(_mm256_cmp_ps(ymm_r2, ymm_small, _CMP_LT_OS));            /* if( r2 < fEpsilon) */
         if( mask )
@@ -186,7 +186,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     if( fDenominator == 0.0 )
     {
         (*pdfValue) =
-            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+            static_cast<const GDALGridInverseDistanceToAPowerOptions*>(poOptions)->dfNoDataValue;
     }
     else
         (*pdfValue) = fNominator / fDenominator;

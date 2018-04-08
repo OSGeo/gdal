@@ -1316,6 +1316,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( nBits >= 8 && !RAWDatasetCheckMemoryUsage(
                         poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nItemSize,
                         nPixelOffset, nLineOffset, nSkipBytes, nBandOffset,
                         poDS->fpImage) )
     {

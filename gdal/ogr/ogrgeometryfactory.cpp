@@ -1406,7 +1406,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         return geom;
     }
 
-    bool bUseFastVersion = TRUE;
+    bool bUseFastVersion = true;
     if( CPLTestBool(CPLGetConfigOption("OGR_DEBUG_ORGANIZE_POLYGONS",
                                        "NO")) )
     {
@@ -1716,7 +1716,7 @@ OGRGeometry* OGRGeometryFactory::organizePolygons( OGRGeometry **papoPolygons,
         {
             bool b_i_inside_j = false;
 
-            if( method == METHOD_ONLY_CCW && asPolyEx[j].bIsCW == FALSE )
+            if( method == METHOD_ONLY_CCW && asPolyEx[j].bIsCW == false )
             {
                 // In that mode, i which is CCW if we reach here can only be
                 // included in a CW polygon.

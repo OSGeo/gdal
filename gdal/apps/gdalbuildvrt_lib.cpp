@@ -848,9 +848,9 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                              "gdalbuildvrt does not support heterogeneous "
                              "band offset: expected (%d,%f), got (%d,%f). "
                              "Skipping %s",
-                             pasBandProperties[j].bHasOffset,
+                             static_cast<int>(pasBandProperties[j].bHasOffset),
                              pasBandProperties[j].dfOffset,
-                             psDatasetProperties->pabHasOffset[j],
+                             static_cast<int>(psDatasetProperties->pabHasOffset[j]),
                              psDatasetProperties->padfOffset[j],
                              dsFileName);
                     return FALSE;
@@ -864,9 +864,9 @@ int VRTBuilder::AnalyseRaster( GDALDatasetH hDS, DatasetProperty* psDatasetPrope
                              "gdalbuildvrt does not support heterogeneous "
                              "band scale: expected (%d,%f), got (%d,%f). "
                              "Skipping %s",
-                             pasBandProperties[j].bHasScale,
+                             static_cast<int>(pasBandProperties[j].bHasScale),
                              pasBandProperties[j].dfScale,
-                             psDatasetProperties->pabHasScale[j],
+                             static_cast<int>(psDatasetProperties->pabHasScale[j]),
                              psDatasetProperties->padfScale[j],
                              dsFileName);
                     return FALSE;

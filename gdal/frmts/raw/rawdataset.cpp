@@ -1226,6 +1226,7 @@ CPLErr RawDataset::IRasterIO( GDALRWFlag eRWFlag,
 /************************************************************************/
 
 bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
+                                int nDTSize,
                                 int nPixelOffset,
                                 int nLineOffset,
                                 vsi_l_offset nHeaderSize,
@@ -1255,5 +1256,15 @@ bool RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
             return false;
         }
     }
+
+    // Currently each RawRasterBand need to allocate nLineSize
+    GIntBig nLineSize =
+        static_cast<GIntBig>(std::abs(nPixelOffset)) * (nXSize - 1) + nDTSize;
+    if( nBands > 0 && nLineSize > INT_MAX / nBands )
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory, "Too much memory needed");
+        return false;
+    }
+
     return true;
 }

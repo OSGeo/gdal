@@ -1211,6 +1211,7 @@ GDALDataset *RRASTERDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if( !RAWDatasetCheckMemoryUsage(
                         nCols, nRows, l_nBands,
+                        GDALGetDataTypeSizeBytes(eDT),
                         nPixelOffset, nLineOffset, 0, nBandOffset,
                         fpImage) )
     {

@@ -132,7 +132,7 @@ GDALFilterLine( float *pafLastLine, float *pafThisLine, float *pafNextLine,
             }
         }
 
-        pafOutLine[iX] = (float) (dfValSum / dfWeightSum);
+        pafOutLine[iX] = static_cast<float>(dfValSum / dfWeightSum);
     }
 }
 

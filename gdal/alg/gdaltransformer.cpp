@@ -2454,7 +2454,7 @@ void GDALDestroyReprojectionTransformer( void *pTransformArg )
         return;
 
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     if( psInfo->poForwardTransform )
         delete psInfo->poForwardTransform;
@@ -2485,7 +2485,7 @@ int GDALReprojectionTransform( void *pTransformArg, int bDstToSrc,
 
 {
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
     int bSuccess;
 
     if( bDstToSrc )
@@ -2508,7 +2508,7 @@ GDALSerializeReprojectionTransformer( void *pTransformArg )
 {
     CPLXMLNode *psTree;
     GDALReprojectionTransformInfo *psInfo =
-        (GDALReprojectionTransformInfo *) pTransformArg;
+        static_cast<GDALReprojectionTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ReprojectionTransformer" );
 
@@ -2643,7 +2643,8 @@ GDALSerializeApproxTransformer( void *pTransformArg )
 
 {
     CPLXMLNode *psTree;
-    ApproxTransformInfo *psInfo = (ApproxTransformInfo *) pTransformArg;
+    ApproxTransformInfo *psInfo =
+        static_cast<ApproxTransformInfo *>(pTransformArg);
 
     psTree = CPLCreateXMLNode( nullptr, CXT_Element, "ApproxTransformer" );
 
@@ -3492,7 +3493,7 @@ CPLErr GDALDeserializeTransformer( CPLXMLNode *psTree,
             while( psList )
             {
                 TransformDeserializerInfo* psInfo =
-                            (TransformDeserializerInfo*)psList->pData;
+                    static_cast<TransformDeserializerInfo *>(psList->pData);
                 if( strcmp(psInfo->pszTransformName, psTree->pszValue) == 0 )
                 {
                     *ppfnFunc = psInfo->pfnTransformerFunc;

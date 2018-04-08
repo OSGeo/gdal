@@ -60,8 +60,8 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     const float fXPoint = static_cast<float>(dfXPoint);
     const float fYPoint = static_cast<float>(dfYPoint);
     const __m128 xmm_small = _mm_load1_ps(const_cast<float *>(&fEpsilon));
-    const __m128 xmm_x = _mm_load1_ps((float*)&fXPoint);
-    const __m128 xmm_y = _mm_load1_ps((float*)&fYPoint);
+    const __m128 xmm_x = _mm_load1_ps(const_cast<float*>(&fXPoint));
+    const __m128 xmm_y = _mm_load1_ps(const_cast<float*>(&fYPoint));
     __m128 xmm_nominator = _mm_setzero_ps();
     __m128 xmm_denominator = _mm_setzero_ps();
     int mask = 0;
@@ -174,7 +174,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
     if( fDenominator == 0.0 )
     {
         (*pdfValue) =
-            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+            static_cast<const GDALGridInverseDistanceToAPowerOptions*>(poOptions)->dfNoDataValue;
     }
     else
     {
