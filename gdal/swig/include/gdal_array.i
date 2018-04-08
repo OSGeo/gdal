@@ -383,7 +383,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
         return NULL;
     }
 
-    switch( psArray->descr->type_num )
+    switch( PyArray_DESCR(psArray)->type_num )
     {
       case NPY_CDOUBLE:
         eType = GDT_CFloat64;
@@ -427,7 +427,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
       default:
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to access numpy arrays of typecode `%c'.",
-                  psArray->descr->type );
+                  PyArray_DESCR(psArray)->type );
         return NULL;
     }
 
