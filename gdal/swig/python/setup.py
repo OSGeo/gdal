@@ -129,7 +129,7 @@ class gdal_config_error(Exception): pass
 
 from distutils.command.build_ext import build_ext
 from distutils.ccompiler import get_default_compiler
-
+from distutils.errors import CompileError
 
 def fetch_config(option, gdal_config='gdal-config'):
 
@@ -181,44 +181,24 @@ int main () { return 0; }""")
         if compiler_flag:
             extra_postargs=[compiler_flag]
 
-        SILENCE_OUTPUT = False
-        # SILENCE_OUTPUT = True doesn't work with precise
-        if os.name == 'posix' and SILENCE_OUTPUT:
-            # if possible avoid any verbose output for this detection test
-            pid = os.fork()
-            if pid == 0:
-                # in the child
-                sys.stdout = open('/dev/null', 'wt')
-                os.close(2)
-                try:
-                    compiler.compile([f.name], extra_postargs=extra_postargs)
-                    os._exit(0)
-                except:
-                    os._exit(1)
-            else:
-                # in the parent
-                while True:
-                    try:
-                        pid, status = os.waitpid(pid, 0)
-                    except OSError as exc:
-                        import errno
-                        if exc.errno == errno.EINTR:
-                            continue
-                        break
-
-                    if os.WIFEXITED(status):
-                        exit_status = os.WEXITSTATUS(status)
-                        if exit_status == 0:
-                            ret = True
-                    elif os.WIFSTOPPED(status):
-                        continue
-
-                    break
+        if os.name == 'posix':
+            # Redirect stderr to /dev/null to hide any error messages
+            # from the compiler.
+            devnull = open(os.devnull, 'w')
+            oldstderr = os.dup(sys.stderr.fileno())
+            os.dup2(devnull.fileno(), sys.stderr.fileno())
+            try:
+                compiler.compile([f.name], extra_postargs=extra_postargs)
+                ret = True
+            except CompileError:
+                pass
+            os.dup2(oldstderr, sys.stderr.fileno())
+            devnull.close()
         else:
             try:
                 compiler.compile([f.name], extra_postargs=extra_postargs)
                 ret = True
-            except:
+            except CompileError:
                 pass
     os.unlink('gdal_python_cxx11_test.cpp')
     if os.path.exists('gdal_python_cxx11_test.o'):
