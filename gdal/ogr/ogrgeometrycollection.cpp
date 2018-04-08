@@ -752,11 +752,11 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
         {
             OGRGeometryCollection* poGC = new OGRGeometryCollection();
             poGeom = poGC;
-            eErr = poGC->importFromWktInternal( (char **) &pszInput,
+            eErr = poGC->importFromWktInternal( const_cast<char**>(&pszInput),
                                                nRecLevel + 1 );
         }
         else
-            eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
+            eErr = OGRGeometryFactory::createFromWkt( const_cast<char**>(&pszInput),
                                                        nullptr, &poGeom );
 
         if( eErr == OGRERR_NONE )

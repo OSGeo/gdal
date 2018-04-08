@@ -460,8 +460,8 @@ static bool WFS_ExprDumpAsOGCFilter( CPLString& osFilter,
         OGRSpatialReference oSRS;
         const char* pszSRSName = WFS_ExprGetSRSName( poExpr, 1, psOptions, oSRS );
         OGRGeometry* poGeom = nullptr;
-        char* pszWKT = (char*)poExpr->papoSubExpr[0]->string_value;
-        OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+        const char* pszWKT = poExpr->papoSubExpr[0]->string_value;
+        OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
         char** papszOptions = nullptr;
         papszOptions = CSLSetNameValue(papszOptions, "FORMAT", "GML3");
         if( pszSRSName != nullptr )
@@ -728,8 +728,8 @@ static swq_field_type OGRWFSGeomFromTextChecker( swq_expr_node *op,
         return SWQ_ERROR;
     }
     OGRGeometry* poGeom = nullptr;
-    char* pszWKT = (char*)op->papoSubExpr[0]->string_value;
-    if( OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom) != OGRERR_NONE )
+    const char* pszWKT = op->papoSubExpr[0]->string_value;
+    if( OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom) != OGRERR_NONE )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Wrong value for argument %d of %s",
                   1, op->string_value);

@@ -2002,9 +2002,8 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset( GDALOpenInfo * poOpenInfo )
         // For descending orbits, we have observed that the order of points in
         // the polygon is UL, LL, LR, UR. That might not be true for ascending orbits
         // but let's assume it...
-        char* pszFootprintC = const_cast<char*>(pszFootprint);
         OGRGeometry* poGeom = nullptr;
-        if( OGRGeometryFactory::createFromWkt( &pszFootprintC, nullptr, &poGeom)
+        if( OGRGeometryFactory::createFromWkt( pszFootprint, nullptr, &poGeom)
                                                                 == OGRERR_NONE &&
             poGeom != nullptr &&
             wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )

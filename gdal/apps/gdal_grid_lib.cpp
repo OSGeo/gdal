@@ -1182,9 +1182,9 @@ GDALGridOptions *GDALGridOptionsNew(char** papszArgv, GDALGridOptionsForBinary* 
                       STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
-                char* pszTmp = const_cast<char *>(papszArgv[i+1]);
                 delete psOptions->poClipSrc;
-                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, &psOptions->poClipSrc);
+                OGRGeometryFactory::createFromWkt(papszArgv[i+1],
+                                            nullptr, &psOptions->poClipSrc);
                 if (psOptions->poClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,

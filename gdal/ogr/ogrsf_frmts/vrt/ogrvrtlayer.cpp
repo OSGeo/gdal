@@ -471,7 +471,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
         pszSrcRegion = CPLGetXMLValue(psNodeParent, "SrcRegion", nullptr);
     if( pszSrcRegion != nullptr )
     {
-        OGRGeometryFactory::createFromWkt((char **)&pszSrcRegion, nullptr,
+        OGRGeometryFactory::createFromWkt(pszSrcRegion, nullptr,
                                           &poProps->poSrcRegion);
         if( poProps->poSrcRegion == nullptr ||
             wkbFlatten(poProps->poSrcRegion->getGeometryType()) != wkbPolygon )
@@ -1457,14 +1457,13 @@ retry:
         }
         else if( eGeometryStyle == VGS_WKT && iGeomField != -1 )
         {
-            char *pszWKT =
-                const_cast<char *>(poSrcFeat->GetFieldAsString(iGeomField));
+            const char *pszWKT = poSrcFeat->GetFieldAsString(iGeomField);
 
             if( pszWKT != nullptr )
             {
                 OGRGeometry *poGeom = nullptr;
 
-                OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+                OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom);
                 if( poGeom == nullptr )
                     CPLDebug("OGR_VRT", "Did not get geometry from %s", pszWKT);
 

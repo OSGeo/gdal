@@ -100,9 +100,7 @@ BlendMaskGenerator( int nXOff, int nYOff, int nXSize, int nYSize,
                           nYOff - (dfBlendDist + 1) );
 
     OGRPolygon *poClipRect = nullptr;
-    char *pszWKT = const_cast<char *>(osClipRectWKT.c_str());
-
-    OGRGeometryFactory::createFromWkt( &pszWKT, nullptr,
+    OGRGeometryFactory::createFromWkt( osClipRectWKT.c_str(), nullptr,
                                        reinterpret_cast<OGRGeometry**>(&poClipRect) );
 
     if( poClipRect )

@@ -424,7 +424,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
             OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                    const_cast<char **>(&pszInput), nullptr, &poGeom );
+                    const_cast<char **>(&pszInput),nullptr, &poGeom );
             if( poGeom )
                 poSurface = poGeom->toSurface();
         }

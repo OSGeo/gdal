@@ -5252,8 +5252,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                       STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
-                char* pszTmp = reinterpret_cast<char*>(papszArgv[i+1]);
-                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, reinterpret_cast<OGRGeometry **>(&psOptions->hClipSrc));
+                OGRGeometryFactory::createFromWkt(papszArgv[i+1], nullptr,
+                        reinterpret_cast<OGRGeometry **>(&psOptions->hClipSrc));
                 if (psOptions->hClipSrc == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
@@ -5328,8 +5328,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(char** papszArgv,
                       STARTS_WITH_CI(papszArgv[i+1], "MULTIPOLYGON")) &&
                       VSIStatL(papszArgv[i+1], &sStat) != 0)
             {
-                char* pszTmp = reinterpret_cast<char*>(papszArgv[i+1]);
-                OGRGeometryFactory::createFromWkt(&pszTmp, nullptr, reinterpret_cast<OGRGeometry **>(&psOptions->hClipDst));
+                OGRGeometryFactory::createFromWkt(papszArgv[i+1],
+                    nullptr, reinterpret_cast<OGRGeometry **>(&psOptions->hClipDst));
                 if (psOptions->hClipDst == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,

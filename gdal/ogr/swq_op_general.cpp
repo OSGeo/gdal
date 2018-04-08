@@ -1434,8 +1434,8 @@ swq_expr_node *SWQCastEvaluator( swq_expr_node *node,
 
                     case SWQ_STRING:
                     {
-                        char* pszTmp = poSrcNode->string_value;
-                        OGRGeometryFactory::createFromWkt(&pszTmp, nullptr,
+                        OGRGeometryFactory::createFromWkt(
+                            poSrcNode->string_value, nullptr,
                             &(poRetNode->geometry_value));
                         if( poRetNode->geometry_value != nullptr )
                             poRetNode->is_null = FALSE;

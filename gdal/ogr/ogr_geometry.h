@@ -2805,7 +2805,8 @@ class CPL_DLL OGRGeometryFactory
                                  int nSize,
                                  OGRwkbVariant eVariant,
                                  int& nBytesConsumedOut );
-
+    static OGRErr createFromWkt( const char* , OGRSpatialReference *,
+                                 OGRGeometry ** );
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
     static OGRErr createFromFgf( unsigned char *, OGRSpatialReference *,

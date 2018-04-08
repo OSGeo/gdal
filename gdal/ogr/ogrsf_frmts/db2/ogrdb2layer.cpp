@@ -330,7 +330,7 @@ OGRFeature *OGRDB2Layer::GetNextRawFeature()
         OGRErr eErr = OGRERR_NONE;
         if( pszGeomText != nullptr )
         {
-            eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+            eErr = OGRGeometryFactory::createFromWkt(pszGeomText,
                     nullptr, &poGeom);
         }
 

@@ -440,14 +440,14 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
                                                       nullptr, &poGeom, nLength);
                     break;
                 case MSSQLGEOMETRY_WKT:
-                    eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                    eErr = OGRGeometryFactory::createFromWkt(pszGeomText,
                                                       nullptr, &poGeom);
                     break;
                 }
             }
             else if (nGeomColumnType == MSSQLCOLTYPE_TEXT)
             {
-                eErr = OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                eErr = OGRGeometryFactory::createFromWkt(pszGeomText,
                                                       nullptr, &poGeom);
             }
         }

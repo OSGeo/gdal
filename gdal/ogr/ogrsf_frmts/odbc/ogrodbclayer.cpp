@@ -283,7 +283,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         if( pszGeomText != nullptr && !bGeomColumnWKB )
         {
             eErr =
-                OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                OGRGeometryFactory::createFromWkt(pszGeomText,
                                                   nullptr, &poGeom);
         }
         else if( pszGeomText != nullptr && bGeomColumnWKB )

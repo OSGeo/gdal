@@ -71,7 +71,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -119,7 +119,7 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
 }
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -242,7 +242,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
 /*                        OGR_G_CreateFromWkb()                         */
 /************************************************************************/
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -288,7 +288,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known text representation.
  *
  * The C function OGR_G_CreateFromWkt() is the same as this method.
@@ -438,11 +438,41 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     return eErr;
 }
 
+/**
+ * \brief Create a geometry object of the appropriate type from its
+ * well known text representation.
+ *
+ * The C function OGR_G_CreateFromWkt() is the same as this method.
+ *
+ * @param pszData input zero terminated string containing well known text
+ *                representation of the geometry to be created.
+ * @param poSR pointer to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param ppoReturn the newly created geometry object will be assigned to the
+ *                  indicated pointer on return.  This will be NULL if the
+ *                  method fails. If not NULL, *ppoReturn should be freed with
+ *                  OGRGeometryFactory::destroyGeometry() after use.
+
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ * @since GDAL 2.3
+ */
+
+OGRErr OGRGeometryFactory::createFromWkt(const char* pszData,
+                                         OGRSpatialReference * poSR,
+                                         OGRGeometry **ppoReturn )
+
+{
+    char* pszTemp = const_cast<char*>(pszData);
+    return createFromWkt(&pszTemp, poSR, ppoReturn);
+}
+
 /************************************************************************/
 /*                        OGR_G_CreateFromWkt()                         */
 /************************************************************************/
 /**
- * \brief Create a geometry object of the appropriate type from it's well known
+ * \brief Create a geometry object of the appropriate type from its well known
  * text representation.
  *
  * The OGRGeometryFactory::createFromWkt CPP method is the same as this
@@ -2830,9 +2860,9 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 const char* pszWKT2 = !bAroundMinus180 ?
                     "POLYGON((180 90,360 90,360 -90,180 -90,180 90))" :
                     "POLYGON((-180 90,-360 90,-360 -90,-180 -90,-180 90))";
-                OGRGeometryFactory::createFromWkt((char**)&pszWKT1, nullptr,
+                OGRGeometryFactory::createFromWkt(pszWKT1, nullptr,
                                                   &poRectangle1);
-                OGRGeometryFactory::createFromWkt((char**)&pszWKT2, nullptr,
+                OGRGeometryFactory::createFromWkt(pszWKT2, nullptr,
                                                   &poRectangle2);
                 OGRGeometry* poGeom1 = poWorkGeom->Intersection(poRectangle1);
                 OGRGeometry* poGeom2 = poWorkGeom->Intersection(poRectangle2);
