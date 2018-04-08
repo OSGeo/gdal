@@ -870,7 +870,11 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
 
     /* Keep a reference to the VirtualMem object */
+%#if NPY_API_VERSION >= 0x00000007
     PyArray_SetBaseObject(ar, obj0);
+%#else
+    PyArray_BASE(ar) = obj0;
+%#endif
     Py_INCREF(obj0);
     Py_DECREF($result);
     $result = (PyObject*) ar;
