@@ -6940,3 +6940,24 @@ void OGRPreparedGeometryUniquePtrDeleter::operator()(OGRPreparedGeometry* poPrep
     OGRDestroyPreparedGeometry(poPreparedGeom);
 }
 //! @endcond
+
+/************************************************************************/
+/*                     HomogenizeDimensionalityWith()                  */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRGeometry::HomogenizeDimensionalityWith( OGRGeometry* poOtherGeom )
+{
+    if( poOtherGeom->Is3D() && !Is3D() )
+        set3D(TRUE);
+
+    if( poOtherGeom->IsMeasured() && !IsMeasured() )
+        setMeasured(TRUE);
+
+    if( !poOtherGeom->Is3D() && Is3D() )
+        poOtherGeom->set3D(TRUE);
+
+    if( !poOtherGeom->IsMeasured() && IsMeasured() )
+        poOtherGeom->setMeasured(TRUE);
+}
+//! @endcond

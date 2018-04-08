@@ -384,17 +384,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     if( !isCompatibleSubType(poNewGeom->getGeometryType()) )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    if( poNewGeom->Is3D() && !Is3D() )
-        set3D(TRUE);
-
-    if( poNewGeom->IsMeasured() && !IsMeasured() )
-        setMeasured(TRUE);
-
-    if( !poNewGeom->Is3D() && Is3D() )
-        poNewGeom->set3D(TRUE);
-
-    if( !poNewGeom->IsMeasured() && IsMeasured() )
-        poNewGeom->setMeasured(TRUE);
+    HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry** papoNewGeoms = static_cast<OGRGeometry **>(
         VSI_REALLOC_VERBOSE(papoGeoms, sizeof(void*) * (nGeomCount + 1)));

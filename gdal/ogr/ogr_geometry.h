@@ -319,6 +319,9 @@ class CPL_DLL OGRGeometry
                      OGRwkbVariant eWkbVariant );
     OGRErr       PointOnSurfaceInternal( OGRPoint * poPoint ) const;
     OGRBoolean   IsSFCGALCompatible() const;
+
+    void         HomogenizeDimensionalityWith( OGRGeometry* poOtherGeom );
+
 //! @endcond
 
   public:

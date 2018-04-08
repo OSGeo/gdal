@@ -209,17 +209,7 @@ OGRErr OGRMultiPolygon::_addGeometryDirectlyWithExpectedSubGeometryType(
     if ( wkbFlatten(poNewGeom->getGeometryType()) != eSubGeometryType)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    if( poNewGeom->Is3D() && !Is3D() )
-        set3D(TRUE);
-
-    if( poNewGeom->IsMeasured() && !IsMeasured() )
-        setMeasured(TRUE);
-
-    if( !poNewGeom->Is3D() && Is3D() )
-        poNewGeom->set3D(TRUE);
-
-    if( !poNewGeom->IsMeasured() && IsMeasured() )
-        poNewGeom->setMeasured(TRUE);
+    HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE( papoGeoms,
                                              sizeof(void*) * (nGeomCount+1) );
