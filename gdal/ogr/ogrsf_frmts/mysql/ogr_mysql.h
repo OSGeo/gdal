@@ -126,7 +126,7 @@ class OGRMySQLLayer : public OGRLayer
 /*                          OGRMySQLTableLayer                          */
 /************************************************************************/
 
-class OGRMySQLTableLayer : public OGRMySQLLayer
+class OGRMySQLTableLayer final: public OGRMySQLLayer
 {
     int                 bUpdateAccess;
 
@@ -181,7 +181,7 @@ class OGRMySQLTableLayer : public OGRMySQLLayer
 /*                         OGRMySQLResultLayer                          */
 /************************************************************************/
 
-class OGRMySQLResultLayer : public OGRMySQLLayer
+class OGRMySQLResultLayer final: public OGRMySQLLayer
 {
     void                BuildFullQueryStatement();
 
@@ -205,7 +205,7 @@ class OGRMySQLResultLayer : public OGRMySQLLayer
 /*                          OGRMySQLDataSource                          */
 /************************************************************************/
 
-class OGRMySQLDataSource : public OGRDataSource
+class OGRMySQLDataSource final: public OGRDataSource
 {
     OGRMySQLLayer       **papoLayers;
     int                 nLayers;

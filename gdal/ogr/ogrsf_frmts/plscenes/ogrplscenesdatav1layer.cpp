@@ -71,7 +71,7 @@ OGRPLScenesDataV1Layer::OGRPLScenesDataV1Layer( OGRPLScenesDataV1Dataset* poDS,
     m_poFeatureDefn->SetGeomType(wkbMultiPolygon);
     m_poFeatureDefn->Reference();
     m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poSRS);
-    ResetReading();
+    OGRPLScenesDataV1Layer::ResetReading();
 }
 
 /************************************************************************/

@@ -66,7 +66,7 @@ class OGRESSortDesc
 /*                          OGRElasticLayer                             */
 /************************************************************************/
 
-class OGRElasticLayer : public OGRLayer {
+class OGRElasticLayer final: public OGRLayer {
     OGRElasticDataSource                *m_poDS;
 
     CPLString                            m_osIndexName;
@@ -213,7 +213,7 @@ public:
 /*                         OGRElasticDataSource                         */
 /************************************************************************/
 
-class OGRElasticDataSource : public GDALDataset {
+class OGRElasticDataSource final: public GDALDataset {
     char               *m_pszName;
     CPLString           m_osURL;
     CPLString           m_osFID;

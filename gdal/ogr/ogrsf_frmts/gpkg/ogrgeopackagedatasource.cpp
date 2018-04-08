@@ -546,7 +546,7 @@ GDALGeoPackageDataset::~GDALGeoPackageDataset()
                   m_osRasterTable.c_str());
     }
 
-    FlushCache();
+    GDALGeoPackageDataset::FlushCache();
     FlushMetadata();
 
     if( eAccess == GA_Update )
@@ -3142,8 +3142,8 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
                  m_eTF == GPKG_TF_TIFF_32BIT_FLOAT);
     if( !m_osRasterTable.empty() )
     {
-        const char* pszIdentifier = GetMetadataItem("IDENTIFIER");
-        const char* pszDescription = GetMetadataItem("DESCRIPTION");
+        const char* pszIdentifier = GDALGeoPackageDataset::GetMetadataItem("IDENTIFIER");
+        const char* pszDescription = GDALGeoPackageDataset::GetMetadataItem("DESCRIPTION");
         if( !m_bIdentifierAsCO && pszIdentifier != nullptr &&
             pszIdentifier != m_osIdentifier )
         {
@@ -3166,7 +3166,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
         }
         if( bCanWriteAreaOrPoint )
         {
-            const char* pszAreaOrPoint = GetMetadataItem(GDALMD_AREA_OR_POINT);
+            const char* pszAreaOrPoint = GDALGeoPackageDataset::GetMetadataItem(GDALMD_AREA_OR_POINT);
             if( pszAreaOrPoint && EQUAL(pszAreaOrPoint, GDALMD_AOP_AREA) )
             {
                 bCanWriteAreaOrPoint = false;
@@ -3193,7 +3193,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
     }
 
     char** papszMDDup = nullptr;
-    for( char** papszIter = GetMetadata(); papszIter && *papszIter; ++papszIter )
+    for( char** papszIter = GDALGeoPackageDataset::GetMetadata(); papszIter && *papszIter; ++papszIter )
     {
         if( STARTS_WITH_CI(*papszIter, "IDENTIFIER=") )
             continue;
@@ -3233,7 +3233,7 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
 
     if( !m_osRasterTable.empty() )
     {
-        char** papszGeopackageMD = GetMetadata("GEOPACKAGE");
+        char** papszGeopackageMD = GDALGeoPackageDataset::GetMetadata("GEOPACKAGE");
 
         papszMDDup = nullptr;
         for( char** papszIter = papszGeopackageMD; papszIter && *papszIter; ++papszIter )

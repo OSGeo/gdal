@@ -597,7 +597,7 @@ OGRLayer* OGROpenFileGDBDataSource::GetLayerByName( const char* pszName )
 /*                   OGROpenFileGDBSingleFeatureLayer                   */
 /************************************************************************/
 
-class OGROpenFileGDBSingleFeatureLayer : public OGRLayer
+class OGROpenFileGDBSingleFeatureLayer final: public OGRLayer
 {
   private:
     char               *pszVal;
@@ -663,7 +663,7 @@ OGRFeature * OGROpenFileGDBSingleFeatureLayer::GetNextFeature()
 /*                     OGROpenFileGDBSimpleSQLLayer                    */
 /***********************************************************************/
 
-class OGROpenFileGDBSimpleSQLLayer: public OGRLayer
+class OGROpenFileGDBSimpleSQLLayer final: public OGRLayer
 {
         OGRLayer        *poBaseLayer;
         FileGDBIterator *poIter;
@@ -734,7 +734,7 @@ OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
         }
     }
     SetDescription( poFeatureDefn->GetName() );
-    ResetReading();
+    OGROpenFileGDBSimpleSQLLayer::ResetReading();
 }
 
 /***********************************************************************/

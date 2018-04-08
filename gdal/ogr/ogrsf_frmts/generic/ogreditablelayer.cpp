@@ -77,7 +77,7 @@ OGREditableLayer::OGREditableLayer(
 
 OGREditableLayer::~OGREditableLayer()
 {
-    SyncToDisk();
+    OGREditableLayer::SyncToDisk();
 
     m_poEditableFeatureDefn->Release();
     delete m_poMemLayer;

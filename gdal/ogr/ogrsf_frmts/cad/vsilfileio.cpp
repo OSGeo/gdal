@@ -40,7 +40,7 @@ VSILFileIO::VSILFileIO(const char* pszFilePath) :
 VSILFileIO::~VSILFileIO()
 {
     if( m_oFileStream )
-        Close();
+        VSILFileIO::Close();
 }
 
 const char* VSILFileIO::ReadLine()

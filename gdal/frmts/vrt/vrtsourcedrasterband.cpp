@@ -122,7 +122,7 @@ VRTSourcedRasterBand::VRTSourcedRasterBand( GDALDataset *poDSIn, int nBandIn,
 VRTSourcedRasterBand::~VRTSourcedRasterBand()
 
 {
-    CloseDependentDatasets();
+    VRTSourcedRasterBand::CloseDependentDatasets();
     CSLDestroy(m_papszSourceList);
 }
 

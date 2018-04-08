@@ -91,7 +91,7 @@ TABSeamless::TABSeamless() :
  **********************************************************************/
 TABSeamless::~TABSeamless()
 {
-    Close();
+    TABSeamless::Close();
 }
 
 void TABSeamless::ResetReading()

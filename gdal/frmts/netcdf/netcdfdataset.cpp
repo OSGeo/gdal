@@ -126,7 +126,7 @@ CPLMutex *hNCMutex = nullptr;
 /* ==================================================================== */
 /************************************************************************/
 
-class netCDFRasterBand : public GDALPamRasterBand
+class netCDFRasterBand final: public GDALPamRasterBand
 {
     friend class netCDFDataset;
 
@@ -468,7 +468,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 #ifdef NCDF_DEBUG
     CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) read", dfNoData);
 #endif
-    SetNoDataValue(dfNoData);
+    netCDFRasterBand::SetNoDataValue(dfNoData);
 
     // Create Band Metadata.
     CreateBandMetadata(paDimIds, panExtraDimVarIds);
@@ -481,7 +481,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status = nc_get_att_double(cdfid, nZId, CF_ADD_OFFSET, &dfOffset);
         CPLDebug("GDAL_netCDF", "got add_offset=%.16g, status=%d",
                  dfOffset, status);
-        SetOffset(dfOffset);
+        netCDFRasterBand::SetOffset(dfOffset);
     }
 
     if( nc_inq_attid(cdfid, nZId, CF_SCALE_FACTOR, nullptr) == NC_NOERR )
@@ -489,7 +489,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         status = nc_get_att_double(cdfid, nZId, CF_SCALE_FACTOR, &dfScale);
         CPLDebug("GDAL_netCDF", "got scale_factor=%.16g, status=%d",
                  dfScale, status);
-        SetScale(dfScale);
+        netCDFRasterBand::SetScale(dfScale);
     }
 
     // Should we check for longitude values > 360?
@@ -498,7 +498,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
         NCDFIsVarLongitude(cdfid, nZId, nullptr);
 
     // Attempt to fetch the units attribute for the variable and set it.
-    SetUnitType(GetMetadataItem(CF_UNITS));
+    netCDFRasterBand::SetUnitType(GetMetadataItem(CF_UNITS));
 
     // Check for variable chunking (netcdf-4 only).
     // GDAL block size should be set to hdf5 chunk size.
@@ -751,7 +751,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 #ifdef NCDF_DEBUG
     CPLDebug("GDAL_netCDF", "SetNoDataValue(%f) default", dfNoData);
 #endif
-    SetNoDataValue(dfNoData);
+    netCDFRasterBand::SetNoDataValue(dfNoData);
 }
 
 /************************************************************************/
@@ -760,7 +760,7 @@ netCDFRasterBand::netCDFRasterBand( netCDFDataset *poNCDFDS,
 
 netCDFRasterBand::~netCDFRasterBand()
 {
-    FlushCache();
+    netCDFRasterBand::FlushCache();
     CPLFree(panBandZPos);
     CPLFree(panBandZLev);
 }

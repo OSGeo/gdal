@@ -70,7 +70,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader() :
     dfElevation(0.0),
     bControlTower(false)
 {
-    Rewind();
+    OGRXPlaneAptReader::Rewind();
 }
 
 /************************************************************************/
@@ -121,7 +121,7 @@ OGRXPlaneAptReader::OGRXPlaneAptReader( OGRXPlaneDataSource* poDataSourceIn ) :
     poDataSource->RegisterLayer(poTaxiwaySignLayer);
     poDataSource->RegisterLayer(poVASI_PAPI_WIGWAG_Layer);
 
-    Rewind();
+    OGRXPlaneAptReader::Rewind();
 }
 
 /************************************************************************/

@@ -43,7 +43,7 @@ extern "C" void GDALRegister_PDS4();
 /*                            PDS4Dataset                               */
 /************************************************************************/
 
-class PDS4Dataset : public RawDataset
+class PDS4Dataset final: public RawDataset
 {
     friend class PDS4RawRasterBand;
     friend class PDS4WrapperRasterBand;
@@ -106,7 +106,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class PDS4RawRasterBand: public RawRasterBand
+class PDS4RawRasterBand final: public RawRasterBand
 {
         friend class PDS4Dataset;
 
@@ -153,7 +153,7 @@ class PDS4RawRasterBand: public RawRasterBand
 /*      proxy for bands stored in other formats.                        */
 /* ==================================================================== */
 /************************************************************************/
-class PDS4WrapperRasterBand : public GDALProxyRasterBand
+class PDS4WrapperRasterBand final: public GDALProxyRasterBand
 {
         friend class PDS4Dataset;
 
@@ -198,7 +198,7 @@ class PDS4WrapperRasterBand : public GDALProxyRasterBand
 /*                             PDS4MaskBand                             */
 /* ==================================================================== */
 
-class PDS4MaskBand : public GDALRasterBand
+class PDS4MaskBand final: public GDALRasterBand
 {
     GDALRasterBand  *m_poBaseBand;
     void            *m_pBuffer;
@@ -700,13 +700,13 @@ PDS4Dataset::~PDS4Dataset()
 {
     if( m_bMustInitImageFile)
         CPL_IGNORE_RET_VAL(InitImageFile());
-    FlushCache();
+    PDS4Dataset::FlushCache();
     if( m_bWriteHeader )
         WriteHeader();
     if( m_fpImage )
         VSIFCloseL(m_fpImage);
     CSLDestroy(m_papszCreationOptions);
-    CloseDependentDatasets();
+    PDS4Dataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

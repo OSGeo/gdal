@@ -66,7 +66,7 @@ OGRIngresLayer::~OGRIngresLayer()
                   poFeatureDefn->GetName() );
     }
 
-    ResetReading();
+    OGRIngresLayer::ResetReading();
 
     if( poSRS != NULL )
         poSRS->Release();

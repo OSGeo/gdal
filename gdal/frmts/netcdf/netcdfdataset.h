@@ -752,7 +752,7 @@ class netCDFWriterConfiguration
 class netCDFRasterBand;
 class netCDFLayer;
 
-class netCDFDataset : public GDALPamDataset
+class netCDFDataset final: public GDALPamDataset
 {
     friend class netCDFRasterBand; //TMP
     friend class netCDFLayer;
@@ -893,7 +893,7 @@ class netCDFDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress, void * pProgressData );
 };
 
-class netCDFLayer: public OGRLayer
+class netCDFLayer final: public OGRLayer
 {
         typedef union
         {

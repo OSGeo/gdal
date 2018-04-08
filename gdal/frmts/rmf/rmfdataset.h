@@ -128,7 +128,7 @@ typedef struct
 /*                              RMFDataset                              */
 /************************************************************************/
 
-class RMFDataset : public GDALDataset
+class RMFDataset final: public GDALDataset
 {
     friend class RMFRasterBand;
 
@@ -197,7 +197,7 @@ class RMFDataset : public GDALDataset
 /*                            RMFRasterBand                             */
 /************************************************************************/
 
-class RMFRasterBand : public GDALRasterBand
+class RMFRasterBand final: public GDALRasterBand
 {
     friend class RMFDataset;
 

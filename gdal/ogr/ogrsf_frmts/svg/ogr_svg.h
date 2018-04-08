@@ -49,7 +49,7 @@ typedef enum
 /*                             OGRSVGLayer                              */
 /************************************************************************/
 
-class OGRSVGLayer : public OGRLayer
+class OGRSVGLayer final: public OGRLayer
 {
     OGRFeatureDefn*    poFeatureDefn;
     OGRSpatialReference *poSRS;
@@ -133,7 +133,7 @@ typedef enum
     SVG_VALIDITY_VALID
 } OGRSVGValidity;
 
-class OGRSVGDataSource : public OGRDataSource
+class OGRSVGDataSource final: public OGRDataSource
 {
     char*               pszName;
 

@@ -39,7 +39,7 @@ class OGRXPlaneDataSource;
 /*                             OGRXPlaneLayer                           */
 /************************************************************************/
 
-class OGRXPlaneLayer : public OGRLayer
+class OGRXPlaneLayer: public OGRLayer
 {
   private:
     int                nFID;
@@ -83,7 +83,7 @@ class OGRXPlaneLayer : public OGRLayer
 /*                           OGRXPlaneDataSource                        */
 /************************************************************************/
 
-class OGRXPlaneDataSource : public OGRDataSource
+class OGRXPlaneDataSource final: public OGRDataSource
 {
     char*               pszName;
 
@@ -117,7 +117,7 @@ class OGRXPlaneDataSource : public OGRDataSource
 /*                             OGRXPlaneDriver                          */
 /************************************************************************/
 
-class OGRXPlaneDriver : public OGRSFDriver
+class OGRXPlaneDriver final: public OGRSFDriver
 {
   public:
 

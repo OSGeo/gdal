@@ -269,7 +269,7 @@ class JPGDatasetCommon : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGDataset : public JPGDatasetCommon
+class JPGDataset final: public JPGDatasetCommon
 {
     GDALJPEGErrorStruct sErrorStruct;
 
@@ -321,7 +321,7 @@ class JPGDataset : public JPGDatasetCommon
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGRasterBand : public GDALPamRasterBand
+class JPGRasterBand final: public GDALPamRasterBand
 {
     friend class JPGDatasetCommon;
 
@@ -354,7 +354,7 @@ class JPGRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class JPGMaskBand : public GDALRasterBand
+class JPGMaskBand final: public GDALRasterBand
 {
   protected:
     virtual CPLErr IReadBlock( int, int, void * ) override;
@@ -368,7 +368,7 @@ class JPGMaskBand : public GDALRasterBand
 /*                         GDALRegister_JPEG()                          */
 /************************************************************************/
 
-class GDALJPGDriver: public GDALDriver
+class GDALJPGDriver final: public GDALDriver
 {
   public:
     GDALJPGDriver() {}

@@ -295,7 +295,7 @@ PNGDataset::PNGDataset() :
 PNGDataset::~PNGDataset()
 
 {
-    FlushCache();
+    PNGDataset::FlushCache();
 
     if( hPNG != nullptr )
         png_destroy_read_struct( &hPNG, &psPNGInfo, nullptr );

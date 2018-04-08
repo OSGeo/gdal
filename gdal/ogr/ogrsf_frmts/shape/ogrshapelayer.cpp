@@ -172,7 +172,7 @@ OGRShapeLayer::OGRShapeLayer( OGRShapeDataSource* poDSIn,
     {
         CPLDebug( "Shape", "Treating as encoding '%s'.", osEncoding.c_str() );
 
-        if( !TestCapability(OLCStringsAsUTF8) )
+        if( !OGRShapeLayer::TestCapability(OLCStringsAsUTF8) )
         {
             CPLDebug( "Shape", "Cannot recode from '%s'. Disabling recoding",
                       osEncoding.c_str() );

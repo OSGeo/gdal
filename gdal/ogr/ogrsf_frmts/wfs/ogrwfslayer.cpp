@@ -151,7 +151,7 @@ OGRWFSLayer::~OGRWFSLayer()
 
 {
     if( bInTransaction )
-        CommitTransaction();
+        OGRWFSLayer::CommitTransaction();
 
     if( poSRS != nullptr )
         poSRS->Release();

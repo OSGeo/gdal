@@ -208,7 +208,7 @@ class OGRMVTLayer : public OGRMVTLayerBase
 /*                        OGRMVTDirectoryLayer                          */
 /************************************************************************/
 
-class OGRMVTDirectoryLayer: public OGRMVTLayerBase
+class OGRMVTDirectoryLayer final: public OGRMVTLayerBase
 {
     OGRMVTDataset              *m_poDS;
     int                         m_nZ = 0;
@@ -268,7 +268,7 @@ class OGRMVTDirectoryLayer: public OGRMVTLayerBase
 /*                           OGRMVTDataset                              */
 /************************************************************************/
 
-class OGRMVTDataset : public GDALDataset
+class OGRMVTDataset final: public GDALDataset
 {
     friend class OGRMVTLayer;
     friend class OGRMVTDirectoryLayer;
@@ -1469,14 +1469,14 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
         }
         m_aosDirContent = StripDummyEntries(m_aosDirContent);
     }
-    ResetReading();
+    OGRMVTDirectoryLayer::ResetReading();
 
     if( psExtent )
     {
         m_sExtent = *psExtent;
     }
 
-    SetSpatialFilter(nullptr);
+    OGRMVTDirectoryLayer::SetSpatialFilter(nullptr);
 
     // If the metadata contains an empty fields object, this may be a sign
     // that it doesn't know the schema. In that case check if a tile has
@@ -1497,7 +1497,7 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
                 m_bJsonField = true;
             }
         }
-        ResetReading();
+        OGRMVTDirectoryLayer::ResetReading();
     }
 
     if( m_bJsonField )
@@ -3134,7 +3134,7 @@ GDALDataset *OGRMVTDataset::Open( GDALOpenInfo* poOpenInfo )
 
 class OGRMVTWriterLayer;
 
-class OGRMVTWriterDataset: public GDALDataset
+class OGRMVTWriterDataset final: public GDALDataset
 {
         class MVTFieldProperties
         {

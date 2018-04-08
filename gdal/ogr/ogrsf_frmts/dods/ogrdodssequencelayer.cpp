@@ -42,7 +42,10 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
                                             AttrTable *poOGRLayerInfoIn ) :
     OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
     pszSubSeqPath("profile"), // hardcode for now.
+    poSuperSeq(nullptr),
     iLastSuperSeq(-1),
+    nRecordCount(-1),
+    nSuperSeqCount(0),
     panSubSeqSize(nullptr)
 {
 /* -------------------------------------------------------------------- */

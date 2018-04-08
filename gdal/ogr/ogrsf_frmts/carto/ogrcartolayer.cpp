@@ -39,9 +39,13 @@ CPL_CVSID("$Id$")
 OGRCARTOLayer::OGRCARTOLayer(OGRCARTODataSource* poDSIn) :
     poDS(poDSIn),
     poFeatureDefn(nullptr),
+    bEOF(false),
+    nFetchedObjects(-1),
+    iNextInFetchedObjects(0),
+    m_nNextFID(0),
+    m_nNextOffset(0),
     poCachedObj(nullptr)
 {
-    ResetReading();
 }
 
 /************************************************************************/

@@ -63,7 +63,7 @@ OGRGPSBabelDataSource::~OGRGPSBabelDataSource()
     CPLFree(pszGPSBabelDriverName);
     CPLFree(pszFilename);
 
-    CloseDependentDatasets();
+    OGRGPSBabelDataSource::CloseDependentDatasets();
 
     if (!osTmpFileName.empty())
         VSIUnlink(osTmpFileName.c_str());

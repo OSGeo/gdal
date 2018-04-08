@@ -63,7 +63,7 @@ enum PDSLayout
 /* ==================================================================== */
 /************************************************************************/
 
-class PDSDataset : public RawDataset
+class PDSDataset final: public RawDataset
 {
     VSILFILE    *fpImage;  // image data file.
     GDALDataset *poCompressedDS;
@@ -146,11 +146,11 @@ PDSDataset::PDSDataset() :
 PDSDataset::~PDSDataset()
 
 {
-    FlushCache();
+    PDSDataset::FlushCache();
     if( fpImage != nullptr )
         VSIFCloseL( fpImage );
 
-    CloseDependentDatasets();
+    PDSDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

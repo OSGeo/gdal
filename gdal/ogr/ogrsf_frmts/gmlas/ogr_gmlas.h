@@ -105,7 +105,7 @@ class GMLASResourceCache
 /*                          GMLASXSDCache                               */
 /************************************************************************/
 
-class GMLASXSDCache: public GMLASResourceCache
+class GMLASXSDCache final: public GMLASResourceCache
 {
     public:
                              GMLASXSDCache();
@@ -152,7 +152,7 @@ class GMLASBaseEntityResolver: public EntityResolver,
 /*                          GMLASInputSource                            */
 /************************************************************************/
 
-class GMLASInputSource : public InputSource
+class GMLASInputSource final: public InputSource
 {
     VSILFILE *m_fp;
     bool      m_bOwnFP;
@@ -178,7 +178,7 @@ public:
 /*                            GMLASErrorHandler                         */
 /************************************************************************/
 
-class GMLASErrorHandler: public ErrorHandler
+class GMLASErrorHandler : public ErrorHandler
 {
     public:
         GMLASErrorHandler () : m_bFailed (false),
@@ -438,7 +438,7 @@ class GMLASConfiguration
 /*                          GMLASXLinkResolver                          */
 /************************************************************************/
 
-class GMLASXLinkResolver: public GMLASResourceCache
+class GMLASXLinkResolver final: public GMLASResourceCache
 {
         GMLASXLinkResolutionConf    m_oConf;
         int                         m_nGlobalResolutionTime;
@@ -1009,7 +1009,7 @@ class GMLASSchemaAnalyzer
 class OGRGMLASLayer;
 class GMLASReader;
 
-class OGRGMLASDataSource: public GDALDataset
+class OGRGMLASDataSource final: public GDALDataset
 {
         std::vector<OGRGMLASLayer*>    m_apoLayers;
         std::map<CPLString, CPLString> m_oMapURIToPrefix;
@@ -1156,7 +1156,7 @@ class OGRGMLASDataSource: public GDALDataset
 /*                             OGRGMLASLayer                            */
 /************************************************************************/
 
-class OGRGMLASLayer: public OGRLayer
+class OGRGMLASLayer final: public OGRLayer
 {
         friend class OGRGMLASDataSource;
 
@@ -1263,7 +1263,7 @@ class OGRGMLASLayer: public OGRLayer
 /*                              GMLASReader                             */
 /************************************************************************/
 
-class GMLASReader : public DefaultHandler
+class GMLASReader final: public DefaultHandler
 {
         /** Schema cache */
         GMLASXSDCache&           m_oCache;

@@ -80,7 +80,7 @@ class OGRWFSSortDesc
 
 class OGRWFSDataSource;
 
-class OGRWFSLayer : public OGRLayer
+class OGRWFSLayer final: public OGRLayer
 {
     OGRWFSDataSource*   poDS;
 
@@ -222,7 +222,7 @@ class OGRWFSLayer : public OGRLayer
 /*                          OGRWFSJoinLayer                             */
 /************************************************************************/
 
-class OGRWFSJoinLayer : public OGRLayer
+class OGRWFSJoinLayer final: public OGRLayer
 {
     OGRWFSDataSource   *poDS;
     OGRFeatureDefn     *poFeatureDefn;
@@ -282,7 +282,7 @@ class OGRWFSJoinLayer : public OGRLayer
 /*                           OGRWFSDataSource                           */
 /************************************************************************/
 
-class OGRWFSDataSource : public OGRDataSource
+class OGRWFSDataSource final: public OGRDataSource
 {
     char*               pszName;
     bool                bRewriteFile;

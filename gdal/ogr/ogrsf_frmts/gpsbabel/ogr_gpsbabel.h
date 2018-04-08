@@ -37,7 +37,7 @@
 /*                        OGRGPSBabelDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelDataSource : public OGRDataSource
+class OGRGPSBabelDataSource final: public OGRDataSource
 {
     int                 nLayers;
     OGRLayer*           apoLayers[5];
@@ -71,7 +71,7 @@ class OGRGPSBabelDataSource : public OGRDataSource
 /*                   OGRGPSBabelWriteDataSource                         */
 /************************************************************************/
 
-class OGRGPSBabelWriteDataSource : public OGRDataSource
+class OGRGPSBabelWriteDataSource final: public OGRDataSource
 {
     char               *pszName;
     char               *pszGPSBabelDriverName;

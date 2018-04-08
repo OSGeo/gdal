@@ -656,7 +656,7 @@ RasterliteDataset::RasterliteDataset( RasterliteDataset* poMainDSIn,
 
 RasterliteDataset::~RasterliteDataset()
 {
-    CloseDependentDatasets();
+    RasterliteDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

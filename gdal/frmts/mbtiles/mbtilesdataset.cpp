@@ -91,7 +91,7 @@ static OGRDataSourceH MBTILESOpenSQLiteDB(const char* pszFilename,
 /* ==================================================================== */
 /************************************************************************/
 
-class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDataset
+class MBTilesDataset final: public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDataset
 {
     friend class MBTilesBand;
     friend class MBTilesVectorLayer;
@@ -212,7 +212,7 @@ class MBTilesDataset : public GDALPamDataset, public GDALGPKGMBTilesLikePseudoDa
 /* ==================================================================== */
 /************************************************************************/
 
-class MBTilesVectorLayer: public OGRLayer
+class MBTilesVectorLayer final: public OGRLayer
 {
         MBTilesDataset* m_poDS = nullptr;
         OGRFeatureDefn* m_poFeatureDefn = nullptr;
@@ -273,7 +273,7 @@ class MBTilesVectorLayer: public OGRLayer
 /* ==================================================================== */
 /************************************************************************/
 
-class MBTilesBand: public GDALGPKGMBTilesLikeRasterBand
+class MBTilesBand final: public GDALGPKGMBTilesLikeRasterBand
 {
     friend class MBTilesDataset;
 
@@ -1403,7 +1403,7 @@ MBTilesVectorLayer::MBTilesVectorLayer(MBTilesDataset* poDS,
 
     m_nZoomLevel = m_poDS->m_nZoomLevel;
     m_bZoomLevelAuto = bZoomLevelFromSpatialFilter;
-    SetSpatialFilter(nullptr);
+    MBTilesVectorLayer::SetSpatialFilter(nullptr);
 
     // If the metadata contains an empty fields object, this may be a sign
     // that it doesn't know the schema. In that case check if a tile has
@@ -1423,7 +1423,7 @@ MBTilesVectorLayer::MBTilesVectorLayer(MBTilesDataset* poDS,
             }
             delete poSrcFeature;
         }
-        ResetReading();
+        MBTilesVectorLayer::ResetReading();
     }
 
     if( m_bJsonField )

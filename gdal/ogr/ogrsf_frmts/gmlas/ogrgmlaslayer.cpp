@@ -116,7 +116,7 @@ OGRGMLASLayer::OGRGMLASLayer( OGRGMLASDataSource* poDS,
     OGRLayer* poLayersMetadataLayer = m_poDS->GetLayersMetadataLayer();
     OGRFeature* poLayerDescFeature =
                         new OGRFeature(poLayersMetadataLayer->GetLayerDefn());
-    poLayerDescFeature->SetField( szLAYER_NAME, GetName() );
+    poLayerDescFeature->SetField( szLAYER_NAME, OGRGMLASLayer::GetName() );
     if( !m_oFC.GetParentXPath().empty() )
     {
         poLayerDescFeature->SetField( szLAYER_CATEGORY, szJUNCTION_TABLE );

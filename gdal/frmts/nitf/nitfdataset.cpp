@@ -127,7 +127,7 @@ NITFDataset::NITFDataset() :
 NITFDataset::~NITFDataset()
 
 {
-    CloseDependentDatasets();
+    NITFDataset::CloseDependentDatasets();
 
 /* -------------------------------------------------------------------- */
 /*      Free datastructures.                                            */
@@ -148,7 +148,7 @@ NITFDataset::~NITFDataset()
 
 int NITFDataset::CloseDependentDatasets()
 {
-    FlushCache();
+    NITFDataset::FlushCache();
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 

@@ -230,7 +230,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDDataset : public GDALJP2AbstractDataset
+class MrSIDDataset final: public GDALJP2AbstractDataset
 {
     friend class MrSIDRasterBand;
 
@@ -314,7 +314,7 @@ class MrSIDDataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDRasterBand : public GDALPamRasterBand
+class MrSIDRasterBand final: public GDALPamRasterBand
 {
     friend class MrSIDDataset;
 
@@ -813,7 +813,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
 
 MrSIDDataset::~MrSIDDataset()
 {
-    FlushCache();
+    MrSIDDataset::FlushCache();
 
 #ifdef MRSID_ESDK
     if ( poImageWriter )
@@ -840,7 +840,7 @@ MrSIDDataset::~MrSIDDataset()
 
     if ( psDefn )
         delete psDefn;
-    CloseDependentDatasets();
+    MrSIDDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

@@ -80,7 +80,7 @@ OGRHTFPolygonLayer::OGRHTFPolygonLayer( const char* pszFilename, int nZone,
     OGRFieldDefn oField5( "DEPTH_ACCURACY", OFTReal);
     poFeatureDefn->AddFieldDefn( &oField5 );
 
-    ResetReading();
+    OGRHTFPolygonLayer::ResetReading();
 }
 
 /************************************************************************/
@@ -202,7 +202,7 @@ OGRHTFSoundingLayer::OGRHTFSoundingLayer( const char* pszFilename, int nZone,
     }
     nNorthingIndex = nIndex;
 
-    ResetReading();
+    OGRHTFSoundingLayer::ResetReading();
 }
 
 /************************************************************************/

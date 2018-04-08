@@ -51,7 +51,7 @@ class RasterliteBand;
 /* ==================================================================== */
 /************************************************************************/
 
-class RasterliteDataset : public GDALPamDataset
+class RasterliteDataset final: public GDALPamDataset
 {
     friend class RasterliteBand;
 
@@ -130,7 +130,7 @@ class RasterliteDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RasterliteBand: public GDALPamRasterBand
+class RasterliteBand final: public GDALPamRasterBand
 {
     friend class RasterliteDataset;
 

@@ -297,7 +297,7 @@ OGRSEGYLayer::OGRSEGYLayer( const char* pszFilename,
     OGRFieldDefn oField( "SAMPLE_ARRAY", OFTRealList );
     poFeatureDefn->AddFieldDefn(&oField);
 
-    ResetReading();
+    OGRSEGYLayer::ResetReading();
 }
 
 /************************************************************************/
@@ -889,8 +889,6 @@ OGRSEGYHeaderLayer::OGRSEGYHeaderLayer( const char* pszLayerName,
                              SEGYHeaderFields[i].eType );
         poFeatureDefn->AddFieldDefn( &oField );
     }
-
-    ResetReading();
 }
 
 /************************************************************************/

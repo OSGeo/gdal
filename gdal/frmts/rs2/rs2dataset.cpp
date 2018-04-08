@@ -62,7 +62,7 @@ static bool IsValidXMLFile( const char *pszPath, const char *pszLut)
 /* ==================================================================== */
 /************************************************************************/
 
-class RS2Dataset : public GDALPamDataset
+class RS2Dataset final: public GDALPamDataset
 {
     CPLXMLNode *psProduct;
 
@@ -106,7 +106,7 @@ class RS2Dataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RS2RasterBand : public GDALPamRasterBand
+class RS2RasterBand final: public GDALPamRasterBand
 {
     GDALDataset     *poBandFile;
 
@@ -529,7 +529,7 @@ RS2Dataset::RS2Dataset() :
 RS2Dataset::~RS2Dataset()
 
 {
-    FlushCache();
+    RS2Dataset::FlushCache();
 
     CPLDestroyXMLNode( psProduct );
     CPLFree( pszProjection );
@@ -541,7 +541,7 @@ RS2Dataset::~RS2Dataset()
         CPLFree( pasGCPList );
     }
 
-    CloseDependentDatasets();
+    RS2Dataset::CloseDependentDatasets();
 
     CSLDestroy( papszSubDatasets );
     CSLDestroy( papszExtraFiles );

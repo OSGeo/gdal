@@ -464,7 +464,7 @@ ILWISDataset::ILWISDataset() :
 ILWISDataset::~ILWISDataset()
 
 {
-    FlushCache();
+    ILWISDataset::FlushCache();
     CPLFree( pszProjection );
 }
 

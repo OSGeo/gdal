@@ -53,7 +53,7 @@ OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services* poServices) :
 OGRDGNV8DataSource::~OGRDGNV8DataSource()
 
 {
-    FlushCache();
+    OGRDGNV8DataSource::FlushCache();
 
     for( int i = 0; i < m_nLayers; i++ )
         delete m_papoLayers[i];

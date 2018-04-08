@@ -442,7 +442,7 @@ WMTSDataset::WMTSDataset() :
 
 WMTSDataset::~WMTSDataset()
 {
-    CloseDependentDatasets();
+    WMTSDataset::CloseDependentDatasets();
     CSLDestroy(papszHTTPOptions);
 }
 
