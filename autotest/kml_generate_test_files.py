@@ -112,13 +112,13 @@ import os
 # ATC 76: Snippet
 # ATC 77: NetworkLink-Url
 
+
 def generate_libkml(filename):
 
     try:
         os.unlink(filename)
     except:
         pass
-
 
     content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
 eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
@@ -128,29 +128,29 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     gdal.Unlink("/vsimem/style.txt")
 
     ds_options = ['author_name=Even Rouault',
-                'author_uri=http://gdal.org',
-                'author_email=foo@bar.com',
-                'link=http://gdal.org',
-                'phonenumber=tel:12345678',
-                'NLC_MINREFRESHPERIOD=3600',
-                'NLC_MAXSESSIONLENGTH=-1',
-                'NLC_COOKIE=cookie',
-                'NLC_MESSAGE=message',
-                'NLC_LINKNAME=linkname',
-                'NLC_LINKDESCRIPTION=linkdescription',
-                'NLC_LINKSNIPPET=linksnippet',
-                'NLC_EXPIRES=2014-12-31T23:59:59Z',
-                'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
-                'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
+                  'author_uri=http://gdal.org',
+                  'author_email=foo@bar.com',
+                  'link=http://gdal.org',
+                  'phonenumber=tel:12345678',
+                  'NLC_MINREFRESHPERIOD=3600',
+                  'NLC_MAXSESSIONLENGTH=-1',
+                  'NLC_COOKIE=cookie',
+                  'NLC_MESSAGE=message',
+                  'NLC_LINKNAME=linkname',
+                  'NLC_LINKDESCRIPTION=linkdescription',
+                  'NLC_LINKSNIPPET=linksnippet',
+                  'NLC_EXPIRES=2014-12-31T23:59:59Z',
+                  'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png',
+                  'eiffel_tower_normal_balloonstyle_bgcolor=#FFFF00']
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename, options = ds_options)
 
     ds.SetStyleTable(style_table)
 
-    lyr_options = [ 'LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
-                    'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
-                    'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
-                    'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
-                    'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
+    lyr_options = ['LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
+                   'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
+                   'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000',
+                   'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
+                   'LISTSTYLE_ICON_HREF=http://www.gdal.org/gdalicon.png']
     lyr = ds.CreateLayer('test', options = lyr_options)
     lyr.CreateField(ogr.FieldDefn('name', ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn('description', ogr.OFTString))
@@ -199,7 +199,6 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxwidth", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxheight", ogr.OFTInteger))
 
-
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('name', 'Eiffel tower')
     feat.SetField('description', 'Famous Paris attraction. Built by Gustave Eiffel in 1889.')
@@ -229,13 +228,12 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetStyleString('BRUSH(fc:#0000FF)')
     lyr.CreateFeature(feat)
 
-
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('name', 'Champ de Mars')
     feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((2.29413 48.85703,2.29606 48.85847,2.29837 48.85679,2.29676 48.85543,2.29413 48.85703)),((2.29656 48.85504,2.29929 48.85674,2.30359 48.85364,2.30164 48.85226,2.29656 48.85504)))'))
     lyr.CreateFeature(feat)
 
-    feat = ogr.Feature( lyr.GetLayerDefn() )
+    feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825 10)'))
     feat.SetField("tilt", 75)
     feat.SetField("roll", 10)
@@ -305,9 +303,9 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     # feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT EMPTY,POINT(1 2))'))
     # lyr.CreateFeature(feat)
 
-    lyr_options = [ 'CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
-                    'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
-                    'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet' ]
+    lyr_options = ['CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
+                   'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
+                   'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
     ds.CreateLayer('test2', options = lyr_options)
 
     gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')
@@ -330,6 +328,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 # ATC 22: Update - targetHref
 # ATC 23: Identification of update target
 
+
 def generate_libkml_update(filename):
     try:
         os.unlink(filename)
@@ -337,7 +336,7 @@ def generate_libkml_update(filename):
         pass
 
     ds = ogr.GetDriverByName('LIBKML').CreateDataSource(filename,
-        options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
+         options = ['UPDATE_TARGETHREF=http://even.rouault.free.fr/kml/gdal_2.1/test_ogrlibkml.kml'])
     lyr = ds.CreateLayer('test')
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(100)
@@ -357,10 +356,11 @@ def generate_libkml_update(filename):
 # ATC 33: GroundOverlay
 # ATC 53: GroundOverlay - minimal content
 
+
 def generate_kmlsuperoverlay(filename):
 
-    src_ds = gdal.GetDriverByName('MEM').Create('',512,256,3)
-    src_ds.SetGeoTransform([-180,360./512,0,90,0,-180./256])
+    src_ds = gdal.GetDriverByName('MEM').Create('', 512, 256, 3)
+    src_ds.SetGeoTransform([-180, 360. / 512, 0, 90, 0, -180. / 256])
     ds = gdal.GetDriverByName('KMLSuperOverlay').CreateCopy(filename, src_ds)
     del ds
     src_ds = None

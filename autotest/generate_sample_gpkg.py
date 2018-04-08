@@ -3,10 +3,10 @@
 #
 # Purpose:  Generate GPKG sample file
 # Author:   Even Rouault <even.rouault at spatialys.com>
-# 
+#
 ###############################################################################
 # Copyright (c) 2014-2017, Even Rouault <even.rouault at spatialys.com>
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
 # to deal in the Software without restriction, including without limitation
@@ -16,7 +16,7 @@
 #
 # The above copyright notice and this permission notice shall be included
 # in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 # OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -47,11 +47,10 @@ elev_src_ds = gdal.OpenEx('https://raw.githubusercontent.com/OSGeo/gdal/master/a
 gdal.SetConfigOption('CREATE_METADATA_TABLES', 'NO')
 
 for (out_filename, options) in [
-            ('gdal_sample_v1.2_no_extensions.gpkg', {}),
-            ('gdal_sample_v1.2_no_extensions_with_gpkg_ogr_contents.gpkg', {'gpkg_ogr_contents':True}),
-            ('gdal_sample_v1.2_spatial_index_extension.gpkg', {'spi':True}),
-            ('gdal_sample_v1.2_spi_nonlinear_webp_elevation.gpkg', {'spi':True, 'nonlinear':True, 'webp':True, 'elevation':True})
-    ]:
+        ('gdal_sample_v1.2_no_extensions.gpkg', {}),
+        ('gdal_sample_v1.2_no_extensions_with_gpkg_ogr_contents.gpkg', {'gpkg_ogr_contents': True}),
+        ('gdal_sample_v1.2_spatial_index_extension.gpkg', {'spi': True}),
+        ('gdal_sample_v1.2_spi_nonlinear_webp_elevation.gpkg', {'spi': True, 'nonlinear': True, 'webp': True, 'elevation': True})]:
 
     dataset_options = ['VERSION=1.2']
     if not('gpkg_ogr_contents' in options and options['gpkg_ogr_contents']):
@@ -181,7 +180,6 @@ for (out_filename, options) in [
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
 
-
     lyr = ds.CreateLayer('point3d', geom_type = ogr.wkbPoint25D, options = layer_options)
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2 3)'))
     lyr.CreateFeature(feat)
@@ -235,7 +233,6 @@ for (out_filename, options) in [
     # Null geometry
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
-
 
     lyr = ds.CreateLayer('geomcollection3d', geom_type = ogr.wkbGeometryCollection25D, options = layer_options)
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -329,7 +326,7 @@ for (out_filename, options) in [
 
     ds = None
 
-    raster_options =  ['APPEND_SUBDATASET=YES']
+    raster_options = ['APPEND_SUBDATASET=YES']
 
     gdal.GetDriverByName('GPKG').CreateCopy(out_filename, byte_src_ds,
                                             options = raster_options + ['TILE_FORMAT=PNG', 'RASTER_TABLE=byte_png'])
