@@ -498,7 +498,7 @@ GDALDataset* NUMPYDataset::Open( PyArrayObject *psArray )
         poDS->SetBand( iBand+1,
                        (GDALRasterBand *)
                        MEMCreateRasterBandEx( poDS, iBand+1,
-                                (GByte *) psArray->data + nBandOffset*iBand,
+                                (GByte *) PyArray_DATA(psArray) + nBandOffset*iBand,
                                           eType, nPixelOffset, nLineOffset,
                                           FALSE ) );
     }
@@ -632,7 +632,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
 
     return  GDALRasterIOEx( band, (bWrite) ? GF_Write : GF_Read, nXOff, nYOff, nXSize, nYSize,
-                          psArray->data, nxsize, nysize,
+                          PyArray_DATA(psArray), nxsize, nysize,
                           ntype, pixel_space, line_space, &sExtraArg );
   }
 %}
@@ -689,7 +689,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     sExtraArg.pProgressData = callback_data;
 
     return  GDALDatasetRasterIOEx( ds, (bWrite) ? GF_Write : GF_Read, xoff, yoff, xsize, ysize,
-                                   psArray->data, nxsize, nysize,
+                                   PyArray_DATA(psArray), nxsize, nysize,
                                    ntype,
                                    bandsize, NULL,
                                    pixel_space, line_space, band_space, &sExtraArg );
