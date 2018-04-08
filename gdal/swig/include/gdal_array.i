@@ -977,7 +977,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     {
         pOutArray = PyArray_SimpleNew(1, &dims, NPY_INT32);
         if( GDALRATValuesIOAsInteger(poRAT, GF_Read, nField, nStart, nLength,
-                        (int*)PyArray_DATA(pOutArray)) != CE_None)
+                        (int*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
         {
             Py_DECREF(pOutArray);
             Py_RETURN_NONE;
@@ -987,7 +987,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     {
         pOutArray = PyArray_SimpleNew(1, &dims, NPY_DOUBLE);
         if( GDALRATValuesIOAsDouble(poRAT, GF_Read, nField, nStart, nLength,
-                        (double*)PyArray_DATA(pOutArray)) != CE_None)
+                        (double*)PyArray_DATA((PyArrayObject *) pOutArray)) != CE_None)
         {
             Py_DECREF(pOutArray);
             Py_RETURN_NONE;
@@ -1043,13 +1043,13 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
                 // we use strncpy so that we don't go over nMaxLen
                 // which we would if the null char is copied
                 // (which we don't want as numpy 'knows' to interpret the string as nMaxLen long)
-                strncpy((char*)PyArray_GETPTR1(pOutArray, n), papszStringList[n], nMaxLen);
+                strncpy((char*)PyArray_GETPTR1((PyArrayObject *) pOutArray, n), papszStringList[n], nMaxLen);
             }
         }
         else
         {
             // so there isn't rubbish in the 1 char strings
-            PyArray_FILLWBYTE(pOutArray, 0);
+            PyArray_FILLWBYTE((PyArrayObject *) pOutArray, 0);
         }
 
         // free strings
