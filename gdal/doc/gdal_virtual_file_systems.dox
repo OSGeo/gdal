@@ -264,7 +264,8 @@ closed.
 
 In addition, a global least-recently-used cache of 16 MB shared among all
 downloaded content is enabled by default, and content in it may be reused
-after a file handle has been closed and reopen. Starting with GDAL 2.3, the
+after a file handle has been closed and reopen, during the life-time of the
+process or until VSICurlClearCache() is called. Starting with GDAL 2.3, the
 size of this global LRU cache can be modified by setting the configuration
 option CPL_VSIL_CURL_CACHE_SIZE (in bytes).
 
