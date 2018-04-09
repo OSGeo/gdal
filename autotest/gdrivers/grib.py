@@ -1252,7 +1252,7 @@ def grib_grib2_write_data_encodings():
         nd = out_ds.GetRasterBand(1).GetNoDataValue()
         out_ds = None
         gdal.Unlink(tmpfilename)
-        if type(expected_cs) != type((1,)):
+        if not isinstance(expected_cs, tuple):
             expected_cs = (expected_cs,)
         if cs not in expected_cs:
             gdaltest.post_reason('did not get expected checksum for %s, %s' % (str(filename), str(options)))
@@ -1260,7 +1260,7 @@ def grib_grib2_write_data_encodings():
             return 'fail'
 
         if section5_template_number in (GS5_CMPLX, GS5_CMPLXSEC):
-            if type(filename) == type(''):
+            if isinstance(filename, str):
                 ref_ds = gdal.Open(filename)
             else:
                 ref_ds = filename
@@ -1407,7 +1407,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
 
         out_ds = None
         gdal.Unlink(tmpfilename)
-        if type(expected_cs) != type((1,)):
+        if not isinstance(expected_cs, tuple):
             expected_cs = (expected_cs,)
         if cs not in expected_cs:
             gdaltest.post_reason('did not get expected checksum for %s, %s' % (str(filename), str(options)))

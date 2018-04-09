@@ -692,7 +692,7 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *& hStmt)
   \brief Execute SQL statement (SQLITE only)
 
   \param pszSQLCommand SQL command to execute
-  \param bQuiet true to print debug message on failure instead of error message
+  \param eErrLevel if equal to CE_None, no error message will be emitted on failure.
 
   \return OGRERR_NONE on success or OGRERR_FAILURE on failure
 */
