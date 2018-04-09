@@ -61,7 +61,8 @@ def ogr_wasp_create_ds():
 
 def ogr_wasp_elevation_from_linestring_z():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
@@ -91,7 +92,8 @@ def ogr_wasp_elevation_from_linestring_z():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     for line in f:
@@ -119,17 +121,20 @@ def ogr_wasp_elevation_from_linestring_z():
 
 def ogr_wasp_elevation_from_linestring_z_toler():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
     ref = osr.SpatialReference()
     ref.ImportFromProj4('+proj=lcc +lat_1=46.8 +lat_0=46.8 +lon_0=0 +k_0=0.99987742 +x_0=600000 +y_0=2200000 +a=6378249.2 +b=6356514.999978254 +pm=2.337229167 +units=m +no_defs')
 
-    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
+    if not ogrtest.have_geos() :
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           ref,
                                           options = ['WASP_TOLERANCE=.1'],
                                           geom_type=ogr.wkbLineString25D )
-    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+    if not ogrtest.have_geos() :
+        gdal.PopErrorHandler()
 
     if layer == None:
         gdaltest.post_reason( 'unable to create layer')
@@ -152,7 +157,8 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     for line in f:
@@ -185,7 +191,8 @@ def ogr_wasp_elevation_from_linestring_z_toler():
 
 def ogr_wasp_elevation_from_linestring_field():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=elevation'],
@@ -213,7 +220,8 @@ def ogr_wasp_elevation_from_linestring_field():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     for line in f:
@@ -237,7 +245,8 @@ def ogr_wasp_elevation_from_linestring_field():
 
 def ogr_wasp_roughness_from_linestring_fields():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=z_left,z_right'],
@@ -269,7 +278,8 @@ def ogr_wasp_roughness_from_linestring_fields():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     for line in f:
@@ -297,12 +307,15 @@ def ogr_wasp_roughness_from_linestring_fields():
 
 def ogr_wasp_roughness_from_polygon_z():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
-    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
+    if not ogrtest.have_geos() :
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           geom_type=ogr.wkbPolygon25D )
-    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+    if not ogrtest.have_geos() :
+        gdal.PopErrorHandler()
 
     if layer == None:
         if ogrtest.have_geos():
@@ -331,7 +344,8 @@ def ogr_wasp_roughness_from_polygon_z():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     res = set()
@@ -341,8 +355,10 @@ def ogr_wasp_roughness_from_polygon_z():
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d' % int(n) )
                 return 'fail'
-            if float(r) > float(l) : res.add((float(l), float(r)))
-            else   : res.add((float(r), float(l)))
+            if float(r) > float(l) :
+                res.add((float(l), float(r)))
+            else   :
+                res.add((float(r), float(l)))
             j+=1
         i+=1
 
@@ -361,13 +377,16 @@ def ogr_wasp_roughness_from_polygon_z():
 
 def ogr_wasp_roughness_from_polygon_field():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
-    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
+    if not ogrtest.have_geos() :
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           options = ['WASP_FIELDS=roughness'],
                                           geom_type=ogr.wkbPolygon )
-    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+    if not ogrtest.have_geos() :
+        gdal.PopErrorHandler()
 
     if layer == None:
         if ogrtest.have_geos():
@@ -398,7 +417,8 @@ def ogr_wasp_roughness_from_polygon_field():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     res = set()
@@ -408,8 +428,10 @@ def ogr_wasp_roughness_from_polygon_field():
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d' % int(n) )
                 return 'fail'
-            if float(r) > float(l) : res.add((float(l), float(r)))
-            else   : res.add((float(r), float(l)))
+            if float(r) > float(l) :
+                res.add((float(l), float(r)))
+            else   :
+                res.add((float(r), float(l)))
             j+=1
         i+=1
 
@@ -430,12 +452,15 @@ def ogr_wasp_roughness_from_polygon_field():
 
 def ogr_wasp_merge():
 
-    if ogr_wasp_create_ds() != 'success': return 'skip'
+    if ogr_wasp_create_ds() != 'success':
+        return 'skip'
 
-    if not ogrtest.have_geos() : gdal.PushErrorHandler('CPLQuietErrorHandler')
+    if not ogrtest.have_geos() :
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
     layer = gdaltest.wasp_ds.CreateLayer('mylayer',
                                           geom_type=ogr.wkbPolygon25D )
-    if not ogrtest.have_geos() : gdal.PopErrorHandler()
+    if not ogrtest.have_geos() :
+        gdal.PopErrorHandler()
 
     if layer == None:
         if ogrtest.have_geos():
@@ -465,7 +490,8 @@ def ogr_wasp_merge():
     del layer
 
     f = open('tmp.map')
-    for i in range(4): f.readline()
+    for i in range(4):
+        f.readline()
     i = 0
     j = 0
     res = []
@@ -475,8 +501,10 @@ def ogr_wasp_merge():
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d (unwanted merge ?)' % int(n) )
                 return 'fail'
-            if float(r) > float(l) : res.append((float(l), float(r)))
-            else   : res.append((float(r), float(l)))
+            if float(r) > float(l) :
+                res.append((float(l), float(r)))
+            else   :
+                res.append((float(r), float(l)))
             j+=1
         i+=1
 
@@ -493,7 +521,8 @@ def ogr_wasp_merge():
 # Read map file
 
 def ogr_wasp_reading():
-    if ogr_wasp_elevation_from_linestring_z() != 'success': return 'skip'
+    if ogr_wasp_elevation_from_linestring_z() != 'success':
+        return 'skip'
 
     gdaltest.wasp_ds = None
 

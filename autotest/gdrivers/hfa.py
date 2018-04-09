@@ -92,7 +92,8 @@ def hfa_histwrite():
 
     # Remove .aux.xml file as histogram can be written in it
     tmpAuxXml = 'tmp/work.img.aux.xml'
-    if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
+    if os.path.exists(tmpAuxXml):
+        os.remove(tmpAuxXml)
 
     ds = gdal.Open('tmp/work.img')
     md = ds.GetRasterBand(1).GetMetadata()
@@ -1373,7 +1374,8 @@ def hfa_createcopy_statistics():
     out_ds = gdal.GetDriverByName('HFA').CreateCopy( '/vsimem/byte.img', ds_src, options = ['STATISTICS=YES'] )
     del out_ds
     ds_src = None
-    if os.path.exists(tmpAuxXml): os.remove(tmpAuxXml)
+    if os.path.exists(tmpAuxXml):
+        os.remove(tmpAuxXml)
 
     gdal.Unlink( '/vsimem/byte.img.aux.xml' )
 

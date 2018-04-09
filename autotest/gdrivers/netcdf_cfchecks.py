@@ -427,7 +427,8 @@ class CFChecker:
     rc=1
 
     # Check global attributes
-    if not self.chkGlobalAttributes(): rc=0
+    if not self.chkGlobalAttributes():
+        rc=0
 
     (coordVars,auxCoordVars,boundsVars,climatologyVars,gridMappingVars)=self.getCoordinateDataVars()
     self.coordVars = coordVars
@@ -468,48 +469,67 @@ class CFChecker:
 
         if var not in axes:
             # Non-coordinate variable
-            if not self.chkDimensions(var,allCoordVars): rc=0
+            if not self.chkDimensions(var,allCoordVars):
+                rc=0
 
-        if not self.chkDescription(var): rc=0
+        if not self.chkDescription(var):
+            rc=0
 
         for attribute in self.f[var].attributes.keys():
-            if not self.chkAttribute(attribute,var,allCoordVars): rc=0
+            if not self.chkAttribute(attribute,var,allCoordVars):
+                rc=0
 
-        if not self.chkUnits(var,allCoordVars): rc=0
+        if not self.chkUnits(var,allCoordVars):
+            rc=0
 
-        if not self.chkValidMinMaxRange(var): rc=0
+        if not self.chkValidMinMaxRange(var):
+            rc=0
 
-        if not self.chk_FillValue(var): rc=0
+        if not self.chk_FillValue(var):
+            rc=0
 
-        if not self.chkAxisAttribute(var): rc=0
+        if not self.chkAxisAttribute(var):
+            rc=0
 
-        if not self.chkPositiveAttribute(var): rc=0
+        if not self.chkPositiveAttribute(var):
+            rc=0
 
-        if not self.chkCellMethods(var): rc=0
+        if not self.chkCellMethods(var):
+            rc=0
 
-        if not self.chkCellMeasures(var): rc=0
+        if not self.chkCellMeasures(var):
+            rc=0
 
-        if not self.chkFormulaTerms(var,allCoordVars): rc=0
+        if not self.chkFormulaTerms(var,allCoordVars):
+            rc=0
 
-        if not self.chkCompressAttr(var): rc=0
+        if not self.chkCompressAttr(var):
+            rc=0
 
-        if not self.chkPackedData(var): rc=0
+        if not self.chkPackedData(var):
+            rc=0
 
         if self.version >= vn1_3:
             # Additional conformance checks from CF-1.3 onwards
-            if not self.chkFlags(var): rc=0
+            if not self.chkFlags(var):
+                rc=0
 
         if self.version >= vn1_6:
             # Additional conformance checks from CF-1.6 onwards
-            if not self.chkCFRole(var): rc=0
-            if not self.chkRaggedArray(var): rc=0
+            if not self.chkCFRole(var):
+                rc=0
+            if not self.chkRaggedArray(var):
+                rc=0
 
         if var in coordVars:
-            if not self.chkMultiDimCoord(var, axes): rc=0
-            if not self.chkValuesMonotonic(var): rc=0
+            if not self.chkMultiDimCoord(var, axes):
+                rc=0
+            if not self.chkValuesMonotonic(var):
+                rc=0
 
         if var in gridMappingVars:
-            if not self.chkGridMappingVar(var) : rc=0
+            if not self.chkGridMappingVar(var) :
+                rc=0
 
         #print "Axes:",axes
         if var in axes:
@@ -522,7 +542,8 @@ class CFChecker:
                 self.warn = self.warn+1
             else:
                 if self.f[var].isTime():
-                    if not self.chkTimeVariableAttributes(var): rc=0
+                    if not self.chkTimeVariableAttributes(var):
+                        rc=0
 
     if rc:
         pass
@@ -1220,7 +1241,8 @@ class CFChecker:
                     else:
                         interp=self.getInterpretation(self.f[dim].units)
 
-                    if not interp: raise ValueError
+                    if not interp:
+                        raise ValueError
                     pos=order.index(interp)
                 else:
                     # No axis or units attribute so can't determine interpretation of variable
