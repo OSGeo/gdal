@@ -48,7 +48,7 @@ Options:
 
 '''
 
-import cdms2 as cdms, re, string, types, numpy
+import cdms2 as cdms, re, string, numpy
 import sys
 
 from cdms2.axis import FileAxis
@@ -1144,7 +1144,7 @@ class CFChecker:
 
     for attribute in ['title','history','institution','source','reference','comment']:
         if attribute in self.f.attributes:
-            if type(self.f.attributes[attribute]) != types.StringType:
+            if not isinstance(self.f.attributes[attribute], str):
                 print("ERROR (2.6.2): Global attribute",attribute,"must be of type 'String'")
                 self.err = self.err+1
     return rc
@@ -1343,13 +1343,13 @@ class CFChecker:
 
         attrType=type(value)
 
-        if attrType == types.StringType:
+        if isinstance(value, str):
             attrType='S'
-        elif attrType == types.IntType or attrType == types.FloatType:
+        elif isinstance(value, int) or isinstance(value, float):
             attrType='N'
-        elif attrType == type(numpy.array([])):
+        elif isinstance(value, numpy.ndarray):
             attrType='N'
-        elif attrType == types.NoneType:
+        elif isinstance(value, type(None)):
             #attrType=self.AttrList[attribute][0]
             attrType='NoneType'
         else:
@@ -1864,7 +1864,7 @@ class CFChecker:
       if 'units' in var.attributes and var.attributes['units'] != '':
           # Type of units is a string
           units = var.attributes['units']
-          if type(units) != types.StringType:
+          if not isinstance(units, str):
               print("ERROR (3.1): units attribute must be of type 'String'")
               self.err = self.err+1
               # units not a string so no point carrying out further tests
@@ -2471,7 +2471,7 @@ class CFChecker:
   #-----------------------
   def getType(self, arg):
   #-----------------------
-      if type(arg) == type(numpy.array([])):
+      if isinstance(arg, numpy.ndarray):
           return "array"
 
       elif type(arg) == str:
