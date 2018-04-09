@@ -83,5 +83,6 @@ def check(filename):
                 else:
                     ok_set[url] = True
 
+
 for filename in sys.argv[1:]:
     check(filename)

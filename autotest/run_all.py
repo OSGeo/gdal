@@ -33,18 +33,18 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append( 'pymod' )
+sys.path.append('pymod')
 import gdaltest
 from osgeo import gdal
 
-all_test_list = [ 'ogr', 'gcore', 'gdrivers', 'osr' , 'alg', 'gnm', 'utilities', 'pyscripts' ]
+all_test_list = ['ogr', 'gcore', 'gdrivers', 'osr', 'alg', 'gnm', 'utilities', 'pyscripts']
 
 run_as_external = False
 
 test_list = []
 
 for arg in gdaltest.argv[1:]:
-    if arg  == '-l':
+    if arg == '-l':
         print('List of GDAL Autotest modules')
         for test in all_test_list:
             print('* ' + test)
@@ -59,7 +59,7 @@ for arg in gdaltest.argv[1:]:
         print('\t-run_as_external - run each test script in a dedicated Python instance')
         sys.exit(0)
     else:
-        test_list.append( arg )
+        test_list.append(arg)
 
 if len(test_list) == 0:
     test_list = all_test_list
@@ -67,11 +67,10 @@ if len(test_list) == 0:
 # we set ECW to not resolve projection and datum strings to get 3.x behavior.
 gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
 
-gdaltest.setup_run( 'gdalautotest_all' )
+gdaltest.setup_run('gdalautotest_all')
 
-gdaltest.run_all( test_list, run_as_external = run_as_external )
+gdaltest.run_all(test_list, run_as_external=run_as_external)
 
 errors = gdaltest.summarize()
 
-sys.exit( errors )
-
+sys.exit(errors)
