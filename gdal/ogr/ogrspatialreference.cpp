@@ -1590,7 +1590,7 @@ double OSRGetPrimeMeridian( OGRSpatialReferenceH hSRS, char **ppszName )
  * \brief Set geographic coordinate system.
  *
  * This method is used to set the datum, ellipsoid, prime meridian and
- * angular units for a geographic coordinate system.  It can be used on it's
+ * angular units for a geographic coordinate system.  It can be used on its
  * own to establish a geographic spatial reference, or applied to a
  * projected coordinate system to establish the underlying geographic
  * coordinate system.
@@ -2051,7 +2051,7 @@ OGRErr OSRCopyGeogCSFrom( OGRSpatialReferenceH hSRS,
  * XML and perhaps a simplified "minilanguage" for indicating common UTM and
  * State Plane definitions.
  *
- * This method is intended to be flexible, but by it's nature it is
+ * This method is intended to be flexible, but by its nature it is
  * imprecise as it must guess information about the format intended.  When
  * possible applications should call the specific method appropriate if the
  * input is known to be in a particular format.

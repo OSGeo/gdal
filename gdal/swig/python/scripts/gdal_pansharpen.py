@@ -215,7 +215,8 @@ def gdal_pansharpen(argv):
         vrt_xml += """      <AlgorithmOptions>\n"""
         vrt_xml += """        <Weights>"""
         for i in range(len(weights)):
-            if i > 0: vrt_xml += ","
+            if i > 0:
+                vrt_xml += ","
             vrt_xml += "%.16g" % weights[i]
         vrt_xml += "</Weights>\n"
         vrt_xml += """      </AlgorithmOptions>\n"""

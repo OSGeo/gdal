@@ -169,8 +169,10 @@ def run_tests( test_list ):
         end_time = time.time()
 
     after_vsimem = gdal.ReadDirRecursive('/vsimem/')
-    if before_vsimem is None: before_vsimem = []
-    if after_vsimem is None: after_vsimem = []
+    if before_vsimem is None:
+        before_vsimem = []
+    if after_vsimem is None:
+        after_vsimem = []
     if len(after_vsimem) > len(before_vsimem):
         failure_counter = failure_counter + 1
         print('Temporary /vsimem/ files remaining: %s' % str(after_vsimem))
@@ -382,7 +384,7 @@ class GDALTest:
         self.band = band
         self.chksum = chksum
         if chksum_after_reopening is not None:
-            if type(chksum_after_reopening) == type([]):
+            if isinstance(chksum_after_reopening, list):
                 self.chksum_after_reopening = chksum_after_reopening
             else:
                 self.chksum_after_reopening = [ chksum_after_reopening ]

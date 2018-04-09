@@ -1822,7 +1822,7 @@ HKVDataset::CreateCopy( const char * pszFilename,
           CPLFree(tempGeoTransform);
 
           // georef file will be saved automatically when dataset is deleted
-          // because SetProjection sets a flag to indicate it's necessary.
+          // because SetProjection sets a flag to indicate it is necessary.
     }
     else
     {

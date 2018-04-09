@@ -31,7 +31,7 @@ from osgeo import gdal
 import gdalnumeric
 try:
     import numpy
-except:
+except ImportError:
     import Numeric as numpy
 
 

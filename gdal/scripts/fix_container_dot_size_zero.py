@@ -121,8 +121,7 @@ while True:
             extra_space = ' '
         pos_cur = find_start_identifier_pos(content, pos - 1)
         pos_cur -= 1
-        while content[pos_cur] == ' ' or content[pos_cur] == '\n' or \
-              content[pos_cur] == '\t':
+        while content[pos_cur] in [' ', '\n', '\t']:
             pos_cur -= 1
         pos_cur += 1
         if (content[pos_after:].startswith(' ?') or \

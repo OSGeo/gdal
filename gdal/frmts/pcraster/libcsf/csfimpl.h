@@ -123,7 +123,7 @@ typedef struct ATTR_CNTRL_BLOCK
 #define ATTR_NOT_USED 0x0
 	/* value of attrId field if an attribute is deleted */
 	/* attrOffset and attrSize must remain valid; so a new
-	 * attribute can be inserted if it's size is equal or
+	 * attribute can be inserted if its size is equal or
 	 * smaller then attrSize
 	 */
 

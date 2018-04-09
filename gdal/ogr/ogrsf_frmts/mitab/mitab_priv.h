@@ -676,8 +676,8 @@ class TABMAPObjMultiPoint final : public TABMAPObjHdrWithCoord
     GInt32      m_nComprOrgX;   /* Present only in compressed coord. case */
     GInt32      m_nComprOrgY;
     GByte       m_nSymbolId;
-    GInt32      m_nLabelX;      /* Not sure if it's a label point, but */
-    GInt32      m_nLabelY;      /* it's similar to what we find in PLINE */
+    GInt32      m_nLabelX;      /* Not sure if it is a label point, but */
+    GInt32      m_nLabelY;      /* it is similar to what we find in PLINE */
 
     TABMAPObjMultiPoint():
         m_nNumPoints(0),

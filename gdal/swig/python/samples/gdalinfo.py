@@ -155,12 +155,12 @@ def main( argv = None ):
 # --------------------------------------------------------------------
 #      Report general info.
 # --------------------------------------------------------------------
-    hDriver = hDataset.GetDriver();
+    hDriver = hDataset.GetDriver()
     print( "Driver: %s/%s" % ( \
             hDriver.ShortName, \
             hDriver.LongName ))
 
-    papszFileList = hDataset.GetFileList();
+    papszFileList = hDataset.GetFileList()
     if papszFileList is None or len(papszFileList) == 0:
         print( "Files: none associated" )
     else:
@@ -322,17 +322,17 @@ def main( argv = None ):
 # --------------------------------------------------------------------
     print( "Corner Coordinates:" )
     GDALInfoReportCorner( hDataset, hTransform, "Upper Left", \
-                          0.0, 0.0 );
+                          0.0, 0.0 )
     GDALInfoReportCorner( hDataset, hTransform, "Lower Left", \
-                          0.0, hDataset.RasterYSize);
+                          0.0, hDataset.RasterYSize)
     GDALInfoReportCorner( hDataset, hTransform, "Upper Right", \
-                          hDataset.RasterXSize, 0.0 );
+                          hDataset.RasterXSize, 0.0 )
     GDALInfoReportCorner( hDataset, hTransform, "Lower Right", \
                           hDataset.RasterXSize, \
-                          hDataset.RasterYSize );
+                          hDataset.RasterYSize )
     GDALInfoReportCorner( hDataset, hTransform, "Center", \
                           hDataset.RasterXSize/2.0, \
-                          hDataset.RasterYSize/2.0 );
+                          hDataset.RasterYSize/2.0 )
 
 # ====================================================================
 #      Loop over bands.
@@ -422,7 +422,7 @@ def main( argv = None ):
                 if iOverview != 0 :
                     line = line +  ", "
 
-                hOverview = hBand.GetOverview( iOverview );
+                hOverview = hBand.GetOverview( iOverview )
                 if hOverview is not None:
 
                     line = line + ( "%dx%d" % (hOverview.XSize, hOverview.YSize))
@@ -448,7 +448,7 @@ def main( argv = None ):
                     if iOverview != 0:
                         line = line +  ", "
 
-                    hOverview = hBand.GetOverview( iOverview );
+                    hOverview = hBand.GetOverview( iOverview )
                     if hOverview is not None:
                         line = line + ( "%d" % hOverview.Checksum())
                     else:
@@ -483,7 +483,7 @@ def main( argv = None ):
                     if iOverview != 0:
                         line = line +  ", "
 
-                    hOverview = hMaskBand.GetOverview( iOverview );
+                    hOverview = hMaskBand.GetOverview( iOverview )
                     if hOverview is not None:
                         line = line + ( "%d" % hOverview.Checksum())
                     else:
@@ -495,7 +495,7 @@ def main( argv = None ):
         papszCategories = hBand.GetRasterCategoryNames()
         if papszCategories is not None:
 
-            print( "  Categories:" );
+            print( "  Categories:" )
             i = 0
             for category in papszCategories:
                 print( "    %3d: %s" % (i, category) )

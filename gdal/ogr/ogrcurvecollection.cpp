@@ -160,21 +160,7 @@ OGRErr OGRCurveCollection::addCurveDirectly( OGRGeometry* poGeom,
                                              OGRCurve* poCurve,
                                              int bNeedRealloc )
 {
-    if( poGeom->Is3D() && !poCurve->Is3D() )
-
-        poCurve->set3D(TRUE);
-
-    if( poGeom->IsMeasured() && !poCurve->IsMeasured() )
-
-        poCurve->setMeasured(TRUE);
-
-    if( !poGeom->Is3D() && poCurve->Is3D() )
-
-        poGeom->set3D(TRUE);
-
-    if( !poGeom->IsMeasured() && poCurve->IsMeasured() )
-
-        poGeom->setMeasured(TRUE);
+    poGeom->HomogenizeDimensionalityWith(poCurve);
 
     if( bNeedRealloc )
     {

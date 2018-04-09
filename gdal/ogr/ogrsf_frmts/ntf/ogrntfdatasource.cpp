@@ -512,7 +512,7 @@ const char *OGRNTFDataSource::GetOption( const char * pszOption )
 /*                        EnsureTileNameUnique()                        */
 /*                                                                      */
 /*      This method is called with an NTFFileReader to ensure that      */
-/*      it's tilename is unique relative to all the readers already     */
+/*      its tilename is unique relative to all the readers already      */
 /*      assigned to this data source.  If not, a unique name is         */
 /*      selected for it and assigned.  This method should not be        */
 /*      called with readers that are already attached to the data      */

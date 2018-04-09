@@ -290,7 +290,7 @@ as regular characters, by being preceded with the escape_char.
     L4C 5E2            %N0N%         No
 \endcode
 
-The <b>IN</b> takes a list of values as it's argument and tests the attribute
+The <b>IN</b> takes a list of values as its argument and tests the attribute
 value for membership in the provided set.
 
 \code

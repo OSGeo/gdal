@@ -12,7 +12,7 @@ later) Object-Relational format.  The Oracle Spatial driver is not
 normally built into OGR, but may be built in on platforms where the
 Oracle client libraries are available. <p>
 
-When opening a database, it's name should be specified in the form
+When opening a database, its name should be specified in the form
 "OCI:userid/password@database_instance:table,table".  The list of tables
 is optional.  The database_instance portion may be omitted
 when accessing the default local database instance.<p>
@@ -44,7 +44,7 @@ and "<b>VALLAYER:&lt;table_name&gt;</b>" to apply the
 SDO_GEOM.VALIDATE_GEOMETRY() check to a layer.  Internally these
 pseudo-commands are translated into more complex SQL commands for Oracle.</p>
 
-<p>It's also possible to request the driver to handle SQL commands with <a href="ogr_sql.html">OGR SQL</a> engine,
+<p>It is also possible to request the driver to handle SQL commands with <a href="ogr_sql.html">OGR SQL</a> engine,
 by passing <strong>"OGRSQL"</strong> string to the ExecuteSQL() method, as name of the SQL dialect.</p>
 
 <h2>Caveats</h2>
@@ -236,7 +236,7 @@ ogrinfo -ro OCI:warmerda/password -sql "SELECT pop_1994 from canada where provin
 <h3>Credits</h3>
 
 I would like to thank <a href="http://www.extendthereach.com/">SRC, LLC</a>
-for it's financial support of the development of this driver.<p>
+for its financial support of the development of this driver.<p>
 
 </body>
 </html>

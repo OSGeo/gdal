@@ -424,7 +424,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
             OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                    const_cast<char **>(&pszInput), nullptr, &poGeom );
+                    const_cast<char **>(&pszInput),nullptr, &poGeom );
             if( poGeom )
                 poSurface = poGeom->toSurface();
         }
@@ -903,17 +903,7 @@ OGRErr OGRPolyhedralSurface::addGeometryDirectly (OGRGeometry *poNewGeom)
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
     }
 
-    if( poNewGeom->Is3D() && !Is3D() )
-        set3D(TRUE);
-
-    if( poNewGeom->IsMeasured() && !IsMeasured() )
-        setMeasured(TRUE);
-
-    if( !poNewGeom->Is3D() && Is3D() )
-        poNewGeom->set3D(TRUE);
-
-    if( !poNewGeom->IsMeasured() && IsMeasured() )
-        poNewGeom->setMeasured(TRUE);
+    HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry** papoNewGeoms = (OGRGeometry **) VSI_REALLOC_VERBOSE(
                                         oMP.papoGeoms,

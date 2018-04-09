@@ -1457,11 +1457,10 @@ OGRFeature *OGRCSVLayer::GetNextUnfilteredFeature()
                 const char *pszStr = papszTokens[iAttr];
                 while( *pszStr == ' ' )
                     pszStr++;
-                char *pszWKT = const_cast<char *>(pszStr);
                 OGRGeometry *poGeom = nullptr;
 
                 CPLPushErrorHandler(CPLQuietErrorHandler);
-                if( OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom) ==
+                if( OGRGeometryFactory::createFromWkt(pszStr, nullptr, &poGeom) ==
                     OGRERR_NONE )
                 {
                     poGeom->assignSpatialReference(

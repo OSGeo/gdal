@@ -319,6 +319,9 @@ class CPL_DLL OGRGeometry
                      OGRwkbVariant eWkbVariant );
     OGRErr       PointOnSurfaceInternal( OGRPoint * poPoint ) const;
     OGRBoolean   IsSFCGALCompatible() const;
+
+    void         HomogenizeDimensionalityWith( OGRGeometry* poOtherGeom );
+
 //! @endcond
 
   public:
@@ -367,7 +370,7 @@ class CPL_DLL OGRGeometry
 
     // IWks Interface.
     virtual int WkbSize() const = 0;
-    OGRErr importFromWkb( unsigned char *, int=-1,
+    OGRErr importFromWkb( const GByte*, int=-1,
                                   OGRwkbVariant=wkbVariantOldOgc );
     virtual OGRErr importFromWkb( const unsigned char *,
                                   int,
@@ -2786,26 +2789,27 @@ inline OGRMultiLineString::ChildType** end(OGRMultiLineString* poGeom) { return 
 
 class CPL_DLL OGRGeometryFactory
 {
-    static OGRErr createFromFgfInternal( unsigned char *pabyData,
+    static OGRErr createFromFgfInternal( const unsigned char *pabyData,
                                          OGRSpatialReference * poSR,
                                          OGRGeometry **ppoReturn,
                                          int nBytes,
                                          int *pnBytesConsumed,
                                          int nRecLevel );
   public:
-    static OGRErr createFromWkb( unsigned char *, OGRSpatialReference *,
+    static OGRErr createFromWkb( const void *, OGRSpatialReference *,
                                  OGRGeometry **, int = -1,
                                  OGRwkbVariant=wkbVariantOldOgc );
-    static OGRErr createFromWkb( const unsigned char * pabyData,
+    static OGRErr createFromWkb( const void * pabyData,
                                  OGRSpatialReference *,
                                  OGRGeometry **,
                                  int nSize,
                                  OGRwkbVariant eVariant,
                                  int& nBytesConsumedOut );
-
+    static OGRErr createFromWkt( const char* , OGRSpatialReference *,
+                                 OGRGeometry ** );
     static OGRErr createFromWkt( char **, OGRSpatialReference *,
                                  OGRGeometry ** );
-    static OGRErr createFromFgf( unsigned char *, OGRSpatialReference *,
+    static OGRErr createFromFgf( const void*, OGRSpatialReference *,
                                  OGRGeometry **, int = -1, int * = nullptr );
     static OGRGeometry *createFromGML( const char * );
     static OGRGeometry *createFromGEOS( GEOSContextHandle_t hGEOSCtxt,

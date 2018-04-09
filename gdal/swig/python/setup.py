@@ -130,7 +130,8 @@ else:
         extra['use_2to3_exclude_fixers'] = exclude_fixers
 
 
-class gdal_config_error(Exception): pass
+class gdal_config_error(Exception):
+    pass
 
 
 from distutils.command.build_ext import build_ext

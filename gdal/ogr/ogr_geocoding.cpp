@@ -720,11 +720,10 @@ static OGRLayerH OGRGeocodeBuildLayerNominatim(
                 }
                 else if( strcmp(pszName, "geotext") == 0 )
                 {
-                    char* pszWKT = const_cast<char *>( pszVal );
-                    if( pszWKT != nullptr )
+                    if( pszVal != nullptr )
                     {
                         OGRGeometry* poGeometry = nullptr;
-                        OGRGeometryFactory::createFromWkt(&pszWKT, nullptr,
+                        OGRGeometryFactory::createFromWkt(pszVal, nullptr,
                                                           &poGeometry);
                         if( poGeometry )
                             poFeature->SetGeometryDirectly(poGeometry);

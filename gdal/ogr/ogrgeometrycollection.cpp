@@ -384,17 +384,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     if( !isCompatibleSubType(poNewGeom->getGeometryType()) )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    if( poNewGeom->Is3D() && !Is3D() )
-        set3D(TRUE);
-
-    if( poNewGeom->IsMeasured() && !IsMeasured() )
-        setMeasured(TRUE);
-
-    if( !poNewGeom->Is3D() && Is3D() )
-        poNewGeom->set3D(TRUE);
-
-    if( !poNewGeom->IsMeasured() && IsMeasured() )
-        poNewGeom->setMeasured(TRUE);
+    HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry** papoNewGeoms = static_cast<OGRGeometry **>(
         VSI_REALLOC_VERBOSE(papoGeoms, sizeof(void*) * (nGeomCount + 1)));
@@ -762,11 +752,11 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
         {
             OGRGeometryCollection* poGC = new OGRGeometryCollection();
             poGeom = poGC;
-            eErr = poGC->importFromWktInternal( (char **) &pszInput,
+            eErr = poGC->importFromWktInternal( const_cast<char**>(&pszInput),
                                                nRecLevel + 1 );
         }
         else
-            eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
+            eErr = OGRGeometryFactory::createFromWkt( const_cast<char**>(&pszInput),
                                                        nullptr, &poGeom );
 
         if( eErr == OGRERR_NONE )
@@ -815,7 +805,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 

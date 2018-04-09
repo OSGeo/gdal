@@ -598,7 +598,7 @@ OGRErr OGR_SRSNode::exportToPrettyWkt( char ** ppszResult, int nDepth ) const
  *
  * This method will wipe the existing children and value of this node, and
  * reassign them based on the contents of the passed WKT string.  Only as
- * much of the input string as needed to construct this node, and it's
+ * much of the input string as needed to construct this node, and its
  * children is consumed from the input string, and the input string pointer
  * is then updated to point to the remaining (unused) input.
  *

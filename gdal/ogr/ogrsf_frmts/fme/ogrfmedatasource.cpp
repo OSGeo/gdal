@@ -1572,7 +1572,7 @@ void OGRFMEDataSource::ReleaseSession()
 /************************************************************************/
 /*                           SerializeToXML()                           */
 /*                                                                      */
-/*      Convert the information about this datasource, and it's         */
+/*      Convert the information about this datasource, and its          */
 /*      layers into an XML format that can be stored in the             */
 /*      persistent feature cache index.                                 */
 /************************************************************************/

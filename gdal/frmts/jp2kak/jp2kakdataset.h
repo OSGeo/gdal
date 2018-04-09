@@ -48,7 +48,7 @@
 #include "subfile_source.h"
 
 // Before v7.5 Kakadu does not advertise its version well
-// After v7.5 Kakadu has KDU_{MAJOR,MINOR,PATCH}_VERSION defines so it's easier
+// After v7.5 Kakadu has KDU_{MAJOR,MINOR,PATCH}_VERSION defines so it is easier
 // For older releases compile with them manually specified.  e.g.:
 // -DKDU_MAJOR_VERSION=7 -DKDU_MINOR_VERSION=3 -DKDU_PATCH_VERSION=2
 #ifndef KDU_MAJOR_VERSION

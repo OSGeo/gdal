@@ -42,7 +42,7 @@ Starting with GDAL 2.3, the URL/filename/text might be prefixed with GeoJSON: to
 <pre>
 ogrinfo -ro http://featureserver/data/.geojson OGRGeoJSON
 </pre>
-It's also valid to assume that OGRDataSource::GetLayerCount() for GeoJSON datasource always returns 1.
+It is also valid to assume that OGRDataSource::GetLayerCount() for GeoJSON datasource always returns 1.
 </p>
 
 <p>Starting with GDAL 2.2, the layer name is built with the following logic:</p>
@@ -102,7 +102,7 @@ allow to have geometries of different types in single layer - a heterogeneous la
 preserves type of geometries.</p>
 
 <p>However, sometimes there is a need to generate a homogeneous layer from a set of heterogeneous features.
-For this purpose, it's possible to tell the driver to wrap all geometries with OGRGeometryCollection type as a common denominator.
+For this purpose, it is possible to tell the driver to wrap all geometries with OGRGeometryCollection type as a common denominator.
 This behavior may be controlled by setting <strong>GEOMETRY_AS_COLLECTION=YES</strong> in the environment (default is <strong>NO</strong>).</p>
 
 <h2>Environment variables</h2>

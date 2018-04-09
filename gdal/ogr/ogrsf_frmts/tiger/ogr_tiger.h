@@ -111,10 +111,10 @@ typedef struct TigerRecordInfo {
 } TigerRecordInfo;
 
 // OGR_TIGER_RECBUF_LEN should be a number that is larger than the
-// longest possible record length for any record type; it's used to
+// longest possible record length for any record type; it is used to
 // create arrays to hold the records.  At the time of this writing the
 // longest record (RT1) has length 228, but I'm choosing 500 because
-// it's a good round number and will allow for growth without having
+// it is a good round number and will allow for growth without having
 // to modify this file.  The code never holds more than a few records
 // in memory at a time, so having OGR_TIGER_RECBUF_LEN be much larger
 // than is really necessary won't affect the amount of memory required

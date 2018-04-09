@@ -1697,7 +1697,7 @@ void NTFFileReader::IndexFile()
         }
 
 /* -------------------------------------------------------------------- */
-/*      Put record into type specific subindex based on it's id as      */
+/*      Put record into type specific subindex based on its id as       */
 /*      the key.                                                        */
 /* -------------------------------------------------------------------- */
         if( apapoRecordIndex[iType][iId] != nullptr )
@@ -2050,7 +2050,7 @@ void NTFFileReader::OverrideTileName( const char *pszNewName )
 /************************************************************************/
 /*                          CacheAddByGeomId()                          */
 /*                                                                      */
-/*      Add a geometry to the geometry cache given it's GEOMID as       */
+/*      Add a geometry to the geometry cache given its GEOMID as        */
 /*      the index.                                                      */
 /************************************************************************/
 

@@ -500,7 +500,7 @@ OGRErr OGRMILayerAttrIndex::CreateIndex( int iField )
 /* -------------------------------------------------------------------- */
     const int iINDIndex = poINDFile->CreateIndex( eTABFT, nFieldWidth );
 
-    // CreateIndex() reports it's own errors.
+    // CreateIndex() reports its own errors.
     if( iINDIndex < 0 )
         return OGRERR_FAILURE;
 

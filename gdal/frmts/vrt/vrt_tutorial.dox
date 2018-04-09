@@ -256,7 +256,7 @@ row.
 </li>
 
 <li> <b>Description</b>: This element contains the optional description
-of a raster band as it's text value.
+of a raster band as its text value.
 
 \code
   <Description>Crop Classification Layer</Description>

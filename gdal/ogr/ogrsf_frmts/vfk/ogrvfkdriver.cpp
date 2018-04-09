@@ -101,6 +101,11 @@ void RegisterOGRVFK()
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "vfk" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_vfk.html" );
 
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST,
+"<OpenOptionList>"
+"  <Option name='SUPPRESS_GEOMETRY' type='boolean' description='whether to suppress geometry' default='NO'/>"
+"</OpenOptionList>");
+
     poDriver->pfnOpen = OGRVFKDriverOpen;
     poDriver->pfnIdentify = OGRVFKDriverIdentify;
 

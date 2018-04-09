@@ -76,7 +76,7 @@ NTFGenericClass::~NTFGenericClass()
 /*                            CheckAddAttr()                            */
 /*                                                                      */
 /*      Check if an attribute already exists.  If not add it with       */
-/*      it's format.  Note we don't check for format conflicts at       */
+/*      its format.  Note we don't check for format conflicts at        */
 /*      this time.                                                      */
 /************************************************************************/
 

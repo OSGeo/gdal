@@ -72,7 +72,7 @@ class CPL_DLL RawDataset : public GDALPamDataset
 
 /**
  * \brief Abstract Base Class dedicated to define raw datasets.
- * \note It is not defined an Abstract Base Class, but it's advised to
+ * \note It is not defined an Abstract Base Class, but it is advised to
  * consider it as such and not use it directly in client's code.
  */
 class CPL_DLL RawRasterBand : public GDALPamRasterBand

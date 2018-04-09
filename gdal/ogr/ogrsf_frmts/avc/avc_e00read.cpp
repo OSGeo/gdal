@@ -854,7 +854,7 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
      *----------------------------------------------------------------*/
     if (AVCE00ParseSuperSectionEnd(psInfo, pszLine) == TRUE)
     {
-        /* Nothing to do... it's all been done by the call to
+        /* Nothing to do... it is all been done by the call to
          * AVCE00ParseSuperSectionEnd()
          */
     }
@@ -873,7 +873,7 @@ static void *_AVCE00ReadNextLineE00(AVCE00ReadE00Ptr psRead,
                                            pszLine) == AVCFileUnknown )
         {
             /*---------------------------------------------------------
-             * This was not a supersection header... check if it's a simple
+             * This was not a supersection header... check if it is a simple
              * section header
              *--------------------------------------------------------*/
             psRead->eCurFileType = AVCE00ParseSectionHeader(psInfo,

@@ -310,7 +310,7 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
                 const char *pszGeomText = v->Printable();
                 if ( pszGeomText != NULL )
                 eErr =
-                    OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                    OGRGeometryFactory::createFromWkt(pszGeomText,
                                                     poSRS, &poGeom);
             }
             else if( ! v->IsNull() && bGeomColumnWKB )

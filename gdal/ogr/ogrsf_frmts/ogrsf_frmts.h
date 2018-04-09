@@ -302,7 +302,7 @@ inline OGRLayer::FeatureIterator end(OGRLayer* poLayer) { return poLayer->end();
  * of one, or a related set of files, though the name doesn't have to be
  * a real item in the file system.
  *
- * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
+ * When an OGRDataSource is destroyed, all its associated OGRLayers objects
  * are also destroyed.
  *
  * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of

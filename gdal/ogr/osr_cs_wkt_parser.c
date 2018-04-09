@@ -955,7 +955,7 @@ yystpcpy (char *yydest, const char *yysrc)
 
 # ifndef yytnamerr
 /* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
+   quotes and backslashes, so that it is suitable for yyerror.  The
    heuristic is that double-quoting is unnecessary unless the string
    contains an apostrophe, a comma, or backslash (other than
    backslash-backslash).  YYSTR is taken from yytname.  If YYRES is

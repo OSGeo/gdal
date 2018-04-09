@@ -739,8 +739,8 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                      EQUAL(pszFieldName,"ST_AsText") )*/
             {
                 /* Handle WKT */
-                char *pszWKT = PQgetvalue( hResult, iRecord, iField );
-                char *pszPostSRID = pszWKT;
+                const char *pszWKT = PQgetvalue( hResult, iRecord, iField );
+                const char *pszPostSRID = pszWKT;
 
                 // optionally strip off PostGIS SRID identifier.  This
                 // happens if we got a raw geometry field.
@@ -759,7 +759,7 @@ OGRFeature *OGRPGLayer::RecordToFeature( PGresult* hResult,
                                                          poDS->sPostGISVersion.nMajor < 2 );
                 }
                 else
-                    OGRGeometryFactory::createFromWkt( &pszPostSRID, nullptr,
+                    OGRGeometryFactory::createFromWkt( pszPostSRID, nullptr,
                                                     &poGeometry );
                 if( poGeometry != nullptr )
                 {
