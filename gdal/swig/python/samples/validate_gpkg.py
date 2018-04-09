@@ -40,7 +40,7 @@ import sys
 try:
     from osgeo import gdal
     has_gdal = True
-except:
+except ImportError:
     has_gdal = False
 
 
@@ -285,7 +285,7 @@ class GPKGChecker:
             try:
                 datetime.datetime.strptime(
                     last_change, '%Y-%m-%dT%H:%M:%S.%fZ')
-            except:
+            except ValueError:
                 self._assert(False, 15,
                              ('last_change = %s for table_name = %s ' +
                               'is invalid datetime') %
@@ -1440,7 +1440,7 @@ class GPKGChecker:
         for (timestamp, ) in rows:
             try:
                 datetime.datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
-            except:
+            except ValueError:
                 self._assert(False, 100,
                              ('timestamp = %s in gpkg_metadata_reference' +
                               'is invalid datetime') % (timestamp))
