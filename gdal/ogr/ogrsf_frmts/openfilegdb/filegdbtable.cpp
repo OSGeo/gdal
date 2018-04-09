@@ -3177,8 +3177,8 @@ OGRGeometry* FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField* psFi
             int* panPartStart = (int*) VSI_MALLOC_VERBOSE(sizeof(int) * nParts);
             double* padfXYZ =  (double*) VSI_MALLOC_VERBOSE(3 * sizeof(double) * nPoints);
             double* padfX = padfXYZ;
-            double* padfY = padfXYZ + nPoints;
-            double* padfZ = padfXYZ + 2 * nPoints;
+            double* padfY = padfXYZ ? padfXYZ + nPoints : nullptr;
+            double* padfZ = padfXYZ ? padfXYZ + 2 * nPoints : nullptr;
             if( panPartType == nullptr || panPartStart == nullptr || padfXYZ == nullptr  )
             {
                 VSIFree(panPartType);
