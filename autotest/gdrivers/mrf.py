@@ -94,7 +94,7 @@ def mrf_zen_test():
 '''
     for interleave in 'PIXEL', 'BAND':
         co = ['COMPRESS=JPEG', 'INTERLEAVE=' + interleave]
-        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format = 'MRF', creationOptions = co);
+        gdal.Translate('tmp/masked.mrf', 'data/masked.jpg', format = 'MRF', creationOptions = co)
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expectedCS:
