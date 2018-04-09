@@ -192,7 +192,7 @@ class Doxy2SWIG:
                      'detaileddescription', 'includes')
             first = self.get_specific_nodes(node, names)
             for n in names:
-                if first.has_key(n):
+                if n in first:
                     self.parse(first[n])
             self.add_text(['";','\n'])
             for n in node.childNodes:
