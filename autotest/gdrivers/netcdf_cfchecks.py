@@ -2142,7 +2142,7 @@ class CFChecker:
 #          print "interp:",interp
 #          print "axis:",var.axis
 
-          if interp != None:
+          if interp is not None:
               # It was possible to deduce axis interpretation from units/positive
               if interp != var.axis:
                   print("ERROR (4): axis attribute inconsistent with coordinate type as deduced from units and/or positive")

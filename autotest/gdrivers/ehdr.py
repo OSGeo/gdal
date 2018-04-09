@@ -255,10 +255,10 @@ def ehdr_13():
     src_ds = None
 
     ds = gdal.Open('/vsimem/byte.bil')
-    if ds.GetRasterBand(1).GetMinimum() != None:
+    if ds.GetRasterBand(1).GetMinimum() is not None:
         gdaltest.post_reason('did not expected minimum')
         return 'fail'
-    if ds.GetRasterBand(1).GetMaximum() != None:
+    if ds.GetRasterBand(1).GetMaximum() is not None:
         gdaltest.post_reason('did not expected maximum')
         return 'fail'
     stats = ds.GetRasterBand(1).GetStatistics(False, True)

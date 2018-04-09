@@ -291,7 +291,7 @@ def ogr_mysql_6():
         gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount() )
         return 'fail'
 
-    if sql_lyr.GetNextFeature() != None:
+    if sql_lyr.GetNextFeature() is not None:
         gdaltest.post_reason( 'GetNextFeature() did not return None' )
         return 'fail'
 

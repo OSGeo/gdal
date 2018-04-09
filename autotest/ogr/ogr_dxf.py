@@ -2483,7 +2483,7 @@ def ogr_dxf_33():
     # 3DSOLID, plain
     feat = layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
         gdaltest.post_reason( 'geometry on first 3DSOLID was not empty' )
         return 'fail'
@@ -2506,7 +2506,7 @@ def ogr_dxf_33():
     # 3DSOLID inside a block
     feat = layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
         gdaltest.post_reason( 'geometry on second 3DSOLID was not empty' )
         return 'fail'

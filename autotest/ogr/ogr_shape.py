@@ -838,7 +838,7 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
         return 'fail'
     feat_read = read_lyr.GetNextFeature()
 
-    if isEmpty and feat_read.GetGeometryRef() == None:
+    if isEmpty and feat_read.GetGeometryRef() is None:
         return 'success'
 
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt(wkt),
@@ -1912,7 +1912,7 @@ def ogr_shape_45():
 
     feat = shp_layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
         return 'fail'
 

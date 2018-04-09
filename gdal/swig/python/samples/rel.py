@@ -178,7 +178,7 @@ lz =  math.sin(lsrcel)
 lxyz = math.sqrt(lx**2 + ly**2 + lz**2)
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)
-if indataset == None:
+if indataset is None:
     print('Cannot open', infile)
     sys.exit(2)
 
@@ -199,7 +199,7 @@ if ysize is None:
     ysize = abs(geotransform[5])
 
 inband = indataset.GetRasterBand(iBand)
-if inband == None:
+if inband is None:
     print('Cannot load band', iBand, 'from the', infile)
     sys.exit(2)
 

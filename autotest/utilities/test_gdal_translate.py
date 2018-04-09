@@ -562,7 +562,7 @@ def test_gdal_translate_20():
         return 'fail'
 
     nodata = ds.GetRasterBand(1).GetNoDataValue()
-    if nodata != None:
+    if nodata is not None:
         print(nodata)
         return 'fail'
 
