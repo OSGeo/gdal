@@ -248,7 +248,7 @@ class gdal_ext(build_ext):
                 for ext in self.extensions:
                     # gdalconst builds as a .c file
                     if ext.name != 'osgeo._gdalconst':
-                        ext.extra_compile_args += [ cxx11_flag ]
+                        ext.extra_compile_args += [cxx11_flag]
 
         build_ext.build_extensions(self)
 

@@ -27,7 +27,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -40,7 +40,7 @@ def osr_pci_1():
 
     prj_parms = (0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     srs = osr.SpatialReference()
-    srs.ImportFromPCI('EC          E015', 'METRE', prj_parms )
+    srs.ImportFromPCI('EC          E015', 'METRE', prj_parms)
 
     if abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_1)-47.0)>0.0000005 \
        or abs(srs.GetProjParm(osr.SRS_PP_STANDARD_PARALLEL_2)-62.0)>0.0000005 \
@@ -53,15 +53,15 @@ def osr_pci_1():
 
     expected = 'PROJCS["unnamed",GEOGCS["Unknown - PCI E015",DATUM["Unknown - PCI E015",SPHEROID["Krassowsky 1940",6378245,298.3,AUTHORITY["EPSG","7024"]]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equidistant_Conic"],PARAMETER["standard_parallel_1",47],PARAMETER["standard_parallel_2",62],PARAMETER["latitude_of_center",54.5],PARAMETER["longitude_of_center",45],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-    if not gdaltest.equal_srs_from_wkt( expected, srs.ExportToWkt() ):
+    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
         return 'fail'
 
     pci_parms = srs.ExportToPCI()
     if pci_parms[0] != 'EC          E015' \
        or pci_parms[1] != 'METRE' \
        or pci_parms[2] != prj_parms:
-        print( pci_parms )
-        gdaltest.post_reason( 'ExportToPCI result wrong.' )
+        print(pci_parms)
+        gdaltest.post_reason('ExportToPCI result wrong.')
         return 'fail'
 
     return 'success'
@@ -112,7 +112,7 @@ def osr_pci_3():
 
     wkt = srs.ExportToWkt()
     if wkt.find('13, Northern Hemi') == -1:
-        gdaltest.post_reason( 'did not default to northern hemisphere!' )
+        gdaltest.post_reason('did not default to northern hemisphere!')
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -122,7 +122,7 @@ def osr_pci_3():
 
     wkt = srs.ExportToWkt()
     if wkt.find('13, Southern Hemi') == -1:
-        gdaltest.post_reason( 'did get southern  hemisphere!' )
+        gdaltest.post_reason('did get southern  hemisphere!')
 
     srs = osr.SpatialReference()
     srs.ImportFromPCI(
@@ -132,7 +132,7 @@ def osr_pci_3():
 
     wkt = srs.ExportToWkt()
     if wkt.find('13, Northern Hemi') == -1:
-        gdaltest.post_reason( 'did get southern  hemisphere!' )
+        gdaltest.post_reason('did get southern  hemisphere!')
 
     return 'success'
 
@@ -145,19 +145,19 @@ def osr_pci_4():
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
-    srs.ImportFromPCI('LONG/LAT    D506', 'DEGREE', prj_parms )
+    srs.ImportFromPCI('LONG/LAT    D506', 'DEGREE', prj_parms)
 
     expected = 'GEOGCS["Rijksdriehoeks Datum",DATUM["Rijksdriehoeks Datum",SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],TOWGS84[565.04,49.91,465.84,0.4094,-0.3597,1.8685,4.077200000063286]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
-    if not gdaltest.equal_srs_from_wkt( expected, srs.ExportToWkt() ):
+    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
         return 'fail'
 
     pci_parms = srs.ExportToPCI()
     if pci_parms[0] != 'LONG/LAT    D506' \
        or pci_parms[1] != 'DEGREE' \
        or pci_parms[2] != prj_parms:
-        print( pci_parms )
-        gdaltest.post_reason( 'ExportToPCI result wrong.' )
+        print(pci_parms)
+        gdaltest.post_reason('ExportToPCI result wrong.')
         return 'fail'
 
     return 'success'
@@ -171,19 +171,19 @@ def osr_pci_5():
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
-    srs.ImportFromPCI('LONG/LAT    E224', 'DEGREE', prj_parms )
+    srs.ImportFromPCI('LONG/LAT    E224', 'DEGREE', prj_parms)
 
     expected = 'GEOGCS["Unknown - PCI E224",DATUM["Unknown - PCI E224",SPHEROID["Xian 1980",6378140,298.2569978029123]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
-    if not gdaltest.equal_srs_from_wkt( expected, srs.ExportToWkt() ):
+    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
         return 'fail'
 
     pci_parms = srs.ExportToPCI()
     if pci_parms[0] != 'LONG/LAT    E224' \
        or pci_parms[1] != 'DEGREE' \
        or pci_parms[2] != prj_parms:
-        print( pci_parms )
-        gdaltest.post_reason( 'ExportToPCI result wrong.' )
+        print(pci_parms)
+        gdaltest.post_reason('ExportToPCI result wrong.')
         return 'fail'
 
     return 'success'
@@ -197,19 +197,19 @@ def osr_pci_6():
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     srs = osr.SpatialReference()
-    srs.ImportFromPCI('LONG/LAT    D030', 'DEGREE', prj_parms )
+    srs.ImportFromPCI('LONG/LAT    D030', 'DEGREE', prj_parms)
 
     expected = 'GEOGCS["AGD84",DATUM["Australian_Geodetic_Datum_1984",SPHEROID["Australian National Spheroid",6378160,298.25,AUTHORITY["EPSG","7003"]],TOWGS84[-134,-48,149,0,0,0,0],AUTHORITY["EPSG","6203"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4203"]]'
 
-    if not gdaltest.equal_srs_from_wkt( expected, srs.ExportToWkt() ):
+    if not gdaltest.equal_srs_from_wkt(expected, srs.ExportToWkt()):
         return 'fail'
 
     pci_parms = srs.ExportToPCI()
     if pci_parms[0] != 'LONG/LAT    D030' \
        or pci_parms[1] != 'DEGREE' \
        or pci_parms[2] != prj_parms:
-        print( pci_parms )
-        gdaltest.post_reason( 'ExportToPCI result wrong.' )
+        print(pci_parms)
+        gdaltest.post_reason('ExportToPCI result wrong.')
         return 'fail'
 
     return 'success'
@@ -222,7 +222,7 @@ def osr_pci_6():
 def osr_pci_7():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( 'GEOGCS["My GCS",DATUM["My Datum",SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],TOWGS84[565.04,49.91,465.84,0.4094,-0.3597,1.8685,4.077200000063286]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]' )
+    srs.SetFromUserInput('GEOGCS["My GCS",DATUM["My Datum",SPHEROID["Bessel 1841",6377397.155,299.1528128,AUTHORITY["EPSG","7004"]],TOWGS84[565.04,49.91,465.84,0.4094,-0.3597,1.8685,4.077200000063286]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -230,8 +230,8 @@ def osr_pci_7():
     if pci_parms[0] != 'LONG/LAT    D506' \
        or pci_parms[1] != 'DEGREE' \
        or pci_parms[2] != prj_parms:
-        print( pci_parms )
-        gdaltest.post_reason( 'ExportToPCI result wrong.' )
+        print(pci_parms)
+        gdaltest.post_reason('ExportToPCI result wrong.')
         return 'fail'
 
     return 'success'
@@ -244,13 +244,13 @@ gdaltest_list = [
     osr_pci_5,
     osr_pci_6,
     osr_pci_7,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_pci' )
+    gdaltest.setup_run('osr_pci')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

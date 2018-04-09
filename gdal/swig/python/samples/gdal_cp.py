@@ -69,7 +69,7 @@ class TermProgress:
                 sys.stdout.write(".")
 
         if self.nThisTick == 40:
-            print( " - done." )
+            print(" - done.")
 
         sys.stdout.flush()
 
@@ -82,8 +82,8 @@ class ScaledProgress:
         self.UnderlyingProgress = UnderlyingProgress
 
     def Progress(self, dfComplete, message):
-        return self.UnderlyingProgress.Progress( dfComplete * (self.dfMax - self.dfMin) + self.dfMin,
-                                                 message )
+        return self.UnderlyingProgress.Progress(dfComplete * (self.dfMax - self.dfMin) + self.dfMin,
+                                                 message)
 
 def gdal_cp_single(srcfile, targetfile, progress):
     if targetfile.endswith('/'):
@@ -249,7 +249,7 @@ def gdal_cp(argv, progress = None):
     recurse = False
     skip_failure = False
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 

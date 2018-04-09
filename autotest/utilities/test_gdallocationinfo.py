@@ -31,8 +31,8 @@
 
 import sys
 
-sys.path.append( '../pymod' )
-sys.path.append( '../gcore' )
+sys.path.append('../pymod')
+sys.path.append('../gcore')
 
 from osgeo import gdal
 import gdaltest
@@ -167,9 +167,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdallocationinfo' )
+    gdaltest.setup_run('test_gdallocationinfo')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

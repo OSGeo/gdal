@@ -32,7 +32,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,13 +42,13 @@ import gdaltest
 
 def sdts_1():
 
-    tst = gdaltest.GDALTest( 'SDTS', 'STDS_1107834_truncated/1107CATD.DDF', 1, 61672 )
+    tst = gdaltest.GDALTest('SDTS', 'STDS_1107834_truncated/1107CATD.DDF', 1, 61672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
     srs.SetUTM(16)
-    if tst.testOpen( check_prj = srs.ExportToWkt(),
-                     check_gt = ( 666015, 30, 0, 5040735, 0, -30 ),
-                     check_filelist = False ) != 'success':
+    if tst.testOpen(check_prj = srs.ExportToWkt(),
+                     check_gt = (666015, 30, 0, 5040735, 0, -30),
+                     check_filelist = False) != 'success':
         return 'fail'
 
     ds = gdal.Open('data/STDS_1107834_truncated/1107CATD.DDF')
@@ -60,12 +60,12 @@ def sdts_1():
     return 'success'
 
 
-gdaltest_list = [ sdts_1 ]
+gdaltest_list = [sdts_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'sdts' )
+    gdaltest.setup_run('sdts')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

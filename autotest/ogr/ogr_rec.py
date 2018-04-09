@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -56,8 +56,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_rec' )
+    gdaltest.setup_run('ogr_rec')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

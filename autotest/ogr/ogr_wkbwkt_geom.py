@@ -30,7 +30,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -42,7 +42,7 @@ class wkb_wkt_unit:
     def __init__(self, unit):
         self.unit = unit
 
-    def wkbwkt_geom( self ):
+    def wkbwkt_geom(self):
         raw_wkb = open('data/wkb_wkt/' + self.unit + '.wkb','rb').read()
         raw_wkt = open('data/wkb_wkt/' + self.unit + '.wkt').read()
 
@@ -50,17 +50,17 @@ class wkb_wkt_unit:
         # Compare the WKT derived from the WKB file to the WKT provided
         # but reformatted (normalized).
 
-        geom_wkb = ogr.CreateGeometryFromWkb( raw_wkb )
+        geom_wkb = ogr.CreateGeometryFromWkb(raw_wkb)
         wkb_wkt = geom_wkb.ExportToWkt()
 
-        geom_wkt = ogr.CreateGeometryFromWkt( raw_wkt )
+        geom_wkt = ogr.CreateGeometryFromWkt(raw_wkt)
         normal_wkt = geom_wkt.ExportToWkt()
 
         #print(wkb_wkt)
         #print(normal_wkt)
         #print(raw_wkt)
         if wkb_wkt != normal_wkt:
-            gdaltest.post_reason( 'WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt) )
+            gdaltest.post_reason('WKT from WKB (%s) does not match clean WKT (%s).' % (wkb_wkt, normal_wkt))
             return 'fail'
 
         ######################################################################
@@ -68,15 +68,15 @@ class wkb_wkt_unit:
         # intended to catch problems with the encoding too WKT that might
         # cause passes above but that are mistaken.
         if geom_wkb.GetCoordinateDimension() != geom_wkt.GetCoordinateDimension():
-            gdaltest.post_reason( 'Coordinate dimension differs!' )
+            gdaltest.post_reason('Coordinate dimension differs!')
             return 'fail'
 
         if geom_wkb.GetGeometryType() != geom_wkt.GetGeometryType():
-            gdaltest.post_reason( 'Geometry type differs!' )
+            gdaltest.post_reason('Geometry type differs!')
             return 'fail'
 
         if geom_wkb.GetGeometryName() != geom_wkt.GetGeometryName():
-            gdaltest.post_reason( 'Geometry name differs!' )
+            gdaltest.post_reason('Geometry name differs!')
             return 'fail'
 
  # It turns out this test is too picky about coordinate precision. skip.
@@ -92,22 +92,22 @@ class wkb_wkt_unit:
         # Convert geometry to WKB and back to verify that WKB encoding is
         # working smoothly.
 
-        wkb_xdr = geom_wkt.ExportToWkb( ogr.wkbXDR )
-        geom_wkb = ogr.CreateGeometryFromWkb( wkb_xdr )
+        wkb_xdr = geom_wkt.ExportToWkb(ogr.wkbXDR)
+        geom_wkb = ogr.CreateGeometryFromWkb(wkb_xdr)
 
         if str(geom_wkb) != str(geom_wkt):
             print(geom_wkb)
             print(geom_wkt)
-            gdaltest.post_reason( 'XDR WKB encoding/decoding failure.' )
+            gdaltest.post_reason('XDR WKB encoding/decoding failure.')
             return 'fail'
 
         geom_wkb.Destroy()
 
-        wkb_ndr = geom_wkt.ExportToWkb( ogr.wkbNDR )
-        geom_wkb = ogr.CreateGeometryFromWkb( wkb_ndr )
+        wkb_ndr = geom_wkt.ExportToWkb(ogr.wkbNDR)
+        geom_wkb = ogr.CreateGeometryFromWkb(wkb_ndr)
 
         if str(geom_wkb) != str(geom_wkt):
-            gdaltest.post_reason( 'NDR WKB encoding/decoding failure.' )
+            gdaltest.post_reason('NDR WKB encoding/decoding failure.')
             return 'fail'
 
         geom_wkb.Destroy()
@@ -124,15 +124,15 @@ def ogr_wkbwkt_geom_bigexponents():
     bigx = -1.79769313486e+308
     bigy = -1.12345678901e+308
 
-    geom = ogr.Geometry( ogr.wkbPoint )
-    geom.SetPoint( 0, bigx, bigy )
+    geom = ogr.Geometry(ogr.wkbPoint)
+    geom.SetPoint(0, bigx, bigy)
 
     expect = 'POINT (-1.79769313486e+308 -1.12345678901e+308 0)'
     wkt = geom.ExportToWkt()
 
     if str(wkt) != str(expect):
         print(wkt)
-        gdaltest.post_reason( 'trimming long float numbers failed.' )
+        gdaltest.post_reason('trimming long float numbers failed.')
         return 'fail'
 
     return 'success'
@@ -143,7 +143,7 @@ def ogr_wkbwkt_geom_bigexponents():
 
 def ogr_wkbwkt_test_broken_geom():
 
-    list_broken = [ 'POINT',
+    list_broken = ['POINT',
                     'POINT UNKNOWN',
                     'POINT(',
                     'POINT()',
@@ -373,7 +373,7 @@ def ogr_wkbwkt_test_broken_geom():
         gdal.PopErrorHandler()
         if geom is not None:
             gdaltest.post_reason(
-                'geom %s instantiated but not expected' % wkt )
+                'geom %s instantiated but not expected' % wkt)
             return 'fail'
 
     return 'success'
@@ -383,7 +383,7 @@ def ogr_wkbwkt_test_broken_geom():
 
 def ogr_wkbwkt_test_import_wkt_sf12():
 
-    list_wkt_tuples = [ ('POINT EMPTY', 'POINT EMPTY'),
+    list_wkt_tuples = [('POINT EMPTY', 'POINT EMPTY'),
                         ('POINT Z EMPTY', 'POINT EMPTY'),
                         ('POINT M EMPTY', 'POINT EMPTY'),
                         ('POINT ZM EMPTY', 'POINT EMPTY'),
@@ -502,7 +502,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
         if out_wkt != wkt_tuple[1]:
             gdaltest.post_reason(
                 'in=%s, out=%s, expected=%s.' % (wkt_tuple[0], out_wkt,
-                                                 wkt_tuple[1]) )
+                                                 wkt_tuple[1]))
             return 'fail'
 
     return 'success'
@@ -514,7 +514,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
 def ogr_wkbwkt_test_import_bad_multipoint_wkb():
 
     import struct
-    wkb = struct.pack('B' * 30, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 1, 64, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0 )
+    wkb = struct.pack('B' * 30, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 1, 64, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom =  ogr.CreateGeometryFromWkb(wkb)
     gdal.PopErrorHandler()
@@ -528,7 +528,7 @@ def ogr_wkbwkt_test_import_bad_multipoint_wkb():
 
 def ogr_wkbwkt_test_geometrycollection_wktwkb():
 
-    wkt_list = [ 'GEOMETRYCOLLECTION (POINT (0 1))',
+    wkt_list = ['GEOMETRYCOLLECTION (POINT (0 1))',
                  'GEOMETRYCOLLECTION (LINESTRING (0 1,2 3))',
                  'GEOMETRYCOLLECTION (POLYGON ((0 0,0 1,1 1,0 0)))',
                  'GEOMETRYCOLLECTION (MULTIPOINT (0 1))',
@@ -594,8 +594,8 @@ def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 
     import struct
-    wkb_repeat = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 1 )
-    wkb_end = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 0 )
+    wkb_repeat = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 1)
+    wkb_end = struct.pack('B' * 9, 0, 0, 0, 0, 7, 0, 0, 0, 0)
 
     wkb = struct.pack('B' * 0)
     for i in range(31):
@@ -686,25 +686,25 @@ gdaltest_list = []
 files = os.listdir('data/wkb_wkt')
 for filename in files:
     if filename[-4:] == '.wkb':
-        ut = wkb_wkt_unit( filename[:-4] )
-        gdaltest_list.append( (ut.wkbwkt_geom, ut.unit) )
+        ut = wkb_wkt_unit(filename[:-4])
+        gdaltest_list.append((ut.wkbwkt_geom, ut.unit))
 
-gdaltest_list.append( ogr_wkbwkt_geom_bigexponents )
-gdaltest_list.append( ogr_wkbwkt_test_broken_geom )
-gdaltest_list.append( ogr_wkbwkt_test_import_wkt_sf12 )
-gdaltest_list.append( ogr_wkbwkt_test_import_bad_multipoint_wkb )
-gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wktwkb )
-gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkt_recursion )
-gdaltest_list.append( ogr_wkbwkt_test_geometrycollection_wkb_recursion )
-gdaltest_list.append( ogr_wkbwkt_export_wkt_iso_multipoint )
-gdaltest_list.append( ogr_wkt_inf_nan )
-gdaltest_list.append( ogr_wkt_multicurve_compoundcurve_corrupted )
-gdaltest_list.append( ogr_wkt_multipolygon_corrupted )
+gdaltest_list.append(ogr_wkbwkt_geom_bigexponents)
+gdaltest_list.append(ogr_wkbwkt_test_broken_geom)
+gdaltest_list.append(ogr_wkbwkt_test_import_wkt_sf12)
+gdaltest_list.append(ogr_wkbwkt_test_import_bad_multipoint_wkb)
+gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wktwkb)
+gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wkt_recursion)
+gdaltest_list.append(ogr_wkbwkt_test_geometrycollection_wkb_recursion)
+gdaltest_list.append(ogr_wkbwkt_export_wkt_iso_multipoint)
+gdaltest_list.append(ogr_wkt_inf_nan)
+gdaltest_list.append(ogr_wkt_multicurve_compoundcurve_corrupted)
+gdaltest_list.append(ogr_wkt_multipolygon_corrupted)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_wkbwkt_geom' )
+    gdaltest.setup_run('ogr_wkbwkt_geom')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

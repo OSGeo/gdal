@@ -33,7 +33,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -186,7 +186,7 @@ def ogr_cloudant_SetSpatialFilter():
     if lyr is None:
         return 'fail'
 
-    lyr.SetSpatialFilterRect( -104.9847,39.7392,-104.9847,39.7392 )
+    lyr.SetSpatialFilterRect(-104.9847,39.7392,-104.9847,39.7392)
 
     feat = lyr.GetNextFeature()
     if feat is None:
@@ -213,8 +213,8 @@ else:
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_cloudant' )
+    gdaltest.setup_run('ogr_cloudant')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

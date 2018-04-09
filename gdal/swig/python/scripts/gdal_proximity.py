@@ -64,17 +64,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -105,9 +105,9 @@ creation_type = 'Float32'
 quiet_flag = 0
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -128,27 +128,27 @@ while i < len(argv):
 
     elif arg == '-maxdist':
         i = i + 1
-        options.append( 'MAXDIST=' + argv[i] )
+        options.append('MAXDIST=' + argv[i])
 
     elif arg == '-values':
         i = i + 1
-        options.append( 'VALUES=' + argv[i] )
+        options.append('VALUES=' + argv[i])
 
     elif arg == '-distunits':
         i = i + 1
-        options.append( 'DISTUNITS=' + argv[i] )
+        options.append('DISTUNITS=' + argv[i])
 
     elif arg == '-nodata':
         i = i + 1
-        options.append( 'NODATA=' + argv[i] )
+        options.append('NODATA=' + argv[i])
 
     elif arg == '-use_input_nodata':
         i = i + 1
-        options.append( 'USE_INPUT_NODATA=' + argv[i] )
+        options.append('USE_INPUT_NODATA=' + argv[i])
 
     elif arg == '-fixed-buf-val':
         i = i + 1
-        options.append( 'FIXED_BUF_VAL=' + argv[i] )
+        options.append('FIXED_BUF_VAL=' + argv[i])
 
     elif arg == '-srcband':
         i = i + 1
@@ -179,7 +179,7 @@ if src_filename is None or dst_filename is None:
 #    Open source file
 # =============================================================================
 
-src_ds = gdal.Open( src_filename )
+src_ds = gdal.Open(src_filename)
 
 if src_ds is None:
     print('Unable to open %s' % src_filename)
@@ -192,9 +192,9 @@ srcband = src_ds.GetRasterBand(src_band_n)
 # =============================================================================
 
 try:
-    driver = gdal.IdentifyDriver( dst_filename )
+    driver = gdal.IdentifyDriver(dst_filename)
     if driver is not None:
-        dst_ds = gdal.Open( dst_filename, gdal.GA_Update )
+        dst_ds = gdal.Open(dst_filename, gdal.GA_Update)
         dstband = dst_ds.GetRasterBand(dst_band_n)
     else:
         dst_ds = None
@@ -209,12 +209,12 @@ if dst_ds is None:
         format = GetOutputDriverFor(dst_filename)
 
     drv = gdal.GetDriverByName(format)
-    dst_ds = drv.Create( dst_filename,
+    dst_ds = drv.Create(dst_filename,
                          src_ds.RasterXSize, src_ds.RasterYSize, 1,
-                         gdal.GetDataTypeByName(creation_type), creation_options )
+                         gdal.GetDataTypeByName(creation_type), creation_options)
 
-    dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
-    dst_ds.SetProjection( src_ds.GetProjectionRef() )
+    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    dst_ds.SetProjection(src_ds.GetProjectionRef())
 
     dstband = dst_ds.GetRasterBand(1)
 
@@ -227,8 +227,8 @@ if quiet_flag:
 else:
     prog_func = gdal.TermProgress
 
-gdal.ComputeProximity( srcband, dstband, options,
-                       callback = prog_func )
+gdal.ComputeProximity(srcband, dstband, options,
+                       callback = prog_func)
 
 srcband = None
 dstband = None

@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -54,7 +54,7 @@ def ogr_csw_init():
         return 'skip'
 
     try:
-        gml_ds = ogr.Open( 'data/ionic_wfs.gml' )
+        gml_ds = ogr.Open('data/ionic_wfs.gml')
     except:
         gml_ds = None
 
@@ -63,7 +63,7 @@ def ogr_csw_init():
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
         else:
-            gdaltest.post_reason( 'failed to open test file.' )
+            gdaltest.post_reason('failed to open test file.')
             return 'skip'
 
     return 'success'
@@ -748,15 +748,15 @@ gdaltest_vsimem_list = [
     ogr_csw_vsimem_cleanup,
 ]
 
-gdaltest_list = [ ogr_csw_init ]
+gdaltest_list = [ogr_csw_init]
 gdaltest_list += gdaltest_vsimem_list
 #gdaltest_list += gdaltest_live_list
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_csw' )
+    gdaltest.setup_run('ogr_csw')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

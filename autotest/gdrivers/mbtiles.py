@@ -33,7 +33,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -44,7 +44,7 @@ import webserver
 def mbtiles_1():
 
     try:
-        gdaltest.mbtiles_drv = gdal.GetDriverByName( 'MBTiles' )
+        gdaltest.mbtiles_drv = gdal.GetDriverByName('MBTiles')
     except:
         gdaltest.mbtiles_drv = None
 
@@ -58,7 +58,7 @@ def mbtiles_2():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'JPEG' ) is None:
+    if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
     ds = gdal.OpenEx('data/world_l1.mbtiles', open_options = ['USE_BOUNDS=NO'])
@@ -101,7 +101,7 @@ def mbtiles_2():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = ( -20037508.342789244, 78271.516964020484, 0.0, 20037508.342789244, 0.0, -78271.516964020484 )
+    expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 20037508.342789244, 0.0, -78271.516964020484)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             gdaltest.post_reason('bad gt')
@@ -126,7 +126,7 @@ def mbtiles_3():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     if sys.platform == 'darwin' and gdal.GetConfigOption('TRAVIS', None) is not None:
@@ -175,7 +175,7 @@ def mbtiles_start_webserver():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(handler = webserver.DispatcherHttpHandler)
@@ -192,10 +192,10 @@ def mbtiles_http_jpeg_three_bands():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'JPEG' ) is None:
+    if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
     if gdaltest.webserver_port == 0:
@@ -218,10 +218,10 @@ def mbtiles_http_jpeg_single_band():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'JPEG' ) is None:
+    if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
     if gdaltest.webserver_port == 0:
@@ -244,10 +244,10 @@ def mbtiles_http_png():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     if gdaltest.webserver_port == 0:
@@ -270,7 +270,7 @@ def mbtiles_stop_webserver():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     if gdaltest.webserver_port != 0:
@@ -286,7 +286,7 @@ def mbtiles_4():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'JPEG' ) is None:
+    if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
     ds = gdal.Open('data/world_l1.mbtiles')
@@ -308,7 +308,7 @@ def mbtiles_4():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = ( -20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484 )
+    expected_gt = (-20037508.342789244, 78271.516964020484, 0.0, 19971868.880408563, 0.0, -78271.516964020484)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             gdaltest.post_reason('bad gt')
@@ -328,11 +328,11 @@ def mbtiles_5():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds )
+    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_5.mbtiles', src_ds)
     src_ds = None
 
     ds = gdal.OpenEx('/vsimem/mbtiles_5.mbtiles', open_options = ['BAND_COUNT=2'])
@@ -388,7 +388,7 @@ def mbtiles_6():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'JPEG' ) is None:
+    if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
     # Test options
@@ -401,7 +401,7 @@ def mbtiles_6():
     options += ['TYPE=baselayer']
     options += ['VERSION=version']
     options += ['WRITE_BOUNDS=no']
-    gdaltest.mbtiles_drv.CreateCopy('tmp/mbtiles_6.mbtiles', src_ds, options = options )
+    gdaltest.mbtiles_drv.CreateCopy('tmp/mbtiles_6.mbtiles', src_ds, options = options)
     src_ds = None
 
     ds = gdal.Open('tmp/mbtiles_6.mbtiles')
@@ -430,7 +430,7 @@ def mbtiles_7():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     src_ds = gdal.Open('data/small_world.tif')
@@ -441,7 +441,7 @@ def mbtiles_7():
                                                 src_ds.RasterCount)
     mem_ds.SetProjection(src_ds.GetProjectionRef())
     gt = src_ds.GetGeoTransform()
-    gt = [ gt[i] for i in range(6) ]
+    gt = [gt[i] for i in range(6)]
     gt[1] /= 2
     gt[5] /= 2
     mem_ds.SetGeoTransform(gt)
@@ -461,8 +461,8 @@ def mbtiles_7():
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
-    expected_ovr_cs = [ 21179, 22577, 11996, 17849 ]
-    got_ovr_cs = [ ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(ds.RasterCount) ]
+    expected_ovr_cs = [21179, 22577, 11996, 17849]
+    got_ovr_cs = [ds.GetRasterBand(i+1).GetOverview(0).Checksum() for i in range(ds.RasterCount)]
     if expected_ovr_cs != got_ovr_cs:
         gdaltest.post_reason('fail')
         print(got_ovr_cs)
@@ -500,15 +500,15 @@ def mbtiles_8():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     src_ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST'])
     out_ds = None
     src_ds = None
 
-    expected_cs = [ 993, 50461, 64354 ]
+    expected_cs = [993, 50461, 64354]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
@@ -528,11 +528,11 @@ def mbtiles_8():
 
     # 512 pixel tiles
     src_ds = gdal.Open('data/small_world_pct.tif')
-    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512']  )
+    out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512'])
     out_ds = None
     src_ds = None
 
-    expected_cs = [ 60844, 7388, 53813 ]
+    expected_cs = [60844, 7388, 53813]
     out_ds = gdal.Open('/vsimem/mbtiles_8.mbtiles')
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if got_cs != expected_cs:
@@ -559,11 +559,11 @@ def mbtiles_9():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     src_ds = gdal.Open('data/byte.tif')
-    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST']  )
+    gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_9.mbtiles', src_ds, options = ['RESAMPLING=NEAREST'])
     src_ds = None
     ds = ogr.Open('SQLITE:/vsimem/mbtiles_9.mbtiles', update = 1)
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
@@ -591,7 +591,7 @@ def mbtiles_10():
     if gdaltest.mbtiles_drv is None:
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
 
     old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption('GPKG_FORCE_TEMPDB_COMPACTION')
@@ -622,7 +622,7 @@ def mbtiles_11():
     if gdaltest.mbtiles_drv.GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
         return 'skip'
 
-    if gdal.GetDriverByName( 'PNG' ) is None:
+    if gdal.GetDriverByName('PNG') is None:
         return 'skip'
     ds = gdal.Open('data/byte.mbtiles.sql')
     if ds.GetRasterBand(1).Checksum() != 4118:
@@ -752,14 +752,14 @@ gdaltest_list = [
     mbtiles_11,
     mbtiles_raster_open_in_vector_mode,
     mbtiles_create,
-    mbtiles_cleanup ]
+    mbtiles_cleanup]
 
 # gdaltest_list = [ mbtiles_1, mbtiles_create ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mbtiles' )
+    gdaltest.setup_run('mbtiles')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -32,7 +32,7 @@
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -482,12 +482,12 @@ def wmts_13():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=',
+    for connection_str in ['WMTS:/vsimem/minimal.xml,layer=',
                             'WMTS:/vsimem/minimal.xml,style=',
                             'WMTS:/vsimem/minimal.xml,tilematrixset=',
                             'WMTS:/vsimem/minimal.xml,tilematrix=',
                             'WMTS:/vsimem/minimal.xml,zoom_level=',
-                            'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=' ]:
+                            'WMTS:/vsimem/minimal.xml,layer=,style=,tilematrixset=']:
         ds = gdal.Open(connection_str)
         if ds is None:
             gdaltest.post_reason('fail')
@@ -495,11 +495,11 @@ def wmts_13():
             return 'fail'
         ds = None
 
-    for connection_str in [ 'WMTS:/vsimem/minimal.xml,layer=foo',
+    for connection_str in ['WMTS:/vsimem/minimal.xml,layer=foo',
                             'WMTS:/vsimem/minimal.xml,style=bar',
                             'WMTS:/vsimem/minimal.xml,tilematrixset=baz',
                             'WMTS:/vsimem/minimal.xml,tilematrix=baw',
-                            'WMTS:/vsimem/minimal.xml,zoom_level=30' ]:
+                            'WMTS:/vsimem/minimal.xml,zoom_level=30']:
         gdal.PushErrorHandler()
         ds = gdal.Open(connection_str)
         gdal.PopErrorHandler()
@@ -715,16 +715,16 @@ def wmts_14():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for open_options in [ ['URL=/vsimem/nominal.xml'],
-                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms'] ]:
+    for open_options in [['URL=/vsimem/nominal.xml'],
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIXSET=tms']]:
         ds = gdal.OpenEx('WMTS:', open_options = open_options)
         if ds is None:
             gdaltest.post_reason('fail')
             return 'fail'
 
-    for open_options in [ ['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
+    for open_options in [['URL=/vsimem/nominal.xml', 'STYLE=x', 'TILEMATRIXSET=y'],
                           ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'TILEMATRIX=30'],
-                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30'] ]:
+                          ['URL=/vsimem/nominal.xml', 'STYLE=style=auto', 'ZOOM_LEVEL=30']]:
         gdal.PushErrorHandler()
         ds = gdal.OpenEx('WMTS:', open_options = open_options)
         gdal.PopErrorHandler()
@@ -1638,14 +1638,14 @@ def wmts_22():
 ###############################################################################
 #
 
-def wmts_23( imagetype, expected_cs ):
+def wmts_23(imagetype, expected_cs):
 
     if gdaltest.wmts_drv is None:
         return 'skip'
 
     inputXml = '/vsimem/' + imagetype +'.xml'
     serviceUrl =  '/vsimem/wmts_23/' + imagetype
-    gdal.FileFromMemBuffer( inputXml, """<Capabilities>
+    gdal.FileFromMemBuffer(inputXml, """<Capabilities>
     <Contents>
         <Layer>
             <Identifier/>
@@ -1673,17 +1673,17 @@ def wmts_23( imagetype, expected_cs ):
     </Contents>
 </Capabilities>""")
 
-    tmp_ds = gdal.Open( 'data/wms/' + imagetype + '.png' )
+    tmp_ds = gdal.Open('data/wms/' + imagetype + '.png')
     if tmp_ds is None:
         gdaltest.post_reason('fail - cannot open tmp_ds')
         return 'fail'
 
-    tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds )
+    tile0_ds = gdal.GetDriverByName('PNG').CreateCopy(serviceUrl + '/0/0/0.png', tmp_ds)
     if tile0_ds is None:
         gdaltest.post_reason('fail - cannot create tile0')
         return 'fail'
 
-    ds = gdal.Open('WMTS:' + inputXml )
+    ds = gdal.Open('WMTS:' + inputXml)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1698,28 +1698,28 @@ def wmts_23( imagetype, expected_cs ):
         return 'fail'
 
     for i in range(4):
-        cs = ds.GetRasterBand( i + 1 ).Checksum()
+        cs = ds.GetRasterBand(i + 1).Checksum()
         if cs != expected_cs[i]:
             gdaltest.post_reason('fail')
-            print( cs )
+            print(cs)
             return 'fail'
 
     return 'success'
 
 def wmts_23_gray():
-    return wmts_23( 'gray', [ 60137, 60137, 60137, 4428 ] )
+    return wmts_23('gray', [60137, 60137, 60137, 4428])
 
 def wmts_23_grayalpha():
-    return wmts_23( 'gray+alpha', [ 39910, 39910, 39910, 63180 ] )
+    return wmts_23('gray+alpha', [39910, 39910, 39910, 63180])
 
 def wmts_23_pal():
-    return wmts_23( 'pal', [ 62950, 59100, 63864, 453 ] )
+    return wmts_23('pal', [62950, 59100, 63864, 453])
 
 def wmts_23_rgb():
-    return wmts_23( 'rgb', [ 1020, 3665, 6180, 4428 ] )
+    return wmts_23('rgb', [1020, 3665, 6180, 4428])
 
 def wmts_23_rgba():
-    return wmts_23( 'rgba', [ 65530, 51449, 1361, 59291 ] )
+    return wmts_23('rgba', [65530, 51449, 1361, 59291])
 
 ###############################################################################
 #
@@ -1788,13 +1788,13 @@ gdaltest_list = [
     wmts_23_pal,
     wmts_23_rgb,
     wmts_23_rgba,
-    wmts_cleanup ]
+    wmts_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'wmts' )
+    gdaltest.setup_run('wmts')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

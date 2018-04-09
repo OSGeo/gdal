@@ -31,7 +31,7 @@
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 def ogr_grass_1():
 
     try:
-        gdaltest.ogr_grass_drv = ogr.GetDriverByName( 'GRASS' )
+        gdaltest.ogr_grass_drv = ogr.GetDriverByName('GRASS')
     except:
         gdaltest.ogr_grass_drv = None
         return 'skip'
@@ -89,9 +89,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'GRASS' )
+    gdaltest.setup_run('GRASS')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

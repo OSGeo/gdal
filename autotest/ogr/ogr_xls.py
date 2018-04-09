@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -193,9 +193,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_xls' )
+    gdaltest.setup_run('ogr_xls')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

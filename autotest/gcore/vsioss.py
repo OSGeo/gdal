@@ -32,7 +32,7 @@ import stat
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -328,9 +328,9 @@ def visoss_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/oss_fake_bucket/invalid_xml_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -345,9 +345,9 @@ def visoss_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/oss_fake_bucket/no_code_in_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -362,9 +362,9 @@ def visoss_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/oss_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -378,9 +378,9 @@ def visoss_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/oss_fake_bucket/no_endpoint_in_PermanentRedirect_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -394,9 +394,9 @@ def visoss_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/oss_fake_bucket/no_message_in_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -494,11 +494,11 @@ def visoss_3():
         return 'fail'
 
     # Test CPL_VSIL_CURL_NON_CACHED
-    for config_option_value in [ '/vsioss/oss_non_cached/test.txt',
+    for config_option_value in ['/vsioss/oss_non_cached/test.txt',
                         '/vsioss/oss_non_cached',
                         '/vsioss/oss_non_cached:/vsioss/unrelated',
                         '/vsioss/unrelated:/vsioss/oss_non_cached',
-                        '/vsioss/unrelated:/vsioss/oss_non_cached:/vsioss/unrelated' ]:
+                        '/vsioss/unrelated:/vsioss/oss_non_cached:/vsioss/unrelated']:
       with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
         handler = webserver.SequentialHandler()
@@ -558,13 +558,13 @@ def visoss_3():
                 return 'fail'
 
     # Retry without option
-    for config_option_value in [ None,
-                                '/vsioss/oss_non_cached/bar.txt' ]:
+    for config_option_value in [None,
+                                '/vsioss/oss_non_cached/bar.txt']:
       with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
         handler = webserver.SequentialHandler()
         if config_option_value is None:
-            handler.add('GET', '/oss_non_cached/?delimiter=%2F', 200, { 'Content-type': 'application/xml' },
+            handler.add('GET', '/oss_non_cached/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
                         """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>/</Prefix>
@@ -614,7 +614,7 @@ def visoss_3():
 
     # List buckets (empty result)
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
@@ -623,7 +623,7 @@ def visoss_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsioss/')
-    if dir_contents != [ '.' ]:
+    if dir_contents != ['.']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -632,7 +632,7 @@ def visoss_3():
 
     # List buckets
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
@@ -644,7 +644,7 @@ def visoss_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsioss/')
-    if dir_contents != [ 'mybucket' ]:
+    if dir_contents != ['mybucket']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -969,10 +969,10 @@ def visoss_6():
     handler.add('POST', '/oss_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads', 200, {}, 'foo')
     handler.add('POST', '/oss_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads', 200, {}, '<foo/>')
     with webserver.install_http_handler(handler):
-      for filename in [ '/vsioss/oss_fake_bucket4/large_file_initiate_403_error.bin',
+      for filename in ['/vsioss/oss_fake_bucket4/large_file_initiate_403_error.bin',
                         '/vsioss/oss_fake_bucket4/large_file_initiate_empty_result.bin',
                         '/vsioss/oss_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
-                        '/vsioss/oss_fake_bucket4/large_file_initiate_no_uploadId.bin' ]:
+                        '/vsioss/oss_fake_bucket4/large_file_initiate_no_uploadId.bin']:
         with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
@@ -1002,7 +1002,7 @@ def visoss_6():
     handler.add('DELETE', '/oss_fake_bucket4/large_file_upload_part_no_etag.bin?uploadId=my_id', 204)
 
     with webserver.install_http_handler(handler):
-      for filename in [ '/vsioss/oss_fake_bucket4/large_file_upload_part_403_error.bin',
+      for filename in ['/vsioss/oss_fake_bucket4/large_file_upload_part_403_error.bin',
                         '/vsioss/oss_fake_bucket4/large_file_upload_part_no_etag.bin']:
         with gdaltest.config_option('VSIOSS_CHUNK_SIZE', '1'): # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
@@ -1058,8 +1058,8 @@ def visoss_6():
     handler = webserver.SequentialHandler()
     handler.add('POST', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploads', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
-    handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, { 'ETag': 'first_etag' }, '')
-    handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, { 'ETag': 'second_etag' }, '')
+    handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, {'ETag': 'first_etag'}, '')
+    handler.add('PUT', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, {'ETag': 'second_etag'}, '')
     handler.add('POST', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 403)
     #handler.add('DELETE', '/oss_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
 
@@ -1115,7 +1115,7 @@ def visoss_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
-                 { 'Content-type': 'application/xml', 'Connection':'close' },
+                 {'Content-type': 'application/xml', 'Connection':'close'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir/</Prefix>
@@ -1143,7 +1143,7 @@ def visoss_7():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_bucket_test_mkdir/dir_nonempty/', 416)
     handler.add('GET', '/oss_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
-                 { 'Content-type': 'application/xml' },
+                 {'Content-type': 'application/xml'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir_nonempty/</Prefix>
@@ -1172,7 +1172,7 @@ def visoss_8():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/visoss_8/?delimiter=%2F', 200,
-                 { 'Content-type': 'application/xml' },
+                 {'Content-type': 'application/xml'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix></Prefix>
@@ -1189,7 +1189,7 @@ def visoss_8():
 
     with webserver.install_http_handler(handler):
         listdir = gdal.ReadDir('/vsioss/visoss_8', 0)
-    if listdir != [ 'test', 'test/' ]:
+    if listdir != ['test', 'test/']:
         gdaltest.post_reason('fail')
         print(listdir)
         return 'fail'
@@ -1420,7 +1420,7 @@ def visoss_cleanup():
 
     return 'success'
 
-gdaltest_list = [ visoss_init,
+gdaltest_list = [visoss_init,
                   visoss_1,
                   visoss_real_test,
                   visoss_start_webserver,
@@ -1432,19 +1432,19 @@ gdaltest_list = [ visoss_init,
                   visoss_7,
                   visoss_8,
                   visoss_stop_webserver,
-                  visoss_cleanup ]
+                  visoss_cleanup]
 
 # gdaltest_list = [ visoss_init, visoss_start_webserver, visoss_8, visoss_stop_webserver, visoss_cleanup ]
 
-gdaltest_list_extra = [ visoss_extra_1 ]
+gdaltest_list_extra = [visoss_extra_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsioss' )
+    gdaltest.setup_run('vsioss')
 
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests( gdaltest_list_extra )
+        gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ visoss_cleanup ] )
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [visoss_cleanup])
 
     gdaltest.summarize()

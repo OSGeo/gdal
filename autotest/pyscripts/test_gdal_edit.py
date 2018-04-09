@@ -33,7 +33,7 @@ import sys
 import os
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -66,7 +66,7 @@ def test_gdal_edit_py_1():
         val_encoded = val
     else:
         exec("val = u'\\u00e9ven'")
-        val_encoded = val.encode( 'utf-8' )
+        val_encoded = val.encode('utf-8')
 
     test_py_scripts.run_py_script(script_path, 'gdal_edit', 'tmp/test_gdal_edit_py.tif -a_srs EPSG:4326 -a_ullr 2 50 3 49 -a_nodata 123 -mo FOO=BAR -mo UTF8=' + val_encoded + ' -mo ' + val_encoded + '=UTF8')
 
@@ -181,7 +181,7 @@ def test_gdal_edit_py_4():
         return 'skip'
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
-    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
     band = ds.GetRasterBand(1)
     band.ComputeStatistics(False)
     band.SetMetadataItem('FOO', 'BAR')
@@ -230,7 +230,7 @@ def test_gdal_edit_py_5():
         return 'skip'
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/test_gdal_edit_py.tif')
-    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
     band = ds.GetRasterBand(1)
     array = band.ReadAsArray()
     # original minimum is 74; modify a pixel value from 99 to 22
@@ -253,7 +253,7 @@ def test_gdal_edit_py_5():
         return 'fail'
     ds = None
 
-    ds = gdal.Open( 'tmp/test_gdal_edit_py.tif', gdal.GA_Update )
+    ds = gdal.Open('tmp/test_gdal_edit_py.tif', gdal.GA_Update)
     band = ds.GetRasterBand(1)
     array = band.ReadAsArray()
     array[15, 12] = 26
@@ -355,8 +355,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_edit_py' )
+    gdaltest.setup_run('test_gdal_edit_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

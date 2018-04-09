@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,7 +41,7 @@ import gdaltest
 
 def gxf_1():
 
-    tst = gdaltest.GDALTest( 'GXF', 'small.gxf', 1, 90 )
+    tst = gdaltest.GDALTest('GXF', 'small.gxf', 1, 90)
 
     return tst.testOpen()
 
@@ -50,7 +50,7 @@ def gxf_1():
 
 def gxf_2():
 
-    tst = gdaltest.GDALTest( 'GXF', 'small2.gxf', 1, 65042 )
+    tst = gdaltest.GDALTest('GXF', 'small2.gxf', 1, 65042)
     wkt = """PROJCS["NAD27 / Ohio North",
     GEOGCS["NAD27",
         DATUM["NAD27",
@@ -65,18 +65,18 @@ def gxf_2():
     PARAMETER["false_easting",609601.22],
     UNIT["ftUS",0.3048006096012]]"""
 
-    return tst.testOpen( check_prj = wkt )
+    return tst.testOpen(check_prj = wkt)
 
 ###############################################################################
 #
 class TestGXF:
-    def __init__( self, downloadURL, fileName, checksum, download_size ):
+    def __init__(self, downloadURL, fileName, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
         self.checksum = checksum
         self.download_size = download_size
 
-    def test( self ):
+    def test(self):
         if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
             return 'skip'
 
@@ -90,9 +90,9 @@ class TestGXF:
 
 
 
-gdaltest_list = [ gxf_1, gxf_2 ]
+gdaltest_list = [gxf_1, gxf_2]
 
-gxf_list = [ ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
+gxf_list = [('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'gxf_compressed.gxf', 20120, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'gxf_text.gxf', 20265, -1),
              ('http://download.osgeo.org/gdal/data/gxf', 'gxf_ul_r.gxf', 19930, -1),
@@ -101,14 +101,14 @@ gxf_list = [ ('http://download.osgeo.org/gdal/data/gxf', 'SAMPLE.GXF', 24068, -1
            ]
 
 for item in gxf_list:
-    ut = TestGXF( item[0], item[1], item[2], item[3] )
-    gdaltest_list.append( (ut.test, item[1]) )
+    ut = TestGXF(item[0], item[1], item[2], item[3])
+    gdaltest_list.append((ut.test, item[1]))
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gxf' )
+    gdaltest.setup_run('gxf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

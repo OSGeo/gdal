@@ -31,7 +31,7 @@
 import sys
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -41,48 +41,48 @@ import gdaltest
 
 def bt_1():
 
-    tst = gdaltest.GDALTest( 'BT', 'int16.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BT', 'int16.tif', 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
-    return tst.testCreateCopy( vsimem = 1, check_srs = srs.ExportToWkt(),
-                               check_gt = ( -67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333 ) )
+    return tst.testCreateCopy(vsimem = 1, check_srs = srs.ExportToWkt(),
+                               check_gt = (-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test CreateCopy() of int32.tif
 
 def bt_2():
 
-    tst = gdaltest.GDALTest( 'BT', 'int32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BT', 'int32.tif', 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
-    return tst.testCreateCopy( check_srs = srs.ExportToWkt(),
-                               check_gt = ( -67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333 ) )
+    return tst.testCreateCopy(check_srs = srs.ExportToWkt(),
+                               check_gt = (-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test CreateCopy() of float32.tif
 
 def bt_3():
 
-    tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS('NAD27')
-    return tst.testCreateCopy( check_srs = srs.ExportToWkt(),
-                               check_gt = ( -67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333 ) )
+    return tst.testCreateCopy(check_srs = srs.ExportToWkt(),
+                               check_gt = (-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test Create() of float32.tif
 
 def bt_4():
 
-    tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
-    return tst.testCreate( out_bands = 1 )
+    tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
+    return tst.testCreate(out_bands = 1)
 
 ###############################################################################
 # Test testSetProjection() of float32.tif
 
 def bt_5():
 
-    tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     return tst.testSetProjection()
 
 ###############################################################################
@@ -90,7 +90,7 @@ def bt_5():
 
 def bt_6():
 
-    tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BT', 'float32.tif', 1, 4672)
     return tst.testSetGeoTransform()
 
 ###############################################################################
@@ -112,13 +112,13 @@ gdaltest_list = [
     bt_4,
     bt_5,
     bt_6,
-    bt_cleanup ]
+    bt_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'bt' )
+    gdaltest.setup_run('bt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

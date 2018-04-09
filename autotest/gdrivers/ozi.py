@@ -32,7 +32,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -76,7 +76,7 @@ def ozi_online_1():
         gcps = ds.GetGCPs()
 
         if len(gcps) != 4:
-            gdaltest.post_reason( 'did not get expected gcp count.')
+            gdaltest.post_reason('did not get expected gcp count.')
             print(len(gcps))
             return 'fail'
 
@@ -84,7 +84,7 @@ def ozi_online_1():
         if gcp0.GCPPixel != 61 or gcp0.GCPLine != 436 \
                 or abs(gcp0.GCPX- (-1653990.4525324)) > 0.001 \
                 or abs(gcp0.GCPY- 6950885.0402214) > 0.001:
-            gdaltest.post_reason( 'did not get expected gcp.')
+            gdaltest.post_reason('did not get expected gcp.')
             print(gcp0)
             return 'fail'
 
@@ -107,13 +107,13 @@ def ozi_online_1():
     return 'success'
 
 gdaltest_list = [
-    ozi_online_1 ]
+    ozi_online_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'OZI' )
+    gdaltest.setup_run('OZI')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

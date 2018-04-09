@@ -79,7 +79,7 @@ while i < len(sys.argv):
         coefs = []
         for iCoef in range(size*size):
             try:
-                coefs.append( float(sys.argv[iCoef+i+1]) )
+                coefs.append(float(sys.argv[iCoef+i+1]))
             except:
                 print("Didn't find enough valid kernel coefficients, need ", \
                       size*size)
@@ -109,15 +109,15 @@ else:
 #   Open input file.
 # =============================================================================
 
-src_ds = gdal.Open( srcfile )
+src_ds = gdal.Open(srcfile)
 
 # =============================================================================
 #   Create a virtual file in memory only which matches the configuration of
 #   the input file.
 # =============================================================================
 
-vrt_driver = gdal.GetDriverByName( 'VRT' )
-vrt_ds = vrt_driver.CreateCopy( '', src_ds )
+vrt_driver = gdal.GetDriverByName('VRT')
+vrt_ds = vrt_driver.CreateCopy('', src_ds)
 
 # =============================================================================
 #   Prepare coefficient list.
@@ -127,7 +127,7 @@ coef_list_size = size * size
 if coefs is None:
     coefs = []
     for i in range(coef_list_size):
-        coefs.append( 1.0 / coef_list_size )
+        coefs.append(1.0 / coef_list_size)
 
 coefs_string = ''
 for i in range(coef_list_size):
@@ -157,24 +157,24 @@ for iBand in range(vrt_ds.RasterCount):
 
     src_xml = filt_template % (iBand+1)
 
-    band.SetMetadata( { 'source_0' : src_xml }, 'vrt_sources' )
+    band.SetMetadata({'source_0' : src_xml}, 'vrt_sources')
 
 # =============================================================================
 #	copy the results to a new file.
 # =============================================================================
 
 if out_format == 'VRT':
-    vrt_ds.SetDescription( dstfile )
+    vrt_ds.SetDescription(dstfile)
     vrt_ds = None
     sys.exit(0)
 
-out_driver = gdal.GetDriverByName( out_format )
+out_driver = gdal.GetDriverByName(out_format)
 if out_driver is None:
     print('Output driver %s does not appear to exist.' % out_format)
     sys.exit(1)
 
-out_ds = out_driver.CreateCopy( dstfile, vrt_ds, options = create_options,
-                                callback = gdal.TermProgress )
+out_ds = out_driver.CreateCopy(dstfile, vrt_ds, options = create_options,
+                                callback = gdal.TermProgress)
 out_ds = None
 
 

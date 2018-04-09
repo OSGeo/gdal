@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -41,34 +41,34 @@ import gdaltest
 
 def ntv2_1():
 
-    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10 )
+    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
-    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+    return tst.testOpen(check_gt = gt, check_prj = 'WGS84')
 
 ###############################################################################
 # Open a big-endian NTv2 grid
 
 def ntv2_2():
 
-    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_be.gsb', 2, 10 )
+    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_be.gsb', 2, 10)
     gt = (-5.52, 7.8, 0.0, 52.05, 0.0, -5.55)
-    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+    return tst.testOpen(check_gt = gt, check_prj = 'WGS84')
 
 ###############################################################################
 # Test creating a little-endian NTv2 grid
 
 def ntv2_3():
 
-    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=LE'] )
-    return tst.testCreateCopy( vsimem = 1 )
+    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=LE'])
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Test creating a big-endian NTv2 grid
 
 def ntv2_4():
 
-    tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=BE'] )
-    return tst.testCreateCopy( vsimem = 1 )
+    tst = gdaltest.GDALTest('NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=BE'])
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Test appending to a little-endian NTv2 grid
@@ -145,9 +145,9 @@ def ntv2_online_1():
     except:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1)
     gt = (165.95, 0.1, 0.0, -33.95, 0.0, -0.1)
-    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+    return tst.testOpen(check_gt = gt, check_prj = 'WGS84')
 
 ###############################################################################
 
@@ -158,8 +158,8 @@ def ntv2_online_2():
     except:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1 )
-    return tst.testCreateCopy( vsimem = 1 )
+    tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1)
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 
@@ -170,8 +170,8 @@ def ntv2_online_3():
     except:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1 )
-    return tst.testCreate( vsimem = 1, out_bands = 4 )
+    tst = gdaltest.GDALTest('NTV2', 'tmp/cache/nzgd2kgrid0005.gsb', 1, 54971, filename_absolute = 1)
+    return tst.testCreate(vsimem = 1, out_bands = 4)
 
 
 gdaltest_list = [
@@ -190,9 +190,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'NTV2' )
+    gdaltest.setup_run('NTV2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

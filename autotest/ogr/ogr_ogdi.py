@@ -32,7 +32,7 @@ import os
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -63,7 +63,7 @@ def ogr_ogdi_1():
         os.stat('tmp/cache/ogdits-3.1')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/ogdits-3.1.0.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/ogdits-3.1.0.zip')
             try:
                 os.stat('tmp/cache/ogdits-3.1')
             except:
@@ -83,7 +83,7 @@ def ogr_ogdi_1():
         gdaltest.post_reason('did not get expected layer count')
         return 'fail'
 
-    layers = [ ('libref@libref(*)_line', ogr.wkbLineString, 15),
+    layers = [('libref@libref(*)_line', ogr.wkbLineString, 15),
                ('libreft@libref(*)_text', ogr.wkbPoint, 4),
                ('markersp@bnd(*)_point', ogr.wkbPoint, 40),
                ('polbnda@bnd(*)_area', ogr.wkbPolygon, 6)]
@@ -199,7 +199,7 @@ def ogr_ogdi_4():
         gdaltest.post_reason('did not get expected layer count')
         return 'fail'
 
-    layers = [ ('polbnda@bnd(*)_area', ogr.wkbPolygon, 6)]
+    layers = [('polbnda@bnd(*)_area', ogr.wkbPolygon, 6)]
 
     for l in layers:
         lyr = ds.GetLayerByName(l[0])
@@ -281,9 +281,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_ogdi' )
+    gdaltest.setup_run('ogr_ogdi')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

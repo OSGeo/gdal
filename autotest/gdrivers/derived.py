@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -110,7 +110,7 @@ def derived_test2():
                      'DERIVED_SUBDATASET_7_NAME' : 'DERIVED_SUBDATASET:LOGAMPLITUDE:../gcore/data/cint_sar.tif',
                      'DERIVED_SUBDATASET_7_DESC' : 'log10 of amplitude of input bands from ../gcore/data/cint_sar.tif'}
 
-    expected_cs = { 'DERIVED_SUBDATASET_1_NAME' : 345,
+    expected_cs = {'DERIVED_SUBDATASET_1_NAME' : 345,
                     'DERIVED_SUBDATASET_2_NAME' : 10,
                     'DERIVED_SUBDATASET_3_NAME' : 159,
                     'DERIVED_SUBDATASET_4_NAME' : 142,
@@ -169,9 +169,9 @@ def derived_test3():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for function in [ 'real', 'imag', 'complex', 'mod', 'phase', 'conj',
+    for function in ['real', 'imag', 'complex', 'mod', 'phase', 'conj',
                       'sum', 'diff', 'mul', 'cmul', 'inv', 'intensity',
-                      'sqrt', 'log10', 'dB', 'dB2amp', 'dB2pow' ]:
+                      'sqrt', 'log10', 'dB', 'dB2amp', 'dB2pow']:
         ds = gdal.Open('<VRTDataset rasterXSize="1" rasterYSize="1"><VRTRasterBand subClass="VRTDerivedRasterBand"><PixelFunctionType>%s</PixelFunctionType></VRTRasterBand></VRTDataset>' % function)
         with gdaltest.error_handler():
             ds.GetRasterBand(1).Checksum()
@@ -186,8 +186,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'derived' )
+    gdaltest.setup_run('derived')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

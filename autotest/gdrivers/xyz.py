@@ -33,7 +33,7 @@ import sys
 import struct
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,8 +42,8 @@ import gdaltest
 
 def xyz_1():
 
-    tst = gdaltest.GDALTest( 'XYZ', 'byte.tif', 1, 4672 )
-    return tst.testCreateCopy( vsimem = 1, check_gt = ( -67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333 ) )
+    tst = gdaltest.GDALTest('XYZ', 'byte.tif', 1, 4672)
+    return tst.testCreateCopy(vsimem = 1, check_gt = (-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333))
 
 ###############################################################################
 # Test CreateCopy() of float.img
@@ -51,7 +51,7 @@ def xyz_1():
 def xyz_2():
 
     src_ds = gdal.Open('data/float.img')
-    ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options = ['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'] )
+    ds = gdal.GetDriverByName('XYZ').CreateCopy('tmp/float.xyz', src_ds, options = ['COLUMN_SEPARATOR=,', 'ADD_HEADER_LINE=YES'])
     got_cs = ds.GetRasterBand(1).Checksum()
     expected_cs = src_ds.GetRasterBand(1).Checksum()
     ds = None
@@ -130,7 +130,7 @@ def xyz_4():
 
 440810 3751050 7"""
     gdal.FileFromMemBuffer('/vsimem/grid.xyz', content)
-    expected = [ ( 0, 1, 2, 0 ), ( 3, 4, 0, 6 ), (0, 0, 7, 0) ]
+    expected = [(0, 1, 2, 0), (3, 4, 0, 6), (0, 0, 7, 0)]
 
     ds = gdal.Open('/vsimem/grid.xyz')
 
@@ -322,13 +322,13 @@ gdaltest_list = [
     xyz_6,
     xyz_7,
     xyz_8,
-    xyz_cleanup ]
+    xyz_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'xyz' )
+    gdaltest.setup_run('xyz')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

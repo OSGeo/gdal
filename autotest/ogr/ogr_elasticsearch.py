@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import ogrtest
 import gdaltest
@@ -278,7 +278,7 @@ def ogr_elasticsearch_1():
     feat['date_field'] = '2015/08/12'
     feat['datetime_field'] = '2015/08/12 12:34:56.789'
     feat['time_field'] = '12:34:56.789'
-    feat.SetFieldBinaryFromHexString( 'binary_field', '0123465789ABCDEF' )
+    feat.SetFieldBinaryFromHexString('binary_field', '0123465789ABCDEF')
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(0 1)'))
 
     # Simulate server error
@@ -2366,7 +2366,7 @@ def ogr_elasticsearch_11():
 
 def ogr_elasticsearch_delete_files():
 
-    for subdir in [ '_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer' ]:
+    for subdir in ['_search', '_cat', 'no_srs', 'non_standard_geometries', 'other_srs', 'a_layer']:
         lst = gdal.ReadDir('/vsimem/fakeelasticsearch/' + subdir)
         if lst:
             for f in lst:
@@ -2417,9 +2417,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_elasticsearch' )
+    gdaltest.setup_run('ogr_elasticsearch')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

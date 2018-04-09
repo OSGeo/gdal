@@ -34,7 +34,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_cli_utilities
@@ -190,9 +190,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gnmutils' )
+    gdaltest.setup_run('test_gnmutils')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

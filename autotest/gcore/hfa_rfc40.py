@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 import numpy
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -74,32 +74,32 @@ def CreateAndWriteRAT(fname):
     rat = band.GetDefaultRAT()
 
     # create some columns
-    if rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("Doubles", gdal.GFT_Real, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("Doubles", gdal.GFT_Real, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("Strings", gdal.GFT_String, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("Strings", gdal.GFT_String, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
     # for writing as different type
-    if rat.CreateColumn("IntAsDouble", gdal.GFT_Integer, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("IntAsDouble", gdal.GFT_Integer, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("IntsAsString", gdal.GFT_Integer, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("IntsAsString", gdal.GFT_Integer, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("DoubleAsInt", gdal.GFT_Real, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("DoubleAsInt", gdal.GFT_Real, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("DoubleAsString", gdal.GFT_Real, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("DoubleAsString", gdal.GFT_Real, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("StringAsInt", gdal.GFT_String, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("StringAsInt", gdal.GFT_String, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
-    if rat.CreateColumn("StringAsDouble", gdal.GFT_String, gdal.GFU_Generic ) != gdal.CE_None:
+    if rat.CreateColumn("StringAsDouble", gdal.GFT_String, gdal.GFU_Generic) != gdal.CE_None:
         raise HFATestError("Create column failed")
 
 
@@ -461,9 +461,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hfa_rfc40' )
+    gdaltest.setup_run('hfa_rfc40')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

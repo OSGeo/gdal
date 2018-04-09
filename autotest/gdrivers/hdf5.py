@@ -34,7 +34,7 @@ import shutil
 
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,7 +44,7 @@ import gdaltest
 def hdf5_1():
 
     try:
-        gdaltest.hdf5_drv = gdal.GetDriverByName( 'HDF5' )
+        gdaltest.hdf5_drv = gdal.GetDriverByName('HDF5')
     except:
         gdaltest.hdf5_drv = None
         return 'skip'
@@ -59,25 +59,25 @@ def hdf5_2():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/groups.h5' )
+    ds = gdal.Open('data/groups.h5')
 
     sds_list = ds.GetMetadata('SUBDATASETS')
 
     if len(sds_list) != 4:
         print(sds_list)
-        gdaltest.post_reason( 'Did not get expected subdataset count.' )
+        gdaltest.post_reason('Did not get expected subdataset count.')
         return 'fail'
 
     if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/groups.h5"://MyGroup/Group_A/dset2' \
        or sds_list['SUBDATASET_2_NAME'] != 'HDF5:"data/groups.h5"://MyGroup/dset1':
         print(sds_list)
-        gdaltest.post_reason( 'did not get expected subdatasets.' )
+        gdaltest.post_reason('did not get expected subdatasets.')
         return 'fail'
 
     ds = None
 
     if gdaltest.is_file_open('data/groups.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -91,17 +91,17 @@ def hdf5_3():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/u8be.h5"://TestArray' )
+    ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 135:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     ds = None
 
     if gdaltest.is_file_open('data/u8be.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -114,11 +114,11 @@ def hdf5_4():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/u8be.h5"://TestArray' )
+    ds = gdal.Open('HDF5:"data/u8be.h5"://TestArray')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 135:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     return 'success'
@@ -131,11 +131,11 @@ def hdf5_5():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/groups.h5"://MyGroup/dset1' )
+    ds = gdal.Open('HDF5:"data/groups.h5"://MyGroup/dset1')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 18:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     return 'success'
@@ -148,32 +148,32 @@ def hdf5_6():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    shutil.copyfile( 'data/groups.h5', 'tmp/groups.h5' )
+    shutil.copyfile('data/groups.h5', 'tmp/groups.h5')
 
-    ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
-    ds.BuildOverviews( overviewlist = [2] )
+    ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
+    ds.BuildOverviews(overviewlist = [2])
     ds = None
 
     if gdaltest.is_file_open('tmp/groups.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
-    ds = gdal.Open( 'HDF5:"tmp/groups.h5"://MyGroup/dset1' )
+    ds = gdal.Open('HDF5:"tmp/groups.h5"://MyGroup/dset1')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason( 'failed to find overview' )
+        gdaltest.post_reason('failed to find overview')
         return 'fail'
     ds = None
 
     # confirm that it works with a different path. (#3290)
 
-    ds = gdal.Open( 'HDF5:"data/../tmp/groups.h5"://MyGroup/dset1' )
+    ds = gdal.Open('HDF5:"data/../tmp/groups.h5"://MyGroup/dset1')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason( 'failed to find overview with alternate path' )
+        gdaltest.post_reason('failed to find overview with alternate path')
         return 'fail'
     ovfile = ds.GetMetadataItem('OVERVIEW_FILE','OVERVIEWS')
     if ovfile[:11] != 'data/../tmp':
         print(ovfile)
-        gdaltest.post_reason( 'did not get expected OVERVIEW_FILE.' )
+        gdaltest.post_reason('did not get expected OVERVIEW_FILE.')
         return 'fail'
     ds = None
 
@@ -190,17 +190,17 @@ def hdf5_7():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/metadata.h5' )
+    ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
     metadataList = ds.GetMetadata_List()
     ds = None
 
     if gdaltest.is_file_open('data/metadata.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     if len(metadata) != len(metadataList):
-        gdaltest.post_reason( 'error in metadata dictionary setup' )
+        gdaltest.post_reason('error in metadata dictionary setup')
         return 'fail'
 
     metadataList = [item.split('=', 1)[0] for item in metadataList]
@@ -208,7 +208,7 @@ def hdf5_7():
         try:
             metadata.pop(key)
         except KeyError:
-            gdaltest.post_reason( 'unable to find "%s" key' % key )
+            gdaltest.post_reason('unable to find "%s" key' % key)
             return 'fail'
     return 'success'
 
@@ -220,12 +220,12 @@ def hdf5_8():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/metadata.h5' )
+    ds = gdal.Open('data/metadata.h5')
     metadata = ds.GetMetadata()
     ds = None
 
     if len(metadata) == 0:
-        gdaltest.post_reason( 'no metadata found' )
+        gdaltest.post_reason('no metadata found')
         return 'fail'
 
     h5groups = ['G1', 'Group with spaces', 'Group_with_underscores',
@@ -244,7 +244,7 @@ def hdf5_8():
             name = '_'.join(parts + [attr])
             name = name.replace(' ', '_')
             if name not in metadata:
-                gdaltest.post_reason( 'unable to find metadata: "%s"' % name )
+                gdaltest.post_reason('unable to find metadata: "%s"' % name)
                 return 'fail'
 
             value = metadata.pop(name)
@@ -252,9 +252,9 @@ def hdf5_8():
             value = value.strip(' d')
             value = type(attributes[attr])(value)
             if value != attributes[attr]:
-                gdaltest.post_reason( 'incorrect metadata value for "%s": '
+                gdaltest.post_reason('incorrect metadata value for "%s": '
                                        '"%s" != "%s"' % (name, value,
-                                                         attributes[attr]) )
+                                                         attributes[attr]))
                 return 'fail'
 
     # level0
@@ -291,11 +291,11 @@ def hdf5_9():
         gdaltest.post_reason('would crash')
         return 'skip'
 
-    ds = gdal.Open( 'data/vlstr_metadata.h5' )
+    ds = gdal.Open('data/vlstr_metadata.h5')
     metadata = ds.GetRasterBand(1).GetMetadata()
     ds = None
     if gdaltest.is_file_open('data/vlstr_metadata.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     ref_metadata = {
@@ -308,20 +308,20 @@ def hdf5_9():
     }
 
     if len(metadata) != len(ref_metadata):
-        gdaltest.post_reason( 'incorrect number of metadata: '
+        gdaltest.post_reason('incorrect number of metadata: '
                               'expected %d, got %d' % (len(ref_metadata),
-                                                       len(metadata)) )
+                                                       len(metadata)))
         return 'fail'
 
     for key in metadata:
         if key not in ref_metadata:
-            gdaltest.post_reason( 'unexpected metadata key "%s"' % key )
+            gdaltest.post_reason('unexpected metadata key "%s"' % key)
             return 'fail'
 
         if metadata[key] != ref_metadata[key]:
-            gdaltest.post_reason( 'incorrect metadata value for key "%s": '
+            gdaltest.post_reason('incorrect metadata value for key "%s": '
                                   'expected "%s", got "%s" '%
-                                    (key, ref_metadata[key], metadata[key]) )
+                                    (key, ref_metadata[key], metadata[key]))
             return 'fail'
 
     return 'success'
@@ -336,13 +336,13 @@ def hdf5_10():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
-    ds = gdal.Open( 'HDF5:"data/CSK_DGM.h5"://S01/QLK' )
+    ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
            gdaltest.post_reason('fail')
            return 'fail'
     ds = None
 
-    ds = gdal.Open( 'HDF5:"data/CSK_DGM.h5"://S01/SBI' )
+    ds = gdal.Open('HDF5:"data/CSK_DGM.h5"://S01/SBI')
     got_gcpprojection = ds.GetGCPProjection()
     if got_gcpprojection.find('GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_gcpprojection)
@@ -361,7 +361,7 @@ def hdf5_10():
 
     ds = None
     if gdaltest.is_file_open('data/CSK_DGM.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -376,13 +376,13 @@ def hdf5_11():
 
     # Try opening the QLK subdataset to check that no error is generated
     gdal.ErrorReset()
-    ds = gdal.Open( 'HDF5:"data/CSK_GEC.h5"://S01/QLK' )
+    ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/QLK')
     if ds is None or gdal.GetLastErrorMsg() != '':
            gdaltest.post_reason('fail')
            return 'fail'
     ds = None
 
-    ds = gdal.Open( 'HDF5:"data/CSK_GEC.h5"://S01/SBI' )
+    ds = gdal.Open('HDF5:"data/CSK_GEC.h5"://S01/SBI')
     got_projection = ds.GetProjection()
     if got_projection.find('PROJCS["Transverse_Mercator",GEOGCS["WGS 84",DATUM["WGS_1984"') != 0:
         print(got_projection)
@@ -400,7 +400,7 @@ def hdf5_11():
     ds = None
 
     if gdaltest.is_file_open('data/CSK_GEC.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -416,7 +416,7 @@ def hdf5_12():
     if not gdaltest.download_file('http://trac.osgeo.org/gdal/raw-attachment/ticket/5032/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf', 'norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf'):
         return 'skip'
 
-    ds = gdal.Open( 'tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf' )
+    ds = gdal.Open('tmp/cache/norsa.ss.ppi-00.5-dbz.aeqd-1000.20070601T000039Z.hdf')
     got_projection = ds.GetProjection()
     if got_projection.find('Azimuthal_Equidistant') < 0 :
         print(got_projection)
@@ -447,7 +447,7 @@ def hdf5_13():
     if not gdaltest.download_file('http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc', 'A2016273115000.L2_LAC_OC.nc'):
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490' )
+    ds = gdal.Open('HDF5:"tmp/cache/A2016273115000.L2_LAC_OC.nc"://geophysical_data/Kd_490')
 
     got_gcps = ds.GetGCPs()
     if len(got_gcps) != 3030:
@@ -470,12 +470,12 @@ def hdf5_14():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/complex.h5' )
+    ds = gdal.Open('data/complex.h5')
     sds_list = ds.GetMetadata('SUBDATASETS')
 
     if len(sds_list) != 6:
         print(sds_list)
-        gdaltest.post_reason( 'Did not get expected complex subdataset count.' )
+        gdaltest.post_reason('Did not get expected complex subdataset count.')
         return 'fail'
 
     if sds_list['SUBDATASET_1_NAME'] != 'HDF5:"data/complex.h5"://f16' \
@@ -488,7 +488,7 @@ def hdf5_14():
     ds = None
 
     if gdaltest.is_file_open('data/complex.h5'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -501,11 +501,11 @@ def hdf5_15():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/complex.h5"://f32' )
+    ds = gdal.Open('HDF5:"data/complex.h5"://f32')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 523:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     return 'success'
@@ -516,11 +516,11 @@ def hdf5_16():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/complex.h5"://f64' )
+    ds = gdal.Open('HDF5:"data/complex.h5"://f64')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 511:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     return 'success'
@@ -531,24 +531,24 @@ def hdf5_17():
     if gdaltest.hdf5_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'HDF5:"data/complex.h5"://f16' )
+    ds = gdal.Open('HDF5:"data/complex.h5"://f16')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 412:
-        gdaltest.post_reason( 'did not get expected checksum' )
+        gdaltest.post_reason('did not get expected checksum')
         return 'fail'
 
     return 'success'
 
 class TestHDF5:
-    def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):
+    def __init__(self, downloadURL, fileName, subdatasetname, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
         self.subdatasetname = subdatasetname
         self.checksum = checksum
         self.download_size = download_size
 
-    def test( self ):
+    def test(self):
         if gdaltest.hdf5_drv is None:
             return 'skip'
 
@@ -584,7 +584,7 @@ gdaltest_list = [
     hdf5_17
 ]
 
-hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
+hdf5_list = [('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'HDF4_PALGROUP/HDF4_PALETTE_2', 7488, -1),
               ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/convert', 'C1979091.h5',
                                      'Raster_Image_#0', 3661, -1),
@@ -593,14 +593,14 @@ hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/
             ]
 
 for item in hdf5_list:
-    ut = TestHDF5( item[0], item[1], item[2], item[3], item[4] )
-    gdaltest_list.append( (ut.test, 'HDF5:"' + item[1]+ '"://' +   item[2]) )
+    ut = TestHDF5(item[0], item[1], item[2], item[3], item[4])
+    gdaltest_list.append((ut.test, 'HDF5:"' + item[1]+ '"://' +   item[2]))
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hdf5' )
+    gdaltest.setup_run('hdf5')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

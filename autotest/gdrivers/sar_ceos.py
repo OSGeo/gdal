@@ -30,33 +30,33 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
 ###############################################################################
 def sar_ceos_online_1():
-    list_files = [ 'ottawa_patch.img',
+    list_files = ['ottawa_patch.img',
                    'ottawa_patch.led',
                    'ottawa_patch.nul',
                    'ottawa_patch.trl',
-                   'ottawa_patch.vol' ]
+                   'ottawa_patch.vol']
 
     for filename in list_files:
         if not gdaltest.download_file('http://download.osgeo.org/gdal/data/ceos/' + filename , filename):
             return 'skip'
 
-    tst = gdaltest.GDALTest( 'SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute = 1)
     return tst.testOpen()
 
 gdaltest_list = [
-    sar_ceos_online_1 ]
+    sar_ceos_online_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'sar_ceos' )
+    gdaltest.setup_run('sar_ceos')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -34,7 +34,7 @@ import sys
 from osgeo import ogr
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -347,7 +347,7 @@ def ogr_osm_4():
     if ogrtest.osm_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/test.pbf' )
+    ds = ogr.Open('data/test.pbf')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -410,19 +410,19 @@ def ogr_osm_5():
     if ogrtest.osm_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/test.pbf' )
+    ds = ogr.Open('data/test.pbf')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    tests = [ [ 'points', '3', True ],
-              [ 'points', 'foo', False ],
-              [ 'lines', '1', True ],
-              [ 'lines', 'foo', False ],
-              [ 'multipolygons', '1', True ],
-              [ 'multipolygons', 'foo', False ],
-              [ 'multilinestrings', '3', True ],
-              [ 'multilinestrings', 'foo', False ] ]
+    tests = [['points', '3', True],
+              ['points', 'foo', False],
+              ['lines', '1', True],
+              ['lines', 'foo', False],
+              ['multipolygons', '1', True],
+              ['multipolygons', 'foo', False],
+              ['multilinestrings', '3', True],
+              ['multilinestrings', 'foo', False]]
 
     for test in tests:
         sql_lyr = ds.ExecuteSQL("SELECT * FROM %s WHERE osm_id = '%s'" % (test[0], test[1]))
@@ -492,7 +492,7 @@ def ogr_osm_7():
     if ogrtest.osm_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/test.pbf' )
+    ds = ogr.Open('data/test.pbf')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -517,12 +517,12 @@ def ogr_osm_8():
     if ogrtest.osm_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/base-64.osm.pbf' )
+    ds = ogr.Open('data/base-64.osm.pbf')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    lyr = ds.GetLayerByName( 'points')
+    lyr = ds.GetLayerByName('points')
     lyr.SetAttributeFilter("osm_id = '4294967934'")
     feat = lyr.GetNextFeature()
 
@@ -532,7 +532,7 @@ def ogr_osm_8():
         feat.DumpReadable()
         return 'fail'
 
-    lyr = ds.GetLayerByName( 'multipolygons')
+    lyr = ds.GetLayerByName('multipolygons')
     feat = lyr.GetFeature(1113)
 
     if ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt('MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))')) != 0:
@@ -811,7 +811,7 @@ def ogr_osm_15():
     count = 0
     last_pct = 0
     while True:
-        f, l, pct = ds.GetNextFeature( include_pct = True )
+        f, l, pct = ds.GetNextFeature(include_pct = True)
         if pct < last_pct:
             gdaltest.post_reason('fail')
             print(last_pct)
@@ -841,7 +841,7 @@ def ogr_osm_15():
         print(last_pct)
         return 'fail'
 
-    f, l, pct = ds.GetNextFeature( include_pct = True )
+    f, l, pct = ds.GetNextFeature(include_pct = True)
     if f is not None or l is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -856,18 +856,18 @@ def ogr_osm_15():
             return 'fail'
 
     ds.ResetReading()
-    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_false )
+    f, l = ds.GetNextFeature(callback = ogr_osm_15_progresscbk_return_false)
     if f is not None or l is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
-    pct_array = [ 0 ]
-    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array )
+    pct_array = [0]
+    f, l = ds.GetNextFeature(callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array)
     if f is None or l is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if pct_array[ 0 ] != 1.0:
+    if pct_array[0] != 1.0:
         gdaltest.post_reason('fail')
         print(pct_array)
         return 'fail'
@@ -907,7 +907,7 @@ attribute_name_laundering=yes
 attributes=foo:baar,foo:bar
 """)
 
-    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options = [ 'CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'] )
+    ds = gdal.OpenEx('/vsimem/ogr_osm_16.osm', open_options = ['CONFIG_FILE=/vsimem/ogr_osm_16_conf.ini'])
     lyr = ds.GetLayerByName('points')
     f = lyr.GetNextFeature()
     if f['foo_baar'] != 'val' or f['foo_bar'] != 'val2':
@@ -997,8 +997,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_osm' )
+    gdaltest.setup_run('ogr_osm')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

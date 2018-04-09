@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -64,7 +64,7 @@ def ogr_gml_fgd_1():
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
         else:
-            gdaltest.post_reason( 'failed to open test file.' )
+            gdaltest.post_reason('failed to open test file.')
             return 'fail'
 
     # we have gml reader for fgd
@@ -146,8 +146,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_gml_fgd_read' )
+    gdaltest.setup_run('ogr_gml_fgd_read')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

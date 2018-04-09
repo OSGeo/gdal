@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,8 +40,8 @@ import gdaltest
 
 def ctg_1():
 
-    tst = gdaltest.GDALTest( 'CTG', 'fake_grid_cell', 1, 21 )
-    expected_gt = [ 421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0 ]
+    tst = gdaltest.GDALTest('CTG', 'fake_grid_cell', 1, 21)
+    expected_gt = [421000.0, 200.0, 0.0, 5094400.0, 0.0, -200.0]
     expected_srs = """PROJCS["WGS 84 / UTM zone 14N",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -83,13 +83,13 @@ def ctg_1():
     return ret
 
 gdaltest_list = [
-    ctg_1 ]
+    ctg_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ctg' )
+    gdaltest.setup_run('ctg')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

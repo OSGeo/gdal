@@ -31,8 +31,8 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
-sys.path.append( '../ogr' )
+sys.path.append('../pymod')
+sys.path.append('../ogr')
 
 from osgeo import ogr
 import gdaltest
@@ -158,8 +158,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_ogrlineref' )
+    gdaltest.setup_run('test_ogrlineref')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

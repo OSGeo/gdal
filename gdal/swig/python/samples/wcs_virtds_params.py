@@ -43,7 +43,7 @@ def Usage():
     sys.exit(1)
 
 argv = sys.argv
-argv = ogr.GeneralCmdLineProcessor( argv )
+argv = ogr.GeneralCmdLineProcessor(argv)
 
 ogr_ds_name = None
 lyr_name = None

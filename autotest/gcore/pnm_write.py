@@ -27,28 +27,28 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),
-    ('uint16.tif', 1, 4672, None) ]
+    ('uint16.tif', 1, 4672, None)]
 
 gdaltest_list = []
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'PNM', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('PNM', item[0], item[1], item[2])
     if ut is None:
-        print( 'PNM tests skipped' )
-    gdaltest_list.append( (ut.testCreateCopy, item[0]) )
-    gdaltest_list.append( (ut.testCreate, item[0]) )
+        print('PNM tests skipped')
+    gdaltest_list.append((ut.testCreateCopy, item[0]))
+    gdaltest_list.append((ut.testCreate, item[0]))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pnm_write' )
+    gdaltest.setup_run('pnm_write')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

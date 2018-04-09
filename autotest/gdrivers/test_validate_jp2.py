@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 sys.path.append('../../gdal/swig/python/samples')
 
 import gdaltest
@@ -45,7 +45,7 @@ def test_validate_jp2_1():
 
     gdaltest.has_validate_jp2_and_build_jp2 = False
     try:
-        gdaltest.jp2openjpeg_drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+        gdaltest.jp2openjpeg_drv = gdal.GetDriverByName('JP2OpenJPEG')
     except:
         gdaltest.jp2openjpeg_drv = None
         return 'skip'
@@ -278,7 +278,7 @@ def test_validate_jp2_5():
  'ERROR[GENERAL]: cmap.PCOL[2] = 0 is invalid since already used',
  'ERROR[GENERAL]: ihdr_nc(=2) != Csiz (=1)',
  'ERROR[INSPIRE_TG, Conformance class A.8.8]: Inconsistent geotransform between OrthoImagery ((440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)) and GMLJP2/GeoJP2 ((40720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0))',
- 'ERROR[INSPIRE_TG, Requirement 26, Conformance class A.8.16]: RGN marker found, which is not allowed' ]
+ 'ERROR[INSPIRE_TG, Requirement 26, Conformance class A.8.16]: RGN marker found, which is not allowed']
 
     if error_report.error_array != expected_errors:
         gdaltest.post_reason('did not get expected errors')
@@ -406,8 +406,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_validate_jp2' )
+    gdaltest.setup_run('test_validate_jp2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

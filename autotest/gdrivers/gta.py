@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -51,7 +51,7 @@ init_list = [ \
     ('cint32.tif', 1, 5028, []),
     ('cfloat32.tif', 1, 5028, []),
     ('cfloat64.tif', 1, 5028, []),
-    ('rgbsmall.tif', 1, 21212, []) ]
+    ('rgbsmall.tif', 1, 21212, [])]
 
 ###############################################################################
 # Verify we have the driver.
@@ -59,7 +59,7 @@ init_list = [ \
 def gta_1():
 
     try:
-        gdaltest.gta_drv = gdal.GetDriverByName( 'GTA' )
+        gdaltest.gta_drv = gdal.GetDriverByName('GTA')
     except:
         gdaltest.gta_drv = None
         return 'skip'
@@ -125,34 +125,34 @@ def gta_3():
     if gdaltest.gta_drv is None:
         return 'skip'
 
-    src_ds = gdal.Open( '../gcore/data/gcps.vrt' )
+    src_ds = gdal.Open('../gcore/data/gcps.vrt')
 
-    new_ds = gdaltest.gta_drv.CreateCopy( '/vsimem/gta_3.gta', src_ds )
+    new_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_3.gta', src_ds)
     new_ds = None
 
-    new_ds = gdal.Open( '/vsimem/gta_3.gta' )
+    new_ds = gdal.Open('/vsimem/gta_3.gta')
 
     if new_ds.GetGeoTransform() != (0.0, 1.0, 0.0, 0.0, 0.0, 1.0):
-        gdaltest.post_reason( 'GeoTransform not set properly.' )
+        gdaltest.post_reason('GeoTransform not set properly.')
         return 'fail'
 
     if new_ds.GetProjectionRef() != '':
-        gdaltest.post_reason( 'Projection not set properly.' )
+        gdaltest.post_reason('Projection not set properly.')
         return 'fail'
 
     if new_ds.GetGCPProjection() != src_ds.GetGCPProjection():
-        gdaltest.post_reason( 'GCP Projection not set properly.' )
+        gdaltest.post_reason('GCP Projection not set properly.')
         return 'fail'
 
     gcps = new_ds.GetGCPs()
     expected_gcps = src_ds.GetGCPs()
     if len(gcps) != len(expected_gcps):
-        gdaltest.post_reason( 'GCP count wrong.' )
+        gdaltest.post_reason('GCP count wrong.')
         return 'fail'
 
     new_ds = None
 
-    gdaltest.gta_drv.Delete( '/vsimem/gta_3.gta' )
+    gdaltest.gta_drv.Delete('/vsimem/gta_3.gta')
 
     return 'success'
 
@@ -177,10 +177,10 @@ def gta_4():
         if i != gdal.GCI_PaletteIndex:
             src_ds.GetRasterBand(i + 1).SetColorInterpretation(i)
 
-    new_ds = gdaltest.gta_drv.CreateCopy( '/vsimem/gta_4.gta', src_ds )
+    new_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_4.gta', src_ds)
     new_ds = None
 
-    new_ds = gdal.Open( '/vsimem/gta_4.gta' )
+    new_ds = gdal.Open('/vsimem/gta_4.gta')
     band = new_ds.GetRasterBand(1)
     if band.GetNoDataValue() != 123:
         gdaltest.post_reason('did not get expected nodata value')
@@ -225,7 +225,7 @@ def gta_4():
 
     new_ds = None
 
-    gdaltest.gta_drv.Delete( '/vsimem/gta_4.gta' )
+    gdaltest.gta_drv.Delete('/vsimem/gta_4.gta')
 
     return 'success'
 
@@ -257,7 +257,7 @@ def gta_5():
         out_ds = gdaltest.gta_drv.CreateCopy('/vsimem/gta_5.gta', src_ds, options = ['COMPRESS=' + compress])
         del out_ds
 
-    gdaltest.gta_drv.Delete( '/vsimem/gta_5.gta' )
+    gdaltest.gta_drv.Delete('/vsimem/gta_5.gta')
 
     return 'success'
 
@@ -266,23 +266,23 @@ for item in init_list:
         filename = item[0]
     else:
         filename = '../../gcore/data/' + item[0]
-    ut = gdaltest.GDALTest( 'GTA', filename, item[1], item[2], options = item[3] )
+    ut = gdaltest.GDALTest('GTA', filename, item[1], item[2], options = item[3])
     if ut is None:
-        print( 'GTA tests skipped' )
+        print('GTA tests skipped')
         sys.exit()
-    gdaltest_list.append( (ut.testCreateCopy, item[0]) )
+    gdaltest_list.append((ut.testCreateCopy, item[0]))
 
-gdaltest_list.append( gta_1 )
-gdaltest_list.append( gta_2 )
-gdaltest_list.append( gta_3 )
-gdaltest_list.append( gta_4 )
-gdaltest_list.append( gta_5 )
+gdaltest_list.append(gta_1)
+gdaltest_list.append(gta_2)
+gdaltest_list.append(gta_3)
+gdaltest_list.append(gta_4)
+gdaltest_list.append(gta_5)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gta' )
+    gdaltest.setup_run('gta')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

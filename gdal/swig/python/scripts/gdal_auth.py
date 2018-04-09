@@ -47,7 +47,7 @@ SCOPES = {
 # =============================================================================
 def Usage():
     print('')
-    print('Usage: gdal_auth_py [-s scope]' )
+    print('Usage: gdal_auth_py [-s scope]')
     print('       - interactive use.')
     print('')
     print('or:')
@@ -67,9 +67,9 @@ scope = SCOPES['ft']
 token_in = None
 command = None
 
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1

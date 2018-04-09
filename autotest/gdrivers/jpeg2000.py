@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ def is_buggy_jasper():
         return gdaltest.buggy_jasper
 
     gdaltest.buggy_jasper = False
-    if gdal.GetDriverByName( 'JPEG2000' ) is None:
+    if gdal.GetDriverByName('JPEG2000') is None:
         return False
 
     # This test will cause a crash with an unpatched version of Jasper, such as the one of Ubuntu 8.04 LTS
@@ -65,7 +65,7 @@ def is_buggy_jasper():
 def jpeg2000_1():
 
     try:
-        gdaltest.jpeg2000_drv = gdal.GetDriverByName( 'JPEG2000' )
+        gdaltest.jpeg2000_drv = gdal.GetDriverByName('JPEG2000')
     except:
         gdaltest.jpeg2000_drv = None
         return 'skip'
@@ -103,8 +103,8 @@ def jpeg2000_2():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest( 'JPEG2000', 'byte.jp2', 1, 50054 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 ###############################################################################
 # Open int16.jp2
@@ -114,8 +114,8 @@ def jpeg2000_3():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/int16.jp2' )
-    ds_ref = gdal.Open( 'data/int16.tif' )
+    ds = gdal.Open('data/int16.jp2')
+    ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
     print(ds.GetRasterBand(1).Checksum())
@@ -139,12 +139,12 @@ def jpeg2000_4():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JPEG2000', 'byte.jp2', 1, 50054 )
+    tst = gdaltest.GDALTest('JPEG2000', 'byte.jp2', 1, 50054)
     if tst.testCreateCopy() != 'success':
         return 'fail'
 
     # This may fail for a good reason
-    if tst.testCreateCopy( check_gt = 1, check_srs = 1) != 'success':
+    if tst.testCreateCopy(check_gt = 1, check_srs = 1) != 'success':
         gdaltest.post_reason('This is an expected failure if Jasper has not the jp2_encode_uuid function')
         return 'expected_fail'
 
@@ -158,7 +158,7 @@ def jpeg2000_5():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JPEG2000', 'int16.jp2', 1, None )
+    tst = gdaltest.GDALTest('JPEG2000', 'int16.jp2', 1, None)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -169,7 +169,7 @@ def jpeg2000_6():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JPEG2000', 'll.jp2', 1, None )
+    tst = gdaltest.GDALTest('JPEG2000', 'll.jp2', 1, None)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -188,7 +188,7 @@ def jpeg2000_7():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JPEG2000', '/vsigzip/data/byte.jp2.gz', 1, 50054, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -201,7 +201,7 @@ def jpeg2000_8():
 
     ds = gdal.Open('data/3_13bit_and_1bit.jp2')
 
-    expected_checksums = [ 64570, 57277, 56048, 61292]
+    expected_checksums = [64570, 57277, 56048, 61292]
 
     for i in range(4):
         if ds.GetRasterBand(i+1).Checksum() != expected_checksums[i]:
@@ -222,7 +222,7 @@ def jpeg2000_9():
     if gdaltest.jpeg2000_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/byte_without_geotransform.jp2' )
+    ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-440720) > 0.1 \
@@ -232,7 +232,7 @@ def jpeg2000_9():
         or abs(geotransform[4]-0) > 0.001 \
         or abs(geotransform[5]- -60) > 0.001:
         print(geotransform)
-        gdaltest.post_reason( 'geotransform differs from expected' )
+        gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
 
     ds = None
@@ -254,7 +254,7 @@ def jpeg2000_10():
     ds = gdaltest.jpeg2000_drv.CreateCopy('/vsimem/jpeg2000_10_dst.tif', src_ds)
     ds = None
 
-    ds = gdal.Open( '/vsimem/jpeg2000_10_dst.tif' )
+    ds = gdal.Open('/vsimem/jpeg2000_10_dst.tif')
     if ds is None:
         return 'fail'
     for i in range(src_ds.RasterCount):
@@ -331,7 +331,7 @@ def jpeg2000_online_1():
         return 'skip'
 
     # Checksum = 32669 on my PC
-    tst = gdaltest.GDALTest( 'JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -352,7 +352,7 @@ def jpeg2000_online_2():
         return 'skip'
 
     # Checksum = 15621 on my PC
-    tst = gdaltest.GDALTest( 'JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -384,7 +384,7 @@ def jpeg2000_online_3():
         return 'skip'
 
     # Checksum = 14443 on my PC
-    tst = gdaltest.GDALTest( 'JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -416,7 +416,7 @@ def jpeg2000_online_4():
     if not gdaltest.download_file('http://www.openjpeg.org/samples/Bretagne2.bmp', 'Bretagne2.bmp'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JPEG2000', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1)
 
     # Jasper cannot handle this image
     # Actually, a patched Jasper can ;-)
@@ -513,12 +513,12 @@ gdaltest_list = [
     jpeg2000_online_4,
     jpeg2000_online_5,
     jpeg2000_online_6,
-    jpeg2000_cleanup ]
+    jpeg2000_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'jpeg2000' )
+    gdaltest.setup_run('jpeg2000')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

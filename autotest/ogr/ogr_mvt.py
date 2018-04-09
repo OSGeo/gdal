@@ -31,7 +31,7 @@
 import json
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -81,8 +81,8 @@ def ogr_mvt_datatypes():
     tab = []
     for i in range(lyr.GetLayerDefn().GetFieldCount()):
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(i)
-        tab += [ (fld_defn.GetName(), fld_defn.GetType(),
-                  fld_defn.GetSubType()) ]
+        tab += [(fld_defn.GetName(), fld_defn.GetType(),
+                  fld_defn.GetSubType())]
     expected_tab = [
         ('mvt_id', ogr.OFTInteger64, ogr.OFSTNone),
         ('bool_true', ogr.OFTInteger, ogr.OFSTBoolean),
@@ -134,12 +134,12 @@ def ogr_mvt_datatypes():
 def ogr_mvt_datatype_promotion():
 
     ds = ogr.Open('data/mvt/datatype_promotion.pbf')
-    tab = [ ('int_to_int64', ogr.OFTInteger64),
+    tab = [('int_to_int64', ogr.OFTInteger64),
             ('int_to_real', ogr.OFTReal),
             ('int64_to_real', ogr.OFTReal),
             ('bool_to_int', ogr.OFTInteger),
             ('bool_to_str', ogr.OFTString),
-            ('float_to_double', ogr.OFTReal) ]
+            ('float_to_double', ogr.OFTReal)]
     for layer_name, dt in tab:
         lyr = ds.GetLayerByName(layer_name)
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(1)
@@ -641,7 +641,7 @@ def ogr_mvt_x_y_z_filename_scheme():
 
     tmpfilename ='/vsimem/0-0-0.pbf'
     gdal.FileFromMemBuffer(tmpfilename,
-        open('data/mvt/linestring/0/0/0.pbf', 'rb').read() )
+        open('data/mvt/linestring/0/0/0.pbf', 'rb').read())
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1195,12 +1195,12 @@ def ogr_mvt_write_conf():
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(500000 1000000)'))
     lyr.CreateFeature(f)
 
-    conf = { 'mylayer' : { 'target_name': 'TheLayer',
+    conf = {'mylayer' : {'target_name': 'TheLayer',
                            'description': 'the layer',
                            'minzoom': 1,
-                           'maxzoom': 2 } }
+                           'maxzoom': 2}}
     out_ds = gdal.VectorTranslate('/vsimem/outmvt', src_ds,
-        format = 'MVT', datasetCreationOptions = [ "CONF=%s" % json.dumps(conf) ])
+        format = 'MVT', datasetCreationOptions = ["CONF=%s" % json.dumps(conf)])
     if out_ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1848,9 +1848,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_mvt' )
+    gdaltest.setup_run('ogr_mvt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -212,12 +212,12 @@ gdaltest_list = [
     vrtovr_2,
     vrtovr_none,
     vrtovr_errors,
-    vrtovr_cleanup ]
+    vrtovr_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrtovr' )
+    gdaltest.setup_run('vrtovr')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

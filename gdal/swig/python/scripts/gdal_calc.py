@@ -80,17 +80,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -344,7 +344,7 @@ def doit(opts, args):
                 if myNDVs is not None:
                     myResult = ((1*(myNDVs==0))*myResult) + (myOutNDV*myNDVs)
                 elif not isinstance(myResult, numpy.ndarray):
-                    myResult = numpy.ones( (nYValid,nXValid) ) * myResult
+                    myResult = numpy.ones((nYValid,nXValid)) * myResult
 
                 # write data block to the output file
                 myOutB=myOut.GetRasterBand(bandNo)

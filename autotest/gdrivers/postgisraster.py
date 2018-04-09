@@ -34,7 +34,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -56,7 +56,7 @@ def postgisraster_init():
     gdaltest.postgisraster_connection_string="PG:host='localhost' dbname='gisdb' user='gis' password='gis' schema='gis_schema' "
 
     try:
-        ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
+        ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
     except:
         gdaltest.postgisrasterDriver = None
 
@@ -100,11 +100,11 @@ def postgisraster_compare_utm():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( 'data/utm.tif' )
-    dst_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
+    src_ds = gdal.Open('data/utm.tif')
+    dst_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     # dataset actually contains many sub-datasets. test the first one
-    dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
+    dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=100, height=100, verbose = 1)
     if diff == 0:
@@ -118,11 +118,11 @@ def postgisraster_compare_small_world():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( 'data/small_world.tif' )
-    dst_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open('data/small_world.tif')
+    dst_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # dataset actually contains many sub-datasets. test the first one
-    dst_ds = gdal.Open( dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'] )
+    dst_ds = gdal.Open(dst_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'])
 
     diff = gdaltest.compare_ds(src_ds, dst_ds, width=40, height=20, verbose = 1)
     if diff == 0:
@@ -137,7 +137,7 @@ def postgisraster_test_utm_open():
         return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/utm.tif' )
+    src_ds = gdal.Open('data/utm.tif')
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -146,7 +146,7 @@ def postgisraster_test_utm_open():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='utm'" )
+    main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
@@ -159,7 +159,7 @@ def postgisraster_test_small_world_open_b1():
         return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/small_world.tif' )
+    src_ds = gdal.Open('data/small_world.tif')
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -168,7 +168,7 @@ def postgisraster_test_small_world_open_b1():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 1, cs, filename_absolute = 1)
@@ -181,7 +181,7 @@ def postgisraster_test_small_world_open_b2():
         return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/small_world.tif' )
+    src_ds = gdal.Open('data/small_world.tif')
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -191,7 +191,7 @@ def postgisraster_test_small_world_open_b2():
     cs = rb.Checksum()
 
 
-    main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Try to open PostGISRaster with the same data than original tif file
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 2, cs, filename_absolute = 1)
@@ -204,7 +204,7 @@ def postgisraster_test_small_world_open_b3():
         return 'skip'
 
     # First open tif file
-    src_ds = gdal.Open( 'data/small_world.tif' )
+    src_ds = gdal.Open('data/small_world.tif')
     prj = src_ds.GetProjectionRef()
     gt = src_ds.GetGeoTransform()
 
@@ -213,9 +213,9 @@ def postgisraster_test_small_world_open_b3():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
-    main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # Checksum for each band can be obtained by gdalinfo -checksum <file>
     tst = gdaltest.GDALTest('PostGISRaster', main_ds.GetMetadata('SUBDATASETS')['SUBDATASET_1_NAME'], 3, cs, filename_absolute = 1)
@@ -226,9 +226,9 @@ def postgisraster_test_create_copy_bad_conn_string():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy( "bogus connection string", src_ds, strict = True )
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy("bogus connection string", src_ds, strict = True)
 
     if new_ds is None:
         return 'success'
@@ -239,13 +239,13 @@ def postgisraster_test_create_copy_no_dbname():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # This is set in order to prevent GDAL from attempting to auto-identify
     # a bogus PG: filename to the postgis raster driver
     options = ['APPEND_SUBDATASET=YES']
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy( "PG: no database name", src_ds, strict = True, options = options )
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy("PG: no database name", src_ds, strict = True, options = options)
 
     if new_ds is None:
         return 'success'
@@ -256,13 +256,13 @@ def postgisraster_test_create_copy_no_tablename():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     # This is set in order to prevent GDAL from attempting to auto-identify
     # a bogus PG: filename to the postgis raster driver
     options = ['APPEND_SUBDATASET=YES']
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy( gdaltest.postgisraster_connection_string, src_ds, strict = True, options = options )
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string, src_ds, strict = True, options = options)
 
     if new_ds is None:
         return 'success'
@@ -277,14 +277,14 @@ def postgisraster_test_create_copy_and_delete():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy( gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True )
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True)
 
     if new_ds is None:
         return 'fail'
 
-    deleted = gdaltest.postgisrasterDriver.Delete( gdaltest.postgisraster_connection_string + "table='small_world_copy'")
+    deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
     if deleted:
         return 'fail'
@@ -298,11 +298,11 @@ def postgisraster_test_create_copy_and_delete_phases():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
-    new_ds = gdaltest.postgisrasterDriver.CreateCopy( gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True )
+    new_ds = gdaltest.postgisrasterDriver.CreateCopy(gdaltest.postgisraster_connection_string + "table='small_world_copy'", src_ds, strict = True)
 
     new_md = new_ds.GetMetadata('SUBDATASETS').keys()
 
@@ -310,64 +310,64 @@ def postgisraster_test_create_copy_and_delete_phases():
     src_ds = None
 
     if new_ds is None:
-        gdaltest.post_reason( 'No new dataset was created during copy.' )
+        gdaltest.post_reason('No new dataset was created during copy.')
         return 'fail'
     elif len(src_md) != len(new_md):
-        gdaltest.post_reason( 'Metadata differs between new and old rasters.' )
+        gdaltest.post_reason('Metadata differs between new and old rasters.')
         return 'fail'
 
     # should delete all raster parts over 50
-    deleted = gdaltest.postgisrasterDriver.Delete( gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid>50'")
+    deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid>50'")
 
     if deleted:
-        gdaltest.post_reason( 'Delete returned an error.' )
+        gdaltest.post_reason('Delete returned an error.')
         return 'fail'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_copy'")
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
     if src_ds is None:
-        gdaltest.post_reason( 'Could not open reduced dataset (1).' )
+        gdaltest.post_reason('Could not open reduced dataset (1).')
         return 'fail'
     elif len(src_md) != 100:
         # The length of the metadata contains two pcs of
         # information per raster, so 50 rasters remaining = 100 keys
         gdaltest.post_reason(
-            'Expected 100 keys of metadata for 50 subdataset rasters.' )
+            'Expected 100 keys of metadata for 50 subdataset rasters.')
         print(len(src_md))
         return 'fail'
 
     # done with src
     src_ds = None
 
-    deleted = gdaltest.postgisrasterDriver.Delete( gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid<=25'")
+    deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy' where='rid<=25'")
 
     if deleted:
-        gdaltest.post_reason( 'Delete returned an error.' )
+        gdaltest.post_reason('Delete returned an error.')
         return 'fail'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_copy'")
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS').keys()
 
     if src_ds is None:
-        gdaltest.post_reason( 'Could not open reduced dataset (2).' )
+        gdaltest.post_reason('Could not open reduced dataset (2).')
         return 'fail'
     elif len(src_md) != 50:
         # The length of the metadata contains two pcs of
         # information per raster, so 25 rasters remaining = 50 keys
-        gdaltest.post_reason( 'Expected 50 keys of metadata for 25 subdataset rasters.' )
+        gdaltest.post_reason('Expected 50 keys of metadata for 25 subdataset rasters.')
         print(len(src_md))
         return 'fail'
 
     # done with src
     src_ds = None
 
-    deleted = gdaltest.postgisrasterDriver.Delete( gdaltest.postgisraster_connection_string + "table='small_world_copy'")
+    deleted = gdaltest.postgisrasterDriver.Delete(gdaltest.postgisraster_connection_string + "table='small_world_copy'")
 
     if deleted:
-        gdaltest.post_reason( 'Delete returned an error.' )
+        gdaltest.post_reason('Delete returned an error.')
         return 'fail'
 
     return 'success'
@@ -379,7 +379,7 @@ def postgisraster_test_norid():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_noid'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_noid'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS')
 
@@ -403,7 +403,7 @@ def postgisraster_test_serial():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_serial'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_serial'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS')
 
@@ -428,7 +428,7 @@ def postgisraster_test_unique():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
 
-    src_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world_unique'" )
+    src_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='small_world_unique'")
 
     src_md = src_ds.GetMetadata('SUBDATASETS')
 
@@ -466,8 +466,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'WKTRASTER' )
+    gdaltest.setup_run('WKTRASTER')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

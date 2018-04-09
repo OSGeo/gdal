@@ -41,7 +41,7 @@ if len(sys.argv) < 3:
 # =============================================================================
 # Get the PCT.
 # =============================================================================
-ds = gdal.Open( sys.argv[1] )
+ds = gdal.Open(sys.argv[1])
 ct = ds.GetRasterBand(1).GetRasterColorTable()
 
 if ct is None:
@@ -56,24 +56,24 @@ ds = None
 # Create a MEM clone of the source file.
 # =============================================================================
 
-src_ds = gdal.Open( sys.argv[2] )
+src_ds = gdal.Open(sys.argv[2])
 
-mem_ds = gdal.GetDriverByName( 'MEM' ).CreateCopy( 'mem', src_ds )
+mem_ds = gdal.GetDriverByName('MEM').CreateCopy('mem', src_ds)
 
 # =============================================================================
 # Assign the color table in memory.
 # =============================================================================
 
-mem_ds.GetRasterBand(1).SetRasterColorTable( ct )
-mem_ds.GetRasterBand(1).SetRasterColorInterpretation( gdal.GCI_PaletteIndex )
+mem_ds.GetRasterBand(1).SetRasterColorTable(ct)
+mem_ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
 # =============================================================================
 # Write the dataset to the output file.
 # =============================================================================
 
-drv = gdal.GetDriverByName( 'GTiff' )
+drv = gdal.GetDriverByName('GTiff')
 
-out_ds = drv.CreateCopy( sys.argv[3], mem_ds )
+out_ds = drv.CreateCopy(sys.argv[3], mem_ds)
 
 out_ds = None
 mem_ds = None

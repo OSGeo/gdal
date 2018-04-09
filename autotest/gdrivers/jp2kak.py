@@ -142,12 +142,12 @@ def jp2kak_10():
     data = ds.ReadRaster(0, 0, 800, 100, band_list = [2, 3]).decode('latin1')
     ds = None
 
-    expected = [ (0,0), (255,0), (0, 255), (255,255),
+    expected = [(0,0), (255,0), (0, 255), (255,255),
                  (255,255), (0,255), (255,0), (0,0)]
     got = []
 
     for x in range(8):
-        got.append( (ord(data[x*100]), ord(data[80000 + x*100])) )
+        got.append((ord(data[x*100]), ord(data[80000 + x*100])))
 
     if got != expected:
         print(got)
@@ -545,7 +545,7 @@ gdaltest_list = [
     jp2kak_20,
     jp2kak_21,
     jp2kak_22,
-    jp2kak_cleanup ]
+    jp2kak_cleanup]
 
 if __name__ == '__main__':
 

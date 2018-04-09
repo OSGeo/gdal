@@ -57,17 +57,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -94,9 +94,9 @@ dst_filename = None
 pct_filename = None
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -131,7 +131,7 @@ if dst_filename is None:
 
 # Open source file
 
-src_ds = gdal.Open( src_filename )
+src_ds = gdal.Open(src_filename)
 if src_ds is None:
     print('Unable to open %s' % src_filename)
     sys.exit(1)
@@ -155,12 +155,12 @@ if dst_driver is None:
 
 ct = gdal.ColorTable()
 if pct_filename is None:
-    err = gdal.ComputeMedianCutPCT( src_ds.GetRasterBand(1),
+    err = gdal.ComputeMedianCutPCT(src_ds.GetRasterBand(1),
                                     src_ds.GetRasterBand(2),
                                     src_ds.GetRasterBand(3),
                                     color_count, ct,
                                     callback = gdal.TermProgress,
-                                    callback_data = 'Generate PCT' )
+                                    callback_data = 'Generate PCT')
 else:
     pct_ds = gdal.Open(pct_filename)
     ct = pct_ds.GetRasterBand(1).GetRasterColorTable().Clone()
@@ -174,38 +174,38 @@ else:
     import tempfile
     tif_filedesc,tif_filename = tempfile.mkstemp(suffix='.tif')
 
-gtiff_driver = gdal.GetDriverByName( 'GTiff' )
+gtiff_driver = gdal.GetDriverByName('GTiff')
 
-tif_ds = gtiff_driver.Create( tif_filename,
+tif_ds = gtiff_driver.Create(tif_filename,
                               src_ds.RasterXSize, src_ds.RasterYSize, 1)
 
-tif_ds.GetRasterBand(1).SetRasterColorTable( ct )
+tif_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
 # ----------------------------------------------------------------------------
 # We should copy projection information and so forth at this point.
 
-tif_ds.SetProjection( src_ds.GetProjection() )
-tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+tif_ds.SetProjection(src_ds.GetProjection())
+tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
 if src_ds.GetGCPCount() > 0:
-    tif_ds.SetGCPs( src_ds.GetGCPs(), src_ds.GetGCPProjection() )
+    tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
 
 # ----------------------------------------------------------------------------
 # Actually transfer and dither the data.
 
-err = gdal.DitherRGB2PCT( src_ds.GetRasterBand(1),
+err = gdal.DitherRGB2PCT(src_ds.GetRasterBand(1),
                           src_ds.GetRasterBand(2),
                           src_ds.GetRasterBand(3),
                           tif_ds.GetRasterBand(1),
                           ct,
                           callback = gdal.TermProgress,
-                          callback_data = 'Generate PCT' )
+                          callback_data = 'Generate PCT')
 
 tif_ds = None
 
 if tif_filename != dst_filename:
-    tif_ds = gdal.Open( tif_filename )
-    dst_driver.CreateCopy( dst_filename, tif_ds )
+    tif_ds = gdal.Open(tif_filename)
+    dst_driver.CreateCopy(dst_filename, tif_ds)
     tif_ds = None
 
     os.close(tif_filedesc)
-    gtiff_driver.Delete( tif_filename )
+    gtiff_driver.Delete(tif_filename)

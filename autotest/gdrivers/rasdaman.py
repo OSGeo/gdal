@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -54,7 +54,7 @@ def rasdaman_1():
         return 'skip'
 
     try:
-        ds = gdal.Open( "rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'" )
+        ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from rgb as a'")
     except:
         gdaltest.rasdamanDriver = None
 
@@ -77,7 +77,7 @@ def rasdaman_2():
     if gdaltest.rasdamanDriver is None:
         return 'skip'
 
-    ds = gdal.Open(  "rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'" )
+    ds = gdal.Open("rasdaman:query='select a[$x_lo:$x_hi,$y_lo:$y_hi] from notexisting as a'")
     if ds is None:
         return 'success'
     else:
@@ -89,7 +89,7 @@ def rasdaman_3():
     if gdaltest.rasdamanDriver is None:
         return 'skip'
 
-    ds = gdal.Open(  "rasdaman:query='select'" )
+    ds = gdal.Open("rasdaman:query='select'")
     if ds is None:
         return 'success'
     else:
@@ -98,12 +98,12 @@ def rasdaman_3():
 gdaltest_list = [
     rasdaman_1,
     rasdaman_2,
-    rasdaman_3 ]
+    rasdaman_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'RASDAMAN' )
+    gdaltest.setup_run('RASDAMAN')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

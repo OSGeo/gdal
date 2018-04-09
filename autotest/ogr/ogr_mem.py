@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -44,7 +44,7 @@ from osgeo import gdal
 def ogr_mem_1():
 
     mem_drv = ogr.GetDriverByName('Memory')
-    gdaltest.mem_ds = mem_drv.CreateDataSource( 'wrk_in_memory' )
+    gdaltest.mem_ds = mem_drv.CreateDataSource('wrk_in_memory')
 
     if gdaltest.mem_ds is None:
         return 'fail'
@@ -59,28 +59,28 @@ def ogr_mem_2():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    if gdaltest.mem_ds.TestCapability( ogr.ODsCCreateLayer ) == 0:
-        gdaltest.post_reason ('ODsCCreateLayer TestCapability failed.' )
+    if gdaltest.mem_ds.TestCapability(ogr.ODsCCreateLayer) == 0:
+        gdaltest.post_reason ('ODsCCreateLayer TestCapability failed.')
         return 'fail'
 
     #######################################################
     # Create memory Layer
-    gdaltest.mem_lyr = gdaltest.mem_ds.CreateLayer( 'tpoly' )
+    gdaltest.mem_lyr = gdaltest.mem_ds.CreateLayer('tpoly')
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.mem_lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(gdaltest.mem_lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
-                                      ('WHEN', ogr.OFTDateTime) ] )
+                                      ('WHEN', ogr.OFTDateTime)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mem_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.mem_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -89,12 +89,12 @@ def ogr_mem_2():
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        ret = gdaltest.mem_lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        ret = gdaltest.mem_lyr.CreateFeature(dst_feat)
         if ret != 0:
-            gdaltest.post_reason ('CreateFeature() failed.' )
+            gdaltest.post_reason ('CreateFeature() failed.')
             return 'fail'
 
         feat = shp_lyr.GetNextFeature()
@@ -110,22 +110,22 @@ def ogr_mem_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mem_lyr.SetAttributeFilter( 'eas_id < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.mem_lyr,
-                                              'eas_id', expect )
-    gdaltest.mem_lyr.SetAttributeFilter( None )
+    gdaltest.mem_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.mem_lyr,
+                                              'eas_id', expect)
+    gdaltest.mem_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mem_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001 ) != 0:
+                                          max_error = 0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
 
     gdaltest.poly_feat = None
@@ -145,28 +145,28 @@ def ogr_mem_4():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mem_lyr.GetLayerDefn() )
-    wkt_list = [ '10', '2', '1', '3d_1', '4', '5', '6' ]
+    dst_feat = ogr.Feature(feature_def = gdaltest.mem_lyr.GetLayerDefn())
+    wkt_list = ['10', '2', '1', '3d_1', '4', '5', '6']
 
     for item in wkt_list:
 
-        wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
-        geom = ogr.CreateGeometryFromWkt( wkt )
+        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
         # Write geometry as a new memory feature.
 
-        dst_feat.SetGeometryDirectly( geom )
-        dst_feat.SetField( 'PRFEDEA', item )
-        gdaltest.mem_lyr.CreateFeature( dst_feat )
+        dst_feat.SetGeometryDirectly(geom)
+        dst_feat.SetField('PRFEDEA', item)
+        gdaltest.mem_lyr.CreateFeature(dst_feat)
 
         ######################################################################
         # Read back the feature and get the geometry.
 
-        gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
+        gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.mem_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
             return 'fail'
 
     return 'success'
@@ -179,13 +179,13 @@ def ogr_mem_5():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
+    expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
-    sql_lyr = gdaltest.mem_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
+    sql_lyr = gdaltest.mem_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.mem_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -201,16 +201,16 @@ def ogr_mem_6():
         return 'skip'
 
     sql_lyr = gdaltest.mem_ds.ExecuteSQL( \
-        "select * from tpoly where prfedea = '2'" )
+        "select * from tpoly where prfedea = '2'")
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['2'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))') != 0:
             tr = 0
 
-    gdaltest.mem_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -225,21 +225,21 @@ def ogr_mem_7():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    gdaltest.mem_lyr.SetAttributeFilter( None )
+    gdaltest.mem_lyr.SetAttributeFilter(None)
 
     geom = ogr.CreateGeometryFromWkt( \
-        'LINESTRING(479505 4763195,480526 4762819)' )
-    gdaltest.mem_lyr.SetSpatialFilter( geom )
+        'LINESTRING(479505 4763195,480526 4762819)')
+    gdaltest.mem_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
-    if gdaltest.mem_lyr.TestCapability( ogr.OLCFastSpatialFilter ):
-        gdaltest.post_reason( 'OLCFastSpatialFilter capability test should have failed.' )
+    if gdaltest.mem_lyr.TestCapability(ogr.OLCFastSpatialFilter):
+        gdaltest.post_reason('OLCFastSpatialFilter capability test should have failed.')
         return 'fail'
 
-    tr = ogrtest.check_features_against_list( gdaltest.mem_lyr, 'eas_id',
-                                              [ 158 ] )
+    tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, 'eas_id',
+                                              [158])
 
-    gdaltest.mem_lyr.SetSpatialFilter( None )
+    gdaltest.mem_lyr.SetSpatialFilter(None)
 
     if tr:
         return 'success'
@@ -253,22 +253,22 @@ def ogr_mem_8():
 
     ####################################################################
     # Add new string field.
-    field_defn = ogr.FieldDefn( 'new_string', ogr.OFTString )
-    gdaltest.mem_lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn('new_string', ogr.OFTString)
+    gdaltest.mem_lyr.CreateField(field_defn)
 
     ####################################################################
     # Apply a value to this field in one feature.
 
-    gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA = '2'" )
+    gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA = '2'")
     feat_read = gdaltest.mem_lyr.GetNextFeature()
-    feat_read.SetField( 'new_string', 'test1' )
-    gdaltest.mem_lyr.SetFeature( feat_read )
+    feat_read.SetField('new_string', 'test1')
+    gdaltest.mem_lyr.SetFeature(feat_read)
 
     # Test expected failed case of SetFeature()
     new_feat = ogr.Feature(gdaltest.mem_lyr.GetLayerDefn())
     new_feat.SetFID(-2)
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ret = gdaltest.mem_lyr.SetFeature( new_feat )
+    ret = gdaltest.mem_lyr.SetFeature(new_feat)
     gdal.PopErrorHandler()
     if ret == 0:
         return 'fail'
@@ -277,12 +277,12 @@ def ogr_mem_8():
     ####################################################################
     # Now fetch two features and verify the new column works OK.
 
-    gdaltest.mem_lyr.SetAttributeFilter( "PRFEDEA IN ( '2', '1' )" )
+    gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA IN ( '2', '1' )")
 
-    tr = ogrtest.check_features_against_list( gdaltest.mem_lyr, 'new_string',
-                                              [ 'test1', None ] )
+    tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, 'new_string',
+                                              ['test1', None])
 
-    gdaltest.mem_lyr.SetAttributeFilter( None )
+    gdaltest.mem_lyr.SetAttributeFilter(None)
 
     if tr:
         return 'success'
@@ -294,12 +294,12 @@ def ogr_mem_8():
 
 def ogr_mem_9():
 
-    if not gdaltest.mem_lyr.TestCapability( ogr.OLCDeleteFeature ):
-        gdaltest.post_reason( 'OLCDeleteFeature capability test failed.' )
+    if not gdaltest.mem_lyr.TestCapability(ogr.OLCDeleteFeature):
+        gdaltest.post_reason('OLCDeleteFeature capability test failed.')
         return 'fail'
 
-    if not gdaltest.mem_lyr.TestCapability( ogr.OLCFastFeatureCount ):
-        gdaltest.post_reason( 'OLCFastFeatureCount capability test failed.' )
+    if not gdaltest.mem_lyr.TestCapability(ogr.OLCFastFeatureCount):
+        gdaltest.post_reason('OLCFastFeatureCount capability test failed.')
         return 'fail'
 
     old_count = gdaltest.mem_lyr.GetFeatureCount()
@@ -308,12 +308,12 @@ def ogr_mem_9():
     # Delete target feature.
 
     target_fid = 2
-    if gdaltest.mem_lyr.DeleteFeature( target_fid ) != 0:
-        gdaltest.post_reason( 'DeleteFeature returned error code.' )
+    if gdaltest.mem_lyr.DeleteFeature(target_fid) != 0:
+        gdaltest.post_reason('DeleteFeature returned error code.')
         return 'fail'
 
-    if gdaltest.mem_lyr.DeleteFeature( target_fid ) == 0:
-        gdaltest.post_reason( 'DeleteFeature should have returned error code.' )
+    if gdaltest.mem_lyr.DeleteFeature(target_fid) == 0:
+        gdaltest.post_reason('DeleteFeature should have returned error code.')
         return 'fail'
 
     ####################################################################
@@ -321,23 +321,23 @@ def ogr_mem_9():
     # can't be fetched.
     new_count = gdaltest.mem_lyr.GetFeatureCount()
     if new_count != old_count - 1:
-        gdaltest.post_reason( 'got feature count of %d, not expected %d.' \
-                              % (new_count, old_count -1) )
+        gdaltest.post_reason('got feature count of %d, not expected %d.' \
+                              % (new_count, old_count -1))
 
-    if not gdaltest.mem_lyr.TestCapability( ogr.OLCRandomRead ):
-        gdaltest.post_reason( 'OLCRandomRead capability test failed.' )
+    if not gdaltest.mem_lyr.TestCapability(ogr.OLCRandomRead):
+        gdaltest.post_reason('OLCRandomRead capability test failed.')
         return 'fail'
 
-    if gdaltest.mem_lyr.GetFeature( target_fid ) is not None:
-        gdaltest.post_reason( 'Got deleted feature!' )
+    if gdaltest.mem_lyr.GetFeature(target_fid) is not None:
+        gdaltest.post_reason('Got deleted feature!')
         return 'fail'
 
-    if gdaltest.mem_lyr.GetFeature( -1 ) is not None:
-        gdaltest.post_reason( 'GetFeature() should have failed' )
+    if gdaltest.mem_lyr.GetFeature(-1) is not None:
+        gdaltest.post_reason('GetFeature() should have failed')
         return 'fail'
 
-    if gdaltest.mem_lyr.GetFeature( 1000 ) is not None:
-        gdaltest.post_reason( 'GetFeature() should have failed' )
+    if gdaltest.mem_lyr.GetFeature(1000) is not None:
+        gdaltest.post_reason('GetFeature() should have failed')
         return 'fail'
 
     return 'success'
@@ -349,7 +349,7 @@ def ogr_mem_9():
 
 def ogr_mem_10():
 
-    d = ogr.GetDriverByName( 'Memory' )
+    d = ogr.GetDriverByName('Memory')
     ds =  d.CreateDataSource('xxxxxx')
 
     try:
@@ -358,7 +358,7 @@ def ogr_mem_10():
         d2 = None
 
     if d2 is None or d2.GetName() != 'Memory':
-        gdaltest.post_reason( 'Did not get expected driver name.' )
+        gdaltest.post_reason('Did not get expected driver name.')
         return 'fail'
 
     return 'success'
@@ -368,40 +368,40 @@ def ogr_mem_10():
 
 def ogr_mem_11():
 
-    if gdaltest.mem_ds.TestCapability( 'DeleteLayer' ) == 0:
-        gdaltest.post_reason ('Deletelayer TestCapability failed.' )
+    if gdaltest.mem_ds.TestCapability('DeleteLayer') == 0:
+        gdaltest.post_reason ('Deletelayer TestCapability failed.')
         return 'fail'
 
-    gdaltest.mem_ds.CreateLayer( 'extra' )
-    gdaltest.mem_ds.CreateLayer( 'extra2' )
+    gdaltest.mem_ds.CreateLayer('extra')
+    gdaltest.mem_ds.CreateLayer('extra2')
     layer_count = gdaltest.mem_ds.GetLayerCount()
 
     gdaltest.mem_lyr = None
     # Delete extra layer
     if gdaltest.mem_ds.DeleteLayer(layer_count - 2)  != 0:
-        gdaltest.post_reason( 'DeleteLayer() failed' )
+        gdaltest.post_reason('DeleteLayer() failed')
         return 'fail'
 
     if gdaltest.mem_ds.DeleteLayer(-1)  == 0:
-        gdaltest.post_reason( 'DeleteLayer() should have failed' )
+        gdaltest.post_reason('DeleteLayer() should have failed')
         return 'fail'
 
     if gdaltest.mem_ds.DeleteLayer(gdaltest.mem_ds.GetLayerCount())  == 0:
-        gdaltest.post_reason( 'DeleteLayer() should have failed' )
+        gdaltest.post_reason('DeleteLayer() should have failed')
         return 'fail'
 
     if gdaltest.mem_ds.GetLayer(-1) is not None:
-        gdaltest.post_reason( 'GetLayer() should have failed' )
+        gdaltest.post_reason('GetLayer() should have failed')
         return 'fail'
 
     if gdaltest.mem_ds.GetLayer(gdaltest.mem_ds.GetLayerCount()) is not None:
-        gdaltest.post_reason( 'GetLayer() should have failed' )
+        gdaltest.post_reason('GetLayer() should have failed')
         return 'fail'
 
     lyr = gdaltest.mem_ds.GetLayer(gdaltest.mem_ds.GetLayerCount() - 1)
 
     if lyr.GetName() != 'extra2':
-        gdaltest.post_reason( 'delete layer seems iffy' )
+        gdaltest.post_reason('delete layer seems iffy')
         return 'fail'
 
     return 'success'
@@ -429,7 +429,7 @@ def ogr_mem_12():
     result = f.GetFieldAsDateTime(idx)
     for i, value in enumerate(result):
       if value != expected[i]:
-        gdaltest.post_reason( '%s != %s' % (result, expected) )
+        gdaltest.post_reason('%s != %s' % (result, expected))
         return 'fail'
     return 'success'
 
@@ -441,14 +441,14 @@ def ogr_mem_13():
     if gdaltest.mem_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mem_ds.CreateLayer( 'listlayer' )
-    field_defn = ogr.FieldDefn( 'stringlist', ogr.OFTStringList )
-    lyr.CreateField( field_defn )
-    field_defn = ogr.FieldDefn( 'intlist', ogr.OFTIntegerList )
-    lyr.CreateField( field_defn )
-    field_defn = ogr.FieldDefn( 'reallist', ogr.OFTRealList )
-    lyr.CreateField( field_defn )
-    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    lyr = gdaltest.mem_ds.CreateLayer('listlayer')
+    field_defn = ogr.FieldDefn('stringlist', ogr.OFTStringList)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('intlist', ogr.OFTIntegerList)
+    lyr.CreateField(field_defn)
+    field_defn = ogr.FieldDefn('reallist', ogr.OFTRealList)
+    lyr.CreateField(field_defn)
+    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
 
     try:
         feat.SetFieldStringList
@@ -482,20 +482,20 @@ def ogr_mem_14():
         return 'skip'
 
     lyr = gdaltest.mem_ds.CreateLayer('SetNextByIndex')
-    field_defn = ogr.FieldDefn( 'foo', ogr.OFTString )
+    field_defn = ogr.FieldDefn('foo', ogr.OFTString)
     lyr.CreateField(field_defn)
-    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
     feat.SetField(0, 'first feature')
     lyr.CreateFeature(feat)
-    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
     feat.SetField(0, 'second feature')
     lyr.CreateFeature(feat)
-    feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
+    feat = ogr.Feature(feature_def = lyr.GetLayerDefn())
     feat.SetField(0, 'third feature')
     lyr.CreateFeature(feat)
 
-    if not lyr.TestCapability( ogr.OLCFastSetNextByIndex ):
-        gdaltest.post_reason( 'OLCFastSetNextByIndex capability test failed.' )
+    if not lyr.TestCapability(ogr.OLCFastSetNextByIndex):
+        gdaltest.post_reason('OLCFastSetNextByIndex capability test failed.')
         return 'fail'
 
     if lyr.SetNextByIndex(1) != 0:
@@ -516,8 +516,8 @@ def ogr_mem_14():
 
     lyr.SetAttributeFilter("foo != 'second feature'")
 
-    if lyr.TestCapability( ogr.OLCFastSetNextByIndex ):
-        gdaltest.post_reason( 'OLCFastSetNextByIndex capability test should have failed.' )
+    if lyr.TestCapability(ogr.OLCFastSetNextByIndex):
+        gdaltest.post_reason('OLCFastSetNextByIndex capability test should have failed.')
         return 'fail'
 
     if lyr.SetNextByIndex(1) != 0:
@@ -785,7 +785,7 @@ def ogr_mem_17():
 
     ds.ResetReading()
 
-    f, lyr, pct = ds.GetNextFeature( include_pct = True )
+    f, lyr, pct = ds.GetNextFeature(include_pct = True)
     if f is None or l.GetName() != 'ogr_mem_1' or pct != 0.25:
         gdaltest.post_reason('fail')
         print(f)
@@ -793,35 +793,35 @@ def ogr_mem_17():
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
     if f is None or pct != 0.50:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
     if f is None or pct != 0.75:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
     if f is None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
     if f is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
         print(pct)
         return 'fail'
 
-    f, pct = ds.GetNextFeature( include_layer = False, include_pct = True )
+    f, pct = ds.GetNextFeature(include_layer = False, include_pct = True)
     if f is not None or pct != 1.0:
         gdaltest.post_reason('fail')
         print(f)
@@ -830,7 +830,7 @@ def ogr_mem_17():
 
     ds.ResetReading()
 
-    f = ds.GetNextFeature( include_layer = False )
+    f = ds.GetNextFeature(include_layer = False)
     if f is None:
         gdaltest.post_reason('fail')
         print(f)
@@ -866,12 +866,12 @@ gdaltest_list = [
     ogr_mem_15,
     ogr_mem_16,
     ogr_mem_17,
-    ogr_mem_cleanup ]
+    ogr_mem_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_mem' )
+    gdaltest.setup_run('ogr_mem')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

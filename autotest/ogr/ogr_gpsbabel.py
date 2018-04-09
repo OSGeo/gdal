@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -54,7 +54,7 @@ def ogr_gpsbabel_init():
         return 'skip'
 
     try:
-        ds = ogr.Open( 'data/test.gpx' )
+        ds = ogr.Open('data/test.gpx')
     except:
         ds = None
 
@@ -150,14 +150,14 @@ gdaltest_list = [
     ogr_gpsbabel_init,
     ogr_gpsbabel_1,
     ogr_gpsbabel_2,
-    ogr_gpsbabel_3 ]
+    ogr_gpsbabel_3]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_gpsbabel' )
+    gdaltest.setup_run('ogr_gpsbabel')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

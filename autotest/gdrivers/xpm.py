@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,13 +39,13 @@ import gdaltest
 ###############################################################################
 #
 class TestXPM:
-    def __init__( self, downloadURL, fileName, checksum, download_size ):
+    def __init__(self, downloadURL, fileName, checksum, download_size):
         self.downloadURL = downloadURL
         self.fileName = fileName
         self.checksum = checksum
         self.download_size = download_size
 
-    def test( self ):
+    def test(self):
         if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
             return 'skip'
 
@@ -60,24 +60,24 @@ class TestXPM:
 
 def xpm_1():
 
-    tst = gdaltest.GDALTest( 'XPM', 'byte.tif', 1, 4583 )
-    return tst.testCreateCopy( vsimem = 1, check_minmax = False )
+    tst = gdaltest.GDALTest('XPM', 'byte.tif', 1, 4583)
+    return tst.testCreateCopy(vsimem = 1, check_minmax = False)
 
 gdaltest_list = []
 
-xpm_list = [ ('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1),
+xpm_list = [('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1),
            ]
 
 for item in xpm_list:
-    ut = TestXPM( item[0], item[1], item[2], item[3] )
-    gdaltest_list.append( (ut.test, item[1]) )
+    ut = TestXPM(item[0], item[1], item[2], item[3])
+    gdaltest_list.append((ut.test, item[1]))
 
-gdaltest_list.append( xpm_1 )
+gdaltest_list.append(xpm_1)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'xpm' )
+    gdaltest.setup_run('xpm')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

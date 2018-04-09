@@ -35,7 +35,7 @@ import sys
 import gzip
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -76,13 +76,13 @@ def _get_mds_num(filename):
 class TestEnvisat:
     # Just a base class
 
-    def __init__( self, downloadURL, fileName, size, checksum ):
+    def __init__(self, downloadURL, fileName, size, checksum):
         self.downloadURL = downloadURL
         self.fileName = fileName
         self.size = size
         self.checksum = checksum
 
-    def download_file( self ):
+    def download_file(self):
         # download and decompress
         if not gdaltest.download_file(self.downloadURL, os.path.basename(self.downloadURL), -1):
             return False
@@ -100,7 +100,7 @@ class TestEnvisat:
 
         return True
 
-    def test_envisat_1( self ):
+    def test_envisat_1(self):
         if not self.download_file():
             return 'skip'
 
@@ -114,7 +114,7 @@ class TestEnvisat:
 
         return 'success'
 
-    def test_envisat_2( self ):
+    def test_envisat_2(self):
         if not self.download_file():
             return 'skip'
 
@@ -128,7 +128,7 @@ class TestEnvisat:
 
         return 'success'
 
-    def test_envisat_3( self ):
+    def test_envisat_3(self):
         # Regression test for #3160 and #3709.
 
         if not self.download_file():
@@ -149,7 +149,7 @@ class TestEnvisat:
 
         return 'success'
 
-    def test_envisat_4( self ):
+    def test_envisat_4(self):
         # test number of bands
 
         if not self.download_file():
@@ -168,7 +168,7 @@ class TestEnvisat:
 
         return 'success'
 
-    def test_envisat_5( self ):
+    def test_envisat_5(self):
         # test metadata in RECORDS domain
 
         if not self.download_file():
@@ -190,7 +190,7 @@ class TestEnvisat:
 ###############################################################################
 #
 class TestEnvisatASAR(TestEnvisat):
-    def test_envisat_asar_1( self ):
+    def test_envisat_asar_1(self):
         # test sensor ID
 
         if not self.download_file():
@@ -208,7 +208,7 @@ class TestEnvisatASAR(TestEnvisat):
 
         return 'success'
 
-    def test_envisat_asar_2( self ):
+    def test_envisat_asar_2(self):
         # test metadata in RECORDS domain
 
         if not self.download_file():
@@ -256,7 +256,7 @@ class TestEnvisatASAR(TestEnvisat):
 ###############################################################################
 #
 class TestEnvisatMERIS(TestEnvisat):
-    def test_envisat_meris_1( self ):
+    def test_envisat_meris_1(self):
         # test sensor ID
 
         if not self.download_file():
@@ -274,7 +274,7 @@ class TestEnvisatMERIS(TestEnvisat):
 
         return 'success'
 
-    def test_envisat_meris_2( self ):
+    def test_envisat_meris_2(self):
         # test metadata in RECORDS domain
 
         if not self.download_file():
@@ -303,7 +303,7 @@ class TestEnvisatMERIS(TestEnvisat):
 
         return 'success'
 
-    def test_envisat_meris_3( self ):
+    def test_envisat_meris_3(self):
         # test Flag bands
 
         if not self.download_file():
@@ -363,7 +363,7 @@ class TestEnvisatMERIS(TestEnvisat):
 
         return 'success'
 
-    def test_envisat_meris_4( self ):
+    def test_envisat_meris_4(self):
         # test DEM corrections (see #5423)
 
         if not self.download_file():
@@ -406,12 +406,12 @@ ut1 = TestEnvisatASAR(
     'http://earth.esa.int/services/sample_products/asar/DS1/WS/ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1.gz',
     'ASA_WS__BPXPDE20020714_100425_000001202007_00380_01937_0053.N1',
     (524, 945),
-    44998 )
+    44998)
 ut2 = TestEnvisatMERIS(
     'http://earth.esa.int/services/sample_products/meris/RRC/L2/MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1.gz',
     'MER_RRC_2PTGMV20000620_104318_00000104X000_00000_00000_0001.N1',
     (1121, 593),
-    55146 )
+    55146)
 
 gdaltest_list = [
     ut1.test_envisat_1,
@@ -433,8 +433,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'envisat' )
+    gdaltest.setup_run('envisat')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

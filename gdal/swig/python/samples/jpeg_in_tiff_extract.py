@@ -99,7 +99,7 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
     interleave = ds.GetMetadataItem('INTERLEAVE', 'IMAGE_STRUCTURE')
     photometric = ds.GetMetadataItem('COMPRESSION', 'IMAGE_STRUCTURE')
     if interleave == 'PIXEL' and photometric == 'JPEG' and ds.RasterCount == 3:
-        adobe_app14 = [ 0xFF, 0xEE, 0x00, 0x0E, 0x41, 0x64, 0x6F, 0x62, 0x65, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00 ]
+        adobe_app14 = [0xFF, 0xEE, 0x00, 0x0E, 0x41, 0x64, 0x6F, 0x62, 0x65, 0x00, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00]
         for c in adobe_app14:
             gdal.VSIFWriteL(chr(c), 1, 1, out_f)
 
@@ -116,7 +116,7 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
     gt = ds.GetGeoTransform()
     srs = ds.GetProjectionRef()
     if srs is not None and srs != '':
-        sub_gt = [ gt[i] for i in range(6) ]
+        sub_gt = [gt[i] for i in range(6)]
         (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
         sub_gt[0] = gt[0] + tile_x * blockxsize * gt[1]
         sub_gt[3] = gt[3] + tile_y * blockysize * gt[5]
@@ -158,7 +158,7 @@ def jpeg_in_tiff_extract(argv):
         tile_y = None
 
     radix_jpg_filename = jpg_filename
-    extensions = [ '.jpg', '.jpeg', '.JPG', '.JPEG' ]
+    extensions = ['.jpg', '.jpeg', '.JPG', '.JPEG']
     extension = None
     for i in range(len(extensions)):
         pos = radix_jpg_filename.find(extensions[i])
@@ -248,5 +248,5 @@ def jpeg_in_tiff_extract(argv):
 # Entry point
 
 if __name__ == '__main__':
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
     sys.exit(jpeg_in_tiff_extract(argv[1:]))

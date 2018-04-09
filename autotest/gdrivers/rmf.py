@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import gdal
@@ -41,75 +41,75 @@ import gdal
 
 def rmf_1():
 
-    tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
-    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+    tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
+    return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 def rmf_2():
 
-    tst = gdaltest.GDALTest( 'rmf', 'byte-lzw.rsw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'byte-lzw.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 def rmf_3():
 
-    tst = gdaltest.GDALTest( 'rmf', 'float64.mtw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'float64.mtw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 def rmf_4():
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 1, 21212 )
-    ret = tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 1, 21212)
+    ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 2, 21053 )
-    ret = tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
+    ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 3, 21349 )
-    return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 3, 21349)
+    return tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
 
 def rmf_5():
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall-lzw.rsw', 1, 21212 )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 1, 21212)
     with gdaltest.error_handler():
-        ret = tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+        ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall-lzw.rsw', 2, 21053 )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 2, 21053)
     with gdaltest.error_handler():
-        ret = tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+        ret = tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall-lzw.rsw', 3, 21349 )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall-lzw.rsw', 3, 21349)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
-                                     -22.932584, 0, -0.003432) )
+        return tst.testOpen(check_gt = (-44.840320, 0.003432, 0,
+                                     -22.932584, 0, -0.003432))
 
 def rmf_6():
 
-    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 1, 7782 )
+    tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 1, 7782)
     with gdaltest.error_handler():
         ret = tst.testOpen()
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 2, 8480 )
+    tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 2, 8480)
     with gdaltest.error_handler():
         ret = tst.testOpen()
     if ret != 'success':
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 3, 4195 )
+    tst = gdaltest.GDALTest('rmf', 'big-endian.rsw', 3, 4195)
     with gdaltest.error_handler():
         return tst.testOpen()
 
@@ -118,31 +118,31 @@ def rmf_6():
 
 def rmf_7():
 
-    tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672)
 
-    return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
+    return tst.testCreateCopy(check_srs = 1, check_gt = 1, vsimem = 1)
 
 def rmf_8():
 
-    tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 2, 21053 )
+    tst = gdaltest.GDALTest('rmf', 'rgbsmall.rsw', 2, 21053)
 
-    return tst.testCreateCopy( check_srs = 1, check_gt = 1 )
+    return tst.testCreateCopy(check_srs = 1, check_gt = 1)
 
 ###############################################################################
 # Create RMFHUGE=YES
 
 def rmf_9():
 
-    tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672, options = ['RMFHUGE=YES'] )
+    tst = gdaltest.GDALTest('rmf', 'byte.rsw', 1, 4672, options = ['RMFHUGE=YES'])
 
-    return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
+    return tst.testCreateCopy(check_srs = 1, check_gt = 1, vsimem = 1)
 
 ###############################################################################
 # Compressed DEM
 
 def rmf_10():
 
-    tst = gdaltest.GDALTest( 'rmf', 't100.mtw', 1, 6388 )
+    tst = gdaltest.GDALTest('rmf', 't100.mtw', 1, 6388)
 
     with gdaltest.error_handler():
         return tst.testOpen()
@@ -156,31 +156,31 @@ def rmf_11():
     src_ds = gdal.Open(test_fn)
 
     if src_ds is None:
-        gdaltest.post_reason( 'Failed to open test dataset.' )
+        gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
     band1 = src_ds.GetRasterBand(1)
 
     if band1.GetOverviewCount() != 3:
-        gdaltest.post_reason( 'overviews is missing' )
+        gdaltest.post_reason('overviews is missing')
         return 'fail'
 
-    ovr_n = ( 0, 1, 2 )
-    ovr_size = ( 256, 64, 16 )
-    ovr_checksum = ( 32756, 51233, 3192 )
+    ovr_n = (0, 1, 2)
+    ovr_size = (256, 64, 16)
+    ovr_checksum = (32756, 51233, 3192)
 
     for i in ovr_n:
         ovr_band = band1.GetOverview(i)
         if ovr_band.XSize != ovr_size[i] or ovr_band.YSize != ovr_size[i]:
             msg = 'overview wrong size: overview %d, size = %d * %d,' % \
                   (i, ovr_band.XSize, ovr_band.YSize)
-            gdaltest.post_reason( msg )
+            gdaltest.post_reason(msg)
             return 'fail'
 
         if ovr_band.Checksum() != ovr_checksum[i]:
             msg = 'overview wrong checkum: overview %d, checksum = %d,' % \
                   (i, ovr_band.Checksum())
-            gdaltest.post_reason( msg )
+            gdaltest.post_reason(msg)
             return 'fail'
 
     return 'success'
@@ -190,81 +190,81 @@ def rmf_11():
 
 def rmf_12a():
 
-    tst = gdaltest.GDALTest( 'rmf', 'cucled-1.rsw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'cucled-1.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with cucled header offsets .
 
 def rmf_12b():
 
-    tst = gdaltest.GDALTest( 'rmf', 'cucled-2.rsw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'cucled-2.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with invalid subheader marker.
 
 def rmf_12c():
 
-    tst = gdaltest.GDALTest( 'rmf', 'invalid-subheader.rsw', 1, 4672 )
+    tst = gdaltest.GDALTest('rmf', 'invalid-subheader.rsw', 1, 4672)
     with gdaltest.error_handler():
-        return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+        return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Check file open with corrupted subheader.
 
 def rmf_12d():
 
-    tst = gdaltest.GDALTest( 'rmf', 'corrupted-subheader.rsw', 1, 4672 )
-    return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+    tst = gdaltest.GDALTest('rmf', 'corrupted-subheader.rsw', 1, 4672)
+    return tst.testOpen(check_gt = (440720, 60, 0, 3751320, 0, -60))
 
 ###############################################################################
 # Build overviews and check
 
 def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_count=1):
 
-    rmf_drv = gdal.GetDriverByName( 'RMF' )
+    rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
-        gdaltest.post_reason( 'RMF driver not found.' )
+        gdaltest.post_reason('RMF driver not found.')
         return 'fail'
 
-    src_ds = gdal.Open( 'data/' + source, gdal.GA_ReadOnly )
+    src_ds = gdal.Open('data/' + source, gdal.GA_ReadOnly)
 
     if src_ds is None:
-        gdaltest.post_reason( 'Failed to open test dataset.' )
+        gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
     test_ds_name = 'tmp/ov-' + testid + '-' + source
-    src_ds = rmf_drv.CreateCopy( test_ds_name, src_ds, options=options )
+    src_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=options)
     if src_ds is None:
-        gdaltest.post_reason( 'Failed to create test dataset copy.' )
+        gdaltest.post_reason('Failed to create test dataset copy.')
         return 'fail'
 
     for pass_n in range(pass_count):
         if reopen:
             src_ds = None
-            src_ds = gdal.Open( test_ds_name, gdal.GA_Update )
+            src_ds = gdal.Open(test_ds_name, gdal.GA_Update)
 
             if src_ds is None:
-                gdaltest.post_reason( 'Failed to open test dataset.' )
+                gdaltest.post_reason('Failed to open test dataset.')
                 return 'fail'
 
         reopen = True
-        err = src_ds.BuildOverviews( overviewlist = [2, 4] )
+        err = src_ds.BuildOverviews(overviewlist = [2, 4])
         if err != 0:
-            gdaltest.post_reason('BuildOverviews reports an error' )
+            gdaltest.post_reason('BuildOverviews reports an error')
             return 'fail'
 
         src_ds = None
-        src_ds = gdal.Open( test_ds_name, gdal.GA_ReadOnly )
+        src_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
 
         for iBand in range(src_ds.RasterCount):
             band = src_ds.GetRasterBand(iBand + 1)
 
             if band.GetOverviewCount() != 2:
-                gdaltest.post_reason( 'overviews missing' )
+                gdaltest.post_reason('overviews missing')
                 return 'fail'
 
             for iOverview in range(band.GetOverviewCount()):
@@ -273,13 +273,13 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
                    ovr_band.YSize != ov_sizes[iOverview][1]:
                     msg = 'overview wrong size: band %d, overview %d, size = %d * %d,' % \
                           (iBand, iOverview, ovr_band.XSize, ovr_band.YSize)
-                    gdaltest.post_reason( msg )
+                    gdaltest.post_reason(msg)
                     return 'fail'
 
                 if ovr_band.Checksum() != crs[iOverview][iBand]:
                     msg = 'overview wrong checkum: band %d, overview %d, checksum = %d,' % \
                           (iBand, iOverview, ovr_band.Checksum())
-                    gdaltest.post_reason( msg )
+                    gdaltest.post_reason(msg)
                     return 'fail'
 
     src_ds = None
@@ -428,48 +428,48 @@ def rmf_24():
 # Nodata write test
 
 def rmf_25():
-    rmf_drv = gdal.GetDriverByName( 'RMF' )
+    rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
-        gdaltest.post_reason( 'RMF driver not found.' )
+        gdaltest.post_reason('RMF driver not found.')
         return 'fail'
 
-    src_ds = gdal.Open( 'data/byte.rsw', gdal.GA_ReadOnly )
+    src_ds = gdal.Open('data/byte.rsw', gdal.GA_ReadOnly)
 
     if src_ds is None:
-        gdaltest.post_reason( 'Failed to open test dataset.' )
+        gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
     test_ds_name = 'tmp/nodata.rsw'
-    test_ds = rmf_drv.CreateCopy( test_ds_name, src_ds )
+    test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds)
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to create test dataset copy.' )
+        gdaltest.post_reason('Failed to create test dataset copy.')
         return 'fail'
 
-    test_ds.GetRasterBand(1).SetNoDataValue( 33 )
+    test_ds.GetRasterBand(1).SetNoDataValue(33)
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
     if nd != 33:
-        gdaltest.post_reason( 'Invalid NoData value after CreateCopy.' )
+        gdaltest.post_reason('Invalid NoData value after CreateCopy.')
         return 'fail'
     test_ds = None
 
-    test_ds = gdal.Open( test_ds_name, gdal.GA_Update )
+    test_ds = gdal.Open(test_ds_name, gdal.GA_Update)
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        gdaltest.post_reason('Failed to reopen test dataset.')
         return 'fail'
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
     if nd != 33:
-        gdaltest.post_reason( 'Invalid NoData value after dataset reopen.' )
+        gdaltest.post_reason('Invalid NoData value after dataset reopen.')
         return 'fail'
-    test_ds.GetRasterBand(1).SetNoDataValue( 55 )
+    test_ds.GetRasterBand(1).SetNoDataValue(55)
     test_ds = None
 
-    test_ds = gdal.Open( test_ds_name, gdal.GA_ReadOnly )
+    test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        gdaltest.post_reason('Failed to reopen test dataset.')
         return 'fail'
     nd = test_ds.GetRasterBand(1).GetNoDataValue()
     if nd != 55:
-        gdaltest.post_reason( 'Invalid NoData value after dataset update.' )
+        gdaltest.post_reason('Invalid NoData value after dataset update.')
         return 'fail'
 
     test_ds = None
@@ -480,54 +480,54 @@ def rmf_25():
 # Unit write test
 
 def rmf_26():
-    rmf_drv = gdal.GetDriverByName( 'RMF' )
+    rmf_drv = gdal.GetDriverByName('RMF')
     if rmf_drv is None:
-        gdaltest.post_reason( 'RMF driver not found.' )
+        gdaltest.post_reason('RMF driver not found.')
         return 'fail'
 
-    src_ds = gdal.Open( 'data/float64.mtw', gdal.GA_ReadOnly )
+    src_ds = gdal.Open('data/float64.mtw', gdal.GA_ReadOnly)
 
     if src_ds is None:
-        gdaltest.post_reason( 'Failed to open test dataset.' )
+        gdaltest.post_reason('Failed to open test dataset.')
         return 'fail'
 
     test_ds_name = 'tmp/unit.mtw'
-    test_ds = rmf_drv.CreateCopy( test_ds_name, src_ds, options=['MTW=YES'] )
+    test_ds = rmf_drv.CreateCopy(test_ds_name, src_ds, options=['MTW=YES'])
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to create test dataset copy.' )
+        gdaltest.post_reason('Failed to create test dataset copy.')
         return 'fail'
 
     test_ds.GetRasterBand(1).SetUnitType('cm')
     unittype = test_ds.GetRasterBand(1).GetUnitType()
     if unittype != 'cm':
-        gdaltest.post_reason( 'Invalid UnitType after CreateCopy.' )
+        gdaltest.post_reason('Invalid UnitType after CreateCopy.')
         return 'fail'
     test_ds = None
 
-    test_ds = gdal.Open( test_ds_name, gdal.GA_Update )
+    test_ds = gdal.Open(test_ds_name, gdal.GA_Update)
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        gdaltest.post_reason('Failed to reopen test dataset.')
         return 'fail'
     unittype = test_ds.GetRasterBand(1).GetUnitType()
     if unittype != 'cm':
-        gdaltest.post_reason( 'Invalid UnitType after dataset reopen.' )
+        gdaltest.post_reason('Invalid UnitType after dataset reopen.')
         return 'fail'
     test_ds.GetRasterBand(1).SetUnitType('mm')
     test_ds = None
 
-    test_ds = gdal.Open( test_ds_name, gdal.GA_ReadOnly )
+    test_ds = gdal.Open(test_ds_name, gdal.GA_ReadOnly)
     if test_ds is None:
-        gdaltest.post_reason( 'Failed to reopen test dataset.' )
+        gdaltest.post_reason('Failed to reopen test dataset.')
         return 'fail'
     unittype = test_ds.GetRasterBand(1).GetUnitType()
     if unittype != 'mm':
-        gdaltest.post_reason( 'Invalid UnitType after dataset update.' )
+        gdaltest.post_reason('Invalid UnitType after dataset update.')
         return 'fail'
 
     test_ds.GetRasterBand(1).SetUnitType('ft')
     unittype = test_ds.GetRasterBand(1).GetUnitType()
     if unittype != 'mm':
-        gdaltest.post_reason( 'Invalid UnitType after dataset update.' )
+        gdaltest.post_reason('Invalid UnitType after dataset update.')
         return 'fail'
 
     test_ds = None
@@ -571,8 +571,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rmf' )
+    gdaltest.setup_run('rmf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

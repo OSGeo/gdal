@@ -34,7 +34,7 @@ import sys
 import shutil
 import struct
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -1101,13 +1101,13 @@ gdaltest_list = [
     plmosaic_20,
     plmosaic_21,
     plmosaic_with_bbox,
-    plmosaic_cleanup ]
+    plmosaic_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'plmosaic' )
+    gdaltest.setup_run('plmosaic')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

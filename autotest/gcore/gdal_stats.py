@@ -32,7 +32,7 @@ import sys
 import struct
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -42,7 +42,7 @@ from osgeo import gdal
 
 def stats_nan_1():
 
-    gdaltest.gtiff_drv = gdal.GetDriverByName( 'GTiff' )
+    gdaltest.gtiff_drv = gdal.GetDriverByName('GTiff')
     if gdaltest.gtiff_drv is None:
         return 'skip'
 
@@ -50,8 +50,8 @@ def stats_nan_1():
 
     shutil.copyfile('data/nan32.tif', 'tmp/nan32.tif')
 
-    t = gdaltest.GDALTest( 'GTiff', 'tmp/nan32.tif', 1, 874, filename_absolute = 1 )
-    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+    t = gdaltest.GDALTest('GTiff', 'tmp/nan32.tif', 1, 874, filename_absolute = 1)
+    ret = t.testOpen(check_approx_stat = stats, check_stat = stats)
 
     gdal.GetDriverByName('GTiff').Delete('tmp/nan32.tif')
 
@@ -69,8 +69,8 @@ def stats_nan_2():
 
     shutil.copyfile('data/nan64.tif', 'tmp/nan64.tif')
 
-    t = gdaltest.GDALTest( 'GTiff', 'tmp/nan64.tif', 1, 4414, filename_absolute = 1 )
-    ret = t.testOpen( check_approx_stat = stats, check_stat = stats )
+    t = gdaltest.GDALTest('GTiff', 'tmp/nan64.tif', 1, 4414, filename_absolute = 1)
+    ret = t.testOpen(check_approx_stat = stats, check_stat = stats)
 
     gdal.GetDriverByName('GTiff').Delete('tmp/nan64.tif')
 
@@ -88,8 +88,8 @@ def stats_signedbyte():
 
     shutil.copyfile('data/stats_signed_byte.img', 'tmp/stats_signed_byte.img')
 
-    t = gdaltest.GDALTest( 'HFA', 'tmp/stats_signed_byte.img', 1, 11, filename_absolute = 1 )
-    ret = t.testOpen( check_approx_stat = stats, check_stat = stats, skip_checksum = 1 )
+    t = gdaltest.GDALTest('HFA', 'tmp/stats_signed_byte.img', 1, 11, filename_absolute = 1)
+    ret = t.testOpen(check_approx_stat = stats, check_stat = stats, skip_checksum = 1)
 
     gdal.GetDriverByName('HFA').Delete('tmp/stats_signed_byte.img')
 
@@ -310,12 +310,12 @@ def stats_nodata_inf():
 
     ds = gdal.GetDriverByName('HFA').Create('/vsimem/stats_nodata_inf.img', 3, 1,1, gdal.GDT_Float32)
     ds.GetRasterBand(1).SetNoDataValue(gdaltest.neginf())
-    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('f', gdaltest.neginf()), buf_type = gdal.GDT_Float32 )
-    ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, struct.pack('f', 1), buf_type = gdal.GDT_Float32 )
-    ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, struct.pack('f', -2), buf_type = gdal.GDT_Float32 )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, struct.pack('f', gdaltest.neginf()), buf_type = gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, struct.pack('f', 1), buf_type = gdal.GDT_Float32)
+    ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, struct.pack('f', -2), buf_type = gdal.GDT_Float32)
 
     ds.GetRasterBand(1).Checksum()
-    user_data = [ 0 ]
+    user_data = [0]
     stats = ds.GetRasterBand(1).ComputeStatistics(False, stats_nodata_inf_progress_cbk, user_data)
     if user_data[0] != 1.0:
         gdaltest.post_reason('did not get expected pct')
@@ -394,7 +394,7 @@ def stats_square_shape():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_square_shape.tif', 32, 32, options = ['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
     ds.GetRasterBand(1).SetNoDataValue(0)
-    ds.GetRasterBand(1).WriteRaster(16, 0, 16, 32, struct.pack('B' * 1, 255), buf_xsize = 1, buf_ysize = 1 )
+    ds.GetRasterBand(1).WriteRaster(16, 0, 16, 32, struct.pack('B' * 1, 255), buf_xsize = 1, buf_ysize = 1)
     stats = ds.GetRasterBand(1).ComputeStatistics(True)
     hist = ds.GetRasterBand(1).GetHistogram(approx_ok = 1)
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax(1)
@@ -539,7 +539,7 @@ def stats_byte_partial_tiles():
 
     # Same but with nodata set but untiled and with non power of 16 block size
     ds = gdal.Translate('/vsimem/stats_byte_untiled.tif', '../gdrivers/data/small_world.tif',
-                        options = '-srcwin 0 0 399 200' )
+                        options = '-srcwin 0 0 399 200')
     ds.GetRasterBand(1).SetNoDataValue(0)
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
@@ -647,7 +647,7 @@ def stats_uint16():
         return 'fail'
 
     ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
-                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16' )
+                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16')
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
 
@@ -662,7 +662,7 @@ def stats_uint16():
 
     # Same but with nodata set but untiled and with non power of 16 block size
     ds = gdal.Translate('/vsimem/stats_uint16_untiled.tif', '../gdrivers/data/small_world.tif',
-                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16' )
+                        options = '-srcwin 0 0 399 200 -scale 0 255 0 65535 -ot UInt16')
     ds.GetRasterBand(1).SetNoDataValue(0)
     stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     ds = None
@@ -676,7 +676,7 @@ def stats_uint16():
         print(expected_stats)
         return 'fail'
 
-    for fill_val in [ 0, 1, 32767, 32768, 65535 ]:
+    for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('GTiff').Create('/vsimem/stats_uint16_tiled.tif', 1000, 512, 1, gdal.GDT_UInt16,
                                                 options = ['TILED=YES', 'BLOCKXSIZE=512', 'BLOCKYSIZE=512'])
         ds.GetRasterBand(1).Fill(fill_val)
@@ -707,7 +707,7 @@ def stats_uint16():
         return 'fail'
 
     # Non optimized code path
-    for fill_val in [ 0, 1, 32767, 32768, 65535 ]:
+    for fill_val in [0, 1, 32767, 32768, 65535]:
         ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1, gdal.GDT_UInt16)
         ds.GetRasterBand(1).WriteRaster(0,0,1,1,struct.pack('H' * 1, fill_val))
         stats = ds.GetRasterBand(1).GetStatistics(0, 1)
@@ -757,7 +757,7 @@ def stats_uint16():
 def stats_nodata_almost_max_float32():
 
     gdal.FileFromMemBuffer('/vsimem/float32_almost_nodata_max_float32.tif',
-                           open('data/float32_almost_nodata_max_float32.tif', 'rb').read() )
+                           open('data/float32_almost_nodata_max_float32.tif', 'rb').read())
 
     ds = gdal.Open('/vsimem/float32_almost_nodata_max_float32.tif')
     minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
@@ -812,9 +812,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gdal_stats' )
+    gdaltest.setup_run('gdal_stats')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

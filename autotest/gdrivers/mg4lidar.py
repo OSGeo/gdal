@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -57,7 +57,7 @@ def mg4lidar_1():
         os.stat('tmp/cache/GDAL_MG4Lidar_Src')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/GDAL_MG4Lidar_Src.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/GDAL_MG4Lidar_Src.zip')
             try:
                 os.stat('tmp/cache/GDAL_MG4Lidar_Src')
             except:
@@ -101,13 +101,13 @@ def mg4lidar_1():
     return 'success'
 
 gdaltest_list = [
-    mg4lidar_1 ]
+    mg4lidar_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mg4lidar' )
+    gdaltest.setup_run('mg4lidar')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

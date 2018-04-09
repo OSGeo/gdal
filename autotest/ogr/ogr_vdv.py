@@ -32,7 +32,7 @@ import os
 import shutil
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -154,11 +154,11 @@ def ogr_vdv_2(src_filename = 'tmp/test.x10'):
 
     src_ds = ogr.Open(src_filename)
     out_ds = ogr.GetDriverByName('VDV').CreateDataSource(out_filename)
-    layer_names = [ src_ds.GetLayer(idx).GetName() for idx in range(src_ds.GetLayerCount()) ]
+    layer_names = [src_ds.GetLayer(idx).GetName() for idx in range(src_ds.GetLayerCount())]
     layer_names.sort()
     for layer_name in layer_names:
         src_lyr = src_ds.GetLayer(layer_name)
-        options = [ 'HEADER_SRC_DATE=01.01.1970', 'HEADER_SRC_TIME=00.00.00', 'HEADER_foo=bar' ]
+        options = ['HEADER_SRC_DATE=01.01.1970', 'HEADER_SRC_TIME=00.00.00', 'HEADER_foo=bar']
         dst_lyr = out_ds.CreateLayer(src_lyr.GetName(), options = options)
         for field_idx in range(src_lyr.GetLayerDefn().GetFieldCount()):
             dst_lyr.CreateField(src_lyr.GetLayerDefn().GetFieldDefn(field_idx))
@@ -266,10 +266,10 @@ def ogr_vdv_6():
 
 def ogr_vdv_7():
 
-    tests = [ ('VDV-452','STOP','POINT_LONGITUDE','POINT_LATITUDE'),
+    tests = [('VDV-452','STOP','POINT_LONGITUDE','POINT_LATITUDE'),
               ('VDV-452-ENGLISH','STOP','POINT_LONGITUDE','POINT_LATITUDE'),
               ('VDV-452','REC_ORT','ORT_POS_LAENGE','ORT_POS_BREITE'),
-              ('VDV-452-GERMAN','REC_ORT','ORT_POS_LAENGE','ORT_POS_BREITE') ]
+              ('VDV-452-GERMAN','REC_ORT','ORT_POS_LAENGE','ORT_POS_BREITE')]
 
     out_filename = '/vsimem/vdv/ogr_vdv_7.x10'
 
@@ -279,7 +279,7 @@ def ogr_vdv_7():
         lyr = ds.CreateLayer(lyrname, geom_type = ogr.wkbPoint, options = ['PROFILE=' + profile])
         f = ogr.Feature(lyr.GetLayerDefn())
         lng = - (123 + 45. / 60 + 56.789 / 3600)
-        lat = - ( 23 + 45. / 60 + 56.789 / 3600)
+        lat = - (23 + 45. / 60 + 56.789 / 3600)
         f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%.10f %.10f)' % (lng, lat)))
         lyr.CreateFeature(f)
         ds = None
@@ -298,7 +298,7 @@ def ogr_vdv_7():
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
 
 
-    tests = [ ('VDV-452', True), ('VDV-452-ENGLISH', False), ('VDV-452-GERMAN', False) ]
+    tests = [('VDV-452', True), ('VDV-452-ENGLISH', False), ('VDV-452-GERMAN', False)]
 
     for (profile, strict) in tests:
 
@@ -552,13 +552,13 @@ gdaltest_list = [
     ogr_vdv_6,
     ogr_vdv_7,
     ogr_vdv_8,
-    ogr_vdv_cleanup ]
+    ogr_vdv_cleanup]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_vdv' )
+    gdaltest.setup_run('ogr_vdv')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

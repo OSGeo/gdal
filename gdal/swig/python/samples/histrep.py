@@ -40,12 +40,12 @@ def Usage():
     print('       histrep.py -req <min> <max> <buckets> [-force] [-approxok]')
     print('                  [-ioor] input_file')
     print('')
-    sys.exit( 1 )
+    sys.exit(1)
 
 
 # =============================================================================
 if __name__ == '__main__':
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
 
     req = None
     force = 0
@@ -84,10 +84,10 @@ if __name__ == '__main__':
         Usage()
 
     # -----------------------------------------------------------------------
-    ds = gdal.Open( file )
+    ds = gdal.Open(file)
 
     if req is None:
-        hist = ds.GetRasterBand(1).GetDefaultHistogram( force=force )
+        hist = ds.GetRasterBand(1).GetDefaultHistogram(force=force)
 
         if hist is None:
             print('No default histogram.')
@@ -99,8 +99,8 @@ if __name__ == '__main__':
             print('Histogram: ', hist[3])
 
     else:
-        hist = ds.GetRasterBand(1).GetHistogram( req[0], req[1], req[2],
-                                                ioor, approxok )
+        hist = ds.GetRasterBand(1).GetHistogram(req[0], req[1], req[2],
+                                                ioor, approxok)
 
         if hist is not None:
             print('Histogram: ', hist)

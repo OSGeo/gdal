@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 
 def png_1():
 
-    tst = gdaltest.GDALTest( 'PNG', 'test.png', 1, 57921 )
+    tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
     return tst.testOpen()
 
 ###############################################################################
@@ -50,7 +50,7 @@ def png_1():
 
 def png_2():
 
-    tst = gdaltest.GDALTest( 'PNG', 'test.png', 1, 57921 )
+    tst = gdaltest.GDALTest('PNG', 'test.png', 1, 57921)
 
     return tst.testCreateCopy()
 
@@ -59,18 +59,18 @@ def png_2():
 
 def png_3():
 
-    ds = gdal.Open( 'data/test.png' )
+    ds = gdal.Open('data/test.png')
     cm = ds.GetRasterBand(1).GetRasterColorTable()
     if cm.GetCount() != 16 \
        or cm.GetColorEntry(0) != (255,255,255,0) \
        or cm.GetColorEntry(1) != (255,255,208,255):
-        gdaltest.post_reason( 'Wrong colormap entries' )
+        gdaltest.post_reason('Wrong colormap entries')
         return 'fail'
 
     cm = None
 
     if int(ds.GetRasterBand(1).GetNoDataValue()) != 0:
-        gdaltest.post_reason( 'Wrong nodata value.' )
+        gdaltest.post_reason('Wrong nodata value.')
         return 'fail'
 
     # This geotransform test is also verifying the fix for bug 1414, as
@@ -85,7 +85,7 @@ def png_3():
             print('expected:', gt_expected)
             print('got:', gt)
 
-            gdaltest.post_reason( 'Mixed locale world file read improperly.' )
+            gdaltest.post_reason('Mixed locale world file read improperly.')
             return 'fail'
 
     return 'success'
@@ -95,7 +95,7 @@ def png_3():
 
 def png_4():
 
-    tst = gdaltest.GDALTest( 'PNG', 'rgb.ntf', 3, 21349 )
+    tst = gdaltest.GDALTest('PNG', 'rgb.ntf', 3, 21349)
 
     return tst.testCreateCopy()
 
@@ -104,7 +104,7 @@ def png_4():
 
 def png_5():
 
-    tst = gdaltest.GDALTest( 'PNG', 'rgba16.png', 3, 1815 )
+    tst = gdaltest.GDALTest('PNG', 'rgba16.png', 3, 1815)
     return tst.testOpen()
 
 ###############################################################################
@@ -112,7 +112,7 @@ def png_5():
 
 def png_6():
 
-    tst = gdaltest.GDALTest( 'PNG', 'rgba16.png', 4, 4873 )
+    tst = gdaltest.GDALTest('PNG', 'rgba16.png', 4, 4873)
 
     return tst.testCreateCopy()
 
@@ -122,23 +122,23 @@ def png_6():
 
 def png_7():
 
-    drv = gdal.GetDriverByName( 'PNG' )
-    srcds = gdal.Open( 'data/tbbn2c16.png' )
+    drv = gdal.GetDriverByName('PNG')
+    srcds = gdal.Open('data/tbbn2c16.png')
 
-    dstds = drv.CreateCopy( 'tmp/png7.png', srcds )
+    dstds = drv.CreateCopy('tmp/png7.png', srcds)
     srcds = None
 
-    dstds = gdal.Open( 'tmp/png7.png' )
+    dstds = gdal.Open('tmp/png7.png')
     md = dstds.GetMetadata()
     dstds = None
 
     if md['NODATA_VALUES'] != '32639 32639 32639':
-        gdaltest.post_reason( 'NODATA_VALUES wrong' )
+        gdaltest.post_reason('NODATA_VALUES wrong')
         return 'fail'
 
     dstds = None
 
-    drv.Delete( 'tmp/png7.png' )
+    drv.Delete('tmp/png7.png')
 
     return 'success'
 
@@ -148,8 +148,8 @@ def png_7():
 
 def png_8():
 
-    drv = gdal.GetDriverByName( 'PNG' )
-    ds_src = gdal.Open( 'data/idat_broken.png' )
+    drv = gdal.GetDriverByName('PNG')
+    ds_src = gdal.Open('data/idat_broken.png')
 
     md = ds_src.GetMetadata()
     if len(md) > 0:
@@ -168,7 +168,7 @@ def png_8():
         return 'fail'
 
     # We're not interested in returned value but internal state of GDAL.
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     b.ComputeBandStats()
     err = gdal.GetLastErrorNo()
     gdal.PopErrorHandler()
@@ -177,8 +177,8 @@ def png_8():
         gdaltest.post_reason('error condition expected')
         return 'fail'
 
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    ds_dst = drv.CreateCopy( 'tmp/idat_broken.png', ds_src )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds_dst = drv.CreateCopy('tmp/idat_broken.png', ds_src)
     err = gdal.GetLastErrorNo()
     gdal.PopErrorHandler()
     ds_src = None
@@ -191,7 +191,7 @@ def png_8():
         gdaltest.post_reason('dataset not expected')
         return 'fail'
 
-    os.remove( 'tmp/idat_broken.png' )
+    os.remove('tmp/idat_broken.png')
 
     return 'success'
 
@@ -201,9 +201,9 @@ def png_8():
 
 def png_9():
 
-    tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( vsimem = 1 )
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Test writing to /vsistdout/
@@ -232,9 +232,9 @@ def png_10():
 
 def png_11():
 
-    tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('PNG', 'byte.tif', 1, 4672)
 
-    ret = tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+    ret = tst.testCreateCopy(vsimem = 1, interrupt_during_copy = True)
     gdal.Unlink('/vsimem/byte.tif.tst')
     return ret
 
@@ -242,14 +242,14 @@ def png_11():
 # Test optimized IRasterIO
 
 def png_12():
-    ds = gdal.Open( '../gcore/data/stefan_full_rgba.png' )
-    cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    ds = gdal.Open('../gcore/data/stefan_full_rgba.png')
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
 
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -258,7 +258,7 @@ def png_12():
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = ds.RasterCount, buf_band_space = 1)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -267,7 +267,7 @@ def png_12():
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize, buf_pixel_space = 5, buf_band_space = 1)
     tmp_ds = gdal.GetDriverByName('Mem').Create('', ds.RasterXSize, ds.RasterYSize, ds.RasterCount)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data, buf_pixel_space = 5, buf_band_space = 1)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -368,9 +368,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'png' )
+    gdaltest.setup_run('png')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

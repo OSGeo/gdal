@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -40,7 +40,7 @@ import gdaltest
 
 def paux_1():
 
-    tst = gdaltest.GDALTest( 'PAux', 'small16.raw', 2, 12816 )
+    tst = gdaltest.GDALTest('PAux', 'small16.raw', 2, 12816)
     return tst.testOpen()
 
 ###############################################################################
@@ -48,18 +48,18 @@ def paux_1():
 
 def paux_2():
 
-    tst = gdaltest.GDALTest( 'PAux', 'byte.tif', 1, 4672)
+    tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( check_gt = 1 )
+    return tst.testCreateCopy(check_gt = 1)
 
 ###############################################################################
 # Test /vsimem based.
 
 def paux_3():
 
-    tst = gdaltest.GDALTest( 'PAux', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('PAux', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( vsimem = 1 )
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Cleanup.
@@ -73,13 +73,13 @@ gdaltest_list = [
     paux_1,
     paux_2,
     paux_3,
-    paux_cleanup ]
+    paux_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'paux' )
+    gdaltest.setup_run('paux')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

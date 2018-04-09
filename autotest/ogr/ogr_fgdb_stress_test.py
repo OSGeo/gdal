@@ -35,7 +35,7 @@ import sys
 import shutil
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -251,16 +251,16 @@ def ogr_fgdb_stress_test_cleanup():
 # Do nothing in whole run of the suite
 gdaltest_list = []
 
-explicit_gdaltest_list = [ ogr_fgdb_stress_test_init,
+explicit_gdaltest_list = [ogr_fgdb_stress_test_init,
                            ogr_fgdb_stress_test_1,
                            ogr_fgdb_stress_test_2,
-                           ogr_fgdb_stress_test_cleanup ]
+                           ogr_fgdb_stress_test_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_fgdb_stress_test' )
+    gdaltest.setup_run('ogr_fgdb_stress_test')
 
-    gdaltest.run_tests( explicit_gdaltest_list )
+    gdaltest.run_tests(explicit_gdaltest_list)
 
     gdaltest.summarize()
 

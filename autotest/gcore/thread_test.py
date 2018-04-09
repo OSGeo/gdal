@@ -32,7 +32,7 @@
 import sys
 import threading
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -64,7 +64,7 @@ def thread_test_1():
     threads = []
     args_array = []
     for i in range(4):
-        args_dict = { 'ret': True }
+        args_dict = {'ret': True}
         t = threading.Thread(target=thread_test_1_worker, args = (args_dict,))
         args_array.append(args_dict)
         threads.append(t)
@@ -78,13 +78,13 @@ def thread_test_1():
 
     return ret
 
-gdaltest_list = [ thread_test_1 ]
+gdaltest_list = [thread_test_1]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'thread_test' )
+    gdaltest.setup_run('thread_test')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

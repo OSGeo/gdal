@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 
 def saga_1():
 
-    tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
+    tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
     return tst.testOpen(check_prj = """PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
         DATUM["North_American_Datum_1927",
@@ -62,37 +62,37 @@ def saga_1():
 
 def saga_2():
 
-    tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
-    return tst.testCreateCopy( new_filename = 'tmp/createcopy.sdat', check_srs = True )
+    tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
+    return tst.testCreateCopy(new_filename = 'tmp/createcopy.sdat', check_srs = True)
 
 ###############################################################################
 # Test copying a reference sample with Create()
 
 def saga_3():
 
-    tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
-    return tst.testCreate( new_filename = 'tmp/copy.sdat', out_bands = 1 )
+    tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
+    return tst.testCreate(new_filename = 'tmp/copy.sdat', out_bands = 1)
 
 ###############################################################################
 # Test CreateCopy() for various data types
 
 def saga_4():
 
-    src_files = [ 'byte.tif',
+    src_files = ['byte.tif',
                   'int16.tif',
                   '../../gcore/data/uint16.tif',
                   '../../gcore/data/int32.tif',
                   '../../gcore/data/uint32.tif',
                   '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif' ]
+                  '../../gcore/data/float64.tif']
 
     for src_file in src_files:
-        tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
+        tst = gdaltest.GDALTest('SAGA', src_file, 1, 4672)
         if src_file == 'byte.tif':
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreateCopy( new_filename = 'tmp/test4.sdat', check_minmax = check_minmax )
+        ret = tst.testCreateCopy(new_filename = 'tmp/test4.sdat', check_minmax = check_minmax)
         if ret != 'success':
             return ret
 
@@ -103,21 +103,21 @@ def saga_4():
 
 def saga_5():
 
-    src_files = [ 'byte.tif',
+    src_files = ['byte.tif',
                   'int16.tif',
                   '../../gcore/data/uint16.tif',
                   '../../gcore/data/int32.tif',
                   '../../gcore/data/uint32.tif',
                   '../../gcore/data/float32.tif',
-                  '../../gcore/data/float64.tif' ]
+                  '../../gcore/data/float64.tif']
 
     for src_file in src_files:
-        tst = gdaltest.GDALTest( 'SAGA', src_file, 1, 4672 )
+        tst = gdaltest.GDALTest('SAGA', src_file, 1, 4672)
         if src_file == 'byte.tif':
             check_minmax = 0
         else:
             check_minmax = 1
-        ret = tst.testCreate( new_filename = 'tmp/test5.sdat', out_bands = 1, check_minmax = check_minmax )
+        ret = tst.testCreate(new_filename = 'tmp/test5.sdat', out_bands = 1, check_minmax = check_minmax)
         if ret != 'success':
             return ret
 
@@ -134,9 +134,9 @@ def saga_6():
                   gdal.GDT_Int32,
                   gdal.GDT_UInt32,
                   gdal.GDT_Float32,
-                  gdal.GDT_Float64 ]
+                  gdal.GDT_Float64]
 
-    expected_nodata = [ 255, -32767, 65535, -2147483647, 4294967295, -99999.0, -99999.0 ]
+    expected_nodata = [255, -32767, 65535, -2147483647, 4294967295, -99999.0, -99999.0]
 
     for i in range(len(gdal_types)):
 
@@ -176,8 +176,8 @@ def saga_6():
 
 def saga_7():
 
-    tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
-    return tst.testCreateCopy( new_filename = '/vsimem/createcopy.sdat' )
+    tst = gdaltest.GDALTest('SAGA', '4byteFloat.sdat', 1, 108)
+    return tst.testCreateCopy(new_filename = '/vsimem/createcopy.sdat')
 
 
 ###############################################################################
@@ -208,13 +208,13 @@ gdaltest_list = [
     saga_5,
     saga_6,
     saga_7,
-    saga_8 ]
+    saga_8]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'saga' )
+    gdaltest.setup_run('saga')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

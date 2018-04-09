@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -286,20 +286,20 @@ def ogr_pdf_online_1():
         return 'skip'
 
     expected_layers = [
-        [ "Cadastral Boundaries", ogr.wkbPolygon ],
-        [ "Water Lines", ogr.wkbLineString ],
-        [ "Sewerage Lines", ogr.wkbLineString ],
-        [ "Sewerage Jump-Ups", ogr.wkbLineString ],
-        [ "Roads", ogr.wkbUnknown ],
-        [ "Water Points", ogr.wkbPoint ],
-        [ "Sewerage Pump Stations", ogr.wkbPoint ],
-        [ "Sewerage Man Holes", ogr.wkbPoint ],
-        [ "BPS - Buildings", ogr.wkbPolygon ],
-        [ "BPS - Facilities", ogr.wkbPolygon ],
-        [ "BPS - Water Sources", ogr.wkbPoint ],
+        ["Cadastral Boundaries", ogr.wkbPolygon],
+        ["Water Lines", ogr.wkbLineString],
+        ["Sewerage Lines", ogr.wkbLineString],
+        ["Sewerage Jump-Ups", ogr.wkbLineString],
+        ["Roads", ogr.wkbUnknown],
+        ["Water Points", ogr.wkbPoint],
+        ["Sewerage Pump Stations", ogr.wkbPoint],
+        ["Sewerage Man Holes", ogr.wkbPoint],
+        ["BPS - Buildings", ogr.wkbPolygon],
+        ["BPS - Facilities", ogr.wkbPolygon],
+        ["BPS - Water Sources", ogr.wkbPoint],
     ]
 
-    ds = ogr.Open( 'tmp/cache/webmap_urbansample.pdf' )
+    ds = ogr.Open('tmp/cache/webmap_urbansample.pdf')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -357,9 +357,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_pdf' )
+    gdaltest.setup_run('ogr_pdf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

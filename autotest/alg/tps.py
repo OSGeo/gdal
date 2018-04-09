@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal, osr
@@ -56,7 +56,7 @@ def tps_1():
     with gdaltest.error_handler():
         transformer = gdal.Transformer(ds, None,
                                        ['DST_SRS='+utm_wkt,
-                                        'METHOD=GCP_TPS'] )
+                                        'METHOD=GCP_TPS'])
     if transformer is not None:
         return 'fail'
 
@@ -69,8 +69,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'tps' )
+    gdaltest.setup_run('tps')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,7 +41,7 @@ import gdaltest
 
 def iris_1():
 
-    tst = gdaltest.GDALTest( 'IRIS', 'fakeiris.dat', 1, 65532 )
+    tst = gdaltest.GDALTest('IRIS', 'fakeiris.dat', 1, 65532)
     return tst.testOpen()
 
 ###############################################################################
@@ -70,7 +70,7 @@ def iris_2():
     #    return 'fail'
 
     got_gt = ds.GetGeoTransform()
-    expected_gt = [ 16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876 ]
+    expected_gt = [16435.721785269096, 1370.4263720754534, 0.0, 5289830.4584420761, 0.0, -1357.6498705837876]
     for i in range(6):
         if (expected_gt[i] == 0.0 and got_gt[i] != 0.0) or \
            (expected_gt[i] != 0.0 and abs(got_gt[i] - expected_gt[i])/abs(expected_gt[i]) > 1e-5) :
@@ -105,7 +105,7 @@ def iris_2():
   "TASK_NAME=PPIVOL_A    ",
   "TIME_INPUT_INGEST_SWEEP=2012-04-19 14:48:05",
   "TIME_PRODUCT_GENERATED=2012-04-19 14:48:30",
-  "WAVELENGTH=5.33 cm" ]
+  "WAVELENGTH=5.33 cm"]
     got_metadata = ds.GetMetadata()
 
     for md in expected_metadata:
@@ -124,8 +124,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'iris' )
+    gdaltest.setup_run('iris')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

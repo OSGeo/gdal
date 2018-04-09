@@ -82,18 +82,18 @@ def GetOutputDriversFor(filename):
     drv_list = []
     ext = GetExtension(filename)
     if ext.lower() == 'vrt':
-        return [ 'VRT' ]
+        return ['VRT']
     for i in range(gdal.GetDriverCount()):
         drv = gdal.GetDriver(i)
         if (drv.GetMetadataItem(gdal.DCAP_CREATE) is not None or \
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     return drv_list
 

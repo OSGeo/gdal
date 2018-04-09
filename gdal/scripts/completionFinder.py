@@ -204,7 +204,7 @@ def main(argv):
     showHelp()
     return 1
 
-  gdaltools = [ "gdal2tiles.py",\
+  gdaltools = ["gdal2tiles.py",\
                 "gdal2xyz.py",\
                 "gdaladdo",\
 #                "gdal_auth.py",\
@@ -238,7 +238,7 @@ def main(argv):
                 "gdal_translate",\
                 "gdalwarp"]
 
-  ogrtools = [ "ogr2ogr",\
+  ogrtools = ["ogr2ogr",\
                "ogrinfo",\
                "ogrlineref",\
                "ogrtindex",

@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -45,7 +45,7 @@ def dods_1():
     gdaltest.dods_dr = None
 
     try:
-        gdaltest.dods_dr = gdal.GetDriverByName( 'DODS' )
+        gdaltest.dods_dr = gdal.GetDriverByName('DODS')
     except:
         return 'skip'
 
@@ -66,7 +66,7 @@ def dods_1():
 def dods_2():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11', 1, 3391, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -75,7 +75,7 @@ def dods_2():
 def dods_3():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z', 12, 43208, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -84,7 +84,7 @@ def dods_3():
 def dods_4():
     if gdaltest.dods_dr is None:
         return 'skip'
-    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][x]', 1, 3391, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -94,7 +94,7 @@ def dods_5():
     if gdaltest.dods_dr is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('dods', 'http://disc1.sci.gsfc.nasa.gov/opendap/tovs/TOVSAMNF/1985/032/TOVS_MONTHLY_PM_8502_NF.HDF.Z?Data-Set-11[y][-x]', 1, 2436, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -111,7 +111,7 @@ def dods_6():
     gdaltest.dods_grid_ds = gdal.Open('http://g0dup05u.ecs.nasa.gov/opendap/AIRS/AIRX3STD.003/2004.12.28/AIRS.2004.12.28.L3.RetStd001.v4.0.9.0.G05253115303.hdf?TotH2OVap_A[y][x]')
     nd = gdaltest.dods_grid_ds.GetRasterBand(1).GetNoDataValue()
     if nd != -9999.0:
-        gdaltest.post_reason( 'nodata value wrong or missing.' )
+        gdaltest.post_reason('nodata value wrong or missing.')
         print(nd)
         return 'fail'
     else:
@@ -138,14 +138,14 @@ manual_gdaltest_list = [
     dods_4,
     dods_5,
     dods_6,
-    dods_cleanup ]
+    dods_cleanup]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'dods' )
+    gdaltest.setup_run('dods')
 
-    gdaltest.run_tests( manual_gdaltest_list )
+    gdaltest.run_tests(manual_gdaltest_list)
 
     gdaltest.summarize()
 

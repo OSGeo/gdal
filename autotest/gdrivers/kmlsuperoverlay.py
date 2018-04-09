@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,18 +43,18 @@ import gdaltest
 
 def kmlsuperoverlay_1():
 
-    tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
+    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = ['FORMAT=PNG'])
 
-    return tst.testCreateCopy( new_filename = '/vsimem/kmlout.kmz' )
+    return tst.testCreateCopy(new_filename = '/vsimem/kmlout.kmz')
 
 ###############################################################################
 # Test CreateCopy() to a KML file
 
 def kmlsuperoverlay_2():
 
-    tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
+    tst = gdaltest.GDALTest('KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = ['FORMAT=PNG'])
 
-    return tst.testCreateCopy( new_filename = '/vsimem/kmlout.kml' )
+    return tst.testCreateCopy(new_filename = '/vsimem/kmlout.kml')
 
 ###############################################################################
 # Test CreateCopy() to a KML file
@@ -66,7 +66,7 @@ def kmlsuperoverlay_3():
     del ds
     src_ds = None
 
-    filelist = [ 'tmp/0/0/0.jpg',
+    filelist = ['tmp/0/0/0.jpg',
                  'tmp/0/0/0.kml',
                  'tmp/1/0/0.jpg',
                  'tmp/1/0/0.kml',
@@ -76,7 +76,7 @@ def kmlsuperoverlay_3():
                  'tmp/1/1/0.kml',
                  'tmp/1/1/1.jpg',
                  'tmp/1/1/1.kml',
-                 'tmp/tmp.kml' ]
+                 'tmp/tmp.kml']
     for filename in filelist:
         try:
             os.remove(filename)
@@ -269,7 +269,7 @@ def kmlsuperoverlay_6():
         gdaltest.post_reason('failure')
         return 'fail'
     got_gt = ds.GetGeoTransform()
-    ref_gt = [ 1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05 ]
+    ref_gt = [1.2554125761846773, 1.6640895429971981e-05, 0.0, 43.452120815728101, 0.0, -1.0762348187666334e-05]
     for i in range(6):
         if abs(got_gt[i] - ref_gt[i]) > 1e-6:
             gdaltest.post_reason('failure')
@@ -305,7 +305,7 @@ def kmlsuperoverlay_7():
         gdaltest.post_reason('failure')
         return 'fail'
     got_gt = ds.GetGeoTransform()
-    ref_gt = [ -180.0, 0.9, 0.0, 90.0, 0.0, -0.9 ]
+    ref_gt = [-180.0, 0.9, 0.0, 90.0, 0.0, -0.9]
     for i in range(6):
         if abs(got_gt[i] - ref_gt[i]) > 1e-6:
             gdaltest.post_reason('failure')
@@ -454,13 +454,13 @@ gdaltest_list = [
     kmlsuperoverlay_6,
     kmlsuperoverlay_7,
     kmlsuperoverlay_8,
-    kmlsuperoverlay_cleanup ]
+    kmlsuperoverlay_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( ' kmlsuperoverlay' )
+    gdaltest.setup_run(' kmlsuperoverlay')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

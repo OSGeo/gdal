@@ -37,8 +37,8 @@ import shutil
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
-sys.path.append( '../osr' )
+sys.path.append('../pymod')
+sys.path.append('../osr')
 
 import gdaltest
 
@@ -61,7 +61,7 @@ def grib_1():
     import osr_ct
     osr_ct.osr_ct_1()
 
-    tst = gdaltest.GDALTest( 'GRIB', 'grib/ds.mint.bin', 2, 46927 )
+    tst = gdaltest.GDALTest('GRIB', 'grib/ds.mint.bin', 2, 46927)
     return tst.testOpen()
 
 
@@ -73,7 +73,7 @@ def grib_2():
     if gdaltest.grib_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GRIB', 'grib/Sample_QuikSCAT.grb', 4, 50714 )
+    tst = gdaltest.GDALTest('GRIB', 'grib/Sample_QuikSCAT.grb', 4, 50714)
     return tst.testOpen()
 
 ###############################################################################
@@ -85,15 +85,15 @@ def grib_read_different_sizes_messages():
     if gdaltest.grib_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GRIB', 'grib/bug3246.grb', 4, 4081 )
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    tst = gdaltest.GDALTest('GRIB', 'grib/bug3246.grb', 4, 4081)
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     result = tst.testOpen()
     gdal.PopErrorHandler()
 
     msg = gdal.GetLastErrorMsg()
     if msg.find('data access may be incomplete') == -1 \
        or gdal.GetLastErrorType() != 2:
-        gdaltest.post_reason( 'did not get expected warning.' )
+        gdaltest.post_reason('did not get expected warning.')
 
     return result
 
@@ -963,7 +963,7 @@ def grib_grib2_write_projections():
     if gdaltest.grib_drv is None:
         return 'skip'
 
-    filenames = [ 'albers_equal_area.grb2',
+    filenames = ['albers_equal_area.grb2',
                   'lambert_azimuthal_equal_area.grb2',
                   'lambert_conformal_conic.grb2',
                   'mercator.grb2',
@@ -975,7 +975,7 @@ def grib_grib2_write_projections():
         filename = 'data/grib/' + filename
         src_ds = gdal.Open(filename)
         tmpfilename = '/vsimem/out.grb2'
-        gdal.Translate( tmpfilename, filename, format = 'GRIB' )
+        gdal.Translate(tmpfilename, filename, format = 'GRIB')
         out_ds = gdal.Open(tmpfilename)
 
         if src_ds.GetProjectionRef() != out_ds.GetProjectionRef():
@@ -1033,7 +1033,7 @@ def grib_grib2_write_projections():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]""")
     tmpfilename = '/vsimem/out.grb2'
-    gdal.Translate( tmpfilename, src_ds, format = 'GRIB' )
+    gdal.Translate(tmpfilename, src_ds, format = 'GRIB')
     out_ds = gdal.Open(tmpfilename)
     expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_2SP"],PARAMETER["standard_parallel_1",33.500986],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     got_sr = osr.SpatialReference()
@@ -1072,7 +1072,7 @@ def grib_grib2_write_projections():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]""")
     tmpfilename = '/vsimem/out.grb2'
-    gdal.Translate( tmpfilename, src_ds, format = 'GRIB' )
+    gdal.Translate(tmpfilename, src_ds, format = 'GRIB')
     out_ds = gdal.Open(tmpfilename)
     expected_wkt = 'PROJCS["unnamed",GEOGCS["Coordinate System imported from GRIB file",DATUM["unknown",SPHEROID["Spheroid imported from GRIB file",6378206.4,294.9786982139109]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",34.310911],PARAMETER["standard_parallel_2",32.686501],PARAMETER["latitude_of_origin",33.5],PARAMETER["central_meridian",117],PARAMETER["false_easting",0],PARAMETER["false_northing",0]]'
     got_sr = osr.SpatialReference()
@@ -1135,42 +1135,42 @@ def grib_grib2_write_data_encodings():
     GS5_PNG = 41
 
     tests = []
-    tests += [ [ 'data/byte.tif', [], 4672, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING' ], 4672, GS5_SIMPLE ] ]
+    tests += [['data/byte.tif', [], 4672, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING'], 4672, GS5_SIMPLE]]
 
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=IEEE_FLOATING_POINT' ], 4672, GS5_IEEE ] ]
+    tests += [['data/byte.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT'], 4672, GS5_IEEE]]
 
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'NBITS=8' ], 4672, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'NBITS=9' ], 4672, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'NBITS=7' ], 4484, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'DECIMAL_SCALE_FACTOR=-1' ], 4820, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'NBITS=5', 'DECIMAL_SCALE_FACTOR=-1' ], 4820, GS5_SIMPLE ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1' ], 4855, GS5_SIMPLE ] ]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=8'], 4672, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=9'], 4672, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=7'], 4484, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=5', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_SIMPLE]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_SIMPLE]]
 
-    tests += [ [ 'data/grib/ds.mint.bin', [ 'PDS_PDTN=8', 'PDS_TEMPLATE_ASSEMBLED_VALUES=0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0'  ], 46650, GS5_CMPLX ] ] # has nodata, hence complex packing
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING' ], 4672, GS5_CMPLX ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=0' ], 4672, GS5_CMPLX ] ]
-    tests += [ [ 'data/byte.tif', [ 'SPATIAL_DIFFERENCING_ORDER=1' ], 4672, GS5_CMPLXSEC ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=1' ], 4672, GS5_CMPLXSEC ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=2' ], 4672, GS5_CMPLXSEC ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING', 'DECIMAL_SCALE_FACTOR=-1' ], 4820, GS5_CMPLX ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=COMPLEX_PACKING', 'NBITS=7' ], 4484, GS5_CMPLX ] ]
+    tests += [['data/grib/ds.mint.bin', ['PDS_PDTN=8', 'PDS_TEMPLATE_ASSEMBLED_VALUES=0 5 2 0 0 255 255 1 19 1 0 0 255 -1 -2147483647 2008 2 22 12 0 0 1 0 3 255 1 12 1 0'], 46650, GS5_CMPLX]] # has nodata, hence complex packing
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING'], 4672, GS5_CMPLX]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=0'], 4672, GS5_CMPLX]]
+    tests += [['data/byte.tif', ['SPATIAL_DIFFERENCING_ORDER=1'], 4672, GS5_CMPLXSEC]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=1'], 4672, GS5_CMPLXSEC]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'SPATIAL_DIFFERENCING_ORDER=2'], 4672, GS5_CMPLXSEC]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_CMPLX]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=COMPLEX_PACKING', 'NBITS=7'], 4484, GS5_CMPLX]]
 
     if gdal.GetDriverByName('PNG') is not None:
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG' ], 4672, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=8' ], 4672, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'DECIMAL_SCALE_FACTOR=-1' ], 4820, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1' ], 4855, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=9' ], 4672, GS5_PNG ] ] # rounded to 16 bit
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=7' ], 4672, GS5_PNG ] ] # rounded to 8 bit
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=4' ], 5103, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=3' ], 5103, GS5_PNG ] ] # rounded to 4 bit
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=2' ], 5103, GS5_PNG ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=PNG', 'NBITS=1' ], 5103, GS5_PNG ] ]
-        tests += [ [ '../gcore/data/float32.tif', [ 'DATA_ENCODING=PNG' ], 4672, GS5_PNG ] ]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG'], 4672, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=8'], 4672, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=9'], 4672, GS5_PNG]] # rounded to 16 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=7'], 4672, GS5_PNG]] # rounded to 8 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=4'], 5103, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=3'], 5103, GS5_PNG]] # rounded to 4 bit
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=2'], 5103, GS5_PNG]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=PNG', 'NBITS=1'], 5103, GS5_PNG]]
+        tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=PNG'], 4672, GS5_PNG]]
 
     found_j2k_drivers = []
-    for drvname in [ 'JP2KAK', 'JP2OPENJPEG', 'JPEG2000', 'JP2ECW' ]:
+    for drvname in ['JP2KAK', 'JP2OPENJPEG', 'JPEG2000', 'JP2ECW']:
         if gdal.GetDriverByName(drvname) is not None:
             if drvname != 'JP2ECW':
                 found_j2k_drivers.append(drvname)
@@ -1180,61 +1180,61 @@ def grib_grib2_write_data_encodings():
                     found_j2k_drivers.append(drvname)
 
     if len(found_j2k_drivers) > 0:
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000' ], 4672, GS5_JPEG2000 ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2' ], 4672, GS5_JPEG2000 ] ] # COMPRESSION_RATIO ignored in that case
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'NBITS=8' ], 4672, GS5_JPEG2000 ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'DECIMAL_SCALE_FACTOR=-1' ], 4820, GS5_JPEG2000 ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1' ], 4855, GS5_JPEG2000 ] ]
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'NBITS=9' ], 4672, GS5_JPEG2000 ] ]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000'], 4672, GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'COMPRESSION_RATIO=2'], 4672, GS5_JPEG2000]] # COMPRESSION_RATIO ignored in that case
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8'], 4672, GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'DECIMAL_SCALE_FACTOR=-1'], 4820, GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=8', 'DECIMAL_SCALE_FACTOR=-1'], 4855, GS5_JPEG2000]]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=9'], 4672, GS5_JPEG2000]]
         # 4899 for JP2ECW, 4440 for JP2OPENJPEG
-        tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=JPEG2000', 'NBITS=7' ], (4484, 4899, 4440), GS5_JPEG2000 ] ]
+        tests += [['data/byte.tif', ['DATA_ENCODING=JPEG2000', 'NBITS=7'], (4484, 4899, 4440), GS5_JPEG2000]]
         for drvname in found_j2k_drivers:
-            tests += [ [ 'data/byte.tif', [ 'JPEG2000_DRIVER=' + drvname ], 4672, GS5_JPEG2000 ] ]
-        tests += [ [ '../gcore/data/float32.tif', [ 'DATA_ENCODING=JPEG2000' ], 4672, GS5_JPEG2000 ] ]
+            tests += [['data/byte.tif', ['JPEG2000_DRIVER=' + drvname], 4672, GS5_JPEG2000]]
+        tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=JPEG2000'], 4672, GS5_JPEG2000]]
 
-    tests += [ [ '../gcore/data/int16.tif', [], 4672, GS5_SIMPLE ] ]
-    tests += [ [ '../gcore/data/uint16.tif', [], 4672, GS5_SIMPLE ] ]
-    tests += [ [ '../gcore/data/int32.tif', [], 4672, GS5_SIMPLE ] ]
-    tests += [ [ '../gcore/data/uint32.tif', [], 4672, GS5_SIMPLE ] ]
-    tests += [ [ '../gcore/data/float32.tif', [], 4672, GS5_IEEE ] ]
-    tests += [ [ '../gcore/data/float64.tif', [], 4672, GS5_IEEE ] ]
-    tests += [ [ '../gcore/data/float32.tif', [ 'DATA_ENCODING=IEEE_FLOATING_POINT' ], 4672, GS5_IEEE ] ]
-    tests += [ [ '../gcore/data/float64.tif', [ 'DATA_ENCODING=IEEE_FLOATING_POINT' ], 4672, GS5_IEEE ] ]
-    tests += [ [ '../gcore/data/float32.tif', [ 'DATA_ENCODING=COMPLEX_PACKING' ], 4672, GS5_CMPLX ] ]
+    tests += [['../gcore/data/int16.tif', [], 4672, GS5_SIMPLE]]
+    tests += [['../gcore/data/uint16.tif', [], 4672, GS5_SIMPLE]]
+    tests += [['../gcore/data/int32.tif', [], 4672, GS5_SIMPLE]]
+    tests += [['../gcore/data/uint32.tif', [], 4672, GS5_SIMPLE]]
+    tests += [['../gcore/data/float32.tif', [], 4672, GS5_IEEE]]
+    tests += [['../gcore/data/float64.tif', [], 4672, GS5_IEEE]]
+    tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT'], 4672, GS5_IEEE]]
+    tests += [['../gcore/data/float64.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT'], 4672, GS5_IEEE]]
+    tests += [['../gcore/data/float32.tif', ['DATA_ENCODING=COMPLEX_PACKING'], 4672, GS5_CMPLX]]
 
     one_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     one_ds.SetGeoTransform([2,1,0,49,0,-1])
     sr = osr.SpatialReference()
     sr.SetFromUserInput('WGS84')
-    one_ds.SetProjection( sr.ExportToWkt() )
+    one_ds.SetProjection(sr.ExportToWkt())
     one_ds.GetRasterBand(1).Fill(1)
 
-    tests += [ [ one_ds, [], 1, GS5_SIMPLE ] ]
-    tests += [ [ one_ds, [ 'DATA_ENCODING=COMPLEX_PACKING' ], 1, GS5_CMPLX ] ]
+    tests += [[one_ds, [], 1, GS5_SIMPLE]]
+    tests += [[one_ds, ['DATA_ENCODING=COMPLEX_PACKING'], 1, GS5_CMPLX]]
     if gdal.GetDriverByName('PNG') is not None:
-        tests += [ [ one_ds, [ 'DATA_ENCODING=PNG' ], 1, GS5_PNG ] ]
+        tests += [[one_ds, ['DATA_ENCODING=PNG'], 1, GS5_PNG]]
     if len(found_j2k_drivers) > 0:
-        tests += [ [ one_ds, [ 'DATA_ENCODING=JPEG2000' ], 1, GS5_JPEG2000 ] ]
+        tests += [[one_ds, ['DATA_ENCODING=JPEG2000'], 1, GS5_JPEG2000]]
 
     nodata_never_hit_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     nodata_never_hit_ds.SetGeoTransform([2,1,0,49,0,-1])
-    nodata_never_hit_ds.SetProjection( sr.ExportToWkt() )
+    nodata_never_hit_ds.SetProjection(sr.ExportToWkt())
     nodata_never_hit_ds.GetRasterBand(1).SetNoDataValue(1)
 
-    tests += [ [ nodata_never_hit_ds, [], 0, GS5_SIMPLE ] ]
+    tests += [[nodata_never_hit_ds, [], 0, GS5_SIMPLE]]
 
     all_nodata_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     all_nodata_ds.SetGeoTransform([2,1,0,49,0,-1])
-    all_nodata_ds.SetProjection( sr.ExportToWkt() )
+    all_nodata_ds.SetProjection(sr.ExportToWkt())
     all_nodata_ds.GetRasterBand(1).SetNoDataValue(0)
 
-    tests += [ [ all_nodata_ds, [ 'DATA_ENCODING=COMPLEX_PACKING'  ], 0, GS5_CMPLX ] ]
+    tests += [[all_nodata_ds, ['DATA_ENCODING=COMPLEX_PACKING'], 0, GS5_CMPLX]]
 
     for (filename, options, expected_cs, expected_section5_template_number) in tests:
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
-        gdal.Translate( tmpfilename, filename, format = 'GRIB',
-                       creationOptions = options )
+        gdal.Translate(tmpfilename, filename, format = 'GRIB',
+                       creationOptions = options)
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
             gdaltest.post_reason('did not expect error for %s, %s' % (str(filename), str(options)))
@@ -1273,15 +1273,15 @@ def grib_grib2_write_data_encodings():
     # Test floating point data with dynamic < 1
     test_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
     test_ds.SetGeoTransform([2,1,0,49,0,-1])
-    test_ds.SetProjection( sr.ExportToWkt() )
+    test_ds.SetProjection(sr.ExportToWkt())
     test_ds.WriteRaster(0, 0, 2, 2, struct.pack(4 * 'f', 1.23, 1.45, 1.56, 1.78))
 
-    encodings = [ 'SIMPLE_PACKING', 'COMPLEX_PACKING', 'IEEE_FLOATING_POINT' ]
+    encodings = ['SIMPLE_PACKING', 'COMPLEX_PACKING', 'IEEE_FLOATING_POINT']
     if gdal.GetDriverByName('PNG') is not None:
-        encodings += [ 'PNG' ]
+        encodings += ['PNG']
     # JPEG2000 doesn't result in an appropriate result
-    if len(found_j2k_drivers) > 0 and found_j2k_drivers != [ 'JPEG2000' ] and found_j2k_drivers != [ 'JPEG2000', 'JP2ECW' ]:
-        encodings += [ 'JPEG2000' ]
+    if len(found_j2k_drivers) > 0 and found_j2k_drivers != ['JPEG2000'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
+        encodings += ['JPEG2000']
 
     for encoding in encodings:
         tmpfilename = '/vsimem/out.grb2'
@@ -1289,12 +1289,12 @@ def grib_grib2_write_data_encodings():
         options = ['DATA_ENCODING=' + encoding]
         if encoding == 'COMPLEX_PACKING':
             with gdaltest.error_handler():
-                success = gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = options )
+                success = gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = options)
             if success:
                 gdaltest.post_reason('expected error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
                 return 'fail'
         else:
-            gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = options )
+            gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = options)
             error_msg = gdal.GetLastErrorMsg()
             if error_msg != '':
                 gdaltest.post_reason('did not expect error for %s, %s' % ('floating point data with dynamic < 1', str(options)))
@@ -1317,21 +1317,21 @@ def grib_grib2_write_data_encodings():
     # Test floating point data with very large dynamic
     test_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, gdal.GDT_Float32)
     test_ds.SetGeoTransform([2,1,0,49,0,-1])
-    test_ds.SetProjection( sr.ExportToWkt() )
+    test_ds.SetProjection(sr.ExportToWkt())
     test_ds.WriteRaster(0, 0, 2, 2, struct.pack(4 * 'f', 1.23e10, -2.45e10, 1.23e10, -2.45e10))
 
-    encodings = [ 'SIMPLE_PACKING' ]
+    encodings = ['SIMPLE_PACKING']
     if gdal.GetDriverByName('PNG') is not None:
-        encodings += [ 'PNG' ]
+        encodings += ['PNG']
     # JP2ECW doesn't manage to compress such a small file
-    if len(found_j2k_drivers) > 0 and found_j2k_drivers != [ 'JP2ECW' ] and found_j2k_drivers != [ 'JPEG2000', 'JP2ECW' ]:
-        encodings += [ 'JPEG2000' ]
+    if len(found_j2k_drivers) > 0 and found_j2k_drivers != ['JP2ECW'] and found_j2k_drivers != ['JPEG2000', 'JP2ECW']:
+        encodings += ['JPEG2000']
 
     for encoding in encodings:
         tmpfilename = '/vsimem/out.grb2'
         if encoding != 'SIMPLE_PACKING':
             gdal.PushErrorHandler()
-        gdal.Translate( tmpfilename, test_ds, format = 'GRIB', creationOptions = ['DATA_ENCODING=' + encoding] )
+        gdal.Translate(tmpfilename, test_ds, format = 'GRIB', creationOptions = ['DATA_ENCODING=' + encoding])
         if encoding != 'SIMPLE_PACKING':
             gdal.PopErrorHandler()
         out_ds = gdal.Open(tmpfilename)
@@ -1353,9 +1353,9 @@ def grib_grib2_write_data_encodings():
     for drvname in found_j2k_drivers:
         tmpfilename = '/vsimem/out.grb2'
         gdal.ErrorReset()
-        gdal.Translate( tmpfilename, 'data/utm.tif', format = 'GRIB',
+        gdal.Translate(tmpfilename, 'data/utm.tif', format = 'GRIB',
                         creationOptions = ['JPEG2000_DRIVER='+drvname,
-                                           'COMPRESSION_RATIO=20'] )
+                                           'COMPRESSION_RATIO=20'])
         error_msg = gdal.GetLastErrorMsg()
         if error_msg != '':
             gdaltest.post_reason('did not expect error for %s, %s' % (str(filename), str(options)))
@@ -1380,20 +1380,20 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
 
     # Cases where warnings are expected
     tests = []
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'DECIMAL_SCALE_FACTOR=1' ], 4672 ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO' ], 4672 ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO' ], 4672 ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=SIMPLE_PACKING', 'SPATIAL_DIFFERENCING_ORDER=1' ], 4672 ] ]
-    tests += [ [ 'data/grib/ds.mint.bin', [ 'DATA_ENCODING=SIMPLE_PACKING' ], 41640 ] ] # should warn since simple packing doesn't support nodata
-    tests += [ [ 'data/byte.tif', [ 'NBITS=32' ], 4672 ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=IEEE_FLOATING_POINT', 'NBITS=8' ], 4672 ] ]
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=IEEE_FLOATING_POINT', 'DECIMAL_SCALE_FACTOR=-1' ], 4672 ] ]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'DECIMAL_SCALE_FACTOR=1'], 4672]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO'], 4672]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'JPEG2000_DRIVER=FOO'], 4672]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=SIMPLE_PACKING', 'SPATIAL_DIFFERENCING_ORDER=1'], 4672]]
+    tests += [['data/grib/ds.mint.bin', ['DATA_ENCODING=SIMPLE_PACKING'], 41640]] # should warn since simple packing doesn't support nodata
+    tests += [['data/byte.tif', ['NBITS=32'], 4672]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT', 'NBITS=8'], 4672]]
+    tests += [['data/byte.tif', ['DATA_ENCODING=IEEE_FLOATING_POINT', 'DECIMAL_SCALE_FACTOR=-1'], 4672]]
     for (filename, options, expected_cs) in tests:
         tmpfilename = '/vsimem/out.grb2'
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            out_ds = gdaltest.grib_drv.CreateCopy( tmpfilename, src_ds, options = options )
+            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
 
         error_msg = gdal.GetLastErrorMsg()
         if error_msg == '':
@@ -1416,24 +1416,24 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
 
     # Cases where errors are expected
     tests = []
-    tests += [ [ 'data/byte.tif', [ 'DATA_ENCODING=FOO' ] ] ] # invalid DATA_ENCODING
-    tests += [ [ 'data/byte.tif', [ 'JPEG2000_DRIVER=FOO', 'SPATIAL_DIFFERENCING_ORDER=BAR' ] ] ] # both cannot be used together
-    tests += [ [ 'data/byte.tif', [ 'SPATIAL_DIFFERENCING_ORDER=3' ] ] ]
-    tests += [ [ 'data/byte.tif', [ 'JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER' ] ] ] # non-existing driver
-    tests += [ [ 'data/byte.tif', [ 'JPEG2000_DRIVER=DERIVED' ] ] ] # Read-only driver
-    tests += [ [ '../gcore/data/cfloat32.tif', [] ] ] # complex data type
-    tests += [ [ 'data/float64.asc', [] ] ] # no projection
-    tests += [ [ 'data/byte.sgi', [] ] ] # no geotransform
-    tests += [ [ 'data/rotation.img', [] ] ] # geotransform with rotation terms
+    tests += [['data/byte.tif', ['DATA_ENCODING=FOO']]] # invalid DATA_ENCODING
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=FOO', 'SPATIAL_DIFFERENCING_ORDER=BAR']]] # both cannot be used together
+    tests += [['data/byte.tif', ['SPATIAL_DIFFERENCING_ORDER=3']]]
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER']]] # non-existing driver
+    tests += [['data/byte.tif', ['JPEG2000_DRIVER=DERIVED']]] # Read-only driver
+    tests += [['../gcore/data/cfloat32.tif', []]] # complex data type
+    tests += [['data/float64.asc', []]] # no projection
+    tests += [['data/byte.sgi', []]] # no geotransform
+    tests += [['data/rotation.img', []]] # geotransform with rotation terms
     gdal.GetDriverByName('GTiff').Create('/vsimem/huge.tif', 65535, 65535, 1, options = ['SPARSE_OK=YES'])
-    tests += [ [ '/vsimem/huge.tif', [] ] ] # too many pixels
+    tests += [['/vsimem/huge.tif', []]] # too many pixels
 
     for (filename, options,) in tests:
         tmpfilename = '/vsimem/out.grb2'
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
         with gdaltest.error_handler():
-            out_ds = gdaltest.grib_drv.CreateCopy( tmpfilename, src_ds, options = options )
+            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
 
         error_msg = gdal.GetLastErrorMsg()
         if error_msg == '':
@@ -1465,13 +1465,13 @@ def grib_grib2_write_temperatures():
             (gdal.GDT_Float32, 'IEEE_FLOATING_POINT', 'C'),
             (gdal.GDT_Float32, 'IEEE_FLOATING_POINT', 'K'),
             (gdal.GDT_Float64, 'IEEE_FLOATING_POINT', None),
-            (gdal.GDT_Float32, 'SIMPLE_PACKING', None) ]:
+            (gdal.GDT_Float32, 'SIMPLE_PACKING', None)]:
 
         src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2, 1, src_type)
         src_ds.SetGeoTransform([2,1,0,49,0,-1])
         sr = osr.SpatialReference()
         sr.SetFromUserInput('WGS84')
-        src_ds.SetProjection( sr.ExportToWkt() )
+        src_ds.SetProjection(sr.ExportToWkt())
         src_ds.WriteRaster(0, 0, 2, 2,
                            struct.pack(4 * 'f', 25.0, 25.1, 25.1, 25.2),
                            buf_type = gdal.GDT_Float32)
@@ -1483,8 +1483,8 @@ def grib_grib2_write_temperatures():
             'PDS_TEMPLATE_NUMBERS=0 5 2 0 0 0 255 255 1 0 0 0 43 1 0 0 0 0 0 255 129 255 255 255 255 7 216 2 23 12 0 0 1 0 0 0 0 3 255 1 0 0 0 12 1 0 0 0 0'
         ]
         if input_unit is not None:
-            options += [ 'INPUT_UNIT=' + input_unit ]
-        gdaltest.grib_drv.CreateCopy( tmpfilename, src_ds, options = options)
+            options += ['INPUT_UNIT=' + input_unit]
+        gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options = options)
 
         out_ds = gdal.Open(tmpfilename)
         got_vals = struct.unpack(4 * 'd', out_ds.ReadRaster())
@@ -1573,9 +1573,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'grib' )
+    gdaltest.setup_run('grib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

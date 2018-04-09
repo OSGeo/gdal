@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -92,7 +92,7 @@ def mycallback(pct, msg, user_data):
 
 def test_gdalbuildvrt_lib_2():
 
-    tab = [ 0 ]
+    tab = [0]
     ds = gdal.BuildVRT('', '../gcore/data/byte.tif', callback = mycallback, callback_data = tab)
     if ds is None:
         return 'fail'
@@ -118,8 +118,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalbuildvrt_lib' )
+    gdaltest.setup_run('test_gdalbuildvrt_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

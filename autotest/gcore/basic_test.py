@@ -32,7 +32,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -47,7 +47,7 @@ def matches_non_existing_error_msg(msg):
     return m1 or m2 or m3
 
 def basic_test_1():
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('non_existing_ds', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
@@ -57,7 +57,7 @@ def basic_test_1():
         return 'fail'
 
 def basic_test_2():
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
@@ -67,7 +67,7 @@ def basic_test_2():
         return 'fail'
 
 def basic_test_3():
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
@@ -77,7 +77,7 @@ def basic_test_3():
         return 'fail'
 
 def basic_test_4():
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('', gdal.GA_Update)
     gdal.PopErrorHandler()
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
@@ -87,7 +87,7 @@ def basic_test_4():
         return 'fail'
 
 def basic_test_5():
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ds = gdal.Open('data/doctype.xml', gdal.GA_ReadOnly)
     gdal.PopErrorHandler()
     last_error = gdal.GetLastErrorMsg()
@@ -287,28 +287,28 @@ def basic_test_11():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = [] )
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = [])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['GTiff'] )
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['GTiff'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['PNG'] )
+    ds = gdal.OpenEx('data/byte.tif', allowed_drivers = ['PNG'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx('data/byte.tif', open_options = ['FOO'] )
+        ds = gdal.OpenEx('data/byte.tif', open_options = ['FOO'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    ar_ds = [ gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for i in range(1024) ]
+    ar_ds = [gdal.OpenEx('data/byte.tif', gdal.OF_SHARED) for i in range(1024)]
     if ar_ds[1023] is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -331,7 +331,7 @@ def basic_test_11():
         return 'fail'
     ds.GetLayer(0).GetMetadata()
 
-    ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers = ['ESRI Shapefile'] )
+    ds = gdal.OpenEx('../ogr/data/poly.shp', allowed_drivers = ['ESRI Shapefile'])
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -503,27 +503,27 @@ def basic_test_14():
     except:
         pass
 
-    ds.SetMetadata({'foo' : 'baz' })
+    ds.SetMetadata({'foo' : 'baz'})
     if ds.GetMetadata_List() != ['foo=baz']:
         gdaltest.post_reason('failure')
         return 'fail'
 
     try:
-        ds.SetMetadata({'foo' : 5 })
+        ds.SetMetadata({'foo' : 5})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({ 5 : 'baz' })
+        ds.SetMetadata({5 : 'baz'})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({ 5 : 6 })
+        ds.SetMetadata({5 : 6})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
@@ -534,25 +534,25 @@ def basic_test_14():
     else:
         exec("val = u'\\u00e9ven'")
 
-    ds.SetMetadata({'bar' : val })
+    ds.SetMetadata({'bar' : val})
     if ds.GetMetadata()['bar'] != val:
         gdaltest.post_reason('failure')
         return 'fail'
 
-    ds.SetMetadata({val : 'baz' })
+    ds.SetMetadata({val : 'baz'})
     if ds.GetMetadata()[val] != 'baz':
         gdaltest.post_reason('failure')
         return 'fail'
 
     try:
-        ds.SetMetadata({val : 5 })
+        ds.SetMetadata({val : 5})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
         pass
 
     try:
-        ds.SetMetadata({ 5 : val })
+        ds.SetMetadata({5 : val})
         gdaltest.post_reason('failure')
         return 'fail'
     except:
@@ -675,7 +675,7 @@ def basic_test_17():
 
     return 'success'
 
-gdaltest_list = [ basic_test_1,
+gdaltest_list = [basic_test_1,
                   basic_test_2,
                   basic_test_3,
                   basic_test_4,
@@ -691,7 +691,7 @@ gdaltest_list = [ basic_test_1,
                   basic_test_14,
                   basic_test_15,
                   basic_test_16,
-                  basic_test_17 ]
+                  basic_test_17]
 
 
 if __name__ == '__main__':
@@ -707,8 +707,8 @@ if __name__ == '__main__':
         testnonboundtoswig.GDALDestroyDriverManager()
         sys.exit(0)
 
-    gdaltest.setup_run( 'basic_test' )
+    gdaltest.setup_run('basic_test')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

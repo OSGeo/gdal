@@ -32,7 +32,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -77,7 +77,7 @@ def mycallback(pct, msg, user_data):
 def test_gdal_translate_lib_2():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
-    tab = [ 0 ]
+    tab = [0]
     ds = gdal.Translate('tmp/test2.tif', src_ds, format = 'GTiff', callback = mycallback, callback_data = tab)
     if ds is None:
         return 'fail'
@@ -235,11 +235,11 @@ def test_gdal_translate_lib_8():
 
     gcps = ds.GetGCPs()
     if len(gcps) != 4:
-        gdaltest.post_reason( 'GCP count wrong.' )
+        gdaltest.post_reason('GCP count wrong.')
         return 'fail'
 
     if ds.GetGCPProjection().find('26711') == -1:
-        gdaltest.post_reason( 'Bad GCP projection.' )
+        gdaltest.post_reason('Bad GCP projection.')
         return 'fail'
 
     ds = None
@@ -473,7 +473,7 @@ def test_gdal_translate_lib_104():
 
 def test_gdal_translate_lib_gcp_vrt_path():
 
-    src_ds = gdal.Open( '../gcore/data/gcps.vrt' )
+    src_ds = gdal.Open('../gcore/data/gcps.vrt')
     ds = gdal.Translate('', src_ds, format = 'MEM', metadataOptions = ['FOO=BAR'])
     if len(ds.GetGCPs()) != len(src_ds.GetGCPs()):
         return 'fail'
@@ -494,7 +494,7 @@ def test_gdal_translate_lib_gcp_vrt_path():
 
 def test_gdal_translate_lib_rcp_vrt_path():
 
-    src_ds = gdal.Open( '../gcore/data/rpc.vrt' )
+    src_ds = gdal.Open('../gcore/data/rpc.vrt')
     ds = gdal.Translate('', src_ds, format = 'MEM', metadataOptions = ['FOO=BAR'])
     if ds.GetMetadata('RPC') != src_ds.GetMetadata('RPC'):
         return 'fail'
@@ -506,7 +506,7 @@ def test_gdal_translate_lib_rcp_vrt_path():
 
 def test_gdal_translate_lib_geolocation_vrt_path():
 
-    src_ds = gdal.Open( '../gcore/data/sstgeo.vrt' )
+    src_ds = gdal.Open('../gcore/data/sstgeo.vrt')
     ds = gdal.Translate('/vsimem/temp.vrt', src_ds, format = 'VRT', metadataOptions = ['FOO=BAR'])
     if ds.GetMetadata('GEOLOCATION') != src_ds.GetMetadata('GEOLOCATION'):
         return 'fail'
@@ -519,7 +519,7 @@ def test_gdal_translate_lib_geolocation_vrt_path():
 
 def test_gdal_translate_lib_colorinterp():
 
-    src_ds = gdal.Open( '../gcore/data/rgbsmall.tif' )
+    src_ds = gdal.Open('../gcore/data/rgbsmall.tif')
 
     # Less bands specified than available
     ds = gdal.Translate('', src_ds, options = '-f MEM -colorinterp blue,gray')
@@ -615,8 +615,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_translate_lib' )
+    gdaltest.setup_run('test_gdal_translate_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

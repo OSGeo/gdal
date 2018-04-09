@@ -31,21 +31,21 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
 ###############################################################################
 #
 class TestFIT:
-    def __init__( self, fileName ):
+    def __init__(self, fileName):
         self.fileName = fileName
         self.fitDriver = gdal.GetDriverByName('FIT')
 
-    def test( self ):
+    def test(self):
 
         ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        self.fitDriver.CreateCopy('tmp/' + self.fileName + '.fit', ds, options = [ 'PAGESIZE=2,2' ] )
+        self.fitDriver.CreateCopy('tmp/' + self.fileName + '.fit', ds, options = ['PAGESIZE=2,2'])
 
         ds2 = gdal.Open('tmp/' + self.fileName + '.fit')
         if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
@@ -59,19 +59,19 @@ class TestFIT:
         return 'success'
 
 
-gdaltest_list = [ ]
+gdaltest_list = []
 
-fit_list = [ 'byte', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64' ]
+fit_list = ['byte', 'int16', 'uint16', 'int32', 'uint32', 'float32', 'float64']
 
 for item in fit_list:
-    ut = TestFIT( item )
-    gdaltest_list.append( (ut.test, item) )
+    ut = TestFIT(item)
+    gdaltest_list.append((ut.test, item))
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'fit' )
+    gdaltest.setup_run('fit')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

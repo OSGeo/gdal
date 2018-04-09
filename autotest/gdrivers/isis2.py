@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +40,7 @@ import gdaltest
 
 def isis2_1():
 
-    tst = gdaltest.GDALTest( 'ISIS2', 'arvidson_original_truncated.cub', 1, 382 )
+    tst = gdaltest.GDALTest('ISIS2', 'arvidson_original_truncated.cub', 1, 382)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL VENUS",
     GEOGCS["GCS_VENUS",
         DATUM["D_VENUS",
@@ -54,8 +54,8 @@ def isis2_1():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
     expected_gt = (10157400.403618813, 1200.0000476837158, 0.0, -585000.02324581146, 0.0, -1200.0000476837158)
-    return tst.testOpen( check_prj = expected_prj,
-                         check_gt = expected_gt )
+    return tst.testOpen(check_prj = expected_prj,
+                         check_gt = expected_gt)
 
 
 ###############################################################################
@@ -63,7 +63,7 @@ def isis2_1():
 
 def isis2_2():
 
-    tst = gdaltest.GDALTest( 'ISIS2', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('ISIS2', 'byte.tif', 1, 4672)
 
     return tst.testCreate()
 
@@ -72,21 +72,21 @@ def isis2_2():
 
 def isis2_3():
 
-    tst = gdaltest.GDALTest( 'ISIS2', 'float32.tif', 1, 4672,
-                             options = ['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'] )
+    tst = gdaltest.GDALTest('ISIS2', 'float32.tif', 1, 4672,
+                             options = ['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'])
 
-    return tst.testCreateCopy( vsimem=1 )
+    return tst.testCreateCopy(vsimem=1)
 
 gdaltest_list = [
     isis2_1,
     isis2_2,
-    isis2_3 ]
+    isis2_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'isis2' )
+    gdaltest.setup_run('isis2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -34,7 +34,7 @@ import struct
 from copy import copy
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -110,7 +110,7 @@ def arg_init():
             meta = copy(gdaltest.argDefaults)
             meta.update(fmt='arg-'+name,dt=name)
             json = open('data/arg-'+name+'.json', 'w')
-            json.write( gdaltest.argJsontpl % meta )
+            json.write(gdaltest.argJsontpl % meta)
             json.close()
 
     ds = gdal.Open('data/arg-'+gdaltest.argTests[0]['formats'][1][0]+'.arg')
@@ -347,8 +347,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ARG' )
+    gdaltest.setup_run('ARG')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

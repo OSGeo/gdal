@@ -42,7 +42,7 @@ def Usage():
     print('in longitude, latitude order. If -coordtype=georef is specified before')
     print('the next 2 values will be interpreted as the X and Y coordinates')
     print('in the dataset spatial reference system.')
-    sys.exit( 1 )
+    sys.exit(1)
 
 # =============================================================================
 
@@ -87,7 +87,7 @@ if filename is None:
     filename()
 
 # Open input dataset
-ds = gdal.Open( filename, gdal.GA_ReadOnly )
+ds = gdal.Open(filename, gdal.GA_ReadOnly)
 if ds is None:
     print('Cannot open %s' % filename)
     sys.exit(1)
