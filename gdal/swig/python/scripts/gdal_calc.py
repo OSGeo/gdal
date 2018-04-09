@@ -240,13 +240,13 @@ def doit(opts, args):
     ################################################################
 
     # use the block size of the first layer to read efficiently
-    myBlockSize=myFiles[0].GetRasterBand(myBands[0]).GetBlockSize();
+    myBlockSize=myFiles[0].GetRasterBand(myBands[0]).GetBlockSize()
     # store these numbers in variables that may change later
     nXValid = myBlockSize[0]
     nYValid = myBlockSize[1]
     # find total x and y blocks to be read
-    nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0]);
-    nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1]);
+    nXBlocks = (int)((DimensionsCheck[0] + myBlockSize[0] - 1) / myBlockSize[0])
+    nYBlocks = (int)((DimensionsCheck[1] + myBlockSize[1] - 1) / myBlockSize[1])
     myBufSize = myBlockSize[0]*myBlockSize[1]
 
     if opts.debug:

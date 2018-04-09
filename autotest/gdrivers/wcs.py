@@ -518,7 +518,7 @@ def wcs_6():
                 oo = setup[server]['Options'][i]
             else:
                 oo = setup[server]['Options']
-            oo = oo.split();
+            oo = oo.split()
             for o in oo:
                 if o != '-oo':
                     options.append(o)

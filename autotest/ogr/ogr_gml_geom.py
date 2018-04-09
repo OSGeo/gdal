@@ -788,7 +788,7 @@ def gml_Triangle():
     wkt_original = 'TRIANGLE ((0 0,0 1,0 1,0 0))'
     triangle = ogr.CreateGeometryFromWkt(wkt_original)
     opts = ["FORMAT=GML3"]
-    gml_string = triangle.ExportToGML(opts);
+    gml_string = triangle.ExportToGML(opts)
 
     if gml_string != '<gml:Triangle><gml:exterior><gml:LinearRing><gml:posList>0 0 0 1 0 1 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle>':
         gdaltest.post_reason( 'incorrect conversion from OGR -> GML for OGRTriangle' )
@@ -915,7 +915,7 @@ def gml_PolyhedralSurface():
 ((0 0 1,1 0 1,1 1 1,0 1 1,0 0 1)))'
     ps = ogr.CreateGeometryFromWkt(wkt_original)
     opts = ["FORMAT=GML3"]
-    string = ps.ExportToGML(opts);
+    string = ps.ExportToGML(opts)
     if string != '<gml:PolyhedralSurface><gml:polygonPatches><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 0 1 0 1 1 0 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 1 0 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 1 0 0 1 0 1 0 0 1 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">1 1 0 1 1 1 1 0 1 1 0 0 1 1 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 0 0 1 1 1 1 1 1 1 0 0 1 0</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch><gml:PolygonPatch><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 1 1 0 1 1 1 1 0 1 1 0 0 1</gml:posList></gml:LinearRing></gml:exterior></gml:PolygonPatch></gml:polygonPatches></gml:PolyhedralSurface>':
         gdaltest.post_reason( 'incorrect parsing of OGR -> GML for PolyhedralSurface' )
         print(geom.ExportToWkt())
@@ -931,7 +931,7 @@ def gml_PolyhedralSurface():
     wkt_original = 'POLYHEDRALSURFACE EMPTY'
     ps = ogr.CreateGeometryFromWkt(wkt_original)
     opts = ["FORMAT=GML3"]
-    string = ps.ExportToGML(opts);
+    string = ps.ExportToGML(opts)
     if string != '<gml:PolyhedralSurface><gml:polygonPatches></gml:polygonPatches></gml:PolyhedralSurface>':
         gdaltest.post_reason( 'incorrect parsing of OGR -> GML for empty PolyhedralSurface' )
         print(geom.ExportToWkt())
@@ -1089,7 +1089,7 @@ def gml_Tin():
 
     tin = ogr.CreateGeometryFromWkt(wkt_original)
     opts = ["FORMAT=GML3"]
-    gml_string = tin.ExportToGML(opts);
+    gml_string = tin.ExportToGML(opts)
 
     if gml_string != '<gml:TriangulatedSurface><gml:patches><gml:Triangle><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 0 1 0 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle><gml:Triangle><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 0 0 0 1 0 1 1 0 0 0 0</gml:posList></gml:LinearRing></gml:exterior></gml:Triangle></gml:patches></gml:TriangulatedSurface>':
         gdaltest.post_reason( 'OGRGeometry::TriangulatedSurface incorrectly converted' )

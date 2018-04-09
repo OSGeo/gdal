@@ -56,8 +56,8 @@ class AffineTransformDecorator:
     def pointsFor(self,width,height):
         xlist=[]
         ylist=[]
-        w=self.scaleX * width;
-        h=self.scaleY * height;
+        w=self.scaleX * width
+        h=self.scaleY * height
 
         xlist.append(self.ulx)
         ylist.append(self.uly)
@@ -162,7 +162,7 @@ class mosaic_info:
             self.ci[iband] = fhInputTile.GetRasterBand(iband + 1).GetRasterColorInterpretation()
 
         extent = self.ogrTileIndexDS.GetLayer().GetExtent()
-        self.ulx = extent[0];
+        self.ulx = extent[0]
         self.uly = extent[3]
         self.lrx = extent[1]
         self.lry = extent[2]
@@ -182,7 +182,7 @@ class mosaic_info:
         features = []
         envelope = None
         while True:
-            feature = self.ogrTileIndexDS.GetLayer().GetNextFeature();
+            feature = self.ogrTileIndexDS.GetLayer().GetNextFeature()
             if feature is None:
                 break
             features.append(feature)
@@ -291,7 +291,7 @@ def getTileIndexFromFiles( inputTiles, driverTyp):
         else:
             exec('print "Building internal Index for %d tile(s) ..." % len(inputTiles), ')
 
-    ogrTileIndexDS = createTileIndex("TileIndex",TileIndexFieldName,None,driverTyp);
+    ogrTileIndexDS = createTileIndex("TileIndex",TileIndexFieldName,None,driverTyp)
     for inputTile in inputTiles:
 
         fhInputTile = gdal.Open(inputTile)
@@ -409,14 +409,14 @@ def copyTileIndexToCSV(OGRDS, fileName):
       if UseDirForEachRow :
           t = os.path.split(os.path.dirname(feature.GetField(0)))
           basename = t[1]+"/"+basename
-      csvfile.write(basename);
+      csvfile.write(basename)
       geom = feature.GetGeometryRef()
-      coords = geom.GetEnvelope();
+      coords = geom.GetEnvelope()
 
       for i in range(len(coords)):
           csvfile.write(CsvDelimiter)
           csvfile.write("%f" % coords[i])
-      csvfile.write("\n");
+      csvfile.write("\n")
 
     csvfile.close()
 
@@ -477,7 +477,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
         sys.exit( 1 )
 
 
-    levelMosaicInfo.closeDataSet(s_fh);
+    levelMosaicInfo.closeDataSet(s_fh)
 
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy( tileName, t_fh, 0, CreateOptions )
@@ -510,7 +510,7 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
                          dec.ulx+offsetX*dec.scaleX+width*dec.scaleX,
                          dec.uly+offsetY*dec.scaleY)
     if s_fh is None:
-        return;
+        return
 
 
     geotransform = [dec.ulx+offsetX*dec.scaleX, dec.scaleX, 0,
@@ -550,7 +550,7 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
         data = s_band.ReadRaster( 0,0,readX,readY,readX,readY,  t_band.DataType )
         t_band.WriteRaster( 0,0,readX,readY, data,readX,readY, t_band.DataType )
 
-    minfo.closeDataSet(s_fh);
+    minfo.closeDataSet(s_fh)
 
     if MemDriver is not None:
         tt_fh = Driver.CreateCopy( tilename, t_fh, 0, CreateOptions )
@@ -563,7 +563,7 @@ def createTile( minfo, offsetX,offsetY,width,height, tilename,OGRDS):
 
 def createTileIndex(dsName,fieldName,srs,driverName):
 
-    OGRDriver = ogr.GetDriverByName(driverName);
+    OGRDriver = ogr.GetDriverByName(driverName)
     if OGRDriver is None:
         print('ESRI Shapefile driver not found')
         sys.exit( 1 )
@@ -599,13 +599,13 @@ def createTileIndex(dsName,fieldName,srs,driverName):
 
 def addFeature(OGRDataSource,location,xlist,ylist):
 
-    OGRLayer=OGRDataSource.GetLayer();
+    OGRLayer=OGRDataSource.GetLayer()
     OGRFeature = ogr.Feature(OGRLayer.GetLayerDefn())
     if OGRFeature is None:
         print('Could not create Feature')
         sys.exit( 1 )
 
-    OGRFeature.SetField(TileIndexFieldName,location);
+    OGRFeature.SetField(TileIndexFieldName,location)
     wkt = 'POLYGON ((%f %f,%f %f,%f %f,%f %f,%f %f ))' % (xlist[0],ylist[0],
             xlist[1],ylist[1],xlist[2],ylist[2],xlist[3],ylist[3],xlist[0],ylist[0])
     OGRGeometry=ogr.CreateGeometryFromWkt(wkt,OGRLayer.GetSpatialRef())
@@ -834,8 +834,8 @@ def main(args = None):
             i+=1
             Source_SRS = osr.SpatialReference()
             if Source_SRS.SetFromUserInput( argv[i] ) != 0:
-                print('invalid -s_srs: ' + argv[i]);
-                return 1;
+                print('invalid -s_srs: ' + argv[i])
+                return 1
 
         elif arg ==  "-pyramidOnly":
             PyramidOnly=True
@@ -916,7 +916,7 @@ def main(args = None):
 
 
     DriverMD = Driver.GetMetadata()
-    Extension=DriverMD.get(gdal.DMD_EXTENSION);
+    Extension=DriverMD.get(gdal.DMD_EXTENSION)
     if 'DCAP_CREATE' not in DriverMD:
         MemDriver=gdal.GetDriverByName("MEM")
 
@@ -924,14 +924,14 @@ def main(args = None):
     tileIndexDS=getTileIndexFromFiles(Names,TileIndexDriverTyp)
     if tileIndexDS is None:
         print("Error building tile index")
-        return 1;
+        return 1
     minfo = mosaic_info(Names[0],tileIndexDS)
     ti=tile_info(minfo.xsize,minfo.ysize, TileWidth, TileHeight, Overlap)
 
     if Source_SRS is None and len(minfo.projection) > 0 :
        Source_SRS = osr.SpatialReference()
        if Source_SRS.SetFromUserInput( minfo.projection ) != 0:
-           print('invalid projection  ' + minfo.projection);
+           print('invalid projection  ' + minfo.projection)
            return 1
 
     if Verbose:
