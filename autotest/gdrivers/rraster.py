@@ -81,7 +81,7 @@ def rraster_1_copy():
 
 ###############################################################################
 def _compare_val(got, expected, key_name, to_print):
-    if type(got) == type([]) and type(expected) == type([]):
+    if isinstance(got, list) and isinstance(expected, list):
         if len(got) != len(expected):
             print('Unexpected number of elements for %s. Got %d, expected %d' % (key_name, len(got), len(expected)))
             pprint.pprint(to_print)
@@ -89,7 +89,7 @@ def _compare_val(got, expected, key_name, to_print):
         for idx in range(len(got)):
             if not _compare_val(got[idx], expected[idx], '%s[%d]' % (key_name, idx), to_print):
                 return False
-    elif type(got) == type({}) and type(expected) == type({}):
+    elif isinstance(got, dict) and isinstance(expected, dict):
         if not _is_dict_included_in_dict(got, expected, key_name, to_print):
             pprint.pprint(to_print)
             return False

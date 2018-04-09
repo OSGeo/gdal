@@ -747,7 +747,7 @@ for item in init_list:
     if item[3]:
         options = item[3]
     chksum_param = item[2]
-    if type(chksum_param) == type([]):
+    if isinstance(chksum_param, list):
         chksum = chksum_param[0]
         chksum_after_reopening = chksum_param[1]
     else:

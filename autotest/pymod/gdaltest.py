@@ -382,7 +382,7 @@ class GDALTest:
         self.band = band
         self.chksum = chksum
         if chksum_after_reopening is not None:
-            if type(chksum_after_reopening) == type([]):
+            if isinstance(chksum_after_reopening, list):
                 self.chksum_after_reopening = chksum_after_reopening
             else:
                 self.chksum_after_reopening = [ chksum_after_reopening ]
