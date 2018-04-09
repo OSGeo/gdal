@@ -7,12 +7,16 @@
 # Howard Butler hobu.inc@gmail.com
 
 
-gdal_version = '2.2.0'
-
 import sys
 import os
 
 from glob import glob
+
+from distutils.command.build_ext import build_ext
+from distutils.ccompiler import get_default_compiler
+from distutils.errors import CompileError
+
+gdal_version = '2.2.0'
 
 # If CXX is defined in the environment, it will be used to link the .so
 # but distutils will be confused if it is made of several words like 'ccache g++'
@@ -80,10 +84,10 @@ try:
         print("numpy version must be > 1.0.0")
         HAVE_NUMPY = False
     else:
-#        print ('numpy include', get_numpy_include())
-        if get_numpy_include() =='.':
+        # print ('numpy include', get_numpy_include())
+        if get_numpy_include() == '.':
             print("numpy headers were not found!  Array support will not be enabled")
-            HAVE_NUMPY=False
+            HAVE_NUMPY = False
 except ImportError:
     pass
 
@@ -124,12 +128,9 @@ else:
         extra['use_2to3_exclude_fixers'] = exclude_fixers
 
 
-class gdal_config_error(Exception): pass
+class gdal_config_error(Exception):
+    pass
 
-
-from distutils.command.build_ext import build_ext
-from distutils.ccompiler import get_default_compiler
-from distutils.errors import CompileError
 
 def fetch_config(option, gdal_config='gdal-config'):
 
@@ -139,7 +140,7 @@ def fetch_config(option, gdal_config='gdal-config'):
         import subprocess
         command, args = command.split()[0], command.split()[1]
         from sys import version_info
-        if version_info >= (3,0,0):
+        if version_info >= (3, 0, 0):
             try:
                 p = subprocess.Popen([command, args], stdout=subprocess.PIPE)
             except OSError:
@@ -179,7 +180,7 @@ int main () { return 0; }""")
         f.close()
         extra_postargs = None
         if compiler_flag:
-            extra_postargs=[compiler_flag]
+            extra_postargs = [compiler_flag]
 
         if os.name == 'posix':
             # Redirect stderr to /dev/null to hide any error messages
@@ -248,7 +249,7 @@ class gdal_ext(build_ext):
                 for ext in self.extensions:
                     # gdalconst builds as a .c file
                     if ext.name != 'osgeo._gdalconst':
-                        ext.extra_compile_args += [ cxx11_flag ]
+                        ext.extra_compile_args += [cxx11_flag]
 
         build_ext.build_extensions(self)
 
@@ -279,8 +280,8 @@ class gdal_ext(build_ext):
             return True
 
         self.gdaldir = self.get_gdal_config('prefix')
-        self.library_dirs.append(os.path.join(self.gdaldir,'lib'))
-        self.include_dirs.append(os.path.join(self.gdaldir,'include'))
+        self.library_dirs.append(os.path.join(self.gdaldir, 'lib'))
+        self.include_dirs.append(os.path.join(self.gdaldir, 'include'))
 
         cflags = self.get_gdal_config('cflags')
         if cflags:
@@ -308,35 +309,35 @@ gdal_module = Extension('osgeo._gdal',
                         extra_link_args = extra_link_args)
 
 gdalconst_module = Extension('osgeo._gdalconst',
-                    sources=['extensions/gdalconst_wrap.c'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                             sources=['extensions/gdalconst_wrap.c'],
+                             extra_compile_args = extra_compile_args,
+                             extra_link_args = extra_link_args)
 
 osr_module = Extension('osgeo._osr',
-                    sources=['extensions/osr_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                       sources=['extensions/osr_wrap.cpp'],
+                       extra_compile_args = extra_compile_args,
+                       extra_link_args = extra_link_args)
 
 ogr_module = Extension('osgeo._ogr',
-                    sources=['extensions/ogr_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                       sources=['extensions/ogr_wrap.cpp'],
+                       extra_compile_args = extra_compile_args,
+                       extra_link_args = extra_link_args)
 
 
 array_module = Extension('osgeo._gdal_array',
-                    sources=['extensions/gdal_array_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                         sources=['extensions/gdal_array_wrap.cpp'],
+                         extra_compile_args = extra_compile_args,
+                         extra_link_args = extra_link_args)
 
 gnm_module = Extension('osgeo._gnm',
-                    sources=['extensions/gnm_wrap.cpp'],
-                    extra_compile_args = extra_compile_args,
-                    extra_link_args = extra_link_args)
+                       sources=['extensions/gnm_wrap.cpp'],
+                       extra_compile_args = extra_compile_args,
+                       extra_link_args = extra_link_args)
 
 ext_modules = [gdal_module,
-              gdalconst_module,
-              osr_module,
-              ogr_module]
+               gdalconst_module,
+               osr_module,
+               ogr_module]
 
 py_modules = ['gdal',
               'ogr',
@@ -358,7 +359,7 @@ if HAVE_NUMPY:
     ext_modules.append(array_module)
     py_modules.append('gdalnumeric')
 
-packages = ["osgeo",]
+packages = ["osgeo"]
 
 readme = str(open('README.txt', 'rb').read())
 
@@ -373,18 +374,17 @@ license = "MIT"
 url = "http://www.gdal.org"
 
 classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: C',
-        'Programming Language :: C++',
-        'Topic :: Scientific/Engineering :: GIS',
-        'Topic :: Scientific/Engineering :: Information Analysis',
-
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: C',
+    'Programming Language :: C++',
+    'Topic :: Scientific/Engineering :: GIS',
+    'Topic :: Scientific/Engineering :: Information Analysis',
 ]
 
 
