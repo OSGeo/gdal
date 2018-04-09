@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_py_scripts
@@ -47,11 +47,11 @@ def test_gdal_sieve_1():
     if script_path is None:
         return 'skip'
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte )
+    drv = gdal.GetDriverByName('GTiff')
+    dst_ds = drv.Create('tmp/sieve_1.tif', 5, 7, 1, gdal.GDT_Byte)
     dst_ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_sieve', '-nomask -st 2 -4 ../alg/data/sieve_src.grd tmp/sieve_1.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_sieve', '-nomask -st 2 -4 ../alg/data/sieve_src.grd tmp/sieve_1.tif')
 
     dst_ds = gdal.Open('tmp/sieve_1.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -63,14 +63,14 @@ def test_gdal_sieve_1():
     dst_ds = None
 
     if cs == cs_expected \
-       or gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) != 'ON':
+       or gdal.GetConfigOption('CPL_DEBUG', 'OFF') != 'ON':
         # Reload because of side effects of run_py_script()
-        drv = gdal.GetDriverByName( 'GTiff' )
-        drv.Delete( 'tmp/sieve_1.tif' )
+        drv = gdal.GetDriverByName('GTiff')
+        drv.Delete('tmp/sieve_1.tif')
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -81,9 +81,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_sieve' )
+    gdaltest.setup_run('test_gdal_sieve')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -32,7 +32,7 @@ import shutil
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
@@ -53,7 +53,7 @@ def test_gdal_retile_1():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile ../gcore/data/byte.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile ../gcore/data/byte.tif')
 
     ds = gdal.Open('tmp/outretile/byte_1_1.tif')
     if ds.GetRasterBand(1).Checksum() != 4672:
@@ -95,7 +95,7 @@ def test_gdal_retile_2():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ../gcore/data/rgba.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile2 ../gcore/data/rgba.tif')
 
     ds = gdal.Open('tmp/outretile2/2/rgba_1_1.tif')
     if ds.GetRasterBand(1).Checksum() != 35:
@@ -121,7 +121,7 @@ def test_gdal_retile_3():
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
-    srs.SetWellKnownGeogCS( 'WGS84' )
+    srs.SetWellKnownGeogCS('WGS84')
     wkt = srs.ExportToWkt()
 
     # Create two images to tile together. The images will cover the geographic
@@ -146,16 +146,16 @@ def test_gdal_retile_3():
     ds = drv.Create('tmp/in1.tif', 100, 100, 1)
     px1_x = 30.0 / ds.RasterXSize
     px1_y = 30.0 / ds.RasterYSize
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 0, px1_x, 0, 30, 0, -px1_y ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
     ds.GetRasterBand(1).Fill(0)
     ds = None
 
     ds = drv.Create('tmp/in2.tif', 50, 50, 1)
     px2_x = 30.0 / ds.RasterXSize
     px2_y = 30.0 / ds.RasterYSize
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 0, px2_x, 0, 60, 0, -px2_y ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([0, px2_x, 0, 60, 0, -px2_y])
     ds.GetRasterBand(1).Fill(42)
     ds = None
 
@@ -164,26 +164,26 @@ def test_gdal_retile_3():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile3 tmp/in1.tif tmp/in2.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 2 -r bilinear -targetDir tmp/outretile3 tmp/in1.tif tmp/in2.tif')
 
     ds = gdal.Open('tmp/outretile3/in1_1_1.tif')
     if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = [ 0, px1_x, 0, 60, 0, -px1_y ]
+    expected_gt = [0, px1_x, 0, 60, 0, -px1_y]
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
             return 'fail'
 
     if ds.RasterXSize != 100 or ds.RasterYSize != 200:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
         return 'fail'
 
     if ds.RasterCount != 1:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 38999:
@@ -207,9 +207,9 @@ def test_gdal_retile_4():
     except:
         pass
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ../gcore/data/byte.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 ../gcore/data/byte.tif')
 
-    expected_results = [ ['tmp/outretile4/byte_1_1.tif', 8, 7],
+    expected_results = [['tmp/outretile4/byte_1_1.tif', 8, 7],
                          ['tmp/outretile4/byte_1_2.tif', 8, 7],
                          ['tmp/outretile4/byte_1_3.tif', 8, 7],
                          ['tmp/outretile4/byte_1_4.tif', 5, 7],
@@ -246,9 +246,9 @@ def test_gdal_retile_4():
             return 'fail'
         ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 ../gcore/data/byte.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_retile', '-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 ../gcore/data/byte.tif')
 
-    expected_results = [ ['tmp/outretile4/byte_1_1.tif', 8, 8],
+    expected_results = [['tmp/outretile4/byte_1_1.tif', 8, 8],
                          ['tmp/outretile4/byte_1_2.tif', 8, 8],
                          ['tmp/outretile4/byte_1_3.tif', 8, 8],
                          ['tmp/outretile4/byte_1_4.tif', 8, 8],
@@ -292,7 +292,7 @@ def test_gdal_retile_4():
 
 def test_gdal_retile_cleanup():
 
-    lst = [ 'tmp/outretile/1/byte_1_1.tif',
+    lst = ['tmp/outretile/1/byte_1_1.tif',
             'tmp/outretile/2/byte_1_1.tif',
             'tmp/outretile/byte_1_1.tif',
             'tmp/outretile/1',
@@ -311,7 +311,7 @@ def test_gdal_retile_cleanup():
             'tmp/outretile3/1',
             'tmp/outretile3/2',
             'tmp/outretile3/in1_1_1.tif',
-            'tmp/outretile3' ]
+            'tmp/outretile3']
     for filename in lst:
         try:
             os.remove(filename)
@@ -336,8 +336,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gdal_retile' )
+    gdaltest.setup_run('gdal_retile')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

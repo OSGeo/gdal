@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -41,7 +41,7 @@ from osgeo import gdal
 def ogr_jml_init():
 
     try:
-        ds = ogr.Open( 'data/test.jml' )
+        ds = ogr.Open('data/test.jml')
     except:
         ds = None
 
@@ -61,7 +61,7 @@ def ogr_jml_1():
     if not gdaltest.jml_read_support:
         return 'skip'
 
-    ds = ogr.Open( 'data/test.jml' )
+    ds = ogr.Open('data/test.jml')
     if ds.GetLayerCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -75,7 +75,7 @@ def ogr_jml_1():
         gdaltest.post_reason('fail')
         return 'fail'
     lyr = ds.GetLayer(0)
-    fields = [ ('first_property', ogr.OFTString),
+    fields = [('first_property', ogr.OFTString),
                ('another_property', ogr.OFTString),
                ('objectAttr', ogr.OFTString),
                ('attr2', ogr.OFTString),
@@ -85,7 +85,7 @@ def ogr_jml_1():
                ('date', ogr.OFTDateTime),
                ('datetime', ogr.OFTDateTime),
                ('R_G_B', ogr.OFTString),
-               ('not_ignored', ogr.OFTString) ]
+               ('not_ignored', ogr.OFTString)]
     if lyr.GetLayerDefn().GetFieldCount() != len(fields):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -381,7 +381,7 @@ def ogr_jml_2():
 
     # Test CREATE_R_G_B_FIELD=NO
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_R_G_B_FIELD=NO'] )
+    lyr = ds.CreateLayer('foo', options = ['CREATE_R_G_B_FIELD=NO'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
@@ -400,7 +400,7 @@ def ogr_jml_2():
 
     # Test CREATE_OGR_STYLE_FIELD=YES
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'] )
+    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'])
     lyr.CreateField(ogr.FieldDefn('str', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetStyleString('PEN(c:#445566)')
@@ -420,7 +420,7 @@ def ogr_jml_2():
 
     # Test CREATE_OGR_STYLE_FIELD=YES with a R_G_B field
     ds = ogr.GetDriverByName('JML').CreateDataSource('/vsimem/ogr_jml.jml')
-    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'] )
+    lyr = ds.CreateLayer('foo', options = ['CREATE_OGR_STYLE_FIELD=YES'])
     lyr.CreateField(ogr.FieldDefn('R_G_B', ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField('R_G_B', '112233')
@@ -660,7 +660,7 @@ def ogr_jml_read_srs():
     if not gdaltest.jml_read_support:
         return 'skip'
 
-    ds = ogr.Open( 'data/one_point_srid_4326.jml' )
+    ds = ogr.Open('data/one_point_srid_4326.jml')
     lyr = ds.GetLayer(0)
     if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
         gdaltest.post_reason('fail')
@@ -688,12 +688,12 @@ gdaltest_list = [
     ogr_jml_3,
     ogr_jml_4,
     ogr_jml_read_srs,
-    ogr_jml_cleanup ]
+    ogr_jml_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_jml' )
+    gdaltest.setup_run('ogr_jml')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

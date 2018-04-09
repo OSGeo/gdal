@@ -103,7 +103,7 @@ def read_grid_crs_to_crs(filename,shape):
 # This function creates a regular grid of lat/long values with one
 # "band" for latitude, and one for longitude.
 #
-def new_create_grid( griddef ):
+def new_create_grid(griddef):
 
     lon_start = -1 * griddef[0]
     lon_end = -1 * griddef[2]
@@ -143,7 +143,7 @@ def write_grid(grid,out_filename):
 
 ##############################################################################
 # Write the resulting grid out in GeoTIFF format.
-def write_gdal_grid(filename, grid, griddef ):
+def write_gdal_grid(filename, grid, griddef):
 
     ps_x = (griddef[2] - griddef[0]) / (griddef[4]-1)
     ps_y = (griddef[3] - griddef[1]) / (griddef[5]-1)
@@ -151,14 +151,14 @@ def write_gdal_grid(filename, grid, griddef ):
                     griddef[1] - ps_y*0.5, 0.0, ps_y)
 
     grid = grid.astype(numpy.float32)
-    ds = gdal_array.SaveArray( grid, filename, format='CTable2')
-    ds.SetGeoTransform( geotransform )
+    ds = gdal_array.SaveArray(grid, filename, format='CTable2')
+    ds.SetGeoTransform(geotransform)
 
 #############################################################################
 
-def write_control( control_fn, out_grid_fn, in_grid_fn,
+def write_control(control_fn, out_grid_fn, in_grid_fn,
                    src_crs_id, src_crs_date,
-                   dst_crs_id, dst_crs_date ):
+                   dst_crs_id, dst_crs_date):
 
     # start_date, end_date should be something like "2011.0"
 
@@ -177,17 +177,17 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
 0
 """
 
-    control_filled = control_template % ( out_grid_fn,
+    control_filled = control_template % (out_grid_fn,
                                           src_crs_id,
                                           dst_crs_id,
                                           src_crs_date,
                                           dst_crs_date,
-                                          in_grid_fn )
+                                          in_grid_fn)
 
     open(control_fn,'w').write(control_filled)
 
 #############################################################################
-def Usage( brief = 1 ):
+def Usage(brief = 1):
     print("""
 crs2crs2grid.py
         <src_crs_id> <src_crs_date> <dst_crs_id> <dst_crs_year>
@@ -245,9 +245,9 @@ if __name__ == '__main__':
 
     # Default GDAL argument parsing.
 
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
-        sys.exit( 0 )
+        sys.exit(0)
 
     if len(argv) == 1:
         Usage(brief=0)
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     dst_crs_date = None
 
     # Decent representation of continental US
-    griddef = (-127.0, 50.0, -66.0, 25.0, 611, 251 )
+    griddef = (-127.0, 50.0, -66.0, 25.0, 611, 251)
 
     htdp_path = 'htdp'
     wrkdir = '.'
@@ -350,20 +350,20 @@ if __name__ == '__main__':
     control_fn = wrkdir + '/crs2crs_control.txt'
 
     # Write out the source grid file.
-    grid = new_create_grid( griddef )
+    grid = new_create_grid(griddef)
 
-    write_grid( grid, in_grid_fn )
-    write_control( control_fn, out_grid_fn, in_grid_fn,
+    write_grid(grid, in_grid_fn)
+    write_control(control_fn, out_grid_fn, in_grid_fn,
                    src_crs_id, src_crs_date,
-                   dst_crs_id, dst_crs_date )
+                   dst_crs_id, dst_crs_date)
 
     # Run htdp to transform the data.
     try:
-      os.unlink( out_grid_fn )
+      os.unlink(out_grid_fn)
     except:
       pass
 
-    rc = os.system( htdp_path + ' < ' + control_fn )
+    rc = os.system(htdp_path + ' < ' + control_fn)
     if rc != 0:
       print('htdp run failed!')
       sys.exit(1)
@@ -376,12 +376,12 @@ if __name__ == '__main__':
     adjustment = adjustment * (3.14159265358979323846 / 180.0)
 
     # write to output output grid file.
-    write_gdal_grid( output_grid_name, adjustment, griddef )
+    write_gdal_grid(output_grid_name, adjustment, griddef)
 
     # cleanup working files unless they have been requested to remain.
     if kwf == 0:
-      os.unlink( in_grid_fn )
-      os.unlink( out_grid_fn )
-      os.unlink( control_fn )
+      os.unlink(in_grid_fn)
+      os.unlink(out_grid_fn)
+      os.unlink(control_fn)
 
     print('Processing complete: see ' + output_grid_name)

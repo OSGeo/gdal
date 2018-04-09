@@ -37,7 +37,7 @@ except:
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -67,7 +67,7 @@ def ogr_wfs_init():
     gdaltest.ionic_wfs = None
 
     try:
-        gml_ds = ogr.Open( 'data/ionic_wfs.gml' )
+        gml_ds = ogr.Open('data/ionic_wfs.gml')
     except:
         gml_ds = None
 
@@ -76,7 +76,7 @@ def ogr_wfs_init():
         if gdal.GetLastErrorMsg().find('Xerces') != -1:
             return 'skip'
         else:
-            gdaltest.post_reason( 'failed to open test file.' )
+            gdaltest.post_reason('failed to open test file.')
             return 'skip'
 
     return 'success'
@@ -202,7 +202,7 @@ def ogr_wfs_geoserver():
 
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
-                                      max_error = 0.000001 ) != 0:
+                                      max_error = 0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (1)')
         feat.DumpReadable()
         return 'fail'
@@ -216,7 +216,7 @@ def ogr_wfs_geoserver():
     feat = lyr.GetNextFeature()
     if feat.GetField('NAME') != 'museam' or \
        ogrtest.check_feature_geometry(feat,'POINT (-74.0104611 40.70758763)',
-                                      max_error = 0.000001 ) != 0:
+                                      max_error = 0.000001) != 0:
         gdaltest.post_reason('did not get expected feature (2)')
         feat.DumpReadable()
         return 'fail'
@@ -294,7 +294,7 @@ def ogr_wfs_geoserver_json():
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
-                                      max_error = 0.000000001 ) != 0:
+                                      max_error = 0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -341,7 +341,7 @@ def ogr_wfs_geoserver_shapezip():
     feat = lyr.GetNextFeature()
     #if feat.GetField('name') != 'Alexander Bay' or \
     if ogrtest.check_feature_geometry(feat,'POINT (16.4827778 -28.5947222)',
-                                      max_error = 0.000000001 ) != 0:
+                                      max_error = 0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -456,7 +456,7 @@ def ogr_wfs_deegree():
     feat = lyr.GetNextFeature()
     if feat.GetField('OBJECTID') != 1 or \
        ogrtest.check_feature_geometry(feat,'POINT (558750.703 4402882.05)',
-                                      max_error = 0.000000001 ) != 0:
+                                      max_error = 0.000000001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         return 'fail'
@@ -597,7 +597,7 @@ def ogr_wfs_fake_wfs_server():
     feat = lyr.GetNextFeature()
     if feat.GetField('MPLength') != '33513.' or \
        ogrtest.check_feature_geometry(feat,'MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))',
-                                      max_error = 0.00001 ) != 0:
+                                      max_error = 0.00001) != 0:
         gdaltest.post_reason('did not get expected feature')
         feat.DumpReadable()
         webserver.server_stop(process, port)
@@ -5498,7 +5498,7 @@ gdaltest_vsimem_list = [
     ogr_wfs_vsimem_cleanup,
 ]
 
-gdaltest_list = [ ogr_wfs_init ]
+gdaltest_list = [ogr_wfs_init]
 gdaltest_list += gdaltest_vsimem_list
 gdaltest_list += [ogr_wfs_turn_streaming_off]
 gdaltest_list += gdaltest_vsimem_list
@@ -5507,8 +5507,8 @@ gdaltest_list += gdaltest_live_list
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_wfs' )
+    gdaltest.setup_run('ogr_wfs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -32,7 +32,7 @@ import os
 import sys
 import math
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -47,12 +47,12 @@ def ogr_selafin_create_ds():
 
     gdaltest.selafin_ds = None
     try:
-        os.remove( 'tmp/tmp.slf' )
+        os.remove('tmp/tmp.slf')
     except:
         pass
     selafin_drv = ogr.GetDriverByName('Selafin')
 
-    gdaltest.selafin_ds = selafin_drv.CreateDataSource( 'tmp/tmp.slf' )
+    gdaltest.selafin_ds = selafin_drv.CreateDataSource('tmp/tmp.slf')
 
 
     if gdaltest.selafin_ds is not None:
@@ -69,7 +69,7 @@ def ogr_selafin_create_nodes():
     ref.ImportFromEPSG(4326)
     layer=gdaltest.selafin_ds.CreateLayer('name',ref,geom_type=ogr.wkbPoint)
     if layer == None:
-        gdaltest.post_reason( 'unable to create layer')
+        gdaltest.post_reason('unable to create layer')
         return 'fail'
     layer.CreateField(ogr.FieldDefn('value',ogr.OFTReal))
     dfn=layer.GetLayerDefn()
@@ -81,7 +81,7 @@ def ogr_selafin_create_nodes():
             feat.SetGeometry(pt)
             feat.SetField(0,(float)(i*5+j))
             if layer.CreateFeature(feat)!=0:
-                gdaltest.post_reason( 'unable to create node feature')
+                gdaltest.post_reason('unable to create node feature')
                 return 'fail'
     # do some checks
     if layer.GetFeatureCount()!=25:
@@ -97,7 +97,7 @@ def ogr_selafin_create_nodes():
 
 def ogr_selafin_create_elements():
 
-    gdaltest.selafin_ds = ogr.Open( 'tmp/tmp.slf',1 )
+    gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf',1)
     if gdaltest.selafin_ds is None:
         return 'skip'
     layerCount=gdaltest.selafin_ds.GetLayerCount()
@@ -125,7 +125,7 @@ def ogr_selafin_create_elements():
             feat=ogr.Feature(dfn)
             feat.SetGeometry(pol)
             if layere.CreateFeature(feat)!=0:
-                gdaltest.post_reason( 'unable to create element feature')
+                gdaltest.post_reason('unable to create element feature')
                 return 'fail'
     pol=ogr.Geometry(type=ogr.wkbPolygon)
     poll=ogr.Geometry(type=ogr.wkbLinearRing)
@@ -138,7 +138,7 @@ def ogr_selafin_create_elements():
     feat=ogr.Feature(dfn)
     feat.SetGeometry(pol)
     if layere.CreateFeature(feat)!=0:
-        gdaltest.post_reason( 'unable to create element feature')
+        gdaltest.post_reason('unable to create element feature')
         return 'fail'
     # do some checks
     if gdaltest.selafin_ds.GetLayer(k).GetFeatureCount()!=28:
@@ -158,7 +158,7 @@ def ogr_selafin_create_elements():
 # Add a field and set its values for point features
 def ogr_selafin_set_field():
 
-    gdaltest.selafin_ds = ogr.Open( 'tmp/tmp.slf',1 )
+    gdaltest.selafin_ds = ogr.Open('tmp/tmp.slf',1)
     if gdaltest.selafin_ds is None:
         return 'skip'
     layerCount=gdaltest.selafin_ds.GetLayerCount()
@@ -197,7 +197,7 @@ def ogr_selafin_set_field():
 def ogr_selafin_cleanup():
 
     selafin_drv = ogr.GetDriverByName('Selafin')
-    selafin_drv.DeleteDataSource( 'tmp/tmp.slf' )
+    selafin_drv.DeleteDataSource('tmp/tmp.slf')
     return 'success'
 
 gdaltest_list = [
@@ -213,8 +213,8 @@ if __name__ == '__main__':
     ogrtest.have_geos()
     gdal.PopErrorHandler()
 
-    gdaltest.setup_run( 'ogr_selafin' )
+    gdaltest.setup_run('ogr_selafin')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

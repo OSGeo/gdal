@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,7 +43,7 @@ import gdaltest
 
 def adrg_read_gen():
 
-    tst = gdaltest.GDALTest( 'ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833 )
+    tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,7 +51,7 @@ def adrg_read_gen():
 
 def adrg_read_transh():
 
-    tst = gdaltest.GDALTest( 'ADRG', 'SMALL_ADRG/TRANSH01.THF', 1, 62833 )
+    tst = gdaltest.GDALTest('ADRG', 'SMALL_ADRG/TRANSH01.THF', 1, 62833)
     return tst.testOpen()
 
 ###############################################################################
@@ -59,7 +59,7 @@ def adrg_read_transh():
 
 def adrg_read_subdataset_img():
 
-    tst = gdaltest.GDALTest( 'ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -67,10 +67,10 @@ def adrg_read_subdataset_img():
 
 def adrg_copy():
 
-    drv = gdal.GetDriverByName( 'ADRG' )
-    srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
+    drv = gdal.GetDriverByName('ADRG')
+    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
 
-    dstds = drv.CreateCopy( 'tmp/ABCDEF01.GEN', srcds )
+    dstds = drv.CreateCopy('tmp/ABCDEF01.GEN', srcds)
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
@@ -80,7 +80,7 @@ def adrg_copy():
 
     dstds = None
 
-    drv.Delete( 'tmp/ABCDEF01.GEN' )
+    drv.Delete('tmp/ABCDEF01.GEN')
 
     return 'success'
 
@@ -89,11 +89,11 @@ def adrg_copy():
 
 def adrg_2subdatasets():
 
-    drv = gdal.GetDriverByName( 'ADRG' )
-    srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
+    drv = gdal.GetDriverByName('ADRG')
+    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
 
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'ON')
-    dstds = drv.CreateCopy( 'tmp/XXXXXX01.GEN', srcds )
+    dstds = drv.CreateCopy('tmp/XXXXXX01.GEN', srcds)
     del dstds
     gdal.SetConfigOption('ADRG_SIMULATE_MULTI_IMG', 'OFF')
 
@@ -114,7 +114,7 @@ def adrg_2subdatasets():
 
     md = ds.GetMetadata('')
     if md['ADRG_NAM'] != 'XXXXXX02':
-        gdaltest.post_reason( 'metadata wrong.' )
+        gdaltest.post_reason('metadata wrong.')
         return 'fail'
 
     ds = None
@@ -132,10 +132,10 @@ def adrg_2subdatasets():
 
 def adrg_copy_vsimem():
 
-    drv = gdal.GetDriverByName( 'ADRG' )
-    srcds = gdal.Open( 'data/SMALL_ADRG/ABCDEF01.GEN' )
+    drv = gdal.GetDriverByName('ADRG')
+    srcds = gdal.Open('data/SMALL_ADRG/ABCDEF01.GEN')
 
-    dstds = drv.CreateCopy( '/vsimem/ABCDEF01.GEN', srcds )
+    dstds = drv.CreateCopy('/vsimem/ABCDEF01.GEN', srcds)
 
     chksum = dstds.GetRasterBand(1).Checksum()
 
@@ -146,7 +146,7 @@ def adrg_copy_vsimem():
     dstds = None
 
     # Reopen file
-    ds = gdal.Open( '/vsimem/ABCDEF01.GEN' )
+    ds = gdal.Open('/vsimem/ABCDEF01.GEN')
 
     chksum = ds.GetRasterBand(1).Checksum()
     if chksum != 62833:
@@ -155,8 +155,8 @@ def adrg_copy_vsimem():
 
     ds = None
 
-    drv.Delete( '/vsimem/ABCDEF01.GEN' )
-    gdal.Unlink( '/vsimem/TRANSH01.THF' )
+    drv.Delete('/vsimem/ABCDEF01.GEN')
+    gdal.Unlink('/vsimem/TRANSH01.THF')
 
     return 'success'
 
@@ -165,10 +165,10 @@ def adrg_copy_vsimem():
 
 def adrg_zna_9():
 
-    ds = gdal.Open( 'data/SMALL_ADRG_ZNA9/ABCDEF01.GEN' )
+    ds = gdal.Open('data/SMALL_ADRG_ZNA9/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, -179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max( abs(gt[i] - expected_gt[i]) for i in range(6) ) > 1e-5:
+    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
         gdaltest.post_reason('Wrong geotransfsorm')
         print(gt)
         return 'fail'
@@ -185,10 +185,10 @@ def adrg_zna_9():
 
 def adrg_zna_18():
 
-    ds = gdal.Open( 'data/SMALL_ADRG_ZNA18/ABCDEF01.GEN' )
+    ds = gdal.Open('data/SMALL_ADRG_ZNA18/ABCDEF01.GEN')
     expected_gt = (-307675.73602473765, 100.09145391818853, 0.0, 179477.5051066006, 0.0, -100.09145391818853)
     gt = ds.GetGeoTransform()
-    if max( abs(gt[i] - expected_gt[i]) for i in range(6) ) > 1e-5:
+    if max(abs(gt[i] - expected_gt[i]) for i in range(6)) > 1e-5:
         gdaltest.post_reason('Wrong geotransfsorm')
         print(gt)
         return 'fail'
@@ -209,13 +209,13 @@ gdaltest_list = [
     adrg_2subdatasets,
     adrg_copy_vsimem,
     adrg_zna_9,
-    adrg_zna_18 ]
+    adrg_zna_18]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'adrg' )
+    gdaltest.setup_run('adrg')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

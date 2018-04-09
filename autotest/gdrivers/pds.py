@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,13 +42,13 @@ import gdaltest
 
 def pds_1():
 
-    tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
+    tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
     expected_prj = """PROJCS["SIMPLE_CYLINDRICAL "MARS"",GEOGCS["GCS_"MARS"",DATUM["D_"MARS"",SPHEROID[""MARS"",3396000,0]],PRIMEM["Reference_Meridian",0],UNIT["degree",0.0174532925199433]],PROJECTION["Equirectangular"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",0],PARAMETER["false_easting",0],PARAMETER["false_northing",0],PARAMETER["pseudo_standard_parallel_1",0]]"""
     expected_gt = (-10668384.903788566589355,926.115274429321289,0,3852176.483988761901855,0,-926.115274429321289)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen( check_prj = expected_prj,
-                         check_gt = expected_gt )
+    ret = tst.testOpen(check_prj = expected_prj,
+                         check_gt = expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     return ret
@@ -59,7 +59,7 @@ def pds_1():
 
 def pds_2():
 
-    tst = gdaltest.GDALTest( 'PDS', 'fl73n003_truncated.img', 1, 34962 )
+    tst = gdaltest.GDALTest('PDS', 'fl73n003_truncated.img', 1, 34962)
     expected_prj = """PROJCS["SINUSOIDAL VENUS",
     GEOGCS["GCS_VENUS",
         DATUM["D_VENUS",
@@ -73,8 +73,8 @@ def pds_2():
     expected_gt = (587861.55900404998, 75.000002980232239, 0.0, -7815243.4746123618, 0.0, -75.000002980232239)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen( check_prj = expected_prj,
-                     check_gt = expected_gt )
+    ret = tst.testOpen(check_prj = expected_prj,
+                     check_gt = expected_gt)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -104,10 +104,10 @@ def pds_3():
     # Shut down warning about missing projection
     gdal.PushErrorHandler('CPLQuietErrorHandler')
 
-    tst = gdaltest.GDALTest( 'PDS', 'EN0001426030M_truncated.IMG', 1, 1367 )
+    tst = gdaltest.GDALTest('PDS', 'EN0001426030M_truncated.IMG', 1, 1367)
 
     gt_expected = (0,1,0,0,0,1)
-    if tst.testOpen( check_gt=gt_expected ) != 'success':
+    if tst.testOpen(check_gt=gt_expected) != 'success':
         return 'fail'
 
     ds = gdal.Open('data/EN0001426030M_truncated.IMG')
@@ -123,11 +123,11 @@ def pds_3():
 
 def pds_4():
 
-    tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
+    tst = gdaltest.GDALTest('PDS', 'pds_3177.lbl', 1, 3418)
     gt_expected = (6119184.3590369327, 1.0113804322107001, 0.0, -549696.39009125973, 0.0, -1.0113804322107001)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen( check_gt = gt_expected )
+    ret = tst.testOpen(check_gt = gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     return ret
@@ -137,7 +137,7 @@ def pds_4():
 
 def pds_5():
 
-    tst = gdaltest.GDALTest( 'PDS', 'pds_3355.lbl', 1, 2748 )
+    tst = gdaltest.GDALTest('PDS', 'pds_3355.lbl', 1, 2748)
     return tst.testOpen()
 
 ###############################################################################
@@ -149,13 +149,13 @@ def pds_6():
     if os.path.exists('data/byte.tif.aux.xml'):
         os.unlink('data/byte.tif.aux.xml')
 
-    tst = gdaltest.GDALTest( 'PDS', 'ESP_013951_1955_RED.LBL', 1, 4672 )
+    tst = gdaltest.GDALTest('PDS', 'ESP_013951_1955_RED.LBL', 1, 4672)
 
     gt_expected = (-6139197.5, 0.5, 0.0, 936003.0, 0.0, -0.5)
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen( check_gt=gt_expected )
+    ret = tst.testOpen(check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -164,7 +164,7 @@ def pds_6():
     ds = gdal.Open('data/ESP_013951_1955_RED.LBL')
 
     if len(ds.GetFileList()) != 2:
-        gdaltest.post_reason( 'failed to get expected file list.' )
+        gdaltest.post_reason('failed to get expected file list.')
         print(ds.GetFileList())
         return 'fail'
 
@@ -173,7 +173,7 @@ def pds_6():
     if expected_wkt != wkt:
         print('Got: ', wkt)
         print('Exp: ', expected_wkt)
-        gdaltest.post_reason( 'did not get expected coordinate system.' )
+        gdaltest.post_reason('did not get expected coordinate system.')
         return 'fail'
 
     return 'success'
@@ -183,8 +183,8 @@ def pds_6():
 
 def pds_7():
 
-    tst = gdaltest.GDALTest( 'PDS', 'LDEM_4.LBL', 1, 50938,
-                             0, 0, 1440, 2 )
+    tst = gdaltest.GDALTest('PDS', 'LDEM_4.LBL', 1, 50938,
+                             0, 0, 1440, 2)
     gt_expected = (-5450622.3254203796, 7580.8377265930176, 0.0, 2721520.7438468933, 0.0, -7580.8377265930176)
     prj_expected = """PROJCS["SIMPLE_CYLINDRICAL MOON",
     GEOGCS["GCS_MOON",
@@ -201,8 +201,8 @@ def pds_7():
 
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '-0.5')
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', '-0.5')
-    ret = tst.testOpen( check_prj=prj_expected,
-                        check_gt=gt_expected )
+    ret = tst.testOpen(check_prj=prj_expected,
+                        check_gt=gt_expected)
     gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
     gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
     if ret != 'success':
@@ -217,22 +217,22 @@ def pds_7():
 def pds_8():
 
     # values for MAGELLAN FMAP data.
-    gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', '1.5' )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', '1.5' )
-    gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', '1.0' )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', '-1.0' )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', '1.5')
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', '1.5')
+    gdal.SetConfigOption('PDS_SampleProjOffset_Mult', '1.0')
+    gdal.SetConfigOption('PDS_LineProjOffset_Mult', '-1.0')
 
-    tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
+    tst = gdaltest.GDALTest('PDS', 'mc02_truncated.img', 1, 47151)
 
     expected_gt = (10670237.134337425, 926.11527442932129, 0.0, -3854028.7145376205, 0.0, -926.11527442932129)
 
-    result = tst.testOpen( check_gt = expected_gt )
+    result = tst.testOpen(check_gt = expected_gt)
 
     # clear config settings
-    gdal.SetConfigOption( 'PDS_SampleProjOffset_Shift', None )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Shift', None )
-    gdal.SetConfigOption( 'PDS_SampleProjOffset_Mult', None )
-    gdal.SetConfigOption( 'PDS_LineProjOffset_Mult', None )
+    gdal.SetConfigOption('PDS_SampleProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Shift', None)
+    gdal.SetConfigOption('PDS_SampleProjOffset_Mult', None)
+    gdal.SetConfigOption('PDS_LineProjOffset_Mult', None)
 
     return result
 
@@ -243,7 +243,7 @@ def pds_8():
 def pds_9():
 
     # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
-    tst = gdaltest.GDALTest( 'PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0 )
+    tst = gdaltest.GDALTest('PDS', 'PDS_WITH_ZIP_IMG.LBL', 1, 0)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -338,13 +338,13 @@ gdaltest_list = [
     pds_7,
     pds_8,
     pds_9,
-    pds_10 ]
+    pds_10]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pds' )
+    gdaltest.setup_run('pds')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -106,7 +106,7 @@ def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
             if href[0] == '(' and href.find(':') > 0 and href[-1] == ')':
                 href_list = href[href.find(':')+1:-1].split(',')
             else:
-                href_list = [ href ]
+                href_list = [href]
 
         for href in href_list:
             target_feature = ogr.Feature(junction_lyr.GetLayerDefn())
@@ -146,7 +146,7 @@ def process_layer(ds, lyr_name, bAppend, bOverwrite):
     return ret
 
 argv = sys.argv
-argv = ogr.GeneralCmdLineProcessor( argv )
+argv = ogr.GeneralCmdLineProcessor(argv)
 
 ds_name = None
 lyr_name = None

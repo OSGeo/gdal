@@ -35,7 +35,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,7 +44,7 @@ import gdaltest
 
 def aaigrid_1():
 
-    tst = gdaltest.GDALTest( 'aaigrid', 'pixel_per_line.asc', 1, 1123 )
+    tst = gdaltest.GDALTest('aaigrid', 'pixel_per_line.asc', 1, 1123)
     return tst.testOpen()
 
 ###############################################################################
@@ -52,27 +52,27 @@ def aaigrid_1():
 
 def aaigrid_2():
 
-    ds = gdal.Open( 'data/pixel_per_line.asc' )
+    ds = gdal.Open('data/pixel_per_line.asc')
 
     gt = ds.GetGeoTransform()
 
     if gt[0] != 100000.0 or gt[1] != 50 or gt[2] != 0 \
        or gt[3] != 650600.0 or gt[4] != 0 or gt[5] != -50:
-        gdaltest.post_reason( 'Aaigrid geotransform wrong.' )
+        gdaltest.post_reason('Aaigrid geotransform wrong.')
         return 'fail'
 
     prj = ds.GetProjection()
     if prj != 'PROJCS["unnamed",GEOGCS["NAD83",DATUM["North_American_Datum_1983",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6269"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4269"]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",61.66666666666666],PARAMETER["standard_parallel_2",68],PARAMETER["latitude_of_center",59],PARAMETER["longitude_of_center",-132.5],PARAMETER["false_easting",500000],PARAMETER["false_northing",500000],UNIT["METERS",1]]':
-        gdaltest.post_reason( 'Projection does not match expected:\n%s' % prj )
+        gdaltest.post_reason('Projection does not match expected:\n%s' % prj)
         return 'fail'
 
     band1 = ds.GetRasterBand(1)
     if band1.GetNoDataValue() != -99999:
-        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        gdaltest.post_reason('Grid NODATA value wrong or missing.')
         return 'fail'
 
     if band1.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason( 'Data type is not Float32!' )
+        gdaltest.post_reason('Data type is not Float32!')
         return 'fail'
 
     return 'success'
@@ -83,26 +83,26 @@ def aaigrid_2():
 
 def aaigrid_comma():
 
-    ds = gdal.Open( 'data/pixel_per_line_comma.asc' )
+    ds = gdal.Open('data/pixel_per_line_comma.asc')
 
     gt = ds.GetGeoTransform()
 
     if gt[0] != 100000.0 or gt[1] != 50 or gt[2] != 0 \
        or gt[3] != 650600.0 or gt[4] != 0 or gt[5] != -50:
-        gdaltest.post_reason( 'Aaigrid geotransform wrong.' )
+        gdaltest.post_reason('Aaigrid geotransform wrong.')
         return 'fail'
 
     band1 = ds.GetRasterBand(1)
     if band1.Checksum() != 1123:
-        gdaltest.post_reason( 'Did not get expected nodata value.' )
+        gdaltest.post_reason('Did not get expected nodata value.')
         return 'fail'
 
     if band1.GetNoDataValue() != -99999:
-        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        gdaltest.post_reason('Grid NODATA value wrong or missing.')
         return 'fail'
 
     if band1.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason( 'Data type is not Float32!' )
+        gdaltest.post_reason('Data type is not Float32!')
         return 'fail'
 
     return 'success'
@@ -112,19 +112,19 @@ def aaigrid_comma():
 
 def aaigrid_3():
 
-    tst = gdaltest.GDALTest( 'AAIGRID', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('AAIGRID', 'byte.tif', 1, 4672)
 
     prj = 'PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke_1866",6378206.4,294.9786982138982]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["Meter",1]]'
 
-    return tst.testCreateCopy( check_gt = 1, check_srs = prj )
+    return tst.testCreateCopy(check_gt = 1, check_srs = prj)
 
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem.
 
 def aaigrid_4():
 
-    tst = gdaltest.GDALTest( 'aaigrid', 'pixel_per_line.asc', 1, 187,
-                             5, 5, 5, 5 )
+    tst = gdaltest.GDALTest('aaigrid', 'pixel_per_line.asc', 1, 187,
+                             5, 5, 5, 5)
     return tst.testOpen()
 
 ###############################################################################
@@ -136,7 +136,7 @@ def aaigrid_5():
     # - case_sensitive.ASC
     # - case_sensitive.PRJ
 
-    tst = gdaltest.GDALTest( 'aaigrid', 'case_sensitive.ASC', 1, 1123 )
+    tst = gdaltest.GDALTest('aaigrid', 'case_sensitive.ASC', 1, 1123)
 
     prj = """PROJCS["unnamed",
     GEOGCS["NAD83",
@@ -167,15 +167,15 @@ def aaigrid_5():
 
 def aaigrid_6():
 
-    ds = gdal.Open( 'data/nodata_float.asc' )
+    ds = gdal.Open('data/nodata_float.asc')
 
     b = ds.GetRasterBand(1)
     if b.GetNoDataValue() != -99999:
-        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        gdaltest.post_reason('Grid NODATA value wrong or missing.')
         return 'fail'
 
     if b.DataType != gdal.GDT_Float32:
-        gdaltest.post_reason( 'Data type is not Float32!' )
+        gdaltest.post_reason('Data type is not Float32!')
         return 'fail'
 
     return 'success'
@@ -185,15 +185,15 @@ def aaigrid_6():
 
 def aaigrid_6bis():
 
-    ds = gdal.Open( 'data/nodata_int.asc' )
+    ds = gdal.Open('data/nodata_int.asc')
 
     b = ds.GetRasterBand(1)
     if b.GetNoDataValue() != -99999:
-        gdaltest.post_reason( 'Grid NODATA value wrong or missing.' )
+        gdaltest.post_reason('Grid NODATA value wrong or missing.')
         return 'fail'
 
     if b.DataType != gdal.GDT_Int32:
-        gdaltest.post_reason( 'Data type is not Int32!' )
+        gdaltest.post_reason('Data type is not Int32!')
         return 'fail'
 
     return 'success'
@@ -203,9 +203,9 @@ def aaigrid_6bis():
 
 def aaigrid_7():
 
-    tst = gdaltest.GDALTest( 'AAIGRID', 'nonsquare.vrt', 1, 12481 )
+    tst = gdaltest.GDALTest('AAIGRID', 'nonsquare.vrt', 1, 12481)
 
-    return tst.testCreateCopy( check_gt = 1 )
+    return tst.testCreateCopy(check_gt = 1)
 
 
 ###############################################################################
@@ -213,9 +213,9 @@ def aaigrid_7():
 
 def aaigrid_8():
 
-    tst = gdaltest.GDALTest( 'AAIGRID', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('AAIGRID', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( vsimem = 1 )
+    return tst.testCreateCopy(vsimem = 1)
 
 
 ###############################################################################
@@ -224,7 +224,7 @@ def aaigrid_8():
 def aaigrid_9():
 
     ds = gdal.Open('data/float32.bil')
-    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['DECIMAL_PRECISION=2'] )
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['DECIMAL_PRECISION=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
 
@@ -243,7 +243,7 @@ def aaigrid_10():
     # By default detected as 32bit float
     ds = gdal.Open('data/float64.asc')
     if ds.GetRasterBand(1).DataType != gdal.GDT_Float32:
-        gdaltest.post_reason( 'Data type is not Float32!' )
+        gdaltest.post_reason('Data type is not Float32!')
         return 'fail'
 
     for i in range(2):
@@ -261,20 +261,20 @@ def aaigrid_10():
             ds = gdal.OpenEx('data/float64.asc', open_options = ['DATATYPE=Float64'])
 
         if ds.GetRasterBand(1).DataType != gdal.GDT_Float64:
-            gdaltest.post_reason( 'Data type is not Float64!' )
+            gdaltest.post_reason('Data type is not Float64!')
             return 'fail'
 
         nv = ds.GetRasterBand(1).GetNoDataValue()
         if abs(nv - -1.234567890123) > 1e-16:
-            gdaltest.post_reason( 'did not get expected nodata value' )
+            gdaltest.post_reason('did not get expected nodata value')
             return 'fail'
 
         got_minmax = ds.GetRasterBand(1).ComputeRasterMinMax()
         if abs(got_minmax[0] - 1.234567890123) > 1e-16:
-            gdaltest.post_reason( 'did not get expected min value' )
+            gdaltest.post_reason('did not get expected min value')
             return 'fail'
         if abs(got_minmax[1] - 1.234567890123) > 1e-16:
-            gdaltest.post_reason( 'did not get expected max value' )
+            gdaltest.post_reason('did not get expected max value')
             return 'fail'
 
         try:
@@ -290,7 +290,7 @@ def aaigrid_10():
 def aaigrid_11():
 
     ds = gdal.Open('data/float32.bil')
-    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['SIGNIFICANT_DIGITS=2'] )
+    ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds, options = ['SIGNIFICANT_DIGITS=2'])
     got_minmax = ds2.GetRasterBand(1).ComputeRasterMinMax()
     ds2 = None
 
@@ -308,7 +308,7 @@ def aaigrid_12():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options = ['DECIMAL_PRECISION=3'] )
+                               options = ['DECIMAL_PRECISION=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
@@ -336,7 +336,7 @@ def aaigrid_13():
 
     ds = gdal.Open('data/nodata_float.asc')
     ds2 = gdal.GetDriverByName('AAIGRID').CreateCopy('tmp/aaigrid.tmp', ds,
-                               options = ['SIGNIFICANT_DIGITS=3'] )
+                               options = ['SIGNIFICANT_DIGITS=3'])
     del ds2
 
     aai = open('tmp/aaigrid.tmp')
@@ -366,7 +366,7 @@ def aaigrid_14():
     mem_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_Float32)
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, ds.ReadRaster(0, 0, 20, 20, buf_type = gdal.GDT_Float32))
     ds = None
-    gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/aaigrid_14.asc', mem_ds )
+    gdal.GetDriverByName('AAIGRID').CreateCopy('/vsimem/aaigrid_14.asc', mem_ds)
 
     f = gdal.VSIFOpenL('/vsimem/aaigrid_14.asc', 'rb')
     data = gdal.VSIFReadL(1, 10000, f).decode('ascii')
@@ -424,13 +424,13 @@ gdaltest_list = [
     aaigrid_12,
     aaigrid_13,
     aaigrid_14,
-    aaigrid_15 ]
+    aaigrid_15]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'aaigrid' )
+    gdaltest.setup_run('aaigrid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

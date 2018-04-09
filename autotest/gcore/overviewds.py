@@ -33,7 +33,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -58,7 +58,7 @@ def overviewds_2():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0only'])
@@ -78,7 +78,7 @@ def overviewds_2():
         gdaltest.post_reason('fail')
         return 'fail'
     src_gt = src_ds.GetGeoTransform()
-    expected_gt = ( src_gt[0], src_gt[1] * 2, src_gt[2], src_gt[3], src_gt[4], src_gt[5] * 2 )
+    expected_gt = (src_gt[0], src_gt[1] * 2, src_gt[2], src_gt[3], src_gt[4], src_gt[5] * 2)
     gt = ds.GetGeoTransform()
     for i in range(6):
         if abs(expected_gt[i] - gt[i]) > 1e-5:
@@ -151,10 +151,10 @@ def overviewds_3():
     src_gcps = (gcp1, gcp2, gcp3)
     ds.SetGCPs(src_gcps, src_ds.GetProjectionRef())
 
-    tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_POLYNOMIAL' ] )
-    (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
+    tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
+    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
@@ -166,8 +166,8 @@ def overviewds_3():
             return 'fail'
 
     # Really check that the transformer works
-    tr = gdal.Transformer( ds, None, [ 'METHOD=GCP_POLYNOMIAL' ] )
-    (success,pnt) = tr.TransformPoint( 0, 20 / 2.0, 10 / 2.0 )
+    tr = gdal.Transformer(ds, None, ['METHOD=GCP_POLYNOMIAL'])
+    (success,pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
@@ -195,10 +195,10 @@ def overviewds_4():
     ds = gdal.Open('tmp/byte.tif')
     rpc_md = ds.GetMetadata('RPC')
 
-    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
-    (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
+    tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
+    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
@@ -223,8 +223,8 @@ def overviewds_4():
             return 'fail'
 
     # Really check that the transformer works
-    tr = gdal.Transformer( ds, None, [ 'METHOD=RPC' ] )
-    (success,pnt) = tr.TransformPoint( 0, 20 / 2.0, 10 / 2.0 )
+    tr = gdal.Transformer(ds, None, ['METHOD=RPC'])
+    (success,pnt) = tr.TransformPoint(0, 20 / 2.0, 10 / 2.0)
 
     for i in range(3):
         if abs(ref_pnt[i] - pnt[i]) > 1e-5:
@@ -253,10 +253,10 @@ def overviewds_5():
     ds = gdal.Open('tmp/sstgeo.vrt')
     geoloc_md = ds.GetMetadata('GEOLOCATION')
 
-    tr = gdal.Transformer( ds, None, [ 'METHOD=GEOLOC_ARRAY' ] )
-    (ref_success,ref_pnt) = tr.TransformPoint( 0, 20, 10 )
+    tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
+    (ref_success,ref_pnt) = tr.TransformPoint(0, 20, 10)
 
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.OpenEx('tmp/sstgeo.vrt', open_options = ['OVERVIEW_LEVEL=0'])
@@ -288,9 +288,9 @@ def overviewds_5():
             return 'fail'
 
     # Really check that the transformer works
-    tr = gdal.Transformer( ds, None, [ 'METHOD=GEOLOC_ARRAY' ] )
-    expected_xyz = ( 20.0 / 2, 10.0 / 2, 0 )
-    (success,pnt) = tr.TransformPoint( 1, ref_pnt[0], ref_pnt[1] )
+    tr = gdal.Transformer(ds, None, ['METHOD=GEOLOC_ARRAY'])
+    expected_xyz = (20.0 / 2, 10.0 / 2, 0)
+    (success,pnt) = tr.TransformPoint(1, ref_pnt[0], ref_pnt[1])
 
     for i in range(3):
         if abs(pnt[i] - expected_xyz[i]) > 0.5:
@@ -309,7 +309,7 @@ def overviewds_6():
 
     shutil.copy('data/byte.tif', 'tmp')
     ds = gdal.Open('tmp/byte.tif')
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     src_ds = gdal.OpenEx('tmp/byte.tif', open_options = ['OVERVIEW_LEVEL=0'])
@@ -354,19 +354,19 @@ def overviewds_cleanup():
     return 'success'
 
 
-gdaltest_list = [ overviewds_1,
+gdaltest_list = [overviewds_1,
                   overviewds_2,
                   overviewds_3,
                   overviewds_4,
                   overviewds_5,
                   overviewds_6,
-                  overviewds_cleanup ]
+                  overviewds_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'overviewds' )
+    gdaltest.setup_run('overviewds')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

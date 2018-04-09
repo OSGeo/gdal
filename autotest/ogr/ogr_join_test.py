@@ -29,7 +29,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -40,17 +40,17 @@ import ogrtest
 # Test a join.
 
 def ogr_join_1():
-    gdaltest.ds = ogr.Open( 'data' )
+    gdaltest.ds = ogr.Open('data')
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
-        'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id' )
+        'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.eas_id')
 
     count = sql_lyr.GetFeatureCount()
     if count != 10:
-        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
+        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
         return 'fail'
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -59,16 +59,16 @@ def ogr_join_1():
 
 def ogr_join_2():
 
-    expect = ['_166_', '_158_', '_165_' ]
+    expect = ['_166_', '_158_', '_165_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT * FROM poly '
         'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        'WHERE eas_id < 168' )
+        'WHERE eas_id < 168')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'NAME', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'NAME', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -80,16 +80,16 @@ def ogr_join_2():
 
 def ogr_join_3():
 
-    expect = ['_166_', '_158_', '_165_' ]
+    expect = ['_166_', '_158_', '_165_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL(
         'SELECT poly.area, idlink.* FROM poly '
         'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id '
-        'WHERE eas_id < 168' )
+        'WHERE eas_id < 168')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'idlink.NAME', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'idlink.NAME', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -101,16 +101,16 @@ def ogr_join_3():
 
 def ogr_join_4():
 
-    expect = ['_179_', '_171_', None, None ]
+    expect = ['_179_', '_171_', None, None]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT poly.*, name FROM poly ' \
         + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'WHERE eas_id > 170' )
+        + 'WHERE eas_id > 170')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'NAME', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'NAME', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -122,16 +122,16 @@ def ogr_join_4():
 
 def ogr_join_5():
 
-    expect = [ 179, 171, 173, 172 ]
+    expect = [179, 171, 173, 172]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' \
-        + 'WHERE eas_id > 170' )
+        + 'WHERE eas_id > 170')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'p.eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -143,16 +143,16 @@ def ogr_join_5():
 
 def ogr_join_6():
 
-    expect = [ 171, 172, 173, 179 ]
+    expect = [171, 172, 173, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN idlink il ON p.eas_id = il.eas_id ' \
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id' )
+        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'p.eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -164,16 +164,16 @@ def ogr_join_6():
 
 def ogr_join_7():
 
-    expect = [ 171, 172, 173, 179 ]
+    expect = [171, 172, 173, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT p.*, il.name FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' \
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id' )
+        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'p.eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'p.eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -185,17 +185,17 @@ def ogr_join_7():
 
 def ogr_join_8():
 
-    expect = [ 171, None, None, 179 ]
+    expect = [171, None, None, 179]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT p.*, il.name, il2.eas_id FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il.eas_id ' \
         + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id ' \
-        + 'WHERE eas_id > 170 ORDER BY p.eas_id' )
+        + 'WHERE eas_id > 170 ORDER BY p.eas_id')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'il2.eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'il2.eas_id', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -208,16 +208,16 @@ def ogr_join_8():
 
 def ogr_join_9():
 
-    expect = [ 179, 171, 173, 172 ]
+    expect = [179, 171, 173, 172]
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT poly.* FROM poly ' \
         + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'WHERE eas_id > 170' )
+        + 'WHERE eas_id > 170')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'poly.EAS_ID', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'poly.EAS_ID', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -232,11 +232,11 @@ def ogr_join_10():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM poly ' \
-        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ' )
+        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.name ')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'F3', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'F3', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -251,11 +251,11 @@ def ogr_join_11():
     expect = ['_168_','_179_','_171_','_170_','_165_','_158_','_166_']
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
-        'SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME' )
+        'SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'il2.NAME', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'il2.NAME', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -266,17 +266,17 @@ def ogr_join_11():
 # Test fix for #4112 (join between 2 datasources)
 
 def ogr_join_12():
-    ds = ogr.Open( 'data/poly.shp' )
+    ds = ogr.Open('data/poly.shp')
 
     sql_lyr = ds.ExecuteSQL(
-        "SELECT * FROM poly LEFT JOIN 'data/idlink.dbf'.idlink ON poly.eas_id = idlink.eas_id" )
+        "SELECT * FROM poly LEFT JOIN 'data/idlink.dbf'.idlink ON poly.eas_id = idlink.eas_id")
 
     count = sql_lyr.GetFeatureCount()
     if count != 10:
-        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
+        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
         return 'fail'
 
-    ds.ReleaseResultSet( sql_lyr )
+    ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -289,11 +289,11 @@ def ogr_join_13():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM poly ' \
-        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id' )
+        + 'LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'name', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'name', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -309,11 +309,11 @@ def ogr_join_14():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( \
         'SELECT * FROM idlink2 ' \
-        + 'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id' )
+        + 'LEFT JOIN poly ON idlink2.eas_id = poly.eas_id')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'poly.EAS_ID', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'poly.EAS_ID', expect)
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -328,15 +328,15 @@ def ogr_join_15():
     ds = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/ogr_join_14')
     lyr = ds.CreateLayer('first')
     ogrtest.quick_create_layer_def(lyr, [['id']])
-    ogrtest.quick_create_feature(lyr, [ 'key' ], None)
+    ogrtest.quick_create_feature(lyr, ['key'], None)
 
     lyr = ds.CreateLayer('second')
     ogrtest.quick_create_layer_def(lyr, [['col1_2'],['id'],['col3_2']])
-    ogrtest.quick_create_feature(lyr, [ 'a2', 'key', 'c2' ], None)
+    ogrtest.quick_create_feature(lyr, ['a2', 'key', 'c2'], None)
 
     lyr = ds.CreateLayer('third')
     ogrtest.quick_create_layer_def(lyr, [['col1_3'],['id'],['col3_3']])
-    ogrtest.quick_create_feature(lyr, [ 'a3', 'key', 'c3' ], None)
+    ogrtest.quick_create_feature(lyr, ['a3', 'key', 'c3'], None)
 
     sql_lyr = ds.ExecuteSQL("SELECT concat(col3_2, ''), col3_2 FROM first JOIN second ON first.id = second.id JOIN third ON first.id = third.id")
     feat = sql_lyr.GetNextFeature()
@@ -374,7 +374,7 @@ def ogr_join_16():
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly ' \
         + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'WHERE idlink.name = \'_165\'' )
+        + 'WHERE idlink.name = \'_165\'')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
@@ -395,7 +395,7 @@ def ogr_join_17():
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT * FROM poly ' \
         + 'LEFT JOIN idlink ON poly.eas_id = idlink.eas_id ' \
-        + 'ORDER BY name' )
+        + 'ORDER BY name')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Cannot use field') != 0:
@@ -413,14 +413,14 @@ def ogr_join_17():
 def ogr_join_18():
 
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
-        'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id'  )
+        'SELECT * FROM poly LEFT JOIN idlink ON idlink.eas_id = poly.eas_id')
 
     count = sql_lyr.GetFeatureCount()
     if count != 10:
-        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
+        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
         return 'fail'
 
-    gdaltest.ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
 
@@ -432,7 +432,7 @@ def ogr_join_19():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
-        'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id'  )
+        'SELECT * FROM poly LEFT JOIN idlink ON poly.foo = idlink.eas_id')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('"poly"."foo" not recognised as an available field') != 0:
@@ -452,7 +452,7 @@ def ogr_join_20():
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
-        'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo'  )
+        'SELECT * FROM poly LEFT JOIN idlink ON poly.eas_id = idlink.foo')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('"idlink"."foo" not recognised as an available field') != 0:
@@ -474,7 +474,7 @@ def ogr_join_21():
     sql_lyr = gdaltest.ds.ExecuteSQL(   \
         'SELECT p.*, il.name, il2.eas_id FROM poly p ' \
         + 'LEFT JOIN "data/idlink.dbf".idlink il ON p.eas_id = il2.eas_id ' \
-        + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id' )
+        + 'LEFT JOIN idlink il2 ON p.eas_id = il2.eas_id')
     gdal.PopErrorHandler()
 
     if gdal.GetLastErrorMsg().find('Field il2.eas_id in JOIN clause does not correspond to the primary table nor the joint (secondary) table') != 0:
@@ -494,13 +494,13 @@ def ogr_join_22():
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
     ogrtest.quick_create_layer_def(lyr, [['id.1'], ['id2']])
-    ogrtest.quick_create_feature(lyr, [ 'key1', 'key2' ], None)
+    ogrtest.quick_create_feature(lyr, ['key1', 'key2'], None)
 
     lyr = ds.CreateLayer('second')
     ogrtest.quick_create_layer_def(lyr, [['id.1'], ['id2'], ['val']])
-    ogrtest.quick_create_feature(lyr, [ 'key1', 'keyX', '1' ], None)
-    ogrtest.quick_create_feature(lyr, [ 'key1', 'key2', '2' ], None)
-    ogrtest.quick_create_feature(lyr, [ 'key1', 'keyY', '3' ], None)
+    ogrtest.quick_create_feature(lyr, ['key1', 'keyX', '1'], None)
+    ogrtest.quick_create_feature(lyr, ['key1', 'key2', '2'], None)
+    ogrtest.quick_create_feature(lyr, ['key1', 'keyY', '3'], None)
 
     sql_lyr = ds.ExecuteSQL("SELECT val FROM first JOIN second ON first.\"id.1\" = second.\"id.1\" AND first.id2 = second.id2")
     feat = sql_lyr.GetNextFeature()
@@ -524,13 +524,13 @@ def ogr_join_23():
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
     lyr = ds.CreateLayer('first')
     ogrtest.quick_create_layer_def(lyr, [['f']])
-    ogrtest.quick_create_feature(lyr, [ None ], None)
-    ogrtest.quick_create_feature(lyr, [ 'key1' ], None)
+    ogrtest.quick_create_feature(lyr, [None], None)
+    ogrtest.quick_create_feature(lyr, ['key1'], None)
 
     lyr = ds.CreateLayer('second')
     ogrtest.quick_create_layer_def(lyr, [['f']])
-    ogrtest.quick_create_feature(lyr, [ 'key1' ], None)
-    ogrtest.quick_create_feature(lyr, [ None ], None)
+    ogrtest.quick_create_feature(lyr, ['key1'], None)
+    ogrtest.quick_create_feature(lyr, [None], None)
 
     sql_lyr = ds.ExecuteSQL("SELECT * FROM first JOIN second ON first.f = second.f")
     feat = sql_lyr.GetNextFeature()
@@ -581,12 +581,12 @@ gdaltest_list = [
     ogr_join_21,
     ogr_join_22,
     ogr_join_23,
-    ogr_join_cleanup ]
+    ogr_join_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_join_test' )
+    gdaltest.setup_run('ogr_join_test')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

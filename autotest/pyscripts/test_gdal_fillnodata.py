@@ -32,7 +32,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -82,7 +82,7 @@ def test_gdal_fillnodata_2():
 
 def test_gdal_fillnodata_cleanup():
 
-    lst = [ 'tmp/test_gdal_fillnodata_1.tif', 'tmp/test_gdal_fillnodata_2.tif' ]
+    lst = ['tmp/test_gdal_fillnodata_1.tif', 'tmp/test_gdal_fillnodata_2.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -100,8 +100,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_fillnodata' )
+    gdaltest.setup_run('test_gdal_fillnodata')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

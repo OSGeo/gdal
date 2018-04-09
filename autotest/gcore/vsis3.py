@@ -33,7 +33,7 @@ import stat
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -322,7 +322,7 @@ def vsis3_2():
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/s3_fake_bucket/resource2.bin', 200,
-                { 'Content-type': 'text/plain',
+                {'Content-type': 'text/plain',
                   'Content-Length': 1000000,
                   'Connection': 'close'})
     with webserver.install_http_handler(handler):
@@ -457,9 +457,9 @@ def vsis3_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/invalid_xml_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -474,9 +474,9 @@ def vsis3_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_code_in_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -491,9 +491,9 @@ def vsis3_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -507,9 +507,9 @@ def vsis3_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>PermanentRedirect</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_endpoint_in_PermanentRedirect_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -523,9 +523,9 @@ def vsis3_2():
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>bla</Code></Error>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
     handler.add('GET', '/s3_fake_bucket/no_message_in_error', 400,
-                { 'Content-type': 'application/xml',
+                {'Content-type': 'application/xml',
                   'Transfer-Encoding': 'chunked',
-                  'Connection': 'close' }, response)
+                  'Connection': 'close'}, response)
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -773,11 +773,11 @@ def vsis3_3():
         return 'fail'
 
     # Test CPL_VSIL_CURL_NON_CACHED
-    for config_option_value in [ '/vsis3/s3_non_cached/test.txt',
+    for config_option_value in ['/vsis3/s3_non_cached/test.txt',
                         '/vsis3/s3_non_cached',
                         '/vsis3/s3_non_cached:/vsis3/unrelated',
                         '/vsis3/unrelated:/vsis3/s3_non_cached',
-                        '/vsis3/unrelated:/vsis3/s3_non_cached:/vsis3/unrelated' ]:
+                        '/vsis3/unrelated:/vsis3/s3_non_cached:/vsis3/unrelated']:
       with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
         handler = webserver.SequentialHandler()
@@ -837,13 +837,13 @@ def vsis3_3():
                 return 'fail'
 
     # Retry without option
-    for config_option_value in [ None,
-                                '/vsis3/s3_non_cached/bar.txt' ]:
+    for config_option_value in [None,
+                                '/vsis3/s3_non_cached/bar.txt']:
       with gdaltest.config_option('CPL_VSIL_CURL_NON_CACHED', config_option_value):
 
         handler = webserver.SequentialHandler()
         if config_option_value is None:
-            handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, { 'Content-type': 'application/xml' },
+            handler.add('GET', '/s3_non_cached/?delimiter=%2F', 200, {'Content-type': 'application/xml'},
                         """<?xml version="1.0" encoding="UTF-8"?>
                         <ListBucketResult>
                             <Prefix>/</Prefix>
@@ -893,7 +893,7 @@ def vsis3_3():
 
     # List buckets (empty result)
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
@@ -902,7 +902,7 @@ def vsis3_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/')
-    if dir_contents != [ '.' ]:
+    if dir_contents != ['.']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -911,7 +911,7 @@ def vsis3_3():
 
     # List buckets
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
@@ -923,7 +923,7 @@ def vsis3_3():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsis3/')
-    if dir_contents != [ 'mybucket' ]:
+    if dir_contents != ['mybucket']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -1432,10 +1432,10 @@ def vsis3_6():
     handler.add('POST', '/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin?uploads', 200, {}, 'foo')
     handler.add('POST', '/s3_fake_bucket4/large_file_initiate_no_uploadId.bin?uploads', 200, {}, '<foo/>')
     with webserver.install_http_handler(handler):
-      for filename in [ '/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
+      for filename in ['/vsis3/s3_fake_bucket4/large_file_initiate_403_error.bin',
                         '/vsis3/s3_fake_bucket4/large_file_initiate_empty_result.bin',
                         '/vsis3/s3_fake_bucket4/large_file_initiate_invalid_xml_result.bin',
-                        '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin' ]:
+                        '/vsis3/s3_fake_bucket4/large_file_initiate_no_uploadId.bin']:
         with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
         if f is None:
@@ -1465,7 +1465,7 @@ def vsis3_6():
     handler.add('DELETE', '/s3_fake_bucket4/large_file_upload_part_no_etag.bin?uploadId=my_id', 204)
 
     with webserver.install_http_handler(handler):
-      for filename in [ '/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
+      for filename in ['/vsis3/s3_fake_bucket4/large_file_upload_part_403_error.bin',
                         '/vsis3/s3_fake_bucket4/large_file_upload_part_no_etag.bin']:
         with gdaltest.config_option('VSIS3_CHUNK_SIZE', '1'): # 1 MB
             f = gdal.VSIFOpenL(filename, 'wb')
@@ -1521,8 +1521,8 @@ def vsis3_6():
     handler = webserver.SequentialHandler()
     handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploads', 200, {},
                 '<?xml version="1.0" encoding="UTF-8"?><InitiateMultipartUploadResult><UploadId>my_id</UploadId></InitiateMultipartUploadResult>')
-    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, { 'ETag': 'first_etag' }, '')
-    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, { 'ETag': 'second_etag' }, '')
+    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=1&uploadId=my_id', 200, {'ETag': 'first_etag'}, '')
+    handler.add('PUT', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?partNumber=2&uploadId=my_id', 200, {'ETag': 'second_etag'}, '')
     handler.add('POST', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 403)
     #handler.add('DELETE', '/s3_fake_bucket4/large_file_completemultipart_403_error.bin?uploadId=my_id', 204)
 
@@ -1578,7 +1578,7 @@ def vsis3_7():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir%2F', 200,
-                 { 'Content-type': 'application/xml', 'Connection':'close' },
+                 {'Content-type': 'application/xml', 'Connection':'close'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir/</Prefix>
@@ -1606,7 +1606,7 @@ def vsis3_7():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_bucket_test_mkdir/dir_nonempty/', 416)
     handler.add('GET', '/s3_bucket_test_mkdir/?delimiter=%2F&max-keys=1&prefix=dir_nonempty%2F', 200,
-                 { 'Content-type': 'application/xml' },
+                 {'Content-type': 'application/xml'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>dir_nonempty/</Prefix>
@@ -1635,7 +1635,7 @@ def vsis3_8():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/vsis3_8/?delimiter=%2F', 200,
-                 { 'Content-type': 'application/xml' },
+                 {'Content-type': 'application/xml'},
                  """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix></Prefix>
@@ -1652,7 +1652,7 @@ def vsis3_8():
 
     with webserver.install_http_handler(handler):
         listdir = gdal.ReadDir('/vsis3/vsis3_8', 0)
-    if listdir != [ 'test', 'test/' ]:
+    if listdir != ['test', 'test/']:
         gdaltest.post_reason('fail')
         print(listdir)
         return 'fail'
@@ -2311,7 +2311,7 @@ def vsis3_cleanup():
 
     return 'success'
 
-gdaltest_list = [ vsis3_init,
+gdaltest_list = [vsis3_init,
                   vsis3_no_sign_request,
                   vsis3_1,
                   vsis3_start_webserver,
@@ -2330,19 +2330,19 @@ gdaltest_list = [ vsis3_init,
                   vsis3_read_credentials_ec2,
                   vsis3_read_credentials_ec2_expiration,
                   vsis3_stop_webserver,
-                  vsis3_cleanup ]
+                  vsis3_cleanup]
 
 # gdaltest_list = [ vsis3_init, vsis3_start_webserver, vsis3_8, vsis3_stop_webserver, vsis3_cleanup ]
 
-gdaltest_list_extra = [ vsis3_extra_1 ]
+gdaltest_list_extra = [vsis3_extra_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsis3' )
+    gdaltest.setup_run('vsis3')
 
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests( gdaltest_list_extra )
+        gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ vsis3_cleanup ] )
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsis3_cleanup])
 
     gdaltest.summarize()

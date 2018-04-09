@@ -33,7 +33,7 @@ import os
 import sys
 import uuid
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -103,7 +103,7 @@ def ogr_couchdb_2():
     if ds is None:
         return 'fail'
     lyr = ds.CreateLayer(ogrtest.couchdb_temp_layer_name, geom_type = ogr.wkbNone, options = ['UPDATE_PERMISSIONS=ALL'])
-    lyr.CreateField( ogr.FieldDefn('str_field', ogr.OFTString) )
+    lyr.CreateField(ogr.FieldDefn('str_field', ogr.OFTString))
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f['str_field'] = 'foo'
@@ -160,8 +160,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_couchdb' )
+    gdaltest.setup_run('ogr_couchdb')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

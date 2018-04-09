@@ -116,7 +116,7 @@ while True:
             content[pos_after:].startswith('&&') or \
             content[pos_after:].startswith('||') or \
             content[pos_after:].startswith(' ?') or \
-            content[pos_after:].startswith('?') ):
+            content[pos_after:].startswith('?')):
         if content[pos_after] != ' ':
             extra_space = ' '
         pos_cur = find_start_identifier_pos(content, pos - 1)

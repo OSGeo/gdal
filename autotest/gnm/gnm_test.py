@@ -34,7 +34,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import shutil
@@ -63,20 +63,20 @@ def gnm_filenetwork_create():
     if ogrtest.drv is None:
         return 'skip'
 
-    ds = ogrtest.drv.Create( 'tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'] )
+    ds = ogrtest.drv.Create('tmp/', 0, 0, 0, gdal.GDT_Unknown, options = ['net_name=test_gnm', 'net_description=Test file based GNM', 'net_srs=EPSG:4326'])
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
         gdaltest.post_reason('fail')
         return 'fail'
     if dn.GetVersion() != 100:
-        gdaltest.post_reason( 'GNM: Check GNM version failed')
+        gdaltest.post_reason('GNM: Check GNM version failed')
         return 'fail'
     if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason( 'GNM: Check GNM name failed')
+        gdaltest.post_reason('GNM: Check GNM name failed')
         return 'fail'
     if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason( 'GNM: Check GNM description failed')
+        gdaltest.post_reason('GNM: Check GNM description failed')
         return 'fail'
 
     dn = None
@@ -91,20 +91,20 @@ def gnm_filenetwork_open():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
     # cast to GNM
     dn = gnm.CastToNetwork(ds)
     if dn is None:
         gdaltest.post_reason('fail')
         return 'fail'
     if dn.GetVersion() != 100:
-        gdaltest.post_reason( 'GNM: Check GNM version failed')
+        gdaltest.post_reason('GNM: Check GNM version failed')
         return 'fail'
     if dn.GetName() != 'test_gnm':
-        gdaltest.post_reason( 'GNM: Check GNM name failed')
+        gdaltest.post_reason('GNM: Check GNM name failed')
         return 'fail'
     if dn.GetDescription() != 'Test file based GNM':
-        gdaltest.post_reason( 'GNM: Check GNM description failed')
+        gdaltest.post_reason('GNM: Check GNM description failed')
         return 'fail'
 
     dn = None
@@ -118,7 +118,7 @@ def gnm_import():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
 
     #pipes
     dspipes = gdal.OpenEx('data/pipes.shp', gdal.OF_VECTOR)
@@ -155,7 +155,7 @@ def gnm_autoconnect():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
     dgn = gnm.CastToGenericNetwork(ds)
     if dgn is None:
         gdaltest.post_reason('cast to GNMGenericNetwork failed')
@@ -177,7 +177,7 @@ def gnm_graph_dijkstra():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
     if dn is None:
         gdaltest.post_reason('cast to GNMNetwork failed')
@@ -205,7 +205,7 @@ def gnm_graph_kshortest():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
     if dn is None:
         gdaltest.post_reason('cast to GNMNetwork failed')
@@ -233,7 +233,7 @@ def gnm_graph_connectedcomponents():
     if not ogrtest.have_gnm:
         return 'skip'
 
-    ds = gdal.OpenEx( 'tmp/test_gnm' )
+    ds = gdal.OpenEx('tmp/test_gnm')
     dn = gnm.CastToNetwork(ds)
     if dn is None:
         gdaltest.post_reason('cast to GNMNetwork failed')
@@ -286,9 +286,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gnm_test' )
+    gdaltest.setup_run('gnm_test')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

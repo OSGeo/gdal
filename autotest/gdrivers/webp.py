@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 def webp_1():
 
     try:
-        gdaltest.webp_drv = gdal.GetDriverByName( 'WEBP' )
+        gdaltest.webp_drv = gdal.GetDriverByName('WEBP')
     except:
         gdaltest.webp_drv = None
         return 'skip'
@@ -160,12 +160,12 @@ gdaltest_list = [
     webp_2,
     webp_3,
     webp_4,
-    webp_5 ]
+    webp_5]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'webp' )
+    gdaltest.setup_run('webp')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

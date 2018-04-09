@@ -39,7 +39,7 @@ from osgeo import gdal
 def Usage():
     print('Usage: fft.py [-inv] [-of out_format] [-ot out_type] infile outfile')
     print('')
-    sys.exit( 1 )
+    sys.exit(1)
 
 # =============================================================================
 
@@ -115,7 +115,7 @@ if  outfile is None:
 if type == None:
     type = gdal.GDT_CFloat32
 
-indataset = gdal.Open( infile, gdal.GA_ReadOnly )
+indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)

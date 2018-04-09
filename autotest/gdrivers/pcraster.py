@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,12 +40,12 @@ import gdaltest
 
 def pcraster_1():
 
-    gdaltest.pcraster_drv = gdal.GetDriverByName( 'PCRaster' )
+    gdaltest.pcraster_drv = gdal.GetDriverByName('PCRaster')
 
     if gdaltest.pcraster_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PCRaster', 'ldd.map', 1, 4528 )
+    tst = gdaltest.GDALTest('PCRaster', 'ldd.map', 1, 4528)
     return tst.testOpen()
 
 ###############################################################################
@@ -56,18 +56,18 @@ def pcraster_2():
     if gdaltest.pcraster_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/ldd.map' )
+    ds = gdal.Open('data/ldd.map')
 
     gt = ds.GetGeoTransform()
 
     if gt[0] != 182140.0 or gt[1] != 10 or gt[2] != 0 \
        or gt[3] != 327880.0 or gt[4] != 0 or gt[5] != -10:
-        gdal.post_reason( 'PCRaster geotransform wrong.' )
+        gdal.post_reason('PCRaster geotransform wrong.')
         return 'fail'
 
     band1 = ds.GetRasterBand(1)
     if band1.GetNoDataValue() != 255:
-        gdal.post_reason( 'PCRaster NODATA value wrong or missing.' )
+        gdal.post_reason('PCRaster NODATA value wrong or missing.')
         return 'fail'
 
     return 'success'
@@ -75,14 +75,14 @@ def pcraster_2():
 
 gdaltest_list = [
     pcraster_1,
-    pcraster_2 ]
+    pcraster_2]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pcraster' )
+    gdaltest.setup_run('pcraster')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

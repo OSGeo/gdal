@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -97,13 +97,13 @@ def osr_usgs_2():
 gdaltest_list = [
     osr_usgs_1,
     osr_usgs_2,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_usgs' )
+    gdaltest.setup_run('osr_usgs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

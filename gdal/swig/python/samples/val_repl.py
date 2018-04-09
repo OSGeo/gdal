@@ -49,7 +49,7 @@ def Usage():
     print('Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value')
     print('                   [-of out_format] [-ot out_type] infile outfile')
     print('')
-    sys.exit( 1 )
+    sys.exit(1)
 
 # =============================================================================
 
@@ -110,7 +110,7 @@ if inNoData is None:
 if outNoData is None:
     Usage()
 
-indataset = gdal.Open( infile, gdal.GA_ReadOnly )
+indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
 out_driver = gdal.GetDriverByName(format)
 outdataset = out_driver.Create(outfile, indataset.RasterXSize, indataset.RasterYSize, indataset.RasterCount, type)
@@ -129,7 +129,7 @@ for iBand in range(1, indataset.RasterCount + 1):
 
     for i in range(inband.YSize - 1, -1, -1):
         scanline = inband.ReadAsArray(0, i, inband.XSize, 1, inband.XSize, 1)
-        scanline = numpy.choose( numpy.equal( scanline, inNoData),
-                                       (scanline, outNoData) )
+        scanline = numpy.choose(numpy.equal(scanline, inNoData),
+                                       (scanline, outNoData))
         outband.WriteArray(scanline, 0, i)
 

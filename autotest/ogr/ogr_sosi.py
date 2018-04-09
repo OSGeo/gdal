@@ -32,7 +32,7 @@
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -59,13 +59,13 @@ def ogr_sosi_1():
 
 
 gdaltest_list = [
-    ogr_sosi_1 ]
+    ogr_sosi_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_sosi' )
+    gdaltest.setup_run('ogr_sosi')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

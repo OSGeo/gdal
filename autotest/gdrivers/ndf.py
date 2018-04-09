@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,8 +39,8 @@ import gdaltest
 
 def ndf_1():
 
-    tst = gdaltest.GDALTest( 'NDF', 'LE7134052000500350.H3', 1, 6510,
-                             xoff = 0, yoff = 0, xsize = 15620, ysize = 1 )
+    tst = gdaltest.GDALTest('NDF', 'LE7134052000500350.H3', 1, 6510,
+                             xoff = 0, yoff = 0, xsize = 15620, ysize = 1)
 
     gt = (320325.75, 14.25, 0, 1383062.25, 0, -14.25)
 
@@ -66,17 +66,17 @@ def ndf_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen( check_gt = gt, gt_epsilon = 0.0001,
-                         check_prj = wkt )
+    return tst.testOpen(check_gt = gt, gt_epsilon = 0.0001,
+                         check_prj = wkt)
 
 gdaltest_list = [
-    ndf_1 ]
+    ndf_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ndf' )
+    gdaltest.setup_run('ndf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

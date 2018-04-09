@@ -34,7 +34,7 @@ import struct
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal, ogr, osr
 import gdaltest
@@ -410,7 +410,7 @@ def test_gdalwarp_lib_21():
 
 def test_gdalwarp_lib_23():
 
-    ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = [ 'CUTLINE_ALL_TOUCHED=TRUE' ], cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline')
+    ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = ['CUTLINE_ALL_TOUCHED=TRUE'], cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline')
     if ds is None:
         return 'fail'
 
@@ -440,7 +440,7 @@ def test_gdalwarp_lib_32():
         return 'fail'
 
     if ds.RasterXSize != 13 or ds.RasterYSize != 25:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
         return 'fail'
 
     ds = None
@@ -487,7 +487,7 @@ def test_gdalwarp_lib_34():
 
 def test_gdalwarp_lib_45():
 
-    ds = gdal.Warp('', ['../gcore/data/byte.tif'], format = 'MEM', outputBounds = [-117.641087629972, 33.8915301685897, -117.628190189534, 33.9024195619201 ], outputBoundsSRS = 'EPSG:4267')
+    ds = gdal.Warp('', ['../gcore/data/byte.tif'], format = 'MEM', outputBounds = [-117.641087629972, 33.8915301685897, -117.628190189534, 33.9024195619201], outputBoundsSRS = 'EPSG:4267')
     if ds.GetRasterBand(1).Checksum() != 4672:
         gdaltest.post_reason('fail')
         print(ds.GetRasterBand(1).Checksum())
@@ -521,7 +521,7 @@ def mycallback(pct, msg, user_data):
 
 def test_gdalwarp_lib_100():
 
-    tab = [ 0 ]
+    tab = [0]
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', callback = mycallback, callback_data = tab)
     if ds is None:
         return 'fail'
@@ -557,7 +557,7 @@ def test_gdalwarp_lib_102():
 
     no_band_ds = gdal.GetDriverByName('MEM').Create('no band', 1, 1, 0)
     with gdaltest.error_handler():
-        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', no_band_ds ], format = 'MEM')
+        ds = gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', no_band_ds], format = 'MEM')
     if ds is not None:
         gdaltest.post_reason('Did not expected dataset')
         return 'fail'
@@ -569,7 +569,7 @@ def test_gdalwarp_lib_102():
 def test_gdalwarp_lib_103():
 
     with gdaltest.error_handler():
-        ds = gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/stefan_full_rgba.tif'], format = 'MEM')
+        ds = gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/stefan_full_rgba.tif'], format = 'MEM')
     if ds is not None:
         gdaltest.post_reason('Did not expected dataset')
         return 'fail'
@@ -596,7 +596,7 @@ def test_gdalwarp_lib_105():
     # otherwise a very big raster will be created with 4.9.3 which may cause
     # hangups in Travis MacOSX
     with gdaltest.error_handler():
-        gdal.Warp('', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ], format = 'MEM', dstSRS = 'EPSG:32645', width = 100, height = 100)
+        gdal.Warp('', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif'], format = 'MEM', dstSRS = 'EPSG:32645', width = 100, height = 100)
 
     return 'success'
 
@@ -606,7 +606,7 @@ def test_gdalwarp_lib_105():
 def test_gdalwarp_lib_106():
 
     with gdaltest.error_handler():
-        ds = gdal.Warp('/not_existing_dir/not_existing_file', [ '../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif' ])
+        ds = gdal.Warp('/not_existing_dir/not_existing_file', ['../gdrivers/data/small_world_pct.tif', '../gcore/data/byte.tif'])
     if ds is not None:
         gdaltest.post_reason('Did not expected dataset')
         return 'fail'
@@ -918,7 +918,7 @@ def test_gdalwarp_lib_125():
         if i == 2 or i == 3:
             src_ds_2.GetRasterBand(1).SetMetadataItem('STATISTICS_MINIUM', '5')
 
-        out_ds = gdal.Warp('', [ src_ds_1, src_ds_2 ], format = 'MEM')
+        out_ds = gdal.Warp('', [src_ds_1, src_ds_2], format = 'MEM')
 
         if out_ds.GetRasterBand(1).GetMetadataItem('STATISTICS_MINIUM') is not None:
             print(i)
@@ -973,7 +973,7 @@ def test_gdalwarp_lib_127():
 def test_gdalwarp_lib_128():
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1177, 4719)
-    rpc =  [ "HEIGHT_OFF=109",
+    rpc =  ["HEIGHT_OFF=109",
              "LINE_NUM_COEFF=-0.001245683 -0.09427649 -1.006342 -1.954469e-05 0.001033926 2.020534e-08 -3.845472e-07 -0.002075817 0.0005520694 0 -4.642442e-06 -3.271793e-06 2.705977e-05 -7.634384e-07 -2.132832e-05 -3.248862e-05 -8.17894e-06 -3.678094e-07 2.002032e-06 3.693162e-08",
              "LONG_OFF=7.1477",
              "SAMP_DEN_COEFF=1 0.01415176 -0.003715018 -0.001205632 -0.0007738299 4.057763e-05 -1.649126e-05 0.0001453584 0.0001628194 -7.354731e-05 4.821444e-07 -4.927701e-06 -1.942371e-05 -2.817499e-06 1.946396e-06 3.04243e-06 2.362282e-07 -2.5371e-07 -1.36993e-07 1.132432e-07",
@@ -986,7 +986,7 @@ def test_gdalwarp_lib_128():
              "LAT_OFF=33.8992",
              "LINE_OFF=2359",
              "LINE_DEN_COEFF=1 0.0007273139 -0.0006006867 -4.272095e-07 2.578717e-05 4.718479e-06 -2.116976e-06 -1.347805e-05 -2.209958e-05 8.131258e-06 -7.290143e-08 5.105109e-08 -7.353388e-07 0 2.131142e-06 9.697701e-08 1.237039e-08 7.153246e-08 6.758015e-08 5.811124e-08",
-             "HEIGHT_SCALE=96.3" ]
+             "HEIGHT_SCALE=96.3"]
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
 
@@ -1057,7 +1057,7 @@ def test_gdalwarp_lib_129():
         return 'skip'
 
     mem_ds = gdal.GetDriverByName('MEM').Create('', 1000, 2000)
-    rpc =  [  "HEIGHT_OFF=1767",
+    rpc =  ["HEIGHT_OFF=1767",
               "LINE_NUM_COEFF=0.0004430579 -0.06200816 -1.007087 1.614683e-05 0.0009263463 -1.003745e-07 -2.346893e-06 -0.001179024 -0.0007413534 0 9.41488e-08 -4.566652e-07 2.895947e-05 -2.925327e-07 -2.308839e-05 -1.502702e-05 -4.775127e-06 0 4.290483e-07 2.850458e-08",
               "LONG_OFF=-.2282",
               "SAMP_DEN_COEFF=1 -0.01907542 0.01651069 -0.001340671 -0.0005495095 -1.072863e-05 -1.157626e-05 0.0003737224 0.0002712591 -0.0001363199 3.614417e-08 3.584749e-06 9.175671e-06 2.661593e-06 -1.045511e-05 -1.293648e-06 -2.769964e-06 5.931109e-07 -1.018687e-07 2.366109e-07",
@@ -1070,7 +1070,7 @@ def test_gdalwarp_lib_129():
               "LAT_OFF=.4344",
               "LINE_OFF=-115",
               "LINE_DEN_COEFF=1 0.0008882352 -0.0002437686 -2.380782e-06 2.69128e-05 0 2.144654e-07 -2.093549e-05 -7.055149e-06 4.740057e-06 0 -1.588607e-08 -1.397592e-05 0 -7.717698e-07 6.505002e-06 0 -1.225041e-08 3.608499e-08 -4.463376e-08",
-              "HEIGHT_SCALE=1024" ]
+              "HEIGHT_SCALE=1024"]
 
     mem_ds.SetMetadata(rpc, "RPC")
     mem_ds.GetRasterBand(1).Fill(255)
@@ -1192,7 +1192,7 @@ def test_gdalwarp_lib_131():
 
 def test_gdalwarp_lib_132():
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_Float32 ]:
+    for dt in [gdal.GDT_Byte, gdal.GDT_Float32]:
         src_ds = gdal.GetDriverByName('GTiff').Create(
             '/vsimem/test_gdalwarp_lib_132.tif', 33, 1, 2, dt)
         src_ds.SetGeoTransform([100,1,0,200,0,-1])
@@ -1282,8 +1282,8 @@ def test_gdalwarp_lib_134():
 
     src_src_ds = gdal.Open('../gcore/data/byte.tif')
     src_ds = gdal.GetDriverByName('MEM').Create('', 20, 20)
-    src_ds.GetRasterBand(1).WriteRaster( 0, 0, 20, 20, src_src_ds.GetRasterBand(1).ReadRaster() )
-    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = [ 'SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds = [1,2,4,6])
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, src_src_ds.GetRasterBand(1).ReadRaster())
+    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = ['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], outputBounds = [1,2,4,6])
     if ds is None:
         return 'fail'
 
@@ -1293,7 +1293,7 @@ def test_gdalwarp_lib_134():
 
     ds = None
 
-    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = [ 'SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], cutlineDSName = '/vsimem/test_gdalwarp_lib_134.shp', cropToCutline = True)
+    ds = gdal.Warp('', src_ds, format = 'MEM', transformerOptions = ['SRC_METHOD=NO_GEOTRANSFORM', 'DST_METHOD=NO_GEOTRANSFORM'], cutlineDSName = '/vsimem/test_gdalwarp_lib_134.shp', cropToCutline = True)
     if ds is None:
         return 'fail'
 
@@ -1584,7 +1584,7 @@ def test_gdalwarp_lib_135():
         ds = gdal.Warp('', src_ds, format = 'MEM',
                    srcSRS = '+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=/vsimem/empty_grid.tif +vunits=m +no_defs',
                    dstSRS = 'EPSG:4979',
-                   transformerOptions = ['ERROR_ON_MISSING_VERT_SHIFT=YES'] )
+                   transformerOptions = ['ERROR_ON_MISSING_VERT_SHIFT=YES'])
     if ds is not None:
         gdaltest.post_reason('Bad value')
         print(data)
@@ -1653,13 +1653,13 @@ def test_gdalwarp_lib_135():
 def test_gdalwarp_lib_136():
 
     with gdaltest.error_handler():
-        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = [ 'CUTLINE=invalid' ])
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = ['CUTLINE=invalid'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     with gdaltest.error_handler():
-        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'VRT', warpOptions = [ 'CUTLINE=invalid' ])
+        ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'VRT', warpOptions = ['CUTLINE=invalid'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1723,11 +1723,11 @@ def test_gdalwarp_lib_override_default_output_nodata():
         return 'skip'
 
     creationoptionlist = drv.GetMetadataItem('DMD_CREATIONOPTIONLIST')
-    formats = [ 'NC' ]
+    formats = ['NC']
     if creationoptionlist.find('<Value>NC2</Value>') >= 0:
-        formats += [ 'NC2' ]
+        formats += ['NC2']
     if creationoptionlist.find('<Value>NC4</Value>') >= 0:
-        formats += [ 'NC4', 'NC4C' ]
+        formats += ['NC4', 'NC4C']
 
     for format in formats:
         gdal.Warp('tmp/out.nc', '../gcore/data/byte.tif', srcNodata = 255,
@@ -1753,7 +1753,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
 def test_gdalwarp_lib_cleanup():
 
     # We don't clean up when run in debug mode.
-    if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
+    if gdal.GetConfigOption('CPL_DEBUG', 'OFF') == 'ON':
         return 'success'
 
     for i in range(2):
@@ -1840,8 +1840,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalwarp_lib' )
+    gdaltest.setup_run('test_gdalwarp_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

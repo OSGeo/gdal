@@ -43,7 +43,7 @@ from osgeo import gdal
 # hsv values will be with hue and saturation in the range [0,1] and value
 # in the range [0,255]
 #
-def rgb_to_hsv( r,g,b ):
+def rgb_to_hsv(r,g,b):
 
     maxc = numpy.maximum(r,numpy.maximum(g,b))
     minc = numpy.minimum(r,numpy.minimum(g,b))
@@ -54,7 +54,7 @@ def rgb_to_hsv( r,g,b ):
 
     # compute the difference, but reset zeros to ones to avoid divide by zeros later.
     ones = numpy.ones((r.shape[0],r.shape[1]))
-    maxc_minus_minc = numpy.choose( minc_eq_maxc, (maxc-minc,ones) )
+    maxc_minus_minc = numpy.choose(minc_eq_maxc, (maxc-minc,ones))
 
     s = (maxc-minc) / numpy.maximum(ones,maxc)
     rc = (maxc-r) / maxc_minus_minc
@@ -66,9 +66,9 @@ def rgb_to_hsv( r,g,b ):
     maxc_is_b = numpy.equal(maxc,b)
 
     h = numpy.zeros((r.shape[0],r.shape[1]))
-    h = numpy.choose( maxc_is_b, (h,4.0+gc-rc) )
-    h = numpy.choose( maxc_is_g, (h,2.0+rc-bc) )
-    h = numpy.choose( maxc_is_r, (h,bc-gc) )
+    h = numpy.choose(maxc_is_b, (h,4.0+gc-rc))
+    h = numpy.choose(maxc_is_g, (h,2.0+rc-bc))
+    h = numpy.choose(maxc_is_r, (h,bc-gc))
 
     h = numpy.mod(h/6.0,1.0)
 
@@ -82,7 +82,7 @@ def rgb_to_hsv( r,g,b ):
 # hsv comes in as [h,s,v] with hue and saturation in the range [0,1],
 # but value in the range [0,255].
 
-def hsv_to_rgb( hsv ):
+def hsv_to_rgb(hsv):
 
     h = hsv[0]
     s = hsv[1]
@@ -95,9 +95,9 @@ def hsv_to_rgb( hsv ):
     q = v*(1.0 - s*f)
     t = v*(1.0 - s*(1.0-f))
 
-    r = i.choose( v, q, p, p, t, v )
-    g = i.choose( t, v, v, q, p, p )
-    b = i.choose( p, p, t, v, v, q )
+    r = i.choose(v, q, p, p, t, v)
+    g = i.choose(t, v, v, q, p, p)
+    b = i.choose(p, p, t, v, v, q)
 
     rgb = numpy.asarray([r,g,b]).astype(numpy.uint8)
 
@@ -120,9 +120,9 @@ where src_color is a RGB or RGBA dataset,
 # 	Mainline
 # =============================================================================
 
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 format = 'GTiff'
 src_color_filename = None
@@ -160,8 +160,8 @@ if dst_color_filename is None:
 
 datatype = gdal.GDT_Byte
 
-hilldataset = gdal.Open( src_greyscale_filename, gdal.GA_ReadOnly )
-colordataset = gdal.Open( src_color_filename, gdal.GA_ReadOnly )
+hilldataset = gdal.Open(src_greyscale_filename, gdal.GA_ReadOnly)
+colordataset = gdal.Open(src_color_filename, gdal.GA_ReadOnly)
 
 #check for 3 or 4 bands in the color file
 if (colordataset.RasterCount != 3 and colordataset.RasterCount != 4):
@@ -201,7 +201,7 @@ for i in range(hillband.YSize):
     hillScanline = hillband.ReadAsArray(0, i, hillband.XSize, 1, hillband.XSize, 1)
 
     #convert to HSV
-    hsv = rgb_to_hsv( rScanline, gScanline, bScanline )
+    hsv = rgb_to_hsv(rScanline, gScanline, bScanline)
 
     # if there's nodata on the hillband, use the v value from the color
     # dataset instead of the hillshade value.
@@ -212,10 +212,10 @@ for i in range(hillband.YSize):
         v = hillScanline
 
     #replace v with hillshade
-    hsv_adjusted = numpy.asarray( [hsv[0], hsv[1], v] )
+    hsv_adjusted = numpy.asarray([hsv[0], hsv[1], v])
 
     #convert back to RGB
-    dst_color = hsv_to_rgb( hsv_adjusted )
+    dst_color = hsv_to_rgb(hsv_adjusted)
 
     #write out new RGB bands to output one band at a time
     outband = outdataset.GetRasterBand(1)
@@ -231,4 +231,4 @@ for i in range(hillband.YSize):
 
     #update progress line
     if not quiet:
-        gdal.TermProgress_nocb( (float(i+1) / hillband.YSize) )
+        gdal.TermProgress_nocb((float(i+1) / hillband.YSize))

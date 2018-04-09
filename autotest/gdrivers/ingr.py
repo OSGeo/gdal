@@ -34,7 +34,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,7 +43,7 @@ import gdaltest
 
 def ingr_1():
 
-    tst = gdaltest.GDALTest( 'INGR', '8bit_rgb.cot', 2, 4855 )
+    tst = gdaltest.GDALTest('INGR', '8bit_rgb.cot', 2, 4855)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,7 +51,7 @@ def ingr_1():
 
 def ingr_2():
 
-    tst = gdaltest.GDALTest( 'INGR', 'uint32.cot', 1, 4672 )
+    tst = gdaltest.GDALTest('INGR', 'uint32.cot', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################
@@ -59,15 +59,15 @@ def ingr_2():
 
 def ingr_3():
 
-    tst = gdaltest.GDALTest( 'INGR', '8bit_pal.cot', 1, 4855 )
+    tst = gdaltest.GDALTest('INGR', '8bit_pal.cot', 1, 4855)
     result = tst.testOpen()
     if result != 'success':
         return result
 
-    ds = gdal.Open( 'data/8bit_pal.cot' )
+    ds = gdal.Open('data/8bit_pal.cot')
     ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 256 or ct.GetColorEntry(8) != (8,8,8,255):
-        gdaltest.post_reason( 'Wrong color table entry.' )
+        gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
     return 'success'
@@ -77,7 +77,7 @@ def ingr_3():
 
 def ingr_4():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testOpen()
 
 ###############################################################################
@@ -85,7 +85,7 @@ def ingr_4():
 
 def ingr_5():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testCreate()
 
 ###############################################################################
@@ -93,7 +93,7 @@ def ingr_5():
 
 def ingr_6():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
+    tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
     return tst.testCreate()
 
 ###############################################################################
@@ -101,7 +101,7 @@ def ingr_6():
 
 def ingr_7():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt30.cot', 1, 29718 )
+    tst = gdaltest.GDALTest('INGR', 'frmt30.cot', 1, 29718)
     return tst.testOpen()
 
 ###############################################################################
@@ -109,7 +109,7 @@ def ingr_7():
 
 def ingr_8():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt09.cot', 1, 23035 )
+    tst = gdaltest.GDALTest('INGR', 'frmt09.cot', 1, 23035)
     return tst.testOpen()
 
 ###############################################################################
@@ -117,7 +117,7 @@ def ingr_8():
 
 def ingr_9():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt10.cot', 1, 47031 )
+    tst = gdaltest.GDALTest('INGR', 'frmt10.cot', 1, 47031)
     return tst.testOpen()
 
 ###############################################################################
@@ -125,7 +125,7 @@ def ingr_9():
 
 def ingr_10():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 23035 )
+    tst = gdaltest.GDALTest('INGR', 'frmt24.cit', 1, 23035)
     return tst.testOpen()
 
 ###############################################################################
@@ -133,7 +133,7 @@ def ingr_10():
 
 def ingr_11():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt27.cot', 2, 45616 )
+    tst = gdaltest.GDALTest('INGR', 'frmt27.cot', 2, 45616)
     return tst.testOpen()
 
 ###############################################################################
@@ -141,7 +141,7 @@ def ingr_11():
 
 def ingr_12():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt28.cot', 2, 45616 )
+    tst = gdaltest.GDALTest('INGR', 'frmt28.cot', 2, 45616)
     return tst.testOpen()
 
 ###############################################################################
@@ -149,7 +149,7 @@ def ingr_12():
 
 def ingr_13():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt29.cot', 1, 26968 )
+    tst = gdaltest.GDALTest('INGR', 'frmt29.cot', 1, 26968)
     return tst.testOpen()
 
 ###############################################################################
@@ -172,11 +172,11 @@ def ingr_14():
 
 def ingr_15():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
-    result = tst.testCreateCopy( vsimem = 1 )
+    tst = gdaltest.GDALTest('INGR', 'frmt02.cot', 1, 26968)
+    result = tst.testCreateCopy(vsimem = 1)
 
     try:
-        os.remove( 'data/frmt02.cot.aux.xml' )
+        os.remove('data/frmt02.cot.aux.xml')
     except:
         pass
 
@@ -187,7 +187,7 @@ def ingr_15():
 
 def ingr_16():
 
-    tst = gdaltest.GDALTest( 'INGR', 'frmt09t.cot', 1, 3178 )
+    tst = gdaltest.GDALTest('INGR', 'frmt09t.cot', 1, 3178)
     return tst.testOpen()
 
 ###############################################################################
@@ -269,13 +269,13 @@ gdaltest_list = [
     ingr_16,
     ingr_17,
     ingr_18,
-    ingr_cleanup ]
+    ingr_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ingr' )
+    gdaltest.setup_run('ingr')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

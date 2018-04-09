@@ -29,7 +29,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -38,15 +38,15 @@ import gdaltest
 
 def bmp_vsimem():
 
-    tst = gdaltest.GDALTest( 'BMP', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('BMP', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( vsimem = 1 )
+    return tst.testCreateCopy(vsimem = 1)
 
 
 ###############################################################################
 # When imported build a list of units based on the files available.
 
-gdaltest_list = [ bmp_vsimem ]
+gdaltest_list = [bmp_vsimem]
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),
@@ -54,20 +54,20 @@ init_list = [ \
     ('8bit_pal.bmp', 1, 4672, None),]
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'BMP', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('BMP', item[0], item[1], item[2])
     if ut is None:
-        print( 'BMP tests skipped' )
+        print('BMP tests skipped')
         sys.exit()
-    gdaltest_list.append( (ut.testCreateCopy, item[0]) )
-    gdaltest_list.append( (ut.testCreate, item[0]) )
+    gdaltest_list.append((ut.testCreateCopy, item[0]))
+    gdaltest_list.append((ut.testCreate, item[0]))
 
-gdaltest_list.append( (gdaltest.clean_tmp, 'bmp_cleanup') )
+gdaltest_list.append((gdaltest.clean_tmp, 'bmp_cleanup'))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'bmp_write' )
+    gdaltest.setup_run('bmp_write')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

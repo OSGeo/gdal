@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,7 +39,7 @@ import gdaltest
 
 def elas_1():
 
-    tst = gdaltest.GDALTest( 'ELAS', 'byte_elas.bin', 1, 4672 )
+    tst = gdaltest.GDALTest('ELAS', 'byte_elas.bin', 1, 4672)
     return tst.testOpen()
 
 ###############################################################################
@@ -47,18 +47,18 @@ def elas_1():
 
 def elas_2():
 
-    tst = gdaltest.GDALTest( 'ELAS', 'byte_elas.bin', 1, 4672 )
+    tst = gdaltest.GDALTest('ELAS', 'byte_elas.bin', 1, 4672)
     return tst.testCreate()
 
 gdaltest_list = [
     elas_1,
-    elas_2 ]
+    elas_2]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'elas' )
+    gdaltest.setup_run('elas')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

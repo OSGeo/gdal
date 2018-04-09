@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -62,7 +62,7 @@ def ogr_pds_1():
         return 'fail'
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (146.1325 -55.648)',
-                                      max_error = 0.000000001 ) != 0:
+                                      max_error = 0.000000001) != 0:
         print('did not get expected geom')
         print(geom.ExportToWkt())
         return 'fail'
@@ -76,13 +76,13 @@ def ogr_pds_1():
     return 'success'
 
 gdaltest_list = [
-    ogr_pds_1 ]
+    ogr_pds_1]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_pds' )
+    gdaltest.setup_run('ogr_pds')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -375,7 +375,7 @@ def download_inspire_schemas(target_dir = '.', \
     except:
         gdaltest.download_file('http://inspire.ec.europa.eu/schemas/inspire_vs/1.0.1.zip', target_dir + '/' + 'inspire_vs_1.0.1.zip', base_dir = '.', force_download = force_download)
 
-    for subdir in [ '', '/common', '/inspire_vs', '/inspire_dls', '/inspire_dls/1.0']:
+    for subdir in ['', '/common', '/inspire_vs', '/inspire_dls', '/inspire_dls/1.0']:
         try:
             os.mkdir(target_dir + '/' + target_subdir + subdir)
         except:

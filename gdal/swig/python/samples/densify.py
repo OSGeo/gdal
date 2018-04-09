@@ -97,7 +97,7 @@ class Translator(object):
 
         if not self.out_drv:
             raise Exception("The '%s' driver was not found, did you misspell it or is it not available in this GDAL build?", self.options.driver)
-        if not self.out_drv.TestCapability( 'CreateDataSource' ):
+        if not self.out_drv.TestCapability('CreateDataSource'):
             raise Exception("The '%s' driver does not support creating layers, you will have to choose another output driver", self.options.driver)
         if not self.options.output:
             raise Exception("No output layer was specified")
@@ -119,14 +119,14 @@ class Translator(object):
         else:
             dsco = (),
 
-        self.out_ds = self.out_drv.CreateDataSource( self.options.output, dsco)
+        self.out_ds = self.out_drv.CreateDataSource(self.options.output, dsco)
 
         if self.options.t_srs:
             self.out_srs = osr.SpatialReference()
             self.out_srs.SetFromUserInput(self.options.t_srs)
         else:
             self.out_srs = None
-        self.output = self.out_ds.CreateLayer(  self.options.output,
+        self.output = self.out_ds.CreateLayer(self.options.output,
                                                 geom_type = self.input.GetLayerDefn().GetGeomType(),
                                                 srs= self.out_srs)
 

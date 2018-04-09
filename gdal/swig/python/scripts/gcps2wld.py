@@ -40,7 +40,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 filename = sys.argv[1]
-dataset = gdal.Open( filename )
+dataset = gdal.Open(filename)
 if dataset is None:
     print('Unable to open %s' % filename)
     sys.exit(1)
@@ -51,11 +51,11 @@ if gcps is None or len(gcps) == 0:
     print('No GCPs found on file ' + filename)
     sys.exit(1)
 
-geotransform = gdal.GCPsToGeoTransform( gcps )
+geotransform = gdal.GCPsToGeoTransform(gcps)
 
 if geotransform is None:
     print('Unable to extract a geotransform.')
-    sys.exit( 1 )
+    sys.exit(1)
 
 print(geotransform[1])
 print(geotransform[4])

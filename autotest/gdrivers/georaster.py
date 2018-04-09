@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -67,13 +67,13 @@ def georaster_init():
     if os.environ.get('OCI_DSNAME') is None:
         return 'skip'
 
-    gdaltest.oci_ds = ogr.Open( os.environ.get('OCI_DSNAME') )
+    gdaltest.oci_ds = ogr.Open(os.environ.get('OCI_DSNAME'))
 
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    rs = gdaltest.oci_ds.ExecuteSQL( 'select owner from all_sdo_geor_sysdata' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    rs = gdaltest.oci_ds.ExecuteSQL('select owner from all_sdo_geor_sysdata')
     gdal.PopErrorHandler()
 
     err_msg = gdal.GetLastErrorMsg()
@@ -83,8 +83,8 @@ def georaster_init():
         rs = None
 
     if err_msg != '':
-        gdaltest.post_reason( 'ALL_SDO_GEOR_SYSDATA inaccessible, '
-                              'likely georaster unavailable.' )
+        gdaltest.post_reason('ALL_SDO_GEOR_SYSDATA inaccessible, '
+                              'likely georaster unavailable.')
 
         gdaltest.oci_ds = None
         return 'skip'
@@ -104,16 +104,16 @@ def georaster_byte():
 
     ds_src = gdal.Open('data/byte.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
-        "INSERT=(1001, sdo_geor.init('GDAL_TEST_RDT',1001))" ] )
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1001, sdo_geor.init('GDAL_TEST_RDT',1001))"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 4672, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -132,16 +132,16 @@ def georaster_int16():
 
     ds_src = gdal.Open('data/int16.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
-        "INSERT=(1002, sdo_geor.init('GDAL_TEST_RDT',1002))" ] )
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1002, sdo_geor.init('GDAL_TEST_RDT',1002))"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 4672, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -160,16 +160,16 @@ def georaster_int32():
 
     ds_src = gdal.Open('data/int32.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
-        "INSERT=(1003, sdo_geor.init('GDAL_TEST_RDT',1003))" ] )
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
+        "INSERT=(1003, sdo_geor.init('GDAL_TEST_RDT',1003))"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 4672, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -186,17 +186,17 @@ def georaster_rgb_b1():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1004, sdo_geor.init('GDAL_TEST_RDT',1004))",
-        "BLOCKBSIZE=1" ] )
+        "BLOCKBSIZE=1"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -213,17 +213,17 @@ def georaster_rgb_b2():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1005, sdo_geor.init('GDAL_TEST_RDT',1005))",
-        "BLOCKBSIZE=2" ] )
+        "BLOCKBSIZE=2"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -240,17 +240,17 @@ def georaster_rgb_b3_bsq():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1006, sdo_geor.init('GDAL_TEST_RDT',1006))",
-        "BLOCKBSIZE=3", "INTERLEAVE=BSQ" ] )
+        "BLOCKBSIZE=3", "INTERLEAVE=BSQ"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -267,17 +267,17 @@ def georaster_rgb_b3_bip():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1007, sdo_geor.init('GDAL_TEST_RDT',1007))",
-        "BLOCKBSIZE=3", "INTERLEAVE=BIP" ] )
+        "BLOCKBSIZE=3", "INTERLEAVE=BIP"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -294,17 +294,17 @@ def georaster_rgb_b3_bil():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1008, sdo_geor.init('GDAL_TEST_RDT',1008))",
-        "BLOCKBSIZE=3", "INTERLEAVE=BIL" ] )
+        "BLOCKBSIZE=3", "INTERLEAVE=BIL"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -321,17 +321,17 @@ def georaster_byte_deflate():
 
     ds_src = gdal.Open('data/byte.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1009, sdo_geor.init('GDAL_TEST_RDT',1009))",
-        "COMPRESS=DEFLATE" ] )
+        "COMPRESS=DEFLATE"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 4672, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 4672, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -348,17 +348,17 @@ def georaster_rgb_deflate_b3():
 
     ds_src = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1010, sdo_geor.init('GDAL_TEST_RDT',1010))",
-        "COMPRESS=DEFLATE", "BLOCKBSIZE=3", "INTERLEAVE=PIXEL" ] )
+        "COMPRESS=DEFLATE", "BLOCKBSIZE=3", "INTERLEAVE=PIXEL"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 21212, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 21212, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -375,17 +375,17 @@ def georaster_1bit():
 
     ds_src = gdal.Open('data/byte.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1011, sdo_geor.init('GDAL_TEST_RDT',1011))" ,
-        "NBITS=1"] )
+        "NBITS=1"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 252, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 252, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -402,17 +402,17 @@ def georaster_2bit():
 
     ds_src = gdal.Open('data/byte.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1012, sdo_geor.init('GDAL_TEST_RDT',1012))" ,
-        "NBITS=2"] )
+        "NBITS=2"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 718, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 718, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -429,17 +429,17 @@ def georaster_4bit():
 
     ds_src = gdal.Open('data/byte.tif')
 
-    ds = gdaltest.georasterDriver.CreateCopy( get_connection_str() +
+    ds = gdaltest.georasterDriver.CreateCopy(get_connection_str() +
         ',GDAL_TEST,RASTER', ds_src, 1,
-        [ "DESCRIPTION=(id number, raster sdo_georaster)" ,
+        ["DESCRIPTION=(id number, raster sdo_georaster)" ,
         "INSERT=(1013, sdo_geor.init('GDAL_TEST_RDT',1013))" ,
-        "NBITS=4"] )
+        "NBITS=4"])
 
     ds_name = ds.GetDescription()
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'GeoRaster', ds_name, 1, 2578, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GeoRaster', ds_name, 1, 2578, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -454,8 +454,8 @@ def georaster_cleanup():
     if gdaltest.oci_ds is None:
         return 'skip'
 
-    gdaltest.oci_ds.ExecuteSQL( 'drop table GDAL_TEST' )
-    gdaltest.oci_ds.ExecuteSQL( 'drop table GDAL_TEST_RDT' )
+    gdaltest.oci_ds.ExecuteSQL('drop table GDAL_TEST')
+    gdaltest.oci_ds.ExecuteSQL('drop table GDAL_TEST_RDT')
 
     gdaltest.oci_ds.Destroy()
     gdaltest.oci_ds = None
@@ -490,9 +490,9 @@ if __name__ == '__main__':
         oci_dsname = string.strip(sys.stdin.readline())
         os.environ['OCI_DSNAME'] = oci_dsname
 
-    gdaltest.setup_run( 'GeoRaster' )
+    gdaltest.setup_run('GeoRaster')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,7 +39,7 @@ import gdaltest
 
 def mff_1():
 
-    tst = gdaltest.GDALTest( 'MFF', 'fakemff.hdr', 1, 1 )
+    tst = gdaltest.GDALTest('MFF', 'fakemff.hdr', 1, 1)
     return tst.testOpen()
 
 ###############################################################################
@@ -47,7 +47,7 @@ def mff_1():
 
 def mff_2():
 
-    tst = gdaltest.GDALTest( 'MFF', 'fakemfftiled.hdr', 1, 1 )
+    tst = gdaltest.GDALTest('MFF', 'fakemfftiled.hdr', 1, 1)
     return tst.testOpen()
 
 
@@ -56,18 +56,18 @@ def mff_2():
 
 def mff_3():
 
-    tst = gdaltest.GDALTest( 'MFF', 'bytemff.hdr', 1, 4672 )
+    tst = gdaltest.GDALTest('MFF', 'bytemff.hdr', 1, 4672)
     return tst.testOpen()
 
 gdaltest_list = [
     mff_1,
     mff_2,
-    mff_3 ]
+    mff_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mff' )
+    gdaltest.setup_run('mff')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

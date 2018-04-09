@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,14 +42,14 @@ import gdaltest
 # Perform simple read test.
 def rraster_1(filename = 'data/byte_rraster.grd', check_prj = None):
 
-    tst = gdaltest.GDALTest( 'RRASTER', filename, 1, 4672, filename_absolute = True )
+    tst = gdaltest.GDALTest('RRASTER', filename, 1, 4672, filename_absolute = True)
     ref_ds = gdal.Open('data/byte.tif')
     if check_prj is None:
         check_prj = ref_ds.GetProjectionRef()
-    ret = tst.testOpen( check_prj = check_prj,
+    ret = tst.testOpen(check_prj = check_prj,
                         check_gt = ref_ds.GetGeoTransform(),
                         check_min = 74,
-                        check_max = 255 )
+                        check_max = 255)
     if ret != 'success':
         return ret
 
@@ -148,7 +148,7 @@ def rraster_rgba_copy():
 
     filename = '/vsimem/rgba_rraster.grd'
 
-    for creationOptions in [ [], ['INTERLEAVE=BIP'], ['INTERLEAVE=BIL'], ['INTERLEAVE=BSQ'] ]:
+    for creationOptions in [[], ['INTERLEAVE=BIP'], ['INTERLEAVE=BIL'], ['INTERLEAVE=BSQ']]:
         gdal.Translate(filename, 'data/rgba_rraster.grd', format = 'RRASTER',
                     creationOptions = creationOptions)
         if gdal.VSIStatL(filename + '.aux.xml'):
@@ -380,7 +380,7 @@ def rraster_nodata_and_metadata():
     ds.SetMetadataItem('CREATED', 'Today')
     ds = None
     ds = gdal.Open(filename)
-    if ds.GetMetadata() != { 'CREATOR': 'GDAL', 'CREATED': 'Today'}:
+    if ds.GetMetadata() != {'CREATOR': 'GDAL', 'CREATED': 'Today'}:
         gdaltest.post_reason('fail')
         return 'fail'
     if ds.GetRasterBand(1).GetNoDataValue() != 1:
@@ -465,9 +465,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'RRASTER' )
+    gdaltest.setup_run('RRASTER')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

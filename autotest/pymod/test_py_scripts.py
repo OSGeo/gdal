@@ -39,7 +39,7 @@ import sys
 #
 def get_py_script(script_name):
 
-    for subdir in [ 'scripts', 'samples' ]:
+    for subdir in ['scripts', 'samples']:
         try:
             # Test subversion layout : {root_dir}/gdal, {root_dir}/autotest
             test_path = os.path.join(os.getcwd(), '..', '..', 'gdal', 'swig', 'python', subdir)
@@ -115,7 +115,7 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
     # Replace argv by user provided one
     # Add first a fake first arg that we set to be the script
     # name but which could be any arbitrary name
-    sys.argv = [ script_name + '.py' ]
+    sys.argv = [script_name + '.py']
 
     import shlex
     sys.argv.extend(shlex.split(concatenated_argv))

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,17 +39,17 @@ import gdaltest
 
 def eir_1():
 
-    tst = gdaltest.GDALTest( 'EIR', 'fakeeir.hdr', 1, 1 )
+    tst = gdaltest.GDALTest('EIR', 'fakeeir.hdr', 1, 1)
     return tst.testOpen()
 
 gdaltest_list = [
-    eir_1 ]
+    eir_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'eir' )
+    gdaltest.setup_run('eir')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

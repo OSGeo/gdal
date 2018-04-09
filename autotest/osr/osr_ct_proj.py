@@ -33,7 +33,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr, gdal
@@ -44,8 +44,8 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 # Class to perform the tests.
 
 class ProjTest:
-    def __init__( self, src_srs, src_xyz, src_error,
-                  dst_srs, dst_xyz, dst_error, options, requirements ):
+    def __init__(self, src_srs, src_xyz, src_error,
+                  dst_srs, dst_xyz, dst_error, options, requirements):
         self.src_srs = src_srs
         self.src_xyz = src_xyz
         self.src_error = src_error
@@ -70,18 +70,18 @@ class ProjTest:
                 return 'skip'
 
             try:
-                open( proj_lib + '/' + self.requirements[5:] )
+                open(proj_lib + '/' + self.requirements[5:])
             except:
                 #print( 'Did not find GRID:%s' % self.requirements[5:] )
                 return 'skip'
 
         src = osr.SpatialReference()
-        if src.SetFromUserInput( self.src_srs ) != 0:
+        if src.SetFromUserInput(self.src_srs) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.src_srs)
             return 'fail'
 
         dst = osr.SpatialReference()
-        if dst.SetFromUserInput( self.dst_srs ) != 0:
+        if dst.SetFromUserInput(self.dst_srs) != 0:
             gdaltest.post_reason('SetFromUserInput(%s) failed.' % self.dst_srs)
             return 'fail'
 
@@ -91,52 +91,52 @@ class ProjTest:
             additionnal_error_str = ''
 
         try:
-            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-            ct = osr.CoordinateTransformation( src, dst )
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ct = osr.CoordinateTransformation(src, dst)
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
             else:
-                gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+                gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
                 return 'fail'
         except:
             gdal.PopErrorHandler()
-            gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
             return 'fail'
 
         ######################################################################
         # Transform source point to destination SRS.
 
-        result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
+        result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
 
         error = abs(result[0] - self.dst_xyz[0]) \
                 + abs(result[1] - self.dst_xyz[1]) \
                 + abs(result[2] - self.dst_xyz[2])
 
         if error > self.dst_error:
-            gdaltest.post_reason( 'Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
-                                  % (error, result[0], result[1], result[2], additionnal_error_str) )
+            gdaltest.post_reason('Dest error is %g, got (%.15g,%.15g,%.15g)%s' \
+                                  % (error, result[0], result[1], result[2], additionnal_error_str))
             return 'fail'
 
         ######################################################################
         # Now transform back.
 
-        ct = osr.CoordinateTransformation( dst, src )
+        ct = osr.CoordinateTransformation(dst, src)
 
-        result = ct.TransformPoint( result[0], result[1], result[2] )
+        result = ct.TransformPoint(result[0], result[1], result[2])
 
         error = abs(result[0] - self.src_xyz[0]) \
                 + abs(result[1] - self.src_xyz[1]) \
                 + abs(result[2] - self.src_xyz[2])
 
         if error > self.src_error:
-            gdaltest.post_reason( 'Back to source error is %g.%s' % (error, additionnal_error_str) )
+            gdaltest.post_reason('Back to source error is %g.%s' % (error, additionnal_error_str))
             return 'fail'
 
         return 'success'
@@ -164,7 +164,7 @@ transform_list = [ \
     # Simple straight forward reprojection.
     ('+proj=utm +zone=11 +datum=WGS84', (398285.45, 2654587.59, 0.0), 0.02,
      'WGS84', (-118.0, 24.0, 0.0), 0.00001,
-     'UTM_WGS84', None, None ),
+     'UTM_WGS84', None, None),
 
     # Ensure that prime meridian *and* axis orientation changes are applied.
     # Note that this test will fail with PROJ.4 4.7 or earlier, it requires
@@ -176,7 +176,7 @@ transform_list = [ \
     # Verify that 26592 "pcs.override" is working well.
     ('EPSG:26591', (1550000, 10000, 0.0), 0.02,
      'EPSG:4265', (9.449316,0.090469,0.00), 0.00001,
-     'MMRome1_MMGreenwich', None, None ),
+     'MMRome1_MMGreenwich', None, None),
 
     # Test Bonne projection.
     ('WGS84', (1.0, 65.0, 0.0), 0.00001,
@@ -211,7 +211,7 @@ transform_list = [ \
     # Test Vertical Datum Shift with a change of horizontal and vert units.
     ('+proj=utm +zone=11 +datum=WGS84', (100000.0,3500000.0,0.0), 0.1,
      '+proj=utm +zone=11 +datum=WGS84 +geoidgrids=egm96_15.gtx +units=us-ft', (328083.333225467,11482916.6665952,136.055454832886), 0.01,
-     'EGM 96 Conversion', None, "GRID:egm96_15.gtx" ),
+     'EGM 96 Conversion', None, "GRID:egm96_15.gtx"),
 
     # Test optimization in case of identical projections (projected)
     ('+proj=utm +zone=11 +datum=NAD27 +units=m', (440720.0,3751260.0,0.0), 0,
@@ -236,16 +236,16 @@ transform_list = [ \
 gdaltest_list = []
 
 for item in transform_list:
-    ut = ProjTest( item[0], item[1], item[2],
+    ut = ProjTest(item[0], item[1], item[2],
                    item[3], item[4], item[5],
-                   item[7], item[8] )
-    gdaltest_list.append( (ut.testProj, item[6]) )
+                   item[7], item[8])
+    gdaltest_list.append((ut.testProj, item[6]))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_ct_proj' )
+    gdaltest.setup_run('osr_ct_proj')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

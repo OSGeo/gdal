@@ -38,7 +38,7 @@ from osgeo import osr
 #############################################################################
 class Module:
 
-    def __init__( self ):
+    def __init__(self):
         self.lines = {}
         self.poly_line_links = {}
 
@@ -78,9 +78,9 @@ if infile is None:
 #############################################################################
 # Open the datasource to operate on.
 
-ds = ogr.Open( infile, update = 0 )
+ds = ogr.Open(infile, update = 0)
 
-poly_layer = ds.GetLayerByName( 'Polygon' )
+poly_layer = ds.GetLayerByName('Polygon')
 
 #############################################################################
 #	Create output file for the composed polygons.
@@ -88,40 +88,40 @@ poly_layer = ds.GetLayerByName( 'Polygon' )
 nad83 = osr.SpatialReference()
 nad83.SetFromUserInput('NAD83')
 
-shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
-shp_driver.DeleteDataSource( outfile )
+shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+shp_driver.DeleteDataSource(outfile)
 
-shp_ds = shp_driver.CreateDataSource( outfile )
+shp_ds = shp_driver.CreateDataSource(outfile)
 
-shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPolygon,
-                                srs = nad83 )
+shp_layer = shp_ds.CreateLayer('out', geom_type = ogr.wkbPolygon,
+                                srs = nad83)
 
 src_defn = poly_layer.GetLayerDefn()
 poly_field_count = src_defn.GetFieldCount()
 
 for fld_index in range(poly_field_count):
-    src_fd = src_defn.GetFieldDefn( fld_index )
+    src_fd = src_defn.GetFieldDefn(fld_index)
 
-    fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
-    fd.SetWidth( src_fd.GetWidth() )
-    fd.SetPrecision( src_fd.GetPrecision() )
-    shp_layer.CreateField( fd )
+    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+    fd.SetWidth(src_fd.GetWidth())
+    fd.SetPrecision(src_fd.GetPrecision())
+    shp_layer.CreateField(fd)
 
 #############################################################################
 # Read all features in the line layer, holding just the geometry in a hash
 # for fast lookup by TLID.
 
-line_layer = ds.GetLayerByName( 'CompleteChain' )
+line_layer = ds.GetLayerByName('CompleteChain')
 line_count = 0
 
 modules_hash = {}
 
 feat = line_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex( 'TLID' )
-tile_ref_field = feat.GetFieldIndex( 'MODULE' )
+geom_id_field = feat.GetFieldIndex('TLID')
+tile_ref_field = feat.GetFieldIndex('MODULE')
 while feat is not None:
-    geom_id = feat.GetField( geom_id_field )
-    tile_ref = feat.GetField( tile_ref_field )
+    geom_id = feat.GetField(geom_id_field)
+    tile_ref = feat.GetField(tile_ref_field)
 
     try:
         module = modules_hash[tile_ref]
@@ -142,23 +142,23 @@ print('Got %d lines in %d modules.' % (line_count,len(modules_hash)))
 # Read all polygon/chain links and build a hash keyed by POLY_ID listing
 # the chains (by TLID) attached to it.
 
-link_layer = ds.GetLayerByName( 'PolyChainLink' )
+link_layer = ds.GetLayerByName('PolyChainLink')
 
 feat = link_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex( 'TLID' )
-tile_ref_field = feat.GetFieldIndex( 'MODULE' )
-lpoly_field = feat.GetFieldIndex( 'POLYIDL' )
-rpoly_field = feat.GetFieldIndex( 'POLYIDR' )
+geom_id_field = feat.GetFieldIndex('TLID')
+tile_ref_field = feat.GetFieldIndex('MODULE')
+lpoly_field = feat.GetFieldIndex('POLYIDL')
+rpoly_field = feat.GetFieldIndex('POLYIDR')
 
 link_count = 0
 
 while feat is not None:
-    module = modules_hash[feat.GetField( tile_ref_field )]
+    module = modules_hash[feat.GetField(tile_ref_field)]
 
-    tlid = feat.GetField( geom_id_field )
+    tlid = feat.GetField(geom_id_field)
 
-    lpoly_id = feat.GetField( lpoly_field )
-    rpoly_id = feat.GetField( rpoly_field )
+    lpoly_id = feat.GetField(lpoly_field)
+    rpoly_id = feat.GetField(rpoly_field)
 
     if lpoly_id == rpoly_id:
         feat.Destroy()
@@ -166,14 +166,14 @@ while feat is not None:
         continue
 
     try:
-        module.poly_line_links[lpoly_id].append( tlid )
+        module.poly_line_links[lpoly_id].append(tlid)
     except:
-        module.poly_line_links[lpoly_id] = [ tlid ]
+        module.poly_line_links[lpoly_id] = [tlid]
 
     try:
-        module.poly_line_links[rpoly_id].append( tlid )
+        module.poly_line_links[rpoly_id].append(tlid)
     except:
-        module.poly_line_links[rpoly_id] = [ tlid ]
+        module.poly_line_links[rpoly_id] = [tlid]
 
     link_count = link_count + 1
 
@@ -187,25 +187,25 @@ print('Processed %d links.' % link_count)
 # Process all polygon features.
 
 feat = poly_layer.GetNextFeature()
-tile_ref_field = feat.GetFieldIndex( 'MODULE' )
-polyid_field = feat.GetFieldIndex( 'POLYID' )
+tile_ref_field = feat.GetFieldIndex('MODULE')
+polyid_field = feat.GetFieldIndex('POLYID')
 
 poly_count = 0
 degenerate_count = 0
 
 while feat is not None:
-    module = modules_hash[feat.GetField( tile_ref_field )]
-    polyid = feat.GetField( polyid_field )
+    module = modules_hash[feat.GetField(tile_ref_field)]
+    polyid = feat.GetField(polyid_field)
 
     tlid_list = module.poly_line_links[polyid]
 
-    link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
+    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
     for tlid in tlid_list:
         geom = module.lines[tlid]
-        link_coll.AddGeometry( geom )
+        link_coll.AddGeometry(geom)
 
     try:
-        poly = ogr.BuildPolygonFromEdges( link_coll )
+        poly = ogr.BuildPolygonFromEdges(link_coll)
 
         if poly.GetGeometryRef(0).GetPointCount() < 4:
             degenerate_count = degenerate_count + 1
@@ -220,11 +220,11 @@ while feat is not None:
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
 
         for fld_index in range(poly_field_count):
-            feat2.SetField( fld_index, feat.GetField( fld_index ) )
+            feat2.SetField(fld_index, feat.GetField(fld_index))
 
-        feat2.SetGeometryDirectly( poly )
+        feat2.SetGeometryDirectly(poly)
 
-        shp_layer.CreateFeature( feat2 )
+        shp_layer.CreateFeature(feat2)
         feat2.Destroy()
 
         poly_count = poly_count + 1

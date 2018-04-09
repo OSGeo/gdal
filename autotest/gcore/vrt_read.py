@@ -35,7 +35,7 @@ import sys
 import shutil
 import struct
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -109,11 +109,11 @@ def vrt_read_3():
 
     driver_tif = gdal.GetDriverByName("GTIFF")
 
-    output_dst = driver_tif.Create( 'tmp/test_mosaic1.tif', 100, 100, 3, gdal.GDT_Byte)
+    output_dst = driver_tif.Create('tmp/test_mosaic1.tif', 100, 100, 3, gdal.GDT_Byte)
     output_dst.GetRasterBand(1).Fill(255)
     output_dst = None
 
-    output_dst = driver_tif.Create( 'tmp/test_mosaic2.tif', 100, 100, 3, gdal.GDT_Byte)
+    output_dst = driver_tif.Create('tmp/test_mosaic2.tif', 100, 100, 3, gdal.GDT_Byte)
     output_dst.GetRasterBand(1).Fill(127)
     output_dst = None
 
@@ -123,7 +123,7 @@ def vrt_read_3():
     data = ds.GetRasterBand(1).ReadRaster(90,0,20,100)
     got = struct.unpack('B' * 20*100, data)
     for i in range(100):
-        if got[i*20 + 9 ] != 255:
+        if got[i*20 + 9] != 255:
             gdaltest.post_reason('at line %d, did not find 255' % i)
             return 'fail'
     ds = None
@@ -197,7 +197,7 @@ def vrt_read_5():
         print(ds.GetGCPProjection())
         return 'fail'
 
-    ds.SetGCPs( ds.GetGCPs(), ds.GetGCPProjection() )
+    ds.SetGCPs(ds.GetGCPs(), ds.GetGCPProjection())
 
     gcps = ds.GetGCPs()
     if len(gcps) != 2 or ds.GetGCPCount() != 2:
@@ -1365,49 +1365,49 @@ dy           1
     return 'success'
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('VRT', item[0], item[1], item[2])
     if ut is None:
-        print( 'VRT tests skipped' )
+        print('VRT tests skipped')
         sys.exit()
-    gdaltest_list.append( (ut.testOpen, item[0]) )
+    gdaltest_list.append((ut.testOpen, item[0]))
 
-gdaltest_list.append( vrt_read_1 )
-gdaltest_list.append( vrt_read_2 )
-gdaltest_list.append( vrt_read_3 )
-gdaltest_list.append( vrt_read_4 )
-gdaltest_list.append( vrt_read_5 )
-gdaltest_list.append( vrt_read_6 )
-gdaltest_list.append( vrt_read_7 )
-gdaltest_list.append( vrt_read_8 )
-gdaltest_list.append( vrt_read_9 )
-gdaltest_list.append( vrt_read_10 )
-gdaltest_list.append( vrt_read_11 )
-gdaltest_list.append( vrt_read_12 )
-gdaltest_list.append( vrt_read_13 )
-gdaltest_list.append( vrt_read_14 )
-gdaltest_list.append( vrt_read_15 )
-gdaltest_list.append( vrt_read_16 )
-gdaltest_list.append( vrt_read_17 )
-gdaltest_list.append( vrt_read_18 )
-gdaltest_list.append( vrt_read_19 )
-gdaltest_list.append( vrt_read_20 )
-gdaltest_list.append( vrt_read_21 )
-gdaltest_list.append( vrt_read_22 )
-gdaltest_list.append( vrt_read_23 )
-gdaltest_list.append( vrt_read_24 )
-gdaltest_list.append( vrt_read_25 )
-gdaltest_list.append( vrt_read_26 )
-gdaltest_list.append( vrt_read_27 )
-gdaltest_list.append( vrt_read_28 )
-gdaltest_list.append( vrt_read_29 )
-gdaltest_list.append( vrt_read_30 )
-gdaltest_list.append( vrt_read_31 )
+gdaltest_list.append(vrt_read_1)
+gdaltest_list.append(vrt_read_2)
+gdaltest_list.append(vrt_read_3)
+gdaltest_list.append(vrt_read_4)
+gdaltest_list.append(vrt_read_5)
+gdaltest_list.append(vrt_read_6)
+gdaltest_list.append(vrt_read_7)
+gdaltest_list.append(vrt_read_8)
+gdaltest_list.append(vrt_read_9)
+gdaltest_list.append(vrt_read_10)
+gdaltest_list.append(vrt_read_11)
+gdaltest_list.append(vrt_read_12)
+gdaltest_list.append(vrt_read_13)
+gdaltest_list.append(vrt_read_14)
+gdaltest_list.append(vrt_read_15)
+gdaltest_list.append(vrt_read_16)
+gdaltest_list.append(vrt_read_17)
+gdaltest_list.append(vrt_read_18)
+gdaltest_list.append(vrt_read_19)
+gdaltest_list.append(vrt_read_20)
+gdaltest_list.append(vrt_read_21)
+gdaltest_list.append(vrt_read_22)
+gdaltest_list.append(vrt_read_23)
+gdaltest_list.append(vrt_read_24)
+gdaltest_list.append(vrt_read_25)
+gdaltest_list.append(vrt_read_26)
+gdaltest_list.append(vrt_read_27)
+gdaltest_list.append(vrt_read_28)
+gdaltest_list.append(vrt_read_29)
+gdaltest_list.append(vrt_read_30)
+gdaltest_list.append(vrt_read_31)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrt_read' )
+    gdaltest.setup_run('vrt_read')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

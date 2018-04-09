@@ -43,7 +43,7 @@ except:
 
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import webserver
 import gdaltest
@@ -57,7 +57,7 @@ def wcs_1():
     gdaltest.wcs_drv = None
 
     try:
-        gdaltest.wcs_drv = gdal.GetDriverByName( 'WCS' )
+        gdaltest.wcs_drv = gdal.GetDriverByName('WCS')
     except:
         gdaltest.wcs_drv = None
 
@@ -86,12 +86,12 @@ def wcs_2():
     open('tmp/geoserver.wcs','w').write(open('data/geoserver.wcs').read())
 
     gdaltest.wcs_ds = None
-    gdaltest.wcs_ds = gdal.Open( 'tmp/geoserver.wcs' )
+    gdaltest.wcs_ds = gdal.Open('tmp/geoserver.wcs')
 
     if gdaltest.wcs_ds is not None:
         return 'success'
     else:
-        gdaltest.post_reason( 'open failed.' )
+        gdaltest.post_reason('open failed.')
         return 'fail'
 
 ###############################################################################
@@ -105,7 +105,7 @@ def wcs_3():
     if gdaltest.wcs_ds.RasterXSize != 983 \
        or gdaltest.wcs_ds.RasterYSize != 598 \
        or gdaltest.wcs_ds.RasterCount != 3:
-        gdaltest.post_reason( 'wrong size or bands' )
+        gdaltest.post_reason('wrong size or bands')
         print(gdaltest.wcs_ds.RasterXSize)
         print(gdaltest.wcs_ds.RasterYSize)
         print(gdaltest.wcs_ds.RasterCount)
@@ -113,23 +113,23 @@ def wcs_3():
 
     wkt = gdaltest.wcs_ds.GetProjectionRef()
     if wkt[:14] != 'GEOGCS["WGS 84':
-        gdaltest.post_reason( 'Got wrong SRS: ' + wkt )
+        gdaltest.post_reason('Got wrong SRS: ' + wkt)
         return 'fail'
 
     gt = gdaltest.wcs_ds.GetGeoTransform()
     expected_gt = (-130.85167999999999, 0.070036907426246159, 0.0, 54.114100000000001, 0.0, -0.055867725752508368)
     for i in range(6):
         if abs(gt[i]- expected_gt[i]) > 0.00001:
-            gdaltest.post_reason( 'wrong geotransform' )
+            gdaltest.post_reason('wrong geotransform')
             print(gt)
             return 'fail'
 
     if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
-        gdaltest.post_reason( 'no overviews!' )
+        gdaltest.post_reason('no overviews!')
         return 'fail'
 
     if gdaltest.wcs_ds.GetRasterBand(1).DataType != gdal.GDT_Byte:
-        gdaltest.post_reason( 'wrong band data type' )
+        gdaltest.post_reason('wrong band data type')
         return 'fail'
 
     return 'success'
@@ -144,7 +144,7 @@ def wcs_4():
 
     cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
     if cs != 58765:
-        gdaltest.post_reason( 'Wrong checksum: ' + str(cs) )
+        gdaltest.post_reason('Wrong checksum: ' + str(cs))
         return 'fail'
 
     return 'success'
@@ -163,16 +163,16 @@ def wcs_5():
 </WCS_GDAL>
 """
 
-    ds = gdal.Open( fn )
+    ds = gdal.Open(fn)
 
     if ds is None:
-        gdaltest.post_reason( 'open failed.' )
+        gdaltest.post_reason('open failed.')
         return 'fail'
 
     if ds.RasterXSize != 983 \
        or ds.RasterYSize != 598 \
        or ds.RasterCount != 3:
-        gdaltest.post_reason( 'wrong size or bands' )
+        gdaltest.post_reason('wrong size or bands')
         print(ds.RasterXSize)
         print(ds.RasterYSize)
         print(ds.RasterCount)
@@ -193,12 +193,12 @@ def old_wcs_2():
     open('tmp/srtmplus.wcs','w').write(open('data/srtmplus.wcs').read())
 
     gdaltest.wcs_ds = None
-    gdaltest.wcs_ds = gdal.Open( 'tmp/srtmplus.wcs' )
+    gdaltest.wcs_ds = gdal.Open('tmp/srtmplus.wcs')
 
     if gdaltest.wcs_ds is not None:
         return 'success'
     else:
-        gdaltest.post_reason( 'open failed.' )
+        gdaltest.post_reason('open failed.')
         return 'fail'
 
 ###############################################################################
@@ -212,12 +212,12 @@ def old_wcs_3():
     if gdaltest.wcs_ds.RasterXSize != 43200 \
        or gdaltest.wcs_ds.RasterYSize != 21600 \
        or gdaltest.wcs_ds.RasterCount != 1:
-        gdaltest.post_reason( 'wrong size or bands' )
+        gdaltest.post_reason('wrong size or bands')
         return 'fail'
 
     wkt = gdaltest.wcs_ds.GetProjectionRef()
     if wkt[:12] != 'GEOGCS["NAD8':
-        gdaltest.post_reason( 'Got wrong SRS: ' + wkt )
+        gdaltest.post_reason('Got wrong SRS: ' + wkt)
         return 'fail'
 
     gt = gdaltest.wcs_ds.GetGeoTransform()
@@ -227,16 +227,16 @@ def old_wcs_3():
        or abs(gt[2] - 0) > 0.00001 \
        or abs(gt[5] - -0.00833333) > 0.00001 \
        or abs(gt[4] - 0) > 0.00001:
-        gdaltest.post_reason( 'wrong geotransform' )
+        gdaltest.post_reason('wrong geotransform')
         print(gt)
         return 'fail'
 
     if gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() < 1:
-        gdaltest.post_reason( 'no overviews!' )
+        gdaltest.post_reason('no overviews!')
         return 'fail'
 
     if gdaltest.wcs_ds.GetRasterBand(1).DataType < gdal.GDT_Int16:
-        gdaltest.post_reason( 'wrong band data type' )
+        gdaltest.post_reason('wrong band data type')
         return 'fail'
 
     return 'success'
@@ -249,9 +249,9 @@ def old_wcs_4():
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
         return 'skip'
 
-    cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum( 0, 0, 100, 100 )
+    cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
     if cs != 10469:
-        gdaltest.post_reason( 'Wrong checksum: ' + str(cs) )
+        gdaltest.post_reason('Wrong checksum: ' + str(cs))
         return 'fail'
 
     return 'success'
@@ -266,16 +266,16 @@ def old_wcs_5():
 
     fn = '<WCS_GDAL><ServiceURL>http://geodata.telascience.org/cgi-bin/mapserv_dem?</ServiceURL><CoverageName>srtmplus_raw</CoverageName><Timeout>75</Timeout></WCS_GDAL>'
 
-    ds = gdal.Open( fn )
+    ds = gdal.Open(fn)
 
     if ds is None:
-        gdaltest.post_reason( 'open failed.' )
+        gdaltest.post_reason('open failed.')
         return 'fail'
 
     if ds.RasterXSize != 43200 \
        or ds.RasterYSize != 21600 \
        or ds.RasterCount != 1:
-        gdaltest.post_reason( 'wrong size or bands' )
+        gdaltest.post_reason('wrong size or bands')
         return 'fail'
 
     ds = None
@@ -573,7 +573,7 @@ def wcs_cleanup():
     gdaltest.wcs_ds = None
 
     try:
-        os.remove( 'tmp/geoserver.wcs' )
+        os.remove('tmp/geoserver.wcs')
     except:
         pass
 
@@ -592,13 +592,13 @@ gdaltest_list = [
     wcs_4,
     #wcs_5, #FIXME: re-enable after adapting test
     wcs_6,
-    wcs_cleanup ]
+    wcs_cleanup]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'wcs' )
+    gdaltest.setup_run('wcs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

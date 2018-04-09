@@ -33,11 +33,11 @@ import sys
 
 from osgeo import gdal
 
-def CopyBand( srcband, dstband ):
+def CopyBand(srcband, dstband):
     for line in range(srcband.YSize):
-        line_data = srcband.ReadRaster( 0, line, srcband.XSize, 1 )
-        dstband.WriteRaster( 0, line, srcband.XSize, 1, line_data,
-                             buf_type = srcband.DataType )
+        line_data = srcband.ReadRaster(0, line, srcband.XSize, 1)
+        dstband.WriteRaster(0, line, srcband.XSize, 1, line_data,
+                             buf_type = srcband.DataType)
 
 def Usage():
     print("""
@@ -65,9 +65,9 @@ creation_options = []
 mask = 'default'
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -142,9 +142,9 @@ except:
 # =============================================================================
 
 if dst_filename is None:
-    src_ds = gdal.Open( src_filename, gdal.GA_Update )
+    src_ds = gdal.Open(src_filename, gdal.GA_Update)
 else:
-    src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
+    src_ds = gdal.Open(src_filename, gdal.GA_ReadOnly)
 
 if src_ds is None:
     print('Unable to open %s' % src_filename)
@@ -157,7 +157,7 @@ if mask is 'default':
 elif mask is 'none':
     maskband = None
 else:
-    mask_ds = gdal.Open( mask )
+    mask_ds = gdal.Open(mask)
     maskband = mask_ds.GetRasterBand(1)
 
 # =============================================================================
@@ -167,15 +167,15 @@ else:
 if dst_filename is not None:
 
     drv = gdal.GetDriverByName(format)
-    dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
-                         srcband.DataType, creation_options )
+    dst_ds = drv.Create(dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
+                         srcband.DataType, creation_options)
     wkt = src_ds.GetProjection()
     if wkt != '':
-        dst_ds.SetProjection( wkt )
-    dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+        dst_ds.SetProjection(wkt)
+    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
 
     dstband = dst_ds.GetRasterBand(1)
-    CopyBand( srcband, dstband )
+    CopyBand(srcband, dstband)
     ndv = srcband.GetNoDataValue()
     if ndv is not None:
         dstband.SetNoDataValue(ndv)
@@ -192,9 +192,9 @@ if quiet_flag:
 else:
     prog_func = gdal.TermProgress
 
-result = gdal.FillNodata( dstband, maskband,
+result = gdal.FillNodata(dstband, maskband,
                           max_distance, smoothing_iterations, options,
-                          callback = prog_func )
+                          callback = prog_func)
 
 
 src_ds = None

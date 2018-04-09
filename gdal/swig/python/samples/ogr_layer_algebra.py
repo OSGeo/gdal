@@ -139,7 +139,7 @@ def main(argv = None):
     srs_name = None
     srs = None
 
-    argv = ogr.GeneralCmdLineProcessor( sys.argv )
+    argv = ogr.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
         return 1
 
@@ -291,7 +291,7 @@ def main(argv = None):
            return Usage()
 
     if method_fields is None:
-        if op_str in ( 'Update', 'Clip', 'Erase' ):
+        if op_str in ('Update', 'Clip', 'Erase'):
             method_fields = 'NONE'
         else:
             method_fields = 'ALL'
@@ -339,8 +339,8 @@ def main(argv = None):
     if srs_name is not None:
         if not EQUAL(srs_name, "NULL") and not EQUAL(srs_name, "NONE"):
             srs = osr.SpatialReference()
-            if srs.SetFromUserInput( srs_name ) != 0:
-                print( "Failed to process SRS definition: %s" % srs_name )
+            if srs.SetFromUserInput(srs_name) != 0:
+                print("Failed to process SRS definition: %s" % srs_name)
                 return 1
     else:
         srs = input_lyr.GetSpatialRef()
@@ -415,7 +415,7 @@ def main(argv = None):
                     break
             if iLayer != cnt:
                 if output_ds.DeleteLayer(iLayer) != 0:
-                    print("DeleteLayer() failed when overwrite requested." )
+                    print("DeleteLayer() failed when overwrite requested.")
                     return 1
 
                 output_lyr = CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, input_lyr, input_fields, method_lyr, method_fields, opt)
@@ -446,4 +446,4 @@ if __name__ == '__main__':
         print('ERROR: Python bindings of GDAL 1.10 or later required')
         sys.exit(1)
 
-    sys.exit(main( sys.argv ))
+    sys.exit(main(sys.argv))

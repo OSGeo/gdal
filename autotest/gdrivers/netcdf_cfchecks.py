@@ -392,7 +392,7 @@ class CFChecker:
     print("Using CF Checker Version 2.0.9-gdal")
 
     if not self.version:
-        print( "Checking against CF Version (auto)")
+        print("Checking against CF Version (auto)")
     else:
         print("Checking against CF Version %s" % self.version)
 
@@ -978,7 +978,7 @@ class CFChecker:
           validNames = ['albers_conical_equal_area','azimuthal_equidistant','lambert_azimuthal_equal_area',
                         'lambert_conformal_conic','polar_stereographic','rotated_latitude_longitude',
                         'stereographic','transverse_mercator']
-          validNames += [ 'geostationary' ] # GDAL addition
+          validNames += ['geostationary'] # GDAL addition
 
           if self.version >= vn1_2:
               # Extra grid_mapping_names at vn1.2

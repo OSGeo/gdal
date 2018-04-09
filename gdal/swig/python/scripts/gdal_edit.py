@@ -51,7 +51,7 @@ def ArgIsNumeric(s):
     i = 0
 
     while i < len(s):
-        if ( s[i] < '0' or s[i] > '9') and s[i] != '.' and s[i] != 'e' and s[i] != '+' and s[i] != '-':
+        if (s[i] < '0' or s[i] > '9') and s[i] != '.' and s[i] != 'e' and s[i] != '+' and s[i] != '-':
             return False
         i = i + 1
 
@@ -59,7 +59,7 @@ def ArgIsNumeric(s):
 
 def gdal_edit(argv):
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 
@@ -169,7 +169,7 @@ def gdal_edit(argv):
                 val = gdal.GCI_Undefined
             else:
                 sys.stderr.write('Unsupported color interpretation %s.\n' % val + \
-                    'Only red, green, blue, alpha, gray, undefined are supported.\n' )
+                    'Only red, green, blue, alpha, gray, undefined are supported.\n')
                 return Usage()
             colorinterp[band] = val
             i = i + 1
@@ -244,14 +244,14 @@ def gdal_edit(argv):
             ds.SetProjection(wkt)
 
     if lry is not None:
-        gt = [ ulx, (lrx - ulx) / ds.RasterXSize, 0,
-               uly, 0, (lry - uly) / ds.RasterYSize ]
+        gt = [ulx, (lrx - ulx) / ds.RasterXSize, 0,
+               uly, 0, (lry - uly) / ds.RasterYSize]
         ds.SetGeoTransform(gt)
 
     if yres is not None:
         gt = ds.GetGeoTransform()
         # Doh ! why is gt a tuple and not an array...
-        gt = [ gt[j] for j in range(6) ]
+        gt = [gt[j] for j in range(6)]
         gt[1] = xres
         gt[5] = yres
         ds.SetGeoTransform(gt)

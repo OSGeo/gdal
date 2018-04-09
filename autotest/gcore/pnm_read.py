@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,17 +44,17 @@ init_list = [ \
     ('uint16.pnm', 1, 4672, None)]
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'PNM', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('PNM', item[0], item[1], item[2])
     if ut is None:
-        print( 'PNM tests skipped' )
+        print('PNM tests skipped')
         sys.exit()
-    gdaltest_list.append( (ut.testOpen, item[0]) )
+    gdaltest_list.append((ut.testOpen, item[0]))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pnm_read' )
+    gdaltest.setup_run('pnm_read')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

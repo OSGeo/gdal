@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -39,17 +39,17 @@ import gdaltest
 
 def cpg_1():
 
-    tst = gdaltest.GDALTest( 'CPG', 'fakecpgSIRC.hdr', 1, 0 )
+    tst = gdaltest.GDALTest('CPG', 'fakecpgSIRC.hdr', 1, 0)
     return tst.testOpen()
 
 gdaltest_list = [
-    cpg_1 ]
+    cpg_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'cpg' )
+    gdaltest.setup_run('cpg')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

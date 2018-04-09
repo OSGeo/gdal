@@ -32,7 +32,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -83,7 +83,7 @@ def ogr_xlsx_check(ds):
         print(lyr.GetLayerDefn().GetFieldCount())
         return 'fail'
 
-    type_array = [ ogr.OFTString,
+    type_array = [ogr.OFTString,
                    ogr.OFTInteger,
                    ogr.OFTReal,
                    ogr.OFTReal,
@@ -94,7 +94,7 @@ def ogr_xlsx_check(ds):
                    ogr.OFTReal,
                    ogr.OFTInteger,
                    ogr.OFTReal,
-                   ogr.OFTDateTime ]
+                   ogr.OFTDateTime]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -253,11 +253,11 @@ def ogr_xlsx_6():
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     if feat.Bl_District_t != 'text6':
-        gdaltest.post_reason( 'Did not get expected value(1)' )
+        gdaltest.post_reason('Did not get expected value(1)')
         return 'fail'
 
     if abs(float(feat.GetField('Lat')) -  23.6247122) > 0.00001:
-        gdaltest.post_reason( 'Did not get expected value(2)' )
+        gdaltest.post_reason('Did not get expected value(2)')
         return 'fail'
 
     gdal.SetConfigOption('OGR_XLSX_HEADERS', None)
@@ -492,7 +492,7 @@ def ogr_xlsx_13():
         gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
         return 'fail'
 
-    type_array = [ ogr.OFTInteger,
+    type_array = [ogr.OFTInteger,
                    ogr.OFTString,
                    ogr.OFTString,
                    ogr.OFTInteger,
@@ -509,7 +509,7 @@ def ogr_xlsx_13():
                    ogr.OFTString,
                    ogr.OFTString,
                    ogr.OFTString,
-                   ogr.OFTString ]
+                   ogr.OFTString]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -543,7 +543,7 @@ def ogr_xlsx_14():
         gdaltest.post_reason('invalid field count ({})'.format(lyr.GetLayerDefn().GetFieldCount()))
         return 'fail'
 
-    type_array = [ ogr.OFTInteger,
+    type_array = [ogr.OFTInteger,
                    ogr.OFTString,
                    ogr.OFTString,
                    ogr.OFTInteger,
@@ -560,7 +560,7 @@ def ogr_xlsx_14():
                    ogr.OFTString,
                    ogr.OFTString,
                    ogr.OFTString,
-                   ogr.OFTString ]
+                   ogr.OFTString]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:
@@ -654,9 +654,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_xlsx' )
+    gdaltest.setup_run('ogr_xlsx')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -31,7 +31,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_py_scripts
@@ -116,13 +116,13 @@ def test_gdalinfo_py_5():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') != -1:
-        gdaltest.post_reason( 'got wrong minimum.' )
+        gdaltest.post_reason('got wrong minimum.')
         print(ret)
         return 'fail'
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-stats ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') == -1:
-        gdaltest.post_reason( 'got wrong minimum (2).' )
+        gdaltest.post_reason('got wrong minimum (2).')
         print(ret)
         return 'fail'
 
@@ -189,13 +189,13 @@ def test_gdalinfo_py_8():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gcore/data/byte.tif')
     if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1:
-        gdaltest.post_reason( 'did not expect histogram.' )
+        gdaltest.post_reason('did not expect histogram.')
         print(ret)
         return 'fail'
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-hist ../gcore/data/byte.tif')
     if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(ret)
         return 'fail'
 
@@ -214,13 +214,13 @@ def test_gdalinfo_py_9():
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') != -1:
-        gdaltest.post_reason( 'Got unexpected extra MD.' )
+        gdaltest.post_reason('Got unexpected extra MD.')
         print(ret)
         return 'fail'
 
     ret = test_py_scripts.run_py_script(script_path, 'gdalinfo', '-mdd TRE ../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') == -1:
-        gdaltest.post_reason( 'did not get extra MD.' )
+        gdaltest.post_reason('did not get extra MD.')
         print(ret)
         return 'fail'
 
@@ -260,8 +260,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalinfo_py' )
+    gdaltest.setup_run('test_gdalinfo_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -31,7 +31,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -69,19 +69,19 @@ def jp2metadata_2():
     except:
         pass
 
-    ds = gdal.Open( 'data/IMG_md_ple.jp2', gdal.GA_ReadOnly )
+    ds = gdal.Open('data/IMG_md_ple.jp2', gdal.GA_ReadOnly)
     if ds is None:
         return 'skip'
 
     filelist = ds.GetFileList()
 
     if len(filelist) != 3:
-        gdaltest.post_reason( 'did not get expected file list.' )
+        gdaltest.post_reason('did not get expected file list.')
         return 'fail'
 
     mddlist = ds.GetMetadataDomainList()
     if not 'IMD' in mddlist or not 'RPC' in mddlist or not 'IMAGERY' in mddlist:
-        gdaltest.post_reason( 'did not get expected metadata list.' )
+        gdaltest.post_reason('did not get expected metadata list.')
         print(mddlist)
         return 'fail'
 
@@ -114,18 +114,18 @@ def jp2metadata_2():
 
 def jp2metadata_3():
 
-    gdal.SetConfigOption( 'GDAL_IGNORE_AXIS_ORIENTATION', 'YES' )
+    gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'YES')
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'
 
-    ds = gdal.Open( 'data/ll.jp2' )
+    ds = gdal.Open('data/ll.jp2')
     if ds is None:
-        gdal.SetConfigOption( 'GDAL_IGNORE_AXIS_ORIENTATION', 'NO' )
+        gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'NO')
         return 'skip'
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason( 'did not get expected WKT, should be WGS84' )
+        gdaltest.post_reason('did not get expected WKT, should be WGS84')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
         return 'fail'
@@ -136,13 +136,13 @@ def jp2metadata_3():
        or abs(gt[2] - 0.0) > 0.000000000005 \
        or abs(gt[4] - 0.0) > 0.000000000005 \
        or abs(gt[5] - -0.000761397164) > 0.000000000005:
-        gdaltest.post_reason( 'did not get expected geotransform' )
+        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
         return 'fail'
 
     ds = None
 
-    gdal.SetConfigOption( 'GDAL_IGNORE_AXIS_ORIENTATION', 'NO' )
+    gdal.SetConfigOption('GDAL_IGNORE_AXIS_ORIENTATION', 'NO')
 
     return 'success'
 
@@ -154,13 +154,13 @@ def jp2metadata_4():
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
-    ds = gdal.Open( 'data/gmljp2_dtedsm_epsg_4326_axes.jp2' )
+    ds = gdal.Open('data/gmljp2_dtedsm_epsg_4326_axes.jp2')
     if ds is None:
         return 'skip'
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason( 'did not get expected WKT, should be WGS84' )
+        gdaltest.post_reason('did not get expected WKT, should be WGS84')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
         return 'fail'
@@ -174,7 +174,7 @@ def jp2metadata_4():
        or abs(gt[2] - gte[2]) > 0.000000000005 \
        or abs(gt[4] - gte[4]) > 0.000000000005 \
        or abs(gt[5] - gte[5]) > 0.000000000005:
-        gdaltest.post_reason( 'did not get expected geotransform' )
+        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
         return 'fail'
 
@@ -190,13 +190,13 @@ def jp2metadata_5():
 
     exp_wkt = 'PROJCS["ETRS89 / LAEA Europe",GEOGCS["ETRS89",DATUM["European_Terrestrial_Reference_System_1989",SPHEROID["GRS 1980",6378137,298.257222101,AUTHORITY["EPSG","7019"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6258"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4258"]],PROJECTION["Lambert_Azimuthal_Equal_Area"],PARAMETER["latitude_of_center",52],PARAMETER["longitude_of_center",10],PARAMETER["false_easting",4321000],PARAMETER["false_northing",3210000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","3035"]]'
 
-    ds = gdal.Open( 'data/gmljp2_epsg3035_easting_northing.jp2' )
+    ds = gdal.Open('data/gmljp2_epsg3035_easting_northing.jp2')
     if ds is None:
         return 'skip'
     wkt = ds.GetProjection()
 
     if wkt != exp_wkt:
-        gdaltest.post_reason( 'did not get expected WKT' )
+        gdaltest.post_reason('did not get expected WKT')
         print('got: ', wkt)
         print('exp: ', exp_wkt)
         return 'fail'
@@ -209,7 +209,7 @@ def jp2metadata_5():
        or abs(gt[2] - gte[2]) > 0.000000000005 \
        or abs(gt[4] - gte[4]) > 0.000000000005 \
        or abs(gt[5] - gte[5]) > 0.000000000005:
-        gdaltest.post_reason( 'did not get expected geotransform' )
+        gdaltest.post_reason('did not get expected geotransform')
         print('got: ', gt)
         return 'fail'
 
@@ -229,9 +229,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'jp2metadata' )
+    gdaltest.setup_run('jp2metadata')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

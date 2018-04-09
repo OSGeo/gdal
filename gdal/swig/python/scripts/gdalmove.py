@@ -34,19 +34,19 @@ import sys
 from osgeo import gdal, osr
 
 ###############################################################################
-def fmt_loc( srs_obj, loc):
+def fmt_loc(srs_obj, loc):
     if srs_obj.IsProjected():
         return '%12.3f %12.3f' % (loc[0], loc[1])
     else:
         return '%12.8f %12.8f' % (loc[0], loc[1])
 
 ###############################################################################
-def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
+def move(filename, t_srs, s_srs=None, pixel_threshold = None):
 
     # -------------------------------------------------------------------------
     # Open the file.
     # -------------------------------------------------------------------------
-    ds = gdal.Open( filename )
+    ds = gdal.Open(filename)
 
     # -------------------------------------------------------------------------
     # Compute the current (s_srs) locations of the four corners and center
@@ -57,14 +57,14 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         'Lower Left',
         'Upper Right',
         'Lower Right',
-        'Center' ]
+        'Center']
 
     corners_pixel_line = [
         (0, 0, 0),
         (0, ds.RasterYSize,0),
         (ds.RasterXSize, 0, 0),
         (ds.RasterXSize, ds.RasterYSize, 0),
-        (ds.RasterXSize/2.0, ds.RasterYSize/2.0, 0.0) ]
+        (ds.RasterXSize/2.0, ds.RasterYSize/2.0, 0.0)]
 
     orig_gt = ds.GetGeoTransform()
 
@@ -74,7 +74,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         corners_s_geo.append( \
             (orig_gt[0] + item[0] * orig_gt[1] + item[1] * orig_gt[2],
              orig_gt[3] + item[0] * orig_gt[4] + item[1] * orig_gt[5],
-             item[2]) )
+             item[2]))
 
     # -------------------------------------------------------------------------
     # Prepare a transformation from source to destination srs.
@@ -83,18 +83,18 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         s_srs = ds.GetProjectionRef()
 
     s_srs_obj = osr.SpatialReference()
-    s_srs_obj.SetFromUserInput( s_srs )
+    s_srs_obj.SetFromUserInput(s_srs)
 
     t_srs_obj = osr.SpatialReference()
-    t_srs_obj.SetFromUserInput( t_srs )
+    t_srs_obj.SetFromUserInput(t_srs)
 
-    tr = osr.CoordinateTransformation( s_srs_obj, t_srs_obj )
+    tr = osr.CoordinateTransformation(s_srs_obj, t_srs_obj)
 
     # -------------------------------------------------------------------------
     # Transform the corners
     # -------------------------------------------------------------------------
 
-    corners_t_geo = tr.TransformPoints( corners_s_geo )
+    corners_t_geo = tr.TransformPoints(corners_s_geo)
 
     # -------------------------------------------------------------------------
     #  Compute a new geotransform for the image in the target SRS.  For now
@@ -116,7 +116,7 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
               (ur[1] - ul[1]) / ds.RasterXSize,
               (ll[1] - ul[1]) / ds.RasterYSize)
 
-    inv_new_gt = gdal.InvGeoTransform( new_gt )
+    inv_new_gt = gdal.InvGeoTransform(new_gt)
 
     # -------------------------------------------------------------------------
     #  Report results for the five locations.
@@ -135,25 +135,25 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         corners_t_new_geo.append(
             (new_gt[0] + item[0] * new_gt[1] + item[1] * new_gt[2],
              new_gt[3] + item[0] * new_gt[4] + item[1] * new_gt[5],
-             item[2]) )
+             item[2]))
 
-        error_geo.append( (corners_t_new_geo[i][0] - corners_t_geo[i][0],
+        error_geo.append((corners_t_new_geo[i][0] - corners_t_geo[i][0],
                            corners_t_new_geo[i][1] - corners_t_geo[i][1],
-                           0.0) )
+                           0.0))
 
 
         item = corners_t_geo[i]
         corners_pixel_line_new.append(
             (inv_new_gt[0] + item[0] * inv_new_gt[1] + item[1] * inv_new_gt[2],
              inv_new_gt[3] + item[0] * inv_new_gt[4] + item[1] * inv_new_gt[5],
-             item[2]) )
+             item[2]))
 
         error_pixel_line.append(
             (corners_pixel_line_new[i][0] - corners_pixel_line[i][0],
              corners_pixel_line_new[i][1] - corners_pixel_line[i][1],
-             corners_pixel_line_new[i][2] - corners_pixel_line[i][2]) )
+             corners_pixel_line_new[i][2] - corners_pixel_line[i][2]))
 
-        print( '%-11s %s %s %s %5.2f %5.2f' % \
+        print('%-11s %s %s %s %5.2f %5.2f' % \
             (corners_names[i],
              fmt_loc(s_srs_obj, corners_s_geo[i]),
              fmt_loc(t_srs_obj, corners_t_geo[i]),
@@ -182,11 +182,11 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
     # -------------------------------------------------------------------------
     if update:
         ds = None
-        ds = gdal.Open( filename, gdal.GA_Update )
+        ds = gdal.Open(filename, gdal.GA_Update)
 
         print('Updating file...')
-        ds.SetGeoTransform( new_gt )
-        ds.SetProjection( t_srs_obj.ExportToWkt() )
+        ds.SetGeoTransform(new_gt)
+        ds.SetProjection(t_srs_obj.ExportToWkt())
         print('Done.')
 
     elif pixel_threshold is None:
@@ -212,9 +212,9 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 def main():
     # Default GDAL argument parsing.
 
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
-        sys.exit( 0 )
+        sys.exit(0)
 
     if len(argv) == 1:
         Usage()
@@ -262,7 +262,7 @@ def main():
         Usage()
 
 
-    move( filename, t_srs, s_srs, pixel_threshold )
+    move(filename, t_srs, s_srs, pixel_threshold)
 
 
 if __name__ == '__main__':

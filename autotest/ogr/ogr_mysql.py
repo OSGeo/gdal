@@ -29,7 +29,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -54,12 +54,12 @@ def ogr_mysql_1():
     gdaltest.mysql_ds = None
 
     try:
-        ogr.GetDriverByName( 'MySQL' )
+        ogr.GetDriverByName('MySQL')
     except:
         return 'skip'
 
     try:
-        gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+        gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
     except:
         gdaltest.mysql_ds = None
 
@@ -76,50 +76,50 @@ def ogr_mysql_2():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
     ######################################################
     # Create Layer
-    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer( 'tpoly', srs = shp_lyr.GetSpatialRef(),
-                                                  options = [ 'ENGINE=MyISAM' ] )
+    gdaltest.mysql_lyr = gdaltest.mysql_ds.CreateLayer('tpoly', srs = shp_lyr.GetSpatialRef(),
+                                                  options = ['ENGINE=MyISAM'])
 
     ######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.mysql_lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(gdaltest.mysql_lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
                                       ('PRFEDEA', ogr.OFTString),
                                       ('SHORTNAME', ogr.OFTString, 8),
-                                      ('INT64', ogr.OFTInteger64) ] )
+                                      ('INT64', ogr.OFTInteger64)])
 
     ######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mysql_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.mysql_lyr.GetLayerDefn())
 
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
+        dst_feat.SetFrom(feat)
         dst_feat.SetField('INT64', 1234567890123)
-        gdaltest.mysql_lyr.CreateFeature( dst_feat )
+        gdaltest.mysql_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
     dst_feat.Destroy()
 
     if gdaltest.mysql_lyr.GetFeatureCount() != shp_lyr.GetFeatureCount():
-        gdaltest.post_reason( 'not matching feature count' )
+        gdaltest.post_reason('not matching feature count')
         return 'fail'
 
     if not gdaltest.mysql_lyr.GetSpatialRef().IsSame(shp_lyr.GetSpatialRef()):
-        gdaltest.post_reason( 'not matching spatial ref' )
+        gdaltest.post_reason('not matching spatial ref')
         return 'fail'
 
     return 'success'
@@ -132,35 +132,35 @@ def ogr_mysql_3():
         return 'skip'
 
     if gdaltest.mysql_lyr.GetFeatureCount() != 10:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.mysql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 10' % gdaltest.mysql_lyr.GetFeatureCount())
         return 'fail'
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mysql_lyr.SetAttributeFilter( 'eas_id < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr,
-                                              'eas_id', expect )
+    gdaltest.mysql_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
+                                              'eas_id', expect)
 
     if gdaltest.mysql_lyr.GetFeatureCount() != 5:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 5' % gdaltest.mysql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 5' % gdaltest.mysql_lyr.GetFeatureCount())
         return 'fail'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mysql_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.001 ) != 0:
+                                          max_error = 0.001) != 0:
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
         if read_feat.GetField('INT64') != 1234567890123:
-            gdaltest.post_reason( 'failure' )
+            gdaltest.post_reason('failure')
             return 'fail'
 
         read_feat.Destroy()
@@ -187,24 +187,24 @@ def ogr_mysql_4():
     # iterating over a query at the same time.
     # If trying to do so, we get the 'Commands out of sync' error.
 
-    wkt_list = [ '10', '2', '1', '4', '5', '6' ]
+    wkt_list = ['10', '2', '1', '4', '5', '6']
 
     gdaltest.mysql_lyr.ResetReading()
 
     feature_def = gdaltest.mysql_lyr.GetLayerDefn()
 
     for item in wkt_list:
-        dst_feat = ogr.Feature( feature_def )
+        dst_feat = ogr.Feature(feature_def)
 
-        wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
-        geom = ogr.CreateGeometryFromWkt( wkt )
+        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
         # Write geometry as a new Oracle feature.
 
-        dst_feat.SetGeometryDirectly( geom )
-        dst_feat.SetField( 'PRFEDEA', item )
-        gdaltest.mysql_lyr.CreateFeature( dst_feat )
+        dst_feat.SetGeometryDirectly(geom)
+        dst_feat.SetField('PRFEDEA', item)
+        gdaltest.mysql_lyr.CreateFeature(dst_feat)
 
         dst_feat.Destroy()
 
@@ -212,24 +212,24 @@ def ogr_mysql_4():
     # mySQL return them as closed, so the check_feature_geometry returns FALSE
     # Checking them after closing the rings again returns TRUE.
 
-    wkt_list = [ '10', '2', '1', '5', '4', '6' ]
+    wkt_list = ['10', '2', '1', '5', '4', '6']
 
     for item in wkt_list:
-        wkt = open( 'data/wkb_wkt/'+item+'.wkt' ).read()
-        geom = ogr.CreateGeometryFromWkt( wkt )
+        wkt = open('data/wkb_wkt/'+item+'.wkt').read()
+        geom = ogr.CreateGeometryFromWkt(wkt)
 
         ######################################################################
         # Read back the feature and get the geometry.
 
-        gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = '%s'" % item )
+        gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.mysql_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
             print('Geometry changed. Closing rings before trying again for wkt #',item)
             print('(before):',geom.ExportToWkt())
             geom.CloseRings()
             print('(after) :',geom.ExportToWkt())
-            if ogrtest.check_feature_geometry( feat_read, geom ) != 0:
+            if ogrtest.check_feature_geometry(feat_read, geom) != 0:
                 return 'fail'
 
         feat_read.Destroy()
@@ -246,17 +246,17 @@ def ogr_mysql_5():
         return 'skip'
 
     # E. Rouault : unlike PostgreSQL driver : None is sorted in last position
-    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None ]
+    expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
-    sql_lyr = gdaltest.mysql_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
+    sql_lyr = gdaltest.mysql_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
 
     if sql_lyr.GetFeatureCount() != 11:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 11' % sql_lyr.GetFeatureCount())
         return 'fail'
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.mysql_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -271,31 +271,31 @@ def ogr_mysql_6():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    sql_lyr = gdaltest.mysql_ds.ExecuteSQL( "select * from tpoly where prfedea = '2'" )
+    sql_lyr = gdaltest.mysql_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea', [ '2' ] )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea', ['2'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry( feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))' ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, 'MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))') != 0:
             tr = 0
         feat_read.Destroy()
     sql_lyr.ResetReading()
 
     geom = ogr.CreateGeometryFromWkt( \
-        'LINESTRING(-10 -10,0 0)' )
-    sql_lyr.SetSpatialFilter( geom )
+        'LINESTRING(-10 -10,0 0)')
+    sql_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
     if sql_lyr.GetFeatureCount() != 0:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount())
         return 'fail'
 
     if sql_lyr.GetNextFeature() != None:
-        gdaltest.post_reason( 'GetNextFeature() did not return None' )
+        gdaltest.post_reason('GetNextFeature() did not return None')
         return 'fail'
 
-    gdaltest.mysql_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.mysql_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -310,29 +310,29 @@ def ogr_mysql_7():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     geom = ogr.CreateGeometryFromWkt( \
-        'LINESTRING(479505 4763195,480526 4762819)' )
-    gdaltest.mysql_lyr.SetSpatialFilter( geom )
+        'LINESTRING(479505 4763195,480526 4762819)')
+    gdaltest.mysql_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
     if gdaltest.mysql_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount())
         return 'fail'
 
-    tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr, 'eas_id',
-                                              [ 158 ] )
+    tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr, 'eas_id',
+                                              [158])
 
-    gdaltest.mysql_lyr.SetAttributeFilter( 'eas_id = 158' )
+    gdaltest.mysql_lyr.SetAttributeFilter('eas_id = 158')
 
     if gdaltest.mysql_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount() )
+        gdaltest.post_reason('GetFeatureCount() returned %d instead of 1' % gdaltest.mysql_lyr.GetFeatureCount())
         return 'fail'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
-    gdaltest.mysql_lyr.SetSpatialFilter( None )
+    gdaltest.mysql_lyr.SetSpatialFilter(None)
 
     if tr:
         return 'success'
@@ -352,25 +352,25 @@ def ogr_mysql_8():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.mysql_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.mysql_lyr.GetLayerDefn())
 
-    dst_feat.SetField( 'PRFEDEA', 'CrazyKey' )
-    dst_feat.SetField( 'SHORTNAME', 'Crazy"\'Long' )
+    dst_feat.SetField('PRFEDEA', 'CrazyKey')
+    dst_feat.SetField('SHORTNAME', 'Crazy"\'Long')
     # We are obliged to create a fake geometry
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 0)') )
-    gdaltest.mysql_lyr.CreateFeature( dst_feat )
+    dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 0)'))
+    gdaltest.mysql_lyr.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
-    gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = 'CrazyKey'" )
+    gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat_read = gdaltest.mysql_lyr.GetNextFeature()
 
     if feat_read is None:
-        gdaltest.post_reason( 'creating crazy feature failed!' )
+        gdaltest.post_reason('creating crazy feature failed!')
         return 'fail'
 
-    if feat_read.GetField( 'shortname' ) != 'Crazy"\'L':
-        gdaltest.post_reason( 'Vvalue not properly escaped or truncated:' \
-                              + feat_read.GetField( 'shortname' ) )
+    if feat_read.GetField('shortname') != 'Crazy"\'L':
+        gdaltest.post_reason('Vvalue not properly escaped or truncated:' \
+                              + feat_read.GetField('shortname'))
         return 'fail'
 
     feat_read.Destroy()
@@ -385,51 +385,51 @@ def ogr_mysql_9():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = 'CrazyKey'" )
+    gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.mysql_lyr.GetNextFeature()
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
-    feat.SetField( 'SHORTNAME', 'Reset' )
+    feat.SetField('SHORTNAME', 'Reset')
 
-    point = ogr.Geometry( ogr.wkbPoint25D )
-    point.SetPoint( 0, 5, 6 )
-    feat.SetGeometryDirectly( point )
+    point = ogr.Geometry(ogr.wkbPoint25D)
+    point.SetPoint(0, 5, 6)
+    feat.SetGeometryDirectly(point)
 
-    if gdaltest.mysql_lyr.SetFeature( feat ) != 0:
+    if gdaltest.mysql_lyr.SetFeature(feat) != 0:
         feat.Destroy()
-        gdaltest.post_reason( 'SetFeature() method failed.' )
+        gdaltest.post_reason('SetFeature() method failed.')
         return 'fail'
 
     fid = feat.GetFID()
     feat.Destroy()
 
-    feat = gdaltest.mysql_lyr.GetFeature( fid )
+    feat = gdaltest.mysql_lyr.GetFeature(fid)
     if feat is None:
-        gdaltest.post_reason( 'GetFeature(%d) failed.' % fid )
+        gdaltest.post_reason('GetFeature(%d) failed.' % fid)
         return 'fail'
 
-    shortname = feat.GetField( 'SHORTNAME' )
+    shortname = feat.GetField('SHORTNAME')
     if shortname[:5] != 'Reset':
-        gdaltest.post_reason( 'SetFeature() did not update SHORTNAME, got %s.'\
-                              % shortname )
+        gdaltest.post_reason('SetFeature() did not update SHORTNAME, got %s.'\
+                              % shortname)
         return 'fail'
 
-    if ogrtest.check_feature_geometry( feat, 'POINT(5 6)' ) != 0:
+    if ogrtest.check_feature_geometry(feat, 'POINT(5 6)') != 0:
         print(feat.GetGeometryRef())
-        gdaltest.post_reason( 'Geometry update failed' )
+        gdaltest.post_reason('Geometry update failed')
         return 'fail'
 
     # Test updating non-existing feature
     feat.SetFID(-10)
-    if gdaltest.mysql_lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+    if gdaltest.mysql_lyr.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
         feat.Destroy()
-        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+        gdaltest.post_reason('Expected failure of SetFeature().')
         return 'fail'
 
     # Test deleting non-existing feature
-    if gdaltest.mysql_lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
+    if gdaltest.mysql_lyr.DeleteFeature(-10) != ogr.OGRERR_NON_EXISTING_FEATURE:
         feat.Destroy()
-        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+        gdaltest.post_reason('Expected failure of DeleteFeature().')
         return 'fail'
 
     feat.Destroy()
@@ -444,26 +444,26 @@ def ogr_mysql_10():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = 'CrazyKey'" )
+    gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.mysql_lyr.GetNextFeature()
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     fid = feat.GetFID()
     feat.Destroy()
 
-    if gdaltest.mysql_lyr.DeleteFeature( fid ) != 0:
-        gdaltest.post_reason( 'DeleteFeature() method failed.' )
+    if gdaltest.mysql_lyr.DeleteFeature(fid) != 0:
+        gdaltest.post_reason('DeleteFeature() method failed.')
         return 'fail'
 
-    gdaltest.mysql_lyr.SetAttributeFilter( "PRFEDEA = 'CrazyKey'" )
+    gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = 'CrazyKey'")
     feat = gdaltest.mysql_lyr.GetNextFeature()
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     if feat is None:
         return 'success'
 
     feat.Destroy()
-    gdaltest.post_reason( 'DeleteFeature() seems to have had no effect.' )
+    gdaltest.post_reason('DeleteFeature() seems to have had no effect.')
     return 'fail'
 
 
@@ -482,10 +482,10 @@ def ogr_mysql_15():
     for id in range(1000):
         query = query + (' or eas_id = %d' % (id+1000))
 
-    gdaltest.mysql_lyr.SetAttributeFilter( query )
-    tr = ogrtest.check_features_against_list( gdaltest.mysql_lyr,
-                                              'eas_id', expect )
-    gdaltest.mysql_lyr.SetAttributeFilter( None )
+    gdaltest.mysql_lyr.SetAttributeFilter(query)
+    tr = ogrtest.check_features_against_list(gdaltest.mysql_lyr,
+                                              'eas_id', expect)
+    gdaltest.mysql_lyr.SetAttributeFilter(None)
 
     if tr:
         return 'success'
@@ -510,11 +510,11 @@ def ogr_mysql_16():
 
     statement = 'select eas_id from tpoly where ' + query
 
-    lyr = gdaltest.mysql_ds.ExecuteSQL( statement )
+    lyr = gdaltest.mysql_ds.ExecuteSQL(statement)
 
-    tr = ogrtest.check_features_against_list( lyr, 'eas_id', expect )
+    tr = ogrtest.check_features_against_list(lyr, 'eas_id', expect)
 
-    gdaltest.mysql_ds.ReleaseResultSet( lyr )
+    gdaltest.mysql_ds.ReleaseResultSet(lyr)
 
     if tr:
         return 'success'
@@ -531,16 +531,16 @@ def ogr_mysql_17():
 
     count = gdaltest.mysql_ds.GetLayerCount()
     try:
-        layer = gdaltest.mysql_ds.GetLayerByName( 'JunkTableName' )
+        layer = gdaltest.mysql_ds.GetLayerByName('JunkTableName')
     except:
         layer = None
 
     if layer is not None:
-        gdaltest.post_reason( 'got layer for non-existent table!' )
+        gdaltest.post_reason('got layer for non-existent table!')
         return 'fail'
 
     if count != gdaltest.mysql_ds.GetLayerCount():
-        gdaltest.post_reason( 'layer count changed unexpectedly.' )
+        gdaltest.post_reason('layer count changed unexpectedly.')
         return 'fail'
 
     return 'success'
@@ -554,13 +554,13 @@ def ogr_mysql_18():
         return 'skip'
 
     count = gdaltest.mysql_ds.GetLayerCount()
-    layer = gdaltest.mysql_ds.GetLayerByName( 'geometry_columns' )
+    layer = gdaltest.mysql_ds.GetLayerByName('geometry_columns')
     if layer is None:
-        gdaltest.post_reason( 'did not get geometry_columns layer' )
+        gdaltest.post_reason('did not get geometry_columns layer')
         return 'fail'
 
     if count+1 != gdaltest.mysql_ds.GetLayerCount():
-        gdaltest.post_reason( 'layer count unexpectedly unchanged.' )
+        gdaltest.post_reason('layer count unexpectedly unchanged.')
         return 'fail'
 
     return 'success'
@@ -573,13 +573,13 @@ def ogr_mysql_19():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.GetLayerByName( 'tpoly' )
+    layer = gdaltest.mysql_ds.GetLayerByName('tpoly')
     if layer is None:
-        gdaltest.post_reason( 'did not get tpoly layer' )
+        gdaltest.post_reason('did not get tpoly layer')
         return 'fail'
 
     extent = layer.GetExtent()
-    expect = ( 478315.53125, 481645.3125, 4762880.5, 4765610.5 )
+    expect = (478315.53125, 481645.3125, 4762880.5, 4765610.5)
 
     minx = abs(extent[0] - expect[0])
     maxx = abs(extent[1] - expect[1])
@@ -587,7 +587,7 @@ def ogr_mysql_19():
     maxy = abs(extent[3] - expect[3])
 
     if max(minx, maxx, miny, maxy) > 0.0001:
-        gdaltest.post_reason( 'Extents do not match' )
+        gdaltest.post_reason('Extents do not match')
         return 'fail'
 
     return 'success'
@@ -600,17 +600,17 @@ def ogr_mysql_20():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('select', options = [ 'ENGINE=MyISAM' ] )
-    ogrtest.quick_create_layer_def( layer,
-                                    [ ('desc', ogr.OFTString) ,
-                                      ('select', ogr.OFTString) ] )
-    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
+    layer = gdaltest.mysql_ds.CreateLayer('select', options = ['ENGINE=MyISAM'])
+    ogrtest.quick_create_layer_def(layer,
+                                    [('desc', ogr.OFTString) ,
+                                      ('select', ogr.OFTString)])
+    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
 
-    dst_feat.SetField( 'desc', 'desc' )
-    dst_feat.SetField( 'select', 'select' )
+    dst_feat.SetField('desc', 'desc')
+    dst_feat.SetField('select', 'select')
     # We are obliged to create a fake geometry
-    dst_feat.SetGeometryDirectly( ogr.CreateGeometryFromWkt('POINT(0 1)') )
-    layer.CreateFeature( dst_feat )
+    dst_feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt('POINT(0 1)'))
+    layer.CreateFeature(dst_feat)
     dst_feat.Destroy()
 
     layer = gdaltest.mysql_ds.GetLayerByName('select')
@@ -629,14 +629,14 @@ def ogr_mysql_21():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ])
-    ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
-    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
-    dst_feat.SetField( 'name', 'name' )
+    layer = gdaltest.mysql_ds.CreateLayer('tablewithspatialindex', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
+    ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
+    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    dst_feat.SetField('name', 'name')
 
     # The insertion MUST fail
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    layer.CreateFeature( dst_feat )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    layer.CreateFeature(dst_feat)
     gdal.PopErrorHandler()
 
     dst_feat.Destroy()
@@ -657,12 +657,12 @@ def ogr_mysql_22():
         return 'skip'
 
     layer = gdaltest.mysql_ds.CreateLayer('tablewithoutspatialindex', geom_type = ogr.wkbPoint,
-                                          options = [ 'SPATIAL_INDEX=NO', 'ENGINE=MyISAM' ] )
-    ogrtest.quick_create_layer_def( layer, [ ('name', ogr.OFTString) ] )
-    dst_feat = ogr.Feature( feature_def = layer.GetLayerDefn() )
-    dst_feat.SetField( 'name', 'name' )
+                                          options = ['SPATIAL_INDEX=NO', 'ENGINE=MyISAM'])
+    ogrtest.quick_create_layer_def(layer, [('name', ogr.OFTString)])
+    dst_feat = ogr.Feature(feature_def = layer.GetLayerDefn())
+    dst_feat.SetField('name', 'name')
 
-    layer.CreateFeature( dst_feat )
+    layer.CreateFeature(dst_feat)
 
     dst_feat.Destroy()
 
@@ -681,13 +681,13 @@ def ogr_mysql_23():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    fields = ( 'zero', 'widthonly', 'onedecimal', 'twentynine', 'thirtyone' )
-    values = ( 1, 2, 1.1, 0.12345678901234567890123456789, 0.1234567890123456789012345678901 )
-    precision = ( 0, 0, 1, 29, 0 )
+    fields = ('zero', 'widthonly', 'onedecimal', 'twentynine', 'thirtyone')
+    values = (1, 2, 1.1, 0.12345678901234567890123456789, 0.1234567890123456789012345678901)
+    precision = (0, 0, 1, 29, 0)
 
     ######################################################
     # Create a layer with a single feature through SQL
-    gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL( "SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;" )
+    gdaltest.mysql_lyr = gdaltest.mysql_ds.ExecuteSQL("SELECT ROUND(1.1,0) AS zero, ROUND(2.0, 0) AS widthonly, ROUND(1.1,1) AS onedecimal, ROUND(0.12345678901234567890123456789,29) AS twentynine, GeomFromText(CONVERT('POINT(1.0 2.0)',CHAR)) as the_geom;")
 
     feat = gdaltest.mysql_lyr.GetNextFeature()
     if feat is None:
@@ -699,11 +699,11 @@ def ogr_mysql_23():
         if feat.GetFieldIndex(fields[i]) < 0:
             print('field not found')
             return 'fail'
-        if feat.GetField( feat.GetFieldIndex(fields[i]) ) != values[i]:
+        if feat.GetField(feat.GetFieldIndex(fields[i])) != values[i]:
             print('value not right')
 #            print feat.GetField( feat.GetFieldIndex(fields[i]) )
             return 'fail'
-        if feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision() != precision[i]:
+        if feat.GetFieldDefnRef(feat.GetFieldIndex(fields[i])).GetPrecision() != precision[i]:
             print('precision not right')
 #            print feat.GetFieldDefnRef( feat.GetFieldIndex(fields[i]) ).GetPrecision()
             return 'fail'
@@ -775,7 +775,7 @@ def ogr_mysql_72():
 
     gdaltest.mysql_ds = None
     # Test with normal protocol
-    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_72')
     if lyr.GetMetadataItem(ogr.OLMD_FID64) is None:
         gdaltest.post_reason('fail')
@@ -796,7 +796,7 @@ def ogr_mysql_25():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ] )
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_25', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
     field_defn = ogr.FieldDefn('field_not_nullable', ogr.OFTString)
     field_defn.SetNullable(0)
     lyr.CreateField(field_defn)
@@ -834,7 +834,7 @@ def ogr_mysql_25():
         f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_25')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_not_nullable')).IsNullable() != 0:
         gdaltest.post_reason('fail')
@@ -856,32 +856,32 @@ def ogr_mysql_26():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type = ogr.wkbPoint, options = [ 'ENGINE=MyISAM' ])
+    lyr = gdaltest.mysql_ds.CreateLayer('ogr_mysql_26', geom_type = ogr.wkbPoint, options = ['ENGINE=MyISAM'])
 
-    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_string_null', ogr.OFTString )
+    field_defn = ogr.FieldDefn('field_string_null', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_int', ogr.OFTInteger)
     field_defn.SetDefault('123')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_real', ogr.OFTReal )
+    field_defn = ogr.FieldDefn('field_real', ogr.OFTReal)
     field_defn.SetDefault('1.23')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_nodefault', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_nodefault', ogr.OFTInteger)
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime', ogr.OFTDateTime)
     field_defn.SetDefault("CURRENT_TIMESTAMP")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime2', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime2', ogr.OFTDateTime)
     field_defn.SetDefault("'2015/06/30 12:34:56'")
     lyr.CreateField(field_defn)
 
@@ -900,7 +900,7 @@ def ogr_mysql_26():
     f = None
 
     gdaltest.mysql_ds = None
-    gdaltest.mysql_ds = ogr.Open( 'MYSQL:autotest', update = 1 )
+    gdaltest.mysql_ds = ogr.Open('MYSQL:autotest', update = 1)
     lyr = gdaltest.mysql_ds.GetLayerByName('ogr_mysql_26')
     if lyr.GetLayerDefn().GetFieldDefn(lyr.GetLayerDefn().GetFieldIndex('field_string')).GetDefault() != "'a''b'":
         gdaltest.post_reason('fail')
@@ -950,16 +950,16 @@ def ogr_mysql_cleanup():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tpoly' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE `select`' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithspatialindex' )
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tpoly')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE `select`')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tablewithspatialindex')
     with gdaltest.error_handler():
-        gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE tablewithoutspatialindex' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE geometry_columns' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE spatial_ref_sys' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE ogr_mysql_72' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE ogr_mysql_25' )
-    gdaltest.mysql_ds.ExecuteSQL( 'DROP TABLE ogr_mysql_26' )
+        gdaltest.mysql_ds.ExecuteSQL('DROP TABLE tablewithoutspatialindex')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE geometry_columns')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE spatial_ref_sys')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_72')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_25')
+    gdaltest.mysql_ds.ExecuteSQL('DROP TABLE ogr_mysql_26')
 
     gdaltest.mysql_ds.Destroy()
     gdaltest.mysql_ds = None
@@ -998,8 +998,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_mysql' )
+    gdaltest.setup_run('ogr_mysql')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

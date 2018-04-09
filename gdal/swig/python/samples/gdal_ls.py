@@ -159,7 +159,7 @@ def gdal_ls(argv, fout = sys.stdout):
     dirname = None
     depth = 1024
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 

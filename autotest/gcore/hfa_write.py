@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,28 +43,28 @@ import gdaltest
 
 def hfa_write_desc():
 
-    src_ds = gdal.Open( 'data/byte.tif' )
+    src_ds = gdal.Open('data/byte.tif')
 
-    new_ds = gdal.GetDriverByName('HFA').CreateCopy( 'tmp/test_desc.img',
-                                                     src_ds )
+    new_ds = gdal.GetDriverByName('HFA').CreateCopy('tmp/test_desc.img',
+                                                     src_ds)
 
     bnd = new_ds.GetRasterBand(1)
-    bnd.SetDescription( 'CustomBandName' )
+    bnd.SetDescription('CustomBandName')
     bnd = None
 
     src_ds = None
     new_ds = None
 
-    new_ds = gdal.Open( 'tmp/test_desc.img' )
+    new_ds = gdal.Open('tmp/test_desc.img')
     bnd = new_ds.GetRasterBand(1)
     if bnd.GetDescription() != 'CustomBandName':
-        gdaltest.post_reason( 'Didnt get custom band name.' )
+        gdaltest.post_reason('Didnt get custom band name.')
         return 'fail'
 
     bnd = None
     new_ds = None
 
-    gdal.GetDriverByName('HFA').Delete( 'tmp/test_desc.img' )
+    gdal.GetDriverByName('HFA').Delete('tmp/test_desc.img')
 
     return 'success'
 
@@ -74,7 +74,7 @@ def hfa_write_desc():
 def hfa_write_4bit():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
-    ds = drv.CreateCopy('tmp/4bit.img', src_ds, options = ['NBITS=1'] )
+    ds = drv.CreateCopy('tmp/4bit.img', src_ds, options = ['NBITS=1'])
     ds = None
     src_ds = None
 
@@ -82,13 +82,13 @@ def hfa_write_4bit():
     cs = ds.GetRasterBand(1).Checksum()
 
     if cs != 252:
-        gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
+        gdaltest.post_reason('Got wrong checksum on 4bit image.')
         print(cs)
         return 'fail'
 
     ds = None
 
-    drv.Delete( 'tmp/4bit.img' )
+    drv.Delete('tmp/4bit.img')
 
     return 'success'
 
@@ -99,7 +99,7 @@ def hfa_write_4bit_compressed():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
     ds = drv.CreateCopy('tmp/4bitc.img', src_ds,
-                        options = ['NBITS=1', 'COMPRESSED=YES'] )
+                        options = ['NBITS=1', 'COMPRESSED=YES'])
     ds = None
     src_ds = None
 
@@ -107,13 +107,13 @@ def hfa_write_4bit_compressed():
     cs = ds.GetRasterBand(1).Checksum()
 
     if cs != 252:
-        gdaltest.post_reason( 'Got wrong checksum on 4bit image.' )
+        gdaltest.post_reason('Got wrong checksum on 4bit image.')
         print(cs)
         return 'fail'
 
     ds = None
 
-    drv.Delete( 'tmp/4bitc.img' )
+    drv.Delete('tmp/4bitc.img')
 
     return 'success'
 
@@ -124,21 +124,21 @@ def hfa_write_4bit_compressed():
 def hfa_write_nd_invalid():
 
     drv = gdal.GetDriverByName('HFA')
-    ds = drv.Create('tmp/ndinvalid.img', 512, 512, 1, gdal.GDT_Byte, [] )
-    ds.GetRasterBand(1).SetNoDataValue( 200 )
+    ds = drv.Create('tmp/ndinvalid.img', 512, 512, 1, gdal.GDT_Byte, [])
+    ds.GetRasterBand(1).SetNoDataValue(200)
     ds = None
 
     ds = gdal.Open('tmp/ndinvalid.img')
     cs = ds.GetRasterBand(1).Checksum()
 
     if cs != 29754:
-        gdaltest.post_reason( 'Got wrong checksum on invalid image.' )
+        gdaltest.post_reason('Got wrong checksum on invalid image.')
         print(cs)
         return 'fail'
 
     ds = None
 
-    drv.Delete( 'tmp/ndinvalid.img' )
+    drv.Delete('tmp/ndinvalid.img')
 
     return 'success'
 
@@ -148,15 +148,15 @@ def hfa_write_nd_invalid():
 def hfa_update_overviews():
 
 
-    shutil.copyfile( 'data/small_ov.img', 'tmp/small.img' )
-    shutil.copyfile( 'data/small_ov.rrd', 'tmp/small.rrd' )
+    shutil.copyfile('data/small_ov.img', 'tmp/small.img')
+    shutil.copyfile('data/small_ov.rrd', 'tmp/small.rrd')
 
-    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
-    result = ds.BuildOverviews( overviewlist = [2] )
+    ds = gdal.Open('tmp/small.img', gdal.GA_Update)
+    result = ds.BuildOverviews(overviewlist = [2])
 
     if result != 0:
         print(result)
-        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        gdaltest.post_reason('BuildOverviews() failed.')
         return 'fail'
     ds = None
 
@@ -167,21 +167,21 @@ def hfa_update_overviews():
 
 def hfa_clean_external_overviews():
 
-    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
-    result = ds.BuildOverviews( overviewlist = [] )
+    ds = gdal.Open('tmp/small.img', gdal.GA_Update)
+    result = ds.BuildOverviews(overviewlist = [])
 
     if result != 0:
-        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        gdaltest.post_reason('BuildOverviews() failed.')
         return 'fail'
 
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason( 'Overviews still exist.' )
+        gdaltest.post_reason('Overviews still exist.')
         return 'fail'
 
     ds = None
-    ds = gdal.Open( 'tmp/small.img' )
+    ds = gdal.Open('tmp/small.img')
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
-        gdaltest.post_reason( 'Overviews still exist.' )
+        gdaltest.post_reason('Overviews still exist.')
         return 'fail'
     ds = None
 
@@ -191,12 +191,12 @@ def hfa_clean_external_overviews():
         fd = None
 
     if fd is not None:
-        gdaltest.post_reason( 'small.rrd still present.' )
+        gdaltest.post_reason('small.rrd still present.')
         return 'fail'
 
     fd = None
 
-    gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
+    gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 
     return 'success'
 
@@ -205,14 +205,14 @@ def hfa_clean_external_overviews():
 
 def hfa_bug_2525():
     drv = gdal.GetDriverByName('HFA')
-    ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options = [ 'COMPRESSED=YES'] )
+    ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options = ['COMPRESSED=YES'])
     import struct
     data = struct.pack('H' * 64, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535, 0, 65535,  0, 65535, 0, 65535, 0, 65535, 0, 65535)
     for i in range(64):
-        ds.GetRasterBand(1).WriteRaster( 0, i, 64, 1, data)
+        ds.GetRasterBand(1).WriteRaster(0, i, 64, 1, data)
     ds = None
 
-    drv.Delete( 'tmp/test_hfa.img' )
+    drv.Delete('tmp/test_hfa.img')
 
     return 'success'
 
@@ -221,17 +221,17 @@ def hfa_bug_2525():
 
 def hfa_use_rrd():
 
-    shutil.copyfile( 'data/small_ov.img', 'tmp/small.img' )
+    shutil.copyfile('data/small_ov.img', 'tmp/small.img')
 
     old_value = gdal.GetConfigOption('HFA_USE_RRD', 'NO')
     gdal.SetConfigOption('HFA_USE_RRD', 'YES')
-    ds = gdal.Open( 'tmp/small.img', gdal.GA_Update )
-    result = ds.BuildOverviews( overviewlist = [2] )
+    ds = gdal.Open('tmp/small.img', gdal.GA_Update)
+    result = ds.BuildOverviews(overviewlist = [2])
     gdal.SetConfigOption('HFA_USE_RRD', old_value)
 
     if result != 0:
         print(result)
-        gdaltest.post_reason( 'BuildOverviews() failed.' )
+        gdaltest.post_reason('BuildOverviews() failed.')
         return 'fail'
     ds = None
 
@@ -241,19 +241,19 @@ def hfa_use_rrd():
         fd = None
 
     if fd is None:
-        gdaltest.post_reason( 'small.rrd not present.' )
+        gdaltest.post_reason('small.rrd not present.')
         return 'fail'
     fd.close()
 
-    ds = gdal.Open('tmp/small.img' )
+    ds = gdal.Open('tmp/small.img')
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 26148:
         print(ds.GetRasterBand(1).GetOverview(0).Checksum())
-        gdaltest.post_reason( 'Unexpected checksum.' )
+        gdaltest.post_reason('Unexpected checksum.')
         return 'fail'
 
     ds = None
 
-    gdal.GetDriverByName('HFA').Delete( 'tmp/small.img' )
+    gdal.GetDriverByName('HFA').Delete('tmp/small.img')
 
     return 'success'
 
@@ -271,7 +271,7 @@ def hfa_update_existing_aux_overviews():
 
     # Create overviews
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     # Save overviews checksum
@@ -280,7 +280,7 @@ def hfa_update_existing_aux_overviews():
     cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
 
     # and regenerate them
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -297,8 +297,8 @@ def hfa_update_existing_aux_overviews():
         return 'fail'
 
     # and regenerate them twice in a row
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
-    ds.BuildOverviews( 'NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
+    ds.BuildOverviews('NEAR', overviewlist = [2, 4])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -315,7 +315,7 @@ def hfa_update_existing_aux_overviews():
         return 'fail'
 
     # and regenerate them with an extra overview level
-    ds.BuildOverviews( 'NEAR', overviewlist = [8])
+    ds.BuildOverviews('NEAR', overviewlist = [8])
     ds = None
 
     ds = gdal.Open('tmp/hfa_update_existing_aux_overviews.bmp')
@@ -410,9 +410,9 @@ init_list = [ \
     ('float64.tif', 1, 4672, None),
     ('cfloat32.tif', 1, 5028, None),
     ('cfloat64.tif', 1, 5028, None),
-    ('utmsmall.tif', 1, 50054, None) ]
+    ('utmsmall.tif', 1, 50054, None)]
 
-gdaltest_list = [ hfa_write_desc,
+gdaltest_list = [hfa_write_desc,
                   hfa_write_4bit,
                   hfa_write_4bit_compressed,
                   hfa_write_nd_invalid,
@@ -421,46 +421,46 @@ gdaltest_list = [ hfa_write_desc,
                   hfa_bug_2525,
                   hfa_use_rrd,
                   hfa_update_existing_aux_overviews,
-                  hfa_write_invalid_wkt ]
+                  hfa_write_invalid_wkt]
 
 # full set of tests for normal mode.
 
 for item in init_list:
-    ut1 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
+    ut1 = gdaltest.GDALTest('HFA', item[0], item[1], item[2])
     if ut1 is None:
-        print( 'HFA tests skipped' )
-    gdaltest_list.append( (ut1.testCreateCopy, item[0]) )
-    gdaltest_list.append( (ut1.testCreate, item[0]) )
-    gdaltest_list.append( (ut1.testSetGeoTransform, item[0]) )
-    gdaltest_list.append( (ut1.testSetMetadata, item[0]) )
+        print('HFA tests skipped')
+    gdaltest_list.append((ut1.testCreateCopy, item[0]))
+    gdaltest_list.append((ut1.testCreate, item[0]))
+    gdaltest_list.append((ut1.testSetGeoTransform, item[0]))
+    gdaltest_list.append((ut1.testSetMetadata, item[0]))
 
 # Just a few for spill file, and compressed support.
 short_list = [ \
     ('byte.tif', 1, 4672, None),
     ('uint16.tif', 1, 4672, None),
-    ('float64.tif', 1, 4672, None) ]
+    ('float64.tif', 1, 4672, None)]
 
 for item in short_list:
-    ut2 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2],
-                             options = [ 'USE_SPILL=YES' ] )
+    ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
+                             options = ['USE_SPILL=YES'])
     if ut2 is None:
-        print( 'HFA tests skipped' )
-    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (spill)') )
-    gdaltest_list.append( (ut2.testCreate, item[0] + ' (spill)') )
+        print('HFA tests skipped')
+    gdaltest_list.append((ut2.testCreateCopy, item[0] + ' (spill)'))
+    gdaltest_list.append((ut2.testCreate, item[0] + ' (spill)'))
 
-    ut2 = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2],
-                             options = [ 'COMPRESS=YES' ] )
+    ut2 = gdaltest.GDALTest('HFA', item[0], item[1], item[2],
+                             options = ['COMPRESS=YES'])
     if ut2 is None:
-        print( 'HFA tests skipped' )
+        print('HFA tests skipped')
 #    gdaltest_list.append( (ut2.testCreateCopy, item[0] + ' (compressed)') )
-    gdaltest_list.append( (ut2.testCreate, item[0] + ' (compressed)') )
+    gdaltest_list.append((ut2.testCreate, item[0] + ' (compressed)'))
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hfa_write' )
+    gdaltest.setup_run('hfa_write')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

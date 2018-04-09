@@ -35,14 +35,14 @@ import osr
 ##############################################################################
 # rtod(): radians to degrees.
 
-def r2d( rad ):
+def r2d(rad):
     return float(rad) / 0.0174532925199433
 
 ##############################################################################
 # load_dict()
 
-def load_dict( filename ):
-    lines = open( filename ).readlines()
+def load_dict(filename):
+    lines = open(filename).readlines()
 
     this_dict = {}
     for line in lines:
@@ -61,16 +61,16 @@ def load_dict( filename ):
 #dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
 dir = '/u/data/ecw/gdt/'
 
-dict_list = [ 'tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
-	      'obmerc_b', 'grinten', 'cassini', 'lambazea', 'datum_sp' ]
+dict_list = ['tranmerc', 'lambert1', 'lamcon2', 'utm', 'albersea', 'mercator',
+	      'obmerc_b', 'grinten', 'cassini', 'lambazea', 'datum_sp']
 
 dict_dict = {}
 
 for item in dict_list:
-    dict_dict[item] = load_dict( dir + item + '.dat' )
+    dict_dict[item] = load_dict(dir + item + '.dat')
     #print 'loaded: %s' % item
 
-pfile = open( dir + 'project.dat' )
+pfile = open(dir + 'project.dat')
 pfile.readline()
 
 for line in pfile.readlines():
@@ -99,28 +99,28 @@ for line in pfile.readlines():
 	    fe = float(dline[2])
 
         if type == 'tranmerc':
-	    srs.SetTM( r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn )
+	    srs.SetTM(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
 
 	elif type == 'mercator':
-	    srs.SetMercator( r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn )
+	    srs.SetMercator(r2d(dline[5]), r2d(dline[4]), float(dline[3]), fe, fn)
 
 	elif type == 'grinten':
-	    srs.SetVDG( r2d(dline[3]), fe, fn )
+	    srs.SetVDG(r2d(dline[3]), fe, fn)
 
 	elif type == 'cassini':
-	    srs.SetCS( r2d(dline[4]), r2d(dline[3]), fe, fn )
+	    srs.SetCS(r2d(dline[4]), r2d(dline[3]), fe, fn)
 
 	elif type == 'lambazea':
-	    srs.SetLAEA( r2d(dline[5]), r2d(dline[4]),
-                         fe, fn )
+	    srs.SetLAEA(r2d(dline[5]), r2d(dline[4]),
+                         fe, fn)
 
 	elif type == 'lambert1':
-	    srs.SetLCC1SP( r2d(dline[5]), r2d(dline[4]),
-                           float(dline[3]), fe, fn )
+	    srs.SetLCC1SP(r2d(dline[5]), r2d(dline[4]),
+                           float(dline[3]), fe, fn)
 
 	elif type == 'lamcon2':
-	    srs.SetLCC( r2d(dline[7]), r2d(dline[8]),
-		        r2d(dline[9]), r2d(dline[6]), fe, fn )
+	    srs.SetLCC(r2d(dline[7]), r2d(dline[8]),
+		        r2d(dline[9]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'lambert2':
 #	    false_en = '+y_0=%.2f +x_0=%.2f' \
@@ -130,23 +130,23 @@ for line in pfile.readlines():
 #			r2d(dline[7]), r2d(dline[8]))
 
 	elif type == 'albersea':
-	    srs.SetACEA( r2d(dline[3]), r2d(dline[4]),
-		         r2d(dline[5]), r2d(dline[6]), fe, fn )
+	    srs.SetACEA(r2d(dline[3]), r2d(dline[4]),
+		         r2d(dline[5]), r2d(dline[6]), fe, fn)
 
 #	elif type == 'obmerc_b':
 #	    result = '+proj=omerc %s +lat_0=%s +lonc=%s +alpha=%s +k=%s' \
 #               % (false_en, r2d(dline[5]), r2d(dline[6]), r2d(dline[4]), dline[3])
 
 	elif type == 'utm':
-	    srs.SetUTM( int(dline[1]), dline[2] != 'S' )
+	    srs.SetUTM(int(dline[1]), dline[2] != 'S')
 
 	# Handle Units from projects.dat file.
         if srs.IsProjected():
-            srs.SetAttrValue( 'PROJCS', id )
+            srs.SetAttrValue('PROJCS', id)
             if lsize_str == '0.30480061':
-                srs.SetLinearUnits( 'US Foot', float(lsize_str) )
+                srs.SetLinearUnits('US Foot', float(lsize_str))
             elif lsize_str != '1.0':
-                srs.SetLinearUnits( 'unnamed', float(lsize_str) )
+                srs.SetLinearUnits('unnamed', float(lsize_str))
 
         wkt = srs.ExportToWkt()
         if len(wkt) > 0:
@@ -163,7 +163,7 @@ for line in pfile.readlines():
 
 ## Translate datums to their underlying spheroid information.
 
-pfile = open( dir + 'datum.dat' )
+pfile = open(dir + 'datum.dat')
 pfile.readline()
 
 for line in pfile.readlines():
@@ -178,13 +178,13 @@ for line in pfile.readlines():
     srs = osr.SpatialReference()
 
     if id == 'WGS84':
-        srs.SetWellKnownGeogCS( 'WGS84' )
+        srs.SetWellKnownGeogCS('WGS84')
     elif id == 'NAD27':
-        srs.SetWellKnownGeogCS( 'NAD27' )
+        srs.SetWellKnownGeogCS('NAD27')
     elif id == 'NAD83':
-        srs.SetWellKnownGeogCS( 'NAD83' )
+        srs.SetWellKnownGeogCS('NAD83')
     else:
-        srs.SetGeogCS( tokens[1], id, sp_name, float(dline[2]), float(dline[4]) )
+        srs.SetGeogCS(tokens[1], id, sp_name, float(dline[2]), float(dline[4]))
 
     print '%s,%s' % (id, srs.ExportToWkt())
 

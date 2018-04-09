@@ -33,7 +33,7 @@
 import sys
 import osr_proj4
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -46,39 +46,39 @@ example_compd_wkt = 'COMPD_CS["OSGB36 / British National Grid + ODN",PROJCS["OSG
 def osr_compd_1():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt( example_compd_wkt )
+    srs.ImportFromWkt(example_compd_wkt)
 
     if not srs.IsProjected():
-        gdaltest.post_reason( 'Projected COMPD_CS not recognised as projected.')
+        gdaltest.post_reason('Projected COMPD_CS not recognised as projected.')
         return 'fail'
 
     if srs.IsGeographic():
-        gdaltest.post_reason( 'projected COMPD_CS misrecognised as geographic.')
+        gdaltest.post_reason('projected COMPD_CS misrecognised as geographic.')
         return 'fail'
 
     if srs.IsLocal():
-        gdaltest.post_reason( 'projected COMPD_CS misrecognised as local.')
+        gdaltest.post_reason('projected COMPD_CS misrecognised as local.')
         return 'fail'
 
     if not srs.IsCompound():
-        gdaltest.post_reason( 'COMPD_CS not recognised as compound.' )
+        gdaltest.post_reason('COMPD_CS not recognised as compound.')
         return 'fail'
 
     expected_proj4 = '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.999601272 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=375,-111,431,0,0,0,0 +units=m +vunits=m +no_defs '
     got_proj4 = srs.ExportToProj4()
 
     if expected_proj4 != got_proj4:
-        print( 'Got:      %s' % got_proj4 )
-        print( 'Expected: %s' % expected_proj4 )
-        gdaltest.post_reason( 'did not get expected proj.4 translation of compd_cs' )
+        print('Got:      %s' % got_proj4)
+        print('Expected: %s' % expected_proj4)
+        gdaltest.post_reason('did not get expected proj.4 translation of compd_cs')
         return 'fail'
 
     if srs.GetLinearUnitsName() != 'metre_1':
-        gdaltest.post_reason( 'Did not get expected linear units.' )
+        gdaltest.post_reason('Did not get expected linear units.')
         return 'fail'
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Validate() failed.' )
+        gdaltest.post_reason('Validate() failed.')
         return 'fail'
 
     return 'success'
@@ -89,14 +89,14 @@ def osr_compd_1():
 def osr_compd_2():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( example_compd_wkt )
+    srs.SetFromUserInput(example_compd_wkt)
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     if not srs.IsProjected():
-        gdaltest.post_reason( 'Projected COMPD_CS not recognised as projected.')
+        gdaltest.post_reason('Projected COMPD_CS not recognised as projected.')
         return 'fail'
 
     return 'success'
@@ -107,10 +107,10 @@ def osr_compd_2():
 def osr_compd_3():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 7401 )
+    srs.ImportFromEPSG(7401)
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     exp_wkt = """COMPD_CS["NTF (Paris) / France II + NGF Lallemand",
@@ -146,8 +146,8 @@ def osr_compd_3():
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
     wkt = srs.ExportToPrettyWkt()
-    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
-        gdaltest.post_reason( 'did not get expected compound cs for EPSG:7401')
+    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
+        gdaltest.post_reason('did not get expected compound cs for EPSG:7401')
         return 'fail'
     # elif exp_wkt != wkt:
     #    print('warning they are equivalent, but not completely the same')
@@ -161,10 +161,10 @@ def osr_compd_3():
 def osr_compd_4():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 7400 )
+    srs.ImportFromEPSG(7400)
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     exp_wkt = """COMPD_CS["NTF (Paris) + NGF IGN69 height",
@@ -189,8 +189,8 @@ def osr_compd_4():
     AUTHORITY["EPSG","7400"]]"""
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
-        gdaltest.post_reason( 'did not get expected compound cs for EPSG:7400')
+    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
+        gdaltest.post_reason('did not get expected compound cs for EPSG:7400')
         return 'fail'
     # elif exp_wkt != wkt:
     #    print('warning they are equivalent, but not completely the same')
@@ -205,10 +205,10 @@ def osr_compd_4():
 def osr_compd_5():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( 'EPSG:26911+5703' )
+    srs.SetFromUserInput('EPSG:26911+5703')
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     exp_wkt = """COMPD_CS["NAD83 / UTM zone 11N + NAVD88 height",
@@ -245,20 +245,20 @@ def osr_compd_5():
         AUTHORITY["EPSG","5703"]]]"""
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
         return 'fail'
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
     if wkt.find('g2012a_conus.gtx') == -1:
-        gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
+        gdaltest.post_reason('Did not get PROJ4_GRIDS EXTENSION node')
         return 'fail'
 
     exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2012a_conus.gtx,g2012a_alaska.gtx,g2012a_guam.gtx,g2012a_hawaii.gtx,g2012a_puertorico.gtx,g2012a_samoa.gtx +vunits=m +no_defs '
     proj4 = srs.ExportToProj4()
     if proj4 != exp_proj4:
-        gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
+        gdaltest.post_reason('Did not get expected proj.4 string, got:' + proj4)
         return 'fail'
 
     return 'success'
@@ -272,10 +272,10 @@ def osr_compd_6():
         return 'skip'
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ' )
+    srs.SetFromUserInput('+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs ')
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     exp_wkt = """COMPD_CS["UTM Zone 11, Northern Hemisphere + Unnamed Vertical Datum",
@@ -301,7 +301,7 @@ def osr_compd_6():
 
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
     elif exp_wkt != wkt:
@@ -309,13 +309,13 @@ def osr_compd_6():
         print(wkt)
 
     if wkt.find('g2003conus.gtx') == -1:
-        gdaltest.post_reason( 'Did not get PROJ4_GRIDS EXTENSION node' )
+        gdaltest.post_reason('Did not get PROJ4_GRIDS EXTENSION node')
         return 'fail'
 
     exp_proj4 = '+proj=utm +zone=11 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx +vunits=us-ft +no_defs '
     proj4 = srs.ExportToProj4()
     if proj4 != exp_proj4:
-        gdaltest.post_reason( 'Did not get expected proj.4 string, got:' + proj4 )
+        gdaltest.post_reason('Did not get expected proj.4 string, got:' + proj4)
         return 'fail'
 
     return 'success'
@@ -326,17 +326,17 @@ def osr_compd_6():
 def osr_compd_7():
 
     srs_horiz = osr.SpatialReference()
-    srs_horiz.ImportFromEPSG( 4326 )
+    srs_horiz.ImportFromEPSG(4326)
 
     srs_vert = osr.SpatialReference()
-    srs_vert.ImportFromEPSG( 5703 )
-    srs_vert.SetTargetLinearUnits( 'VERT_CS', 'foot', 0.304800609601219 )
+    srs_vert.ImportFromEPSG(5703)
+    srs_vert.SetTargetLinearUnits('VERT_CS', 'foot', 0.304800609601219)
 
     srs = osr.SpatialReference()
-    srs.SetCompoundCS( 'My Compound SRS', srs_horiz, srs_vert )
+    srs.SetCompoundCS('My Compound SRS', srs_horiz, srs_vert)
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     exp_wkt = """COMPD_CS["My Compound SRS",
@@ -360,19 +360,19 @@ def osr_compd_7():
 
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt( exp_wkt, wkt ) == 0:
+    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
         return 'fail'
     elif exp_wkt != wkt:
         print('warning they are equivalent, but not completely the same')
         print(wkt)
 
     if srs.GetTargetLinearUnits('VERT_CS') != 0.304800609601219:
-        gdaltest.post_reason( 'Didnt get expected linear units' )
+        gdaltest.post_reason('Didnt get expected linear units')
         print('%.16g' % srs.GetTargetLinearUnits('VERT_CS'))
         return 'fail'
 
     if srs.GetTargetLinearUnits(None) != 0.304800609601219:
-        gdaltest.post_reason( 'Didnt get expected linear units' )
+        gdaltest.post_reason('Didnt get expected linear units')
         print('%.16g' % srs.GetTargetLinearUnits(None))
         return 'fail'
 
@@ -384,15 +384,15 @@ def osr_compd_7():
 def osr_compd_8():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput( 'urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::5701' )
+    srs.SetFromUserInput('urn:ogc:def:crs,crs:EPSG::27700,crs:EPSG::5701')
 
     if srs.Validate() != 0:
-        gdaltest.post_reason( 'Does not validate' )
+        gdaltest.post_reason('Does not validate')
         return 'fail'
 
     wkt = srs.ExportToWkt()
     if wkt.find('COMPD_CS') != 0:
-        gdaltest.post_reason( 'COMPD_CS not recognised as compound.' )
+        gdaltest.post_reason('COMPD_CS not recognised as compound.')
         print(wkt)
         return 'fail'
 
@@ -407,12 +407,12 @@ gdaltest_list = [
     osr_compd_6,
     osr_compd_7,
     osr_compd_8,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_compd' )
+    gdaltest.setup_run('osr_compd')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

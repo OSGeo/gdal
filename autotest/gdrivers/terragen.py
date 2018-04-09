@@ -29,7 +29,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -38,7 +38,7 @@ import gdaltest
 
 def terragen_1():
 
-    tst = gdaltest.GDALTest( 'terragen', 'float32.ter', 1, 1128 )
+    tst = gdaltest.GDALTest('terragen', 'float32.ter', 1, 1128)
 
     return tst.testOpen()
 
@@ -66,8 +66,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'TERRAGEN' )
+    gdaltest.setup_run('TERRAGEN')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -34,7 +34,7 @@ from osgeo import gdal
 from osgeo import ogr
 from sys import version_info
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -186,7 +186,7 @@ def vsicurl_9():
         filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename = filename.encode( 'utf-8' )
+        filename = filename.encode('utf-8')
 
     ds = gdal.Open('/vsicurl/http://download.osgeo.org/gdal/data/gtiff/' + filename)
     if ds is None:
@@ -275,7 +275,7 @@ def vsicurl_test_redirect():
 
     handler.add('HEAD', '/test_redirect/test.bin', custom_method = method)
     handler.add('HEAD', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), 403,
-                {'Server' : 'foo' }, '')
+                {'Server' : 'foo'}, '')
 
     def method(request):
         if 'Range' in request.headers:
@@ -395,8 +395,8 @@ def vsicurl_test_retry():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/test_retry/', 404)
-    handler.add('HEAD', '/test_retry/test.txt', 200, { 'Content-Length': '3' } )
-    handler.add('GET', '/test_retry/test.txt', 502 )
+    handler.add('HEAD', '/test_retry/test.txt', 200, {'Content-Length': '3'})
+    handler.add('GET', '/test_retry/test.txt', 502)
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl/http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
         data_len = 0
@@ -412,10 +412,10 @@ def vsicurl_test_retry():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/test_retry/', 404)
-    handler.add('HEAD', '/test_retry/test.txt', 200, { 'Content-Length': '3' } )
-    handler.add('GET', '/test_retry/test.txt', 502 )
-    handler.add('GET', '/test_retry/test.txt', 429 )
-    handler.add('GET', '/test_retry/test.txt', 200, {}, 'foo' )
+    handler.add('HEAD', '/test_retry/test.txt', 200, {'Content-Length': '3'})
+    handler.add('GET', '/test_retry/test.txt', 502)
+    handler.add('GET', '/test_retry/test.txt', 429)
+    handler.add('GET', '/test_retry/test.txt', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL('/vsicurl?max_retry=2&retry_delay=0.01&url=http://localhost:%d/test_retry/test.txt' % gdaltest.webserver_port, 'rb')
         if f is None:
@@ -448,7 +448,7 @@ def vsicurl_test_fallback_from_head_to_get():
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/test_fallback_from_head_to_get', 405)
-    handler.add('GET', '/test_fallback_from_head_to_get', 200, {}, 'foo' )
+    handler.add('GET', '/test_fallback_from_head_to_get', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         statres = gdal.VSIStatL('/vsicurl/http://localhost:%d/test_fallback_from_head_to_get' % gdaltest.webserver_port)
     if statres.size != 3:
@@ -472,7 +472,7 @@ def vsicurl_stop_webserver():
 
     return 'success'
 
-gdaltest_list = [ vsicurl_1,
+gdaltest_list = [vsicurl_1,
                   #vsicurl_2,
                   #vsicurl_3,
                   vsicurl_4,
@@ -488,7 +488,7 @@ gdaltest_list = [ vsicurl_1,
                   vsicurl_test_clear_cache,
                   vsicurl_test_retry,
                   vsicurl_test_fallback_from_head_to_get,
-                  vsicurl_stop_webserver ]
+                  vsicurl_stop_webserver]
 
 if __name__ == '__main__':
 
@@ -496,9 +496,9 @@ if __name__ == '__main__':
         print('Enabling slow tests as GDAL_RUN_SLOW_TESTS is not defined')
         gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 
-    gdaltest.setup_run( 'vsicurl' )
+    gdaltest.setup_run('vsicurl')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

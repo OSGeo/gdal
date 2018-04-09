@@ -33,7 +33,7 @@ import sys
 import os
 import struct
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -48,7 +48,7 @@ def test_rgb2pct_1():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '../gcore/data/rgbsmall.tif tmp/test_rgb2pct_1.tif' )
+    test_py_scripts.run_py_script(script_path, 'rgb2pct', '../gcore/data/rgbsmall.tif tmp/test_rgb2pct_1.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_1.tif')
     if ds.GetRasterBand(1).Checksum() != 31231:
@@ -72,7 +72,7 @@ def test_pct2rgb_1():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'pct2rgb', 'tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif' )
+    test_py_scripts.run_py_script(script_path, 'pct2rgb', 'tmp/test_rgb2pct_1.tif tmp/test_pct2rgb_1.tif')
 
     ds = gdal.Open('tmp/test_pct2rgb_1.tif')
     if ds.GetRasterBand(1).Checksum() != 20963:
@@ -125,7 +125,7 @@ def test_rgb2pct_3():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_3.tif' )
+    test_py_scripts.run_py_script(script_path, 'rgb2pct', '-pct tmp/test_rgb2pct_2.tif ../gcore/data/rgbsmall.tif tmp/test_rgb2pct_3.tif')
 
     ds = gdal.Open('tmp/test_rgb2pct_3.tif')
     if ds.GetRasterBand(1).Checksum() != 16596:
@@ -186,12 +186,12 @@ def test_pct2rgb_4():
 
 def test_rgb2pct_cleanup():
 
-    lst = [ 'tmp/test_rgb2pct_1.tif',
+    lst = ['tmp/test_rgb2pct_1.tif',
             'tmp/test_pct2rgb_1.tif',
             'tmp/test_rgb2pct_2.tif',
             'tmp/test_rgb2pct_3.tif',
             'tmp/test_pct2rgb_1.tif',
-            'tmp/test_pct2rgb_4.tif' ]
+            'tmp/test_pct2rgb_4.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -212,8 +212,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_rgb2pct' )
+    gdaltest.setup_run('test_rgb2pct')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

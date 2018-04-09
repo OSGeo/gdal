@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -46,8 +46,8 @@ def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32600 + 17)
 
-    tst = gdaltest.GDALTest( 'SRP', filename, 1, 24576 )
-    ret = tst.testOpen( check_prj = srs.ExportToWkt(), check_gt = (500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0) )
+    tst = gdaltest.GDALTest('SRP', filename, 1, 24576)
+    ret = tst.testOpen(check_prj = srs.ExportToWkt(), check_gt = (500000.0, 5.0, 0.0, 5000000.0, 0.0, -5.0))
     if ret != 'success':
         return ret
 
@@ -71,14 +71,14 @@ def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
         print(ct.GetColorEntry(1))
         return 'fail'
 
-    expected_md = [ 'SRP_CLASSIFICATION=U',
+    expected_md = ['SRP_CLASSIFICATION=U',
             'SRP_CREATIONDATE=20120505',
             'SRP_EDN=0',
             'SRP_NAM=FKUSRP',
             'SRP_PRODUCT=USRP',
             'SRP_REVISIONDATE=20120505',
             'SRP_SCA=50000',
-            'SRP_ZNA=17' ]
+            'SRP_ZNA=17']
 
     got_md = ds.GetMetadata()
     for md in expected_md:
@@ -107,7 +107,7 @@ def srp_3():
 
 def srp_4():
 
-    tst = gdaltest.GDALTest( 'SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576 )
+    tst = gdaltest.GDALTest('SRP', 'USRP_PCB0/TRANSH01.THF', 1, 24576)
     ret = tst.testOpen()
     return ret
 
@@ -131,10 +131,10 @@ def srp_5():
         print(subdatasets)
         return 'fail'
 
-    expected_md = [ 'SRP_CLASSIFICATION=U',
+    expected_md = ['SRP_CLASSIFICATION=U',
             'SRP_CREATIONDATE=20120505',
             'SRP_EDN=1',
-            'SRP_VOO=           ' ]
+            'SRP_VOO=           ']
 
     got_md = ds.GetMetadata()
     for md in expected_md:
@@ -151,7 +151,7 @@ def srp_5():
 
 def srp_6():
 
-    tst = gdaltest.GDALTest( 'SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1)
     return tst.testOpen()
 
 
@@ -178,9 +178,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'srp' )
+    gdaltest.setup_run('srp')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

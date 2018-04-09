@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +40,7 @@ import gdaltest
 # Perform simple read test.
 def roipac_1():
 
-    tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
+    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
 
     prj = """GEOGCS["WGS 84",
     DATUM["WGS_1984",
@@ -54,17 +54,17 @@ def roipac_1():
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
 
-    return tst.testOpen( check_prj = prj,
+    return tst.testOpen(check_prj = prj,
                          check_gt = (-180.0083333, 0.0083333333, 0.0,
-                                     -59.9916667, 0.0, -0.0083333333) )
+                                     -59.9916667, 0.0, -0.0083333333))
 
 ###############################################################################
 # Test reading of metadata from the ROI_PAC metadata domain
 
 def roipac_2():
 
-    ds = gdal.Open( 'data/srtm.dem' )
-    val = ds.GetMetadataItem( 'YMAX', 'ROI_PAC' )
+    ds = gdal.Open('data/srtm.dem')
+    val = ds.GetMetadataItem('YMAX', 'ROI_PAC')
     if val != '9':
         return 'fail'
 
@@ -75,28 +75,28 @@ def roipac_2():
 
 def roipac_3():
 
-    tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
-    return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem' )
+    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
+    return tst.testCreateCopy(check_gt = 1, new_filename = 'strm.tst.dem')
 
 ###############################################################################
 # Verify VSIF*L capacity
 
 def roipac_4():
 
-    tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
-    return tst.testCreateCopy( check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1 )
+    tst = gdaltest.GDALTest('roi_pac', 'srtm.dem', 1, 64074)
+    return tst.testCreateCopy(check_gt = 1, new_filename = 'strm.tst.dem', vsimem = 1)
 
 ###############################################################################
 # Verify offset/scale metadata reading
 
 def roipac_5():
 
-    ds = gdal.Open( 'data/srtm.dem' )
-    band = ds.GetRasterBand( 1 )
-    offset = band.GetOffset( )
+    ds = gdal.Open('data/srtm.dem')
+    band = ds.GetRasterBand(1)
+    offset = band.GetOffset()
     if offset != 1:
         return 'fail'
-    scale = band.GetScale( )
+    scale = band.GetScale()
     if scale != 2:
         return 'fail'
 
@@ -107,9 +107,9 @@ def roipac_5():
 
 def roipac_6():
 
-    tst = gdaltest.GDALTest( 'roi_pac', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('roi_pac', 'byte.tif', 1, 4672)
     with gdaltest.error_handler():
-        ret = tst.testCreateCopy( check_gt = 1, new_filename = 'byte.flg', vsimem = 1 )
+        ret = tst.testCreateCopy(check_gt = 1, new_filename = 'byte.flg', vsimem = 1)
     return ret
 
 gdaltest_list = [
@@ -124,9 +124,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'roipac' )
+    gdaltest.setup_run('roipac')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

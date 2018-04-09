@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -75,14 +75,14 @@ def test_gdalinfo_lib_3():
 
     ret = gdal.Info(ds, format = 'json')
     if 'TRE' in ret['metadata']:
-        gdaltest.post_reason( 'got unexpected extra MD.' )
+        gdaltest.post_reason('got unexpected extra MD.')
         print(ret)
         return 'fail'
 
     options = gdal.InfoOptions(format = 'json', extraMDDomains = ['TRE'])
     ret = gdal.Info(ds, options = options)
     if ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') == -1:
-        gdaltest.post_reason( 'did not get extra MD.' )
+        gdaltest.post_reason('did not get extra MD.')
         print(ret)
         return 'fail'
 
@@ -187,8 +187,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalinfo_lib' )
+    gdaltest.setup_run('test_gdalinfo_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

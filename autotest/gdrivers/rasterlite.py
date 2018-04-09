@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,12 +44,12 @@ import gdaltest
 def rasterlite_1():
 
     try:
-        gdaltest.rasterlite_drv = gdal.GetDriverByName( 'RASTERLITE' )
+        gdaltest.rasterlite_drv = gdal.GetDriverByName('RASTERLITE')
     except:
         gdaltest.rasterlite_drv = None
 
     try:
-        gdaltest.epsilon_drv = gdal.GetDriverByName( 'EPSILON' )
+        gdaltest.epsilon_drv = gdal.GetDriverByName('EPSILON')
     except:
         gdaltest.epsilon_drv = None
 
@@ -127,7 +127,7 @@ def rasterlite_2():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = ( -180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
+    expected_gt = (-180.0, 360. / ds.RasterXSize, 0.0, 90.0, 0.0, -180. / ds.RasterYSize)
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1e-15:
             print(gt)
@@ -263,7 +263,7 @@ def rasterlite_6():
 
     # Test first if spatialite is available
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ogr_ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
+    ogr_ds = ogr.GetDriverByName('SQLite').CreateDataSource('tmp/spatialite_test.db', options = ['SPATIALITE=YES'])
     if ogr_ds is not None:
         sql_lyr = ogr_ds.ExecuteSQL("SELECT AsText(GeomFromText('POINT(0 1)'))")
     else:
@@ -280,7 +280,7 @@ def rasterlite_6():
 
     # Test now CreateCopy()
     src_ds = gdal.Open('data/byte.tif')
-    ds = gdal.GetDriverByName('RASTERLITE').CreateCopy( 'RASTERLITE:tmp/byte.sqlite,table=byte', src_ds )
+    ds = gdal.GetDriverByName('RASTERLITE').CreateCopy('RASTERLITE:tmp/byte.sqlite,table=byte', src_ds)
     if ds is None:
         return 'fail'
 
@@ -293,7 +293,7 @@ def rasterlite_6():
     expected_gt = src_ds.GetGeoTransform()
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
             return 'fail'
 
     if ds.GetProjectionRef().find('NAD27 / UTM zone 11N') == -1:
@@ -316,10 +316,10 @@ def rasterlite_7():
     if gdaltest.has_spatialite is False:
         return 'skip'
 
-    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+    ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
     # Resampling method is not taken into account
-    ds.BuildOverviews( 'NEAREST', overviewlist = [2, 4] )
+    ds.BuildOverviews('NEAREST', overviewlist = [2, 4])
 
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
         gdaltest.post_reason('Wrong checksum for overview 0')
@@ -333,7 +333,7 @@ def rasterlite_7():
 
     # Reopen and test
     ds = None
-    ds = gdal.Open( 'tmp/byte.sqlite' )
+    ds = gdal.Open('tmp/byte.sqlite')
 
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1192:
         gdaltest.post_reason('Wrong checksum for overview 0')
@@ -358,9 +358,9 @@ def rasterlite_8():
     if gdaltest.has_spatialite is False:
         return 'skip'
 
-    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+    ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
-    ds.BuildOverviews( overviewlist = [] )
+    ds.BuildOverviews(overviewlist = [])
 
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         return 'fail'
@@ -381,9 +381,9 @@ def rasterlite_9():
     if gdaltest.epsilon_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'RASTERLITE', 'byte.tif', 1, 4866, options = ['DRIVER=EPSILON'] )
+    tst = gdaltest.GDALTest('RASTERLITE', 'byte.tif', 1, 4866, options = ['DRIVER=EPSILON'])
 
-    return tst.testCreateCopy( check_gt = 1, check_srs = 1, check_minmax = 0 )
+    return tst.testCreateCopy(check_gt = 1, check_srs = 1, check_minmax = 0)
 
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
@@ -399,9 +399,9 @@ def rasterlite_10():
     if gdaltest.epsilon_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'RASTERLITE', 'rgbsmall.tif', 1, 23189, options = ['DRIVER=EPSILON'] )
+    tst = gdaltest.GDALTest('RASTERLITE', 'rgbsmall.tif', 1, 23189, options = ['DRIVER=EPSILON'])
 
-    return tst.testCreateCopy( check_gt = 1, check_srs = 1, check_minmax = 0 )
+    return tst.testCreateCopy(check_gt = 1, check_srs = 1, check_minmax = 0)
 
 ###############################################################################
 # Test BuildOverviews() with AVERAGE resampling
@@ -414,16 +414,16 @@ def rasterlite_11():
     if gdaltest.has_spatialite is False:
         return 'skip'
 
-    ds = gdal.Open( 'tmp/byte.sqlite', gdal.GA_Update )
+    ds = gdal.Open('tmp/byte.sqlite', gdal.GA_Update)
 
-    ds.BuildOverviews( overviewlist = [] )
+    ds.BuildOverviews(overviewlist = [])
 
     # Resampling method is not taken into account
-    ds.BuildOverviews( 'AVERAGE', overviewlist = [2, 4] )
+    ds.BuildOverviews('AVERAGE', overviewlist = [2, 4])
 
     # Reopen and test
     ds = None
-    ds = gdal.Open( 'tmp/byte.sqlite' )
+    ds = gdal.Open('tmp/byte.sqlite')
 
     if ds.GetRasterBand(1).GetOverview(0).Checksum() != 1152:
         gdaltest.post_reason('Wrong checksum for overview 0')
@@ -483,22 +483,22 @@ def rasterlite_cleanup():
         return 'skip'
 
     try:
-        os.remove( 'tmp/spatialite_test.db' )
+        os.remove('tmp/spatialite_test.db')
     except:
         pass
 
     try:
-        os.remove( 'tmp/byte.sqlite' )
+        os.remove('tmp/byte.sqlite')
     except:
         pass
 
     try:
-        os.remove( 'tmp/byte.tif.tst' )
+        os.remove('tmp/byte.tif.tst')
     except:
         pass
 
     try:
-        os.remove( 'tmp/rgbsmall.tif.tst' )
+        os.remove('tmp/rgbsmall.tif.tst')
     except:
         pass
 
@@ -518,12 +518,12 @@ gdaltest_list = [
     rasterlite_11,
     rasterlite_12,
     rasterlite_13,
-    rasterlite_cleanup ]
+    rasterlite_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rasterlite' )
+    gdaltest.setup_run('rasterlite')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

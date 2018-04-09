@@ -33,7 +33,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,12 +42,12 @@ import gdaltest
 # Write a HFA/Imagine and read it back to check its SRS
 
 class TestHFASRS:
-    def __init__( self, epsg_code, use_epsg_code, expected_fail ):
+    def __init__(self, epsg_code, use_epsg_code, expected_fail):
         self.epsg_code = epsg_code
         self.use_epsg_code = use_epsg_code
         self.expected_fail = expected_fail
 
-    def test( self ):
+    def test(self):
         sr = osr.SpatialReference()
         sr.ImportFromEPSG(self.epsg_code)
         if self.use_epsg_code == 0:
@@ -91,7 +91,7 @@ class TestHFASRS:
 
 gdaltest_list = []
 
-hfa_srs_list = [ 2758, #tmerc
+hfa_srs_list = [2758, #tmerc
                   [2036, True], #sterea   # failure caused by revert done in r22803
                   2046, #tmerc
                   [3031, True], #stere
@@ -122,16 +122,16 @@ for item in hfa_srs_list:
         epsg_broken = False
         #epsg_proj4_broken = False
 
-    ut = TestHFASRS( epsg_code, 1, epsg_broken )
-    gdaltest_list.append( (ut.test, "hfa_srs_epsg_%d" % epsg_code) )
+    ut = TestHFASRS(epsg_code, 1, epsg_broken)
+    gdaltest_list.append((ut.test, "hfa_srs_epsg_%d" % epsg_code))
     #ut = TestHFASRS( epsg_code, 0, epsg_proj4_broken )
     #gdaltest_list.append( (ut.test, "hfa_srs_proj4_of_epsg_%d" % epsg_code) )
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hfa_srs' )
+    gdaltest.setup_run('hfa_srs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

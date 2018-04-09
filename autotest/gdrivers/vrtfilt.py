@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -41,7 +41,7 @@ import gdaltest
 
 def vrtfilt_1():
 
-    tst = gdaltest.GDALTest( 'VRT', 'avfilt.vrt', 1, 21890 )
+    tst = gdaltest.GDALTest('VRT', 'avfilt.vrt', 1, 21890)
     return tst.testOpen()
 
 ###############################################################################
@@ -55,7 +55,7 @@ def vrtfilt_2():
 
     # This is a black&white checkboard, where black = nodata
     # Thus averaging it and taking nodata into account will not change it
-    tst = gdaltest.GDALTest( 'VRT', 'avfilt_nodata.vrt', 1, checksum )
+    tst = gdaltest.GDALTest('VRT', 'avfilt_nodata.vrt', 1, checksum)
     return tst.testOpen()
 
 ###############################################################################
@@ -151,7 +151,7 @@ def vrtfilt_5():
 
 def vrtfilt_6():
 
-    tst = gdaltest.GDALTest( 'VRT', 'avfilt_1d.vrt', 1, 22377 )
+    tst = gdaltest.GDALTest('VRT', 'avfilt_1d.vrt', 1, 22377)
     return tst.testOpen()
 
 ###############################################################################
@@ -167,12 +167,12 @@ gdaltest_list = [
     vrtfilt_4,
     vrtfilt_5,
     vrtfilt_6,
-    vrtfilt_cleanup ]
+    vrtfilt_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrtfilt' )
+    gdaltest.setup_run('vrtfilt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

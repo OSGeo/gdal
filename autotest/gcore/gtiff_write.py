@@ -27,7 +27,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -48,27 +48,27 @@ gdaltest_list = []
 
 # Some tests we don't need to do for each type.
 item = init_list[0]
-ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
-gdaltest_list.append( (ut.testSetGeoTransform, item[0]) )
-gdaltest_list.append( (ut.testSetProjection, item[0]) )
-gdaltest_list.append( (ut.testSetMetadata, item[0]) )
+ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
+gdaltest_list.append((ut.testSetGeoTransform, item[0]))
+gdaltest_list.append((ut.testSetProjection, item[0]))
+gdaltest_list.append((ut.testSetMetadata, item[0]))
 
 # Others we do for each pixel type.
 for item in init_list:
-    ut = gdaltest.GDALTest( 'GTiff', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('GTiff', item[0], item[1], item[2])
     if ut is None:
-        print( 'GTiff tests skipped' )
-    gdaltest_list.append( (ut.testCreateCopy, item[0]) )
-    gdaltest_list.append( (ut.testCreate, item[0]) )
-    gdaltest_list.append( (ut.testSetNoDataValue, item[0]) )
+        print('GTiff tests skipped')
+    gdaltest_list.append((ut.testCreateCopy, item[0]))
+    gdaltest_list.append((ut.testCreate, item[0]))
+    gdaltest_list.append((ut.testSetNoDataValue, item[0]))
 
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gtiff_write' )
+    gdaltest.setup_run('gtiff_write')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

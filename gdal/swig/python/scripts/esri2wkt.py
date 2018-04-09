@@ -39,15 +39,15 @@ if len(sys.argv) < 2:
     print('Usage: esri2wkt.py <esri .prj file>')
     sys.exit(1)
 
-prj_fd = open( sys.argv[1] )
+prj_fd = open(sys.argv[1])
 prj_lines = prj_fd.readlines()
 prj_fd.close()
 
 for i in range(len(prj_lines)):
-    prj_lines[i] = string.rstrip( prj_lines[i] )
+    prj_lines[i] = string.rstrip(prj_lines[i])
 
 prj_srs = osr.SpatialReference()
-err = prj_srs.ImportFromESRI( prj_lines )
+err = prj_srs.ImportFromESRI(prj_lines)
 if err != 0:
     print('Error = %d' % err)
 else:

@@ -116,7 +116,7 @@ class SequentialHandler:
 
     def add(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
         assert len(self.req_resp_map) == 0
-        self.req_resp.append( RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body) )
+        self.req_resp.append(RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body))
 
     def add_unordered(self, method, path, code = None, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
         self.req_resp_map[(method, path)] = RequestResponse(method, path, code, headers, body, custom_method, expected_headers, expected_body)

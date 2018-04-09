@@ -33,7 +33,7 @@ from osgeo import gdal
 import struct
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -300,7 +300,7 @@ def vsicrypt_3():
     for options in ['sector_size=16', 'alg=AES', 'alg=DES_EDE2', 'alg=DES_EDE3', 'alg=SKIPJACK', 'alg=invalid',
                     'mode=CBC', 'mode=CFB', 'mode=OFB', 'mode=CTR', 'mode=CBC_CTS', 'mode=invalid',
                     'freetext=my_free_text',
-                    'add_key_check=yes' ]:
+                    'add_key_check=yes']:
 
         gdal.Unlink('/vsimem/file.bin')
 
@@ -437,7 +437,7 @@ def vsicrypt_4():
             gdal.VSIFSeekL(ref_f, random_offset, 0)
 
             random_size = random.randint(1,80)
-            random_content = ''.join([ chr(40 + int(10 * random.random()) ) for i in range(random_size) ])
+            random_content = ''.join([chr(40 + int(10 * random.random())) for i in range(random_size)])
             gdal.VSIFWriteL(random_content, 1, random_size, test_f)
             gdal.VSIFWriteL(random_content, 1, random_size, ref_f)
 
@@ -557,7 +557,7 @@ def vsicrypt_6():
     if testnonboundtoswig.gdal_handle is None:
         return 'skip'
 
-    testnonboundtoswig.gdal_handle.VSISetCryptKey.argtypes = [ ctypes.c_char_p, ctypes.c_int]
+    testnonboundtoswig.gdal_handle.VSISetCryptKey.argtypes = [ctypes.c_char_p, ctypes.c_int]
     testnonboundtoswig.gdal_handle.VSISetCryptKey.restype = None
 
     # Set a valid key
@@ -622,17 +622,17 @@ def vsicrypt_6():
 
     return 'success'
 
-gdaltest_list = [ vsicrypt_1,
+gdaltest_list = [vsicrypt_1,
                   vsicrypt_2,
                   vsicrypt_3,
                   vsicrypt_4,
                   vsicrypt_5,
-                  vsicrypt_6 ]
+                  vsicrypt_6]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsicrypt' )
+    gdaltest.setup_run('vsicrypt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

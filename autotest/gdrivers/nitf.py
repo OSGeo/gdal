@@ -40,7 +40,7 @@ import struct
 import shutil
 from sys import version_info
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -49,7 +49,7 @@ import gdaltest
 
 def nitf_1():
 
-    tst = gdaltest.GDALTest( 'NITF', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', 'byte.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -57,7 +57,7 @@ def nitf_1():
 
 def nitf_2():
 
-    tst = gdaltest.GDALTest( 'NITF', 'int16.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', 'int16.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -65,7 +65,7 @@ def nitf_2():
 
 def nitf_3():
 
-    tst = gdaltest.GDALTest( 'NITF', 'rgbsmall.tif', 3, 21349 )
+    tst = gdaltest.GDALTest('NITF', 'rgbsmall.tif', 3, 21349)
     return tst.testCreateCopy()
 
 
@@ -74,39 +74,39 @@ def nitf_3():
 
 def nitf_create(creation_options, set_inverted_color_interp = True, createcopy = False):
 
-    drv = gdal.GetDriverByName( 'NITF' )
+    drv = gdal.GetDriverByName('NITF')
 
     try:
-        os.remove( 'tmp/test_create.ntf' )
+        os.remove('tmp/test_create.ntf')
     except:
         pass
 
     if createcopy:
         ds = gdal.GetDriverByName('MEM').Create('', 200, 100, 3, gdal.GDT_Byte)
     else:
-        ds = drv.Create( 'tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
-                     creation_options )
-    ds.SetGeoTransform( (100, 0.1, 0.0, 30.0, 0.0, -0.1 ) )
+        ds = drv.Create('tmp/test_create.ntf', 200, 100, 3, gdal.GDT_Byte,
+                     creation_options)
+    ds.SetGeoTransform((100, 0.1, 0.0, 30.0, 0.0, -0.1))
 
     if set_inverted_color_interp:
-        ds.GetRasterBand( 1 ).SetRasterColorInterpretation( gdal.GCI_BlueBand )
-        ds.GetRasterBand( 2 ).SetRasterColorInterpretation( gdal.GCI_GreenBand )
-        ds.GetRasterBand( 3 ).SetRasterColorInterpretation( gdal.GCI_RedBand )
+        ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+        ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+        ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_RedBand)
     else:
-        ds.GetRasterBand( 1 ).SetRasterColorInterpretation( gdal.GCI_RedBand )
-        ds.GetRasterBand( 2 ).SetRasterColorInterpretation( gdal.GCI_GreenBand )
-        ds.GetRasterBand( 3 ).SetRasterColorInterpretation( gdal.GCI_BlueBand )
+        ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_RedBand)
+        ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+        ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_BlueBand)
 
     my_list = list(range(200)) + list(range(20,220)) + list(range(30,230))
     raw_data = array.array('h',my_list).tostring()
 
     for line in range(100):
-        ds.WriteRaster( 0, line, 200, 1, raw_data,
+        ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type = gdal.GDT_Int16,
-                        band_list = [1,2,3] )
+                        band_list = [1,2,3])
 
     if createcopy:
-        ds = drv.CreateCopy( 'tmp/test_create.ntf', ds,
+        ds = drv.CreateCopy('tmp/test_create.ntf', ds,
                             options = creation_options)
 
     ds = None
@@ -118,33 +118,33 @@ def nitf_create(creation_options, set_inverted_color_interp = True, createcopy =
 
 def nitf_4():
 
-    return nitf_create([ 'ICORDS=G' ])
+    return nitf_create(['ICORDS=G'])
 
 
 ###############################################################################
 # Verify created file
 
 def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_interp = True):
-    ds = gdal.Open( 'tmp/test_create.ntf' )
+    ds = gdal.Open('tmp/test_create.ntf')
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = checksum1
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        gdaltest.post_reason('Did not get expected chksum for band 1')
         print(chksum, chksum_expect)
         return 'fail'
 
     chksum = ds.GetRasterBand(2).Checksum()
     chksum_expect = checksum2
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 2' )
+        gdaltest.post_reason('Did not get expected chksum for band 2')
         print(chksum, chksum_expect)
         return 'fail'
 
     chksum = ds.GetRasterBand(3).Checksum()
     chksum_expect = checksum3
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 3' )
+        gdaltest.post_reason('Did not get expected chksum for band 3')
         print(chksum, chksum_expect)
         return 'fail'
 
@@ -156,20 +156,20 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
         or abs(geotransform[4]-0) > 0.001 \
         or abs(geotransform[5]- -0.1) > 0.001:
         print(geotransform)
-        gdaltest.post_reason( 'geotransform differs from expected' )
+        gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
 
     if set_inverted_color_interp:
         if ds.GetRasterBand(1).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
-            gdaltest.post_reason( 'Got wrong color interpretation.' )
+            gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
         if ds.GetRasterBand(2).GetRasterColorInterpretation() !=gdal.GCI_GreenBand:
-            gdaltest.post_reason( 'Got wrong color interpretation.' )
+            gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
         if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_RedBand:
-            gdaltest.post_reason( 'Got wrong color interpretation.' )
+            gdaltest.post_reason('Got wrong color interpretation.')
             return 'fail'
 
     ds = None
@@ -188,36 +188,36 @@ def nitf_5():
 
 def nitf_6():
 
-    tst = gdaltest.GDALTest( 'NITF', 'rgb.ntf', 3, 21349 )
-    return tst.testOpen( check_prj = 'WGS84',
+    tst = gdaltest.GDALTest('NITF', 'rgb.ntf', 3, 21349)
+    return tst.testOpen(check_prj = 'WGS84',
                          check_gt = (-44.842029478458, 0.003503401360, 0,
-                                     -22.930748299319, 0, -0.003503401360) )
+                                     -22.930748299319, 0, -0.003503401360))
 
 ###############################################################################
 # NITF in-memory.
 
 def nitf_7():
 
-    tst = gdaltest.GDALTest( 'NITF', 'rgbsmall.tif', 3, 21349 )
-    return tst.testCreateCopy( vsimem = 1 )
+    tst = gdaltest.GDALTest('NITF', 'rgbsmall.tif', 3, 21349)
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Verify we can open an NSIF file, and get metadata including BLOCKA.
 
 def nitf_8():
 
-    ds = gdal.Open( 'data/fake_nsif.ntf' )
+    ds = gdal.Open('data/fake_nsif.ntf')
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        gdaltest.post_reason('Did not get expected chksum for band 1')
         print(chksum, chksum_expect)
         return 'fail'
 
     md = ds.GetMetadata()
     if md['NITF_FHDR'] != 'NSIF01.00':
-        gdaltest.post_reason( 'Got wrong FHDR value' )
+        gdaltest.post_reason('Got wrong FHDR value')
         return 'fail'
 
     if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
@@ -230,7 +230,7 @@ def nitf_8():
        or md['NITF_BLOCKA_LRLC_LOC_01'] != '+41.317083+020.126072' \
        or md['NITF_BLOCKA_LRFC_LOC_01'] != '+41.281634+020.122570' \
        or md['NITF_BLOCKA_FRFC_LOC_01'] != '+41.283881+020.074924':
-        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        gdaltest.post_reason('BLOCKA metadata has unexpected value.')
         return 'fail'
 
     return 'success'
@@ -240,25 +240,25 @@ def nitf_8():
 
 def nitf_9():
 
-    src_ds = gdal.Open( 'data/rgbsmall.tif' )
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf9.ntf', src_ds,
-                                                  options = ['IC=C3'] )
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf9.ntf', src_ds,
+                                                  options = ['IC=C3'])
     src_ds = None
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf9.ntf' )
+    ds = gdal.Open('tmp/nitf9.ntf')
 
     (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
-        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason( 'Did not get expected compression value.' )
+        gdaltest.post_reason('Did not get expected compression value.')
         return 'fail'
 
     return 'success'
@@ -273,10 +273,10 @@ def nitf_10():
     expected_cs = src_ds.GetRasterBand(2).Checksum()
     src_ds = None
     if expected_cs != 22296 and expected_cs != 22259:
-        gdaltest.post_reason( 'fail' )
+        gdaltest.post_reason('fail')
         return 'fail'
 
-    tst = gdaltest.GDALTest( 'NITF', '../tmp/nitf9.ntf', 2, expected_cs )
+    tst = gdaltest.GDALTest('NITF', '../tmp/nitf9.ntf', 2, expected_cs)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -285,7 +285,7 @@ def nitf_10():
 def nitf_11():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034c.ntf
-    tst = gdaltest.GDALTest( 'NITF', 'i_3034c.ntf', 1, 170 )
+    tst = gdaltest.GDALTest('NITF', 'i_3034c.ntf', 1, 170)
     return tst.testOpen()
 
 ###############################################################################
@@ -293,19 +293,19 @@ def nitf_11():
 
 def nitf_12():
 
-    ds = gdal.Open( 'data/fake_nsif.ntf' )
+    ds = gdal.Open('data/fake_nsif.ntf')
 
-    mdTRE = ds.GetMetadata( 'TRE' )
+    mdTRE = ds.GetMetadata('TRE')
 
     try: # NG bindings
-        blockA = ds.GetMetadataItem( 'BLOCKA', 'TRE' )
+        blockA = ds.GetMetadataItem('BLOCKA', 'TRE')
     except:
         blockA = mdTRE['BLOCKA']
 
-    mdCGM = ds.GetMetadata( 'CGM' )
+    mdCGM = ds.GetMetadata('CGM')
 
     try: # NG bindings
-        segmentCount = ds.GetMetadataItem( 'SEGMENT_COUNT', 'CGM' )
+        segmentCount = ds.GetMetadataItem('SEGMENT_COUNT', 'CGM')
     except:
         segmentCount = mdCGM['SEGMENT_COUNT']
 
@@ -314,19 +314,19 @@ def nitf_12():
     expectedBlockA = '010000001000000000                +41.319331+020.078400+41.317083+020.126072+41.281634+020.122570+41.283881+020.074924     '
 
     if mdTRE['BLOCKA'] != expectedBlockA:
-        gdaltest.post_reason( 'did not find expected BLOCKA from metadata.' )
+        gdaltest.post_reason('did not find expected BLOCKA from metadata.')
         return 'fail'
 
     if blockA != expectedBlockA:
-        gdaltest.post_reason( 'did not find expected BLOCKA from metadata item.' )
+        gdaltest.post_reason('did not find expected BLOCKA from metadata item.')
         return 'fail'
 
     if mdCGM['SEGMENT_COUNT'] != '0':
-        gdaltest.post_reason( 'did not find expected SEGMENT_COUNT from metadata.' )
+        gdaltest.post_reason('did not find expected SEGMENT_COUNT from metadata.')
         return 'fail'
 
     if segmentCount != '0':
-        gdaltest.post_reason( 'did not find expected SEGMENT_COUNT from metadata item.' )
+        gdaltest.post_reason('did not find expected SEGMENT_COUNT from metadata item.')
         return 'fail'
 
     return 'success'
@@ -336,19 +336,19 @@ def nitf_12():
 # Test creation of an NITF file in UTM Zone 11, Southern Hemisphere.
 
 def nitf_13():
-    drv = gdal.GetDriverByName( 'NITF' )
-    ds = drv.Create( 'tmp/test_13.ntf', 200, 100, 1, gdal.GDT_Byte,
-                     [ 'ICORDS=S' ] )
-    ds.SetGeoTransform( (400000, 10, 0.0, 6000000, 0.0, -10 ) )
+    drv = gdal.GetDriverByName('NITF')
+    ds = drv.Create('tmp/test_13.ntf', 200, 100, 1, gdal.GDT_Byte,
+                     ['ICORDS=S'])
+    ds.SetGeoTransform((400000, 10, 0.0, 6000000, 0.0, -10))
     ds.SetProjection('PROJCS["UTM Zone 11, Southern Hemisphere",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["Meter",1]]')
 
     my_list = list(range(200))
     raw_data = array.array('f',my_list).tostring()
 
     for line in range(100):
-        ds.WriteRaster( 0, line, 200, 1, raw_data,
+        ds.WriteRaster(0, line, 200, 1, raw_data,
                         buf_type = gdal.GDT_Int16,
-                        band_list = [1] )
+                        band_list = [1])
 
     ds = None
 
@@ -358,12 +358,12 @@ def nitf_13():
 # Verify previous file
 
 def nitf_14():
-    ds = gdal.Open( 'tmp/test_13.ntf' )
+    ds = gdal.Open('tmp/test_13.ntf')
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 55964
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        gdaltest.post_reason('Did not get expected chksum for band 1')
         print(chksum, chksum_expect)
         return 'fail'
 
@@ -375,13 +375,13 @@ def nitf_14():
     or abs(geotransform[4]-0) > 0.001 \
     or abs(geotransform[5]- -10) > 0.001:
         print(geotransform)
-        gdaltest.post_reason( 'geotransform differs from expected' )
+        gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
 
     prj = ds.GetProjectionRef()
     if prj.find('UTM Zone 11, Southern Hemisphere') == -1:
         print(prj)
-        gdaltest.post_reason( 'Coordinate system not UTM Zone 11, Southern Hemisphere' )
+        gdaltest.post_reason('Coordinate system not UTM Zone 11, Southern Hemisphere')
         return 'fail'
 
     ds = None
@@ -393,9 +393,9 @@ def nitf_14():
 
 def nitf_15():
 
-    tst = gdaltest.GDALTest( 'NITF', 'byte.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', 'byte.tif', 1, 4672)
 
-    return tst.testCreateCopy( vsimem = 1 )
+    return tst.testCreateCopy(vsimem = 1)
 
 ###############################################################################
 # Checks a 1-bit mono with mask table having (0x00) black as transparent with white arrow.
@@ -403,7 +403,7 @@ def nitf_15():
 def nitf_16():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3034d.nsf
-    tst = gdaltest.GDALTest( 'NITF', 'ns3034d.nsf', 1, 170 )
+    tst = gdaltest.GDALTest('NITF', 'ns3034d.nsf', 1, 170)
     return tst.testOpen()
 
 
@@ -414,7 +414,7 @@ def nitf_16():
 def nitf_17():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034f.ntf
-    tst = gdaltest.GDALTest( 'NITF', 'i_3034f.ntf', 1, 170 )
+    tst = gdaltest.GDALTest('NITF', 'i_3034f.ntf', 1, 170)
     return tst.testOpen()
 
 ###############################################################################
@@ -423,7 +423,7 @@ def nitf_17():
 def nitf_18():
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0006A.NTF
     ds = gdal.Open("data/U_0006A.NTF")
     gdal.PopErrorHandler()
@@ -439,7 +439,7 @@ def nitf_18():
 def nitf_19():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_0/U_1050A.NTF
-    tst = gdaltest.GDALTest( 'NITF', 'U_1050A.NTF', 1, 65024 )
+    tst = gdaltest.GDALTest('NITF', 'U_1050A.NTF', 1, 65024)
 
     return tst.testOpen()
 
@@ -450,7 +450,7 @@ def nitf_19():
 def nitf_20():
 
     # Shut up the warning about file either corrupt or empty
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0002A.NTF
     ds = gdal.Open("data/U_0002A.NTF")
     gdal.PopErrorHandler()
@@ -469,25 +469,25 @@ def nitf_20():
 def nitf_21():
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    ds = gdal.Open( 'data/ns3114a.nsf' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('data/ns3114a.nsf')
     gdal.PopErrorHandler()
 
-    mdTEXT = ds.GetMetadata( 'TEXT' )
+    mdTEXT = ds.GetMetadata('TEXT')
 
     try: # NG bindings
-        data0 = ds.GetMetadataItem( 'DATA_0', 'TEXT' )
+        data0 = ds.GetMetadataItem('DATA_0', 'TEXT')
     except:
         data0 = mdTEXT['DATA_0']
 
     ds = None
 
     if mdTEXT['DATA_0'] != 'A':
-        gdaltest.post_reason( 'did not find expected DATA_0 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_0 from metadata.')
         return 'fail'
 
     if data0 != 'A':
-        gdaltest.post_reason( 'did not find expected DATA_0 from metadata item.' )
+        gdaltest.post_reason('did not find expected DATA_0 from metadata item.')
         return 'fail'
 
     return 'success'
@@ -498,7 +498,7 @@ def nitf_21():
 
 def nitf_22():
 
-    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/int32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', '../../gcore/data/int32.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -506,7 +506,7 @@ def nitf_22():
 
 def nitf_23():
 
-    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/float32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', '../../gcore/data/float32.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -514,7 +514,7 @@ def nitf_23():
 
 def nitf_24():
 
-    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/float64.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', '../../gcore/data/float64.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -522,7 +522,7 @@ def nitf_24():
 
 def nitf_25():
 
-    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint16.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', '../../gcore/data/uint16.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -530,7 +530,7 @@ def nitf_25():
 
 def nitf_26():
 
-    tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint32.tif', 1, 4672 )
+    tst = gdaltest.GDALTest('NITF', '../../gcore/data/uint32.tif', 1, 4672)
     return tst.testCreateCopy()
 
 ###############################################################################
@@ -538,7 +538,7 @@ def nitf_26():
 
 def nitf_27():
 
-    if nitf_create([ 'ICORDS=G', 'IC=NC', 'BLOCKXSIZE=10', 'BLOCKYSIZE=10' ]) != 'success':
+    if nitf_create(['ICORDS=G', 'IC=NC', 'BLOCKXSIZE=10', 'BLOCKYSIZE=10']) != 'success':
         return 'fail'
 
     return nitf_check_created_file(32498, 42602, 38982)
@@ -560,7 +560,7 @@ def nitf_28_jp2ecw():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
 
-    if nitf_create([ 'ICORDS=G', 'IC=C8', 'TARGET=75' ], set_inverted_color_interp = False) == 'success':
+    if nitf_create(['ICORDS=G', 'IC=C8', 'TARGET=75'], set_inverted_color_interp = False) == 'success':
         ret = nitf_check_created_file(32398, 42502, 38882, set_inverted_color_interp = False)
         if ret == 'success':
             gdaltest.nitf_28_jp2ecw_is_ok = True
@@ -591,7 +591,7 @@ def nitf_28_jp2mrsid():
         return 'skip'
 
     try:
-        jp2mrsid_drv = gdal.GetDriverByName( 'JP2MrSID' )
+        jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     except:
         jp2mrsid_drv = None
 
@@ -616,7 +616,7 @@ def nitf_28_jp2kak():
         return 'skip'
 
     try:
-        jp2kak_drv = gdal.GetDriverByName( 'JP2KAK' )
+        jp2kak_drv = gdal.GetDriverByName('JP2KAK')
     except:
         jp2kak_drv = None
 
@@ -640,7 +640,7 @@ def nitf_28_jp2openjpeg():
         return 'skip'
 
     try:
-        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+        drv = gdal.GetDriverByName('JP2OpenJPEG')
     except:
         drv = None
 
@@ -661,7 +661,7 @@ def nitf_28_jp2openjpeg():
 
 def nitf_28_jp2openjpeg_bis():
     try:
-        drv = gdal.GetDriverByName( 'JP2OpenJPEG' )
+        drv = gdal.GetDriverByName('JP2OpenJPEG')
     except:
         drv = None
 
@@ -671,7 +671,7 @@ def nitf_28_jp2openjpeg_bis():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2OpenJPEG')
 
-    if nitf_create([ 'ICORDS=G', 'IC=C8', 'QUALITY=25' ], set_inverted_color_interp = False, createcopy = True) == 'success':
+    if nitf_create(['ICORDS=G', 'IC=C8', 'QUALITY=25'], set_inverted_color_interp = False, createcopy = True) == 'success':
         ret = nitf_check_created_file(31604, 42782, 38791, set_inverted_color_interp = False)
     else:
         ret = 'fail'
@@ -697,45 +697,45 @@ def nitf_28_jp2openjpeg_bis():
 
 def nitf_29():
 
-    drv = gdal.GetDriverByName( 'NITF' )
+    drv = gdal.GetDriverByName('NITF')
 
-    ds = drv.Create( 'tmp/test_29.ntf', 1, 1, 1, gdal.GDT_Byte,
-                     [ 'IREP=RGB/LUT', 'LUT_SIZE=128' ] )
+    ds = drv.Create('tmp/test_29.ntf', 1, 1, 1, gdal.GDT_Byte,
+                     ['IREP=RGB/LUT', 'LUT_SIZE=128'])
 
     ct = gdal.ColorTable()
-    ct.SetColorEntry( 0, (255,255,255,255) )
-    ct.SetColorEntry( 1, (255,255,0,255) )
-    ct.SetColorEntry( 2, (255,0,255,255) )
-    ct.SetColorEntry( 3, (0,255,255,255) )
+    ct.SetColorEntry(0, (255,255,255,255))
+    ct.SetColorEntry(1, (255,255,0,255))
+    ct.SetColorEntry(2, (255,0,255,255))
+    ct.SetColorEntry(3, (0,255,255,255))
 
-    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     ds = None
 
-    ds = gdal.Open( 'tmp/test_29.ntf' )
+    ds = gdal.Open('tmp/test_29.ntf')
 
-    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 129 or \
        ct.GetColorEntry(0) != (255,255,255,255) or \
        ct.GetColorEntry(1) != (255,255,0,255) or \
        ct.GetColorEntry(2) != (255,0,255,255) or \
        ct.GetColorEntry(3) != (0,255,255,255):
-        gdaltest.post_reason( 'Wrong color table entry.' )
+        gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
-    new_ds = drv.CreateCopy( 'tmp/test_29_copy.ntf', ds )
+    new_ds = drv.CreateCopy('tmp/test_29_copy.ntf', ds)
     del new_ds
     ds = None
 
-    ds = gdal.Open( 'tmp/test_29_copy.ntf' )
+    ds = gdal.Open('tmp/test_29_copy.ntf')
 
-    ct = ds.GetRasterBand( 1 ).GetRasterColorTable()
+    ct = ds.GetRasterBand(1).GetRasterColorTable()
     if ct.GetCount() != 130 or \
        ct.GetColorEntry(0) != (255,255,255,255) or \
        ct.GetColorEntry(1) != (255,255,0,255) or \
        ct.GetColorEntry(2) != (255,0,255,255) or \
        ct.GetColorEntry(3) != (0,255,255,255):
-        gdaltest.post_reason( 'Wrong color table entry.' )
+        gdaltest.post_reason('Wrong color table entry.')
         return 'fail'
 
     ds = None
@@ -747,19 +747,19 @@ def nitf_29():
 
 def nitf_30():
 
-    src_ds = gdal.Open( 'data/fake_nsif.ntf' )
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf30.ntf', src_ds )
+    src_ds = gdal.Open('data/fake_nsif.ntf')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf30.ntf', src_ds)
 
     chksum = ds.GetRasterBand(1).Checksum()
     chksum_expect = 12033
     if chksum != chksum_expect:
-        gdaltest.post_reason( 'Did not get expected chksum for band 1' )
+        gdaltest.post_reason('Did not get expected chksum for band 1')
         print(chksum, chksum_expect)
         return 'fail'
 
     md = ds.GetMetadata()
     if md['NITF_FHDR'] != 'NSIF01.00':
-        gdaltest.post_reason( 'Got wrong FHDR value' )
+        gdaltest.post_reason('Got wrong FHDR value')
         return 'fail'
 
     if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
@@ -772,15 +772,15 @@ def nitf_30():
        or md['NITF_BLOCKA_LRLC_LOC_01'] != '+41.317083+020.126072' \
        or md['NITF_BLOCKA_LRFC_LOC_01'] != '+41.281634+020.122570' \
        or md['NITF_BLOCKA_FRFC_LOC_01'] != '+41.283881+020.074924':
-        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        gdaltest.post_reason('BLOCKA metadata has unexpected value.')
         return 'fail'
 
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf30.ntf' )
+    gdal.GetDriverByName('NITF').Delete('tmp/nitf30.ntf')
 
     # Test overriding src BLOCKA metadata with NITF_BLOCKA creation options
-    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
         options = ['BLOCKA_BLOCK_INSTANCE_01=01',
                    'BLOCKA_BLOCK_COUNT=01',
                    'BLOCKA_N_GRAY_01=00000',
@@ -792,10 +792,10 @@ def nitf_30():
                    'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                    'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
                    ])
-    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    ds =  gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf30_override.ntf')
 
     if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
        or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
@@ -807,18 +807,18 @@ def nitf_30():
        or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
        or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
        or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
-        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        gdaltest.post_reason('BLOCKA metadata has unexpected value.')
         print(md)
         return 'fail'
 
     # Test overriding src BLOCKA metadata with TRE=BLOCKA= creation option
-    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_override.ntf', src_ds,
         options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
                    ])
-    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    ds =  gdal.Open('/vsimem/nitf30_override.ntf')
     md = ds.GetMetadata()
     ds = None
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf30_override.ntf')
 
     if md['NITF_BLOCKA_BLOCK_INSTANCE_01'] != '01' \
        or md['NITF_BLOCKA_BLOCK_COUNT'] != '01' \
@@ -830,29 +830,29 @@ def nitf_30():
        or md['NITF_BLOCKA_LRLC_LOC_01'] != '+42.317083+020.126072' \
        or md['NITF_BLOCKA_LRFC_LOC_01'] != '+42.281634+020.122570' \
        or md['NITF_BLOCKA_FRFC_LOC_01'] != '+42.283881+020.074924':
-        gdaltest.post_reason( 'BLOCKA metadata has unexpected value.' )
+        gdaltest.post_reason('BLOCKA metadata has unexpected value.')
         print(md)
         return 'fail'
 
     # Test that gdal_translate -ullr doesn't propagate BLOCKA
     gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
-    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    ds =  gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf30_no_src_md.ntf')
     if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
-        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        gdaltest.post_reason('unexpectdly found BLOCKA metadata.')
         return 'fail'
 
     # Test USE_SRC_NITF_METADATA=NO
-    gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_no_src_md.ntf', src_ds,
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf30_no_src_md.ntf', src_ds,
                                             options = ['USE_SRC_NITF_METADATA=NO'])
-    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    ds =  gdal.Open('/vsimem/nitf30_no_src_md.ntf')
     md = ds.GetMetadata()
     ds = None
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf30_no_src_md.ntf')
     if 'NITF_BLOCKA_BLOCK_INSTANCE_01' in md:
-        gdaltest.post_reason( 'unexpectdly found BLOCKA metadata.' )
+        gdaltest.post_reason('unexpectdly found BLOCKA metadata.')
         return 'fail'
 
     return 'success'
@@ -862,36 +862,36 @@ def nitf_30():
 
 def nitf_31():
 
-    if nitf_create( [ 'TRE=CUSTOM= Test TRE1\\0MORE',
+    if nitf_create(['TRE=CUSTOM= Test TRE1\\0MORE',
                       'TRE=TOTEST=SecondTRE',
-                      'ICORDS=G' ] ) != 'success':
+                      'ICORDS=G']) != 'success':
         return 'fail'
 
-    ds = gdal.Open( 'tmp/test_create.ntf' )
+    ds = gdal.Open('tmp/test_create.ntf')
 
-    md = ds.GetMetadata( 'TRE' )
+    md = ds.GetMetadata('TRE')
     if len(md) != 2:
-        gdaltest.post_reason( 'Did not get expected TRE count' )
+        gdaltest.post_reason('Did not get expected TRE count')
         print(md)
         return 'fail'
 
     # Check that the leading space in the CUSTOM metadata item is preserved (#3088, #3204)
     try:
-        if ds.GetMetadataItem( 'CUSTOM', 'TRE') != ' Test TRE1\\0MORE':
-            gdaltest.post_reason( 'Did not get expected TRE contents' )
-            print(ds.GetMetadataItem( 'CUSTOM', 'TRE'))
+        if ds.GetMetadataItem('CUSTOM', 'TRE') != ' Test TRE1\\0MORE':
+            gdaltest.post_reason('Did not get expected TRE contents')
+            print(ds.GetMetadataItem('CUSTOM', 'TRE'))
             return 'fail'
     except:
         pass
 
     if md['CUSTOM'] != ' Test TRE1\\0MORE' \
        or md['TOTEST'] != 'SecondTRE':
-        gdaltest.post_reason( 'Did not get expected TRE contents' )
+        gdaltest.post_reason('Did not get expected TRE contents')
         print(md)
         return 'fail'
 
     ds = None
-    return nitf_check_created_file( 32498, 42602, 38982 )
+    return nitf_check_created_file(32498, 42602, 38982)
 
 
 ###############################################################################
@@ -899,7 +899,7 @@ def nitf_31():
 
 def nitf_32():
 
-    if nitf_create([ 'ICORDS=D' ]) != 'success':
+    if nitf_create(['ICORDS=D']) != 'success':
         return 'fail'
 
     return nitf_check_created_file(32498, 42602, 38982)
@@ -910,14 +910,14 @@ def nitf_32():
 
 def nitf_33():
 
-    if nitf_create([ 'ICORDS=D',
+    if nitf_create(['ICORDS=D',
         'BLOCKA_BLOCK_COUNT=01',
         'BLOCKA_BLOCK_INSTANCE_01=01',
         'BLOCKA_L_LINES_01=100',
         'BLOCKA_FRLC_LOC_01=+29.950000+119.950000',
         'BLOCKA_LRLC_LOC_01=+20.050000+119.950000',
         'BLOCKA_LRFC_LOC_01=+20.050000+100.050000',
-        'BLOCKA_FRFC_LOC_01=+29.950000+100.050000' ]) != 'success':
+        'BLOCKA_FRFC_LOC_01=+29.950000+100.050000']) != 'success':
         return 'fail'
 
     return nitf_check_created_file(32498, 42602, 38982)
@@ -928,27 +928,27 @@ def nitf_33():
 
 def nitf_34():
 
-    tst = gdaltest.GDALTest( 'NITF', 'n43.dt0', 1, 49187, options = [ 'BLOCKSIZE=64' ] )
-    return tst.testCreateCopy( )
+    tst = gdaltest.GDALTest('NITF', 'n43.dt0', 1, 49187, options = ['BLOCKSIZE=64'])
+    return tst.testCreateCopy()
 
 ###############################################################################
 # Test CreateCopy() writing file with a text segment.
 
 def nitf_35():
 
-    src_ds = gdal.Open( 'data/text_md.vrt' )
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf_35.ntf', src_ds )
+    src_ds = gdal.Open('data/text_md.vrt')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_35.ntf', src_ds)
     src_ds = None
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf_35.ntf' )
+    ds = gdal.Open('tmp/nitf_35.ntf')
 
     exp_text = """This is text data
 with a newline."""
 
     md = ds.GetMetadata('TEXT')
     if md['DATA_0'] != exp_text:
-        gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
+        gdaltest.post_reason('Did not get expected TEXT metadata.')
         print(md)
         return 'fail'
 
@@ -956,13 +956,13 @@ with a newline."""
 
     md = ds.GetMetadata('TEXT')
     if md['DATA_1'] != exp_text:
-        gdaltest.post_reason( 'Did not get expected TEXT metadata.' )
+        gdaltest.post_reason('Did not get expected TEXT metadata.')
         print(md)
         return 'fail'
 
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_35.ntf' )
+    gdal.GetDriverByName('NITF').Delete('tmp/nitf_35.ntf')
     return 'success'
 
 ###############################################################################
@@ -971,21 +971,21 @@ with a newline."""
 
 def nitf_36():
 
-    src_ds = gdal.Open( 'data/rgbsmall.tif' )
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf36.ntf', src_ds,
-                                                  options = ['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'] )
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf36.ntf', src_ds,
+                                                  options = ['IC=C3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf36.ntf' )
+    ds = gdal.Open('tmp/nitf36.ntf')
 
     if ds.GetRasterBand(1).GetMinimum() is not None:
-        gdaltest.post_reason( 'Did not expect to have minimum value at that point.' )
+        gdaltest.post_reason('Did not expect to have minimum value at that point.')
         return 'fail'
 
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
     if stddev >= 0:
-        gdaltest.post_reason( 'Did not expect to have statistics at that point.' )
+        gdaltest.post_reason('Did not expect to have statistics at that point.')
         return 'fail'
 
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
@@ -993,27 +993,27 @@ def nitf_36():
 
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
-        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason( 'Did not get expected compression value.' )
+        gdaltest.post_reason('Did not get expected compression value.')
         return 'fail'
 
     ds = None
 
     # Check that statistics are persisted (#3985)
-    ds = gdal.Open( 'tmp/nitf36.ntf' )
+    ds = gdal.Open('tmp/nitf36.ntf')
 
     if ds.GetRasterBand(1).GetMinimum() is None:
-        gdaltest.post_reason( 'Should have minimum value at that point.' )
+        gdaltest.post_reason('Should have minimum value at that point.')
         return 'fail'
 
     (minval, maxval, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
-        gdaltest.post_reason( 'Should have statistics at that point.' )
+        gdaltest.post_reason('Should have statistics at that point.')
         return 'fail'
 
     ds = None
@@ -1031,10 +1031,10 @@ def nitf_37():
     # OG-python bindings don't have gdal.VersionInfo. Too bad, but let's hope that GDAL's version isn't too old !
         pass
 
-    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf37.ntf', 1, 1, 69999)
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf37.ntf', 1, 1, 69999)
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf37.ntf' )
+    ds = gdal.Open('tmp/nitf37.ntf')
     if ds.RasterCount != 69999:
         return 'fail'
     ds = None
@@ -1052,34 +1052,34 @@ def nitf_38():
     data =  ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
     expected_cs = ds.GetRasterBand(1).Checksum()
 
-    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf38.ntf', nXSize, nYSize, 1, options = [ 'NUMI=999' ])
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf38.ntf', nXSize, nYSize, 1, options = ['NUMI=999'])
     ds = None
 
     ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf', gdal.GA_Update)
     ds.GetRasterBand(1).WriteRaster(0, 0, nXSize, nYSize, data)
 
     # Create overviews
-    ds.BuildOverviews( overviewlist = [2] )
+    ds.BuildOverviews(overviewlist = [2])
 
     ds = None
 
-    ds = gdal.Open( 'NITF_IM:0:tmp/nitf38.ntf' )
+    ds = gdal.Open('NITF_IM:0:tmp/nitf38.ntf')
     if ds.GetRasterBand(1).Checksum() != 0:
         return 'fail'
     ds = None
 
-    ds = gdal.Open( 'NITF_IM:998:tmp/nitf38.ntf' )
+    ds = gdal.Open('NITF_IM:998:tmp/nitf38.ntf')
     cs = ds.GetRasterBand(1).Checksum()
     if cs != expected_cs:
         print(cs)
-        gdaltest.post_reason( 'bad checksum for image of 998th subdataset' )
+        gdaltest.post_reason('bad checksum for image of 998th subdataset')
         return 'fail'
 
     # Check the overview
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1087:
         print(cs)
-        gdaltest.post_reason( 'bad checksum for overview of image of 998th subdataset' )
+        gdaltest.post_reason('bad checksum for overview of image of 998th subdataset')
         return 'fail'
 
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/nitf38.vrt', ds)
@@ -1096,7 +1096,7 @@ def nitf_38():
         print(cs)
         return 'fail'
 
-    ds = gdal.Open( 'NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd() )
+    ds = gdal.Open('NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('%s/tmp/nitf38.vrt' % os.getcwd(), ds)
     out_ds = None
     ds = None
@@ -1111,7 +1111,7 @@ def nitf_38():
         print(cs)
         return 'fail'
 
-    ds = gdal.Open( 'NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd() )
+    ds = gdal.Open('NITF_IM:998:%s/tmp/nitf38.ntf' % os.getcwd())
     out_ds = gdal.GetDriverByName('VRT').CreateCopy('tmp/nitf38.vrt', ds)
     del out_ds
     ds = None
@@ -1133,25 +1133,25 @@ def nitf_38():
 
 def nitf_39():
 
-    src_ds = gdal.Open( 'data/rgbsmall.tif' )
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf39.ntf', src_ds,
-                                                  options = ['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'] )
+    src_ds = gdal.Open('data/rgbsmall.tif')
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf39.ntf', src_ds,
+                                                  options = ['IC=M3', 'BLOCKSIZE=32', 'QUALITY=100'])
     src_ds = None
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf39.ntf' )
+    ds = gdal.Open('tmp/nitf39.ntf')
 
     (exp_mean, exp_stddev) = (65.4208, 47.254550335)
     (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
 
     if abs(exp_mean-mean) > 0.1 or abs(exp_stddev-stddev) > 0.1:
         print(mean, stddev)
-        gdaltest.post_reason( 'did not get expected mean or standard dev.' )
+        gdaltest.post_reason('did not get expected mean or standard dev.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     if md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason( 'Did not get expected compression value.' )
+        gdaltest.post_reason('Did not get expected compression value.')
         return 'fail'
 
     ds = None
@@ -1240,7 +1240,7 @@ def nitf_41():
     ds = gdal.Open('data/U_4017A.NTF')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[2] < 2385 or stats[2] > 2386:
         print(stats)
         return 'fail'
@@ -1275,7 +1275,7 @@ def nitf_42():
     ds = gdal.Open('tmp/nitf42.ntf')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[2] < 2385 or stats[2] > 2386:
         print(stats)
         return 'fail'
@@ -1289,7 +1289,7 @@ def nitf_42():
 def nitf_43(driver_to_test, options):
 
     try:
-        jp2_drv = gdal.GetDriverByName( driver_to_test )
+        jp2_drv = gdal.GetDriverByName(driver_to_test)
         if driver_to_test == 'JP2ECW' and jp2_drv is not None:
             if 'DMD_CREATIONOPTIONLIST' not in jp2_drv.GetMetadata():
                 jp2_drv = None
@@ -1368,14 +1368,14 @@ def nitf_45():
     except:
         pass
 
-    shutil.copyfile( 'data/two_images_jpeg.ntf', 'tmp/nitf45.ntf' )
+    shutil.copyfile('data/two_images_jpeg.ntf', 'tmp/nitf45.ntf')
 
-    ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update )
-    ds.BuildOverviews( overviewlist = [2] )
+    ds = gdal.Open('NITF_IM:1:tmp/nitf45.ntf', gdal.GA_Update)
+    ds.BuildOverviews(overviewlist = [2])
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
 
-    ds = gdal.Open( 'NITF_IM:1:tmp/nitf45.ntf' )
+    ds = gdal.Open('NITF_IM:1:tmp/nitf45.ntf')
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs != 1086:
         print(cs)
@@ -1392,7 +1392,7 @@ def nitf_45():
 def nitf_46(driver_to_test):
 
     try:
-        jp2_drv = gdal.GetDriverByName( driver_to_test )
+        jp2_drv = gdal.GetDriverByName(driver_to_test)
     except:
         jp2_drv = None
 
@@ -1412,14 +1412,14 @@ def nitf_46(driver_to_test):
     except:
         pass
 
-    shutil.copyfile( 'data/two_images_jp2.ntf', 'tmp/nitf46.ntf' )
+    shutil.copyfile('data/two_images_jp2.ntf', 'tmp/nitf46.ntf')
 
-    ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update )
-    ds.BuildOverviews( overviewlist = [2] )
+    ds = gdal.Open('NITF_IM:1:tmp/nitf46.ntf', gdal.GA_Update)
+    ds.BuildOverviews(overviewlist = [2])
     # FIXME ? ds.GetRasterBand(1).GetOverview(0) is None until we reopen
     ds = None
 
-    ds = gdal.Open( 'NITF_IM:1:tmp/nitf46.ntf' )
+    ds = gdal.Open('NITF_IM:1:tmp/nitf46.ntf')
     if ds.GetRasterBand(1).GetOverview(0) is None:
         gdaltest.post_reason('no overview of subdataset')
         ret = 'fail'
@@ -1458,11 +1458,11 @@ def nitf_46_openjpeg():
 
 def nitf_47():
 
-    ds = gdal.Open( 'data/rset.ntf.r0' )
+    ds = gdal.Open('data/rset.ntf.r0')
 
     band = ds.GetRasterBand(2)
     if band.GetOverviewCount() != 2:
-        gdaltest.post_reason( 'did not get the expected number of rset overviews.' )
+        gdaltest.post_reason('did not get the expected number of rset overviews.')
         return 'fail'
 
     cs = band.GetOverview(1).Checksum()
@@ -1488,17 +1488,17 @@ def nitf_48():
     except:
         pass
 
-    shutil.copyfile( 'data/rset.ntf.r0', 'tmp/rset.ntf.r0' )
-    shutil.copyfile( 'data/rset.ntf.r1', 'tmp/rset.ntf.r1' )
-    shutil.copyfile( 'data/rset.ntf.r2', 'tmp/rset.ntf.r2' )
+    shutil.copyfile('data/rset.ntf.r0', 'tmp/rset.ntf.r0')
+    shutil.copyfile('data/rset.ntf.r1', 'tmp/rset.ntf.r1')
+    shutil.copyfile('data/rset.ntf.r2', 'tmp/rset.ntf.r2')
 
-    ds = gdal.Open( 'tmp/rset.ntf.r0', gdal.GA_Update )
-    ds.BuildOverviews( overviewlist = [3] )
+    ds = gdal.Open('tmp/rset.ntf.r0', gdal.GA_Update)
+    ds.BuildOverviews(overviewlist = [3])
     ds = None
 
-    ds = gdal.Open( 'tmp/rset.ntf.r0' )
+    ds = gdal.Open('tmp/rset.ntf.r0')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
-        gdaltest.post_reason( 'did not get the expected number of rset overviews.' )
+        gdaltest.post_reason('did not get the expected number of rset overviews.')
         return 'fail'
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1524,23 +1524,23 @@ def nitf_48():
 
 def nitf_49():
 
-    options = [ "TEXT=DATA_0=COUCOU",
+    options = ["TEXT=DATA_0=COUCOU",
                 "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
                 "CGM=SEGMENT_0_SLOC_ROW=25",
                 "CGM=SEGMENT_0_SLOC_COL=25",
                 "CGM=SEGMENT_0_SDLVL=2",
                 "CGM=SEGMENT_0_SALVL=1",
-                "CGM=SEGMENT_0_DATA=XYZ" ]
+                "CGM=SEGMENT_0_DATA=XYZ"]
 
     src_ds = gdal.Open('data/text_md.vrt')
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf49.ntf', src_ds,
-                                                  options = options )
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49.ntf', src_ds,
+                                                  options = options)
 
     # Test copy from source TEXT and CGM metadata domains
-    ds2 = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf49_2.ntf', ds )
+    ds2 = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf49_2.ntf', ds)
 
     md = ds2.GetMetadata('TEXT')
     if 'DATA_0' not in md or md['DATA_0'] != 'COUCOU' or \
@@ -1575,7 +1575,7 @@ def nitf_50():
                 "CGM=SEGMENT_0_SLOC_COL=25",
                 "CGM=SEGMENT_0_SDLVL=2",
                 "CGM=SEGMENT_0_SALVL=1",
-                "CGM=SEGMENT_0_DATA=XYZ" ]
+                "CGM=SEGMENT_0_DATA=XYZ"]
 
     try:
         os.remove('tmp/nitf50.ntf')
@@ -1583,15 +1583,15 @@ def nitf_50():
         pass
 
     # This will check that the creation option overrides the TEXT metadata domain from the source
-    ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf50.ntf', 100, 100, 3, options = options )
+    ds = gdal.GetDriverByName('NITF').Create('tmp/nitf50.ntf', 100, 100, 3, options = options)
 
-    ds.WriteRaster( 0, 0, 100, 100, '   ', 1, 1,
+    ds.WriteRaster(0, 0, 100, 100, '   ', 1, 1,
                     buf_type = gdal.GDT_Byte,
-                    band_list = [1,2,3] )
+                    band_list = [1,2,3])
 
-    ds.GetRasterBand( 1 ).SetRasterColorInterpretation( gdal.GCI_BlueBand )
-    ds.GetRasterBand( 2 ).SetRasterColorInterpretation( gdal.GCI_GreenBand )
-    ds.GetRasterBand( 3 ).SetRasterColorInterpretation( gdal.GCI_RedBand )
+    ds.GetRasterBand(1).SetRasterColorInterpretation(gdal.GCI_BlueBand)
+    ds.GetRasterBand(2).SetRasterColorInterpretation(gdal.GCI_GreenBand)
+    ds.GetRasterBand(3).SetRasterColorInterpretation(gdal.GCI_RedBand)
 
     # We need to reopen the dataset, because the TEXT and CGM segments are only written
     # when closing the dataset (for JP2 compressed datastreams, we need to wait for the
@@ -1625,7 +1625,7 @@ def nitf_51():
 
     for xsize in range(1,9):
         for nbpp in [1,2,3,4,5,6,7,12]:
-            ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf51.ntf', xsize, 1 )
+            ds = gdal.GetDriverByName('NITF').Create('tmp/nitf51.ntf', xsize, 1)
             ds = None
 
             f = open('tmp/nitf51.ntf', 'rb+')
@@ -2281,28 +2281,28 @@ def nitf_69():
 
 def nitf_70():
 
-    src_ds = gdal.Open( 'data/rgbsmall.tif' )
+    src_ds = gdal.Open('data/rgbsmall.tif')
 
-    ds = gdal.GetDriverByName('NITF').CreateCopy( 'tmp/nitf_70.ntf', src_ds,
-                                                  options = ['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'] )
+    ds = gdal.GetDriverByName('NITF').CreateCopy('tmp/nitf_70.ntf', src_ds,
+                                                  options = ['IC=C3', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     ds = None
 
     # For comparison
-    ds = gdal.GetDriverByName('GTiff').CreateCopy( 'tmp/nitf_70.tif', src_ds,
-                                                  options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'] )
+    ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/nitf_70.tif', src_ds,
+                                                  options = ['COMPRESS=JPEG', 'PHOTOMETRIC=YCBCR', 'TILED=YES', 'BLOCKXSIZE=64', 'BLOCKYSIZE=64'])
     ds = None
     src_ds = None
 
-    ds = gdal.Open( 'tmp/nitf_70.ntf' )
+    ds = gdal.Open('tmp/nitf_70.ntf')
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    ds = gdal.Open( 'tmp/nitf_70.tif' )
+    ds = gdal.Open('tmp/nitf_70.tif')
     cs_ref = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( 'tmp/nitf_70.ntf' )
-    gdal.GetDriverByName('GTiff').Delete( 'tmp/nitf_70.tif' )
+    gdal.GetDriverByName('NITF').Delete('tmp/nitf_70.ntf')
+    gdal.GetDriverByName('GTiff').Delete('tmp/nitf_70.tif')
 
     if cs != cs_ref:
         print(cs)
@@ -2324,7 +2324,7 @@ def nitf_71():
     data = ds.GetMetadata('xml:TRE')[0]
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_71.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_71.ntf')
 
     expected_data = """<tres>
   <tre name="ENGRDA" location="image">
@@ -2376,8 +2376,8 @@ def compare_rpc(src_md, md):
             print(md)
             return 'fail'
         if 'COEFF' in key:
-            expected = [ float(v) for v in src_md[key].strip().split(' ') ]
-            found =  [ float(v) for v in md[key].strip().split(' ') ]
+            expected = [float(v) for v in src_md[key].strip().split(' ')]
+            found =  [float(v) for v in md[key].strip().split(' ')]
             if expected != found:
                 gdaltest.post_reason('fail: %s value is not the one expected' % key)
                 print(md)
@@ -2496,7 +2496,7 @@ def nitf_72():
 
 
     # Test that RPC00B = NO works
-    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPC00B=NO'] )
+    gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPC00B=NO'])
 
     if gdal.VSIStatL('/vsimem/nitf_72.ntf.aux.xml') is None:
         gdaltest.post_reason('fail: PAM file was expected')
@@ -2567,7 +2567,7 @@ def nitf_72():
 
 
     # Test loss of precision
-    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
+    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE'):
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         src_md = copy.copy(src_md_max_precision)
         if src_md[key].find('.') < 0:
@@ -2674,7 +2674,7 @@ def nitf_72():
         return 'fail'
 
     # Test out of range
-    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
+    for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE'):
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
         src_md = copy.copy(src_md_max_precision)
         if src_md[key].find('-') >= 0:
@@ -2728,7 +2728,7 @@ def nitf_74():
     data = ds.GetMetadata('xml:TRE')[0]
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_74.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_74.ntf')
 
     expected_data = """<tres>
   <tre name="CCINFA" location="file">
@@ -2825,7 +2825,7 @@ def nitf_75():
     data = ds.GetMetadata('xml:TRE')[0]
     ds = None
 
-    gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf_75.ntf' )
+    gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_75.ntf')
 
     expected_data = """<tres>
   <tre name="CCINFA" location="image">
@@ -2971,10 +2971,10 @@ def nitf_online_1():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 'NITF21_CGM_ANNO_Uncompressed_unmasked.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 1, 13123, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/NITF21_CGM_ANNO_Uncompressed_unmasked.ntf', 1, 13123, filename_absolute = 1)
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
     ret = tst.testOpen()
     gdal.PopErrorHandler()
 
@@ -2988,11 +2988,11 @@ def nitf_online_2():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
         return 'skip'
 
-    ds = gdal.Open( 'tmp/cache/U_0001a.ntf' )
+    ds = gdal.Open('tmp/cache/U_0001a.ntf')
 
     md = ds.GetMetadata('SUBDATASETS')
     if 'SUBDATASET_1_NAME' not in md:
-        gdaltest.post_reason( 'missing SUBDATASET_1_NAME metadata' )
+        gdaltest.post_reason('missing SUBDATASET_1_NAME metadata')
         return 'fail'
     ds = None
 
@@ -3006,7 +3006,7 @@ def nitf_online_3():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'NITF_IM:3:tmp/cache/U_0001a.ntf', 1, 23463, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'NITF_IM:3:tmp/cache/U_0001a.ntf', 1, 23463, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3019,17 +3019,17 @@ def nitf_online_4():
         return 'skip'
 
     # check that the RPF attribute metadata was carried through.
-    ds = gdal.Open( 'tmp/cache/001zc013.on1' )
+    ds = gdal.Open('tmp/cache/001zc013.on1')
     md = ds.GetMetadata()
     if md['NITF_RPF_CurrencyDate'] != '19950720' \
        or md['NITF_RPF_ProductionDate'] != '19950720' \
        or md['NITF_RPF_SignificantDate'] != '19890629':
-        gdaltest.post_reason( 'RPF attribute metadata not captured (#3413)')
+        gdaltest.post_reason('RPF attribute metadata not captured (#3413)')
         return 'fail'
 
     ds = None
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/001zc013.on1', 1, 53960, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3041,7 +3041,7 @@ def nitf_online_5():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr', 'overview.ovr'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/overview.ovr', 1, 60699, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/overview.ovr', 1, 60699, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3053,7 +3053,7 @@ def nitf_online_6():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_4001b.ntf', 'U_4001b.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/U_4001b.ntf', 1, 60030, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_4001b.ntf', 1, 60030, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3063,7 +3063,7 @@ def nitf_online_6():
 
 def nitf_online_7():
 
-    files = [ 'ns3228b.nsf', 'i_3228c.ntf', 'ns3228d.nsf', 'i_3228e.ntf' ]
+    files = ['ns3228b.nsf', 'i_3228c.ntf', 'ns3228d.nsf', 'i_3228e.ntf']
     for file in files:
         if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/' + file, file):
             return 'skip'
@@ -3072,19 +3072,19 @@ def nitf_online_7():
         if ds.RasterCount != 6:
             return 'fail'
 
-        checksums = [ 48385, 48385, 40551, 54223, 48385, 33094 ]
-        colorInterpretations = [ gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand ]
+        checksums = [48385, 48385, 40551, 54223, 48385, 33094]
+        colorInterpretations = [gdal.GCI_Undefined, gdal.GCI_Undefined, gdal.GCI_RedBand, gdal.GCI_BlueBand, gdal.GCI_Undefined, gdal.GCI_GreenBand]
 
         for i in range(6):
             cs = ds.GetRasterBand(i+1).Checksum()
             if cs != checksums[i]:
-                gdaltest.post_reason( 'got checksum %d for image %s' \
-                                      % (cs, file) )
+                gdaltest.post_reason('got checksum %d for image %s' \
+                                      % (cs, file))
                 return 'fail'
 
             if ds.GetRasterBand(i+1).GetRasterColorInterpretation() != colorInterpretations[i]:
-                gdaltest.post_reason( 'got wrong color interp for image %s' \
-                                      % file )
+                gdaltest.post_reason('got wrong color interp for image %s' \
+                                      % file)
                 return 'fail'
         ds = None
 
@@ -3114,7 +3114,7 @@ def nitf_online_8():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3301j.nsf', 'ns3301j.nsf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/ns3301j.nsf', 1, 56861, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3301j.nsf', 1, 56861, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3127,7 +3127,7 @@ def nitf_online_9():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3304a.nsf', 'ns3304a.nsf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/ns3304a.nsf', 1, 32419, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/ns3304a.nsf', 1, 32419, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3142,16 +3142,16 @@ def nitf_online_10():
         return 'skip'
 
     # Shut up the warning about missing image segment
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    ds = gdal.Open( 'tmp/cache/ns3119b.nsf' )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    ds = gdal.Open('tmp/cache/ns3119b.nsf')
     gdal.PopErrorHandler()
 
-    mdCGM = ds.GetMetadata( 'CGM' )
+    mdCGM = ds.GetMetadata('CGM')
 
     ds = None
 
     if mdCGM['SEGMENT_COUNT'] != '8':
-        gdaltest.post_reason( 'wrong SEGMENT_COUNT.' )
+        gdaltest.post_reason('wrong SEGMENT_COUNT.')
         return 'fail'
 
     tab = [
@@ -3183,7 +3183,7 @@ def nitf_online_10():
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
-            gdaltest.post_reason( 'wrong value for %s.' % item[0] )
+            gdaltest.post_reason('wrong value for %s.' % item[0])
             return 'fail'
 
     return 'success'
@@ -3196,26 +3196,26 @@ def nitf_online_11():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_1122a.ntf', 'U_1122a.ntf'):
         return 'skip'
 
-    ds = gdal.Open( 'tmp/cache/U_1122a.ntf' )
+    ds = gdal.Open('tmp/cache/U_1122a.ntf')
 
-    mdTEXT = ds.GetMetadata( 'TEXT' )
+    mdTEXT = ds.GetMetadata('TEXT')
 
     ds = None
 
     if mdTEXT['DATA_0'] != 'This is test text file 01.\r\n':
-        gdaltest.post_reason( 'did not find expected DATA_0 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_0 from metadata.')
         return 'fail'
     if mdTEXT['DATA_1'] != 'This is test text file 02.\r\n':
-        gdaltest.post_reason( 'did not find expected DATA_1 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_1 from metadata.')
         return 'fail'
     if mdTEXT['DATA_2'] != 'This is test text file 03.\r\n':
-        gdaltest.post_reason( 'did not find expected DATA_2 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_2 from metadata.')
         return 'fail'
     if mdTEXT['DATA_3'] != 'This is test text file 04.\r\n':
-        gdaltest.post_reason( 'did not find expected DATA_3 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_3 from metadata.')
         return 'fail'
     if mdTEXT['DATA_4'] != 'This is test text file 05.\r\n':
-        gdaltest.post_reason( 'did not find expected DATA_4 from metadata.' )
+        gdaltest.post_reason('did not find expected DATA_4 from metadata.')
         return 'fail'
 
     return 'success'
@@ -3229,8 +3229,8 @@ def nitf_online_12():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/i_3430a.ntf', 'i_3430a.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/i_3430a.ntf', 1, 38647,
-                             filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/i_3430a.ntf', 1, 38647,
+                             filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3244,15 +3244,15 @@ def nitf_online_13():
         return 'skip'
 
     # Shut up the warning about missing image segment
-    ds = gdal.Open( 'NITF_IM:2:tmp/cache/u_3054a.ntf' )
+    ds = gdal.Open('NITF_IM:2:tmp/cache/u_3054a.ntf')
 
-    mdCGM = ds.GetMetadata( 'CGM' )
+    mdCGM = ds.GetMetadata('CGM')
     md = ds.GetMetadata()
 
     ds = None
 
     if mdCGM['SEGMENT_COUNT'] != '3':
-        gdaltest.post_reason( 'wrong SEGMENT_COUNT.' )
+        gdaltest.post_reason('wrong SEGMENT_COUNT.')
         return 'fail'
 
     tab = [
@@ -3266,7 +3266,7 @@ def nitf_online_13():
 
     for item in tab:
         if mdCGM[item[0]] != item[1]:
-            gdaltest.post_reason( 'wrong value for %s.' % item[0] )
+            gdaltest.post_reason('wrong value for %s.' % item[0])
             return 'fail'
 
     tab = [
@@ -3280,8 +3280,8 @@ def nitf_online_13():
 
     for item in tab:
         if md[item[0]] != item[1]:
-            gdaltest.post_reason( 'wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]) )
+            gdaltest.post_reason('wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     return 'success'
@@ -3313,7 +3313,7 @@ def nitf_online_14():
     ds = gdal.Open('tmp/cache/U_4020h.ntf')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[2] < 2607 or stats[2] > 2608:
         print(stats)
         return 'fail'
@@ -3334,7 +3334,7 @@ def nitf_online_15(driver_to_test, expected_cs = 1054):
         return 'skip'
 
     try:
-        jp2_drv = gdal.GetDriverByName( driver_to_test )
+        jp2_drv = gdal.GetDriverByName(driver_to_test)
     except:
         jp2_drv = None
 
@@ -3349,7 +3349,7 @@ def nitf_online_15(driver_to_test, expected_cs = 1054):
         ret = 'success'
     else:
         print(ds.GetRasterBand(1).Checksum())
-        gdaltest.post_reason( 'Did not get expected checksums' )
+        gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3380,7 +3380,7 @@ def nitf_online_16(driver_to_test):
         return 'skip'
 
     try:
-        jp2_drv = gdal.GetDriverByName( driver_to_test )
+        jp2_drv = gdal.GetDriverByName(driver_to_test)
     except:
         jp2_drv = None
 
@@ -3407,7 +3407,7 @@ def nitf_online_16(driver_to_test):
         for i in range(ds.RasterCount):
             print(ds.GetRasterBand(i+1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason( 'Did not get expected checksums' )
+        gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3438,7 +3438,7 @@ def nitf_online_17(driver_to_test):
         return 'skip'
 
     try:
-        jp2_drv = gdal.GetDriverByName( driver_to_test )
+        jp2_drv = gdal.GetDriverByName(driver_to_test)
     except:
         jp2_drv = None
 
@@ -3458,7 +3458,7 @@ def nitf_online_17(driver_to_test):
         for i in range(ds.RasterCount):
             print(ds.GetRasterBand(i+1).Checksum())
         print(ds.GetRasterBand(1).GetRasterColorTable())
-        gdaltest.post_reason( 'Did not get expected checksums' )
+        gdaltest.post_reason('Did not get expected checksums')
         ret = 'fail'
 
     gdaltest.reregister_all_jpeg2000_drivers()
@@ -3494,11 +3494,11 @@ def nitf_online_18():
     # If we have functioning coordinate transformer.
     if prj[:6] == 'PROJCS':
         if prj.find('Azimuthal_Equidistant') == -1:
-            gdaltest.post_reason( 'wrong projection?' )
+            gdaltest.post_reason('wrong projection?')
             return 'fail'
         expected_gt=(-1669792.3618991028, 724.73626818537502, 0.0, -556597.45396636717, 0.0, -724.73626818537434)
-        if not gdaltest.geotransform_equals( gt, expected_gt, 1.0 ):
-            gdaltest.post_reason( 'did not get expected geotransform.' )
+        if not gdaltest.geotransform_equals(gt, expected_gt, 1.0):
+            gdaltest.post_reason('did not get expected geotransform.')
             return 'fail'
 
     # If we do not have a functioning coordinate transformer.
@@ -3507,12 +3507,12 @@ def nitf_online_18():
              or not gdaltest.geotransform_equals(gt,(0,1,0,0,0,1),0.00000001):
             print(gt)
             print(prj)
-            gdaltest.post_reason( 'did not get expected empty gt/projection' )
+            gdaltest.post_reason('did not get expected empty gt/projection')
             return 'fail'
 
         prj = ds.GetGCPProjection()
         if prj[:6] != 'GEOGCS':
-            gdaltest.post_reason( 'did not get expected geographic srs' )
+            gdaltest.post_reason('did not get expected geographic srs')
             return 'fail'
 
         gcps = ds.GetGCPs()
@@ -3520,7 +3520,7 @@ def nitf_online_18():
         if gcp3.GCPPixel != 0 or gcp3.GCPLine != 1536 \
                 or abs(gcp3.GCPX+45) > 0.0000000001 \
                 or abs(gcp3.GCPY-68.78679656) > 0.00000001:
-            gdaltest.post_reason( 'did not get expected gcp.')
+            gdaltest.post_reason('did not get expected gcp.')
             return 'fail'
 
     ds = None
@@ -3535,11 +3535,11 @@ def nitf_online_19():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/0000M033.GN3', '0000M033.GN3'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
-                             filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/0000M033.GN3', 1, 38928,
+                             filename_absolute = 1)
 
-    return tst.testOpen( check_gt = (174.375000000000000,0.010986328125000,0,
-                                     51.923076923076927,0,-0.006760817307692) )
+    return tst.testOpen(check_gt = (174.375000000000000,0.010986328125000,0,
+                                     51.923076923076927,0,-0.006760817307692))
 
 ###############################################################################
 # Check that the RPF attribute metadata was carried through.
@@ -3554,12 +3554,12 @@ def nitf_online_20():
     # check that the RPF attribute metadata was carried through.
     # Special case where the reported size of the attribute subsection is
     # smaller than really available
-    ds = gdal.Open( 'tmp/cache/0000M033.GN3' )
+    ds = gdal.Open('tmp/cache/0000M033.GN3')
     md = ds.GetMetadata()
     if md['NITF_RPF_CurrencyDate'] != '19941201' \
        or md['NITF_RPF_ProductionDate'] != '19980511' \
        or md['NITF_RPF_SignificantDate'] != '19850305':
-        gdaltest.post_reason( 'RPF attribute metadata not captured (#3413)')
+        gdaltest.post_reason('RPF attribute metadata not captured (#3413)')
         return 'fail'
 
     return 'success'
@@ -3573,7 +3573,7 @@ def nitf_online_21():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3321a.nsf', 'ns3321a.nsf'):
         return 'skip'
 
-    ds = gdal.Open( 'tmp/cache/ns3321a.nsf' )
+    ds = gdal.Open('tmp/cache/ns3321a.nsf')
     md = ds.GetMetadata()
     ds = None
 
@@ -3594,7 +3594,7 @@ def nitf_online_22():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv1_1/U_0001C.NTF', 'U_0001C.NTF'):
         return 'skip'
 
-    ds = gdal.Open( 'NITF_IM:1:tmp/cache/U_0001C.NTF' )
+    ds = gdal.Open('NITF_IM:1:tmp/cache/U_0001C.NTF')
     md = ds.GetMetadata()
     ds = None
 
@@ -3609,11 +3609,11 @@ def nitf_online_22():
 
     for item in tab:
         if md[item[0]] != item[1]:
-            gdaltest.post_reason( '(1) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]) )
+            gdaltest.post_reason('(1) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    ds = gdal.Open( 'NITF_IM:2:tmp/cache/U_0001C.NTF' )
+    ds = gdal.Open('NITF_IM:2:tmp/cache/U_0001C.NTF')
     md = ds.GetMetadata()
     ds = None
 
@@ -3628,11 +3628,11 @@ def nitf_online_22():
 
     for item in tab:
         if md[item[0]] != item[1]:
-            gdaltest.post_reason( '(2) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]) )
+            gdaltest.post_reason('(2) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    ds = gdal.Open( 'NITF_IM:3:tmp/cache/U_0001C.NTF' )
+    ds = gdal.Open('NITF_IM:3:tmp/cache/U_0001C.NTF')
     md = ds.GetMetadata()
     ds = None
 
@@ -3647,11 +3647,11 @@ def nitf_online_22():
 
     for item in tab:
         if md[item[0]] != item[1]:
-            gdaltest.post_reason( '(3) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]) )
+            gdaltest.post_reason('(3) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]))
             return 'fail'
 
-    ds = gdal.Open( 'NITF_IM:4:tmp/cache/U_0001C.NTF' )
+    ds = gdal.Open('NITF_IM:4:tmp/cache/U_0001C.NTF')
     md = ds.GetMetadata()
     ds = None
 
@@ -3666,8 +3666,8 @@ def nitf_online_22():
 
     for item in tab:
         if md[item[0]] != item[1]:
-            gdaltest.post_reason( '(4) wrong value for %s, got %s instead of %s.'
-                                  % (item[0], md[item[0]], item[1]) )
+            gdaltest.post_reason('(4) wrong value for %s, got %s instead of %s.'
+                                  % (item[0], md[item[0]], item[1]))
             return 'fail'
 
     return 'success'
@@ -3680,7 +3680,7 @@ def nitf_online_23():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf', 'U_3058b.ntf'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/U_3058b.ntf', 1, 44748, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/U_3058b.ntf', 1, 44748, filename_absolute = 1)
 
     return tst.testOpen()
 
@@ -3726,7 +3726,7 @@ def nitf_online_25():
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/docs/HRE_spec/Case1_HRE10G324642N1170747W_Uxx.hr5', 'Case1_HRE10G324642N1170747W_Uxx.hr5'):
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('NITF', 'tmp/cache/Case1_HRE10G324642N1170747W_Uxx.hr5', 1, 7099, filename_absolute = 1)
 
     ret = tst.testOpen()
     if ret != 'success':
@@ -3748,149 +3748,149 @@ def nitf_online_25():
 
 def nitf_cleanup():
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/test_create.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/test_create.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf9.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf9.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/test_13.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/test_13.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/test_29.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/test_29.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/test_29_copy.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/test_29_copy.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf36.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf36.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf37.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf37.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf38.ntf' )
-        os.unlink( 'tmp/nitf38.ntf_0.ovr' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf38.ntf')
+        os.unlink('tmp/nitf38.ntf_0.ovr')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf39.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf39.ntf')
     except:
         pass
 
     try:
-        os.stat( 'tmp/nitf40.ntf' )
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf40.ntf' )
+        os.stat('tmp/nitf40.ntf')
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf40.ntf')
     except:
         pass
 
     try:
-        os.stat( 'tmp/nitf42.ntf' )
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf42.ntf' )
+        os.stat('tmp/nitf42.ntf')
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf42.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf44.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf44.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf45.ntf' )
-        os.unlink( 'tmp/nitf45.ntf_0.ovr' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf45.ntf')
+        os.unlink('tmp/nitf45.ntf_0.ovr')
     except:
         pass
 
     try:
-        os.stat( 'tmp/nitf46.ntf' )
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf46.ntf' )
-        os.unlink( 'tmp/nitf46.ntf_0.ovr' )
+        os.stat('tmp/nitf46.ntf')
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf46.ntf')
+        os.unlink('tmp/nitf46.ntf_0.ovr')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf49.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf49.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf49_2.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf49_2.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf50.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf50.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf51.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf51.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf52.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf52.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf53.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf53.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf54.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf54.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf55.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf55.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf56.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf56.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf57.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf57.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf58.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf58.ntf')
     except:
         pass
 
     try:
         os.remove('tmp/nitf59.hdr')
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf59.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf59.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf62.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf62.ntf')
     except:
         pass
 
     try:
-        gdal.GetDriverByName('NITF').Delete( 'tmp/nitf63.ntf' )
+        gdal.GetDriverByName('NITF').Delete('tmp/nitf63.ntf')
     except:
         pass
 
@@ -4021,15 +4021,15 @@ gdaltest_list = [
     nitf_online_23,
     nitf_online_24,
     nitf_online_25,
-    nitf_cleanup ]
+    nitf_cleanup]
 
 # gdaltest_list = [ nitf_72 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'nitf' )
+    gdaltest.setup_run('nitf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

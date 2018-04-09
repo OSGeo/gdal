@@ -70,17 +70,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -107,9 +107,9 @@ out_bands = 3
 band_number = 1
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -144,7 +144,7 @@ if dst_filename is None:
 # ----------------------------------------------------------------------------
 # Open source file
 
-src_ds = gdal.Open( src_filename )
+src_ds = gdal.Open(src_filename)
 if src_ds is None:
     print('Unable to open %s ' % src_filename)
     sys.exit(1)
@@ -187,24 +187,24 @@ if format == 'GTiff':
 else:
     tif_filename = 'temp.tif'
 
-gtiff_driver = gdal.GetDriverByName( 'GTiff' )
+gtiff_driver = gdal.GetDriverByName('GTiff')
 
-tif_ds = gtiff_driver.Create( tif_filename,
-                              src_ds.RasterXSize, src_ds.RasterYSize, out_bands )
+tif_ds = gtiff_driver.Create(tif_filename,
+                              src_ds.RasterXSize, src_ds.RasterYSize, out_bands)
 
 
 # ----------------------------------------------------------------------------
 # We should copy projection information and so forth at this point.
 
-tif_ds.SetProjection( src_ds.GetProjection() )
-tif_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+tif_ds.SetProjection(src_ds.GetProjection())
+tif_ds.SetGeoTransform(src_ds.GetGeoTransform())
 if src_ds.GetGCPCount() > 0:
-    tif_ds.SetGCPs( src_ds.GetGCPs(), src_ds.GetGCPProjection() )
+    tif_ds.SetGCPs(src_ds.GetGCPs(), src_ds.GetGCPProjection())
 
 # ----------------------------------------------------------------------------
 # Do the processing one scanline at a time.
 
-progress( 0.0 )
+progress(0.0)
 for iY in range(src_ds.RasterYSize):
     src_data = src_band.ReadAsArray(0,iY,src_ds.RasterXSize,1)
 
@@ -214,7 +214,7 @@ for iY in range(src_ds.RasterYSize):
         dst_data = Numeric.take(band_lookup,src_data)
         tif_ds.GetRasterBand(iBand+1).WriteArray(dst_data,0,iY)
 
-    progress( (iY+1.0) / src_ds.RasterYSize )
+    progress((iY+1.0) / src_ds.RasterYSize)
 
 
 tif_ds = None
@@ -223,8 +223,8 @@ tif_ds = None
 # Translate intermediate file to output format if desired format is not TIFF.
 
 if tif_filename != dst_filename:
-    tif_ds = gdal.Open( tif_filename )
-    dst_driver.CreateCopy( dst_filename, tif_ds )
+    tif_ds = gdal.Open(tif_filename)
+    dst_driver.CreateCopy(dst_filename, tif_ds)
     tif_ds = None
 
-    gtiff_driver.Delete( tif_filename )
+    gtiff_driver.Delete(tif_filename)

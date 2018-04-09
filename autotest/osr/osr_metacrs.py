@@ -33,7 +33,7 @@
 import sys
 import csv
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,10 +43,10 @@ from osgeo import osr, gdal
 # Class to perform the tests.
 
 class MetaCRSTest:
-    def __init__( self, test_line ):
+    def __init__(self, test_line):
         self.test_line = test_line
 
-    def parse_line( self ):
+    def parse_line(self):
         test_line = self.test_line
 
         self.src_srs = self.build_srs(test_line['srcCrsAuth'],
@@ -63,21 +63,21 @@ class MetaCRSTest:
             return 'fail'
 
         try:
-            self.src_xyz = ( float(test_line['srcOrd1']),
+            self.src_xyz = (float(test_line['srcOrd1']),
                              float(test_line['srcOrd2']),
-                             float(test_line['srcOrd3']) )
+                             float(test_line['srcOrd3']))
         except:
-            self.src_xyz = ( float(test_line['srcOrd1']),
+            self.src_xyz = (float(test_line['srcOrd1']),
                              float(test_line['srcOrd2']),
-                             0.0 )
+                             0.0)
         try:
-            self.dst_xyz = ( float(test_line['tgtOrd1']),
+            self.dst_xyz = (float(test_line['tgtOrd1']),
                              float(test_line['tgtOrd2']),
-                             float(test_line['tgtOrd3']) )
+                             float(test_line['tgtOrd3']))
         except:
-            self.dst_xyz = ( float(test_line['tgtOrd1']),
+            self.dst_xyz = (float(test_line['tgtOrd1']),
                              float(test_line['tgtOrd2']),
-                             0.0 )
+                             0.0)
         try:
             self.dst_error = max(float(test_line['tolOrd1']),
                                  float(test_line['tolOrd2']),
@@ -91,13 +91,13 @@ class MetaCRSTest:
     def build_srs(self,type,crstext):
         if type == 'EPSG':
             srs = osr.SpatialReference()
-            if srs.ImportFromEPSGA( int(crstext) ) == 0:
+            if srs.ImportFromEPSGA(int(crstext)) == 0:
                 return srs
             else:
-                gdaltest.post_reason( 'failed to translate EPSG:' + crstext )
+                gdaltest.post_reason('failed to translate EPSG:' + crstext)
                 return None
         else:
-            gdaltest.post_reason( 'unsupported srs type: ' + type )
+            gdaltest.post_reason('unsupported srs type: ' + type)
             return None
 
     def testMetaCRS(self):
@@ -106,23 +106,23 @@ class MetaCRSTest:
             return result
 
         try:
-            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-            ct = osr.CoordinateTransformation( self.src_srs, self.dst_srs )
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
+            ct = osr.CoordinateTransformation(self.src_srs, self.dst_srs)
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
         except ValueError:
             gdal.PopErrorHandler()
             if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-                gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+                gdaltest.post_reason('PROJ.4 missing, transforms not available.')
                 return 'skip'
             else:
-                gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+                gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
                 return 'fail'
         except:
             gdal.PopErrorHandler()
-            gdaltest.post_reason( 'failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
+            gdaltest.post_reason('failed to create coordinate transformation. %s' % gdal.GetLastErrorMsg())
             return 'fail'
 
         ######################################################################
@@ -132,7 +132,7 @@ class MetaCRSTest:
         if self.src_srs.EPSGTreatsAsLatLong():
             self.src_xyz = (self.src_xyz[1],self.src_xyz[0],self.src_xyz[2])
 
-        result = ct.TransformPoint( self.src_xyz[0], self.src_xyz[1], self.src_xyz[2] )
+        result = ct.TransformPoint(self.src_xyz[0], self.src_xyz[1], self.src_xyz[2])
 
         if self.src_srs.EPSGTreatsAsLatLong():
             result = (result[1],result[0],result[2])
@@ -150,11 +150,11 @@ class MetaCRSTest:
                          result[0], result[1], result[2],
                          self.dst_xyz[0],self.dst_xyz[1],self.dst_xyz[2])
 
-            gdaltest.post_reason( err_msg )
+            gdaltest.post_reason(err_msg)
 
-            gdal.Debug( 'OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n' \
+            gdal.Debug('OSR', 'Src SRS:\n%s\n\nDst SRS:\n%s\n' \
                         % (self.src_srs.ExportToPrettyWkt(),
-                           self.dst_srs.ExportToPrettyWkt()) )
+                           self.dst_srs.ExportToPrettyWkt()))
 
             return 'fail'
 
@@ -168,14 +168,14 @@ gdaltest_list = []
 csv_reader = csv.DictReader(open('data/Test_Data_File.csv','rt'))
 
 for test in csv_reader:
-    ut = MetaCRSTest( test )
-    gdaltest_list.append( (ut.testMetaCRS, test['testName']) )
+    ut = MetaCRSTest(test)
+    gdaltest_list.append((ut.testMetaCRS, test['testName']))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_metacrs' )
+    gdaltest.setup_run('osr_metacrs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

@@ -32,7 +32,7 @@
 import struct
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -53,12 +53,12 @@ def rasterio_1():
 
     ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_type = gdal.GDT_Byte, buf_xsize=1, buf_ysize=1)
     if checksum != ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason( 'Didnt get expected checksum ')
+        gdaltest.post_reason('Didnt get expected checksum ')
         return 'fail'
 
     data2 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 1, 1)
     if data2 != data:
-        gdaltest.post_reason( 'Didnt get expected buffer ')
+        gdaltest.post_reason('Didnt get expected buffer ')
         return 'fail'
 
     ds = None
@@ -82,12 +82,12 @@ def rasterio_2():
 
     ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, data, buf_type = gdal.GDT_Byte, buf_xsize=5, buf_ysize=4)
     if checksum != ds.GetRasterBand(1).Checksum():
-        gdaltest.post_reason( 'Didnt get expected checksum ')
+        gdaltest.post_reason('Didnt get expected checksum ')
         return 'fail'
 
     data2 = ds.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, 5, 4)
     if data2 != data:
-        gdaltest.post_reason( 'Didnt get expected buffer ')
+        gdaltest.post_reason('Didnt get expected buffer ')
         return 'fail'
 
     ds = None
@@ -126,7 +126,7 @@ def rasterio_3():
                                            buf_xsize=xsize + 1, buf_ysize=ysize + 1)
                             data2 = ds.ReadRaster(i, j, k + 1, l + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[xsize][ysize]:
-                                gdaltest.post_reason( 'Didnt get expected buffer ')
+                                gdaltest.post_reason('Didnt get expected buffer ')
                                 return 'fail'
                     l = l + 1
                 k = k + 1
@@ -143,14 +143,14 @@ def rasterio_3():
 
 def rasterio_4():
 
-    data = [ '' for i in range(5 * 4)]
+    data = ['' for i in range(5 * 4)]
     for size in range(5 * 4):
         for k in range(size+1):
             data[size] = data[size] + 'A'
         data[size] = data[size].encode('ascii')
 
     drv = gdal.GetDriverByName('GTiff')
-    ds = drv.Create('tmp/rasterio4.tif', 20, 20, 1, options = [ 'TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16' ])
+    ds = drv.Create('tmp/rasterio4.tif', 20, 20, 1, options = ['TILED=YES', 'BLOCKXSIZE=16', 'BLOCKYSIZE=16'])
 
     i = 0
     while i < ds.RasterXSize:
@@ -168,7 +168,7 @@ def rasterio_4():
                                            buf_xsize=xsize + 1, buf_ysize=ysize + 1)
                             data2 = ds.ReadRaster(i, j, k + 1, l + 1, xsize + 1, ysize + 1, gdal.GDT_Byte)
                             if data2 != data[(xsize + 1) * (ysize + 1) - 1]:
-                                gdaltest.post_reason( 'Didnt get expected buffer ')
+                                gdaltest.post_reason('Didnt get expected buffer ')
                                 print(i,j,k,l,xsize,ysize)
                                 print(data2)
                                 print(data[(xsize + 1) * (ysize + 1) - 1])
@@ -377,7 +377,7 @@ def rasterio_8():
         return 'skip'
 
     # Test RasterBand.ReadRaster
-    tab = [ 0, True ]
+    tab = [0, True]
     data = ds.GetRasterBand(1).ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                                           callback = rasterio_8_progress_callback,
                                           callback_data = tab)
@@ -390,7 +390,7 @@ def rasterio_8():
         return 'fail'
 
     # Test interruption
-    tab = [ 0 ]
+    tab = [0]
     data = ds.GetRasterBand(1).ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                                           callback = rasterio_8_progress_interrupt_callback,
                                           callback_data = tab)
@@ -402,7 +402,7 @@ def rasterio_8():
         return 'fail'
 
     # Test RasterBand.ReadRaster with type change
-    tab = [ 0, True ]
+    tab = [0, True]
     data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16,
                                           callback = rasterio_8_progress_callback,
                                           callback_data = tab)
@@ -414,7 +414,7 @@ def rasterio_8():
         return 'fail'
 
     # Same with interruption
-    tab = [ 0 ]
+    tab = [0]
     data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16,
                                           callback = rasterio_8_progress_interrupt_callback,
                                           callback_data = tab)
@@ -423,7 +423,7 @@ def rasterio_8():
         return 'fail'
 
     # Test RasterBand.ReadRaster with resampling
-    tab = [ 0, True ]
+    tab = [0, True]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 40,
                                           callback = rasterio_8_progress_callback,
                                           callback_data = tab)
@@ -435,7 +435,7 @@ def rasterio_8():
         return 'fail'
 
     # Same with interruption
-    tab = [ 0 ]
+    tab = [0]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 40,
                                           callback = rasterio_8_progress_interrupt_callback,
                                           callback_data = tab)
@@ -444,7 +444,7 @@ def rasterio_8():
         return 'fail'
 
     # Test Dataset.ReadRaster
-    tab = [ 0, True ]
+    tab = [0, True]
     data = ds.ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                          callback = rasterio_8_progress_callback,
                          callback_data = tab)
@@ -460,7 +460,7 @@ def rasterio_8():
 
     # Test Dataset.ReadRaster on a multi band file, with INTERLEAVE=BAND
     ds = gdal.Open('data/rgbsmall.tif')
-    last_pct = [ 0 ]
+    last_pct = [0]
     data = ds.ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                   callback = rasterio_8_progress_callback_2,
                   callback_data = last_pct)
@@ -469,7 +469,7 @@ def rasterio_8():
         return 'fail'
 
     # Same with interruption
-    tab = [ 0 ]
+    tab = [0]
     data = ds.ReadRaster(callback = rasterio_8_progress_interrupt_callback,
                          callback_data = tab)
     if data is not None or tab[0] < 0.50:
@@ -480,7 +480,7 @@ def rasterio_8():
 
     # Test Dataset.ReadRaster on a multi band file, with INTERLEAVE=PIXEL
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
-    last_pct = [ 0 ]
+    last_pct = [0]
     data = ds.ReadRaster(resample_alg = gdal.GRIORA_NearestNeighbour,
                   callback = rasterio_8_progress_callback_2,
                   callback_data = last_pct)
@@ -489,7 +489,7 @@ def rasterio_8():
         return 'fail'
 
     # Same with interruption
-    tab = [ 0 ]
+    tab = [0]
     data = ds.ReadRaster(callback = rasterio_8_progress_interrupt_callback,
                          callback_data = tab)
     if data is not None or tab[0] < 0.50:
@@ -520,7 +520,7 @@ def rasterio_9():
     ds = gdal.Open('data/byte.tif')
 
     # Test RasterBand.ReadRaster, with Bilinear
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_Int16,
                                           buf_xsize = 10,
                                           buf_ysize = 10,
@@ -555,7 +555,7 @@ def rasterio_9():
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Lanczos
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
                                           buf_ysize = 10,
                                           resample_alg = gdal.GRIORA_Lanczos,
@@ -576,7 +576,7 @@ def rasterio_9():
 
     # Test RasterBand.ReadRaster, with Bilinear and UInt16 data type
     src_ds_uint16 = gdal.Open('data/uint16.tif')
-    tab = [ 0, None ]
+    tab = [0, None]
     data = src_ds_uint16.GetRasterBand(1).ReadRaster(buf_type = gdal.GDT_UInt16,
                                           buf_xsize = 10,
                                           buf_ysize = 10,
@@ -598,7 +598,7 @@ def rasterio_9():
 
 
     # Test RasterBand.ReadRaster, with Bilinear on Complex, thus using warp API
-    tab = [ 0, None ]
+    tab = [0, None]
     complex_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_CInt16)
     complex_ds.GetRasterBand(1).WriteRaster(0,0,20,20, ds.GetRasterBand(1).ReadRaster(), buf_type = gdal.GDT_Byte)
     data = complex_ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
@@ -622,7 +622,7 @@ def rasterio_9():
 
 
     # Test interruption
-    tab = [ 0, 0.5 ]
+    tab = [0, 0.5]
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
                                           buf_ysize = 10,
@@ -638,7 +638,7 @@ def rasterio_9():
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Gauss, and downsampling
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
                                           buf_ysize = 10,
                                           resample_alg = gdal.GRIORA_Gauss,
@@ -658,7 +658,7 @@ def rasterio_9():
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Cubic, and downsampling
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 10,
                                           buf_ysize = 10,
                                           resample_alg = gdal.GRIORA_Cubic,
@@ -704,7 +704,7 @@ def rasterio_9():
         return 'fail'
 
     # Test RasterBand.ReadRaster, with Cubic and supersampling
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 40,
                                           buf_ysize = 40,
                                           resample_alg = gdal.GRIORA_Cubic,
@@ -724,7 +724,7 @@ def rasterio_9():
         return 'fail'
 
     # Test Dataset.ReadRaster, with Cubic and supersampling
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.ReadRaster(buf_xsize = 40,
                          buf_ysize = 40,
                          resample_alg = gdal.GRIORA_CubicSpline,
@@ -745,7 +745,7 @@ def rasterio_9():
 
     # Test Dataset.ReadRaster on a multi band file, with INTERLEAVE=PIXEL
     ds = gdal.Open('data/rgbsmall_cmyk.tif')
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.ReadRaster(buf_xsize = 25,
                          buf_ysize = 25,
                          resample_alg = gdal.GRIORA_Cubic,
@@ -772,7 +772,7 @@ def rasterio_9():
 
     # Test Band.ReadRaster on a RGBA with parts fully opaque, and fully transparent and with huge upscaling
     ds = gdal.Open('data/stefan_full_rgba.png')
-    tab = [ 0, None ]
+    tab = [0, None]
     data = ds.GetRasterBand(1).ReadRaster(buf_xsize = 162 * 16,
                          buf_ysize = 150 * 16,
                          resample_alg = gdal.GRIORA_Cubic,
@@ -884,7 +884,7 @@ def rasterio_12():
     for i in range(4):
         mem_ds.GetRasterBand(i+1).WriteArray(numpy.array([[0,0,0,0],[0,255,0,0],[0,0,0,0]]))
 
-    tab = [ 0 ]
+    tab = [0]
     ar_ds = mem_ds.ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic, \
                                callback = rasterio_12_progress_callback, \
                                callback_data = tab)
@@ -900,7 +900,7 @@ def rasterio_12():
         print(ar_ds2)
         return 'fail'
 
-    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic) for i in range(4) ]
+    ar_bands = [mem_ds.GetRasterBand(i+1).ReadAsArray(0,0,4,3,buf_xsize = 8, buf_ysize = 3, resample_alg = gdal.GRIORA_Cubic) for i in range(4)]
 
     # Results of band or dataset RasterIO should be the same
     for i in range(4):
@@ -938,7 +938,7 @@ def rasterio_13():
     except:
         return 'skip'
 
-    for dt in [ gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32 ]:
+    for dt in [gdal.GDT_Byte, gdal.GDT_UInt16, gdal.GDT_UInt32]:
 
         mem_ds = gdal.GetDriverByName('MEM').Create('', 4, 3, 1, dt)
         mem_ds.GetRasterBand(1).SetNoDataValue(0)
@@ -1105,9 +1105,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rasterio' )
+    gdaltest.setup_run('rasterio')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

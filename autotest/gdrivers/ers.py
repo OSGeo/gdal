@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,7 +43,7 @@ import gdaltest
 
 def ers_1():
 
-    tst = gdaltest.GDALTest( 'ERS', 'srtm.ers', 1, 64074 )
+    tst = gdaltest.GDALTest('ERS', 'srtm.ers', 1, 64074)
     return tst.testOpen()
 
 ###############################################################################
@@ -51,17 +51,17 @@ def ers_1():
 
 def ers_2():
 
-    tst = gdaltest.GDALTest( 'ERS', 'float32.bil', 1, 27 )
-    return tst.testCreateCopy( new_filename = 'tmp/float32.ers',
-                               check_gt = 1, vsimem = 1 )
+    tst = gdaltest.GDALTest('ERS', 'float32.bil', 1, 27)
+    return tst.testCreateCopy(new_filename = 'tmp/float32.ers',
+                               check_gt = 1, vsimem = 1)
 
 ###############################################################################
 # Test multi-band file.
 
 def ers_3():
 
-    tst = gdaltest.GDALTest( 'ERS', 'rgbsmall.tif', 2, 21053 )
-    return tst.testCreate( new_filename = 'tmp/rgbsmall.ers' )
+    tst = gdaltest.GDALTest('ERS', 'rgbsmall.tif', 2, 21053)
+    return tst.testCreate(new_filename = 'tmp/rgbsmall.ers')
 
 ###############################################################################
 # Test HeaderOffset case.
@@ -75,19 +75,19 @@ def ers_4():
     PRIMEM["Greenwich",0],
     UNIT["degree",0.0174532925199433]]"""
 
-    tst = gdaltest.GDALTest( 'ERS', 'ers_dem.ers', 1, 56588 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('ERS', 'ers_dem.ers', 1, 56588)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 ###############################################################################
 # Confirm we can recognised signed 8bit data.
 
 def ers_5():
 
-    ds = gdal.Open( 'data/8s.ers' )
+    ds = gdal.Open('data/8s.ers')
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
     if md['PIXELTYPE'] != 'SIGNEDBYTE':
-        gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
+        gdaltest.post_reason('Failed to detect SIGNEDBYTE')
         return 'fail'
 
     ds = None
@@ -99,21 +99,21 @@ def ers_5():
 
 def ers_6():
 
-    drv = gdal.GetDriverByName( 'ERS' )
+    drv = gdal.GetDriverByName('ERS')
 
-    src_ds = gdal.Open( 'data/8s.ers' )
+    src_ds = gdal.Open('data/8s.ers')
 
-    ds = drv.CreateCopy( 'tmp/8s.ers', src_ds )
+    ds = drv.CreateCopy('tmp/8s.ers', src_ds)
 
     md = ds.GetRasterBand(1).GetMetadata('IMAGE_STRUCTURE')
 
     if md['PIXELTYPE'] != 'SIGNEDBYTE':
-        gdaltest.post_reason( 'Failed to detect SIGNEDBYTE' )
+        gdaltest.post_reason('Failed to detect SIGNEDBYTE')
         return 'fail'
 
     ds = None
 
-    drv.Delete( 'tmp/8s.ers' )
+    drv.Delete('tmp/8s.ers')
 
     return 'success'
 
@@ -122,13 +122,13 @@ def ers_6():
 
 def ers_7():
 
-    ds = gdal.Open( 'data/caseinsensitive.ers' )
+    ds = gdal.Open('data/caseinsensitive.ers')
 
     desc = ds.GetRasterBand(1).GetDescription()
 
     if desc != 'RTP 1st Vertical Derivative':
         print(desc)
-        gdaltest.post_reason( 'did not get expected values.' )
+        gdaltest.post_reason('did not get expected values.')
         return 'fail'
 
     return 'success'
@@ -139,7 +139,7 @@ def ers_7():
 def ers_8():
 
     src_ds = gdal.Open('../gcore/data/gcps.vrt')
-    drv = gdal.GetDriverByName( 'ERS' )
+    drv = gdal.GetDriverByName('ERS')
     ds = drv.CreateCopy('/vsimem/ers_8.ers', src_ds)
     ds = None
 
@@ -179,7 +179,7 @@ def ers_8():
 
 def ers_9():
 
-    drv = gdal.GetDriverByName( 'ERS' )
+    drv = gdal.GetDriverByName('ERS')
     ds = drv.Create('/vsimem/ers_9.ers', 1, 1)
     ds.GetRasterBand(1).SetNoDataValue(123)
     ds = None
@@ -209,7 +209,7 @@ def ers_9():
 
 def ers_10():
 
-    drv = gdal.GetDriverByName( 'ERS' )
+    drv = gdal.GetDriverByName('ERS')
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=METERS'])
 
     proj = ds.GetMetadataItem("PROJ", "ERS")
@@ -375,9 +375,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ers' )
+    gdaltest.setup_run('ers')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
 

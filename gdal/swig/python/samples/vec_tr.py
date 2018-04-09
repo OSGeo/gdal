@@ -33,7 +33,7 @@ import sys
 from osgeo import ogr
 
 #############################################################################
-def TransformPoint( xyz ):
+def TransformPoint(xyz):
 
     x = xyz[0]
     y = xyz[1]
@@ -44,22 +44,22 @@ def TransformPoint( xyz ):
     return (x,y,z)
 
 #############################################################################
-def WalkAndTransform( geom ):
+def WalkAndTransform(geom):
 
     if geom.GetGeometryCount() > 0:
         for i in range(geom.GetGeometryCount()):
             old_geom = geom.GetGeometryRef(i)
-            new_geom = WalkAndTransform( old_geom )
+            new_geom = WalkAndTransform(old_geom)
             if new_geom is not old_geom:
-                geom.SetGeometryDirectly( new_geom )
+                geom.SetGeometryDirectly(new_geom)
         return geom
 
     for i in range(geom.GetPointCount()):
         xyz = (geom.GetX(i), geom.GetY(i), geom.GetZ(i))
 
-        xyz = TransformPoint( xyz )
+        xyz = TransformPoint(xyz)
 
-        geom.SetPoint( i, xyz[0], xyz[1], xyz[2] )
+        geom.SetPoint(i, xyz[0], xyz[1], xyz[2])
 
     return geom
 
@@ -100,36 +100,36 @@ if outfile is None:
 #############################################################################
 # Open the datasource to operate on.
 
-in_ds = ogr.Open( infile, update = 0 )
+in_ds = ogr.Open(infile, update = 0)
 
 if layer_name is not None:
-    in_layer = in_ds.GetLayerByName( layer_name )
+    in_layer = in_ds.GetLayerByName(layer_name)
 else:
-    in_layer = in_ds.GetLayer( 0 )
+    in_layer = in_ds.GetLayer(0)
 
 in_defn = in_layer.GetLayerDefn()
 
 #############################################################################
 #	Create output file with similar information.
 
-shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
-shp_driver.DeleteDataSource( outfile )
+shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+shp_driver.DeleteDataSource(outfile)
 
-shp_ds = shp_driver.CreateDataSource( outfile )
+shp_ds = shp_driver.CreateDataSource(outfile)
 
-shp_layer = shp_ds.CreateLayer( in_defn.GetName(),
+shp_layer = shp_ds.CreateLayer(in_defn.GetName(),
                                 geom_type = in_defn.GetGeomType(),
-                                srs = in_layer.GetSpatialRef() )
+                                srs = in_layer.GetSpatialRef())
 
 in_field_count = in_defn.GetFieldCount()
 
 for fld_index in range(in_field_count):
-    src_fd = in_defn.GetFieldDefn( fld_index )
+    src_fd = in_defn.GetFieldDefn(fld_index)
 
-    fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
-    fd.SetWidth( src_fd.GetWidth() )
-    fd.SetPrecision( src_fd.GetPrecision() )
-    shp_layer.CreateField( fd )
+    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+    fd.SetWidth(src_fd.GetWidth())
+    fd.SetPrecision(src_fd.GetPrecision())
+    shp_layer.CreateField(fd)
 
 #############################################################################
 # Process all features in input layer.
@@ -139,13 +139,13 @@ while in_feat is not None:
 
     geom = in_feat.GetGeometryRef().Clone()
 
-    geom = WalkAndTransform( geom )
+    geom = WalkAndTransform(geom)
 
-    out_feat = ogr.Feature( feature_def = shp_layer.GetLayerDefn() )
-    out_feat.SetFrom( in_feat )
-    out_feat.SetGeometryDirectly( geom )
+    out_feat = ogr.Feature(feature_def = shp_layer.GetLayerDefn())
+    out_feat.SetFrom(in_feat)
+    out_feat.SetGeometryDirectly(geom)
 
-    shp_layer.CreateFeature( out_feat )
+    shp_layer.CreateFeature(out_feat)
     out_feat.Destroy()
 
     in_feat.Destroy()
