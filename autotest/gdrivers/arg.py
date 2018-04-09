@@ -40,7 +40,8 @@ import gdaltest
 
 # given fmt and nodata, encodes a value as bytes
 def pack(fmt, nodata, value):
-    if value is None: value = nodata
+    if value is None:
+        value = nodata
     return struct.pack(fmt, value)
 
 # packs the given values together as bytes

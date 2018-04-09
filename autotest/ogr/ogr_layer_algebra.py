@@ -189,7 +189,8 @@ def algebra_intersection():
     C.ResetReading()
     while 1:
         feat = C.GetNextFeature()
-        if not feat: break
+        if not feat:
+            break
 
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):
@@ -225,7 +226,8 @@ def algebra_intersection():
     C.ResetReading()
     while 1:
         feat = C.GetNextFeature()
-        if not feat: break
+        if not feat:
+            break
 
         g = feat.GetGeometryRef()
         if g.Equals(f1[0]):

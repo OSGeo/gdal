@@ -102,7 +102,8 @@ if __name__ == '__main__':
     if srcfile is None:
         Usage()
 
-    if band_nums == []: band_nums = [1]
+    if band_nums == []:
+        band_nums = [1]
     # Open source file.
     srcds = gdal.Open( srcfile )
     if srcds is None:
