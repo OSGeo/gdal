@@ -62,7 +62,7 @@ def pam_1():
         gdaltest.post_reason( 'xml:test metadata missing' )
         return 'fail'
 
-    if type(xml_md) != type(['abc']):
+    if not isinstance(xml_md, list):
         gdaltest.post_reason( 'xml:test metadata not returned as list.' )
         return 'fail'
 
@@ -120,7 +120,7 @@ def pam_3():
         gdaltest.post_reason( 'xml:test metadata missing' )
         return 'fail'
 
-    if type(xml_md) != type(['abc']):
+    if not isinstance(xml_md, list):
         gdaltest.post_reason( 'xml:test metadata not returned as list.' )
         return 'fail'
 
