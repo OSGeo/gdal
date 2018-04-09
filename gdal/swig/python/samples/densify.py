@@ -170,11 +170,6 @@ class Translator(object):
         if self.output:
             self.output.SyncToDisk()
 
-def radians(degrees):
-    return math.pi/180.0*degrees
-def degrees(radians):
-    return radians*180.0/math.pi
-
 class Densify(Translator):
 
     def calcpoint(self,x0, x1, y0, y1, d):
@@ -190,7 +185,7 @@ class Densify(Translator):
                 yn = y0 - d
             return (xn, yn)
 
-        theta = degrees(math.atan(abs(b)/abs(a)))
+        theta = math.degrees(math.atan(abs(b)/abs(a)))
 
         if a > 0 and b > 0:
             omega = theta
@@ -208,8 +203,8 @@ class Densify(Translator):
             else:
                 xn = x0 - d
         else:
-            xn = x0 + d*math.cos(radians(omega))
-            yn = y0 + d*math.sin(radians(omega))
+            xn = x0 + d*math.cos(math.radians(omega))
+            yn = y0 + d*math.sin(math.radians(omega))
 
         return (xn, yn)
 
