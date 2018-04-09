@@ -186,7 +186,7 @@ class Doxy2SWIG:
         kind = node.attributes['kind'].value
         if kind in ('class', 'struct'):
             prot = node.attributes['prot'].value
-            if prot <> 'public':
+            if prot != 'public':
                 return
             names = ('compoundname', 'briefdescription',
                      'detaileddescription', 'includes')
