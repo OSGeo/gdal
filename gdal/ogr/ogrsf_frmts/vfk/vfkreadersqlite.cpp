@@ -286,7 +286,7 @@ VFKReaderSQLite::~VFKReaderSQLite()
 
   \return number of data blocks or -1 on error
 */
-int VFKReaderSQLite::ReadDataBlocks()
+int VFKReaderSQLite::ReadDataBlocks(bool bSuppressGeometry)
 {
     CPLString osSQL;
     osSQL.Printf("SELECT table_name, table_defn FROM %s", VFK_DB_TABLE);
@@ -298,7 +298,14 @@ int VFKReaderSQLite::ReadDataBlocks()
         {
             IVFKDataBlock *poNewDataBlock =
                 (IVFKDataBlock *) CreateDataBlock(pszName);
-            poNewDataBlock->SetGeometryType();
+            poNewDataBlock->SetGeometryType(bSuppressGeometry);
+            if ( poNewDataBlock->GetGeometryType() != wkbNone ) {
+                /* may happen:
+                 * first open with "-oo SUPPRESS_GEOMETRY=YES --config OGR_VFK_DB_READ_ALL_BLOCKS NO"
+                 * than attempt to fetch feature from geometry-included layer: SOBR -fid 1
+                 */
+                ((VFKDataBlockSQLite *) poNewDataBlock)->AddGeometryColumn();
+            }
             poNewDataBlock->SetProperties(pszDefn);
             VFKReader::AddDataBlock(poNewDataBlock, nullptr);
         }
@@ -306,7 +313,7 @@ int VFKReaderSQLite::ReadDataBlocks()
 
     CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "BEGIN", nullptr, nullptr, nullptr));
     /* Read data from VFK file */
-    const int nDataBlocks = VFKReader::ReadDataBlocks();
+    const int nDataBlocks = VFKReader::ReadDataBlocks(bSuppressGeometry);
     CPL_IGNORE_RET_VAL(sqlite3_exec(m_poDB, "COMMIT", nullptr, nullptr, nullptr));
 
     return nDataBlocks;
