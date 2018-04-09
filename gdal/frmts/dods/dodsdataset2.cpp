@@ -216,7 +216,7 @@ private:
     CPLErr GetGeoTransform(double *padfTransform) override;
     const char *GetProjectionRef() override;
 
-    /// Open is not a method in GDALDataset; it's the driver.
+    /// Open is not a method in GDALDataset; it is the driver.
     static GDALDataset *Open(GDALOpenInfo *);
 
     /// Return the connection object

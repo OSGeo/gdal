@@ -152,7 +152,7 @@ int json_parse_double(const char *buf, double *retval)
 /*
  * Not all implementations of sscanf actually work properly.
  * Check whether the one we're currently using does, and if
- * it's broken, enable the workaround code.
+ * it is broken, enable the workaround code.
  */
 static void sscanf_is_broken_test()
 {

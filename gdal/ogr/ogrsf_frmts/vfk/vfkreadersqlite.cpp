@@ -142,7 +142,7 @@ VFKReaderSQLite::VFKReaderSQLite( const char *pszFileName ) :
     CPLString osCommand;
     if( m_bDbSource )
     {
-        /* check if it's really VFK DB datasource */
+        /* check if it is really VFK DB datasource */
         char* pszErrMsg = nullptr;
         char** papszResult = nullptr;
         nRowCount = nColCount = 0;

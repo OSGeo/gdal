@@ -819,7 +819,7 @@ OGRErr OGRSDELayer::TranslateOGRRecord( OGRFeature *poFeature,
         // Skip FID and Geometry columns
         if( EQUAL(poFieldDefn->GetNameRef(), osFIDColumnName.c_str()) )
         {
-            // Skip the column if it's managed by SDE
+            // Skip the column if it is managed by SDE
             if( nFIDColumnType == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_SDE )
                 continue;
         }

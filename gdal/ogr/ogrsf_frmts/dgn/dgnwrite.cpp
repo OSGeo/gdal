@@ -59,7 +59,7 @@ static void DGNPointToInt( DGNInfo *psDGN, DGNPoint *psPoint,
  * loaded element, and afterwards the raw_data would be updated before calling
  * DGNWriteElement().  If DGNWriteElement() isn't called after
  * DGNResizeElement() then the element will be lost having been marked as
- * deleted in it's old position but never written at the new location.
+ * deleted in its old position but never written at the new location.
  *
  * @param hDGN the DGN file on which the element lives.
  * @param psElement the element to alter.

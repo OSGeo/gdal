@@ -362,7 +362,7 @@ bool OGRAVCE00Layer::FormPolygonGeometry( OGRFeature *poFeature,
 /*                          CheckSetupTable()                           */
 /*                                                                      */
 /*      Check if the named table exists, and if so, setup access to     */
-/*      it (open it), and add it's fields to the feature class          */
+/*      it (open it), and add its fields to the feature class           */
 /*      definition.                                                     */
 /************************************************************************/
 

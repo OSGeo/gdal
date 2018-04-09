@@ -356,7 +356,7 @@ void OGRFMECacheIndex::Add( CPLXMLNode *psDSNode )
 /*      different timeouts apply.  One is for layers with a RefCount    */
 /*      of 0 and the other (longer time) is for those with a            */
 /*      non-zero refcount.  Even if the RefCount is non-zero we         */
-/*      assume this may because a program crashed during it's run.      */
+/*      assume this may because a program crashed during its run.       */
 /************************************************************************/
 
 int OGRFMECacheIndex::ExpireOldCaches( IFMESession *poSession )

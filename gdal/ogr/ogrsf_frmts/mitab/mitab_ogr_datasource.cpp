@@ -311,7 +311,7 @@ OGRTABDataSource::ICreateLayer( const char *pszLayerName,
         return nullptr;
     }
 
-    // If it's a single file mode file, then we may have already
+    // If it is a single file mode file, then we may have already
     // instantiated the low level layer.   We would just need to
     // reset the coordinate system and (potentially) bounds.
     IMapInfoFile *poFile = nullptr;

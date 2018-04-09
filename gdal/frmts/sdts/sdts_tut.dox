@@ -15,7 +15,7 @@ The following statements will open an SDTS transfer.  The filename
 passed to SDTSTransfer::Open() should be the name of the catalog file,
 such as <tt>palo_alto/SC01CATD.DDF</tt>.  The Open() method returns FALSE
 if it fails for any reason.  In addition to the message we print out ourselves,
-the SDTSTransfer::Open() method will also emit it's own error message using
+the SDTSTransfer::Open() method will also emit its own error message using
 CPLError().  See the cpl_error.h page for more information on how to
 capture and control CPLError() style error reporting.<p>
 
@@ -113,7 +113,7 @@ managed by the SDTSTransfer, and should not be deleted by the application.<p>
 <h2>Collecting Polygon Geometry</h2>
 
 The SDTS TVP format does not directly associate a polygons geometry (the
-points forming it's boundary) with the polygon feature.  Instead it is
+points forming its boundary) with the polygon feature.  Instead it is
 stored in separate line layers, and the lines contain references to the
 right, and left polygons that the lines border.<p>
 

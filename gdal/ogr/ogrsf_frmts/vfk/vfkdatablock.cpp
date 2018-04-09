@@ -619,7 +619,7 @@ void IVFKDataBlock::SetIncRecordCount(RecordType iRec)
 }
 
 /*!
-  \brief Get first found feature based on it's properties
+  \brief Get first found feature based on its properties
 
   Note: modifies next feature.
 

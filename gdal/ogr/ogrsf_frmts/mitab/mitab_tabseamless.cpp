@@ -180,7 +180,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
 #endif
 
     /*-----------------------------------------------------------------
-     * Open .TAB file... since it's a small text file, we will just load
+     * Open .TAB file... since it is a small text file, we will just load
      * it as a stringlist in memory.
      *----------------------------------------------------------------*/
     char **papszTABFile = TAB_CSLLoad(m_pszFname);

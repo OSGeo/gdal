@@ -862,7 +862,7 @@ CPLErr EHdrDataset::ReadSTX() const
 /************************************************************************/
 
 // Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep
-// if it's a GIS-GeoSPOT image.
+// if it is a GIS-GeoSPOT image.
 // For the specification of SPDF (in French), see
 //   http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download
 
@@ -1451,7 +1451,7 @@ GDALDataset *EHdrDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         // Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep
-        // if it's a GIS-GeoSPOT image
+        // if it is a GIS-GeoSPOT image
         // For the specification of SPDF (in French), see
         //   http://eden.ign.fr/download/pub/doc/emabgi/spdf10.pdf/download
         const CPLString szImageRepFilename =

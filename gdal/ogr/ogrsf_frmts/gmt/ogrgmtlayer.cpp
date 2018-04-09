@@ -900,7 +900,7 @@ OGRErr OGRGmtLayer::ICreateFeature( OGRFeature *poFeature )
 /*      means the angle bracket preceding the point stream has          */
 /*      already been written out.                                       */
 /*                                                                      */
-/*      We use the C API for geometry access because of it's            */
+/*      We use the C API for geometry access because of its            */
 /*      simplified access to vertices and children geometries.          */
 /************************************************************************/
 

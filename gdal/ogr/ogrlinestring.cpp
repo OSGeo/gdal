@@ -1831,7 +1831,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 

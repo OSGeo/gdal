@@ -1355,7 +1355,7 @@ static OGRErr SetEPSGGeogCS( OGRSpatialReference * poSRS, int nGeogCS )
 /************************************************************************/
 /*                           OGR_FetchParm()                            */
 /*                                                                      */
-/*      Fetch a parameter from the parm list, based on it's EPSG        */
+/*      Fetch a parameter from the parm list, based on its EPSG         */
 /*      parameter code.                                                 */
 /************************************************************************/
 

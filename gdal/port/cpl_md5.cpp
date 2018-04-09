@@ -31,7 +31,7 @@ this file is only about 3k of object code.  */
 /* Modified by E. Rouault, to fix :
    warning: argument to 'sizeof' in 'memset' call is the same expression as
    the destination; did you mean to dereference it? [-Wsizeof-pointer-memaccess]
-        memset(ctx, 0, sizeof(ctx)); */   /* In case it's sensitive */
+        memset(ctx, 0, sizeof(ctx)); */   /* In case it is sensitive */
 /* at the end of cvs_MD5Final */
 
 #include "cpl_md5.h"
@@ -156,7 +156,7 @@ void CPLMD5Final( unsigned char digest[16], struct CPLMD5Context *context )
     putu32(context->buf[1], digest + 4);
     putu32(context->buf[2], digest + 8);
     putu32(context->buf[3], digest + 12);
-    memset(context, 0, sizeof(*context));  /* In case it's sensitive */
+    memset(context, 0, sizeof(*context));  /* In case it is sensitive */
 }
 
 #ifndef ASM_MD5

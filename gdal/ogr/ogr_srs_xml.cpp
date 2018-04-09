@@ -1003,7 +1003,7 @@ static double getProjectionParm( CPLXMLNode *psRootNode,
 /************************************************************************/
 /*                         getNormalizedValue()                         */
 /*                                                                      */
-/*      Parse a node to get it's numerical value, and then normalize    */
+/*      Parse a node to get its numerical value, and then normalize     */
 /*      into meters of degrees depending on the measure type.           */
 /************************************************************************/
 

@@ -954,7 +954,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             ((oType > OFTMaxType && !osGeomColsType.empty() ) ||
              EQUAL(osGeomColumnName, pszName)) )
         {
-            /* Maybe it's a geometry type? */
+            /* Maybe it is a geometry type? */
             OGRwkbGeometryType oGeomType;
             if( oType > OFTMaxType )
                 oGeomType = GPkgGeometryTypeToWKB(pszType, bHasZ, bHasM);

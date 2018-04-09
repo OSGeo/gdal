@@ -96,8 +96,8 @@ int OGRARCGENDataSource::Open( const char * pszFilename )
         return FALSE;
 
     /* Go to end of file, and count the number of END keywords */
-    /* If there's 1, it's a point layer */
-    /* If there's 2, it's a linestring or polygon layer */
+    /* If there's 1, it is a point layer */
+    /* If there's 2, it is a linestring or polygon layer */
     VSIFSeekL( fp, 0, SEEK_END );
     vsi_l_offset nSize = VSIFTellL(fp);
     if (nSize < 10)

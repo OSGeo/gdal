@@ -65,7 +65,7 @@ CPL_CVSID("$Id$")
 /**
  * \brief Constructor
  *
- * Note that the OGRFeature will increment the reference count of it's
+ * Note that the OGRFeature will increment the reference count of its
  * defining OGRFeatureDefn.  Destruction of the OGRFeatureDefn before
  * destruction of all OGRFeatures that depend on it is likely to result in
  * a crash.
@@ -112,7 +112,7 @@ OGRFeature::OGRFeature( OGRFeatureDefn * poDefnIn ) :
 /**
  * \brief Feature factory.
  *
- * Note that the OGRFeature will increment the reference count of it's
+ * Note that the OGRFeature will increment the reference count of its
  * defining OGRFeatureDefn.  Destruction of the OGRFeatureDefn before
  * destruction of all OGRFeatures that depend on it is likely to result in
  * a crash.
@@ -936,7 +936,7 @@ OGRErr OGR_F_SetGeomField( OGRFeatureH hFeat, int iField, OGRGeometryH hGeom )
 /**
  * \brief Duplicate feature.
  *
- * The newly created feature is owned by the caller, and will have it's own
+ * The newly created feature is owned by the caller, and will have its own
  * reference to the OGRFeatureDefn.
  *
  * This method is the same as the C function OGR_F_Clone().
@@ -968,7 +968,7 @@ OGRFeature *OGRFeature::Clone() const
 /**
  * \brief Duplicate feature.
  *
- * The newly created feature is owned by the caller, and will have it's own
+ * The newly created feature is owned by the caller, and will have its own
  * reference to the OGRFeatureDefn.
  *
  * This function is the same as the C++ method OGRFeature::Clone().

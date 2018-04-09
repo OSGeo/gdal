@@ -1,4 +1,4 @@
-/*
+    /*
  * $Id: json_object.h,v 1.12 2006/01/30 23:07:57 mclark Exp $
  *
  * Copyright (c) 2004, 2005 Metaparadigm Pte. Ltd.
@@ -185,7 +185,7 @@ flags);
  *
  * The user_delete parameter is optional and may be passed as NULL, even if
  * the userdata parameter is non-NULL.  It will be called just before the
- * json_object is deleted, after it's reference count goes to zero
+ * json_object is deleted, after its reference count goes to zero
  * (see json_object_put()).
  * If this is not provided, it is up to the caller to free the userdata at
  * an appropriate time. (i.e. after the json_object is deleted)
