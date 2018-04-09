@@ -360,7 +360,7 @@ if __name__ == '__main__':
     # Run htdp to transform the data.
     try:
       os.unlink( out_grid_fn )
-    except:
+    except OSError:
       pass
 
     rc = os.system( htdp_path + ' < ' + control_fn )

@@ -62,7 +62,7 @@ def ProcessTarget( target, recursive, report_failure, filelist = None ):
     if recursive and driver is None:
         try:
             mode = os.stat(target)[stat.ST_MODE]
-        except:
+        except OSError:
             mode = 0
 
         if stat.S_ISDIR(mode):
