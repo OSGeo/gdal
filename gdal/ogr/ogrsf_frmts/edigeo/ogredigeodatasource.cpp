@@ -368,14 +368,19 @@ int OGREDIGEODataSource::ReadDIC()
                 sAttributeDef.osTYP = osTYP;
                 mapAttributes[osRID] = sAttributeDef;
             }
-            if (pszLine == nullptr)
-                break;
+        }
+
+        if (pszLine == nullptr)
+            break;
+
+        if( STARTS_WITH(pszLine, "RTYSA") )
+        {
             osRTY = pszLine + 8;
             osRID = "";
             osLAB = "";
             osTYP = "";
         }
-        if (STARTS_WITH(pszLine, "RIDSA"))
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
         else if (STARTS_WITH(pszLine, "LABSA"))
             osLAB = pszLine + 8;
@@ -453,8 +458,12 @@ int OGREDIGEODataSource::ReadSCD()
                     mapAttributesSCD[osRID] = attDesc;
                 }
             }
-            if (pszLine == nullptr)
-                break;
+        }
+
+        if (pszLine == nullptr)
+            break;
+        if (STARTS_WITH(pszLine, "RTYSA"))
+        {
             osRTY = pszLine + 8;
             osRID = "";
             osNameRID = "";
@@ -462,7 +471,7 @@ int OGREDIGEODataSource::ReadSCD()
             aosAttrRID.resize(0);
             nWidth = 0;
         }
-        if (STARTS_WITH(pszLine, "RIDSA"))
+        else if (STARTS_WITH(pszLine, "RIDSA"))
             osRID = pszLine + 8;
         else if (STARTS_WITH(pszLine, "DIPCP"))
         {
