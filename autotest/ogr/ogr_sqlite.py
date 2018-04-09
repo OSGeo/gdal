@@ -3487,7 +3487,7 @@ def ogr_sqlite_45():
 
     if gdaltest.sl_ds is None:
         return 'skip'
-    
+
     if gdaltest.sl_ds is None:
         return 'skip'
 

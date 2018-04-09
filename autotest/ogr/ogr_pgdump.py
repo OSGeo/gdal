@@ -979,7 +979,7 @@ def ogr_pgdump_15():
     return 'success'
 
 ###############################################################################
-# Test sequence updating 
+# Test sequence updating
 
 def ogr_pgdump_16():
 

@@ -1270,7 +1270,7 @@ def ogr_sql_sqlite_start_webserver():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
-        
+
     if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 

@@ -95,7 +95,7 @@ def vsigs_1():
         print(last_err)
         return 'fail'
 
-    # Invalid content for header file 
+    # Invalid content for header file
     with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', 'vsigs.py'):
         with gdaltest.config_option('CPL_GCE_SKIP', 'YES'):
             f = open_for_read('/vsigs/foo/bar')
@@ -186,7 +186,7 @@ def vsigs_2():
     if gdaltest.webserver_port == 0:
         return 'skip'
 
-    # header file 
+    # header file
     gdal.FileFromMemBuffer('/vsimem/my_headers.txt', 'foo: bar')
 
     handler = webserver.SequentialHandler()

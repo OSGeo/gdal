@@ -665,7 +665,7 @@ def mbtiles_create():
     ds.SetGeoTransform(src_ds.GetGeoTransform())
     ds.SetProjection(src_ds.GetProjectionRef())
 
-    # Cannot modify geotransform once set" 
+    # Cannot modify geotransform once set"
     with gdaltest.error_handler():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     if ret == 0:

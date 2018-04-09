@@ -905,7 +905,7 @@ def gpkg_11(tile_drv_name = 'JPEG'):
         return 'skip'
 
     gdal.Unlink('/vsimem/tmp.gpkg')
-    
+
     rgba_xml = '<VRTDataset rasterXSize="162" rasterYSize="150">'
     for i in range(4):
         rgba_xml += """<VRTRasterBand dataType="Byte" band="%d">

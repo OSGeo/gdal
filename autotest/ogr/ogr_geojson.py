@@ -3744,22 +3744,22 @@ def ogr_geojson_63():
 def ogr_geojson_64():
 
     g = ogr.CreateGeometryFromWkt('POINT ZM(1 2 3 4)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
                             ogr.CreateGeometryFromWkt('POINT Z(1 2 3)') ) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('POINT M(1 2 3)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
                             ogr.CreateGeometryFromWkt('POINT (1 2)') ) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING ZM(1 2 3 4,5 6 7 8)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
                             ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)') ) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING M(1 2 3,4 5 6)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()), 
+    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
                             ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)') ) != 0:
         return 'fail'
 
@@ -3802,12 +3802,12 @@ def ogr_geojson_66():
 {
     "type": "Feature",
     "geometry": null,
-    "properties": null 
+    "properties": null
 },
 {
     "type": "Feature",
     "geometry": null,
-    "properties": [] 
+    "properties": []
 }
 ]}""")
     lyr = ds.GetLayer(0)

@@ -280,7 +280,7 @@ def ogr_vfk_8():
     if count1 != count2:
         gdaltest.post_reason('layer count differs when opening DB by SQLite and VFK drivers')
         return 'fail'
-    
+
     del os.environ['OGR_VFK_DB_READ']
 
     return 'success'
