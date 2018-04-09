@@ -754,7 +754,7 @@ IVFKFeature *VFKDataBlockSQLite::GetFeature(GIntBig nFID)
 }
 
 /*!
-  \brief Get first found feature based on it's property
+  \brief Get first found feature based on its property
 
   \param column property name
   \param value property value
@@ -792,7 +792,7 @@ VFKFeatureSQLite *VFKDataBlockSQLite::GetFeature(const char *column, GUIntBig va
 }
 
 /*!
-  \brief Get first found feature based on it's properties (AND)
+  \brief Get first found feature based on its properties (AND)
 
   \param column array of property names
   \param value array of property values
@@ -899,6 +899,11 @@ OGRErr VFKDataBlockSQLite::SaveGeometryToDB(const OGRGeometry *poGeom, int iRowI
     sqlite3_stmt *hStmt = nullptr;
 
     VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
+
+    /* check if geometry column exists (see SUPPRESS_GEOMETRY open
+       option) */
+    if ( AddGeometryColumn() != OGRERR_NONE )
+        return OGRERR_FAILURE;
 
     if (poGeom) {
         nWKBLen = poGeom->WkbSize();
@@ -1122,4 +1127,31 @@ int VFKDataBlockSQLite::GetGeometrySQLType() const
         return 1;
 
     return 0; /* unknown geometry type */
+}
+
+/*!
+  \brief Add geometry column into table if not exists
+
+  \return OGRERR_NONE on success otherwise OGRERR_FAILURE
+ */
+OGRErr VFKDataBlockSQLite::AddGeometryColumn() const
+{
+    CPLString osSQL;
+    sqlite3_stmt *hStmt = nullptr;
+    OGRErr ret = OGRERR_NONE;
+
+    VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
+
+    osSQL.Printf("SELECT COUNT(*) AS rec FROM pragma_table_info('%s') WHERE name='%s'",
+                 m_pszName, GEOM_COLUMN);
+    hStmt = poReader->PrepareStatement(osSQL.c_str());
+    if ( poReader->ExecuteSQL(hStmt) == OGRERR_NONE &&
+         sqlite3_column_int(hStmt, 0) == 0 ) {
+        osSQL.Printf("ALTER TABLE %s ADD COLUMN %s blob",
+                     m_pszName, GEOM_COLUMN);
+        ret = poReader->ExecuteSQL(osSQL.c_str());
+    }
+    sqlite3_finalize(hStmt);
+
+    return ret;
 }

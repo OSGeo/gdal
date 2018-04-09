@@ -174,7 +174,7 @@ OGRSPFDataSource::~OGRSPFDataSource()
 \endcode
 
 The Open() method is the most important one on the datasource, though
-in this particular instance it passes most of it's work off to the
+in this particular instance it passes most of its work off to the
 OGRSPFLayer constructor if it believes the file is of the desired format.
 
 Note that Open() methods should try and determine that a file isn't of the
@@ -384,7 +384,7 @@ void OGRSPFLayer::ResetReading()
 
 In this implementation we do not provide a custom implementation for the
 GetFeature() method.  This means an attempt to read a particular feature
-by it's feature id will result in many calls to GetNextFeature() until the
+by its feature id will result in many calls to GetNextFeature() until the
 desired feature is found.  However, in a sequential text format like spf
 there is little else we could do anyway.
 

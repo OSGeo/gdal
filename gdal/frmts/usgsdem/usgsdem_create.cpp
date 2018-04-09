@@ -1233,7 +1233,7 @@ static int USGSDEMProductSetup_DEFAULT( USGSDEMWriteInfo *psWInfo )
                 "DEM Default Setup: Failed to set datum of destination" );
             return FALSE;
         }
-        /* XXX Hopefully it's ok, to just keep changing the projection
+        /* XXX Hopefully it is ok, to just keep changing the projection
          * of our destination.  If not, we'll want to reinitialize the
          * OGRSpatialReference each time.
          */

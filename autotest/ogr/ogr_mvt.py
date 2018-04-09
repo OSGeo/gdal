@@ -1536,7 +1536,7 @@ def ogr_mvt_write_custom_tiling_scheme():
 
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0, gdal.GDT_Unknown)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput("WGS84");
+    srs.SetFromUserInput("WGS84")
     lyr = src_ds.CreateLayer('mylayer', srs = srs)
 
     f = ogr.Feature(lyr.GetLayerDefn())

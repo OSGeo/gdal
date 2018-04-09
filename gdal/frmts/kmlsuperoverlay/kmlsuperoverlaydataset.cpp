@@ -535,7 +535,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency( int rxsize, int rysize,
                     }
                 }
                 // shortcut - if there are both types of pixels, flags is as
-                // full as it's going to get.
+                // full as it is going to get.
                 // so no point continuing, skip to the next band
                 if ((flags & KMLSO_ContainsTransparentPixels) &&
                     (flags & KMLSO_ContainsOpaquePixels)) {

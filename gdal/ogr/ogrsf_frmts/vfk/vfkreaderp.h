@@ -77,7 +77,7 @@ public:
     bool           IsSpatial() const override { return false; }
     bool           IsPreProcessed() const override { return false; }
     bool           IsValid() const override { return true; }
-    int            ReadDataBlocks() override;
+    int            ReadDataBlocks(bool = false) override;
     int            ReadDataRecords(IVFKDataBlock * = nullptr) override;
     int            LoadGeometry() override;
 
@@ -117,11 +117,11 @@ public:
     bool          IsSpatial() const override { return m_bSpatial; }
     bool          IsPreProcessed() const override { return !m_bNewDb; }
     bool          IsValid() const override { return m_poDB != nullptr; }
-    int           ReadDataBlocks() override;
+    int           ReadDataBlocks(bool = false) override;
     int           ReadDataRecords(IVFKDataBlock * = nullptr) override;
 
     sqlite3_stmt *PrepareStatement(const char *);
-    OGRErr        ExecuteSQL( const char *, bool = false );
+    OGRErr        ExecuteSQL(const char *, CPLErr = CE_Failure);
     OGRErr        ExecuteSQL(sqlite3_stmt *&);
 };
 

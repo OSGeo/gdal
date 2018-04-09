@@ -179,7 +179,7 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 /*                            BuildFields()                             */
 /*                                                                      */
 /*      Build the field definition or definitions corresponding to      */
-/*      the passed variable and it's children (if it has them).         */
+/*      the passed variable and its children (if it has them).         */
 /************************************************************************/
 
 bool OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,

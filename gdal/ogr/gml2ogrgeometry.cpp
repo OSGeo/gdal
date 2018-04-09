@@ -819,7 +819,7 @@ bool GML2OGRGeometry_AddToMultiSurface( OGRMultiSurface* poMS,
 /************************************************************************/
 /*                      GML2OGRGeometry_XMLNode()                       */
 /*                                                                      */
-/*      Translates the passed XMLnode and it's children into an         */
+/*      Translates the passed XMLnode and its children into an         */
 /*      OGRGeometry.  This is used recursively for geometry             */
 /*      collections.                                                    */
 /************************************************************************/

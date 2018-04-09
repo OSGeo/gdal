@@ -1962,7 +1962,7 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
  * \fn void OGRGeometry::empty();
  *
  * \brief Clear geometry information.
- * This restores the geometry to it's initial
+ * This restores the geometry to its initial
  * state after construction, and before assignment of actual geometry.
  *
  * This method relates to the SFCOM IGeometry::Empty() method.
@@ -1975,7 +1975,7 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
 /************************************************************************/
 /**
  * \brief Clear geometry information.
- * This restores the geometry to it's initial
+ * This restores the geometry to its initial
  * state after construction, and before assignment of actual geometry.
  *
  * This function relates to the SFCOM IGeometry::Empty() method.

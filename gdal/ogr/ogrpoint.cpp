@@ -563,7 +563,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.                                                     */
 /************************************************************************/
 

@@ -114,10 +114,12 @@ def ogr_fgdb_stress_test_1():
         function = random.randrange(0,500)
         if function == 0:
             if not in_transaction:
-                if verbose: print('StartTransaction')
+                if verbose:
+                    print('StartTransaction')
                 ds_test.StartTransaction(force = 1)
             else:
-                if verbose: print('CommitTransaction')
+                if verbose:
+                    print('CommitTransaction')
                 ds_test.CommitTransaction()
             in_transaction = not in_transaction
         elif function < 500 / 3:
@@ -127,7 +129,8 @@ def ogr_fgdb_stress_test_1():
                 fid = 1+random.randrange(0,1000)
             str = '%d' % random.randrange(0,1000)
             wkt = 'POINT (%d %d)' % (random.randrange(0,100),random.randrange(0,100))
-            if verbose: print('Create(%d)' % fid)
+            if verbose:
+                print('Create(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:
                 f = ogr.Feature(lyr.GetLayerDefn())
                 f.SetFID(fid)
@@ -150,7 +153,8 @@ def ogr_fgdb_stress_test_1():
         elif function < 500 * 2 / 3 and nfeatures_created >= 2:
             ret = []
             fid = 1+random.randrange(0,1000)
-            if verbose: print('Update(%d)' % fid)
+            if verbose:
+                print('Update(%d)' % fid)
             str = '%d' % random.randrange(0,1000)
             wkt = 'POINT (%d %d)' % (random.randrange(0,100),random.randrange(0,100))
             for lyr in [lyr_test, lyr_ref]:
@@ -169,7 +173,8 @@ def ogr_fgdb_stress_test_1():
         elif nfeatures_created >= 2:
             ret = []
             fid = 1+random.randrange(0,1000)
-            if verbose: print('Delete(%d)' % fid)
+            if verbose:
+                print('Delete(%d)' % fid)
             for lyr in [lyr_test, lyr_ref]:
                 #gdal.PushErrorHandler()
                 ret.append(lyr.DeleteFeature(fid))

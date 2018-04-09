@@ -924,7 +924,7 @@ CPLErr netCDFRasterBand::SetNoDataValue( double dfNoData )
     if( poDS->GetAccess() == GA_Update )
     {
         // netcdf-4 does not allow to set _FillValue after leaving define mode,
-        // but it's ok if variable has not been written to, so only print debug.
+        // but it is ok if variable has not been written to, so only print debug.
         // See bug #4484.
         if( bNoDataSet &&
             !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode() )

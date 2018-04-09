@@ -60,7 +60,7 @@ defined in a single call to SetWellKnownGeogCS().
 \endcode
 
 Furthermore, any geographic coordinate system in the EPSG database can
-be set by it's GCS code number if the EPSG database is available.
+be set by its GCS code number if the EPSG database is available.
 
 \code
 	oSRS.SetWellKnownGeogCS( "EPSG:4326" );

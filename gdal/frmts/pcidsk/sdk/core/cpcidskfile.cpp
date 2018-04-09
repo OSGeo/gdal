@@ -1075,7 +1075,7 @@ int CPCIDSKFile::CreateSegment( std::string name, std::string description,
 
 /* -------------------------------------------------------------------- */
 /*      If the segment does not have a data area already, identify      */
-/*      it's location at the end of the file, and extend the file to    */
+/*      its location at the end of the file, and extend the file to     */
 /*      the desired length.                                             */
 /* -------------------------------------------------------------------- */
     if( seg_start == 0 )
@@ -1381,7 +1381,7 @@ void CPCIDSKFile::CreateOverviews( int chan_count, int *chan_list,
         }
 
 /* -------------------------------------------------------------------- */
-/*      Force channel to invalidate it's loaded overview list.          */
+/*      Force channel to invalidate it is loaded overview list.         */
 /* -------------------------------------------------------------------- */
         CPCIDSKChannel* cpcidskchannel = dynamic_cast<CPCIDSKChannel *>(channel);
         if( cpcidskchannel )

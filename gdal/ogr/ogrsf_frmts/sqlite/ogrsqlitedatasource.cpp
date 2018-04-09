@@ -3174,7 +3174,7 @@ int OGRSQLiteDataSource::FetchSRSId( OGRSpatialReference * poSRS )
                 else if ( nRowCount == 0 &&
                           strcmp(pszAuthorityName, "EPSG") == 0)
                 {
-                    /* If it's in upper case, look for lower case */
+                    /* If it is in upper case, look for lower case */
                     sqlite3_free_table(papszResult);
 
                     osCommand.Printf( "SELECT srid FROM spatial_ref_sys WHERE "

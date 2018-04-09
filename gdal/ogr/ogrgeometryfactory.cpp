@@ -1239,7 +1239,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a curve line, approximate it and wrap in a multilinestring */
+/*      If it is a curve line, approximate it and wrap in a multilinestring */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbCircularString ||
         eGeomType == wkbCompoundCurve )
@@ -1262,7 +1262,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a multicurve, call getLinearGeometry()                */
+/*      If it is a multicurve, call getLinearGeometry()                */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbMultiCurve )
     {
@@ -2133,7 +2133,7 @@ bool OGRGeometryFactory::haveGEOS()
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's FGF (FDO Geometry Format) binary representation.
+ * \brief Create a geometry object of the appropriate type from its FGF (FDO Geometry Format) binary representation.
  *
  * Also note that this is a static method, and that there
  * is no need to instantiate an OGRGeometryFactory object.
@@ -2479,7 +2479,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( const unsigned char *pabyData,
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's FGF
+ * \brief Create a geometry object of the appropriate type from its FGF
  * (FDO Geometry Format) binary representation.
  *
  * See OGRGeometryFactory::createFromFgf() */
@@ -3988,7 +3988,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a polygon with a single ring, return it                 */
+/*      If it is a polygon with a single ring, return it                 */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbPolygon || eGeomType == wkbCurvePolygon )
     {
@@ -4003,7 +4003,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a curve line, call CurveToLine()                        */
+/*      If it is a curve line, call CurveToLine()                        */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbCircularString ||
         eGeomType == wkbCompoundCurve )

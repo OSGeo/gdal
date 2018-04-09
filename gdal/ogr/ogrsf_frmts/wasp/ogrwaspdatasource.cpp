@@ -91,7 +91,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
         if (!bSilent) CPLError( CE_Failure, CPLE_NotSupported, "layer already loaded");
         return OGRERR_FAILURE;
     }
-    /* Parse the first line of the file in case it's a spatial ref*/
+    /* Parse the first line of the file in case it is a spatial ref*/
     const char * pszLine = CPLReadLine2L( hFile, 1024, nullptr );
     if ( !pszLine )
     {

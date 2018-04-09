@@ -192,7 +192,7 @@ int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
         /*-----------------------------------------------------------------
          * Read access: try to read header block
          * First try with a 512 bytes block to check the .map version.
-         * If it's version 500 or more then read again a 1024 bytes block
+         * If it is version 500 or more then read again a 1024 bytes block
          *----------------------------------------------------------------*/
         poBlock = TABCreateMAPBlockFromFile(fp, 0, 512, TRUE, m_eAccessMode);
 
@@ -1491,7 +1491,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
         if (m_poCurObjBlock &&
             m_poCurObjBlock->GetStartAddress() != nObjBlockForInsert)
         {
-            /* Got a block in memory but it's not the right one, flush it */
+            /* Got a block in memory but it is not the right one, flush it */
             if (CommitObjAndCoordBlocks(TRUE) != 0 )
                 return -1;
         }
@@ -1675,7 +1675,7 @@ int   TABMAPFile::PrepareNewObjViaSpatialIndex(TABMAPObjHdr *poObjHdr)
 
         /*-------------------------------------------------------------
          * Delete second object block, no need to commit to file first since
-         * it's already been committed to disk by Split()
+         * it is already been committed to disk by Split()
          *------------------------------------------------------------*/
         delete poNewObjBlock;
     }
@@ -3017,7 +3017,7 @@ int TABMAPFile::CommitSpatialIndex()
 
     /*-------------------------------------------------------------
      * Update header fields and commit index block
-     * (it's children will be recursively committed as well)
+     * (its children will be recursively committed as well)
      *------------------------------------------------------------*/
     // Add 1 to Spatial Index Depth to account to the MapObjectBlocks
     const int nNextDepth = m_poSpIndex->GetCurMaxDepth() + 1;

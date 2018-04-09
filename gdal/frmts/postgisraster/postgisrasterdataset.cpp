@@ -1540,7 +1540,7 @@ void PostGISRasterDataset::BuildBands(BandMetadata * poBandMetaData,
 /***********************************************************************
  * \brief Construct just one dataset from all the results fetched.
  *
- * This method is not very elegant. It's strongly attached to
+ * This method is not very elegant. It is strongly attached to
  * SetRasterProperties (it assumes poResult is not NULL, and the actual
  * results are stored at fixed positions). I just did it to avoid a
  * huge SetRasterProperties method.
@@ -1561,7 +1561,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
      * - All the bands have the same data type
      * - All the bands have the same NODATA value
      *
-     * It's user's responsibility to ensure the requested table fit in
+     * It is user's responsibility to ensure the requested table fit in
      * this schema. He/she may use the 'where' clause to ensure this
      ******************************************************************/
     int nBandsFetched = 0;
@@ -1812,7 +1812,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(
 /***********************************************************************
  * \brief Construct subdatasets and show them.
  *
- * This method is not very elegant. It's strongly attached to
+ * This method is not very elegant. It is strongly attached to
  * SetRasterProperties (it assumes poResult is not NULL, and the actual
  * results are stored at fixed positions). I just did it to avoid a
  * huge SetRasterProperties method.
@@ -1919,8 +1919,8 @@ const char * pszValidConnectionString)
  * table is a raster object, and has its own georeference information,
  * whether if the record is a tile of a bigger raster coverage or is a
  * complete raster. So, <b>there's no a way of knowing if the rows of a
- * raster table are related or not</b>. It's user's responsibility, and
- * it's managed by 'mode' parameter in connection string, which
+ * raster table are related or not</b>. It is user's responsibility, and
+ * it is managed by 'mode' parameter in connection string, which
  * determines the driver working mode.
  *
  * The user is responsible to ensure that the raster layer meets the

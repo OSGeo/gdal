@@ -1403,7 +1403,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     if( hDBF == nullptr )
     {
 /* -------------------------------------------------------------------- */
-/*      If this is a new feature, establish it's feature id.            */
+/*      If this is a new feature, establish its feature id.             */
 /* -------------------------------------------------------------------- */
         if( hSHP != nullptr && poFeature->GetFID() == OGRNullFID )
             poFeature->SetFID( hSHP->nRecords - 1 );
@@ -1412,7 +1412,7 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If this is a new feature, establish it's feature id.            */
+/*      If this is a new feature, establish its feature id.             */
 /* -------------------------------------------------------------------- */
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( DBFGetRecordCount( hDBF ) );

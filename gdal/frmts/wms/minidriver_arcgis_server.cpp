@@ -84,7 +84,7 @@ CPLErr WMSMiniDriver_AGS::Initialize(CPLXMLNode *config, CPL_UNUSED char **papsz
             m_projection_wkt = ProjToWKT(irs);
             m_irs = irs + 5;
         }
-        else //if we have AGS code - try if it's EPSG
+        else //if we have AGS code - try if it is EPSG
         {
             m_irs = irs;
             m_projection_wkt = ProjToWKT("EPSG:" + m_irs);

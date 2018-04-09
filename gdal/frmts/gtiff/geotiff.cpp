@@ -3820,7 +3820,7 @@ int GTiffDataset::DirectIO( GDALRWFlag eRWFlag,
     {
         eErr = CE_Failure;
     }
-    // For now we always allocate a temp buffer as it's easier.
+    // For now we always allocate a temp buffer as it is easier.
     else
         // if( nXSize != nBufXSize || nYSize != nBufYSize ||
         //   eBufType != eDataType ||

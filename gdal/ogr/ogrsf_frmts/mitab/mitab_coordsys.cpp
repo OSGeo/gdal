@@ -334,7 +334,7 @@ int MITABCoordSys2TABProjInfo(const char * pszCoordSys, TABProjInfo *psProj)
     }
     else if (nDatum != 999 && nDatum != 9999)
     {
-        // Find the datum, and collect it's parameters if possible.
+        // Find the datum, and collect its parameters if possible.
         const MapInfoDatumInfo *psDatumInfo = nullptr;
 
         int iDatum = 0;  // Used after for.

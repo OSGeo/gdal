@@ -264,7 +264,8 @@ closed.
 
 In addition, a global least-recently-used cache of 16 MB shared among all
 downloaded content is enabled by default, and content in it may be reused
-after a file handle has been closed and reopen. Starting with GDAL 2.3, the
+after a file handle has been closed and reopen, during the life-time of the
+process or until VSICurlClearCache() is called. Starting with GDAL 2.3, the
 size of this global LRU cache can be modified by setting the configuration
 option CPL_VSIL_CURL_CACHE_SIZE (in bytes).
 
@@ -784,17 +785,22 @@ Hopefully the values and semantics are fairly obvious.
 \section gdal_virtual_file_systems_vsicache File caching
 
 This is not a proper virtual file system handler, but a C function that
-takes a virtual file handle and return a new handle that caches read-operations
-on the input file handle.
+takes a virtual file handle and returns a new handle that caches read-operations
+on the input file handle. The cache is RAM based and the content of the cache is
+discarded when the file handle is closed. The cache is a least-recently used
+lists of blocks of 32KB each.
 
 The VSICachedFile class only handles read operations at that time, and will
 error out on write operations.
 
 This is done with the VSICreateCachedFile() function, that is implictly used
-by a number of the above mentioned file systems if the VSI_CACHE configuration
-option is set to YES. The default size of caching for each file is 25 MB, and
-can be controlled with the VSI_CACHE_SIZE configuration option (value in bytes).
-Content in that cache is discarded when the file handle is closed.
+by a number of the above mentioned file systems (namely the default one for
+standard file system operations, and the /vsicurl/ and other related network
+file systems) if the VSI_CACHE configuration option is set to YES.
+
+The default size of caching for each file is 25 MB (25 MB
+for each file that is cached), and can be controlled with the VSI_CACHE_SIZE
+configuration option (value in bytes).
 
 \section gdal_virtual_file_systems_vsicrypt /vsicrypt/ (encrypted files)
 

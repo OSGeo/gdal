@@ -85,7 +85,7 @@ void CPCIDSKGCP2Segment::Load()
 
     // check for 'GCP2    ' in the first 8 bytes
     if (!STARTS_WITH(pimpl_->seg_data.buffer, "GCP2    ")) {
-        // Assume it's an empty segment, so we can mark loaded_ = true,
+        // Assume it is an empty segment, so we can mark loaded_ = true,
         // write it out and return
         pimpl_->changed = true;
         pimpl_->map_units = "LAT/LONG D000";

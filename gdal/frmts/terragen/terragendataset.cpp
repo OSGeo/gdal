@@ -308,7 +308,7 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 const char *TerragenRasterBand::GetUnitType()
 {
     // todo: Return elevation units.
-    // For Terragen documents, it's the same as the ground units.
+    // For Terragen documents, it is the same as the ground units.
     TerragenDataset *poGDS = reinterpret_cast<TerragenDataset *>( poDS );
 
     return poGDS->m_szUnits;

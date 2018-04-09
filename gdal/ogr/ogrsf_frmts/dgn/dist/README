@@ -155,7 +155,7 @@ Release 1.5
    table is read.
 
  o Fixed problem with spatial queries either including all of a complex
-   element (and it's members) or none.
+   element (and its members) or none.
 
  o Added support for reading the eight view descriptions in the TCB element.
 

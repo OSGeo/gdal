@@ -242,7 +242,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature) {
     OGRGeometry *poGeom=poFeature->GetGeometryRef();
     if (poGeom==nullptr) return OGRERR_FAILURE;
     if (eType==POINTS) {
-        // If it's a point layer, it's the "easy" case: we change the coordinates and attributes of the feature and update the file
+        // If it is a point layer, it is the "easy" case: we change the coordinates and attributes of the feature and update the file
         if (poGeom->getGeometryType()!=wkbPoint) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should be of the same Point geometry as the existing ones in the layer.");
             return OGRERR_FAILURE;
@@ -304,7 +304,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature) {
     if (poGeom==nullptr) return OGRERR_FAILURE;
     if (VSIFSeekL(poHeader->fp,poHeader->getPosition(0),SEEK_SET)!=0) return OGRERR_FAILURE;
     if (eType==POINTS) {
-        // If it's a point layer, it's the "easy" case: we add a new point feature and update the file
+        // If it is a point layer, it is the "easy" case: we add a new point feature and update the file
         if (poGeom->getGeometryType()!=wkbPoint) {
             CPLError( CE_Failure, CPLE_AppDefined, "The new feature should be of the same Point geometry as the existing ones in the layer.");
             return OGRERR_FAILURE;

@@ -155,9 +155,11 @@ char *VFKReader::ReadLine( bool bRecode )
 
   Call VFKReader::OpenFile() before this function.
 
+  \param bSuppressGeometry True for skipping geometry resolver (force wkbNone type)
+
   \return number of data blocks or -1 on error
 */
-int VFKReader::ReadDataBlocks()
+int VFKReader::ReadDataBlocks(bool bSuppressGeometry)
 {
     CPLAssert(nullptr != m_pszFilename);
 
@@ -187,7 +189,7 @@ int VFKReader::ReadDataBlocks()
             {
                 IVFKDataBlock *poNewDataBlock =
                     (IVFKDataBlock *) CreateDataBlock(pszBlockName);
-                poNewDataBlock->SetGeometryType();
+                poNewDataBlock->SetGeometryType(bSuppressGeometry);
                 poNewDataBlock->SetProperties(pszLine); /* TODO: check consistency on property level */
                 AddDataBlock(poNewDataBlock, pszLine);
             }

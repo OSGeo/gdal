@@ -421,7 +421,7 @@ OGRFieldType OGRMongoDBGetFieldTypeFromBSON( const BSONElement* poElt,
         std::vector<BSONElement> oArray = poElt->Array();
         int nSize = (int)oArray.size();
         if (nSize == 0)
-            return OFTStringList; /* we don't know, so let's assume it's a string list */
+            return OFTStringList; /* we don't know, so let's assume it is a string list */
         OGRFieldType eType = OFTIntegerList;
         int bOnlyBoolean = TRUE;
         for(int i=0;i<nSize;i++)

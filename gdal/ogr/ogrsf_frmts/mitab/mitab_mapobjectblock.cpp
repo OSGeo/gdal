@@ -1030,7 +1030,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt16();
         m_nLabelY = poObjBlock->ReadInt16();
 
@@ -1053,7 +1053,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     else
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt32();
         m_nLabelY = poObjBlock->ReadInt32();
 
@@ -1133,7 +1133,7 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
         poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 
@@ -1674,7 +1674,7 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt16();
         m_nLabelY = poObjBlock->ReadInt16();
 
@@ -1753,7 +1753,7 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
         poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 

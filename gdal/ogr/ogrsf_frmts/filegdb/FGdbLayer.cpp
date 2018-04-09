@@ -2377,7 +2377,7 @@ bool FGdbLayer::Create(FGdbDataSource* pParentDataSource,
     CPLCreateXMLElementAndValue(defn_xml,"Name", layerName.c_str());
     CPLCreateXMLElementAndValue(defn_xml,"ChildrenExpanded", "false");
 
-    /* WKB type of none implies this is a 'Table' otherwise it's a 'Feature Class' */
+    /* WKB type of none implies this is a 'Table' otherwise it is a 'Feature Class' */
     std::string datasettype = (eType == wkbNone ? "esriDTTable" : "esriDTFeatureClass");
     CPLCreateXMLElementAndValue(defn_xml,"DatasetType", datasettype.c_str() );
     CPLCreateXMLElementAndValue(defn_xml,"Versioned", "false");

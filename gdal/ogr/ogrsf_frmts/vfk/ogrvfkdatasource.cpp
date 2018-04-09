@@ -83,8 +83,9 @@ int OGRVFKDataSource::Open(GDALOpenInfo* poOpenInfo)
         return FALSE;
     }
 
+    bool bSuppressGeometry = CPLFetchBool(poOpenInfo->papszOpenOptions, "SUPPRESS_GEOMETRY", false);
     /* read data blocks, i.e. &B */
-    poReader->ReadDataBlocks();
+    poReader->ReadDataBlocks(bSuppressGeometry);
 
     /* get list of layers */
     papoLayers = (OGRVFKLayer **) CPLCalloc(sizeof(OGRVFKLayer *), poReader->GetDataBlockCount());
@@ -99,9 +100,11 @@ int OGRVFKDataSource::Open(GDALOpenInfo* poOpenInfo)
         /* read data records if requested */
         poReader->ReadDataRecords();
 
-        for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
-            /* load geometry */
-            poReader->GetDataBlock(iLayer)->LoadGeometry();
+        if ( !bSuppressGeometry ) {
+            for (int iLayer = 0; iLayer < poReader->GetDataBlockCount(); iLayer++) {
+                /* load geometry */
+                poReader->GetDataBlock(iLayer)->LoadGeometry();
+            }
         }
     }
 

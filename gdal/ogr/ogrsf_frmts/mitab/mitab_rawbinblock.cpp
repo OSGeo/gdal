@@ -530,7 +530,7 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
     }
     else if (m_eAccess == TABReadWrite)
     {
-        // TODO: THIS IS NOT REAL read/write access (it's more extended write)
+        // TODO: THIS IS NOT REAL read/write access (it is more extended write)
         // Currently we try to read from file only if explicitly requested.
         // If we ever want true read/write mode we should implement
         // more smarts to detect whether the caller wants an existing block to
@@ -540,7 +540,7 @@ int     TABRawBinBlock::GotoByteInFile(int nOffset,
         if (bOffsetIsEndOfData &&  nOffset%m_nBlockSize == 0)
         {
             /* We're trying to go byte m_nBlockSize of a block that's full of data.
-             * In this case it's okay to place the m_nCurPos at byte m_nBlockSize
+             * In this case it is okay to place the m_nCurPos at byte m_nBlockSize
              * which is past the end of the block.
              */
 

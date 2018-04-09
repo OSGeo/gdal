@@ -1200,7 +1200,7 @@ int OGRStyleTable::IsExist( const char *pszName )
 /**
  * \brief Duplicate style table.
  *
- * The newly created style table is owned by the caller, and will have it's
+ * The newly created style table is owned by the caller, and will have its
  * own reference to the OGRStyleTable.
  *
  * @return new style table, exactly matching this style table.
@@ -1815,18 +1815,18 @@ GBool OGRStyleTool::Parse( const OGRStyleParamId *pasStyle,
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // Here we will loop on each element in the StyleString. If it's
+    // Here we will loop on each element in the StyleString. If it is
     // a valid element, we will add it in the StyleTool with
     // SetParamStr().
     //
-    // It's important to note that the SetInternalUnit...() is use to update
+    // It is important to note that the SetInternalUnit...() is use to update
     // the unit of the StyleTool param (m_eUnit).
     // See OGRStyleTool::SetParamStr().
     // There's a StyleTool unit (m_eUnit), which is the output unit, and each
     // parameter of the style have its own unit value (the input unit). Here we
     // set m_eUnit to the input unit and in SetParamStr(), we will use this
     // value to set the input unit. Then after the loop we will reset m_eUnit
-    // to it's original value. (Yes it's a side effect / black magic)
+    // to its original value. (Yes it is a side effect / black magic)
     //
     // The pasStyle variable is a global variable passed in argument to the
     // function. See at the top of this file the four OGRStyleParamId

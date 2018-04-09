@@ -331,7 +331,7 @@ bool VecSegHeader::GrowSection( int hsec, uint32 new_size )
     }
 
 /* -------------------------------------------------------------------- */
-/*      Can we grow the section in it's currently location without      */
+/*      Can we grow the section in its currently location without       */
 /*      overlapping anything else?                                      */
 /* -------------------------------------------------------------------- */
     int ihsec;

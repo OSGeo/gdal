@@ -1638,7 +1638,7 @@ class TABMultiPoint final : public TABFeature,
                      public ITABFeatureSymbol
 {
   private:
-    // We call it center, but it's more like a label point
+    // We call it center, but it is more like a label point
     // Its value default to be the location of the first point
     GBool       m_bCenterIsSet;
     double      m_dCenterX;
@@ -1759,7 +1759,7 @@ class TABCollection final : public TABFeature,
  *                      class TABDebugFeature
  *
  * Feature class to use for testing purposes... this one does not
- * correspond to any MapInfo type... it's just used to dump info about
+ * correspond to any MapInfo type... it is just used to dump info about
  * feature types that are not implemented yet.
  *--------------------------------------------------------------------*/
 class TABDebugFeature final : public TABFeature
