@@ -696,23 +696,20 @@ OGRErr VFKReaderSQLite::ExecuteSQL(sqlite3_stmt *& hStmt)
 
   \return OGRERR_NONE on success or OGRERR_FAILURE on failure
 */
-OGRErr VFKReaderSQLite::ExecuteSQL( const char *pszSQLCommand, bool bQuiet )
+OGRErr VFKReaderSQLite::ExecuteSQL( const char *pszSQLCommand, CPLErr eErrLevel )
 {
     char *pszErrMsg = nullptr;
 
     if( SQLITE_OK != sqlite3_exec(m_poDB, pszSQLCommand,
                                   nullptr, nullptr, &pszErrMsg) )
     {
-        if (!bQuiet)
-            CPLError(CE_Failure, CPLE_AppDefined,
+        if ( eErrLevel != CE_None ) {
+            CPLError(eErrLevel, CPLE_AppDefined,
                      "In ExecuteSQL(%s): %s",
                      pszSQLCommand, pszErrMsg ? pszErrMsg : "(null)");
-        else
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "In ExecuteSQL(%s): %s",
-                     pszSQLCommand, pszErrMsg ? pszErrMsg : "(null)");
-
+        }
         sqlite3_free(pszErrMsg);
+
         return  OGRERR_FAILURE;
     }
 
@@ -776,7 +773,7 @@ OGRErr VFKReaderSQLite::AddFeature( IVFKDataBlock *poDataBlock,
     osValue += ")";
     osCommand += osValue;
 
-    if( ExecuteSQL(osCommand.c_str(), true) != OGRERR_NONE )
+    if( ExecuteSQL(osCommand.c_str(), CE_Warning) != OGRERR_NONE )
         return OGRERR_FAILURE;
 
     if (EQUAL(pszBlockName, "SBP")) {

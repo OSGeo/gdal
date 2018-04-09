@@ -121,7 +121,7 @@ public:
     int           ReadDataRecords(IVFKDataBlock * = nullptr) override;
 
     sqlite3_stmt *PrepareStatement(const char *);
-    OGRErr        ExecuteSQL( const char *, bool = false );
+    OGRErr        ExecuteSQL(const char *, CPLErr = CE_Failure);
     OGRErr        ExecuteSQL(sqlite3_stmt *&);
 };
 
