@@ -122,9 +122,33 @@ CPLXMLNode CPL_DLL *CPLParseXMLString( const char * );
 void       CPL_DLL  CPLDestroyXMLNode( CPLXMLNode * );
 CPLXMLNode CPL_DLL *CPLGetXMLNode( CPLXMLNode *poRoot,
                                    const char *pszPath );
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+/*! @cond Doxygen_Suppress */
+extern "C++"
+{
+inline const CPLXMLNode *CPLGetXMLNode( const CPLXMLNode *poRoot,
+                                        const char *pszPath ) {
+    return const_cast<const CPLXMLNode*>(CPLGetXMLNode(
+        const_cast<CPLXMLNode*>(poRoot), pszPath));
+}
+}
+/*! @endcond */
+#endif
 CPLXMLNode CPL_DLL *CPLSearchXMLNode( CPLXMLNode *poRoot,
                                       const char *pszTarget );
-const char CPL_DLL *CPLGetXMLValue( CPLXMLNode *poRoot,
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+/*! @cond Doxygen_Suppress */
+extern "C++"
+{
+inline const CPLXMLNode *CPLSearchXMLNode( const CPLXMLNode *poRoot,
+                                           const char *pszTarget ) {
+    return const_cast<const CPLXMLNode*>(CPLSearchXMLNode(
+        const_cast<CPLXMLNode*>(poRoot), pszTarget));
+}
+}
+/*! @endcond */
+#endif
+const char CPL_DLL *CPLGetXMLValue( const CPLXMLNode *poRoot,
                                     const char *pszPath,
                                     const char *pszDefault );
 CPLXMLNode CPL_DLL *CPLCreateXMLNode( CPLXMLNode *poParent,
@@ -143,7 +167,7 @@ CPLXMLNode CPL_DLL *CPLCreateXMLElementAndValue( CPLXMLNode *psParent,
 void       CPL_DLL CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
                                                  const char *pszName,
                                                  const char *pszValue );
-CPLXMLNode CPL_DLL *CPLCloneXMLTree( CPLXMLNode *psTree );
+CPLXMLNode CPL_DLL *CPLCloneXMLTree( const CPLXMLNode *psTree );
 int        CPL_DLL CPLSetXMLValue( CPLXMLNode *psRoot,  const char *pszPath,
                                    const char *pszValue );
 void       CPL_DLL CPLStripXMLNamespace( CPLXMLNode *psRoot,

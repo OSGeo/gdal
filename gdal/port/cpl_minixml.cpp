@@ -1642,11 +1642,11 @@ CPLXMLNode *CPLGetXMLNode( CPLXMLNode *psRoot, const char *pszPath )
  * @return the requested value or pszDefault if not found.
  */
 
-const char *CPLGetXMLValue( CPLXMLNode *psRoot, const char *pszPath,
+const char *CPLGetXMLValue( const CPLXMLNode *psRoot, const char *pszPath,
                             const char *pszDefault )
 
 {
-    CPLXMLNode *psTarget = nullptr;
+    const CPLXMLNode *psTarget = nullptr;
 
     if( pszPath == nullptr || *pszPath == '\0' )
         psTarget = psRoot;
@@ -1911,7 +1911,7 @@ void CPLAddXMLAttributeAndValue( CPLXMLNode *psParent,
  * @return a copy of the whole tree.
  */
 
-CPLXMLNode *CPLCloneXMLTree( CPLXMLNode *psTree )
+CPLXMLNode *CPLCloneXMLTree( const CPLXMLNode *psTree )
 
 {
     CPLXMLNode *psPrevious = nullptr;
