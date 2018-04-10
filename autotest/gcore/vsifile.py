@@ -166,7 +166,7 @@ def vsifile_2():
 
 def vsifile_3():
 
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     filename = 'tmp/vsifile_3'
@@ -299,7 +299,7 @@ def vsifile_5():
 
 def vsifile_6():
 
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     offset = 4 * 1024 * 1024 * 1024
