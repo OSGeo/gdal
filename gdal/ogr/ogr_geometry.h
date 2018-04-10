@@ -2836,7 +2836,8 @@ class CPL_DLL OGRGeometryFactory
      * @deprecated in GDAL 2.3
      */
     static OGRErr createFromWkt( char ** ppszInput, OGRSpatialReference * poSRS,
-                                 OGRGeometry ** ppoGeom ) CPL_WARN_DEPRECATED("Use createFromWkt(const char**, ...) instead")
+                                 OGRGeometry ** ppoGeom )
+                                CPL_WARN_DEPRECATED("Use createFromWkt(const char**, ...) instead")
     {
         return createFromWkt( const_cast<const char**>(ppszInput), poSRS, ppoGeom);
     }
