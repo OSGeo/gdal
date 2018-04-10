@@ -81,7 +81,7 @@ def ecw_1():
     gdaltest.ecw_write = 0
 
     if gdaltest.ecw_drv is not None:
-        if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') != None:
+        if gdaltest.ecw_drv.GetMetadataItem('DMD_CREATIONDATATYPES') is not None:
             gdaltest.ecw_write = 1
 
         longname = gdaltest.ecw_drv.GetMetadataItem('DMD_LONGNAME')

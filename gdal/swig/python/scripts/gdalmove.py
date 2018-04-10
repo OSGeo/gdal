@@ -242,7 +242,7 @@ def main():
             pixel_threshold = float(argv[i+1])
             i += 1
 
-        elif filename == None:
+        elif filename is None:
             filename = argv[i]
 
         else:

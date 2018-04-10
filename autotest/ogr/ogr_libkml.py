@@ -159,7 +159,7 @@ def ogr_libkml_attributes_2():
         gdaltest.post_reason( 'Wrong name field value' )
         return 'fail'
 
-    if feat.GetField('description') != None:
+    if feat.GetField('description') is not None:
         gdaltest.post_reason( 'Wrong description field value' )
         print("'%s'" % feat.GetField('description'))
         return 'fail'
@@ -237,7 +237,7 @@ def ogr_libkml_attributes_4():
             print('Got: "%s"' % feat.GetField('name'))
             return 'fail'
 
-        if feat.GetField('description') != None:
+        if feat.GetField('description') is not None:
             gdaltest.post_reason( 'Wrong description field value' )
             return 'fail'
 

@@ -953,7 +953,7 @@ def hfa_delete_colortable():
 
     # check color table gone.
     ds = gdal.Open( 'tmp/i8u.img' )
-    if ds.GetRasterBand(1).GetColorTable() != None:
+    if ds.GetRasterBand(1).GetColorTable() is not None:
         gdaltest.post_reason( 'failed to remove color table' )
         return 'fail'
 
@@ -992,7 +992,7 @@ def hfa_delete_colortable2():
 
     # check color table gone.
     ds = gdal.Open( 'tmp/hfa_delete_colortable2.img' )
-    if ds.GetRasterBand(1).GetColorTable() != None:
+    if ds.GetRasterBand(1).GetColorTable() is not None:
         gdaltest.post_reason( 'failed to remove color table' )
         return 'fail'
 

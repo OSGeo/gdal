@@ -1172,7 +1172,7 @@ def ogr_sqlite_23():
 
     feat = shp_layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
         return 'fail'
 

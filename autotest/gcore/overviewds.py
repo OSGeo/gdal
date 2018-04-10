@@ -118,7 +118,7 @@ def overviewds_2():
     if len(ds.GetMetadata('GEOLOCATION')) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.GetMetadataItem('RPC', 'FOO') != None:
+    if ds.GetMetadataItem('RPC', 'FOO') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None

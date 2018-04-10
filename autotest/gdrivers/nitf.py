@@ -3400,7 +3400,7 @@ def nitf_online_16(driver_to_test):
 
     elif ds.RasterCount == 1 and \
        ds.GetRasterBand(1).Checksum() == 47664 and \
-       ds.GetRasterBand(1).GetRasterColorTable() != None:
+       ds.GetRasterBand(1).GetRasterColorTable() is not None:
         ret = 'success'
     else:
         print(ds.RasterCount)
@@ -3451,7 +3451,7 @@ def nitf_online_17(driver_to_test):
     ds = gdal.Open('tmp/cache/file9_j2c.ntf')
     if ds.RasterCount == 1 and \
        ds.GetRasterBand(1).Checksum() == 47664 and \
-       ds.GetRasterBand(1).GetRasterColorTable() != None:
+       ds.GetRasterBand(1).GetRasterColorTable() is not None:
         ret = 'success'
     else:
         print(ds.RasterCount)
