@@ -378,7 +378,7 @@ def ogr_pg_6():
         gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 0' % sql_lyr.GetFeatureCount() )
         return 'fail'
 
-    if sql_lyr.GetNextFeature() != None:
+    if sql_lyr.GetNextFeature() is not None:
         gdaltest.post_reason( 'GetNextFeature() did not return None' )
         return 'fail'
 
@@ -514,7 +514,7 @@ def ogr_pg_9():
     feat.Destroy()
 
     feat = gdaltest.pg_lyr.GetFeature( fid )
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         print(feat.GetGeometryRef())
         gdaltest.post_reason( 'Geometry update failed. null geometry expected' )
         return 'fail'
@@ -2214,7 +2214,7 @@ def ogr_pg_40():
         return 'skip'
 
     layer = gdaltest.pg_ds.GetLayerByName('tpoly')
-    if layer.GetFeature(0) != None:
+    if layer.GetFeature(0) is not None:
         return 'fail'
 
     return 'success'
@@ -3058,19 +3058,19 @@ def ogr_pg_56():
     lyr = ds.GetLayerByName('ogr_pg_56')
 
     feat = lyr.GetNextFeature()
-    if feat.GetField(0) != None or feat.GetField(1) != None:
+    if feat.GetField(0) is not None or feat.GetField(1) is not None:
         gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField(0) != '' or feat.GetField(1) != None:
+    if feat.GetField(0) != '' or feat.GetField(1) is not None:
         gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
         return 'fail'
 
     feat = lyr.GetNextFeature()
-    if feat.GetField(0) != None or feat.GetField(1) != '':
+    if feat.GetField(0) is not None or feat.GetField(1) != '':
         gdaltest.post_reason('did not get expected value for feat %d' % feat.GetFID())
         feat.DumpReadable()
         return 'fail'

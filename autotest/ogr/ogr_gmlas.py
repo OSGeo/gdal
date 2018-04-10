@@ -3147,7 +3147,7 @@ def ogr_gmlas_swe_dataarray():
        f.GetField('myQuantity') != 2.34 or \
        f.GetField('myCount') != 3 or \
        f.GetField('myText') != 'foo' or \
-       f.GetField('myBoolean') != True:
+       f.GetField('myBoolean') is False:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
@@ -3240,7 +3240,7 @@ def ogr_gmlas_swe_datarecord():
        f.GetField('myquantity_value') != 1.23 or \
        f.GetField('mycount_value') != 2 or \
        f.GetField('mytext_value') != 'foo' or \
-       f.GetField('myboolean_value') != True:
+       f.GetField('myboolean_value') is False:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

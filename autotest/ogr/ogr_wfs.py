@@ -262,7 +262,7 @@ def ogr_wfs_geoserver_json():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.geoserver_wfs != True:
+    if not gdaltest.geoserver_wfs:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=json')
@@ -309,7 +309,7 @@ def ogr_wfs_geoserver_shapezip():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.geoserver_wfs != True:
+    if not gdaltest.geoserver_wfs:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=za:za_points&MAXFEATURES=10&VERSION=1.1.0&OUTPUTFORMAT=SHAPE-ZIP')
@@ -355,7 +355,7 @@ def ogr_wfs_geoserver_paging():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.geoserver_wfs != True:
+    if not gdaltest.geoserver_wfs:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=og:bugsites&VERSION=1.1.0')
@@ -489,7 +489,7 @@ def ogr_wfs_test_ogrsf():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.deegree_wfs != True:
+    if not gdaltest.deegree_wfs:
         return 'skip'
 
     import test_cli_utilities
@@ -614,7 +614,7 @@ def ogr_wfs_geoserver_wfst():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.geoserver_wfs != True:
+    if not gdaltest.geoserver_wfs:
         return 'skip'
 
     ds = ogr.Open('WFS:http://demo.opengeo.org/geoserver/wfs?VERSION=1.1.0', update = 1)
@@ -794,7 +794,7 @@ def ogr_wfs_ionic_sql():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.ionic_wfs != True:
+    if not gdaltest.ionic_wfs:
         return 'skip'
 
     ds = ogr.Open('WFS:http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA')
@@ -863,7 +863,7 @@ def ogr_wfs_xmldescriptionfile_to_be_updated():
     if gdaltest.wfs_drv is None:
         return 'skip'
 
-    if gdaltest.geoserver_wfs != True:
+    if not gdaltest.geoserver_wfs:
         return 'skip'
 
     f = open('tmp/ogr_wfs_xmldescriptionfile_to_be_updated.xml', 'wt')

@@ -71,7 +71,7 @@ def ogr_wasp_elevation_from_linestring_z():
                                           ref,
                                           geom_type=ogr.wkbLineString25D )
 
-    if layer == None:
+    if layer is None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
 
@@ -136,7 +136,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
-    if layer == None:
+    if layer is None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
 
@@ -198,7 +198,7 @@ def ogr_wasp_elevation_from_linestring_field():
                                           options = ['WASP_FIELDS=elevation'],
                                           geom_type=ogr.wkbLineString )
 
-    if layer == None:
+    if layer is None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
 
@@ -252,7 +252,7 @@ def ogr_wasp_roughness_from_linestring_fields():
                                           options = ['WASP_FIELDS=z_left,z_right'],
                                           geom_type=ogr.wkbLineString )
 
-    if layer == None:
+    if layer is None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
 
@@ -317,7 +317,7 @@ def ogr_wasp_roughness_from_polygon_z():
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
-    if layer == None:
+    if layer is None:
         if ogrtest.have_geos():
             gdaltest.post_reason( 'unable to create layer')
             return 'fail'
@@ -388,7 +388,7 @@ def ogr_wasp_roughness_from_polygon_field():
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
-    if layer == None:
+    if layer is None:
         if ogrtest.have_geos():
             gdaltest.post_reason( 'unable to create layer')
             return 'fail'
@@ -462,7 +462,7 @@ def ogr_wasp_merge():
     if not ogrtest.have_geos() :
         gdal.PopErrorHandler()
 
-    if layer == None:
+    if layer is None:
         if ogrtest.have_geos():
             gdaltest.post_reason( 'unable to create layer')
             return 'fail'
@@ -528,7 +528,7 @@ def ogr_wasp_reading():
 
     ds = ogr.Open( 'tmp.map' )
 
-    if ds == None or  ds.GetLayerCount() != 1:
+    if ds is None or  ds.GetLayerCount() != 1:
         return 'fail'
 
     layer = ds.GetLayer(0)

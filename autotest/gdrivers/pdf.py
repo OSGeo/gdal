@@ -808,7 +808,7 @@ def pdf_update_info():
     author = ds.GetMetadataItem('AUTHOR')
     ds = None
 
-    if author != None:
+    if author is not None:
         gdaltest.post_reason('did not get expected metadata')
         print(author)
         return 'fail'
@@ -875,7 +875,7 @@ def pdf_update_xmp():
     xmp = ds.GetMetadata('xml:XMP')
     ds = None
 
-    if xmp != None:
+    if xmp is not None:
         gdaltest.post_reason('did not get expected metadata')
         print(xmp)
         return 'fail'

@@ -1750,12 +1750,12 @@ def ogr_sql_sqlite_25():
         print(val_ogr)
         return 'fail'
 
-    if val1_sql != None:
+    if val1_sql is not None:
         gdaltest.post_reason('fail')
         print(val1_sql)
         return 'fail'
 
-    if val2_sql != None:
+    if val2_sql is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 

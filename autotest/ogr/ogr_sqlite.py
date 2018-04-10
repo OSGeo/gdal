@@ -880,7 +880,7 @@ def ogr_sqlite_17():
     with gdaltest.error_handler():
         ds = ogr.GetDriverByName( 'SQLite' ).CreateDataSource( 'tmp/spatialite_test.db', options = ['SPATIALITE=YES'] )
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         if ds is not None:
             return 'fail'
         return 'success'
@@ -929,7 +929,7 @@ def ogr_sqlite_18():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
@@ -972,7 +972,7 @@ def ogr_sqlite_19():
     if int(gdal.VersionInfo('VERSION_NUM')) < 1800:
         return 'skip'
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if gdaltest.spatialite_version != '2.3.1':
@@ -1009,7 +1009,7 @@ def ogr_sqlite_19_bis():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if int(gdaltest.spatialite_version[0:gdaltest.spatialite_version.find('.')]) < 4:
@@ -1172,7 +1172,7 @@ def ogr_sqlite_23():
 
     feat = shp_layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
         return 'fail'
 
@@ -1504,7 +1504,7 @@ def ogr_spatialite_1():
 
 def ogr_spatialite_2():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
@@ -1554,10 +1554,10 @@ def ogr_spatialite_2():
         'POLYGON((2 2,2 8,8 8,8 2,2 2))' )
     lyr.SetSpatialFilter( geom )
 
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != True:
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) is False:
         gdaltest.post_reason('OLCFastFeatureCount failed')
         return 'fail'
-    if lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
 
@@ -1582,11 +1582,11 @@ def ogr_spatialite_2():
         print(extent)
         return 'fail'
 
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     sql_lyr.SetSpatialFilter( geom )
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     if sql_lyr.GetFeatureCount() != 50:
@@ -1597,11 +1597,11 @@ def ogr_spatialite_2():
 
     # Test spatial filter with a SQL result layer with WHERE clause
     sql_lyr = ds.ExecuteSQL('SELECT * FROM test_spatialfilter WHERE 1=1')
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     sql_lyr.SetSpatialFilter( geom )
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     if sql_lyr.GetFeatureCount() != 50:
@@ -1626,11 +1626,11 @@ def ogr_spatialite_2():
         print(extent)
         return 'fail'
 
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     sql_lyr.SetSpatialFilter( geom )
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     if sql_lyr.GetFeatureCount() != 50:
@@ -1655,11 +1655,11 @@ def ogr_spatialite_2():
         print(extent)
         return 'fail'
 
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     sql_lyr.SetSpatialFilter( geom )
-    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) != True:
+    if sql_lyr.TestCapability(ogr.OLCFastSpatialFilter) is False:
         gdaltest.post_reason('OLCFastSpatialFilter failed')
         return 'fail'
     if sql_lyr.GetFeatureCount() != 50:
@@ -1694,9 +1694,9 @@ def ogr_spatialite_2():
     lyr.SetSpatialFilter( geom )
     geom.Destroy()
 
-    if lyr.TestCapability(ogr.OLCFastFeatureCount) != False:
+    if lyr.TestCapability(ogr.OLCFastFeatureCount) is True:
         return 'fail'
-    if lyr.TestCapability(ogr.OLCFastSpatialFilter) != False:
+    if lyr.TestCapability(ogr.OLCFastSpatialFilter) is True:
         return 'fail'
 
     if lyr.GetFeatureCount() != 50:
@@ -1712,7 +1712,7 @@ def ogr_spatialite_2():
 
 def ogr_spatialite_3():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1 )
@@ -1741,7 +1741,7 @@ def ogr_spatialite_3():
 
 def ogr_spatialite_4():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.Open( 'tmp/spatialite_test.db', update = 1  )
@@ -1798,7 +1798,7 @@ def ogr_spatialite_4():
 
 def ogr_spatialite_5(bUseComprGeom = False):
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     try:
@@ -1936,7 +1936,7 @@ def ogr_spatialite_5(bUseComprGeom = False):
 
 def ogr_spatialite_compressed_geom_5():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if gdaltest.spatialite_version == '2.3.1':
@@ -1949,7 +1949,7 @@ def ogr_spatialite_compressed_geom_5():
 
 def ogr_spatialite_6():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if gdaltest.spatialite_version.find('2.3') == 0:
@@ -2095,7 +2095,7 @@ def ogr_spatialite_6():
 
 def ogr_spatialite_7():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.Open('VirtualShape:data/poly.shp')
@@ -2124,7 +2124,7 @@ def ogr_spatialite_7():
 
 def ogr_spatialite_8():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if gdaltest.spatialite_version.find('2.3') == 0:
@@ -2477,7 +2477,7 @@ def ogr_sqlite_33():
         if i == 0:
             options = []
         else:
-            if gdaltest.has_spatialite == False:
+            if not gdaltest.has_spatialite:
                 return 'success'
             if gdaltest.spatialite_version.find('2.3') == 0:
                 return 'success'
@@ -2620,7 +2620,7 @@ def ogr_sqlite_35():
     if gdaltest.sl_ds is None:
         return 'skip'
 
-    if gdaltest.has_spatialite == True and gdaltest.spatialite_version.find('2.3') < 0:
+    if gdaltest.has_spatialite and gdaltest.spatialite_version.find('2.3') < 0:
         options = ['SPATIALITE=YES']
     else:
         options = []
@@ -3002,7 +3002,7 @@ def ogr_sqlite_38():
 
 def ogr_spatialite_9():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_9.sqlite', options = [ 'SPATIALITE=YES'] )
@@ -3025,7 +3025,7 @@ def ogr_spatialite_9():
 
 def ogr_spatialite_10():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
     try:
         os.remove('tmp/ogr_spatialite_10.sqlite')
@@ -3529,7 +3529,7 @@ def ogr_sqlite_45():
 
 def ogr_spatialite_11():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource('/vsimem/ogr_spatialite_11.sqlite', options = ['SPATIALITE=YES'])
@@ -3558,7 +3558,7 @@ def ogr_spatialite_11():
 
 def ogr_spatialite_12():
 
-    if gdaltest.has_spatialite == False:
+    if not gdaltest.has_spatialite:
         return 'skip'
 
     if gdal.GetDriverByName('SQLite').GetMetadataItem("ENABLE_SQL_SQLITE_FORMAT") != 'YES':
@@ -3690,7 +3690,7 @@ def ogr_sqlite_cleanup():
 
 def ogr_sqlite_without_spatialite():
 
-    if gdaltest.has_spatialite == False or not run_without_spatialite:
+    if not gdaltest.has_spatialite or not run_without_spatialite:
         return 'skip'
 
     import test_py_scripts

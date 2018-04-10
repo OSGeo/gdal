@@ -169,13 +169,13 @@ def ogr_geom_is_empty_triangle():
     geom_wkt = 'TRIANGLE EMPTY'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    if (geom.IsEmpty() == False):
+    if not geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
         return 'fail'
 
     geom = ogr.CreateGeometryFromWkb( geom.ExportToWkb() )
 
-    if (geom.IsEmpty() == False):
+    if not geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
         return 'fail'
 
@@ -187,7 +187,7 @@ def ogr_geom_is_empty_triangle():
         gdaltest.post_reason ("A geometry could not be created from wkt: %s"%geom_wkt)
         return 'fail'
 
-    if (geom.IsEmpty() == True):
+    if geom.IsEmpty():
         gdaltest.post_reason ("IsEmpty returning true for a non-empty geometry")
         return 'fail'
     return 'success'
@@ -265,11 +265,11 @@ def ogr_geom_polyhedral_surface():
 
     if ogrtest.have_geos() or ogrtest.have_sfcgal():
         geom = ogr.CreateGeometryFromWkb(wkb_string)
-        if ps.Contains(geom) != True:
+        if not ps.Contains(geom):
             gdaltest.post_reason ("Failure in Contains() of PolyhedralSurface")
             return 'fail'
 
-    if ps.IsEmpty() == True:
+    if ps.IsEmpty():
         gdaltest.post_reason ("Failure in IsEmpty() of PolyhedralSurface")
         return 'fail'
 
@@ -373,7 +373,7 @@ def ogr_geom_tin():
     #    gdaltest.post_reason ("Failure in Contains() of TIN")
     #    return 'fail'
 
-    if tin.IsEmpty() == True:
+    if tin.IsEmpty():
         gdaltest.post_reason ("Failure in IsEmpty() of TIN")
         return 'fail'
 
@@ -411,7 +411,7 @@ def ogr_geom_tin():
     #    return 'fail'
 
     tin.FlattenTo2D()
-    if tin.IsValid() == True:
+    if tin.IsValid():
         gdaltest.post_reason ("Problem with IsValid() in TIN")
         return 'fail'
 
@@ -1468,7 +1468,7 @@ def ogr_geom_triangle_sfcgal():
 
     g1 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,100 0 100,0 100 100,0 0))' )
     g2 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((-1 -1,100 0 100,0 100 100,-1 -1))' )
-    if g2.Intersects(g1) != True:
+    if not g2.Intersects(g1):
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1476,7 +1476,7 @@ def ogr_geom_triangle_sfcgal():
     g2 = ogr.CreateGeometryFromWkt( 'TRIANGLE ((0 0,1 0,1 1,0 0))' )
     g3 = g1.Intersection(g2)
     g4 = ogr.CreateGeometryFromWkt('TRIANGLE ((0.5 0.5 0,0 0 0,1 0 0,0.5 0.5 0))')
-    if g4.Equals(g3) == False:
+    if not g4.Equals(g3):
         gdaltest.post_reason('fail')
         return 'fail'
 

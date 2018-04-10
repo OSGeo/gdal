@@ -2109,7 +2109,7 @@ def tiff_write_56():
     ds = gdal.Open( 'tmp/tiff_write_56.tif' )
     ct = ds.GetRasterBand(1).GetRasterColorTable()
 
-    if ct != None:
+    if ct is not None:
         gdaltest.post_reason( 'color table seemingly not cleared.' )
         return 'fail'
 
@@ -2594,7 +2594,7 @@ def tiff_write_71():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     header = open('data/bigtiff_header_extract.tif', 'rb').read()
@@ -3138,7 +3138,7 @@ def tiff_write_80():
 
     # Third part : test storing and retrieving scale & offsets from PAM metadata
     ds = gdaltest.tiff_drv.Create( 'tmp/tiff_write_80_bis.tif', 1, 1)
-    if ds.GetRasterBand(1).GetScale() != None or ds.GetRasterBand(1).GetOffset() != None:
+    if ds.GetRasterBand(1).GetScale() is not None or ds.GetRasterBand(1).GetOffset() is not None:
         gdaltest.post_reason('expected None values')
         return 'fail'
     ds = None
@@ -3477,7 +3477,7 @@ def tiff_write_86():
                'tmp/tiff_write_86.tif.aux.xml.hidden' )
 
     ds = gdal.Open( 'tmp/tiff_write_86.tif' )
-    if ds.GetMetadata( 'xml:ESRI' ) != None:
+    if ds.GetMetadata( 'xml:ESRI' ) is not None:
         print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata' )
         return 'fail'
@@ -3516,7 +3516,7 @@ def tiff_write_86():
     os.remove( 'tmp/tiff_write_86_cc.tif.aux.xml' )
 
     ds = gdal.Open( 'tmp/tiff_write_86_cc.tif' )
-    if ds.GetMetadata( 'xml:ESRI' ) != None:
+    if ds.GetMetadata( 'xml:ESRI' ) is not None:
         print(ds.GetMetadata( 'xml:ESRI' ))
         gdaltest.post_reason( 'unexpectedly got xml:ESRI metadata(2)' )
         return 'fail'
@@ -4006,7 +4006,7 @@ def tiff_write_95():
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', 'YES')
     ds = gdaltest.tiff_drv.CreateCopy('tmp/tiff_write_95_dst.tif', src_ds, options = ['COPY_SRC_OVERVIEWS=YES'])
     gdal.SetConfigOption('GTIFF_DONT_WRITE_BLOCKS', None)
-    ok = ds != None
+    ok = ds is not None
     ds = None
     src_ds = None
 
@@ -6597,7 +6597,7 @@ def tiff_write_144():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_144.tif', 20, 20, 1, options = ['BIGTIFF=YES'])

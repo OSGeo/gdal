@@ -2314,7 +2314,7 @@ def ogr_elasticsearch_11():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f['str_field'] != None:
+    if f['str_field'] is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'
