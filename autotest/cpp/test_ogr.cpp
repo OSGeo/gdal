@@ -609,9 +609,8 @@ namespace tut
         oPoint.setY(1);
         ensure( !oPoly.IsPointOnSurface(&oPoint) );
 
-        const char* pszPolyWkt = "POLYGON((0 0,0 10,10 10,10 0,0 0),(4 4,4 6,6 6,6 4,4 4))";
-        char* pszWktChar = const_cast<char*>(pszPolyWkt);
-        oPoly.importFromWkt(&pszWktChar);
+        const char* pszPoly = "POLYGON((0 0,0 10,10 10,10 0,0 0),(4 4,4 6,6 6,6 4,4 4))";
+        oPoly.importFromWkt(&pszPoly);
 
         ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
 
@@ -846,8 +845,7 @@ namespace tut
         Concrete obj;
         if( pszWKT )
         {
-            char* pszNonConstWKT = const_cast<char*>(pszWKT);
-            obj.importFromWkt(&pszNonConstWKT);
+            obj.importFromWkt(&pszWKT);
         }
         TestIterator<Abstract>(&obj, nExpectedPointCount);
     };
@@ -916,8 +914,7 @@ namespace tut
         for( size_t i = 0; i < CPL_ARRAYSIZE(asTests); i++ )
         {
             OGRGeometry* poGeom = nullptr;
-            char* pszWKT = const_cast<char*>(asTests[i].pszWKT);
-            OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+            OGRGeometryFactory::createFromWkt(asTests[i].pszWKT, nullptr, &poGeom);
             PointCounterVisitor oVisitor;
             poGeom->accept(&oVisitor);
             ensure_equals(oVisitor.getNumPoints(), asTests[i].nExpectedPointCount);

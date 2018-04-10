@@ -523,7 +523,7 @@ OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRCurvePolygon::importFromWkt( char ** ppszInput )
+OGRErr OGRCurvePolygon::importFromWkt( const char ** ppszInput )
 
 {
     return importCurveCollectionFromWkt( ppszInput,

@@ -198,7 +198,7 @@ OGRErr OGRCompoundCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
 /*                           importFromWkt()                            */
 /************************************************************************/
 
-OGRErr OGRCompoundCurve::importFromWkt( char ** ppszInput )
+OGRErr OGRCompoundCurve::importFromWkt( const char ** ppszInput )
 {
     return importCurveCollectionFromWkt( ppszInput,
                                          FALSE, // bAllowEmptyComponent

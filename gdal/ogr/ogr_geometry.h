@@ -294,11 +294,11 @@ class CPL_DLL OGRGeometry
 
     unsigned int flags;
 
-    OGRErr       importPreambleFromWkt( char ** ppszInput,
+    OGRErr       importPreambleFromWkt( const char ** ppszInput,
                                          int* pbHasZ, int* pbHasM,
                                          bool* pbIsEmpty );
     OGRErr       importCurveCollectionFromWkt(
-                     char ** ppszInput,
+                     const char ** ppszInput,
                      int bAllowEmptyComponent,
                      int bAllowLineString,
                      int bAllowCurve,
@@ -378,7 +378,16 @@ class CPL_DLL OGRGeometry
                                   int& nBytesConsumedOut ) = 0;
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc ) const = 0;
-    virtual OGRErr importFromWkt( char ** ppszInput ) = 0;
+    virtual OGRErr importFromWkt( const char ** ppszInput ) = 0;
+
+    /** Deprecated.
+     * @deprecated in GDAL 2.3
+     */
+    OGRErr importFromWkt( char ** ppszInput ) CPL_WARN_DEPRECATED("Use importFromWkt(const char**) instead")
+    {
+        return importFromWkt( const_cast<const char**>(ppszInput) );
+    }
+
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc ) const = 0;
 
@@ -823,7 +832,8 @@ class CPL_DLL OGRPoint : public OGRGeometry
     OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                         OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     OGRErr exportToWkt( char ** ppszDstText,
                         OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1037,7 +1047,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     void        RemoveM();
     void        AddM();
 
-    OGRErr      importFromWKTListOnly( char ** ppszInput, int bHasZ, int bHasM,
+    OGRErr      importFromWKTListOnly( const char ** ppszInput, int bHasZ, int bHasM,
                                        OGRRawPoint*& paoPointsIn,
                                        int& nMaxPoints,
                                        double*& padfZIn );
@@ -1123,7 +1133,8 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1413,7 +1424,8 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1625,7 +1637,8 @@ class CPL_DLL OGRCompoundCurve : public OGRCurve
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -1822,7 +1835,8 @@ class CPL_DLL OGRCurvePolygon : public OGRSurface
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant eWkbVariant = wkbVariantOldOgc )
         const override;
@@ -1903,7 +1917,7 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     friend class OGRTriangulatedSurface;
 
     virtual int checkRing( OGRCurve * poNewRing ) const override;
-    virtual OGRErr importFromWKTListOnly( char ** ppszInput,
+    virtual OGRErr importFromWKTListOnly( const char ** ppszInput,
                                           int bHasZ, int bHasM,
                                           OGRRawPoint*& paoPoints,
                                           int& nMaxPoints,
@@ -1960,7 +1974,9 @@ class CPL_DLL OGRPolygon : public OGRCurvePolygon
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
+
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2022,7 +2038,7 @@ class CPL_DLL OGRTriangle : public OGRPolygon
   protected:
 //! @cond Doxygen_Suppress
     virtual OGRSurfaceCasterToPolygon   GetCasterToPolygon() const override;
-    virtual OGRErr importFromWKTListOnly( char ** ppszInput,
+    virtual OGRErr importFromWKTListOnly( const char ** ppszInput,
                                           int bHasZ, int bHasM,
                                           OGRRawPoint*& paoPoints,
                                           int& nMaxPoints,
@@ -2078,7 +2094,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
                                        int nSize,
                                        int nRecLevel,
                                        OGRwkbVariant, int& nBytesConsumedOut );
-    OGRErr      importFromWktInternal( char **ppszInput, int nRecLevel );
+    OGRErr      importFromWktInternal( const char **ppszInput, int nRecLevel );
 
   protected:
 //! @cond Doxygen_Suppress
@@ -2143,7 +2159,9 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
+
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2239,7 +2257,9 @@ class CPL_DLL OGRMultiSurface : public OGRGeometryCollection
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
+
     virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
         const override;
 
@@ -2423,7 +2443,8 @@ class CPL_DLL OGRPolyhedralSurface : public OGRSurface
     virtual OGRErr exportToWkb( OGRwkbByteOrder, unsigned char *,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char ** ppszDstText,
                                 OGRwkbVariant=wkbVariantOldOgc )
         const override;
@@ -2565,7 +2586,7 @@ inline OGRTriangulatedSurface::ChildType** end(OGRTriangulatedSurface* poGeom) {
 class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
 {
   private:
-    OGRErr  importFromWkt_Bracketed( char **, int bHasM, int bHasZ );
+    OGRErr  importFromWkt_Bracketed( const char **, int bHasM, int bHasZ );
 
   protected:
     virtual OGRBoolean  isCompatibleSubType( OGRwkbGeometryType )
@@ -2597,7 +2618,8 @@ class CPL_DLL OGRMultiPoint : public OGRGeometryCollection
     // Non-standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
         const override;
 
@@ -2675,7 +2697,8 @@ class CPL_DLL OGRMultiCurve : public OGRGeometryCollection
     // Non standard (OGRGeometry).
     virtual const char *getGeometryName() const override;
     virtual OGRwkbGeometryType getGeometryType() const override;
-    virtual OGRErr importFromWkt( char ** ) override;
+    using OGRGeometry::importFromWkt; /** deprecated */
+    OGRErr importFromWkt( const char ** ) override;
     virtual OGRErr exportToWkt( char **, OGRwkbVariant=wkbVariantOldOgc )
         const override;
 
@@ -2807,8 +2830,17 @@ class CPL_DLL OGRGeometryFactory
                                  int& nBytesConsumedOut );
     static OGRErr createFromWkt( const char* , OGRSpatialReference *,
                                  OGRGeometry ** );
-    static OGRErr createFromWkt( char **, OGRSpatialReference *,
+    static OGRErr createFromWkt( const char **, OGRSpatialReference *,
                                  OGRGeometry ** );
+    /** Deprecated.
+     * @deprecated in GDAL 2.3
+     */
+    static OGRErr createFromWkt( char ** ppszInput, OGRSpatialReference * poSRS,
+                                 OGRGeometry ** ppoGeom ) CPL_WARN_DEPRECATED("Use createFromWkt(const char**, ...) instead")
+    {
+        return createFromWkt( const_cast<const char**>(ppszInput), poSRS, ppoGeom);
+    }
+
     static OGRErr createFromFgf( const void*, OGRSpatialReference *,
                                  OGRGeometry **, int = -1, int * = nullptr );
     static OGRGeometry *createFromGML( const char * );
