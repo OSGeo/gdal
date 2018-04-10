@@ -602,4 +602,24 @@ namespace tut
         ensure( !GDALDataTypeIsConversionLossy(GDT_CFloat64, GDT_CFloat64) );
     }
 
+    // Test GDALDataset::GetBands()
+    template<> template<> void object::test<17>()
+    {
+        GDALDatasetUniquePtr poDS(
+            GDALDriver::FromHandle(
+                GDALGetDriverByName("MEM"))->Create("", 1, 1, 3, GDT_Byte, nullptr));
+        int nExpectedNumber = 1;
+        for( auto&& poBand: poDS->GetBands() )
+        {
+            ensure_equals( poBand->GetBand(), nExpectedNumber );
+            nExpectedNumber ++;
+        }
+        ensure_equals( nExpectedNumber, 3 + 1 );
+
+        ensure_equals( poDS->GetBands().size(), 3U );
+        ensure_equals( poDS->GetBands()[0], poDS->GetRasterBand(1) );
+        ensure_equals( poDS->GetBands()[static_cast<size_t>(0)], poDS->GetRasterBand(1) );
+
+    }
+
 } // namespace tut

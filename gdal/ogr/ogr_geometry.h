@@ -937,7 +937,7 @@ class CPL_DLL OGRCurve : public OGRGeometry
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRCurve* poSelf, bool bStart);
-                ConstIterator(ConstIterator&& oOther);
+                ConstIterator(ConstIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
@@ -1057,7 +1057,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 void update();
             public:
                 Iterator(OGRSimpleCurve* poSelf, int nPos);
-                Iterator(Iterator&& oOther);
+                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
                 ~Iterator();
                 OGRPoint& operator*();
                 Iterator& operator++();
@@ -1073,7 +1073,7 @@ class CPL_DLL OGRSimpleCurve: public OGRCurve
                 std::unique_ptr<Private> m_poPrivate;
             public:
                 ConstIterator(const OGRSimpleCurve* poSelf, int nPos);
-                ConstIterator(ConstIterator&& oOther);
+                ConstIterator(ConstIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
                 ~ConstIterator();
                 const OGRPoint& operator*() const;
                 ConstIterator& operator++();
