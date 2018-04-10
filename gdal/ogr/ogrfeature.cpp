@@ -1704,6 +1704,71 @@ void OGR_F_SetFieldNull( OGRFeatureH hFeat, int iField )
 }
 
 /************************************************************************/
+/*                           operator[]                                */
+/************************************************************************/
+
+/**
+* \brief Return a field value.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1. This is not
+ *               checked by the method !
+ *
+ * @return the field value.
+ * @since GDAL 2.3
+ */
+const OGRFeature::FieldValue OGRFeature::operator[](int iField) const
+{
+    return {this, iField};
+}
+
+/**
+* \brief Return a field value.
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1. This is not
+ *               checked by the method !
+ *
+ * @return the field value.
+ * @since GDAL 2.3
+ */
+OGRFeature::FieldValue OGRFeature::operator[](int iField)
+{
+    return {this, iField};
+}
+
+/**
+* \brief Return a field value.
+ *
+ * @param pszFieldName field name
+ *
+ * @return the field value, or throw a FieldNotFoundException if not found.
+ * @since GDAL 2.3
+ */
+const OGRFeature::FieldValue OGRFeature::operator[](const char* pszFieldName) const
+{
+    int iField = GetFieldIndex(pszFieldName);
+    if( iField < 0 )
+        throw FieldNotFoundException();
+    return {this, iField};
+}
+
+/**
+* \brief Return a field value.
+ *
+ * @param pszFieldName field name
+ *
+ * @return the field value, or throw a FieldNotFoundException if not found.
+ * @since GDAL 2.3
+ */
+OGRFeature::FieldValue OGRFeature::operator[](const char* pszFieldName)
+{
+    int iField = GetFieldIndex(pszFieldName);
+    if( iField < 0 )
+        throw FieldNotFoundException();
+    return {this, iField};
+}
+
+
+/************************************************************************/
 /*                           GetRawFieldRef()                           */
 /************************************************************************/
 
@@ -3255,7 +3320,7 @@ char* OGRFeature::GetFieldAsSerializedJSon( int iField ) const
     if( eType == OFTStringList )
     {
         json_object* poObj = json_object_new_array();
-        char** papszValues = GetFieldAsStringList(iField);
+        auto&& papszValues = GetFieldAsStringList(iField);
         for( int i=0; papszValues[i] != nullptr; i++)
         {
             json_object_array_add( poObj,
@@ -4076,7 +4141,7 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nCount, int *panValues )
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const int *panValues )
  * \brief Set field to list of integers value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List
@@ -4110,7 +4175,7 @@ void OGR_F_SetFieldString( OGRFeatureH hFeat, int iField, const char *pszValue)
  * @param panValues the values to assign.
  */
 
-void OGRFeature::SetField( int iField, int nCount, int *panValues )
+void OGRFeature::SetField( int iField, int nCount, const int *panValues )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -4148,7 +4213,8 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
         uField.IntegerList.nCount = nCount;
         uField.Set.nMarker2 = 0;
         uField.Set.nMarker3 = 0;
-        uField.IntegerList.paList = panValuesMod ? panValuesMod : panValues;
+        uField.IntegerList.paList = panValuesMod ?
+                panValuesMod : const_cast<int*>(panValues);
 
         SetField( iField, &uField );
         CPLFree(panValuesMod);
@@ -4216,7 +4282,7 @@ void OGRFeature::SetField( int iField, int nCount, int *panValues )
  */
 
 void OGR_F_SetFieldIntegerList( OGRFeatureH hFeat, int iField,
-                                int nCount, int *panValues )
+                                int nCount, const int *panValues )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldIntegerList" );
@@ -4376,7 +4442,7 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nCount, double * padfValues )
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const double * padfValues )
  * \brief Set field to list of doubles value.
  *
  * This method currently on has an effect of OFTIntegerList, OFTInteger64List,
@@ -4410,7 +4476,7 @@ void OGR_F_SetFieldInteger64List( OGRFeatureH hFeat, int iField,
  * @param padfValues the values to assign.
  */
 
-void OGRFeature::SetField( int iField, int nCount, double * padfValues )
+void OGRFeature::SetField( int iField, int nCount, const double * padfValues )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -4426,7 +4492,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
         uField.RealList.nCount = nCount;
         uField.Set.nMarker2 = 0;
         uField.Set.nMarker3 = 0;
-        uField.RealList.paList = padfValues;
+        uField.RealList.paList = const_cast<double*>(padfValues);
 
         SetField( iField, &uField );
     }
@@ -4495,7 +4561,7 @@ void OGRFeature::SetField( int iField, int nCount, double * padfValues )
  */
 
 void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
-                               int nCount, double *padfValues )
+                               int nCount, const double *padfValues )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldDoubleList" );
@@ -4508,7 +4574,7 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName,  char ** papszValues )
+ * \fn OGRFeature::SetField( const char* pszFName,  const char * const * papszValues )
  * \brief Set field to list of strings value.
  *
  * This method currently on has an effect of OFTStringList fields.
@@ -4538,7 +4604,7 @@ void OGR_F_SetFieldDoubleList( OGRFeatureH hFeat, int iField,
  * @param papszValues the values to assign.
  */
 
-void OGRFeature::SetField( int iField, char ** papszValues )
+void OGRFeature::SetField( int iField, const char * const * papszValues )
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn( iField );
@@ -4549,14 +4615,17 @@ void OGRFeature::SetField( int iField, char ** papszValues )
     OGRFieldType eType = poFDefn->GetType();
     if( eType == OFTStringList )
     {
-        OGRField uField;
+        if( papszValues != pauFields[iField].StringList.paList )
+        {
+            OGRField uField;
 
-        uField.StringList.nCount = CSLCount(papszValues);
-        uField.Set.nMarker2 = 0;
-        uField.Set.nMarker3 = 0;
-        uField.StringList.paList = papszValues;
+            uField.StringList.nCount = CSLCount(papszValues);
+            uField.Set.nMarker2 = 0;
+            uField.Set.nMarker3 = 0;
+            uField.StringList.paList = const_cast<char**>(papszValues);
 
-        SetField( iField, &uField );
+            SetField( iField, &uField );
+        }
     }
     else if( eType == OFTIntegerList )
     {
@@ -4639,12 +4708,13 @@ void OGRFeature::SetField( int iField, char ** papszValues )
  */
 
 void OGR_F_SetFieldStringList( OGRFeatureH hFeat, int iField,
-                               char ** papszValues )
+                               CSLConstList papszValues )
 
 {
     VALIDATE_POINTER0( hFeat, "OGR_F_SetFieldStringList" );
 
-    OGRFeature::FromHandle(hFeat)->SetField( iField, papszValues );
+    OGRFeature::FromHandle(hFeat)->SetField( iField,
+                                const_cast<const char* const*>(papszValues) );
 }
 
 /************************************************************************/
@@ -6952,3 +7022,363 @@ void OGRFeatureUniquePtrDeleter::operator()(OGRFeature* poFeature) const
     delete poFeature;
 }
 //! @endcond
+
+/************************************************************************/
+/*                    OGRFeature::ConstFieldIterator                    */
+/************************************************************************/
+
+struct OGRFeature::FieldValue::Private
+{
+    OGRFeature* m_poSelf;
+    int m_nPos;
+    mutable std::vector<int> m_anList;
+    mutable std::vector<GIntBig> m_anList64;
+    mutable std::vector<double> m_adfList;
+    mutable std::vector<std::string> m_aosList;
+
+    Private(const OGRFeature* poSelf, int iFieldIndex):
+        m_poSelf(const_cast<OGRFeature*>(poSelf)), m_nPos(iFieldIndex)
+    {}
+    Private(OGRFeature* poSelf, int iFieldIndex):
+        m_poSelf(poSelf), m_nPos(iFieldIndex)
+    {}
+};
+
+struct OGRFeature::ConstFieldIterator::Private
+{
+    OGRFeature::FieldValue m_oValue;
+    int m_nPos = 0;
+
+    Private(const OGRFeature* poSelf, int iFieldIndex):
+        m_oValue(poSelf, iFieldIndex)
+    {}
+};
+
+//! @cond Doxygen_Suppress
+OGRFeature::ConstFieldIterator::ConstFieldIterator(const OGRFeature* poSelf, int nPos):
+    m_poPrivate(new Private(poSelf, nPos))
+{
+    m_poPrivate->m_nPos = nPos;
+}
+
+OGRFeature::ConstFieldIterator::~ConstFieldIterator()
+{
+}
+
+const OGRFeature::FieldValue& OGRFeature::ConstFieldIterator::operator*() const
+{
+    return m_poPrivate->m_oValue;
+}
+
+OGRFeature::ConstFieldIterator& OGRFeature::ConstFieldIterator::operator++()
+{
+    ++m_poPrivate->m_nPos;
+    m_poPrivate->m_oValue.m_poPrivate->m_nPos = m_poPrivate->m_nPos;
+    return *this;
+}
+
+bool OGRFeature::ConstFieldIterator::operator!=(const ConstFieldIterator& it) const
+{
+    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+}
+//! @endcond
+
+OGRFeature::ConstFieldIterator OGRFeature::begin() const
+{
+    return {this, 0};
+}
+
+OGRFeature::ConstFieldIterator OGRFeature::end() const
+{
+    return {this, GetFieldCount()};
+}
+
+/************************************************************************/
+/*                      OGRFeature::FieldValue                          */
+/************************************************************************/
+
+OGRFeature::FieldValue::FieldValue(const OGRFeature* poFeature,
+                                   int iFieldIndex) :
+    m_poPrivate(new Private(poFeature, iFieldIndex))
+{
+}
+
+OGRFeature::FieldValue::FieldValue(OGRFeature* poFeature,
+                                   int iFieldIndex) :
+    m_poPrivate(new Private(poFeature, iFieldIndex))
+{
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator=
+                                                    (const FieldValue& oOther)
+{
+    if( &oOther != this &&
+        !( m_poPrivate->m_poSelf == oOther.m_poPrivate->m_poSelf &&
+           m_poPrivate->m_nPos == oOther.m_poPrivate->m_nPos) )
+    {
+        OGRFieldType eOtherType(oOther.GetType());
+        if( oOther.IsNull() )
+            SetNull();
+        else if( oOther.IsUnset() )
+            Unset();
+        else if( eOtherType == OFTInteger )
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                            oOther.GetInteger());
+        else if( eOtherType == OFTInteger64 )
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                            oOther.GetInteger64());
+        else if( eOtherType == OFTReal )
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                            oOther.GetDouble());
+        else if( eOtherType == OFTString )
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                            oOther.GetString());
+        else if( eOtherType == OFTDate ||
+                 eOtherType == OFTDateTime ||
+                 eOtherType == OFTTime )
+        {
+            int nYear;
+            int nMonth;
+            int nDay;
+            int nHour;
+            int nMinute;
+            float fSecond;
+            int nTZFlag;
+            oOther.GetDateTime(&nYear, &nMonth, &nDay, &nHour, &nMinute,
+                               &fSecond, &nTZFlag);
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                            nYear, nMonth, nDay,
+                                            nHour, nMinute, fSecond, nTZFlag);
+        }
+        else if( eOtherType == OFTStringList )
+        {
+            m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                oOther.m_poPrivate->m_poSelf->GetFieldAsStringList(
+                    oOther.m_poPrivate->m_nPos));
+        }
+        else if( eOtherType == OFTIntegerList )
+        {
+            return operator= (oOther.GetAsIntegerList());
+        }
+        else if( eOtherType == OFTInteger64List )
+        {
+            return operator= (oOther.GetAsInteger64List());
+        }
+        else if( eOtherType == OFTRealList )
+        {
+            return operator= (oOther.GetAsDoubleList());
+        }
+    }
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (int nVal)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, nVal);
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (GIntBig nVal)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, nVal);
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (double dfVal)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, dfVal);
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (const char* pszVal)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, pszVal);
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (const std::string& osVal)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, osVal.c_str());
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (
+                                            const std::vector<int>& oArray)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                    static_cast<int>(oArray.size()),
+                                    oArray.empty() ? nullptr : oArray.data());
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (
+                                        const std::vector<GIntBig>& oArray)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                    static_cast<int>(oArray.size()),
+                                    oArray.empty() ? nullptr : oArray.data());
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (
+                                    const std::vector<double>& oArray)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                    static_cast<int>(oArray.size()),
+                                    oArray.empty() ? nullptr : oArray.data());
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (
+                                        const std::vector<std::string>& oArray)
+{
+    CPLStringList aosList;
+    for( auto&& oStr: oArray )
+        aosList.AddString(oStr.c_str());
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                    aosList.List());
+    return *this;
+}
+
+OGRFeature::FieldValue& OGRFeature::FieldValue::operator= (
+                                        CSLConstList papszValues)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, papszValues);
+    return *this;
+}
+
+void OGRFeature::FieldValue::SetDateTime(int nYear, int nMonth, int nDay,
+                                         int nHour, int nMinute, float fSecond,
+                                         int nTZFlag)
+{
+    m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
+                                    nYear, nMonth, nDay,
+                                    nHour, nMinute, fSecond, nTZFlag);
+}
+
+
+void OGRFeature::FieldValue::SetNull()
+{
+    m_poPrivate->m_poSelf->SetFieldNull(m_poPrivate->m_nPos);
+}
+
+void OGRFeature::FieldValue::clear()
+{
+    m_poPrivate->m_poSelf->UnsetField(m_poPrivate->m_nPos);
+}
+
+//! @cond Doxygen_Suppress
+OGRFeature::FieldValue::~FieldValue()
+{
+}
+
+//! @endcond
+
+int OGRFeature::FieldValue::GetIndex() const
+{
+    return m_poPrivate->m_nPos ;
+}
+
+const OGRFieldDefn* OGRFeature::FieldValue::GetDefn() const
+{
+    return m_poPrivate->m_poSelf->GetFieldDefnRef(GetIndex());
+}
+
+const OGRField* OGRFeature::FieldValue::GetRawValue() const
+{
+    return &(m_poPrivate->m_poSelf->pauFields[GetIndex()]);
+}
+
+bool OGRFeature::FieldValue::IsUnset() const
+{
+    return CPL_TO_BOOL(OGR_RawField_IsUnset(GetRawValue()));
+}
+
+bool OGRFeature::FieldValue::IsNull() const
+{
+    return CPL_TO_BOOL(OGR_RawField_IsNull(GetRawValue()));
+}
+
+int OGRFeature::FieldValue::GetAsInteger() const
+{
+    return const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                GetFieldAsInteger(GetIndex());
+}
+
+GIntBig OGRFeature::FieldValue::GetAsInteger64() const
+{
+    return const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                GetFieldAsInteger64(GetIndex());
+}
+
+double OGRFeature::FieldValue::GetAsDouble() const
+{
+    return const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                GetFieldAsDouble(GetIndex());
+}
+
+const char* OGRFeature::FieldValue::GetAsString() const
+{
+    return const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                GetFieldAsString(GetIndex());
+}
+
+bool OGRFeature::FieldValue::GetDateTime( int *pnYear, int *pnMonth,
+                                int *pnDay,
+                                int *pnHour, int *pnMinute,
+                                float *pfSecond,
+                                int *pnTZFlag ) const
+{
+    return CPL_TO_BOOL(const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+        GetFieldAsDateTime(GetIndex(), pnYear, pnMonth, pnDay,
+                           pnHour, pnMinute, pfSecond, pnTZFlag));
+}
+
+const std::vector<int>& OGRFeature::FieldValue::GetAsIntegerList() const
+{
+    int nCount = 0;
+    auto&& panList = const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                                GetFieldAsIntegerList( GetIndex(), &nCount );
+    m_poPrivate->m_anList.assign( panList, panList + nCount );
+    return m_poPrivate->m_anList;
+}
+
+const std::vector<GIntBig>& OGRFeature::FieldValue::GetAsInteger64List() const
+{
+    int nCount = 0;
+    auto&& panList = const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                                GetFieldAsInteger64List( GetIndex(), &nCount );
+    m_poPrivate->m_anList64.assign( panList, panList + nCount );
+    return m_poPrivate->m_anList64;
+}
+
+const std::vector<double>& OGRFeature::FieldValue::GetAsDoubleList() const
+{
+    int nCount = 0;
+    auto&& panList = const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                                GetFieldAsDoubleList( GetIndex(), &nCount );
+    m_poPrivate->m_adfList.assign( panList, panList + nCount );
+    return m_poPrivate->m_adfList;
+}
+
+const std::vector<std::string>& OGRFeature::FieldValue::GetAsStringList() const
+{
+    auto&& papszList = const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                                GetFieldAsStringList( GetIndex() );
+    m_poPrivate->m_aosList.clear();
+    if( papszList )
+    {
+        for( char** papszIter = papszList; *papszIter; ++papszIter )
+        {
+            m_poPrivate->m_aosList.push_back(std::string(*papszIter));
+        }
+    }
+    return m_poPrivate->m_aosList;
+}
+
+OGRFeature::FieldValue::operator CSLConstList() const
+{
+    return const_cast<CSLConstList>(
+        const_cast<OGRFeature*>(m_poPrivate->m_poSelf)->
+                                GetFieldAsStringList( GetIndex() ));
+}

@@ -486,11 +486,6 @@ OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
     m_poPrivate->m_nPos = nPos;
 }
 
-OGRSimpleCurve::Iterator::Iterator(Iterator&& oOther):
-    m_poPrivate(std::move(oOther.m_poPrivate))
-{
-}
-
 OGRSimpleCurve::Iterator::~Iterator()
 {
     update();
@@ -544,11 +539,6 @@ OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int n
     m_poPrivate->m_nPos = nPos;
 }
 
-OGRSimpleCurve::ConstIterator::ConstIterator(ConstIterator&& oOther):
-    m_poPrivate(std::move(oOther.m_poPrivate))
-{
-}
-
 OGRSimpleCurve::ConstIterator::~ConstIterator()
 {
 }
@@ -599,11 +589,6 @@ OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
         if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
             m_poPrivate->m_poIterator.reset();
     }
-}
-
-OGRCurve::ConstIterator::ConstIterator(ConstIterator&& oOther) :
-    m_poPrivate(std::move(oOther.m_poPrivate))
-{
 }
 
 OGRCurve::ConstIterator::~ConstIterator()

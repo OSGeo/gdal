@@ -71,6 +71,7 @@ class GDALAsyncReader;
 #include <cmath>
 #include <memory>
 #include "ogr_core.h"
+#include "ogr_feature.h"
 
 //! @cond Doxygen_Suppress
 #define GMO_VALID                0x0001
@@ -331,8 +332,6 @@ typedef void signature_changed;
 #endif
 //! @endcond
 
-class OGRFeature;
-
 /** A set of associated raster bands, usually from one file. */
 class CPL_DLL GDALDataset : public GDALMajorObject
 {
@@ -466,6 +465,43 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     int GetRasterCount();
     GDALRasterBand *GetRasterBand( int );
 
+    /** Class returned by GetBands() that act as a container for raster bands. */
+    class CPL_DLL Bands
+    {
+      private:
+
+        friend class GDALDataset;
+        GDALDataset* m_poSelf;
+        explicit Bands(GDALDataset* poSelf): m_poSelf(poSelf) {}
+
+        class CPL_DLL Iterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+            public:
+                Iterator(GDALDataset* poDS, bool bStart);
+                Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                ~Iterator();
+                GDALRasterBand* operator*();
+                Iterator& operator++();
+                bool operator!=(const Iterator& it) const;
+        };
+
+      public:
+
+        const Iterator begin() const;
+
+        const Iterator end() const;
+
+        size_t size() const;
+
+        GDALRasterBand* operator[](int iBand);
+        GDALRasterBand* operator[](size_t iBand);
+    };
+
+    Bands              GetBands();
+
     virtual void FlushCache(void);
 
     virtual const char *GetProjectionRef(void);
@@ -584,6 +620,16 @@ class CPL_DLL GDALDataset : public GDALMajorObject
                                       papszSiblingFiles));
     }
 
+    /** Object returned by GetFeatures() iterators */
+    struct FeatureLayerPair
+    {
+        /** Unique pointer to a OGRFeature. */
+        OGRFeatureUniquePtr feature;
+
+        /** Layer to which the feature belongs to. */
+        OGRLayer* layer;
+    };
+
 private:
     class Private;
     Private *m_poPrivate;
@@ -593,10 +639,50 @@ private:
                                              const char *pszDialect,
                                              swq_select_parse_options* poSelectParseOptions);
     CPLStringList oDerivedMetadataList;
+
   public:
 
     virtual int         GetLayerCount();
     virtual OGRLayer    *GetLayer(int iLayer);
+
+    /** Class returned by GetLayers() that act as a container for vector layers. */
+    class CPL_DLL Layers
+    {
+      private:
+
+        friend class GDALDataset;
+        GDALDataset* m_poSelf;
+        explicit Layers(GDALDataset* poSelf): m_poSelf(poSelf) {}
+
+        class CPL_DLL Iterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+            public:
+                Iterator(GDALDataset* poDS, bool bStart);
+                Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                ~Iterator();
+                OGRLayer* operator*();
+                Iterator& operator++();
+                bool operator!=(const Iterator& it) const;
+        };
+
+      public:
+
+        const Iterator begin() const;
+
+        const Iterator end() const;
+
+        size_t size() const;
+
+        OGRLayer* operator[](int iLayer);
+        OGRLayer* operator[](size_t iLayer);
+        OGRLayer* operator[](const char* pszLayername);
+    };
+
+    Layers              GetLayers();
+
     virtual OGRLayer    *GetLayerByName(const char *);
     virtual OGRErr      DeleteLayer(int iLayer);
 
@@ -605,6 +691,39 @@ private:
                                         double* pdfProgressPct,
                                         GDALProgressFunc pfnProgress,
                                         void* pProgressData );
+
+
+    /** Class returned by GetFeatures() that act as a container for vector features. */
+    class CPL_DLL Features
+    {
+      private:
+
+        friend class GDALDataset;
+        GDALDataset* m_poSelf;
+        explicit Features(GDALDataset* poSelf): m_poSelf(poSelf) {}
+
+        class CPL_DLL Iterator
+        {
+                struct Private;
+                std::unique_ptr<Private> m_poPrivate;
+            public:
+                Iterator(GDALDataset* poDS, bool bStart);
+                Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                ~Iterator();
+                const FeatureLayerPair& operator*() const;
+                Iterator& operator++();
+                bool operator!=(const Iterator& it) const;
+        };
+
+      public:
+
+        const Iterator begin() const;
+
+        const Iterator end() const;
+    };
+
+    Features            GetFeatures();
 
     virtual int         TestCapability( const char * );
 

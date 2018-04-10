@@ -751,6 +751,8 @@ int CPL_STDCALL GDALGetRasterYSize( GDALDatasetH hDataset )
 /**
 
  \brief Fetch a band object for a dataset.
+ 
+ See GetBands() for a C++ iterator version of this method.
 
  Equivalent of the C function GDALGetRasterBand().
 
@@ -6052,6 +6054,8 @@ int GDALDataset::GetLayerCount() { return 0; }
 
  The returned layer remains owned by the
  GDALDataset and should not be deleted by the application.
+ 
+ See GetLayers() for a C++ iterator version of this method.
 
  This method is the same as the C function GDALDatasetGetLayer() and the
  deprecated OGR_DS_GetLayer().
@@ -6061,6 +6065,8 @@ int GDALDataset::GetLayerCount() { return 0; }
  @param iLayer a layer number between 0 and GetLayerCount()-1.
 
  @return the layer, or NULL if iLayer is out of range or an error occurs.
+
+ @see GetLayers()
 */
 
 OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) { return nullptr; }
@@ -6129,6 +6135,8 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
  is not efficient, but in general OGRLayer::GetNextFeature() is a more
  natural API.
 
+ See GetFeatures() for a C++ iterator version of this method.
+
  The returned feature becomes the responsibility of the caller to
  delete with OGRFeature::DestroyFeature().
 
@@ -6168,6 +6176,7 @@ void CPL_DLL GDALDatasetResetReading( GDALDatasetH hDS )
  @param pProgressData     user data provided to pfnProgress, or NULL
  @return a feature, or NULL if no more features are available.
  @since GDAL 2.2
+ @see GetFeatures()
 */
 
 OGRFeature *GDALDataset::GetNextFeature( OGRLayer **ppoBelongingLayer,
@@ -6842,3 +6851,487 @@ void GDALDataset::ReleaseMutex()
         CPLReleaseMutex(m_poPrivate->hMutex);
 }
 //! @endcond
+
+
+/************************************************************************/
+/*              GDALDataset::Features::Iterator::Private                */
+/************************************************************************/
+
+struct GDALDataset::Features::Iterator::Private
+{
+    GDALDataset::FeatureLayerPair m_oPair;
+    GDALDataset* m_poDS = nullptr;
+    bool m_bEOF = true;
+};
+
+GDALDataset::Features::Iterator::Iterator(GDALDataset* poDS, bool bStart):
+    m_poPrivate(new GDALDataset::Features::Iterator::Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    if( bStart )
+    {
+        poDS->ResetReading();
+        m_poPrivate->m_oPair.feature.reset(
+            poDS->GetNextFeature(
+                &m_poPrivate->m_oPair.layer, nullptr, nullptr, nullptr));
+        m_poPrivate->m_bEOF = m_poPrivate->m_oPair.feature == nullptr;
+    }
+}
+
+GDALDataset::Features::Iterator::~Iterator()
+{
+}
+
+const GDALDataset::FeatureLayerPair&
+                GDALDataset::Features::Iterator::operator*() const
+{
+    return m_poPrivate->m_oPair;
+}
+
+GDALDataset::Features::Iterator& GDALDataset::Features::Iterator::operator++()
+{
+    m_poPrivate->m_oPair.feature.reset(
+        m_poPrivate->m_poDS->GetNextFeature(
+            &m_poPrivate->m_oPair.layer, nullptr, nullptr, nullptr));
+    m_poPrivate->m_bEOF = m_poPrivate->m_oPair.feature == nullptr;
+    return *this;
+}
+
+bool GDALDataset::Features::Iterator::operator!= (const Iterator& it) const
+{
+    return m_poPrivate->m_bEOF != it.m_poPrivate->m_bEOF;
+}
+
+/************************************************************************/
+/*                            GetFeatures()                             */
+/************************************************************************/
+
+/** Function that return an iterable object over features in the dataset
+* layer.
+*
+* This is a C++ iterator friendly version of GetNextFeature().
+*
+* Using this iterator for standard range-based loops is safe, but
+* due to implementation limitations, you shouldn't try to access
+* (dereference) more than one iterator step at a time, since the
+* FeatureLayerPair reference which is returned is reused.
+*
+* Typical use is:
+* <pre>
+* for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
+* {
+*       std::cout << "Feature of layer " <<
+*               oFeatureLayerPair.layer->GetName() << std::endl;
+*       oFeatureLayerPair.feature->DumpReadable();
+* }
+* </pre>
+*
+* @see GetNextFeature()
+*
+* @since GDAL 2.3
+*/
+GDALDataset::Features GDALDataset::GetFeatures()
+{
+    return Features(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of feature iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of feature iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Features::Iterator GDALDataset::Features::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*               GDALDataset::Layers::Iterator::Private                 */
+/************************************************************************/
+
+struct GDALDataset::Layers::Iterator::Private
+{
+    OGRLayer* m_poLayer = nullptr;
+    int m_iCurLayer = 0;
+    int m_nLayerCount = 0;
+    GDALDataset* m_poDS = nullptr;
+};
+
+GDALDataset::Layers::Iterator::Iterator(GDALDataset* poDS, bool bStart):
+    m_poPrivate(new GDALDataset::Layers::Iterator::Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    m_poPrivate->m_nLayerCount = poDS->GetLayerCount();
+    if( bStart )
+    {
+        if( m_poPrivate->m_nLayerCount )
+            m_poPrivate->m_poLayer = poDS->GetLayer(0);
+    }
+    else
+    {
+        m_poPrivate->m_iCurLayer = m_poPrivate->m_nLayerCount;
+    }
+}
+
+GDALDataset::Layers::Iterator::~Iterator()
+{
+}
+
+OGRLayer* GDALDataset::Layers::Iterator::operator*()
+{
+    return m_poPrivate->m_poLayer;
+}
+
+GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator++()
+{
+    m_poPrivate->m_iCurLayer ++;
+    if( m_poPrivate->m_iCurLayer < m_poPrivate->m_nLayerCount )
+    {
+        m_poPrivate->m_poLayer =
+            m_poPrivate->m_poDS->GetLayer(m_poPrivate->m_iCurLayer);
+    }
+    else
+    {
+        m_poPrivate->m_poLayer = nullptr;
+    }
+    return *this;
+}
+
+bool GDALDataset::Layers::Iterator::operator!= (const Iterator& it) const
+{
+    return m_poPrivate->m_iCurLayer != it.m_poPrivate->m_iCurLayer;
+}
+
+/************************************************************************/
+/*                             GetLayers()                              */
+/************************************************************************/
+
+/** Function that returns an iterable object over layers in the dataset.
+*
+* This is a C++ iterator friendly version of GetLayer().
+*
+* Typical use is:
+* <pre>
+* for( auto&& poLayer: poDS->GetLayers() )
+* {
+*       std::cout << "Layer  << poLayer->GetName() << std::endl;
+* }
+* </pre>
+*
+* @see GetLayer()
+*
+* @since GDAL 2.3
+*/
+GDALDataset::Layers GDALDataset::GetLayers()
+{
+    return Layers(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of layer iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of layer iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*                                  size()                             */
+/************************************************************************/
+
+/**
+ \brief Get the number of layers in this dataset.
+
+ @return layer count.
+
+ @since GDAL 2.3
+*/
+
+size_t GDALDataset::Layers::size() const
+{
+    return static_cast<size_t>(m_poSelf->GetLayerCount());
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param iLayer a layer number between 0 and size()-1.
+
+ @return the layer, or nullptr if iLayer is out of range or an error occurs.
+
+ @since GDAL 2.3
+*/
+
+OGRLayer* GDALDataset::Layers::operator[](int iLayer)
+{
+    return m_poSelf->GetLayer(iLayer);
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by index.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param iLayer a layer number between 0 and size()-1.
+
+ @return the layer, or nullptr if iLayer is out of range or an error occurs.
+
+ @since GDAL 2.3
+*/
+
+OGRLayer* GDALDataset::Layers::operator[](size_t iLayer)
+{
+    return m_poSelf->GetLayer(static_cast<int>(iLayer));
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a layer by name.
+
+ The returned layer remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @param pszLayerName layer name
+
+ @return the layer, or nullptr if pszLayerName does not match with a layer
+
+ @since GDAL 2.3
+*/
+
+OGRLayer* GDALDataset::Layers::operator[](const char* pszLayerName)
+{
+    return m_poSelf->GetLayerByName(pszLayerName);
+}
+
+/************************************************************************/
+/*               GDALDataset::Bands::Iterator::Private                 */
+/************************************************************************/
+
+struct GDALDataset::Bands::Iterator::Private
+{
+    GDALRasterBand* m_poBand = nullptr;
+    int m_iCurBand = 0;
+    int m_nBandCount = 0;
+    GDALDataset* m_poDS = nullptr;
+};
+
+GDALDataset::Bands::Iterator::Iterator(GDALDataset* poDS, bool bStart):
+    m_poPrivate(new GDALDataset::Bands::Iterator::Private())
+{
+    m_poPrivate->m_poDS = poDS;
+    m_poPrivate->m_nBandCount = poDS->GetRasterCount();
+    if( bStart )
+    {
+        if( m_poPrivate->m_nBandCount )
+            m_poPrivate->m_poBand = poDS->GetRasterBand(1);
+    }
+    else
+    {
+        m_poPrivate->m_iCurBand = m_poPrivate->m_nBandCount;
+    }
+}
+
+GDALDataset::Bands::Iterator::~Iterator()
+{
+}
+
+GDALRasterBand* GDALDataset::Bands::Iterator::operator*()
+{
+    return m_poPrivate->m_poBand;
+}
+
+GDALDataset::Bands::Iterator& GDALDataset::Bands::Iterator::operator++()
+{
+    m_poPrivate->m_iCurBand ++;
+    if( m_poPrivate->m_iCurBand < m_poPrivate->m_nBandCount )
+    {
+        m_poPrivate->m_poBand =
+            m_poPrivate->m_poDS->GetRasterBand(1 + m_poPrivate->m_iCurBand);
+    }
+    else
+    {
+        m_poPrivate->m_poBand = nullptr;
+    }
+    return *this;
+}
+
+bool GDALDataset::Bands::Iterator::operator!= (const Iterator& it) const
+{
+    return m_poPrivate->m_iCurBand != it.m_poPrivate->m_iCurBand;
+}
+
+/************************************************************************/
+/*                            GetBands()                           */
+/************************************************************************/
+
+/** Function that returns an iterable object over GDALRasterBand in the dataset.
+*
+* This is a C++ iterator friendly version of GetRasterBand().
+*
+* Typical use is:
+* <pre>
+* for( auto&& poBand: poDS->GetBands() )
+* {
+*       std::cout << "Band  << poBand->GetDescription() << std::endl;
+* }
+* </pre>
+*
+* @see GetRasterBand()
+*
+* @since GDAL 2.3
+*/
+GDALDataset::Bands GDALDataset::GetBands()
+{
+    return Bands(this);
+}
+
+/************************************************************************/
+/*                                 begin()                              */
+/************************************************************************/
+
+/**
+ \brief Return beginning of band iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Bands::Iterator GDALDataset::Bands::begin() const
+{
+    return {m_poSelf, true};
+}
+
+/************************************************************************/
+/*                                  end()                               */
+/************************************************************************/
+
+/**
+ \brief Return end of band iterator.
+
+ @since GDAL 2.3
+*/
+
+const GDALDataset::Bands::Iterator GDALDataset::Bands::end() const
+{
+    return {m_poSelf, false};
+}
+
+/************************************************************************/
+/*                                  size()                             */
+/************************************************************************/
+
+/**
+ \brief Get the number of raster bands in this dataset.
+
+ @return raster band count.
+
+ @since GDAL 2.3
+*/
+
+size_t GDALDataset::Bands::size() const
+{
+    return static_cast<size_t>(m_poSelf->GetRasterCount());
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 2.3
+*/
+
+GDALRasterBand* GDALDataset::Bands::operator[](int iBand)
+{
+    return m_poSelf->GetRasterBand(1+iBand);
+}
+
+/************************************************************************/
+/*                                operator[]()                          */
+/************************************************************************/
+
+/**
+ \brief Fetch a raster band by index.
+
+ The returned band remains owned by the
+ GDALDataset and should not be deleted by the application.
+
+ @warning Contrary to GDALDataset::GetRasterBand(), the indexing here is
+ consistent with the conventions of C/C++, i.e. starting at 0.
+
+ @param iBand a band index between 0 and size()-1.
+
+ @return the band, or nullptr if iBand is out of range or an error occurs.
+
+ @since GDAL 2.3
+*/
+
+
+GDALRasterBand* GDALDataset::Bands::operator[](size_t iBand)
+{
+    return m_poSelf->GetRasterBand(1+static_cast<int>(iBand));
+}

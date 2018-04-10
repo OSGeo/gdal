@@ -13,6 +13,13 @@ import sys
 import os
 
 from glob import glob
+from distutils.sysconfig import get_config_vars
+
+# Strip -Wstrict-prototypes from compiler options, if present. This is
+# not required when compiling a C++ extension.
+(opt,) = get_config_vars('OPT')
+if opt is not None:
+    os.environ['OPT'] = " ".join(f for f in opt.split() if f != '-Wstrict-prototypes')
 
 # If CXX is defined in the environment, it will be used to link the .so
 # but distutils will be confused if it is made of several words like 'ccache g++'

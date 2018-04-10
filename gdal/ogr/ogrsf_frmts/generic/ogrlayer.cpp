@@ -4298,25 +4298,6 @@ OGRLayer::FeatureIterator::FeatureIterator(OGRLayer* poLayer, bool bStart):
 }
 
 /************************************************************************/
-/*                OGRLayer::FeatureIterator::FeatureIterator()          */
-/************************************************************************/
-
-OGRLayer::FeatureIterator::FeatureIterator(OGRLayer::FeatureIterator&& oOther)
-{
-    m_poPrivate->m_poFeature.swap(oOther.m_poPrivate->m_poFeature);
-    oOther.m_poPrivate->m_poFeature.reset();
-
-    m_poPrivate->m_poLayer = oOther.m_poPrivate->m_poLayer;
-    oOther.m_poPrivate->m_poLayer = nullptr;
-
-    m_poPrivate->m_bError = oOther.m_poPrivate->m_bError;
-    oOther.m_poPrivate->m_bError = true;
-
-    m_poPrivate->m_bEOF = oOther.m_poPrivate->m_bEOF;
-    oOther.m_poPrivate->m_bEOF = true;
-}
-
-/************************************************************************/
 /*               ~OGRLayer::FeatureIterator::FeatureIterator()          */
 /************************************************************************/
 
