@@ -60,7 +60,7 @@ def ogr_ods_check(ds):
         gdaltest.post_reason('bad layer geometry type')
         return 'fail'
 
-    if lyr.GetSpatialRef() != None:
+    if lyr.GetSpatialRef() is not None:
         gdaltest.post_reason('bad spatial ref')
         return 'fail'
 
@@ -177,7 +177,7 @@ def ogr_ods_kspread_1():
         gdaltest.post_reason('bad layer geometry type')
         return 'fail'
 
-    if lyr.GetSpatialRef() != None:
+    if lyr.GetSpatialRef() is not None:
         gdaltest.post_reason('bad spatial ref')
         return 'fail'
 

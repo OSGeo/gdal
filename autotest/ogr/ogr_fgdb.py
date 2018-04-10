@@ -159,7 +159,7 @@ def ogr_fgdb_1():
         # We need at least 5 features so that test_ogrsf can test SetFeature()
         for i in range(5):
             feat = ogr.Feature(lyr.GetLayerDefn())
-            if data[1] != ogr.wkbNone and data[2] != None:
+            if data[1] != ogr.wkbNone and data[2] is not None:
                 feat.SetGeometry(ogr.CreateGeometryFromWkt(data[2]))
             feat.SetField("id", i + 1)
             feat.SetField("str", "foo_\xc3\xa9")

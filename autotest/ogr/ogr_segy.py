@@ -59,7 +59,7 @@ def ogr_segy_1():
         gdaltest.post_reason('bad layer geometry type')
         return 'fail'
 
-    if lyr.GetSpatialRef() != None:
+    if lyr.GetSpatialRef() is not None:
         gdaltest.post_reason('bad spatial ref')
         return 'fail'
 
@@ -89,7 +89,7 @@ def ogr_segy_1():
         gdaltest.post_reason('bad layer geometry type')
         return 'fail'
 
-    if lyr.GetSpatialRef() != None:
+    if lyr.GetSpatialRef() is not None:
         gdaltest.post_reason('bad spatial ref')
         return 'fail'
 

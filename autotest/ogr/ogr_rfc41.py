@@ -52,7 +52,7 @@ def ogr_rfc41_1():
     if gfld_defn.GetType() != ogr.wkbUnknown:
         gdaltest.post_reason('fail')
         return 'fail'
-    if gfld_defn.GetSpatialRef() != None:
+    if gfld_defn.GetSpatialRef() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     if gfld_defn.IsIgnored() != 0:
@@ -80,7 +80,7 @@ def ogr_rfc41_1():
         return 'fail'
 
     gfld_defn.SetSpatialRef(None)
-    if gfld_defn.GetSpatialRef() != None:
+    if gfld_defn.GetSpatialRef() is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -205,7 +205,7 @@ def ogr_rfc41_2():
         gdal.PushErrorHandler('CPLQuietErrorHandler')
         ret = feature_defn.GetGeomFieldDefn(idx)
         gdal.PopErrorHandler()
-        if ret != None:
+        if ret is not None:
             gdaltest.post_reason('fail')
             return 'fail'
 
@@ -336,7 +336,7 @@ def ogr_rfc41_3():
     if feature.SetGeomFieldDirectly(0, None) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-    if feature.GetGeomFieldRef(0) != None:
+    if feature.GetGeomFieldRef(0) is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     if feature.Equal(feature_clone_with_geom):
@@ -530,17 +530,17 @@ def ogr_rfc41_5():
 
     f = ogr.Feature(feature_defn)
 
-    if f['strfield'] != None:
+    if f['strfield'] is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if f.strfield != None:
+    if f.strfield is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    if f['geomfield'] != None:
+    if f['geomfield'] is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if f.geomfield != None:
+    if f.geomfield is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -1026,7 +1026,7 @@ def ogr_rfc41_7():
        feat.area_int != 215229 or \
        abs(feat.area - 215229.266) > 1e-5 or \
        feat.geom1.GetGeometryType() != ogr.wkbPolygon or \
-       feat.geom2 != None or \
+       feat.geom2 is not None or \
        feat.geom3.GetGeometryType() != ogr.wkbPoint or \
        feat.geom4.GetGeometryType() != ogr.wkbPolygon or \
        feat['_ogr_geometry_'].GetGeometryType() != ogr.wkbPolygon:

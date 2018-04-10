@@ -840,7 +840,7 @@ def ogr_vrt_17():
     feat = vrt_lyr.GetNextFeature()
 
     if feat.GetField(0) != 8901 or feat.GetField(1) != "Greenwich" \
-       or feat.GetField(2) != None:
+       or feat.GetField(2) is not None:
         gdaltest.post_reason( 'did not get expected field value(s).' )
         return 'fail'
 

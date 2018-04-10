@@ -96,7 +96,7 @@ def test_ogrtindex_1(srs = None):
         return 'fail'
 
     if srs is not None:
-        if ds.GetLayer(0).GetSpatialRef() == None or not ds.GetLayer(0).GetSpatialRef().IsSame(srs):
+        if ds.GetLayer(0).GetSpatialRef() is None or not ds.GetLayer(0).GetSpatialRef().IsSame(srs):
             gdaltest.post_reason('did not get expected spatial ref')
             return 'fail'
     else:
