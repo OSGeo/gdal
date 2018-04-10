@@ -56,7 +56,7 @@ GML_ExtractSrsNameFromGeometry(const CPLXMLNode *const *papsGeometry,
     if (papsGeometry[0] != nullptr && papsGeometry[1] == nullptr)
     {
         const char *pszSRSName =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(papsGeometry[0]),
+            CPLGetXMLValue(papsGeometry[0],
                            "srsName", nullptr);
         if(pszSRSName)
         {

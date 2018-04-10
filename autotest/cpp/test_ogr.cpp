@@ -609,9 +609,8 @@ namespace tut
         oPoint.setY(1);
         ensure( !oPoly.IsPointOnSurface(&oPoint) );
 
-        const char* pszPolyWkt = "POLYGON((0 0,0 10,10 10,10 0,0 0),(4 4,4 6,6 6,6 4,4 4))";
-        char* pszWktChar = const_cast<char*>(pszPolyWkt);
-        oPoly.importFromWkt(&pszWktChar);
+        const char* pszPoly = "POLYGON((0 0,0 10,10 10,10 0,0 0),(4 4,4 6,6 6,6 4,4 4))";
+        oPoly.importFromWkt(&pszPoly);
 
         ensure( !oPoly.IsPointOnSurface(&oEmptyPoint) );
 
@@ -846,8 +845,7 @@ namespace tut
         Concrete obj;
         if( pszWKT )
         {
-            char* pszNonConstWKT = const_cast<char*>(pszWKT);
-            obj.importFromWkt(&pszNonConstWKT);
+            obj.importFromWkt(&pszWKT);
         }
         TestIterator<Abstract>(&obj, nExpectedPointCount);
     };
@@ -916,8 +914,7 @@ namespace tut
         for( size_t i = 0; i < CPL_ARRAYSIZE(asTests); i++ )
         {
             OGRGeometry* poGeom = nullptr;
-            char* pszWKT = const_cast<char*>(asTests[i].pszWKT);
-            OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom);
+            OGRGeometryFactory::createFromWkt(asTests[i].pszWKT, nullptr, &poGeom);
             PointCounterVisitor oVisitor;
             poGeom->accept(&oVisitor);
             ensure_equals(oVisitor.getNumPoints(), asTests[i].nExpectedPointCount);
@@ -1031,6 +1028,28 @@ namespace tut
             ensure( !(oIter2 != poLayer->end()) );
             ensure( oIter != poLayer->end() );
         }
+
+        poDS.reset(GetGDALDriverManager()->GetDriverByName("Memory")->
+            Create("", 0, 0, 0, GDT_Unknown, nullptr));
+        int nCountLayers = 0;
+        for( auto&& poLayer: poDS->GetLayers() )
+        {
+            CPL_IGNORE_RET_VAL(poLayer);
+            nCountLayers++;
+        }
+        ensure_equals(nCountLayers, 0);
+
+        poDS->CreateLayer("foo");
+        poDS->CreateLayer("bar");
+        for( auto&& poLayer: poDS->GetLayers() )
+        {
+            if( nCountLayers == 0 )
+                ensure_equals( poLayer->GetName(), "foo" );
+            else if( nCountLayers == 1 )
+                ensure_equals( poLayer->GetName(), "bar" );
+            nCountLayers++;
+        }
+        ensure_equals(nCountLayers, 2);
     }
 
     // Test field iterator

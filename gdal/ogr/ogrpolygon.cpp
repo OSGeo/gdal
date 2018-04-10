@@ -444,7 +444,7 @@ OGRErr OGRPolygon::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `POLYGON ((x y, x y, ...),(x y, ...),...)'.                     */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
+OGRErr OGRPolygon::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
@@ -479,7 +479,7 @@ OGRErr OGRPolygon::importFromWkt( char ** ppszInput )
 /*      Instantiate from "((x y, x y, ...),(x y, ...),...)"             */
 /************************************************************************/
 
-OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
+OGRErr OGRPolygon::importFromWKTListOnly( const char ** ppszInput,
                                           int bHasZ, int bHasM,
                                           OGRRawPoint*& paoPoints,
                                           int& nMaxPoints,
@@ -493,7 +493,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
     pszInput = OGRWktReadToken( pszInput, szToken );
     if( EQUAL(szToken, "EMPTY") )
     {
-        *ppszInput = (char*) pszInput;
+        *ppszInput = pszInput;
         return OGRERR_NONE;
     }
     if( !EQUAL(szToken, "(") )
@@ -608,7 +608,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 /*! @endcond */
@@ -616,7 +616,7 @@ OGRErr OGRPolygon::importFromWKTListOnly( char ** ppszInput,
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into its well known text format       */
+/*      Translate this structure into its well known text format        */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 
