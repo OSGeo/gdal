@@ -392,6 +392,13 @@ All together our program looks like this.
 
 With GDAL 2.3 and C++11 :
 \code
+#include "ogrsf_frmts.h"
+
+int main()
+
+{
+    GDALAllRegister();
+
     GDALDatasetUniquePtr poDS(GDALDataset::Open( "point.shp", GDAL_OF_VECTOR));
     if( poDS == nullptr )
     {
