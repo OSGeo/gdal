@@ -85,7 +85,7 @@ def ogr_tiger_1():
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
 
-    if feat.TLID != 2833200 or feat.FRIADDL != None or feat.BLOCKL != 5000:
+    if feat.TLID != 2833200 or feat.FRIADDL is not None or feat.BLOCKL != 5000:
         gdaltest.post_reason( 'wrong attribute on cc feature.' )
         return 'fail'
 
@@ -211,7 +211,7 @@ def ogr_tiger_4():
     feat = cc_layer.GetNextFeature()
     feat = cc_layer.GetNextFeature()
 
-    if feat.TLID != 2833200 or feat.FRIADDL != None or feat.BLOCKL != 5000:
+    if feat.TLID != 2833200 or feat.FRIADDL is not None or feat.BLOCKL != 5000:
         gdaltest.post_reason( 'wrong attribute on cc feature.' )
         return 'fail'
 

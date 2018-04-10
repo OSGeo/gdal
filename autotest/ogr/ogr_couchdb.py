@@ -123,7 +123,7 @@ def ogr_couchdb_2():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f['str_field'] != None:
+    if f['str_field'] is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

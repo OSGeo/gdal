@@ -84,7 +84,7 @@ while i < len(sys.argv):
 
     if arg == '-inv':
         transformation = 'inverse'
-        if type == None:
+        if type is None:
             type = gdal.GDT_Float32
 
     elif arg == '-of':
@@ -112,7 +112,7 @@ if infile is None:
 if  outfile is None:
     Usage()
 
-if type == None:
+if type is None:
     type = gdal.GDT_CFloat32
 
 indataset = gdal.Open( infile, gdal.GA_ReadOnly )

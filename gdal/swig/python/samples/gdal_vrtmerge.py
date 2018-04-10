@@ -84,7 +84,7 @@ class file_info:
             band = fh.GetRasterBand(i)
             self.band_types.append(band.DataType)
             self.block_sizes.append(band.GetBlockSize())
-            if band.GetNoDataValue() != None:
+            if band.GetNoDataValue() is not None:
                 self.nodata.append(band.GetNoDataValue())
             self.color_interps.append(band.GetRasterColorInterpretation())
             ct = band.GetRasterColorTable()
@@ -307,7 +307,7 @@ if __name__ == '__main__':
                     file_infos[0].color_interps[band]))
 
             ct = file_infos[0].cts[band]
-            if ct != None:
+            if ct is not None:
                 t_fh.write('\t\t<ColorTable>\n')
                 for i in range(ct.GetCount()):
                     t_fh.write(

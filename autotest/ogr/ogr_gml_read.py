@@ -4155,7 +4155,7 @@ def ogr_gml_80():
         return 'fail'
 
     f = lyr.GetNextFeature()
-    if f['int_field'] != None:
+    if f['int_field'] is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

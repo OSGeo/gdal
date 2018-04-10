@@ -221,7 +221,7 @@ def doit(opts, args):
         myOut.SetGeoTransform(myFiles[0].GetGeoTransform())
         myOut.SetProjection(myFiles[0].GetProjection())
 
-        if opts.NoDataValue!=None:
+        if opts.NoDataValue is not None:
             myOutNDV=opts.NoDataValue
         else:
             myOutNDV=DefaultNDVLookup[myOutType]
