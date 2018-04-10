@@ -1031,6 +1031,28 @@ namespace tut
             ensure( !(oIter2 != poLayer->end()) );
             ensure( oIter != poLayer->end() );
         }
+
+        poDS.reset(GetGDALDriverManager()->GetDriverByName("Memory")->
+            Create("", 0, 0, 0, GDT_Unknown, nullptr));
+        int nCountLayers = 0;
+        for( auto&& poLayer: poDS->GetLayers() )
+        {
+            CPL_IGNORE_RET_VAL(poLayer);
+            nCountLayers++;
+        }
+        ensure_equals(nCountLayers, 0);
+
+        poDS->CreateLayer("foo");
+        poDS->CreateLayer("bar");
+        for( auto&& poLayer: poDS->GetLayers() )
+        {
+            if( nCountLayers == 0 )
+                ensure_equals( poLayer->GetName(), "foo" );
+            else if( nCountLayers == 1 )
+                ensure_equals( poLayer->GetName(), "bar" );
+            nCountLayers++;
+        }
+        ensure_equals(nCountLayers, 2);
     }
 
     // Test field iterator
