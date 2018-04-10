@@ -67,7 +67,7 @@ generate: ${WRAPPERS} gdal_array_wrap.cpp
 build: extensions/gdal_wrap.cpp
 	rm -f setup_vars.ini
 	echo 'GNM_ENABLED=$(GNM_ENABLED)' >> setup_vars.ini
-	OPT="-DNDEBUG -g -O2 -Wall" $(PYTHON) setup.py build
+	$(PYTHON) setup.py build
 
 egg:
 	$(PYTHON) setup.py bdist_egg 
