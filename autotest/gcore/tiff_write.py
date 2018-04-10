@@ -2594,7 +2594,7 @@ def tiff_write_71():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     header = open('data/bigtiff_header_extract.tif', 'rb').read()
@@ -6597,7 +6597,7 @@ def tiff_write_144():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/tiff_write_144.tif', 20, 20, 1, options = ['BIGTIFF=YES'])

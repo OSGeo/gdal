@@ -1142,7 +1142,7 @@ def ogr_shape_28():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     for filename in ('tmp/hugedbf.dbf', 'tmp/hugedbf.shp', 'tmp/hugedbf.shx'):
@@ -3486,7 +3486,7 @@ def ogr_shape_72():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if gdaltest.filesystem_supports_sparse_files('tmp') is False:
         return 'skip'
 
     import struct
