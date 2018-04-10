@@ -281,7 +281,7 @@ if __name__ == '__main__':
     if not filecmp.cmp(golden_file,new_file):
       print('Files differ at the binary level.')
       found_diff += 1
-  except:
+  except OSError:
     print('Skipped binary file comparison, golden file not in filesystem.')
 
   # compare as GDAL Datasets.

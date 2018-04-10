@@ -84,12 +84,12 @@ if  outfile is None:
     Usage()
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)
-if infile == None:
+if infile is None:
     print('Cannot open', infile)
     sys.exit(2)
 geotransform = indataset.GetGeoTransform()
 band = indataset.GetRasterBand(iBand)
-if band == None:
+if band is None:
     print('Cannot load band', iBand, 'from the', infile)
     sys.exit(2)
 

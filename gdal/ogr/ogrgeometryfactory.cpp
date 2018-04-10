@@ -71,7 +71,7 @@ CPL_CVSID("$Id$")
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -102,7 +102,7 @@ CPL_CVSID("$Id$")
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
+OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
                                           int nBytes,
@@ -110,7 +110,7 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
 
 {
     int nBytesConsumedOutIgnored = -1;
-    return createFromWkb( const_cast<const unsigned char*>(pabyData),
+    return createFromWkb( pabyData,
                           poSR,
                           ppoReturn,
                           nBytes,
@@ -119,7 +119,7 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
 }
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -152,7 +152,7 @@ OGRErr OGRGeometryFactory::createFromWkb( unsigned char *pabyData,
  * @since GDAL 2.3
  */
 
-OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
+OGRErr OGRGeometryFactory::createFromWkb( const void *pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
                                           int nBytes,
@@ -160,6 +160,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
                                           int& nBytesConsumedOut )
 
 {
+    const GByte* l_pabyData = static_cast<const GByte*>(pabyData);
     nBytesConsumedOut = -1;
     *ppoReturn = nullptr;
 
@@ -170,21 +171,21 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
 /*      Get the byte order byte.  The extra tests are to work around    */
 /*      bug sin the WKB of DB2 v7.2 as identified by Safe Software.     */
 /* -------------------------------------------------------------------- */
-    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*pabyData);
+    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(*l_pabyData);
     if( nByteOrder != wkbXDR && nByteOrder != wkbNDR )
     {
         CPLDebug( "OGR",
                   "OGRGeometryFactory::createFromWkb() - got corrupt data.\n"
                   "%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                  pabyData[0],
-                  pabyData[1],
-                  pabyData[2],
-                  pabyData[3],
-                  pabyData[4],
-                  pabyData[5],
-                  pabyData[6],
-                  pabyData[7],
-                  pabyData[8]);
+                  l_pabyData[0],
+                  l_pabyData[1],
+                  l_pabyData[2],
+                  l_pabyData[3],
+                  l_pabyData[4],
+                  l_pabyData[5],
+                  l_pabyData[6],
+                  l_pabyData[7],
+                  l_pabyData[8]);
         return OGRERR_CORRUPT_DATA;
     }
 
@@ -196,7 +197,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
 
     OGRwkbGeometryType eGeometryType = wkbUnknown;
     const OGRErr err =
-        OGRReadWKBGeometryType( pabyData, eWkbVariant, &eGeometryType );
+        OGRReadWKBGeometryType( l_pabyData, eWkbVariant, &eGeometryType );
 
     if( err != OGRERR_NONE )
         return err;
@@ -213,7 +214,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
 /* -------------------------------------------------------------------- */
 /*      Import from binary.                                             */
 /* -------------------------------------------------------------------- */
-    const OGRErr eErr = poGeom->importFromWkb( pabyData, nBytes, eWkbVariant,
+    const OGRErr eErr = poGeom->importFromWkb( l_pabyData, nBytes, eWkbVariant,
                                                nBytesConsumedOut );
     if( eErr != OGRERR_NONE )
     {
@@ -242,7 +243,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
 /*                        OGR_G_CreateFromWkb()                         */
 /************************************************************************/
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known binary representation.
  *
  * Note that if nBytes is passed as zero, no checking can be done on whether
@@ -270,7 +271,7 @@ OGRErr OGRGeometryFactory::createFromWkb( const unsigned char *pabyData,
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
+OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,
                                     int nBytes )
@@ -278,7 +279,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
 {
     return OGRGeometryFactory::createFromWkb(
         pabyData,
-        reinterpret_cast<OGRSpatialReference *>(hSRS),
+        OGRSpatialReference::FromHandle(hSRS),
         reinterpret_cast<OGRGeometry **>(phGeometry),
         nBytes );
 }
@@ -288,7 +289,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's
+ * \brief Create a geometry object of the appropriate type from its
  * well known text representation.
  *
  * The C function OGR_G_CreateFromWkt() is the same as this method.
@@ -322,12 +323,12 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *pabyData,
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
+OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
                                          OGRSpatialReference * poSR,
                                          OGRGeometry **ppoReturn )
 
 {
-    char *pszInput = *ppszData;
+    const char *pszInput = *ppszData;
     *ppoReturn = nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -438,11 +439,40 @@ OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
     return eErr;
 }
 
+/**
+ * \brief Create a geometry object of the appropriate type from its
+ * well known text representation.
+ *
+ * The C function OGR_G_CreateFromWkt() is the same as this method.
+ *
+ * @param pszData input zero terminated string containing well known text
+ *                representation of the geometry to be created.
+ * @param poSR pointer to the spatial reference to be assigned to the
+ *             created geometry object.  This may be NULL.
+ * @param ppoReturn the newly created geometry object will be assigned to the
+ *                  indicated pointer on return.  This will be NULL if the
+ *                  method fails. If not NULL, *ppoReturn should be freed with
+ *                  OGRGeometryFactory::destroyGeometry() after use.
+
+ * @return OGRERR_NONE if all goes well, otherwise any of
+ * OGRERR_NOT_ENOUGH_DATA, OGRERR_UNSUPPORTED_GEOMETRY_TYPE, or
+ * OGRERR_CORRUPT_DATA may be returned.
+ * @since GDAL 2.3
+ */
+
+OGRErr OGRGeometryFactory::createFromWkt(const char* pszData,
+                                         OGRSpatialReference * poSR,
+                                         OGRGeometry **ppoReturn )
+
+{
+    return createFromWkt(&pszData, poSR, ppoReturn);
+}
+
 /************************************************************************/
 /*                        OGR_G_CreateFromWkt()                         */
 /************************************************************************/
 /**
- * \brief Create a geometry object of the appropriate type from it's well known
+ * \brief Create a geometry object of the appropriate type from its well known
  * text representation.
  *
  * The OGRGeometryFactory::createFromWkt CPP method is the same as this
@@ -469,7 +499,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData,
 
 {
     return OGRGeometryFactory::createFromWkt(
-        ppszData,
+        const_cast<const char**>(ppszData),
         reinterpret_cast<OGRSpatialReference *>(hSRS),
         reinterpret_cast<OGRGeometry **>(phGeometry));
 }
@@ -1208,7 +1238,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a curve line, approximate it and wrap in a multilinestring */
+/*      If it is a curve line, approximate it and wrap in a multilinestring */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbCircularString ||
         eGeomType == wkbCompoundCurve )
@@ -1231,7 +1261,7 @@ OGRGeometry *OGRGeometryFactory::forceToMultiLineString( OGRGeometry *poGeom )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a multicurve, call getLinearGeometry()                */
+/*      If it is a multicurve, call getLinearGeometry()                */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbMultiCurve )
     {
@@ -2050,7 +2080,7 @@ OGRGeometryFactory::createFromGEOS(
         return nullptr;
     }
 
-    if( OGRGeometryFactory::createFromWkb( (unsigned char *) pabyBuf,
+    if( OGRGeometryFactory::createFromWkb( pabyBuf,
                                            nullptr, &poGeometry,
                                            static_cast<int>(nSize) )
         != OGRERR_NONE )
@@ -2102,7 +2132,7 @@ bool OGRGeometryFactory::haveGEOS()
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's FGF (FDO Geometry Format) binary representation.
+ * \brief Create a geometry object of the appropriate type from its FGF (FDO Geometry Format) binary representation.
  *
  * Also note that this is a static method, and that there
  * is no need to instantiate an OGRGeometryFactory object.
@@ -2124,14 +2154,15 @@ bool OGRGeometryFactory::haveGEOS()
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
+OGRErr OGRGeometryFactory::createFromFgf( const void* pabyData,
                                           OGRSpatialReference * poSR,
                                           OGRGeometry **ppoReturn,
                                           int nBytes,
                                           int *pnBytesConsumed )
 
 {
-    return createFromFgfInternal(pabyData, poSR, ppoReturn, nBytes,
+    return createFromFgfInternal(static_cast<const GByte*>(pabyData),
+                                 poSR, ppoReturn, nBytes,
                                  pnBytesConsumed, 0);
 }
 
@@ -2139,7 +2170,7 @@ OGRErr OGRGeometryFactory::createFromFgf( unsigned char *pabyData,
 /*                       createFromFgfInternal()                        */
 /************************************************************************/
 
-OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
+OGRErr OGRGeometryFactory::createFromFgfInternal( const unsigned char *pabyData,
                                                   OGRSpatialReference * poSR,
                                                   OGRGeometry **ppoReturn,
                                                   int nBytes,
@@ -2447,19 +2478,19 @@ OGRErr OGRGeometryFactory::createFromFgfInternal( unsigned char *pabyData,
 /************************************************************************/
 
 /**
- * \brief Create a geometry object of the appropriate type from it's FGF
+ * \brief Create a geometry object of the appropriate type from its FGF
  * (FDO Geometry Format) binary representation.
  *
  * See OGRGeometryFactory::createFromFgf() */
-OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *pabyData,
+OGRErr CPL_DLL OGR_G_CreateFromFgf( const void* pabyData,
                                     OGRSpatialReferenceH hSRS,
                                     OGRGeometryH *phGeometry,
                                     int nBytes, int *pnBytesConsumed )
 
 {
     return OGRGeometryFactory::createFromFgf( pabyData,
-                                              (OGRSpatialReference *) hSRS,
-                                              (OGRGeometry **) phGeometry,
+                                              OGRSpatialReference::FromHandle(hSRS),
+                                              reinterpret_cast<OGRGeometry **>(phGeometry),
                                               nBytes, pnBytesConsumed );
 }
 
@@ -2830,9 +2861,9 @@ static void CutGeometryOnDateLineAndAddToMulti( OGRGeometryCollection* poMulti,
                 const char* pszWKT2 = !bAroundMinus180 ?
                     "POLYGON((180 90,360 90,360 -90,180 -90,180 90))" :
                     "POLYGON((-180 90,-360 90,-360 -90,-180 -90,-180 90))";
-                OGRGeometryFactory::createFromWkt((char**)&pszWKT1, nullptr,
+                OGRGeometryFactory::createFromWkt(pszWKT1, nullptr,
                                                   &poRectangle1);
-                OGRGeometryFactory::createFromWkt((char**)&pszWKT2, nullptr,
+                OGRGeometryFactory::createFromWkt(pszWKT2, nullptr,
                                                   &poRectangle2);
                 OGRGeometry* poGeom1 = poWorkGeom->Intersection(poRectangle1);
                 OGRGeometry* poGeom2 = poWorkGeom->Intersection(poRectangle2);
@@ -3956,7 +3987,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a polygon with a single ring, return it                 */
+/*      If it is a polygon with a single ring, return it                 */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbPolygon || eGeomType == wkbCurvePolygon )
     {
@@ -3971,7 +4002,7 @@ OGRGeometry *OGRGeometryFactory::forceToLineString( OGRGeometry *poGeom,
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a curve line, call CurveToLine()                        */
+/*      If it is a curve line, call CurveToLine()                        */
 /* -------------------------------------------------------------------- */
     if( eGeomType == wkbCircularString ||
         eGeomType == wkbCompoundCurve )

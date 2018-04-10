@@ -42,7 +42,7 @@
 #include <vector>
 
 class OGRPLScenesDataV1Layer;
-class OGRPLScenesDataV1Dataset: public GDALDataset
+class OGRPLScenesDataV1Dataset final: public GDALDataset
 {
         bool            m_bLayerListInitialized;
         bool            m_bMustCleanPersistent;
@@ -87,7 +87,7 @@ class OGRPLScenesDataV1Dataset: public GDALDataset
         static GDALDataset* Open(GDALOpenInfo* poOpenInfo);
 };
 
-class OGRPLScenesDataV1FeatureDefn: public OGRFeatureDefn
+class OGRPLScenesDataV1FeatureDefn final: public OGRFeatureDefn
 {
             OGRPLScenesDataV1Layer* m_poLayer;
 
@@ -102,7 +102,7 @@ class OGRPLScenesDataV1FeatureDefn: public OGRFeatureDefn
        void DropRefToLayer() { m_poLayer = nullptr; }
 };
 
-class OGRPLScenesDataV1Layer: public OGRLayer
+class OGRPLScenesDataV1Layer final: public OGRLayer
 {
             friend class OGRPLScenesDataV1Dataset;
             friend class OGRPLScenesDataV1FeatureDefn;

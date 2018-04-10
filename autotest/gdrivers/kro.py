@@ -79,7 +79,7 @@ def kro_5():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 10 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     ds = gdal.GetDriverByName('KRO').Create('tmp/kro_5.kro', 100000, 10000, 4)

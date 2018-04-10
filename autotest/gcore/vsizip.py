@@ -250,7 +250,7 @@ def vsizip_2():
         gdaltest.post_reason('expected error')
         print(gdal.GetLastErrorMsg())
         return 'fail'
-    if content != None:
+    if content is not None:
         gdaltest.post_reason('bad content 2')
         print(content)
         return 'fail'

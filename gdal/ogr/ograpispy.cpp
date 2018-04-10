@@ -201,7 +201,7 @@ static bool OGRAPISpyEnabled()
     fprintf(fpSpyFile, "from osgeo import osr\n");
     fprintf(fpSpyFile, "import os\n");
     fprintf(fpSpyFile, "import shutil\n");
-    // To make pyflakes happy in case it's unused later.
+    // To make pyflakes happy in case it is unused later.
     fprintf(fpSpyFile, "os.access\n");
     fprintf(fpSpyFile, "shutil.copy\n");  // Same here.
     fprintf(fpSpyFile, "\n");

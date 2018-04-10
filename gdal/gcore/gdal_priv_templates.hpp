@@ -475,7 +475,7 @@ inline void GDALCopy8Words(const float* pValueIn, GUInt16* const &pValueOut)
     ymm_i = _mm256_packus_epi32(ymm_i, ymm_i);   // Pack int32 to uint16
     ymm_i = _mm256_permute4x64_epi64(ymm_i, 0 | (2 << 2)); // AVX2
 
-    _mm_storeu_si128( (__m128i*) pValueOut, _mm256_castsi256_si128(ymm_i) );
+    _mm_storeu_si128( reinterpret_cast<__m128i*>(pValueOut), _mm256_castsi256_si128(ymm_i) );
 }
 #else
 inline void GDALCopy8Words(const float* pValueIn, GUInt16* const &pValueOut)

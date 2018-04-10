@@ -57,7 +57,8 @@ OGRCloudantTableLayer::~OGRCloudantTableLayer()
 {
     if( bMustWriteMetadata )
     {
-        WriteMetadata();
+        OGRCloudantTableLayer::GetLayerDefn();
+        OGRCloudantTableLayer::WriteMetadata();
         bMustWriteMetadata = false;
     }
 
@@ -239,10 +240,8 @@ void OGRCloudantTableLayer::GetSpatialView()
 
 void OGRCloudantTableLayer::WriteMetadata()
 {
-    GetLayerDefn();
-
     if (pszSpatialDDoc == nullptr)
-        GetSpatialView();
+        OGRCloudantTableLayer::GetSpatialView();
     if( pszSpatialDDoc == nullptr )
         return;
 

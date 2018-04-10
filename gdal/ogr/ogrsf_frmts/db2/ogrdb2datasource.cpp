@@ -223,7 +223,7 @@ OGRDB2DataSource::~OGRDB2DataSource()
                     m_osRasterTable.c_str());
         }
 
-        FlushCache();
+        OGRDB2DataSource::FlushCache();
         FlushMetadata();
     }
 

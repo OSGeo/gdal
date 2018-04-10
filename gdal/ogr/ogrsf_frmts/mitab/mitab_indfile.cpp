@@ -1238,7 +1238,7 @@ GInt32 TABINDNode::FindFirst(GByte *pKeyValue)
                 }
 
                 /*-----------------------------------------------------
-                 * OK, now it's time to load/access the candidate child nodes.
+                 * OK, now it is time to load/access the candidate child nodes.
                  *----------------------------------------------------*/
                 int nRetValue = 0;
                 for(int iChild=0; nRetValue==0 &&

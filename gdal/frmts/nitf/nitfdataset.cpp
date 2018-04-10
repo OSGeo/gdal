@@ -127,7 +127,7 @@ NITFDataset::NITFDataset() :
 NITFDataset::~NITFDataset()
 
 {
-    CloseDependentDatasets();
+    NITFDataset::CloseDependentDatasets();
 
 /* -------------------------------------------------------------------- */
 /*      Free datastructures.                                            */
@@ -148,7 +148,7 @@ NITFDataset::~NITFDataset()
 
 int NITFDataset::CloseDependentDatasets()
 {
-    FlushCache();
+    NITFDataset::FlushCache();
 
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
@@ -466,7 +466,7 @@ int NITFDataset::Identify( GDALOpenInfo * poOpenInfo )
         && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") )
         return FALSE;
 
-    /* Check that it's not in fact a NITF A.TOC file, which is handled by the RPFTOC driver */
+    /* Check that it is not in fact a NITF A.TOC file, which is handled by the RPFTOC driver */
     for( int i=0;
          i < static_cast<int>(poOpenInfo->nHeaderBytes)
              - static_cast<int>( strlen("A.TOC") );
@@ -5548,7 +5548,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
             const char chTimeZone = achTSH[20];
 
             // Check for Zulu time zone character.  IpachLTf that exist, then
-            // it's NITF2.0 format.
+            // it is NITF2.0 format.
             if (chTimeZone == 'Z') {
                 char *achOrigDate=achTSH+12;  // original date string
 
@@ -5563,7 +5563,7 @@ static bool NITFWriteTextSegments( const char *pszFilename,
                 // Set century.
                 // Since NITF2.0 does not track the century, we are going to
                 // assume any year number greater then 94 (the year NITF2.0
-                // spec published), will be 1900s, otherwise, it's 2000s.
+                // spec published), will be 1900s, otherwise, it is 2000s.
                 char achNewDate[] = "20021216151629";
                 if (nYear > 94) memcpy(achNewDate,"19",2);
                 else memcpy(achNewDate,"20",2);

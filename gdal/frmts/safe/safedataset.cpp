@@ -42,7 +42,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFEDataset : public GDALPamDataset
+class SAFEDataset final: public GDALPamDataset
 {
     CPLXMLNode *psManifest;
 
@@ -95,7 +95,7 @@ class SAFEDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class SAFERasterBand : public GDALPamRasterBand
+class SAFERasterBand final: public GDALPamRasterBand
 {
     GDALDataset     *poBandFile;
 
@@ -287,7 +287,7 @@ SAFEDataset::SAFEDataset() :
 SAFEDataset::~SAFEDataset()
 
 {
-    FlushCache();
+    SAFEDataset::FlushCache();
 
     CPLDestroyXMLNode( psManifest );
     CPLFree( pszProjection );
@@ -299,7 +299,7 @@ SAFEDataset::~SAFEDataset()
         CPLFree( pasGCPList );
     }
 
-    CloseDependentDatasets();
+    SAFEDataset::CloseDependentDatasets();
 
     CSLDestroy( papszSubDatasets );
     CSLDestroy( papszExtraFiles );

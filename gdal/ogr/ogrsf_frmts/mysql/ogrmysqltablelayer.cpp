@@ -1248,7 +1248,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForc
 
             OGRGeometry *poGeometry = nullptr;
             // Geometry columns will have the first 4 bytes contain the SRID.
-            OGRGeometryFactory::createFromWkb(((GByte *)row[0]) + 4,
+            OGRGeometryFactory::createFromWkb(row[0] + 4,
                                               nullptr,
                                               &poGeometry,
                                               static_cast<int>(panLengths[0] - 4) );

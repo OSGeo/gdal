@@ -217,7 +217,7 @@ OGRErr OGRTriangle::importFromWkb( const unsigned char *pabyData,
 /*      Instantiate from "((x y, x y, ...),(x y, ...),...)"             */
 /************************************************************************/
 
-OGRErr OGRTriangle::importFromWKTListOnly( char ** ppszInput,
+OGRErr OGRTriangle::importFromWKTListOnly( const char ** ppszInput,
                                           int bHasZ, int bHasM,
                                           OGRRawPoint*& paoPoints,
                                           int& nMaxPoints,

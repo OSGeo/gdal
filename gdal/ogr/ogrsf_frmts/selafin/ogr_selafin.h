@@ -107,7 +107,6 @@ class OGRSelafinLayer : public OGRLayer {
 class OGRSelafinDataSource : public OGRDataSource {
     private:
         char *pszName;
-        char *pszLockName;
         OGRSelafinLayer **papoLayers;
         Range poRange;
         int nLayers;
@@ -115,8 +114,7 @@ class OGRSelafinDataSource : public OGRDataSource {
         Selafin::Header *poHeader;
         CPLString osDefaultSelafinName;
         OGRSpatialReference *poSpatialRef;
-        int TakeLock(const char *pszFilename);
-        void ReleaseLock();
+
     public:
         OGRSelafinDataSource();
         virtual ~OGRSelafinDataSource();

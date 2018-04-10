@@ -81,7 +81,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
             std::unique_ptr<Private> m_poPrivate;
         public:
             FeatureIterator(OGRLayer* poLayer, bool bStart);
-            FeatureIterator(FeatureIterator&& oOther);
+            FeatureIterator(FeatureIterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
             ~FeatureIterator();
             OGRFeatureUniquePtr& operator*();
             FeatureIterator& operator++();
@@ -119,7 +119,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
      * Using this iterator for standard range-based loops is safe, but
      * due to implementation limitations, you shouldn't try to access
      * (dereference) more than one iterator step at a time, since the
-     * std::unique_ptr&lt;OGRFeature&gt; reference is reused.
+     * OGRFeatureUniquePtr reference is reused.
      *
      * Only one iterator per layer can be active at a time.
      * @since GDAL 2.3
@@ -302,7 +302,7 @@ inline OGRLayer::FeatureIterator end(OGRLayer* poLayer) { return poLayer->end();
  * of one, or a related set of files, though the name doesn't have to be
  * a real item in the file system.
  *
- * When an OGRDataSource is destroyed, all it's associated OGRLayers objects
+ * When an OGRDataSource is destroyed, all its associated OGRLayers objects
  * are also destroyed.
  *
  * NOTE: Starting with GDAL 2.0, it is *NOT* safe to cast the handle of

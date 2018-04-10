@@ -83,7 +83,7 @@ TABView::TABView() :
  **********************************************************************/
 TABView::~TABView()
 {
-    Close();
+    TABView::Close();
 }
 
 GIntBig TABView::GetFeatureCount (int bForce)
@@ -186,7 +186,7 @@ int TABView::OpenForRead(const char *pszFname,
 #endif
 
     /*-----------------------------------------------------------------
-     * Open .TAB file... since it's a small text file, we will just load
+     * Open .TAB file... since it is a small text file, we will just load
      * it as a stringlist in memory.
      *----------------------------------------------------------------*/
     m_papszTABFile = TAB_CSLLoad(m_pszFname);
@@ -1875,7 +1875,7 @@ GBool TABRelation::IsFieldUnique(int nFieldId)
     {
         if (m_panRelTableFieldMap[i] == nFieldId)
         {
-            return TRUE;  // If it's here then it is unique!
+            return TRUE;  // If it is here then it is unique!
         }
     }
 

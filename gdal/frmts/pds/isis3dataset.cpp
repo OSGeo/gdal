@@ -115,7 +115,7 @@ CPL_CVSID("$Id$")
 /* ==================================================================== */
 /************************************************************************/
 
-class ISIS3Dataset : public RawDataset
+class ISIS3Dataset final: public RawDataset
 {
     friend class ISIS3RawRasterBand;
     friend class ISISTiledBand;
@@ -226,7 +226,7 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class ISISTiledBand : public GDALPamRasterBand
+class ISISTiledBand final: public GDALPamRasterBand
 {
         friend class ISIS3Dataset;
 
@@ -271,7 +271,7 @@ class ISISTiledBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class ISIS3RawRasterBand: public RawRasterBand
+class ISIS3RawRasterBand final: public RawRasterBand
 {
         friend class ISIS3Dataset;
 
@@ -318,7 +318,7 @@ class ISIS3RawRasterBand: public RawRasterBand
 /*      proxy for bands stored in other formats.                        */
 /* ==================================================================== */
 /************************************************************************/
-class ISIS3WrapperRasterBand : public GDALProxyRasterBand
+class ISIS3WrapperRasterBand final: public GDALProxyRasterBand
 {
         friend class ISIS3Dataset;
 
@@ -364,7 +364,7 @@ class ISIS3WrapperRasterBand : public GDALProxyRasterBand
 /*                             ISISMaskBand                             */
 /* ==================================================================== */
 
-class ISISMaskBand : public GDALRasterBand
+class ISISMaskBand final: public GDALRasterBand
 {
     GDALRasterBand  *m_poBaseBand;
     void            *m_pBuffer;
@@ -1377,13 +1377,13 @@ ISIS3Dataset::~ISIS3Dataset()
         reinterpret_cast<ISIS3WrapperRasterBand*>(GetRasterBand(1))->
             InitFile();
     }
-    FlushCache();
+    ISIS3Dataset::FlushCache();
     if( m_fpLabel != nullptr )
         VSIFCloseL( m_fpLabel );
     if( m_fpImage != nullptr && m_fpImage != m_fpLabel )
         VSIFCloseL( m_fpImage );
 
-    CloseDependentDatasets();
+    ISIS3Dataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

@@ -67,7 +67,7 @@ OGRMySQLLayer::~OGRMySQLLayer()
                   poFeatureDefn->GetName() );
     }
 
-    ResetReading();
+    OGRMySQLLayer::ResetReading();
 
     CPLFree( pszGeomColumn );
     CPLFree( pszGeomColumnTable );
@@ -187,7 +187,7 @@ OGRFeature *OGRMySQLLayer::RecordToFeature( char **papszRow,
 
             // Geometry columns will have the first 4 bytes contain the SRID.
             OGRGeometryFactory::createFromWkb(
-                ((GByte *)papszRow[iField]) + 4,
+                papszRow[iField] + 4,
                 nullptr,
                 &poGeometry,
                 static_cast<int>(panLengths[iField] - 4) );

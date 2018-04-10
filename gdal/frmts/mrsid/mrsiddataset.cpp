@@ -230,7 +230,7 @@ private:
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDDataset : public GDALJP2AbstractDataset
+class MrSIDDataset final: public GDALJP2AbstractDataset
 {
     friend class MrSIDRasterBand;
 
@@ -314,7 +314,7 @@ class MrSIDDataset : public GDALJP2AbstractDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class MrSIDRasterBand : public GDALPamRasterBand
+class MrSIDRasterBand final: public GDALPamRasterBand
 {
     friend class MrSIDDataset;
 
@@ -813,7 +813,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000) :
 
 MrSIDDataset::~MrSIDDataset()
 {
-    FlushCache();
+    MrSIDDataset::FlushCache();
 
 #ifdef MRSID_ESDK
     if ( poImageWriter )
@@ -840,7 +840,7 @@ MrSIDDataset::~MrSIDDataset()
 
     if ( psDefn )
         delete psDefn;
-    CloseDependentDatasets();
+    MrSIDDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -2650,7 +2650,7 @@ void MrSIDDataset::GetGTIFDefn()
 /* -------------------------------------------------------------------- */
 /*      If this is UTM, and we were unable to extract the projection    */
 /*      parameters from the CSV file, just set them directly now,       */
-/*      since it's pretty easy, and a common case.                      */
+/*      since it is pretty easy, and a common case.                     */
 /* -------------------------------------------------------------------- */
     if( (psDefn->MapSys == MapSys_UTM_North
          || psDefn->MapSys == MapSys_UTM_South)

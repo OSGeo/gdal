@@ -467,7 +467,7 @@ def DumpReadableFeature( poFeature, options = None ):
 
 def DumpReadableGeometry( poGeometry, pszPrefix, options ):
 
-    if pszPrefix == None:
+    if pszPrefix is None:
         pszPrefix = ""
 
     if 'DISPLAY_GEOMETRY' in options and EQUAL(options['DISPLAY_GEOMETRY'], 'SUMMARY'):

@@ -1152,10 +1152,9 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 #endif
         if( pszWKT != nullptr )
         {
-            char *pszWKTTmp = pszWKT;
             OGRGeometry *poGeom = nullptr;
             CPL_IGNORE_RET_VAL(
-                OGRGeometryFactory::createFromWkt(&pszWKTTmp, nullptr, &poGeom));
+                OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom));
             if( poGeom != nullptr )
             {
                 poGeom->assignSpatialReference(GetSpatialRef());

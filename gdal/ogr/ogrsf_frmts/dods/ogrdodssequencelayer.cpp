@@ -42,7 +42,10 @@ OGRDODSSequenceLayer::OGRDODSSequenceLayer( OGRDODSDataSource *poDSIn,
                                             AttrTable *poOGRLayerInfoIn ) :
     OGRDODSLayer( poDSIn, pszTargetIn, poOGRLayerInfoIn ),
     pszSubSeqPath("profile"), // hardcode for now.
+    poSuperSeq(nullptr),
     iLastSuperSeq(-1),
+    nRecordCount(-1),
+    nSuperSeqCount(0),
     panSubSeqSize(nullptr)
 {
 /* -------------------------------------------------------------------- */
@@ -176,7 +179,7 @@ Sequence *OGRDODSSequenceLayer::FindSuperSequence( BaseType *poChild )
 /*                            BuildFields()                             */
 /*                                                                      */
 /*      Build the field definition or definitions corresponding to      */
-/*      the passed variable and it's children (if it has them).         */
+/*      the passed variable and its children (if it has them).         */
 /************************************************************************/
 
 bool OGRDODSSequenceLayer::BuildFields( BaseType *poFieldVar,

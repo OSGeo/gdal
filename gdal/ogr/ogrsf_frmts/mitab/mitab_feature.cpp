@@ -196,7 +196,7 @@ TABFeature *TABFeature::CreateFromMapInfoType(int nMapInfoType,
  * Used by CloneTABFeature() to copy the basic (fields, geometry, etc.)
  * TABFeature members.
  *
- * The newly created feature is owned by the caller, and will have it's own
+ * The newly created feature is owned by the caller, and will have its own
  * reference to the OGRFeatureDefn.
  *
  * It is possible to create the clone with a different OGRFeatureDefn,
@@ -246,7 +246,7 @@ void TABFeature::CopyTABFeatureBase(TABFeature *poDestFeature)
  *
  * Duplicate feature, including stuff specific to each TABFeature type.
  *
- * The newly created feature is owned by the caller, and will have it's own
+ * The newly created feature is owned by the caller, and will have its own
  * reference to the OGRFeatureDefn.
  *
  * It is possible to create the clone with a different OGRFeatureDefn,
@@ -2518,7 +2518,7 @@ int TABPolyline::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                 poLine->getEnvelope(&sEnvelope);
 
                 pasSecHdrs[iLine].numVertices = poLine->getNumPoints();
-                pasSecHdrs[iLine].numHoles = 0; // It's a line!
+                pasSecHdrs[iLine].numHoles = 0; // It is a line!
 
                 poMapFile->Coordsys2Int(sEnvelope.MinX, sEnvelope.MinY,
                                         pasSecHdrs[iLine].nXMin,
@@ -6092,7 +6092,7 @@ int TABText::IsFontUnderline() const
  *                   TABText::GetLabelStyleString()
  *
  * This is not the correct location, it should be in ITABFeatureFont,
- * but it's really more easy to put it here.  This fct return a complete
+ * but it is really more easy to put it here.  This fct return a complete
  * string for the representation with the string to display
  **********************************************************************/
 const char *TABText::GetLabelStyleString() const
@@ -7040,7 +7040,7 @@ int  TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
     if (bComprCoord)
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         pnLabelX = poCoordBlock->ReadInt16();
         pnLabelY = poCoordBlock->ReadInt16();
 
@@ -7059,7 +7059,7 @@ int  TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
     else
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         pnLabelX = poCoordBlock->ReadInt32();
         pnLabelY = poCoordBlock->ReadInt32();
 
@@ -8624,7 +8624,7 @@ void  ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
         }
     }
 
-    // Set the BackColor, if not set, then it's transparent
+    // Set the BackColor, if not set, then it is transparent
     const char *pszBrushColor = poBrushStyle->BackColor(bIsNull);
     if(bIsNull) pszBrushColor = nullptr;
 

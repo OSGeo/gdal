@@ -478,7 +478,7 @@ OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
             return OFTString;
         const int nSize = json_object_array_length(poObject);
         if( nSize == 0 )
-            // We don't know, so let's assume it's a string list.
+            // We don't know, so let's assume it is a string list.
             return OFTStringList;
         OGRFieldType eType = OFTIntegerList;
         bool bOnlyBoolean = true;

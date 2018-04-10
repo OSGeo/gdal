@@ -689,7 +689,7 @@ Version 1.1.1 - (2001-05-01)
   datasets.
 
 - Modified reading of TABRegion to maintain outside/inside ring relationship
-  when it's available in the source file.
+  when it is available in the source file.
 
 - Fixed default for BRUSH when brush index=0 in the source file.  It should
   be BRUSH(1,0,16777215) and not BRUSH(2,16777215,16777215).
@@ -846,7 +846,7 @@ Version 1.0 - (2000-03-26)
   .MAP file, and return a valid feature with a NONE geometry.
 
 - Done more tests (and required changes) to fix the way the quadrant
-  setting affects the way to read arc angles... hopefully it's right
+  setting affects the way to read arc angles... hopefully it is right
   this time!
 
 - TABText objects now return their text string with any "\n" escaped on
@@ -906,8 +906,8 @@ Version 0.2 - (1999-12-20)
  - Fixed TABFile::GetBounds() that could sometimes return Min values > Max
 
  - Rounded rectangles with radius bigger than MBR: we used to return a
-   corrected radius value, but it's now changed to return the real radius
-   value (even if it's too big) since this is what MapInfo appears to do
+   corrected radius value, but it is now changed to return the real radius
+   value (even if it is too big) since this is what MapInfo appears to do
    when exporting from TAB to MIF
 
  - Fixed some problems that had appeared following a change in OGR's

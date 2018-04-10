@@ -203,8 +203,7 @@ int     TABMAPIndexBlock::CommitToFile()
      *----------------------------------------------------------------*/
     for(int i=0; nStatus == 0 && i<m_numEntries; i++)
     {
-        if (nStatus == 0)
-            nStatus = WriteNextEntry(&(m_asEntries[i]));
+        nStatus = WriteNextEntry(&(m_asEntries[i]));
     }
 
     /*-----------------------------------------------------------------
@@ -574,7 +573,7 @@ GInt32  TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
      *----------------------------------------------------------------*/
 
     // Make sure blocks currently in memory are written to disk.
-    // TODO: Could we avoid deleting m_poCurChild if it's already
+    // TODO: Could we avoid deleting m_poCurChild if it is already
     //       the best candidate for insert?
     if (m_poCurChild)
     {

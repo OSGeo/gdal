@@ -129,8 +129,7 @@ OGRElasticLayer::OGRElasticLayer( const char* pszLayerName,
         AddFieldDefn("_type", OFTString, std::vector<CPLString>());
     }
 
-    ResetReading();
-    return;
+    OGRElasticLayer::ResetReading();
 }
 
 /************************************************************************/
@@ -170,9 +169,9 @@ OGRElasticLayer* OGRElasticLayer::Clone() const
 /************************************************************************/
 
 OGRElasticLayer::~OGRElasticLayer() {
-    SyncToDisk();
+    OGRElasticLayer::SyncToDisk();
 
-    ResetReading();
+    OGRElasticLayer::ResetReading();
 
     json_object_put(m_poSpatialFilter);
     json_object_put(m_poJSONFilter);

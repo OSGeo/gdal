@@ -44,7 +44,7 @@
 /*      override the OdExDgnSystemServices IO to use VSI*L.             */
 /************************************************************************/
 
-class OGRDGNV8Services : public OdExDgnSystemServices,
+class OGRDGNV8Services: public OdExDgnSystemServices,
                          public OdExDgnHostAppServices
 {
 protected:
@@ -58,7 +58,7 @@ protected:
 class OGRDGNV8DataSource;
 typedef std::pair<OGRFeature*, bool> tPairFeatureHoleFlag;
 
-class OGRDGNV8Layer : public OGRLayer
+class OGRDGNV8Layer final: public OGRLayer
 {
     friend class OGRDGNV8DataSource;
 
@@ -123,7 +123,7 @@ class OGRDGNV8Layer : public OGRLayer
 /*                         OGRDGNV8DataSource                           */
 /************************************************************************/
 
-class OGRDGNV8DataSource : public GDALDataset
+class OGRDGNV8DataSource final: public GDALDataset
 {
     OGRDGNV8Services   *m_poServices;
     OGRDGNV8Layer     **m_papoLayers;

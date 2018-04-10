@@ -113,7 +113,7 @@ static std::vector<CPLXMLNode*> BuildIDIndex( CPLXMLNode* psNode,
 /*                          FindElementByID()                           */
 /*                                                                      */
 /*      Find a node with the indicated "gml:id" in the node tree and    */
-/*      it's siblings.                                                  */
+/*      its siblings.                                                   */
 /************************************************************************/
 
 static CPLXMLNode *FindElementByID( CPLXMLNode *psRoot, const char *pszID )
@@ -231,7 +231,7 @@ static bool TrimTree( CPLXMLNode *psRoot )
 /************************************************************************/
 /*                          CorrectURLs()                               */
 /*                                                                      */
-/*  Processes the node and all it's children recursively. Siblings of   */
+/*  Processes the node and all its children recursively. Siblings of   */
 /*  psRoot are ignored.                                                 */
 /*  - Replaces all every URL in URL#id pairs with pszURL.               */
 /*  - Leaves it alone if the paths are same or the URL is not relative. */
@@ -397,7 +397,7 @@ static CPLXMLNode *FindTreeByURL( CPLXMLNode ***ppapsRoot,
 
 /************************************************************************/
 /*                           ResolveTree()                              */
-/*  Resolves the xlinks in a node and it's siblings                     */
+/*  Resolves the xlinks in a node and its siblings                      */
 /*  If any error is encountered or any element is skipped(papszSkip):   */
 /*      If bStrict is TRUE, process is stopped and CE_Error is returned */
 /*      If bStrict is FALSE, the process is continued but CE_Warning is */

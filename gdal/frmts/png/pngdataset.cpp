@@ -295,7 +295,7 @@ PNGDataset::PNGDataset() :
 PNGDataset::~PNGDataset()
 
 {
-    FlushCache();
+    PNGDataset::FlushCache();
 
     if( hPNG != nullptr )
         png_destroy_read_struct( &hPNG, &psPNGInfo, nullptr );
@@ -2137,7 +2137,7 @@ CPLErr PNGRasterBand::IWriteBlock(int x, int y, void* pvData)
     // We received all the bands, so reset band flags and write pixels out.
     this->reset_band_provision_flags();
 
-    // If it's the first block, write out the file header.
+    // If it is the first block, write out the file header.
     if(x == 0 && y == 0)
     {
         CPLErr err = ds.write_png_header();

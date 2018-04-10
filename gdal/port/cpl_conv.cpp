@@ -2519,7 +2519,7 @@ int CPLUnlinkTree( const char *pszPath )
     }
 
 /* -------------------------------------------------------------------- */
-/*      If it's a simple file, just delete it.                          */
+/*      If it is a simple file, just delete it.                         */
 /* -------------------------------------------------------------------- */
     if( VSI_ISREG(sStatBuf.st_mode) )
     {

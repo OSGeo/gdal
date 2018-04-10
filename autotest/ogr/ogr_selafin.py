@@ -64,11 +64,12 @@ def ogr_selafin_create_ds():
 # Add a few points to the datasource
 
 def ogr_selafin_create_nodes():
-    if ogr_selafin_create_ds() != 'success': return 'skip'
+    if ogr_selafin_create_ds() != 'success':
+        return 'skip'
     ref=osr.SpatialReference()
     ref.ImportFromEPSG(4326)
     layer=gdaltest.selafin_ds.CreateLayer('name',ref,geom_type=ogr.wkbPoint)
-    if layer == None:
+    if layer is None:
         gdaltest.post_reason( 'unable to create layer')
         return 'fail'
     layer.CreateField(ogr.FieldDefn('value',ogr.OFTReal))

@@ -419,7 +419,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 try:
                     import xmlvalidate
                     xml_validate_found = True
-                except:
+                except ImportError:
                     error_report.EmitWarning('GMLJP2', 'xmlvalidate not found or not runnable')
                     xml_validate_found = False
                 if xml_validate_found:
@@ -1225,11 +1225,11 @@ def main():
     if ogc_schemas_location is not None:
         try:
             os.stat('%s/xml.xsd' % ogc_schemas_location)
-        except:
+        except OSError:
             try:
                 os.stat('%s/SCHEMAS_OPENGIS_NET/xml.xsd' % ogc_schemas_location)
                 ogc_schemas_location = '%s/SCHEMAS_OPENGIS_NET' % ogc_schemas_location
-            except:
+            except OSError:
                 print('Cannot find %s/xml.xsd. -ogc_schemas_location value is probably wrong' % ogc_schemas_location)
                 return 1
 

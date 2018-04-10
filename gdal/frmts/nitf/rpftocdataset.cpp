@@ -1218,7 +1218,7 @@ int RPFTOCDataset::Identify( GDALOpenInfo * poOpenInfo )
         && !STARTS_WITH_CI((char *) poOpenInfo->pabyHeader, "NITF") )
         return FALSE;
 
-    /* If it's a NITF A.TOC file, it must contain A.TOC in it's header */
+    /* If it is a NITF A.TOC file, it must contain A.TOC in its header */
     for( int i = 0;
          i < static_cast<int>( poOpenInfo->nHeaderBytes )
              - static_cast<int>( strlen( "A.TOC" ) );

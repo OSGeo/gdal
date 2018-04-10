@@ -39,7 +39,7 @@
 /*                   OGRXPlaneAirwaySegmentLayer                        */
 /************************************************************************/
 
-class OGRXPlaneAirwaySegmentLayer : public OGRXPlaneLayer
+class OGRXPlaneAirwaySegmentLayer final: public OGRXPlaneLayer
 {
   public:
                         OGRXPlaneAirwaySegmentLayer();
@@ -59,7 +59,7 @@ class OGRXPlaneAirwaySegmentLayer : public OGRXPlaneLayer
 /*                 OGRXPlaneAirwayIntersectionLayer                     */
 /************************************************************************/
 
-class OGRXPlaneAirwayIntersectionLayer : public OGRXPlaneLayer
+class OGRXPlaneAirwayIntersectionLayer final: public OGRXPlaneLayer
 {
   private:
     CPLHashSet* poSet;
@@ -79,7 +79,7 @@ class OGRXPlaneAirwayIntersectionLayer : public OGRXPlaneLayer
 /*                           OGRXPlaneAwyReader                         */
 /************************************************************************/
 
-class OGRXPlaneAwyReader : public OGRXPlaneReader
+class OGRXPlaneAwyReader final: public OGRXPlaneReader
 {
     private:
         OGRXPlaneAirwaySegmentLayer*      poAirwaySegmentLayer;

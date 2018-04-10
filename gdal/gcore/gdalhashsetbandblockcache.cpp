@@ -161,7 +161,6 @@ CPLErr GDALHashSetBandBlockCache::FlushCache()
     {
         CPLLockHolderOptionalLockD( hLock );
         oOldSet = std::move(m_oSet);
-        CPLAssert(m_oSet.empty());
     }
 
     for( auto& poBlock: oOldSet )

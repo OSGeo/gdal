@@ -838,7 +838,7 @@ def ogr_shape_23_write_valid_and_invalid(layer_name, wkt, invalid_wkt, wkbType, 
         return 'fail'
     feat_read = read_lyr.GetNextFeature()
 
-    if isEmpty and feat_read.GetGeometryRef() == None:
+    if isEmpty and feat_read.GetGeometryRef() is None:
         return 'success'
 
     if ogrtest.check_feature_geometry(feat_read,ogr.CreateGeometryFromWkt(wkt),
@@ -1142,7 +1142,7 @@ def ogr_shape_28():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if not gdaltest.filesystem_supports_sparse_files('tmp'):
         return 'skip'
 
     for filename in ('tmp/hugedbf.dbf', 'tmp/hugedbf.shp', 'tmp/hugedbf.shx'):
@@ -1912,7 +1912,7 @@ def ogr_shape_45():
 
     feat = shp_layer.GetNextFeature()
 
-    if feat.GetGeometryRef() != None:
+    if feat.GetGeometryRef() is not None:
         gdaltest.post_reason( 'Unexpectedly got a geometry on feature 2.' )
         return 'fail'
 
@@ -3486,7 +3486,7 @@ def ogr_shape_72():
 
     # Determine if the filesystem supports sparse files (we don't want to create a real 3 GB
     # file !
-    if (gdaltest.filesystem_supports_sparse_files('tmp') == False):
+    if gdaltest.filesystem_supports_sparse_files('tmp') is False:
         return 'skip'
 
     import struct

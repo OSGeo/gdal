@@ -40,9 +40,12 @@ OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource* poDSIn) :
     poDS(poDSIn),
     poFeatureDefn(nullptr),
     osFIDColName("amigo_id"),
+    bEOF(FALSE),
+    nFetchedObjects(-1),
+    iNextInFetchedObjects(0),
+    iNext(0),
     poCachedObj(nullptr)
 {
-    ResetReading();
 }
 
 /************************************************************************/

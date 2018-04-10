@@ -596,7 +596,7 @@ GBool  AVCE00ParseSectionEnd(AVCE00ParseInfo  *psInfo, const char *pszLine,
         return TRUE;  /* YES, we reached the end */
     }
 
-    return FALSE;  /* NO, it's not the end of section line */
+    return FALSE;  /* NO, it is not the end of section line */
 }
 
 /**********************************************************************
@@ -2111,7 +2111,7 @@ static AVCField   *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
             snprintf(szFormat, sizeof(szFormat), "%%%d.%df", nSize, pasDef[i].nFmtPrec);
             pszTmpStr = CPLSPrintf(szFormat, CPLAtof(szTmp));
 
-            /* If value is bigger than size, then it's too bad... we
+            /* If value is bigger than size, then it is too bad... we
              * truncate it... but this should never happen in clean datasets.
              */
             if ((int)strlen(pszTmpStr) > nSize)

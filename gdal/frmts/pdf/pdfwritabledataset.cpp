@@ -49,7 +49,7 @@ PDFWritableVectorDataset::PDFWritableVectorDataset() :
 
 PDFWritableVectorDataset::~PDFWritableVectorDataset()
 {
-    SyncToDisk();
+    PDFWritableVectorDataset::SyncToDisk();
 
     CSLDestroy(papszOptions);
     for( int i = 0; i < nLayers; i++ )

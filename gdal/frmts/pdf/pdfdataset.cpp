@@ -2083,7 +2083,7 @@ CPLErr PDFDataset::ReadPixels( int nReqXOff, int nReqYOff,
 /* ==================================================================== */
 /************************************************************************/
 
-class PDFImageRasterBand : public PDFRasterBand
+class PDFImageRasterBand final: public PDFRasterBand
 {
     friend class PDFDataset;
 

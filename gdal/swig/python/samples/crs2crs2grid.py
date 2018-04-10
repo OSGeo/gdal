@@ -86,7 +86,7 @@ def read_grid_crs_to_crs(filename,shape):
     points_found = 0
 
     ptuple = next_point(fd)
-    while ptuple != None:
+    while ptuple is not None:
         grid[0,ptuple[1],ptuple[0]] = ptuple[4] - ptuple[2]
         grid[1,ptuple[1],ptuple[0]] = ptuple[5] - ptuple[3]
         points_found = points_found + 1
@@ -360,7 +360,7 @@ if __name__ == '__main__':
     # Run htdp to transform the data.
     try:
       os.unlink( out_grid_fn )
-    except:
+    except OSError:
       pass
 
     rc = os.system( htdp_path + ' < ' + control_fn )

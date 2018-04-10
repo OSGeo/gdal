@@ -101,7 +101,7 @@ TABFile::TABFile() :
  **********************************************************************/
 TABFile::~TABFile()
 {
-    Close();
+    TABFile::Close();
 }
 
 /************************************************************************/
@@ -259,7 +259,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
     if (m_eAccessMode == TABRead || m_eAccessMode == TABReadWrite )
     {
         /*-------------------------------------------------------------
-         * Open .TAB file... since it's a small text file, we will just load
+         * Open .TAB file... since it is a small text file, we will just load
          * it as a stringlist in memory.
          *------------------------------------------------------------*/
         m_papszTABFile = TAB_CSLLoad(m_pszFname);
@@ -285,7 +285,7 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
          *------------------------------------------------------------*/
         if ( ParseTABFileFirstPass(bTestOpenNoError) != 0 )
         {
-            // No need to produce an error... it's already been done if
+            // No need to produce an error... it is already been done if
             // necessary... just cleanup and exit.
 
             CPLFree(m_pszFname);
@@ -1087,7 +1087,7 @@ int TABFile::Close()
 
     if (m_poMAPFile)
     {
-        // In Write access, it's time to write the .TAB file.
+        // In Write access, it is time to write the .TAB file.
         if (m_eAccessMode != TABRead)
         {
             WriteTABFile();
@@ -2185,7 +2185,7 @@ int TABFile::SetFieldIndexed( int nFieldId )
         return 0;  // Nothing to do
 
     /*-----------------------------------------------------------------
-     * Create .IND file if it's not done yet.
+     * Create .IND file if it is not done yet.
      *
      * Note: We can pass the .TAB's filename directly and the
      * TABINDFile class will automagically adjust the extension.

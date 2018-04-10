@@ -65,7 +65,7 @@ public:
 
 class PLMosaicRasterBand;
 
-class PLMosaicDataset : public GDALPamDataset
+class PLMosaicDataset final: public GDALPamDataset
 {
     friend class PLMosaicRasterBand;
 
@@ -144,7 +144,7 @@ class PLMosaicDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class PLMosaicRasterBand : public GDALRasterBand
+class PLMosaicRasterBand final: public GDALRasterBand
 {
     friend class PLMosaicDataset;
 
@@ -370,7 +370,7 @@ PLMosaicDataset::PLMosaicDataset() :
 PLMosaicDataset::~PLMosaicDataset()
 
 {
-    FlushCache();
+    PLMosaicDataset::FlushCache();
     CPLFree(pszWKT);
     for( auto& poDS: apoTMSDS )
         delete poDS;

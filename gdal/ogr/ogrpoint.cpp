@@ -51,10 +51,9 @@ CPL_CVSID("$Id$")
  * \brief Create an empty point.
  */
 
-OGRPoint::OGRPoint()
+OGRPoint::OGRPoint(): x(0.0), y(0.0), z(0.0), m(0.0)
 
 {
-    empty();
     flags = 0;
 }
 
@@ -483,7 +482,7 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      (x,y)''.                                                        */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkt( char ** ppszInput )
+OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
@@ -556,7 +555,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     CPLFree( padfZ );
     CPLFree( padfM );
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }
@@ -564,7 +563,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.                                                     */
 /************************************************************************/
 

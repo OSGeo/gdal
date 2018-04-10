@@ -344,11 +344,18 @@ int IVFKDataBlock::GetPropertyIndex(const char *pszName) const
 /*!
   \brief Set geometry type (point, linestring, polygon)
 
+  \param bSuppressGeometry True for forcing wkbNone type
+
   \return geometry type
 */
-OGRwkbGeometryType IVFKDataBlock::SetGeometryType()
+OGRwkbGeometryType IVFKDataBlock::SetGeometryType(bool bSuppressGeometry)
 {
     m_nGeometryType = wkbNone; /* pure attribute records */
+    if ( bSuppressGeometry ) {
+        m_bGeometry = true; /* pretend that geometry is already loaded */
+
+        return m_nGeometryType;
+    }
 
     if (EQUAL (m_pszName, "SOBR") ||
         EQUAL (m_pszName, "OBBP") ||
@@ -361,7 +368,7 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType()
     else if (EQUAL (m_pszName, "SBP") ||
              EQUAL (m_pszName, "HP") ||
              EQUAL (m_pszName, "DPM") ||
-            EQUAL (m_pszName, "ZVB"))
+             EQUAL (m_pszName, "ZVB"))
         m_nGeometryType = wkbLineString;
 
     else if (EQUAL (m_pszName, "PAR") ||
@@ -612,7 +619,7 @@ void IVFKDataBlock::SetIncRecordCount(RecordType iRec)
 }
 
 /*!
-  \brief Get first found feature based on it's properties
+  \brief Get first found feature based on its properties
 
   Note: modifies next feature.
 

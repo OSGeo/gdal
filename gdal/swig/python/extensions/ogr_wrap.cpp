@@ -7460,7 +7460,13 @@ SWIGINTERN PyObject *_wrap_MajorObject_SetMetadata__SWIG_0(PyObject *SWIGUNUSEDP
       /* We need to use the dictionary form. */
       Py_ssize_t size = PyMapping_Length( obj1 );
       if ( size > 0 && size == (int)size) {
+#if PY_VERSION_HEX < 0x03000000
+        // PyMapping_Items also work with python 2.x  but throws a warning about
+        // -Wwrite-strings warning
+        PyObject *item_list = PyObject_CallMethod(obj1,const_cast<char*>("items"),NULL);
+#else
         PyObject *item_list = PyMapping_Items( obj1 );
+#endif
         for( int i=0; i<(int)size; i++ ) {
           PyObject *it = PySequence_GetItem( item_list, i );
           

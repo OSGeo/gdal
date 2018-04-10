@@ -89,7 +89,7 @@ OGRPGDataSource::OGRPGDataSource() :
 OGRPGDataSource::~OGRPGDataSource()
 
 {
-    FlushCache();
+    OGRPGDataSource::FlushCache();
 
     CPLFree( pszName );
     CPLFree( pszDBName );

@@ -3216,7 +3216,7 @@ HFADataset::HFADataset() :
 HFADataset::~HFADataset()
 
 {
-    FlushCache();
+    HFADataset::FlushCache();
 
     // Destroy the raster bands if they exist.  We forcibly clean
     // them up now to avoid any effort to write to them after the

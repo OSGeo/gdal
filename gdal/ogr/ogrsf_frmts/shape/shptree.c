@@ -203,7 +203,7 @@ SHPTree SHPAPI_CALL1(*)
     }
 
 /* -------------------------------------------------------------------- */
-/*      If we have a file, insert all it's shapes into the tree.        */
+/*      If we have a file, insert all its shapes into the tree.        */
 /* -------------------------------------------------------------------- */
     if( hSHP != NULL )
     {
@@ -1006,7 +1006,7 @@ int* SHPSearchDiskTreeEx( SHPTreeDiskHandle hDiskTree,
         bNeedSwap = TRUE;
 
 /* -------------------------------------------------------------------- */
-/*      Search through root node and it's descendants.                  */
+/*      Search through root node and its descendants.                   */
 /* -------------------------------------------------------------------- */
     if( !SHPSearchDiskTreeNode( hDiskTree, padfBoundsMin, padfBoundsMax,
                                 &panResultBuffer, &nBufferMax,

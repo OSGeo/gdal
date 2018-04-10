@@ -78,9 +78,16 @@ OGRGeometryCollection::OGRGeometryCollection(
     nGeomCount(0),
     papoGeoms(nullptr)
 {
-    for( int i = 0; i < other.nGeomCount; i++ )
+    // Do not use addGeometry() as it is virtual.
+    papoGeoms = static_cast<OGRGeometry **>(
+        VSI_CALLOC_VERBOSE(sizeof(void*), other.nGeomCount));
+    if( papoGeoms )
     {
-        addGeometry( other.papoGeoms[i] );
+        nGeomCount = other.nGeomCount;
+        for( int i = 0; i < other.nGeomCount; i++ )
+        {
+            papoGeoms[i] = other.papoGeoms[i]->clone();
+        }
     }
 }
 
@@ -91,7 +98,7 @@ OGRGeometryCollection::OGRGeometryCollection(
 OGRGeometryCollection::~OGRGeometryCollection()
 
 {
-    empty();
+    OGRGeometryCollection::empty();
 }
 
 /************************************************************************/
@@ -377,17 +384,7 @@ OGRErr OGRGeometryCollection::addGeometryDirectly( OGRGeometry * poNewGeom )
     if( !isCompatibleSubType(poNewGeom->getGeometryType()) )
         return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
 
-    if( poNewGeom->Is3D() && !Is3D() )
-        set3D(TRUE);
-
-    if( poNewGeom->IsMeasured() && !IsMeasured() )
-        setMeasured(TRUE);
-
-    if( !poNewGeom->Is3D() && Is3D() )
-        poNewGeom->set3D(TRUE);
-
-    if( !poNewGeom->IsMeasured() && IsMeasured() )
-        poNewGeom->setMeasured(TRUE);
+    HomogenizeDimensionalityWith(poNewGeom);
 
     OGRGeometry** papoNewGeoms = static_cast<OGRGeometry **>(
         VSI_REALLOC_VERBOSE(papoGeoms, sizeof(void*) * (nGeomCount + 1)));
@@ -706,7 +703,7 @@ OGRErr OGRGeometryCollection::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*                       importFromWktInternal()                        */
 /************************************************************************/
 
-OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
+OGRErr OGRGeometryCollection::importFromWktInternal( const char ** ppszInput,
                                                      int nRecLevel )
 
 {
@@ -755,11 +752,11 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
         {
             OGRGeometryCollection* poGC = new OGRGeometryCollection();
             poGeom = poGC;
-            eErr = poGC->importFromWktInternal( (char **) &pszInput,
+            eErr = poGC->importFromWktInternal( &pszInput,
                                                nRecLevel + 1 );
         }
         else
-            eErr = OGRGeometryFactory::createFromWkt( (char **) &pszInput,
+            eErr = OGRGeometryFactory::createFromWkt( &pszInput,
                                                        nullptr, &poGeom );
 
         if( eErr == OGRERR_NONE )
@@ -790,7 +787,7 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }
@@ -799,7 +796,7 @@ OGRErr OGRGeometryCollection::importFromWktInternal( char ** ppszInput,
 /*                           importFromWkt()                            */
 /************************************************************************/
 
-OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
+OGRErr OGRGeometryCollection::importFromWkt( const char ** ppszInput )
 
 {
     return importFromWktInternal(ppszInput, 0);
@@ -808,7 +805,7 @@ OGRErr OGRGeometryCollection::importFromWkt( char ** ppszInput )
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format        */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 

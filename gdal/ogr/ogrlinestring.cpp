@@ -1716,7 +1716,7 @@ OGRErr OGRSimpleCurve::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `LINESTRING ( x y, x y, ...)',                                  */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
+OGRErr OGRSimpleCurve::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
@@ -1758,7 +1758,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
         setMeasured(TRUE);
     }
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }
@@ -1770,7 +1770,7 @@ OGRErr OGRSimpleCurve::importFromWkt( char ** ppszInput )
 /*      Instantiate from "(x y, x y, ...)"                              */
 /************************************************************************/
 
-OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
+OGRErr OGRSimpleCurve::importFromWKTListOnly( const char ** ppszInput,
                                               int bHasZ, int bHasM,
                                               OGRRawPoint*& paoPointsIn,
                                               int& nMaxPointsIn,
@@ -1813,7 +1813,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
         bHasM = TRUE;
     }
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
 
     if( bHasM && bHasZ )
         setPoints( nPointCountRead, paoPointsIn, padfZIn, padfMIn );
@@ -1831,7 +1831,7 @@ OGRErr OGRSimpleCurve::importFromWKTListOnly( char ** ppszInput,
 /************************************************************************/
 /*                            exportToWkt()                             */
 /*                                                                      */
-/*      Translate this structure into it's well known text format       */
+/*      Translate this structure into its well known text format       */
 /*      equivalent.  This could be made a lot more CPU efficient.       */
 /************************************************************************/
 

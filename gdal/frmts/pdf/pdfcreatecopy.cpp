@@ -592,7 +592,7 @@ int  GDALPDFWriter::WriteSRS_ISO32000(GDALDataset* poSrcDS,
     if( bHasGT && pszNEATLINE != nullptr && pszNEATLINE[0] != '\0' )
     {
         OGRGeometry* poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
+        OGRGeometryFactory::createFromWkt( pszNEATLINE, nullptr, &poGeom );
         if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
             OGRLineString* poLS = poGeom->toPolygon()->getExteriorRing();
@@ -1234,7 +1234,7 @@ int GDALPDFWriter::WriteSRS_OGC_BP(GDALDataset* poSrcDS,
     if( bHasGT && pszNEATLINE != nullptr && !EQUAL(pszNEATLINE, "NO") && pszNEATLINE[0] != '\0' )
     {
         OGRGeometry* poGeom = nullptr;
-        OGRGeometryFactory::createFromWkt( (char**)&pszNEATLINE, nullptr, &poGeom );
+        OGRGeometryFactory::createFromWkt( pszNEATLINE, nullptr, &poGeom );
         if ( poGeom != nullptr && wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
         {
             OGRLineString* poLS = poGeom->toPolygon()->getExteriorRing();

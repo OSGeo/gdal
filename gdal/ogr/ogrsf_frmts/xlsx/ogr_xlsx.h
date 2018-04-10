@@ -47,7 +47,7 @@ namespace OGRXLSX {
 
 class OGRXLSXDataSource;
 
-class OGRXLSXLayer : public OGRMemLayer
+class OGRXLSXLayer final: public OGRMemLayer
 {
     bool               bInit;
     OGRXLSXDataSource* poDS;
@@ -152,7 +152,7 @@ public:
                                     eType(eTypeIn), bHasMS(bHasMSIn) {}
 };
 
-class OGRXLSXDataSource : public GDALDataset
+class OGRXLSXDataSource final: public GDALDataset
 {
     char*               pszName;
     CPLString           osPrefixedFilename;

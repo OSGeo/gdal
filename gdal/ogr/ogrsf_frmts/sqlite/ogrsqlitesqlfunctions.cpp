@@ -779,14 +779,15 @@ void OGR2SQLITE_ST_GeomFromText(sqlite3_context* pContext,
         sqlite3_result_null (pContext);
         return;
     }
-    char* pszWKT = (char*) sqlite3_value_text( argv[0] );
+    const char* pszWKT =
+        reinterpret_cast<const char*>(sqlite3_value_text( argv[0] ));
 
     int nSRID = -1;
     if( argc == 2 && sqlite3_value_type (argv[1]) == SQLITE_INTEGER )
         nSRID = sqlite3_value_int( argv[1] );
 
     OGRGeometry* poGeom = nullptr;
-    if( OGRGeometryFactory::createFromWkt(&pszWKT, nullptr, &poGeom) == OGRERR_NONE )
+    if( OGRGeometryFactory::createFromWkt(pszWKT, nullptr, &poGeom) == OGRERR_NONE )
     {
         OGR2SQLITE_SetGeom_AndDestroy(pContext, poGeom, nSRID);
     }

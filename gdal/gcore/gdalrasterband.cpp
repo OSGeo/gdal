@@ -111,7 +111,7 @@ void GDALRasterBand::Init(int bForceCachedIOIn)
 GDALRasterBand::~GDALRasterBand()
 
 {
-    FlushCache();
+    GDALRasterBand::FlushCache();
 
     delete poBandBlockCache;
 
@@ -1388,7 +1388,7 @@ CPLErr GDALRasterBand::Fill( double dfRealValue, double dfImaginaryValue ) {
     // General approach is to construct a source block of the file's
     // native type containing the appropriate value and then copy this
     // to each block in the image via the RasterBlock cache. Using
-    // the cache means we avoid file I/O if it's not necessary, at the
+    // the cache means we avoid file I/O if it is not necessary, at the
     // expense of some extra memcpy's (since we write to the
     // RasterBlock cache, which is then at some point written to the
     // underlying file, rather than simply directly to the underlying

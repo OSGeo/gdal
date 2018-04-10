@@ -283,7 +283,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
         if( pszGeomText != nullptr && !bGeomColumnWKB )
         {
             eErr =
-                OGRGeometryFactory::createFromWkt((char **) &pszGeomText,
+                OGRGeometryFactory::createFromWkt(pszGeomText,
                                                   nullptr, &poGeom);
         }
         else if( pszGeomText != nullptr && bGeomColumnWKB )
@@ -291,7 +291,7 @@ OGRFeature *OGRODBCLayer::GetNextRawFeature()
             int nLength = poStmt->GetColDataLength( iField );
 
             eErr =
-                OGRGeometryFactory::createFromWkb((unsigned char *) pszGeomText,
+                OGRGeometryFactory::createFromWkb(pszGeomText,
                                                   nullptr, &poGeom, nLength);
         }
 

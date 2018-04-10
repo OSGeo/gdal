@@ -153,7 +153,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset( int nXSize, int nYSize ) :
 VRTPansharpenedDataset::~VRTPansharpenedDataset()
 
 {
-    CloseDependentDatasets();
+    VRTPansharpenedDataset::CloseDependentDatasets();
     CPLFree(m_pabyLastBufferBandRasterIO);
 }
 

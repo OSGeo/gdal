@@ -279,7 +279,7 @@ public:
     IVFKFeature       *GetLastFeature();
     int                SetNextFeature(const IVFKFeature *);
 
-    OGRwkbGeometryType SetGeometryType();
+    OGRwkbGeometryType SetGeometryType(bool = false);
     OGRwkbGeometryType GetGeometryType() const;
 
     int                LoadGeometry();
@@ -344,6 +344,7 @@ public:
 
     int                  GetGeometrySQLType() const;
 
+    OGRErr               AddGeometryColumn() const;
 };
 
 /************************************************************************/
@@ -366,7 +367,7 @@ public:
     virtual bool           IsSpatial() const = 0;
     virtual bool           IsPreProcessed() const = 0;
     virtual bool           IsValid() const = 0;
-    virtual int            ReadDataBlocks() = 0;
+    virtual int            ReadDataBlocks(bool = false) = 0;
     virtual int            ReadDataRecords(IVFKDataBlock * = nullptr) = 0;
     virtual int            LoadGeometry() = 0;
 

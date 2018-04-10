@@ -479,7 +479,7 @@ OGRGeometry* GPkgGeometryToOGR(const GByte *pabyGpkg, size_t nGpkgLen, OGRSpatia
 
     /* Parse WKB */
     OGRGeometry *poGeom = nullptr;
-    err = OGRGeometryFactory::createFromWkb((GByte*)pabyWkb, poSrs, &poGeom,
+    err = OGRGeometryFactory::createFromWkb(pabyWkb, poSrs, &poGeom,
                                             static_cast<int>(nWkbLen));
     if ( err != OGRERR_NONE )
         return nullptr;

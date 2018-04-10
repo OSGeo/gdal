@@ -75,7 +75,7 @@ struct _IntOrMap
     } u;
 };
 
-class OGRMongoDBLayer: public OGRLayer
+class OGRMongoDBLayer final: public OGRLayer
 {
             OGRMongoDBDataSource    *m_poDS;
             OGRFeatureDefn          *m_poFeatureDefn;
@@ -165,7 +165,7 @@ public:
             void                SetCreateSpatialIndex(int bFlag) { m_bCreateSpatialIndex = bFlag; }
 };
 
-class OGRMongoDBDataSource: public GDALDataset
+class OGRMongoDBDataSource final: public GDALDataset
 {
             DBClientBase *m_poConn;
             CPLString     m_osDatabase;
@@ -256,7 +256,7 @@ OGRMongoDBLayer::OGRMongoDBLayer(OGRMongoDBDataSource* poDS,
 
 OGRMongoDBLayer::~OGRMongoDBLayer()
 {
-    SyncToDisk();
+    OGRMongoDBLayer::SyncToDisk();
 
     for(int i=0;i<(int)m_apoCT.size();i++)
         delete m_apoCT[i];
@@ -421,7 +421,7 @@ OGRFieldType OGRMongoDBGetFieldTypeFromBSON( const BSONElement* poElt,
         std::vector<BSONElement> oArray = poElt->Array();
         int nSize = (int)oArray.size();
         if (nSize == 0)
-            return OFTStringList; /* we don't know, so let's assume it's a string list */
+            return OFTStringList; /* we don't know, so let's assume it is a string list */
         OGRFieldType eType = OFTIntegerList;
         int bOnlyBoolean = TRUE;
         for(int i=0;i<nSize;i++)

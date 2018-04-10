@@ -987,7 +987,7 @@ JPGDatasetCommon::~JPGDatasetCommon()
     CPLFree(pabyCMask);
     delete poMaskBand;
 
-    CloseDependentDatasets();
+    JPGDatasetCommon::CloseDependentDatasets();
 }
 
 /************************************************************************/

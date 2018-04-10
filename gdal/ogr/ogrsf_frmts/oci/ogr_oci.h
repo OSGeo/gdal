@@ -347,7 +347,7 @@ public:
 #define LDRM_VARIABLE 2
 #define LDRM_BINARY   3
 
-class OGROCILoaderLayer : public OGROCIWritableLayer
+class OGROCILoaderLayer final: public OGROCIWritableLayer
 {
     OGREnvelope         sExtent;
     int                 iNextFIDToWrite;
@@ -400,7 +400,7 @@ class OGROCILoaderLayer : public OGROCIWritableLayer
 /*                           OGROCITableLayer                            */
 /************************************************************************/
 
-class OGROCITableLayer : public OGROCIWritableLayer
+class OGROCITableLayer final: public OGROCIWritableLayer
 {
     int                 bUpdateAccess;
     int                 bNewLayer;
@@ -496,7 +496,7 @@ class OGROCITableLayer : public OGROCIWritableLayer
 /*                          OGROCISelectLayer                           */
 /************************************************************************/
 
-class OGROCISelectLayer : public OGROCILayer
+class OGROCISelectLayer final: public OGROCILayer
 {
     OGRFeatureDefn     *ReadTableDefinition( OGROCIStatement * poStatement );
 
@@ -511,7 +511,7 @@ class OGROCISelectLayer : public OGROCILayer
 /*                           OGROCIDataSource                           */
 /************************************************************************/
 
-class OGROCIDataSource : public OGRDataSource
+class OGROCIDataSource final: public OGRDataSource
 {
     OGROCILayer       **papoLayers;
     int                 nLayers;

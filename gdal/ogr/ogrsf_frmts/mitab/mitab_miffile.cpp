@@ -68,7 +68,7 @@ MIFFile::MIFFile() :
     m_nVersion(300),
     // Tab is default delimiter in MIF spec if not explicitly specified.  Use
     // that by default for read mode. In write mode, we will use "," as
-    // delimiter since it's more common than tab (we do this in Open())
+    // delimiter since it is more common than tab (we do this in Open())
     m_pszDelimiter(CPLStrdup("\t")),
     m_pszUnique(nullptr),
     m_pszIndex(nullptr),
@@ -111,7 +111,7 @@ MIFFile::MIFFile() :
  **********************************************************************/
 MIFFile::~MIFFile()
 {
-    Close();
+    MIFFile::Close();
 }
 
 /**********************************************************************
@@ -150,7 +150,7 @@ int MIFFile::Open(const char *pszFname, TABAccess eAccess,
         m_eAccessMode = TABWrite;
         pszAccess = "wt";
 
-        // In write mode, use "," as delimiter since it's more common than tab
+        // In write mode, use "," as delimiter since it is more common than tab
         CPLFree(m_pszDelimiter);
         m_pszDelimiter = CPLStrdup(",");
     }

@@ -86,7 +86,7 @@ OGRIdrisiLayer::OGRIdrisiLayer( const char* pszFilename,
         }
     }
 
-    ResetReading();
+    OGRIdrisiLayer::ResetReading();
 }
 
 /************************************************************************/

@@ -198,7 +198,7 @@ void CollectNamespacePrefixes(const char* pszXSDFilename,
 /*                       GMLASAnalyzerEntityResolver                    */
 /************************************************************************/
 
-class GMLASAnalyzerEntityResolver: public GMLASBaseEntityResolver
+class GMLASAnalyzerEntityResolver final: public GMLASBaseEntityResolver
 {
         std::map<CPLString, CPLString>& m_oMapURIToPrefix;
         const std::map<CPLString, CPLString>& m_oMapDocNSURIToPrefix;

@@ -445,14 +445,15 @@ void OGRSQLiteLayer::BuildFeatureDefn( const char *pszLayerName,
             }
             else if( nColType == SQLITE_TEXT )
             {
-                char* pszText = (char*) sqlite3_column_text( hStmtIn, iCol );
+                const char* pszText = reinterpret_cast<const char*>(
+                    sqlite3_column_text( hStmtIn, iCol ));
                 if( pszText != nullptr )
                 {
                     OGRSQLiteGeomFormat eGeomFormat = OSGF_None;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     OGRGeometry* poGeometry = nullptr;
                     if( OGRGeometryFactory::createFromWkt(
-                        &pszText, nullptr, &poGeometry ) == OGRERR_NONE )
+                        pszText, nullptr, &poGeometry ) == OGRERR_NONE )
                     {
                         eGeomFormat = OSGF_WKT;
                         OGRSQLiteGeomFieldDefn* poGeomFieldDefn =
@@ -660,10 +661,10 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             OGRGeometry *poGeometry = nullptr;
             if ( poGeomFieldDefn->eGeomFormat == OSGF_WKT )
             {
-                char* pszWKT = (char *) sqlite3_column_text( hStmt, poGeomFieldDefn->iCol );
-                char* pszWKTCopy = pszWKT;
+                const char* pszWKT = reinterpret_cast<const char*>(
+                    sqlite3_column_text( hStmt, poGeomFieldDefn->iCol ));
                 OGRGeometryFactory::createFromWkt(
-                        &pszWKTCopy, nullptr, &poGeometry );
+                        pszWKT, nullptr, &poGeometry );
             }
             else if ( poGeomFieldDefn->eGeomFormat == OSGF_WKB )
             {
@@ -688,7 +689,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                 if( poGeomFieldDefn->eGeomFormat == OSGF_WKB )
                 {
                     // coverity[tainted_data_return]
-                    GByte* pabyBlob = (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol );
+                    const void* pabyBlob = sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol );
                     CPL_IGNORE_RET_VAL(OGRGeometryFactory::createFromWkb(
                         pabyBlob, nullptr, &poGeometry, nBytes ));
                 }
@@ -697,7 +698,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
             {
                 const int nBytes = sqlite3_column_bytes( hStmt, poGeomFieldDefn->iCol );
                 // coverity[tainted_data_return]
-                GByte* pabyBlob = (GByte*)sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol );
+                const void* pabyBlob = sqlite3_column_blob( hStmt, poGeomFieldDefn->iCol );
                 OGRGeometryFactory::createFromFgf( pabyBlob,
                         nullptr, &poGeometry, nBytes, nullptr );
             }
@@ -2588,7 +2589,7 @@ OGRErr OGRSQLiteLayer::ImportSpatiaLiteGeometry( const GByte *pabyData,
         {
             OGRGeometry* poOriginalGeometry = nullptr;
             eErr = OGRGeometryFactory::createFromWkb(
-                    (unsigned char*)(pabyData + 39 + nBytesConsumed + 1),
+                    pabyData + 39 + nBytesConsumed + 1,
                     nullptr, &poOriginalGeometry, nBytes - (39 + nBytesConsumed + 1 + 1));
             delete *ppoGeometry;
             if( eErr == OGRERR_NONE )

@@ -535,7 +535,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency( int rxsize, int rysize,
                     }
                 }
                 // shortcut - if there are both types of pixels, flags is as
-                // full as it's going to get.
+                // full as it is going to get.
                 // so no point continuing, skip to the next band
                 if ((flags & KMLSO_ContainsTransparentPixels) &&
                     (flags & KMLSO_ContainsOpaquePixels)) {
@@ -1037,7 +1037,7 @@ KmlSuperOverlayReadDataset::~KmlSuperOverlayReadDataset()
 {
     if( psRoot != nullptr )
         CPLDestroyXMLNode( psRoot );
-    CloseDependentDatasets();
+    KmlSuperOverlayReadDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -1871,7 +1871,7 @@ struct KmlSingleDocRasterTilesDesc
     char szExtI[4];  /* extension of tile at which max i is realized */
 };
 
-class KmlSingleDocRasterDataset: public GDALDataset
+class KmlSingleDocRasterDataset final: public GDALDataset
 {
         friend class KmlSingleDocRasterRasterBand;
         CPLString osDirname;
@@ -1946,7 +1946,7 @@ KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
 
 KmlSingleDocRasterDataset::~KmlSingleDocRasterDataset()
 {
-    CloseDependentDatasets();
+    KmlSingleDocRasterDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/

@@ -1557,9 +1557,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO( GDALRWFlag eRWFlag,
     }
     else if( m_bNoDataValueSet )
     {
-        double dfWriteValue = 0.0;
-        if( m_bNoDataValueSet )
-            dfWriteValue = m_dfNoDataValue;
+        double dfWriteValue = m_dfNoDataValue;
 
         for( int iLine = 0; iLine < nBufYSize; iLine++ )
         {

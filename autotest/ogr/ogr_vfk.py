@@ -36,6 +36,7 @@ import sys
 sys.path.append( '../pymod' )
 
 import gdaltest
+from osgeo import gdal
 from osgeo import ogr
 
 ###############################################################################
@@ -285,6 +286,32 @@ def ogr_vfk_8():
     return 'success'
 
 ###############################################################################
+# Open datasource with SUPPRESS_GEOMETRY open option (new in GDAL 2.3)
+
+def ogr_vfk_9():
+
+    if gdaltest.vfk_drv is None:
+        return 'skip'
+
+    # open with suppressing geometry
+    gdaltest.vfk_ds = None
+    gdaltest.vfk_ds = gdal.OpenEx('data/bylany.vfk', open_options = ['SUPPRESS_GEOMETRY=YES'])
+
+    gdaltest.vfk_layer_par = gdaltest.vfk_ds.GetLayerByName('PAR')
+
+    if not gdaltest.vfk_layer_par != 'PAR':
+        gdaltest.post_reason('did not get expected layer name "PAR"')
+        return 'fail'
+
+    geom_type = gdaltest.vfk_layer_par.GetGeomType()
+
+    if geom_type != ogr.wkbNone:
+        gdaltest.post_reason('did not get expected geometry type, got %d' % geom_type)
+        return 'fail'
+
+    return 'success'
+
+###############################################################################
 # cleanup
 
 def ogr_vfk_cleanup():
@@ -293,6 +320,7 @@ def ogr_vfk_cleanup():
        return 'skip'
 
     gdaltest.vfk_layer_par = None
+    gdaltest.vfk_layer_hp = None
     gdaltest.vfk_layer_sobr = None
     gdaltest.vfk_ds = None
 
@@ -315,6 +343,7 @@ gdaltest_list = [
     ogr_vfk_6,
     ogr_vfk_7,
     ogr_vfk_8,
+    ogr_vfk_9,
     ogr_vfk_cleanup ]
 
 if __name__ == '__main__':

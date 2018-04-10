@@ -383,40 +383,82 @@ bool VFKFeature::SetProperties(const char *pszLine)
 
     poChar++; /* skip ';' after data block name*/
 
+    /* remove extra quotes (otherwise due to buggy format the parsing is
+     * almost impossible */
+    CPLString osLine;
+    while ( *poChar != '\0' ) {
+        osLine += *poChar;
+
+        if ( *poChar == '"' &&
+             !( *(poChar-1) == ';' && *(poChar+1) == '"' &&     /* skip ;""; */
+                ( *(poChar+2) == ';' || *(poChar+2) == '\0' ) ) ) {
+            while ( *poChar == '"' ) {
+                poChar++;
+            }
+        }
+        else {
+            poChar++;
+        }
+    }
+    poChar = osLine;
+
     /* read properties into the list */
     const char *poProp = poChar;
     unsigned int iIndex = 0;
     unsigned int nLength = 0;
+    unsigned int nQuotes = 0;
     bool inString = false;
     char* pszProp = nullptr;
     std::vector<CPLString> oPropList;
     while( *poChar != '\0' )
     {
-        if (*poChar == '"' &&
-            (*(poChar-1) == ';' || *(poChar+1) == ';' || *(poChar+1) == '\0')) {
+        if ( ( !inString && *poChar == '"' ) ||                  /* begin of string */
+             ( inString && *poChar == '"' && nQuotes == 1 &&     /* end of string */
+              ( *(poChar+1) == ';' || *(poChar+1) == '\0') ) ) {
+
             poChar++; /* skip '"' */
             inString = !inString;
             if (inString) {
+                nQuotes = 1;
                 poProp = poChar;
                 if (*poChar == '"' && (*(poChar+1) == ';' || *(poChar+1) == '\0')) {
+                    /* process empty string */
                     poChar++;
                     inString = false;
                 }
+                else {
+                    /* count number of starting quotes */
+                    while (*poChar == '"') {
+                        nQuotes++;
+                        nLength++;
+                        poChar++;
+                    }
+                }
             }
-            if (*poChar == '\0')
+            if (*poChar == '\0') {
+                /* end of line */
                 break;
+            }
         }
         if (*poChar == ';' && !inString) {
+            /* end of property */
             pszProp = (char *) CPLRealloc(pszProp, nLength + 1);
             if (nLength > 0)
                 strncpy(pszProp, poProp, nLength);
             pszProp[nLength] = '\0';
+            /* add new property into the list */
             oPropList.push_back(pszProp);
+            /* prepare for next property */
             iIndex++;
             poProp = ++poChar;
             nLength = 0;
+            nQuotes = 0;
         }
         else {
+            if (*poChar == '"' && nQuotes > 1)
+                nQuotes--;
+
+            /* add character to property */
             poChar++;
             nLength++;
         }
@@ -435,9 +477,10 @@ bool VFKFeature::SetProperties(const char *pszLine)
     if (oPropList.size() != (size_t) m_poDataBlock->GetPropertyCount()) {
         /* try to read also invalid records */
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "%s: invalid number of properties %d should be %d",
+                 "%s: invalid number of properties %d should be %d\n%s",
                  m_poDataBlock->GetName(),
-                 (int) oPropList.size(), m_poDataBlock->GetPropertyCount());
+                 (int) oPropList.size(), m_poDataBlock->GetPropertyCount(),
+                 pszLine);
         CPLFree(pszProp);
         return false;
    }

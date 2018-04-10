@@ -968,14 +968,14 @@ class XMMReg4Double
         //xmm_i = _mm_packs_epi32(xmm_i, xmm_i);   // Pack int32 to int16
         //xmm_i = _mm_packus_epi16(xmm_i, xmm_i);  // Pack int16 to uint8
         xmm_i = _mm_shuffle_epi8(xmm_i, _mm_cvtsi32_si128(0 | (4 << 8) | (8 << 16) | (12 << 24))); //  SSSE3
-        GDALCopyXMMToInt32(xmm_i, (GInt32*)ptr);
+        GDALCopyXMMToInt32(xmm_i, reinterpret_cast<GInt32*>(ptr));
     }
 
     inline void Store4Val(unsigned short* ptr) const
     {
         __m128i xmm_i = _mm256_cvttpd_epi32 (_mm256_add_pd(ymm, _mm256_set1_pd(0.5)));
         xmm_i = _mm_packus_epi32(xmm_i, xmm_i);   // Pack uint32 to uint16
-        GDALCopyXMMToInt64(xmm_i, (GInt64*)ptr);
+        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<GInt64*>(ptr));
     }
 
     inline void Store4Val(float* ptr) const
@@ -990,7 +990,7 @@ class XMMReg4Double
 
     inline void StoreMask(unsigned char* ptr) const
     {
-        _mm256_storeu_si256( (__m256i*)ptr, _mm256_castpd_si256(ymm) );
+        _mm256_storeu_si256( reinterpret_cast<__m256i*>(ptr), _mm256_castpd_si256(ymm) );
     }
 };
 

@@ -40,7 +40,7 @@ CPL_CVSID("$Id$")
 /**
  * \brief Constructor.
  *
- * nBand it's just necessary for overview band creation
+ * nBand it is just necessary for overview band creation
  */
 PostGISRasterRasterBand::PostGISRasterRasterBand(
     PostGISRasterDataset * poDSIn, int nBandIn,

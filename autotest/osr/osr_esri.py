@@ -449,7 +449,7 @@ def osr_esri_14():
                           'FIPSZONE 2600',
                           'DATUM NAD83',
                           'PARAMETERS' ] )
-    if srs.GetAuthorityCode( 'PROJCS' ) != None:
+    if srs.GetAuthorityCode( 'PROJCS' ) is not None:
         print(srs.GetAuthorityCode( 'PROJCS' ))
         gdaltest.post_reason( 'Get epsg authority code inappropriately.' )
         return 'fail'

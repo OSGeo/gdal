@@ -36,7 +36,7 @@ gdal.TermProgress = gdal.TermProgress_nocb
 
 try:
     import numpy
-except:
+except ImportError:
     import Numeric as numpy
     numpy.arange = numpy.arrayrange
 

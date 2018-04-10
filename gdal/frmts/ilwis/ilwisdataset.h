@@ -103,7 +103,7 @@ struct ILWISInfo
 
 class ILWISDataset;
 
-class ILWISRasterBand : public GDALPamRasterBand
+class ILWISRasterBand final: public GDALPamRasterBand
 {
     friend class ILWISDataset;
 public:
@@ -130,7 +130,7 @@ private:
 /************************************************************************/
 /*                         ILWISDataset                                 */
 /************************************************************************/
-class ILWISDataset : public GDALPamDataset
+class ILWISDataset final: public GDALPamDataset
 {
     friend class ILWISRasterBand;
     CPLString osFileName;

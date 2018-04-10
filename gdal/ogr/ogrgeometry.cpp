@@ -1370,11 +1370,11 @@ void OGR_G_GetEnvelope3D( OGRGeometryH hGeom, OGREnvelope3D *psEnvelope )
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
+OGRErr OGRGeometry::importFromWkb( const GByte* pabyData,
                                    int nSize, OGRwkbVariant eWkbVariant )
 {
     int nBytesConsumedOutIgnored = -1;
-    return importFromWkb( const_cast<const unsigned char*>(pabyData),
+    return importFromWkb( pabyData,
                           nSize, eWkbVariant, nBytesConsumedOutIgnored );
 }
 
@@ -1429,13 +1429,13 @@ OGRErr OGRGeometry::importFromWkb( unsigned char * pabyData,
  */
 
 OGRErr OGR_G_ImportFromWkb( OGRGeometryH hGeom,
-                            unsigned char *pabyData, int nSize )
+                            const void *pabyData, int nSize )
 
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ImportFromWkb", OGRERR_FAILURE );
 
     return OGRGeometry::FromHandle(hGeom)->
-        importFromWkb( pabyData, nSize );
+        importFromWkb( static_cast<const GByte*>(pabyData), nSize );
 }
 
 /**
@@ -1542,7 +1542,7 @@ OGRErr OGR_G_ExportToIsoWkb( OGRGeometryH hGeom, OGRwkbByteOrder eOrder,
 }
 
 /**
- * \fn OGRErr OGRGeometry::importFromWkt( char ** ppszInput );
+ * \fn OGRErr OGRGeometry::importFromWkt( const char ** ppszInput );
  *
  * \brief Assign geometry from well known text data.
  *
@@ -1590,7 +1590,8 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 {
     VALIDATE_POINTER1( hGeom, "OGR_G_ImportFromWkt", OGRERR_FAILURE );
 
-    return OGRGeometry::FromHandle(hGeom)->importFromWkt( ppszSrcText );
+    return OGRGeometry::FromHandle(hGeom)->importFromWkt(
+        const_cast<const char**>(ppszSrcText) );
 }
 
 /************************************************************************/
@@ -1599,7 +1600,7 @@ OGRErr OGR_G_ImportFromWkt( OGRGeometryH hGeom, char ** ppszSrcText )
 
 // Returns -1 if processing must continue.
 //! @cond Doxygen_Suppress
-OGRErr OGRGeometry::importPreambleFromWkt( char ** ppszInput,
+OGRErr OGRGeometry::importPreambleFromWkt( const char ** ppszInput,
                                             int* pbHasZ, int* pbHasM,
                                             bool* pbIsEmpty )
 {
@@ -1677,7 +1678,7 @@ OGRErr OGRGeometry::importPreambleFromWkt( char ** ppszInput,
         pszPreScan = OGRWktReadToken( pszInput, szToken );
         if( EQUAL(szToken, "EMPTY") )
         {
-            *ppszInput = const_cast<char *>(pszPreScan);
+            *ppszInput = pszPreScan;
             empty();
             if( bHasZ )
                 set3D(TRUE);
@@ -1709,7 +1710,7 @@ OGRErr OGRGeometry::importPreambleFromWkt( char ** ppszInput,
             }
             else
             {
-                *ppszInput = const_cast<char *>(pszPreScan);
+                *ppszInput = pszPreScan;
                 empty();
                 *pbIsEmpty = true;
                 return OGRERR_NONE;
@@ -1717,7 +1718,7 @@ OGRErr OGRGeometry::importPreambleFromWkt( char ** ppszInput,
         }
     }
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput =pszInput;
 
     return OGRERR_NONE;
 }
@@ -1962,7 +1963,7 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
  * \fn void OGRGeometry::empty();
  *
  * \brief Clear geometry information.
- * This restores the geometry to it's initial
+ * This restores the geometry to its initial
  * state after construction, and before assignment of actual geometry.
  *
  * This method relates to the SFCOM IGeometry::Empty() method.
@@ -1975,7 +1976,7 @@ OGRSpatialReferenceH OGR_G_GetSpatialReference( OGRGeometryH hGeom )
 /************************************************************************/
 /**
  * \brief Clear geometry information.
- * This restores the geometry to it's initial
+ * This restores the geometry to its initial
  * state after construction, and before assignment of actual geometry.
  *
  * This function relates to the SFCOM IGeometry::Empty() method.
@@ -5977,7 +5978,7 @@ OGRErr OGRGeometry::importPreambleOfCollectionFromWkb( const unsigned char * pab
 /************************************************************************/
 
 OGRErr OGRGeometry::importCurveCollectionFromWkt(
-    char ** ppszInput,
+    const char ** ppszInput,
     int bAllowEmptyComponent,
     int bAllowLineString,
     int bAllowCurve,
@@ -6032,7 +6033,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
             poCurve = poLine;
             pszInput = pszInputBefore;
             eErr = poLine->importFromWKTListOnly(
-                const_cast<char **>(&pszInput),
+                &pszInput,
                 bHasZ, bHasM,
                 paoPoints, nMaxPoints,
                 padfZ );
@@ -6052,7 +6053,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
             OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                const_cast<char **>(&pszInput),
+                &pszInput,
                 nullptr, &poGeom );
             if( poGeom == nullptr )
             {
@@ -6101,7 +6102,7 @@ OGRErr OGRGeometry::importCurveCollectionFromWkt(
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 //! @endcond
@@ -6635,7 +6636,7 @@ OGRGeometry* OGRGeometry::SFCGALexportToOGR(
     memcpy(pszWKT, pabySFCGALWKT, nLength);
     pszWKT[nLength] = 0;
     free(pabySFCGALWKT);
-    char *pszTmpWKT = pszWKT;
+    const char *pszTmpWKT = pszWKT;
 
     sfcgal_geometry_type_t geom_type = sfcgal_geometry_type_id (geometry);
 
@@ -6938,5 +6939,26 @@ void OGRGeometryUniquePtrDeleter::operator()(OGRGeometry* poGeom) const
 void OGRPreparedGeometryUniquePtrDeleter::operator()(OGRPreparedGeometry* poPreparedGeom) const
 {
     OGRDestroyPreparedGeometry(poPreparedGeom);
+}
+//! @endcond
+
+/************************************************************************/
+/*                     HomogenizeDimensionalityWith()                  */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void OGRGeometry::HomogenizeDimensionalityWith( OGRGeometry* poOtherGeom )
+{
+    if( poOtherGeom->Is3D() && !Is3D() )
+        set3D(TRUE);
+
+    if( poOtherGeom->IsMeasured() && !IsMeasured() )
+        setMeasured(TRUE);
+
+    if( !poOtherGeom->Is3D() && Is3D() )
+        poOtherGeom->set3D(TRUE);
+
+    if( !poOtherGeom->IsMeasured() && IsMeasured() )
+        poOtherGeom->setMeasured(TRUE);
 }
 //! @endcond

@@ -82,11 +82,11 @@ struct _CPLXMLNode;
 
 /* From base OGRGeometry class */
 
-OGRErr CPL_DLL OGR_G_CreateFromWkb( unsigned char *, OGRSpatialReferenceH,
+OGRErr CPL_DLL OGR_G_CreateFromWkb( const void*, OGRSpatialReferenceH,
                                     OGRGeometryH *, int );
 OGRErr CPL_DLL OGR_G_CreateFromWkt( char **, OGRSpatialReferenceH,
                                     OGRGeometryH * );
-OGRErr CPL_DLL OGR_G_CreateFromFgf( unsigned char *, OGRSpatialReferenceH,
+OGRErr CPL_DLL OGR_G_CreateFromFgf( const void*, OGRSpatialReferenceH,
                                     OGRGeometryH *, int, int * );
 void   CPL_DLL OGR_G_DestroyGeometry( OGRGeometryH );
 OGRGeometryH CPL_DLL OGR_G_CreateGeometry( OGRwkbGeometryType ) CPL_WARN_UNUSED_RESULT;
@@ -117,7 +117,7 @@ void   CPL_DLL OGR_G_SetMeasured( OGRGeometryH, int );
 OGRGeometryH CPL_DLL OGR_G_Clone( OGRGeometryH ) CPL_WARN_UNUSED_RESULT;
 void   CPL_DLL OGR_G_GetEnvelope( OGRGeometryH, OGREnvelope * );
 void   CPL_DLL OGR_G_GetEnvelope3D( OGRGeometryH, OGREnvelope3D * );
-OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, unsigned char *, int );
+OGRErr CPL_DLL OGR_G_ImportFromWkb( OGRGeometryH, const void*, int );
 OGRErr CPL_DLL OGR_G_ExportToWkb( OGRGeometryH, OGRwkbByteOrder, unsigned char*);
 OGRErr CPL_DLL OGR_G_ExportToIsoWkb( OGRGeometryH, OGRwkbByteOrder, unsigned char*);
 int    CPL_DLL OGR_G_WkbSize( OGRGeometryH hGeom );
@@ -444,10 +444,10 @@ void   CPL_DLL OGR_F_SetFieldInteger( OGRFeatureH, int, int );
 void   CPL_DLL OGR_F_SetFieldInteger64( OGRFeatureH, int, GIntBig );
 void   CPL_DLL OGR_F_SetFieldDouble( OGRFeatureH, int, double );
 void   CPL_DLL OGR_F_SetFieldString( OGRFeatureH, int, const char * );
-void   CPL_DLL OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, int * );
+void   CPL_DLL OGR_F_SetFieldIntegerList( OGRFeatureH, int, int, const int * );
 void   CPL_DLL OGR_F_SetFieldInteger64List( OGRFeatureH, int, int, const GIntBig * );
-void   CPL_DLL OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, double * );
-void   CPL_DLL OGR_F_SetFieldStringList( OGRFeatureH, int, char ** );
+void   CPL_DLL OGR_F_SetFieldDoubleList( OGRFeatureH, int, int, const double * );
+void   CPL_DLL OGR_F_SetFieldStringList( OGRFeatureH, int, CSLConstList );
 void   CPL_DLL OGR_F_SetFieldRaw( OGRFeatureH, int, OGRField * );
 void   CPL_DLL OGR_F_SetFieldBinary( OGRFeatureH, int, int, GByte * );
 void   CPL_DLL OGR_F_SetFieldDateTime( OGRFeatureH, int,

@@ -1583,15 +1583,18 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
         {
             case 0: // String
             {
-                unsigned char nStrSize = citer->acData[1];
-                // +2 = skip CodePage, no idea how to use it anyway
-
-                if(nStrSize > 0)
+                if( citer->acData.size() > 1 )
                 {
-                    for( size_t i = 0; i < nStrSize &&
-                         i < citer->acData.size() - 4; ++i )
+                    unsigned char nStrSize = citer->acData[1];
+                    // +2 = skip CodePage, no idea how to use it anyway
+
+                    if(nStrSize > 0)
                     {
-                        sEED += citer->acData[i + 4];
+                        for( size_t i = 0; i < nStrSize &&
+                            i + 4 < citer->acData.size(); ++i )
+                        {
+                            sEED += citer->acData[i + 4];
+                        }
                     }
                 }
                 break;
@@ -1603,14 +1606,17 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             }
             case 2: // { or }
             {
-                sEED += citer->acData[1] == 0 ? '{' : '}';
+                if( citer->acData.size() > 1 )
+                {
+                    sEED += citer->acData[1] == 0 ? '{' : '}';
+                }
                 break;
             }
             case 3: // Layer table ref
             {
                 // FIXME: get CADHandle and return getAsLong() result.
                 sEED += "Layer table ref (handle):";
-                for( size_t i = 0; i < 8 && i < citer->acData.size() - 1; ++i )
+                for( size_t i = 0; i < 8 && i + 1 < citer->acData.size(); ++i )
                 {
                     sEED += citer->acData[i + 1];
                 }
@@ -1618,19 +1624,22 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             }
             case 4: // Binary chunk
             {
-                unsigned char nChunkSize = citer->acData[1];
-                sEED += "Binary chunk (chars):";
-                if(nChunkSize > 0)
+                if( citer->acData.size() > 1 )
                 {
-                    for( size_t i = 0; i < nChunkSize &&
-                         i < citer->acData.size() - 2; ++i )
+                    unsigned char nChunkSize = citer->acData[1];
+                    sEED += "Binary chunk (chars):";
+                    if(nChunkSize > 0)
                     {
-                        sEED += citer->acData[i + 2];
+                        for( size_t i = 0; i < nChunkSize &&
+                            i + 2 < citer->acData.size(); ++i )
+                        {
+                            sEED += citer->acData[i + 2];
+                        }
                     }
-                }
-                else
-                {
-                    sEED += "?";
+                    else
+                    {
+                        sEED += "?";
+                    }
                 }
                 break;
             }
@@ -1638,7 +1647,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 // FIXME: Get CADHandle and return getAsLong() result.
                 sEED += "Entity handle ref (handle):";
-                for( size_t i = 0; i < 8 && i < citer->acData.size() - 1; ++i )
+                for( size_t i = 0; i < 8 && i + 1 < citer->acData.size(); ++i )
                 {
                     sEED += citer->acData[i + 1];
                 }
@@ -1671,7 +1680,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 sEED += "Double:";
                 double dfVal = 0;
-                if(citer->acData.size() > 7)
+                if(citer->acData.size() > 8)
                     memcpy( & dfVal, citer->acData.data() + 1, 8 );
                 sEED += std::to_string( dfVal );
                 break;
@@ -1680,7 +1689,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 sEED += "Short:";
                 int16_t dVal = 0;
-                if(citer->acData.size() > 1)
+                if(citer->acData.size() > 2)
                     memcpy( & dVal, citer->acData.data() + 1, 2 );
                 sEED += std::to_string( dVal );
                 break;
@@ -1689,7 +1698,7 @@ CADGeometry * DWGFileR2000::GetGeometry( size_t iLayerIndex, long dHandle, long 
             {
                 sEED += "Long Int:";
                 int32_t dVal = 0;
-                if(citer->acData.size() > 3)
+                if(citer->acData.size() > 4)
                     memcpy( & dVal, citer->acData.data() + 1, 4 );
                 sEED += std::to_string( dVal );
                 break;

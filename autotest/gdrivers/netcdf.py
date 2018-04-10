@@ -578,7 +578,7 @@ def netcdf_13():
     scale = ds.GetRasterBand( 1 ).GetScale()
     offset = ds.GetRasterBand( 1 ).GetOffset()
 
-    if scale != None or offset != None:
+    if scale is not None or offset is not None:
         gdaltest.post_reason( 'Incorrect scale or offset' )
         return 'fail'
 
@@ -1090,7 +1090,7 @@ def netcdf_test_4dfile( ofile ):
     except:
         print('NOTICE: ncdump not found')
         return 'success'
-    if err == None or not 'netcdf library version' in err:
+    if err is None or not 'netcdf library version' in err:
         print('NOTICE: ncdump not found')
         return 'success'
     (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h '+ ofile )
