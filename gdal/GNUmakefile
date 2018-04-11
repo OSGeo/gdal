@@ -150,6 +150,9 @@ configure:	configure.ac aclocal.m4
 GDALmake.opt:	GDALmake.opt.in config.status
 	./config.status
 
+config.status:  configure
+	./config.status --recheck
+
 docs:
 	(cd html; rm -f *.*)
 # Generate translated docs. Should go first, because index.html page should
