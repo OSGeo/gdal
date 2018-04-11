@@ -385,7 +385,7 @@ class FileGDBOGRGeometryConverter
        virtual OGRGeometry*                GetAsGeometry(const OGRField* psField) = 0;
 
        static FileGDBOGRGeometryConverter* BuildConverter(const FileGDBGeomField* poGeomField);
-       static OGRwkbGeometryType           GetGeometryTypeFromESRI(const char* pszESRIGeometyrType);
+       static OGRwkbGeometryType           GetGeometryTypeFromESRI(const char* pszESRIGeometryType);
 };
 
 int FileGDBDoubleDateToOGRDate(double dfVal, OGRField* psField);
