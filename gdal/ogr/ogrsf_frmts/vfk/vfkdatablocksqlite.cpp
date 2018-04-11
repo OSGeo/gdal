@@ -1137,21 +1137,17 @@ int VFKDataBlockSQLite::GetGeometrySQLType() const
 OGRErr VFKDataBlockSQLite::AddGeometryColumn() const
 {
     CPLString osSQL;
-    sqlite3_stmt *hStmt = nullptr;
-    OGRErr ret = OGRERR_NONE;
 
     VFKReaderSQLite *poReader = (VFKReaderSQLite*) m_poReader;
 
-    osSQL.Printf("SELECT COUNT(*) AS rec FROM pragma_table_info('%s') WHERE name='%s'",
-                 m_pszName, GEOM_COLUMN);
-    hStmt = poReader->PrepareStatement(osSQL.c_str());
-    if ( poReader->ExecuteSQL(hStmt) == OGRERR_NONE &&
-         sqlite3_column_int(hStmt, 0) == 0 ) {
+    osSQL.Printf("SELECT %s FROM %s LIMIT 0",
+                 GEOM_COLUMN, m_pszName);
+    if ( poReader->ExecuteSQL(osSQL.c_str(), CE_None) == OGRERR_FAILURE ) {
+        /* query failed, we assume that geometry column not exists */
         osSQL.Printf("ALTER TABLE %s ADD COLUMN %s blob",
                      m_pszName, GEOM_COLUMN);
-        ret = poReader->ExecuteSQL(osSQL.c_str());
+        return poReader->ExecuteSQL(osSQL.c_str());
     }
-    sqlite3_finalize(hStmt);
 
-    return ret;
+    return OGRERR_NONE;
 }
