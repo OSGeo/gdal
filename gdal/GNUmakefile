@@ -144,9 +144,6 @@ dist-clean:	clean
 config:	configure
 	./configure
 
-#configure:	configure.ac aclocal.m4
-#	autoconf
-
 GDALmake.opt:	GDALmake.opt.in config.status
 	./config.status
 
