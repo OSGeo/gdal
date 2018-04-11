@@ -44,7 +44,7 @@ force-lib:
 
 static-lib: lib-dependencies GDALmake.opt
 	$(MAKE) static-lib-stage2
-	
+
 static-lib-stage2: $(GDAL_OBJ)
 	rm -f libgdal.a
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
