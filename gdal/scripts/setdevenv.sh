@@ -3,14 +3,16 @@
 # This script set ups the environment variables needed for executing the
 # GDAL build in this tree, without installing it.
 
+set -eu
+
 called=$_
 
-if [[ $called == $0 ]]; then
+if [[ $called == "$0" ]]; then
     echo "Script should be sourced with '. $0', instead of run."
     exit 1
 fi
 
-GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; echo `pwd`)
+GDAL_ROOT=$(cd $(dirname ${BASH_SOURCE[0]})/..; pwd)
 
 if [[ ! ${PATH,,} =~ "$GDAL_ROOT/apps" ]]; then
     export PATH="$GDAL_ROOT/apps:$GDAL_ROOT/apps/.libs:$PATH"
