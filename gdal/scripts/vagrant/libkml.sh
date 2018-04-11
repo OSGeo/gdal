@@ -16,11 +16,5 @@ export NUMTHREADS
 #cd libkml-read-only
 #git clone https://github.com/google/libkml.git
 svn co https://github.com/google/libkml/trunk libkml
-cd libkml
-./autogen.sh
-./configure
 
-make -j $NUMTHREADS
-sudo make install
-
-cd ..
+(cd libkml && ./autogen.sh && ./configure && make -j $NUMTHREADS; sudo make install)
