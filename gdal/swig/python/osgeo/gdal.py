@@ -988,7 +988,7 @@ def Grid(destName, srcDS, **kwargs):
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 def RasterizeOptions(options = [], format = None,
-         outputType = GDT_Unknown, 
+         outputType = GDT_Unknown,
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
          transformerOptions = None,
