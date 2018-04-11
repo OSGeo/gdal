@@ -1,11 +1,13 @@
 #!/bin/sh
 
-if ! test -d $HOME/gdal_vce2008; then
+set -eu
+
+if ! test -d "$HOME/gdal_vce2008"; then
     echo "$HOME/gdal_vce2008 does not exist. Run ./prepare-gdal-vce2008.sh first"
     exit 1
 fi
 
-cd $HOME/gdal_vce2008/gdal
+cd "$HOME/gdal_vce2008/gdal"
 
 # Hack for libjpeg12
 if ! test -f frmts/jpeg/libjpeg12/jmorecfg.h; then
