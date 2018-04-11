@@ -482,7 +482,7 @@ OGRErr OGRPoint::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      (x,y)''.                                                        */
 /************************************************************************/
 
-OGRErr OGRPoint::importFromWkt( char ** ppszInput )
+OGRErr OGRPoint::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
@@ -555,7 +555,7 @@ OGRErr OGRPoint::importFromWkt( char ** ppszInput )
     CPLFree( padfZ );
     CPLFree( padfM );
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }

@@ -158,7 +158,7 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRMultiCurve::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiCurve::importFromWkt( const char ** ppszInput )
 
 {
     const bool bIsMultiCurve = wkbFlatten(getGeometryType()) == wkbMultiCurve;

@@ -251,7 +251,7 @@ OGRErr OGRMultiPoint::exportToWkt( char ** ppszDstText,
 /*                           importFromWkt()                            */
 /************************************************************************/
 
-OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiPoint::importFromWkt( const char ** ppszInput )
 
 {
     const char *pszInputBefore = *ppszInput;
@@ -277,7 +277,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     // Do we have an inner bracket?
     if( EQUAL(szToken,"(") || EQUAL(szToken, "EMPTY") )
     {
-        *ppszInput = const_cast<char *>(pszInputBefore);
+        *ppszInput = pszInputBefore;
         return importFromWkt_Bracketed( ppszInput, bHasM, bHasZ );
     }
 
@@ -357,7 +357,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
     if( eErr != OGRERR_NONE )
         return eErr;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }
@@ -371,7 +371,7 @@ OGRErr OGRMultiPoint::importFromWkt( char ** ppszInput )
 /*      importFromWkt().                                                */
 /************************************************************************/
 
-OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput,
+OGRErr OGRMultiPoint::importFromWkt_Bracketed( const char ** ppszInput,
                                                int bHasM, int bHasZ )
 
 {
@@ -479,7 +479,7 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed( char ** ppszInput,
     if( !EQUAL(szToken, ")") )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
 
     return OGRERR_NONE;
 }

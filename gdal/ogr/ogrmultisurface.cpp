@@ -149,7 +149,7 @@ OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiSurface::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
@@ -199,7 +199,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             poSurface = poPolygon;
             pszInput = pszInputBefore;
             eErr = poPolygon->importFromWKTListOnly(
-                const_cast<char **>(&pszInput), bHasZ, bHasM,
+                &pszInput, bHasZ, bHasM,
                 paoPoints, nMaxPoints, padfZ );
         }
         else if( EQUAL(szToken, "EMPTY") )
@@ -214,7 +214,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                const_cast<char **>(&pszInput), nullptr, &poGeom );
+                &pszInput, nullptr, &poGeom );
             if( poGeom == nullptr )
             {
                 eErr = OGRERR_CORRUPT_DATA;
@@ -257,7 +257,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 

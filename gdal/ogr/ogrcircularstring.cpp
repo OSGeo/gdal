@@ -186,7 +186,7 @@ OGRErr OGRCircularString::exportToWkb( OGRwkbByteOrder eByteOrder,
 /*      `CIRCULARSTRING [Z] ( x y [z], x y [z], ...)',                  */
 /************************************************************************/
 
-OGRErr OGRCircularString::importFromWkt( char ** ppszInput )
+OGRErr OGRCircularString::importFromWkt( const char ** ppszInput )
 
 {
     const OGRErr eErr = OGRSimpleCurve::importFromWkt(ppszInput);

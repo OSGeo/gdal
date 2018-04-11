@@ -323,12 +323,12 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb( const void *pabyData,
  * OGRERR_CORRUPT_DATA may be returned.
  */
 
-OGRErr OGRGeometryFactory::createFromWkt(char **ppszData,
+OGRErr OGRGeometryFactory::createFromWkt(const char **ppszData,
                                          OGRSpatialReference * poSR,
                                          OGRGeometry **ppoReturn )
 
 {
-    char *pszInput = *ppszData;
+    const char *pszInput = *ppszData;
     *ppoReturn = nullptr;
 
 /* -------------------------------------------------------------------- */
@@ -465,8 +465,7 @@ OGRErr OGRGeometryFactory::createFromWkt(const char* pszData,
                                          OGRGeometry **ppoReturn )
 
 {
-    char* pszTemp = const_cast<char*>(pszData);
-    return createFromWkt(&pszTemp, poSR, ppoReturn);
+    return createFromWkt(&pszData, poSR, ppoReturn);
 }
 
 /************************************************************************/
@@ -500,7 +499,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt( char **ppszData,
 
 {
     return OGRGeometryFactory::createFromWkt(
-        ppszData,
+        const_cast<const char**>(ppszData),
         reinterpret_cast<OGRSpatialReference *>(hSRS),
         reinterpret_cast<OGRGeometry **>(phGeometry));
 }

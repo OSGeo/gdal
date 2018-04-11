@@ -280,7 +280,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
         const char *pszCoordString = GetElementText( psCoordinates );
 
         const char *pszDecimal =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psCoordinates),
+            CPLGetXMLValue(psCoordinates,
                            "decimal", nullptr);
         char chDecimal = '.';
         if( pszDecimal != nullptr )
@@ -296,7 +296,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
         }
 
         const char *pszCS =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psCoordinates), "cs", nullptr);
+            CPLGetXMLValue(psCoordinates, "cs", nullptr);
         char chCS = ',';
         if( pszCS != nullptr )
         {
@@ -309,7 +309,7 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
             chCS = pszCS[0];
         }
         const char *pszTS =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psCoordinates), "ts", nullptr);
+            CPLGetXMLValue(psCoordinates, "ts", nullptr);
         char chTS = ' ';
         if( pszTS != nullptr )
         {
@@ -522,12 +522,12 @@ static bool ParseGMLCoordinates( const CPLXMLNode *psGeomNode,
         // This attribute is only available for gml3.1.1 but not
         // available for gml3.1 SF.
         const char* pszSRSDimension =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psPosList),
+            CPLGetXMLValue(psPosList,
                            "srsDimension", nullptr);
         // If not found at the posList level, try on the enclosing element.
         if( pszSRSDimension == nullptr )
             pszSRSDimension =
-                CPLGetXMLValue(const_cast<CPLXMLNode *>(psGeomNode),
+                CPLGetXMLValue(psGeomNode,
                                "srsDimension", nullptr);
         if( pszSRSDimension != nullptr )
             nDimension = atoi(pszSRSDimension);
@@ -875,13 +875,13 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
         return nullptr;
 
     const char* pszSRSDimension =
-        CPLGetXMLValue(const_cast<CPLXMLNode *>(psNode), "srsDimension", nullptr);
+        CPLGetXMLValue(psNode, "srsDimension", nullptr);
     if( pszSRSDimension != nullptr )
         nSRSDimension = atoi(pszSRSDimension);
 
     if( pszSRSName == nullptr )
         pszSRSName =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psNode), "srsName", nullptr);
+            CPLGetXMLValue(psNode, "srsName", nullptr);
 
     const char *pszBaseGeometry = BareGMLElement( psNode->pszValue );
     if( nPseudoBoolGetSecondaryGeometryOption < 0 )
@@ -1227,9 +1227,9 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
                     if( psRadius && psRadius->eType == CXT_Element )
                     {
                         double dfRadius = CPLAtof(CPLGetXMLValue(
-                            const_cast<CPLXMLNode *>(psRadius), nullptr, "0"));
+                            psRadius, nullptr, "0"));
                         const char* pszUnits = CPLGetXMLValue(
-                            const_cast<CPLXMLNode *>(psRadius), "uom", nullptr);
+                            psRadius, "uom", nullptr);
                         bool bSRSUnitIsDegree = false;
                         bool bInvertedAxisOrder = false;
                         if( pszSRSName != nullptr )
@@ -1639,10 +1639,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return nullptr;
         }
         const double dfRadius =
-            CPLAtof(CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild),
+            CPLAtof(CPLGetXMLValue(psChild,
                                    nullptr, "0"));
         const char* pszUnits =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild), "uom", nullptr);
+            CPLGetXMLValue(psChild, "uom", nullptr);
 
         psChild = FindBareXMLChild( psNode, "startAngle");
         if( psChild == nullptr || psChild->eType != CXT_Element )
@@ -1652,7 +1652,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return nullptr;
         }
         const double dfStartAngle =
-            CPLAtof(CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild),
+            CPLAtof(CPLGetXMLValue(psChild,
                                    nullptr, "0"));
 
         psChild = FindBareXMLChild( psNode, "endAngle");
@@ -1663,7 +1663,7 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return nullptr;
         }
         const double dfEndAngle =
-            CPLAtof(CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild),
+            CPLAtof(CPLGetXMLValue(psChild,
                                    nullptr, "0"));
 
         OGRPoint p;
@@ -1787,10 +1787,10 @@ OGRGeometry *GML2OGRGeometry_XMLNode_Internal(
             return nullptr;
         }
         const double dfRadius =
-            CPLAtof(CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild),
+            CPLAtof(CPLGetXMLValue(psChild,
                                    nullptr, "0"));
         const char* pszUnits =
-            CPLGetXMLValue(const_cast<CPLXMLNode *>(psChild), "uom", nullptr);
+            CPLGetXMLValue(psChild, "uom", nullptr);
 
         OGRPoint p;
         if( !ParseGMLCoordinates( psNode, &p, nSRSDimension ) )

@@ -357,7 +357,7 @@ OGRErr  OGRPolyhedralSurface::exportToWkb ( OGRwkbByteOrder eByteOrder,
 /*              Instantiate from well known text format.                */
 /************************************************************************/
 
-OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
+OGRErr OGRPolyhedralSurface::importFromWkt( const char ** ppszInput )
 {
     int bHasZ = FALSE, bHasM = FALSE;
     bool bIsEmpty = false;
@@ -408,25 +408,8 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
             poSurface = poPolygon;
             pszInput = pszInputBefore;
             eErr = poPolygon->importFromWKTListOnly(
-                            (char**)&pszInput, bHasZ, bHasM,
+                            &pszInput, bHasZ, bHasM,
                             paoPoints, nMaxPoints, padfZ );
-        }
-        else if (EQUAL(szToken, "EMPTY") )
-        {
-            poSurface = OGRGeometryFactory::createGeometry(
-                            getSubGeometryType() )->toSurface();
-        }
-
-        /* We accept POLYGON() but this is an extension to the BNF, also */
-        /* accepted by PostGIS */
-        else if (EQUAL(szToken,getSubGeometryName()))
-        {
-            OGRGeometry* poGeom = nullptr;
-            pszInput = pszInputBefore;
-            eErr = OGRGeometryFactory::createFromWkt(
-                    const_cast<char **>(&pszInput),nullptr, &poGeom );
-            if( poGeom )
-                poSurface = poGeom->toSurface();
         }
         else
         {
@@ -461,7 +444,7 @@ OGRErr OGRPolyhedralSurface::importFromWkt( char ** ppszInput )
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = (char *) pszInput;
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 
