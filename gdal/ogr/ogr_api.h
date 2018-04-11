@@ -56,7 +56,7 @@ CPL_C_START
 #ifdef DEBUG
 typedef struct OGRGeometryHS *OGRGeometryH;
 #else
-/** Opaque type for a geometyr */
+/** Opaque type for a geometry */
 typedef void *OGRGeometryH;
 #endif
 #endif /* DEFINEH_OGRGeometryH */

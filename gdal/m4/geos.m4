@@ -34,7 +34,7 @@ dnl GEOS_INIT (MINIMUM_VERSION)
 dnl
 dnl Test for GEOS: define HAVE_GEOS, GEOS_LIBS, GEOS_CFLAGS, GEOS_VERSION
 dnl
-dnl Call as GEOS_INIT or GEOS_INIT(minimum version) in configure.in. Test
+dnl Call as GEOS_INIT or GEOS_INIT(minimum version) in configure.ac. Test
 dnl HAVE_GEOS (yes|no) afterwards. If yes, all other vars above can be
 dnl used in program.
 dnl

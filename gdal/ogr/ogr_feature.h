@@ -385,6 +385,7 @@ class CPL_DLL OGRFeature
 
         FieldValue(OGRFeature* poFeature, int iFieldIndex);
         FieldValue(const OGRFeature* poFeature, int iFieldIndex);
+        FieldValue(const FieldValue& oOther) = delete;
 
       public:
 //! @cond Doxygen_Suppress

@@ -392,6 +392,13 @@ All together our program looks like this.
 
 With GDAL 2.3 and C++11 :
 \code
+#include "ogrsf_frmts.h"
+
+int main()
+
+{
+    GDALAllRegister();
+
     GDALDatasetUniquePtr poDS(GDALDataset::Open( "point.shp", GDAL_OF_VECTOR));
     if( poDS == nullptr )
     {
@@ -399,11 +406,11 @@ With GDAL 2.3 and C++11 :
         exit( 1 );
     }
 
-    for( auto&& poLayer: poDS->GetLayers() )
+    for( const auto& poLayer: poDS->GetLayers() )
     {
-        for( auto&& poFeature: *poLayer )
+        for( const auto& poFeature: *poLayer )
         {
-            for( auto&& oField: *poFeature )
+            for( const auto& oField: *poFeature )
             {
                 switch( oField.GetType() )
                 {

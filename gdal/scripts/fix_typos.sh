@@ -29,19 +29,21 @@
 #  DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-SCRIPT_DIR=`dirname $0`
+set -eu
+
+SCRIPT_DIR=$(dirname "$0")
 case $SCRIPT_DIR in
     "/"*)
         ;;
     ".")
-        SCRIPT_DIR=`pwd`
+        SCRIPT_DIR=$(pwd)
         ;;
     *)
-        SCRIPT_DIR=`pwd`"/"`dirname $0`
+        SCRIPT_DIR=$(pwd)"/"$(dirname "$0")
         ;;
 esac
 GDAL_ROOT=$SCRIPT_DIR/..
-cd $GDAL_ROOT
+cd "$GDAL_ROOT"
 
 if ! test -d fix_typos; then
     # Get our fork of codespell that adds --words-white-list and full filename support for -S option
@@ -57,7 +59,7 @@ if ! test -d fix_typos; then
     cat codespell/data/dictionary.txt qgis.txt debian.txt | awk 'NF' > gdal_dict.txt
     echo "difered->deferred" >> gdal_dict.txt
     echo "differed->deferred" >> gdal_dict.txt
-    cat gdal_dict.txt | grep -v 404 > gdal_dict.txt.tmp
+    grep -v 404 < gdal_dict.txt > gdal_dict.txt.tmp
     mv gdal_dict.txt.tmp gdal_dict.txt
     cd ..
 fi
@@ -83,9 +85,9 @@ WORDS_WHITE_LIST="$WORDS_WHITE_LIST,oUTMorLL"
 # hf2dataset.cpp
 WORDS_WHITE_LIST="$WORDS_WHITE_LIST,fVertPres"
 
-python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S $EXCLUDED_FILES \
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
     -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
     ../autotest
-python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S $EXCLUDED_FILES \
+python3 fix_typos/codespell/codespell.py -w -i 3 -q 2 -S "$EXCLUDED_FILES" \
     -x scripts/typos_whitelist.txt --words-white-list=$WORDS_WHITE_LIST \
     -D ./fix_typos/gdal_dict.txt  .

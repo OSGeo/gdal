@@ -44,7 +44,7 @@ force-lib:
 
 static-lib: lib-dependencies GDALmake.opt
 	$(MAKE) static-lib-stage2
-	
+
 static-lib-stage2: $(GDAL_OBJ)
 	rm -f libgdal.a
 	$(AR) r $(GDAL_LIB) $(GDAL_OBJ)
@@ -144,11 +144,11 @@ dist-clean:	clean
 config:	configure
 	./configure
 
-configure:	configure.in aclocal.m4
-	autoconf
-
 GDALmake.opt:	GDALmake.opt.in config.status
 	./config.status
+
+config.status:  configure
+	./config.status --recheck
 
 docs:
 	(cd html; rm -f *.*)
