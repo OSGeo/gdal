@@ -78,10 +78,3 @@ out_ds = drv.CreateCopy( sys.argv[3], mem_ds )
 out_ds = None
 mem_ds = None
 src_ds = None
-
-
-
-
-
-
-

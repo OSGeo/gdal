@@ -130,4 +130,3 @@ for i in range(band.YSize - 1, -1, -1):
     # Display progress report on terminal
     if not quiet:
         gdal.TermProgress(float(band.YSize - i) / band.YSize)
-

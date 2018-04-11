@@ -108,4 +108,3 @@ if __name__ == '__main__':
     gdaltest.setup_run( 'dither' )
     gdaltest.run_tests( gdaltest_list )
     gdaltest.summarize()
-

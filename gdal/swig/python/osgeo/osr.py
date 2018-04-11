@@ -1295,5 +1295,3 @@ def CreateCoordinateTransformation(*args):
     """CreateCoordinateTransformation(SpatialReference src, SpatialReference dst) -> CoordinateTransformation"""
     return _osr.CreateCoordinateTransformation(*args)
 # This file is compatible with both classic and new-style classes.
-
-

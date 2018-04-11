@@ -495,5 +495,3 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     return
 
 # This file is compatible with both classic and new-style classes.
-
-

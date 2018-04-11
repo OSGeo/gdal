@@ -74,4 +74,3 @@ gdaltest.run_all( test_list, run_as_external = run_as_external )
 errors = gdaltest.summarize()
 
 sys.exit( errors )
-
