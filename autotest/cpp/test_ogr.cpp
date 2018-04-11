@@ -821,7 +821,7 @@ namespace tut
                                            int nExpectedPointCount)
     {
         int nCount = 0;
-        for( auto&& elt: obj )
+        for( auto& elt: obj )
         {
             nCount ++;
             CPL_IGNORE_RET_VAL(elt);
@@ -830,7 +830,7 @@ namespace tut
 
         nCount = 0;
         const T* const_obj(obj);
-        for( auto&& elt: const_obj)
+        for( const auto& elt: const_obj)
         {
             nCount ++;
             CPL_IGNORE_RET_VAL(elt);
@@ -971,7 +971,7 @@ namespace tut
 
         {
             GIntBig nExpectedFID = 0;
-            for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
+            for( const auto& oFeatureLayerPair: poDS->GetFeatures() )
             {
                 ensure_equals( oFeatureLayerPair.feature->GetFID(), nExpectedFID );
                 nExpectedFID ++;
@@ -985,10 +985,10 @@ namespace tut
         ensure_equals( poDS->GetLayers()[static_cast<size_t>(0)], poDS->GetLayer(0) );
         ensure_equals( poDS->GetLayers()["poly"], poDS->GetLayer(0) );
 
-        for( auto&& poLayer: poDS->GetLayers() )
+        for( auto poLayer: poDS->GetLayers() )
         {
             GIntBig nExpectedFID = 0;
-            for( auto&& poFeature: poLayer )
+            for( const auto& poFeature: poLayer )
             {
                 ensure_equals( poFeature->GetFID(), nExpectedFID );
                 nExpectedFID ++;
@@ -996,7 +996,7 @@ namespace tut
             ensure_equals(nExpectedFID, 10);
 
             nExpectedFID = 0;
-            for( auto&& oFeatureLayerPair: poDS->GetFeatures() )
+            for(const  auto& oFeatureLayerPair: poDS->GetFeatures() )
             {
                 ensure_equals( oFeatureLayerPair.feature->GetFID(), nExpectedFID );
                 nExpectedFID ++;
@@ -1020,10 +1020,10 @@ namespace tut
             OGR_FOR_EACH_FEATURE_END(hFeat)
             ensure_equals(nExpectedFID, 5);
 
-            auto&& oIter = poLayer->begin();
+            auto oIter = poLayer->begin();
             CPLPushErrorHandler(CPLQuietErrorHandler);
             // Only one feature iterator can be active at a time
-            auto&& oIter2 = poLayer->begin();
+            auto oIter2 = poLayer->begin();
             CPLPopErrorHandler();
             ensure( !(oIter2 != poLayer->end()) );
             ensure( oIter != poLayer->end() );
@@ -1032,7 +1032,7 @@ namespace tut
         poDS.reset(GetGDALDriverManager()->GetDriverByName("Memory")->
             Create("", 0, 0, 0, GDT_Unknown, nullptr));
         int nCountLayers = 0;
-        for( auto&& poLayer: poDS->GetLayers() )
+        for( auto poLayer: poDS->GetLayers() )
         {
             CPL_IGNORE_RET_VAL(poLayer);
             nCountLayers++;
@@ -1041,7 +1041,7 @@ namespace tut
 
         poDS->CreateLayer("foo");
         poDS->CreateLayer("bar");
-        for( auto&& poLayer: poDS->GetLayers() )
+        for( auto poLayer: poDS->GetLayers() )
         {
             if( nCountLayers == 0 )
                 ensure_equals( poLayer->GetName(), "foo" );
@@ -1110,6 +1110,7 @@ namespace tut
             oFeatureTmp[0] = "bar";
             ensure_equals( oFeatureTmp[0].GetString(), "bar" );
             {
+                // Proxy reference
                 auto&& x= oFeatureTmp[0];
                 x = x;
                 ensure_equals( oFeatureTmp[0].GetString(), "bar" );
@@ -1119,6 +1120,7 @@ namespace tut
                 ensure_equals( oFeatureTmp[0].GetString(), "bar" );
             }
             {
+                // Proxy reference
                 auto&& x= oFeatureTmp[0];
                 x = "baz";
                 ensure_equals( x.GetString(), "baz" );
@@ -1145,7 +1147,7 @@ namespace tut
             oFeatureTmp["doublelist_field"] = std::vector<double>();
             oFeatureTmp["doublelist_field"] = std::vector<double>{ 12.25,56.75 };
 
-            for( auto&& oField: oFeatureTmp )
+            for( const auto& oField: oFeatureTmp )
             {
                 oFeature[oField.GetIndex()] = oField;
             }
@@ -1184,7 +1186,7 @@ namespace tut
 
         int iIter = 0;
         const OGRFeature* poConstFeature = &oFeature;
-        for( auto&& oField: *poConstFeature )
+        for( const auto& oField: *poConstFeature )
         {
             ensure_equals( oField.GetIndex(), iIter );
             ensure_equals( oField.GetDefn(), poFeatureDefn->GetFieldDefn(iIter) );

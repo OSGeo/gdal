@@ -406,11 +406,11 @@ int main()
         exit( 1 );
     }
 
-    for( auto&& poLayer: poDS->GetLayers() )
+    for( const auto& poLayer: poDS->GetLayers() )
     {
-        for( auto&& poFeature: *poLayer )
+        for( const auto& poFeature: *poLayer )
         {
-            for( auto&& oField: *poFeature )
+            for( const auto& oField: *poFeature )
             {
                 switch( oField.GetType() )
                 {
