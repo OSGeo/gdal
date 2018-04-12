@@ -203,8 +203,7 @@ class mosaic_info:
 
         self.ogrTileIndexDS.GetLayer().SetSpatialFilter(None)
 
-         # merge tiles
-
+        # merge tiles
 
         resultSizeX =int(math.ceil(((maxx-minx) / self.scaleX )))
         resultSizeY =int(math.ceil(((miny-maxy) / self.scaleY )))

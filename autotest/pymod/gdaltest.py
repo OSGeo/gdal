@@ -1000,11 +1000,11 @@ class GDALTest:
         dict = {}
         dict['TEST_KEY'] = 'TestValue'
         new_ds.SetMetadata( dict )
-# FIXME
-        #if new_ds.SetMetadata( dict ) is not gdal.CE_None:
-            #print new_ds.SetMetadata( dict )
-            #post_reason( 'Failed to set metadata item.' )
-            #return 'fail'
+        # FIXME
+        # if new_ds.SetMetadata( dict ) is not gdal.CE_None:
+        #     print new_ds.SetMetadata( dict )
+        #     post_reason( 'Failed to set metadata item.' )
+        #     return 'fail'
 
         src_ds = None
         new_ds = None

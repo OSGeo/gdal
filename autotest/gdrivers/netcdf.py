@@ -697,7 +697,7 @@ def netcdf_17():
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-                #return fail if opened with the netCDF driver
+            # return fail if opened with the netCDF driver
             if name == 'netCDF':
                 gdaltest.post_reason('netcdf driver opened hdf5 file')
                 return 'fail'
