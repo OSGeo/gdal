@@ -2609,7 +2609,7 @@ def getargs(arglist):
     try:
         (opts,args)=getopt(arglist[1:],'a:bchlnu:s:v:',['area_types=','badc','coards','help','uploader','noname','udunits=','cf_standard_names=','version='])
     except GetoptError:
-        stderr.write('%s\n'%__doc__)
+        stderr.write('%s\n' % __doc__)
         exit(1)
 
     for a, v in opts:
@@ -2653,7 +2653,7 @@ def getargs(arglist):
             continue
 
     if len(args) == 0:
-        stderr.write('ERROR in command line\n\nusage:\n%s\n'%__doc__)
+        stderr.write('ERROR in command line\n\nusage:\n%s\n' % __doc__)
         exit(1)
 
     return (badc,coards,uploader,useFileName,standardname,areatypes,udunits,version,args)

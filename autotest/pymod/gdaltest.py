@@ -547,7 +547,7 @@ class GDALTest:
                 # Tested on Linux, Mac OS X and Windows, with Python 2.3/2.4/2.5.
                 sv = str(new_stat[i]).lower()
                 if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
-                    post_reason( 'NaN or Invinite value encountered '%'.' % sv )
+                    post_reason( 'NaN or Invinite value encountered ' % '.' % sv )
                     return 'fail'
 
                 if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
@@ -571,7 +571,7 @@ class GDALTest:
 
                 sv = str(new_stat[i]).lower()
                 if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
-                    post_reason( 'NaN or Infinite value encountered '%'.' % sv )
+                    post_reason( 'NaN or Infinite value encountered ' % '.' % sv )
                     return 'fail'
 
                 if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
