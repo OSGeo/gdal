@@ -2395,7 +2395,7 @@ Algorithms:
  * RPC transformer: in DEM mode, implement optimization, in specific conditions (input points at same longitude, DEM in EPSG:4326) to extract several elevations at a time
  * TPS transformer: fix crash if the forward or backward transform cannot be computed (#5588)
  * OpenCL warper: remove unused variable in bilinear resampling that can cause compilation error (#5518)
- * OpenCL wraper: fix code compilation with NVIDIA OpenCL (#5772)
+ * OpenCL wrapper: fix code compilation with NVIDIA OpenCL (#5772)
  * Overview: Fix and speed-up cubic resampling in overview computation to take into account scaling factor (#5685)
  * Overview: ignore alpha=0 values when compute an average overview of an alpha band; and also avoid memory errors when calling GetMaskBand()/GetMaskFlags() after overview computation if GetMaskXXX() has been called before (#5640)
  * Overview: avoid crash when computing overview with a X dimension much smaller than Y dimension (#5794)

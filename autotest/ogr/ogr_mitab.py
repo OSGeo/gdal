@@ -2277,9 +2277,9 @@ def ogr_mitab_45():
     featNames = [ 'аз',
                   'буки',
                   'веди' ]
-    formats =  [  'MIF',  'TAB', 'MIF', 'TAB' ]
-    lyrNums =  [      1,      1,     2,     2 ]
-    dsExts =   [ '.mif', '.tab',    '',    '' ]
+    formats = [  'MIF',  'TAB', 'MIF', 'TAB' ]
+    lyrNums = [      1,      1,     2,     2 ]
+    dsExts = [ '.mif', '.tab',    '',    '' ]
 
     for formatN in range(len(formats)):
         format = formats[formatN]
@@ -2374,7 +2374,7 @@ def ogr_mitab_45():
 
 def ogr_mitab_46():
 
-    dsNames =  [ 'data/mitab/tab-win1251.TAB',
+    dsNames = [ 'data/mitab/tab-win1251.TAB',
                  'data/mitab/win1251.mif']
     fldNames = [ 'Поле_А',     'Поле_Б',     'Поле_В',     'Поле_Г',     'Поле_Д' ]
     fldVal = [ [ 'Значение А', 'Значение Б', 'Значение В', 'Значение Г', 'Значение Д' ],

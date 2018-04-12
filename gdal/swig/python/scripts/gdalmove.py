@@ -228,7 +228,7 @@ def main():
     # Script argument parsing.
 
     i = 1
-    while  i < len(argv):
+    while i < len(argv):
 
         if argv[i] == '-s_srs' and i < len(argv)-1:
             s_srs = argv[i+1]

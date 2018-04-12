@@ -408,7 +408,7 @@ def ogr_sql_sqlite_2():
 
     for i in range(2):
         feat = sql_lyr.GetNextFeature()
-        if  feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
+        if feat.GetGeometryRef().ExportToWkt() != 'POINT (0 1)':
             gdaltest.post_reason('failure')
             feat.DumpReadable()
             return 'fail'

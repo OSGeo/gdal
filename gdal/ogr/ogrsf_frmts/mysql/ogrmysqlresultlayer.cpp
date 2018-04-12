@@ -233,6 +233,7 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
+        poDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
 
         osCommand.Printf(
                 "SELECT type FROM geometry_columns WHERE f_table_name='%s'",

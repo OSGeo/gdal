@@ -1127,7 +1127,7 @@ def ogr_fgdb_18_test_results():
     f = lyr.GetNextFeature()
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
-       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         gdaltest.post_reason('fail')
         f.DumpReadable()
@@ -1901,7 +1901,7 @@ def ogr_fgdb_20():
     f.SetFID(2)
     f.SetField('id', 2)
     ret = lyr.CreateFeature(f)
-    if ret != 0 or f.GetFID() != 2  or lyr.GetMetadataItem('2', 'MAP_OGR_FID_TO_FGDB_FID') is not None:
+    if ret != 0 or f.GetFID() != 2 or lyr.GetMetadataItem('2', 'MAP_OGR_FID_TO_FGDB_FID') is not None:
         gdaltest.post_reason('fail')
         f.DumpReadable()
         return 'fail'

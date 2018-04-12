@@ -755,7 +755,7 @@ def transformer_14():
     gdal.SetConfigOption('RPC_INVERSE_VERBOSE', old_rpc_inverse_verbose)
     gdal.SetConfigOption('RPC_INVERSE_LOG', old_rpc_inverse_log)
     (success,pnt) = tr.TransformPoint( 0, 0, 0 )
-    if not success or abs(pnt[0] - 1.9391846640653961e-05) > 1e-7 or abs(pnt[1] -  -0.0038824752244123275) > 1e-7:
+    if not success or abs(pnt[0] - 1.9391846640653961e-05) > 1e-7 or abs(pnt[1] - -0.0038824752244123275) > 1e-7:
         gdaltest.post_reason('fail')
         print(pnt)
         return 'fail'

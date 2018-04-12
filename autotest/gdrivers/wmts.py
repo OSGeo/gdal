@@ -1644,7 +1644,7 @@ def wmts_23( imagetype, expected_cs ):
         return 'skip'
 
     inputXml = '/vsimem/' + imagetype +'.xml'
-    serviceUrl =  '/vsimem/wmts_23/' + imagetype
+    serviceUrl = '/vsimem/wmts_23/' + imagetype
     gdal.FileFromMemBuffer( inputXml, """<Capabilities>
     <Contents>
         <Layer>

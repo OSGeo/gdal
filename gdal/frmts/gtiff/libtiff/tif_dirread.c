@@ -165,6 +165,7 @@ static int TIFFFetchStripThing(TIFF* tif, TIFFDirEntry* dir, uint32 nstrips, uin
 static int TIFFFetchSubjectDistance(TIFF*, TIFFDirEntry*);
 static void ChopUpSingleUncompressedStrip(TIFF*);
 static uint64 TIFFReadUInt64(const uint8 *value);
+static int _TIFFGetMaxColorChannels(uint16 photometric);
 
 static int _TIFFFillStrilesInternal( TIFF *tif, int loadStripByteCount );
 
@@ -3505,6 +3506,35 @@ static void TIFFReadDirEntryOutputErr(TIFF* tif, enum TIFFReadDirEntryErr err, c
 }
 
 /*
+ * Return the maximum number of color channels specified for a given photometric
+ * type. 0 is returned if photometric type isn't supported or no default value
+ * is defined by the specification.
+ */
+static int _TIFFGetMaxColorChannels( uint16 photometric )
+{
+    switch (photometric) {
+	case PHOTOMETRIC_PALETTE:
+	case PHOTOMETRIC_MINISWHITE:
+	case PHOTOMETRIC_MINISBLACK:
+            return 1;
+	case PHOTOMETRIC_YCBCR:
+	case PHOTOMETRIC_RGB:
+	case PHOTOMETRIC_CIELAB:
+            return 3;
+	case PHOTOMETRIC_SEPARATED:
+	case PHOTOMETRIC_MASK:
+            return 4;
+	case PHOTOMETRIC_LOGL:
+	case PHOTOMETRIC_LOGLUV:
+	case PHOTOMETRIC_CFA:
+	case PHOTOMETRIC_ITULAB:
+	case PHOTOMETRIC_ICCLAB:
+	default:
+            return 0;
+    }
+}
+
+/*
  * Read the next TIFF directory from a file and convert it to the internal
  * format. We read directories sequentially.
  */
@@ -3520,6 +3550,7 @@ TIFFReadDirectory(TIFF* tif)
 	uint32 fii=FAILED_FII;
         toff_t nextdiroff;
     int bitspersample_read = FALSE;
+        int color_channels;
 
 	tif->tif_diroff=tif->tif_nextdiroff;
 	if (!TIFFCheckDirOffset(tif,tif->tif_nextdiroff))
@@ -4024,6 +4055,37 @@ TIFFReadDirectory(TIFF* tif)
 			}
 		}
 	}
+
+	/*
+	 * Make sure all non-color channels are extrasamples.
+	 * If it's not the case, define them as such.
+	 */
+        color_channels = _TIFFGetMaxColorChannels(tif->tif_dir.td_photometric);
+        if (color_channels && tif->tif_dir.td_samplesperpixel - tif->tif_dir.td_extrasamples > color_channels) {
+                uint16 old_extrasamples;
+                uint16 *new_sampleinfo;
+
+                TIFFWarningExt(tif->tif_clientdata,module, "Sum of Photometric type-related "
+                    "color channels and ExtraSamples doesn't match SamplesPerPixel. "
+                    "Defining non-color channels as ExtraSamples.");
+
+                old_extrasamples = tif->tif_dir.td_extrasamples;
+                tif->tif_dir.td_extrasamples = (tif->tif_dir.td_samplesperpixel - color_channels);
+
+                // sampleinfo should contain information relative to these new extra samples
+                new_sampleinfo = (uint16*) _TIFFcalloc(tif->tif_dir.td_extrasamples, sizeof(uint16));
+                if (!new_sampleinfo) {
+                    TIFFErrorExt(tif->tif_clientdata, module, "Failed to allocate memory for "
+                                "temporary new sampleinfo array (%d 16 bit elements)",
+                                tif->tif_dir.td_extrasamples);
+                    goto bad;
+                }
+
+                memcpy(new_sampleinfo, tif->tif_dir.td_sampleinfo, old_extrasamples * sizeof(uint16));
+                _TIFFsetShortArray(&tif->tif_dir.td_sampleinfo, new_sampleinfo, tif->tif_dir.td_extrasamples);
+                _TIFFfree(new_sampleinfo);
+        }
+
 	/*
 	 * Verify Palette image has a Colormap.
 	 */

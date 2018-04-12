@@ -43,6 +43,7 @@
 #include "gdal_alg.h"
 #include "gdal_version.h"
 #include "gdal.h"
+#include "gdal_utils.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"

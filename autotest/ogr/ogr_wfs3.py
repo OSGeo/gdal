@@ -480,7 +480,7 @@ def ogr_wfs3_fc_links_next_geojson():
                             "foo": "bar"
                         }
                     }
-                ] }""" %  gdaltest.webserver_port)
+                ] }""" % gdaltest.webserver_port)
     with webserver.install_http_handler(handler):
         f = lyr.GetNextFeature()
     if f['foo'] != 'bar':

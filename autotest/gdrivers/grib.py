@@ -890,7 +890,7 @@ def grib_grib2_write_creation_options():
     ds = None
     gdal.Unlink(tmpfilename)
 
-     # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
+    # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
     with gdaltest.error_handler():
         out_ds = gdal.Translate(tmpfilename, 'data/byte.tif', format = 'GRIB',
                    creationOptions = [

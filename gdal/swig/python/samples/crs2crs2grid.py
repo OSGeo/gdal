@@ -269,7 +269,7 @@ if __name__ == '__main__':
     # Script argument parsing.
 
     i = 1
-    while  i < len(argv):
+    while i < len(argv):
 
         if argv[i] == '-griddef' and i < len(argv)-6:
             griddef = (float(argv[i+1]),

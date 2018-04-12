@@ -1516,7 +1516,7 @@ def ogr_geom_circularstring():
 
     # Test Length()
     length = g1.Length()
-    expected_length =  1.5 * math.pi
+    expected_length = 1.5 * math.pi
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1725,7 +1725,7 @@ def ogr_geom_circularstring():
         return 'fail'
 
     length = g1.Length()
-    expected_length =  2 * math.pi * 0.5
+    expected_length = 2 * math.pi * 0.5
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1742,7 +1742,7 @@ def ogr_geom_circularstring():
         return 'fail'
 
     length = g1.Length()
-    expected_length =  2 * math.pi * 0.5
+    expected_length = 2 * math.pi * 0.5
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1758,7 +1758,7 @@ def ogr_geom_circularstring():
 
     # Sanity check: the length must remain the same
     length = g1.Length()
-    expected_length =  2 * math.pi * 0.5
+    expected_length = 2 * math.pi * 0.5
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1810,7 +1810,7 @@ def ogr_geom_circularstring():
         return 'fail'
 
     length = g1.Length()
-    expected_length =  2 * math.pi * 0.5
+    expected_length = 2 * math.pi * 0.5
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1827,7 +1827,7 @@ def ogr_geom_circularstring():
         return 'fail'
 
     length = g1.Length()
-    expected_length =  2 * math.sqrt(2)
+    expected_length = 2 * math.sqrt(2)
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -1857,7 +1857,7 @@ def ogr_geom_circularstring():
 
     # Sanity check: the length must remain the same
     length = g1.Length()
-    expected_length =  2 * math.sqrt(2)
+    expected_length = 2 * math.sqrt(2)
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -2051,7 +2051,7 @@ def ogr_geom_compoundcurve():
             return 'fail'
 
     length = g1.Length()
-    expected_length =  1.5 * math.pi
+    expected_length = 1.5 * math.pi
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -2191,7 +2191,7 @@ def ogr_geom_compoundcurve():
         return 'fail'
 
     length = g1.Length()
-    expected_length =  1.5 * math.pi + math.sqrt(2)
+    expected_length = 1.5 * math.pi + math.sqrt(2)
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -2845,7 +2845,7 @@ def ogr_geom_multicurve():
             return 'fail'
 
     length = g1.Length()
-    expected_length =  2 * math.pi * 0.5
+    expected_length = 2 * math.pi * 0.5
     if abs(length - expected_length) > 1e-8:
         gdaltest.post_reason('fail')
         print(length)
@@ -2968,7 +2968,7 @@ def ogr_geom_multisurface():
             return 'fail'
 
     area = g1.Area()
-    expected_area =  math.pi * 0.5 * 0.5
+    expected_area = math.pi * 0.5 * 0.5
     if abs(area - expected_area) > 1e-8:
         gdaltest.post_reason('fail')
         print(area)

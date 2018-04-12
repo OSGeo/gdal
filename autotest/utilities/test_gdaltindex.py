@@ -202,7 +202,7 @@ def test_gdaltindex_4():
 
     ds = ogr.Open('tmp/tileindex.shp')
     if ds.GetLayer(0).GetFeatureCount() != 5:
-        gdaltest.post_reason( 'got %d features, expecting 5' %  ds.GetLayer(0).GetFeatureCount() )
+        gdaltest.post_reason( 'got %d features, expecting 5' % ds.GetLayer(0).GetFeatureCount() )
         return 'fail'
     ds.Destroy()
 
@@ -233,7 +233,7 @@ def test_gdaltindex_5():
         ds = ogr.Open('tmp/test_gdaltindex_5.shp')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 2:
-            gdaltest.post_reason( 'got %d features, expecting 2' %  ds.GetLayer(0).GetFeatureCount() )
+            gdaltest.post_reason( 'got %d features, expecting 2' % ds.GetLayer(0).GetFeatureCount() )
             return 'fail'
         feat = lyr.GetNextFeature()
         feat = lyr.GetNextFeature()
@@ -271,7 +271,7 @@ def test_gdaltindex_6():
         ds = ogr.Open('tmp/test_gdaltindex_6.mif')
         lyr = ds.GetLayer(0)
         if lyr.GetFeatureCount() != 1:
-            gdaltest.post_reason( 'got %d features, expecting 1' %  lyr.GetFeatureCount() )
+            gdaltest.post_reason( 'got %d features, expecting 1' % lyr.GetFeatureCount() )
             return 'fail'
         ds = None
 

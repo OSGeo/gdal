@@ -2914,7 +2914,7 @@ def jp2openjpeg_45():
             third_metadata_pos < GMLJP2RectifiedGridCoverage_pos and \
             GMLJP2RectifiedGridCoverage_pos < fourth_metadata_pos and \
             fourth_metadata_pos < feature_pos and \
-            fourth_metadata_pos < feature_pos  and \
+            fourth_metadata_pos < feature_pos and \
             myshape2_gml_pos < myshape_kml_pos and \
             myshape_kml_pos < empty_kml_pos and \
             empty_kml_pos < style2_pos and \

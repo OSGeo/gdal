@@ -350,7 +350,7 @@ def ogr_mem_9():
 def ogr_mem_10():
 
     d = ogr.GetDriverByName( 'Memory' )
-    ds =  d.CreateDataSource('xxxxxx')
+    ds = d.CreateDataSource('xxxxxx')
 
     try:
         d2 = ds.GetDriver()
