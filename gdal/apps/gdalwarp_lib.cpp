@@ -3609,9 +3609,9 @@ void GDALWarpAppOptionsSetProgress( GDALWarpAppOptions *psOptions,
  */
 
 void GDALWarpAppOptionsSetQuiet( GDALWarpAppOptions *psOptions,
-                                 bool bQuiet )
+                                 int bQuiet )
 {
-    psOptions->bQuiet = bQuiet;
+    psOptions->bQuiet = CPL_TO_BOOL(bQuiet);
 }
 
 /************************************************************************/

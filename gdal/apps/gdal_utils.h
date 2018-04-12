@@ -92,7 +92,7 @@ void CPL_DLL GDALWarpAppOptionsSetProgress( GDALWarpAppOptions *psOptions,
                                               GDALProgressFunc pfnProgress,
                                               void *pProgressData );
 void CPL_DLL GDALWarpAppOptionsSetQuiet( GDALWarpAppOptions *psOptions,
-                                         bool bQuiet );
+                                         int bQuiet );
 void CPL_DLL GDALWarpAppOptionsSetWarpOption( GDALWarpAppOptions *psOptions,
                                               const char* pszKey,
                                               const char* pszValue );
