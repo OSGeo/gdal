@@ -256,7 +256,7 @@ def ogr_xlsx_6():
         gdaltest.post_reason( 'Did not get expected value(1)' )
         return 'fail'
 
-    if abs(float(feat.GetField('Lat')) -  23.6247122) > 0.00001:
+    if abs(float(feat.GetField('Lat')) - 23.6247122) > 0.00001:
         gdaltest.post_reason( 'Did not get expected value(2)' )
         return 'fail'
 

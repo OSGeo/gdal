@@ -555,6 +555,9 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
     // Build field definitions.
     poFeatureDefn->ReserveSpaceForFields(nFieldCount);
 
+    constexpr int knMAX_GEOM_COLUMNS = 100;
+    bool bWarnedMaxGeomFields = false;
+
     for( int iField = 0; !bIsEurostatTSV && iField < nFieldCount; iField++ )
     {
         char *pszFieldName = nullptr;
@@ -596,6 +599,19 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
         {
             if( EQUAL(papszFieldTypes[iField], "WKT") )
             {
+                if( poFeatureDefn->GetGeomFieldCount() > knMAX_GEOM_COLUMNS )
+                {
+                    if( !bWarnedMaxGeomFields )
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                            "A maximum number of %d geometry fields is supported. "
+                            "Only the first ones are taken into account.",
+                            knMAX_GEOM_COLUMNS);
+                        bWarnedMaxGeomFields = true;
+                    }
+                    continue;
+                }
+
                 eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
                 panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
                 OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(),
@@ -719,6 +735,19 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                   STARTS_WITH_CI(oField.GetNameRef(), "_WKT")) &&
                  oField.GetType() == OFTString )
         {
+            if( poFeatureDefn->GetGeomFieldCount() > knMAX_GEOM_COLUMNS )
+            {
+                if( !bWarnedMaxGeomFields )
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                        "A maximum number of %d geometry fields is supported. "
+                        "Only the first ones are taken into account.",
+                        knMAX_GEOM_COLUMNS);
+                    bWarnedMaxGeomFields = true;
+                }
+                continue;
+            }
+
             eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
 
             panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
@@ -731,16 +760,11 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
             const char *pszEPSG = strstr(pszFieldName, "_EPSG_");
             if( pszEPSG != nullptr )
             {
-                // We limit arbitrarily to 100 imports from EPSG for performance
-                // reason on oss-fuzz
-                if( poFeatureDefn->GetGeomFieldCount() < 100 )
-                {
-                    const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
-                    OGRSpatialReference *poSRS = new OGRSpatialReference();
-                    poSRS->importFromEPSG(nEPSGCode);
-                    oGeomFieldDefn.SetSpatialRef(poSRS);
-                    poSRS->Release();
-                }
+                const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
+                OGRSpatialReference *poSRS = new OGRSpatialReference();
+                poSRS->importFromEPSG(nEPSGCode);
+                oGeomFieldDefn.SetSpatialRef(poSRS);
+                poSRS->Release();
             }
 
             if( strstr(pszFieldName, "_POINT") )

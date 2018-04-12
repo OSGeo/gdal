@@ -115,7 +115,6 @@ class OGRMySQLLayer : public OGRLayer
     virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual const char *GetFIDColumn() override;
-    virtual const char *GetGeometryColumn() override;
 
     /* custom methods */
     virtual OGRFeature *RecordToFeature( char **papszRow, unsigned long * );

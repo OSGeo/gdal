@@ -131,6 +131,10 @@ def ogr_mysql_3():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
+    if gdaltest.mysql_lyr.GetGeometryColumn() != 'SHAPE':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
     if gdaltest.mysql_lyr.GetFeatureCount() != 10:
         gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.mysql_lyr.GetFeatureCount() )
         return 'fail'
@@ -932,7 +936,7 @@ def ogr_mysql_26():
     if f.GetField('field_string') != 'a\'b' or f.GetField('field_int') != 123 or \
        f.GetField('field_real') != 1.23 or \
        not f.IsFieldNull('field_string_null') or \
-       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime')  or \
+       not f.IsFieldNull('field_nodefault') or not f.IsFieldSet('field_datetime') or \
        f.GetField('field_datetime2') != '2015/06/30 12:34:56':
         gdaltest.post_reason('fail')
         f.DumpReadable()

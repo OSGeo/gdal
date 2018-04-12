@@ -2217,7 +2217,7 @@ def ogr_gml_53():
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds =  None
+    ds = None
 
     return 'success'
 
@@ -2238,14 +2238,14 @@ def ogr_gml_54():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds =  None
+    ds = None
 
     # with .gfs now
     ds = ogr.Open('data/empty.gml')
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds =  None
+    ds = None
 
     try:
         os.unlink('data/empty.gfs')

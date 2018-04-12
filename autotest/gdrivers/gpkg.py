@@ -2524,7 +2524,7 @@ def gpkg_26():
 
     gdal.Unlink('/vsimem/tmp.gpkg')
 
-    tests =  [ ('CUSTOM', [4672, 4672, 4672, 4873], None),
+    tests = [ ('CUSTOM', [4672, 4672, 4672, 4873], None),
                ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], None),
                ('GoogleCRS84Quad', [3562, 3562, 3562, 3691], ['RESAMPLING=BILINEAR']),
                ('GoogleCRS84Quad', [3417, 3417, 3417, 3691], ['RESAMPLING=CUBIC']),
@@ -2557,7 +2557,7 @@ def gpkg_26():
 
         gdal.Unlink('/vsimem/tmp.gpkg')
 
-    tests =  [ ('GoogleCRS84Quad', [[42255, 47336, 24963, 35707],[42253, 47333, 24961, 35707]], None),
+    tests = [ ('GoogleCRS84Quad', [[42255, 47336, 24963, 35707],[42253, 47333, 24961, 35707]], None),
                ('GoogleMapsCompatible', [[35429, 36787, 20035, 17849]], None) ]
 
     for (scheme, expected_cs, other_options) in tests:

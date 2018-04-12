@@ -43,7 +43,7 @@ def doq2_1():
 
     ds = gdal.Open('data/C3607614_truncated.NWS')
 
-    mem_ds =  gdal.GetDriverByName('MEM').Create( 'mem_1.mem', 500, 1, gdal.GDT_Byte, 1 )
+    mem_ds = gdal.GetDriverByName('MEM').Create( 'mem_1.mem', 500, 1, gdal.GDT_Byte, 1 )
 
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 500, 1, ds.GetRasterBand(1).ReadRaster(0, 0, 500, 1))
     if mem_ds.GetRasterBand(1).Checksum() != 4201:

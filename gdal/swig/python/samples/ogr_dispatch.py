@@ -339,7 +339,7 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
         elif EQUAL(arg, '-style_as_field'):
             options.bStyleAsField = True
         elif (EQUAL(arg,"-tg") or \
-                EQUAL(arg,"-gt"))  and i+1 < len(argv):
+                EQUAL(arg,"-gt")) and i+1 < len(argv):
             i = i + 1
             options.nGroupTransactions = int(argv[i])
         elif EQUAL(arg,"-where") and i+1 < len(argv):

@@ -235,7 +235,7 @@ def ogr_sde_6():
         gdaltest.post_reason("unforced extent did not equal expected value")
 
     extent = l1.GetExtent(force=1)
-    if extent !=     (478316.0, 481645.0, 4762881.0, 4765611.0):
+    if extent != (478316.0, 481645.0, 4762881.0, 4765611.0):
         gdaltest.post_reason("forced extent did not equal expected value")
     return 'success'
 

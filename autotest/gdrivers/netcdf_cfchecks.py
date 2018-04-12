@@ -2358,7 +2358,7 @@ class CFChecker:
             self.err = self.err+1
             rc=0
 
-        if varType != 'b' and  varType != 'h' and varType != 'i':
+        if varType != 'b' and varType != 'h' and varType != 'i':
             print("ERROR (8.1):",var.id,"must be of type byte, short or int")
             self.err = self.err+1
             rc=0

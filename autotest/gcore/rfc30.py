@@ -43,7 +43,7 @@ import gdaltest
 def rfc30_1():
 
     if version_info >= (3,0,0):
-        filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
+        filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
         filename_escaped = gdaltest.urlescape(filename)
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
@@ -78,7 +78,7 @@ def rfc30_1():
 def rfc30_2():
 
     if version_info >= (3,0,0):
-        filename =  'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
+        filename = 'tmp/yy\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
         # The typemaps should accept Unicode strings directly
