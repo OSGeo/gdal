@@ -1084,7 +1084,7 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            new_ds = gdal.Open (new_filename)
+            new_ds = gdal.Open(new_filename)
             if new_ds.GetRasterBand(1).GetNoDataValue() is not None:
                 post_reason( 'Got nodata value whereas none was expected' )
                 return 'fail'

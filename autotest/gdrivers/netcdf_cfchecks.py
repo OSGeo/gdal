@@ -2672,6 +2672,6 @@ if __name__ == '__main__':
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
         rc = inst.checker(file)
-        exit (rc)
+        exit(rc)
 
 

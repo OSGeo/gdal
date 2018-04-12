@@ -489,7 +489,7 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
             try:
                 dst.SetGCPs( new_gcps , src.GetGCPProjection() )
             except:
-                print ("Failed to set GCPs")
+                print("Failed to set GCPs")
                 return
 
     return
