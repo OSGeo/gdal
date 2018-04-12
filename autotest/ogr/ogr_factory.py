@@ -270,7 +270,7 @@ def ogr_factory_6():
                      'MULTICURVE ((0 0,0 1))',
                      'MULTICURVE (COMPOUNDCURVE((0 0,0 1)))',
                      'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0))',
-                      ]
+                     ]
 
     for src_wkt in src_wkt_list:
         if src_wkt is None:
@@ -567,7 +567,7 @@ def ogr_factory_8():
               ('MULTISURFACE (CURVEPOLYGON(CIRCULARSTRING(0 0,1 0,0 0)))', 'MULTICURVE (CIRCULARSTRING (0 0,1 0,0 0))', ogr.wkbMultiCurve ),
 
               ('MULTIPOINT (2 5)', 'POINT(2 5)', ogr.wkbPoint ),
-            ]
+              ]
     for (src_wkt, exp_wkt, target_type) in tests:
 
         src_geom = ogr.CreateGeometryFromWkt( src_wkt )

@@ -358,7 +358,7 @@ def test_ogr2ogr_lib_16():
               [ 'POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)' ],
               [ 'POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)' ],
               [ 'POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)' ],
-            ]
+              ]
     for (wkt_before, dim, wkt_after) in tests:
         srcDS = gdal.GetDriverByName('Memory').Create('',0,0,0)
         geom = ogr.CreateGeometryFromWkt(wkt_before)

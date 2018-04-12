@@ -63,7 +63,7 @@ def ogr_xplane_apt_dat():
                ( 'TaxiwaySign'          , 17,  [ ('apt_icao', 'CYXX') ] ),
                ( 'VASI_PAPI_WIGWAG'     , 30,  [ ('apt_icao', 'CYXX') ] ),
                ( 'Stopway'              , 6,   [ ('apt_icao', 'LFPM') ] ),
-             ]
+               ]
 
     for layer in layers:
         lyr = xplane_apt_ds.GetLayerByName( layer[0] )
@@ -109,7 +109,7 @@ def ogr_xplane_apt_v810_dat():
                ( 'TaxiwaySign'          , 0,   [ ] ),
                ( 'VASI_PAPI_WIGWAG'     , 12,  [ ('apt_icao', 'UHP1') ] ),
                ( 'Stopway'              , 4,   [ ('apt_icao', 'EKYT' ) ] ),
-             ]
+               ]
 
     for layer in layers:
         lyr = xplane_apt_ds.GetLayerByName( layer[0] )
@@ -143,7 +143,7 @@ def ogr_xplane_nav_dat():
                ( 'Marker'               , 3, [ ('apt_icao', '40N') ] ),
                ( 'DME'                  , 6, [ ('navaid_id', 'AAL') ] ),
                ( 'DMEILS'               , 1, [ ('navaid_id', 'IWG') ] )
-             ]
+               ]
 
     for layer in layers:
         lyr = xplane_nav_ds.GetLayerByName( layer[0] )
@@ -175,7 +175,7 @@ def ogr_xplane_awy_dat():
 
     layers = [ ( 'AirwaySegment'        , 11, [ ('segment_name', 'R464') ] ),
                ( 'AirwayIntersection'   , 14, [ ('name', '00MKK') ] )
-             ]
+               ]
 
     for layer in layers:
         lyr = xplane_awy_ds.GetLayerByName( layer[0] )
@@ -203,7 +203,7 @@ def ogr_xplane_fix_dat():
         return 'fail'
 
     layers = [ ( 'FIX'                  , 1, [ ('fix_name', '00MKK') ] )
-             ]
+               ]
 
     for layer in layers:
         lyr = xplane_fix_ds.GetLayerByName( layer[0] )

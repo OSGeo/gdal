@@ -219,7 +219,7 @@ def tiff_copy_options_colorimetric_data():
         'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
         'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
         'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
-        ]
+                ]
 
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte)
@@ -310,7 +310,7 @@ def tiff_copy_colorimetric_data():
         'TIFFTAG_TRANSFERFUNCTION_RED=' + cvtTuple2String(tifftag_transferfunction[0]),
         'TIFFTAG_TRANSFERFUNCTION_GREEN=' + cvtTuple2String(tifftag_transferfunction[1]),
         'TIFFTAG_TRANSFERFUNCTION_BLUE=' + cvtTuple2String(tifftag_transferfunction[2])
-        ]
+                ]
 
     driver = gdal.GetDriverByName('GTiff')
     ds = driver.Create('tmp/icc_test.tiff', 64, 64, 3, gdal.GDT_Byte, options)
