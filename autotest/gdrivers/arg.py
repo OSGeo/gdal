@@ -133,7 +133,7 @@ def arg_unsupported():
             if name == 'int64' or name == 'uint64':
                 with gdaltest.error_handler('CPLQuietErrorHandler'):
                     ds = gdal.Open('data/arg-'+name+'.arg')
-                if not ds is None:
+                if ds is not None:
                     return 'fail'
             else:
                 ds = gdal.Open('data/arg-'+name+'.arg')

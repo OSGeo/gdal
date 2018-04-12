@@ -1076,7 +1076,7 @@ def netcdf_test_4dfile( ofile ):
         return 'fail'
     md = ds.GetMetadata( 'SUBDATASETS' )
     subds_count = 0
-    if not md is None:
+    if md is not None:
         subds_count = len(md) / 2
     if ds.RasterCount != 8 or subds_count != 0:
         gdaltest.post_reason( 'copy has %d bands (expected 8) and has %d subdatasets'\
