@@ -862,10 +862,10 @@ def ogr_csv_20():
     expect = ['1 - 2', '2-3']
     got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
                  lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
-    if  got[0]!= expect[0]:
+    if got[0]!= expect[0]:
         print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])) )
         return 'fail'
-    if  got[1]!= expect[1]:
+    if got[1]!= expect[1]:
         print('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])) )
         return 'fail'
 
@@ -883,10 +883,10 @@ def ogr_csv_20():
     expect = ['field_1', 'field_2']
     got = [lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef(),\
                  lyr.GetLayerDefn().GetFieldDefn(1).GetNameRef()]
-    if  got[0]!= expect[0]:
+    if got[0]!= expect[0]:
         print('column 0 got name %s expected %s' % (str(got[0]), str(expect[0])) )
         return 'fail'
-    if  got[1]!= expect[1]:
+    if got[1]!= expect[1]:
         print('column 1 got name %s expected %s' % (str(got[1]), str(expect[1])) )
         return 'fail'
 
@@ -914,7 +914,7 @@ def ogr_csv_21():
     expect = ['test', '2000', '2000.12']
     for i in range(0,3):
         got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
-        if  got!= expect[i]:
+        if got!= expect[i]:
             print('column %d got name %s expected %s' % (i,str(got), str(expect[i])) )
             return 'fail'
 
@@ -932,7 +932,7 @@ def ogr_csv_21():
     expect = ['field_1', 'field_2', 'field_3']
     for i in range(0,3):
         got = lyr.GetLayerDefn().GetFieldDefn(i).GetNameRef()
-        if  got!= expect[i]:
+        if got!= expect[i]:
             print('column %d got name %s expected %s' % (i,str(got), str(expect[i])) )
             return 'fail'
 

@@ -433,7 +433,7 @@ def kmlsuperoverlay_8():
 ###############################################################################
 # Cleanup
 
-def  kmlsuperoverlay_cleanup():
+def kmlsuperoverlay_cleanup():
 
     gdal.Unlink('/vsimem/0/0/0.png')
     gdal.Unlink('/vsimem/0/0/0.kml')

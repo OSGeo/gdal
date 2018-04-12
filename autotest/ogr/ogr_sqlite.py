@@ -646,7 +646,7 @@ def ogr_sqlite_13():
     # Must still be 1
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT COUNT(*) AS count FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
-    if  feat.GetFieldAsInteger('count') != 1:
+    if feat.GetFieldAsInteger('count') != 1:
         return 'fail'
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 

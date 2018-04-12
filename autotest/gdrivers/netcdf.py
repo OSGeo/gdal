@@ -180,7 +180,7 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
         gdaltest.post_reason( 'Error getting file sizes.' )
         return 'fail'
 
-    if  size2 >= size1:
+    if size2 >= size1:
         gdaltest.post_reason( 'Compressed file is not smaller than reference, check your netcdf-4, HDF5 and zlib installation' )
         return 'fail'
 
@@ -451,7 +451,7 @@ def netcdf_8():
     srs.ImportFromWkt( ds.GetProjection( ) )
 
     proj = srs.GetAttrValue( 'PROJECTION' )
-    if  proj != 'Albers_Conic_Equal_Area':
+    if proj != 'Albers_Conic_Equal_Area':
         gdaltest.post_reason( 'Projection does not match expected : ' + proj )
         return 'fail'
 
@@ -1404,7 +1404,7 @@ def netcdf_37():
         return 'fail'
     y_vals = md['Y_VALUES']
     if not y_vals.startswith('{-87.15909455586265,-83.47893666931698,') \
-            or not  y_vals.endswith(',83.47893666931698,87.15909455586265}'):
+            or not y_vals.endswith(',83.47893666931698,87.15909455586265}'):
         gdaltest.post_reason( 'got incorrect values in 1D geolocation' )
         return 'fail'
 

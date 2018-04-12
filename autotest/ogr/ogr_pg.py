@@ -1707,7 +1707,7 @@ def ogr_pg_32():
 
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
-    if  feat.count != 1:
+    if feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (1)')
         feat.DumpReadable()
         return 'fail'
@@ -1723,7 +1723,7 @@ def ogr_pg_32():
     # Must still be 1
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
-    if  feat.count != 1:
+    if feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (2)')
         feat.DumpReadable()
         return 'fail'
@@ -1739,7 +1739,7 @@ def ogr_pg_32():
     # Must still be 1
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
-    if  feat.count != 1:
+    if feat.count != 1:
         gdaltest.post_reason('did not get expected count after step (3)')
         feat.DumpReadable()
         return 'fail'
@@ -1764,7 +1764,7 @@ def ogr_pg_32():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     # Must be 2 now
-    if  feat.count != 2:
+    if feat.count != 2:
         gdaltest.post_reason('did not get expected count after step (4)')
         feat.DumpReadable()
         return 'fail'
@@ -1821,7 +1821,7 @@ def ogr_pg_32():
     sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT COUNT(*) FROM spatial_ref_sys")
     feat = sql_lyr.GetNextFeature()
     # Must be 3 now
-    if  feat.count != 3:
+    if feat.count != 3:
         gdaltest.post_reason('did not get expected count after step (5)')
         feat.DumpReadable()
         return 'fail'
@@ -3779,7 +3779,7 @@ def ogr_pg_70():
         return 'fail'
     ds = None
 
-    if  gdaltest.pg_has_postgis and gdaltest.pg_ds.GetLayerByName('geography_columns') is not None:
+    if gdaltest.pg_has_postgis and gdaltest.pg_ds.GetLayerByName('geography_columns') is not None:
         print('Trying geography')
 
         gdaltest.pg_ds.ExecuteSQL('DELLAYER:ogr_pg_70')
