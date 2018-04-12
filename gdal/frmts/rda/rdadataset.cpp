@@ -751,6 +751,12 @@ char** GDALRDADataset::GetHTTPOptions()
                                    osAuthorization.c_str());
     papszOptions = CSLSetNameValue(papszOptions, "PERSISTENT",
                                    CPLSPrintf("%p", this));
+
+    papszOptions = CSLSetNameValue(papszOptions, "MAX_RETRY",
+                                   CPLSPrintf("%d", 3));
+
+    papszOptions = CSLSetNameValue(papszOptions, "RETRY_DELAY",
+                                   CPLSPrintf("%d", 1));
     return papszOptions;
 }
 
@@ -919,6 +925,10 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
                     osURL += "&";
                 osURL += std::get<0>(tup)+"="+std::get<1>(tup);
                 nCountOptions ++;
+            }
+            if(osURL.endsWith("&"))
+            {
+                osURL.erase((osURL.begin() + osURL.size()-1), osURL.end());
             }
         }
         else
@@ -1542,11 +1552,11 @@ CPLString GDALRDADataset::ConstructTileFetchURL(const CPLString& baseUrl,
     }
     else if(m_osType == RDADatasetType::TEMPLATE)
     {
+        //don't pass extension to template endpoint
         retVal += "/template/" + m_osTemplateId + "/tile/";
-        CPLString tosDiscardPath= "." + m_osRequestTileFileFormat;
-        CPLString tosSubPath = subPath ;
-        tosSubPath.erase((tosSubPath.begin()+tosSubPath.find(tosDiscardPath)),
-                         tosSubPath.end());
+        size_t lastdot = subPath.find_last_of(".");
+        CPLString tosSubPath  = (lastdot == std::string::npos) ? subPath.c_str(): subPath.substr(0, lastdot);
+
         retVal += tosSubPath;
         retVal += m_osParams.size()>0 || m_osNodeId ? "?": "";
         if(!m_osNodeId.empty())
