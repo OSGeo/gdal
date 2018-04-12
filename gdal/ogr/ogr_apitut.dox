@@ -95,7 +95,7 @@ of feature we get back, but for now we are interested in getting all features.
 
 With GDAL 2.3 and C++11:
 \code
-    for( auto&& poFeature: poLayer )
+    for( auto& poFeature: poLayer )
     {
 \endcode
 
@@ -406,7 +406,7 @@ int main()
         exit( 1 );
     }
 
-    for( const auto& poLayer: poDS->GetLayers() )
+    for( const OGRLayer* poLayer: poDS->GetLayers() )
     {
         for( const auto& poFeature: *poLayer )
         {
