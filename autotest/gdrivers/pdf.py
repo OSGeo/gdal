@@ -1071,7 +1071,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     got_neatline = ds.GetMetadataItem('NEATLINE')
     ds = None
 
-    if got_wkt  != '':
+    if got_wkt != '':
         gdaltest.post_reason('did not expect non null GetProjectionRef')
         print(got_wkt)
         return 'fail'

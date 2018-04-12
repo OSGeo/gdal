@@ -67,7 +67,7 @@ def ogr_wfs3_errors():
     handler.add('GET', '/wfs3', 404)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -77,7 +77,7 @@ def ogr_wfs3_errors():
     handler.add('GET', '/wfs3', 200, {}, 'foo')
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -88,7 +88,7 @@ def ogr_wfs3_errors():
                 { 'Content-Type': 'text/html' }, 'foo')
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -99,7 +99,7 @@ def ogr_wfs3_errors():
                 { 'Content-Type': 'application/json' }, 'foo bar')
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -110,7 +110,7 @@ def ogr_wfs3_errors():
                 { 'Content-Type': 'application/json' }, '{}')
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -122,7 +122,7 @@ def ogr_wfs3_errors():
                 '{ "collections" : null }')
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
-            ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+            ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -132,7 +132,7 @@ def ogr_wfs3_errors():
                 { 'Content-Type': 'application/json' },
                 '{ "collections" : [ null, {} ] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -162,7 +162,7 @@ def ogr_wfs3_empty_layer():
                 { 'Content-Type': 'application/json' },
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -201,7 +201,7 @@ def ogr_wfs3_schema_from_api():
                 { 'Content-Type': 'application/json' },
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -338,7 +338,7 @@ def ogr_wfs3_fc_no_links_next_legacy_behaviour():
     handler.add('GET', '/wfs3', 200, { 'Content-Type': 'application/json' },
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -445,7 +445,7 @@ def ogr_wfs3_fc_links_next_geojson():
     handler.add('GET', '/wfs3', 200, { 'Content-Type': 'application/json' },
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -522,7 +522,7 @@ def ogr_wfs3_fc_links_next_headers():
     handler.add('GET', '/wfs3', 200, { 'Content-Type': 'application/json' },
                 '{ "collections" : [ { "name": "foo" }] }')
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -603,7 +603,7 @@ def ogr_wfs3_spatial_filter():
                     }
                  }] }""")
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
     if lyr.GetExtent() != (-10.0, 15.0, 40.0, 50.0):
         gdaltest.post_reason('fail')
@@ -688,7 +688,7 @@ def ogr_wfs3_get_feature_count():
                     }
                  }] }""")
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
@@ -754,7 +754,7 @@ def ogr_wfs3_attribute_filter():
                     "name": "foo"
                  }] }""")
     with webserver.install_http_handler(handler):
-        ds  = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
+        ds = ogr.Open('WFS3:http://localhost:%d/wfs3' % gdaltest.webserver_port)
     lyr = ds.GetLayer(0)
 
     handler = webserver.SequentialHandler()
