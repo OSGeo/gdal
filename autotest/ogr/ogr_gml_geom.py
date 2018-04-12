@@ -1458,7 +1458,7 @@ def gml_nested():
         gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
     gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
     for i in range(31):
-        gml = gml +  '</gml:geometryMember></gml:MultiGeometry>'
+        gml = gml + '</gml:geometryMember></gml:MultiGeometry>'
 
     geom = ogr.CreateGeometryFromGML(gml)
     if geom is None:
@@ -1470,7 +1470,7 @@ def gml_nested():
         gml = gml + '<gml:MultiGeometry><gml:geometryMember>'
     gml = gml + '<gml:MultiPolygon></gml:MultiPolygon>'
     for i in range(32):
-        gml = gml +  '</gml:geometryMember></gml:MultiGeometry>'
+        gml = gml + '</gml:geometryMember></gml:MultiGeometry>'
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     geom = ogr.CreateGeometryFromGML(gml)

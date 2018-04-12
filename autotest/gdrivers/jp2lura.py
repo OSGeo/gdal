@@ -2279,7 +2279,7 @@ def jp2lura_52():
     if gdaltest.jp2lura_drv is None:
         return 'skip'
 
-    tests =  [ [-32768, gdal.GDT_Int16, 'h'],
+    tests = [ [-32768, gdal.GDT_Int16, 'h'],
                [-1, gdal.GDT_Int16, 'h'],
                [ 32767, gdal.GDT_Int16, 'h'],
                [     0, gdal.GDT_UInt16, 'H'],

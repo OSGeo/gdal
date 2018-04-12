@@ -329,7 +329,7 @@ for (out_filename, options) in [
 
     ds = None
 
-    raster_options =  ['APPEND_SUBDATASET=YES']
+    raster_options = ['APPEND_SUBDATASET=YES']
 
     gdal.GetDriverByName('GPKG').CreateCopy(out_filename, byte_src_ds,
                                             options = raster_options + ['TILE_FORMAT=PNG', 'RASTER_TABLE=byte_png'])

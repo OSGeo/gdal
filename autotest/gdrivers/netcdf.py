@@ -755,7 +755,7 @@ def netcdf_19():
     if not gdaltest.netcdf_drv_has_nc4:
         return 'skip'
 
-    tst =  gdaltest.GDALTest( 'NetCDF', 'data/trmm-nc4z.nc', 1, 50235,
+    tst = gdaltest.GDALTest( 'NetCDF', 'data/trmm-nc4z.nc', 1, 50235,
                               filename_absolute = 1 )
 
     result = tst.testOpen(skip_checksum = True)

@@ -126,7 +126,7 @@ def run_tests( test_list ):
         except:
             func = test_item
             name = func.__name__
-            outline =  '  TEST: ' + name + ' ... '
+            outline = '  TEST: ' + name + ' ... '
 
         sys.stdout.write( outline )
         sys.stdout.flush()
