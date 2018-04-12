@@ -272,7 +272,7 @@ def ogr_elasticsearch_1():
     feat.SetField('real_field', 2.34)
     feat.SetField('boolean_field', 1)
     feat['strlist_field'] = ['a', 'b']
-    feat['intlist_field'] =  [1,2]
+    feat['intlist_field'] = [1,2]
     feat['int64list_field'] = [123456789012,2]
     feat['reallist_field'] = [1.23,4.56]
     feat['date_field'] = '2015/08/12'

@@ -555,7 +555,7 @@ class TestHDF5:
         if not gdaltest.download_file(self.downloadURL + '/' + self.fileName, self.fileName, self.download_size):
             return 'skip'
 
-        ds = gdal.Open('HDF5:"tmp/cache/' + self.fileName + '"://' +  self.subdatasetname)
+        ds = gdal.Open('HDF5:"tmp/cache/' + self.fileName + '"://' + self.subdatasetname)
 
         if ds.GetRasterBand(1).Checksum() != self.checksum:
             gdaltest.post_reason('Bad checksum. Expected %d, got %d' % (self.checksum, ds.GetRasterBand(1).Checksum()))
@@ -594,7 +594,7 @@ hdf5_list = [ ('ftp://ftp.hdfgroup.uiuc.edu/pub/outgoing/hdf_files/hdf5/samples/
 
 for item in hdf5_list:
     ut = TestHDF5( item[0], item[1], item[2], item[3], item[4] )
-    gdaltest_list.append( (ut.test, 'HDF5:"' + item[1]+ '"://' +   item[2]) )
+    gdaltest_list.append( (ut.test, 'HDF5:"' + item[1]+ '"://' + item[2]) )
 
 
 if __name__ == '__main__':

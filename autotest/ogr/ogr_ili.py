@@ -409,7 +409,7 @@ def ogr_interlis1_9():
     lyr = ds.GetLayerByName('BoGebaeude')
 
     if lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef() != 'AssekuranzNr':
-        gdaltest.post_reason( 'Wrong field name: ' +  lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef())
+        gdaltest.post_reason( 'Wrong field name: ' + lyr.GetLayerDefn().GetFieldDefn(0).GetNameRef())
         return 'fail'
 
     if lyr.GetFeatureCount() != 1:
