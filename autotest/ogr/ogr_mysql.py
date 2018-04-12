@@ -131,6 +131,10 @@ def ogr_mysql_3():
     if gdaltest.mysql_ds is None:
         return 'skip'
 
+    if gdaltest.mysql_lyr.GetGeometryColumn() != 'SHAPE':
+        gdaltest.post_reason( 'fail' )
+        return 'fail'
+
     if gdaltest.mysql_lyr.GetFeatureCount() != 10:
         gdaltest.post_reason( 'GetFeatureCount() returned %d instead of 10' % gdaltest.mysql_lyr.GetFeatureCount() )
         return 'fail'
