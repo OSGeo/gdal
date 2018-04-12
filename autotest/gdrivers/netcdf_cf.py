@@ -484,7 +484,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         tst_res[i_t+1] = netcdf_test_copy( projRaster, 1, None, projNc2, [], 'NETCDF' )
         tst_res[i_t+2] = netcdf_test_copy( projNc2, 1, None, projRaster2, [], intFmt )
 
-        if  tst_res[i_t+1] == 'fail' or tst_res[i_t+2] == 'fail':
+        if tst_res[i_t+1] == 'fail' or tst_res[i_t+2] == 'fail':
             result = 'fail'
 
         i_t = i_t + 2

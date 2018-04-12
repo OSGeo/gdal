@@ -217,7 +217,7 @@ class Densify(Translator):
 
     def densify(self, geometry):
         gtype = geometry.GetGeometryType()
-        if  not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
+        if not (gtype == ogr.wkbLineString or gtype == ogr.wkbMultiLineString):
             raise Exception("The densify function only works on linestring or multilinestring geometries")
 
         g = ogr.Geometry(ogr.wkbLineString)
