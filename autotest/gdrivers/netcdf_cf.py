@@ -312,7 +312,7 @@ netcdf_cfproj_tuples = [
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
     #Note: Rotated Pole not in this list, as seems not GDAL-supported
-    ("TM", "Transverse Mercator", "EPSG:32655", #UTM Zone 55N
+    ("TM", "Transverse Mercator", "EPSG:32655",  # UTM Zone 55N
         "transverse_mercator",
         [
          'scale_factor_at_central_meridian',

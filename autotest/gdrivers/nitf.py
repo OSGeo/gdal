@@ -1567,7 +1567,7 @@ def nitf_49():
 
 def nitf_50():
 
-    options = [ #"IC=C8",
+    options = [  # "IC=C8",
                 "TEXT=DATA_0=COUCOU",
                 "TEXT=HEADER_0=ABC", # This content is invalid but who cares here
                 "CGM=SEGMENT_COUNT=1",
