@@ -533,7 +533,7 @@ def ogr_dxf_13():
     # that the points lie along (or reasonably close to) said path.
 
     if geom.GetPointCount() != 146:
-        gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % geom.GetPointCount() )
         return 'fail'
 
     if abs(geom.GetX(0)-251297.8179) > 0.001 \
@@ -588,7 +588,7 @@ def ogr_dxf_14():
         return 'fail'
 
     if geom.GetPointCount() != 146:
-        gdaltest.post_reason( 'did not get expected number of points, got %d' % (geom.GetPointCount()) )
+        gdaltest.post_reason( 'did not get expected number of points, got %d' % geom.GetPointCount() )
         return 'fail'
 
     if abs(geom.GetX(0)-251297.8179) > 0.001 \
@@ -2464,7 +2464,7 @@ def ogr_dxf_33():
 
     faces = geom.GetGeometryCount()
     if faces != 6:
-        gdaltest.post_reason( 'did not get expected number of faces, got %d instead of %d', faces, 6)
+        gdaltest.post_reason( 'did not get expected number of faces, got %d instead of %d' % (faces, 6))
         return 'fail'
 
     # Cylinder (CIRCLE with thickness)
