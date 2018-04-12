@@ -56,7 +56,7 @@ class TestXMPRead:
 
         if self.drivername == 'PDF':
             md = drv.GetMetadata()
-            if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+            if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md:
                 return 'skip'
 
         # we set ECW to not resolve projection and datum strings to get 3.x behavior.

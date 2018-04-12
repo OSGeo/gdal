@@ -984,7 +984,7 @@ def ogr_openfilegdb_10():
                             error_msg = gdal.GetLastErrorMsg()
                 if feat is None or error_msg != '':
                     if offset - last_offset >= 4 or last_error_msg != error_msg:
-                        if error_msg != '' and not error_msg in errors:
+                        if error_msg != '' and error_msg not in errors:
                             errors.add(error_msg)
                             offsets.append(offset)
                         else:
@@ -1022,7 +1022,7 @@ def ogr_openfilegdb_10():
                             error_msg = gdal.GetLastErrorMsg()
                 if feat is None or error_msg != '':
                     if offset - last_offset >= 4 or last_error_msg != error_msg:
-                        if error_msg != '' and not error_msg in errors:
+                        if error_msg != '' and error_msg not in errors:
                             errors.add(error_msg)
                             offsets.append(offset)
                         else:

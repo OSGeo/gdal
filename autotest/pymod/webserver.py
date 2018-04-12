@@ -150,7 +150,7 @@ class SequentialHandler:
                 request.send_header(k, req_resp.headers[k])
             if req_resp.body:
                 request.send_header('Content-Length', len(req_resp.body))
-            elif not 'Content-Length' in req_resp.headers:
+            elif 'Content-Length' not in req_resp.headers:
                 request.send_header('Content-Length', '0')
             request.end_headers()
             if req_resp.body:

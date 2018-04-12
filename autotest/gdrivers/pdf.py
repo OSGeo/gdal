@@ -55,7 +55,7 @@ def pdf_init():
         return 'skip'
 
     md = gdaltest.pdf_drv.GetMetadata()
-    if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md and not 'HAVE_PDFIUM' in md:
+    if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md and 'HAVE_PDFIUM' not in md:
         gdaltest.pdf_drv = None
         return 'skip'
 

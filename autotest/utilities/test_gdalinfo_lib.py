@@ -118,13 +118,13 @@ def test_gdalinfo_lib_5():
         gdaltest.post_reason('fail')
         return 'fail'
     band = ret['bands'][0]
-    if not 'computedMin' in band:
+    if 'computedMin' not in band:
         gdaltest.post_reason('fail')
         return 'fail'
-    if not 'histogram' in band:
+    if 'histogram' not in band:
         gdaltest.post_reason('fail')
         return 'fail'
-    if not 'checksum' in band:
+    if 'checksum' not in band:
         gdaltest.post_reason('fail')
         return 'fail'
 
