@@ -304,7 +304,7 @@ class GDAL_Handler(BaseHTTPRequestHandler):
 
 class GDAL_HttpServer(HTTPServer):
 
-    def __init__ (self, server_address, handlerClass):
+    def __init__(self, server_address, handlerClass):
         HTTPServer.__init__(self, server_address, handlerClass)
         self.running = False
         self.stop_requested = False
@@ -332,7 +332,7 @@ class GDAL_HttpServer(HTTPServer):
 
 class GDAL_ThreadedHttpServer(Thread):
 
-    def __init__ (self, handlerClass = None):
+    def __init__(self, handlerClass = None):
         Thread.__init__(self)
         ok = False
         self.server = 0

@@ -405,11 +405,11 @@ def ogr_libkml_write(filename):
 
     lyr = ds.CreateLayer('test_wgs84')
 
-    fielddefn = ogr.FieldDefn ( 'name', ogr.OFTString)
+    fielddefn = ogr.FieldDefn( 'name', ogr.OFTString)
     lyr.CreateField(fielddefn)
-    fielddefn = ogr.FieldDefn ( 'description', ogr.OFTString)
+    fielddefn = ogr.FieldDefn( 'description', ogr.OFTString)
     lyr.CreateField(fielddefn)
-    fielddefn = ogr.FieldDefn ( 'foo', ogr.OFTString)
+    fielddefn = ogr.FieldDefn( 'foo', ogr.OFTString)
     lyr.CreateField(fielddefn)
 
     dst_feat = ogr.Feature( lyr.GetLayerDefn() )

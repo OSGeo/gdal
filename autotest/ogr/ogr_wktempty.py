@@ -46,7 +46,7 @@ class TestWktEmpty:
 
         if not geom.IsEmpty():
             geom.Destroy()
-            gdaltest.post_reason ("IsEmpty returning false for an empty geometry")
+            gdaltest.post_reason("IsEmpty returning false for an empty geometry")
             return 'fail'
 
         return 'success'

@@ -51,11 +51,11 @@ def dimap_1():
     if ds.RasterCount != 1 \
        or ds.RasterXSize != 6000 \
        or ds.RasterYSize != 6000:
-        gdaltest.post_reason ( 'wrong size or bands' )
+        gdaltest.post_reason( 'wrong size or bands' )
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum(0,0,100,100) != 21586:
-        gdaltest.post_reason ( 'wrong checksum' )
+        gdaltest.post_reason( 'wrong checksum' )
         return 'fail'
 
     md = ds.GetMetadata()
@@ -105,7 +105,7 @@ def dimap_2():
         if ds.RasterCount != 4 \
           or ds.RasterXSize != 20 \
           or ds.RasterYSize != 30:
-            gdaltest.post_reason ( 'wrong size or bands' )
+            gdaltest.post_reason( 'wrong size or bands' )
             return 'fail'
 
         md = ds.GetMetadata()
