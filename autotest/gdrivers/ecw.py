@@ -540,10 +540,10 @@ def ecw_15():
     gcps = ds.GetGCPs()
     if len(gcps) != 4 \
        or gcps[1].GCPPixel != 0 \
-       or gcps[1].GCPLine  != 50 \
-       or gcps[1].GCPX     != 0 \
-       or gcps[1].GCPY     != 50 \
-       or gcps[1].GCPZ     != 0:
+       or gcps[1].GCPLine != 50 \
+       or gcps[1].GCPX != 0 \
+       or gcps[1].GCPY != 50 \
+       or gcps[1].GCPZ != 0:
         gdaltest.post_reason( 'GCPs wrong.' )
         print(gcps)
         return 'fail'
@@ -1410,13 +1410,13 @@ def ecw_36():
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc312.ecw', vrt_ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
-        print ('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
-        print ('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print ('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dswr = None
@@ -1424,13 +1424,13 @@ def ecw_36():
     dsr = gdal.Open( 'tmp/jrc312.ecw' )
 
     if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_BlueBand :
-        print ('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Blue  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_RedBand:
-        print ('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print ('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dsr = None
@@ -1452,13 +1452,13 @@ def ecw_37():
     dswr = gdaltest.ecw_drv.CreateCopy( 'tmp/jrc123.ecw', ds, options = ['ECW_FORMAT_VERSION=3','TARGET=75'] )
 
     if dswr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
-        print ('Band 1 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Red but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print ('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dswr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        print ('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dswr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dswr = None
@@ -1466,13 +1466,13 @@ def ecw_37():
     dsr = gdal.Open( 'tmp/jrc123.ecw' )
 
     if dsr.GetRasterBand(1).GetColorInterpretation() != gdal.GCI_RedBand :
-        print ('Band 1 color interpretation should be Red  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
+        print('Band 1 color interpretation should be Red  but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(1).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(2).GetColorInterpretation() != gdal.GCI_GreenBand:
-        print ('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
+        print('Band 2 color interpretation should be Green but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(2).GetColorInterpretation()))
         return 'fail'
     if dsr.GetRasterBand(3).GetColorInterpretation() != gdal.GCI_BlueBand:
-        print ('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
+        print('Band 3 color interpretation should be Blue but is : '+ gdal.GetColorInterpretationName(dsr.GetRasterBand(3).GetColorInterpretation()))
         return 'fail'
 
     dsr = None
@@ -2501,4 +2501,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -1271,10 +1271,10 @@ def gml_invalid_geoms():
         ('<gml:OrientableSurface><foo/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface/></gml:OrientableSurface>', None),
         ('<gml:OrientableSurface><gml:baseSurface><foo/></gml:baseSurface></gml:OrientableSurface>', None),
-        ('<gmlce:SimplePolygon/>',None), #invalid
+        ('<gmlce:SimplePolygon/>',None),  # invalid
         ('<gmlce:SimplePolygon><foo/></gmlce:SimplePolygon>',None), # invalid GML3, but we are tolerant
         ('<gmlce:SimplePolygon><gml:posList/></gmlce:SimplePolygon>','POLYGON EMPTY'), # validates the schema
-        ('<gmlce:SimpleMultiPoint/>',None), #invalid
+        ('<gmlce:SimpleMultiPoint/>',None),  # invalid
         ('<gmlce:SimpleMultiPoint><foo/></gmlce:SimpleMultiPoint>',None), # invalid GML3, but we are tolerant
         ('<gmlce:SimpleMultiPoint><gml:posList/></gmlce:SimpleMultiPoint>','MULTIPOINT EMPTY'), # validates the schema
         ('<gml:Envelope/>',None),

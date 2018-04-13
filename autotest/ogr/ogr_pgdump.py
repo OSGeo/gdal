@@ -979,7 +979,7 @@ def ogr_pgdump_15():
     return 'success'
 
 ###############################################################################
-# Test sequence updating 
+# Test sequence updating
 
 def ogr_pgdump_16():
 
@@ -1051,4 +1051,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

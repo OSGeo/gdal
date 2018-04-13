@@ -239,4 +239,3 @@ for i in range(1, inband.YSize - 1):
 
 outdataset.SetGeoTransform(geotransform)
 outdataset.SetProjection(projection)
-

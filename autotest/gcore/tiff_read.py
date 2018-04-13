@@ -588,7 +588,7 @@ def tiff_linearparmunits2():
 
 def tiff_g4_split():
 
-    if not 'GetBlockSize' in dir(gdal.Band):
+    if 'GetBlockSize' not in dir(gdal.Band):
         return 'skip'
 
     ds = gdal.Open('data/slim_g4.tif')
@@ -3115,7 +3115,7 @@ def tiff_read_unknown_compression():
     if ds is not None:
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 
@@ -3188,7 +3188,7 @@ def tiff_read_big_strip():
     return 'success'
 
 ###############################################################################
-# (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT 
+# (Potentially) test libtiff CHUNKY_STRIP_READ_SUPPORT
 
 def tiff_read_big_strip_chunky_way():
 
@@ -3228,7 +3228,7 @@ def tiff_read_huge_tile():
     if ds is not None:
         return 'fail'
 
-    return 'success' 
+    return 'success'
 
 ###############################################################################
 
@@ -3448,7 +3448,7 @@ def tiff_read_stripoffset_types():
 
 ###############################################################################
 # Test reading a JPEG-in-TIFF file that contains the 2 denial of service
-# vulnerabilities listed in 
+# vulnerabilities listed in
 # http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 def tiff_read_progressive_jpeg_denial_of_service():
@@ -3457,7 +3457,7 @@ def tiff_read_progressive_jpeg_denial_of_service():
         return 'skip'
 
     # Should error out with 'JPEGPreDecode:Reading this strip would require
-    #libjpeg to allocate at least...' 
+    #libjpeg to allocate at least...'
     gdal.ErrorReset()
     ds = gdal.Open('/vsizip/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():

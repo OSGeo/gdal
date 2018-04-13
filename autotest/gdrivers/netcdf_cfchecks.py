@@ -1467,7 +1467,7 @@ class CFChecker:
                     dims=re.split(':',part)
                     for d in dims:
                         if d:
-                            if var.getAxisIndex(d) == -1 and not d in self.std_name_dh.dict.keys():
+                            if var.getAxisIndex(d) == -1 and d not in self.std_name_dh.dict.keys():
                                 print("ERROR (7.3): Invalid 'name' in cell_methods attribute:",d)
                                 self.err = self.err+1
                                 rc=0
@@ -1511,7 +1511,7 @@ class CFChecker:
           #print "ROS: Attribute cf_role found!!"
           self.cf_roleCount = self.cf_roleCount + 1
 
-          if not cf_role in ['timeseries_id','profile_id','trajectory_id']:
+          if cf_role not in ['timeseries_id','profile_id','trajectory_id']:
               print("ERROR (9.5): Invalid value for cf_role attribute")
               self.err = self.err + 1
 
@@ -1658,7 +1658,7 @@ class CFChecker:
                 for d in dims:
                     if d:
                         dc=dc+1
-                        if var.getAxisIndex(d) == -1 and not d in self.std_name_dh.dict.keys():
+                        if var.getAxisIndex(d) == -1 and d not in self.std_name_dh.dict.keys():
                             if self.version >= vn1_4:
                                 # Extra constraints at CF-1.4 and above
                                 if d != "area":
@@ -2269,7 +2269,7 @@ class CFChecker:
           else:
               # Validate standard_name
               name=std_name_el[0]
-              if not name in self.std_name_dh.dict.keys():
+              if name not in self.std_name_dh.dict.keys():
                   if chkDerivedName(name):
                       print("ERROR (3.3): Invalid standard_name:",name)
                       self.err = self.err + 1
@@ -2278,7 +2278,7 @@ class CFChecker:
               if len(std_name_el) == 2:
                   # Validate modifier
                   modifier=std_name_el[1]
-                  if not modifier in ['detection_minimum','number_of_observations','standard_error','status_flag']:
+                  if modifier not in ['detection_minimum','number_of_observations','standard_error','status_flag']:
                       print("ERROR (3.3): Invalid standard_name modifier: "+modifier)
                       rc=0
 
@@ -2672,6 +2672,4 @@ if __name__ == '__main__':
     inst = CFChecker(uploader=uploader, useFileName=useFileName, badc=badc, coards=coards, cfStandardNamesXML=standardName, cfAreaTypesXML=areaTypes, udunitsDat=udunitsDat, version=version)
     for file in files:
         rc = inst.checker(file)
-        exit (rc)
-
-
+        exit(rc)

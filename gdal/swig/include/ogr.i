@@ -3006,7 +3006,7 @@ public:
   double Distance( OGRGeometryShadow* other) {
     return OGR_G_Distance(self, other);
   }
-  
+
   double Distance3D( OGRGeometryShadow* other) {
     return OGR_G_Distance3D(self, other);
   }

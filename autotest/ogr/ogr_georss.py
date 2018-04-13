@@ -131,7 +131,7 @@ def ogr_georss_1_atom_ns():
 def ogr_georss_1bis():
 
     try:
-        os.remove ('tmp/test_atom.xml')
+        os.remove('tmp/test_atom.xml')
     except:
         pass
 
@@ -261,7 +261,7 @@ def ogr_georss_3():
 def ogr_georss_create(filename, options):
 
     try:
-        os.remove (filename)
+        os.remove(filename)
     except:
         pass
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource(filename, options = options )
@@ -402,7 +402,7 @@ def ogr_georss_9():
 
 def ogr_georss_10():
     try:
-        os.remove ('tmp/test32631.rss')
+        os.remove('tmp/test32631.rss')
     except:
         pass
 
@@ -423,7 +423,7 @@ def ogr_georss_10():
     ds = None
 
     try:
-        os.remove ('tmp/test32631.rss')
+        os.remove('tmp/test32631.rss')
     except:
         pass
 
@@ -520,7 +520,7 @@ def ogr_georss_12():
 
 def ogr_georss_13():
     try:
-        os.remove ('tmp/nonstandard.rss')
+        os.remove('tmp/nonstandard.rss')
     except:
         pass
     ds = ogr.GetDriverByName('GeoRSS').CreateDataSource('tmp/nonstandard.rss', options = [ 'USE_EXTENSIONS=YES'] )
@@ -631,7 +631,7 @@ def ogr_georss_cleanup():
     list_files = [ 'tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss' ]
     for filename in list_files:
         try:
-            os.remove (filename)
+            os.remove(filename)
         except:
             pass
 

@@ -44,7 +44,7 @@ def names_to_fileinfos( names ):
         if fi.init_from_name(name):
             file_infos.append(fi)
         else:
-            print ('Can not open dataset "%s", skipped' % name)
+            print('Can not open dataset "%s", skipped' % name)
 
     return file_infos
 
@@ -158,9 +158,9 @@ class file_info:
 
 # =============================================================================
 def Usage():
-    print ('Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]')
-    print ('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
-    print ('           | input_files]')
+    print('Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]')
+    print('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
+    print('           | input_files]')
 
 # =============================================================================
 #
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             i = i + 4
 
         elif arg[:1] == '-':
-            print ('Unrecognized command option: ', arg)
+            print('Unrecognized command option: ', arg)
             Usage()
             sys.exit( 1 )
 
@@ -216,14 +216,14 @@ if __name__ == '__main__':
         i = i + 1
 
     if len(names) == 0:
-        print ('No input files selected.')
+        print('No input files selected.')
         Usage()
         sys.exit( 1 )
 
     # Collect information on all the source files.
     file_infos = names_to_fileinfos( names )
     if len(file_infos) == 0:
-        print ('Nothing to process, exiting.')
+        print('Nothing to process, exiting.')
         sys.exit(1)
 
     if ulx is None:
@@ -246,16 +246,16 @@ if __name__ == '__main__':
 
     for fi in file_infos:
         if fi.geotransform[1] != psize_x or fi.geotransform[5] != psize_y:
-            print ("All files must have the same scale; %s does not" \
+            print("All files must have the same scale; %s does not" \
                 % fi.filename)
             sys.exit(1)
 
         if fi.geotransform[2] != 0 or fi.geotransform[4] != 0:
-            print ("No file must be rotated; %s is" % fi.filename)
+            print("No file must be rotated; %s is" % fi.filename)
             sys.exit(1)
 
         if fi.projection != projection:
-            print ("All files must be in the same projection; %s is not" \
+            print("All files must be in the same projection; %s is not" \
                 % fi.filename)
             sys.exit(1)
 
@@ -283,7 +283,7 @@ if __name__ == '__main__':
         for fi in file_infos:
             band_n = band_n + 1
             if len(fi.band_types) != 2:
-                print ( 'File %s has %d bands. Only first band will be taken '
+                print( 'File %s has %d bands. Only first band will be taken '
                         'into account' % (fi.filename, len(fi.band_types)-1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 

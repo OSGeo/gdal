@@ -151,13 +151,13 @@ def saga_6():
         import struct
         value = struct.unpack('d' * 1, data)[0]
         if value != expected_nodata[i]:
-            print (value)
+            print(value)
             gdaltest.post_reason('did not get expected pixel value')
             return 'fail'
 
         nodata = ds.GetRasterBand(1).GetNoDataValue()
         if nodata != expected_nodata[i]:
-            print (nodata)
+            print(nodata)
             gdaltest.post_reason('did not get expected nodata value')
             return 'fail'
 
@@ -217,4 +217,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

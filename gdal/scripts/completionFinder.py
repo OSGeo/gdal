@@ -268,7 +268,7 @@ function_exists _get_comp_words_by_ref || return 0
     optList = processTool(name)
     if "--help-general" in optList:
       for item in generalOptions:
-        if not item in optList:
+        if item not in optList:
           optList.append(item)
     of.writelines(getCompletionScript(name,optList))
   for name in ogrtools:
@@ -277,7 +277,7 @@ function_exists _get_comp_words_by_ref || return 0
     optList = processTool(name)
     if "--help-general" in optList:
       for item in generalOGROptions:
-        if not item in optList:
+        if item not in optList:
           optList.append(item)
     of.writelines(getCompletionScript(name,optList))
 
@@ -287,4 +287,3 @@ function_exists _get_comp_words_by_ref || return 0
 
 if __name__ == "__main__":
   main(sys.argv)
-

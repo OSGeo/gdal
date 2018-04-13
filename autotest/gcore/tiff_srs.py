@@ -490,33 +490,33 @@ def tiff_srs_pcscitation():
 
 gdaltest_list = []
 
-tiff_srs_list = [ 2758, #tmerc
-                  2036, #sterea
-                  2046, #tmerc
-                  3031, #polar stere (ticket #3220)
-                  3032, #polar stere (ticket #3220)
-                  32661, #stere
-                  3035, #laea
-                  2062, #lcc 1SP
-                  [2065, False, True], #krovak
-                  2066, #cass
-                  2964, #aea
-                  3410, #cea
-                  3786, #eqc spherical, method=9823
-                  32663, #eqc elliptical, method=9842
+tiff_srs_list = [ 2758,  # tmerc
+                  2036,  # sterea
+                  2046,  # tmerc
+                  3031,  # polar stere (ticket #3220)
+                  3032,  # polar stere (ticket #3220)
+                  32661,  # stere
+                  3035,  # laea
+                  2062,  # lcc 1SP
+                  [2065, False, True],  # krovak
+                  2066,  # cass
+                  2964,  # aea
+                  3410,  # cea
+                  3786,  # eqc spherical, method=9823
+                  32663,  # eqc elliptical, method=9842
                   4087, # eqc WGS 84 / World Equidistant Cylindrical method=1028
                   4088, # eqc World Equidistant Cylindrical (Sphere) method=1029
-                  2934, #merc
-                  27200, #nzmg
-                  2057, #omerc Hotine_Oblique_Mercator_Azimuth_Center
-                  3591, #omerc Hotine_Oblique_Mercator
-                  29100, #poly
-                  2056, #somerc
-                  2027, #utm
-                  4326, #longlat
-                  26943, #lcc 2SP,
-                  4328, #geocentric
-                  3994, #mercator 2SP
+                  2934,  # merc
+                  27200,  # nzmg
+                  2057,  # omerc Hotine_Oblique_Mercator_Azimuth_Center
+                  3591,  # omerc Hotine_Oblique_Mercator
+                  29100,  # poly
+                  2056,  # somerc
+                  2027,  # utm
+                  4326,  # longlat
+                  26943,  # lcc 2SP,
+                  4328,  # geocentric
+                  3994,  # mercator 2SP
                   26920, # UTM NAD83 special case
                   26720, # UTM NAD27 special case
                   32630, # UTM WGS84 north special case
@@ -572,4 +572,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

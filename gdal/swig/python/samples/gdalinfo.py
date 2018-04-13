@@ -459,7 +459,7 @@ def main( argv = None ):
             print( "  Overviews: arbitrary" )
 
         nMaskFlags = hBand.GetMaskFlags()
-        if (nMaskFlags & (gdal.GMF_NODATA|gdal.GMF_ALL_VALID)) == 0:
+        if (nMaskFlags & (gdal.GMF_NODATA | gdal.GMF_ALL_VALID)) == 0:
 
             hMaskBand = hBand.GetMaskBand()
 

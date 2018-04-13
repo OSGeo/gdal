@@ -165,7 +165,7 @@ def ogr_vfk_4():
         return 'fail'
 
     feat = gdaltest.vfk_layer_sbp.GetFeature(5)
-    length = int (feat.geometry().Length())
+    length = int(feat.geometry().Length())
 
     if length != 10:
         gdaltest.post_reason('did not get expected length, got %d' % length)
@@ -280,7 +280,7 @@ def ogr_vfk_8():
     if count1 != count2:
         gdaltest.post_reason('layer count differs when opening DB by SQLite and VFK drivers')
         return 'fail'
-    
+
     del os.environ['OGR_VFK_DB_READ']
 
     return 'success'

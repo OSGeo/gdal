@@ -98,7 +98,7 @@ def mrf_zen_test():
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expectedCS:
-            gdaltest.post_reason('Interleave=' + interleave + 
+            gdaltest.post_reason('Interleave=' + interleave +
                                  ' expected checksum ' + str(expectedCS) + ' got ' + str(cs))
             result = 'fail'
         for f in glob.glob('tmp/masked.*'):
@@ -723,7 +723,7 @@ class myTestCreateCopyWrapper:
         self.ut = ut
 
     def myTestCreateCopy(self):
-        check_minmax = not 'COMPRESS=JPEG' in self.ut.options
+        check_minmax = 'COMPRESS=JPEG' not in self.ut.options
         for x in self.ut.options:
             if x.find('OPTIONS:LERC_PREC=') >= 0:
                 check_minmax = False

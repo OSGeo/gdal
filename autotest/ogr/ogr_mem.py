@@ -60,7 +60,7 @@ def ogr_mem_2():
         return 'skip'
 
     if gdaltest.mem_ds.TestCapability( ogr.ODsCCreateLayer ) == 0:
-        gdaltest.post_reason ('ODsCCreateLayer TestCapability failed.' )
+        gdaltest.post_reason('ODsCCreateLayer TestCapability failed.' )
         return 'fail'
 
     #######################################################
@@ -94,7 +94,7 @@ def ogr_mem_2():
         dst_feat.SetFrom( feat )
         ret = gdaltest.mem_lyr.CreateFeature( dst_feat )
         if ret != 0:
-            gdaltest.post_reason ('CreateFeature() failed.' )
+            gdaltest.post_reason('CreateFeature() failed.' )
             return 'fail'
 
         feat = shp_lyr.GetNextFeature()
@@ -369,7 +369,7 @@ def ogr_mem_10():
 def ogr_mem_11():
 
     if gdaltest.mem_ds.TestCapability( 'DeleteLayer' ) == 0:
-        gdaltest.post_reason ('Deletelayer TestCapability failed.' )
+        gdaltest.post_reason('Deletelayer TestCapability failed.' )
         return 'fail'
 
     gdaltest.mem_ds.CreateLayer( 'extra' )
@@ -378,15 +378,15 @@ def ogr_mem_11():
 
     gdaltest.mem_lyr = None
     # Delete extra layer
-    if gdaltest.mem_ds.DeleteLayer(layer_count - 2)  != 0:
+    if gdaltest.mem_ds.DeleteLayer(layer_count - 2) != 0:
         gdaltest.post_reason( 'DeleteLayer() failed' )
         return 'fail'
 
-    if gdaltest.mem_ds.DeleteLayer(-1)  == 0:
+    if gdaltest.mem_ds.DeleteLayer(-1) == 0:
         gdaltest.post_reason( 'DeleteLayer() should have failed' )
         return 'fail'
 
-    if gdaltest.mem_ds.DeleteLayer(gdaltest.mem_ds.GetLayerCount())  == 0:
+    if gdaltest.mem_ds.DeleteLayer(gdaltest.mem_ds.GetLayerCount()) == 0:
         gdaltest.post_reason( 'DeleteLayer() should have failed' )
         return 'fail'
 

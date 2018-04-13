@@ -71,7 +71,7 @@ def jp2lura_1():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def jp2lura_missing_license_num():
 
@@ -93,7 +93,7 @@ def jp2lura_missing_license_num():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def jp2lura_invalid_license_num():
 
@@ -2495,4 +2495,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
