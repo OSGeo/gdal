@@ -65,12 +65,14 @@ class GDALAsyncReader;
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_atomic_ops.h"
-#include <vector>
-#include <map>
-#include <limits>
+
 #include <cmath>
-#include <memory>
 #include <iterator>
+#include <limits>
+#include <map>
+#include <memory>
+#include <vector>
+
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
