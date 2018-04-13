@@ -2693,7 +2693,7 @@ def check_identity_transformation(x, y, srid):
 
     # Note that when transforming CSV to SHP the same internal definition of EPSG:srid is being used for source and target,
     # so that this transformation will have identically defined input and output units
-    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point.shp tmp/input_point.csv -oo GEOM_POSSIBLE_NAMES=wkb_geom -s_srs EPSG:%(srid)d  -t_srs EPSG:%(srid)d"  % locals())
+    gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point.shp tmp/input_point.csv -oo GEOM_POSSIBLE_NAMES=wkb_geom -s_srs EPSG:%(srid)d  -t_srs EPSG:%(srid)d" % locals())
 
     ds = ogr.Open('tmp/output_point.shp')
     feat = ds.GetLayer(0).GetNextFeature()
@@ -2705,7 +2705,7 @@ def check_identity_transformation(x, y, srid):
         # Now, transforming SHP to SHP will have a different definition of the SRS (EPSG:srid) which comes from the previouly saved .prj file
         # For angular units in degrees the .prj is saved with greater precision than the internally used value.
         # We perform this additional transformation to exercise the case of units defined with different precision
-        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point2.shp tmp/output_point.shp -t_srs EPSG:%(srid)d"  % locals())
+        gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + " tmp/output_point2.shp tmp/output_point.shp -t_srs EPSG:%(srid)d" % locals())
         ds = ogr.Open('tmp/output_point2.shp')
         feat = ds.GetLayer(0).GetNextFeature()
         ok = feat.GetGeometryRef().GetX() == x and feat.GetGeometryRef().GetY() == y

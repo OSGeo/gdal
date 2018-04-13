@@ -44,7 +44,7 @@ run_as_external = False
 test_list = []
 
 for arg in gdaltest.argv[1:]:
-    if arg  == '-l':
+    if arg == '-l':
         print('List of GDAL Autotest modules')
         for test in all_test_list:
             print('* ' + test)

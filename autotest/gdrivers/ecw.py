@@ -540,10 +540,10 @@ def ecw_15():
     gcps = ds.GetGCPs()
     if len(gcps) != 4 \
        or gcps[1].GCPPixel != 0 \
-       or gcps[1].GCPLine  != 50 \
-       or gcps[1].GCPX     != 0 \
-       or gcps[1].GCPY     != 50 \
-       or gcps[1].GCPZ     != 0:
+       or gcps[1].GCPLine != 50 \
+       or gcps[1].GCPX != 0 \
+       or gcps[1].GCPY != 50 \
+       or gcps[1].GCPZ != 0:
         gdaltest.post_reason( 'GCPs wrong.' )
         print(gcps)
         return 'fail'
