@@ -1439,7 +1439,7 @@ def ogr_gmlas_dataset_getnextfeature():
         return 'fail'
 
     ds.ResetReading()
-    last_pct =  0
+    last_pct = 0
     while True:
         f, l, pct = ds.GetNextFeature( include_pct = True )
         last_pct = pct

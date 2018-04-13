@@ -203,8 +203,7 @@ class mosaic_info:
 
         self.ogrTileIndexDS.GetLayer().SetSpatialFilter(None)
 
-         # merge tiles
-
+        # merge tiles
 
         resultSizeX =int(math.ceil(((maxx-minx) / self.scaleX )))
         resultSizeY =int(math.ceil(((miny-maxy) / self.scaleY )))
@@ -472,7 +471,7 @@ def createPyramidTile(levelMosaicInfo, offsetX, offsetY, width, height,tileName,
         t_band.SetRasterColorInterpretation(levelMosaicInfo.ci[band-1])
 
     res = gdal.ReprojectImage(s_fh,t_fh,None,None,ResamplingMethod)
-    if  res!=0:
+    if res!=0:
         print("Reprojection failed for %s, error %d" % (tileName,res))
         sys.exit( 1 )
 

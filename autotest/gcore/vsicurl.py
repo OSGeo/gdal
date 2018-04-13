@@ -183,7 +183,7 @@ def vsicurl_9():
         return 'skip'
 
     if version_info >= (3,0,0):
-        filename =  'xx\u4E2D\u6587.\u4E2D\u6587'
+        filename = 'xx\u4E2D\u6587.\u4E2D\u6587'
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
         filename = filename.encode( 'utf-8' )
@@ -269,7 +269,7 @@ def vsicurl_test_redirect():
             response = 'HTTP/1.1 302\r\n'
             response += 'Server: foo\r\n'
             response += 'Date: ' + time.strftime("%a, %d %b %Y %H:%M:%S GMT", time.gmtime(current_time)) + '\r\n'
-            response += 'Location: %s\r\n' %  ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (gdaltest.webserver_port, current_time + 30))
+            response += 'Location: %s\r\n' % ('http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (gdaltest.webserver_port, current_time + 30))
             response += '\r\n'
             request.wfile.write(response.encode('ascii'))
 

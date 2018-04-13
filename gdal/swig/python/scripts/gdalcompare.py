@@ -252,7 +252,7 @@ if __name__ == '__main__':
   check_sds = 0
 
   i = 1
-  while  i < len(argv):
+  while i < len(argv):
 
     if argv[i] == '-sds':
       check_sds = 1

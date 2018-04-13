@@ -357,7 +357,7 @@ def ogr_wasp_roughness_from_polygon_z():
                 return 'fail'
             if float(r) > float(l) :
                 res.add((float(l), float(r)))
-            else   :
+            else :
                 res.add((float(r), float(l)))
             j+=1
         i+=1
@@ -430,7 +430,7 @@ def ogr_wasp_roughness_from_polygon_field():
                 return 'fail'
             if float(r) > float(l) :
                 res.add((float(l), float(r)))
-            else   :
+            else :
                 res.add((float(r), float(l)))
             j+=1
         i+=1
@@ -503,7 +503,7 @@ def ogr_wasp_merge():
                 return 'fail'
             if float(r) > float(l) :
                 res.append((float(l), float(r)))
-            else   :
+            else :
                 res.append((float(r), float(l)))
             j+=1
         i+=1
@@ -528,7 +528,7 @@ def ogr_wasp_reading():
 
     ds = ogr.Open( 'tmp.map' )
 
-    if ds is None or  ds.GetLayerCount() != 1:
+    if ds is None or ds.GetLayerCount() != 1:
         return 'fail'
 
     layer = ds.GetLayer(0)

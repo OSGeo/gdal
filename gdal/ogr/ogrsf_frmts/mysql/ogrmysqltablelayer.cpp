@@ -378,6 +378,7 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition( const char *pszTable )
 
         // set to unknown first
         poDefn->SetGeomType( wkbUnknown );
+        poDefn->GetGeomFieldDefn(0)->SetName( pszGeomColumn );
 
         osCommand = "SELECT type, coord_dimension FROM geometry_columns WHERE f_table_name='";
         osCommand += pszTable;

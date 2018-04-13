@@ -41,7 +41,7 @@ expected_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2
 
 
 def osr_url_test(url, expected_wkt):
-    timeout =  10
+    timeout = 10
     socket.setdefaulttimeout(timeout)
     if gdaltest.gdalurlopen(url) is None:
         return 'skip'

@@ -62,7 +62,7 @@ def ogr_rfc30_1_internal(filename, layer_name):
 def ogr_rfc30_1():
 
     if version_info >= (3,0,0):
-        filename =  '/vsimem/\u00e9.shp'
+        filename = '/vsimem/\u00e9.shp'
         layer_name = '\u00e9'
     else:
         # First try with Unicode string

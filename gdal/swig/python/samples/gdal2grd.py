@@ -80,7 +80,7 @@ while i < len(sys.argv):
 
 if infile is None:
     Usage()
-if  outfile is None:
+if outfile is None:
     Usage()
 
 indataset = gdal.Open(infile, gdal.GA_ReadOnly)

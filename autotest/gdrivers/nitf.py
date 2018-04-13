@@ -792,7 +792,7 @@ def nitf_30():
                    'BLOCKA_LRFC_LOC_01=+42.281634+020.122570',
                    'BLOCKA_FRFC_LOC_01=+42.283881+020.074924'
                    ])
-    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    ds = gdal.Open( '/vsimem/nitf30_override.ntf' )
     md = ds.GetMetadata()
     ds = None
     gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
@@ -815,7 +815,7 @@ def nitf_30():
     gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_override.ntf', src_ds,
         options = ['TRE=BLOCKA=010000001000000000                +42.319331+020.078400+42.317083+020.126072+42.281634+020.122570+42.283881+020.074924xxxxx'
                    ])
-    ds =  gdal.Open( '/vsimem/nitf30_override.ntf' )
+    ds = gdal.Open( '/vsimem/nitf30_override.ntf' )
     md = ds.GetMetadata()
     ds = None
     gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_override.ntf' )
@@ -836,7 +836,7 @@ def nitf_30():
 
     # Test that gdal_translate -ullr doesn't propagate BLOCKA
     gdal.Translate('/vsimem/nitf30_no_src_md.ntf', src_ds, format = 'NITF', outputBounds = [2,49,3,50])
-    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    ds = gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
     md = ds.GetMetadata()
     ds = None
     gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
@@ -847,7 +847,7 @@ def nitf_30():
     # Test USE_SRC_NITF_METADATA=NO
     gdal.GetDriverByName('NITF').CreateCopy( '/vsimem/nitf30_no_src_md.ntf', src_ds,
                                             options = ['USE_SRC_NITF_METADATA=NO'])
-    ds =  gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
+    ds = gdal.Open( '/vsimem/nitf30_no_src_md.ntf' )
     md = ds.GetMetadata()
     ds = None
     gdal.GetDriverByName('NITF').Delete( '/vsimem/nitf30_no_src_md.ntf' )
@@ -1049,7 +1049,7 @@ def nitf_38():
     ds = gdal.Open('data/byte.tif')
     nXSize = ds.RasterXSize
     nYSize = ds.RasterYSize
-    data =  ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, nXSize, nYSize)
     expected_cs = ds.GetRasterBand(1).Checksum()
 
     ds = gdal.GetDriverByName('NITF').Create( 'tmp/nitf38.ntf', nXSize, nYSize, 1, options = [ 'NUMI=999' ])
@@ -2377,7 +2377,7 @@ def compare_rpc(src_md, md):
             return 'fail'
         if 'COEFF' in key:
             expected = [ float(v) for v in src_md[key].strip().split(' ') ]
-            found =  [ float(v) for v in md[key].strip().split(' ') ]
+            found = [ float(v) for v in md[key].strip().split(' ') ]
             if expected != found:
                 gdaltest.post_reason('fail: %s value is not the one expected' % key)
                 print(md)
