@@ -6945,7 +6945,7 @@ GDALDataset::Features GDALDataset::GetFeatures()
  @since GDAL 2.3
 */
 
-GDALDataset::Features::Iterator GDALDataset::Features::begin() const
+const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
 {
     return {m_poSelf, true};
 }
@@ -6960,7 +6960,7 @@ GDALDataset::Features::Iterator GDALDataset::Features::begin() const
  @since GDAL 2.3
 */
 
-GDALDataset::Features::Iterator GDALDataset::Features::end() const
+const GDALDataset::Features::Iterator GDALDataset::Features::end() const
 {
     return {m_poSelf, false};
 }
@@ -7096,7 +7096,7 @@ GDALDataset::Layers GDALDataset::GetLayers()
  @since GDAL 2.3
 */
 
-const GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
+GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
 {
     return {m_poSelf, true};
 }
@@ -7111,7 +7111,7 @@ const GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
  @since GDAL 2.3
 */
 
-const GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
+GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
 {
     return {m_poSelf, false};
 }
