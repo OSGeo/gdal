@@ -32,7 +32,7 @@
 import struct
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
@@ -541,15 +541,15 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
 def test_gdaldem_lib_nodata():
 
-    for ( value, type ) in [ ( 0, gdal.GDT_Byte ),
-                             ( 1, gdal.GDT_Byte ),
-                             ( 255, gdal.GDT_Byte ),
-                             ( 0, gdal.GDT_UInt16 ),
-                             ( 1, gdal.GDT_UInt16 ),
-                             ( 65535, gdal.GDT_UInt16 ),
-                             ( 0, gdal.GDT_Int16 ),
-                             ( -32678, gdal.GDT_Int16 ),
-                             ( 32767, gdal.GDT_Int16 ) ]:
+    for (value, type) in [(0, gdal.GDT_Byte),
+                             (1, gdal.GDT_Byte),
+                             (255, gdal.GDT_Byte),
+                             (0, gdal.GDT_UInt16),
+                             (1, gdal.GDT_UInt16),
+                             (65535, gdal.GDT_UInt16),
+                             (0, gdal.GDT_Int16),
+                             (-32678, gdal.GDT_Int16),
+                             (32767, gdal.GDT_Int16)]:
         src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, type)
         src_ds.GetRasterBand(1).SetNoDataValue(value)
         src_ds.GetRasterBand(1).Fill(value)
@@ -635,8 +635,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdaldem_lib' )
+    gdaltest.setup_run('test_gdaldem_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

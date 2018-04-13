@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,9 +42,9 @@ import gdaltest
 def blx_1():
 
     prj = 'WGS84'
-    gt = [ 20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333 ]
-    tst = gdaltest.GDALTest( 'BLX', 's4103.blx', 1, 47024 )
-    return tst.testOpen( check_prj = prj, check_gt = gt )
+    gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
+    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024)
+    return tst.testOpen(check_prj = prj, check_gt = gt)
 
 
 ###############################################################################
@@ -53,9 +53,9 @@ def blx_1():
 def blx_2():
 
     prj = 'WGS84'
-    gt = [ 20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333 ]
-    tst = gdaltest.GDALTest( 'BLX', 's4103.xlb', 1, 47024 )
-    return tst.testOpen( check_prj = prj, check_gt = gt )
+    gt = [20.0004166, 0.0008333, 0.0, 50.0004166, 0.0, -0.0008333]
+    tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
+    return tst.testOpen(check_prj = prj, check_gt = gt)
 
 
 ###############################################################################
@@ -63,8 +63,8 @@ def blx_2():
 
 def blx_3():
 
-    tst = gdaltest.GDALTest( 'BLX', 's4103.xlb', 1, 47024 )
-    return tst.testCreateCopy( check_gt = 1, check_srs = 1 )
+    tst = gdaltest.GDALTest('BLX', 's4103.xlb', 1, 47024)
+    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
 
 
 ###############################################################################
@@ -72,8 +72,8 @@ def blx_3():
 
 def blx_4():
 
-    tst = gdaltest.GDALTest( 'BLX', 's4103.blx', 1, 47024, options = [ 'BIGENDIAN=YES' ] )
-    return tst.testCreateCopy( check_gt = 1, check_srs = 1 )
+    tst = gdaltest.GDALTest('BLX', 's4103.blx', 1, 47024, options = ['BIGENDIAN=YES'])
+    return tst.testCreateCopy(check_gt = 1, check_srs = 1)
 
 
 ###############################################################################
@@ -81,31 +81,31 @@ def blx_4():
 
 def blx_5():
 
-    ds = gdal.Open( 'data/s4103.blx' )
+    ds = gdal.Open('data/s4103.blx')
 
     band = ds.GetRasterBand(1)
     if band.GetOverviewCount() != 4:
-        gdaltest.post_reason( 'did not get expected overview count' )
+        gdaltest.post_reason('did not get expected overview count')
         return 'fail'
 
     cs = band.GetOverview(0).Checksum()
     if cs != 42981:
-        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
+        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
         return 'fail'
 
     cs = band.GetOverview(1).Checksum()
     if cs != 61363:
-        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
+        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
         return 'fail'
 
     cs = band.GetOverview(2).Checksum()
     if cs != 48060:
-        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
+        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
         return 'fail'
 
     cs = band.GetOverview(3).Checksum()
     if cs != 12058:
-        gdaltest.post_reason( 'wrong overview checksum (%d)' % cs )
+        gdaltest.post_reason('wrong overview checksum (%d)' % cs)
         return 'fail'
 
     return 'success'
@@ -122,8 +122,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'blx' )
+    gdaltest.setup_run('blx')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

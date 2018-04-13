@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -63,19 +63,19 @@ def hfa_read_completedefn_recursion():
 
 
 for item in init_list:
-    ut = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
+    ut = gdaltest.GDALTest('HFA', item[0], item[1], item[2])
     if ut is None:
-        print( 'HFA tests skipped' )
+        print('HFA tests skipped')
         sys.exit()
-    gdaltest_list.append( (ut.testOpen, item[0]) )
+    gdaltest_list.append((ut.testOpen, item[0]))
 
 
-gdaltest_list.append( (hfa_read_completedefn_recursion) )
+gdaltest_list.append((hfa_read_completedefn_recursion))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hfa_read' )
+    gdaltest.setup_run('hfa_read')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

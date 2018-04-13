@@ -35,7 +35,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -45,7 +45,7 @@ import gdaltest
 
 def envi_1():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
+    tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
 
     prj = """PROJCS["unnamed",
     GEOGCS["Ellipse Based",
@@ -62,9 +62,9 @@ def envi_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen( check_prj = prj,
+    return tst.testOpen(check_prj = prj,
                          check_gt = (-936408.178, 28.5, 0.0,
-                                     2423902.344, 0.0, -28.5) )
+                                     2423902.344, 0.0, -28.5))
 
 ###############################################################################
 # Verify this can be exported losslessly.
@@ -72,8 +72,8 @@ def envi_1():
 
 def envi_2():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
-    return tst.testCreateCopy( check_gt = 1 )
+    tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
+    return tst.testCreateCopy(check_gt = 1)
 
 ###############################################################################
 # Try the Create interface with an RGB image.
@@ -81,7 +81,7 @@ def envi_2():
 
 def envi_3():
 
-    tst = gdaltest.GDALTest( 'envi', 'rgbsmall.tif', 2, 21053 )
+    tst = gdaltest.GDALTest('envi', 'rgbsmall.tif', 2, 21053)
     return tst.testCreate()
 
 ###############################################################################
@@ -90,7 +90,7 @@ def envi_3():
 
 def envi_4():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
+    tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
 
     prj = """PROJCS["unnamed",
     GEOGCS["NAD83",
@@ -107,7 +107,7 @@ def envi_4():
     PARAMETER["false_easting",20000],
     PARAMETER["false_northing",30000]]"""
 
-    return tst.testSetProjection( prj = prj )
+    return tst.testSetProjection(prj = prj)
 
 ###############################################################################
 # Test TM Projection.
@@ -115,7 +115,7 @@ def envi_4():
 
 def envi_5():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
+    tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
     prj = """PROJCS["OSGB 1936 / British National Grid",
     GEOGCS["OSGB 1936",
         DATUM["OSGB_1936",
@@ -153,7 +153,7 @@ def envi_5():
     PARAMETER["false_northing",-100000],
     UNIT["Meter",1]]"""
 
-    return tst.testSetProjection( prj = prj, expected_prj = expected_prj )
+    return tst.testSetProjection(prj = prj, expected_prj = expected_prj)
 
 ###############################################################################
 # Test LAEA Projection.
@@ -161,7 +161,7 @@ def envi_5():
 
 def envi_6():
 
-    gdaltest.envi_tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
+    gdaltest.envi_tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 24)
 
     prj = """PROJCS["unnamed",
     GEOGCS["Sphere",
@@ -175,7 +175,7 @@ def envi_6():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
 
-    return gdaltest.envi_tst.testSetProjection( prj = prj )
+    return gdaltest.envi_tst.testSetProjection(prj = prj)
 
 ###############################################################################
 # Verify VSIF*L capacity
@@ -183,8 +183,8 @@ def envi_6():
 
 def envi_7():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
-    return tst.testCreateCopy( check_gt = 1, vsimem = 1 )
+    tst = gdaltest.GDALTest('envi', 'aea.dat', 1, 14823)
+    return tst.testCreateCopy(check_gt = 1, vsimem = 1)
 
 ###############################################################################
 # Test fix for #3751
@@ -212,8 +212,8 @@ def envi_8():
 
 def envi_9():
 
-    tst = gdaltest.GDALTest( 'envi', 'aea_compressed.dat', 1, 14823 )
-    return tst.testCreateCopy( check_gt = 1 )
+    tst = gdaltest.GDALTest('envi', 'aea_compressed.dat', 1, 14823)
+    return tst.testCreateCopy(check_gt = 1)
 
 ###############################################################################
 # Test RPC reading and writing
@@ -347,8 +347,8 @@ def envi_15():
     got_gt = src_ds.GetGeoTransform()
     expected_gt = [736600.089, 1.0981889363046606, -2.4665727356350224,
                    4078126.75, -2.4665727356350224, -1.0981889363046606]
-    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6) ]) > 1e-5:
-        gdaltest.post_reason( 'did not get expected geotransform' )
+    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) > 1e-5:
+        gdaltest.post_reason('did not get expected geotransform')
         print(got_gt)
         return 'fail'
 
@@ -356,8 +356,8 @@ def envi_15():
 
     ds = gdal.Open('data/rotation.img')
     got_gt = ds.GetGeoTransform()
-    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6) ]) > 1e-5:
-        gdaltest.post_reason( 'did not get expected geotransform' )
+    if max([abs((got_gt[i] - expected_gt[i]) / expected_gt[i]) for i in range(6)]) > 1e-5:
+        gdaltest.post_reason('did not get expected geotransform')
         print(got_gt)
         return 'fail'
     ds = None
@@ -387,8 +387,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'envi' )
+    gdaltest.setup_run('envi')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

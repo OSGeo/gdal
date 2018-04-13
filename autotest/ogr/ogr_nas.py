@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -64,7 +64,7 @@ def ogr_nas_1():
         os.stat('tmp/cache/BKG_NAS_Peine.xml')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/nas_testdaten_peine.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/nas_testdaten_peine.zip')
             try:
                 os.stat('tmp/cache/BKG_NAS_Peine.xml')
             except:
@@ -73,7 +73,7 @@ def ogr_nas_1():
             return 'skip'
 
     try:
-        os.remove( 'tmp/cache/BKG_NAS_Peine.gfs' )
+        os.remove('tmp/cache/BKG_NAS_Peine.gfs')
     except:
         pass
 
@@ -128,7 +128,7 @@ def ogr_nas_2():
         os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml.zip')
             try:
                 os.stat('tmp/cache/gm2566-testdaten-gid60-2008-11-11.xml')
             except:
@@ -137,7 +137,7 @@ def ogr_nas_2():
             return 'skip'
 
     try:
-        os.remove( 'tmp/cache/gm2566-testdaten-gid60-2008-11-11.gfs' )
+        os.remove('tmp/cache/gm2566-testdaten-gid60-2008-11-11.gfs')
     except:
         pass
 
@@ -216,7 +216,7 @@ def ogr_nas_4():
         return 'skip'
 
     try:
-        os.remove( 'data/delete_nas.gfs' )
+        os.remove('data/delete_nas.gfs')
     except:
         pass
 
@@ -230,32 +230,32 @@ def ogr_nas_4():
         print(ds.GetLayerCount())
         return 'fail'
 
-    del_lyr = ds.GetLayerByName( 'Delete' )
+    del_lyr = ds.GetLayerByName('Delete')
 
     if del_lyr.GetFeatureCount() != 3:
-        gdaltest.post_reason( 'did not get expected number of features' )
+        gdaltest.post_reason('did not get expected number of features')
         return 'fail'
 
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
 
     if feat.GetField('context') != 'Delete':
-        gdaltest.post_reason( 'did not get expected context' )
+        gdaltest.post_reason('did not get expected context')
         return 'fail'
 
     if feat.GetField('typeName') != 'AX_Namensnummer':
-        gdaltest.post_reason( 'did not get expected typeName' )
+        gdaltest.post_reason('did not get expected typeName')
         return 'fail'
 
     if feat.GetField('FeatureId') != 'DENW44AL00000HJU20100730T092847Z':
-        gdaltest.post_reason( 'did not get expected FeatureId' )
+        gdaltest.post_reason('did not get expected FeatureId')
         return 'fail'
 
     del_lyr = None
     ds = None
 
     try:
-        os.remove( 'data/delete_nas.gfs' )
+        os.remove('data/delete_nas.gfs')
     except:
         pass
 
@@ -277,7 +277,7 @@ def ogr_nas_5():
         return 'skip'
 
     try:
-        os.remove( 'data/replace_nas.gfs' )
+        os.remove('data/replace_nas.gfs')
     except:
         pass
 
@@ -293,54 +293,54 @@ def ogr_nas_5():
 
     # Check the delete operation created for the replace
 
-    del_lyr = ds.GetLayerByName( 'Delete' )
+    del_lyr = ds.GetLayerByName('Delete')
 
     if del_lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'did not get expected number of features' )
+        gdaltest.post_reason('did not get expected number of features')
         return 'fail'
 
     del_lyr.ResetReading()
     feat = del_lyr.GetNextFeature()
 
     if feat.GetField('context') != 'Replace':
-        gdaltest.post_reason( 'did not get expected context' )
+        gdaltest.post_reason('did not get expected context')
         return 'fail'
 
     if feat.GetField('replacedBy') != 'DENW44AL00003IkM20110429T070635Z':
-        gdaltest.post_reason( 'did not get expected replacedBy' )
+        gdaltest.post_reason('did not get expected replacedBy')
         return 'fail'
 
     if feat.GetField('safeToIgnore') != 'false':
-        gdaltest.post_reason( 'did not get expected safeToIgnore' )
+        gdaltest.post_reason('did not get expected safeToIgnore')
         return 'fail'
 
     if feat.GetField('typeName') != 'AX_Flurstueck':
-        gdaltest.post_reason( 'did not get expected typeName' )
+        gdaltest.post_reason('did not get expected typeName')
         return 'fail'
 
     if feat.GetField('FeatureId') != 'DENW44AL00003IkM20100809T071726Z':
-        gdaltest.post_reason( 'did not get expected FeatureId' )
+        gdaltest.post_reason('did not get expected FeatureId')
         return 'fail'
 
     del_lyr = None
 
     # Check also the feature created by the Replace
 
-    lyr = ds.GetLayerByName( 'AX_Flurstueck' )
+    lyr = ds.GetLayerByName('AX_Flurstueck')
 
     if lyr.GetFeatureCount() != 1:
-        gdaltest.post_reason( 'did not get expected number of features' )
+        gdaltest.post_reason('did not get expected number of features')
         return 'fail'
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
 
     if feat.GetField('gml_id') != 'DENW44AL00003IkM20110429T070635Z':
-        gdaltest.post_reason( 'did not get expected gml_id' )
+        gdaltest.post_reason('did not get expected gml_id')
         return 'fail'
 
     if feat.GetField('stelle') != 5212:
-        gdaltest.post_reason( 'did not get expected stelle' )
+        gdaltest.post_reason('did not get expected stelle')
         return 'fail'
 
     lyr = None
@@ -348,7 +348,7 @@ def ogr_nas_5():
     ds = None
 
     try:
-        os.remove( 'data/replace_nas.gfs' )
+        os.remove('data/replace_nas.gfs')
     except:
         pass
 
@@ -360,12 +360,12 @@ gdaltest_list = [
     ogr_nas_2,
     ogr_nas_3,
     ogr_nas_4,
-    ogr_nas_5 ]
+    ogr_nas_5]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_nas' )
+    gdaltest.setup_run('ogr_nas')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -32,7 +32,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -173,7 +173,7 @@ def virtualmem_3():
     if not sys.platform.startswith('linux'):
         return 'skip'
 
-    for tmpfile in [ 'tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img' ]:
+    for tmpfile in ['tmp/virtualmem_3.img', '/vsimem/virtualmem_3.img']:
         ds = gdal.GetDriverByName('EHdr').Create(tmpfile, 400, 300, 2)
         ar1 = ds.GetRasterBand(1).GetVirtualMemAutoArray(gdal.GF_Write)
         ar2 = ds.GetRasterBand(2).GetVirtualMemAutoArray(gdal.GF_Write)
@@ -225,7 +225,7 @@ def virtualmem_4():
         return 'skip'
 
     tmpfile = 'tmp/virtualmem_4.tif'
-    for option in [ 'INTERLEAVE=PIXEL', 'INTERLEAVE=BAND' ]:
+    for option in ['INTERLEAVE=PIXEL', 'INTERLEAVE=BAND']:
         try:
             os.unlink(tmpfile)
         except:
@@ -285,16 +285,16 @@ def virtualmem_4():
     return 'success'
 
 
-gdaltest_list = [ virtualmem_1,
+gdaltest_list = [virtualmem_1,
                   virtualmem_2,
                   virtualmem_3,
-                  virtualmem_4 ]
+                  virtualmem_4]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'virtualmem' )
+    gdaltest.setup_run('virtualmem')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

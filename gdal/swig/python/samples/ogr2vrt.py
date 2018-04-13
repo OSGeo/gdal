@@ -38,9 +38,9 @@ from osgeo import ogr, gdal
 #############################################################################
 
 
-def GeomType2Name( type ):
+def GeomType2Name(type):
     flat_type = ogr.GT_Flatten(type)
-    dic = { ogr.wkbUnknown : ('wkbUnknown', '25D'),
+    dic = {ogr.wkbUnknown : ('wkbUnknown', '25D'),
             ogr.wkbPoint : ('wkbPoint', '25D'),
             ogr.wkbLineString : ('wkbLineString', '25D'),
             ogr.wkbPolygon : ('wkbPolygon', '25D'),
@@ -59,7 +59,7 @@ def GeomType2Name( type ):
             ogr.wkbSurface : ('wkbSurface', 'Z'),
             ogr.wkbPolyhedralSurface : ('wkbPolyhedralSurface', 'Z'),
             ogr.wkbTIN : ('wkbTIN', 'Z'),
-            ogr.wkbTriangle : ('wkbTriangle', 'Z') }
+            ogr.wkbTriangle : ('wkbTriangle', 'Z')}
     ret = dic[flat_type][0]
     if flat_type != type:
         if ogr.GT_HasM(type):
@@ -75,7 +75,7 @@ def GeomType2Name( type ):
 
 
 def Esc(x):
-    return gdal.EscapeString( x, gdal.CPLES_XML )
+    return gdal.EscapeString(x, gdal.CPLES_XML)
 
 #############################################################################
 
@@ -99,9 +99,9 @@ feature_count=0
 extent=0
 openoptions = []
 
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 i = 1
 while i < len(argv):
@@ -133,7 +133,7 @@ while i < len(argv):
         outfile = arg
 
     else:
-        layer_list.append( arg )
+        layer_list.append(arg)
 
     i = i + 1
 
@@ -151,14 +151,14 @@ if schema and extent:
 #############################################################################
 # Open the datasource to read.
 
-src_ds = gdal.OpenEx( infile, gdal.OF_VECTOR, open_options = openoptions )
+src_ds = gdal.OpenEx(infile, gdal.OF_VECTOR, open_options = openoptions)
 
 if schema:
     infile = '@dummy@'
 
 if len(layer_list) == 0:
     for lyr_idx in range(src_ds.GetLayerCount()):
-        layer_list.append( src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName() )
+        layer_list.append(src_ds.GetLayer(lyr_idx).GetLayerDefn().GetName())
 
 #############################################################################
 # Start the VRT file.
@@ -253,7 +253,7 @@ for name in layer_list:
     # New format for multi-geometry field support
     else:
         for fld_index in range(layerdef.GetGeomFieldCount()):
-            src_fd = layerdef.GetGeomFieldDefn( fld_index )
+            src_fd = layerdef.GetGeomFieldDefn(fld_index)
             vrt += '    <GeometryField name="%s"' % src_fd.GetName()
             if src_fd.IsNullable() == 0:
                 vrt += ' nullable="false"'
@@ -274,7 +274,7 @@ for name in layer_list:
 
     # Process all the fields.
     for fld_index in range(layerdef.GetFieldCount()):
-        src_fd = layerdef.GetFieldDefn( fld_index )
+        src_fd = layerdef.GetFieldDefn(fld_index)
         if src_fd.GetType() == ogr.OFTInteger:
             type = 'Integer'
         elif src_fd.GetType() == ogr.OFTInteger64:

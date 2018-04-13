@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -71,7 +71,7 @@ def ogr_edigeo_1():
         print(ds.GetLayerCount())
         return 'fail'
 
-    layers = [ ('BATIMENT_id', ogr.wkbPolygon, 107),
+    layers = [('BATIMENT_id', ogr.wkbPolygon, 107),
                ('BORNE_id', ogr.wkbPoint, 5),
                ('COMMUNE_id', ogr.wkbPolygon, 1),
                ('LIEUDIT_id', ogr.wkbPolygon, 3),
@@ -126,12 +126,12 @@ def ogr_edigeo_1():
 
 
 gdaltest_list = [
-    ogr_edigeo_1 ]
+    ogr_edigeo_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_edigeo' )
+    gdaltest.setup_run('ogr_edigeo')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

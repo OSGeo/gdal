@@ -44,7 +44,7 @@ def Usage():
 
 
 argv = sys.argv
-argv = ogr.GeneralCmdLineProcessor( argv )
+argv = ogr.GeneralCmdLineProcessor(argv)
 
 ogr_ds_name = None
 lyr_name = None

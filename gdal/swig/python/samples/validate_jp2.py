@@ -627,7 +627,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                     error_report.EmitWarning('GENERAL', '"bpcc" box has %d elements whereas ihdr.nc = %d' % (len(bpc_vals), ihdr_nc))
 
             if ihdr and not bpcc:
-                bpc_vals = [ ihdr_bpcc for i in range(ihdr_nc) ]
+                bpc_vals = [ihdr_bpcc for i in range(ihdr_nc)]
 
             # Check "colr" subbox
             colr = find_jp2box(jp2h, 'colr')
@@ -844,7 +844,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
         count_boxes = get_count_and_indices_of_jp2boxes(ar)
         for key in count_boxes:
             (val, _) = count_boxes[key]
-            if key in ( 'jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c' ):
+            if key in ('jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c'):
                 if key == 'jp2c':
                     if inspire_tg and val > 1:
                         error_report.EmitError('INSPIRE_TG', '"%s" box expected to be found one time, but present %d times' % (key, val), requirement = 23, conformance_class = 'A.8.15')
@@ -855,7 +855,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
 
         # Check order of boxes
         last_idx = -1
-        for box_name in [ 'jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c', 'jp2i']:
+        for box_name in ['jP  ', 'ftyp', 'rreq', 'jp2h', 'jp2c', 'jp2i']:
             if box_name in count_boxes:
                 (_, idx) = count_boxes[box_name]
                 if idx < last_idx:
@@ -961,7 +961,7 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                 elif YRsiz < min_XYRSiz:
                     min_XYRSiz = YRsiz
 
-            tiled = not (XTsiz + XTOSiz >= Xsiz and YTsiz + YTOSiz >= Ysiz )
+            tiled = not (XTsiz + XTOSiz >= Xsiz and YTsiz + YTOSiz >= Ysiz)
             if (inspire_tg or Rsiz == 2) and XTsiz / min_XYRSiz > 1024 and tiled:
                 error_report.EmitError('PROFILE_1', 'XTsiz / min_XYRSiz = %f > 1024' % (1.0 * XTsiz / min_XYRSiz))
             if (inspire_tg or Rsiz == 2) and XTsiz != YTsiz and tiled:

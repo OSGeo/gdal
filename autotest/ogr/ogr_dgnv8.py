@@ -32,7 +32,7 @@ import os
 import shutil
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -48,9 +48,9 @@ def ogr_dgnv8_1():
     if gdaltest.dgnv8_drv is None:
         return 'skip'
 
-    ds = ogr.Open( 'data/test_dgnv8.dgn' )
+    ds = ogr.Open('data/test_dgnv8.dgn')
     if ds is None:
-        gdaltest.post_reason( 'failed to open test file.' )
+        gdaltest.post_reason('failed to open test file.')
         return 'fail'
 
     return 'success'
@@ -69,7 +69,7 @@ def ogr_dgnv8_2():
 
     ds_ref = ogr.Open('/vsimem/ogr_dgnv8_2.csv')
     lyr_ref = ds_ref.GetLayer(0)
-    ds = ogr.Open( 'data/test_dgnv8_ref.csv' )
+    ds = ogr.Open('data/test_dgnv8_ref.csv')
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
 
@@ -97,7 +97,7 @@ def ogr_dgnv8_3():
         print(ret)
         return 'fail'
 
-    shutil.copy( 'data/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn' )
+    shutil.copy('data/test_dgnv8.dgn', 'tmp/test_dgnv8.dgn')
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' tmp/test_dgnv8.dgn')
     os.unlink('tmp/test_dgnv8.dgn')
 
@@ -127,7 +127,7 @@ def ogr_dgnv8_4():
 
     ds_ref = ogr.Open(tmp_csv)
     lyr_ref = ds_ref.GetLayer(0)
-    ds = ogr.Open( 'data/test_dgnv8_write_ref.csv' )
+    ds = ogr.Open('data/test_dgnv8_write_ref.csv')
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
 
@@ -145,7 +145,7 @@ def ogr_dgnv8_5():
         return 'skip'
 
     tmp_dgn = 'tmp/ogr_dgnv8_5.dgn'
-    options = [ 'APPLICATION=application',
+    options = ['APPLICATION=application',
                 'TITLE=title',
                 'SUBJECT=subject',
                 'AUTHOR=author',
@@ -156,7 +156,7 @@ def ogr_dgnv8_5():
                 'REVISION_NUMBER=revision_number',
                 'CATEGORY=category',
                 'MANAGER=manager',
-                'COMPANY=company' ]
+                'COMPANY=company']
     ds = gdaltest.dgnv8_drv.CreateDataSource(tmp_dgn, options = options)
     lyr = ds.CreateLayer('my_layer')
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -232,12 +232,12 @@ gdaltest_list = [
     ogr_dgnv8_3,
     ogr_dgnv8_4,
     ogr_dgnv8_5,
-    ogr_dgnv8_cleanup ]
+    ogr_dgnv8_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_dgnv8' )
+    gdaltest.setup_run('ogr_dgnv8')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

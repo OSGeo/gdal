@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -270,11 +270,11 @@ def vrtmisc_10():
     ds = None
 
     ds = gdal.Open("/vsimem/vrtmisc_10.vrt", gdal.GA_Update)
-    if ds.GetMetadata() != { 'foo': 'bar' }:
+    if ds.GetMetadata() != {'foo': 'bar'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
-    if ds.GetMetadata('some_domain') != { 'bar' : 'baz' }:
+    if ds.GetMetadata('some_domain') != {'bar' : 'baz'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata('some_domain'))
         return 'fail'
@@ -291,7 +291,7 @@ def vrtmisc_10():
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
-    if ds.GetMetadata('some_domain') != { 'bar' : 'baz' }:
+    if ds.GetMetadata('some_domain') != {'bar' : 'baz'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata('some_domain'))
         return 'fail'
@@ -405,7 +405,7 @@ def vrtmisc_13():
 
 def vrtmisc_14():
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 123456789, 1, options = ['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
     src_ds = None
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
@@ -421,7 +421,7 @@ def vrtmisc_14():
         print(content)
         return 'fail'
 
-    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options = [ 'SPARSE_OK=YES', 'TILED=YES' ] )
+    src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_14_src.tif', 1, 123456789, options = ['SPARSE_OK=YES', 'TILED=YES'])
     gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_14.vrt', src_ds)
     src_ds = None
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_14.vrt', 'rb')
@@ -461,7 +461,7 @@ def vrtmisc_15():
 
 def vrtmisc_16():
 
-    gdal.BuildVRT('/vsimem/vrtmisc_16.vrt', [ 'data/vrtmisc16_tile1.tif', 'data/vrtmisc16_tile2.tif' ])
+    gdal.BuildVRT('/vsimem/vrtmisc_16.vrt', ['data/vrtmisc16_tile1.tif', 'data/vrtmisc16_tile2.tif'])
     fp = gdal.VSIFOpenL('/vsimem/vrtmisc_16.vrt', 'rb')
     content = gdal.VSIFReadL(1, 100000, fp).decode('latin1')
     gdal.VSIFCloseL(fp)
@@ -574,7 +574,7 @@ def vrtmisc_rat():
 
     ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format = 'MEM')
     rat = gdal.RasterAttributeTable()
-    rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic )
+    rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic)
     ds.GetRasterBand(1).SetDefaultRAT(rat)
 
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_rat.vrt', ds)
@@ -631,7 +631,7 @@ def vrtmisc_colortable():
 
     ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
     ct = gdal.ColorTable()
-    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry(0, (255,255,255,255))
     ds.GetRasterBand(1).SetColorTable(ct)
     if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
         gdaltest.post_reason('fail')
@@ -695,12 +695,12 @@ gdaltest_list = [
     vrtmisc_rat,
     vrtmisc_colortable,
     vrtmisc_histogram,
-    vrtmisc_cleanup ]
+    vrtmisc_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrtmisc' )
+    gdaltest.setup_run('vrtmisc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -33,7 +33,7 @@ import sys
 from osgeo import gdal
 import array
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -46,34 +46,34 @@ def mem_1():
     #######################################################
     # Setup dataset
     drv = gdal.GetDriverByName('MEM')
-    gdaltest.mem_ds = drv.Create( 'mem_1.mem', 50, 3 )
+    gdaltest.mem_ds = drv.Create('mem_1.mem', 50, 3)
     ds = gdaltest.mem_ds
 
     if ds.GetProjection() != '':
-        gdaltest.post_reason( 'projection wrong' )
+        gdaltest.post_reason('projection wrong')
         return 'fail'
 
     if ds.GetGeoTransform(can_return_null = True) is not None:
-        gdaltest.post_reason( 'geotransform wrong' )
+        gdaltest.post_reason('geotransform wrong')
         return 'fail'
 
     raw_data = array.array('f',list(range(150))).tostring()
-    ds.WriteRaster( 0, 0, 50, 3, raw_data,
+    ds.WriteRaster(0, 0, 50, 3, raw_data,
                     buf_type = gdal.GDT_Float32,
-                    band_list = [1] )
+                    band_list = [1])
 
-    wkt = gdaltest.user_srs_to_wkt( 'EPSG:26711' )
-    ds.SetProjection( wkt )
+    wkt = gdaltest.user_srs_to_wkt('EPSG:26711')
+    ds.SetProjection(wkt)
 
-    gt = ( 440720, 5, 0, 3751320, 0, -5 )
-    ds.SetGeoTransform( gt )
+    gt = (440720, 5, 0, 3751320, 0, -5)
+    ds.SetGeoTransform(gt)
 
     band = ds.GetRasterBand(1)
-    band.SetNoDataValue( -1.0 )
+    band.SetNoDataValue(-1.0)
 
     # Set GCPs()
-    wkt_gcp = gdaltest.user_srs_to_wkt( 'EPSG:4326' )
-    gcps = [ gdal.GCP(0,1,2,3,4) ]
+    wkt_gcp = gdaltest.user_srs_to_wkt('EPSG:4326')
+    gcps = [gdal.GCP(0,1,2,3,4)]
     ds.SetGCPs([], "")
     ds.SetGCPs(gcps, wkt_gcp)
     ds.SetGCPs([], "")
@@ -84,32 +84,32 @@ def mem_1():
     # Verify dataset.
 
     if band.GetNoDataValue() != -1.0:
-        gdaltest.post_reason( 'no data is wrong' )
+        gdaltest.post_reason('no data is wrong')
         return 'fail'
 
     if ds.GetProjection() != wkt:
-        gdaltest.post_reason( 'projection wrong' )
+        gdaltest.post_reason('projection wrong')
         return 'fail'
 
     if ds.GetGeoTransform() != gt:
-        gdaltest.post_reason( 'geotransform wrong' )
+        gdaltest.post_reason('geotransform wrong')
         return 'fail'
 
     if band.Checksum() != 1531:
-        gdaltest.post_reason( 'checksum wrong' )
+        gdaltest.post_reason('checksum wrong')
         print(band.Checksum())
         return 'fail'
 
     if ds.GetGCPCount() != 1:
-        gdaltest.post_reason( 'GetGCPCount wrong' )
+        gdaltest.post_reason('GetGCPCount wrong')
         return 'fail'
 
     if len(ds.GetGCPs()) != 1:
-        gdaltest.post_reason( 'GetGCPs wrong' )
+        gdaltest.post_reason('GetGCPs wrong')
         return 'fail'
 
     if ds.GetGCPProjection() != wkt_gcp:
-        gdaltest.post_reason( 'GetGCPProjection wrong' )
+        gdaltest.post_reason('GetGCPProjection wrong')
         return 'fail'
 
     if band.DeleteNoDataValue() != 0:
@@ -130,10 +130,10 @@ def mem_1():
 def mem_2():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    ds = gdal.Open( 'MEM:::' )
+    ds = gdal.Open('MEM:::')
     gdal.PopErrorHandler()
     if ds is not None:
-        gdaltest.post_reason( 'opening MEM dataset should have failed.' )
+        gdaltest.post_reason('opening MEM dataset should have failed.')
         return 'fail'
 
     try:
@@ -170,32 +170,32 @@ def mem_2():
 
     # build ds name.
     dsnames = ['MEM:::DATAPOINTER=0x%X,PIXELS=%d,LINES=%d,BANDS=1,DATATYPE=Float32,PIXELOFFSET=4,LINEOFFSET=%d,BANDOFFSET=0' % (p, width, height, width * 4),
-               'MEM:::DATAPOINTER=0x%X,PIXELS=%d,LINES=%d,DATATYPE=Float32' % (p, width, height) ]
+               'MEM:::DATAPOINTER=0x%X,PIXELS=%d,LINES=%d,DATATYPE=Float32' % (p, width, height)]
 
     for dsname in dsnames:
 
         for i in range(width*height):
             float_p[i] = 5.0
 
-        ds = gdal.Open( dsname )
+        ds = gdal.Open(dsname)
         if ds is None:
-            gdaltest.post_reason( 'opening MEM dataset failed.' )
+            gdaltest.post_reason('opening MEM dataset failed.')
             free(p)
             return 'fail'
 
         chksum = ds.GetRasterBand(1).Checksum()
         if chksum != 750:
-            gdaltest.post_reason( 'checksum failed.' )
+            gdaltest.post_reason('checksum failed.')
             print(chksum)
             free(p)
             return 'fail'
 
-        ds.GetRasterBand(1).Fill( 100.0 )
+        ds.GetRasterBand(1).Fill(100.0)
         ds.FlushCache()
 
         if float_p[0] != 100.0:
             print(float_p[0])
-            gdaltest.post_reason( 'fill seems to have failed.' )
+            gdaltest.post_reason('fill seems to have failed.')
             free(p)
             return 'fail'
 
@@ -212,7 +212,7 @@ def mem_2():
 def mem_3():
 
     drv = gdal.GetDriverByName('MEM')
-    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    ds = drv.Create('MEM:::', 1, 1, 1)
     if ds is None:
         return 'fail'
     ds = None
@@ -227,8 +227,8 @@ def mem_4():
 
     drv = gdal.GetDriverByName('MEM')
 
-    ds = drv.Create( '', 100, 100, 3 )
-    expected_cs = [ 0, 0, 0 ]
+    ds = drv.Create('', 100, 100, 3)
+    expected_cs = [0, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i+1).Checksum()
         if cs != expected_cs[i]:
@@ -237,7 +237,7 @@ def mem_4():
             return 'fail'
 
     ds.GetRasterBand(1).Fill(255)
-    expected_cs = [ 57182, 0, 0 ]
+    expected_cs = [57182, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i+1).Checksum()
         if cs != expected_cs[i]:
@@ -257,8 +257,8 @@ def mem_5():
 
     drv = gdal.GetDriverByName('MEM')
 
-    ds = drv.Create( '', 100, 100, 3, options = ['INTERLEAVE=PIXEL'] )
-    expected_cs = [ 0, 0, 0 ]
+    ds = drv.Create('', 100, 100, 3, options = ['INTERLEAVE=PIXEL'])
+    expected_cs = [0, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i+1).Checksum()
         if cs != expected_cs[i]:
@@ -267,7 +267,7 @@ def mem_5():
             return 'fail'
 
     ds.GetRasterBand(1).Fill(255)
-    expected_cs = [ 57182, 0, 0 ]
+    expected_cs = [57182, 0, 0]
     for i in range(3):
         cs = ds.GetRasterBand(i+1).Checksum()
         if cs != expected_cs[i]:
@@ -296,7 +296,7 @@ def mem_6():
 
     # Multiplication overflow
     with gdaltest.error_handler():
-        ds = drv.Create( '', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64 )
+        ds = drv.Create('', 1, 1, 0x7FFFFFFF, gdal.GDT_Float64)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -304,7 +304,7 @@ def mem_6():
 
     # Multiplication overflow
     with gdaltest.error_handler():
-        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 16 )
+        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 16)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -312,7 +312,7 @@ def mem_6():
 
     # Multiplication overflow
     with gdaltest.error_handler():
-        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64 )
+        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, gdal.GDT_Float64)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -320,7 +320,7 @@ def mem_6():
 
     # Out of memory error
     with gdaltest.error_handler():
-        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'] )
+        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1, options = ['INTERLEAVE=PIXEL'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -328,19 +328,19 @@ def mem_6():
 
     # Out of memory error
     with gdaltest.error_handler():
-        ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 1 )
+        ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 1)
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = None
 
     # 32 bit overflow on 32-bit builds, or possible out of memory error
-    ds = drv.Create( '', 0x7FFFFFFF, 1, 0 )
+    ds = drv.Create('', 0x7FFFFFFF, 1, 0)
     with gdaltest.error_handler():
         ds.AddBand(gdal.GDT_Float64)
 
     # Will raise out of memory error in all cases
-    ds = drv.Create( '', 0x7FFFFFFF, 0x7FFFFFFF, 0 )
+    ds = drv.Create('', 0x7FFFFFFF, 0x7FFFFFFF, 0)
     with gdaltest.error_handler():
         ret = ds.AddBand(gdal.GDT_Float64)
     if ret == 0:
@@ -356,7 +356,7 @@ def mem_6():
 def mem_7():
 
     drv = gdal.GetDriverByName('MEM')
-    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    ds = drv.Create('MEM:::', 1, 1, 1)
     ds.AddBand(gdal.GDT_Byte, [])
     if ds.RasterCount != 2:
         return 'fail'
@@ -371,7 +371,7 @@ def mem_7():
 def mem_8():
 
     drv = gdal.GetDriverByName('MEM')
-    ds = drv.Create( 'MEM:::', 1, 1, 1 )
+    ds = drv.Create('MEM:::', 1, 1, 1)
     ds.GetRasterBand(1).SetDefaultHistogram(0,255,[])
     ds.GetRasterBand(1).SetDefaultHistogram(1,2,[5,6])
     ds.GetRasterBand(1).SetDefaultHistogram(1,2,[3000000000,4])
@@ -394,7 +394,7 @@ def mem_9():
     src_ds = gdal.Open('data/rgbsmall.tif')
     drv = gdal.GetDriverByName('MEM')
 
-    for interleave in [ 'BAND', 'PIXEL' ] :
+    for interleave in ['BAND', 'PIXEL'] :
         out_ds = drv.CreateCopy('', src_ds, options = ['INTERLEAVE=%s' % interleave])
         ref_data = src_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
         got_data = out_ds.GetRasterBand(2).ReadRaster(20,8,4,5)
@@ -514,12 +514,12 @@ def mem_9():
 def mem_10():
 
     # Error case: building overview on a 0 band dataset
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
     with gdaltest.error_handler():
         ds.BuildOverviews('NEAR', [2])
 
     # Requesting overviews when they are not
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     if ds.GetRasterBand(1).GetOverviewCount() != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -675,13 +675,13 @@ def mem_10():
 def mem_11():
 
     # Error case: building overview on a 0 band dataset
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 0)
     if ds.CreateMaskBand(gdal.GMF_PER_DATASET) == 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Per dataset mask on single band dataset
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -700,7 +700,7 @@ def mem_11():
         return 'fail'
 
     # Check that the per dataset mask is shared by all bands
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
     if ds.CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -713,7 +713,7 @@ def mem_11():
         return 'fail'
 
     # Same but call it on band 2
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
     if ds.GetRasterBand(2).CreateMaskBand(gdal.GMF_PER_DATASET) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -726,7 +726,7 @@ def mem_11():
         return 'fail'
 
     # Per band masks
-    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2 )
+    ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 2)
     if ds.GetRasterBand(1).CreateMaskBand(0) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -751,7 +751,7 @@ def mem_11():
 def mem_12():
 
     # Test on per-band mask
-    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2 )
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
     ds.GetRasterBand(1).CreateMaskBand(0)
     ds.GetRasterBand(1).GetMaskBand().Fill(127)
     ds.BuildOverviews('NEAR', [2])
@@ -769,7 +769,7 @@ def mem_12():
         return 'fail'
 
     # Test on per-dataset mask
-    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2 )
+    ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 2)
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     ds.GetRasterBand(1).GetMaskBand().Fill(127)
     ds.BuildOverviews('NEAR', [2])
@@ -830,7 +830,7 @@ def mem_colortable():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     ct = gdal.ColorTable()
-    ct.SetColorEntry( 0, (255,255,255,255) )
+    ct.SetColorEntry(0, (255,255,255,255))
     ds.GetRasterBand(1).SetColorTable(ct)
     if ds.GetRasterBand(1).GetColorTable().GetCount() != 1:
         gdaltest.post_reason('fail')
@@ -867,12 +867,12 @@ gdaltest_list = [
     mem_rat,
     mem_categorynames,
     mem_colortable,
-    mem_cleanup ]
+    mem_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mem' )
+    gdaltest.setup_run('mem')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

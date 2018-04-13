@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,18 +40,18 @@ import gdaltest
 
 def gtx_1():
 
-    tst = gdaltest.GDALTest( 'GTX', 'hydroc1.gtx', 1, 64183 )
+    tst = gdaltest.GDALTest('GTX', 'hydroc1.gtx', 1, 64183)
     gt = (276.725, 0.05, 0.0, 42.775, 0.0, -0.05)
-    return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+    return tst.testOpen(check_gt = gt, check_prj = 'WGS84')
 
 
 gdaltest_list = [
-    gtx_1 ]
+    gtx_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gtx' )
+    gdaltest.setup_run('gtx')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

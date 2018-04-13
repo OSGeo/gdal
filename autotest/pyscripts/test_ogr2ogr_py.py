@@ -33,8 +33,8 @@ import sys
 import os
 import shutil
 
-sys.path.append( '../pymod' )
-sys.path.append( '../ogr' )
+sys.path.append('../pymod')
+sys.path.append('../ogr')
 
 from osgeo import ogr
 from osgeo import osr
@@ -663,7 +663,7 @@ def test_ogr2ogr_py_20():
     except:
         pass
 
-    expected_fields = [ 'a',
+    expected_fields = ['a',
                         'A_1',
                         'a_1_2',
                         'aaaaaAAAAA',
@@ -677,8 +677,8 @@ def test_ogr2ogr_py_20():
                         'aaaaaAAA_7',
                         'aaaaaAAA_8',
                         'aaaaaAAA_9',
-                        'aaaaaAAA10' ]
-    expected_data = [ '1',
+                        'aaaaaAAA10']
+    expected_data = ['1',
                       '2',
                       '3',
                       '4',
@@ -692,7 +692,7 @@ def test_ogr2ogr_py_20():
                       '12',
                       '13',
                       '14',
-                      '15' ]
+                      '15']
 
     test_py_scripts.run_py_script(script_path, 'ogr2ogr', 'tmp ../utilities/data/Fields.csv')
 
@@ -702,16 +702,16 @@ def test_ogr2ogr_py_20():
         return 'fail'
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
-        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
+        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
         ds.Destroy()
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
 
     error_occurred = False
     feat = ds.GetLayer(0).GetNextFeature()
-    for i in range( layer_defn.GetFieldCount() ):
-        if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
-            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef())
+    for i in range(layer_defn.GetFieldCount()):
+        if layer_defn.GetFieldDefn(i).GetNameRef() != expected_fields[i]:
+            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn(i).GetNameRef())
             error_occurred = True
         if feat.GetFieldAsString(i) != expected_data[i]:
             print('Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i))
@@ -1598,8 +1598,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_ogr2ogr_py' )
+    gdaltest.setup_run('test_ogr2ogr_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

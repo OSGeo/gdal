@@ -30,7 +30,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -42,7 +42,7 @@ from osgeo import ogr
 
 def ogr_basic_1():
 
-    gdaltest.ds = ogr.Open( 'data/poly.shp' )
+    gdaltest.ds = ogr.Open('data/poly.shp')
 
     if gdaltest.ds is not None:
         return 'success'
@@ -55,7 +55,7 @@ def ogr_basic_1():
 
 def ogr_basic_2():
 
-    gdaltest.lyr = gdaltest.ds.GetLayerByName( 'poly' )
+    gdaltest.lyr = gdaltest.ds.GetLayerByName('poly')
 
     if gdaltest.lyr.GetName() != 'poly':
         return 'fail'
@@ -69,7 +69,7 @@ def ogr_basic_2():
 
     count = gdaltest.lyr.GetFeatureCount()
     if count != 10:
-        gdaltest.post_reason( 'Got wrong count with GetFeatureCount() - %d, expecting 10' % count )
+        gdaltest.post_reason('Got wrong count with GetFeatureCount() - %d, expecting 10' % count)
         return 'fail'
 
     # Now actually iterate through counting the features and ensure they agree.
@@ -82,7 +82,7 @@ def ogr_basic_2():
         feat = gdaltest.lyr.GetNextFeature()
 
     if count2 != 10:
-        gdaltest.post_reason( 'Got wrong count with GetNextFeature() - %d, expecting 10' % count2 )
+        gdaltest.post_reason('Got wrong count with GetNextFeature() - %d, expecting 10' % count2)
         return 'fail'
 
     return 'success'
@@ -101,36 +101,36 @@ def ogr_basic_3():
     ###########################################################################
     # Create query geometry.
 
-    ring = ogr.Geometry( type = ogr.wkbLinearRing )
-    ring.AddPoint( minx, miny )
-    ring.AddPoint( maxx, miny )
-    ring.AddPoint( maxx, maxy )
-    ring.AddPoint( minx, maxy )
-    ring.AddPoint( minx, miny )
+    ring = ogr.Geometry(type = ogr.wkbLinearRing)
+    ring.AddPoint(minx, miny)
+    ring.AddPoint(maxx, miny)
+    ring.AddPoint(maxx, maxy)
+    ring.AddPoint(minx, maxy)
+    ring.AddPoint(minx, miny)
 
-    poly = ogr.Geometry( type = ogr.wkbPolygon )
-    poly.AddGeometryDirectly( ring )
+    poly = ogr.Geometry(type = ogr.wkbPolygon)
+    poly.AddGeometryDirectly(ring)
 
-    gdaltest.lyr.SetSpatialFilter( poly )
-    gdaltest.lyr.SetSpatialFilter( gdaltest.lyr.GetSpatialFilter() )
+    gdaltest.lyr.SetSpatialFilter(poly)
+    gdaltest.lyr.SetSpatialFilter(gdaltest.lyr.GetSpatialFilter())
     gdaltest.lyr.ResetReading()
 
     count = gdaltest.lyr.GetFeatureCount()
     if count != 1:
-        gdaltest.post_reason( 'Got wrong feature count with spatial filter, expected 1, got %d' % count )
+        gdaltest.post_reason('Got wrong feature count with spatial filter, expected 1, got %d' % count)
         return 'fail'
 
     feat1 = gdaltest.lyr.GetNextFeature()
     feat2 = gdaltest.lyr.GetNextFeature()
 
     if feat1 is None or feat2 is not None:
-        gdaltest.post_reason( 'Got too few or too many features with spatial filter.' )
+        gdaltest.post_reason('Got too few or too many features with spatial filter.')
         return 'fail'
 
-    gdaltest.lyr.SetSpatialFilter( None )
+    gdaltest.lyr.SetSpatialFilter(None)
     count = gdaltest.lyr.GetFeatureCount()
     if count != 10:
-        gdaltest.post_reason( 'Clearing spatial query may not have worked properly, getting\n%d features instead of expected 10 features.' % count )
+        gdaltest.post_reason('Clearing spatial query may not have worked properly, getting\n%d features instead of expected 10 features.' % count)
         return 'fail'
 
     return 'success'
@@ -142,11 +142,11 @@ def ogr_basic_3():
 def ogr_basic_4():
     driver = gdaltest.ds.GetDriver()
     if driver is None:
-        gdaltest.post_reason( 'GetDriver() returns None' )
+        gdaltest.post_reason('GetDriver() returns None')
         return 'fail'
 
     if driver.GetName() != 'ESRI Shapefile':
-        gdaltest.post_reason( 'Got wrong driver name: ' + driver.GetName() )
+        gdaltest.post_reason('Got wrong driver name: ' + driver.GetName())
         return 'fail'
 
     return 'success'
@@ -157,20 +157,20 @@ def ogr_basic_4():
 
 def ogr_basic_5():
 
-    gdaltest.lyr.SetAttributeFilter( 'FID = 3' )
+    gdaltest.lyr.SetAttributeFilter('FID = 3')
     gdaltest.lyr.ResetReading()
 
     feat1 = gdaltest.lyr.GetNextFeature()
     feat2 = gdaltest.lyr.GetNextFeature()
 
-    gdaltest.lyr.SetAttributeFilter( None )
+    gdaltest.lyr.SetAttributeFilter(None)
 
     if feat1 is None or feat2 is not None:
-        gdaltest.post_reason( 'unexpected result count.' )
+        gdaltest.post_reason('unexpected result count.')
         return 'fail'
 
     if feat1.GetFID() != 3:
-        gdaltest.post_reason( 'got wrong feature.' )
+        gdaltest.post_reason('got wrong feature.')
         return 'fail'
 
     return 'success'
@@ -182,13 +182,13 @@ def ogr_basic_6():
 
     # Put inside try/except for OG python bindings
     try:
-        if ogr.Open( '' ) is not None:
+        if ogr.Open('') is not None:
             return 'fail'
     except:
         pass
 
     try:
-        if ogr.Open( 'non_existing' ) is not None:
+        if ogr.Open('non_existing') is not None:
             return 'fail'
     except:
         pass
@@ -406,24 +406,24 @@ def ogr_basic_8():
 
 def ogr_basic_9():
 
-    geom_type_tuples = [ [ ogr.wkbUnknown, "Unknown (any)" ],
-                         [ ogr.wkbPoint, "Point" ],
-                         [ ogr.wkbLineString, "Line String"],
-                         [ ogr.wkbPolygon, "Polygon"],
-                         [ ogr.wkbMultiPoint, "Multi Point"],
-                         [ ogr.wkbMultiLineString, "Multi Line String"],
-                         [ ogr.wkbMultiPolygon, "Multi Polygon"],
-                         [ ogr.wkbGeometryCollection, "Geometry Collection"],
-                         [ ogr.wkbNone, "None"],
-                         [ ogr.wkbUnknown | ogr.wkb25DBit, "3D Unknown (any)" ],
-                         [ ogr.wkbPoint25D, "3D Point" ],
-                         [ ogr.wkbLineString25D, "3D Line String"],
-                         [ ogr.wkbPolygon25D, "3D Polygon"],
-                         [ ogr.wkbMultiPoint25D, "3D Multi Point"],
-                         [ ogr.wkbMultiLineString25D, "3D Multi Line String"],
-                         [ ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
-                         [ ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
-                         [ 123456, "Unrecognized: 123456" ]
+    geom_type_tuples = [[ogr.wkbUnknown, "Unknown (any)"],
+                         [ogr.wkbPoint, "Point"],
+                         [ogr.wkbLineString, "Line String"],
+                         [ogr.wkbPolygon, "Polygon"],
+                         [ogr.wkbMultiPoint, "Multi Point"],
+                         [ogr.wkbMultiLineString, "Multi Line String"],
+                         [ogr.wkbMultiPolygon, "Multi Polygon"],
+                         [ogr.wkbGeometryCollection, "Geometry Collection"],
+                         [ogr.wkbNone, "None"],
+                         [ogr.wkbUnknown | ogr.wkb25DBit, "3D Unknown (any)"],
+                         [ogr.wkbPoint25D, "3D Point"],
+                         [ogr.wkbLineString25D, "3D Line String"],
+                         [ogr.wkbPolygon25D, "3D Polygon"],
+                         [ogr.wkbMultiPoint25D, "3D Multi Point"],
+                         [ogr.wkbMultiLineString25D, "3D Multi Line String"],
+                         [ogr.wkbMultiPolygon25D, "3D Multi Polygon"],
+                         [ogr.wkbGeometryCollection25D, "3D Geometry Collection"],
+                         [123456, "Unrecognized: 123456"]
                          ]
 
     for geom_type_tuple in geom_type_tuples:
@@ -483,12 +483,12 @@ def ogr_basic_12():
     if ogr.GetFieldSubTypeName(ogr.OFSTBoolean) != 'Boolean':
         gdaltest.post_reason('fail')
         return 'fail'
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTInteger )
-    field_def.SetSubType( ogr.OFSTBoolean )
+    field_def = ogr.FieldDefn('fld', ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTBoolean)
     if field_def.GetSubType() != ogr.OFSTBoolean:
         gdaltest.post_reason('fail')
         return 'fail'
-    feat_def.AddFieldDefn( field_def )
+    feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
     f.SetField('fld', 0)
@@ -519,8 +519,8 @@ def ogr_basic_12():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTString )
-    field_def.SetSubType( ogr.OFSTBoolean )
+    field_def = ogr.FieldDefn('fld', ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTBoolean)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -531,12 +531,12 @@ def ogr_basic_12():
 
     # boolean list
     feat_def = ogr.FeatureDefn()
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTIntegerList )
-    field_def.SetSubType( ogr.OFSTBoolean )
+    field_def = ogr.FieldDefn('fld', ogr.OFTIntegerList)
+    field_def.SetSubType(ogr.OFSTBoolean)
     if field_def.GetSubType() != ogr.OFSTBoolean:
         gdaltest.post_reason('fail')
         return 'fail'
-    feat_def.AddFieldDefn( field_def )
+    feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
     f.SetFieldIntegerList(0, [0,1])
@@ -557,12 +557,12 @@ def ogr_basic_12():
     if ogr.GetFieldSubTypeName(ogr.OFSTInt16) != 'Int16':
         gdaltest.post_reason('fail')
         return 'fail'
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTInteger )
-    field_def.SetSubType( ogr.OFSTInt16 )
+    field_def = ogr.FieldDefn('fld', ogr.OFTInteger)
+    field_def.SetSubType(ogr.OFSTInt16)
     if field_def.GetSubType() != ogr.OFSTInt16:
         gdaltest.post_reason('fail')
         return 'fail'
-    feat_def.AddFieldDefn( field_def )
+    feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
     f.SetField('fld', -32768)
@@ -590,8 +590,8 @@ def ogr_basic_12():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTString )
-    field_def.SetSubType( ogr.OFSTInt16 )
+    field_def = ogr.FieldDefn('fld', ogr.OFTString)
+    field_def.SetSubType(ogr.OFSTInt16)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -605,12 +605,12 @@ def ogr_basic_12():
     if ogr.GetFieldSubTypeName(ogr.OFSTFloat32) != 'Float32':
         gdaltest.post_reason('fail')
         return 'fail'
-    field_def = ogr.FieldDefn( 'fld', ogr.OFTReal )
-    field_def.SetSubType( ogr.OFSTFloat32 )
+    field_def = ogr.FieldDefn('fld', ogr.OFTReal)
+    field_def.SetSubType(ogr.OFSTFloat32)
     if field_def.GetSubType() != ogr.OFSTFloat32:
         gdaltest.post_reason('fail')
         return 'fail'
-    feat_def.AddFieldDefn( field_def )
+    feat_def.AddFieldDefn(field_def)
 
     if False:
         f = ogr.Feature(feat_def)
@@ -633,8 +633,8 @@ def ogr_basic_12():
 
     gdal.ErrorReset()
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    field_def = ogr.FieldDefn( 'fld', ogr.OFSTFloat32 )
-    field_def.SetSubType( ogr.OFSTInt16 )
+    field_def = ogr.FieldDefn('fld', ogr.OFSTFloat32)
+    field_def.SetSubType(ogr.OFSTInt16)
     gdal.PopErrorHandler()
     if gdal.GetLastErrorMsg() == '':
         gdaltest.post_reason('fail')
@@ -654,7 +654,7 @@ def ogr_basic_13():
     field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
     feat_defn.AddFieldDefn(field_defn)
 
-    tests = [ ('2016/1/1', '2016/01/01 00:00:00'),
+    tests = [('2016/1/1', '2016/01/01 00:00:00'),
               ('2016/1/1 12:34', '2016/01/01 12:34:00'),
               ('2016/1/1 12:34:56', '2016/01/01 12:34:56'),
               ('2016/1/1 12:34:56.789', '2016/01/01 12:34:56.789'),
@@ -675,7 +675,7 @@ def ogr_basic_13():
               ('00/00/00', None),
               ('000/00/00', None),
               ('0000/00/00', None),
-              ('//foo', None) ]
+              ('//foo', None)]
 
     for (val, expected_ret) in tests:
         f = ogr.Feature(feat_defn)
@@ -808,14 +808,14 @@ gdaltest_list = [
     ogr_basic_15,
     ogr_basic_16,
     ogr_basic_invalid_unicode,
-    ogr_basic_cleanup ]
+    ogr_basic_cleanup]
 
 #gdaltest_list = [ ogr_basic_13 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_basic_test' )
+    gdaltest.setup_run('ogr_basic_test')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

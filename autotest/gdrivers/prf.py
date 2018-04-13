@@ -26,7 +26,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -36,8 +36,8 @@ from osgeo import gdal
 
 def prf_1():
 
-    tst = gdaltest.GDALTest( 'prf', './PRF/ph.prf', 1, 43190 )
-    return tst.testOpen( check_gt = (1, 2, 3, -7, 5, 6) )
+    tst = gdaltest.GDALTest('prf', './PRF/ph.prf', 1, 43190)
+    return tst.testOpen(check_gt = (1, 2, 3, -7, 5, 6))
 
 
 def prf_2():
@@ -65,17 +65,17 @@ def prf_2():
 
     expectedOvCount = 1
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        gdaltest.post_reason( 'did not get expected number of overviews')
-        print( 'Overview count must be %d' % expectedOvCount )
-        print( 'But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount() )
+        gdaltest.post_reason('did not get expected number of overviews')
+        print('Overview count must be %d' % expectedOvCount)
+        print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
 
     overview = ds.GetRasterBand(1).GetOverview(0)
     if overview.XSize != 1082:
-        gdaltest.post_reason( 'Invalid dataset width %d' % overview.XSize )
+        gdaltest.post_reason('Invalid dataset width %d' % overview.XSize)
         return 'fail'
     if overview.YSize != 1165:
-        gdaltest.post_reason( 'Invalid dataset height %d' % overview.YSize )
+        gdaltest.post_reason('Invalid dataset height %d' % overview.YSize)
         return 'fail'
 
     ds = None
@@ -89,9 +89,9 @@ def prf_3():
 
     expectedOvCount = 0
     if ds.GetRasterBand(1).GetOverviewCount() != expectedOvCount:
-        gdaltest.post_reason( 'did not get expected number of overviews')
-        print( 'Overview count must be %d' % expectedOvCount )
-        print( 'But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount() )
+        gdaltest.post_reason('did not get expected number of overviews')
+        print('Overview count must be %d' % expectedOvCount)
+        print('But GetOverviewCount returned %d' % ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
 
     ds = None
@@ -109,8 +109,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'prf' )
+    gdaltest.setup_run('prf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

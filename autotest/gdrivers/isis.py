@@ -33,7 +33,7 @@ import json
 import struct
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
@@ -60,8 +60,8 @@ def isis_1():
     gt = (-4766.96484375, 10.102499961853027, 0.0,
           -872623.625, 0.0, -10.102499961853027)
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 ###############################################################################
 # Perform simple read test on isis3 detached dataset.
@@ -84,8 +84,8 @@ def isis_2():
     gt = (653.132641495800044, 0.38, 0,
           -2298409.710162799805403, 0, -0.38)
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_unit_test.cub', 1, 42403 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_unit_test.cub', 1, 42403)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 ###############################################################################
 # Perform simple read test on isis3 detached dataset with GeoTIFF image file
@@ -108,21 +108,21 @@ def isis_3():
     gt = (-4766.96484375, 10.102499961853027, 0.0,
           -872623.625, 0.0, -10.102499961853027)
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_geotiff.lbl', 1, 9978 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_geotiff.lbl', 1, 9978)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 # ISIS3 -> ISIS3 conversion
 
 
 def isis_4():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978 )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978)
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
-    if ds.GetMetadataDomainList() != [ '', 'json:ISIS3' ]:
+    if ds.GetMetadataDomainList() != ['', 'json:ISIS3']:
         gdaltest.post_reason('fail')
         print(ds.GetMetadataDomainList())
         return 'fail'
@@ -148,10 +148,10 @@ def isis_4():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     # Preserve source Mapping group as well
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
-                            options = ['USE_SRC_MAPPING=YES'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
+                            options = ['USE_SRC_MAPPING=YES'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -168,13 +168,13 @@ def isis_4():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     # Preserve source Mapping group, but with a few overrides
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['USE_SRC_MAPPING=YES',
                                        'LONGITUDE_DIRECTION=PositiveEast',
                                        'LATITUDE_TYPE=Planetocentric',
-                                       'TARGET_NAME=my_label'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'TARGET_NAME=my_label'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
@@ -201,11 +201,11 @@ def isis_4():
 
 def isis_5():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['USE_SRC_LABEL=NO',
-                                       'WRITE_BOUNDING_DEGREES=NO'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'WRITE_BOUNDING_DEGREES=NO'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.cub') is not None:
@@ -226,12 +226,12 @@ def isis_5():
 
 def isis_6():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['DATA_LOCATION=EXTERNAL',
                                        'USE_SRC_LABEL=NO',
-                                       'COMMENT=my comment'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'COMMENT=my comment'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.cub') is None:
@@ -263,11 +263,11 @@ def isis_6():
 
 def isis_7():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['DATA_LOCATION=GEOTIFF',
-                                       'USE_SRC_LABEL=NO'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'USE_SRC_LABEL=NO'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
@@ -283,12 +283,12 @@ def isis_7():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     # Test GEOTIFF_AS_REGULAR_EXTERNAL = NO
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['DATA_LOCATION=GEOTIFF',
                                        'GEOTIFF_AS_REGULAR_EXTERNAL=NO',
-                                       'USE_SRC_LABEL=NO'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'USE_SRC_LABEL=NO'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
@@ -310,12 +310,12 @@ def isis_7():
 
 def isis_8():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['DATA_LOCATION=GEOTIFF',
                                        'USE_SRC_LABEL=NO',
-                                       'GEOTIFF_OPTIONS=COMPRESS=LZW'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'GEOTIFF_OPTIONS=COMPRESS=LZW'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/isis_tmp.tif') is None:
@@ -344,13 +344,13 @@ def isis_8():
 
 def isis_9():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['DATA_LOCATION=EXTERNAL',
                                        'USE_SRC_LABEL=NO',
                                        'TILED=YES',
-                                       'EXTERNAL_FILENAME=/vsimem/foo.bin'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'EXTERNAL_FILENAME=/vsimem/foo.bin'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     if gdal.VSIStatL('/vsimem/foo.bin') is None:
@@ -375,14 +375,14 @@ def isis_9():
 
 def isis_10():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['USE_SRC_LABEL=NO',
                                        'DATA_LOCATION=GEOTIFF',
                                        'TILED=YES',
                                        'BLOCKXSIZE=16', 'BLOCKYSIZE=32',
-                                       'EXTERNAL_FILENAME=/vsimem/foo.tif'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'EXTERNAL_FILENAME=/vsimem/foo.tif'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/foo.tif')
@@ -402,13 +402,13 @@ def isis_10():
 
 def isis_11():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978,
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978,
                             options = ['USE_SRC_LABEL=NO',
                                        'DATA_LOCATION=GEOTIFF',
                                        'TILED=YES',
-                                       'GEOTIFF_OPTIONS=COMPRESS=LZW'] )
-    ret = tst.testCreateCopy( new_filename = '/vsimem/isis_tmp.lbl',
-                             delete_copy = 0 )
+                                       'GEOTIFF_OPTIONS=COMPRESS=LZW'])
+    ret = tst.testCreateCopy(new_filename = '/vsimem/isis_tmp.lbl',
+                             delete_copy = 0)
     if ret != 'success':
         return ret
     ds = gdal.Open('/vsimem/isis_tmp.tif')
@@ -506,8 +506,8 @@ def isis_15():
 
 def isis_16():
 
-    for read_before_write in [ False, True ]:
-        for init_nd in [ False, True ]:
+    for read_before_write in [False, True]:
+        for init_nd in [False, True]:
             for dt, cs, nd, options in [
                                     [gdal.GDT_Byte, 0, 0, []],
                                     [gdal.GDT_Byte, 0, 0, ['TILED=YES']],
@@ -561,8 +561,8 @@ def isis_16():
 
 def isis_17():
 
-    tst = gdaltest.GDALTest( 'ISIS3', 'isis3_detached.lbl', 1, 9978 )
-    return tst.testCreate( vsimem = 1 )
+    tst = gdaltest.GDALTest('ISIS3', 'isis3_detached.lbl', 1, 9978)
+    return tst.testCreate(vsimem = 1)
 
 # Test SRS serialization and deserialization
 
@@ -571,7 +571,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetEquirectangular2(0,1,2,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -585,7 +585,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetEquirectangular2(123456,1,2,987654,3210123)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     gdal.PushErrorHandler()
@@ -602,7 +602,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetOrthographic(1,2,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -616,7 +616,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetSinusoidal(1,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -630,7 +630,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetMercator(1,2,0.9,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -644,7 +644,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetPS(1,2,0.9,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -658,7 +658,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetTM(1,2,0.9,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -672,7 +672,7 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetLCC(1,2,3,4,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
@@ -686,13 +686,13 @@ def isis_18():
 
     sr = osr.SpatialReference()
     sr.SetEquirectangular2(0,1,2,0,0)
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1,
                                 options = ['LATITUDE_TYPE=Planetographic',
                                            'TARGET_NAME=my_target',
                                            'BOUNDING_DEGREES=1.5,2.5,3.5,4.5'])
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform( [1000,1,0,2000,0,-1] )
+    ds.SetGeoTransform([1000,1,0,2000,0,-1])
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
@@ -723,11 +723,11 @@ def isis_18():
     ds = None
 
     sr = osr.SpatialReference()
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 100, 100,
                                 options = ['LONGITUDE_DIRECTION=PositiveWest'])
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform( [10,1,0,40,0,-1] )
+    ds.SetGeoTransform([10,1,0,40,0,-1])
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
@@ -758,11 +758,11 @@ def isis_18():
     ds = None
 
     sr = osr.SpatialReference()
-    sr.SetGeogCS( "GEOG_NAME", "D_DATUM_NAME", "", 123456, 200 )
+    sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 100, 100,
                                 options = ['FORCE_360=YES'])
     ds.SetProjection(sr.ExportToWkt())
-    ds.SetGeoTransform( [-10,1,0,40,0,-1] )
+    ds.SetGeoTransform([-10,1,0,40,0,-1])
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
@@ -823,8 +823,8 @@ def isis_19():
 def isis_20():
 
     with gdaltest.error_handler():
-        gdal.Translate( '/vsimem/isis_tmp.lbl', 'data/isis3_detached.lbl',
-                        format = 'ISIS3', srcWin = [ 0, 0, 1, 1 ] )
+        gdal.Translate('/vsimem/isis_tmp.lbl', 'data/isis3_detached.lbl',
+                        format = 'ISIS3', srcWin = [0, 0, 1, 1])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     lbl = ds.GetMetadata_List('json:ISIS3')[0]
     if lbl.find('AMadeUpValue') < 0:
@@ -842,8 +842,8 @@ def isis_20():
 def isis_21():
 
     with gdaltest.error_handler():
-        gdal.Warp( '/vsimem/isis_tmp.lbl', 'data/isis3_detached.lbl',
-                   format = 'ISIS3' )
+        gdal.Warp('/vsimem/isis_tmp.lbl', 'data/isis3_detached.lbl',
+                   format = 'ISIS3')
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ds.GetRasterBand(1).Checksum() != 9978:
         gdaltest.post_reason('fail')
@@ -868,7 +868,7 @@ def isis_22():
     # Invalid Json
     js = """invalid"""
     with gdaltest.error_handler():
-        if ds.SetMetadata( [js], 'json:ISIS3') == 0:
+        if ds.SetMetadata([js], 'json:ISIS3') == 0:
             gdaltest.post_reason('fail')
             return 'fail'
     ds = None
@@ -877,12 +877,12 @@ def isis_22():
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     # Invalid type for IsisCube
     js = """{ "IsisCube": 5 }"""
-    ds.SetMetadata( [js], 'json:ISIS3')
+    ds.SetMetadata([js], 'json:ISIS3')
     lbl = ds.GetMetadata_List('json:ISIS3')
     if lbl is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    ds.SetMetadata( [js], 'json:ISIS3')
+    ds.SetMetadata([js], 'json:ISIS3')
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ds is None:
@@ -893,7 +893,7 @@ def isis_22():
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1)
     # Invalid type for IsisCube.Core
     js = """{ "IsisCube": { "_type": "object", "Core": 5 } }"""
-    ds.SetMetadata( [js], 'json:ISIS3')
+    ds.SetMetadata([js], 'json:ISIS3')
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ds is None:
@@ -905,7 +905,7 @@ def isis_22():
     # Invalid type for IsisCube.Core.Dimensions and IsisCube.Core.Pixels
     js = """{ "IsisCube": { "_type": "object", "Core": { "_type": "object",
                                         "Dimensions": 5, "Pixels": 5 } } }"""
-    ds.SetMetadata( [js], 'json:ISIS3')
+    ds.SetMetadata([js], 'json:ISIS3')
     ds = None
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ds is None:
@@ -914,12 +914,12 @@ def isis_22():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/isis_tmp.lbl', 1, 1,
-                                              options = ['DATA_LOCATION=EXTERNAL'] )
+                                              options = ['DATA_LOCATION=EXTERNAL'])
     js = """{ "IsisCube": { "foo": "bar", "bar": [ 123, 124.0, 2.5, "xyz", "anotherveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylooooongtext",
     234, 456, 789, 234, 567, 890, 123456789.0, 123456789.0, 123456789.0, 123456789.0, 123456789.0 ],
                          "baz" : { "value": 5, "unit": "M" }, "baw": "with space",
                          "very_long": "aveeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeerylooooongtext"} }"""
-    ds.SetMetadata( [js], 'json:ISIS3')
+    ds.SetMetadata([js], 'json:ISIS3')
     ds = None
 
     f = gdal.VSIFOpenL('/vsimem/isis_tmp.lbl', 'rb')
@@ -977,7 +977,7 @@ def isis_23():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
-                   format = 'ISIS3', creationOptions = [ 'DATA_LOCATION=GeoTIFF'] )
+                   format = 'ISIS3', creationOptions = ['DATA_LOCATION=GeoTIFF'])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ref_data == ds.GetRasterBand(1).ReadRaster():
         gdaltest.post_reason('fail')
@@ -986,7 +986,7 @@ def isis_23():
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
     gdal.Translate('/vsimem/isis_tmp.lbl', mem_ds,
-                   format = 'ISIS3', creationOptions = [ 'TILED=YES'] )
+                   format = 'ISIS3', creationOptions = ['TILED=YES'])
     ds = gdal.Open('/vsimem/isis_tmp.lbl')
     if ref_data == ds.GetRasterBand(1).ReadRaster():
         gdaltest.post_reason('fail')
@@ -994,7 +994,7 @@ def isis_23():
     ds = None
     gdal.GetDriverByName('ISIS3').Delete('/vsimem/isis_tmp.lbl')
 
-    for dt in [ gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Float32 ]:
+    for dt in [gdal.GDT_Int16, gdal.GDT_UInt16, gdal.GDT_Float32]:
         mem_ds = gdal.Translate('', 'data/byte.tif', format = 'MEM', outputType = dt)
         mem_ds.SetProjection('')
         mem_ds.SetGeoTransform([0,1,0,0,0,1])
@@ -1063,7 +1063,7 @@ def isis_24():
     with gdaltest.error_handler():
         ds = gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/out.lbl',
                                         src_ds,
-                                        options = ['DATA_LOCATION=GEOTIFF' ])
+                                        options = ['DATA_LOCATION=GEOTIFF'])
     if ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -1074,7 +1074,7 @@ def isis_24():
     with gdaltest.error_handler():
         gdal.GetDriverByName('ISIS3').CreateCopy('/vsimem/out.lbl',
                                         src_ds,
-                                        options = ['DATA_LOCATION=EXTERNAL' ])
+                                        options = ['DATA_LOCATION=EXTERNAL'])
     gdal.Unlink('/vsimem/out.cub')
     with gdaltest.error_handler():
         ds = gdal.Open('/vsimem/out.lbl')
@@ -1811,13 +1811,13 @@ gdaltest_list = [
     isis_28,
     isis_29,
     isis_30,
-    isis_31 ]
+    isis_31]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'isis' )
+    gdaltest.setup_run('isis')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

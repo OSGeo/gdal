@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal, ogr
 import gdaltest
@@ -299,7 +299,7 @@ def mycallback(pct, msg, user_data):
 
 def test_ogr2ogr_lib_12():
 
-    tab = [ 0 ]
+    tab = [0]
     ds = gdal.VectorTranslate('', '../ogr/data/poly.shp', format = 'Memory', callback = mycallback, callback_data = tab)
     if ds is None or ds.GetLayer(0).GetFeatureCount() != 10:
         return 'fail'
@@ -364,18 +364,18 @@ def test_ogr2ogr_lib_15():
 
 def test_ogr2ogr_lib_16():
 
-    tests = [ [ 'POINT M (1 2 3)', None, 'POINT M (1 2 3)' ],
-              [ 'POINT M (1 2 3)', 'XY', 'POINT (1 2)' ],
-              [ 'POINT M (1 2 3)', 'XYZ', 'POINT Z (1 2 0)' ],
-              [ 'POINT M (1 2 3)', 'XYM', 'POINT M (1 2 3)' ],
-              [ 'POINT M (1 2 3)', 'XYZM', 'POINT ZM (1 2 0 3)' ],
-              [ 'POINT M (1 2 3)', 'layer_dim', 'POINT M (1 2 3)' ],
-              [ 'POINT ZM (1 2 3 4)', None, 'POINT ZM (1 2 3 4)' ],
-              [ 'POINT ZM (1 2 3 4)', 'XY', 'POINT (1 2)' ],
-              [ 'POINT ZM (1 2 3 4)', 'XYZ', 'POINT Z (1 2 3)' ],
-              [ 'POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)' ],
-              [ 'POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)' ],
-              [ 'POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)' ],
+    tests = [['POINT M (1 2 3)', None, 'POINT M (1 2 3)'],
+              ['POINT M (1 2 3)', 'XY', 'POINT (1 2)'],
+              ['POINT M (1 2 3)', 'XYZ', 'POINT Z (1 2 0)'],
+              ['POINT M (1 2 3)', 'XYM', 'POINT M (1 2 3)'],
+              ['POINT M (1 2 3)', 'XYZM', 'POINT ZM (1 2 0 3)'],
+              ['POINT M (1 2 3)', 'layer_dim', 'POINT M (1 2 3)'],
+              ['POINT ZM (1 2 3 4)', None, 'POINT ZM (1 2 3 4)'],
+              ['POINT ZM (1 2 3 4)', 'XY', 'POINT (1 2)'],
+              ['POINT ZM (1 2 3 4)', 'XYZ', 'POINT Z (1 2 3)'],
+              ['POINT ZM (1 2 3 4)', 'XYM', 'POINT M (1 2 4)'],
+              ['POINT ZM (1 2 3 4)', 'XYZM', 'POINT ZM (1 2 3 4)'],
+              ['POINT ZM (1 2 3 4)', 'layer_dim', 'POINT ZM (1 2 3 4)'],
               ]
     for (wkt_before, dim, wkt_after) in tests:
         srcDS = gdal.GetDriverByName('Memory').Create('',0,0,0)
@@ -524,8 +524,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_ogr2ogr_lib' )
+    gdaltest.setup_run('test_ogr2ogr_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

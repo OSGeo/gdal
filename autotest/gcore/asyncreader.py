@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -55,8 +55,8 @@ def asyncreader_1():
     out_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/asyncresult.tif', ds.RasterXSize,ds.RasterYSize,ds.RasterCount)
     out_ds.WriteRaster(0,0,ds.RasterXSize,ds.RasterYSize,buf)
 
-    expected_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
-    cs = [ out_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    expected_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
+    cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(ds.RasterCount)]
 
     ds = None
     out_ds = None
@@ -72,13 +72,13 @@ def asyncreader_1():
     return 'success'
 
 
-gdaltest_list = [ asyncreader_1 ]
+gdaltest_list = [asyncreader_1]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'asyncreader' )
+    gdaltest.setup_run('asyncreader')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

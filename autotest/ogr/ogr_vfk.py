@@ -33,7 +33,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -355,7 +355,7 @@ gdaltest_list = [
     ogr_vfk_7,
     ogr_vfk_8,
     ogr_vfk_9,
-    ogr_vfk_cleanup ]
+    ogr_vfk_cleanup]
 
 if __name__ == '__main__':
     gdaltest.setup_run('ogr_vfk')

@@ -32,7 +32,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -156,7 +156,7 @@ def ecrgtoc_2():
 def ecrgtoc_3():
 
     # Try different errors
-    for name in [ 'ECRG_TOC_ENTRY:',
+    for name in ['ECRG_TOC_ENTRY:',
                   'ECRG_TOC_ENTRY:ProductTitle',
                   'ECRG_TOC_ENTRY:ProductTitle:DiscId',
                   'ECRG_TOC_ENTRY:ProductTitle:DiscId:not_existing',
@@ -362,12 +362,12 @@ gdaltest_list = [
     ecrgtoc_2,
     ecrgtoc_3,
     ecrgtoc_4,
-    ecrgtoc_online_1 ]
+    ecrgtoc_online_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ecrgtoc' )
+    gdaltest.setup_run('ecrgtoc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

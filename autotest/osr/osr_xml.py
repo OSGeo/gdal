@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -202,8 +202,8 @@ def osr_xml_2():
     got = srs.ExportToXML()
 
     # Strip the gml:id tags
-    got = re.sub(r' gml:id="[^"]*"', '', got, 0 )
-    expected = re.sub(r' gml:id="[^"]*"', '', expected, 0 )
+    got = re.sub(r' gml:id="[^"]*"', '', got, 0)
+    expected = re.sub(r' gml:id="[^"]*"', '', expected, 0)
 
     if got != expected:
         print(got)
@@ -214,12 +214,12 @@ def osr_xml_2():
 
 gdaltest_list = [
     osr_xml_1,
-    osr_xml_2 ]
+    osr_xml_2]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_xml' )
+    gdaltest.setup_run('osr_xml')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

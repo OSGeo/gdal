@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -41,7 +41,7 @@ import gdaltest
 
 def cals_1():
 
-    tst = gdaltest.GDALTest( 'CALS', 'small1bit.img', 1, 9907 )
+    tst = gdaltest.GDALTest('CALS', 'small1bit.img', 1, 9907)
 
     return tst.testCreateCopy()
 
@@ -52,7 +52,7 @@ def cals_1():
 def cals_2():
 
     # Has no color table
-    tst = gdaltest.GDALTest( 'CALS', '../../gcore/data/oddsize1bit.tif', 1, 3883 )
+    tst = gdaltest.GDALTest('CALS', '../../gcore/data/oddsize1bit.tif', 1, 3883)
 
     return tst.testCreateCopy()
 
@@ -184,8 +184,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'cals' )
+    gdaltest.setup_run('cals')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

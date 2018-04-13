@@ -35,7 +35,7 @@ import sys
 import shutil
 import struct
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 import gdaltest
 
 from osgeo import gdal
@@ -47,7 +47,7 @@ from osgeo import gdalconst
 
 def jpeg_1():
 
-    ds = gdal.Open( 'data/albania.jpg' )
+    ds = gdal.Open('data/albania.jpg')
     cs = ds.GetRasterBand(2).Checksum()
     if cs == 34296:
         gdaltest.jpeg_version = '9b'
@@ -58,11 +58,11 @@ def jpeg_1():
     ds = None
 
     if gdaltest.jpeg_version == '9b':
-        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 34296 )
+        tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 34296)
     elif gdaltest.jpeg_version == '8':
-        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 34298 )
+        tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 34298)
     else:
-        tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
+        tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 17016)
     return tst.testOpen()
 
 ###############################################################################
@@ -71,7 +71,7 @@ def jpeg_1():
 
 def jpeg_2():
 
-    ds = gdal.Open( 'data/albania.jpg' )
+    ds = gdal.Open('data/albania.jpg')
 
     md = ds.GetMetadata()
 
@@ -85,28 +85,28 @@ def jpeg_2():
             or md['EXIF_ExifVersion'] != '0210'
             or md['EXIF_XResolution'] != '(96)'):
             print(md)
-            gdaltest.post_reason( 'Exif metadata wrong.' )
+            gdaltest.post_reason('Exif metadata wrong.')
             return 'fail'
     except:
         print(md)
-        gdaltest.post_reason( 'Exit metadata apparently missing.' )
+        gdaltest.post_reason('Exit metadata apparently missing.')
         return 'fail'
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation() != gdal.GCI_BlueBand:
-        gdaltest.post_reason( 'Did not get expected color interpretation.' )
+        gdaltest.post_reason('Did not get expected color interpretation.')
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
     if 'INTERLEAVE' not in md or md['INTERLEAVE'] != 'PIXEL':
-        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
+        gdaltest.post_reason('missing INTERLEAVE metadata')
         return 'fail'
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
+        gdaltest.post_reason('missing INTERLEAVE metadata')
         return 'fail'
 
     md = ds.GetRasterBand(3).GetMetadata('IMAGE_STRUCTURE')
     if 'COMPRESSION' not in md or md['COMPRESSION'] != 'JPEG':
-        gdaltest.post_reason( 'missing INTERLEAVE metadata' )
+        gdaltest.post_reason('missing INTERLEAVE metadata')
         return 'fail'
 
     return 'success'
@@ -122,19 +122,19 @@ def jpeg_3():
     options = ['PROGRESSIVE=YES',
                'QUALITY=50',
                'WORLDFILE=YES']
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/byte.jpg', ds,
-                                                  options = options )
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('tmp/byte.jpg', ds,
+                                                  options = options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
 
     if ds.GetRasterBand(1).Checksum() not in expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_GrayIndex:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
@@ -148,7 +148,7 @@ def jpeg_3():
 
     ds = None
 
-    os.unlink( 'tmp/byte.jpg.aux.xml' )
+    os.unlink('tmp/byte.jpg.aux.xml')
 
     try:
         os.stat('tmp/byte.wld')
@@ -170,7 +170,7 @@ def jpeg_3():
     ds.GetFileList()
     ds = None
 
-    gdal.GetDriverByName('JPEG').Delete( 'tmp/byte.jpg' )
+    gdal.GetDriverByName('JPEG').Delete('tmp/byte.jpg')
 
     try:
         os.stat('tmp/byte.wld')
@@ -197,12 +197,12 @@ def jpeg_4():
     refband = ds.GetRasterBand(1)
 
     if refband.GetMaskFlags() != gdalconst.GMF_PER_DATASET:
-        gdaltest.post_reason( 'wrong mask flags' )
+        gdaltest.post_reason('wrong mask flags')
         return 'fail'
 
     cs = refband.GetMaskBand().Checksum()
     if cs != 770:
-        gdaltest.post_reason( 'Wrong mask checksum' )
+        gdaltest.post_reason('Wrong mask checksum')
         print(cs)
         return 'fail'
 
@@ -221,23 +221,23 @@ def jpeg_5():
 
     ds = gdal.Open('data/masked.jpg')
 
-    ds2 = gdal.GetDriverByName('JPEG').CreateCopy( 'tmp/masked.jpg', ds )
+    ds2 = gdal.GetDriverByName('JPEG').CreateCopy('tmp/masked.jpg', ds)
 
     refband = ds2.GetRasterBand(1)
 
     if refband.GetMaskFlags() != gdalconst.GMF_PER_DATASET:
-        gdaltest.post_reason( 'wrong mask flags' )
+        gdaltest.post_reason('wrong mask flags')
         return 'fail'
 
     cs = refband.GetMaskBand().Checksum()
     if cs != 770:
-        gdaltest.post_reason( 'Wrong checksum on copied images mask.')
+        gdaltest.post_reason('Wrong checksum on copied images mask.')
         print(cs)
         return 'fail'
 
     refband = None
     ds2 = None
-    gdal.GetDriverByName('JPEG').Delete( 'tmp/masked.jpg' )
+    gdal.GetDriverByName('JPEG').Delete('tmp/masked.jpg')
 
     return 'success'
 
@@ -254,7 +254,7 @@ def jpeg_6():
     # Because of the optimization in r17446, we shouldn't yet get this error.
     if (gdal.GetLastErrorType() == 2
         and gdal.GetLastErrorMsg().find('Ignoring EXIF') != -1):
-        gdaltest.post_reason( 'got error too soon.')
+        gdaltest.post_reason('got error too soon.')
         return 'fail'
 
     with gdaltest.error_handler('CPLQuietErrorHandler'):
@@ -265,11 +265,11 @@ def jpeg_6():
     # Did we get an exif related warning?
     if (gdal.GetLastErrorType() != 2
         or gdal.GetLastErrorMsg().find('Ignoring EXIF') == -1):
-        gdaltest.post_reason( 'did not get expected error.')
+        gdaltest.post_reason('did not get expected error.')
         return 'fail'
 
     if len(md) != 1 or md['EXIF_Software'] != 'IrfanView':
-        gdaltest.post_reason( 'did not get expected metadata.' )
+        gdaltest.post_reason('did not get expected metadata.')
         print(md)
         return 'fail'
 
@@ -287,19 +287,19 @@ def jpeg_7():
 
     options = ['PROGRESSIVE=YES',
                'QUALITY=50']
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', ds,
-                                                  options = options )
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', ds,
+                                                  options = options)
 
     # IJG, MozJPEG
     expected_cs = [4794, 4787]
 
     if ds.GetRasterBand(1).Checksum() not in expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     ds = None
-    gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+    gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
     return 'success'
 
@@ -309,48 +309,48 @@ def jpeg_7():
 
 def jpeg_8():
 
-    ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
+    ds = gdal.Open('data/rgb_ntf_cmyk.jpg')
 
     expected_cs = 20385
 
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_RedBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     expected_cs = 20865
 
     if ds.GetRasterBand(2).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_GreenBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
     expected_cs = 19441
 
     if ds.GetRasterBand(3).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_BlueBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
 
     md = ds.GetMetadata('IMAGE_STRUCTURE')
 
     if 'SOURCE_COLOR_SPACE' not in md or md['SOURCE_COLOR_SPACE'] != 'CMYK':
-        gdaltest.post_reason( 'missing SOURCE_COLOR_SPACE metadata' )
+        gdaltest.post_reason('missing SOURCE_COLOR_SPACE metadata')
         return 'fail'
 
     return 'success'
@@ -362,54 +362,54 @@ def jpeg_8():
 def jpeg_9():
 
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'NO')
-    ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
+    ds = gdal.Open('data/rgb_ntf_cmyk.jpg')
     gdal.SetConfigOption('GDAL_JPEG_TO_RGB', 'YES')
 
     expected_cs = 21187
 
     if ds.GetRasterBand(1).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(1).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(1).GetRasterColorInterpretation()!= gdal.GCI_CyanBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(1).GetRasterColorInterpretation())
         return 'fail'
 
     expected_cs = 21054
 
     if ds.GetRasterBand(2).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(2).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(2).GetRasterColorInterpretation()!= gdal.GCI_MagentaBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(2).GetRasterColorInterpretation())
         return 'fail'
 
     expected_cs = 21499
 
     if ds.GetRasterBand(3).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(3).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(3).GetRasterColorInterpretation()!= gdal.GCI_YellowBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(3).GetRasterColorInterpretation())
         return 'fail'
 
     expected_cs = 21069
 
     if ds.GetRasterBand(4).Checksum() != expected_cs:
-        gdaltest.post_reason( 'Wrong checksum on copied image.')
+        gdaltest.post_reason('Wrong checksum on copied image.')
         print(ds.GetRasterBand(4).Checksum())
         return 'fail'
 
     if ds.GetRasterBand(4).GetRasterColorInterpretation()!= gdal.GCI_BlackBand:
-        gdaltest.post_reason( 'Wrong color interpretation.')
+        gdaltest.post_reason('Wrong color interpretation.')
         print(ds.GetRasterBand(4).GetRasterColorInterpretation())
         return 'fail'
 
@@ -439,7 +439,7 @@ def jpeg_10():
     ds = gdal.Open('data/12bit_rose_extract.jpg')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[2] < 3613 or stats[2] > 3614:
         print(stats)
         return 'fail'
@@ -475,7 +475,7 @@ def jpeg_11():
     ds = gdal.Open('tmp/jpeg11.jpg')
     if ds.GetRasterBand(1).DataType != gdal.GDT_UInt16:
         return 'fail'
-    stats = ds.GetRasterBand(1).GetStatistics( 0, 1 )
+    stats = ds.GetRasterBand(1).GetStatistics(0, 1)
     if stats[2] < 3613 or stats[2] > 3614:
         print(stats)
         return 'fail'
@@ -569,9 +569,9 @@ def jpeg_14():
 
 def jpeg_15():
 
-    tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
+    tst = gdaltest.GDALTest('JPEG', 'albania.jpg', 2, 17016)
 
-    return tst.testCreateCopy( vsimem = 1, interrupt_during_copy = True )
+    return tst.testCreateCopy(vsimem = 1, interrupt_during_copy = True)
 
 ###############################################################################
 # Test overview support
@@ -579,13 +579,13 @@ def jpeg_15():
 
 def jpeg_16():
 
-    shutil.copy( 'data/albania.jpg', 'tmp/albania.jpg' )
+    shutil.copy('data/albania.jpg', 'tmp/albania.jpg')
     try:
-        os.unlink( 'tmp/albania.jpg.ovr' )
+        os.unlink('tmp/albania.jpg.ovr')
     except:
         pass
 
-    ds = gdal.Open( 'tmp/albania.jpg' )
+    ds = gdal.Open('tmp/albania.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 1:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -629,7 +629,7 @@ def jpeg_16():
     ds = None
 
     # Check we are using external overviews
-    ds = gdal.Open( 'tmp/albania.jpg' )
+    ds = gdal.Open('tmp/albania.jpg')
     if ds.GetRasterBand(1).GetOverviewCount() != 2:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -777,7 +777,7 @@ def jpeg_18():
 
 def jpeg_19():
 
-    for width, height, iX in [ (32, 32, 12), (25, 25, 8), (24, 25, 8) ]:
+    for width, height, iX in [(32, 32, 12), (25, 25, 8), (24, 25, 8)]:
         src_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/jpeg_19.tif',
                                                       width, height, 1)
         src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -884,7 +884,7 @@ def jpeg_21():
         gdaltest.post_reason('failure')
         print(ds.GetRasterBand(1).GetOverviewCount())
         return 'fail'
-    expected_dim_cs = [ [512,512,0], [256,256,0], [196,196,12681] ]
+    expected_dim_cs = [[512,512,0], [256,256,0], [196,196,12681]]
     i = 0
     for expected_w, expected_h, expected_cs in expected_dim_cs:
         ovr = ds.GetRasterBand(1).GetOverview(i)
@@ -998,15 +998,15 @@ def jpeg_22():
 
 
 def jpeg_23():
-    ds = gdal.Open( 'data/albania.jpg' )
-    cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    ds = gdal.Open('data/albania.jpg')
+    cs = [ds.GetRasterBand(i+1).Checksum() for i in range(3)]
 
     # Band interleaved
     data = ds.ReadRaster(0,0,ds.RasterXSize, ds.RasterYSize)
     tmp_ds = gdal.GetDriverByName('Mem').Create(
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0,0,ds.RasterXSize, ds.RasterYSize,data)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1018,7 +1018,7 @@ def jpeg_23():
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
                        buf_pixel_space = 3, buf_band_space = 1)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1030,7 +1030,7 @@ def jpeg_23():
         '', ds.RasterXSize, ds.RasterYSize, 3)
     tmp_ds.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize,data,
                        buf_pixel_space = 4, buf_band_space = 1)
-    got_cs = [ tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
+    got_cs = [tmp_ds.GetRasterBand(i+1).Checksum() for i in range(3)]
     if cs != got_cs:
         gdaltest.post_reason('failure')
         return 'fail'
@@ -1053,25 +1053,25 @@ def jpeg_24():
     src_ds = gdal.Open('data/byte.tif')
     if not has_arithmetic:
         gdal.PushErrorHandler()
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( '/vsimem/byte.jpg', src_ds,
-                                                  options = ['ARITHMETIC=YES'] )
+    ds = gdal.GetDriverByName('JPEG').CreateCopy('/vsimem/byte.jpg', src_ds,
+                                                  options = ['ARITHMETIC=YES'])
     if not has_arithmetic:
         gdal.PopErrorHandler()
     else:
         if gdal.GetLastErrorMsg().find('Requested feature was omitted at compile time') >= 0:
             ds = None
-            gdal.Unlink( '/vsimem/byte.jpg' )
+            gdal.Unlink('/vsimem/byte.jpg')
             return 'skip'
 
         expected_cs = 4743
 
         if ds.GetRasterBand(1).Checksum() != expected_cs:
-            gdaltest.post_reason( 'Wrong checksum on copied image.')
+            gdaltest.post_reason('Wrong checksum on copied image.')
             print(ds.GetRasterBand(1).Checksum())
             return 'fail'
 
         ds = None
-        gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+        gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
     return 'success'
 
@@ -1083,16 +1083,16 @@ def jpeg_25():
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdal.GetDriverByName('JPEG').CreateCopy(
-        '/vsimem/byte.jpg', src_ds, options = ['COMMENT=my comment'] )
+        '/vsimem/byte.jpg', src_ds, options = ['COMMENT=my comment'])
     ds = None
-    ds = gdal.Open( '/vsimem/byte.jpg' )
+    ds = gdal.Open('/vsimem/byte.jpg')
     if ds.GetMetadataItem('COMMENT') != 'my comment':
-        gdaltest.post_reason( 'Wrong comment.')
+        gdaltest.post_reason('Wrong comment.')
         print(ds.GetMetadata())
         return 'fail'
 
     ds = None
-    gdal.GetDriverByName('JPEG').Delete( '/vsimem/byte.jpg' )
+    gdal.GetDriverByName('JPEG').Delete('/vsimem/byte.jpg')
 
     return 'success'
 
@@ -1155,7 +1155,7 @@ def jpeg_28():
 
     # Nothing
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
-    ds = gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    ds = gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = gdal.Open(tmpfilename)
     if len(ds.GetMetadata()) != 0:
@@ -1188,7 +1188,7 @@ def jpeg_28():
     src_ds.SetMetadataItem('EXIF_ApertureValue', '-1') # invalid RATIONAL
 
     with gdaltest.error_handler():
-        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')
@@ -1202,10 +1202,10 @@ def jpeg_28():
         return 'fail'
 
     # Test SRATIONAL
-    for val in (-1.5, -1, -0.5, 0, 0.5, 1, 1.5 ):
+    for val in (-1.5, -1, -0.5, 0, 0.5, 1, 1.5):
         src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
         src_ds.SetMetadataItem('EXIF_ShutterSpeedValue', str(val))
-        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
         if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
             gdaltest.post_reason('fail')
@@ -1220,10 +1220,10 @@ def jpeg_28():
             return 'fail'
 
     # Test RATIONAL
-    for val in (0, 0.5, 1, 1.5 ):
+    for val in (0, 0.5, 1, 1.5):
         src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
         src_ds.SetMetadataItem('EXIF_ApertureValue', str(val))
-        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
         src_ds = None
         if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
             gdaltest.post_reason('fail')
@@ -1241,14 +1241,14 @@ def jpeg_28():
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
     src_ds.SetMetadataItem('EXIF_GPSLatitude', '49 34 56.5')
-    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
-    if got_md != { 'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude' : '(49) (34) (56.5)' }:
+    if got_md != {'EXIF_GPSLatitudeRef': 'N', 'EXIF_GPSLatitude' : '(49) (34) (56.5)'}:
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
@@ -1258,14 +1258,14 @@ def jpeg_28():
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
-    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+    gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
-    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N' }:
+    if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N'}:
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
@@ -1277,14 +1277,14 @@ def jpeg_28():
     src_ds.SetMetadataItem('EXIF_invalid', 'foo')
     src_ds.SetMetadataItem('FOO', 'BAR')
     with gdaltest.error_handler():
-        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is None:
         gdaltest.post_reason('fail')
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
-    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_invalid': 'foo', 'FOO': 'BAR' }:
+    if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_invalid': 'foo', 'FOO': 'BAR'}:
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
@@ -1294,7 +1294,7 @@ def jpeg_28():
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
     src_ds.SetMetadataItem('EXIF_UserComment', ''.join(['x' for i in range(65535)]))
     with gdaltest.error_handler():
-        gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds)
+        gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = None
 
@@ -1302,7 +1302,7 @@ def jpeg_28():
     src_ds = gdal.GetDriverByName('MEM').Create('',1024,1024)
     src_ds.SetMetadataItem('EXIF_ExifVersion', '0231')
     src_ds.SetMetadataItem('EXIF_GPSLatitudeRef', 'N')
-    gdal.GetDriverByName('JPEG').CreateCopy( tmpfilename, src_ds,
+    gdal.GetDriverByName('JPEG').CreateCopy(tmpfilename, src_ds,
             options = ['EXIF_THUMBNAIL=YES', 'THUMBNAIL_WIDTH=32', 'THUMBNAIL_HEIGHT=32'])
     src_ds = None
     if gdal.VSIStatL(tmpfilename + '.aux.xml') is not None:
@@ -1310,7 +1310,7 @@ def jpeg_28():
         return 'fail'
     ds = gdal.Open(tmpfilename)
     got_md = ds.GetMetadata()
-    if got_md != { 'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N' }:
+    if got_md != {'EXIF_ExifVersion': '0231', 'EXIF_GPSLatitudeRef': 'N'}:
         gdaltest.post_reason('fail')
         print(got_md)
         return 'fail'
@@ -1330,11 +1330,11 @@ def jpeg_28():
 def jpeg_cleanup():
 
     try:
-        os.unlink( 'tmp/albania.jpg' )
+        os.unlink('tmp/albania.jpg')
     except:
         pass
     try:
-        os.unlink( 'tmp/albania.jpg.ovr' )
+        os.unlink('tmp/albania.jpg.ovr')
     except:
         pass
 
@@ -1370,14 +1370,14 @@ gdaltest_list = [
     jpeg_26,
     jpeg_27,
     jpeg_28,
-    jpeg_cleanup ]
+    jpeg_cleanup]
 
 # gdaltest_list = [ jpeg_28 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'jpeg' )
+    gdaltest.setup_run('jpeg')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

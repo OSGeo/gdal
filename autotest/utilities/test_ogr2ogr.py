@@ -33,8 +33,8 @@ import sys
 import os
 import shutil
 
-sys.path.append( '../pymod' )
-sys.path.append( '../ogr' )
+sys.path.append('../pymod')
+sys.path.append('../ogr')
 
 from osgeo import gdal, ogr, osr
 import gdaltest
@@ -647,7 +647,7 @@ def test_ogr2ogr_20():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
 
-    expected_fields = [ 'a',
+    expected_fields = ['a',
                         'A_1',
                         'a_1_2',
                         'aaaaaAAAAA',
@@ -661,8 +661,8 @@ def test_ogr2ogr_20():
                         'aaaaaAAA_7',
                         'aaaaaAAA_8',
                         'aaaaaAAA_9',
-                        'aaaaaAAA10' ]
-    expected_data = [ '1',
+                        'aaaaaAAA10']
+    expected_data = ['1',
                       '2',
                       '3',
                       '4',
@@ -676,7 +676,7 @@ def test_ogr2ogr_20():
                       '12',
                       '13',
                       '14',
-                      '15' ]
+                      '15']
 
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' tmp data/Fields.csv')
 
@@ -686,16 +686,16 @@ def test_ogr2ogr_20():
         return 'fail'
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
-        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
+        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
         ds.Destroy()
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
 
     error_occurred = False
     feat = ds.GetLayer(0).GetNextFeature()
-    for i in range( layer_defn.GetFieldCount() ):
-        if layer_defn.GetFieldDefn( i ).GetNameRef() != expected_fields[i]:
-            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn( i ).GetNameRef())
+    for i in range(layer_defn.GetFieldCount()):
+        if layer_defn.GetFieldDefn(i).GetNameRef() != expected_fields[i]:
+            print('Expected ', expected_fields[i],',but got',layer_defn.GetFieldDefn(i).GetNameRef())
             error_occurred = True
         if feat.GetFieldAsString(i) != expected_data[i]:
             print('Expected the value ', expected_data[i],',but got',feat.GetFieldAsString(i))
@@ -1858,7 +1858,7 @@ def test_ogr2ogr_48():
         return 'fail'
     layer_defn = ds.GetLayer(0).GetLayerDefn()
     if layer_defn.GetFieldCount() != 15:
-        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()) )
+        gdaltest.post_reason('Unexpected field count: ' + str(ds.GetLayer(0).GetLayerDefn().GetFieldCount()))
         ds.Destroy()
         ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/Fields.dbf')
         return 'fail'
@@ -1867,12 +1867,12 @@ def test_ogr2ogr_48():
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    for i in range( layer_defn.GetFieldCount() ):
+    for i in range(layer_defn.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(i + 1):
             print('Expected the value ', str(i + 1),',but got',feat.GetFieldAsString(i))
             error_occurred = True
     feat = lyr.GetNextFeature()
-    for i in range( layer_defn.GetFieldCount() ):
+    for i in range(layer_defn.GetFieldCount()):
         if feat.GetFieldAsString(i) != str(layer_defn.GetFieldCount() - i):
             print('Expected the value ', str(layer_defn.GetFieldCount() - i),',but got',feat.GetFieldAsString(i))
             error_occurred = True
@@ -1932,7 +1932,7 @@ def test_ogr2ogr_49_bis():
 """        <name>440750.000</name>""",
 """  </Placemark>""",
 """</Folder>""",
-"""</Document></kml>""" ]
+"""</Document></kml>"""]
 
     if len(lines) != len(expected_lines):
         print(lines)
@@ -2469,20 +2469,20 @@ def test_ogr2ogr_59():
     gdaltest.runexternal(test_cli_utilities.get_ogr2ogr_path() + ' -f GPKG tmp/test_ogr2ogr_59_dest.gpkg tmp/test_ogr2ogr_59_src.gpkg -mo BAZ=BAW')
 
     ds = ogr.Open('tmp/test_ogr2ogr_59_dest.gpkg')
-    if ds.GetMetadata() != { 'FOO': 'BAR', 'BAZ': 'BAW' }:
+    if ds.GetMetadata() != {'FOO': 'BAR', 'BAZ': 'BAW'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
-    if ds.GetMetadata('another_domain') != { 'BAR': 'BAZ' }:
+    if ds.GetMetadata('another_domain') != {'BAR': 'BAZ'}:
         gdaltest.post_reason('fail')
         print(ds.GetMetadata())
         return 'fail'
     lyr = ds.GetLayer(0)
-    if lyr.GetMetadata() != { 'lyr_FOO': 'lyr_BAR' }:
+    if lyr.GetMetadata() != {'lyr_FOO': 'lyr_BAR'}:
         gdaltest.post_reason('fail')
         print(lyr.GetMetadata())
         return 'fail'
-    if lyr.GetMetadata('lyr_another_domain') != { 'lyr_BAR': 'lyr_BAZ' }:
+    if lyr.GetMetadata('lyr_another_domain') != {'lyr_BAR': 'lyr_BAZ'}:
         gdaltest.post_reason('fail')
         print(lyr.GetMetadata())
         return 'fail'
@@ -2880,8 +2880,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_ogr2ogr' )
+    gdaltest.setup_run('test_ogr2ogr')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

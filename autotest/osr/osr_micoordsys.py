@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -126,12 +126,12 @@ def osr_micoordsys_3():
 gdaltest_list = [
     osr_micoordsys_1,
     osr_micoordsys_2,
-    osr_micoordsys_3 ]
+    osr_micoordsys_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_micoordsys' )
+    gdaltest.setup_run('osr_micoordsys')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

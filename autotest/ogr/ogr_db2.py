@@ -41,7 +41,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -223,7 +223,7 @@ def ogr_db2_SetSpatialFilter():
         return 'fail'
 
 # set a query envelope so we only get one feature
-    lyr.SetSpatialFilterRect( -122.02, 37.42, -122.01, 37.43 )
+    lyr.SetSpatialFilterRect(-122.02, 37.42, -122.01, 37.43)
 
     count = lyr.GetFeatureCount()
 
@@ -244,7 +244,7 @@ def ogr_db2_SetSpatialFilter():
 
 # start over with a larger envelope to get 3 out of 5 of the points
     lyr.ResetReading()
-    lyr.SetSpatialFilterRect( -122.04, 37.30, -121.80, 37.43 )
+    lyr.SetSpatialFilterRect(-122.04, 37.30, -121.80, 37.43)
 
     count = lyr.GetFeatureCount()
 
@@ -340,9 +340,9 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_db2' )
+    gdaltest.setup_run('ogr_db2')
     if os.name == 'nt':
-        gdaltest.run_tests( gdaltest_list )
+        gdaltest.run_tests(gdaltest_list)
     else:
         print("These tests only run on Windows")
     gdaltest.summarize()

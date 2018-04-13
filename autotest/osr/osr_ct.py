@@ -33,7 +33,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -49,30 +49,30 @@ def osr_ct_1():
     gdaltest.have_proj4 = 0
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
     try:
-        gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-        ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+        gdal.PushErrorHandler('CPLQuietErrorHandler')
+        ct = osr.CoordinateTransformation(ll_srs, utm_srs)
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
             return 'skip'
     except ValueError:
         gdal.PopErrorHandler()
         if gdal.GetLastErrorMsg().find('Unable to load PROJ.4') != -1:
-            gdaltest.post_reason( 'PROJ.4 missing, transforms not available.' )
+            gdaltest.post_reason('PROJ.4 missing, transforms not available.')
             return 'skip'
         else:
-            gdaltest.post_reason( gdal.GetLastErrorMsg() )
+            gdaltest.post_reason(gdal.GetLastErrorMsg())
             return 'fail'
 
     if ct is None or ct.this is None:
-        gdaltest.post_reason( 'Unable to create simple CoordinateTransformat.')
+        gdaltest.post_reason('Unable to create simple CoordinateTransformat.')
         return 'fail'
 
     gdaltest.have_proj4 = 1
@@ -89,19 +89,19 @@ def osr_ct_2():
         return 'skip'
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    gdaltest.ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    gdaltest.ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
-    result = gdaltest.ct.TransformPoint( -117.5, 32.0, 0.0 )
+    result = gdaltest.ct.TransformPoint(-117.5, 32.0, 0.0)
     if abs(result[0] - 452772.06) > 0.01 \
-       or abs(result[1] - 3540544.89 ) > 0.01 \
+       or abs(result[1] - 3540544.89) > 0.01 \
        or abs(result[2] - 0.0) > 0.01:
-        gdaltest.post_reason( 'Wrong LL to UTM result' )
+        gdaltest.post_reason('Wrong LL to UTM result')
         return 'fail'
     else:
         return 'success'
@@ -118,16 +118,16 @@ def osr_ct_3():
         return 'skip'
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
-    pnt = ogr.CreateGeometryFromWkt( 'POINT(-117.5 32.0)', ll_srs )
-    result = pnt.Transform( ct )
+    pnt = ogr.CreateGeometryFromWkt('POINT(-117.5 32.0)', ll_srs)
+    result = pnt.Transform(ct)
     if result != 0:
         return 'fail'
 
@@ -137,7 +137,7 @@ def osr_ct_3():
 
     out_srs = pnt.GetSpatialReference().ExportToPrettyWkt()
     if out_srs[0:6] != 'PROJCS':
-        gdaltest.post_reason( 'output srs corrupt, ref counting issue?' )
+        gdaltest.post_reason('output srs corrupt, ref counting issue?')
         return 'fail'
 
     pnt = None
@@ -155,21 +155,21 @@ def osr_ct_4():
         return 'skip'
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    gdaltest.ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    gdaltest.ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
-    result = gdaltest.ct.TransformPoints(  [ (-117.5, 32.0, 0.0), (-117.5, 32.0) ] )
+    result = gdaltest.ct.TransformPoints([(-117.5, 32.0, 0.0), (-117.5, 32.0)])
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89 ) > 0.01 \
+        or abs(result[i][1] - 3540544.89) > 0.01 \
         or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason( 'Wrong LL to UTM result' )
+            gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
     return 'success'
@@ -185,21 +185,21 @@ def osr_ct_5():
         return 'skip'
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    gdaltest.ct = osr.CoordinateTransformation( ll_srs, utm_srs )
+    gdaltest.ct = osr.CoordinateTransformation(ll_srs, utm_srs)
 
-    result = gdaltest.ct.TransformPoints(  ( (-117.5, 32.0, 0.0), (-117.5, 32.0) ) )
+    result = gdaltest.ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89 ) > 0.01 \
+        or abs(result[i][1] - 3540544.89) > 0.01 \
         or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason( 'Wrong LL to UTM result' )
+            gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
     return 'success'
@@ -213,28 +213,28 @@ def osr_ct_6():
     if gdaltest.have_proj4 == 0:
         return 'skip'
 
-    ct = osr.CreateCoordinateTransformation( None, None )
+    ct = osr.CreateCoordinateTransformation(None, None)
     if ct is not None:
         return 'fail'
 
     utm_srs = osr.SpatialReference()
-    utm_srs.SetUTM( 11 )
-    utm_srs.SetWellKnownGeogCS( 'WGS84' )
+    utm_srs.SetUTM(11)
+    utm_srs.SetWellKnownGeogCS('WGS84')
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    ct = osr.CreateCoordinateTransformation( ll_srs, utm_srs )
+    ct = osr.CreateCoordinateTransformation(ll_srs, utm_srs)
     if ct is None:
         return 'fail'
 
-    result = ct.TransformPoints(  ( (-117.5, 32.0, 0.0), (-117.5, 32.0) ) )
+    result = ct.TransformPoints(((-117.5, 32.0, 0.0), (-117.5, 32.0)))
 
     for i in range(2):
         if abs(result[i][0] - 452772.06) > 0.01 \
-        or abs(result[i][1] - 3540544.89 ) > 0.01 \
+        or abs(result[i][1] - 3540544.89) > 0.01 \
         or abs(result[i][2] - 0.0) > 0.01:
-            gdaltest.post_reason( 'Wrong LL to UTM result' )
+            gdaltest.post_reason('Wrong LL to UTM result')
             return 'fail'
 
     return 'success'
@@ -249,34 +249,34 @@ def osr_ct_7():
         return 'skip'
 
     pm_srs = osr.SpatialReference()
-    pm_srs.ImportFromEPSG( 3857 )
+    pm_srs.ImportFromEPSG(3857)
 
     ll_srs = osr.SpatialReference()
-    ll_srs.SetWellKnownGeogCS( 'WGS84' )
+    ll_srs.SetWellKnownGeogCS('WGS84')
 
-    gdaltest.ct = osr.CoordinateTransformation( pm_srs, ll_srs )
+    gdaltest.ct = osr.CoordinateTransformation(pm_srs, ll_srs)
 
-    (x, y, z) = gdaltest.ct.TransformPoint( 7000000, 7000000, 0 )
+    (x, y, z) = gdaltest.ct.TransformPoint(7000000, 7000000, 0)
     (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
     if (abs(exp_x - x) > 0.00001 or
         abs(exp_y - y) > 0.00001 or
         abs(exp_z - z) > 0.00001):
-        gdaltest.post_reason( 'Wrong LL for Pseudo Mercator result' )
+        gdaltest.post_reason('Wrong LL for Pseudo Mercator result')
         print('Got:      (%f, %f, %f)' % (x, y, z))
         print('Expected: (%f, %f, %f)' % (exp_x, exp_y, exp_z))
         return 'fail'
 
-    pnt = ogr.CreateGeometryFromWkt( 'POINT(%g %g)' % (7000000, 7000000),
-                                     pm_srs )
-    expected_pnt = ogr.CreateGeometryFromWkt( 'POINT(%.10f %.10f)' % (exp_x, exp_y),
-                                     ll_srs )
-    result = pnt.Transform( gdaltest.ct )
+    pnt = ogr.CreateGeometryFromWkt('POINT(%g %g)' % (7000000, 7000000),
+                                     pm_srs)
+    expected_pnt = ogr.CreateGeometryFromWkt('POINT(%.10f %.10f)' % (exp_x, exp_y),
+                                     ll_srs)
+    result = pnt.Transform(gdaltest.ct)
     if result != 0:
         return 'fail'
     if (abs(expected_pnt.GetX() - pnt.GetX()) > 0.00001 or
         abs(expected_pnt.GetY() - pnt.GetY()) > 0.00001 or
         abs(expected_pnt.GetZ() - pnt.GetZ()) > 0.00001):
-        gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+        gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
         print('Got:      %s' % pnt.ExportToWkt())
         print('Expected: %s' % expected_pnt.ExportToWkt())
         return 'fail'
@@ -293,33 +293,33 @@ def osr_ct_8():
         return 'skip'
 
     src_srs = osr.SpatialReference()
-    src_srs.ImportFromEPSG( 3857 )
+    src_srs.ImportFromEPSG(3857)
 
     dst_srs = osr.SpatialReference()
-    dst_srs.SetWellKnownGeogCS( 'WGS84' )
+    dst_srs.SetWellKnownGeogCS('WGS84')
 
-    ct = osr.CoordinateTransformation( src_srs, dst_srs )
+    ct = osr.CoordinateTransformation(src_srs, dst_srs)
 
-    pnts = [ (0, 6274861.39400658), (1, 6274861.39400658) ]
-    result = ct.TransformPoints( pnts )
-    expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000000000000007, 0.0) ]
+    pnts = [(0, 6274861.39400658), (1, 6274861.39400658)]
+    result = ct.TransformPoints(pnts)
+    expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000000000000007, 0.0)]
 
     for i in range(2):
         for j in range(3):
             if abs(result[i][j] - expected_result[i][j]) > 1e-10:
-                gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+                gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
                 return 'fail'
 
-    pnts = [ (0, 6274861.39400658), (1+0, 1+6274861.39400658) ]
-    result = ct.TransformPoints( pnts )
+    pnts = [(0, 6274861.39400658), (1+0, 1+6274861.39400658)]
+    result = ct.TransformPoints(pnts)
     expected_result = [(0.0, 49.000000000000007, 0.0), (8.9831528411952125e-06, 49.000005893478189, 0.0)]
 
     for i in range(2):
         for j in range(3):
             if abs(result[i][j] - expected_result[i][j]) > 1e-10:
-                gdaltest.post_reason( 'Failed to transform from Pseudo Mercator to LL')
+                gdaltest.post_reason('Failed to transform from Pseudo Mercator to LL')
                 print('Got:      %s' % str(result))
                 print('Expected: %s' % str(expected_result))
                 print(i)
@@ -352,12 +352,12 @@ gdaltest_list = [
     osr_ct_7,
     osr_ct_8,
     osr_ct_cleanup,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_ct' )
+    gdaltest.setup_run('osr_ct')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

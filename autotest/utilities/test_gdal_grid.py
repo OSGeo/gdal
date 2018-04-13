@@ -33,8 +33,8 @@ import sys
 import os
 import struct
 
-sys.path.append( '../pymod' )
-sys.path.append( '../gcore' )
+sys.path.append('../pymod')
+sys.path.append('../gcore')
 
 from osgeo import gdal
 from osgeo import ogr
@@ -82,19 +82,19 @@ def test_gdal_grid_1():
     geotransform = ds.GetGeoTransform()
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
-    shape_ds = shape_drv.CreateDataSource( 'tmp' )
-    shape_lyr = shape_ds.CreateLayer( 'n43' )
+    shape_ds = shape_drv.CreateDataSource('tmp')
+    shape_lyr = shape_ds.CreateLayer('n43')
 
     data = ds.ReadRaster(0, 0, 121, 121)
     array_val = struct.unpack('h' * 121*121, data)
     for j in range(121):
         for i in range(121):
-            wkt = 'POINT(%f %f %s)' % ( geotransform[0] + (i + .5) * geotransform[1],
+            wkt = 'POINT(%f %f %s)' % (geotransform[0] + (i + .5) * geotransform[1],
                                         geotransform[3] + (j + .5) * geotransform[5],
-                                        array_val[j * 121 + i] )
-            dst_feat = ogr.Feature( feature_def = shape_lyr.GetLayerDefn() )
+                                        array_val[j * 121 + i])
+            dst_feat = ogr.Feature(feature_def = shape_lyr.GetLayerDefn())
             dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-            shape_lyr.CreateFeature( dst_feat )
+            shape_lyr.CreateFeature(dst_feat)
 
     dst_feat.Destroy()
 
@@ -952,8 +952,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_grid' )
+    gdaltest.setup_run('test_gdal_grid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

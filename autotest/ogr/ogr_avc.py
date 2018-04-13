@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -43,10 +43,10 @@ from osgeo import gdal
 
 def check_content(ds):
 
-    lyr = ds.GetLayerByName( 'ARC' )
+    lyr = ds.GetLayerByName('ARC')
     expect = ['1', '2', '3', '4', '5', '6', '7']
 
-    tr = ogrtest.check_features_against_list( lyr, 'UserID', expect )
+    tr = ogrtest.check_features_against_list(lyr, 'UserID', expect)
     if not tr:
         return 'fail'
 
@@ -54,7 +54,7 @@ def check_content(ds):
 
     feat = lyr.GetNextFeature()
     if ogrtest.check_feature_geometry(feat,'LINESTRING (340099.875 4100200.0,340400.0625 4100399.5,340900.125 4100200.0,340700.03125 4100199.5)',
-                                      max_error = 0.01 ) != 0:
+                                      max_error = 0.01) != 0:
         return 'fail'
 
     return 'success'
@@ -66,7 +66,7 @@ def check_content(ds):
 def ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
-    avc_ds = ogr.Open( 'data/test.e00' )
+    avc_ds = ogr.Open('data/test.e00')
     if avc_ds.GetLayer(0).GetSpatialRef() is None:
         gdaltest.post_reason('expected SRS')
         return 'fail'
@@ -82,7 +82,7 @@ def ogr_avc_1():
 
 def ogr_avc_2():
 
-    avc_ds = ogr.Open( 'data/testavc/testavc' )
+    avc_ds = ogr.Open('data/testavc/testavc')
     if avc_ds.GetLayer(0).GetSpatialRef() is None:
         gdaltest.post_reason('expected SRS')
         return 'fail'
@@ -99,7 +99,7 @@ def ogr_avc_2():
 def ogr_avc_3():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    avc_ds = ogr.Open( 'data/compressed.e00' )
+    avc_ds = ogr.Open('data/compressed.e00')
     gdal.PopErrorHandler()
     last_error_msg = gdal.GetLastErrorMsg()
 
@@ -119,8 +119,8 @@ def ogr_avc_3():
 
 def ogr_avc_4():
 
-    for filename in [ 'data/testpointavc/testpointavc', 'data/testpoint.e00' ]:
-        avc_ds = ogr.Open( filename )
+    for filename in ['data/testpointavc/testpointavc', 'data/testpoint.e00']:
+        avc_ds = ogr.Open(filename)
         lyr = avc_ds.GetLayer(0)
         last_feature = None
         count = 0
@@ -161,8 +161,8 @@ def ogr_avc_4():
 
 def ogr_avc_5():
 
-    for filename in [ 'data/testpolyavc/testpolyavc', 'data/testpoly.e00' ]:
-        avc_ds = ogr.Open( filename )
+    for filename in ['data/testpolyavc/testpolyavc', 'data/testpoly.e00']:
+        avc_ds = ogr.Open(filename)
         lyr = avc_ds.GetLayerByName('PAL')
         last_feature = None
         count = 0
@@ -214,8 +214,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_avc' )
+    gdaltest.setup_run('ogr_avc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

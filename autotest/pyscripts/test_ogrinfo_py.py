@@ -31,7 +31,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -228,12 +228,12 @@ def test_ogrinfo_py_22():
     f.write('"POINT(1 2)","POINT(3 4)"\n')
     f.close()
 
-    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', 'tmp/test_ogrinfo_22.csv' )
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', 'tmp/test_ogrinfo_22.csv')
     if ret.find('1: test_ogrinfo_22 (Unknown (any), Unknown (any))') < 0:
         print(ret)
         return 'fail'
 
-    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_22.csv' )
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_22.csv')
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_22.csv'
       using driver `CSV' successful.
 
@@ -313,7 +313,7 @@ def test_ogrinfo_py_23():
     f.write('"POINT(3 4)","POINT(1 2)"\n')
     f.close()
 
-    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_23.csv -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631' )
+    ret = test_py_scripts.run_py_script(script_path, 'ogrinfo', '-al tmp/test_ogrinfo_23.csv -spat 1 2 1 2 -geomfield geom__WKTgeom2_EPSG_32631')
     expected_ret = """INFO: Open of `tmp/test_ogrinfo_23.csv'
       using driver `CSV' successful.
 
@@ -398,8 +398,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_ogrinfo_py' )
+    gdaltest.setup_run('test_ogrinfo_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

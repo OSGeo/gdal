@@ -36,7 +36,7 @@ from osgeo import ogr
 # Open the datasource to operate on.
 
 #ds = ogr.Open( '/u/data/ntf/bl2000/HALTON.NTF' )
-ds = ogr.Open( 'PG:dbname=test', update = 1 )
+ds = ogr.Open('PG:dbname=test', update = 1)
 
 layer_count = ds.GetLayerCount()
 
@@ -54,11 +54,11 @@ poly_layer = ds.GetLayer(1)
 lines_hash = {}
 
 feat = line_layer.GetNextFeature()
-geom_id_field = feat.GetFieldIndex( 'GEOM_ID' )
-tile_ref_field = feat.GetFieldIndex( 'TILE_REF' )
+geom_id_field = feat.GetFieldIndex('GEOM_ID')
+tile_ref_field = feat.GetFieldIndex('TILE_REF')
 while feat is not None:
-    geom_id = feat.GetField( geom_id_field )
-    tile_ref = feat.GetField( tile_ref_field )
+    geom_id = feat.GetField(geom_id_field)
+    tile_ref = feat.GetField(tile_ref_field)
 
     if tile_ref not in lines_hash:
         lines_hash[tile_ref] = {}
@@ -77,17 +77,17 @@ print('Got %d lines.' % len(lines_hash))
 # Read all polygon features.
 
 feat = poly_layer.GetNextFeature()
-link_field = feat.GetFieldIndex( 'GEOM_ID_OF_LINK' )
-tile_ref_field = feat.GetFieldIndex( 'TILE_REF' )
+link_field = feat.GetFieldIndex('GEOM_ID_OF_LINK')
+tile_ref_field = feat.GetFieldIndex('TILE_REF')
 
 while feat is not None:
-    tile_ref = feat.GetField( tile_ref_field )
-    link_list = feat.GetField( link_field )
+    tile_ref = feat.GetField(tile_ref_field)
+    link_list = feat.GetField(link_field)
 
     # If the list is in string form we need to convert it.
     if type(link_list).__name__ == 'str':
         colon = link_list.find(':')
-        items = link_list[colon+1:-1].split( ',' )
+        items = link_list[colon+1:-1].split(',')
         link_list = []
         for item in items:
             try:
@@ -95,15 +95,15 @@ while feat is not None:
             except:
                 print('item failed to translate: ', item)
 
-    link_coll = ogr.Geometry( type = ogr.wkbGeometryCollection )
+    link_coll = ogr.Geometry(type = ogr.wkbGeometryCollection)
     for geom_id in link_list:
         geom = lines_hash[tile_ref][geom_id]
-        link_coll.AddGeometry( geom )
+        link_coll.AddGeometry(geom)
 
     try:
-        poly = ogr.BuildPolygonFromEdges( link_coll )
+        poly = ogr.BuildPolygonFromEdges(link_coll)
         print(poly.ExportToWkt())
-        feat.SetGeometryDirectly( poly )
+        feat.SetGeometryDirectly(poly)
     except:
         print('BuildPolygonFromEdges failed.')
 

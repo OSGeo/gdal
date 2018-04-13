@@ -32,7 +32,7 @@ import sys
 import time
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 
 def vsicurl_streaming_1():
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -143,14 +143,14 @@ def vsicurl_streaming_1():
     return 'success'
 
 
-gdaltest_list = [ vsicurl_streaming_1 ]
+gdaltest_list = [vsicurl_streaming_1]
 
 if __name__ == '__main__':
 
     gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 
-    gdaltest.setup_run( 'vsicurl_streaming' )
+    gdaltest.setup_run('vsicurl_streaming')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

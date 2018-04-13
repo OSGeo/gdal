@@ -67,11 +67,11 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_VECTOR) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     return drv_list
 
@@ -107,9 +107,9 @@ dst_field = -1
 mask = 'default'
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -182,7 +182,7 @@ except:
 #	Open source file
 # =============================================================================
 
-src_ds = gdal.Open( src_filename )
+src_ds = gdal.Open(src_filename)
 
 if src_ds is None:
     print('Unable to open %s' % src_filename)
@@ -204,7 +204,7 @@ if mask is 'default':
 elif mask is 'none':
     maskband = None
 else:
-    mask_ds = gdal.Open( mask )
+    mask_ds = gdal.Open(mask)
     maskband = mask_ds.GetRasterBand(1)
 
 # =============================================================================
@@ -212,8 +212,8 @@ else:
 # =============================================================================
 
 try:
-    gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
-    dst_ds = ogr.Open( dst_filename, update=1 )
+    gdal.PushErrorHandler('CPLQuietErrorHandler')
+    dst_ds = ogr.Open(dst_filename, update=1)
     gdal.PopErrorHandler()
 except:
     dst_ds = None
@@ -225,7 +225,7 @@ if dst_ds is None:
     drv = ogr.GetDriverByName(format)
     if not quiet_flag:
         print('Creating output %s of format %s.' % (dst_filename, format))
-    dst_ds = drv.CreateDataSource( dst_filename )
+    dst_ds = drv.CreateDataSource(dst_filename)
 
 # =============================================================================
 #       Find or create destination layer.
@@ -240,15 +240,15 @@ if dst_layer is None:
     srs = None
     if src_ds.GetProjectionRef() != '':
         srs = osr.SpatialReference()
-        srs.ImportFromWkt( src_ds.GetProjectionRef() )
+        srs.ImportFromWkt(src_ds.GetProjectionRef())
 
-    dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs = srs )
+    dst_layer = dst_ds.CreateLayer(dst_layername, geom_type=ogr.wkbPolygon, srs = srs)
 
     if dst_fieldname is None:
         dst_fieldname = 'DN'
 
-    fd = ogr.FieldDefn( dst_fieldname, ogr.OFTInteger )
-    dst_layer.CreateField( fd )
+    fd = ogr.FieldDefn(dst_fieldname, ogr.OFTInteger)
+    dst_layer.CreateField(fd)
     dst_field = 0
 else:
     if dst_fieldname is not None:
@@ -265,8 +265,8 @@ if quiet_flag:
 else:
     prog_func = gdal.TermProgress
 
-result = gdal.Polygonize( srcband, maskband, dst_layer, dst_field, options,
-                          callback = prog_func )
+result = gdal.Polygonize(srcband, maskband, dst_layer, dst_field, options,
+                          callback = prog_func)
 
 srcband = None
 src_ds = None

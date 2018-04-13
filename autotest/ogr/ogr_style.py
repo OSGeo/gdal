@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -143,12 +143,12 @@ def ogr_style_styletable():
 
 
 gdaltest_list = [
-    ogr_style_styletable ]
+    ogr_style_styletable]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_style' )
+    gdaltest.setup_run('ogr_style')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

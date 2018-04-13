@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -59,14 +59,14 @@ def ogr_segp1_points():
     feat = lyr.GetNextFeature()
 
     expected_values = [
-        ( 'LINENAME', 'firstline' ),
-        ( 'POINTNUMBER', 10 ),
-        ( 'RESHOOTCODE', ' ' ),
-        ( 'LONGITUDE', 2 ),
-        ( 'LATITUDE', 49 ),
-        ( 'EASTING', 426857 ),
-        ( 'NORTHING', 5427937 ),
-        ( 'DEPTH', 1234 )
+        ('LINENAME', 'firstline'),
+        ('POINTNUMBER', 10),
+        ('RESHOOTCODE', ' '),
+        ('LONGITUDE', 2),
+        ('LATITUDE', 49),
+        ('EASTING', 426857),
+        ('NORTHING', 5427937),
+        ('DEPTH', 1234)
     ]
 
     for values in expected_values:
@@ -76,7 +76,7 @@ def ogr_segp1_points():
             return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -111,7 +111,7 @@ def ogr_segp1_lines():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -124,7 +124,7 @@ def ogr_segp1_lines():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -154,13 +154,13 @@ def ogr_ukooa_points():
     feat = lyr.GetNextFeature()
 
     expected_values = [
-        ( 'LINENAME', 'firstline' ),
-        ( 'POINTNUMBER', 10 ),
-        ( 'LONGITUDE', 2 ),
-        ( 'LATITUDE', 49 ),
-        ( 'EASTING', 426857 ),
-        ( 'NORTHING', 5427937 ),
-        ( 'DEPTH', 1234 )
+        ('LINENAME', 'firstline'),
+        ('POINTNUMBER', 10),
+        ('LONGITUDE', 2),
+        ('LATITUDE', 49),
+        ('EASTING', 426857),
+        ('NORTHING', 5427937),
+        ('DEPTH', 1234)
     ]
 
     for values in expected_values:
@@ -170,7 +170,7 @@ def ogr_ukooa_points():
             return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'POINT (2 49)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -205,7 +205,7 @@ def ogr_ukooa_lines():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'LINESTRING (2 49,2.0 49.5)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -218,7 +218,7 @@ def ogr_ukooa_lines():
         return 'fail'
 
     if ogrtest.check_feature_geometry(feat,'LINESTRING (-2 -49,-2.5 -49.0)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         print('did not get expected first geom')
         feat.DumpReadable()
         return 'fail'
@@ -236,8 +236,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_segukooa' )
+    gdaltest.setup_run('ogr_segukooa')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

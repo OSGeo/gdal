@@ -32,7 +32,7 @@ import json
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import osr
 from osgeo import ogr
@@ -102,13 +102,13 @@ def verify_geojson_copy(name, fids, names):
 
     ######################################################
     # Test attributes
-    ret = ogrtest.check_features_against_list( lyr, 'FID', fids)
+    ret = ogrtest.check_features_against_list(lyr, 'FID', fids)
     if ret != 1:
         print('Wrong values in \'FID\' field')
         return False
 
     lyr.ResetReading()
-    ret = ogrtest.check_features_against_list( lyr, 'NAME', names)
+    ret = ogrtest.check_features_against_list(lyr, 'NAME', names)
     if ret != 1:
         print('Wrong values in \'NAME\' field')
         return False
@@ -125,7 +125,7 @@ def verify_geojson_copy(name, fids, names):
             print('Failed trying to read feature')
             return False
 
-        if ogrtest.check_feature_geometry( feat, orig_feat.GetGeometryRef(),
+        if ogrtest.check_feature_geometry(feat, orig_feat.GetGeometryRef(),
                                            max_error = 0.001) != 0:
             print('Geometry test failed')
             gdaltest.gjpoint_feat = None
@@ -168,8 +168,8 @@ def copy_shape_to_geojson(gjname, compress = None):
     ######################################################
     # Setup schema (all test shapefiles use common schmea)
     ogrtest.quick_create_layer_def(lyr,
-                                   [ ('FID', ogr.OFTReal),
-                                     ('NAME', ogr.OFTString) ])
+                                   [('FID', ogr.OFTReal),
+                                     ('NAME', ogr.OFTString)])
 
     ######################################################
     # Copy in gjpoint.shp
@@ -453,12 +453,12 @@ def ogr_geojson_9():
         return 'skip'
 
     gdaltest.tests = [
-        ['gjpoint', [ 1 ], [ 'Point 1' ] ],
-        ['gjline',  [ 1 ], [ 'Line 1' ] ],
-        ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
-        ['gjmultipoint', [ 1 ], [ 'MultiPoint 1' ] ],
-        ['gjmultiline', [ 2 ], [ 'MultiLine 1' ] ],
-        ['gjmultipoly', [ 2 ], [ 'MultiPoly 1' ] ]
+        ['gjpoint', [1], ['Point 1']],
+        ['gjline',  [1], ['Line 1']],
+        ['gjpoly',  [1], ['Polygon 1']],
+        ['gjmultipoint', [1], ['MultiPoint 1']],
+        ['gjmultiline', [2], ['MultiLine 1']],
+        ['gjmultipoly', [2], ['MultiPoly 1']]
     ]
 
     for i in range(len(gdaltest.tests)):
@@ -486,12 +486,12 @@ def ogr_geojson_10():
         return 'skip'
 
     gdaltest.tests = [
-        ['gjpoint', [ 1 ], [ 'Point 1' ] ],
-        ['gjline',  [ 1 ], [ 'Line 1' ] ],
-        ['gjpoly',  [ 1 ], [ 'Polygon 1' ] ],
-        ['gjmultipoint', [ 1 ], [ 'MultiPoint 1' ] ],
-        ['gjmultiline', [ 2 ], [ 'MultiLine 1' ] ],
-        ['gjmultipoly', [ 2 ], [ 'MultiPoly 1' ] ]
+        ['gjpoint', [1], ['Point 1']],
+        ['gjline',  [1], ['Line 1']],
+        ['gjpoly',  [1], ['Polygon 1']],
+        ['gjmultipoint', [1], ['MultiPoint 1']],
+        ['gjmultiline', [2], ['MultiLine 1']],
+        ['gjmultipoly', [2], ['MultiPoly 1']]
     ]
 
     for i in range(len(gdaltest.tests)):
@@ -590,7 +590,7 @@ def ogr_geojson_13():
     if gdaltest.geojson_drv is None:
         return 'skip'
 
-    test = ['gjpoint', [ 1 ], [ 'Point 1' ] ]
+    test = ['gjpoint', [1], ['Point 1']]
 
     rc = copy_shape_to_geojson(test[0], '/vsistdout/')
     if not rc:
@@ -1140,41 +1140,41 @@ def ogr_geojson_25():
         gdaltest.post_reason('failure')
         return 'fail'
     expected_results = [
-        ( None, None, 'POINT EMPTY'),
-        ( None, None, 'POINT EMPTY'),
-        ( None, None, 'POINT EMPTY'),
-        ( None, None, 'POINT (100 1010)'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, None, 'LINESTRING EMPTY'),
-        ( None, '0', 'LINESTRING EMPTY'),
-        ( None, 'foo', 'LINESTRING EMPTY'),
-        ( '1', None, 'LINESTRING (100 1000,110 1000,110 1100)'),
-        ( '2', None, 'LINESTRING (110 1100,110 1000,100 1000)'),
-        ( None, None, 'POLYGON EMPTY'),
-        ( None, None, 'POLYGON EMPTY'),
-        ( None, None, 'POLYGON EMPTY'),
-        ( None, None, 'POLYGON ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
-        ( None, None, 'POLYGON ((110 1100,110 1000,100 1000,100 1100,110 1100),(101 1010,109 1010,109 1090,101 1090,101 1010))'),
-        ( None, None, 'MULTIPOINT EMPTY'),
-        ( None, None, 'MULTIPOINT EMPTY'),
-        ( None, None, 'MULTIPOINT EMPTY'),
-        ( None, None, 'MULTIPOINT EMPTY'),
-        ( None, None, 'MULTIPOINT (100 1010,101 1020)'),
-        ( None, None, 'MULTIPOLYGON EMPTY'),
-        ( None, None, 'MULTIPOLYGON EMPTY'),
-        ( None, None, 'MULTIPOLYGON EMPTY'),
-        ( None, None, 'MULTIPOLYGON (((110 1100,110 1000,100 1000,100 1100,110 1100)),((101 1010,109 1010,109 1090,101 1090,101 1010)))'),
-        ( None, None, 'MULTILINESTRING EMPTY'),
-        ( None, None, 'MULTILINESTRING EMPTY'),
-        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100))'),
-        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000))'),
-        ( None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
+        (None, None, 'POINT EMPTY'),
+        (None, None, 'POINT EMPTY'),
+        (None, None, 'POINT EMPTY'),
+        (None, None, 'POINT (100 1010)'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, None, 'LINESTRING EMPTY'),
+        (None, '0', 'LINESTRING EMPTY'),
+        (None, 'foo', 'LINESTRING EMPTY'),
+        ('1', None, 'LINESTRING (100 1000,110 1000,110 1100)'),
+        ('2', None, 'LINESTRING (110 1100,110 1000,100 1000)'),
+        (None, None, 'POLYGON EMPTY'),
+        (None, None, 'POLYGON EMPTY'),
+        (None, None, 'POLYGON EMPTY'),
+        (None, None, 'POLYGON ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
+        (None, None, 'POLYGON ((110 1100,110 1000,100 1000,100 1100,110 1100),(101 1010,109 1010,109 1090,101 1090,101 1010))'),
+        (None, None, 'MULTIPOINT EMPTY'),
+        (None, None, 'MULTIPOINT EMPTY'),
+        (None, None, 'MULTIPOINT EMPTY'),
+        (None, None, 'MULTIPOINT EMPTY'),
+        (None, None, 'MULTIPOINT (100 1010,101 1020)'),
+        (None, None, 'MULTIPOLYGON EMPTY'),
+        (None, None, 'MULTIPOLYGON EMPTY'),
+        (None, None, 'MULTIPOLYGON EMPTY'),
+        (None, None, 'MULTIPOLYGON (((110 1100,110 1000,100 1000,100 1100,110 1100)),((101 1010,109 1010,109 1090,101 1090,101 1010)))'),
+        (None, None, 'MULTILINESTRING EMPTY'),
+        (None, None, 'MULTILINESTRING EMPTY'),
+        (None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100))'),
+        (None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000))'),
+        (None, None, 'MULTILINESTRING ((100 1000,110 1000,110 1100,100 1100,100 1000),(101 1010,101 1090,109 1090,109 1010,101 1010))'),
     ]
     if lyr.GetFeatureCount() != len(expected_results):
         gdaltest.post_reason('failure')
@@ -2427,7 +2427,7 @@ def ogr_geojson_45():
         if i == 0:
             expected = [
                 '{ "type": "Feature", "foo": [ "bar", "baz", 1.000000, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }',
-                '{ "type": "Feature", "foo": [ "bar", "baz", 1.0, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }' ]
+                '{ "type": "Feature", "foo": [ "bar", "baz", 1.0, true, false, [ ], { } ], "properties": { "myprop": "myvalue" }, "geometry": null }']
         else:
             expected = ['{"type":"Feature","foo":["bar","baz",1.0,true,false,[],{}],"properties":{"myprop":"myvalue"},"geometry":null}']
         if native_data not in expected:
@@ -2446,7 +2446,7 @@ def ogr_geojson_45():
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_45.json')
     lyr = ds.CreateLayer('test', options = [
             'NATIVE_DATA={ "type": "ignored", "bbox": [ 0, 0, 0, 0 ], "foo": "bar", "bar": "baz", "features": "ignored" }',
-            'NATIVE_MEDIA_TYPE=application/vnd.geo+json'] )
+            'NATIVE_MEDIA_TYPE=application/vnd.geo+json'])
     f = ogr.Feature(lyr.GetLayerDefn())
     json_geom = """{ "type": "GeometryCollection", "foo_gc": "bar_gc", "geometries" : [
                         { "type": "Point", "foo_point": "bar_point", "coordinates": [0,1,2, 3] },
@@ -2549,7 +2549,7 @@ def ogr_geojson_46():
         return 'skip'
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_46.json')
-    lyr = ds.CreateLayer('test' )
+    lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('myprop'))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['myprop'] = '{ "a": "b" }'
@@ -2829,7 +2829,7 @@ def ogr_geojson_50():
         return 'skip'
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
-    lyr = ds.CreateLayer('test' )
+    lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['val'] = 1.23456789012456
@@ -2855,7 +2855,7 @@ def ogr_geojson_50():
     # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION not,
     # then it also applies to coordinates
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
-    lyr = ds.CreateLayer('test', options = ['SIGNIFICANT_FIGURES=17'] )
+    lyr = ds.CreateLayer('test', options = ['SIGNIFICANT_FIGURES=17'])
     lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT (0.0000123456789012456 0)'))
@@ -2877,7 +2877,7 @@ def ogr_geojson_50():
     # If SIGNIFICANT_FIGURES is explicitly specified, and COORDINATE_PRECISION too,
     # then SIGNIFICANT_FIGURES only applies to non-coordinates floating point values.
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_50.json')
-    lyr = ds.CreateLayer('test', options = ['COORDINATE_PRECISION=15', 'SIGNIFICANT_FIGURES=17'] )
+    lyr = ds.CreateLayer('test', options = ['COORDINATE_PRECISION=15', 'SIGNIFICANT_FIGURES=17'])
     lyr.CreateField(ogr.FieldDefn('val', ogr.OFTReal))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['val'] = 1.23456789012456
@@ -2908,7 +2908,7 @@ def ogr_geojson_51():
         return 'skip'
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_51.json')
-    lyr = ds.CreateLayer('test' )
+    lyr = ds.CreateLayer('test')
     lyr.CreateField(ogr.FieldDefn('id', ogr.OFTInteger))
     f = ogr.Feature(lyr.GetLayerDefn())
     f['id'] = 1
@@ -3033,7 +3033,7 @@ def ogr_geojson_53():
         return 'skip'
 
     ds = ogr.GetDriverByName('GeoJSON').CreateDataSource('/vsimem/ogr_geojson_53.json')
-    lyr = ds.CreateLayer('test' )
+    lyr = ds.CreateLayer('test')
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT ZM (1 2 3 4)'))
     lyr.CreateFeature(f)
@@ -3798,23 +3798,23 @@ def ogr_geojson_63():
 def ogr_geojson_64():
 
     g = ogr.CreateGeometryFromWkt('POINT ZM(1 2 3 4)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('POINT Z(1 2 3)') ) != 0:
+    if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
+                            ogr.CreateGeometryFromWkt('POINT Z(1 2 3)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('POINT M(1 2 3)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('POINT (1 2)') ) != 0:
+    if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
+                            ogr.CreateGeometryFromWkt('POINT (1 2)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING ZM(1 2 3 4,5 6 7 8)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)') ) != 0:
+    if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
+                            ogr.CreateGeometryFromWkt('LINESTRING Z(1 2 3,5 6 7)')) != 0:
         return 'fail'
 
     g = ogr.CreateGeometryFromWkt('LINESTRING M(1 2 3,4 5 6)')
-    if ogrtest.check_feature_geometry( ogr.CreateGeometryFromJson(g.ExportToJson()),
-                            ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)') ) != 0:
+    if ogrtest.check_feature_geometry(ogr.CreateGeometryFromJson(g.ExportToJson()),
+                            ogr.CreateGeometryFromWkt('LINESTRING (1 2,4 5)')) != 0:
         return 'fail'
 
     return 'success'
@@ -4039,13 +4039,13 @@ def ogr_geojson_geom_export_failure():
 
     g = ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION(TIN EMPTY)')
     geojson = json.loads(g.ExportToJson())
-    if geojson != { "type": "GeometryCollection", "geometries": None }:
+    if geojson != {"type": "GeometryCollection", "geometries": None}:
         gdaltest.post_reason('fail')
         print(geojson)
         return 'fail'
 
     g = ogr.Geometry(ogr.wkbLineString)
-    g.AddPoint_2D( float('nan'), 0 )
+    g.AddPoint_2D(float('nan'), 0)
     with gdaltest.error_handler():
         geojson = g.ExportToJson()
     if geojson is not None:
@@ -4084,11 +4084,11 @@ def ogr_geojson_cleanup():
 
     try:
         if gdaltest.tests is not None:
-            gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
+            gdal.PushErrorHandler('CPLQuietErrorHandler')
             for i in range(len(gdaltest.tests)):
 
                 fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson')
-                ogr.GetDriverByName('GeoJSON').DeleteDataSource( fname )
+                ogr.GetDriverByName('GeoJSON').DeleteDataSource(fname)
 
                 fname = os.path.join('tmp', gdaltest.tests[i][0] + '.geojson.gz')
                 gdal.Unlink(fname)
@@ -4184,12 +4184,12 @@ gdaltest_list = [
     ogr_geojson_68,
     ogr_geojson_id_field_and_id_type,
     ogr_geojson_geom_export_failure,
-    ogr_geojson_cleanup ]
+    ogr_geojson_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_geojson' )
+    gdaltest.setup_run('ogr_geojson')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

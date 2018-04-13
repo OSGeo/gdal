@@ -37,7 +37,7 @@ import sys
 # -----------------------------------------------------------------------------
 
 
-def EscapeLine( line ):
+def EscapeLine(line):
 
     line_out = ''
     for lchar in line:
@@ -54,7 +54,7 @@ def EscapeLine( line ):
 
 if __name__ != '__main__':
     print 'This module should only be used as a mainline.'
-    sys.exit( 1 )
+    sys.exit(1)
 
 if len(sys.argv) < 2:
     directory = os.environ['S57_CSV']
@@ -63,7 +63,7 @@ else:
 
 
 print 'char *gpapszS57Classes[] = {'
-classes = open( directory + '/s57objectclasses.csv' ).readlines()
+classes = open(directory + '/s57objectclasses.csv').readlines()
 
 for line in classes:
     print '"%s",' % EscapeLine(string.strip(line))
@@ -71,7 +71,7 @@ for line in classes:
 print 'NULL };'
 
 print 'char *gpapszS57attributes[] = {'
-classes = open( directory + '/s57attributes.csv' ).readlines()
+classes = open(directory + '/s57attributes.csv').readlines()
 
 for line in classes:
     print '"%s",' % EscapeLine(string.strip(line))

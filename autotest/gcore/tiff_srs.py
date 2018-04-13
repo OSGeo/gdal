@@ -33,7 +33,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,12 +42,12 @@ import gdaltest
 # Write a geotiff and read it back to check its SRS
 
 class TestTiffSRS:
-    def __init__( self, epsg_code, use_epsg_code, expected_fail ):
+    def __init__(self, epsg_code, use_epsg_code, expected_fail):
         self.epsg_code = epsg_code
         self.use_epsg_code = use_epsg_code
         self.expected_fail = expected_fail
 
-    def test( self ):
+    def test(self):
         sr = osr.SpatialReference()
         if isinstance(self.epsg_code, str):
             sr.SetFromUserInput(self.epsg_code)
@@ -504,7 +504,7 @@ def tiff_srs_pcscitation():
 
 gdaltest_list = []
 
-tiff_srs_list = [ 2758,  # tmerc
+tiff_srs_list = [2758,  # tmerc
                   2036,  # sterea
                   2046,  # tmerc
                   3031,  # polar stere (ticket #3220)
@@ -551,38 +551,38 @@ for item in tiff_srs_list:
         epsg_broken = False
         epsg_proj4_broken = False
 
-    ut = TestTiffSRS( epsg_code, 1, epsg_broken )
-    gdaltest_list.append( (ut.test, "tiff_srs_epsg_%d" % epsg_code) )
-    ut = TestTiffSRS( epsg_code, 0, epsg_proj4_broken )
-    gdaltest_list.append( (ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code) )
+    ut = TestTiffSRS(epsg_code, 1, epsg_broken)
+    gdaltest_list.append((ut.test, "tiff_srs_epsg_%d" % epsg_code))
+    ut = TestTiffSRS(epsg_code, 0, epsg_proj4_broken)
+    gdaltest_list.append((ut.test, "tiff_srs_proj4_of_epsg_%d" % epsg_code))
 
-tiff_srs_list_proj4 = [ ['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1,2,3,4,5,6)],
+tiff_srs_list_proj4 = [['eqdc', '+proj=eqdc +lat_0=%.16g +lon_0=%.16g +lat_1=%.16g +lat_2=%.16g" +x_0=%.16g +y_0=%.16g' % (1,2,3,4,5,6)],
                         ['mill', '+proj=mill +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g +R_A' % (1,2,3,4)],
                         ['gnom', '+proj=gnom +lat_0=%.16g +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3,4)],
                         ['robin', '+proj=robin +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
                         ['sinu', '+proj=sinu +lon_0=%.16g +x_0=%.16g +y_0=%.16g' % (1,2,3)],
                         ]
 for (title, proj4) in tiff_srs_list_proj4:
-    ut = TestTiffSRS( proj4, 0, False )
-    gdaltest_list.append( (ut.test, "tiff_srs_proj4_%s" % title) )
+    ut = TestTiffSRS(proj4, 0, False)
+    gdaltest_list.append((ut.test, "tiff_srs_proj4_%s" % title))
 
-gdaltest_list.append( tiff_srs_without_linear_units )
-gdaltest_list.append( tiff_srs_compd_cs )
-gdaltest_list.append( tiff_srs_weird_mercator_2sp )
-gdaltest_list.append( tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere )
-gdaltest_list.append( tiff_srs_angular_units )
-gdaltest_list.append( tiff_custom_datum_known_ellipsoid )
-gdaltest_list.append( tiff_srs_epsg_2853_with_us_feet )
-gdaltest_list.append( tiff_srs_PCSCitationGeoKey_LUnits )
-gdaltest_list.append( tiff_srs_projection_3856 )
-gdaltest_list.append( tiff_srs_imagine_localcs_citation )
-gdaltest_list.append( tiff_srs_towgs84_override )
-gdaltest_list.append( tiff_srs_pcscitation )
+gdaltest_list.append(tiff_srs_without_linear_units)
+gdaltest_list.append(tiff_srs_compd_cs)
+gdaltest_list.append(tiff_srs_weird_mercator_2sp)
+gdaltest_list.append(tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere)
+gdaltest_list.append(tiff_srs_angular_units)
+gdaltest_list.append(tiff_custom_datum_known_ellipsoid)
+gdaltest_list.append(tiff_srs_epsg_2853_with_us_feet)
+gdaltest_list.append(tiff_srs_PCSCitationGeoKey_LUnits)
+gdaltest_list.append(tiff_srs_projection_3856)
+gdaltest_list.append(tiff_srs_imagine_localcs_citation)
+gdaltest_list.append(tiff_srs_towgs84_override)
+gdaltest_list.append(tiff_srs_pcscitation)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'tiff_srs' )
+    gdaltest.setup_run('tiff_srs')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

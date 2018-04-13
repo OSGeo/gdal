@@ -55,18 +55,18 @@ shpfilename = sys.argv[2]
 #############################################################################-
 # Open the S57 file, and find the SOUNDG layer.
 
-ds = ogr.Open( s57filename )
-src_soundg = ds.GetLayerByName( 'SOUNDG' )
+ds = ogr.Open(s57filename)
+src_soundg = ds.GetLayerByName('SOUNDG')
 
 #############################################################################-
 # Create the output shapefile.
 
-shp_driver = ogr.GetDriverByName( 'ESRI Shapefile' )
-shp_driver.DeleteDataSource( shpfilename )
+shp_driver = ogr.GetDriverByName('ESRI Shapefile')
+shp_driver.DeleteDataSource(shpfilename)
 
-shp_ds = shp_driver.CreateDataSource( shpfilename )
+shp_ds = shp_driver.CreateDataSource(shpfilename)
 
-shp_layer = shp_ds.CreateLayer( 'out', geom_type = ogr.wkbPoint25D )
+shp_layer = shp_ds.CreateLayer('out', geom_type = ogr.wkbPoint25D)
 
 src_defn = src_soundg.GetLayerDefn()
 field_count = src_defn.GetFieldCount()
@@ -76,20 +76,20 @@ field_count = src_defn.GetFieldCount()
 
 out_mapping = []
 for fld_index in range(field_count):
-    src_fd = src_defn.GetFieldDefn( fld_index )
+    src_fd = src_defn.GetFieldDefn(fld_index)
 
-    fd = ogr.FieldDefn( src_fd.GetName(), src_fd.GetType() )
-    fd.SetWidth( src_fd.GetWidth() )
-    fd.SetPrecision( src_fd.GetPrecision() )
-    if shp_layer.CreateField( fd ) != 0:
-        out_mapping.append( -1 )
+    fd = ogr.FieldDefn(src_fd.GetName(), src_fd.GetType())
+    fd.SetWidth(src_fd.GetWidth())
+    fd.SetPrecision(src_fd.GetPrecision())
+    if shp_layer.CreateField(fd) != 0:
+        out_mapping.append(-1)
     else:
-        out_mapping.append( shp_layer.GetLayerDefn().GetFieldCount() - 1 )
+        out_mapping.append(shp_layer.GetLayerDefn().GetFieldCount() - 1)
 
-fd = ogr.FieldDefn( 'ELEV', ogr.OFTReal )
-fd.SetWidth( 12 )
-fd.SetPrecision( 4 )
-shp_layer.CreateField( fd )
+fd = ogr.FieldDefn('ELEV', ogr.OFTReal)
+fd.SetWidth(12)
+fd.SetPrecision(4)
+shp_layer.CreateField(fd)
 
 #############################################################################
 # Process all SOUNDG features.
@@ -100,16 +100,16 @@ while feat is not None:
     multi_geom = feat.GetGeometryRef()
 
     for iPnt in range(multi_geom.GetGeometryCount()):
-        pnt = multi_geom.GetGeometryRef( iPnt )
+        pnt = multi_geom.GetGeometryRef(iPnt)
 
         feat2 = ogr.Feature(feature_def=shp_layer.GetLayerDefn())
 
         for fld_index in range(field_count):
-            feat2.SetField( out_mapping[fld_index], feat.GetField( fld_index ) )
+            feat2.SetField(out_mapping[fld_index], feat.GetField(fld_index))
 
-        feat2.SetField( 'ELEV', pnt.GetZ( 0 ) )
-        feat2.SetGeometry( pnt )
-        shp_layer.CreateFeature( feat2 )
+        feat2.SetField('ELEV', pnt.GetZ(0))
+        feat2.SetGeometry(pnt)
+        shp_layer.CreateFeature(feat2)
         feat2.Destroy()
 
     feat.Destroy()

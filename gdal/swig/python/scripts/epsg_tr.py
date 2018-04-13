@@ -52,7 +52,7 @@ def Usage():
 def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     try:
-        err = prj_srs.ImportFromEPSG( code )
+        err = prj_srs.ImportFromEPSG(code)
     except:
         err = 1
 
@@ -133,7 +133,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 wkt = prj_srs.ExportToWkt()
                 proj4text = prj_srs.ExportToProj4()
 
-                print( '%d\t%d%s\t%d\t%d%s\t%d%s\n' \
+                print('%d\t%d%s\t%d\t%d%s\t%d%s\n' \
                        % (code,4,'EPSG',code,len(wkt),wkt,
                           len(proj4text),proj4text))
             except:
@@ -150,9 +150,9 @@ if __name__ == '__main__':
     output_format = '-pretty_wkt'
     report_error = 1
 
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
-        sys.exit( 0 )
+        sys.exit(0)
 
     # Parse command line arguments.
 
@@ -209,7 +209,7 @@ if __name__ == '__main__':
 
     elif list_file is not None:
 
-        list_fd = open( list_file )
+        list_fd = open(list_file)
         line = list_fd.readline()
         while len(line) > 0:
             try:

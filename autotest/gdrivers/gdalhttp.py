@@ -35,7 +35,7 @@ import sys
 from osgeo import gdal
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -48,7 +48,7 @@ def http_1():
     gdaltest.dods_drv = None
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -56,14 +56,14 @@ def http_1():
         return 'skip'
 
     try:
-        gdaltest.dods_drv = gdal.GetDriverByName( 'DODS' )
+        gdaltest.dods_drv = gdal.GetDriverByName('DODS')
         if gdaltest.dods_drv is not None:
             gdaltest.dods_drv.Deregister()
     except:
         gdaltest.dods_drv = None
 
-    tst = gdaltest.GDALTest( 'PNG','http://gdal.org/gdalicon.png',
-                             1, 7617, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('PNG','http://gdal.org/gdalicon.png',
+                             1, 7617, filename_absolute = 1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('http://gdal.org/gdalicon.png')
@@ -81,15 +81,15 @@ def http_1():
 def http_2():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
     if drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'GTiff','/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
-                             1, 4672, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('GTiff','/vsicurl/https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif',
+                             1, 4672, filename_absolute = 1)
     ret = tst.testOpen()
     if ret == 'fail':
         conn = gdaltest.gdalurlopen('https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gcore/data/byte.tif')
@@ -107,7 +107,7 @@ def http_2():
 def http_3():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -134,7 +134,7 @@ def http_3():
 def http_4_old():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -175,7 +175,7 @@ def http_4():
         return 'skip'
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -215,7 +215,7 @@ def http_4():
 def http_5():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -255,7 +255,7 @@ def http_5():
 def http_6():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -285,7 +285,7 @@ def http_6():
 
 def http_test_ssl_verifystatus():
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     with gdaltest.config_option('GDAL_HTTP_SSL_VERIFYSTATUS', 'YES'):
@@ -309,7 +309,7 @@ def http_test_ssl_verifystatus():
 
 def http_test_use_capi_store():
 
-    if gdal.GetDriverByName( 'HTTP' ) is None:
+    if gdal.GetDriverByName('HTTP') is None:
         return 'skip'
 
     if sys.platform != 'win32':
@@ -344,7 +344,7 @@ def http_cleanup():
     return 'success'
 
 
-gdaltest_list = [ http_1,
+gdaltest_list = [http_1,
                   http_2,
                   http_3,
                   #http_4_old,
@@ -353,17 +353,17 @@ gdaltest_list = [ http_1,
                   http_6,
                   http_test_ssl_verifystatus,
                   http_test_use_capi_store,
-                  http_cleanup ]
+                  http_cleanup]
 
 # gdaltest_list = [ http_test_use_capi_store ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'http' )
+    gdaltest.setup_run('http')
 
     if len(sys.argv) == 2 and sys.argv[1] == '-use_capi_store':
-        gdaltest_list = [ http_test_use_capi_store_sub ]
+        gdaltest_list = [http_test_use_capi_store_sub]
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

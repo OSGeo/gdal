@@ -146,7 +146,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 
     ds.SetStyleTable(style_table)
 
-    lyr_options = [ 'LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
+    lyr_options = ['LOOKAT_LONGITUDE=2.2945', 'LOOKAT_LATITUDE=48.85825', 'LOOKAT_RANGE=300',
                     'LOOKAT_ALTITUDE=30', 'LOOKAT_HEADING=0', 'LOOKAT_TILT=70', 'LOOKAT_ALTITUDEMODE=relativeToGround',
                     'ADD_REGION=YES', 'REGION_MIN_LOD_PIXELS=128', 'REGION_MAX_LOD_PIXELS=10000000', \
                     'REGION_MIN_FADE_EXTENT=1', 'REGION_MAX_FADE_EXTENT=2', 'SO_HREF=http://www.gdal.org/gdalicon.png',
@@ -233,7 +233,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetGeometry(ogr.CreateGeometryFromWkt('MULTIPOLYGON(((2.29413 48.85703,2.29606 48.85847,2.29837 48.85679,2.29676 48.85543,2.29413 48.85703)),((2.29656 48.85504,2.29929 48.85674,2.30359 48.85364,2.30164 48.85226,2.29656 48.85504)))'))
     lyr.CreateFeature(feat)
 
-    feat = ogr.Feature( lyr.GetLayerDefn() )
+    feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(2.2945 48.85825 10)'))
     feat.SetField("tilt", 75)
     feat.SetField("roll", 10)
@@ -303,9 +303,9 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     # feat.SetGeometry(ogr.CreateGeometryFromWkt('GEOMETRYCOLLECTION (POINT EMPTY,POINT(1 2))'))
     # lyr.CreateFeature(feat)
 
-    lyr_options = [ 'CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
+    lyr_options = ['CAMERA_LONGITUDE=2.2945', 'CAMERA_LATITUDE=48.85825', 'CAMERA_ALTITUDE=30',
                     'CAMERA_HEADING=120', 'CAMERA_TILT=70', 'CAMERA_ROLL=10', 'CAMERA_ALTITUDEMODE=relativeToGround',
-                    'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet' ]
+                    'FOLDER=YES', 'NAME=layer_name', 'DESCRIPTION=description', 'OPEN=1', 'VISIBILITY=1', 'SNIPPET=snippet']
     ds.CreateLayer('test2', options = lyr_options)
 
     gdal.SetConfigOption('LIBKML_USE_SIMPLEFIELD', 'NO')

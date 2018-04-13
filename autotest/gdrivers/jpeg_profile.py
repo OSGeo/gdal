@@ -34,7 +34,7 @@ import os
 import sys
 import base64
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -56,7 +56,7 @@ def jpeg_copy_icc():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('JPEG')
     driver_tiff = gdal.GetDriverByName('GTiff')
@@ -99,7 +99,7 @@ def jpeg_copy_options_icc():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('JPEG')
     driver_tiff = gdal.GetDriverByName('GTiff')
@@ -148,7 +148,7 @@ def jpeg_copy_icc_64K():
     f.close()
 
     # Create dummy file
-    options = [ 'SOURCE_ICC_PROFILE=' + icc ]
+    options = ['SOURCE_ICC_PROFILE=' + icc]
 
     driver = gdal.GetDriverByName('JPEG')
     driver_tiff = gdal.GetDriverByName('GTiff')
@@ -216,14 +216,14 @@ def jpeg_copy_icc_64K():
 ###############################################################################################
 
 
-gdaltest_list.append( (jpeg_copy_icc) )
-gdaltest_list.append( (jpeg_copy_options_icc) )
-gdaltest_list.append( (jpeg_copy_icc_64K) )
+gdaltest_list.append((jpeg_copy_icc))
+gdaltest_list.append((jpeg_copy_options_icc))
+gdaltest_list.append((jpeg_copy_icc_64K))
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'jpeg_profile' )
+    gdaltest.setup_run('jpeg_profile')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

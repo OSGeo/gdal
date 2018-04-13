@@ -32,7 +32,7 @@ import stat
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -51,7 +51,7 @@ def vsiswift_init():
 
     gdaltest.az_vars = {}
     for var in ('SWIFT_STORAGE_URL', 'SWIFT_AUTH_TOKEN',
-                'SWIFT_AUTH_V1_URL', 'SWIFT_USER', 'SWIFT_KEY' ):
+                'SWIFT_AUTH_V1_URL', 'SWIFT_USER', 'SWIFT_KEY'):
         gdaltest.az_vars[var] = gdal.GetConfigOption(var)
         if gdaltest.az_vars[var] is not None:
             gdal.SetConfigOption(var, "")
@@ -254,7 +254,7 @@ def vsiswift_fake_auth_storage_url_and_auth_token():
 
     # Failure
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something/foo/bar', 501 )
+    handler.add('GET', '/v1/AUTH_something/foo/bar', 501)
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsiswift/foo/bar')
         if f is None:
@@ -324,7 +324,7 @@ def vsiswift_stat():
             return 'fail'
 
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/v1/AUTH_something/foo/bar', 200, {'Content-Length': '1000000'} )
+    handler.add('HEAD', '/v1/AUTH_something/foo/bar', 200, {'Content-Length': '1000000'})
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift_streaming/foo/bar')
         if stat_res is None or stat_res.size != 1000000:
@@ -339,7 +339,7 @@ def vsiswift_stat():
     handler = webserver.SequentialHandler()
     # GET on the container URL returns something, but we must hack this back
     # to a directory
-    handler.add('GET', '/v1/AUTH_something/foo', 200, {}, "blabla" )
+    handler.add('GET', '/v1/AUTH_something/foo', 200, {}, "blabla")
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiswift/foo')
         if stat_res is None or not stat.S_ISDIR(stat_res.mode):
@@ -361,7 +361,7 @@ def vsiswift_fake_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=1', 200,
-                { 'Content-type': 'application/json' },
+                {'Content-type': 'application/json'},
                 """[
   {
     "last_modified": "1970-01-01T00:00:01",
@@ -371,7 +371,7 @@ def vsiswift_fake_readdir():
 ]""")
 
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=1&marker=bar.baz', 200,
-                { 'Content-type': 'application/json' },
+                {'Content-type': 'application/json'},
                 """[
   {
     "subdir": "mysubdir/"
@@ -379,7 +379,7 @@ def vsiswift_fake_readdir():
 ]""")
 
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=1&marker=mysubdir%2F', 200,
-                { 'Content-type': 'application/json' },
+                {'Content-type': 'application/json'},
                 """[
 ]""")
 
@@ -423,12 +423,12 @@ def vsiswift_fake_readdir():
 
     # List containers (empty result)
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something', 200, { 'Content-type': 'application/json' },
+    handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
         """[]
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != [ '.' ]:
+    if dir_contents != ['.']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -437,13 +437,13 @@ def vsiswift_fake_readdir():
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something', 200, { 'Content-type': 'application/json' },
+    handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
         """[ { "name": "mycontainer1", "count": 0, "bytes": 0 },
              { "name": "mycontainer2", "count": 0, "bytes": 0}
            ] """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != [ 'mycontainer1', 'mycontainer2' ]:
+    if dir_contents != ['mycontainer1', 'mycontainer2']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -452,7 +452,7 @@ def vsiswift_fake_readdir():
     gdal.VSICurlClearCache()
 
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/v1/AUTH_something', 200, { 'Content-type': 'application/json' },
+    handler.add('GET', '/v1/AUTH_something', 200, {'Content-type': 'application/json'},
         """[ {
                 "last_modified": "1970-01-01T00:00:01",
                 "bytes": 123456,
@@ -461,17 +461,17 @@ def vsiswift_fake_readdir():
              { "subdir": "foo/"} ] """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/')
-    if dir_contents != [ 'foo', 'foo/' ]:
+    if dir_contents != ['foo', 'foo/']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000', 200,
-                { 'Content-type': 'application/json' }, "[]")
+                {'Content-type': 'application/json'}, "[]")
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiswift/foo/')
-    if dir_contents != [ '.' ]:
+    if dir_contents != ['.']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -606,7 +606,7 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/dir/', 404, {'Connection':'close'})
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json' },
+                {'Connection':'close', 'Content-type': 'application/json'},
                 """[ { "subdir": "dir/" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Mkdir('/vsiswift/foo/dir', 0)
@@ -627,7 +627,7 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/it_is_a_file/', 404)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json' },
+                {'Connection':'close', 'Content-type': 'application/json'},
                 """[ { "name": "it_is_a_file/", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/it_is_a_file')
@@ -640,7 +640,7 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/dir/', 200)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir%2F',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json' },
+                {'Connection':'close', 'Content-type': 'application/json'},
                 """[]
                 """)
     handler.add('DELETE', '/v1/AUTH_something/foo/dir/', 204)
@@ -667,11 +667,11 @@ def vsiswift_fake_mkdir_rmdir():
     handler.add('GET', '/v1/AUTH_something/foo/dir_nonempty/', 404)
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=10000',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json' },
+                {'Connection':'close', 'Content-type': 'application/json'},
                 """[ { "subdir": "dir_nonempty/" } ]""")
     handler.add('GET', '/v1/AUTH_something/foo?delimiter=%2F&limit=2&prefix=dir_nonempty%2F',
                 200,
-                {'Connection':'close', 'Content-type': 'application/json' },
+                {'Connection':'close', 'Content-type': 'application/json'},
                 """[ { "name": "dir_nonempty/some_file", "bytes": 0, "last_modified": "1970-01-01T00:00:01" } ]""")
     with webserver.install_http_handler(handler):
         ret = gdal.Rmdir('/vsiswift/foo/dir_nonempty')
@@ -862,7 +862,7 @@ def vsiswift_cleanup():
     return 'success'
 
 
-gdaltest_list = [ vsiswift_init,
+gdaltest_list = [vsiswift_init,
                   vsiswift_real_server_errors,
                   vsiswift_start_webserver,
                   vsiswift_fake_auth_v1_url,
@@ -873,19 +873,19 @@ gdaltest_list = [ vsiswift_init,
                   vsiswift_fake_unlink,
                   vsiswift_fake_mkdir_rmdir,
                   vsiswift_stop_webserver,
-                  vsiswift_cleanup ]
+                  vsiswift_cleanup]
 
 # gdaltest_list = [ vsiswift_init, vsiswift_start_webserver, vsiswift_fake_mkdir_rmdir, vsiswift_stop_webserver, vsiswift_cleanup ]
 
-gdaltest_list_extra = [ vsiswift_extra_1 ]
+gdaltest_list_extra = [vsiswift_extra_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsiswift' )
+    gdaltest.setup_run('vsiswift')
 
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests( gdaltest_list_extra )
+        gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ vsiswift_cleanup ] )
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsiswift_cleanup])
 
     gdaltest.summarize()

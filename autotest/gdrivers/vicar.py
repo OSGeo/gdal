@@ -32,7 +32,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -42,7 +42,7 @@ import gdaltest
 
 def vicar_1():
 
-    tst = gdaltest.GDALTest( 'VICAR', 'test_vicar_truncated.bin', 1, 0 )
+    tst = gdaltest.GDALTest('VICAR', 'test_vicar_truncated.bin', 1, 0)
     expected_prj = """PROJCS["SINUSOIDAL MARS",
     GEOGCS["GCS_MARS",
         DATUM["D_MARS",
@@ -53,7 +53,7 @@ def vicar_1():
     PARAMETER["longitude_of_center",137],
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0]]"""
-    if tst.testOpen( check_prj = expected_prj, skip_checksum = True ) != 'success':
+    if tst.testOpen(check_prj = expected_prj, skip_checksum = True) != 'success':
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -98,12 +98,12 @@ def vicar_1():
 
 
 gdaltest_list = [
-    vicar_1 ]
+    vicar_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vicar' )
+    gdaltest.setup_run('vicar')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

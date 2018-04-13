@@ -79,7 +79,7 @@ def gdal_rm(argv, progress = None):
     recurse = False
     simulate = False
 
-    argv = gdal.GeneralCmdLineProcessor( argv )
+    argv = gdal.GeneralCmdLineProcessor(argv)
     if argv is None:
         return -1
 

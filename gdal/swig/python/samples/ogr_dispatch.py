@@ -206,7 +206,7 @@ def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, option
             if out_lyr is None:
                 return 1
             src_field_count = src_lyr.GetLayerDefn().GetFieldCount()
-            panMap = [ -1 for i in range(src_field_count) ]
+            panMap = [-1 for i in range(src_field_count)]
             for i in range(src_field_count):
                 field_defn = src_lyr.GetLayerDefn().GetFieldDefn(i)
                 if options.bRemoveDispatchFields:
@@ -271,7 +271,7 @@ def convert_layer(src_lyr, dst_ds, layerMap, options):
 
         out_feat = ogr.Feature(out_lyr.GetLayerDefn())
         if panMap is not None:
-            out_feat.SetFromWithMap( feat, 1, panMap )
+            out_feat.SetFromWithMap(feat, 1, panMap)
         else:
             out_feat.SetFrom(feat)
         if options.bStyleAsField:
@@ -325,8 +325,8 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
                 options.bNullifyOutputSRS = True
             else:
                 options.poOutputSRS = osr.SpatialReference()
-                if options.poOutputSRS.SetFromUserInput( pszOutputSRSDef ) != 0:
-                    print( "Failed to process SRS definition: %s" % pszOutputSRSDef )
+                if options.poOutputSRS.SetFromUserInput(pszOutputSRSDef) != 0:
+                    print("Failed to process SRS definition: %s" % pszOutputSRSDef)
                     return 1
         elif EQUAL(arg, '-dsco') and i+1 < len(argv):
             i = i + 1
@@ -405,5 +405,5 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
 
 
 if __name__ == '__main__':
-    argv = ogr.GeneralCmdLineProcessor( sys.argv )
+    argv = ogr.GeneralCmdLineProcessor(sys.argv)
     sys.exit(ogr_dispatch(argv[1:]))
