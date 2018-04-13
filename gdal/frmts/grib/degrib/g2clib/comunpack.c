@@ -61,6 +61,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       g2int msng1,msng2;
       g2float ref,bscale,dscale,rmiss1,rmiss2;
       g2int totBit, totLen;
+      g2int errorOccurred = 0;
 
       //printf('IDRSTMPL: ',(idrstmpl(j),j=1,16)
       rdieee(idrstmpl+0,&ref,1);
@@ -290,21 +291,24 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
         if( gwidth[j] < 0 || glen[j] < 0 ||
             (gwidth[j] > 0 && glen[j] > INT_MAX / gwidth[j]) )
         {
+            errorOccurred = 1;
             break;
         }
         width_mult_len = gwidth[j]*glen[j];
         if( totBit > INT_MAX - width_mult_len )
         {
+            errorOccurred = 1;
             break;
         }
         totBit += width_mult_len;
         if( totLen > INT_MAX - glen[j] )
         {
+            errorOccurred = 1;
             break;
         }
         totLen += glen[j];
       }
-      if (totLen != ndpts || totBit / 8. > lensec) {
+      if (errorOccurred || totLen != ndpts || totBit / 8. > lensec) {
         free(ifld);
         free(gwidth);
         free(glen);
