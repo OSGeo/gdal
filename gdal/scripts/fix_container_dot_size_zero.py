@@ -74,7 +74,7 @@ while True:
     if pos1 < 0 and pos2 < 0:
         break
     separator = ''
-    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0): 
+    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0):
         pos = pos1
         pos_after = pos + len('.size()')
         separator = '.'

@@ -53,19 +53,19 @@ def applyverticalshiftgrid_1():
     if out_ds.RasterXSize != src_ds.RasterXSize:
         gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
-        return 'fail' 
+        return 'fail'
     if out_ds.RasterYSize != src_ds.RasterYSize:
         gdaltest.post_reason('fail')
         print(out_ds.RasterYSize)
-        return 'fail' 
+        return 'fail'
     if out_ds.GetGeoTransform() != src_ds.GetGeoTransform():
         gdaltest.post_reason('fail')
         print(out_ds.GetGeoTransform())
-        return 'fail' 
+        return 'fail'
     if out_ds.GetProjectionRef() != src_ds.GetProjectionRef():
         gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
-        return 'fail' 
+        return 'fail'
     # Check that we can drop the reference to the sources
     src_ds = None
     grid_ds = None
@@ -217,19 +217,19 @@ def applyverticalshiftgrid_3():
     if out_ds.RasterXSize != src_ds.RasterXSize:
         gdaltest.post_reason('fail')
         print(out_ds.RasterXSize)
-        return 'fail' 
+        return 'fail'
     if out_ds.RasterYSize != src_ds.RasterYSize:
         gdaltest.post_reason('fail')
         print(out_ds.RasterYSize)
-        return 'fail' 
+        return 'fail'
     if out_ds.GetGeoTransform() != src_ds.GetGeoTransform():
         gdaltest.post_reason('fail')
         print(out_ds.GetGeoTransform())
-        return 'fail' 
+        return 'fail'
     if out_ds.GetProjectionRef() != src_ds.GetProjectionRef():
         gdaltest.post_reason('fail')
         print(out_ds.GetProjectionRef())
-        return 'fail' 
+        return 'fail'
     cs = out_ds.GetRasterBand(1).Checksum()
     if cs != 5112:
         gdaltest.post_reason('fail')

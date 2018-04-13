@@ -4584,7 +4584,7 @@ def ogr_gpkg_58():
 
     out_filename = '/vsimem/ogr_gpkg_58.gpkg'
     gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG')
-    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG', 
+    gdal.VectorTranslate(out_filename, 'data/poly.shp', format = 'GPKG',
                          accessMode = 'overwrite')
 
     ds = ogr.Open(out_filename)

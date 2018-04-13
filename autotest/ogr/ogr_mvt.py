@@ -657,7 +657,7 @@ def ogr_mvt_x_y_z_filename_scheme():
 
 def ogr_mvt_polygon_larger_than_header():
 
-    ds = gdal.OpenEx('data/mvt/polygon_larger_than_header.pbf', 
+    ds = gdal.OpenEx('data/mvt/polygon_larger_than_header.pbf',
                      open_options = ['CLIP=NO'])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -690,14 +690,14 @@ def ogr_mvt_errors():
 
     # Inexisting metadata
     with gdaltest.error_handler():
-        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
                         open_options = ['METADATA_FILE=/i_do_not/exist']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
 
     # Invalid metadata
     with gdaltest.error_handler():
-        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
                         open_options = ['METADATA_FILE=ogr_mvt.py']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -705,7 +705,7 @@ def ogr_mvt_errors():
     # Invalid metadata
     gdal.FileFromMemBuffer('/vsimem/my.json', '{}')
     with gdaltest.error_handler():
-        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
                         open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
             gdaltest.post_reason('fail')
             return 'fail'
@@ -714,7 +714,7 @@ def ogr_mvt_errors():
     # Invalid metadata
     gdal.FileFromMemBuffer('/vsimem/my.json', '{ "json": "x y" }')
     with gdaltest.error_handler():
-        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf', 
+        if gdal.OpenEx('data/mvt/linestring/0/0/0.pbf',
                         open_options = ['METADATA_FILE=/vsimem/my.json']) is None:
             gdaltest.post_reason('fail')
             return 'fail'

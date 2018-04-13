@@ -397,7 +397,7 @@ def grib_grib2_read_template_4_40():
     return 'success'
 
 ###############################################################################
-# Test support for a unhandled GRIB2 Section 4 Template 
+# Test support for a unhandled GRIB2 Section 4 Template
 
 def grib_grib2_read_template_4_unhandled():
 

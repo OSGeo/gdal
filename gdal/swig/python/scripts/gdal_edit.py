@@ -285,7 +285,7 @@ def gdal_edit(argv):
     if offset is not None:
        for i in range(ds.RasterCount):
            ds.GetRasterBand(i+1).SetOffset(offset)
- 
+
     if unsetstats:
         for i in range(ds.RasterCount):
             band = ds.GetRasterBand(i+1)

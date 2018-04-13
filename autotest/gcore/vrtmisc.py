@@ -555,7 +555,7 @@ def vrtmisc_rat():
 
     ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format = 'MEM')
     rat = gdal.RasterAttributeTable()
-    rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic ) 
+    rat.CreateColumn("Ints", gdal.GFT_Integer, gdal.GFU_Generic )
     ds.GetRasterBand(1).SetDefaultRAT(rat)
 
     vrt_ds = gdal.GetDriverByName('VRT').CreateCopy('/vsimem/vrtmisc_rat.vrt', ds)
