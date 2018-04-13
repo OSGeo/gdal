@@ -24,7 +24,11 @@ RUN python2.7 emsdk update && python2.7 emsdk install \
     node-4.1.1-64bit \
     emscripten-1.37.22 \
     sdk-1.37.22-64bit
-RUN python2.7 emsdk activate
+RUN python2.7 emsdk activate \
+    clang-e1.37.22-64bit \
+    node-4.1.1-64bit \
+    emscripten-1.37.22 \
+    sdk-1.37.22-64bit
 
 # Mimic "source ./emsdk_env.sh"
 ENV PATH="/opt/emsdk-portable/emscripten/1.37.22:${PATH}"
