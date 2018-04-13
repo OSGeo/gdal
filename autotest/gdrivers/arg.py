@@ -86,15 +86,15 @@ def arg_init():
 
     # None means "no data"
     gdaltest.argTests = [
-        {'formats': [('int8', '>b', -(1<<7)),
-                     ('int16', '>h', -(1<<15)),
-                     ('int32', '>i', -(1<<31)),
-                     ('int64', '>q', -(1<<63))],
+        {'formats': [('int8', '>b', -(1 << 7)),
+                     ('int16', '>h', -(1 << 15)),
+                     ('int32', '>i', -(1 << 31)),
+                     ('int64', '>q', -(1 << 63))],
          'data': [None, 2, -3, -4]},
-        {'formats': [('uint8', '>B', (1<<8)-1),
-                     ('uint16', '>H', (1<<16)-1),
-                     ('uint32', '>I', (1<<32)-1),
-                     ('uint64', '>Q', (1<<64)-1)],
+        {'formats': [('uint8', '>B', (1 << 8)-1),
+                     ('uint16', '>H', (1 << 16)-1),
+                     ('uint32', '>I', (1 << 32)-1),
+                     ('uint64', '>Q', (1 << 64)-1)],
          'data': [None, 2, 3, 4]},
         {'formats': [('float32', '>f', gdaltest.NaN()),
                      ('float64', '>d', gdaltest.NaN())],
