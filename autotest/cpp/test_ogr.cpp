@@ -1050,6 +1050,49 @@ namespace tut
             nCountLayers++;
         }
         ensure_equals(nCountLayers, 2);
+
+        // std::copy requires a InputIterator
+        std::vector<OGRLayer*> oTarget;
+        oTarget.resize(2);
+        auto layers = poDS->GetLayers();
+        std::copy(layers.begin(), layers.end(), oTarget.begin());
+        ensure_equals(oTarget[0], layers[0]);
+        ensure_equals(oTarget[1], layers[1]);
+
+        // but in practice not necessarily uses the postincrement iterator.
+        oTarget.clear();
+        oTarget.resize(2);
+        auto input_iterator = layers.begin();
+        auto output_iterator = oTarget.begin();
+        while (input_iterator != layers.end())
+        {
+            *output_iterator++ = *input_iterator++;
+        }
+        ensure_equals(oTarget[0], layers[0]);
+        ensure_equals(oTarget[1], layers[1]);
+
+        {
+            GDALDataset::Layers::Iterator newIter(poDS->GetLayers().begin());
+            ensure_equals(*newIter, layers[0]);
+        }
+
+        {
+            GDALDataset::Layers::Iterator newIter;
+            newIter = poDS->GetLayers().begin();
+            ensure_equals(*newIter, layers[0]);
+        }
+
+        {
+            GDALDataset::Layers::Iterator newIter(std::move(poDS->GetLayers().begin()));
+            ensure_equals(*newIter, layers[0]);
+        }
+
+        {
+            GDALDataset::Layers::Iterator newIter;
+            newIter = std::move(poDS->GetLayers().begin());
+            ensure_equals(*newIter, layers[0]);
+        }
+
     }
 
     // Test field iterator
