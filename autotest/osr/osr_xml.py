@@ -41,6 +41,7 @@ import re
 # Test the osr.SpatialReference.ImportFromXML() function.
 #
 
+
 def osr_xml_1():
 
     gdaltest.srs_xml = """<gml:ProjectedCRS>
@@ -190,6 +191,7 @@ def osr_xml_1():
 # Test the osr.SpatialReference.ExportToXML() function.
 #
 
+
 def osr_xml_2():
 
     srs = osr.SpatialReference()
@@ -208,6 +210,7 @@ def osr_xml_2():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_xml_1,

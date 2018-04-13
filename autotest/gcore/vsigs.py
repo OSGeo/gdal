@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+
 def open_for_read(uri):
     """
     Opens a test file for reading.
@@ -44,6 +45,8 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+
+
 def vsigs_init():
 
     gdaltest.gs_vars = {}
@@ -73,6 +76,7 @@ def vsigs_init():
 
 ###############################################################################
 # Error cases
+
 
 def vsigs_1():
 
@@ -160,6 +164,8 @@ def vsigs_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsigs_start_webserver():
 
     gdaltest.webserver_process = None
@@ -180,6 +186,7 @@ def vsigs_start_webserver():
 
 ###############################################################################
 # Test with a fake Google Cloud Storage server
+
 
 def vsigs_2():
 
@@ -205,7 +212,6 @@ def vsigs_2():
                 gdaltest.post_reason('fail')
                 return 'fail'
     gdal.Unlink('/vsimem/my_headers.txt')
-
 
     gdal.SetConfigOption('GS_SECRET_ACCESS_KEY', 'GS_SECRET_ACCESS_KEY')
     gdal.SetConfigOption('GS_ACCESS_KEY_ID', 'GS_ACCESS_KEY_ID')
@@ -283,6 +289,7 @@ def vsigs_2():
 
 ###############################################################################
 # Test ReadDir() with a fake Google Cloud Storage server
+
 
 def vsigs_readdir():
 
@@ -373,6 +380,7 @@ def vsigs_readdir():
 ###############################################################################
 # Test write
 
+
 def vsigs_write():
 
     if gdaltest.webserver_port == 0:
@@ -407,7 +415,6 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-
     handler.add('PUT', '/test_copy/file.bin', custom_method = method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
@@ -418,7 +425,6 @@ def vsigs_write():
             gdal.VSIFCloseL(f)
             return 'fail'
         gdal.VSIFCloseL(f)
-
 
     # Simulate failure while transmitting
     f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
@@ -434,7 +440,6 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-
     handler.add('PUT', '/test_copy/file.bin', custom_method = method)
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -445,7 +450,6 @@ def vsigs_write():
             gdal.VSIFCloseL(f)
             return 'fail'
     gdal.VSIFCloseL(f)
-
 
     # Simulate failure at end of transfer
     f = gdal.VSIFOpenL('/vsigs/test_copy/file.bin', 'wb')
@@ -469,7 +473,6 @@ def vsigs_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-
     handler.add('PUT', '/test_copy/file.bin', custom_method = method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
@@ -488,6 +491,7 @@ def vsigs_write():
 
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
+
 
 def vsigs_read_credentials_refresh_token_default_gdal_app():
 
@@ -570,6 +574,7 @@ def vsigs_read_credentials_refresh_token_default_gdal_app():
 ###############################################################################
 # Read credentials with OAuth2 refresh_token
 
+
 def vsigs_read_credentials_refresh_token_custom_app():
 
     if gdaltest.webserver_port == 0:
@@ -649,6 +654,7 @@ def vsigs_read_credentials_refresh_token_custom_app():
 
 ###############################################################################
 # Read credentials with OAuth2 service account
+
 
 def vsigs_read_credentials_oauth2_service_account():
 
@@ -767,6 +773,7 @@ gwE6fxOLyJDxuWRf
 ###############################################################################
 # Read credentials with OAuth2 service account through a json configuration file
 
+
 def vsigs_read_credentials_oauth2_service_account_json_file():
 
     if gdaltest.webserver_port == 0:
@@ -869,6 +876,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
 ###############################################################################
 # Read credentials from simulated ~/.boto
 
+
 def vsigs_read_credentials_file():
 
     if gdaltest.webserver_port == 0:
@@ -932,6 +940,7 @@ gs_secret_access_key = bar
 
 ###############################################################################
 # Read credentials from simulated ~/.boto
+
 
 def vsigs_read_credentials_file_refresh_token():
 
@@ -1016,6 +1025,7 @@ client_secret = CLIENT_SECRET
 
 ###############################################################################
 # Read credentials from simulated GCE instance
+
 
 def vsigs_read_credentials_gce():
 
@@ -1106,6 +1116,7 @@ def vsigs_read_credentials_gce():
 # Read credentials from simulated GCE instance with expiration of the
 # cached credentials
 
+
 def vsigs_read_credentials_gce_expiration():
 
     if gdaltest.webserver_port == 0:
@@ -1124,7 +1135,6 @@ def vsigs_read_credentials_gce_expiration():
     gdal.SetConfigOption('CPL_GCE_CHECK_LOCAL_FILES', 'NO')
 
     gdal.VSICurlClearCache()
-
 
     def method(request):
         if 'Authorization' not in request.headers:
@@ -1178,6 +1188,8 @@ def vsigs_read_credentials_gce_expiration():
     return 'success'
 
 ###############################################################################
+
+
 def vsigs_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -1193,6 +1205,7 @@ def vsigs_stop_webserver():
 
 ###############################################################################
 # Nominal cases (require valid credentials)
+
 
 def vsigs_extra_1():
 
@@ -1308,13 +1321,11 @@ def vsigs_extra_1():
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
-
         ret = gdal.Rmdir(subpath)
         if ret < 0:
             gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
-
 
         return 'success'
 
@@ -1380,12 +1391,15 @@ def vsigs_extra_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsigs_cleanup():
 
     for var in gdaltest.gs_vars:
         gdal.SetConfigOption(var, gdaltest.gs_vars[var])
 
     return 'success'
+
 
 gdaltest_list = [ vsigs_init,
                   vsigs_1,

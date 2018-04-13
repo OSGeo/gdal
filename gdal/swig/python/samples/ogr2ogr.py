@@ -45,6 +45,7 @@ from osgeo import osr
 
 ###############################################################################
 
+
 class ScaledProgressObject:
     def __init__(self, min, max, cbk, cbk_data = None):
         self.min = min
@@ -54,12 +55,14 @@ class ScaledProgressObject:
 
 ###############################################################################
 
+
 def ScaledProgressFunc(pct, msg, data):
     if data.cbk is None:
         return True
     return data.cbk(data.min + pct * (data.max - data.min), msg, data.cbk_data)
 
 ###############################################################################
+
 
 def EQUAL(a, b):
     return a.lower() == b.lower()
@@ -68,7 +71,9 @@ def EQUAL(a, b):
 # Redefinition of GDALTermProgress, so that autotest/pyscripts/test_ogr2ogr_py.py
 # can check that the progress bar is displayed
 
+
 nLastTick = -1
+
 
 def TermProgress( dfComplete, pszMessage, pProgressArg ):
 
@@ -101,6 +106,7 @@ def TermProgress( dfComplete, pszMessage, pProgressArg ):
 
     return True
 
+
 class TargetLayerInfo:
     def __init__(self):
         self.poDstLayer = None
@@ -108,6 +114,7 @@ class TargetLayerInfo:
         #self.papszTransformOptions = None
         self.panMap = None
         self.iSrcZField = None
+
 
 class AssociatedLayers:
     def __init__(self):
@@ -118,10 +125,12 @@ class AssociatedLayers:
 #                                main()
 #**********************************************************************
 
+
 bSkipFailures = False
 nGroupTransactions = 200
 bPreserveFID = False
 nFIDToFetch = ogr.NullFID
+
 
 class Enum(set):
     def __getattr__(self, name):
@@ -129,7 +138,9 @@ class Enum(set):
             return name
         raise AttributeError
 
+
 GeomOperation = Enum(["NONE", "SEGMENTIZE", "SIMPLIFY_PRESERVE_TOPOLOGY"])
+
 
 def main(args = None, progress_func = TermProgress, progress_data = None):
 
@@ -697,7 +708,6 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 except:
                     pass
 
-
             psInfo = SetupTargetLayer(  poDS, \
                                         poResultSet,
                                         poODS, \
@@ -974,7 +984,6 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
                 except:
                     pass
 
-
             psInfo = SetupTargetLayer( poDS, \
                                        poLayer, \
                                        poODS, \
@@ -1024,6 +1033,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
 #**********************************************************************
 #                               Usage()
 #**********************************************************************
+
 
 def Usage():
 
@@ -1084,6 +1094,7 @@ def Usage():
 
     return False
 
+
 def CSLFindString(v, mystr):
     i = 0
     for strIter in v:
@@ -1092,12 +1103,14 @@ def CSLFindString(v, mystr):
         i = i + 1
     return -1
 
+
 def IsNumber( pszStr):
     try:
         (float)(pszStr)
         return True
     except:
         return False
+
 
 def LoadGeometry( pszDS, pszSQL, pszLyr, pszWhere):
     poGeom = None
@@ -1159,6 +1172,7 @@ def wkbFlatten(x):
 #                               SetZ()
 #**********************************************************************
 
+
 def SetZ(poGeom, dfZ):
 
     if poGeom is None:
@@ -1184,6 +1198,7 @@ def SetZ(poGeom, dfZ):
 #**********************************************************************
 #                         SetupTargetLayer()
 #**********************************************************************
+
 
 def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
                     bTransform,  poOutputSRS, bNullifyOutputSRS, poSourceSRS, papszSelFields, \
@@ -1489,6 +1504,7 @@ def SetupTargetLayer( poSrcDS, poSrcLayer, poDstDS, papszLCO, pszNewLayerName, \
 #                           TranslateLayer()
 #**********************************************************************
 
+
 def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poOutputSRS, bNullifyOutputSRS, \
                     eGType, bPromoteToMulti, nCoordDim, eGeomOp, dfGeomOpParam, \
@@ -1595,7 +1611,6 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
                     poDstFeature.SetGeometryDirectly(poDupGeometry)
                     poDstGeometry = poDupGeometry
 
-
                 if nCoordDim == 2 or nCoordDim == 3:
                     poDstGeometry.SetCoordinateDimension( nCoordDim )
 
@@ -1683,6 +1698,7 @@ def TranslateLayer( psInfo, poSrcDS, poSrcLayer, poDstDS,  \
         poDstLayer.CommitTransaction()
 
     return True
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

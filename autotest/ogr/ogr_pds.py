@@ -39,6 +39,7 @@ from osgeo import ogr
 ###############################################################################
 # Basic test
 
+
 def ogr_pds_1():
 
     ds = ogr.Open('data/ap01578l.lbl')
@@ -74,6 +75,7 @@ def ogr_pds_1():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_pds_1 ]

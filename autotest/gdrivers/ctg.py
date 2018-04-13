@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Test a fake CTG dataset
 
+
 def ctg_1():
 
     tst = gdaltest.GDALTest( 'CTG', 'fake_grid_cell', 1, 21 )
@@ -81,6 +82,7 @@ def ctg_1():
             return 'fail'
 
     return ret
+
 
 gdaltest_list = [
     ctg_1 ]

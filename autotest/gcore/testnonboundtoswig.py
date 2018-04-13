@@ -49,11 +49,13 @@ gdal_handle_stdcall = None
 ###############################################################################
 # find_libgdal()
 
+
 def find_libgdal():
     return gdaltest.find_lib('gdal')
 
 ###############################################################################
 # Init
+
 
 def testnonboundtoswig_init():
 
@@ -109,6 +111,7 @@ def testnonboundtoswig_init():
 ###############################################################################
 # Call GDALDestroyDriverManager()
 
+
 def GDALDestroyDriverManager():
 
     if gdal_handle is None:
@@ -126,6 +129,7 @@ def GDALDestroyDriverManager():
 
 ###############################################################################
 # Call OGRCleanupAll()
+
 
 def OGRCleanupAll():
 
@@ -145,6 +149,7 @@ def OGRCleanupAll():
 ###############################################################################
 # Call OSRCleanup()
 
+
 def OSRCleanup():
 
     if gdal_handle is None:
@@ -162,6 +167,7 @@ def OSRCleanup():
 
 ###############################################################################
 # Test GDALSimpleImageWarp
+
 
 def testnonboundtoswig_GDALSimpleImageWarp():
 
@@ -243,6 +249,7 @@ def testnonboundtoswig_GDALSimpleImageWarp():
 ###############################################################################
 # Test VRT derived bands with callback functions implemented in Python!
 
+
 def GDALTypeToCTypes(gdaltype):
 
     if gdaltype == gdal.GDT_Byte:
@@ -261,6 +268,7 @@ def GDALTypeToCTypes(gdaltype):
         return ctypes.c_double
     else:
         return None
+
 
 def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eSrcType, eBufType, nPixelSpace, nLineSpace):
     if nSources != 1:
@@ -299,6 +307,7 @@ def my_pyDerivedPixelFunc(papoSources, nSources, pData, nBufXSize, nBufYSize, eS
             dstValues[j * nLineStride + i] = srcValues[j * nBufXSize + i]
 
     return 0
+
 
 def testnonboundtoswig_VRTDerivedBands():
 
@@ -367,6 +376,7 @@ def testnonboundtoswig_VRTDerivedBands():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [ testnonboundtoswig_init,
                   testnonboundtoswig_GDALSimpleImageWarp,

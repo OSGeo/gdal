@@ -36,6 +36,8 @@ from osgeo import gdal
 from osgeo import osr
 
 #######################################################
+
+
 def compare_metadata(golden_md, new_md, id, options=[]):
   if golden_md is None and new_md is None:
     return 0
@@ -78,6 +80,8 @@ def compare_image_pixels(golden_band, new_band, id, options=[]):
   print('  Maximum Pixel Difference: ' + str(max_diff))
 
 #######################################################
+
+
 def compare_band(golden_band, new_band, id, options=[]):
   found_diff = 0
 
@@ -130,6 +134,8 @@ def compare_band(golden_band, new_band, id, options=[]):
   return found_diff
 
 #######################################################
+
+
 def compare_srs(golden_wkt, new_wkt):
   if golden_wkt == new_wkt:
     return 0
@@ -152,6 +158,8 @@ def compare_srs(golden_wkt, new_wkt):
   return 1
 
 #######################################################
+
+
 def compare_db(golden_db, new_db, options=[]):
   found_diff = 0
 
@@ -205,6 +213,8 @@ def compare_db(golden_db, new_db, options=[]):
   return found_diff
 
 #######################################################
+
+
 def compare_sds(golden_db, new_db, options=[]):
   found_diff = 0
 
@@ -227,6 +237,8 @@ def compare_sds(golden_db, new_db, options=[]):
   return found_diff
 
 #######################################################
+
+
 def Usage():
   print('Usage: gdalcompare.py [-sds] <golden_file> <new_file>')
   sys.exit(1)
@@ -235,6 +247,7 @@ def Usage():
 #
 # Mainline
 #
+
 
 if __name__ == '__main__':
 

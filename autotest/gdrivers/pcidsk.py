@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Read test of floating point reference data.
 
+
 def pcidsk_1():
 
     tst = gdaltest.GDALTest( 'PCIDSK', 'utm.pix', 1, 39576 )
@@ -48,6 +49,7 @@ def pcidsk_1():
 
 ###############################################################################
 # Test lossless copying (16, multiband) via Create().
+
 
 def pcidsk_2():
 
@@ -58,6 +60,7 @@ def pcidsk_2():
 ###############################################################################
 # Test copying of georeferencing and projection.
 
+
 def pcidsk_3():
 
     tst = gdaltest.GDALTest( 'PCIDSK', 'utm.pix', 1, 39576 )
@@ -66,6 +69,7 @@ def pcidsk_3():
 
 ###############################################################################
 # Test overview reading.
+
 
 def pcidsk_4():
 
@@ -85,6 +89,7 @@ def pcidsk_4():
 
 ###############################################################################
 # Test writing metadata to a newly created file.
+
 
 def pcidsk_5():
 
@@ -132,6 +137,7 @@ def pcidsk_5():
 ###############################################################################
 # Test writing metadata to a band.
 
+
 def pcidsk_6():
 
     if gdaltest.pcidsk_new == 0:
@@ -166,6 +172,7 @@ def pcidsk_6():
 
 ###############################################################################
 # Test creating a color table and reading it back.
+
 
 def pcidsk_7():
 
@@ -230,6 +237,7 @@ def pcidsk_7():
 ###############################################################################
 # Test FILE interleaving.
 
+
 def pcidsk_8():
 
     tst = gdaltest.GDALTest( 'PCIDSK', 'rgba16.png', 2, 2042,
@@ -240,6 +248,7 @@ def pcidsk_8():
 ###############################################################################
 # Test that we cannot open a vector only pcidsk
 # FIXME: test disabled because of unification
+
 
 def pcidsk_9():
 
@@ -267,6 +276,7 @@ def pcidsk_9():
 
 ###############################################################################
 # Test overview creation.
+
 
 def pcidsk_10():
     if gdaltest.pcidsk_new == 0:
@@ -300,6 +310,7 @@ def pcidsk_10():
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving.
 
+
 def pcidsk_11():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -312,6 +323,7 @@ def pcidsk_11():
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=RLE
 
+
 def pcidsk_12():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -323,6 +335,7 @@ def pcidsk_12():
 
 ###############################################################################
 # Test INTERLEAVING=TILED interleaving and COMPRESSION=JPEG
+
 
 def pcidsk_13():
     if gdaltest.pcidsk_new == 0:
@@ -356,6 +369,7 @@ def pcidsk_13():
 ###############################################################################
 # Test SetDescription()
 
+
 def pcidsk_14():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -383,6 +397,7 @@ def pcidsk_14():
 
 ###############################################################################
 # Test mixed raster and vector
+
 
 def pcidsk_15():
     if gdaltest.pcidsk_new == 0:
@@ -473,6 +488,7 @@ def pcidsk_15():
 ###############################################################################
 # Check various items from a modern irvine.pix
 
+
 def pcidsk_online_1():
     if gdaltest.pcidsk_new == 0:
         return 'skip'
@@ -515,10 +531,12 @@ def pcidsk_online_1():
 ###############################################################################
 # Cleanup.
 
+
 def pcidsk_cleanup():
     gdaltest.pcidsk_ds = None
     gdaltest.clean_tmp()
     return 'success'
+
 
 gdaltest_list = [
     pcidsk_1,

@@ -103,6 +103,7 @@ def test_gdal_calc_py_1():
 ###############################################################################
 # test simple formulas
 
+
 def test_gdal_calc_py_2():
 
     if gdalnumeric_not_available:
@@ -184,6 +185,7 @@ def test_gdal_calc_py_3():
 ###############################################################################
 # test --allBands option (simple calc)
 
+
 def test_gdal_calc_py_4():
 
     if gdalnumeric_not_available:
@@ -239,6 +241,7 @@ def test_gdal_calc_py_4():
 ###############################################################################
 # test python interface, basic copy
 
+
 def test_gdal_calc_py_5():
 
     if gdalnumeric_not_available:
@@ -293,6 +296,7 @@ def test_gdal_calc_py_5():
 
 ###############################################################################
 # test nodata
+
 
 def test_gdal_calc_py_6():
 
@@ -355,6 +359,7 @@ def test_gdal_calc_py_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_calc_py_1,

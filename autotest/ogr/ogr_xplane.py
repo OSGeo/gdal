@@ -38,6 +38,7 @@ from osgeo import ogr
 ###############################################################################
 # Test apt.dat reading
 
+
 def ogr_xplane_apt_dat():
 
     xplane_apt_ds = ogr.Open( 'data/apt.dat' )
@@ -129,6 +130,7 @@ def ogr_xplane_apt_v810_dat():
 ###############################################################################
 # Test nav.dat reading
 
+
 def ogr_xplane_nav_dat():
 
     xplane_nav_ds = ogr.Open( 'data/nav.dat' )
@@ -195,6 +197,7 @@ def ogr_xplane_awy_dat():
 ###############################################################################
 # Test fix.dat reading
 
+
 def ogr_xplane_fix_dat():
 
     xplane_fix_ds = ogr.Open( 'data/fix.dat' )
@@ -222,6 +225,7 @@ def ogr_xplane_fix_dat():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     ogr_xplane_apt_dat,

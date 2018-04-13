@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_gdalinfo_1():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -59,6 +60,7 @@ def test_gdalinfo_1():
 ###############################################################################
 # Test -checksum option
 
+
 def test_gdalinfo_2():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -71,6 +73,7 @@ def test_gdalinfo_2():
 
 ###############################################################################
 # Test -nomd option
+
 
 def test_gdalinfo_3():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -89,6 +92,7 @@ def test_gdalinfo_3():
 ###############################################################################
 # Test -noct option
 
+
 def test_gdalinfo_4():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -105,6 +109,7 @@ def test_gdalinfo_4():
 
 ###############################################################################
 # Test -stats option
+
 
 def test_gdalinfo_5():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -135,6 +140,7 @@ def test_gdalinfo_5():
 ###############################################################################
 # Test a dataset with overviews and RAT
 
+
 def test_gdalinfo_6():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -149,6 +155,7 @@ def test_gdalinfo_6():
 
 ###############################################################################
 # Test a dataset with GCPs
+
 
 def test_gdalinfo_7():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -175,6 +182,7 @@ def test_gdalinfo_7():
 
 ###############################################################################
 # Test -hist option
+
 
 def test_gdalinfo_8():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -205,6 +213,7 @@ def test_gdalinfo_8():
 ###############################################################################
 # Test -mdd option
 
+
 def test_gdalinfo_9():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -226,6 +235,7 @@ def test_gdalinfo_9():
 ###############################################################################
 # Test -mm option
 
+
 def test_gdalinfo_10():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -243,6 +253,7 @@ def test_gdalinfo_10():
 ###############################################################################
 # Test gdalinfo --version
 
+
 def test_gdalinfo_11():
 
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -258,6 +269,7 @@ def test_gdalinfo_11():
 ###############################################################################
 # Test gdalinfo --build
 
+
 def test_gdalinfo_12():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -272,6 +284,7 @@ def test_gdalinfo_12():
 
 ###############################################################################
 # Test gdalinfo --license
+
 
 def test_gdalinfo_13():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -291,6 +304,7 @@ def test_gdalinfo_13():
 ###############################################################################
 # Test erroneous use of --config.
 
+
 def test_gdalinfo_14():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -304,6 +318,7 @@ def test_gdalinfo_14():
 
 ###############################################################################
 # Test erroneous use of --mempreload.
+
 
 def test_gdalinfo_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -319,6 +334,7 @@ def test_gdalinfo_15():
 ###############################################################################
 # Test --mempreload
 
+
 def test_gdalinfo_16():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -333,6 +349,7 @@ def test_gdalinfo_16():
 ###############################################################################
 # Test erroneous use of --debug.
 
+
 def test_gdalinfo_17():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -346,6 +363,7 @@ def test_gdalinfo_17():
 
 ###############################################################################
 # Test erroneous use of --optfile.
+
 
 def test_gdalinfo_18():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -368,6 +386,7 @@ def test_gdalinfo_18():
 ###############################################################################
 # Test --optfile
 
+
 def test_gdalinfo_19():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -387,6 +406,7 @@ def test_gdalinfo_19():
 ###############################################################################
 # Test --formats
 
+
 def test_gdalinfo_20():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -400,6 +420,7 @@ def test_gdalinfo_20():
 
 ###############################################################################
 # Test erroneous use of --format.
+
 
 def test_gdalinfo_21():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -421,6 +442,7 @@ def test_gdalinfo_21():
 
 ###############################################################################
 # Test --format
+
 
 def test_gdalinfo_22():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -450,6 +472,7 @@ def test_gdalinfo_22():
 ###############################################################################
 # Test --help-general
 
+
 def test_gdalinfo_23():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -464,6 +487,7 @@ def test_gdalinfo_23():
 ###############################################################################
 # Test --locale
 
+
 def test_gdalinfo_24():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -477,6 +501,7 @@ def test_gdalinfo_24():
 
 ###############################################################################
 # Test -listmdd
+
 
 def test_gdalinfo_25():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -495,6 +520,7 @@ def test_gdalinfo_25():
 ###############################################################################
 # Test -mdd all
 
+
 def test_gdalinfo_26():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -509,6 +535,7 @@ def test_gdalinfo_26():
 ###############################################################################
 # Test -oo
 
+
 def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -522,6 +549,7 @@ def test_gdalinfo_27():
 
 ###############################################################################
 # Simple -json test
+
 
 def test_gdalinfo_28():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -541,6 +569,7 @@ def test_gdalinfo_28():
 ###############################################################################
 # Test -json -checksum option
 
+
 def test_gdalinfo_29():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -554,6 +583,7 @@ def test_gdalinfo_29():
 
 ###############################################################################
 # Test -json -nomd option
+
 
 def test_gdalinfo_30():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -574,6 +604,7 @@ def test_gdalinfo_30():
 ###############################################################################
 # Test -json -noct option
 
+
 def test_gdalinfo_31():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -592,6 +623,7 @@ def test_gdalinfo_31():
 
 ###############################################################################
 # Test -stats option
+
 
 def test_gdalinfo_32():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -624,6 +656,7 @@ def test_gdalinfo_32():
 ###############################################################################
 # Test a dataset with overviews and RAT
 
+
 def test_gdalinfo_33():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -639,6 +672,7 @@ def test_gdalinfo_33():
 
 ###############################################################################
 # Test a dataset with GCPs
+
 
 def test_gdalinfo_34():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -662,6 +696,7 @@ def test_gdalinfo_34():
 
 ###############################################################################
 # Test -hist option
+
 
 def test_gdalinfo_35():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -694,6 +729,7 @@ def test_gdalinfo_35():
 ###############################################################################
 # Test -mdd option
 
+
 def test_gdalinfo_36():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -717,6 +753,7 @@ def test_gdalinfo_36():
 ###############################################################################
 # Test -mm option
 
+
 def test_gdalinfo_37():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -736,6 +773,7 @@ def test_gdalinfo_37():
 ###############################################################################
 # Test -listmdd
 
+
 def test_gdalinfo_38():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -754,6 +792,7 @@ def test_gdalinfo_38():
 ###############################################################################
 # Test -mdd all
 
+
 def test_gdalinfo_39():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
@@ -768,6 +807,7 @@ def test_gdalinfo_39():
 
 ###############################################################################
 # Test -json wgs84Extent
+
 
 def test_gdalinfo_40():
     if test_cli_utilities.get_gdalinfo_path() is None:
@@ -792,6 +832,7 @@ def test_gdalinfo_40():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdalinfo_1,

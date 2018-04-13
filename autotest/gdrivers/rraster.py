@@ -40,6 +40,8 @@ import gdaltest
 
 ###############################################################################
 # Perform simple read test.
+
+
 def rraster_1(filename = 'data/byte_rraster.grd', check_prj = None):
 
     tst = gdaltest.GDALTest( 'RRASTER', filename, 1, 4672, filename_absolute = True )
@@ -65,6 +67,8 @@ def rraster_1(filename = 'data/byte_rraster.grd', check_prj = None):
     return 'success'
 
 ###############################################################################
+
+
 def rraster_1_copy():
 
     filename = '/vsimem/byte_rraster.grd'
@@ -80,6 +84,8 @@ def rraster_1_copy():
     return ret
 
 ###############################################################################
+
+
 def _compare_val(got, expected, key_name, to_print):
     if isinstance(got, list) and isinstance(expected, list):
         if len(got) != len(expected):
@@ -100,6 +106,8 @@ def _compare_val(got, expected, key_name, to_print):
     return True
 
 ###############################################################################
+
+
 def _is_dict_included_in_dict(got, expected, key_name = '', to_print = None):
     if to_print is None:
         to_print = got
@@ -112,6 +120,8 @@ def _is_dict_included_in_dict(got, expected, key_name = '', to_print = None):
     return True
 
 ###############################################################################
+
+
 def rraster_rgba(filename = 'data/rgba_rraster.grd'):
 
     ds = gdal.Open(filename)
@@ -144,6 +154,8 @@ def rraster_rgba(filename = 'data/rgba_rraster.grd'):
     return 'success'
 
 ###############################################################################
+
+
 def rraster_rgba_copy():
 
     filename = '/vsimem/rgba_rraster.grd'
@@ -163,6 +175,8 @@ def rraster_rgba_copy():
     return 'success'
 
 ###############################################################################
+
+
 def rraster_ct_rgb(filename = 'data/byte_rraster_ct_rgb.grd'):
 
     ds = gdal.Open(filename)
@@ -182,6 +196,8 @@ def rraster_ct_rgb(filename = 'data/byte_rraster_ct_rgb.grd'):
     return 'success'
 
 ###############################################################################
+
+
 def rraster_ct_rgb_copy():
 
     filename = '/vsimem/byte_rraster_ct_rgb.grd'
@@ -195,6 +211,8 @@ def rraster_ct_rgb_copy():
     return ret
 
 ###############################################################################
+
+
 def rraster_ct_rgba(filename = 'data/byte_rraster_ct_rgba.grd'):
 
     ds = gdal.Open(filename)
@@ -214,6 +232,8 @@ def rraster_ct_rgba(filename = 'data/byte_rraster_ct_rgba.grd'):
     return 'success'
 
 ###############################################################################
+
+
 def rraster_ct_rgba_copy():
 
     filename = '/vsimem/byte_rraster_ct_rgba.grd'
@@ -227,6 +247,8 @@ def rraster_ct_rgba_copy():
     return ret
 
 ###############################################################################
+
+
 def rraster_rat(filename = 'data/byte_rraster_rat.grd'):
 
     ds = gdal.Open(filename)
@@ -306,6 +328,8 @@ def rraster_rat(filename = 'data/byte_rraster_rat.grd'):
     return 'success'
 
 ###############################################################################
+
+
 def rraster_rat_copy():
 
     filename = '/vsimem/byte_rraster_rat.grd'
@@ -319,6 +343,8 @@ def rraster_rat_copy():
     return ret
 
 ###############################################################################
+
+
 def rraster_signedbyte():
 
     filename = '/vsimem/rraster_signedbyte.grd'
@@ -342,6 +368,8 @@ def rraster_signedbyte():
     return 'success'
 
 ###############################################################################
+
+
 def rraster_datatypes():
 
     filename = '/vsimem/temp.grd'
@@ -369,6 +397,8 @@ def rraster_datatypes():
     return 'success'
 
 ###############################################################################
+
+
 def rraster_nodata_and_metadata():
 
     filename = '/vsimem/temp.grd'
@@ -393,6 +423,8 @@ def rraster_nodata_and_metadata():
     return 'success'
 
 ###############################################################################
+
+
 def rraster_update():
 
     filename = '/vsimem/temp.grd'
@@ -415,6 +447,8 @@ def rraster_update():
     return 'success'
 
 ###############################################################################
+
+
 def rraster_colorinterpretation():
 
     filename = '/vsimem/temp.grd'
@@ -443,6 +477,7 @@ def rraster_colorinterpretation():
 
     return 'success'
 
+
 gdaltest_list = [
     rraster_1,
     rraster_1_copy,
@@ -460,7 +495,6 @@ gdaltest_list = [
     rraster_update,
     rraster_colorinterpretation,
     ]
-
 
 
 if __name__ == '__main__':

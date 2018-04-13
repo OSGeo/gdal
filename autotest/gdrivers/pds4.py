@@ -43,6 +43,7 @@ import gdaltest
 ###############################################################################
 # Validate XML file against schemas
 
+
 def validate_xml(filename):
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -79,6 +80,7 @@ def validate_xml(filename):
 ###############################################################################
 # Perform simple read test on PDS4 dataset.
 
+
 def pds4_1():
     srs = """PROJCS["Transverse Mercator Earth",
     GEOGCS["GCS_Earth",
@@ -101,9 +103,11 @@ def pds4_1():
 ###############################################################################
 # hide_substitution_warnings_error_handler()
 
+
 def hide_substitution_warnings_error_handler_cbk(type, errno, msg):
     if msg.find('substituted') < 0 and msg.find('VAR_TITLE not defined') < 0:
         print(msg)
+
 
 @contextlib.contextmanager
 def hide_substitution_warnings_error_handler():
@@ -116,6 +120,7 @@ def hide_substitution_warnings_error_handler():
 ###############################################################################
 # Test CreateCopy() with defaults
 
+
 def pds4_2():
 
     tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053 )
@@ -125,6 +130,7 @@ def pds4_2():
 
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BSQ
+
 
 def pds4_3():
 
@@ -136,6 +142,7 @@ def pds4_3():
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BIP
 
+
 def pds4_4():
 
     tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP'] )
@@ -145,6 +152,7 @@ def pds4_4():
 
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BIL
+
 
 def pds4_5():
 
@@ -156,6 +164,7 @@ def pds4_5():
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BSQ and IMAGE_FORMAT=GEOTIFF
 
+
 def pds4_6():
 
     tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BSQ', 'IMAGE_FORMAT=GEOTIFF'] )
@@ -166,6 +175,7 @@ def pds4_6():
 ###############################################################################
 # Test CreateCopy() with explicit INTERLEAVE=BIP and IMAGE_FORMAT=GEOTIFF
 
+
 def pds4_7():
 
     tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP', 'IMAGE_FORMAT=GEOTIFF'] )
@@ -175,6 +185,7 @@ def pds4_7():
 
 ###############################################################################
 # Test SRS support
+
 
 def pds4_8():
 
@@ -214,7 +225,6 @@ def pds4_8():
             print(proj4)
             return 'fail'
 
-
     # longlat doesn't roundtrip as such
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
     sr = osr.SpatialReference()
@@ -250,6 +260,7 @@ def pds4_8():
 
 ###############################################################################
 # Test nodata / mask
+
 
 def pds4_9():
 
@@ -380,7 +391,6 @@ def pds4_9():
             print(cs)
             return 'fail'
         ds = None
-
 
     template = '/vsimem/template.xml'
 
@@ -524,6 +534,7 @@ def pds4_9():
 ###############################################################################
 # Test scale / offset
 
+
 def pds4_10():
 
     filename = '/vsimem/out.xml'
@@ -557,6 +568,7 @@ def pds4_10():
 
 ###############################################################################
 # Test various data types
+
 
 def pds4_11():
 
@@ -601,6 +613,7 @@ def pds4_11():
 
 ###############################################################################
 # Test various creation options
+
 
 def pds4_12():
 
@@ -666,6 +679,7 @@ def pds4_12():
 
 ###############################################################################
 # Test subdatasets
+
 
 def pds4_13():
 
@@ -744,6 +758,7 @@ def pds4_13():
 
 ###############################################################################
 # Test error cases
+
 
 def pds4_14():
 
@@ -996,7 +1011,6 @@ def pds4_14():
         return 'fail'
     gdal.Unlink('/vsimem/test.tif')
 
-
     template = '/vsimem/template.xml'
 
     # Missing Product_Observational root
@@ -1075,6 +1089,7 @@ def pds4_14():
 ###############################################################################
 # Test Create() without geospatial info but from a geospatial enabled template
 
+
 def pds4_15():
 
     filename = '/vsimem/out.xml'
@@ -1102,6 +1117,7 @@ def pds4_15():
 
 ###############################################################################
 # Test Create() with geospatial info but from a template without Discipline_Area
+
 
 def pds4_16():
 
@@ -1190,6 +1206,7 @@ def pds4_16():
 ###############################################################################
 # Test ARRAY_TYPE creation option
 
+
 def pds4_17():
 
     filename = '/vsimem/out.xml'
@@ -1247,6 +1264,7 @@ def pds4_17():
 ###############################################################################
 # Test RADII creation option
 
+
 def pds4_18():
 
     filename = '/vsimem/out.xml'
@@ -1273,6 +1291,7 @@ def pds4_18():
     gdal.GetDriverByName('PDS4').Delete(filename)
 
     return 'success'
+
 
 gdaltest_list = [
     pds4_1,

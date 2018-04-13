@@ -130,6 +130,7 @@ def ecrgtoc_1():
 ###############################################################################
 # Test overviews
 
+
 def ecrgtoc_2():
 
     ds = gdal.Open('/vsimem/TOC.xml')
@@ -150,6 +151,7 @@ def ecrgtoc_2():
 
 ###############################################################################
 # Test opening subdataset
+
 
 def ecrgtoc_3():
 
@@ -196,6 +198,7 @@ def ecrgtoc_3():
 
 ###############################################################################
 # Test dataset with 3 subdatasets
+
 
 def ecrgtoc_4():
 
@@ -316,6 +319,8 @@ def ecrgtoc_4():
     return 'success'
 
 ###############################################################################
+
+
 def ecrgtoc_online_1():
 
     if not gdaltest.download_file('http://www.falconview.org/trac/FalconView/downloads/17', 'ECRG_Sample.zip'):
@@ -350,6 +355,7 @@ def ecrgtoc_online_1():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ecrgtoc_1,

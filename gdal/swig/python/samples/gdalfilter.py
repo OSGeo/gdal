@@ -34,6 +34,7 @@ gdal.TermProgress = gdal.TermProgress_nocb
 import sys
 import string
 
+
 def Usage():
     print('Usage: gdalfilter.py [-n] [-size n] [-coefs ...] [-f format] [-co NAME=VALUE]\n' \
           '                     in_file out_file')
@@ -42,6 +43,7 @@ def Usage():
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 srcwin = None
 bands = []

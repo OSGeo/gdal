@@ -36,6 +36,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def ogr_rec_1():
 
     import test_cli_utilities
@@ -49,6 +51,7 @@ def ogr_rec_1():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_rec_1

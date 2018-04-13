@@ -44,6 +44,7 @@ import gdaltest
 
 have_proj480_flag = None
 
+
 def have_proj480():
 
     global have_proj480_flag
@@ -91,6 +92,7 @@ def have_proj480():
 # This is from Bugzilla bug 355.
 #
 
+
 def osr_proj4_1():
 
     srs = osr.SpatialReference()
@@ -106,6 +108,7 @@ def osr_proj4_1():
 # Verify that we can import strings with parameter values that are exponents
 # and contain a plus sign.  As per bug 355 in GDAL/OGR's bugzilla.
 #
+
 
 def osr_proj4_2():
 
@@ -126,6 +129,7 @@ def osr_proj4_2():
 ###############################################################################
 # Verify that empty srs'es don't cause a crash (#1718).
 #
+
 
 def osr_proj4_3():
 
@@ -150,6 +154,7 @@ def osr_proj4_3():
 # annoying ellipsoid-only results.
 #
 
+
 def osr_proj4_4():
 
     srs = osr.SpatialReference()
@@ -173,6 +178,7 @@ def osr_proj4_4():
 ###############################################################################
 # Verify that prime meridians are preserved when round tripping. (#1940)
 #
+
 
 def osr_proj4_5():
 
@@ -202,6 +208,7 @@ def osr_proj4_5():
 ###############################################################################
 # Confirm handling of non-zero latitude of origin mercator (#3026)
 #
+
 
 def osr_proj4_6():
 
@@ -269,6 +276,7 @@ def osr_proj4_6():
 # Confirm handling of somerc (#3032).
 #
 
+
 def osr_proj4_7():
 
     srs = osr.SpatialReference()
@@ -313,6 +321,7 @@ def osr_proj4_7():
 ###############################################################################
 # Check EPSG:3857, confirm Google Mercator hackery.
 
+
 def osr_proj4_8():
 
     srs = osr.SpatialReference()
@@ -339,6 +348,7 @@ def osr_proj4_8():
 ###############################################################################
 # NAD27 is a bit special - make sure no towgs84 values come through.
 #
+
 
 def osr_proj4_9():
 
@@ -367,6 +377,7 @@ def osr_proj4_9():
 # Does geocentric work okay?
 #
 
+
 def osr_proj4_10():
 
     srs = osr.SpatialReference()
@@ -393,6 +404,8 @@ def osr_proj4_10():
 ###############################################################################
 # Test round-tripping of all supported projection methods
 #
+
+
 def osr_proj4_11():
 
     proj4strlist = [ '+proj=bonne +lon_0=2 +lat_1=1 +x_0=3 +y_0=4',
@@ -490,6 +503,8 @@ def osr_proj4_11():
 ###############################################################################
 # Test importing +init=epsg:XXX
 #
+
+
 def osr_proj4_12():
 
     expect_wkt = """GEOGCS["WGS 84",
@@ -518,6 +533,8 @@ def osr_proj4_12():
 ###############################################################################
 # Test error cases
 #
+
+
 def osr_proj4_13():
 
     proj4strlist = [ '',
@@ -544,6 +561,8 @@ def osr_proj4_13():
 ###############################################################################
 # Test etmerc (#4853)
 #
+
+
 def osr_proj4_14():
 
     proj4str = '+proj=etmerc +lat_0=0 +lon_0=9 +k=0.9996 +units=m +x_0=500000 +datum=WGS84 +nodefs'
@@ -616,6 +635,8 @@ def osr_proj4_14():
 ###############################################################################
 # Test other authorities than EPSG, e.g. IGNF:XXXX
 #
+
+
 def osr_proj4_15():
 
     srs = osr.SpatialReference()
@@ -637,6 +658,8 @@ def osr_proj4_15():
 ###############################################################################
 # Test unit parsing
 #
+
+
 def osr_proj4_16():
 
     def almost(a,b):
@@ -678,6 +701,8 @@ def osr_proj4_16():
 ###############################################################################
 # Test unit parsing for name assignment
 #
+
+
 def osr_proj4_17():
 
     units = (('km', 'kilometre'),
@@ -715,6 +740,8 @@ def osr_proj4_17():
 ###############################################################################
 # Test fix for #5511
 #
+
+
 def osr_proj4_18():
 
     for p in [ 'no_off', 'no_uoff']:
@@ -738,6 +765,7 @@ def osr_proj4_18():
 ###############################################################################
 # Test EXTENSION and AUTHORITY in DATUM
 
+
 def osr_proj4_19():
 
     srs = osr.SpatialReference()
@@ -757,6 +785,7 @@ def osr_proj4_19():
 
 ###############################################################################
 # Test EXTENSION in GOGCS
+
 
 def osr_proj4_20():
 
@@ -779,6 +808,7 @@ def osr_proj4_20():
 ###############################################################################
 # Test importing datum other than WGS84, WGS72, NAD27 or NAD83
 
+
 def osr_proj4_21():
 
     srs = osr.SpatialReference()
@@ -798,6 +828,7 @@ def osr_proj4_21():
 ###############################################################################
 # Test importing ellipsoid defined with +R
 
+
 def osr_proj4_22():
 
     srs = osr.SpatialReference()
@@ -813,6 +844,7 @@ def osr_proj4_22():
 
 ###############################################################################
 # Test importing ellipsoid defined with +a and +f
+
 
 def osr_proj4_23():
 
@@ -839,6 +871,7 @@ def osr_proj4_23():
 
 ###############################################################################
 # Test importing linear units defined with +to_meter
+
 
 def osr_proj4_24():
 
@@ -885,6 +918,7 @@ def osr_proj4_24():
 
 ###############################################################################
 # Test importing linear units defined with +vto_meter
+
 
 def osr_proj4_25():
 
@@ -935,6 +969,7 @@ def osr_proj4_25():
 ###############################################################################
 # Test importing linear units defined with +vunits
 
+
 def osr_proj4_26():
 
     if not have_proj480():
@@ -974,6 +1009,7 @@ def osr_proj4_26():
 ###############################################################################
 # Test geostationary +sweep (#6030)
 
+
 def osr_proj4_27():
 
     if not have_proj480():
@@ -993,6 +1029,7 @@ def osr_proj4_27():
 ###############################################################################
 # Test importing +init=epsg: with an override
 
+
 def osr_proj4_28():
 
     srs = osr.SpatialReference()
@@ -1005,6 +1042,7 @@ def osr_proj4_28():
         return 'fail'
 
     return 'success'
+
 
 def osr_proj4_28_missing_proj_epsg_dict():
 
@@ -1042,6 +1080,7 @@ def osr_proj4_error_cases_export_mercator():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_proj4_1,

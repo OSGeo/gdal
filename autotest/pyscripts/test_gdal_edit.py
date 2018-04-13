@@ -114,6 +114,7 @@ def test_gdal_edit_py_1():
 ###############################################################################
 # Test -unsetgt
 
+
 def test_gdal_edit_py_2():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
@@ -144,6 +145,7 @@ def test_gdal_edit_py_2():
 ###############################################################################
 # Test -a_srs ''
 
+
 def test_gdal_edit_py_3():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
@@ -173,6 +175,7 @@ def test_gdal_edit_py_3():
 
 ###############################################################################
 # Test -unsetstats
+
 
 def test_gdal_edit_py_4():
 
@@ -216,6 +219,7 @@ def test_gdal_edit_py_4():
 
 ###############################################################################
 # Test -stats
+
 
 def test_gdal_edit_py_5():
 
@@ -280,6 +284,7 @@ def test_gdal_edit_py_5():
 ###############################################################################
 # Test -scale and -offset
 
+
 def test_gdal_edit_py_6():
 
     script_path = test_py_scripts.get_py_script('gdal_edit')
@@ -302,6 +307,7 @@ def test_gdal_edit_py_6():
 
 ###############################################################################
 # Test -colorinterp_X
+
 
 def test_gdal_edit_py_7():
 
@@ -332,6 +338,7 @@ def test_gdal_edit_py_7():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_edit_py_cleanup():
 
     try:
@@ -340,6 +347,7 @@ def test_gdal_edit_py_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_edit_py_1,

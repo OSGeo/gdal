@@ -38,6 +38,7 @@ import ogrtest
 ###############################################################################
 # Create a MIF file to be our primary table.
 
+
 def ogr_index_1():
 
     from osgeo import gdal
@@ -83,6 +84,7 @@ def ogr_index_1():
 ###############################################################################
 # Create a dbf file to be our secondary table.  Close it, and reopen shared.
 
+
 def ogr_index_2():
 
     drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -113,6 +115,7 @@ def ogr_index_2():
 ###############################################################################
 # Verify a simple join without indexing.
 
+
 def ogr_index_3():
 
     expect = [ 'Value 5', 'Value 10', 'Value 9', 'Value 4', 'Value 3',
@@ -134,6 +137,7 @@ def ogr_index_3():
 ###############################################################################
 # Create an INDEX on the SKEY and VALUE field in the join table.
 
+
 def ogr_index_4():
 
     gdaltest.s_ds.ExecuteSQL( 'CREATE INDEX ON join_t USING value' )
@@ -143,6 +147,7 @@ def ogr_index_4():
 
 ###############################################################################
 # Check that indexable single int lookup works.
+
 
 def ogr_index_5():
 
@@ -161,6 +166,7 @@ def ogr_index_5():
 #
 # We also close the datasource and reopen to ensure that reloaded indexes
 # work OK too.
+
 
 def ogr_index_6():
 
@@ -181,6 +187,7 @@ def ogr_index_6():
 ###############################################################################
 # Check that range query that isn't currently implemented using index works.
 
+
 def ogr_index_7():
 
     gdaltest.s_lyr.SetAttributeFilter( 'SKEY < 3' )
@@ -196,6 +203,7 @@ def ogr_index_7():
 
 ###############################################################################
 # Try join again.
+
 
 def ogr_index_8():
 
@@ -218,6 +226,7 @@ def ogr_index_8():
 ###############################################################################
 # Verify that dropping both indexes gets rid of them, and that results still
 # work.
+
 
 def ogr_index_9():
 
@@ -290,6 +299,7 @@ def ogr_index_9():
 ###############################################################################
 # Test fix for #4326
 
+
 def ogr_index_10():
 
     ds = ogr.GetDriverByName( 'ESRI Shapefile' ).CreateDataSource('tmp/ogr_index_10.shp')
@@ -355,7 +365,6 @@ def ogr_index_10():
         gdaltest.post_reason('failed')
         return 'fail'
 
-
     lyr.SetAttributeFilter('realfield IN (1.0)')
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -405,7 +414,6 @@ def ogr_index_10():
         gdaltest.post_reason('failed')
         return 'fail'
 
-
     lyr.SetAttributeFilter("strfield IN ('foo')")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -434,6 +442,7 @@ def ogr_index_10():
 ###############################################################################
 # Test support for OR and AND expression
 
+
 def ogr_index_11_check(lyr, expected_fids):
 
     lyr.ResetReading()
@@ -447,6 +456,7 @@ def ogr_index_11_check(lyr, expected_fids):
             return 'fail'
 
     return 'success'
+
 
 def ogr_index_11():
 
@@ -495,6 +505,7 @@ def ogr_index_11():
 
 ###############################################################################
 
+
 def ogr_index_cleanup():
     try:
         gdaltest.p_ds.Release()
@@ -524,6 +535,7 @@ def ogr_index_cleanup():
         'tmp/ogr_index_11.dbf' )
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_index_1,

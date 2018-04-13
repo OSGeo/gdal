@@ -47,6 +47,7 @@ def osr_getprojectionmethods_1():
 
     return 'success'
 
+
 gdaltest_list = [
     osr_getprojectionmethods_1,
     None ]

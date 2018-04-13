@@ -42,6 +42,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <cpl_http.h>
 
 using TileCacheType = lru11::Cache<std::string,
                                    std::shared_ptr<GDALDataset>, std::mutex>;
@@ -184,7 +185,7 @@ class GDALRDADataset: public GDALDataset
                                       GSpacing nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg) override;
         CPLErr          AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int /* nBufXSize */,
                                         int /* nBufYSize */,
                                         GDALDataType /* eBufType */,
@@ -217,10 +218,10 @@ class GDALRDARasterBand: public GDALRasterBand
                                       GSpacing nLineSpace,
                                       GDALRasterIOExtraArg *psExtraArg) override;
         CPLErr          AdviseRead (int nXOff, int nYOff,
-                                        int nXSize, int nYSize, 
+                                        int nXSize, int nYSize,
                                         int /* nBufXSize */,
                                         int /* nBufYSize */,
-                                        GDALDataType /* eBufType */, 
+                                        GDALDataType /* eBufType */,
                                         char ** /* papszOptions */) override;
         GDALColorInterp GetColorInterpretation() override;
 };
@@ -751,6 +752,12 @@ char** GDALRDADataset::GetHTTPOptions()
                                    osAuthorization.c_str());
     papszOptions = CSLSetNameValue(papszOptions, "PERSISTENT",
                                    CPLSPrintf("%p", this));
+
+    papszOptions = CSLSetNameValue(papszOptions, "MAX_RETRY",
+                                   CPLSPrintf("%d", 3));
+
+    papszOptions = CSLSetNameValue(papszOptions, "RETRY_DELAY",
+                                   CPLSPrintf("%d", 1));
     return papszOptions;
 }
 
@@ -810,7 +817,7 @@ static CPLString GetJsonString(json_object* poObj, const char* pszPath,
     json_object* poVal = json_ex_get_object_by_path(poObj, pszPath);
     if( poVal == nullptr || json_object_get_type(poVal) != json_type_string )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find %s of type string", pszPath);
@@ -831,7 +838,7 @@ static GIntBig GetJsonInt64(json_object* poObj, const char* pszPath,
     json_object* poVal = json_ex_get_object_by_path(poObj, pszPath);
     if( poVal == nullptr || json_object_get_type(poVal) != json_type_int )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find %s of type integer", pszPath);
@@ -854,7 +861,7 @@ static double GetJsonDouble(json_object* poObj, const char* pszPath,
         (json_object_get_type(poVal) != json_type_double &&
          json_object_get_type(poVal) != json_type_int) )
     {
-        if( bVerboseError ) 
+        if( bVerboseError )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find %s of type double", pszPath);
@@ -1542,11 +1549,11 @@ CPLString GDALRDADataset::ConstructTileFetchURL(const CPLString& baseUrl,
     }
     else if(m_osType == RDADatasetType::TEMPLATE)
     {
+        //don't pass extension to template endpoint
         retVal += "/template/" + m_osTemplateId + "/tile/";
-        CPLString tosDiscardPath= "." + m_osRequestTileFileFormat;
-        CPLString tosSubPath = subPath ;
-        tosSubPath.erase((tosSubPath.begin()+tosSubPath.find(tosDiscardPath)),
-                         tosSubPath.end());
+        size_t lastdot = subPath.find_last_of(".");
+        CPLString tosSubPath  = (lastdot == std::string::npos) ? subPath.c_str(): subPath.substr(0, lastdot);
+
         retVal += tosSubPath;
         retVal += m_osParams.size()>0 || m_osNodeId ? "?": "";
         if(!m_osNodeId.empty())
@@ -1688,8 +1695,20 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
 
         for( int j = 0; j < nToDownload; j++ )
         {
-            if( pasResults[j]->pabyData )
+            if( pasResults[j]->pszErrBuf != nullptr )
             {
+                CPLError( CE_Debug, CPLE_AppDefined,
+                          "BatchFetch request %s failed: %s",
+                          apszURLLists[i + j],
+                          pasResults[j]->pabyData ? CPLSPrintf("%s: %s",
+                                                               pasResults[j]->pszErrBuf,
+                                                               reinterpret_cast<const char*>(pasResults[j]->pabyData)) :
+                          pasResults[j]->pszErrBuf );
+            }
+            else if( pasResults[j]->pabyData )
+            {
+
+
                 const int64_t nTileX = aTileIdx[i+j].first;
                 const int64_t nTileY = aTileIdx[i+j].second;
 
@@ -1780,67 +1799,78 @@ GDALRDADataset::GetTiles(
                             0,
                             papszOptions);
         CSLDestroy(papszOptions);
-        for(size_t i=0;i<apszURLLists.size();i++)
-        {
-            CPLFree(apszURLLists[i]);
-        }
-        if( pasResults == nullptr )
-            return oResult;
 
-        for(size_t i=0;i<anOutIndex.size();i++)
+        if(pasResults != nullptr)
         {
-            const size_t nOutIdx = anOutIndex[i];
-            const int64_t nTileX = aTileIdx[nOutIdx].first;
-            const int64_t nTileY = aTileIdx[nOutIdx].second;
-            if( pasResults[i]->pabyData )
+            for(size_t i=0;i<anOutIndex.size();i++)
             {
-                CPLString osTmpMemFile(CPLSPrintf("/vsimem/rda_%p_%d_%d.",
-                                                this,
-                                                static_cast<int>(nTileX),
-                                                static_cast<int>(nTileY)));
-                osTmpMemFile += m_osRequestTileFileFormat;
-                GByte* pabyData = pasResults[i]->pabyData;
-                pasResults[i]->pabyData = nullptr;
-                VSIFCloseL(VSIFileFromMemBuffer(osTmpMemFile, pabyData,
-                                                pasResults[i]->nDataLen, true));
-                GDALDataset* poTileDS = reinterpret_cast<GDALDataset*>(
-                    GDALOpenEx(osTmpMemFile, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
-                           nullptr, nullptr, nullptr));
-                std::shared_ptr<GDALDataset> ds =
-                    std::shared_ptr<GDALDataset>(poTileDS);
-                if( poTileDS == nullptr )
+                const size_t nOutIdx = anOutIndex[i];
+                const int64_t nTileX = aTileIdx[nOutIdx].first;
+                const int64_t nTileY = aTileIdx[nOutIdx].second;
+                if( pasResults[i]->pszErrBuf != nullptr )
                 {
-                    VSIUnlink(osTmpMemFile);
+                    CPLError( CE_Failure, CPLE_AppDefined,
+                              "GetTiles request %s failed: %s",
+                              apszURLLists[i],
+                              pasResults[i]->pabyData ? CPLSPrintf("%s: %s",
+                                                              pasResults[i]->pszErrBuf,
+                                                              reinterpret_cast<const char*>(pasResults[i]->pabyData )) :
+                              pasResults[i]->pszErrBuf );
                 }
-                else
+                else if( pasResults[i]->pabyData )
                 {
-                    poTileDS->MarkSuppressOnClose();
-                    if( poTileDS->GetRasterCount() == GetRasterCount() &&
-                        poTileDS->GetRasterXSize() == m_nTileXSize &&
-                        poTileDS->GetRasterYSize() == m_nTileYSize )
+                    CPLString osTmpMemFile(CPLSPrintf("/vsimem/rda_%p_%d_%d.",
+                                                      this,
+                                                      static_cast<int>(nTileX),
+                                                      static_cast<int>(nTileY)));
+                    osTmpMemFile += m_osRequestTileFileFormat;
+                    GByte* pabyData = pasResults[i]->pabyData;
+                    pasResults[i]->pabyData = nullptr;
+                    VSIFCloseL(VSIFileFromMemBuffer(osTmpMemFile, pabyData,
+                                                    pasResults[i]->nDataLen, true));
+                    GDALDataset* poTileDS = reinterpret_cast<GDALDataset*>(
+                            GDALOpenEx(osTmpMemFile, GDAL_OF_RASTER | GDAL_OF_INTERNAL,
+                                       nullptr, nullptr, nullptr));
+                    std::shared_ptr<GDALDataset> ds =
+                            std::shared_ptr<GDALDataset>(poTileDS);
+                    if( poTileDS == nullptr )
                     {
-                        oResult[nOutIdx] = ds;
-                        const auto nKey = MakeKeyCache(nTileX, nTileY);
-                        GetTileCache()->insert(nKey, ds);
+                        VSIUnlink(osTmpMemFile);
+                    }
+                    else
+                    {
+                        poTileDS->MarkSuppressOnClose();
+                        if( poTileDS->GetRasterCount() == GetRasterCount() &&
+                            poTileDS->GetRasterXSize() == m_nTileXSize &&
+                            poTileDS->GetRasterYSize() == m_nTileYSize )
+                        {
+                            oResult[nOutIdx] = ds;
+                            const auto nKey = MakeKeyCache(nTileX, nTileY);
+                            GetTileCache()->insert(nKey, ds);
 
-                        CPLString osSubPath;
-                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                                static_cast<GIntBig>(nTileX));
-                        osSubPath += "/";
-                        osSubPath += CPLSPrintf(CPL_FRMT_GIB,
-                                                static_cast<GIntBig>(nTileY));
-                        osSubPath += ".";
-                        osSubPath += m_osRequestTileFileFormat;
-                        CPLString osCachedFilename(
-                            GetDatasetCacheDir() + "/" + osSubPath);
-                        CacheFile( osCachedFilename, pabyData,
-                                   pasResults[i]->nDataLen);
+                            CPLString osSubPath;
+                            osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                    static_cast<GIntBig>(nTileX));
+                            osSubPath += "/";
+                            osSubPath += CPLSPrintf(CPL_FRMT_GIB,
+                                                    static_cast<GIntBig>(nTileY));
+                            osSubPath += ".";
+                            osSubPath += m_osRequestTileFileFormat;
+                            CPLString osCachedFilename(
+                                    GetDatasetCacheDir() + "/" + osSubPath);
+                            CacheFile( osCachedFilename, pabyData,
+                                       pasResults[i]->nDataLen);
+                        }
                     }
                 }
             }
+            CPLHTTPDestroyMultiResult(pasResults,
+                                      static_cast<int>(apszURLLists.size()));
         }
-        CPLHTTPDestroyMultiResult(pasResults,
-                                  static_cast<int>(apszURLLists.size()));
+    }
+    for(size_t i=0;i<apszURLLists.size();i++)
+    {
+        CPLFree(apszURLLists[i]);
     }
 
     return oResult;

@@ -41,6 +41,7 @@ from osgeo import gdal
 ###############################################################################
 # Error cases
 
+
 def overviewds_1():
     ds = gdal.OpenEx('data/byte.tif', open_options = ['OVERVIEW_LEVEL=-1'])
     if ds is not None:
@@ -53,6 +54,7 @@ def overviewds_1():
 
 ###############################################################################
 # Nominal cases
+
 
 def overviewds_2():
 
@@ -128,6 +130,7 @@ def overviewds_2():
 ###############################################################################
 # Test GCP
 
+
 def overviewds_3():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -182,11 +185,13 @@ def overviewds_3():
 ###############################################################################
 # Test RPC
 
+
 def myfloat(s):
     p = s.rfind(' ')
     if p >= 0:
         s = s[0:p]
     return float(s)
+
 
 def overviewds_4():
 
@@ -244,6 +249,7 @@ def overviewds_4():
 
 ###############################################################################
 # Test GEOLOCATION
+
 
 def overviewds_5():
 
@@ -305,6 +311,7 @@ def overviewds_5():
 ###############################################################################
 # Test VRT
 
+
 def overviewds_6():
 
     shutil.copy('data/byte.tif', 'tmp')
@@ -332,6 +339,7 @@ def overviewds_6():
 
 ###############################################################################
 # Cleanup
+
 
 def overviewds_cleanup():
 

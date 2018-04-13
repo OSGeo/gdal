@@ -43,6 +43,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_ogrtindex_1(srs = None):
     if test_cli_utilities.get_ogrtindex_path() is None:
         return 'skip'
@@ -123,6 +124,7 @@ def test_ogrtindex_1(srs = None):
 ###############################################################################
 # Same test but with a SRS set on the different tiles to index
 
+
 def test_ogrtindex_2():
 
     srs = osr.SpatialReference()
@@ -132,6 +134,7 @@ def test_ogrtindex_2():
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format and -t_srs
+
 
 def test_ogrtindex_3():
 
@@ -233,6 +236,7 @@ def test_ogrtindex_3():
 
 ###############################################################################
 # Cleanup
+
 
 def test_ogrtindex_cleanup():
     if test_cli_utilities.get_ogrtindex_path() is None:

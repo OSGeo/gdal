@@ -38,6 +38,8 @@ from osgeo import osr
 from osgeo import gdal
 
 # =============================================================================
+
+
 def Usage():
 
     print('Usage: epsg_tr.py [-wkt] [-pretty_wkt] [-proj4] [-xml] [-postgis]')
@@ -45,6 +47,8 @@ def Usage():
     sys.exit(1)
 
 # =============================================================================
+
+
 def trHandleCode(code, gen_dict_line, report_error, output_format):
 
     try:
@@ -136,6 +140,7 @@ def trHandleCode(code, gen_dict_line, report_error, output_format):
                 pass
 
 # =============================================================================
+
 
 if __name__ == '__main__':
 

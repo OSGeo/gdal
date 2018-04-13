@@ -37,6 +37,7 @@ import sys
 ###############################################################
 # Usage()
 
+
 def Usage():
     print('ogr_dispatch.py [-f format] -src name -dst name [-field field]+')
     print('                [-25D_as_2D] [-multi_as_single]')
@@ -74,16 +75,19 @@ def Usage():
 
 ###############################################################################
 
+
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
 ###############################################################
 # wkbFlatten()
 
+
 def wkbFlatten(x):
     return x & (~ogr.wkb25DBit)
 
 ###############################################################
+
 
 class Options:
     def __init__(self):
@@ -101,6 +105,7 @@ class Options:
 
 ###############################################################
 # GeometryTypeToName()
+
 
 def GeometryTypeToName(eGeomType, options):
 
@@ -154,6 +159,7 @@ def GeometryTypeToName(eGeomType, options):
 ###############################################################
 # get_out_lyr_name()
 
+
 def get_out_lyr_name(src_lyr, feat, options):
     if options.bPrefixWithLayerName:
         out_lyr_name = src_lyr.GetName()
@@ -182,6 +188,7 @@ def get_out_lyr_name(src_lyr, feat, options):
 
 ###############################################################
 # get_layer_and_map()
+
 
 def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, options):
 
@@ -228,6 +235,7 @@ def get_layer_and_map(out_lyr_name, src_lyr, dst_ds, layerMap, geom_type, option
 
 ###############################################################
 # convert_layer()
+
 
 def convert_layer(src_lyr, dst_ds, layerMap, options):
 
@@ -281,6 +289,7 @@ def convert_layer(src_lyr, dst_ds, layerMap, options):
 
 ###############################################################
 # ogr_dispatch()
+
 
 def ogr_dispatch(argv, progress = None, progress_arg = None):
 
@@ -389,11 +398,11 @@ def ogr_dispatch(argv, progress = None, progress_arg = None):
         if ret != 0:
             return ret
 
-
     return 0
 
 ###############################################################
 # Entry point
+
 
 if __name__ == '__main__':
     argv = ogr.GeneralCmdLineProcessor( sys.argv )

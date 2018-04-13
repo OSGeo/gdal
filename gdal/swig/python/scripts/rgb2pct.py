@@ -34,19 +34,23 @@ import sys
 
 from osgeo import gdal
 
+
 def Usage():
     print('Usage: rgb2pct.py [-n colors | -pct palette_file] [-of format] source_file dest_file')
     sys.exit(1)
 
+
 def DoesDriverHandleExtension(drv, ext):
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
+
 
 def GetExtension(filename):
     ext = os.path.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]
     return ext
+
 
 def GetOutputDriversFor(filename):
     drv_list = []
@@ -71,6 +75,7 @@ def GetOutputDriversFor(filename):
 
     return drv_list
 
+
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
     if len(drv_list) == 0:
@@ -86,6 +91,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 #      Mainline
 # =============================================================================
+
 
 color_count = 256
 format = None

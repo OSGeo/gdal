@@ -38,6 +38,7 @@ import gdaltest
 # Read a truncated and modified version of arvidson_original.cub from
 # ftp://ftpflag.wr.usgs.gov/dist/pigpen/venus/venustopo_download/ovda_dtm.zip
 
+
 def isis2_1():
 
     tst = gdaltest.GDALTest( 'ISIS2', 'arvidson_original_truncated.cub', 1, 382 )
@@ -70,12 +71,14 @@ def isis2_2():
 ###############################################################################
 # Test a different data type with some options.
 
+
 def isis2_3():
 
     tst = gdaltest.GDALTest( 'ISIS2', 'float32.tif', 1, 4672,
                              options = ['LABELING_METHOD=DETACHED', 'IMAGE_EXTENSION=qub'] )
 
     return tst.testCreateCopy( vsimem=1 )
+
 
 gdaltest_list = [
     isis2_1,

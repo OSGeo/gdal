@@ -39,6 +39,7 @@ from osgeo import ogr
 ###############################################################################
 # Read SEG-Y
 
+
 def ogr_segy_1():
 
     ds = ogr.Open('data/segy/testsegy.segy')
@@ -116,6 +117,7 @@ def ogr_segy_1():
 
 ###############################################################################
 # Read ASCII header SEG-Y
+
 
 def ogr_segy_2():
     ds = ogr.Open('data/segy/ascii-header-with-nuls.sgy')

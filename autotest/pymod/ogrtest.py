@@ -35,6 +35,8 @@ geos_flag = None
 sfcgal_flag = None
 
 ###############################################################################
+
+
 def check_features_against_list( layer, field_name, value_list ):
 
     field_index = layer.GetLayerDefn().GetFieldIndex( field_name )
@@ -64,6 +66,8 @@ def check_features_against_list( layer, field_name, value_list ):
     return 1
 
 ###############################################################################
+
+
 def check_feature_geometry( feat, geom, max_error = 0.0001 ):
     """ Returns 0 in case of success """
     try:
@@ -134,6 +138,8 @@ def check_feature_geometry( feat, geom, max_error = 0.0001 ):
     return 0
 
 ###############################################################################
+
+
 def check_feature( feat, feat_ref, max_error = 0.0001, excluded_fields = None ):
     """ Returns 0 in case of success """
 
@@ -157,6 +163,8 @@ def check_feature( feat, feat_ref, max_error = 0.0001, excluded_fields = None ):
     return 0
 
 ###############################################################################
+
+
 def compare_layers( lyr, lyr_ref, excluded_fields = None ):
 
     for f_ref in lyr_ref:
@@ -177,6 +185,8 @@ def compare_layers( lyr, lyr_ref, excluded_fields = None ):
     return 'success'
 
 ###############################################################################
+
+
 def quick_create_layer_def( lyr, field_list):
     # Each field is a tuple of (name, type, width, precision)
     # Any of type, width and precision can be skipped.  Default type is string.
@@ -199,6 +209,8 @@ def quick_create_layer_def( lyr, field_list):
         lyr.CreateField( field_defn )
 
 ###############################################################################
+
+
 def quick_create_feature( layer, field_values, wkt_geometry ):
     feature = ogr.Feature( feature_def = layer.GetLayerDefn() )
 
@@ -217,6 +229,8 @@ def quick_create_feature( layer, field_values, wkt_geometry ):
         raise ValueError('CreateFeature() failed in ogrtest.quick_create_feature()')
 
 ###############################################################################
+
+
 def have_geos():
     global geos_flag
 
@@ -228,6 +242,8 @@ def have_geos():
     return geos_flag
 
 ###############################################################################
+
+
 def have_sfcgal():
     global sfcgal_flag
 

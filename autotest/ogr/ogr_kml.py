@@ -44,6 +44,8 @@ from osgeo import gdal
 ###############################################################################
 # Test basic open operation for KML datastore.
 #
+
+
 def ogr_kml_datastore():
 
     ogrtest.kml_ds = None
@@ -90,6 +92,8 @@ def ogr_kml_datastore():
 ###############################################################################
 # Test reading attributes for first layer (point).
 #
+
+
 def ogr_kml_attributes_1():
 
     if not ogrtest.have_read_kml:
@@ -144,6 +148,8 @@ def ogr_kml_attributes_1():
 ###############################################################################
 # Test reading attributes for another layer (point).
 #
+
+
 def ogr_kml_attributes_2():
 
     if not ogrtest.have_read_kml:
@@ -174,6 +180,8 @@ def ogr_kml_attributes_2():
 ###############################################################################
 # Test reading attributes for another layer (linestring).
 #
+
+
 def ogr_kml_attributes_3():
 
     if not ogrtest.have_read_kml:
@@ -217,6 +225,8 @@ def ogr_kml_attributes_3():
 ###############################################################################
 # Test reading attributes for another layer (polygon).
 #
+
+
 def ogr_kml_attributes_4():
 
     if not ogrtest.have_read_kml:
@@ -249,6 +259,8 @@ def ogr_kml_attributes_4():
 ###############################################################################
 # Test reading of KML point geometry
 #
+
+
 def ogr_kml_point_read():
 
     if not ogrtest.have_read_kml:
@@ -292,6 +304,8 @@ def ogr_kml_point_read():
 ###############################################################################
 # Test reading of KML linestring geometry
 #
+
+
 def ogr_kml_linestring_read():
 
     if not ogrtest.have_read_kml:
@@ -332,6 +346,8 @@ def ogr_kml_linestring_read():
 ###############################################################################
 # Test reading of KML polygon geometry
 #
+
+
 def ogr_kml_polygon_read():
 
     if not ogrtest.have_read_kml:
@@ -380,6 +396,7 @@ def ogr_kml_polygon_read():
 
 ###############################################################################
 # Write test
+
 
 def ogr_kml_write_1():
 
@@ -559,6 +576,7 @@ def ogr_kml_xml_attributes():
 ###############################################################################
 # Test reading all geometry types (#3558)
 
+
 def ogr_kml_read_geometries():
 
     if not ogrtest.have_read_kml:
@@ -575,6 +593,7 @@ def ogr_kml_read_geometries():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_kml_test_ogrsf():
 
@@ -595,6 +614,7 @@ def ogr_kml_test_ogrsf():
 
 ###############################################################################
 # Test fix for #2772
+
 
 def ogr_kml_interleaved_writing():
 
@@ -617,6 +637,7 @@ def ogr_kml_interleaved_writing():
 ###############################################################################
 # Test reading KML with only Placemark
 
+
 def ogr_kml_read_placemark():
 
     if not ogrtest.have_read_kml:
@@ -633,6 +654,7 @@ def ogr_kml_read_placemark():
 ###############################################################################
 # Test reading KML without any layer
 
+
 def ogr_kml_read_empty():
 
     if not ogrtest.have_read_kml:
@@ -648,6 +670,7 @@ def ogr_kml_read_empty():
 
 ###############################################################################
 # Test reading KML with empty layers
+
 
 def ogr_kml_read_emptylayers():
 
@@ -674,6 +697,7 @@ def ogr_kml_read_emptylayers():
 
 ###############################################################################
 
+
 def compare_output(content, expected_content):
     content_lines = content.strip().split('\n')
     expected_lines = expected_content.strip().split('\n')
@@ -692,6 +716,7 @@ def compare_output(content, expected_content):
 
 ###############################################################################
 # Test that we can write a schema
+
 
 def ogr_kml_write_schema():
 
@@ -737,6 +762,7 @@ def ogr_kml_write_schema():
 ###############################################################################
 #
 
+
 def ogr_kml_empty_layer():
 
     ds = ogr.GetDriverByName('KML').CreateDataSource('/vsimem/ogr_kml_empty_layer.kml')
@@ -760,6 +786,7 @@ def ogr_kml_empty_layer():
 
 ###############################################################################
 # Empty layer followed by regular layer
+
 
 def ogr_kml_two_layers():
 
@@ -801,6 +828,7 @@ def ogr_kml_two_layers():
 ###############################################################################
 #  Cleanup
 
+
 def ogr_kml_cleanup():
 
     os.remove('tmp/kml.kml')
@@ -820,6 +848,7 @@ def ogr_kml_cleanup():
 
 ###############################################################################
 # Test reading KML with folder with empty subfolder and placemark
+
 
 def ogr_kml_read_folder_with_subfolder_placemark():
 
@@ -842,6 +871,7 @@ def ogr_kml_read_folder_with_subfolder_placemark():
 ###############################################################################
 # Test reading invalid KML (#6878)
 
+
 def ogr_kml_read_truncated():
 
     if not ogrtest.have_read_kml:
@@ -856,6 +886,7 @@ def ogr_kml_read_truncated():
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1591
+
 
 def ogr_kml_read_weird_empty_folders():
 
@@ -878,6 +909,7 @@ def ogr_kml_read_weird_empty_folders():
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1683
 
+
 def ogr_kml_read_junk_content_after_valid_doc():
 
     if not ogrtest.have_read_kml:
@@ -892,6 +924,7 @@ def ogr_kml_read_junk_content_after_valid_doc():
 
 ###############################################################################
 # Test reading KML with kml: prefix
+
 
 def ogr_kml_read_placemark_with_kml_prefix():
 
@@ -908,6 +941,7 @@ def ogr_kml_read_placemark_with_kml_prefix():
 
 ###############################################################################
 # Test reading KML with dumplicated folder name
+
 
 def ogr_kml_read_duplicate_folder_name():
 
@@ -930,6 +964,7 @@ def ogr_kml_read_duplicate_folder_name():
 
 ###############################################################################
 # Test reading KML with a placemark in root document, and a subfolder (#7221)
+
 
 def ogr_kml_read_placemark_in_root_and_subfolder():
 
@@ -957,6 +992,7 @@ def ogr_kml_read_placemark_in_root_and_subfolder():
 
 ###############################################################################
 # Build tests runner
+
 
 gdaltest_list = [
     ogr_kml_datastore,

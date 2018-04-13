@@ -45,6 +45,8 @@ except ImportError:
 import sys
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: val_repl.py -innd in_nodata_value -outnd out_nodata_value')
     print('                   [-of out_format] [-ot out_type] infile outfile')
@@ -54,6 +56,8 @@ def Usage():
 # =============================================================================
 
 # =============================================================================
+
+
 def ParseType(type):
     gdal_dt = gdal.GetDataTypeByName(type)
     if gdal_dt is gdal.GDT_Unknown:
@@ -61,6 +65,7 @@ def ParseType(type):
     return gdal_dt
 
 # =============================================================================
+
 
 inNoData = None
 outNoData = None

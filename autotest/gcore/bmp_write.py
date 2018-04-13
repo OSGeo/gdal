@@ -36,6 +36,7 @@ import gdaltest
 ###############################################################################
 # Test creating an in memory copy.
 
+
 def bmp_vsimem():
 
     tst = gdaltest.GDALTest( 'BMP', 'byte.tif', 1, 4672 )

@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Generic test
 
+
 def vsifile_generic(filename):
 
     start_time = time.time()
@@ -145,11 +146,13 @@ def vsifile_generic(filename):
 ###############################################################################
 # Test /vsimem
 
+
 def vsifile_1():
     return vsifile_generic('/vsimem/vsifile_1.bin')
 
 ###############################################################################
 # Test regular file system
+
 
 def vsifile_2():
 
@@ -163,6 +166,7 @@ def vsifile_2():
 
 ###############################################################################
 # Test ftruncate >= 32 bit
+
 
 def vsifile_3():
 
@@ -206,6 +210,7 @@ def vsifile_3():
 ###############################################################################
 # Test fix for #4583 (short reads)
 
+
 def vsifile_4():
 
     fp = gdal.VSIFOpenL('vsifile.py', 'rb')
@@ -221,6 +226,7 @@ def vsifile_4():
 
 ###############################################################################
 # Test vsicache
+
 
 def vsifile_5():
 
@@ -297,6 +303,7 @@ def vsifile_5():
 ###############################################################################
 # Test vsicache above 2 GB
 
+
 def vsifile_6():
 
     if not gdaltest.filesystem_supports_sparse_files('tmp'):
@@ -338,6 +345,7 @@ def vsifile_6():
 
 ###############################################################################
 # Test limit cases on /vsimem
+
 
 def vsifile_7():
 
@@ -389,6 +397,7 @@ def vsifile_7():
 ###############################################################################
 # Test renaming directory in /vsimem
 
+
 def vsifile_8():
 
     # octal 0666 = decimal 438
@@ -409,6 +418,7 @@ def vsifile_8():
 
 ###############################################################################
 # Test ReadDir()
+
 
 def vsifile_9():
 
@@ -445,6 +455,7 @@ def vsifile_9():
 
 ###############################################################################
 # Test fuzzer friendly archive
+
 
 def vsifile_10():
 
@@ -523,7 +534,6 @@ a""")
         print(gdal.VSIStatL('/vsitar//vsimem/vsifile_10.tar/small.txt').size)
         return 'fail'
 
-
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
 """FUZZER_FRIENDLY_ARCHIVE
 ***NEWFILE***:x
@@ -533,7 +543,6 @@ abc""")
         gdaltest.post_reason('fail')
         print(contents)
         return 'fail'
-
 
     gdal.FileFromMemBuffer('/vsimem/vsifile_10.tar',
 """FUZZER_FRIENDLY_ARCHIVE
@@ -551,6 +560,7 @@ abc***NEWFILE***:""")
 
 ###############################################################################
 # Test generic Truncate implementation for file extension
+
 
 def vsifile_11():
     f = gdal.VSIFOpenL('/vsimem/vsifile_11', 'wb')
@@ -585,6 +595,7 @@ def vsifile_11():
 
 ###############################################################################
 # Test regular file system sparse file support
+
 
 def vsifile_12():
 
@@ -623,6 +634,7 @@ def vsifile_12():
 ###############################################################################
 # Test reading filename with prefixes without terminating slash
 
+
 def vsifile_13():
 
     gdal.VSIFOpenL('/vsigzip', 'rb')
@@ -659,6 +671,7 @@ def vsifile_13():
 ###############################################################################
 # Check performance issue (https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1673)
 
+
 def vsifile_14():
 
     with gdaltest.error_handler():
@@ -667,6 +680,7 @@ def vsifile_14():
 
 ###############################################################################
 # Test issue with Eof() not detecting end of corrupted gzip stream (#6944)
+
 
 def vsifile_15():
 
@@ -682,6 +696,7 @@ def vsifile_15():
 
 ###############################################################################
 # Test failed gdal.Rename() with exceptions enabled
+
 
 def vsifile_16():
 
@@ -699,6 +714,7 @@ def vsifile_16():
 ###############################################################################
 # Test gdal.GetActualURL() on a non-network based filesystem
 
+
 def vsifile_17():
 
     if gdal.GetActualURL('foo') is not None:
@@ -714,6 +730,7 @@ def vsifile_17():
 ###############################################################################
 # Test gdal.GetFileSystemsPrefixes()
 
+
 def vsifile_18():
 
     prefixes = gdal.GetFileSystemsPrefixes()
@@ -725,6 +742,7 @@ def vsifile_18():
 
 ###############################################################################
 # Test gdal.GetFileSystemOptions()
+
 
 def vsifile_19():
 
@@ -739,6 +757,7 @@ def vsifile_19():
                 return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [ vsifile_1,
                   vsifile_2,

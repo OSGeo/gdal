@@ -39,6 +39,8 @@ import gdaltest
 import ogrtest
 
 ###############################################################################
+
+
 def ogr_virtualogr_run_sql(sql_statement):
 
     ds = ogr.GetDriverByName('SQLite').CreateDataSource(':memory:')
@@ -66,6 +68,7 @@ def ogr_virtualogr_run_sql(sql_statement):
 
 ###############################################################################
 # Basic tests
+
 
 def ogr_virtualogr_1():
 
@@ -140,6 +143,7 @@ def ogr_virtualogr_1():
 
 ###############################################################################
 # Test detection of suspicious use of VirtualOGR
+
 
 def ogr_virtualogr_2():
 
@@ -223,6 +227,7 @@ def ogr_virtualogr_2():
 ###############################################################################
 # Test GDAL as a SQLite3 dynamically loaded extension
 
+
 def ogr_virtualogr_3():
 
     if not ogrtest.has_sqlite_dialect:
@@ -260,6 +265,7 @@ def ogr_virtualogr_3():
 
 ###############################################################################
 # Test ogr_datasource_load_layers()
+
 
 def ogr_virtualogr_4():
 
@@ -329,6 +335,7 @@ def ogr_virtualogr_4():
 ###############################################################################
 # Test failed CREATE VIRTUAL TABLE USING VirtualOGR
 
+
 def ogr_virtualogr_5():
 
     if not ogrtest.has_sqlite_dialect:
@@ -353,6 +360,7 @@ def ogr_virtualogr_5():
     gdal.Unlink('/vsimem/ogr_virtualogr_5.csv')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_virtualogr_1,

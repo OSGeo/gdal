@@ -42,6 +42,7 @@ sys.path.append( '../osr' )
 
 import gdaltest
 
+
 def has_jp2kdrv():
     for i in range(gdal.GetDriverCount()):
         if gdal.GetDriver(i).ShortName.startswith('JP2'):
@@ -50,6 +51,7 @@ def has_jp2kdrv():
 
 ###############################################################################
 # Do a simple checksum on our test file
+
 
 def grib_1():
 
@@ -80,6 +82,7 @@ def grib_2():
 # This file has different raster sizes for some of the products, which
 # we sort-of-support per ticket Test a small GRIB 1 sample file.
 
+
 def grib_read_different_sizes_messages():
 
     if gdaltest.grib_drv is None:
@@ -99,6 +102,7 @@ def grib_read_different_sizes_messages():
 
 ###############################################################################
 # Check nodata
+
 
 def grib_grib2_read_nodata():
 
@@ -122,6 +126,7 @@ def grib_grib2_read_nodata():
 
 ###############################################################################
 # Check grib units (#3606)
+
 
 def grib_read_units():
 
@@ -173,6 +178,7 @@ def grib_read_units():
 # grib files had one cell in either direction for geographic projections.  See
 # ticket #5532
 
+
 def grib_read_geotransform_one_n_or_n_one():
 
     if gdaltest.grib_drv is None:
@@ -193,6 +199,7 @@ def grib_read_geotransform_one_n_or_n_one():
 # come up with a pure /vsizip/ test case, so here's a real world use
 # case (#5530).
 
+
 def grib_read_vsizip():
 
     if gdaltest.grib_drv is None:
@@ -206,6 +213,7 @@ def grib_read_vsizip():
 
 ###############################################################################
 # Write PDS numbers to all bands
+
 
 def grib_grib2_test_grib_pds_all_bands():
 
@@ -237,6 +245,7 @@ def grib_grib2_test_grib_pds_all_bands():
 ###############################################################################
 # Test support for template 4.15 (#5768)
 
+
 def grib_grib2_read_template_4_15():
 
     if gdaltest.grib_drv is None:
@@ -264,6 +273,7 @@ def grib_grib2_read_template_4_15():
 ###############################################################################
 # Test support for PNG compressed
 
+
 def grib_grib2_read_png():
 
     if gdaltest.grib_drv is None:
@@ -283,6 +293,7 @@ def grib_grib2_read_png():
 
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 32, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for synthetic satellite data.
+
 
 def grib_grib2_read_template_4_32():
 
@@ -309,6 +320,7 @@ def grib_grib2_read_template_4_32():
 ###############################################################################
 # GRIB2 file with all 0 data
 
+
 def grib_grib2_read_all_zero_data():
 
     if gdaltest.grib_drv is None:
@@ -333,6 +345,7 @@ def grib_grib2_read_all_zero_data():
 
 ###############################################################################
 # GRIB1 file with rotate pole lonlat
+
 
 def grib_grib2_read_rotated_pole_lonlat():
 
@@ -374,6 +387,7 @@ def grib_grib2_read_rotated_pole_lonlat():
 ###############################################################################
 # Test support for GRIB2 Section 4 Template 40, Analysis or forecast at a horizontal level or in a horizontal layer at a point in time for atmospheric chemical constituents
 
+
 def grib_grib2_read_template_4_40():
 
     if gdaltest.grib_drv is None:
@@ -399,6 +413,7 @@ def grib_grib2_read_template_4_40():
 ###############################################################################
 # Test support for a unhandled GRIB2 Section 4 Template
 
+
 def grib_grib2_read_template_4_unhandled():
 
     if gdaltest.grib_drv is None:
@@ -418,6 +433,7 @@ def grib_grib2_read_template_4_unhandled():
 
 ###############################################################################
 # Test reading GRIB2 Transverse Mercator grid
+
 
 def grib_grib2_read_transverse_mercator():
 
@@ -444,6 +460,7 @@ def grib_grib2_read_transverse_mercator():
 
 ###############################################################################
 # Test reading GRIB2 Mercator grid
+
 
 def grib_grib2_read_mercator():
 
@@ -474,6 +491,7 @@ def grib_grib2_read_mercator():
 ###############################################################################
 # Test reading GRIB2 Mercator grid
 
+
 def grib_grib2_read_mercator_2sp():
 
     if gdaltest.grib_drv is None:
@@ -502,6 +520,7 @@ def grib_grib2_read_mercator_2sp():
 
 ###############################################################################
 # Test reading GRIB2 Lambert Conformal Conic grid
+
 
 def grib_grib2_read_lcc():
 
@@ -532,6 +551,7 @@ def grib_grib2_read_lcc():
 ###############################################################################
 # Test reading GRIB2 Polar Stereographic grid
 
+
 def grib_grib2_read_polar_stereo():
 
     if gdaltest.grib_drv is None:
@@ -560,6 +580,7 @@ def grib_grib2_read_polar_stereo():
 
 ###############################################################################
 # Test reading GRIB2 Albers Equal Area grid
+
 
 def grib_grib2_read_aea():
 
@@ -590,6 +611,7 @@ def grib_grib2_read_aea():
 ###############################################################################
 # Test reading GRIB2 Lambert Azimuthal Equal Area grid
 
+
 def grib_grib2_read_laea():
 
     if gdaltest.grib_drv is None:
@@ -619,6 +641,7 @@ def grib_grib2_read_laea():
 ###############################################################################
 # Test reading GRIB2 with Grid point data - IEEE Floating Point Data (template 5.4)
 
+
 def grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
 
     if gdaltest.grib_drv is None:
@@ -642,6 +665,7 @@ def grib_grib2_read_template_5_4_grid_point_ieee_floating_point():
 
 ###############################################################################
 # Test reading GRIB2 with NBITS=0 and DECIMAL_SCALE !=0
+
 
 def grib_grib2_read_section_5_nbits_zero_decimal_scaled():
 
@@ -676,6 +700,7 @@ def grib_grib2_read_section_5_nbits_zero_decimal_scaled():
 ###############################################################################
 # Test reading GRIB2 with complex packing and spatial differencing of order 1
 
+
 def grib_grib2_read_spatial_differencing_order_1():
 
     if gdaltest.grib_drv is None:
@@ -691,6 +716,7 @@ def grib_grib2_read_spatial_differencing_order_1():
 
 ###############################################################################
 # Test GRIB2 creation options
+
 
 def grib_grib2_write_creation_options():
 
@@ -958,6 +984,7 @@ def grib_grib2_write_creation_options():
 ###############################################################################
 # Test GRIB2 write support for projections
 
+
 def grib_grib2_write_projections():
 
     if gdaltest.grib_drv is None:
@@ -1095,6 +1122,8 @@ def grib_grib2_write_projections():
     return 'success'
 
 ###############################################################################
+
+
 def _grib_read_section(filename, sect_num_to_read):
 
     f = gdal.VSIFOpenL(filename, 'rb')
@@ -1120,6 +1149,7 @@ def _grib_read_section(filename, sect_num_to_read):
 
 ###############################################################################
 # Test GRIB2 write support for data encodings
+
 
 def grib_grib2_write_data_encodings():
 
@@ -1373,6 +1403,7 @@ def grib_grib2_write_data_encodings():
 ###############################################################################
 # Test GRIB2 write support with warnings/errors
 
+
 def grib_grib2_write_data_encodings_warnings_and_errors():
 
     if gdaltest.grib_drv is None:
@@ -1458,6 +1489,7 @@ def grib_grib2_write_data_encodings_warnings_and_errors():
 ###############################################################################
 # Test writing temperatures with automatic Celcius -> Kelvin conversion
 
+
 def grib_grib2_write_temperatures():
 
     for (src_type, data_encoding, input_unit) in [
@@ -1504,6 +1536,8 @@ def grib_grib2_write_temperatures():
 
 ###############################################################################
 # Test GRIB2 file with JPEG2000 codestream on a single line (#6719)
+
+
 def grib_online_grib2_jpeg2000_single_line():
 
     if gdaltest.grib_drv is None:
@@ -1536,6 +1570,7 @@ def grib_online_grib2_jpeg2000_single_line():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     grib_1,

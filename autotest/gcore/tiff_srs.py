@@ -89,6 +89,8 @@ class TestTiffSRS:
 
 ###############################################################################
 # Test fix for #4677:
+
+
 def tiff_srs_without_linear_units():
 
     sr = osr.SpatialReference()
@@ -117,6 +119,7 @@ def tiff_srs_without_linear_units():
 
 ###############################################################################
 # Test COMPDCS without VerticalCSType
+
 
 def tiff_srs_compd_cs():
 
@@ -165,6 +168,7 @@ def tiff_srs_compd_cs():
 ###############################################################################
 # Test reading a GeoTIFF with both StdParallel1 and ScaleAtNatOrigin defined (#5791)
 
+
 def tiff_srs_weird_mercator_2sp():
 
     ds = gdal.Open('data/weird_mercator_2sp.tif')
@@ -210,6 +214,7 @@ def tiff_srs_weird_mercator_2sp():
 ###############################################################################
 # Test reading ESRI WGS_1984_Web_Mercator_Auxiliary_Sphere
 
+
 def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
 
     ds = gdal.Open('data/WGS_1984_Web_Mercator_Auxiliary_Sphere.tif')
@@ -241,6 +246,7 @@ def tiff_srs_WGS_1984_Web_Mercator_Auxiliary_Sphere():
 
 ###############################################################################
 # Test writing and reading various angular units
+
 
 def tiff_srs_angular_units():
 
@@ -342,6 +348,7 @@ def tiff_srs_angular_units():
 ###############################################################################
 # Test writing and reading a unknown datum but with a known ellipsoid
 
+
 def tiff_custom_datum_known_ellipsoid():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tiff_custom_datum_known_ellipsoid.tif', 1, 1)
@@ -366,6 +373,7 @@ def tiff_custom_datum_known_ellipsoid():
 ###############################################################################
 # Test reading a GeoTIFF file with only PCS set, but with a ProjLinearUnitsGeoKey
 # override to another unit (us-feet) ... (#6210)
+
 
 def tiff_srs_epsg_2853_with_us_feet():
 
@@ -392,6 +400,7 @@ def tiff_srs_epsg_2853_with_us_feet():
 
 ###############################################################################
 # Test reading a SRS with a PCSCitationGeoKey = "LUnits = ..."
+
 
 def tiff_srs_PCSCitationGeoKey_LUnits():
 
@@ -426,6 +435,7 @@ def tiff_srs_PCSCitationGeoKey_LUnits():
 ###############################################################################
 # Test reading a geotiff key ProjectionGeoKey (Short,1): Unknown-3856
 
+
 def tiff_srs_projection_3856():
 
     ds = gdal.Open('data/projection_3856.tif')
@@ -441,6 +451,7 @@ def tiff_srs_projection_3856():
 
 ###############################################################################
 # Test reading a geotiff with a LOCAL_CS and a Imagine citation
+
 
 def tiff_srs_imagine_localcs_citation():
 
@@ -459,6 +470,7 @@ def tiff_srs_imagine_localcs_citation():
 # Test reading a geotiff with a EPSG code and a TOWGS84 key that must
 # override the default coming from EPSG
 
+
 def tiff_srs_towgs84_override():
 
     ds = gdal.Open('data/gtiff_towgs84_override.tif')
@@ -475,6 +487,7 @@ def tiff_srs_towgs84_override():
 ###############################################################################
 # Test reading PCSCitationGeoKey (#7199)
 
+
 def tiff_srs_pcscitation():
 
     ds = gdal.Open('data/pcscitation.tif')
@@ -487,6 +500,7 @@ def tiff_srs_pcscitation():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = []
 

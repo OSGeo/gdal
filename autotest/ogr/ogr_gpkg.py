@@ -58,6 +58,7 @@ try:
 except:
     has_validate = False
 
+
 def validate(filename, quiet = False):
     if has_validate:
         my_filename = filename
@@ -83,6 +84,7 @@ def validate(filename, quiet = False):
 
 ###############################################################################
 # Create a fresh database.
+
 
 def ogr_gpkg_1():
 
@@ -121,6 +123,7 @@ def ogr_gpkg_1():
 
 ###############################################################################
 # Re-open database to test validity
+
 
 def ogr_gpkg_2():
 
@@ -186,6 +189,7 @@ def ogr_gpkg_3():
 
 ###############################################################################
 # Close and re-open to test the layer registration
+
 
 def ogr_gpkg_4():
 
@@ -587,6 +591,7 @@ def ogr_gpkg_8():
 ###############################################################################
 # Test support for extents and counts
 
+
 def ogr_gpkg_9():
 
     if gdaltest.gpkg_dr is None or gdaltest.gpkg_ds is None:
@@ -609,6 +614,7 @@ def ogr_gpkg_9():
 
 ###############################################################################
 # Test non-SELECT SQL commands
+
 
 def ogr_gpkg_11():
 
@@ -634,6 +640,7 @@ def ogr_gpkg_11():
 
 ###############################################################################
 # Test SELECT SQL commands
+
 
 def ogr_gpkg_12():
 
@@ -774,6 +781,7 @@ def ogr_gpkg_12():
 ###############################################################################
 # Test non-spatial tables
 
+
 def ogr_gpkg_13():
 
     if gdaltest.gpkg_dr is None:
@@ -835,6 +843,7 @@ def ogr_gpkg_13():
 
 ###############################################################################
 # Add various geometries to test spatial filtering
+
 
 def ogr_gpkg_14():
 
@@ -935,6 +944,7 @@ def ogr_gpkg_14():
 ###############################################################################
 # Test SQL functions
 
+
 def ogr_gpkg_15():
 
     if gdaltest.gpkg_dr is None:
@@ -979,7 +989,6 @@ def ogr_gpkg_15():
             print("expected_type=%s actual_type=%s expected_result=%d got_result=%d" % (expected_type, actual_type, expected_result, got_result))
             gdaltest.post_reason('fail')
             return 'fail'
-
 
     for (sql, expected_result) in [
             ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
@@ -1150,7 +1159,6 @@ def ogr_gpkg_15():
         return 'fail'
     gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
 
-
     if osr_proj4.have_proj480():
         sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_Transform(geom, ST_SRID(geom)) FROM tbl_linestring_renamed")
         feat = sql_lyr.GetNextFeature()
@@ -1176,7 +1184,6 @@ def ogr_gpkg_15():
             feat.DumpReadable()
             return 'fail'
         gdaltest.gpkg_ds.ReleaseResultSet(sql_lyr)
-
 
     # Error case: less than 8 bytes
     sql_lyr = gdaltest.gpkg_ds.ExecuteSQL("SELECT ST_MinX(x'00')")
@@ -1344,6 +1351,7 @@ def ogr_gpkg_15():
 ###############################################################################
 # Test unknown extensions
 
+
 def ogr_gpkg_16():
 
     if gdaltest.gpkg_dr is None:
@@ -1468,6 +1476,7 @@ def ogr_gpkg_16():
 ###############################################################################
 # Run INDIRECT_SQLITE dialect
 
+
 def ogr_gpkg_17():
 
     if gdaltest.gpkg_dr is None:
@@ -1486,6 +1495,7 @@ def ogr_gpkg_17():
 
 ###############################################################################
 # Test geometry type extension
+
 
 def ogr_gpkg_18():
 
@@ -1606,6 +1616,7 @@ def ogr_gpkg_18():
 
 ###############################################################################
 # Test metadata
+
 
 def ogr_gpkg_19():
 
@@ -1737,6 +1748,7 @@ def ogr_gpkg_19():
 ###############################################################################
 # Test spatial reference system
 
+
 def ogr_gpkg_20():
 
     if gdaltest.gpkg_dr is None:
@@ -1848,6 +1860,7 @@ def ogr_gpkg_20():
 ###############################################################################
 # Test maximum width of text fields
 
+
 def ogr_gpkg_21():
 
     if gdaltest.gpkg_dr is None:
@@ -1900,7 +1913,6 @@ def ogr_gpkg_21():
 
     gdal.Unlink('/vsimem/ogr_gpkg_21.gpkg')
 
-
     ds = gdaltest.gpkg_dr.CreateDataSource('/vsimem/ogr_gpkg_21.gpkg')
     lyr = ds.CreateLayer('test', options = ['TRUNCATE_FIELDS=YES'])
     field_defn = ogr.FieldDefn('str', ogr.OFTString)
@@ -1943,6 +1955,7 @@ def ogr_gpkg_21():
 ###############################################################################
 # Test FID64 support
 
+
 def ogr_gpkg_22():
 
     if gdaltest.gpkg_dr is None:
@@ -1977,6 +1990,7 @@ def ogr_gpkg_22():
 
 ###############################################################################
 # Test not nullable fields
+
 
 def ogr_gpkg_23():
 
@@ -2171,6 +2185,7 @@ def ogr_gpkg_23():
 ###############################################################################
 # Test default values
 
+
 def ogr_gpkg_24():
 
     if gdaltest.gpkg_dr is None:
@@ -2303,6 +2318,7 @@ def ogr_gpkg_24():
 ###############################################################################
 # Test creating a field with the fid name
 
+
 def ogr_gpkg_25():
 
     if gdaltest.gpkg_dr is None:
@@ -2404,6 +2420,7 @@ def ogr_gpkg_25():
 
 ###############################################################################
 # Test dataset transactions
+
 
 def ogr_gpkg_26():
 
@@ -2565,6 +2582,7 @@ def ogr_gpkg_26():
 ###############################################################################
 # Test interface with Spatialite
 
+
 def ogr_gpkg_27():
 
     if gdaltest.gpkg_dr is None:
@@ -2601,6 +2619,7 @@ def ogr_gpkg_27():
 # Test ogr2ogr -a_srs (as the geopackage driver doesn't clone the passed SRS
 # but inc/dec its ref count, which can exhibit issues in GDALVectorTanslate())
 
+
 def ogr_gpkg_28():
 
     if gdaltest.gpkg_dr is None:
@@ -2618,6 +2637,7 @@ def ogr_gpkg_28():
 
 ###############################################################################
 # Test XYM / XYZM support
+
 
 def ogr_gpkg_29():
 
@@ -2706,6 +2726,7 @@ def ogr_gpkg_29():
 ###############################################################################
 # Test non standard file extension (#6396)
 
+
 def ogr_gpkg_30():
 
     if gdaltest.gpkg_dr is None:
@@ -2738,6 +2759,7 @@ def ogr_gpkg_30():
 
 ###############################################################################
 # Test CURVE and SURFACE types
+
 
 def ogr_gpkg_31():
 
@@ -2784,6 +2806,7 @@ def ogr_gpkg_31():
 # Run creating a non-spatial layer that isn't registered as 'aspatial' and
 # read it back
 
+
 def ogr_gpkg_32():
 
     if gdaltest.gpkg_dr is None:
@@ -2825,6 +2848,7 @@ def ogr_gpkg_32():
 ###############################################################################
 # Test OGR_CURRENT_DATE
 
+
 def ogr_gpkg_33():
 
     if gdaltest.gpkg_dr is None:
@@ -2850,6 +2874,7 @@ def ogr_gpkg_33():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_gpkg_test_ogrsf():
 
@@ -2975,7 +3000,6 @@ def ogr_gpkg_34():
 
     gdaltest.gpkg_dr.DeleteDataSource(dbname)
 
-
     # Try again with DROP TABLE syntax
     ds = gdaltest.gpkg_dr.CreateDataSource(dbname)
     lyr = ds.CreateLayer(layer_name, geom_type = ogr.wkbCurvePolygon )
@@ -3023,6 +3047,7 @@ def ogr_gpkg_34():
 
 ###############################################################################
 # Test DeleteField()
+
 
 def ogr_gpkg_35():
 
@@ -3141,6 +3166,7 @@ def ogr_gpkg_35():
 
 ###############################################################################
 # Test AlterFieldDefn()
+
 
 def ogr_gpkg_36():
 
@@ -3295,6 +3321,7 @@ def ogr_gpkg_36():
 ###############################################################################
 # Test ReorderFields()
 
+
 def ogr_gpkg_37():
 
     if gdaltest.gpkg_dr is None:
@@ -3338,7 +3365,6 @@ def ogr_gpkg_37():
         gdaltest.post_reason('fail')
         return 'fail'
 
-
     if lyr.ReorderFields([1,0]) != 0:
         gdaltest.post_reason('fail')
         return 'fail'
@@ -3379,6 +3405,7 @@ def ogr_gpkg_37():
 
 ###############################################################################
 # Test GetExtent() and RECOMPUTE EXTENT ON
+
 
 def ogr_gpkg_38():
 
@@ -3483,6 +3510,7 @@ def ogr_gpkg_38():
 ###############################################################################
 # Test checking of IDENTIFIER unicity
 
+
 def ogr_gpkg_39():
 
     if gdaltest.gpkg_dr is None:
@@ -3532,6 +3560,7 @@ def ogr_gpkg_39():
 # Run creating a non-spatial layer that is registered as 'attributes' and
 # read it back
 
+
 def ogr_gpkg_40():
 
     if gdaltest.gpkg_dr is None:
@@ -3573,6 +3602,7 @@ def ogr_gpkg_40():
 ###############################################################################
 # Test tables without integer primary key (#6799), and unrecognized column type
 
+
 def ogr_gpkg_41():
 
     if gdaltest.gpkg_dr is None:
@@ -3611,6 +3641,7 @@ def ogr_gpkg_41():
 ###############################################################################
 # Test feature_count
 
+
 def foo_has_trigger(ds):
     sql_lyr = ds.ExecuteSQL(
         "SELECT COUNT(*) FROM sqlite_master WHERE name = 'trigger_insert_feature_count_foo'", dialect = 'DEBUG')
@@ -3620,6 +3651,7 @@ def foo_has_trigger(ds):
     ds.ReleaseResultSet(sql_lyr)
     return has_trigger
 
+
 def get_feature_count_from_gpkg_contents(ds):
     sql_lyr = ds.ExecuteSQL('SELECT feature_count FROM gpkg_ogr_contents', dialect = 'DEBUG')
     f = sql_lyr.GetNextFeature()
@@ -3627,6 +3659,7 @@ def get_feature_count_from_gpkg_contents(ds):
     f = None
     ds.ReleaseResultSet(sql_lyr)
     return val
+
 
 def ogr_gpkg_42():
 
@@ -3810,7 +3843,6 @@ def ogr_gpkg_42():
         return 'fail'
     ds = None
 
-
     gdaltest.gpkg_dr.DeleteDataSource('/vsimem/ogr_gpkg_42.gpkg')
 
     return 'success'
@@ -3943,6 +3975,7 @@ def ogr_gpkg_45():
 ###############################################################################
 # Test spatial view and spatial index
 
+
 def ogr_gpkg_46():
 
     if gdaltest.gpkg_dr is None:
@@ -4061,6 +4094,7 @@ def ogr_gpkg_46():
 
 ###############################################################################
 # Test corner case of Identify()
+
 
 def ogr_gpkg_47():
 
@@ -4207,6 +4241,7 @@ def ogr_gpkg_47():
 ###############################################################################
 # Test insertion of features with unset fields
 
+
 def ogr_gpkg_48():
 
     if gdaltest.gpkg_dr is None:
@@ -4271,6 +4306,7 @@ def ogr_gpkg_48():
 ###############################################################################
 # Test CreateGeomField() on a attributes layer
 
+
 def ogr_gpkg_49():
 
     if gdaltest.gpkg_dr is None:
@@ -4297,6 +4333,7 @@ def ogr_gpkg_49():
 
 ###############################################################################
 # Test minimalistic support of definition_12_063
+
 
 def ogr_gpkg_50():
 
@@ -4349,6 +4386,7 @@ def ogr_gpkg_50():
 ###############################################################################
 # Test opening a .gpkg.sql file
 
+
 def ogr_gpkg_51():
 
     if gdaltest.gpkg_dr is None:
@@ -4368,6 +4406,7 @@ def ogr_gpkg_51():
 ###############################################################################
 # Test opening a .gpkg file
 
+
 def ogr_gpkg_52():
 
     if gdaltest.gpkg_dr is None:
@@ -4384,6 +4423,7 @@ def ogr_gpkg_52():
 
 ###############################################################################
 # Test opening a .gpkg file with inconsistency regarding table case (#6916)
+
 
 def ogr_gpkg_53():
 
@@ -4415,6 +4455,7 @@ def ogr_gpkg_53():
 
 ###############################################################################
 # Test editing of a database with 2 layers (https://issues.qgis.org/issues/17034)
+
 
 def ogr_gpkg_54():
 
@@ -4484,6 +4525,7 @@ def ogr_gpkg_54():
 ###############################################################################
 # Test inserting geometries incompatible with declared layer geometry type
 
+
 def ogr_gpkg_55():
 
     if gdaltest.gpkg_dr is None:
@@ -4518,6 +4560,7 @@ def ogr_gpkg_55():
 ###############################################################################
 # Test FID identification on SQL result layer
 
+
 def ogr_gpkg_56():
 
     if gdaltest.gpkg_dr is None:
@@ -4538,6 +4581,7 @@ def ogr_gpkg_56():
 
 ###############################################################################
 # Test opening a corrupted gpkg with duplicated layer names
+
 
 def ogr_gpkg_57():
 
@@ -4577,6 +4621,7 @@ CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
 ###############################################################################
 # Test overwriting a layer
 
+
 def ogr_gpkg_58():
 
     if gdaltest.gpkg_dr is None:
@@ -4602,6 +4647,7 @@ def ogr_gpkg_58():
 ###############################################################################
 # Test CreateSpatialIndex()
 
+
 def ogr_gpkg_59():
 
     if gdaltest.gpkg_dr is None:
@@ -4625,6 +4671,7 @@ def ogr_gpkg_59():
 
 ###############################################################################
 # Remove the test db from the tmp directory
+
 
 def ogr_gpkg_cleanup():
 

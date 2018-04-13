@@ -37,6 +37,7 @@ from osgeo import ogr, gdal
 
 #############################################################################
 
+
 def GeomType2Name( type ):
     flat_type = ogr.GT_Flatten(type)
     dic = { ogr.wkbUnknown : ('wkbUnknown', '25D'),
@@ -71,10 +72,14 @@ def GeomType2Name( type ):
     return ret
 
 #############################################################################
+
+
 def Esc(x):
     return gdal.EscapeString( x, gdal.CPLES_XML )
 
 #############################################################################
+
+
 def Usage():
     print('Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]')
     print('                  in_datasource out_vrtfile [layers]')
@@ -83,6 +88,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 infile = None
 outfile = None

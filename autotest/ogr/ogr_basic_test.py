@@ -39,6 +39,7 @@ from osgeo import ogr
 
 ###############################################################################
 
+
 def ogr_basic_1():
 
     gdaltest.ds = ogr.Open( 'data/poly.shp' )
@@ -50,6 +51,7 @@ def ogr_basic_1():
 
 ###############################################################################
 # Test Feature counting.
+
 
 def ogr_basic_2():
 
@@ -87,6 +89,7 @@ def ogr_basic_2():
 
 ###############################################################################
 # Test Spatial Query.
+
 
 def ogr_basic_3():
 
@@ -135,6 +138,7 @@ def ogr_basic_3():
 ###############################################################################
 # Test GetDriver().
 
+
 def ogr_basic_4():
     driver = gdaltest.ds.GetDriver()
     if driver is None:
@@ -149,6 +153,7 @@ def ogr_basic_4():
 
 ###############################################################################
 # Test attribute query on special field fid - per bug 1468.
+
 
 def ogr_basic_5():
 
@@ -192,6 +197,7 @@ def ogr_basic_6():
 
 ###############################################################################
 # Test ogr.Feature.Equal()
+
 
 def ogr_basic_7():
 
@@ -385,6 +391,7 @@ def ogr_basic_7():
 ###############################################################################
 # Issue several RegisterAll() to check that OGR drivers are good citizens
 
+
 def ogr_basic_8():
 
     ogr.RegisterAll()
@@ -395,6 +402,7 @@ def ogr_basic_8():
 
 ###############################################################################
 # Test ogr.GeometryTypeToName (#4871)
+
 
 def ogr_basic_9():
 
@@ -429,6 +437,7 @@ def ogr_basic_9():
 ###############################################################################
 # Run test_ogrsf -all_drivers
 
+
 def ogr_basic_10():
 
     import test_cli_utilities
@@ -445,6 +454,7 @@ def ogr_basic_10():
 
 ###############################################################################
 # Test double call to UseExceptions() (#5704)
+
 
 def ogr_basic_11():
 
@@ -464,6 +474,7 @@ def ogr_basic_11():
 
 ###############################################################################
 # Test OFSTBoolean, OFSTInt16 and OFSTFloat32
+
 
 def ogr_basic_12():
 
@@ -637,6 +648,7 @@ def ogr_basic_12():
 ###############################################################################
 # Test OGRParseDate (#6452)
 
+
 def ogr_basic_13():
     feat_defn = ogr.FeatureDefn('test')
     field_defn = ogr.FieldDefn('date', ogr.OFTDateTime)
@@ -679,6 +691,7 @@ def ogr_basic_13():
 ###############################################################################
 # Test ogr.Open(.) in an empty directory
 
+
 def ogr_basic_14():
 
     os.mkdir('tmp/ogr_basic_14')
@@ -695,6 +708,7 @@ def ogr_basic_14():
 
 ###############################################################################
 # Test exceptions with OGRErr return code
+
 
 def ogr_basic_15():
 
@@ -727,10 +741,12 @@ def ogr_basic_16_make_geom():
     geom.AddPoint_2D(0, 0)
     return geom
 
+
 def ogr_basic_16_gen_list(N):
     for i in range(N):
         ogr_basic_16_make_geom()
         yield i
+
 
 def ogr_basic_16():
 
@@ -738,6 +754,7 @@ def ogr_basic_16():
         return 'fail'
 
     return 'success'
+
 
 def ogr_basic_invalid_unicode():
 
@@ -765,11 +782,13 @@ def ogr_basic_invalid_unicode():
 ###############################################################################
 # cleanup
 
+
 def ogr_basic_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_basic_1,

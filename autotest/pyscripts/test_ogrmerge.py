@@ -40,6 +40,7 @@ import test_py_scripts
 ###############################################################################
 # Test -single
 
+
 def test_ogrmerge_1():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -61,6 +62,7 @@ def test_ogrmerge_1():
 
 ###############################################################################
 # Test -append and glob
+
 
 def test_ogrmerge_2():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -86,6 +88,7 @@ def test_ogrmerge_2():
 ###############################################################################
 # Test -overwrite_ds
 
+
 def test_ogrmerge_3():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -109,6 +112,7 @@ def test_ogrmerge_3():
 
 ###############################################################################
 # Test -f VRT
+
 
 def test_ogrmerge_4():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -134,6 +138,7 @@ def test_ogrmerge_4():
 
 ###############################################################################
 # Test -nln
+
 
 def test_ogrmerge_5():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -170,6 +175,7 @@ def test_ogrmerge_5():
 ###############################################################################
 # Test -src_layer_field_name -src_layer_field_content
 
+
 def test_ogrmerge_6():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -195,6 +201,7 @@ def test_ogrmerge_6():
 
 ###############################################################################
 # Test -src_geom_type
+
 
 def test_ogrmerge_7():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -258,6 +265,7 @@ def test_ogrmerge_7():
 ###############################################################################
 # Test -s_srs -t_srs in -single mode
 
+
 def test_ogrmerge_8():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -294,6 +302,7 @@ def test_ogrmerge_8():
 
 ###############################################################################
 # Test -s_srs -t_srs in default mode
+
 
 def test_ogrmerge_9():
     script_path = test_py_scripts.get_py_script('ogrmerge')
@@ -332,6 +341,7 @@ def test_ogrmerge_9():
 ###############################################################################
 # Test -a_srs in -single mode
 
+
 def test_ogrmerge_10():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -364,6 +374,7 @@ def test_ogrmerge_10():
 ###############################################################################
 # Test -a_srs in default mode
 
+
 def test_ogrmerge_11():
     script_path = test_py_scripts.get_py_script('ogrmerge')
     if script_path is None:
@@ -392,6 +403,7 @@ def test_ogrmerge_11():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_ogrmerge_1,

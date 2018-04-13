@@ -44,6 +44,7 @@ from osgeo import gdal
 ###############################################################################
 # Verify we can open the test file.
 
+
 def ogr_s57_1():
 
     gdaltest.s57_ds = None
@@ -63,6 +64,7 @@ def ogr_s57_1():
 # Verify we have the set of expected layers and that some rough information
 # matches our expectations.
 
+
 def ogr_s57_2():
     if gdaltest.s57_ds is None:
         return 'skip'
@@ -80,7 +82,6 @@ def ogr_s57_2():
                    ('M_COVR', ogr.wkbPolygon, 1),
                    ('M_NSYS', ogr.wkbPolygon, 1),
                    ('M_QUAL', ogr.wkbPolygon, 1) ]
-
 
     if gdaltest.s57_ds.GetLayerCount() != len(layer_list):
         gdaltest.post_reason( 'Did not get expected number of layers, likely cannot find support files.' )
@@ -109,6 +110,7 @@ def ogr_s57_2():
 ###############################################################################
 # Check the COALNE feature.
 
+
 def ogr_s57_3():
     if gdaltest.s57_ds is None:
         return 'skip'
@@ -136,6 +138,7 @@ def ogr_s57_3():
 ###############################################################################
 # Check the M_QUAL feature.
 
+
 def ogr_s57_4():
     if gdaltest.s57_ds is None:
         return 'skip'
@@ -161,6 +164,7 @@ def ogr_s57_4():
 
 ###############################################################################
 # Check the SOUNDG feature.
+
 
 def ogr_s57_5():
     if gdaltest.s57_ds is None:
@@ -190,6 +194,7 @@ def ogr_s57_5():
 ###############################################################################
 # Test reading features from dataset with some double byte attributes. (#1526)
 
+
 def ogr_s57_6():
 
     ds = ogr.Open( 'data/bug1526.000' )
@@ -209,6 +214,7 @@ def ogr_s57_6():
 
 ###############################################################################
 # Test handling of a dataset with a multilinestring feature (#2147).
+
 
 def ogr_s57_7():
 
@@ -230,6 +236,7 @@ def ogr_s57_7():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_s57_8():
 
     import test_cli_utilities
@@ -246,6 +253,7 @@ def ogr_s57_8():
 
 ###############################################################################
 # Test S57 to S57 conversion
+
 
 def ogr_s57_9():
 
@@ -319,6 +327,7 @@ def ogr_s57_9():
 ###############################################################################
 # Test opening a fake very small S57 file
 
+
 def ogr_s57_10():
 
     ds = ogr.Open('data/fake_s57.000')
@@ -332,6 +341,7 @@ def ogr_s57_10():
 # Test opening a fake very small S57 file with ISO8211 record with zero length,
 # using variant (C.1.5.1) logic.
 
+
 def ogr_s57_11():
 
     ds = ogr.Open('data/fake_s57_variant_C151.000')
@@ -343,6 +353,7 @@ def ogr_s57_11():
 
 ###############################################################################
 # Test decoding of Dutch inland ENCs (#3881).
+
 
 def ogr_s57_online_1():
 
@@ -373,6 +384,7 @@ def ogr_s57_online_1():
 
 ###############################################################################
 # Test with ENC 3.0 TDS - tile without updates.
+
 
 def ogr_s57_online_2():
 
@@ -410,6 +422,7 @@ def ogr_s57_online_2():
 
 ###############################################################################
 # Test with ENC 3.0 TDS - tile with updates.
+
 
 def ogr_s57_online_3():
 
@@ -450,6 +463,7 @@ def ogr_s57_online_3():
 ###############################################################################
 # Test ENC LL2 (#5048)
 
+
 def ogr_s57_online_4():
 
     if not gdaltest.download_file('http://www1.kaiho.mlit.go.jp/KOKAI/ENC/images/sample/sample.zip', 'sample.zip'):
@@ -481,11 +495,13 @@ def ogr_s57_online_4():
 ###############################################################################
 #  Cleanup
 
+
 def ogr_s57_cleanup():
 
     gdaltest.s57_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_s57_1,

@@ -112,13 +112,13 @@ import os
 # ATC 76: Snippet
 # ATC 77: NetworkLink-Url
 
+
 def generate_libkml(filename):
 
     try:
         os.unlink(filename)
     except:
         pass
-
 
     content = """eiffel_tower_normal:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#FF0000FF)
 eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg/220px-Eiffel_Tower_from_north_Avenue_de_New_York%2C_Aug_2010.jpg");LABEL(c:#0000FFFF)"""
@@ -199,7 +199,6 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxwidth", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("imagepyramid_maxheight", ogr.OFTInteger))
 
-
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('name', 'Eiffel tower')
     feat.SetField('description', 'Famous Paris attraction. Built by Gustave Eiffel in 1889.')
@@ -228,7 +227,6 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
     feat.SetField('extrude', 1)
     feat.SetStyleString('BRUSH(fc:#0000FF)')
     lyr.CreateFeature(feat)
-
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField('name', 'Champ de Mars')
@@ -330,6 +328,7 @@ eiffel_tower_highlight:SYMBOL(id:"http://upload.wikimedia.org/wikipedia/commons/
 # ATC 22: Update - targetHref
 # ATC 23: Identification of update target
 
+
 def generate_libkml_update(filename):
     try:
         os.unlink(filename)
@@ -356,6 +355,7 @@ def generate_libkml_update(filename):
 # ATC 11: LatLonBox
 # ATC 33: GroundOverlay
 # ATC 53: GroundOverlay - minimal content
+
 
 def generate_kmlsuperoverlay(filename):
 

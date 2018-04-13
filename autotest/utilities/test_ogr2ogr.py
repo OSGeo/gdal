@@ -44,6 +44,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_ogr2ogr_1():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -83,6 +84,7 @@ def test_ogr2ogr_1():
 ###############################################################################
 # Test -sql
 
+
 def test_ogr2ogr_2():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -106,6 +108,7 @@ def test_ogr2ogr_2():
 
 ###############################################################################
 # Test -spat
+
 
 def test_ogr2ogr_3():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -135,6 +138,7 @@ def test_ogr2ogr_3():
 ###############################################################################
 # Test -where
 
+
 def test_ogr2ogr_4():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -158,6 +162,7 @@ def test_ogr2ogr_4():
 
 ###############################################################################
 # Test -append
+
 
 def test_ogr2ogr_5():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -198,6 +203,7 @@ def test_ogr2ogr_5():
 ###############################################################################
 # Test -overwrite
 
+
 def test_ogr2ogr_6():
 
     import ogr_pg
@@ -229,6 +235,7 @@ def test_ogr2ogr_6():
 ###############################################################################
 # Test -gt
 
+
 def test_ogr2ogr_7():
 
     import ogr_pg
@@ -259,6 +266,7 @@ def test_ogr2ogr_7():
 ###############################################################################
 # Test -t_srs
 
+
 def test_ogr2ogr_8():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -283,6 +291,7 @@ def test_ogr2ogr_8():
 ###############################################################################
 # Test -a_srs
 
+
 def test_ogr2ogr_9():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -306,6 +315,7 @@ def test_ogr2ogr_9():
 
 ###############################################################################
 # Test -select
+
 
 def test_ogr2ogr_10():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -344,6 +354,7 @@ def test_ogr2ogr_10():
 ###############################################################################
 # Test -lco
 
+
 def test_ogr2ogr_11():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -367,6 +378,7 @@ def test_ogr2ogr_11():
 
 ###############################################################################
 # Test -nlt
+
 
 def test_ogr2ogr_12():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -392,6 +404,7 @@ def test_ogr2ogr_12():
 ###############################################################################
 # Add explicit source layer name
 
+
 def test_ogr2ogr_13():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -415,6 +428,7 @@ def test_ogr2ogr_13():
 
 ###############################################################################
 # Test -segmentize
+
 
 def test_ogr2ogr_14():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -442,6 +456,7 @@ def test_ogr2ogr_14():
 
 ###############################################################################
 # Test -overwrite with a shapefile
+
 
 def test_ogr2ogr_15():
 
@@ -475,6 +490,7 @@ def test_ogr2ogr_15():
 ###############################################################################
 # Test -fid
 
+
 def test_ogr2ogr_16():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -505,6 +521,7 @@ def test_ogr2ogr_16():
 ###############################################################################
 # Test -progress
 
+
 def test_ogr2ogr_17():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -530,6 +547,7 @@ def test_ogr2ogr_17():
 
 ###############################################################################
 # Test -wrapdateline
+
 
 def test_ogr2ogr_18():
 
@@ -588,6 +606,7 @@ def test_ogr2ogr_18():
 ###############################################################################
 # Test -clipsrc
 
+
 def test_ogr2ogr_19():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -622,6 +641,7 @@ def test_ogr2ogr_19():
 # Test correct remap of fields when laundering to Shapefile format
 # Test that the data is going into the right field
 # FIXME: Any field is skipped if a subsequent field with same name is found.
+
 
 def test_ogr2ogr_20():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -693,6 +713,7 @@ def test_ogr2ogr_20():
 # Test ogr2ogr when the output driver has already created the fields
 # at dataset creation (#3247)
 
+
 def test_ogr2ogr_21():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -759,6 +780,7 @@ def test_ogr2ogr_22():
 ###############################################################################
 # Same as previous but with -select
 
+
 def test_ogr2ogr_23():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -788,6 +810,7 @@ def test_ogr2ogr_23():
 
 ###############################################################################
 # Test -clipsrc with WKT geometry (#3530)
+
 
 def test_ogr2ogr_24():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -821,6 +844,7 @@ def test_ogr2ogr_24():
 
 ###############################################################################
 # Test -clipsrc with clip from external datasource
+
 
 def test_ogr2ogr_25():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -861,6 +885,7 @@ def test_ogr2ogr_25():
 ###############################################################################
 # Test -clipdst with WKT geometry (#3530)
 
+
 def test_ogr2ogr_26():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -893,6 +918,7 @@ def test_ogr2ogr_26():
 
 ###############################################################################
 # Test -clipdst with clip from external datasource
+
 
 def test_ogr2ogr_27():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -985,6 +1011,7 @@ def test_ogr2ogr_28():
 ###############################################################################
 # Test -wrapdateline on polygons
 
+
 def test_ogr2ogr_29():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1048,6 +1075,7 @@ def test_ogr2ogr_29():
 ###############################################################################
 # Test -splitlistfields option
 
+
 def test_ogr2ogr_30():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1090,6 +1118,7 @@ def test_ogr2ogr_30():
 ###############################################################################
 # Test that -overwrite work if the output file doesn't yet exist (#3825)
 
+
 def test_ogr2ogr_31():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1113,6 +1142,7 @@ def test_ogr2ogr_31():
 
 ###############################################################################
 # Test that -append/-overwrite to a single-file shapefile work without specifying -nln
+
 
 def test_ogr2ogr_32():
 
@@ -1147,6 +1177,7 @@ def test_ogr2ogr_32():
 
 ###############################################################################
 # Test -explodecollections
+
 
 def test_ogr2ogr_33():
 
@@ -1215,6 +1246,7 @@ def test_ogr2ogr_33():
 # This should result in creating a someDirThatDoesNotExist directory with
 # someDirThatDoesNotExist.shp/dbf/shx inside this directory
 
+
 def test_ogr2ogr_34():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1255,6 +1287,7 @@ def test_ogr2ogr_34():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist src.shp'
+
 
 def test_ogr2ogr_35():
 
@@ -1297,6 +1330,7 @@ def test_ogr2ogr_35():
 ###############################################################################
 # Test ogr2ogr -zfield
 
+
 def test_ogr2ogr_36():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1324,6 +1358,7 @@ def test_ogr2ogr_36():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer'
+
 
 def test_ogr2ogr_37():
 
@@ -1363,6 +1398,7 @@ def test_ogr2ogr_37():
 # Test that we take into account the fields by the where clause when combining
 # -select and -where (#4015)
 
+
 def test_ogr2ogr_38():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1389,6 +1425,7 @@ def test_ogr2ogr_38():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer -sql "select * from alayer"' (#4268)
+
 
 def test_ogr2ogr_39():
 
@@ -1427,6 +1464,7 @@ def test_ogr2ogr_39():
 ###############################################################################
 # Test 'ogr2ogr -update asqlite.db asqlite.db layersrc -nln layerdst' (#4270)
 
+
 def test_ogr2ogr_40():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1456,6 +1494,7 @@ def test_ogr2ogr_40():
 
 ###############################################################################
 # Test 'ogr2ogr -update PG:xxxx PG:xxxx layersrc -nln layerdst' (#4270)
+
 
 def test_ogr2ogr_41():
 
@@ -1498,6 +1537,7 @@ def test_ogr2ogr_41():
 ###############################################################################
 # Test combination of -select and -where FID=xx (#4500)
 
+
 def test_ogr2ogr_42():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1523,6 +1563,7 @@ def test_ogr2ogr_42():
 
 ###############################################################################
 # Test -dim 3 and -dim 2
+
 
 def test_ogr2ogr_43():
 
@@ -1564,6 +1605,7 @@ def test_ogr2ogr_43():
 
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
+
 
 def test_ogr2ogr_44():
 
@@ -1621,6 +1663,7 @@ def test_ogr2ogr_44():
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for linestring/multilinestring
 
+
 def test_ogr2ogr_45():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1677,6 +1720,7 @@ def test_ogr2ogr_45():
 ###############################################################################
 # Test -gcp (#4604)
 
+
 def test_ogr2ogr_46():
 
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1732,6 +1776,7 @@ def test_ogr2ogr_46():
 
 ###############################################################################
 # Test reprojection with features with different SRS
+
 
 def test_ogr2ogr_47():
 
@@ -1798,6 +1843,7 @@ def test_ogr2ogr_47():
 ###############################################################################
 # Test fieldmap option
 
+
 def test_ogr2ogr_48():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -1843,6 +1889,7 @@ def test_ogr2ogr_48():
 # Test detection of duplicated field names in source layer and renaming
 # in target layer
 
+
 def test_ogr2ogr_49():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -1863,6 +1910,7 @@ def test_ogr2ogr_49():
 
 ###############################################################################
 # Test detection of duplicated field names is case insensitive (#5208)
+
 
 def test_ogr2ogr_49_bis():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1898,6 +1946,7 @@ def test_ogr2ogr_49_bis():
 
 ###############################################################################
 # Test -addfields
+
 
 def test_ogr2ogr_50():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -1939,6 +1988,7 @@ def test_ogr2ogr_50():
 
 ###############################################################################
 # Test RFC 41 support
+
 
 def test_ogr2ogr_51():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2036,6 +2086,7 @@ def test_ogr2ogr_51():
 ###############################################################################
 # Test -nlt CONVERT_TO_LINEAR and -nlt CONVERT_TO_CURVE
 
+
 def test_ogr2ogr_52():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2075,6 +2126,7 @@ def test_ogr2ogr_52():
 
 ###############################################################################
 # Test -mapFieldType and 64 bit integers
+
 
 def test_ogr2ogr_53():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2136,7 +2188,6 @@ def test_ogr2ogr_53():
 
     os.unlink('tmp/test_ogr2ogr_53.kml')
 
-
     os.unlink('tmp/test_ogr2ogr_53.csv')
     os.unlink('tmp/test_ogr2ogr_53.csvt')
 
@@ -2144,6 +2195,7 @@ def test_ogr2ogr_53():
 
 ###############################################################################
 # Test behaviour with nullable fields
+
 
 def test_ogr2ogr_54():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2208,6 +2260,7 @@ def test_ogr2ogr_54():
 
 ###############################################################################
 # Test behaviour with default values
+
 
 def test_ogr2ogr_55():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2274,6 +2327,7 @@ def test_ogr2ogr_55():
 ###############################################################################
 # Test behaviour when creating a field with same name as FID column.
 
+
 def test_ogr2ogr_56():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2307,6 +2361,7 @@ def test_ogr2ogr_56():
 
 ###############################################################################
 # Test default propagation of FID column name and values, and -unsetFid
+
 
 def test_ogr2ogr_57():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2373,6 +2428,7 @@ def test_ogr2ogr_57():
 ###############################################################################
 # Test datasource transactions
 
+
 def test_ogr2ogr_58():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2394,6 +2450,7 @@ def test_ogr2ogr_58():
 
 ###############################################################################
 # Test metadata support
+
 
 def test_ogr2ogr_59():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2455,6 +2512,7 @@ def test_ogr2ogr_59():
 ###############################################################################
 # Test forced datasource transactions
 
+
 def test_ogr2ogr_60():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2476,6 +2534,7 @@ def test_ogr2ogr_60():
 
 ###############################################################################
 # Test -spat_srs
+
 
 def test_ogr2ogr_61():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2510,6 +2569,7 @@ def test_ogr2ogr_61():
 
 ###############################################################################
 # Test -noNativeData
+
 
 def test_ogr2ogr_62():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2556,6 +2616,7 @@ def test_ogr2ogr_62():
 ###############################################################################
 # Test --formats
 
+
 def test_ogr2ogr_63():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2581,6 +2642,7 @@ def test_ogr2ogr_63():
 
 ###############################################################################
 # Test appending multiple layers, whose one already exists (#6345)
+
 
 def test_ogr2ogr_64():
     if test_cli_utilities.get_ogr2ogr_path() is None:
@@ -2624,6 +2686,7 @@ def test_ogr2ogr_64():
 ###############################################################################
 # Test detection of extension
 
+
 def test_ogr2ogr_65():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2648,6 +2711,7 @@ def test_ogr2ogr_65():
 ###############################################################################
 # Test accidental overriding of dataset when dst and src filenames are the same (#1465)
 
+
 def test_ogr2ogr_66():
     if test_cli_utilities.get_ogr2ogr_path() is None:
         return 'skip'
@@ -2661,10 +2725,12 @@ def test_ogr2ogr_66():
 
     return 'success'
 
+
 def hexify_double(val):
     val = hex(val)
     # On 32bit Linux, we might get a trailing L
     return val.rstrip('L').lstrip('0x').zfill(16).upper()
+
 
 def check_identity_transformation(x, y, srid):
     import struct
@@ -2724,6 +2790,7 @@ def check_identity_transformation(x, y, srid):
 ###############################################################################
 # Test coordinates values are preserved for identity transformations
 
+
 def test_ogr2ogr_67():
 
     # Test coordinates
@@ -2736,6 +2803,7 @@ def test_ogr2ogr_67():
     # both as latitutude/longitude in degrees.
     ret = check_identity_transformation(x, y, 4326)
     return ret
+
 
 gdaltest_list = [
     test_ogr2ogr_1,

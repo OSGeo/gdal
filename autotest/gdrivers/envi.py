@@ -42,6 +42,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def envi_1():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
@@ -68,6 +69,7 @@ def envi_1():
 ###############################################################################
 # Verify this can be exported losslessly.
 
+
 def envi_2():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
@@ -76,6 +78,7 @@ def envi_2():
 ###############################################################################
 # Try the Create interface with an RGB image.
 
+
 def envi_3():
 
     tst = gdaltest.GDALTest( 'envi', 'rgbsmall.tif', 2, 21053 )
@@ -83,6 +86,7 @@ def envi_3():
 
 ###############################################################################
 # Test LCC Projection.
+
 
 def envi_4():
 
@@ -107,6 +111,7 @@ def envi_4():
 
 ###############################################################################
 # Test TM Projection.
+
 
 def envi_5():
 
@@ -153,6 +158,7 @@ def envi_5():
 ###############################################################################
 # Test LAEA Projection.
 
+
 def envi_6():
 
     gdaltest.envi_tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 24 )
@@ -174,6 +180,7 @@ def envi_6():
 ###############################################################################
 # Verify VSIF*L capacity
 
+
 def envi_7():
 
     tst = gdaltest.GDALTest( 'envi', 'aea.dat', 1, 14823 )
@@ -181,6 +188,7 @@ def envi_7():
 
 ###############################################################################
 # Test fix for #3751
+
 
 def envi_8():
 
@@ -201,6 +209,7 @@ def envi_8():
 ###############################################################################
 # Verify reading a compressed file
 
+
 def envi_9():
 
     tst = gdaltest.GDALTest( 'envi', 'aea_compressed.dat', 1, 14823 )
@@ -208,6 +217,7 @@ def envi_9():
 
 ###############################################################################
 # Test RPC reading and writing
+
 
 def envi_10():
 
@@ -233,6 +243,7 @@ def envi_10():
 ###############################################################################
 # Check .sta reading
 
+
 def envi_11():
 
     ds = gdal.Open('data/envistat')
@@ -248,6 +259,7 @@ def envi_11():
 
 ###############################################################################
 # Test category names reading and writing
+
 
 def envi_12():
 
@@ -285,6 +297,7 @@ def envi_12():
 ###############################################################################
 # Test writing of metadata from the ENVI metadata domain and read it back (#4957)
 
+
 def envi_13():
 
     ds = gdal.GetDriverByName('ENVI').Create('/vsimem/envi_13.dat', 1, 1)
@@ -310,6 +323,7 @@ def envi_13():
 ###############################################################################
 # Test that the image file is at the expected size on closing (#6662)
 
+
 def envi_14():
 
     gdal.GetDriverByName('ENVI').Create('/vsimem/envi_14.dat', 3, 4, 5, gdal.GDT_Int16)
@@ -325,6 +339,7 @@ def envi_14():
 
 ###############################################################################
 # Test reading and writing geotransform matrix with rotation
+
 
 def envi_15():
 
@@ -349,6 +364,7 @@ def envi_15():
     gdal.GetDriverByName('ENVI').Delete('/vsimem/envi_15.dat')
 
     return 'success'
+
 
 gdaltest_list = [
     envi_1,

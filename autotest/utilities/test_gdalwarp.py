@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_gdalwarp_1():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -115,6 +116,7 @@ def test_gdalwarp_3():
 ###############################################################################
 # Test -t_srs option
 
+
 def test_gdalwarp_4():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -135,6 +137,7 @@ def test_gdalwarp_4():
 
 ###############################################################################
 # Test warping from GCPs without any explicit option
+
 
 def test_gdalwarp_5():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -215,6 +218,7 @@ def test_gdalwarp_7():
 ###############################################################################
 # Test -ts
 
+
 def test_gdalwarp_8():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -237,6 +241,7 @@ def test_gdalwarp_8():
 ###############################################################################
 # Test -te
 
+
 def test_gdalwarp_9():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -257,6 +262,7 @@ def test_gdalwarp_9():
 
 ###############################################################################
 # Test -rn
+
 
 def test_gdalwarp_10():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -279,6 +285,7 @@ def test_gdalwarp_10():
 
 ###############################################################################
 # Test -rb
+
 
 def test_gdalwarp_11():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -386,6 +393,7 @@ def test_gdalwarp_14():
 ###############################################################################
 # Test -dstnodata
 
+
 def test_gdalwarp_15():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -413,6 +421,7 @@ def test_gdalwarp_15():
 ###############################################################################
 # Test -of VRT which is a special case
 
+
 def test_gdalwarp_16():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -435,6 +444,7 @@ def test_gdalwarp_16():
 ###############################################################################
 # Test -dstalpha
 
+
 def test_gdalwarp_17():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -455,6 +465,7 @@ def test_gdalwarp_17():
 
 ###############################################################################
 # Test -wm -multi
+
 
 def test_gdalwarp_18():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -482,6 +493,7 @@ def test_gdalwarp_18():
 ###############################################################################
 # Test -et 0 which is a special case
 
+
 def test_gdalwarp_19():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -503,6 +515,7 @@ def test_gdalwarp_19():
 
 ###############################################################################
 # Test -of VRT -et 0 which is a special case
+
 
 def test_gdalwarp_20():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -595,6 +608,7 @@ def test_gdalwarp_23():
 ###############################################################################
 # Test warping an image crossing the 180E/180W longitude (#3206)
 
+
 def test_gdalwarp_24():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -622,6 +636,7 @@ def test_gdalwarp_24():
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=sinu (#2305)
+
 
 def test_gdalwarp_25():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -654,6 +669,7 @@ def test_gdalwarp_25():
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=eck4 (#2305)
 
+
 def test_gdalwarp_26():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -685,6 +701,7 @@ def test_gdalwarp_26():
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=vandg (#2305)
 
+
 def test_gdalwarp_27():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -715,6 +732,7 @@ def test_gdalwarp_27():
 
 ###############################################################################
 # Test warping a full EPSG:4326 extent to +proj=aeqd +lat_0=45 +lon_0=90 (#2305)
+
 
 def test_gdalwarp_28():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -754,6 +772,7 @@ def test_gdalwarp_28():
 ###############################################################################
 # Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
 
+
 def test_gdalwarp_29():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -784,6 +803,7 @@ def test_gdalwarp_29():
 
 ###############################################################################
 # Test the effect of the -wo OPTIMIZE_SIZE=TRUE and -wo STREAMABLE_OUTPUT=TRUE options (#3459, #1866)
+
 
 def test_gdalwarp_30():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -855,6 +875,7 @@ def test_gdalwarp_30():
 ###############################################################################
 # Test -overwrite (#3759)
 
+
 def test_gdalwarp_31():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -887,6 +908,7 @@ def test_gdalwarp_31():
 
 ###############################################################################
 # Test -tap
+
 
 def test_gdalwarp_32():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -921,6 +943,7 @@ def test_gdalwarp_32():
 
 ###############################################################################
 # Test warping a JPEG compressed image with a mask into a RGBA image
+
 
 def test_gdalwarp_33():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -963,6 +986,7 @@ def test_gdalwarp_33():
 
 ###############################################################################
 # Test warping multiple sources
+
 
 def test_gdalwarp_34():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1013,6 +1037,7 @@ def test_gdalwarp_34():
 ###############################################################################
 # Test -ts and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
+
 def test_gdalwarp_35():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1034,6 +1059,7 @@ def test_gdalwarp_35():
 ###############################################################################
 # Test -tr and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
+
 def test_gdalwarp_36():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1054,6 +1080,7 @@ def test_gdalwarp_36():
 
 ###############################################################################
 # Test metadata copying - stats should not be copied (#5319)
+
 
 def test_gdalwarp_37():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1089,6 +1116,7 @@ def test_gdalwarp_37():
 ###############################################################################
 # Test implicit nodata setting (#5675)
 
+
 def test_gdalwarp_38():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1109,6 +1137,7 @@ def test_gdalwarp_38():
 ###############################################################################
 # Test -oo
 
+
 def test_gdalwarp_39():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1125,6 +1154,7 @@ def test_gdalwarp_39():
 
 ###############################################################################
 # Test -ovr
+
 
 def test_gdalwarp_40():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1274,6 +1304,7 @@ def test_gdalwarp_40():
 ###############################################################################
 # Test source fill ratio heuristics (#3120)
 
+
 def test_gdalwarp_41():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1324,6 +1355,7 @@ def test_gdalwarp_41():
 
 ###############################################################################
 # Test warping multiple source images, in one step or several, with INIT_DEST/nodata (#5909, #5387)
+
 
 def test_gdalwarp_42():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1388,6 +1420,7 @@ def test_gdalwarp_42():
 ###############################################################################
 # Test that NODATA_VALUES is honoured, but not transferred when adding an alpha channel.
 
+
 def test_gdalwarp_43():
     if test_cli_utilities.get_gdalwarp_path() is None:
         return 'skip'
@@ -1416,6 +1449,7 @@ def test_gdalwarp_43():
 
 ###############################################################################
 # Test effect of -wo SRC_COORD_PRECISION
+
 
 def test_gdalwarp_44():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1454,6 +1488,7 @@ def test_gdalwarp_44():
 
 ###############################################################################
 # Test -te_srs
+
 
 def test_gdalwarp_45():
     if test_cli_utilities.get_gdalwarp_path() is None:
@@ -1641,6 +1676,7 @@ def test_gdalwarp_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdalwarp_cleanup,

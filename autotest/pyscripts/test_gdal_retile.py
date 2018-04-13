@@ -42,6 +42,7 @@ import test_py_scripts
 ###############################################################################
 # Test gdal_retile.py
 
+
 def test_gdal_retile_1():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
@@ -84,6 +85,7 @@ def test_gdal_retile_1():
 ###############################################################################
 # Test gdal_retile.py with RGBA dataset
 
+
 def test_gdal_retile_2():
 
     script_path = test_py_scripts.get_py_script('gdal_retile')
@@ -112,6 +114,7 @@ def test_gdal_retile_2():
 
 ###############################################################################
 # Test gdal_retile.py with input images of different pixel sizes
+
 
 def test_gdal_retile_3():
 
@@ -290,6 +293,7 @@ def test_gdal_retile_4():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_retile_cleanup():
 
     lst = [ 'tmp/outretile/1/byte_1_1.tif',
@@ -324,6 +328,7 @@ def test_gdal_retile_cleanup():
     shutil.rmtree('tmp/outretile4')
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_retile_1,

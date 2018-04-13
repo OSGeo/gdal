@@ -37,6 +37,8 @@ import gdaltest
 
 ###############################################################################
 # Remove mime header if found
+
+
 def ingest_file_and_strip_mime(filename):
     data = ''
     f = open(filename, 'rt')
@@ -54,6 +56,7 @@ def ingest_file_and_strip_mime(filename):
 ###############################################################################
 # Replace http://schemas.opengis.net/foo by $(ogc_schemas_location)/foo
 
+
 def substitute_ogc_schemas_location(location, ogc_schemas_location):
     if ogc_schemas_location is not None and \
         location.startswith('http://schemas.opengis.net/'):
@@ -63,6 +66,7 @@ def substitute_ogc_schemas_location(location, ogc_schemas_location):
 ###############################################################################
 # Replace http://inspire.ec.europa.eu/schemas/foo by $(inspire_schemas_location)/foo
 
+
 def substitute_inspire_schemas_location(location, inspire_schemas_location):
     if inspire_schemas_location is not None and \
         location.startswith('http://inspire.ec.europa.eu/schemas/'):
@@ -71,6 +75,7 @@ def substitute_inspire_schemas_location(location, inspire_schemas_location):
 
 ###############################################################################
 # Validation function
+
 
 def validate(xml_filename_or_content, xsd_filename = None, \
              application_schema_ns = None, \
@@ -195,6 +200,7 @@ def validate(xml_filename_or_content, xsd_filename = None, \
 ###############################################################################
 # Transform absolute schemaLocations into relative ones
 
+
 def transform_abs_links_to_ref_links(path, level = 0):
     for file in os.listdir(path):
         filename=path + '/' + file
@@ -248,6 +254,7 @@ def transform_abs_links_to_ref_links(path, level = 0):
 
 ###############################################################################
 # Transform absolute schemaLocations into relative ones
+
 
 def transform_inspire_abs_links_to_ref_links(path, level = 0):
     for file in os.listdir(path):
@@ -304,6 +311,7 @@ def transform_inspire_abs_links_to_ref_links(path, level = 0):
 ###############################################################################
 # Download OGC schemas
 
+
 def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_OPENGIS_NET.zip', \
                          xlink_xsd_url = 'http://www.w3.org/1999/xlink.xsd', \
                          xml_xsd_url = 'http://www.w3.org/2001/xml.xsd', \
@@ -357,6 +365,7 @@ def download_ogc_schemas(ogc_schemas_url = 'http://schemas.opengis.net/SCHEMAS_O
 
 ###############################################################################
 # Download INSPIRE schemas
+
 
 def download_inspire_schemas(target_dir = '.', \
                              target_subdir = 'inspire_schemas',
@@ -432,6 +441,7 @@ def download_inspire_schemas(target_dir = '.', \
 ###############################################################################
 # has_local_ogc_schemas()
 
+
 def has_local_ogc_schemas(path):
 
     # Autodetect OGC schemas
@@ -465,6 +475,7 @@ def has_local_ogc_schemas(path):
 ###############################################################################
 # has_local_inspire_schemas()
 
+
 def has_local_inspire_schemas(path):
 
     # Autodetect INSPIRE schemas
@@ -482,6 +493,7 @@ def has_local_inspire_schemas(path):
 ###############################################################################
 # Usage function
 
+
 def Usage():
     print('Usage: validate.py [-target_dir dir] [-download_ogc_schemas] [-ogc_schemas_location path]')
     print('                   [-download_inspire_schemas] [-inspire_schemas_location path]')
@@ -491,6 +503,7 @@ def Usage():
 
 ###############################################################################
 # Main
+
 
 if __name__ == '__main__':
     argv = sys.argv[1:]

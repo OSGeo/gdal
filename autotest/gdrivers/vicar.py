@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Read truncated VICAR file
 
+
 def vicar_1():
 
     tst = gdaltest.GDALTest( 'VICAR', 'test_vicar_truncated.bin', 1, 0 )
@@ -94,6 +95,7 @@ def vicar_1():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     vicar_1 ]

@@ -38,6 +38,7 @@ from osgeo import gdal
 
 ###############################################################################
 
+
 class wkb_wkt_unit:
     def __init__(self, unit):
         self.unit = unit
@@ -118,6 +119,7 @@ class wkb_wkt_unit:
 
 ###############################################################################
 # Test geometry with very large exponents of coordinate values.
+
 
 def ogr_wkbwkt_geom_bigexponents():
 
@@ -381,6 +383,7 @@ def ogr_wkbwkt_test_broken_geom():
 ###############################################################################
 # Test importing WKT SF1.2
 
+
 def ogr_wkbwkt_test_import_wkt_sf12():
 
     list_wkt_tuples = [ ('POINT EMPTY', 'POINT EMPTY'),
@@ -511,6 +514,7 @@ def ogr_wkbwkt_test_import_wkt_sf12():
 # Test that importing the wkb that would be equivalent to MULTIPOINT(POLYGON((0 0))
 # doesn't work
 
+
 def ogr_wkbwkt_test_import_bad_multipoint_wkb():
 
     import struct
@@ -525,6 +529,7 @@ def ogr_wkbwkt_test_import_bad_multipoint_wkb():
 
 ###############################################################################
 # Test WKT -> WKB -> WKT roundtripping for GEOMETRYCOLLECTION
+
 
 def ogr_wkbwkt_test_geometrycollection_wktwkb():
 
@@ -556,6 +561,7 @@ def ogr_wkbwkt_test_geometrycollection_wktwkb():
 
 ###############################################################################
 # Test that importing too nested WKT doesn't cause stack overflows
+
 
 def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 
@@ -591,6 +597,7 @@ def ogr_wkbwkt_test_geometrycollection_wkt_recursion():
 ###############################################################################
 # Test that importing too nested WKB doesn't cause stack overflows
 
+
 def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 
     import struct
@@ -624,6 +631,7 @@ def ogr_wkbwkt_test_geometrycollection_wkb_recursion():
 ###############################################################################
 # Test ISO WKT compliant export of MULTIPOINT
 
+
 def ogr_wkbwkt_export_wkt_iso_multipoint():
 
     wkt = 'MULTIPOINT ((0 0),(1 1))'
@@ -638,6 +646,7 @@ def ogr_wkbwkt_export_wkt_iso_multipoint():
 
 ###############################################################################
 # Test exporting WKT with non finite values (#6319)
+
 
 def ogr_wkt_inf_nan():
 
@@ -654,6 +663,7 @@ def ogr_wkt_inf_nan():
 ###############################################################################
 # Test corrupted WKT
 
+
 def ogr_wkt_multicurve_compoundcurve_corrupted():
 
     with gdaltest.error_handler():
@@ -665,6 +675,7 @@ def ogr_wkt_multicurve_compoundcurve_corrupted():
 
 ###############################################################################
 # Test corrupted WKT
+
 
 def ogr_wkt_multipolygon_corrupted():
 
@@ -680,6 +691,7 @@ def ogr_wkt_multipolygon_corrupted():
 
 #print 'hit enter'
 #sys.stdin.readline()
+
 
 gdaltest_list = []
 

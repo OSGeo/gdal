@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # Parse a simple document into a tree of lists.
 
+
 def minixml_1():
 
     tree = gdal.ParseXMLString( '<TestDoc style="123"><sub1/><sub2>abc</sub2></TestDoc>' )
@@ -113,6 +114,7 @@ def minixml_1():
 ###############################################################################
 # Serialize an XML Tree
 
+
 def minixml_2():
 
     tree = [0,'TestDoc',[2,'style',[1,'123']],[0,'sub1'],[0,'sub2',[1,'abc']]]
@@ -126,6 +128,7 @@ def minixml_2():
 
 ###############################################################################
 # Read XML document with complex DOCTYPE element.
+
 
 def minixml_3():
 
@@ -191,6 +194,7 @@ def minixml_3():
 ###############################################################################
 # Parse and serialize an XML Tree with a <?xml> prolog
 
+
 def minixml_4():
 
     xml = """<?xml encoding="utf-8"?>\n<foo />\n"""
@@ -204,6 +208,7 @@ def minixml_4():
 
 ###############################################################################
 # Parse malformed XML.  Complains, but still makes a tree.
+
 
 def minixml_5():
 
@@ -232,6 +237,7 @@ def minixml_5():
 
 ###############################################################################
 # Parse malformed XML.
+
 
 def minixml_6():
 
@@ -271,6 +277,7 @@ def minixml_6():
 ###############################################################################
 # Parse malformed XML.  Pass without warning, but should not pass.
 
+
 def minixml_7():
 
     test_strings = (
@@ -298,6 +305,7 @@ def minixml_7():
 ###############################################################################
 # Parse XML with too many nesting
 
+
 def minixml_8():
 
     xml_str = ''.join('<a>' for i in range(10001))
@@ -321,6 +329,7 @@ def minixml_8():
 
 def minixml_cleanup():
     return 'success'
+
 
 gdaltest_list = [
     minixml_1,

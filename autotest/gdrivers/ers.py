@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def ers_1():
 
     tst = gdaltest.GDALTest( 'ERS', 'srtm.ers', 1, 64074 )
@@ -48,6 +49,7 @@ def ers_1():
 
 ###############################################################################
 # Create simple copy and check.
+
 
 def ers_2():
 
@@ -58,6 +60,7 @@ def ers_2():
 ###############################################################################
 # Test multi-band file.
 
+
 def ers_3():
 
     tst = gdaltest.GDALTest( 'ERS', 'rgbsmall.tif', 2, 21053 )
@@ -65,6 +68,7 @@ def ers_3():
 
 ###############################################################################
 # Test HeaderOffset case.
+
 
 def ers_4():
 
@@ -81,6 +85,7 @@ def ers_4():
 ###############################################################################
 # Confirm we can recognised signed 8bit data.
 
+
 def ers_5():
 
     ds = gdal.Open( 'data/8s.ers' )
@@ -96,6 +101,7 @@ def ers_5():
 
 ###############################################################################
 # Confirm a copy preserves the signed byte info.
+
 
 def ers_6():
 
@@ -120,6 +126,7 @@ def ers_6():
 ###############################################################################
 # Test opening a file with everything in lower case.
 
+
 def ers_7():
 
     ds = gdal.Open( 'data/caseinsensitive.ers' )
@@ -135,6 +142,7 @@ def ers_7():
 
 ###############################################################################
 # Test GCP support
+
 
 def ers_8():
 
@@ -177,6 +185,7 @@ def ers_8():
 ###############################################################################
 # Test NoData support (#4207)
 
+
 def ers_9():
 
     drv = gdal.GetDriverByName( 'ERS' )
@@ -206,6 +215,7 @@ def ers_9():
 
 ###############################################################################
 # Test PROJ, DATUM, UNITS support (#4229)
+
 
 def ers_10():
 
@@ -298,7 +308,6 @@ def ers_10():
         print(wkt)
         return 'fail'
 
-
     ds = drv.Create('/vsimem/ers_10.ers', 1, 1, options = ['DATUM=GDA94', 'PROJ=MGA55', 'UNITS=FEET'])
     ds = None
 
@@ -354,9 +363,11 @@ def ers_10():
 ###############################################################################
 # Cleanup
 
+
 def ers_cleanup():
     gdaltest.clean_tmp()
     return 'success'
+
 
 gdaltest_list = [
     ers_1,

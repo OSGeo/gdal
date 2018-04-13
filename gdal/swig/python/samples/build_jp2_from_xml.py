@@ -40,9 +40,11 @@ XML_TYPE_IDX = 0
 XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
 
+
 def Usage():
     print('Usage: build_jp2_from_xml in.xml out.jp2')
     return 1
+
 
 def find_xml_node(ar, element_name, immediate_child = False, only_attributes = False):
     #type = ar[XML_TYPE_IDX]
@@ -62,6 +64,7 @@ def find_xml_node(ar, element_name, immediate_child = False, only_attributes = F
                 return found
     return None
 
+
 def get_attribute_val(ar, attr_name):
     node = find_xml_node(ar, attr_name, True)
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
@@ -71,6 +74,7 @@ def get_attribute_val(ar, attr_name):
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
+
 def get_node_content(node):
     if node is None:
         return None
@@ -79,6 +83,7 @@ def get_node_content(node):
         if child[XML_TYPE_IDX] == gdal.CXT_Text:
             return child[XML_VALUE_IDX]
     return None
+
 
 def hex_letter_to_number(ch):
     val = 0
@@ -90,6 +95,7 @@ def hex_letter_to_number(ch):
         val = (ord(ch) - ord('A')) + 10
     return val
 
+
 def write_hexstring_as_binary(hex_binary_content, out_f):
     for i in range(int(len(hex_binary_content)/2)):
         val = hex_letter_to_number(hex_binary_content[2*i]) * 16 + \
@@ -98,6 +104,7 @@ def write_hexstring_as_binary(hex_binary_content, out_f):
             out_f.write(chr(val).encode('latin1'))
         else:
             out_f.write(chr(val))
+
 
 def parse_field(xml_tree, out_f, src_jp2file):
     if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Field'):
@@ -136,6 +143,7 @@ def parse_field(xml_tree, out_f, src_jp2file):
         return False
     return True
 
+
 marker_map = {
     "SOC": 0xFF4F,
     "EOC": 0xFFD9,
@@ -155,6 +163,7 @@ marker_map = {
     "CRG": 0xFF63,
     "COM": 0xFF64,
 }
+
 
 def parse_jpc_marker(xml_tree, out_f, src_jp2file):
     if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'Marker'):
@@ -207,8 +216,8 @@ def parse_jpc_marker(xml_tree, out_f, src_jp2file):
 
         out_f.write(data)
 
-
     return True
+
 
 def parse_jp2codestream(inpath, xml_tree, out_f, src_jp2file = None):
 
@@ -229,6 +238,7 @@ def parse_jp2codestream(inpath, xml_tree, out_f, src_jp2file = None):
         if not parse_jpc_marker(child, out_f, src_jp2file):
             return False
     return True
+
 
 def parse_jp2_box(xml_tree, out_f, src_jp2file):
     if not(xml_tree[XML_TYPE_IDX] == gdal.CXT_Element and xml_tree[XML_VALUE_IDX] == 'JP2Box'):
@@ -368,6 +378,7 @@ def parse_jp2_box(xml_tree, out_f, src_jp2file):
 
     return True
 
+
 def parse_jp2file(inpath, xml_tree, out_f):
     src_jp2filename = get_attribute_val(xml_tree, 'filename')
     if src_jp2filename is None:
@@ -386,6 +397,8 @@ def parse_jp2file(inpath, xml_tree, out_f):
     return True
 
 # Wrapper class for GDAL VSI*L API with class Python file interface
+
+
 class VSILFile:
     def __init__(self, filename, access):
         self.f = gdal.VSIFOpenL(filename, access)
@@ -402,6 +415,7 @@ class VSILFile:
     def close(self):
         gdal.VSIFCloseL(self.f)
         self.f = None
+
 
 def build_file(inname, outname):
 
@@ -423,6 +437,7 @@ def build_file(inname, outname):
     out_f.close()
 
     return ret
+
 
 def main():
     i = 1
@@ -446,6 +461,7 @@ def main():
     if build_file(inname, outname):
         return 0
     return 1
+
 
 if __name__ == '__main__':
     sys.exit(main())

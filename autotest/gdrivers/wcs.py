@@ -51,6 +51,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+
 def wcs_1():
 
     # Disable wcs tests till we have a more reliable test server.
@@ -77,6 +78,7 @@ def wcs_1():
 ###############################################################################
 # Open the GeoServer WCS service.
 
+
 def wcs_2():
 
     if gdaltest.wcs_drv is None:
@@ -96,6 +98,7 @@ def wcs_2():
 
 ###############################################################################
 # Check various things about the configuration.
+
 
 def wcs_3():
 
@@ -137,6 +140,7 @@ def wcs_3():
 ###############################################################################
 # Check checksum
 
+
 def wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
@@ -151,6 +155,7 @@ def wcs_4():
 
 ###############################################################################
 # Open the service using XML as filename.
+
 
 def wcs_5():
 
@@ -184,6 +189,7 @@ def wcs_5():
 ###############################################################################
 # Open the srtm plus service.
 
+
 def old_wcs_2():
 
     if gdaltest.wcs_drv is None:
@@ -203,6 +209,7 @@ def old_wcs_2():
 
 ###############################################################################
 # Check various things about the configuration.
+
 
 def old_wcs_3():
 
@@ -244,6 +251,7 @@ def old_wcs_3():
 ###############################################################################
 # Check checksum for a small region.
 
+
 def old_wcs_4():
 
     if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
@@ -258,6 +266,7 @@ def old_wcs_4():
 
 ###############################################################################
 # Open the srtm plus service using XML as filename.
+
 
 def old_wcs_5():
 
@@ -286,6 +295,7 @@ def old_wcs_5():
 
 # utilities
 
+
 def read_urls():
     retval = {}
     fname = 'data/wcs/urls'
@@ -301,8 +311,10 @@ def read_urls():
         retval[items[0]][items[1]] = items[2]
     return retval
 
+
 do_log = False
 wcs_6_ok = True
+
 
 class WCSHTTPHandler(BaseHTTPRequestHandler):
 
@@ -377,6 +389,7 @@ class WCSHTTPHandler(BaseHTTPRequestHandler):
             print('test ' + server + ' ' + test + ' WCS ' + version + ' '+ok)
         self.Respond(request, server, version, test)
         return
+
 
 def setupFct():
     return {
@@ -473,6 +486,7 @@ def setupFct():
 
 ###############################################################################
 
+
 def wcs_6():
     driver = gdal.GetDriverByName('WCS')
     if driver is None:
@@ -567,6 +581,8 @@ def wcs_6():
         return 'fail'
 
 ###############################################################################
+
+
 def wcs_cleanup():
 
     gdaltest.wcs_drv = None

@@ -45,12 +45,14 @@ bSummaryOnly = False
 nFetchFID = ogr.NullFID
 papszOptions = None
 
+
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
 #**********************************************************************
 #                                main()
 #**********************************************************************
+
 
 def main(argv = None):
 
@@ -294,6 +296,7 @@ def main(argv = None):
 #                               Usage()
 #**********************************************************************
 
+
 def Usage():
 
     print( "Usage: ogrinfo [--help-general] [-ro] [-q] [-where restricted_where]\n"
@@ -306,6 +309,7 @@ def Usage():
 #**********************************************************************
 #                           ReportOnLayer()
 #**********************************************************************
+
 
 def ReportOnLayer( poLayer, pszWHERE, pszGeomField, poSpatialFilter, options ):
 
@@ -442,7 +446,6 @@ def DumpReadableFeature( poFeature, options = None ):
 
             print(line)
 
-
     if poFeature.GetStyleString() is not None:
 
         if 'DISPLAY_STYLE' not in options or EQUAL(options['DISPLAY_STYLE'], 'yes'):
@@ -522,6 +525,7 @@ def DumpReadableGeometry( poGeometry, pszPrefix, options ):
         print("%s%s" % (pszPrefix, poGeometry.ExportToWkt() ))
 
     return
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

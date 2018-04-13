@@ -38,6 +38,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+
 def _xmlsearch(root, nodetype, name):
     for node in root[2:]:
         if node[0] == nodetype and node[1] == name:
@@ -48,6 +49,7 @@ def _xmlsearch(root, nodetype, name):
 ###############################################################################
 # Verify reading from simple existing raw definition.
 
+
 def vrtrawlink_1():
 
     tst = gdaltest.GDALTest( 'VRT', 'small.vrt', 2, 12816 )
@@ -55,6 +57,7 @@ def vrtrawlink_1():
 
 ###############################################################################
 # Create a new VRT raw link via the AddBand() method.
+
 
 def vrtrawlink_2():
 
@@ -86,6 +89,7 @@ def vrtrawlink_2():
 ###############################################################################
 # Confirm that the newly written file is was saved properly
 
+
 def vrtrawlink_3():
 
     gdaltest.rawlink_ds = gdal.Open( 'tmp/rawlink.vrt', gdal.GA_Update )
@@ -106,6 +110,7 @@ def vrtrawlink_3():
 
 ###############################################################################
 # Add a new band, and we will test if we can write to it.
+
 
 def vrtrawlink_4():
 
@@ -169,6 +174,7 @@ def vrtrawlink_4():
 ###############################################################################
 # Add a new band, and check the relativeToVRT property.
 
+
 def vrtrawlink_5():
 
     driver = gdal.GetDriverByName( "VRT" )
@@ -217,6 +223,7 @@ def vrtrawlink_5():
 ###############################################################################
 # Add a new band with relativeToVRT=1, and re-open the dataset.
 
+
 def vrtrawlink_6():
 
     driver = gdal.GetDriverByName( "VRT" )
@@ -263,6 +270,7 @@ def vrtrawlink_6():
 ###############################################################################
 # Add a new band with relativeToVRT=1, change directory and re-open the dataset.
 
+
 def vrtrawlink_7():
 
     driver = gdal.GetDriverByName( "VRT" )
@@ -308,6 +316,7 @@ def vrtrawlink_7():
 ###############################################################################
 # Test error case (too much memory allocation)
 
+
 def vrtrawlink_8():
 
     for i in range(2):
@@ -330,6 +339,7 @@ def vrtrawlink_8():
 ###############################################################################
 # Test error case (inexisting file)
 
+
 def vrtrawlink_9():
 
     with gdaltest.error_handler():
@@ -346,6 +356,7 @@ def vrtrawlink_9():
 
 ###############################################################################
 # Test error case (invalid byte order)
+
 
 def vrtrawlink_10():
 
@@ -365,6 +376,7 @@ def vrtrawlink_10():
 ###############################################################################
 # Cleanup.
 
+
 def vrtrawlink_cleanup():
     gdaltest.rawlink_ds = None
 
@@ -377,6 +389,7 @@ def vrtrawlink_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     vrtrawlink_1,

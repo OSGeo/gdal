@@ -45,6 +45,7 @@ import gdaltest
 ###############################################################################
 # Test if DB2 and tile drivers are available
 
+
 def gpkg_init():
 
     gdaltest.db2_drv = None
@@ -89,6 +90,8 @@ def gpkg_init():
 
 ###############################################################################
 #
+
+
 def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, clamp_output = True):
     if extend_src:
         mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, working_bands)
@@ -128,6 +131,8 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
 
 ###############################################################################
 #
+
+
 def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct, row = 0, col = 0, zoom_level = None):
     if zoom_level is None:
         zoom_level_str = "(SELECT MAX(zoom_level) FROM tmp)"
@@ -179,13 +184,13 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 ###############################################################################
 # Single band, PNG
 
+
 def gpkg_1():
 
     if gdaltest.db2_drv is None:
         return 'skip'
     if gdaltest.png_dr is None:
         return 'skip'
-
 
     # With padding
     ds = gdal.Open('data/byte.tif')
@@ -232,6 +237,7 @@ def gpkg_1():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     gpkg_init,

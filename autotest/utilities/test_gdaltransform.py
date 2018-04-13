@@ -38,6 +38,7 @@ import test_cli_utilities
 ###############################################################################
 # Test -s_srs and -t_srs
 
+
 def test_gdaltransform_1():
     if test_cli_utilities.get_gdaltransform_path() is None:
         return 'skip'
@@ -56,6 +57,7 @@ def test_gdaltransform_1():
 
 ###############################################################################
 # Test -gcp
+
 
 def test_gdaltransform_2():
     if test_cli_utilities.get_gdaltransform_path() is None:
@@ -82,6 +84,7 @@ def test_gdaltransform_2():
 ###############################################################################
 # Test -gcp -tps
 
+
 def test_gdaltransform_3():
     if test_cli_utilities.get_gdaltransform_path() is None:
         return 'skip'
@@ -106,6 +109,7 @@ def test_gdaltransform_3():
 
 ###############################################################################
 # Test -gcp -order 1
+
 
 def test_gdaltransform_4():
     if test_cli_utilities.get_gdaltransform_path() is None:
@@ -132,6 +136,7 @@ def test_gdaltransform_4():
 ###############################################################################
 # Test with input file and -t_srs
 
+
 def test_gdaltransform_5():
     if test_cli_utilities.get_gdaltransform_path() is None:
         return 'skip'
@@ -151,6 +156,7 @@ def test_gdaltransform_5():
 
 ###############################################################################
 # Test with input file and output file
+
 
 def test_gdaltransform_6():
     if test_cli_utilities.get_gdaltransform_path() is None:
@@ -193,6 +199,7 @@ def test_gdaltransform_7():
 ###############################################################################
 # Test -to
 
+
 def test_gdaltransform_8():
     if test_cli_utilities.get_gdaltransform_path() is None:
         return 'skip'
@@ -209,6 +216,7 @@ def test_gdaltransform_8():
 ###############################################################################
 # Test -output_xy
 
+
 def test_gdaltransform_9():
     if test_cli_utilities.get_gdaltransform_path() is None:
         return 'skip'
@@ -222,6 +230,7 @@ def test_gdaltransform_9():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdaltransform_1,

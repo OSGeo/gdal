@@ -39,6 +39,7 @@ from osgeo import osr
 ###############################################################################
 # No root pointer
 
+
 def osr_validate_1():
 
     empty_srs = osr.SpatialReference()
@@ -49,6 +50,7 @@ def osr_validate_1():
 
 ###############################################################################
 # Unrecognized root node
+
 
 def osr_validate_2():
 
@@ -61,6 +63,7 @@ def osr_validate_2():
 
 ###############################################################################
 # COMPD_CS errors
+
 
 def osr_validate_3():
 
@@ -92,6 +95,7 @@ def osr_validate_3():
 
 ###############################################################################
 # VERT_CS errors
+
 
 def osr_validate_4():
 
@@ -147,6 +151,7 @@ def osr_validate_4():
 
 ###############################################################################
 # GEOCCS errors
+
 
 def osr_validate_5():
 
@@ -210,6 +215,7 @@ def osr_validate_5():
 
 ###############################################################################
 # PROJCS errors
+
 
 def osr_validate_6():
 
@@ -290,6 +296,7 @@ def osr_validate_6():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     osr_validate_1,

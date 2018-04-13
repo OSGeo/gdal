@@ -63,7 +63,6 @@ for item in init_list:
     gdaltest_list.append( (ut.testSetNoDataValue, item[0]) )
 
 
-
 if __name__ == '__main__':
 
     gdaltest.setup_run( 'gtiff_write' )

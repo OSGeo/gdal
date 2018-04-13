@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Read Test grayscale (PGM)
 
+
 def pnm_1():
 
     tst = gdaltest.GDALTest( 'PNM', 'byte.pgm', 1, 4672 )
@@ -45,6 +46,7 @@ def pnm_1():
 
 ###############################################################################
 # Write Test grayscale (PGM)
+
 
 def pnm_2():
 
@@ -55,6 +57,7 @@ def pnm_2():
 ###############################################################################
 # Read Test RGB (PPM)
 
+
 def pnm_3():
 
     tst = gdaltest.GDALTest( 'PNM', 'rgbsmall.ppm', 2, 21053 )
@@ -64,11 +67,13 @@ def pnm_3():
 ###############################################################################
 # Write Test RGB (PPM)
 
+
 def pnm_4():
 
     tst = gdaltest.GDALTest( 'PNM', 'rgbsmall.ppm', 2, 21053 )
 
     return tst.testCreateCopy()
+
 
 gdaltest_list = [
     pnm_1,

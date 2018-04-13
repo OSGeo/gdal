@@ -42,6 +42,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+
 def http_1():
 
     gdaltest.dods_drv = None
@@ -76,6 +77,7 @@ def http_1():
 ###############################################################################
 # Verify /vsicurl (subversion file listing)
 
+
 def http_2():
 
     try:
@@ -100,6 +102,7 @@ def http_2():
 
 ###############################################################################
 # Verify /vsicurl (apache file listing)
+
 
 def http_3():
 
@@ -126,6 +129,7 @@ def http_3():
 
 ###############################################################################
 # Verify /vsicurl (ftp)
+
 
 def http_4_old():
 
@@ -162,6 +166,7 @@ def http_4_old():
 
 ###############################################################################
 # Verify /vsicurl (ftp)
+
 
 def http_4():
 
@@ -206,6 +211,7 @@ def http_4():
 ###############################################################################
 # Test HTTP driver with non VSIL driver
 
+
 def http_5():
 
     try:
@@ -244,6 +250,7 @@ def http_5():
 
 ###############################################################################
 # Test HTTP driver with OGR driver
+
 
 def http_6():
 
@@ -299,6 +306,7 @@ def http_test_ssl_verifystatus():
 
 ###############################################################################
 
+
 def http_test_use_capi_store():
 
     if gdal.GetDriverByName( 'HTTP' ) is None:
@@ -316,6 +324,7 @@ def http_test_use_capi_store():
 
     return 'success'
 
+
 def http_test_use_capi_store_sub():
 
     with gdaltest.config_option('GDAL_HTTP_USE_CAPI_STORE', 'YES'):
@@ -326,12 +335,14 @@ def http_test_use_capi_store_sub():
 ###############################################################################
 #
 
+
 def http_cleanup():
     if gdaltest.dods_drv is not None:
         gdaltest.dods_drv.Register()
     gdaltest.dods_drv = None
 
     return 'success'
+
 
 gdaltest_list = [ http_1,
                   http_2,

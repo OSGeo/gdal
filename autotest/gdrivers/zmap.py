@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Test CreateCopy() of byte.tif
 
+
 def zmap_1():
 
     tst = gdaltest.GDALTest( 'ZMap', 'byte.tif', 1, 4672 )

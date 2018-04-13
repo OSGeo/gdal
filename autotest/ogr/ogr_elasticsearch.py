@@ -42,6 +42,7 @@ from osgeo import osr
 # Test driver availability
 #
 
+
 def ogr_elasticsearch_init():
 
     ogrtest.elasticsearch_drv = None
@@ -62,6 +63,7 @@ def ogr_elasticsearch_init():
 
 ###############################################################################
 # Test writing into an nonexistent ElasticSearch datastore.
+
 
 def ogr_elasticsearch_nonexistent_server():
     if ogrtest.elasticsearch_drv is None:
@@ -122,6 +124,7 @@ def ogr_elasticsearch_nonexistent_server():
 
 ###############################################################################
 # Simple test
+
 
 def ogr_elasticsearch_1():
     if ogrtest.elasticsearch_drv is None:
@@ -381,6 +384,7 @@ def ogr_elasticsearch_1():
 ###############################################################################
 # Geo_shape geometries
 
+
 def ogr_elasticsearch_2():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
@@ -418,11 +422,11 @@ def ogr_elasticsearch_2():
         return 'fail'
     feat = None
 
-
     return 'success'
 
 ###############################################################################
 # Test bulk insert and layer name laundering
+
 
 def ogr_elasticsearch_3():
     if ogrtest.elasticsearch_drv is None:
@@ -472,6 +476,7 @@ def ogr_elasticsearch_3():
 
 ###############################################################################
 # Test basic read functionality
+
 
 def ogr_elasticsearch_4():
     if ogrtest.elasticsearch_drv is None:
@@ -638,7 +643,6 @@ def ogr_elasticsearch_4():
     if f is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/a_layer/FeatureCollection/_search?scroll=1m&size=100""", """{
 
@@ -809,7 +813,6 @@ def ogr_elasticsearch_4():
     if f['int_field'] != 2:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     gdal.FileFromMemBuffer("""/vsimem/fakeelasticsearch/_search/scroll?scroll=1m&scroll_id=my_scrollid""", """{
     "hits":
@@ -1063,6 +1066,7 @@ def ogr_elasticsearch_4():
 ###############################################################################
 # Write documents with non geojson structure
 
+
 def ogr_elasticsearch_5():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
@@ -1298,6 +1302,7 @@ def ogr_elasticsearch_5():
 ###############################################################################
 # Test reading circle and envelope geometries
 
+
 def ogr_elasticsearch_6():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
@@ -1397,6 +1402,7 @@ def ogr_elasticsearch_6():
 ###############################################################################
 # Test WRITE_MAPPING option
 
+
 def ogr_elasticsearch_7():
     if ogrtest.elasticsearch_drv is None:
         return 'skip'
@@ -1429,6 +1435,7 @@ def ogr_elasticsearch_7():
 
 ###############################################################################
 # Test SRS support
+
 
 def ogr_elasticsearch_8():
     if ogrtest.elasticsearch_drv is None:
@@ -1486,6 +1493,7 @@ def ogr_elasticsearch_8():
 
 ###############################################################################
 # Test ElasticSearch 5.X
+
 
 def ogr_elasticsearch_9():
     if ogrtest.elasticsearch_drv is None:
@@ -1593,6 +1601,7 @@ def ogr_elasticsearch_9():
 
 ###############################################################################
 # Test SQL
+
 
 def ogr_elasticsearch_10():
     if ogrtest.elasticsearch_drv is None:
@@ -2228,6 +2237,7 @@ def ogr_elasticsearch_10():
 
 ###############################################################################
 # Test isnull and unset
+
 
 def ogr_elasticsearch_11():
     if ogrtest.elasticsearch_drv is None:

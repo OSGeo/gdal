@@ -38,6 +38,8 @@ import gdaltest
 
 ###############################################################################
 # Perform simple read test.
+
+
 def roipac_1():
 
     tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
@@ -61,6 +63,7 @@ def roipac_1():
 ###############################################################################
 # Test reading of metadata from the ROI_PAC metadata domain
 
+
 def roipac_2():
 
     ds = gdal.Open( 'data/srtm.dem' )
@@ -73,6 +76,7 @@ def roipac_2():
 ###############################################################################
 # Verify this can be exported losslessly.
 
+
 def roipac_3():
 
     tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
@@ -81,6 +85,7 @@ def roipac_3():
 ###############################################################################
 # Verify VSIF*L capacity
 
+
 def roipac_4():
 
     tst = gdaltest.GDALTest( 'roi_pac', 'srtm.dem', 1, 64074 )
@@ -88,6 +93,7 @@ def roipac_4():
 
 ###############################################################################
 # Verify offset/scale metadata reading
+
 
 def roipac_5():
 
@@ -105,12 +111,14 @@ def roipac_5():
 ###############################################################################
 # Test .flg
 
+
 def roipac_6():
 
     tst = gdaltest.GDALTest( 'roi_pac', 'byte.tif', 1, 4672 )
     with gdaltest.error_handler():
         ret = tst.testCreateCopy( check_gt = 1, new_filename = 'byte.flg', vsimem = 1 )
     return ret
+
 
 gdaltest_list = [
     roipac_1,

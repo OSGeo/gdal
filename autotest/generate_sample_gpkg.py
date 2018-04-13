@@ -181,7 +181,6 @@ for (out_filename, options) in [
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
 
-
     lyr = ds.CreateLayer('point3d', geom_type = ogr.wkbPoint25D, options = layer_options)
     feat.SetGeometry(ogr.CreateGeometryFromWkt('POINT(1 2 3)'))
     lyr.CreateFeature(feat)
@@ -235,7 +234,6 @@ for (out_filename, options) in [
     # Null geometry
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
-
 
     lyr = ds.CreateLayer('geomcollection3d', geom_type = ogr.wkbGeometryCollection25D, options = layer_options)
     feat = ogr.Feature(lyr.GetLayerDefn())

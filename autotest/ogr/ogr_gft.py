@@ -42,6 +42,7 @@ from osgeo import ogr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_gft_init():
 
     ogrtest.gft_drv = None
@@ -65,6 +66,7 @@ def ogr_gft_init():
 
 ###############################################################################
 # Read test on Wikileaks Afgan War Diary 2004-2010 table.
+
 
 def ogr_gft_read():
     if ogrtest.gft_drv is None:
@@ -116,6 +118,7 @@ def ogr_gft_read():
 
 ###############################################################################
 # Write test
+
 
 def ogr_gft_write():
     if ogrtest.gft_drv is None:
@@ -191,6 +194,7 @@ def ogr_gft_write():
 ###############################################################################
 # ogr2ogr test to create a non-spatial GFT table
 
+
 def ogr_gft_ogr2ogr_non_spatial():
     if ogrtest.gft_drv is None:
         return 'skip'
@@ -239,6 +243,7 @@ def ogr_gft_ogr2ogr_non_spatial():
 
 ###############################################################################
 # ogr2ogr test to create a spatial GFT table
+
 
 def ogr_gft_ogr2ogr_spatial():
     if ogrtest.gft_drv is None:
@@ -321,6 +326,7 @@ def ogr_gft_ogr2ogr_spatial():
     ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_gft_init,

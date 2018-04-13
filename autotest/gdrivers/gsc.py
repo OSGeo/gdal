@@ -37,10 +37,12 @@ import gdaltest
 ###############################################################################
 # Test a fake - and certainly incorrect - GSC dataset
 
+
 def gsc_1():
 
     tst = gdaltest.GDALTest( 'GSC', 'fakegsc.gsc', 1, 0 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     gsc_1 ]

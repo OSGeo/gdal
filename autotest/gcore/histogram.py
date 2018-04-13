@@ -42,6 +42,7 @@ import gdaltest
 ###############################################################################
 # Fetch simple histogram.
 
+
 def histogram_1():
 
     ds = gdal.Open( 'data/utmsmall.tif' )
@@ -59,6 +60,7 @@ def histogram_1():
 ###############################################################################
 # Fetch histogram with specified sampling, using keywords.
 
+
 def histogram_2():
 
     ds = gdal.Open( 'data/utmsmall.tif' )
@@ -75,6 +77,7 @@ def histogram_2():
 
 ###############################################################################
 # try on a different data type with out of range values included.
+
 
 def histogram_3():
 
@@ -94,6 +97,7 @@ def histogram_3():
 
 ###############################################################################
 # try on a different data type without out of range values included.
+
 
 def histogram_4():
 
@@ -121,6 +125,7 @@ def histogram_4():
 ###############################################################################
 # Test GetDefaultHistogram() on the file.
 
+
 def histogram_5():
 
     ds = gdal.Open( 'data/utmsmall.tif' )
@@ -145,6 +150,7 @@ def histogram_5():
 ###############################################################################
 # Test GetDefaultHistogram( force = 0 ) on a JPG file (#3304)
 
+
 def histogram_6():
 
     shutil.copy( '../gdrivers/data/albania.jpg', 'tmp/albania.jpg' )
@@ -158,6 +164,7 @@ def histogram_6():
     os.unlink( 'tmp/albania.jpg' )
 
     return 'success'
+
 
 gdaltest_list = [
     histogram_1,

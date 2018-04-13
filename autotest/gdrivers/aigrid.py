@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def aigrid_1():
 
     tst = gdaltest.GDALTest( 'AIG', 'abc3x1', 1, 3 )
@@ -47,6 +48,7 @@ def aigrid_1():
 
 ###############################################################################
 # Verify some auxiliary data.
+
 
 def aigrid_2():
 
@@ -78,6 +80,7 @@ def aigrid_2():
 ###############################################################################
 # Verify the colormap, and nodata setting for test file.
 
+
 def aigrid_3():
 
     ds = gdal.Open( 'data/abc3x1' )
@@ -98,6 +101,7 @@ def aigrid_3():
 ###############################################################################
 # Read test of simple byte reference data with data directory name in all uppercase
 
+
 def aigrid_4():
 
     tst = gdaltest.GDALTest( 'AIG', 'ABC3X1UC', 1, 3 )
@@ -105,6 +109,7 @@ def aigrid_4():
 
 ###############################################################################
 # Verify the colormap, and nodata setting for test file with names of coverage directory and all files in it in all uppercase. Additionally also test for case where clr file resides in parent directory of coverage.
+
 
 def aigrid_5():
 
@@ -127,6 +132,7 @@ def aigrid_5():
 ###############################################################################
 # Verify dataset whose sta.adf is 24 bytes
 
+
 def aigrid_6():
 
     ds = gdal.Open( 'data/aigrid_sta_24bytes/teststa' )
@@ -143,6 +149,7 @@ def aigrid_6():
 
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
+
 
 def aigrid_online_1():
 
@@ -239,6 +246,7 @@ def aigrid_online_1():
 ###############################################################################
 # Test on real dataset downloaded from http://download.osgeo.org/gdal/data/aig/nzdem
 
+
 def aigrid_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/aig/ai_bug_6886.zip', 'ai_bug_6886.zip'):
@@ -260,6 +268,7 @@ def aigrid_online_2():
     return tst.testOpen()
 
 ###############################################################################
+
 
 gdaltest_list = [
     aigrid_1,

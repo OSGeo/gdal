@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Test opening
 
+
 def saga_1():
 
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
@@ -60,6 +61,7 @@ def saga_1():
 ###############################################################################
 # Test copying a reference sample with CreateCopy()
 
+
 def saga_2():
 
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
@@ -68,6 +70,7 @@ def saga_2():
 ###############################################################################
 # Test copying a reference sample with Create()
 
+
 def saga_3():
 
     tst = gdaltest.GDALTest( 'SAGA', '4byteFloat.sdat', 1, 108 )
@@ -75,6 +78,7 @@ def saga_3():
 
 ###############################################################################
 # Test CreateCopy() for various data types
+
 
 def saga_4():
 
@@ -101,6 +105,7 @@ def saga_4():
 ###############################################################################
 # Test Create() for various data types
 
+
 def saga_5():
 
     src_files = [ 'byte.tif',
@@ -125,6 +130,7 @@ def saga_5():
 
 ###############################################################################
 # Test creating empty datasets and check that nodata values are properly written
+
 
 def saga_6():
 
@@ -173,6 +179,7 @@ def saga_6():
 
 ###############################################################################
 # Test /vsimem
+
 
 def saga_7():
 

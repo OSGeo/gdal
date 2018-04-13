@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test reading a - fake - IRIS dataset
 
+
 def iris_1():
 
     tst = gdaltest.GDALTest( 'IRIS', 'fakeiris.dat', 1, 65532 )
@@ -46,6 +47,7 @@ def iris_1():
 
 ###############################################################################
 # Test reading a real world IRIS dataset.
+
 
 def iris_2():
 
@@ -117,6 +119,7 @@ def iris_2():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     iris_1,

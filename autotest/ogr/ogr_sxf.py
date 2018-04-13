@@ -36,6 +36,7 @@ from osgeo import ogr
 ###############################################################################
 # Open SXF datasource.
 
+
 def ogr_sxf_1():
 
     gdaltest.sxf_ds = None
@@ -69,6 +70,7 @@ def ogr_sxf_2():
 ###############################################################################
 #
 
+
 def ogr_sxf_cleanup():
 
     if gdaltest.sxf_ds is None:
@@ -77,6 +79,7 @@ def ogr_sxf_cleanup():
     gdaltest.sxf_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_sxf_1,

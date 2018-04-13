@@ -42,6 +42,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def aaigrid_1():
 
     tst = gdaltest.GDALTest( 'aaigrid', 'pixel_per_line.asc', 1, 1123 )
@@ -49,6 +50,7 @@ def aaigrid_1():
 
 ###############################################################################
 # Verify some auxiliary data.
+
 
 def aaigrid_2():
 
@@ -110,6 +112,7 @@ def aaigrid_comma():
 ###############################################################################
 # Create simple copy and check.
 
+
 def aaigrid_3():
 
     tst = gdaltest.GDALTest( 'AAIGRID', 'byte.tif', 1, 4672 )
@@ -121,6 +124,7 @@ def aaigrid_3():
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem.
 
+
 def aaigrid_4():
 
     tst = gdaltest.GDALTest( 'aaigrid', 'pixel_per_line.asc', 1, 187,
@@ -129,6 +133,7 @@ def aaigrid_4():
 
 ###############################################################################
 # Perform simple read test on mixed-case .PRJ filename
+
 
 def aaigrid_5():
 
@@ -165,6 +170,7 @@ def aaigrid_5():
 ###############################################################################
 # Verify data type determination from type of nodata
 
+
 def aaigrid_6():
 
     ds = gdal.Open( 'data/nodata_float.asc' )
@@ -183,6 +189,7 @@ def aaigrid_6():
 ###############################################################################
 # Verify data type determination from type of nodata
 
+
 def aaigrid_6bis():
 
     ds = gdal.Open( 'data/nodata_int.asc' )
@@ -200,6 +207,7 @@ def aaigrid_6bis():
 
 ###############################################################################
 # Verify writing files with non-square pixels.
+
 
 def aaigrid_7():
 
@@ -237,6 +245,7 @@ def aaigrid_9():
 
 ###############################################################################
 # Test AAIGRID_DATATYPE configuration option and DATATYPE open options
+
 
 def aaigrid_10():
 
@@ -287,6 +296,7 @@ def aaigrid_10():
 ###############################################################################
 # Test SIGNIFICANT_DIGITS creation option (same as DECIMAL_PRECISION test)
 
+
 def aaigrid_11():
 
     ds = gdal.Open('data/float32.bil')
@@ -303,6 +313,7 @@ def aaigrid_11():
 
 ###############################################################################
 # Test no data is written to correct precision with DECIMAL_PRECISION.
+
 
 def aaigrid_12():
 
@@ -332,6 +343,7 @@ def aaigrid_12():
 ###############################################################################
 # Test no data is written to correct precision WITH SIGNIFICANT_DIGITS.
 
+
 def aaigrid_13():
 
     ds = gdal.Open('data/nodata_float.asc')
@@ -360,6 +372,7 @@ def aaigrid_13():
 ###############################################################################
 # Test fix for #6060
 
+
 def aaigrid_14():
 
     ds = gdal.Open('data/byte.tif')
@@ -384,6 +397,7 @@ def aaigrid_14():
 ###############################################################################
 # Test Float64 detection when nodata = DBL_MIN
 
+
 def aaigrid_15():
 
     gdal.FileFromMemBuffer('/vsimem/aaigrid_15.asc', """ncols        4
@@ -406,6 +420,7 @@ NODATA_value  2.2250738585072014e-308
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     aaigrid_1,

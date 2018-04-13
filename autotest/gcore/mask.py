@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
 
+
 def mask_1():
 
     ds = gdal.Open('data/byte.tif')
@@ -65,6 +66,7 @@ def mask_1():
 ###############################################################################
 # Verify the checksum and flags for "nodata" case.
 
+
 def mask_2():
 
     ds = gdal.Open('data/byte.vrt')
@@ -89,6 +91,7 @@ def mask_2():
 
 ###############################################################################
 # Verify the checksum and flags for "alpha" case.
+
 
 def mask_3():
 
@@ -142,6 +145,7 @@ def mask_3():
 ###############################################################################
 # Copy a *real* masked dataset, and confirm masks copied properly.
 
+
 def mask_4():
 
     src_ds = gdal.Open('../gdrivers/data/masked.jpg')
@@ -179,6 +183,7 @@ def mask_4():
 ###############################################################################
 # Create overviews for masked file, and verify the overviews have proper
 # masks built for them.
+
 
 def mask_5():
 
@@ -249,6 +254,7 @@ def mask_5():
 ###############################################################################
 # Test a TIFF file with 1 band and an embedded mask of 1 bit
 
+
 def mask_6():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK_TO_8BIT', 'FALSE')
@@ -276,6 +282,7 @@ def mask_6():
 
 ###############################################################################
 # Test a TIFF file with 3 bands and an embedded mask of 1 band of 1 bit
+
 
 def mask_7():
 
@@ -307,6 +314,7 @@ def mask_7():
 # Test a TIFF file with 1 band and an embedded mask of 8 bit.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
+
 def mask_8():
 
     ds = gdal.Open('data/test_with_mask_8bit.tif')
@@ -332,6 +340,7 @@ def mask_8():
 ###############################################################################
 # Test a TIFF file with 3 bands with an embedded mask of 1 bit with 3 bands.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
+
 
 def mask_9():
 
@@ -360,6 +369,7 @@ def mask_9():
 # Test a TIFF file with 3 bands with an embedded mask of 8 bit with 3 bands.
 # Note : The TIFF6 specification, page 37, only allows 1 BitsPerSample && 1 SamplesPerPixel,
 
+
 def mask_10():
 
     ds = gdal.Open('data/test3_with_mask_8bit.tif')
@@ -386,6 +396,7 @@ def mask_10():
 ###############################################################################
 # Test a TIFF file with an overview, an embedded mask of 1 bit, and an embedded
 # mask for the overview
+
 
 def mask_11():
 
@@ -502,6 +513,7 @@ def mask_12():
 ###############################################################################
 # Test creation of external TIFF mask band
 
+
 def mask_13():
 
     gdal.SetConfigOption('GDAL_TIFF_INTERNAL_MASK','NO')
@@ -567,6 +579,7 @@ def mask_13():
 
 ###############################################################################
 # Test creation of internal TIFF mask band
+
 
 def mask_14():
 
@@ -677,6 +690,7 @@ def mask_14():
 ###############################################################################
 # Test creation of internal TIFF overview, mask band and mask band of overview
 
+
 def mask_and_ovr(order, method):
 
     src_ds = gdal.Open('data/byte.tif')
@@ -773,29 +787,37 @@ def mask_and_ovr(order, method):
 def mask_15():
     return mask_and_ovr(1, 'NEAREST')
 
+
 def mask_16():
     return mask_and_ovr(2, 'NEAREST')
+
 
 def mask_17():
     return mask_and_ovr(3, 'NEAREST')
 
+
 def mask_18():
     return mask_and_ovr(4, 'NEAREST')
+
 
 def mask_15_avg():
     return mask_and_ovr(1, 'AVERAGE')
 
+
 def mask_16_avg():
     return mask_and_ovr(2, 'AVERAGE')
 
+
 def mask_17_avg():
     return mask_and_ovr(3, 'AVERAGE')
+
 
 def mask_18_avg():
     return mask_and_ovr(4, 'AVERAGE')
 
 ###############################################################################
 # Test NODATA_VALUES mask
+
 
 def mask_19():
 
@@ -826,6 +848,7 @@ def mask_19():
 
 ###############################################################################
 # Extensive test of nodata mask for all data types
+
 
 def mask_20():
 
@@ -858,6 +881,7 @@ def mask_20():
 
 ###############################################################################
 # Extensive test of NODATA_VALUES mask for all data types
+
 
 def mask_21():
 
@@ -894,6 +918,7 @@ def mask_21():
 
 ###############################################################################
 # Test creation of external TIFF mask band just after Create()
+
 
 def mask_22():
 
@@ -952,6 +977,7 @@ def mask_22():
 # Test CreateCopy() of a dataset with a mask into a JPEG-compressed TIFF with
 # internal mask (#3800)
 
+
 def mask_23():
 
     drv = gdal.GetDriverByName('GTiff')
@@ -985,6 +1011,7 @@ def mask_23():
 
 ###############################################################################
 # Test on a GDT_UInt16 RGBA (#5692)
+
 
 def mask_24():
 
@@ -1030,6 +1057,7 @@ def mask_24():
 
 ###############################################################################
 # Test various error conditions
+
 
 def mask_25():
 

@@ -110,6 +110,7 @@ def srtmhgt_2():
 ###############################################################################
 # Test reading from a .hgt.zip file
 
+
 def srtmhgt_3():
 
     ds = gdal.Open( 'tmp/n43w080.hgt' )
@@ -129,6 +130,7 @@ def srtmhgt_3():
 
 ###############################################################################
 # Test reading from a .SRTMSWBD.raw.zip file (GRASS #3246)
+
 
 def srtmhgt_4():
 
@@ -155,6 +157,7 @@ def srtmhgt_4():
 ###############################################################################
 # Cleanup.
 
+
 def srtmhgt_cleanup():
     try:
         gdal.GetDriverByName( "SRTMHGT" ).Delete('tmp/n43w080.hgt')
@@ -164,6 +167,7 @@ def srtmhgt_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     srtmhgt_1,

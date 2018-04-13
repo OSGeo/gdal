@@ -35,6 +35,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def sar_ceos_online_1():
     list_files = [ 'ottawa_patch.img',
                    'ottawa_patch.led',
@@ -48,6 +50,7 @@ def sar_ceos_online_1():
 
     tst = gdaltest.GDALTest( 'SAR_CEOS', 'tmp/cache/ottawa_patch.img', 1, 23026, filename_absolute = 1 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     sar_ceos_online_1 ]

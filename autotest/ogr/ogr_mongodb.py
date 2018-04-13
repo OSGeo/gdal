@@ -44,6 +44,7 @@ from osgeo import osr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_mongodb_init():
 
     ogrtest.mongodb_drv = None
@@ -102,6 +103,7 @@ def ogr_mongodb_init():
 
 ###############################################################################
 # Test various open methods
+
 
 def ogr_mongodb_1():
     if ogrtest.mongodb_drv is None:
@@ -273,6 +275,7 @@ def ogr_mongodb_1():
 
 ###############################################################################
 # Basic tests
+
 
 def ogr_mongodb_2():
     if ogrtest.mongodb_drv is None:
@@ -920,6 +923,7 @@ def ogr_mongodb_2():
 ###############################################################################
 # test_ogrsf
 
+
 def ogr_mongodb_3():
     if ogrtest.mongodb_drv is None:
         return 'skip'
@@ -937,6 +941,7 @@ def ogr_mongodb_3():
 
 ###############################################################################
 # Cleanup
+
 
 def ogr_mongodb_cleanup():
     if ogrtest.mongodb_drv is None:
@@ -961,6 +966,7 @@ def ogr_mongodb_cleanup():
     ogrtest.mongodb_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_mongodb_init,

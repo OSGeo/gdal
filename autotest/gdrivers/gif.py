@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Get the GIF driver, and verify a few things about it.
 
+
 def gif_1():
 
     gdaltest.gif_drv = gdal.GetDriverByName( 'GIF' )
@@ -61,6 +62,7 @@ def gif_1():
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def gif_2():
 
     tst = gdaltest.GDALTest( 'GIF', 'bug407.gif', 1, 57921 )
@@ -68,6 +70,7 @@ def gif_2():
 
 ###############################################################################
 # Test lossless copying.
+
 
 def gif_3():
 
@@ -78,6 +81,7 @@ def gif_3():
 
 ###############################################################################
 # Verify the colormap, and nodata setting for test file.
+
 
 def gif_4():
 
@@ -106,6 +110,7 @@ def gif_4():
 ###############################################################################
 # Test creating an in memory copy.
 
+
 def gif_5():
 
     tst = gdaltest.GDALTest( 'GIF', 'byte.tif', 1, 4672 )
@@ -114,6 +119,7 @@ def gif_5():
 
 ###############################################################################
 # Verify nodata support
+
 
 def gif_6():
 
@@ -181,6 +187,7 @@ def gif_7():
 ###############################################################################
 # Confirm that BIGGIF driver is selected for huge gifs
 
+
 def gif_8():
 
     # Move the BIGGIF driver after the GIF driver.
@@ -199,6 +206,7 @@ def gif_8():
 
 ###############################################################################
 # Test writing to /vsistdout/
+
 
 def gif_9():
 
@@ -223,6 +231,7 @@ def gif_9():
 ###############################################################################
 # Test interlacing
 
+
 def gif_10():
 
     tst = gdaltest.GDALTest( 'GIF', 'byte.tif', 1, 4672,
@@ -233,9 +242,11 @@ def gif_10():
 ###############################################################################
 # Cleanup.
 
+
 def gif_cleanup():
     gdaltest.clean_tmp()
     return 'success'
+
 
 gdaltest_list = [
     gif_1,

@@ -44,6 +44,7 @@ def Usage():
     print('')
     sys.exit(1)
 
+
 def build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
 
     first_table = lyr.GetName()
@@ -144,6 +145,7 @@ def process_layer(ds, lyr_name, bAppend, bOverwrite):
             if not build_junction_table(ds, lyr, ifield, bAppend, bOverwrite):
                 ret = False
     return ret
+
 
 argv = sys.argv
 argv = ogr.GeneralCmdLineProcessor( argv )

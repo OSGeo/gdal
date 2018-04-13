@@ -35,11 +35,13 @@ import osr
 ##############################################################################
 # rtod(): radians to degrees.
 
+
 def r2d( rad ):
     return float(rad) / 0.0174532925199433
 
 ##############################################################################
 # load_dict()
+
 
 def load_dict( filename ):
     lines = open( filename ).readlines()
@@ -57,6 +59,7 @@ def load_dict( filename ):
 
 ##############################################################################
 # Mainline
+
 
 #dir = 'M:/software/ER Viewer 2.0c/GDT_Data/'
 dir = '/u/data/ecw/gdt/'

@@ -40,6 +40,7 @@ from osgeo import gdal
 # Test reading a MG4Lidar file
 #
 
+
 def mg4lidar_1():
 
     try:
@@ -99,6 +100,7 @@ def mg4lidar_1():
     ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     mg4lidar_1 ]

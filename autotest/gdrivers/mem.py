@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Create a MEM dataset, and set some data, then test it.
 
+
 def mem_1():
 
     #######################################################
@@ -125,6 +126,7 @@ def mem_1():
 ###############################################################################
 # Open an in-memory array.
 
+
 def mem_2():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -206,6 +208,7 @@ def mem_2():
 ###############################################################################
 # Test creating a MEM dataset with the "MEM:::" name
 
+
 def mem_3():
 
     drv = gdal.GetDriverByName('MEM')
@@ -218,6 +221,7 @@ def mem_3():
 
 ###############################################################################
 # Test creating a band interleaved multi-band MEM dataset
+
 
 def mem_4():
 
@@ -247,6 +251,7 @@ def mem_4():
 
 ###############################################################################
 # Test creating a pixel interleaved multi-band MEM dataset
+
 
 def mem_5():
 
@@ -280,6 +285,7 @@ def mem_5():
 
 ###############################################################################
 # Test out-of-memory situations
+
 
 def mem_6():
 
@@ -346,6 +352,7 @@ def mem_6():
 ###############################################################################
 # Test AddBand()
 
+
 def mem_7():
 
     drv = gdal.GetDriverByName('MEM')
@@ -359,6 +366,7 @@ def mem_7():
 
 ###############################################################################
 # Test SetDefaultHistogram() / GetDefaultHistogram()
+
 
 def mem_8():
 
@@ -378,6 +386,7 @@ def mem_8():
 
 ###############################################################################
 # Test RasterIO()
+
 
 def mem_9():
 
@@ -500,6 +509,7 @@ def mem_9():
 
 ###############################################################################
 # Test BuildOverviews()
+
 
 def mem_10():
 
@@ -661,6 +671,7 @@ def mem_10():
 ###############################################################################
 # Test CreateMaskBand()
 
+
 def mem_11():
 
     # Error case: building overview on a 0 band dataset
@@ -736,6 +747,7 @@ def mem_11():
 ###############################################################################
 # Test CreateMaskBand() and overviews.
 
+
 def mem_12():
 
     # Test on per-band mask
@@ -777,6 +789,7 @@ def mem_12():
 ###############################################################################
 # Check RAT support
 
+
 def mem_rat():
 
     ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
@@ -793,6 +806,7 @@ def mem_rat():
 
 ###############################################################################
 # Check CategoryNames support
+
 
 def mem_categorynames():
 

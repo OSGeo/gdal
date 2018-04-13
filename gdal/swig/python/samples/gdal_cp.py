@@ -39,9 +39,11 @@ from osgeo import gdal
 def needsVSICurl(filename):
     return filename.startswith('http://') or filename.startswith('https://') or filename.startswith('ftp://')
 
+
 def Usage():
     print('Usage: gdal_cp [-progress] [-r] [-skipfailures] source_file target_file')
     return -1
+
 
 class TermProgress:
     def __init__(self):
@@ -75,6 +77,7 @@ class TermProgress:
 
         return True
 
+
 class ScaledProgress:
     def __init__(self, dfMin, dfMax, UnderlyingProgress):
         self.dfMin = dfMin
@@ -84,6 +87,7 @@ class ScaledProgress:
     def Progress(self, dfComplete, message):
         return self.UnderlyingProgress.Progress( dfComplete * (self.dfMax - self.dfMin) + self.dfMin,
                                                  message )
+
 
 def gdal_cp_single(srcfile, targetfile, progress):
     if targetfile.endswith('/'):
@@ -156,6 +160,7 @@ def gdal_cp_single(srcfile, targetfile, progress):
 
     return ret
 
+
 def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
 
     if srcdir[-1] == '/':
@@ -180,6 +185,7 @@ def gdal_cp_recurse(srcdir, targetdir, progress, skip_failure):
         if ret == -2 or (ret == -1 and not skip_failure):
             return ret
     return 0
+
 
 def gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure):
 
@@ -308,6 +314,7 @@ def gdal_cp(argv, progress = None):
         return gdal_cp_pattern_match(srcdir, pattern, targetfile, progress, skip_failure)
     else:
         return gdal_cp_single(srcfile, targetfile, progress)
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

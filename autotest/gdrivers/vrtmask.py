@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Test with a global dataset mask band
 
+
 def vrtmask_1():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -131,6 +132,7 @@ def vrtmask_2():
 ###############################################################################
 # Translate a RGB dataset with a mask into a VRT
 
+
 def vrtmask_3():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
@@ -165,6 +167,7 @@ def vrtmask_3():
 ###############################################################################
 # Same with gdalbuildvrt
 
+
 def vrtmask_4():
     import test_cli_utilities
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -198,6 +201,7 @@ def vrtmask_4():
 ###############################################################################
 # Same with gdal_translate
 
+
 def vrtmask_5():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
@@ -227,6 +231,7 @@ def vrtmask_5():
 
 ###############################################################################
 # Same with gdal_translate with explicit -b and -mask arguments
+
 
 def vrtmask_6():
 
@@ -258,6 +263,7 @@ def vrtmask_6():
 
 ###############################################################################
 # gdal_translate with RGBmask -> RGBA and then RGBA->RGBmask
+
 
 def vrtmask_7():
 
@@ -315,6 +321,7 @@ def vrtmask_7():
 ###############################################################################
 # gdal_translate with RGBmask -> RGB
 
+
 def vrtmask_8():
 
     gtiff_drv = gdal.GetDriverByName('GTiff')
@@ -339,6 +346,7 @@ def vrtmask_8():
 
 ###############################################################################
 # gdal_translate with RGBA -> RGB
+
 
 def vrtmask_9():
     import test_cli_utilities
@@ -370,6 +378,7 @@ def vrtmask_9():
 ###############################################################################
 # Test fix for #5120 (VRTSourcedRasterBand::AddMaskBandSource() ignores specified window)
 
+
 def vrtmask_10():
 
     gdal.Translate('tmp/vrtmask_10_ref.tif', '../gcore/data/stefan_full_rgba.tif', options = '-srcwin 40 40 100 100')
@@ -395,6 +404,7 @@ def vrtmask_10():
     return 'success'
 
 ###############################################################################
+
 
 def vrtmask_11():
 
@@ -436,8 +446,10 @@ def vrtmask_11():
 ###############################################################################
 # Cleanup.
 
+
 def vrtmask_cleanup():
     return 'success'
+
 
 gdaltest_list = [
     vrtmask_1,

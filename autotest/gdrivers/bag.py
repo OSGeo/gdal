@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Test if BAG driver is present
 
+
 def bag_1():
 
     try:
@@ -52,6 +53,7 @@ def bag_1():
 
 ###############################################################################
 # Confirm various info on true_n_nominal 1.1 sample file.
+
 
 def bag_2():
 
@@ -101,7 +103,6 @@ def bag_2():
     # It would be nice to test srs and geotransform but they are
     # pretty much worthless on this dataset.
 
-
     # Test the xml:BAG metadata domain
     xmlBag = ds.GetMetadata('xml:BAG')[0]
     if xmlBag.find('<?xml') != 0:
@@ -119,6 +120,7 @@ def bag_2():
 
 ###############################################################################
 # Test a southern hemisphere falseNorthing sample file.
+
 
 def bag_3():
 
@@ -151,6 +153,7 @@ def bag_3():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [ bag_1,
                   bag_2,

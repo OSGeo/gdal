@@ -43,6 +43,7 @@ from osgeo import gdal
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
 
+
 def pam_1():
 
     gdaltest.pam_setting = gdal.GetConfigOption( 'GDAL_PAM_ENABLED', "NULL" )
@@ -80,6 +81,7 @@ def pam_1():
 ###############################################################################
 # Verify that we can write XML to a new file.
 
+
 def pam_2():
 
     driver = gdal.GetDriverByName( 'PNM' )
@@ -102,6 +104,7 @@ def pam_2():
 
 ###############################################################################
 # Check that we can read PAM metadata for existing PNM file.
+
 
 def pam_3():
 
@@ -154,6 +157,8 @@ def pam_3():
 ###############################################################################
 # Check that PAM binary encoded nodata values work properly.
 #
+
+
 def pam_4():
 
     # Copy test dataset to tmp directory so that the .aux.xml file
@@ -176,6 +181,8 @@ def pam_4():
 # Verify that .aux files that don't match the configuration of the
 # dependent file are not utilized. (#2471)
 #
+
+
 def pam_5():
 
     ds = gdal.Open( 'data/sasha.tif' )
@@ -193,6 +200,8 @@ def pam_5():
 ###############################################################################
 # Verify we can read nodata values from .aux files (#2505)
 #
+
+
 def pam_6():
 
     ds = gdal.Open( 'data/f2r23.tif' )
@@ -210,6 +219,8 @@ def pam_6():
 ###############################################################################
 # Verify we can create overviews on PNG with PAM disabled (#3693)
 #
+
+
 def pam_7():
 
     gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
@@ -234,6 +245,8 @@ def pam_7():
 ###############################################################################
 # Test that Band.SetDescription() goes through PAM (#3780)
 #
+
+
 def pam_8():
 
     gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'YES' )
@@ -257,6 +270,8 @@ def pam_8():
 ###############################################################################
 # Test that we can retrieve projection from xml:ESRI domain
 #
+
+
 def pam_9():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/pam_9.tif', 1, 1, 1)
@@ -292,6 +307,7 @@ def pam_9():
 
 ###############################################################################
 # Test serializing and deserializing of various band metadata
+
 
 def pam_10():
 
@@ -375,6 +391,7 @@ def pam_10():
 ###############################################################################
 # Test PamProxyDb mechanism
 
+
 def pam_11():
 
     # Create a read-only directory
@@ -439,6 +456,7 @@ def pam_11():
 ###############################################################################
 # Test histogram with 64bit counts
 
+
 def pam_12():
 
     shutil.copy('data/byte.tif', 'tmp')
@@ -486,6 +504,8 @@ def pam_12():
 ###############################################################################
 # Test various stuff with PAM disabled
 #
+
+
 def pam_13():
 
     gdal.SetConfigOption( 'GDAL_PAM_ENABLED', 'NO' )
@@ -542,6 +562,7 @@ def pam_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     pam_1,

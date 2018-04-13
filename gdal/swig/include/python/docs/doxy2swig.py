@@ -36,6 +36,7 @@ def my_open_read(source):
     else:
         return open(source)
 
+
 def my_open_write(dest):
     if hasattr(dest, "write"):
         return dest

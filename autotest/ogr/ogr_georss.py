@@ -39,6 +39,7 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 
+
 def ogr_georss_init():
 
     try:
@@ -86,6 +87,7 @@ def ogr_georss_init():
 ###############################################################################
 # Used by ogr_georss_1 and ogr_georss_1ter
 
+
 def ogr_georss_test_atom(filename):
 
     if not gdaltest.georss_read_support:
@@ -114,6 +116,7 @@ def ogr_georss_test_atom(filename):
 ###############################################################################
 # Test reading an ATOM document without any geometry
 
+
 def ogr_georss_1():
 
     return ogr_georss_test_atom('data/atom_rfc_sample.xml')
@@ -121,12 +124,14 @@ def ogr_georss_1():
 ###############################################################################
 # Test reading an ATOM document with atom: prefiw
 
+
 def ogr_georss_1_atom_ns():
 
     return ogr_georss_test_atom('data/atom_rfc_sample_atom_ns.xml')
 
 ###############################################################################
 # Test writing a Atom 1.0 document (doesn't need read support)
+
 
 def ogr_georss_1bis():
 
@@ -241,12 +246,14 @@ def ogr_georss_test_rss(filename, only_first_feature):
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS simple geometries
 
+
 def ogr_georss_2():
 
     return ogr_georss_test_rss('data/test_georss_simple.xml', False)
 
 ###############################################################################
 # Test reading a RSS 2.0 document with GeoRSS GML geometries
+
 
 def ogr_georss_3():
 
@@ -257,6 +264,7 @@ def ogr_georss_3():
 
 ###############################################################################
 # Test writing a RSS 2.0 document (doesn't need read support)
+
 
 def ogr_georss_create(filename, options):
 
@@ -332,6 +340,7 @@ def ogr_georss_create(filename, options):
 ###############################################################################
 # Test writing a RSS 2.0 document in Simple dialect (doesn't need read support)
 
+
 def ogr_georss_4():
 
     if ogr_georss_create('tmp/test_rss2.xml', []) != 'success':
@@ -347,12 +356,14 @@ def ogr_georss_4():
 ###############################################################################
 # Test reading document created at previous step
 
+
 def ogr_georss_5():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', False)
 
 ###############################################################################
 # Test writing a RSS 2.0 document in GML dialect (doesn't need read support)
+
 
 def ogr_georss_6():
 
@@ -369,6 +380,7 @@ def ogr_georss_6():
 ###############################################################################
 # Test reading document created at previous step
 
+
 def ogr_georss_7():
     if not gdaltest.have_gml_reader:
         return 'skip'
@@ -377,6 +389,7 @@ def ogr_georss_7():
 
 ###############################################################################
 # Test writing a RSS 2.0 document in W3C Geo dialect (doesn't need read support)
+
 
 def ogr_georss_8():
 
@@ -393,12 +406,14 @@ def ogr_georss_8():
 ###############################################################################
 # Test reading document created at previous step
 
+
 def ogr_georss_9():
 
     return ogr_georss_test_rss('tmp/test_rss2.xml', True)
 
 ###############################################################################
 # Test writing a RSS 2.0 document in GML dialect with EPSG:32631
+
 
 def ogr_georss_10():
     try:
@@ -449,6 +464,7 @@ def ogr_georss_10():
 ###############################################################################
 # Test reading document created at previous step
 
+
 def ogr_georss_11():
 
     if not gdaltest.georss_read_support:
@@ -481,6 +497,7 @@ def ogr_georss_11():
 
 ###############################################################################
 # Test various broken documents
+
 
 def ogr_georss_12():
 
@@ -517,6 +534,7 @@ def ogr_georss_12():
 
 ###############################################################################
 # Test writing non standard fields
+
 
 def ogr_georss_13():
     try:
@@ -557,6 +575,7 @@ def ogr_georss_13():
 ###############################################################################
 # Test reading document created at previous step
 
+
 def ogr_georss_14():
 
     if not gdaltest.georss_read_support:
@@ -581,6 +600,7 @@ def ogr_georss_14():
 
 ###############################################################################
 # Test reading an in memory file (#2931)
+
 
 def ogr_georss_15():
 
@@ -626,6 +646,7 @@ def ogr_georss_15():
 ###############################################################################
 #
 
+
 def ogr_georss_cleanup():
 
     list_files = [ 'tmp/test_rss2.xml', 'tmp/test_atom.xml', 'tmp/test32631.rss', 'tmp/broken.rss', 'tmp/nonstandard.rss' ]
@@ -641,6 +662,7 @@ def ogr_georss_cleanup():
             os.unlink('data/' + filename)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_georss_init,

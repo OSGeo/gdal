@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Read USRP dataset with PCB=0
 
+
 def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
 
     srs = osr.SpatialReference()
@@ -93,17 +94,20 @@ def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
 ###############################################################################
 # Read USRP dataset with PCB=4
 
+
 def srp_2():
     return srp_1('USRP_PCB4/FKUSRP01.IMG')
 
 ###############################################################################
 # Read USRP dataset with PCB=8
 
+
 def srp_3():
     return srp_1('USRP_PCB8/FKUSRP01.IMG')
 
 ###############################################################################
 # Read from TRANSH01.THF file.
+
 
 def srp_4():
 
@@ -113,6 +117,7 @@ def srp_4():
 
 ###############################################################################
 # Read from TRANSH01.THF file (without "optimization" for single GEN in THF)
+
 
 def srp_5():
 
@@ -149,6 +154,7 @@ def srp_5():
 ###############################################################################
 # Read with subdataset syntax
 
+
 def srp_6():
 
     tst = gdaltest.GDALTest( 'SRP', 'SRP:data/USRP_PCB4/FKUSRP01.GEN,data/USRP_PCB4/FKUSRP01.IMG', 1, 24576, filename_absolute = 1 )
@@ -165,6 +171,7 @@ def srp_cleanup():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     srp_1,

@@ -34,6 +34,8 @@ import sys
 from osgeo import gdal
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: histrep.py [-force] input_file')
     print('   or')

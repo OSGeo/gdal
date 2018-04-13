@@ -39,12 +39,14 @@ import gdaltest
 from osgeo import gdal
 from osgeo import ogr
 
+
 def save_as_csv( geom, filename ):
     csv = 'ID,WKT\n0,"%s"\n' % geom.ExportToWkt()
     open('/home/warmerda/'+filename,'w').write(csv)
 
 ###############################################################################
 # 30 degree rotated ellipse, just one quarter.
+
 
 def ogr_factory_1():
 
@@ -59,6 +61,7 @@ def ogr_factory_1():
 
 ###############################################################################
 # Test forceToPolygon()
+
 
 def ogr_factory_2():
 
@@ -107,6 +110,7 @@ def ogr_factory_2():
 ###############################################################################
 # Test forceToMultiPolygon()
 
+
 def ogr_factory_3():
 
     src_wkt = 'POLYGON((0 0,100 0,100 100,0 0))'
@@ -154,6 +158,7 @@ def ogr_factory_3():
 ###############################################################################
 # Test forceToMultiPoint()
 
+
 def ogr_factory_4():
 
     src_wkt = 'POINT(2 5 3)'
@@ -180,6 +185,7 @@ def ogr_factory_4():
 
 ###############################################################################
 # Test forceToMultiLineString()
+
 
 def ogr_factory_5():
 
@@ -293,6 +299,7 @@ def ogr_factory_6():
 
 ###############################################################################
 # Test forceToLineString()
+
 
 def ogr_factory_7():
 
@@ -420,6 +427,7 @@ def ogr_factory_7():
 
 ###############################################################################
 # Test forceTo()
+
 
 def ogr_factory_8():
 
@@ -592,6 +600,7 @@ def ogr_factory_8():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_factory_1,

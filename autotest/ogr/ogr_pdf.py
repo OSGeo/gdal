@@ -42,6 +42,7 @@ from osgeo import osr
 ###############################################################################
 # Test write support
 
+
 def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
     if ogr.GetDriverByName('PDF') is None:
@@ -113,6 +114,7 @@ def ogr_pdf_1(name = 'tmp/ogr_pdf_1.pdf', write_attributes = 'YES'):
 
 ###############################################################################
 # Test read support
+
 
 def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
 
@@ -211,11 +213,13 @@ def ogr_pdf_2(name = 'tmp/ogr_pdf_1.pdf', has_attributes = True):
 ###############################################################################
 # Test write support without writing attributes
 
+
 def ogr_pdf_3():
     return ogr_pdf_1('tmp/ogr_pdf_2.pdf', 'NO')
 
 ###############################################################################
 # Check read support without writing attributes
+
 
 def ogr_pdf_4():
     return ogr_pdf_2('tmp/ogr_pdf_2.pdf', False)
@@ -242,6 +246,7 @@ def ogr_pdf_4_podofo():
 
 ###############################################################################
 # Test read support with OGR_PDF_READ_NON_STRUCTURED=YES
+
 
 def ogr_pdf_5():
 
@@ -270,6 +275,7 @@ def ogr_pdf_5():
 
 ###############################################################################
 # Test read support with a non-OGR datasource
+
 
 def ogr_pdf_online_1():
 
@@ -334,6 +340,7 @@ def ogr_pdf_online_1():
 ###############################################################################
 # Cleanup
 
+
 def ogr_pdf_cleanup():
 
     if ogr.GetDriverByName('PDF') is None:
@@ -343,6 +350,7 @@ def ogr_pdf_cleanup():
     ogr.GetDriverByName('PDF').DeleteDataSource('tmp/ogr_pdf_2.pdf')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_pdf_1,

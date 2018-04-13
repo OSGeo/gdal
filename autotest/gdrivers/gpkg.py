@@ -52,6 +52,7 @@ try:
 except:
     has_validate = False
 
+
 def validate(filename, quiet = False):
     if has_validate:
         my_filename = filename
@@ -77,6 +78,7 @@ def validate(filename, quiet = False):
 
 ###############################################################################
 # Test if GPKG and tile drivers are available
+
 
 def gpkg_init():
 
@@ -120,6 +122,8 @@ def gpkg_init():
 
 ###############################################################################
 #
+
+
 def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, clamp_output = True):
     if extend_src:
         mem_ds = gdal.GetDriverByName('MEM').Create('', 256, 256, working_bands)
@@ -159,6 +163,8 @@ def get_expected_checksums(src_ds, tile_drv, working_bands, extend_src = True, c
 
 ###############################################################################
 #
+
+
 def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct, row = 0, col = 0, zoom_level = None):
     if zoom_level is None:
         zoom_level_str = "(SELECT MAX(zoom_level) FROM tmp)"
@@ -209,6 +215,7 @@ def check_tile_format(out_ds, expected_format, expected_band_count, expected_ct,
 
 ###############################################################################
 # Single band, PNG
+
 
 def gpkg_1():
 
@@ -327,6 +334,7 @@ def gpkg_1():
 ###############################################################################
 # Single band, JPEG
 
+
 def gpkg_2():
 
     if gdaltest.gpkg_dr is None:
@@ -427,6 +435,7 @@ def gpkg_2():
 
 ###############################################################################
 # Single band, WEBP
+
 
 def gpkg_3():
 
@@ -550,6 +559,7 @@ def gpkg_3():
 ###############################################################################
 # Three band, PNG
 
+
 def gpkg_4(tile_drv_name = 'PNG'):
 
     if gdaltest.gpkg_dr is None:
@@ -628,17 +638,20 @@ def gpkg_4(tile_drv_name = 'PNG'):
 ###############################################################################
 # Three band, JPEG
 
+
 def gpkg_5():
     return gpkg_4(tile_drv_name = 'JPEG')
 
 ###############################################################################
 # Three band, WEBP
 
+
 def gpkg_6():
     return gpkg_4(tile_drv_name = 'WEBP')
 
 ###############################################################################
 # 4 band, PNG
+
 
 def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaque = False):
     assert(not (alpha_fully_transparent and alpha_fully_opaque))
@@ -653,6 +666,7 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent = False, alpha_fully_opaqu
     elif alpha_fully_transparent:
         tmp_ds.GetRasterBand(4).Fill(0)
     return tmp_ds
+
 
 def gpkg_7(tile_drv_name = 'PNG'):
 
@@ -744,17 +758,21 @@ def gpkg_7(tile_drv_name = 'PNG'):
 ###############################################################################
 # 4 band, JPEG
 
+
 def gpkg_8():
     return gpkg_7(tile_drv_name = 'JPEG')
 
 ###############################################################################
 # 4 band, WEBP
 
+
 def gpkg_9():
     return gpkg_7(tile_drv_name = 'WEBP')
 
 ###############################################################################
 #
+
+
 def get_georeferenced_ds_with_pct32():
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba_pct32.png')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
@@ -767,6 +785,7 @@ def get_georeferenced_ds_with_pct32():
 
 ###############################################################################
 # Single band with 32 bit color table, PNG
+
 
 def gpkg_10():
 
@@ -888,6 +907,7 @@ def gpkg_10():
 ###############################################################################
 # Single band with 32 bit color table, JPEG
 
+
 def gpkg_11(tile_drv_name = 'JPEG'):
 
     if gdaltest.gpkg_dr is None:
@@ -943,11 +963,13 @@ def gpkg_11(tile_drv_name = 'JPEG'):
 ###############################################################################
 # Single band with 32 bit color table, WEBP
 
+
 def gpkg_12():
     return gpkg_11(tile_drv_name = 'WEBP')
 
 ###############################################################################
 # Single band with 24 bit color table, PNG
+
 
 def gpkg_13():
 
@@ -1018,6 +1040,7 @@ def gpkg_13():
 
 ###############################################################################
 # Test creation and opening options
+
 
 def gpkg_14():
 
@@ -1432,6 +1455,7 @@ def gpkg_14():
 ###############################################################################
 # Test error cases
 
+
 def gpkg_15():
 
     if gdaltest.gpkg_dr is None:
@@ -1596,6 +1620,7 @@ def gpkg_15():
 ###############################################################################
 # Test block/tile caching
 
+
 def gpkg_16():
 
     if gdaltest.gpkg_dr is None:
@@ -1640,6 +1665,7 @@ def gpkg_16():
 
 ###############################################################################
 # Test overviews with single band dataset
+
 
 def gpkg_17():
 
@@ -1807,6 +1833,7 @@ def gpkg_17():
 ###############################################################################
 # Test overviews with 3 band dataset
 
+
 def gpkg_18():
 
     if gdaltest.gpkg_dr is None:
@@ -1961,6 +1988,7 @@ def gpkg_18():
 ###############################################################################
 # Test overviews with 24-bit color palette single band dataset
 
+
 def gpkg_19():
 
     if gdaltest.gpkg_dr is None:
@@ -2012,6 +2040,7 @@ def gpkg_19():
 
 ###############################################################################
 # Test PNG8
+
 
 def gpkg_20():
 
@@ -2115,6 +2144,7 @@ def gpkg_20():
 
 ###############################################################################
 # Test metadata
+
 
 def gpkg_21():
 
@@ -2411,6 +2441,7 @@ def gpkg_21():
 ###############################################################################
 # Two band, PNG
 
+
 def get_georeferenced_greyalpha_ds():
     src_ds = gdal.Open('../gcore/data/stefan_full_greyalpha.tif')
     tmp_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tmp.tif',
@@ -2419,6 +2450,7 @@ def get_georeferenced_greyalpha_ds():
     tmp_ds.WriteRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize,
                        src_ds.ReadRaster(0, 0, src_ds.RasterXSize, src_ds.RasterYSize))
     return tmp_ds
+
 
 def gpkg_22(tile_drv_name = 'PNG'):
 
@@ -2497,11 +2529,13 @@ def gpkg_22(tile_drv_name = 'PNG'):
 ###############################################################################
 # Two band, JPEG
 
+
 def gpkg_23():
     return gpkg_22(tile_drv_name = 'JPEG')
 
 ###############################################################################
 # Two band, WEBP
+
 
 def gpkg_24():
     return gpkg_22(tile_drv_name = 'WEBP')
@@ -2509,11 +2543,13 @@ def gpkg_24():
 ###############################################################################
 # Two band, mixed
 
+
 def gpkg_25():
     return gpkg_22(tile_drv_name = None)
 
 ###############################################################################
 # Test TILING_SCHEME
+
 
 def gpkg_26():
 
@@ -2646,6 +2682,7 @@ def gpkg_26():
 ###############################################################################
 # Test behaviour with low block cache max
 
+
 def gpkg_27():
 
     if gdaltest.gpkg_dr is None:
@@ -2673,6 +2710,7 @@ def gpkg_27():
 ###############################################################################
 # Test that reading a block in a band doesn't wipe another band of the same
 # block that would have gone through the GPKG in-memory cache
+
 
 def gpkg_28():
 
@@ -2715,6 +2753,7 @@ def gpkg_28():
 
 ###############################################################################
 # Variation of gpkg_28 with 2 blocks
+
 
 def gpkg_29(x = 0):
 
@@ -2760,12 +2799,14 @@ def gpkg_29(x = 0):
 ###############################################################################
 # Variation of gpkg_29 where the read is done in another block
 
+
 def gpkg_30():
 
     return gpkg_29(x = 200)
 
 ###############################################################################
 # 1 band to RGBA
+
 
 def gpkg_31():
 
@@ -2796,6 +2837,7 @@ def gpkg_31():
 
 ###############################################################################
 # grey-alpha to RGBA
+
 
 def gpkg_32():
 
@@ -2835,6 +2877,7 @@ def gpkg_32():
 ###############################################################################
 # Single band with 32 bit color table -> RGBA
 
+
 def gpkg_33():
 
     if gdaltest.gpkg_dr is None:
@@ -2867,6 +2910,7 @@ def gpkg_33():
 ###############################################################################
 # Test partial tiles with overviews (#6335)
 
+
 def gpkg_34():
 
     if gdaltest.gpkg_dr is None:
@@ -2894,6 +2938,7 @@ def gpkg_34():
 
 ###############################################################################
 # Test dirty block flushing while reading block (#6365)
+
 
 def gpkg_35():
 
@@ -2945,6 +2990,7 @@ def gpkg_35():
 ###############################################################################
 # Single band with 24 bit color table, PNG, GoogleMapsCompatible
 
+
 def gpkg_36():
 
     if gdaltest.gpkg_dr is None:
@@ -2978,6 +3024,7 @@ def gpkg_36():
 # due to issues in comparing the factor of overviews with the user specified
 # factors
 
+
 def gpkg_37():
 
     if gdaltest.gpkg_dr is None:
@@ -2999,6 +3046,7 @@ def gpkg_37():
 
 ###############################################################################
 # Test generating more than 1000 tiles
+
 
 def gpkg_38():
 
@@ -3041,6 +3089,7 @@ def gpkg_38():
 
 ###############################################################################
 # Test tile gridded coverage data
+
 
 def gpkg_39():
 
@@ -3198,7 +3247,6 @@ def gpkg_39():
         print(mdi)
         return 'fail'
     ds = None
-
 
     gdal.Translate('/vsimem/gpkg_39.gpkg', src_ds, format = 'GPKG', noData = 1)
     ds = gdal.Open('/vsimem/gpkg_39.gpkg')
@@ -3374,7 +3422,6 @@ NODATA_value -32768
     src_ds = None
     gdal.Unlink('/vsimem/gpkg_39.asc')
 
-
     # Particular case with nodata = 65535 for UInt16
     gdal.FileFromMemBuffer('/vsimem/gpkg_39.asc',
 """ncols        6
@@ -3478,7 +3525,6 @@ cellsize     60
     src_ds = None
     gdal.Unlink('/vsimem/gpkg_39.asc')
 
-
     # Test that we can delete an existing tile
     ds = gdaltest.gpkg_dr.Create('/vsimem/gpkg_39.gpkg', 256, 256, 1, gdal.GDT_UInt16)
     ds.SetGeoTransform([2,0.001,0,49,0,-0.001])
@@ -3542,6 +3588,7 @@ cellsize     60
 
 ###############################################################################
 # Test VERSION
+
 
 def gpkg_40():
 
@@ -3629,6 +3676,7 @@ def gpkg_40():
 ###############################################################################
 # Robustness test
 
+
 def gpkg_41():
 
     if gdaltest.gpkg_dr is None or gdal.GetConfigOption('TRAVIS') is not None or \
@@ -3648,6 +3696,7 @@ def gpkg_41():
 
 ###############################################################################
 # Test opening in vector mode a database without gpkg_geometry_columns
+
 
 def gpkg_42():
 
@@ -3681,6 +3730,7 @@ def gpkg_42():
 
 ###############################################################################
 # Test adding raster to a database without pre-existing raster support tables.
+
 
 def gpkg_43():
 
@@ -3724,6 +3774,7 @@ def gpkg_43():
 ###############################################################################
 # Test opening a .gpkg.sql file
 
+
 def gpkg_44():
 
     if gdaltest.gpkg_dr is None:
@@ -3741,6 +3792,7 @@ def gpkg_44():
 ###############################################################################
 # Test opening a .gpkg file
 
+
 def gpkg_45():
 
     if gdaltest.gpkg_dr is None:
@@ -3754,6 +3806,7 @@ def gpkg_45():
 
 ###############################################################################
 # Test fix for #6932
+
 
 def gpkg_46():
 
@@ -3798,6 +3851,7 @@ def gpkg_46():
 ###############################################################################
 # Test fix for #6976
 
+
 def gpkg_47():
 
     if gdaltest.gpkg_dr is None:
@@ -3821,6 +3875,7 @@ def gpkg_47():
 ###############################################################################
 # Test fix for https://issues.qgis.org/issues/16997 (opening a file with
 # subdatasets on Windows)
+
 
 def gpkg_48():
 
@@ -3851,6 +3906,8 @@ def gpkg_48():
     return 'success'
 
 ###############################################################################
+
+
 def gpkg_delete_raster_layer():
 
     if gdaltest.gpkg_dr is None:
@@ -3905,6 +3962,8 @@ def gpkg_open_old_gpkg_elevation_tiles_extension():
     return 'success'
 
 ###############################################################################
+
+
 def gpkg_GeneralCmdLineProcessor():
 
     if gdaltest.gpkg_dr is None:
@@ -3926,6 +3985,7 @@ def gpkg_GeneralCmdLineProcessor():
 
 ###############################################################################
 #
+
 
 def gpkg_cleanup():
 

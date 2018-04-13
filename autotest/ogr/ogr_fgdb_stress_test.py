@@ -46,6 +46,7 @@ from osgeo import osr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_fgdb_stress_test_init():
 
     ogrtest.fgdb_drv = None
@@ -89,6 +90,7 @@ def ogr_fgdb_stress_test_init():
 
 ###############################################################################
 # Generate databases from random operations
+
 
 def ogr_fgdb_stress_test_1():
     if ogrtest.fgdb_drv is None:
@@ -191,6 +193,7 @@ def ogr_fgdb_stress_test_1():
 
 ###############################################################################
 # Compare databases
+
 
 def ogr_fgdb_stress_test_2():
     if ogrtest.fgdb_drv is None:

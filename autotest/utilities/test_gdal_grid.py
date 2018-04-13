@@ -52,6 +52,7 @@ gdal_grid = test_cli_utilities.get_gdal_grid_path()
 ###############################################################################
 #
 
+
 def test_gdal_grid_1():
     if gdal_grid is None:
         return 'skip'
@@ -124,6 +125,7 @@ def test_gdal_grid_1():
 
 ###############################################################################
 # Test Nearest Neighbour gridding algorithm
+
 
 def test_gdal_grid_2():
     if gdal_grid is None:
@@ -257,6 +259,7 @@ def test_gdal_grid_2():
 
 ###############################################################################
 # Test Inverse Distance to a Power gridding algorithm
+
 
 def test_gdal_grid_3():
     if gdal_grid is None:
@@ -419,6 +422,7 @@ def test_gdal_grid_3():
 ###############################################################################
 # Test Moving Average gridding algorithm
 
+
 def test_gdal_grid_4():
     if gdal_grid is None:
         return 'skip'
@@ -517,6 +521,7 @@ def test_gdal_grid_4():
 ###############################################################################
 # Test Minimum data metric
 
+
 def test_gdal_grid_5():
     if gdal_grid is None:
         return 'skip'
@@ -568,6 +573,7 @@ def test_gdal_grid_5():
 ###############################################################################
 # Test Maximum data metric
 
+
 def test_gdal_grid_6():
     if gdal_grid is None:
         return 'skip'
@@ -618,6 +624,7 @@ def test_gdal_grid_6():
 
 ###############################################################################
 # Test Range data metric
+
 
 def test_gdal_grid_7():
     if gdal_grid is None:
@@ -671,6 +678,7 @@ def test_gdal_grid_7():
 ###############################################################################
 # Test Count data metric
 
+
 def test_gdal_grid_8():
     if gdal_grid is None:
         return 'skip'
@@ -719,6 +727,7 @@ def test_gdal_grid_8():
 
 ###############################################################################
 # Test Average Distance data metric
+
 
 def test_gdal_grid_9():
     if gdal_grid is None:
@@ -775,6 +784,7 @@ def test_gdal_grid_9():
 ###############################################################################
 # Test Average Distance Between Points data metric
 
+
 def test_gdal_grid_10():
     if gdal_grid is None:
         return 'skip'
@@ -807,6 +817,7 @@ def test_gdal_grid_10():
 ###############################################################################
 # Test linear
 
+
 def test_gdal_grid_11():
     if gdal_grid is None:
         return 'skip'
@@ -834,6 +845,7 @@ def test_gdal_grid_11():
 
 ###############################################################################
 # Test Inverse Distance to a Power with Nearest Neighbor gridding algorithm
+
 
 def test_gdal_grid_12():
     if gdal_grid is None:
@@ -910,6 +922,7 @@ def test_gdal_grid_12():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_grid_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/n43.shp')
@@ -918,6 +931,7 @@ def test_gdal_grid_cleanup():
         drv.Delete(outfile)
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_grid_1,

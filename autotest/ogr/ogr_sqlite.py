@@ -52,6 +52,7 @@ run_without_spatialite = True
 ###############################################################################
 # Create a fresh database.
 
+
 def ogr_sqlite_1():
 
     gdaltest.sl_ds = None
@@ -83,6 +84,7 @@ def ogr_sqlite_1():
 
 ###############################################################################
 # Create table from data/poly.shp
+
 
 def ogr_sqlite_2():
 
@@ -200,6 +202,7 @@ def ogr_sqlite_2():
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
+
 def ogr_sqlite_3():
     if gdaltest.sl_ds is None:
         return 'skip'
@@ -253,6 +256,7 @@ def ogr_sqlite_3():
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.
 
+
 def ogr_sqlite_4():
 
     if gdaltest.sl_ds is None:
@@ -292,6 +296,7 @@ def ogr_sqlite_4():
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
+
 def ogr_sqlite_5():
 
     if gdaltest.sl_ds is None:
@@ -317,6 +322,7 @@ def ogr_sqlite_5():
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
 
+
 def ogr_sqlite_6():
 
     if gdaltest.sl_ds is None:
@@ -340,6 +346,7 @@ def ogr_sqlite_6():
 
 ###############################################################################
 # Test spatial filtering.
+
 
 def ogr_sqlite_7():
 
@@ -377,6 +384,7 @@ def ogr_sqlite_7():
 
 ###############################################################################
 # Test transactions with rollback.
+
 
 def ogr_sqlite_8():
 
@@ -434,6 +442,7 @@ def ogr_sqlite_8():
 
 ###############################################################################
 # Test SetFeature()
+
 
 def ogr_sqlite_9():
 
@@ -495,6 +504,7 @@ def ogr_sqlite_9():
 ###############################################################################
 # Test GetFeature()
 
+
 def ogr_sqlite_10():
 
     if gdaltest.sl_ds is None:
@@ -531,6 +541,7 @@ def ogr_sqlite_10():
 ###############################################################################
 # Test FORMAT=WKB creation option
 
+
 def ogr_sqlite_11():
 
     if gdaltest.sl_ds is None:
@@ -565,6 +576,7 @@ def ogr_sqlite_11():
 
 ###############################################################################
 # Test FORMAT=WKT creation option
+
 
 def ogr_sqlite_12():
 
@@ -615,6 +627,7 @@ def ogr_sqlite_12():
 
 ###############################################################################
 # Test SRID support
+
 
 def ogr_sqlite_13():
 
@@ -706,6 +719,7 @@ def ogr_sqlite_14():
 
 ###############################################################################
 # Test FORMAT=SPATIALITE layer creation option
+
 
 def ogr_sqlite_15():
 
@@ -869,6 +883,7 @@ def ogr_sqlite_16():
 ###############################################################################
 # Test SPATIALITE dataset creation option
 
+
 def ogr_sqlite_17():
 
     if gdaltest.sl_ds is None:
@@ -924,6 +939,7 @@ def ogr_sqlite_17():
 ###############################################################################
 # Create a layer with a non EPSG SRS into a SPATIALITE DB (#3506)
 
+
 def ogr_sqlite_18():
 
     if gdaltest.sl_ds is None:
@@ -963,6 +979,7 @@ def ogr_sqlite_18():
 
 ###############################################################################
 # Create a SpatiaLite DB with INIT_WITH_EPSG=YES
+
 
 def ogr_sqlite_19():
 
@@ -1004,6 +1021,7 @@ def ogr_sqlite_19():
 ###############################################################################
 # Create a SpatiaLite DB with INIT_WITH_EPSG=NO
 
+
 def ogr_sqlite_19_bis():
 
     if gdaltest.sl_ds is None:
@@ -1042,6 +1060,7 @@ def ogr_sqlite_19_bis():
 ###############################################################################
 # Create a regular DB with INIT_WITH_EPSG=YES
 
+
 def ogr_sqlite_20():
 
     if gdaltest.sl_ds is None:
@@ -1078,6 +1097,7 @@ def ogr_sqlite_20():
 ###############################################################################
 # Test CopyLayer() from a table layer (#3617)
 
+
 def ogr_sqlite_21():
 
     if gdaltest.sl_ds is None:
@@ -1098,6 +1118,7 @@ def ogr_sqlite_21():
 
 ###############################################################################
 # Test CopyLayer() from a result layer (#3617)
+
 
 def ogr_sqlite_22():
 
@@ -1121,6 +1142,7 @@ def ogr_sqlite_22():
 
 ###############################################################################
 # Test ignored fields works ok
+
 
 def ogr_sqlite_23():
 
@@ -1188,6 +1210,7 @@ def ogr_sqlite_23():
 
 ###############################################################################
 # Test that ExecuteSQL() with OGRSQL dialect doesn't forward the where clause to sqlite (#4022)
+
 
 def ogr_sqlite_24():
 
@@ -1260,6 +1283,7 @@ def ogr_sqlite_24():
 ###############################################################################
 # Test opening a /vsicurl/ DB
 
+
 def ogr_sqlite_25():
 
     if gdaltest.sl_ds is None:
@@ -1312,6 +1336,7 @@ def ogr_sqlite_25():
 ###############################################################################
 # Test creating a :memory: DB
 
+
 def ogr_sqlite_26():
 
     if gdaltest.sl_ds is None:
@@ -1335,6 +1360,7 @@ def ogr_sqlite_26():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_sqlite_27():
 
@@ -1386,6 +1412,7 @@ def ogr_sqlite_27():
 ###############################################################################
 # Run test_ogrsf on a spatialite enabled DB
 
+
 def ogr_sqlite_28():
 
     if gdaltest.sl_ds is None:
@@ -1435,6 +1462,7 @@ def ogr_sqlite_28():
 ###############################################################################
 # Test CreateFeature() with empty feature
 
+
 def ogr_sqlite_29():
 
     if gdaltest.sl_ds is None:
@@ -1458,6 +1486,7 @@ def ogr_sqlite_29():
 ###############################################################################
 # Test ExecuteSQL() with empty result set (#4684)
 
+
 def ogr_sqlite_30():
 
     if gdaltest.sl_ds is None:
@@ -1478,6 +1507,7 @@ def ogr_sqlite_30():
 
 ###############################################################################
 # Test if SpatiaLite is available
+
 
 def ogr_spatialite_1():
 
@@ -1501,6 +1531,7 @@ def ogr_spatialite_1():
 
 ###############################################################################
 # Test spatial filter when SpatiaLite is available
+
 
 def ogr_spatialite_2():
 
@@ -1710,6 +1741,7 @@ def ogr_spatialite_2():
 ###############################################################################
 # Test VirtualShape feature of SpatiaLite
 
+
 def ogr_spatialite_3():
 
     if not gdaltest.has_spatialite:
@@ -1738,6 +1770,7 @@ def ogr_spatialite_3():
 
 ###############################################################################
 # Test updating a spatialite DB (#3471 and #3474)
+
 
 def ogr_spatialite_4():
 
@@ -1795,6 +1828,7 @@ def ogr_spatialite_4():
 
 ###############################################################################
 # Test writing and reading back spatialite geometries (#4092)
+
 
 def ogr_spatialite_5(bUseComprGeom = False):
 
@@ -1947,6 +1981,7 @@ def ogr_spatialite_compressed_geom_5():
 ###############################################################################
 # Test spatialite spatial views
 
+
 def ogr_spatialite_6():
 
     if not gdaltest.has_spatialite:
@@ -2093,6 +2128,7 @@ def ogr_spatialite_6():
 ###############################################################################
 # Test VirtualShape:xxx.shp
 
+
 def ogr_spatialite_7():
 
     if not gdaltest.has_spatialite:
@@ -2121,6 +2157,7 @@ def ogr_spatialite_7():
 
 ###############################################################################
 # Test tables with multiple geometry columns (#4768)
+
 
 def ogr_spatialite_8():
 
@@ -2327,6 +2364,7 @@ def ogr_spatialite_8():
 ###############################################################################
 # Test tables with multiple geometry columns (#4768)
 
+
 def ogr_sqlite_31():
 
     if gdaltest.sl_ds is None:
@@ -2408,6 +2446,7 @@ def ogr_sqlite_31():
 ###############################################################################
 # Test datetime support
 
+
 def ogr_sqlite_32():
 
     if gdaltest.sl_ds is None:
@@ -2463,6 +2502,7 @@ def ogr_sqlite_32():
 
 ###############################################################################
 # Test SRID layer creation option
+
 
 def ogr_sqlite_33():
 
@@ -2539,6 +2579,7 @@ def ogr_sqlite_33():
 ###############################################################################
 # Test REGEXP support (#4823)
 
+
 def ogr_sqlite_34():
 
     if gdaltest.sl_ds is None:
@@ -2614,6 +2655,7 @@ def ogr_sqlite_34():
 
 ###############################################################################
 # Test SetAttributeFilter() on SQL result layer
+
 
 def ogr_sqlite_35():
 
@@ -2711,6 +2753,7 @@ def ogr_sqlite_35():
 ###############################################################################
 # Test FID64 support
 
+
 def ogr_sqlite_36():
 
     if gdaltest.sl_ds is None:
@@ -2748,6 +2791,7 @@ def ogr_sqlite_36():
 
 ###############################################################################
 # Test not nullable fields
+
 
 def ogr_sqlite_37():
 
@@ -2858,6 +2902,7 @@ def ogr_sqlite_37():
 
 ###############################################################################
 # Test  default values
+
 
 def ogr_sqlite_38():
 
@@ -3000,6 +3045,7 @@ def ogr_sqlite_38():
 ###############################################################################
 # Test spatial filters with point extent
 
+
 def ogr_spatialite_9():
 
     if not gdaltest.has_spatialite:
@@ -3022,6 +3068,7 @@ def ogr_spatialite_9():
 
 ###############################################################################
 # Test not nullable fields
+
 
 def ogr_spatialite_10():
 
@@ -3169,6 +3216,7 @@ def ogr_sqlite_39():
 
 ###############################################################################
 # Test dataset transactions
+
 
 def ogr_sqlite_40():
 
@@ -3331,6 +3379,7 @@ def ogr_sqlite_40():
 ###############################################################################
 # Test reading dates from Julian day floating point representation
 
+
 def ogr_sqlite_41():
 
     if gdaltest.sl_ds is None:
@@ -3355,6 +3404,7 @@ def ogr_sqlite_41():
 
 ###############################################################################
 # Test ExecuteSQL() heuristics (#6107)
+
 
 def ogr_sqlite_42():
 
@@ -3418,6 +3468,7 @@ def ogr_sqlite_42():
 ###############################################################################
 # Test file:foo?mode=memory&cache=shared (#6150)
 
+
 def ogr_sqlite_43():
 
     if gdaltest.sl_ds is None:
@@ -3436,6 +3487,7 @@ def ogr_sqlite_43():
 
 ###############################################################################
 # Test reading/writing StringList, etc..
+
 
 def ogr_sqlite_44():
 
@@ -3482,6 +3534,7 @@ def ogr_sqlite_44():
 
 ###############################################################################
 # Test WAL and opening in read-only (#6776)
+
 
 def ogr_sqlite_45():
 
@@ -3556,6 +3609,7 @@ def ogr_spatialite_11():
 ###############################################################################
 # Test opening a .sql file
 
+
 def ogr_spatialite_12():
 
     if not gdaltest.has_spatialite:
@@ -3575,6 +3629,7 @@ def ogr_spatialite_12():
 
 ###############################################################################
 #
+
 
 def ogr_sqlite_cleanup():
 
@@ -3687,6 +3742,7 @@ def ogr_sqlite_cleanup():
 
 ###############################################################################
 # Ask to run again tests in a new python process without libspatialite loaded
+
 
 def ogr_sqlite_without_spatialite():
 

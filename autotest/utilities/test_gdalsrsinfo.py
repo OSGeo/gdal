@@ -39,6 +39,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_gdalsrsinfo_1():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -59,6 +60,7 @@ def test_gdalsrsinfo_1():
 ###############################################################################
 # Test -o proj4 option
 
+
 def test_gdalsrsinfo_2():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -75,6 +77,7 @@ def test_gdalsrsinfo_2():
 ###############################################################################
 # Test -o wkt option
 
+
 def test_gdalsrsinfo_3():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -89,11 +92,11 @@ def test_gdalsrsinfo_3():
         print(ret.strip())
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test -o wkt_esri option
+
 
 def test_gdalsrsinfo_4():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -109,6 +112,7 @@ def test_gdalsrsinfo_4():
 
 ###############################################################################
 # Test -o wkt_old option
+
 
 def test_gdalsrsinfo_5():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -127,6 +131,7 @@ def test_gdalsrsinfo_5():
 
 ###############################################################################
 # Test -o wkt_simple option
+
 
 def test_gdalsrsinfo_6():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -167,11 +172,11 @@ def test_gdalsrsinfo_6():
         print(ret.strip())
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test -o mapinfo option
+
 
 def test_gdalsrsinfo_7():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -254,6 +259,7 @@ def test_gdalsrsinfo_10():
 ###############################################################################
 # Test -V option - invalid
 
+
 def test_gdalsrsinfo_11():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -275,6 +281,7 @@ def test_gdalsrsinfo_11():
 
 ###############################################################################
 # Test EPSG:epsg format
+
 
 def test_gdalsrsinfo_12():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -307,6 +314,7 @@ def test_gdalsrsinfo_13():
 ###############################################################################
 # Test VSILFILE format
 
+
 def test_gdalsrsinfo_14():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -321,6 +329,7 @@ def test_gdalsrsinfo_14():
 
 ###############################################################################
 # Test .shp format
+
 
 def test_gdalsrsinfo_14bis():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -337,6 +346,7 @@ def test_gdalsrsinfo_14bis():
 ###############################################################################
 # Test .prj format
 
+
 def test_gdalsrsinfo_15():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
         return 'skip'
@@ -351,6 +361,7 @@ def test_gdalsrsinfo_15():
 
 ###############################################################################
 # Test DRIVER:file syntax (bug #4493) -  similar test should be done with OGR
+
 
 def test_gdalsrsinfo_16():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -372,6 +383,7 @@ def test_gdalsrsinfo_16():
 
 ###############################################################################
 # Test -e
+
 
 def test_gdalsrsinfo_17():
     if test_cli_utilities.get_gdalsrsinfo_path() is None:
@@ -407,6 +419,7 @@ def test_gdalsrsinfo_17():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     test_gdalsrsinfo_1,

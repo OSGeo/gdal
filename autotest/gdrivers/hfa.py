@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Verify we can read the special histogram metadata from a provided image.
 
+
 def hfa_histread():
 
     ds = gdal.Open('../gcore/data/utmsmall.img')
@@ -75,12 +76,12 @@ def hfa_histread():
         gdaltest.post_reason( 'STATISTICS_EXCLUDEDVALUE is wrong.' )
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file the histogram
 # info is preserved.
+
 
 def hfa_histwrite():
 
@@ -113,7 +114,6 @@ def hfa_histwrite():
         gdaltest.post_reason( 'STATISTICS_HISTOMAX is wrong.' )
         return 'fail'
 
-
     if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
         gdaltest.post_reason( 'STATISTICS_HISTOBINVALUES is wrong.' )
         return 'fail'
@@ -123,6 +123,8 @@ def hfa_histwrite():
 ###############################################################################
 # Verify that if we copy this test image to a new Imagine file and then re-write the
 # histogram information, the new histogram can then be read back in.
+
+
 def hfa_histrewrite():
 
     drv = gdal.GetDriverByName('HFA')
@@ -163,6 +165,7 @@ def hfa_histrewrite():
 ###############################################################################
 # Verify we can read metadata of int.img.
 
+
 def hfa_int_stats_1():
 
     ds = gdal.Open('data/int.img')
@@ -202,6 +205,7 @@ def hfa_int_stats_1():
 ###############################################################################
 # Verify we can read band statistics of int.img.
 
+
 def hfa_int_stats_2():
 
     ds = gdal.Open('data/int.img')
@@ -230,6 +234,7 @@ def hfa_int_stats_2():
 
 ###############################################################################
 # Verify we can read metadata of float.img.
+
 
 def hfa_float_stats_1():
 
@@ -278,6 +283,7 @@ def hfa_float_stats_1():
 ###############################################################################
 # Verify we can read band statistics of float.img.
 
+
 def hfa_float_stats_2():
 
     ds = gdal.Open('data/float.img')
@@ -307,6 +313,7 @@ def hfa_float_stats_2():
 ###############################################################################
 # Verify we can read image data.
 
+
 def hfa_int_read():
 
     ds = gdal.Open('data/int.img')
@@ -323,6 +330,7 @@ def hfa_int_read():
 
 ###############################################################################
 # Verify we can read image data.
+
 
 def hfa_float_read():
 
@@ -349,6 +357,7 @@ def hfa_float_read():
 ###############################################################################
 # verify we can read PE_STRING coordinate system.
 
+
 def hfa_pe_read():
 
     ds = gdal.Open('data/87test.img')
@@ -364,6 +373,7 @@ def hfa_pe_read():
 
 ###############################################################################
 # Verify we can write PE_STRING nodes.
+
 
 def hfa_pe_write():
 
@@ -392,6 +402,7 @@ def hfa_pe_write():
 ###############################################################################
 # Verify we can write and read large metadata items.
 
+
 def hfa_metadata_1():
 
     drv = gdal.GetDriverByName('HFA')
@@ -416,6 +427,7 @@ def hfa_metadata_1():
 ###############################################################################
 # Verify that writing metadata multiple times does not result in duplicate
 # nodes.
+
 
 def hfa_metadata_2():
 
@@ -445,6 +457,7 @@ def hfa_metadata_2():
 ###############################################################################
 # Verify we can grow the RRD list in cases where this requires
 # moving the HFAEntry to the end of the file.  (bug #1109)
+
 
 def hfa_grow_rrdlist():
 
@@ -476,6 +489,7 @@ def hfa_grow_rrdlist():
 
 ###############################################################################
 # Make sure an old .ige file is deleted when creating a new dataset. (#1784)
+
 
 def hfa_clean_ige():
 
@@ -528,6 +542,7 @@ def hfa_clean_ige():
 ###############################################################################
 # Verify that we can read this corrupt .aux file without hanging (#1907)
 
+
 def hfa_corrupt_aux():
 
     # NOTE: we depend on being able to open .aux files as a weak sort of
@@ -553,6 +568,7 @@ def hfa_corrupt_aux():
 ###############################################################################
 # support MapInformation for units (#1967)
 
+
 def hfa_mapinformation_units():
 
     # NOTE: we depend on being able to open .aux files as a weak sort of
@@ -572,6 +588,7 @@ def hfa_mapinformation_units():
 
 ###############################################################################
 # Write nodata value.
+
 
 def hfa_nodata_write():
 
@@ -594,6 +611,7 @@ def hfa_nodata_write():
 
 ###############################################################################
 # Verify written nodata value.
+
 
 def hfa_nodata_read():
 
@@ -634,6 +652,7 @@ def hfa_nodata_read():
 ###############################################################################
 # Verify we read simple affine geotransforms properly.
 
+
 def hfa_rotated_read():
 
     ds = gdal.Open( 'data/fg118-91.aux' )
@@ -657,6 +676,7 @@ def hfa_rotated_read():
 
 ###############################################################################
 # Verify we can write affine geotransforms.
+
 
 def hfa_rotated_write():
 
@@ -739,6 +759,7 @@ def hfa_vsimem():
 # Test that PROJCS[] names are preserved as the mapinfo.proName in
 # the .img file.  (#2422)
 
+
 def hfa_proName():
 
     drv = gdal.GetDriverByName('HFA')
@@ -795,6 +816,7 @@ def hfa_read_empty_compressed():
 ###############################################################################
 # Verify "unique values" based color table (#2419)
 
+
 def hfa_unique_values_color_table():
 
     ds = gdal.Open( 'data/i8u_c_i.img' )
@@ -824,6 +846,7 @@ def hfa_unique_values_color_table():
 
 ###############################################################################
 # Verify "unique values" based histogram.
+
 
 def hfa_unique_values_hist():
 
@@ -874,6 +897,7 @@ def hfa_unique_values_hist():
 
 ###############################################################################
 # Verify reading of 3rd order XFORM polynomials.
+
 
 def hfa_xforms_3rd():
 
@@ -931,6 +955,7 @@ def hfa_xforms_3rd():
 ###############################################################################
 # Verify that we can clear an existing color table
 
+
 def hfa_delete_colortable():
     # copy a file to tmp dir to modify.
     open('tmp/i8u.img','wb').write(open('data/i8u_c_i.img', 'rb').read())
@@ -965,6 +990,7 @@ def hfa_delete_colortable():
 
 ###############################################################################
 # Verify that we can clear an existing color table (#2842)
+
 
 def hfa_delete_colortable2():
 
@@ -1005,6 +1031,7 @@ def hfa_delete_colortable2():
 ###############################################################################
 # Verify we can read the special histogram metadata from a provided image.
 
+
 def hfa_excluded_values():
 
     ds = gdal.Open('data/dem10.img')
@@ -1015,11 +1042,11 @@ def hfa_excluded_values():
         gdaltest.post_reason( 'STATISTICS_EXCLUDEDVALUE is wrong.' )
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # verify that we propagate nodata to overviews in .img/.rrd format.
+
 
 def hfa_ov_nodata():
 
@@ -1062,6 +1089,7 @@ def hfa_ov_nodata():
 ###############################################################################
 # Confirm that we can read 8bit grayscale overviews for 1bit images.
 
+
 def hfa_read_bit2grayscale():
 
     ds = gdal.Open( 'data/small1bit.img' )
@@ -1082,6 +1110,7 @@ def hfa_read_bit2grayscale():
 ###############################################################################
 # Confirm that we can create overviews in rrd format for an .img file with
 # the bit2grayscale algorithm (#2914)
+
 
 def hfa_write_bit2grayscale():
 
@@ -1123,6 +1152,7 @@ def hfa_write_bit2grayscale():
 ###############################################################################
 # Verify handling of camera model metadata (#2675)
 
+
 def hfa_camera_md():
 
     ds = gdal.Open( '/vsisparse/data/251_sparse.xml' )
@@ -1161,6 +1191,7 @@ def hfa_camera_md():
 ###############################################################################
 # Verify dataset's projection matches expected
 
+
 def hfa_verify_dataset_projection(dataset_path, exp_wkt):
 
     ds = gdal.Open( dataset_path )
@@ -1175,12 +1206,14 @@ def hfa_verify_dataset_projection(dataset_path, exp_wkt):
 ###############################################################################
 # Verify can read Transverse Mercator (South Orientated) projections
 
+
 def hfa_read_tmso_projection():
     exp_wkt = 'PROJCS["Transverse Mercator (South Orientated)",GEOGCS["Cape-1",DATUM["Cape-1",SPHEROID["Clarke 1880 Arc",6378249.145,293.4663077168331],TOWGS84[-136,-108,-292,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator_South_Orientated"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",21],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
     return hfa_verify_dataset_projection('../gcore/data/22281.aux', exp_wkt)
 
 ###############################################################################
 # Verify can write Transverse Mercator (South Orientated) projections to aux files
+
 
 def hfa_write_tmso_projection():
     dataset_path = 'tmp/tmso.img'
@@ -1197,12 +1230,14 @@ def hfa_write_tmso_projection():
 ###############################################################################
 # Verify can read Hotine Oblique Mercator (Variant A) projections
 
+
 def hfa_read_homva_projection():
     exp_wkt = 'PROJCS["Hotine Oblique Mercator (Variant A)",GEOGCS["GDM 2000",DATUM["GDM 2000",SPHEROID["GRS 1980",6378137,298.2572220960422],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator"],PARAMETER["latitude_of_center",4],PARAMETER["longitude_of_center",115],PARAMETER["azimuth",53.31580995],PARAMETER["rectified_grid_angle",53.13010236111111],PARAMETER["scale_factor",0.99984],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]'
     return hfa_verify_dataset_projection('../gcore/data/3376.tif', exp_wkt)
 
 ###############################################################################
 # Verify can write Transverse Mercator (South Orientated) projections to aux files
+
 
 def hfa_write_homva_projection():
     dataset_path = 'tmp/homva.img'
@@ -1219,6 +1254,7 @@ def hfa_write_homva_projection():
 ###############################################################################
 # Check that overviews with an .rde file are properly supported in file list,
 # and fetching actual overviews.
+
 
 def hfa_rde_overviews():
 
@@ -1257,6 +1293,7 @@ def hfa_rde_overviews():
 ###############################################################################
 # Check that we can copy and rename a complex file set, and that the internal filenames
 # in the .img and .rrd seem to be updated properly.
+
 
 def hfa_copyfiles():
 
@@ -1363,6 +1400,7 @@ def hfa_write_rat():
 ###############################################################################
 # Test STATISTICS creation option
 
+
 def hfa_createcopy_statistics():
 
     tmpAuxXml = '../gcore/data/byte.tif.aux.xml'
@@ -1395,6 +1433,7 @@ def hfa_createcopy_statistics():
 ###############################################################################
 # Test GetUnitType()
 
+
 def hfa_read_elevation_units():
 
     ds = gdal.Open('../gcore/data/erdas_cm.img')
@@ -1425,6 +1464,7 @@ def hfa_read_elevation_units():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     hfa_histread,

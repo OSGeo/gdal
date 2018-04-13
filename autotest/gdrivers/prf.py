@@ -33,10 +33,12 @@ from osgeo import gdal
 
 ###############################################################################
 
+
 def prf_1():
 
     tst = gdaltest.GDALTest( 'prf', './PRF/ph.prf', 1, 43190 )
     return tst.testOpen( check_gt = (1, 2, 3, -7, 5, 6) )
+
 
 def prf_2():
 
@@ -80,6 +82,7 @@ def prf_2():
 
     return 'success'
 
+
 def prf_3():
 
     ds = gdal.Open('./data/PRF/ph.prf')
@@ -96,6 +99,7 @@ def prf_3():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     prf_1,

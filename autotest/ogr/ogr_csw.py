@@ -41,6 +41,7 @@ from osgeo import gdal
 # Test underlying OGR drivers
 #
 
+
 def ogr_csw_init():
 
     gdaltest.csw_drv = None
@@ -71,6 +72,7 @@ def ogr_csw_init():
 ###############################################################################
 # Test reading a pyCSW server
 
+
 def ogr_csw_pycsw():
     if gdaltest.csw_drv is None:
         return 'skip'
@@ -91,6 +93,8 @@ def ogr_csw_pycsw():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_not_enabled():
 
     if gdaltest.csw_drv is None:
@@ -122,6 +126,8 @@ def ogr_csw_vsimem_fail_because_no_get_capabilities():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_empty_response():
 
     if gdaltest.csw_drv is None:
@@ -145,6 +151,8 @@ def ogr_csw_vsimem_fail_because_empty_response():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
 
     if gdaltest.csw_drv is None:
@@ -168,6 +176,8 @@ def ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_exception():
 
     if gdaltest.csw_drv is None:
@@ -191,6 +201,8 @@ def ogr_csw_vsimem_fail_because_exception():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
 
     if gdaltest.csw_drv is None:
@@ -214,6 +226,8 @@ def ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_fail_because_missing_version():
 
     if gdaltest.csw_drv is None:
@@ -239,6 +253,8 @@ def ogr_csw_vsimem_fail_because_missing_version():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_csw_vsimem_csw_minimal_instance():
 
     if gdaltest.csw_drv is None:
@@ -561,6 +577,7 @@ def ogr_csw_vsimem_csw_minimal_instance():
 
 ###############################################################################
 
+
 def ogr_csw_vsimem_csw_output_schema_csw():
 
     if gdaltest.csw_drv is None:
@@ -625,6 +642,7 @@ def ogr_csw_vsimem_csw_output_schema_csw():
 
 ###############################################################################
 
+
 def ogr_csw_vsimem_csw_output_schema_gmd():
 
     if gdaltest.csw_drv is None:
@@ -669,6 +687,7 @@ def ogr_csw_vsimem_csw_output_schema_gmd():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_csw_vsimem_csw_output_schema_fgdc():
 
@@ -717,6 +736,7 @@ def ogr_csw_vsimem_csw_output_schema_fgdc():
 
 ###############################################################################
 
+
 def ogr_csw_vsimem_cleanup():
 
     if gdaltest.csw_drv is None:
@@ -728,6 +748,7 @@ def ogr_csw_vsimem_cleanup():
         gdal.Unlink('/vsimem/' + f)
 
     return 'success'
+
 
 gdaltest_live_list = [
     ogr_csw_pycsw

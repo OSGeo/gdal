@@ -40,6 +40,7 @@ import gdaltest
 # Test a RIK map
 # Data downloaded from : http://www.lantmateriet.se/upload/filer/kartor/programvaror/sverige500_swe99.zip
 
+
 def rik_online_1():
 
     try:
@@ -72,6 +73,7 @@ def rik_online_1():
 ###############################################################################
 # Test a LZW compressed RIK dataset
 
+
 def rik_online_2():
 
     try:
@@ -85,6 +87,7 @@ def rik_online_2():
 
     tst = gdaltest.GDALTest('RIK', 'tmp/cache/ab-del.rik', 1, 44974, filename_absolute = 1 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     rik_online_1,

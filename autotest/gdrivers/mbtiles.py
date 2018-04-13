@@ -41,6 +41,7 @@ import webserver
 ###############################################################################
 # Get the mbtiles driver
 
+
 def mbtiles_1():
 
     try:
@@ -52,6 +53,7 @@ def mbtiles_1():
 
 ###############################################################################
 # Basic test
+
 
 def mbtiles_2():
 
@@ -121,6 +123,7 @@ def mbtiles_2():
 ###############################################################################
 # Open a /vsicurl/ DB
 
+
 def mbtiles_3():
 
     if gdaltest.mbtiles_drv is None:
@@ -164,11 +167,11 @@ def mbtiles_3():
             return 'skip'
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 #
+
 
 def mbtiles_start_webserver():
 
@@ -186,6 +189,7 @@ def mbtiles_start_webserver():
 
 ###############################################################################
 #
+
 
 def mbtiles_http_jpeg_three_bands():
 
@@ -213,6 +217,7 @@ def mbtiles_http_jpeg_three_bands():
 ###############################################################################
 #
 
+
 def mbtiles_http_jpeg_single_band():
 
     if gdaltest.mbtiles_drv is None:
@@ -238,6 +243,7 @@ def mbtiles_http_jpeg_single_band():
 
 ###############################################################################
 #
+
 
 def mbtiles_http_png():
 
@@ -265,6 +271,7 @@ def mbtiles_http_png():
 ###############################################################################
 #
 
+
 def mbtiles_stop_webserver():
 
     if gdaltest.mbtiles_drv is None:
@@ -280,6 +287,7 @@ def mbtiles_stop_webserver():
 
 ###############################################################################
 # Basic test without any option
+
 
 def mbtiles_4():
 
@@ -322,6 +330,7 @@ def mbtiles_4():
 
 ###############################################################################
 # Test write support of a single band dataset
+
 
 def mbtiles_5():
 
@@ -383,6 +392,7 @@ def mbtiles_5():
 ###############################################################################
 # Test write support with options
 
+
 def mbtiles_6():
 
     if gdaltest.mbtiles_drv is None:
@@ -424,6 +434,7 @@ def mbtiles_6():
 
 ###############################################################################
 # Test building overview
+
 
 def mbtiles_7():
 
@@ -495,6 +506,7 @@ def mbtiles_7():
 ###############################################################################
 # Single band with 24 bit color table, PNG
 
+
 def mbtiles_8():
 
     if gdaltest.mbtiles_drv is None:
@@ -525,7 +537,6 @@ def mbtiles_8():
         return 'fail'
     out_ds = None
 
-
     # 512 pixel tiles
     src_ds = gdal.Open('data/small_world_pct.tif')
     out_ds = gdaltest.mbtiles_drv.CreateCopy('/vsimem/mbtiles_8.mbtiles', src_ds, options = ['RESAMPLING=NEAREST', 'BLOCKSIZE=512']  )
@@ -553,6 +564,7 @@ def mbtiles_8():
 
 ###############################################################################
 # Test we are robust to invalid bounds
+
 
 def mbtiles_9():
 
@@ -586,6 +598,7 @@ def mbtiles_9():
 ###############################################################################
 # Test compaction of temporary database
 
+
 def mbtiles_10():
 
     if gdaltest.mbtiles_drv is None:
@@ -614,6 +627,7 @@ def mbtiles_10():
 ###############################################################################
 # Test opening a .mbtiles.sql file
 
+
 def mbtiles_11():
 
     if gdaltest.mbtiles_drv is None:
@@ -633,6 +647,7 @@ def mbtiles_11():
 
 ###############################################################################
 
+
 def mbtiles_raster_open_in_vector_mode():
 
     if gdaltest.mbtiles_drv is None:
@@ -645,6 +660,7 @@ def mbtiles_raster_open_in_vector_mode():
     return 'success'
 
 ###############################################################################
+
 
 def mbtiles_create():
 
@@ -732,6 +748,7 @@ def mbtiles_cleanup():
         return 'skip'
 
     return 'success'
+
 
 gdaltest_list = [
     mbtiles_1,

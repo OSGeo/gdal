@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+
 def open_for_read(uri):
     """
     Opens a test file for reading.
@@ -44,6 +45,8 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+
+
 def visoss_init():
 
     gdaltest.oss_vars = {}
@@ -60,6 +63,7 @@ def visoss_init():
 
 ###############################################################################
 # Error cases
+
 
 def visoss_1():
 
@@ -98,6 +102,7 @@ def visoss_1():
 
     return 'success'
 
+
 def visoss_real_test():
 
     if not gdaltest.built_against_curl():
@@ -130,6 +135,8 @@ def visoss_real_test():
     return 'success'
 
 ###############################################################################
+
+
 def visoss_start_webserver():
 
     gdaltest.webserver_process = None
@@ -153,6 +160,7 @@ def visoss_start_webserver():
 
 ###############################################################################
 
+
 def get_oss_fake_bucket_resource_method(request):
     request.protocol_version = 'HTTP/1.1'
 
@@ -175,6 +183,7 @@ def get_oss_fake_bucket_resource_method(request):
 
 ###############################################################################
 # Test with a fake OSS server
+
 
 def visoss_2():
 
@@ -219,8 +228,6 @@ def visoss_2():
         gdaltest.post_reason('fail')
         print(data)
         return 'fail'
-
-
 
     handler = webserver.SequentialHandler()
 
@@ -293,7 +300,6 @@ def visoss_2():
         print(data)
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
 
     def method(request):
@@ -323,7 +329,6 @@ def visoss_2():
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
@@ -340,7 +345,6 @@ def visoss_2():
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
@@ -356,7 +360,6 @@ def visoss_2():
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
-
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
@@ -410,6 +413,7 @@ def visoss_2():
 
 ###############################################################################
 # Test ReadDir() with a fake OSS server
+
 
 def visoss_3():
 
@@ -654,6 +658,7 @@ def visoss_3():
 ###############################################################################
 # Test simple PUT support with a fake OSS server
 
+
 def visoss_4():
 
     if gdaltest.webserver_port == 0:
@@ -812,6 +817,7 @@ def visoss_4():
 ###############################################################################
 # Test simple DELETE support with a fake OSS server
 
+
 def visoss_5():
 
     if gdaltest.webserver_port == 0:
@@ -844,7 +850,6 @@ def visoss_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/oss_delete_bucket/delete_file', 404, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
@@ -866,6 +871,7 @@ def visoss_5():
 
 ###############################################################################
 # Test multipart upload with a fake OSS server
+
 
 def visoss_6():
 
@@ -1090,6 +1096,7 @@ def visoss_6():
 ###############################################################################
 # Test Mkdir() / Rmdir()
 
+
 def visoss_7():
 
     if gdaltest.webserver_port == 0:
@@ -1165,6 +1172,7 @@ def visoss_7():
 ###############################################################################
 # Test handling of file and directory with same name
 
+
 def visoss_8():
 
     if gdaltest.webserver_port == 0:
@@ -1209,6 +1217,8 @@ def visoss_8():
     return 'success'
 
 ###############################################################################
+
+
 def visoss_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -1224,6 +1234,7 @@ def visoss_stop_webserver():
 
 ###############################################################################
 # Nominal cases (require valid credentials)
+
 
 def visoss_extra_1():
 
@@ -1340,13 +1351,11 @@ def visoss_extra_1():
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
-
         ret = gdal.Rmdir(subpath)
         if ret < 0:
             gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
-
 
         return 'success'
 
@@ -1413,12 +1422,15 @@ def visoss_extra_1():
     return 'success'
 
 ###############################################################################
+
+
 def visoss_cleanup():
 
     for var in gdaltest.oss_vars:
         gdal.SetConfigOption(var, gdaltest.oss_vars[var])
 
     return 'success'
+
 
 gdaltest_list = [ visoss_init,
                   visoss_1,

@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Create 3-band byte
 
+
 def kro_1():
 
     tst = gdaltest.GDALTest( 'KRO', 'rgbsmall.tif', 2, 21053 )
@@ -47,6 +48,7 @@ def kro_1():
 
 ###############################################################################
 # Create 1-band uint16
+
 
 def kro_2():
 
@@ -57,6 +59,7 @@ def kro_2():
 ###############################################################################
 # Create 1-band float32
 
+
 def kro_3():
 
     tst = gdaltest.GDALTest( 'KRO', '../../gcore/data/float32.tif', 1, 4672 )
@@ -66,6 +69,7 @@ def kro_3():
 ###############################################################################
 # Create 4-band rgba uint16
 
+
 def kro_4():
 
     tst = gdaltest.GDALTest( 'KRO', 'rgba16.png', 1, 1886 )
@@ -74,6 +78,7 @@ def kro_4():
 
 ###############################################################################
 # Test optimized IO
+
 
 def kro_5():
 
@@ -92,6 +97,7 @@ def kro_5():
     gdal.Unlink('tmp/kro_5.kro')
 
     return 'success'
+
 
 gdaltest_list = [
     kro_1,

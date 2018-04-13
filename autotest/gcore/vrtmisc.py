@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test linear scaling
 
+
 def vrtmisc_1():
 
     ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255')
@@ -55,6 +56,7 @@ def vrtmisc_1():
 ###############################################################################
 # Test power scaling
 
+
 def vrtmisc_2():
 
     ds = gdal.Translate('', 'data/byte.tif', options = '-of MEM -scale 74 255 0 255 -exponent 2.2')
@@ -70,6 +72,7 @@ def vrtmisc_2():
 
 ###############################################################################
 # Test power scaling (not <SrcMin> <SrcMax> in VRT file)
+
 
 def vrtmisc_3():
 
@@ -97,6 +100,7 @@ def vrtmisc_3():
 ###############################################################################
 # Test multi-band linear scaling with a single -scale occurrence.
 
+
 def vrtmisc_4():
 
     # -scale specified once applies to all bands
@@ -118,6 +122,7 @@ def vrtmisc_4():
 
 ###############################################################################
 # Test multi-band linear scaling with -scale_XX syntax
+
 
 def vrtmisc_5():
 
@@ -141,6 +146,7 @@ def vrtmisc_5():
 ###############################################################################
 # Test multi-band linear scaling with repeated -scale syntax
 
+
 def vrtmisc_6():
 
     # -scale repeated as many times as output band number
@@ -162,6 +168,7 @@ def vrtmisc_6():
 
 ###############################################################################
 # Test multi-band power scaling with a single -scale and -exponent occurrence.
+
 
 def vrtmisc_7():
 
@@ -185,6 +192,7 @@ def vrtmisc_7():
 ###############################################################################
 # Test multi-band power scaling with -scale_XX and -exponent_XX syntax
 
+
 def vrtmisc_8():
 
     # -scale_2 and -exponent_2 apply to band 2 only
@@ -207,6 +215,7 @@ def vrtmisc_8():
 ###############################################################################
 # Test multi-band linear scaling with repeated -scale and -exponent syntax
 
+
 def vrtmisc_9():
 
     # -scale and -exponent repeated as many times as output band number
@@ -228,6 +237,7 @@ def vrtmisc_9():
 
 ###############################################################################
 # Test metadata serialization (#5944)
+
 
 def vrtmisc_10():
 
@@ -298,6 +308,7 @@ def vrtmisc_10():
 ###############################################################################
 # Test relativeToVRT is preserved during re-serialization (#5985)
 
+
 def vrtmisc_11():
 
     f = open('tmp/vrtmisc_11.vrt', 'wt')
@@ -333,6 +344,7 @@ def vrtmisc_11():
 
 ###############################################################################
 # Test set/delete nodata
+
 
 def vrtmisc_12():
 
@@ -376,6 +388,7 @@ def vrtmisc_12():
 ###############################################################################
 # Test CreateCopy() preserve NBITS
 
+
 def vrtmisc_13():
 
     ds = gdal.Open('data/oddsize1bit.tif')
@@ -388,6 +401,7 @@ def vrtmisc_13():
 
 ###############################################################################
 # Test SrcRect/DstRect are serialized as integers
+
 
 def vrtmisc_14():
 
@@ -428,6 +442,7 @@ def vrtmisc_14():
 ###############################################################################
 # Test CreateCopy() preserve SIGNEDBYTE
 
+
 def vrtmisc_15():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/vrtmisc_15.tif', 1, 1, options = ['PIXELTYPE=SIGNEDBYTE'])
@@ -442,6 +457,7 @@ def vrtmisc_15():
 
 ###############################################################################
 # Test rounding to closest int for coordinates
+
 
 def vrtmisc_16():
 
@@ -513,6 +529,7 @@ def vrtmisc_16():
 ###############################################################################
 # Check that the serialized xml:VRT doesn't include itself (#6767)
 
+
 def vrtmisc_17():
 
     ds = gdal.Open('data/byte.tif')
@@ -529,6 +546,7 @@ def vrtmisc_17():
 
 ###############################################################################
 # Check GetMetadata('xml:VRT') behaviour on a in-memory VRT copied from a VRT
+
 
 def vrtmisc_18():
 
@@ -551,6 +569,7 @@ def vrtmisc_18():
 ###############################################################################
 # Check RAT support
 
+
 def vrtmisc_rat():
 
     ds = gdal.Translate('/vsimem/vrtmisc_rat.tif', 'data/byte.tif', format = 'MEM')
@@ -570,7 +589,6 @@ def vrtmisc_rat():
         gdaltest.post_reason('fail')
         print(xml_vrt)
         return 'fail'
-
 
     vrt_ds = gdal.Translate('/vsimem/vrtmisc_rat.vrt', ds, format = 'VRT', srcWin = [0,0,1,1])
 
@@ -608,6 +626,7 @@ def vrtmisc_rat():
 ###############################################################################
 # Check ColorTable support
 
+
 def vrtmisc_colortable():
 
     ds = gdal.Translate('', 'data/byte.tif', format = 'VRT')
@@ -626,6 +645,7 @@ def vrtmisc_colortable():
 
 ###############################################################################
 # Check histogram support
+
 
 def vrtmisc_histogram():
 
@@ -648,8 +668,10 @@ def vrtmisc_histogram():
 ###############################################################################
 # Cleanup.
 
+
 def vrtmisc_cleanup():
     return 'success'
+
 
 gdaltest_list = [
     vrtmisc_1,

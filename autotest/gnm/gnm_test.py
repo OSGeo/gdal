@@ -45,6 +45,7 @@ from osgeo import gnm
 ###############################################################################
 # Create file base network
 
+
 def gnm_filenetwork_create():
 
     try:
@@ -86,6 +87,7 @@ def gnm_filenetwork_create():
 ###############################################################################
 # Open file base network
 
+
 def gnm_filenetwork_open():
 
     if not ogrtest.have_gnm:
@@ -112,6 +114,7 @@ def gnm_filenetwork_open():
 
 ###############################################################################
 # Import layers into file base network
+
 
 def gnm_import():
 
@@ -150,6 +153,7 @@ def gnm_import():
 ###############################################################################
 # autoconnect
 
+
 def gnm_autoconnect():
 
     if not ogrtest.have_gnm:
@@ -171,6 +175,7 @@ def gnm_autoconnect():
 
 ###############################################################################
 # Dijkstra shortest path
+
 
 def gnm_graph_dijkstra():
 
@@ -196,9 +201,12 @@ def gnm_graph_dijkstra():
     dn.ReleaseResultSet(lyr)
     dn = None
     return 'success'
+
+
 import ogrtest
 ###############################################################################
 # KShortest Paths
+
 
 def gnm_graph_kshortest():
 
@@ -228,6 +236,7 @@ def gnm_graph_kshortest():
 ###############################################################################
 # ConnectedComponents
 
+
 def gnm_graph_connectedcomponents():
 
     if not ogrtest.have_gnm:
@@ -255,6 +264,7 @@ def gnm_graph_connectedcomponents():
 
 ###############################################################################
 # Network deleting
+
 
 def gnm_delete():
 

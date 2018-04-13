@@ -37,6 +37,7 @@ import gdaltest
 
 ###############################################################################
 
+
 def jpegls_1():
 
     try:
@@ -45,11 +46,11 @@ def jpegls_1():
     except:
         return 'skip'
 
-
     tst = gdaltest.GDALTest( 'JPEGLS', 'byte.tif', 1, 4672 )
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
+
 
 def jpegls_2():
 
@@ -59,9 +60,9 @@ def jpegls_2():
     except:
         return 'skip'
 
-
     tst = gdaltest.GDALTest( 'JPEGLS', 'int16.tif', 1, 4672 )
     return tst.testCreateCopy( vsimem = 1 )
+
 
 gdaltest_list = [
     jpegls_1,

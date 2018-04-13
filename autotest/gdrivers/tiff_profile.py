@@ -115,6 +115,7 @@ def tiff_write_icc():
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy()
 
+
 def tiff_copy_icc():
 
     f = open('data/sRGB.icc', 'rb')
@@ -156,6 +157,7 @@ def tiff_copy_icc():
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
+
 def tiff_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
@@ -194,6 +196,7 @@ def tiff_copy_options_icc():
 
     return 'success'
 
+
 def cvtTuple2String(a):
     s = ''
     for i in range(0, len(a)):
@@ -205,6 +208,7 @@ def cvtTuple2String(a):
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
+
 
 def tiff_copy_options_colorimetric_data():
     # sRGB values
@@ -296,6 +300,7 @@ def tiff_copy_options_colorimetric_data():
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
+
 
 def tiff_copy_colorimetric_data():
     # sRGB values
@@ -391,6 +396,7 @@ def tiff_copy_colorimetric_data():
 ###############################################################################
 # Test updating ICC profile
 
+
 def tiff_update_icc():
 
     f = open('data/sRGB.icc', 'rb')
@@ -430,6 +436,7 @@ def tiff_update_icc():
 
 ###############################################################################
 # Test updating colorimetric options
+
 
 def tiff_update_colorimetric():
     source_primaries = [(0.234, 0.555, 1.0), (0.2,0,1), (2,3.5,1)]
@@ -517,6 +524,7 @@ def tiff_update_colorimetric():
     return 'success'
 
 ############################################################################
+
 
 gdaltest_list.append( (tiff_write_icc) )
 gdaltest_list.append( (tiff_copy_icc) )

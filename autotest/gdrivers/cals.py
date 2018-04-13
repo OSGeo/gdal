@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Source has no color table
 
+
 def cals_1():
 
     tst = gdaltest.GDALTest( 'CALS', 'small1bit.img', 1, 9907 )
@@ -46,6 +47,7 @@ def cals_1():
 
 ###############################################################################
 # Source has a color table (0,0,0),(255,255,255)
+
 
 def cals_2():
 
@@ -56,6 +58,7 @@ def cals_2():
 
 ###############################################################################
 # Source has a color table (255,255,255),(0,0,0)
+
 
 def cals_3():
 
@@ -89,6 +92,7 @@ def cals_3():
 
 ###############################################################################
 # Test CreateCopy() error conditions
+
 
 def cals_4():
 
@@ -144,6 +148,7 @@ def cals_4():
 ###############################################################################
 # Test PIXEL_PATH & LINE_PROGRESSION metadata item
 
+
 def cals_5():
 
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1,1)
@@ -166,6 +171,7 @@ def cals_5():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     cals_1,

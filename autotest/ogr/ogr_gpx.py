@@ -38,6 +38,7 @@ import ogrtest
 from osgeo import ogr
 from osgeo import gdal
 
+
 def ogr_gpx_init():
     gdaltest.gpx_ds = None
 
@@ -62,6 +63,7 @@ def ogr_gpx_init():
 
 ###############################################################################
 # Test waypoints gpx layer.
+
 
 def ogr_gpx_1():
     if not gdaltest.have_gpx:
@@ -159,6 +161,7 @@ def ogr_gpx_1():
 ###############################################################################
 # Test routes gpx layer.
 
+
 def ogr_gpx_2():
     if not gdaltest.have_gpx:
         return 'skip'
@@ -208,6 +211,7 @@ def ogr_gpx_3():
 ###############################################################################
 # Test tracks gpx layer.
 
+
 def ogr_gpx_4():
     if not gdaltest.have_gpx:
         return 'skip'
@@ -236,6 +240,7 @@ def ogr_gpx_4():
 ###############################################################################
 # Test route_points gpx layer.
 
+
 def ogr_gpx_5():
     if not gdaltest.have_gpx:
         return 'skip'
@@ -260,6 +265,7 @@ def ogr_gpx_5():
 
 ###############################################################################
 # Copy our small gpx file to a new gpx file.
+
 
 def ogr_gpx_6():
     if not gdaltest.have_gpx:
@@ -347,6 +353,7 @@ def ogr_gpx_6():
 ###############################################################################
 # Output extra fields as <extensions>.
 
+
 def ogr_gpx_7():
     if not gdaltest.have_gpx:
         return 'skip'
@@ -419,6 +426,7 @@ def ogr_gpx_7():
 
 ###############################################################################
 # Output extra fields as <extensions>.
+
 
 def ogr_gpx_8():
     if not gdaltest.have_gpx:
@@ -514,6 +522,7 @@ def ogr_gpx_8():
 ###############################################################################
 # Parse file with a <time> extension at track level (#6237)
 
+
 def ogr_gpx_9():
     if not gdaltest.have_gpx:
         return 'skip'
@@ -531,6 +540,7 @@ def ogr_gpx_9():
 ###############################################################################
 #
 
+
 def ogr_gpx_cleanup():
 
     gdaltest.gpx_ds = None
@@ -539,6 +549,7 @@ def ogr_gpx_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     ogr_gpx_init,

@@ -44,6 +44,7 @@ from osgeo import gdalconst
 ###############################################################################
 # Perform simple read test.
 
+
 def jpeg_1():
 
     ds = gdal.Open( 'data/albania.jpg' )
@@ -66,6 +67,7 @@ def jpeg_1():
 
 ###############################################################################
 # Verify EXIF metadata, color interpretation and image_structure
+
 
 def jpeg_2():
 
@@ -111,6 +113,7 @@ def jpeg_2():
 
 ###############################################################################
 # Create simple copy and check (greyscale) using progressive option.
+
 
 def jpeg_3():
 
@@ -181,6 +184,7 @@ def jpeg_3():
 ###############################################################################
 # Verify masked jpeg.
 
+
 def jpeg_4():
 
     try:
@@ -206,6 +210,7 @@ def jpeg_4():
 
 ###############################################################################
 # Verify CreateCopy() of masked jpeg.
+
 
 def jpeg_5():
 
@@ -240,6 +245,7 @@ def jpeg_5():
 # Verify ability to open file with corrupt metadata (#1904).  Note the file
 # data/vophead.jpg is truncated to keep the size small, but this should
 # not affect opening the file which just reads the header.
+
 
 def jpeg_6():
 
@@ -300,6 +306,7 @@ def jpeg_7():
 ###############################################################################
 # Read a CMYK image as a RGB image
 
+
 def jpeg_8():
 
     ds = gdal.Open( 'data/rgb_ntf_cmyk.jpg' )
@@ -350,6 +357,7 @@ def jpeg_8():
 
 ###############################################################################
 # Read a CMYK image as a CMYK image
+
 
 def jpeg_9():
 
@@ -410,6 +418,7 @@ def jpeg_9():
 ###############################################################################
 # Check reading a 12-bit JPEG
 
+
 def jpeg_10():
 
     if gdaltest.jpeg_version == '9b': # Fails for some reason
@@ -446,6 +455,7 @@ def jpeg_10():
 ###############################################################################
 # Check creating a 12-bit JPEG
 
+
 def jpeg_11():
 
     if gdaltest.jpeg_version == '9b': # Fails for some reason
@@ -478,6 +488,7 @@ def jpeg_11():
 ###############################################################################
 # Test reading a stored JPEG in ZIP (#3908)
 
+
 def jpeg_12():
 
     ds = gdal.Open('/vsizip/data/byte_jpg.zip')
@@ -501,6 +512,7 @@ def jpeg_12():
 ###############################################################################
 # Test writing to /vsistdout/
 
+
 def jpeg_13():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -522,6 +534,7 @@ def jpeg_13():
 
 ###############################################################################
 # Test writing to /vsistdout/
+
 
 def jpeg_14():
 
@@ -553,6 +566,7 @@ def jpeg_14():
 ###############################################################################
 # Test CreateCopy() interruption
 
+
 def jpeg_15():
 
     tst = gdaltest.GDALTest( 'JPEG', 'albania.jpg', 2, 17016 )
@@ -561,6 +575,7 @@ def jpeg_15():
 
 ###############################################################################
 # Test overview support
+
 
 def jpeg_16():
 
@@ -635,6 +650,7 @@ def jpeg_16():
 ###############################################################################
 # Test bogus files
 
+
 def jpeg_17():
     gdal.ErrorReset()
     with gdaltest.error_handler('CPLQuietErrorHandler'):
@@ -687,6 +703,7 @@ def jpeg_17():
 
 ###############################################################################
 # Test situation where we cause a restart and need to reset scale
+
 
 def jpeg_18():
     height = 1024
@@ -756,6 +773,7 @@ def jpeg_18():
 
 ###############################################################################
 # Test MSB ordering of bits in mask (#5102)
+
 
 def jpeg_19():
 
@@ -831,6 +849,7 @@ def jpeg_19():
 ###############################################################################
 # Test correct GCP reading with PAM (#5352)
 
+
 def jpeg_20():
 
     src_ds = gdal.Open('data/rgb_gcp.vrt')
@@ -856,6 +875,7 @@ def jpeg_20():
 
 ###############################################################################
 # Test implicit and EXIF overviews
+
 
 def jpeg_21():
 
@@ -884,6 +904,7 @@ def jpeg_21():
 
 ###############################################################################
 # Test generation of EXIF overviews
+
 
 def jpeg_22():
 
@@ -975,6 +996,7 @@ def jpeg_22():
 ###############################################################################
 # Test optimized JPEG IRasterIO
 
+
 def jpeg_23():
     ds = gdal.Open( 'data/albania.jpg' )
     cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(3)]
@@ -1019,6 +1041,7 @@ def jpeg_23():
 # Test Arithmetic coding (and if not enabled, will trigger error code handling
 # in CreateCopy())
 
+
 def jpeg_24():
 
     if gdal.GetDriverByName('JPEG').GetMetadataItem(
@@ -1055,6 +1078,7 @@ def jpeg_24():
 ###############################################################################
 # Test COMMENT
 
+
 def jpeg_25():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -1075,6 +1099,7 @@ def jpeg_25():
 ###############################################################################
 # Test creation error
 
+
 def jpeg_26():
 
     src_ds = gdal.GetDriverByName('Mem').Create('', 70000, 1)
@@ -1091,6 +1116,7 @@ def jpeg_26():
 # Test reading a file that contains the 2 denial of service
 # vulnerabilities listed in
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
+
 
 def jpeg_27():
 
@@ -1121,6 +1147,7 @@ def jpeg_27():
 
 ###############################################################################
 # Test writing of EXIF and GPS tags
+
 
 def jpeg_28():
 
@@ -1298,6 +1325,7 @@ def jpeg_28():
 
 ###############################################################################
 # Cleanup
+
 
 def jpeg_cleanup():
 

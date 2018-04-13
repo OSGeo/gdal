@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def ilwis_1():
 
     tst = gdaltest.GDALTest( 'ilwis', 'LanduseSmall.mpr', 1, 2351 )
@@ -68,6 +69,7 @@ def ilwis_1():
 ###############################################################################
 # copy byte data and verify.
 
+
 def ilwis_2():
 
     tst = gdaltest.GDALTest( 'ilwis', 'byte.tif', 1, 4672 )
@@ -78,6 +80,7 @@ def ilwis_2():
 ###############################################################################
 # copy floating point data and use Create interface.
 
+
 def ilwis_3():
 
     tst = gdaltest.GDALTest( 'ilwis', 'float.img', 1, 23529 )
@@ -86,6 +89,7 @@ def ilwis_3():
 
 ###############################################################################
 # Try multi band dataset.
+
 
 def ilwis_4():
 
@@ -96,6 +100,7 @@ def ilwis_4():
 
 ###############################################################################
 # Test vsi in-memory support.
+
 
 def ilwis_5():
 
@@ -112,9 +117,11 @@ def ilwis_5():
 # part of the dataset properly, so we can't automatically clean them up
 # properly. So we do the brute force approach...
 
+
 def ilwis_cleanup():
     gdaltest.clean_tmp()
     return 'success'
+
 
 gdaltest_list = [
     ilwis_1,

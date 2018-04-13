@@ -41,6 +41,7 @@ import ogrtest
 ###############################################################################
 # Basic testing
 
+
 def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
 
     ogrtest.pgeo_ds = None
@@ -117,11 +118,13 @@ def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
 
     return 'success'
 
+
 def ogr_pgeo_mdb_1():
     return ogr_pgeo_1('MDB', 'PGeo')
 
 ###############################################################################
 # Test spatial filter
+
 
 def ogr_pgeo_2():
     if ogrtest.pgeo_ds is None:
@@ -162,6 +165,7 @@ def ogr_pgeo_2():
 ###############################################################################
 # Test attribute filter
 
+
 def ogr_pgeo_3():
     if ogrtest.pgeo_ds is None:
         return 'skip'
@@ -196,6 +200,7 @@ def ogr_pgeo_3():
 ###############################################################################
 # Test ExecuteSQL()
 
+
 def ogr_pgeo_4():
     if ogrtest.pgeo_ds is None:
         return 'skip'
@@ -223,6 +228,7 @@ def ogr_pgeo_4():
 ###############################################################################
 # Test GetFeature()
 
+
 def ogr_pgeo_5():
     if ogrtest.pgeo_ds is None:
         return 'skip'
@@ -238,6 +244,7 @@ def ogr_pgeo_5():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_pgeo_6():
     if ogrtest.pgeo_ds is None:
@@ -258,6 +265,7 @@ def ogr_pgeo_6():
 ###############################################################################
 # Run test_ogrsf with -sql
 
+
 def ogr_pgeo_7():
     if ogrtest.pgeo_ds is None:
         return 'skip'
@@ -276,6 +284,7 @@ def ogr_pgeo_7():
 
 ###############################################################################
 
+
 def ogr_pgeo_cleanup():
 
     if ogrtest.other_driver is not None:
@@ -287,6 +296,7 @@ def ogr_pgeo_cleanup():
 
     ogrtest.pgeo_ds = None
     return 'success'
+
 
 gdaltest_list_internal = [
     ogr_pgeo_2,
@@ -300,6 +310,7 @@ gdaltest_list_internal = [
 ###############################################################################
 #
 
+
 def ogr_pgeo_main():
 
     # Run with the PGeo driver only (MDB disabled)
@@ -311,6 +322,7 @@ def ogr_pgeo_main():
     gdaltest.run_tests( gdaltest_list_internal )
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_pgeo_main

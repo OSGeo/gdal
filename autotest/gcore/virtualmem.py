@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Test linear and tiled virtual mem interfaces in read-only mode
 
+
 def virtualmem_1():
 
     if gdal.GetConfigOption('SKIP_VIRTUALMEM'):
@@ -122,11 +123,11 @@ def virtualmem_1():
     ar_bsq = None
     ds = None
 
-
     return 'success'
 
 ###############################################################################
 # Test write mode
+
 
 def virtualmem_2():
 
@@ -158,6 +159,7 @@ def virtualmem_2():
 
 ###############################################################################
 # Test virtual mem auto with a raw driver
+
 
 def virtualmem_3():
 
@@ -208,6 +210,7 @@ def virtualmem_3():
 
 ###############################################################################
 # Test virtual mem auto with GTiff
+
 
 def virtualmem_4():
 
@@ -280,6 +283,7 @@ def virtualmem_4():
         gdal.GetDriverByName('GTiff').Delete(tmpfile)
 
     return 'success'
+
 
 gdaltest_list = [ virtualmem_1,
                   virtualmem_2,

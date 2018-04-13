@@ -47,6 +47,7 @@ def Usage():
 # 	ProcessTarget()
 # =============================================================================
 
+
 def ProcessTarget( target, recursive, report_failure, filelist = None ):
 
     if filelist is not None:
@@ -74,6 +75,7 @@ def ProcessTarget( target, recursive, report_failure, filelist = None ):
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 recursive = 0
 report_failure = 0

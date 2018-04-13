@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Read test of byte file.
 
+
 def idrisi_1():
 
     tst = gdaltest.GDALTest( 'RST', 'byte.rst', 1, 5044 )
@@ -47,6 +48,7 @@ def idrisi_1():
 ###############################################################################
 # Read test of byte file.
 
+
 def idrisi_2():
 
     tst = gdaltest.GDALTest( 'RST', 'real.rst', 1, 5275 )
@@ -54,6 +56,7 @@ def idrisi_2():
 
 ###############################################################################
 #
+
 
 def idrisi_3():
 
@@ -64,6 +67,7 @@ def idrisi_3():
 ###############################################################################
 #
 
+
 def idrisi_4():
 
     tst = gdaltest.GDALTest( 'RST', 'rgbsmall.tif', 2, 21053 )
@@ -73,6 +77,7 @@ def idrisi_4():
 
 ###############################################################################
 # Cleanup.
+
 
 def idrisi_cleanup():
     gdaltest.clean_tmp()
@@ -85,6 +90,7 @@ def idrisi_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     idrisi_1,

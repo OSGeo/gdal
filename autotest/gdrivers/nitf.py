@@ -47,6 +47,7 @@ import gdaltest
 ###############################################################################
 # Write/Read test of simple byte reference data.
 
+
 def nitf_1():
 
     tst = gdaltest.GDALTest( 'NITF', 'byte.tif', 1, 4672 )
@@ -55,6 +56,7 @@ def nitf_1():
 ###############################################################################
 # Write/Read test of simple 16bit reference data.
 
+
 def nitf_2():
 
     tst = gdaltest.GDALTest( 'NITF', 'int16.tif', 1, 4672 )
@@ -62,6 +64,7 @@ def nitf_2():
 
 ###############################################################################
 # Write/Read RGB image with lat/long georeferencing, and verify.
+
 
 def nitf_3():
 
@@ -115,6 +118,7 @@ def nitf_create(creation_options, set_inverted_color_interp = True, createcopy =
 
 ###############################################################################
 # Test direction creation of an non-compressed NITF file.
+
 
 def nitf_4():
 
@@ -179,12 +183,14 @@ def nitf_check_created_file(checksum1, checksum2, checksum3, set_inverted_color_
 ###############################################################################
 # Verify file created by nitf_4()
 
+
 def nitf_5():
 
     return nitf_check_created_file(32498, 42602, 38982)
 
 ###############################################################################
 # Read existing NITF file.  Verifies the new adjusted IGEOLO interp.
+
 
 def nitf_6():
 
@@ -196,6 +202,7 @@ def nitf_6():
 ###############################################################################
 # NITF in-memory.
 
+
 def nitf_7():
 
     tst = gdaltest.GDALTest( 'NITF', 'rgbsmall.tif', 3, 21349 )
@@ -203,6 +210,7 @@ def nitf_7():
 
 ###############################################################################
 # Verify we can open an NSIF file, and get metadata including BLOCKA.
+
 
 def nitf_8():
 
@@ -238,6 +246,7 @@ def nitf_8():
 ###############################################################################
 # Create and read a JPEG encoded NITF file.
 
+
 def nitf_9():
 
     src_ds = gdal.Open( 'data/rgbsmall.tif' )
@@ -267,6 +276,7 @@ def nitf_9():
 # For esoteric reasons, createcopy from jpeg compressed nitf files can be
 # tricky.  Verify this is working.
 
+
 def nitf_10():
 
     src_ds = gdal.Open('tmp/nitf9.ntf')
@@ -282,6 +292,7 @@ def nitf_10():
 ###############################################################################
 # Test 1bit file ... conveniently very small and easy to include! (#1854)
 
+
 def nitf_11():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034c.ntf
@@ -290,6 +301,7 @@ def nitf_11():
 
 ###############################################################################
 # Verify that TRE and CGM access via the metadata domain works.
+
 
 def nitf_12():
 
@@ -357,6 +369,7 @@ def nitf_13():
 ###############################################################################
 # Verify previous file
 
+
 def nitf_14():
     ds = gdal.Open( 'tmp/test_13.ntf' )
 
@@ -391,6 +404,7 @@ def nitf_14():
 ###############################################################################
 # Test creating an in memory copy.
 
+
 def nitf_15():
 
     tst = gdaltest.GDALTest( 'NITF', 'byte.tif', 1, 4672 )
@@ -399,6 +413,7 @@ def nitf_15():
 
 ###############################################################################
 # Checks a 1-bit mono with mask table having (0x00) black as transparent with white arrow.
+
 
 def nitf_16():
 
@@ -420,6 +435,7 @@ def nitf_17():
 ###############################################################################
 # Test NITF file without image segment
 
+
 def nitf_18():
 
     # Shut up the warning about missing image segment
@@ -435,6 +451,7 @@ def nitf_18():
 
 ###############################################################################
 # Test BILEVEL (C1) decompression
+
 
 def nitf_19():
 
@@ -504,6 +521,7 @@ def nitf_22():
 ###############################################################################
 # Write/Read test of simple float32 reference data.
 
+
 def nitf_23():
 
     tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/float32.tif', 1, 4672 )
@@ -511,6 +529,7 @@ def nitf_23():
 
 ###############################################################################
 # Write/Read test of simple float64 reference data.
+
 
 def nitf_24():
 
@@ -520,6 +539,7 @@ def nitf_24():
 ###############################################################################
 # Write/Read test of simple uint16 reference data.
 
+
 def nitf_25():
 
     tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint16.tif', 1, 4672 )
@@ -528,6 +548,7 @@ def nitf_25():
 ###############################################################################
 # Write/Read test of simple uint32 reference data.
 
+
 def nitf_26():
 
     tst = gdaltest.GDALTest( 'NITF', '../../gcore/data/uint32.tif', 1, 4672 )
@@ -535,6 +556,7 @@ def nitf_26():
 
 ###############################################################################
 # Test Create() with IC=NC compression, and multi-blocks
+
 
 def nitf_27():
 
@@ -586,6 +608,7 @@ def nitf_28_jp2ecw():
 ###############################################################################
 # Test reading the previously create file with the JP2MrSID driver
 
+
 def nitf_28_jp2mrsid():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
@@ -635,6 +658,7 @@ def nitf_28_jp2kak():
 ###############################################################################
 # Test reading the previously create file with the JP2KAK driver
 
+
 def nitf_28_jp2openjpeg():
     if not gdaltest.nitf_28_jp2ecw_is_ok:
         return 'skip'
@@ -658,6 +682,7 @@ def nitf_28_jp2openjpeg():
 
 ###############################################################################
 # Test Create() with IC=C8 compression with the JP2OpenJPEG driver
+
 
 def nitf_28_jp2openjpeg_bis():
     try:
@@ -694,6 +719,7 @@ def nitf_28_jp2openjpeg_bis():
 
 ###############################################################################
 # Test Create() with a LUT
+
 
 def nitf_29():
 
@@ -744,6 +770,7 @@ def nitf_29():
 
 ###############################################################################
 # Verify we can write a file with BLOCKA TRE and read it back properly.
+
 
 def nitf_30():
 
@@ -860,6 +887,7 @@ def nitf_30():
 ###############################################################################
 # Verify we can write a file with a custom TRE and read it back properly.
 
+
 def nitf_31():
 
     if nitf_create( [ 'TRE=CUSTOM= Test TRE1\\0MORE',
@@ -934,6 +962,7 @@ def nitf_34():
 ###############################################################################
 # Test CreateCopy() writing file with a text segment.
 
+
 def nitf_35():
 
     src_ds = gdal.Open( 'data/text_md.vrt' )
@@ -968,6 +997,7 @@ with a newline."""
 ###############################################################################
 # Create and read a JPEG encoded NITF file (C3) with several blocks
 # Check that statistics are persisted (#3985)
+
 
 def nitf_36():
 
@@ -1023,6 +1053,7 @@ def nitf_36():
 ###############################################################################
 # Create and read a NITF file with 69999 bands
 
+
 def nitf_37():
     try:
         if int(gdal.VersionInfo('VERSION_NUM')) < 1700:
@@ -1043,6 +1074,7 @@ def nitf_37():
 
 ###############################################################################
 # Create and read a NITF file with 999 images
+
 
 def nitf_38():
 
@@ -1131,6 +1163,7 @@ def nitf_38():
 ###############################################################################
 # Create and read a JPEG encoded NITF file (M3) with several blocks
 
+
 def nitf_39():
 
     src_ds = gdal.Open( 'data/rgbsmall.tif' )
@@ -1160,6 +1193,7 @@ def nitf_39():
 
 ###############################################################################
 # Create a 10 GB NITF file
+
 
 def nitf_40():
 
@@ -1256,6 +1290,7 @@ def nitf_41():
 ###############################################################################
 # Check creating a 12-bit JPEG compressed NITF
 
+
 def nitf_42():
 
     if gdaltest.jpeg_version == '9b':
@@ -1285,6 +1320,7 @@ def nitf_42():
 
 ###############################################################################
 # Test CreateCopy() in IC=C8 with various JPEG2000 drivers
+
 
 def nitf_43(driver_to_test, options):
 
@@ -1324,8 +1360,10 @@ def nitf_43(driver_to_test, options):
 
     return ret
 
+
 def nitf_43_jasper():
     return nitf_43('JPEG2000', ['IC=C8'])
+
 
 def nitf_43_jp2ecw():
     import ecw
@@ -1333,11 +1371,13 @@ def nitf_43_jp2ecw():
         return 'skip'
     return nitf_43('JP2ECW', ['IC=C8', 'TARGET=0'])
 
+
 def nitf_43_jp2kak():
     return nitf_43('JP2KAK', ['IC=C8', 'QUALITY=100'])
 
 ###############################################################################
 # Check creating a monoblock 10000x1 image (ticket #3263)
+
 
 def nitf_44():
 
@@ -1360,6 +1400,7 @@ def nitf_44():
 
 ###############################################################################
 # Check overviews on a JPEG compressed subdataset
+
 
 def nitf_45():
 
@@ -1388,6 +1429,7 @@ def nitf_45():
 
 ###############################################################################
 # Check overviews on a JPEG2000 compressed subdataset
+
 
 def nitf_46(driver_to_test):
 
@@ -1438,23 +1480,29 @@ def nitf_46(driver_to_test):
 
     return ret
 
+
 def nitf_46_jp2ecw():
     return nitf_46('JP2ECW')
+
 
 def nitf_46_jp2mrsid():
     return nitf_46('JP2MrSID')
 
+
 def nitf_46_jp2kak():
     return nitf_46('JP2KAK')
 
+
 def nitf_46_jasper():
     return nitf_46('JPEG2000')
+
 
 def nitf_46_openjpeg():
     return nitf_46('JP2OpenJPEG')
 
 ###############################################################################
 # Check reading of rsets.
+
 
 def nitf_47():
 
@@ -1477,6 +1525,7 @@ def nitf_47():
 
 ###############################################################################
 # Check building of standard overviews in place of rset overviews.
+
 
 def nitf_48():
 
@@ -1522,6 +1571,7 @@ def nitf_48():
 ###############################################################################
 # Test TEXT and CGM creation options with CreateCopy() (#3376)
 
+
 def nitf_49():
 
     options = [ "TEXT=DATA_0=COUCOU",
@@ -1564,6 +1614,7 @@ def nitf_49():
 
 ###############################################################################
 # Test TEXT and CGM creation options with Create() (#3376)
+
 
 def nitf_50():
 
@@ -1620,6 +1671,7 @@ def nitf_50():
 ###############################################################################
 # Test reading very small images with NBPP < 8 or NBPP == 12
 
+
 def nitf_51():
     import struct
 
@@ -1663,6 +1715,7 @@ def nitf_51():
 ###############################################################################
 # Test reading GeoSDE TREs
 
+
 def nitf_52():
 
     # Create a fake NITF file with GeoSDE TREs (probably not conformant, but enough to test GDAL code)
@@ -1691,6 +1744,7 @@ def nitf_52():
 
 ###############################################################################
 # Test reading UTM MGRS
+
 
 def nitf_53():
 
@@ -1736,6 +1790,7 @@ def nitf_53():
 ###############################################################################
 # Test reading RPC00B
 
+
 def nitf_54():
 
     # Create a fake NITF file with RPC00B TRE (probably not conformant, but enough to test GDAL code)
@@ -1756,6 +1811,7 @@ def nitf_54():
 
 ###############################################################################
 # Test reading ICHIPB
+
 
 def nitf_55():
 
@@ -1778,6 +1834,7 @@ def nitf_55():
 ###############################################################################
 # Test reading USE00A
 
+
 def nitf_56():
 
     # Create a fake NITF file with USE00A TRE (probably not conformant, but enough to test GDAL code)
@@ -1798,6 +1855,7 @@ def nitf_56():
 
 ###############################################################################
 # Test reading GEOLOB
+
 
 def nitf_57():
 
@@ -1821,6 +1879,7 @@ def nitf_57():
 ###############################################################################
 # Test reading STDIDC
 
+
 def nitf_58():
 
     # Create a fake NITF file with STDIDC TRE (probably not conformant, but enough to test GDAL code)
@@ -1841,6 +1900,7 @@ def nitf_58():
 
 ###############################################################################
 # Test reading IMRFCA and IMASDA
+
 
 def nitf_read_IMRFCA_IMASDA():
 
@@ -1910,6 +1970,7 @@ def nitf_read_IMRFCA_IMASDA():
 ###############################################################################
 # Test georeferencing through .nfw and .hdr files
 
+
 def nitf_59():
 
     shutil.copyfile('data/nitf59.nfw', 'tmp/nitf59.nfw')
@@ -1936,6 +1997,7 @@ def nitf_59():
 
 ###############################################################################
 # Test reading CADRG polar tile georeferencing (#2940)
+
 
 def nitf_60():
 
@@ -1964,6 +2026,7 @@ def nitf_60():
 ###############################################################################
 # Test reading TRE from DE segment
 
+
 def nitf_61():
 
     # Derived from http://www.gwg.nga.mil/ntb/baseline/software/testfile/rsm/SampleFiles/FrameSet1/NITF_Files/i_6130a.zip
@@ -1987,6 +2050,7 @@ def nitf_61():
 ###############################################################################
 # Test creating & reading image comments
 
+
 def nitf_62():
 
     # 80+1 characters
@@ -2009,6 +2073,7 @@ def nitf_62():
 
 ###############################################################################
 # Test NITFReadImageLine() and NITFWriteImageLine() when nCols < nBlockWidth (#3551)
+
 
 def nitf_63():
 
@@ -2046,11 +2111,11 @@ def nitf_63():
         gdaltest.post_reason('did not get expected checksums : (%d, %d, %d) instead of (0, 14186, 15301)' % (cs1, cs2, cs3))
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test SDE_TRE creation option
+
 
 def nitf_64():
 
@@ -2063,7 +2128,6 @@ def nitf_64():
     ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=D'])
     ds = None
 
-
     ds = gdal.Open('/vsimem/nitf_64.ntf')
     # One can notice that the topleft location is only precise to the 3th decimal !
     expected_gt = (2.123270588235294, 0.12345882352941177, 0.0, 49.123729411764707, 0.0, -0.12345882352941176)
@@ -2074,8 +2138,6 @@ def nitf_64():
             print(got_gt)
             return 'fail'
     ds = None
-
-
 
     ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['ICORDS=G'])
     ds = None
@@ -2090,7 +2152,6 @@ def nitf_64():
             print(got_gt)
             return 'fail'
     ds = None
-
 
     ds = gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_64.ntf', src_ds, options = ['SDE_TRE=YES'])
     ds = None
@@ -2115,6 +2176,7 @@ def nitf_64():
 ###############################################################################
 # Test creating an image with block_width = image_width > 8192 (#3922)
 
+
 def nitf_65():
 
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_65.ntf', 10000, 100, options = ['BLOCKXSIZE=10000'])
@@ -2136,6 +2198,7 @@ def nitf_65():
 ###############################################################################
 # Test creating an image with block_height = image_height > 8192 (#3922)
 
+
 def nitf_66():
 
     ds = gdal.GetDriverByName('NITF').Create('/vsimem/nitf_66.ntf', 100, 10000, options = ['BLOCKYSIZE=10000', 'BLOCKXSIZE=50'])
@@ -2156,6 +2219,7 @@ def nitf_66():
 
 ###############################################################################
 # Test that we don't use scanline access in illegal cases (#3926)
+
 
 def nitf_67():
 
@@ -2182,6 +2246,7 @@ def nitf_67():
 ###############################################################################
 # Test reading NITF_METADATA domain
 
+
 def nitf_68():
 
     ds = gdal.Open('data/rgb.ntf')
@@ -2200,6 +2265,7 @@ def nitf_68():
 
 ###############################################################################
 # Test SetGCPs() support
+
 
 def nitf_69():
 
@@ -2279,6 +2345,7 @@ def nitf_69():
 ###############################################################################
 # Create and read a JPEG encoded NITF file with NITF dimensions != JPEG dimensions
 
+
 def nitf_70():
 
     src_ds = gdal.Open( 'data/rgbsmall.tif' )
@@ -2313,6 +2380,7 @@ def nitf_70():
 
 ###############################################################################
 # Test reading ENGRDA TRE (#6285)
+
 
 def nitf_71():
 
@@ -2366,6 +2434,7 @@ def nitf_71():
 ###############################################################################
 # Test writing and reading RPC00B
 
+
 def compare_rpc(src_md, md):
     # Check that we got data with the expected precision
     for key in src_md:
@@ -2389,6 +2458,7 @@ def compare_rpc(src_md, md):
             print(md)
             return 'fail'
     return 'success'
+
 
 def nitf_72():
 
@@ -2494,7 +2564,6 @@ def nitf_72():
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72.ntf')
     gdal.GetDriverByName('NITF').Delete('/vsimem/nitf_72_copy.ntf')
 
-
     # Test that RPC00B = NO works
     gdal.GetDriverByName('NITF').CreateCopy('/vsimem/nitf_72.ntf', src_ds, options = ['RPC00B=NO'] )
 
@@ -2564,7 +2633,6 @@ def nitf_72():
         gdaltest.post_reason('fail: did not get expected RPC00B')
         print(RPC00B)
         return 'fail'
-
 
     # Test loss of precision
     for key in ('LINE_OFF', 'SAMP_OFF', 'LAT_OFF', 'LONG_OFF', 'HEIGHT_OFF', 'LINE_SCALE', 'SAMP_SCALE', 'LAT_SCALE', 'LONG_SCALE', 'HEIGHT_SCALE' ):
@@ -2707,6 +2775,7 @@ def nitf_72():
 ###############################################################################
 # Test case for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1525
 
+
 def nitf_73():
 
     with gdaltest.error_handler():
@@ -2717,6 +2786,7 @@ def nitf_73():
 ###############################################################################
 # Test cases for CCLSTA
 #  - Simple case
+
 
 def nitf_74():
 
@@ -2753,6 +2823,7 @@ def nitf_74():
     return 'success'
 
 #  - TABLE AG.2 case
+
 
 def nitf_75():
 
@@ -2953,6 +3024,7 @@ def nitf_75():
 ###############################################################################
 # Test reading C4 compressed file
 
+
 def nitf_read_C4():
 
     ds = gdal.Open('data/RPFTOC01.ON2')
@@ -2965,6 +3037,7 @@ def nitf_read_C4():
 
 ###############################################################################
 # Test NITF21_CGM_ANNO_Uncompressed_unmasked.ntf for bug #1313 and #1714
+
 
 def nitf_online_1():
 
@@ -2982,6 +3055,7 @@ def nitf_online_1():
 
 ###############################################################################
 # Test NITF file with multiple images
+
 
 def nitf_online_2():
 
@@ -3001,6 +3075,7 @@ def nitf_online_2():
 ###############################################################################
 # Test ARIDPCM (C2) image
 
+
 def nitf_online_3():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf1.1/U_0001a.ntf', 'U_0001a.ntf'):
@@ -3012,6 +3087,7 @@ def nitf_online_3():
 
 ###############################################################################
 # Test Vector Quantization (VQ) (C4) file
+
 
 def nitf_online_4():
 
@@ -3036,6 +3112,7 @@ def nitf_online_4():
 ###############################################################################
 # Test Vector Quantization (VQ) (M4) file
 
+
 def nitf_online_5():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/cadrg/overview.ovr', 'overview.ovr'):
@@ -3047,6 +3124,7 @@ def nitf_online_5():
 
 ###############################################################################
 # Test a JPEG compressed, single blocked 2048x2048 mono image
+
 
 def nitf_online_6():
 
@@ -3109,6 +3187,7 @@ def nitf_online_7():
 ###############################################################################
 # Test JPEG-compressed multi-block mono-band image with a data mask subheader (IC=M3, IMODE=B)
 
+
 def nitf_online_8():
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3301j.nsf', 'ns3301j.nsf'):
@@ -3136,7 +3215,6 @@ def nitf_online_9():
 # Verify that CGM access on a file with 8 CGM segments
 
 def nitf_online_10():
-
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3119b.nsf', 'ns3119b.nsf'):
         return 'skip'
@@ -3190,6 +3268,7 @@ def nitf_online_10():
 
 ###############################################################################
 # 5 text files
+
 
 def nitf_online_11():
 
@@ -3329,6 +3408,7 @@ def nitf_online_14():
 ###############################################################################
 # Test opening a IC=C8 NITF file with the various JPEG2000 drivers
 
+
 def nitf_online_15(driver_to_test, expected_cs = 1054):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/p0_01/p0_01a.ntf', 'p0_01a.ntf'):
         return 'skip'
@@ -3356,17 +3436,22 @@ def nitf_online_15(driver_to_test, expected_cs = 1054):
 
     return ret
 
+
 def nitf_online_15_jp2ecw():
     return nitf_online_15('JP2ECW')
+
 
 def nitf_online_15_jp2mrsid():
     return nitf_online_15('JP2MrSID')
 
+
 def nitf_online_15_jp2kak():
     return nitf_online_15('JP2KAK')
 
+
 def nitf_online_15_jasper():
     return nitf_online_15('JPEG2000')
+
 
 def nitf_online_15_openjpeg():
     return nitf_online_15('JP2OpenJPEG')
@@ -3374,6 +3459,7 @@ def nitf_online_15_openjpeg():
 ###############################################################################
 # Test opening a IC=C8 NITF file which has 256-entry palette/LUT in both JP2 Header and image Subheader
 # We expect RGB expansion from some JPEG2000 driver
+
 
 def nitf_online_16(driver_to_test):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_jp2_2places.ntf', 'file9_jp2_2places.ntf'):
@@ -3414,17 +3500,22 @@ def nitf_online_16(driver_to_test):
 
     return ret
 
+
 def nitf_online_16_jp2ecw():
     return nitf_online_16('JP2ECW')
+
 
 def nitf_online_16_jp2mrsid():
     return nitf_online_16('JP2MrSID')
 
+
 def nitf_online_16_jp2kak():
     return nitf_online_16('JP2KAK')
 
+
 def nitf_online_16_jasper():
     return nitf_online_16('JPEG2000')
+
 
 def nitf_online_16_openjpeg():
     return nitf_online_16('JP2OpenJPEG')
@@ -3432,6 +3523,7 @@ def nitf_online_16_openjpeg():
 ###############################################################################
 # Test opening a IC=C8 NITF file which has 256-entry/LUT in Image Subheader, JP2 header completely removed
 # We don't expect RGB expansion from the JPEG2000 driver
+
 
 def nitf_online_17(driver_to_test):
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Jpeg2000/jp2_09/file9_j2c.ntf', 'file9_j2c.ntf'):
@@ -3465,23 +3557,30 @@ def nitf_online_17(driver_to_test):
 
     return ret
 
+
 def nitf_online_17_jp2ecw():
     return nitf_online_17('JP2ECW')
+
 
 def nitf_online_17_jp2mrsid():
     return nitf_online_17('JP2MrSID')
 
+
 def nitf_online_17_jp2kak():
     return nitf_online_17('JP2KAK')
 
+
 def nitf_online_17_jasper():
     return nitf_online_17('JPEG2000')
+
 
 def nitf_online_17_openjpeg():
     return nitf_online_17('JP2OpenJPEG')
 
 ###############################################################################
 # Test polar stereographic CADRG tile.
+
+
 def nitf_online_18():
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/bugs/bug3337.ntf', 'bug3337.ntf'):
         return 'skip'
@@ -3530,6 +3629,7 @@ def nitf_online_18():
 ###############################################################################
 # Test CADRG tile crossing dateline (#3383)
 
+
 def nitf_online_19():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/0000M033.GN3', '0000M033.GN3'):
@@ -3545,6 +3645,7 @@ def nitf_online_19():
 # Check that the RPF attribute metadata was carried through.
 # Special case where the reported size of the attribute subsection is
 # smaller than really available
+
 
 def nitf_online_20():
 
@@ -3568,6 +3669,7 @@ def nitf_online_20():
 # Check that we can read NITF header located in STREAMING_FILE_HEADER DE
 # segment when header at beginning of file is incomplete
 
+
 def nitf_online_21():
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3321a.nsf', 'ns3321a.nsf'):
@@ -3588,6 +3690,7 @@ def nitf_online_21():
 ###############################################################################
 # Test fix for #3002 (reconcile NITF file with LA segments)
 #
+
 
 def nitf_online_22():
 
@@ -3675,6 +3778,7 @@ def nitf_online_22():
 ###############################################################################
 # Test reading a M4 compressed file (fixed for #3848)
 
+
 def nitf_online_23():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/nitf/nitf2.0/U_3058b.ntf', 'U_3058b.ntf'):
@@ -3686,6 +3790,7 @@ def nitf_online_23():
 
 ###############################################################################
 # Test reading ECRG frames
+
 
 def nitf_online_24():
 
@@ -3721,6 +3826,7 @@ def nitf_online_24():
 ###############################################################################
 # Test reading a HRE file
 
+
 def nitf_online_25():
 
     if not gdaltest.download_file('http://www.gwg.nga.mil/ntb/baseline/docs/HRE_spec/Case1_HRE10G324642N1170747W_Uxx.hr5', 'Case1_HRE10G324642N1170747W_Uxx.hr5'):
@@ -3745,6 +3851,7 @@ def nitf_online_25():
 
 ###############################################################################
 # Cleanup.
+
 
 def nitf_cleanup():
     try:
@@ -3895,6 +4002,7 @@ def nitf_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     nitf_1,

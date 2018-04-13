@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Simple test
 
+
 def vrtovr_1():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -81,6 +82,7 @@ def vrtovr_1():
 
 ###############################################################################
 # Test serialization
+
 
 def vrtovr_2():
 
@@ -130,6 +132,7 @@ def vrtovr_2():
 ###############################################################################
 #
 
+
 def vrtovr_none():
 
     vrt_string = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -159,6 +162,7 @@ def vrtovr_none():
 
 ###############################################################################
 #
+
 
 def vrtovr_errors():
 
@@ -206,6 +210,7 @@ def vrtovr_errors():
 
 def vrtovr_cleanup():
     return 'success'
+
 
 gdaltest_list = [
     vrtovr_1,

@@ -42,6 +42,7 @@ from osgeo import osr
 ###############################################################################
 # Simple read test of known file.
 
+
 def ogr_gxt_1():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD.gxt' )
@@ -98,6 +99,7 @@ def ogr_gxt_1():
 ###############################################################################
 # Similar test than previous one with TAB separator.
 
+
 def ogr_gxt_2():
 
     gdaltest.gxt_ds = ogr.Open('data/expected_000_GRD_TAB.txt' )
@@ -142,6 +144,7 @@ def ogr_gxt_2():
 ###############################################################################
 # Read a GXT file containing 2 points, duplicate it, and check the newly written file
 
+
 def ogr_gxt_3():
 
     gdaltest.gxt_ds = None
@@ -181,7 +184,6 @@ def ogr_gxt_3():
         feat = src_lyr.GetNextFeature()
 
     gdaltest.gxt_ds = None
-
 
     # Read the newly written GXT file and check its features and geometries
     gdaltest.gxt_ds = ogr.Open('tmp/tmp.gxt')
@@ -232,6 +234,7 @@ def ogr_gxt_3():
 ###############################################################################
 #
 
+
 def ogr_gxt_multipolygon_singlepart_nohole():
 
     ds = ogr.Open('data/geoconcept_multipolygon_singlepart_nohole.txt')
@@ -247,6 +250,7 @@ def ogr_gxt_multipolygon_singlepart_nohole():
 
 ###############################################################################
 #
+
 
 def ogr_gxt_multipolygon_singlepart_hole():
 
@@ -267,6 +271,7 @@ def ogr_gxt_multipolygon_singlepart_hole():
 ###############################################################################
 #
 
+
 def ogr_gxt_multipolygon_twoparts_second_with_hole():
 
     if not ogrtest.have_geos():
@@ -286,6 +291,7 @@ def ogr_gxt_multipolygon_twoparts_second_with_hole():
 ###############################################################################
 #
 
+
 def ogr_gxt_line():
 
     if not ogrtest.have_geos():
@@ -304,6 +310,7 @@ def ogr_gxt_line():
 
 ###############################################################################
 #
+
 
 def ogr_gxt_cleanup():
 

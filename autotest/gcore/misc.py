@@ -63,6 +63,7 @@ def misc_1():
 # the same dataset with it. If it did not work, that would exhaust the system
 # limit of maximum file descriptors opened at the same time
 
+
 def misc_2():
 
     tab_ds = [None for i in range(5000)]
@@ -78,6 +79,7 @@ def misc_2():
 
 ###############################################################################
 # Test OpenShared() with a dataset whose filename != description (#2797)
+
 
 def misc_3():
 
@@ -101,6 +103,7 @@ def misc_3():
 
 ###############################################################################
 # Test Create() with invalid arguments
+
 
 def misc_4():
 
@@ -143,6 +146,7 @@ def get_filename(drv, dirname):
 
 ###############################################################################
 # Test Create() with various band numbers (including 0) and datatype
+
 
 def misc_5_internal(drv, datatype, nBands):
 
@@ -197,6 +201,7 @@ def misc_5_internal(drv, datatype, nBands):
         return 0
 
     return 1
+
 
 def misc_5():
 
@@ -272,6 +277,7 @@ class misc_6_interrupt_callback_class:
 
 ###############################################################################
 # Test CreateCopy() with a source dataset with various band numbers (including 0) and datatype
+
 
 def misc_6_internal(datatype, nBands, setDriversDone):
 
@@ -390,6 +396,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
     return 'success'
 
+
 def misc_6():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -445,6 +452,7 @@ def misc_6():
 ###############################################################################
 # Test gdal.InvGeoTransform()
 
+
 def misc_7():
 
     try:
@@ -465,6 +473,7 @@ def misc_7():
 ###############################################################################
 # Test gdal.ApplyGeoTransform()
 
+
 def misc_8():
 
     try:
@@ -481,6 +490,7 @@ def misc_8():
 
 ###############################################################################
 # Test setting and retrieving > 2 GB values for GDAL max cache (#3689)
+
 
 def misc_9():
 
@@ -561,6 +571,7 @@ def misc_11():
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
+
 def misc_12():
 
     if int(gdal.VersionInfo('VERSION_NUM')) < 1900:
@@ -629,6 +640,7 @@ def misc_12():
 ###############################################################################
 # Test CreateCopy() with incompatible driver types (#5912)
 
+
 def misc_13():
 
     # Raster-only -> vector-only
@@ -652,6 +664,8 @@ def misc_13():
     return 'success'
 
 ###############################################################################
+
+
 def misc_cleanup():
 
     try:
@@ -660,6 +674,7 @@ def misc_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [ misc_1,
                   misc_2,

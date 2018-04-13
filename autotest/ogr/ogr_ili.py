@@ -35,15 +35,18 @@ import ogrtest
 from osgeo import gdal
 from osgeo import ogr
 
+
 def cpl_debug_on():
     gdaltest.cpl_debug = gdal.GetConfigOption('CPL_DEBUG')
     gdal.SetConfigOption('CPL_DEBUG', 'ON')
+
 
 def cpl_debug_reset():
     gdal.SetConfigOption('CPL_DEBUG', gdaltest.cpl_debug)
 
 ###############################################################################
 # Open Driver
+
 
 def ogr_interlis1_1():
 
@@ -61,6 +64,7 @@ def ogr_interlis1_1():
 
 ###############################################################################
 # Check that Ili1 point layer is properly read.
+
 
 def ogr_interlis1_2():
 
@@ -126,6 +130,7 @@ def ogr_interlis1_2():
 ###############################################################################
 # Ili1 FORMAT DEFAULT test.
 
+
 def ogr_interlis1_3():
 
     if not gdaltest.have_ili_reader:
@@ -169,6 +174,7 @@ def ogr_interlis1_3():
 ###############################################################################
 # Ili1 FORMAT test.
 
+
 def ogr_interlis1_4():
 
     if not gdaltest.have_ili_reader:
@@ -211,6 +217,7 @@ def ogr_interlis1_4():
 
 ###############################################################################
 # Write Ili1 transfer file without model.
+
 
 def ogr_interlis1_5():
 
@@ -260,6 +267,7 @@ ENDE"""
 ###############################################################################
 # Write Ili1 transfer file.
 
+
 def ogr_interlis1_6():
 
     if not gdaltest.have_ili_reader:
@@ -304,6 +312,7 @@ ENDE"""
 
 ###############################################################################
 # Ili1 character encoding test.
+
 
 def ogr_interlis1_7():
 
@@ -390,6 +399,7 @@ ENDE"""
 ###############################################################################
 # Ili1 VRT rename
 
+
 def ogr_interlis1_9():
 
     if not gdaltest.have_ili_reader:
@@ -436,6 +446,7 @@ def ogr_interlis1_9():
 ###############################################################################
 # Ili1 Area with polygonizing
 
+
 def ogr_interlis1_10():
 
     if not gdaltest.have_ili_reader:
@@ -470,6 +481,7 @@ def ogr_interlis1_10():
 
 ###############################################################################
 # Ili1 multi-geom test (RFC41)
+
 
 def ogr_interlis1_11():
 
@@ -527,6 +539,7 @@ def ogr_interlis1_11():
 ###############################################################################
 # Ili1 multi-geom test (RFC41)
 
+
 def ogr_interlis1_12():
 
     if not gdaltest.have_ili_reader:
@@ -574,6 +587,7 @@ def ogr_interlis1_12():
 
 ###############################################################################
 # Ili1 Surface test.
+
 
 def ogr_interlis1_13():
 
@@ -812,7 +826,6 @@ def ogr_interlis1_13():
             feat.DumpReadable()
             return 'fail'
 
-
     # Test assembling curves not in "right" order
     ds = ogr.Open('data/ili/surface_complex.itf,data/ili/surface.imd')
     lyr = ds.GetLayerByName('SURFC_TOP__SURFC_TBL')
@@ -830,6 +843,7 @@ def ogr_interlis1_13():
 
 ###############################################################################
 # Ili1 Surface test with linear conversion.
+
 
 def ogr_interlis1_13_linear():
 
@@ -1001,6 +1015,7 @@ def ogr_interlis1_13_linear():
 ###############################################################################
 # Write Ili1 Arcs.
 
+
 def ogr_interlis1_14():
 
     if not gdaltest.have_ili_reader:
@@ -1052,6 +1067,7 @@ ENDE
 ###############################################################################
 # Reading Ili2 without model
 
+
 def ogr_interlis2_1():
 
     if not gdaltest.have_ili_reader:
@@ -1080,6 +1096,7 @@ def ogr_interlis2_1():
 
 ###############################################################################
 # Reading Ili2
+
 
 def ogr_interlis2_2():
 
@@ -1145,7 +1162,6 @@ def ogr_interlis2_2():
             feat.DumpReadable()
             return 'fail'
 
-
     lyr = ds.GetLayerByName('RoadsExdm2ien.RoadsExtended.StreetAxis')
     if lyr.GetFeatureCount() != 7:
         gdaltest.post_reason( 'feature count wrong.' )
@@ -1165,7 +1181,6 @@ def ogr_interlis2_2():
         if ogrtest.check_feature_geometry(geom, geom_field_values[i]) != 0:
             feat.DumpReadable()
             return 'fail'
-
 
     lyr = ds.GetLayerByName('RoadsExdm2ben.Roads.LandCover')
     if lyr.GetFeatureCount() != 12:
@@ -1288,6 +1303,7 @@ def ogr_interlis2_3():
 
 ###############################################################################
 # Ili2 Oereb model
+
 
 def ogr_interlis2_4():
 
@@ -1444,6 +1460,7 @@ def ogr_interlis_arc1():
 ###############################################################################
 # Check polyline with arc
 
+
 def ogr_interlis_arc2():
 
     if not gdaltest.have_ili_reader:
@@ -1475,6 +1492,7 @@ def ogr_interlis_arc2():
 ###############################################################################
 #
 
+
 def ogr_interlis_cleanup():
 
     if not gdaltest.have_ili_reader:
@@ -1485,6 +1503,7 @@ def ogr_interlis_cleanup():
     gdaltest.clean_tmp()
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_interlis1_1,

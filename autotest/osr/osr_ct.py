@@ -46,7 +46,6 @@ from osgeo import ogr
 
 def osr_ct_1():
 
-
     gdaltest.have_proj4 = 0
 
     utm_srs = osr.SpatialReference()
@@ -83,6 +82,7 @@ def osr_ct_1():
 ###############################################################################
 # Actually perform a simple LL to UTM conversion.
 
+
 def osr_ct_2():
 
     if gdaltest.have_proj4 == 0:
@@ -110,6 +110,7 @@ def osr_ct_2():
 # Transform an OGR geometry ... this is mostly aimed at ensuring that
 # the OGRCoordinateTransformation target SRS isn't deleted till the output
 # geometry which also uses it is deleted.
+
 
 def osr_ct_3():
 
@@ -147,6 +148,7 @@ def osr_ct_3():
 # Actually perform a simple LL to UTM conversion.
 # Works for both OG and NG bindings
 
+
 def osr_ct_4():
 
     if gdaltest.have_proj4 == 0:
@@ -176,6 +178,7 @@ def osr_ct_4():
 # Same test, but with any sequence of tuples instead of a tuple of tuple
 # New in NG bindings (#3020)
 
+
 def osr_ct_5():
 
     if gdaltest.have_proj4 == 0:
@@ -203,6 +206,7 @@ def osr_ct_5():
 
 ###############################################################################
 # Test osr.CreateCoordinateTransformation() method
+
 
 def osr_ct_6():
 
@@ -237,6 +241,7 @@ def osr_ct_6():
 
 ###############################################################################
 # Actually perform a simple Pseudo Mercator to LL conversion.
+
 
 def osr_ct_7():
 
@@ -280,6 +285,7 @@ def osr_ct_7():
 
 ###############################################################################
 # Test WebMercator -> WGS84 optimized transform
+
 
 def osr_ct_8():
 
@@ -325,6 +331,7 @@ def osr_ct_8():
 ###############################################################################
 # Cleanup
 
+
 def osr_ct_cleanup():
 
     if gdaltest.have_proj4 == 0:
@@ -333,6 +340,7 @@ def osr_ct_cleanup():
     gdaltest.ct = None
 
     return 'success'
+
 
 gdaltest_list = [
     osr_ct_1,

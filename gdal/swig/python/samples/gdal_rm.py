@@ -32,9 +32,11 @@ import sys
 
 from osgeo import gdal
 
+
 def Usage():
     print('Usage: gdal_rm [-r] filename')
     return -1
+
 
 def gdal_rm_recurse(filename, simulate = False):
 
@@ -70,6 +72,7 @@ def gdal_rm_recurse(filename, simulate = False):
             return 0
         else:
             return gdal.Unlink(filename)
+
 
 def gdal_rm(argv, progress = None):
     filename = None
@@ -122,6 +125,7 @@ def gdal_rm(argv, progress = None):
     if ret != 0:
         print('Deletion failed')
     return ret
+
 
 if __name__ == '__main__':
     sys.exit(gdal_rm(sys.argv))

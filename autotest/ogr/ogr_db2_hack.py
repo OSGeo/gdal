@@ -37,6 +37,7 @@ from osgeo import ogr
 ###############################################################################
 # Create a point in DB2 format, and verify the byte order flag.
 
+
 def ogr_db2_hack_1():
 
     if ogr.SetGenerate_DB2_V72_BYTE_ORDER( 1 ) != 0:
@@ -64,6 +65,7 @@ def ogr_db2_hack_1():
 
 ###############################################################################
 # Verify that we can turn DB2 V7.2 mode back off!
+
 
 def ogr_db2_hack_2():
 
@@ -127,6 +129,7 @@ def ogr_db2_hack_3():
     ogr.SetGenerate_DB2_V72_BYTE_ORDER( 0 )
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_db2_hack_1,

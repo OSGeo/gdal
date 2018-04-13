@@ -41,6 +41,7 @@ import test_py_scripts
 ###############################################################################
 #
 
+
 def test_gdalmove_1():
 
     script_path = test_py_scripts.get_py_script('gdalmove')
@@ -72,6 +73,7 @@ def test_gdalmove_1():
 ###############################################################################
 # Cleanup
 
+
 def test_gdalmove_cleanup():
 
     lst = [ 'tmp/test_gdalmove_1.tif' ]
@@ -82,6 +84,7 @@ def test_gdalmove_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdalmove_1,
