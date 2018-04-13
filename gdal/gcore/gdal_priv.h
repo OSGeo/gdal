@@ -660,25 +660,25 @@ private:
                 struct Private;
                 std::unique_ptr<Private> m_poPrivate;
             public:
-				using value_type = OGRLayer*;
-				using reference = OGRLayer*;
-				using difference_type = void;
-				using pointer = void;
-				using iterator_category = std::input_iterator_tag;
-				
-				
+
+                using value_type = OGRLayer*;
+                using reference = OGRLayer*;
+                using difference_type = void;
+                using pointer = void;
+                using iterator_category = std::input_iterator_tag;
+
                 Iterator();
                 Iterator(GDALDataset* poDS, bool bStart);
                 Iterator(const Iterator& oOther); 
                 Iterator(Iterator&& oOther); 
                 ~Iterator();
 				
-				Iterator& operator=(const Iterator& oOther);
+                Iterator& operator=(const Iterator& oOther);
                 Iterator& operator=(Iterator&& oOther);
 				
                 OGRLayer* operator*() const;
                 Iterator& operator++();
-				Iterator operator++(int);
+                Iterator operator++(int);
                 bool operator!=(const Iterator& it) const;
         };
 
