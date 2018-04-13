@@ -37,8 +37,10 @@ int gbits(unsigned char *in,g2int in_length,g2int *iout,g2int iskip,g2int nbyte,
 
 //     nbit is the start position of the field in bits
       nbit = iskip;
-      if( n> 0 && (nbyte + nskip > INT_MAX / n ||
-                   iskip > INT_MAX - n*(nbyte + nskip)) )
+      if( nbyte < 0 )
+          return -1;
+      if( n > 0 && (nbyte + nskip > INT_MAX / n ||
+                    iskip > INT_MAX - n*(nbyte + nskip)) )
           return -1;
       for (i=0;i<n;i++) {
          bitcnt = nbyte;
