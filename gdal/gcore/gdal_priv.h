@@ -70,6 +70,7 @@ class GDALAsyncReader;
 #include <limits>
 #include <cmath>
 #include <memory>
+#include <iterator>
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
@@ -645,7 +646,7 @@ private:
     virtual int         GetLayerCount();
     virtual OGRLayer    *GetLayer(int iLayer);
 
-    /** Class returned by GetLayers() that act as a container for vector layers. */
+    /** Class returned by GetLayers() that acts as a range of layers. */
     class CPL_DLL Layers
     {
       private:
@@ -659,20 +660,32 @@ private:
                 struct Private;
                 std::unique_ptr<Private> m_poPrivate;
             public:
+				using value_type = OGRLayer*;
+				using reference = OGRLayer*;
+				using difference_type = void;
+				using pointer = void;
+				using iterator_category = std::input_iterator_tag;
+				
+				
+                Iterator();
                 Iterator(GDALDataset* poDS, bool bStart);
-                Iterator(const Iterator& oOther); // declared but not defined. Needed for gcc 5.4 at least
-                Iterator(Iterator&& oOther); // declared but not defined. Needed for gcc 5.4 at least
+                Iterator(const Iterator& oOther); 
+                Iterator(Iterator&& oOther); 
                 ~Iterator();
-                OGRLayer* operator*();
+				
+				Iterator& operator=(const Iterator& oOther);
+                Iterator& operator=(Iterator&& oOther);
+				
+                OGRLayer* operator*() const;
                 Iterator& operator++();
+				Iterator operator++(int);
                 bool operator!=(const Iterator& it) const;
         };
 
       public:
 
-        const Iterator begin() const;
-
-        const Iterator end() const;
+        Iterator begin() const;
+        Iterator end() const;
 
         size_t size() const;
 

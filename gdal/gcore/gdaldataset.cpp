@@ -6977,6 +6977,24 @@ struct GDALDataset::Layers::Iterator::Private
     GDALDataset* m_poDS = nullptr;
 };
 
+GDALDataset::Layers::Iterator::Iterator():
+    m_poPrivate(new GDALDataset::Layers::Iterator::Private())
+{}
+
+GDALDataset::Layers::Iterator::Iterator(
+	const GDALDataset::Layers::Iterator& oOther):
+    m_poPrivate(new GDALDataset::Layers::Iterator::Private())
+{
+	*m_poPrivate = *oOther.m_poPrivate;
+}
+
+GDALDataset::Layers::Iterator::Iterator(
+	GDALDataset::Layers::Iterator&& oOther):
+    m_poPrivate(new GDALDataset::Layers::Iterator::Private())
+{
+	*m_poPrivate = *oOther.m_poPrivate;
+}
+
 GDALDataset::Layers::Iterator::Iterator(GDALDataset* poDS, bool bStart):
     m_poPrivate(new GDALDataset::Layers::Iterator::Private())
 {
@@ -6997,7 +7015,21 @@ GDALDataset::Layers::Iterator::~Iterator()
 {
 }
 
-OGRLayer* GDALDataset::Layers::Iterator::operator*()
+GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
+	const GDALDataset::Layers::Iterator& oOther)
+{
+	*m_poPrivate = *oOther.m_poPrivate;
+	return *this;
+)
+
+GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
+	GDALDataset::Layers::Iterator&& oOther)
+{
+	*m_poPrivate = *oOther.m_poPrivate;
+	return *this;
+}
+
+OGRLayer* GDALDataset::Layers::Iterator::operator*() const
 {
     return m_poPrivate->m_poLayer;
 }
@@ -7015,6 +7047,13 @@ GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator++()
         m_poPrivate->m_poLayer = nullptr;
     }
     return *this;
+}
+
+GDALDataset::Layers::Iterator GDALDataset::Layers::Iterator::operator++(int)
+{
+	GDALDataset::Layers::Iterator temp = *this;
+	++(*this);
+	return temp;
 }
 
 bool GDALDataset::Layers::Iterator::operator!= (const Iterator& it) const
