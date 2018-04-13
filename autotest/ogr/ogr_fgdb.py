@@ -130,7 +130,7 @@ def ogr_fgdb_1():
                  [ "tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))" ],
                  [ "null_polygon", ogr.wkbPolygon, None],
                  [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
-               ]
+                 ]
 
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
 
@@ -609,7 +609,7 @@ def ogr_fgdb_9():
                  _160char, # OK
                  _160char + 'A', # too long
                  _160char + 'B', # still too long
-               ]
+                 ]
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -2411,7 +2411,7 @@ def ogr_fgdb_21():
                  [ "multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
                  [ "multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
                  [ "empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
-               ]
+                 ]
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")

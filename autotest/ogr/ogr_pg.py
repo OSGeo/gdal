@@ -1190,7 +1190,7 @@ def ogr_pg_22():
                                                   options = [
                                                       'DIM=3',
                                                       'SCHEMA=' + schema_name ]
-                                                )
+                                                  )
 
     ######################################################
     # Setup Schema
@@ -3912,7 +3912,7 @@ def ogr_pg_71():
                  'MULTISURFACE (((0 0,0 10,10 10,10 0,0 0)),CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0)))',
                  'MULTISURFACE Z (((0 0 1,0 10 1,10 10 1,10 0 1,0 0 1)),CURVEPOLYGON Z (CIRCULARSTRING Z (0 0 1,1 0 1,0 0 1)))',
                  'GEOMETRYCOLLECTION (CIRCULARSTRING (0 1,2 3,4 5),COMPOUNDCURVE ((0 1,2 3,4 5)),CURVEPOLYGON ((0 0,0 1,1 1,1 0,0 0)),MULTICURVE ((0 0,1 1)),MULTISURFACE (((0 0,0 10,10 10,10 0,0 0))))',
-               ]:
+                 ]:
 
         # would cause PostGIS 1.X to crash
         if not gdaltest.pg_has_postgis_2 and wkt == 'CURVEPOLYGON EMPTY':
@@ -5299,7 +5299,7 @@ def ogr_pg_83():
               [ ogr.wkbPoint25D, [], 'POINT ZM (1 2 3 4)', 'POINT Z (1 2 3)' ],
               [ ogr.wkbPointM, [], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)' ],
               [ ogr.wkbUnknown, [ 'GEOM_TYPE=geography', 'DIM=XYM' ], 'POINT ZM (1 2 3 4)', 'POINT M (1 2 4)' ],
-            ]
+              ]
 
     for (geom_type, options, wkt, expected_wkt) in tests:
         lyr = gdaltest.pg_ds.CreateLayer('ogr_pg_83', geom_type = geom_type, options = options + [ 'OVERWRITE=YES' ] )

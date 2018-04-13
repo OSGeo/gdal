@@ -332,7 +332,7 @@ def ogr_sde_cleanup():
         return 'skip'
     base = 'SDE:%s,%s,%s,%s,%s' % (sde_server, sde_port, sde_db, sde_user, sde_password)
     ds = ogr.Open(base, update=1)
-    ds.DeleteLayer('%s.%s'%(sde_user.upper(),'TPOLY'))
+    ds.DeleteLayer('%s.%s' % (sde_user.upper(),'TPOLY'))
     ds.Destroy()
 
     return 'success'

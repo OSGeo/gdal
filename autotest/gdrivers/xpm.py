@@ -67,7 +67,7 @@ def xpm_1():
 gdaltest_list = []
 
 xpm_list = [ ('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1),
-           ]
+             ]
 
 for item in xpm_list:
     ut = TestXPM( item[0], item[1], item[2], item[3] )

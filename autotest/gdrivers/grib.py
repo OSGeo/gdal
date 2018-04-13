@@ -997,7 +997,7 @@ def grib_grib2_write_projections():
                   'mercator_2sp.grb2',
                   'polar_stereographic.grb2',
                   'ieee754_single.grb2' # Longitude latitude
-                ]
+                  ]
     for filename in filenames:
         filename = 'data/grib/' + filename
         src_ds = gdal.Open(filename)

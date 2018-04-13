@@ -1394,7 +1394,7 @@ def jp2openjpeg_28():
               ( ['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True ),
               ( ['CODEBLOCK_WIDTH=63'], 32, 64, True ),
               ( ['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False ),
-            ]
+              ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1432,7 +1432,7 @@ def jp2openjpeg_29():
               ( ['TILEPARTS=LAYERS', 'QUALITY=1,2'], False ),
               ( ['TILEPARTS=COMPONENTS'], False ),
               ( ['TILEPARTS=ILLEGAL'], True ),
-            ]
+              ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
@@ -1474,7 +1474,7 @@ def jp2openjpeg_30():
               ( ['QUALITY=100', 'REVERSIBLE=YES'], False ),
               ( ['QUALITY=50'], True ),
               ( ['REVERSIBLE=NO'], True ),
-            ]
+              ]
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()

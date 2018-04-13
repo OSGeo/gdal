@@ -602,7 +602,7 @@ def ogr_openfilegdb_4():
               ("id = 1 OR xml <> ''", [1,2,3,4,5], 0), # no index used
               ('id = id', [1,2,3,4,5], 0), # no index used
               ('id = 1 + 0', [1], 0), # no index used (currently...)
-             ]
+              ]
     for test in tests:
 
         if len(test) == 2:
@@ -644,7 +644,7 @@ def ogr_openfilegdb_4():
               ('id IS NULL OR id IS NOT NULL', [1,2,3,4,5,6]),
               ('id = 1 OR id IS NULL', [1, 6]),
               ('id IS NULL OR id = 1', [1, 6]),
-            ]
+              ]
     for test in tests:
 
         if len(test) == 2:
@@ -688,7 +688,7 @@ def ogr_openfilegdb_4():
               ('real < 4', 86 + 3 * 85, None),
               ('real > 1 AND real < 2', 0, None),
               ('real < 0', 0, None),
-            ]
+              ]
     for (where_clause, count, start) in tests:
 
         lyr.SetAttributeFilter(where_clause)

@@ -98,14 +98,14 @@ def ogr_wasp_elevation_from_linestring_z():
     i = 0
     j = 0
     for line in f:
-        if not i%2:
+        if not i % 2:
             [h,n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
+                gdaltest.post_reason( 'altitude should be %d and is %s' % (j,h) )
                 return 'fail'
 
             j+=1
@@ -164,7 +164,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
     i = 0
     j = 0
     for line in f:
-        if not i%2:
+        if not i % 2:
             [h,n] = line.split()
             if int(n) != 2:
                 if ogrtest.have_geos():
@@ -175,7 +175,7 @@ def ogr_wasp_elevation_from_linestring_z_toler():
                     return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
+                gdaltest.post_reason( 'altitude should be %d and is %s' % (j,h) )
                 return 'fail'
 
             j+=1
@@ -227,14 +227,14 @@ def ogr_wasp_elevation_from_linestring_field():
     i = 0
     j = 0
     for line in f:
-        if not i%2:
+        if not i % 2:
             [h,n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
             if float(h) != j:
-                gdaltest.post_reason( 'altitude should be %d and is %s' %(j,h) )
+                gdaltest.post_reason( 'altitude should be %d and is %s' % (j,h) )
                 return 'fail'
 
             j+=1
@@ -274,7 +274,7 @@ def ogr_wasp_roughness_from_linestring_fields():
         line.AddPoint( i, 1 )
         feat.SetGeometry( line )
         if layer.CreateFeature( feat ) != 0:
-            gdaltest.post_reason( 'unable to create feature %d'%i)
+            gdaltest.post_reason( 'unable to create feature %d' % i)
             return 'fail'
 
     del gdaltest.wasp_ds
@@ -286,14 +286,14 @@ def ogr_wasp_roughness_from_linestring_fields():
     i = 0
     j = 0
     for line in f:
-        if not i%2:
+        if not i % 2:
             [l,r,n] = line.split()
             if int(n) != 3:
                 gdaltest.post_reason( 'number of points should be 3 and is %s' % n )
                 return 'fail'
 
             if float(r) != j or float(l) != j-1:
-                gdaltest.post_reason( 'roughness should be %d and %d and is %s and %s' %(j-1,j,l,r) )
+                gdaltest.post_reason( 'roughness should be %d and %d and is %s and %s' % (j-1,j,l,r) )
                 return 'fail'
 
             j+=1
@@ -354,7 +354,7 @@ def ogr_wasp_roughness_from_polygon_z():
     j = 0
     res = set()
     for line in f:
-        if not i%2:
+        if not i % 2:
             [l,r,n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d' % int(n) )
@@ -428,7 +428,7 @@ def ogr_wasp_roughness_from_polygon_field():
     j = 0
     res = set()
     for line in f:
-        if not i%2:
+        if not i % 2:
             [l,r,n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d' % int(n) )
@@ -480,7 +480,7 @@ def ogr_wasp_merge():
     for i in range(6):
         feat = ogr.Feature( dfn )
         ring = ogr.Geometry( type = ogr.wkbLinearRing )
-        h = i%2
+        h = i % 2
         ring.AddPoint( 0, 0, h )
         ring.AddPoint( round(math.cos(i*math.pi/3),6),  round(math.sin(i*math.pi/3),6), h )
         ring.AddPoint( round(math.cos((i+1)*math.pi/3),6),  round(math.sin((i+1)*math.pi/3),6), h )
@@ -502,7 +502,7 @@ def ogr_wasp_merge():
     j = 0
     res = []
     for line in f:
-        if not i%2:
+        if not i % 2:
             [l,r,n] = [v for v in line.split()]
             if int(n) != 2:
                 gdaltest.post_reason( 'number of points should be 2 and is %d (unwanted merge ?)' % int(n) )

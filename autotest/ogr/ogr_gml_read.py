@@ -1196,7 +1196,7 @@ def ogr_gml_29():
     expected_results = [ [ ogr.wkbMultiPoint, 'MULTIPOINT (2 49)' ],
                          [ ogr.wkbMultiPolygon, 'MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49)))'],
                          [ ogr.wkbMultiLineString, 'MULTILINESTRING ((2 49,3 50))'],
-                       ]
+                         ]
 
     for j in range(len(expected_results)):
         lyr = ds.GetLayer(j)
@@ -1881,7 +1881,7 @@ def ogr_gml_46():
                  # 'MULTIPOLYGON (((0 0 10,0 1 10,1 1 10,1 0 10,0 0 10)))',
                  'GEOMETRYCOLLECTION (POINT (0 1))',
                  # 'GEOMETRYCOLLECTION (POINT (0 1 2))'
-                ]
+                 ]
 
     format_list = [ 'GML2', 'GML3', 'GML3Deegree', 'GML3.2' ]
 
@@ -3076,7 +3076,7 @@ def ogr_gml_65():
     option_expected_list = [ ['SRSDIMENSION_LOC=GEOMETRY', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList>0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
                              ['SRSDIMENSION_LOC=POSLIST', '<ogr:geometryProperty><gml:MultiSurface><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
                              ['SRSDIMENSION_LOC=GEOMETRY,POSLIST', '<ogr:geometryProperty><gml:MultiSurface srsDimension="3"><gml:surfaceMember><gml:Polygon><gml:exterior><gml:LinearRing><gml:posList srsDimension="3">0 1 2 3 4 5 6 7 8 0 1 2</gml:posList></gml:LinearRing></gml:exterior></gml:Polygon></gml:surfaceMember></gml:MultiSurface></ogr:geometryProperty>'],
-                           ]
+                             ]
     for (option, expected) in option_expected_list:
         filename = '/vsimem/ogr_gml_65.gml'
         #filename = 'ogr_gml_65.gml'
@@ -4171,7 +4171,7 @@ def ogr_gml_79():
     tests = [ [ 'SHORT', 'EPSG:4326', '2 49' ],
               [ 'OGC_URN', 'urn:ogc:def:crs:EPSG::4326', '49 2'],
               [ 'OGC_URL', 'http://www.opengis.net/def/crs/EPSG/0/4326', '49 2']
-            ]
+              ]
     for (srsname_format, expected_srsname, expected_coords) in tests:
 
         ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_79.xml', \
