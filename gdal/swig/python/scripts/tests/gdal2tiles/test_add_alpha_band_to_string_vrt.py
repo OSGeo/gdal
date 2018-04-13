@@ -114,4 +114,3 @@ class AddAlphaBandToStringVrtTest(TestCase):
         init_dest_option = vrt_root.find(".//GDALWarpOptions/Option[@name='INIT_DEST']")
         self.assertIsNotNone(init_dest_option)
         self.assertEqual(init_dest_option.text, "0")
-

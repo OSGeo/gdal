@@ -148,5 +148,3 @@ while in_feat is not None:
 
 shp_ds.Destroy()
 in_ds.Destroy()
-
-

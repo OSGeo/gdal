@@ -3354,5 +3354,3 @@ def BuildVRTInternalNames(*args):
     """BuildVRTInternalNames(char const * dest, char ** source_filenames, GDALBuildVRTOptions options, GDALProgressFunc callback=0, void * callback_data=None) -> Dataset"""
     return _gdal.BuildVRTInternalNames(*args)
 # This file is compatible with both classic and new-style classes.
-
-

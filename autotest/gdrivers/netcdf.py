@@ -3295,4 +3295,3 @@ if __name__ == '__main__':
     gdaltest.clean_tmp()
 
     gdaltest.summarize()
-

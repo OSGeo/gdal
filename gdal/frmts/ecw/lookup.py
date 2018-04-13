@@ -187,4 +187,3 @@ for line in pfile.readlines():
         srs.SetGeogCS( tokens[1], id, sp_name, float(dline[2]), float(dline[4]) )
 
     print '%s,%s' % (id, srs.ExportToWkt())
-

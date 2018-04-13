@@ -75,5 +75,3 @@ for line in classes:
     print '"%s",' % EscapeLine(string.strip(line))
 
 print 'NULL };'
-
-
