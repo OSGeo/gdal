@@ -2529,7 +2529,7 @@ def ogr_csv_more_than_100_geom_fields():
     with gdaltest.error_handler():
         ds = ogr.Open('data/more_than_100_geom_fields.csv')
     lyr = ds.GetLayer(0)
-    f = lyr.GetNextFeature()
+    lyr.GetNextFeature()
 
     return 'success'
 
