@@ -44,6 +44,7 @@ import tiff_ovr
 ###############################################################################
 # Similar to tiff_ovr_1
 
+
 def test_gdaladdo_1():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
@@ -97,6 +98,7 @@ def test_gdaladdo_2():
 ###############################################################################
 # Test -ro
 
+
 def test_gdaladdo_3():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
@@ -127,6 +129,7 @@ def test_gdaladdo_3():
 ###############################################################################
 # Test -clean
 
+
 def test_gdaladdo_4():
     if test_cli_utilities.get_gdaladdo_path() is None:
         return 'skip'
@@ -154,6 +157,7 @@ def test_gdaladdo_4():
 
 ###############################################################################
 # Test implicit levels
+
 
 def test_gdaladdo_5():
     if test_cli_utilities.get_gdaladdo_path() is None:
@@ -202,6 +206,7 @@ def test_gdaladdo_5():
     os.remove('tmp/test_gdaladdo_5.tif')
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdaladdo_1,

@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test if WEBP driver is present
 
+
 def webp_1():
 
     try:
@@ -51,6 +52,7 @@ def webp_1():
 
 ###############################################################################
 # Open() test
+
 
 def webp_2():
 
@@ -68,6 +70,7 @@ def webp_2():
 
 ###############################################################################
 # CreateCopy() test
+
 
 def webp_3():
 
@@ -92,6 +95,7 @@ def webp_3():
 
 ###############################################################################
 # CreateCopy() on RGBA
+
 
 def webp_4():
 
@@ -126,6 +130,7 @@ def webp_4():
 ###############################################################################
 # CreateCopy() on RGBA with lossless compression
 
+
 def webp_5():
 
     if gdaltest.webp_drv is None:
@@ -154,6 +159,7 @@ def webp_5():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     webp_1,

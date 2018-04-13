@@ -40,6 +40,7 @@ import ogrtest
 ###############################################################################
 # Simple test
 
+
 def test_ogr2ogr_lib_1():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -61,6 +62,7 @@ def test_ogr2ogr_lib_1():
 
 ###############################################################################
 # Test SQLStatement
+
 
 def test_ogr2ogr_lib_2():
 
@@ -94,6 +96,7 @@ def test_ogr2ogr_lib_2():
 ###############################################################################
 # Test WHERE
 
+
 def test_ogr2ogr_lib_3():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -114,6 +117,7 @@ def test_ogr2ogr_lib_3():
 
 ###############################################################################
 # Test accessMode
+
 
 def test_ogr2ogr_lib_4():
 
@@ -161,6 +165,7 @@ def test_ogr2ogr_lib_4():
 ###############################################################################
 # Test dstSRS
 
+
 def test_ogr2ogr_lib_5():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -172,6 +177,7 @@ def test_ogr2ogr_lib_5():
 
 ###############################################################################
 # Test selFields
+
 
 def test_ogr2ogr_lib_6():
 
@@ -197,6 +203,7 @@ def test_ogr2ogr_lib_6():
 ###############################################################################
 # Test LCO
 
+
 def test_ogr2ogr_lib_7():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -211,6 +218,7 @@ def test_ogr2ogr_lib_7():
 
 ###############################################################################
 # Add explicit source layer name
+
 
 def test_ogr2ogr_lib_8():
 
@@ -229,6 +237,7 @@ def test_ogr2ogr_lib_8():
 ###############################################################################
 # Test -segmentize
 
+
 def test_ogr2ogr_lib_9():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -243,6 +252,7 @@ def test_ogr2ogr_lib_9():
 
 ###############################################################################
 # Test overwrite with a shapefile
+
 
 def test_ogr2ogr_lib_10():
 
@@ -264,6 +274,7 @@ def test_ogr2ogr_lib_10():
 ###############################################################################
 # Test filter
 
+
 def test_ogr2ogr_lib_11():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -280,9 +291,11 @@ def test_ogr2ogr_lib_11():
 ###############################################################################
 # Test callback
 
+
 def mycallback(pct, msg, user_data):
     user_data[0] = pct
     return 1
+
 
 def test_ogr2ogr_lib_12():
 
@@ -300,10 +313,12 @@ def test_ogr2ogr_lib_12():
 ###############################################################################
 # Test callback with failure
 
+
 def mycallback_with_failure(pct, msg, user_data):
     if pct > 0.5:
         return 0
     return 1
+
 
 def test_ogr2ogr_lib_13():
 
@@ -316,6 +331,7 @@ def test_ogr2ogr_lib_13():
 
 ###############################################################################
 # Test internal wrappers
+
 
 def test_ogr2ogr_lib_14():
 
@@ -330,6 +346,7 @@ def test_ogr2ogr_lib_14():
 ###############################################################################
 # Test non existing zfield
 
+
 def test_ogr2ogr_lib_15():
 
     srcDS = gdal.OpenEx('../ogr/data/poly.shp')
@@ -343,6 +360,7 @@ def test_ogr2ogr_lib_15():
 
 ###############################################################################
 # Test -dim
+
 
 def test_ogr2ogr_lib_16():
 
@@ -383,6 +401,7 @@ def test_ogr2ogr_lib_16():
 ###############################################################################
 # Test gdal.VectorTranslate(dst_ds, ...) without accessMode specified (#6612)
 
+
 def test_ogr2ogr_lib_17():
 
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
@@ -397,6 +416,7 @@ def test_ogr2ogr_lib_17():
 ###############################################################################
 # Test -limit
 
+
 def test_ogr2ogr_lib_18():
 
     ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
@@ -410,6 +430,7 @@ def test_ogr2ogr_lib_18():
 
 ###############################################################################
 # Test -addFields + -select
+
 
 def test_ogr2ogr_lib_19():
 
@@ -461,7 +482,6 @@ def test_ogr2ogr_lib_20():
     ds = None
     gdal.Unlink('/vsimem/out.gpkg')
 
-
     src_ds = gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     lyr = src_ds.CreateLayer('layer', geom_type = ogr.wkbNone)
     lyr.CreateGeomField(ogr.GeomFieldDefn('foo'))
@@ -477,6 +497,7 @@ def test_ogr2ogr_lib_20():
     gdal.Unlink('/vsimem/out.gpkg')
 
     return 'success'
+
 
 gdaltest_list = [
     test_ogr2ogr_lib_1,

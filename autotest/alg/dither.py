@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Test
 
+
 def dither_1():
 
     drv = gdal.GetDriverByName( 'GTiff' )

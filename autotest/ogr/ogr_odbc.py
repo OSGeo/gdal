@@ -41,6 +41,7 @@ import ogrtest
 ###############################################################################
 # Basic testing
 
+
 def ogr_odbc_1():
 
     ogrtest.odbc_drv = None
@@ -147,6 +148,7 @@ def ogr_odbc_1():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_odbc_2():
     if ogrtest.odbc_drv is None:
         return 'skip'
@@ -166,6 +168,7 @@ def ogr_odbc_2():
 ###############################################################################
 # Cleanup
 
+
 def ogr_odbc_cleanup():
     if ogrtest.odbc_drv is None:
         return 'skip'
@@ -176,6 +179,7 @@ def ogr_odbc_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_odbc_1,

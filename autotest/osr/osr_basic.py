@@ -93,6 +93,7 @@ def osr_basic_1():
 ###############################################################################
 # Simple default NAD83 State Plane zone.
 
+
 def osr_basic_2():
 
     srs = osr.SpatialReference()
@@ -136,6 +137,7 @@ def osr_basic_2():
 
 ###############################################################################
 # NAD83 State Plane zone, but overridden to be in Feet.
+
 
 def osr_basic_3():
 
@@ -237,6 +239,7 @@ def osr_basic_4():
 ###############################################################################
 # Test URN support for OGC:CRS84.
 
+
 def osr_basic_5():
 
     wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:OGC:1.3:CRS84' )
@@ -249,6 +252,7 @@ def osr_basic_5():
 
 ###############################################################################
 # Test URN support for EPSG
+
 
 def osr_basic_6():
 
@@ -282,6 +286,7 @@ def osr_basic_6():
 ###############################################################################
 # Test URN support for auto projection.
 
+
 def osr_basic_7():
 
     wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:OGC::AUTO42001:-117:33' )
@@ -296,6 +301,7 @@ def osr_basic_7():
 
 ###############################################################################
 # Test the SetLinearUnitsAndUpdateParameters() method.
+
 
 def osr_basic_8():
 
@@ -329,6 +335,7 @@ def osr_basic_8():
 
 ###############################################################################
 # Test the Validate() method.
+
 
 def osr_basic_9():
 
@@ -377,6 +384,7 @@ def osr_basic_10():
 
 ###############################################################################
 # Test the IsSame() method (and the IsSameGeogCS() method through that)
+
 
 def osr_basic_11():
 
@@ -433,6 +441,7 @@ def osr_basic_11():
 ###############################################################################
 # Test URN support for OGC:CRS84.
 
+
 def osr_basic_12():
 
     wkt_1 = osr.GetUserInputAsWKT( 'CRS:84' )
@@ -445,6 +454,7 @@ def osr_basic_12():
 
 ###############################################################################
 # Test GEOCCS lookup in supporting data files.
+
 
 def osr_basic_13():
 
@@ -471,6 +481,7 @@ def osr_basic_13():
 
 ###############################################################################
 # Manually setup a simple geocentric/wgs84 srs.
+
 
 def osr_basic_14():
 
@@ -499,6 +510,7 @@ def osr_basic_14():
 
 ###############################################################################
 # Test validation and fixup methods.
+
 
 def osr_basic_15():
 
@@ -531,6 +543,7 @@ def osr_basic_15():
 
 ###############################################################################
 # Test OSRSetGeocCS()
+
 
 def osr_basic_16():
 
@@ -610,6 +623,7 @@ def osr_basic_16():
 ###############################################################################
 # Test OGC URL support
 
+
 def osr_basic_17():
 
     wkt_1 = osr.GetUserInputAsWKT( 'urn:ogc:def:crs:EPSG::4326' )
@@ -622,6 +636,7 @@ def osr_basic_17():
 
 ###############################################################################
 # Test OGC URL support for compound CRS
+
 
 def osr_basic_18():
 
@@ -636,6 +651,7 @@ def osr_basic_18():
 
 ###############################################################################
 # Test well known GCS names against their corresponding EPSG definitions (#6080)
+
 
 def osr_basic_19():
 
@@ -692,6 +708,7 @@ def osr_basic_19():
 ###############################################################################
 # Test GetAxisName() and GetAxisOrientation() and GetAngularUnitsName()
 
+
 def osr_basic_20():
 
     sr = osr.SpatialReference()
@@ -726,6 +743,7 @@ def osr_basic_20():
 
 ###############################################################################
 # Test IsSame() with equivalent forms of Mercator_1SP and Mercator_2SP
+
 
 def osr_basic_21():
 
@@ -789,6 +807,7 @@ def osr_basic_21():
 
 ###############################################################################
 # Test LCC_2SP -> LCC_1SP -> LCC_2SP
+
 
 def osr_basic_22():
 
@@ -906,8 +925,6 @@ def osr_basic_22():
         print(sr3)
         return 'fail'
 
-
-
     # Particular case of LCC_2SP with phi0 != phi1 and phi1=phi2
     sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
@@ -988,6 +1005,7 @@ def osr_basic_22():
 ###############################################################################
 # Test LCC_1SP -> LCC_2SP -> LCC_1SP
 
+
 def osr_basic_23():
 
     sr = osr.SpatialReference()
@@ -1055,6 +1073,7 @@ def osr_basic_23():
 ###############################################################################
 # Test Mercator_1SP -> Mercator_2SP -> Mercator_1SP
 
+
 def osr_basic_24():
 
     sr = osr.SpatialReference()
@@ -1111,6 +1130,7 @@ def osr_basic_24():
 
 ###############################################################################
 # Test corner cases of ConvertToOtherProjection()
+
 
 def osr_basic_25():
 
@@ -1423,6 +1443,7 @@ def osr_basic_25():
 ###############################################################################
 # Test corner cases of osr.SetGeocCS()
 
+
 def osr_basic_setgeogcs():
 
     sr = osr.SpatialReference()
@@ -1458,6 +1479,7 @@ def osr_basic_setgeogcs():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     osr_basic_1,

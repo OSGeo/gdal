@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Test with -a and -i options
 
+
 def contour_1():
 
     try:
@@ -83,7 +84,6 @@ def contour_1():
         ds.WriteRaster( int(size/4)+int(size/8)+int(size/16), i+int(size/4)+int(size/8)+int(size/16), int(size/8), 1, raw_data,
                         buf_type = gdal.GDT_Int16,
                         band_list = [1] )
-
 
     ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
     ogr_lyr = ogr_ds.CreateLayer('contour')
@@ -130,6 +130,7 @@ def contour_1():
 
 ###############################################################################
 # Test with -fl option and -3d option
+
 
 def contour_2():
 
@@ -198,6 +199,7 @@ def contour_2():
 
 ###############################################################################
 # Cleanup
+
 
 def contour_cleanup():
 

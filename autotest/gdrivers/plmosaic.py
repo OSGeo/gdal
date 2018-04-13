@@ -43,6 +43,7 @@ import gdaltest
 ###############################################################################
 # Find PLMosaic driver
 
+
 def plmosaic_1():
 
     gdaltest.plmosaic_drv = gdal.GetDriverByName('PLMosaic')
@@ -54,6 +55,7 @@ def plmosaic_1():
 
 ###############################################################################
 # Error: no API_KEY
+
 
 def plmosaic_2():
 
@@ -74,6 +76,7 @@ def plmosaic_2():
 ###############################################################################
 # Error case: invalid root URL
 
+
 def plmosaic_3():
 
     if gdaltest.plmosaic_drv is None:
@@ -92,6 +95,7 @@ def plmosaic_3():
 
 ###############################################################################
 # Error case: invalid JSON
+
 
 def plmosaic_4():
 
@@ -114,6 +118,7 @@ def plmosaic_4():
 ###############################################################################
 # Error case: not a JSON dictionary
 
+
 def plmosaic_5():
 
     if gdaltest.plmosaic_drv is None:
@@ -134,6 +139,7 @@ def plmosaic_5():
 
 ###############################################################################
 # Error case: missing "mosaics" element
+
 
 def plmosaic_6():
 
@@ -156,6 +162,7 @@ def plmosaic_6():
 ###############################################################################
 # Valid root but no mosaics
 
+
 def plmosaic_7():
 
     if gdaltest.plmosaic_drv is None:
@@ -177,6 +184,7 @@ def plmosaic_7():
 
 ###############################################################################
 # Valid root with 2 mosaics
+
 
 def plmosaic_8():
 
@@ -235,6 +243,7 @@ def plmosaic_8():
 ###############################################################################
 # Error case: invalid mosaic
 
+
 def plmosaic_9():
 
     if gdaltest.plmosaic_drv is None:
@@ -254,6 +263,7 @@ def plmosaic_9():
 
 ###############################################################################
 # Invalid mosaic definition: invalid JSON
+
 
 def plmosaic_9bis():
 
@@ -276,6 +286,7 @@ def plmosaic_9bis():
 ###############################################################################
 # Invalid mosaic definition: JSON without mosaics array
 
+
 def plmosaic_9ter():
 
     if gdaltest.plmosaic_drv is None:
@@ -296,6 +307,7 @@ def plmosaic_9ter():
 
 ###############################################################################
 # Invalid mosaic definition: missing parameters
+
 
 def plmosaic_10():
 
@@ -322,6 +334,7 @@ def plmosaic_10():
 
 ###############################################################################
 # Invalid mosaic definition: unsupported projection
+
 
 def plmosaic_11():
 
@@ -355,6 +368,7 @@ def plmosaic_11():
 ###############################################################################
 # Invalid mosaic definition: unsupported datatype
 
+
 def plmosaic_12():
 
     if gdaltest.plmosaic_drv is None:
@@ -386,6 +400,7 @@ def plmosaic_12():
 
 ###############################################################################
 # Invalid mosaic definition: unsupported resolution
+
 
 def plmosaic_13():
 
@@ -419,6 +434,7 @@ def plmosaic_13():
 ###############################################################################
 # Invalid mosaic definition: unsupported quad_size
 
+
 def plmosaic_14():
 
     if gdaltest.plmosaic_drv is None:
@@ -450,6 +466,7 @@ def plmosaic_14():
 
 ###############################################################################
 # Nearly valid mosaic definition. Warning about invalid links.tiles
+
 
 def plmosaic_15():
 
@@ -496,6 +513,7 @@ def plmosaic_15():
 
 ###############################################################################
 # Valid mosaic definition
+
 
 def plmosaic_16():
 
@@ -568,6 +586,7 @@ def plmosaic_16():
 
 ###############################################################################
 # Open with explicit MOSAIC dataset open option
+
 
 def plmosaic_17():
 
@@ -738,6 +757,7 @@ def plmosaic_17():
 ###############################################################################
 # Test location info
 
+
 def plmosaic_18():
 
     if gdaltest.plmosaic_drv is None:
@@ -789,6 +809,7 @@ def plmosaic_18():
 ###############################################################################
 # Try error in saving in cache
 
+
 def plmosaic_19():
 
     if gdaltest.plmosaic_drv is None:
@@ -819,6 +840,7 @@ def plmosaic_19():
 ###############################################################################
 # Try disabling cache
 
+
 def plmosaic_20():
 
     if gdaltest.plmosaic_drv is None:
@@ -846,6 +868,7 @@ def plmosaic_20():
 
 ###############################################################################
 # Try use_tiles
+
 
 def plmosaic_21():
 
@@ -943,6 +966,7 @@ def plmosaic_21():
 
 ###############################################################################
 # Valid mosaic definition with bbox
+
 
 def plmosaic_with_bbox():
 
@@ -1048,6 +1072,7 @@ def plmosaic_with_bbox():
 
 ###############################################################################
 #
+
 
 def plmosaic_cleanup():
 

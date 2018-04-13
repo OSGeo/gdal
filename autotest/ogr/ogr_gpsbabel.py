@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Check that dependencies are met
 
+
 def ogr_gpsbabel_init():
 
     # Test if the gpsbabel is accessible
@@ -70,6 +71,7 @@ def ogr_gpsbabel_init():
 ###############################################################################
 # Test reading with explicit subdriver
 
+
 def ogr_gpsbabel_1():
 
     if not ogrtest.have_read_gpsbabel:
@@ -87,6 +89,7 @@ def ogr_gpsbabel_1():
 ###############################################################################
 # Test reading with implicit subdriver
 
+
 def ogr_gpsbabel_2():
 
     if not ogrtest.have_read_gpsbabel:
@@ -103,6 +106,7 @@ def ogr_gpsbabel_2():
 
 ###############################################################################
 # Test writing
+
 
 def ogr_gpsbabel_3():
 
@@ -145,6 +149,7 @@ def ogr_gpsbabel_3():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_gpsbabel_init,

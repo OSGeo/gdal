@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Get the rl2 driver
 
+
 def rl2_1():
 
     gdaltest.rl2_drv = gdal.GetDriverByName( 'SQLite' )
@@ -52,6 +53,7 @@ def rl2_1():
 
 ###############################################################################
 # Test opening a rl2 DB gray level
+
 
 def rl2_2():
 
@@ -119,11 +121,11 @@ def rl2_2():
         print(cs)
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test opening a rl2 DB gray level
+
 
 def rl2_3():
 
@@ -190,6 +192,7 @@ def rl2_3():
 ###############################################################################
 # Test opening a rl2 DB paletted
 
+
 def rl2_4():
 
     if gdaltest.rl2_drv is None:
@@ -231,6 +234,7 @@ def rl2_4():
 
 ###############################################################################
 # Test opening a rl2 DB with various data types
+
 
 def rl2_5():
 
@@ -277,6 +281,7 @@ def rl2_5():
 ###############################################################################
 # Test CreateCopy() on a grayscale uint8
 
+
 def rl2_6():
 
     if gdaltest.rl2_drv is None:
@@ -287,6 +292,7 @@ def rl2_6():
 
 ###############################################################################
 # Test CreateCopy() on a RGB
+
 
 def rl2_7():
 
@@ -299,6 +305,7 @@ def rl2_7():
 ###############################################################################
 # Test CreateCopy() on a paletted dataset
 
+
 def rl2_8():
 
     if gdaltest.rl2_drv is None:
@@ -309,6 +316,7 @@ def rl2_8():
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID uint16
+
 
 def rl2_9():
 
@@ -321,6 +329,7 @@ def rl2_9():
 ###############################################################################
 # Test CreateCopy() on a DATAGRID int16
 
+
 def rl2_10():
 
     if gdaltest.rl2_drv is None:
@@ -331,6 +340,7 @@ def rl2_10():
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID uint32
+
 
 def rl2_11():
 
@@ -343,6 +353,7 @@ def rl2_11():
 ###############################################################################
 # Test CreateCopy() on a DATAGRID int32
 
+
 def rl2_12():
 
     if gdaltest.rl2_drv is None:
@@ -353,6 +364,7 @@ def rl2_12():
 
 ###############################################################################
 # Test CreateCopy() on a DATAGRID float
+
 
 def rl2_13():
 
@@ -365,6 +377,7 @@ def rl2_13():
 ###############################################################################
 # Test CreateCopy() on a DATAGRID double
 
+
 def rl2_14():
 
     if gdaltest.rl2_drv is None:
@@ -375,6 +388,7 @@ def rl2_14():
 
 ###############################################################################
 # Test CreateCopy() on a 1 bit paletted
+
 
 def rl2_15():
 
@@ -387,6 +401,7 @@ def rl2_15():
 ###############################################################################
 # Test CreateCopy() on a forced 1 bit
 
+
 def rl2_16():
 
     if gdaltest.rl2_drv is None:
@@ -397,6 +412,7 @@ def rl2_16():
 
 ###############################################################################
 # Test CreateCopy() on a forced 2 bit
+
 
 def rl2_17():
 
@@ -409,6 +425,7 @@ def rl2_17():
 ###############################################################################
 # Test CreateCopy() on a forced 4 bit
 
+
 def rl2_18():
 
     if gdaltest.rl2_drv is None:
@@ -419,6 +436,7 @@ def rl2_18():
 
 ###############################################################################
 # Test CreateCopy() with forced monochrome
+
 
 def rl2_19():
 
@@ -431,6 +449,7 @@ def rl2_19():
 ###############################################################################
 # Test incompatibilities on CreateCopy()
 # Se https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table
+
 
 def rl2_20():
 
@@ -481,6 +500,7 @@ def rl2_20():
 ###############################################################################
 # Test compression methods
 
+
 def rl2_21():
 
     if gdaltest.rl2_drv is None:
@@ -524,6 +544,7 @@ def rl2_21():
 
 ###############################################################################
 # Test APPEND_SUBDATASET
+
 
 def rl2_22():
 
@@ -574,6 +595,7 @@ def rl2_22():
 ###############################################################################
 # Test BuildOverviews
 
+
 def rl2_23():
 
     if gdaltest.rl2_drv is None:
@@ -613,6 +635,7 @@ def rl2_23():
 ###############################################################################
 # Test opening a .rl2.sql file
 
+
 def rl2_24():
 
     if gdaltest.rl2_drv is None:
@@ -626,6 +649,7 @@ def rl2_24():
         gdaltest.post_reason('validation failed')
         return 'fail'
     return 'success'
+
 
 gdaltest_list = [
     rl2_1,

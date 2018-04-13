@@ -41,6 +41,7 @@ from osgeo import gdal
 ###############################################################################
 # Test OGRGeomFieldDefn class
 
+
 def ogr_rfc41_1():
 
     gfld_defn = ogr.GeomFieldDefn()
@@ -273,6 +274,7 @@ def ogr_rfc41_2():
 ###############################################################################
 # Test OGRFeature methods
 
+
 def ogr_rfc41_3():
 
     # Test with just one geometry field
@@ -418,6 +420,7 @@ def ogr_rfc41_3():
 ###############################################################################
 # Test OGRLayer methods
 
+
 def ogr_rfc41_4():
 
     ds = ogr.GetDriverByName('memory').CreateDataSource('')
@@ -521,6 +524,7 @@ def ogr_rfc41_4():
 ###############################################################################
 # Test Python field accessors facilities
 
+
 def ogr_rfc41_5():
 
     feature_defn = ogr.FeatureDefn()
@@ -609,6 +613,7 @@ def ogr_rfc41_5():
 
 ###############################################################################
 # Test OGRSQL with geometries
+
 
 def ogr_rfc41_6():
 
@@ -1009,6 +1014,7 @@ def ogr_rfc41_6():
 ###############################################################################
 # Test crazy OGRSQL
 
+
 def ogr_rfc41_7():
 
     ds = ogr.Open('data')
@@ -1041,6 +1047,7 @@ def ogr_rfc41_7():
 
 ###############################################################################
 # Test SQLite dialect
+
 
 def ogr_rfc41_8():
 
@@ -1120,6 +1127,7 @@ def ogr_rfc41_8():
     ds.ReleaseResultSet(sql_lyr)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_rfc41_1,

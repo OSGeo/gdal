@@ -41,6 +41,7 @@ import test_py_scripts
 ###############################################################################
 # Dummy test : there is no nodata value in the source dataset !
 
+
 def test_gdal_fillnodata_1():
 
     script_path = test_py_scripts.get_py_script('gdal_fillnodata')
@@ -59,6 +60,7 @@ def test_gdal_fillnodata_1():
 ###############################################################################
 # Make sure we copy the no data value to the dst when created
 # No data value for nodata_byte.tif is 0.
+
 
 def test_gdal_fillnodata_2():
 
@@ -90,6 +92,7 @@ def test_gdal_fillnodata_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_fillnodata_1,

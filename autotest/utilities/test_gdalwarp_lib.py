@@ -43,6 +43,7 @@ import ogrtest
 ###############################################################################
 # Simple test
 
+
 def test_gdalwarp_lib_1():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
@@ -97,6 +98,7 @@ def test_gdalwarp_lib_3():
 ###############################################################################
 # Test -t_srs option
 
+
 def test_gdalwarp_lib_4():
 
     ds1 = gdal.Open('../gcore/data/byte.tif')
@@ -112,6 +114,7 @@ def test_gdalwarp_lib_4():
 
 ###############################################################################
 # Test warping from GCPs without any explicit option
+
 
 def test_gdalwarp_lib_5():
 
@@ -176,6 +179,7 @@ def test_gdalwarp_lib_7():
 ###############################################################################
 # Test -ts
 
+
 def test_gdalwarp_lib_8():
 
     ds1 = gdal.Open('tmp/testgdalwarp_gcp.tif')
@@ -195,6 +199,7 @@ def test_gdalwarp_lib_8():
 ###############################################################################
 # Test -te
 
+
 def test_gdalwarp_lib_9():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', outputBounds = [440720.000, 3750120.000, 441920.000, 3751320.000])
@@ -209,6 +214,7 @@ def test_gdalwarp_lib_9():
 
 ###############################################################################
 # Test -rn
+
 
 def test_gdalwarp_lib_10():
 
@@ -225,6 +231,7 @@ def test_gdalwarp_lib_10():
 
 ###############################################################################
 # Test -rb
+
 
 def test_gdalwarp_lib_11():
 
@@ -246,6 +253,7 @@ def test_gdalwarp_lib_11():
 ###############################################################################
 # Test -rc
 
+
 def test_gdalwarp_lib_12():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', width = 40, height = 40, resampleAlg = gdal.GRIORA_Cubic)
@@ -265,6 +273,7 @@ def test_gdalwarp_lib_12():
 
 ###############################################################################
 # Test -rcs
+
 
 def test_gdalwarp_lib_13():
 
@@ -286,6 +295,7 @@ def test_gdalwarp_lib_13():
 ###############################################################################
 # Test -r lanczos
 
+
 def test_gdalwarp_lib_14():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', width = 40, height = 40, resampleAlg = gdal.GRIORA_Lanczos)
@@ -305,6 +315,7 @@ def test_gdalwarp_lib_14():
 
 ###############################################################################
 # Test -dstnodata
+
 
 def test_gdalwarp_lib_15():
 
@@ -326,6 +337,7 @@ def test_gdalwarp_lib_15():
 
 ###############################################################################
 # Test -of VRT which is a special case
+
 
 def test_gdalwarp_lib_16():
 
@@ -355,6 +367,7 @@ def test_gdalwarp_lib_16():
 ###############################################################################
 # Test -dstalpha
 
+
 def test_gdalwarp_lib_17():
 
     ds = gdal.Warp('', '../gcore/data/rgbsmall.tif', format = 'MEM', dstAlpha = True)
@@ -371,6 +384,7 @@ def test_gdalwarp_lib_17():
 
 ###############################################################################
 # Test -et 0 which is a special case
+
 
 def test_gdalwarp_lib_19():
 
@@ -390,6 +404,7 @@ def test_gdalwarp_lib_19():
 ###############################################################################
 # Test cutline from OGR datasource.
 
+
 def test_gdalwarp_lib_21():
 
     ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline')
@@ -408,6 +423,7 @@ def test_gdalwarp_lib_21():
 ###############################################################################
 # Test cutline with ALL_TOUCHED enabled.
 
+
 def test_gdalwarp_lib_23():
 
     ds = gdal.Warp('', '../gcore/data/utmsmall.tif', format = 'MEM', warpOptions = [ 'CUTLINE_ALL_TOUCHED=TRUE' ], cutlineDSName = 'data/cutline.vrt', cutlineLayer = 'cutline')
@@ -425,6 +441,7 @@ def test_gdalwarp_lib_23():
 
 ###############################################################################
 # Test -tap
+
 
 def test_gdalwarp_lib_32():
 
@@ -449,6 +466,7 @@ def test_gdalwarp_lib_32():
 
 ###############################################################################
 # Test warping multiple sources
+
 
 def test_gdalwarp_lib_34():
 
@@ -485,6 +503,7 @@ def test_gdalwarp_lib_34():
 ###############################################################################
 # Test -te_srs
 
+
 def test_gdalwarp_lib_45():
 
     ds = gdal.Warp('', ['../gcore/data/byte.tif'], format = 'MEM', outputBounds = [-117.641087629972, 33.8915301685897, -117.628190189534, 33.9024195619201 ], outputBoundsSRS = 'EPSG:4267')
@@ -499,6 +518,7 @@ def test_gdalwarp_lib_45():
 
 ###############################################################################
 # Test -crop_to_cutline
+
 
 def test_gdalwarp_lib_46():
 
@@ -515,9 +535,11 @@ def test_gdalwarp_lib_46():
 ###############################################################################
 # Test callback
 
+
 def mycallback(pct, msg, user_data):
     user_data[0] = pct
     return 1
+
 
 def test_gdalwarp_lib_100():
 
@@ -541,6 +563,7 @@ def test_gdalwarp_lib_100():
 ###############################################################################
 # Test with color table
 
+
 def test_gdalwarp_lib_101():
 
     ds = gdal.Warp('', '../gdrivers/data/small_world_pct.tif', format = 'MEM')
@@ -552,6 +575,7 @@ def test_gdalwarp_lib_101():
 
 ###############################################################################
 # Test with a dataset with no bands
+
 
 def test_gdalwarp_lib_102():
 
@@ -566,6 +590,7 @@ def test_gdalwarp_lib_102():
 ###############################################################################
 # Test failed transformer
 
+
 def test_gdalwarp_lib_103():
 
     with gdaltest.error_handler():
@@ -578,6 +603,7 @@ def test_gdalwarp_lib_103():
 ###############################################################################
 # Test no usable source image
 
+
 def test_gdalwarp_lib_104():
 
     with gdaltest.error_handler():
@@ -589,6 +615,7 @@ def test_gdalwarp_lib_104():
 
 ###############################################################################
 # Test failure in GDALSuggestedWarpOutput2
+
 
 def test_gdalwarp_lib_105():
 
@@ -603,6 +630,7 @@ def test_gdalwarp_lib_105():
 ###############################################################################
 # Test failure in creation
 
+
 def test_gdalwarp_lib_106():
 
     with gdaltest.error_handler():
@@ -614,6 +642,7 @@ def test_gdalwarp_lib_106():
 
 ###############################################################################
 # Test forced width only
+
 
 def test_gdalwarp_lib_107():
 
@@ -628,6 +657,7 @@ def test_gdalwarp_lib_107():
 ###############################################################################
 # Test forced height only
 
+
 def test_gdalwarp_lib_108():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', height = 20)
@@ -641,6 +671,7 @@ def test_gdalwarp_lib_108():
 ###############################################################################
 # Test wrong cutline name
 
+
 def test_gdalwarp_lib_109():
 
     with gdaltest.error_handler():
@@ -653,6 +684,7 @@ def test_gdalwarp_lib_109():
 ###############################################################################
 # Test wrong cutline layer name
 
+
 def test_gdalwarp_lib_110():
 
     with gdaltest.error_handler():
@@ -664,6 +696,7 @@ def test_gdalwarp_lib_110():
 
 ###############################################################################
 # Test cutline SQL
+
 
 def test_gdalwarp_lib_111():
 
@@ -682,6 +715,7 @@ def test_gdalwarp_lib_111():
 
 ###############################################################################
 # Test cutline without geometry
+
 
 def test_gdalwarp_lib_112():
 
@@ -702,6 +736,7 @@ def test_gdalwarp_lib_112():
 
 ###############################################################################
 # Test cutline with non polygon geometry
+
 
 def test_gdalwarp_lib_113():
 
@@ -724,6 +759,7 @@ def test_gdalwarp_lib_113():
 ###############################################################################
 # Test cutline without feature
 
+
 def test_gdalwarp_lib_114():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/cutline.shp')
@@ -741,6 +777,7 @@ def test_gdalwarp_lib_114():
 ###############################################################################
 # Test source dataset without band
 
+
 def test_gdalwarp_lib_115():
 
     no_band_ds = gdal.GetDriverByName('MEM').Create('no band', 1, 1, 0)
@@ -757,6 +794,7 @@ def test_gdalwarp_lib_115():
 ###############################################################################
 # Test failed cropToCutline due to invalid SRC_SRS
 
+
 def test_gdalwarp_lib_116():
 
     with gdaltest.error_handler():
@@ -769,6 +807,7 @@ def test_gdalwarp_lib_116():
 
 ###############################################################################
 # Test failed cropToCutline due to invalid DST_SRS
+
 
 def test_gdalwarp_lib_117():
 
@@ -783,6 +822,7 @@ def test_gdalwarp_lib_117():
 ###############################################################################
 # Test failed cropToCutline due to no source raster
 
+
 def test_gdalwarp_lib_118():
 
     with gdaltest.error_handler():
@@ -795,6 +835,7 @@ def test_gdalwarp_lib_118():
 
 ###############################################################################
 # Test failed cropToCutline due to source raster without projection
+
 
 def test_gdalwarp_lib_119():
 
@@ -810,6 +851,7 @@ def test_gdalwarp_lib_119():
 ###############################################################################
 # Test failed cropToCutline due to source raster with dummy projection
 
+
 def test_gdalwarp_lib_120():
 
     dummy_proj_ds = gdal.GetDriverByName('MEM').Create('no_proj_ds', 1, 1)
@@ -824,6 +866,7 @@ def test_gdalwarp_lib_120():
 
 ###############################################################################
 # Test internal wrappers
+
 
 def test_gdalwarp_lib_121():
 
@@ -854,6 +897,7 @@ def test_gdalwarp_lib_121():
 ###############################################################################
 # Test unnamed output VRT
 
+
 def test_gdalwarp_lib_122():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'VRT')
@@ -864,6 +908,7 @@ def test_gdalwarp_lib_122():
 
 ###############################################################################
 # Test failure during warping
+
 
 def test_gdalwarp_lib_123():
 
@@ -876,6 +921,7 @@ def test_gdalwarp_lib_123():
 
 ###############################################################################
 # Test warping to dataset with existing nodata
+
 
 def test_gdalwarp_lib_124():
 
@@ -904,6 +950,7 @@ def test_gdalwarp_lib_124():
 ###############################################################################
 # Test that statistics are not propagated
 
+
 def test_gdalwarp_lib_125():
 
     for i in range(3):
@@ -929,6 +976,7 @@ def test_gdalwarp_lib_125():
 ###############################################################################
 # Test cutline with invalid geometry
 
+
 def test_gdalwarp_lib_126():
 
     if not ogrtest.have_geos():
@@ -953,6 +1001,7 @@ def test_gdalwarp_lib_126():
 ###############################################################################
 # Test -srcnodata (#6315)
 
+
 def test_gdalwarp_lib_127():
 
     ds = gdal.Warp('', '../gcore/data/byte.tif', format = 'MEM', srcNodata = 1)
@@ -969,6 +1018,7 @@ def test_gdalwarp_lib_127():
 
 ###############################################################################
 # Test automatic densification of cutline (#6375)
+
 
 def test_gdalwarp_lib_128():
 
@@ -1052,6 +1102,7 @@ def test_gdalwarp_lib_128():
 # Test automatic densification of cutline, but with initial guess leading
 # to an invalid geometry (#6375)
 
+
 def test_gdalwarp_lib_129():
     if not ogrtest.have_geos():
         return 'skip'
@@ -1104,6 +1155,7 @@ def test_gdalwarp_lib_129():
 ###############################################################################
 # Test automatic detection and setting of alpha channel, and setting RGB on
 # GTiff output
+
 
 def test_gdalwarp_lib_130():
 
@@ -1160,6 +1212,7 @@ def test_gdalwarp_lib_130():
 ###############################################################################
 # Test -nosrcalpha
 
+
 def test_gdalwarp_lib_131():
 
     src_ds = gdal.GetDriverByName('GTiff').Create(
@@ -1189,6 +1242,7 @@ def test_gdalwarp_lib_131():
 ###############################################################################
 # Test that alpha blending works by warping onto an existing dataset
 # with alpha > 0 and < 255
+
 
 def test_gdalwarp_lib_132():
 
@@ -1236,6 +1290,7 @@ def test_gdalwarp_lib_132():
 ###############################################################################
 # Test cutline with multiple touching polygons
 
+
 def test_gdalwarp_lib_133():
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('/vsimem/test_gdalwarp_lib_133.shp')
@@ -1269,6 +1324,7 @@ def test_gdalwarp_lib_133():
 
 ###############################################################################
 # Test SRC_METHOD=NO_GEOTRANSFORM and DST_METHOD=NO_GEOTRANSFORM (#6721)
+
 
 def test_gdalwarp_lib_134():
 
@@ -1309,6 +1365,7 @@ def test_gdalwarp_lib_134():
 
 ###############################################################################
 # Test vertical datum shift
+
 
 def test_gdalwarp_lib_135():
 
@@ -1503,7 +1560,6 @@ def test_gdalwarp_lib_135():
         print(data)
         return 'fail'
 
-
     # Forward transform with explicit m unit
     src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1)
     src_ds.SetGeoTransform([500000,1,0,4000000,0,-1])
@@ -1650,6 +1706,7 @@ def test_gdalwarp_lib_135():
 ###############################################################################
 # Test error code path linked with failed warper initialization
 
+
 def test_gdalwarp_lib_136():
 
     with gdaltest.error_handler():
@@ -1668,6 +1725,7 @@ def test_gdalwarp_lib_136():
 
 ###############################################################################
 # Test warping two input datasets with different SRS, with no explicit target SRS
+
 
 def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs():
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -1698,6 +1756,7 @@ def test_gdalwarp_lib_several_sources_with_different_srs_no_explicit_target_srs(
 ###############################################################################
 # Test fix for https://trac.osgeo.org/gdal/ticket/7243
 
+
 def test_gdalwarp_lib_touching_dateline():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 100,100)
@@ -1715,6 +1774,7 @@ def test_gdalwarp_lib_touching_dateline():
 
 ###############################################################################
 # Test fix for https://trac.osgeo.org/gdal/ticket/7245
+
 
 def test_gdalwarp_lib_override_default_output_nodata():
 
@@ -1749,6 +1809,7 @@ def test_gdalwarp_lib_override_default_output_nodata():
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdalwarp_lib_cleanup():
 

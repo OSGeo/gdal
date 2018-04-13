@@ -40,11 +40,13 @@ from osgeo import gdal
 # Nothing exciting here. Just trying to open non existing files,
 # or empty names, or files that are not valid datasets...
 
+
 def matches_non_existing_error_msg(msg):
     m1 = "does not exist in the file system, and is not recognized as a supported dataset name." in msg
     m2 = 'No such file or directory' in msg
     m3 = 'Permission denied' in msg
     return m1 or m2 or m3
+
 
 def basic_test_1():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -56,6 +58,7 @@ def basic_test_1():
         gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
+
 def basic_test_2():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('non_existing_ds', gdal.GA_Update)
@@ -65,6 +68,7 @@ def basic_test_2():
     else:
         gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
+
 
 def basic_test_3():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -76,6 +80,7 @@ def basic_test_3():
         gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
 
+
 def basic_test_4():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
     ds = gdal.Open('', gdal.GA_Update)
@@ -85,6 +90,7 @@ def basic_test_4():
     else:
         gdaltest.post_reason('did not get expected error message, got %s' % gdal.GetLastErrorMsg())
         return 'fail'
+
 
 def basic_test_5():
     gdal.PushErrorHandler( 'CPLQuietErrorHandler' )
@@ -100,6 +106,7 @@ def basic_test_5():
 ###############################################################################
 # Issue several AllRegister() to check that GDAL drivers are good citizens
 
+
 def basic_test_6():
     gdal.AllRegister()
     gdal.AllRegister()
@@ -109,6 +116,7 @@ def basic_test_6():
 
 ###############################################################################
 # Test fix for #3077 (check that errors are cleared when using UseExceptions())
+
 
 def basic_test_7_internal():
     try:
@@ -135,6 +143,7 @@ def basic_test_7_internal():
 
         return 'success'
 
+
 def basic_test_7():
     old_use_exceptions_status = gdal.GetUseExceptions()
     gdal.UseExceptions()
@@ -145,6 +154,7 @@ def basic_test_7():
 
 ###############################################################################
 # Test gdal.VersionInfo('RELEASE_DATE') and gdal.VersionInfo('LICENSE')
+
 
 def basic_test_8():
 
@@ -179,10 +189,12 @@ def basic_test_8():
 ###############################################################################
 # Test gdal.PushErrorHandler() with a Python error handler
 
+
 def my_python_error_handler(eErrClass, err_no, msg):
     gdaltest.eErrClass = eErrClass
     gdaltest.err_no = err_no
     gdaltest.msg = msg
+
 
 def basic_test_9():
 
@@ -210,6 +222,7 @@ def basic_test_9():
 ###############################################################################
 # Test gdal.PushErrorHandler() with a Python error handler as a method (#5186)
 
+
 class my_python_error_handler_class:
     def __init__(self):
         self.eErrClass = None
@@ -220,6 +233,7 @@ class my_python_error_handler_class:
         self.eErrClass = eErrClass
         self.err_no = err_no
         self.msg = msg
+
 
 def basic_test_10():
 
@@ -249,6 +263,7 @@ def basic_test_10():
 
 ###############################################################################
 # Test gdal.OpenEx()
+
 
 def basic_test_11():
 
@@ -371,6 +386,7 @@ def basic_test_11():
 ###############################################################################
 # Test GDAL layer API
 
+
 def basic_test_12():
 
     ds = gdal.GetDriverByName('MEMORY').Create('bar', 0, 0, 0)
@@ -428,6 +444,7 @@ def basic_test_12():
 ###############################################################################
 # Test correct sorting of StringList / metadata (#5540, #5557)
 
+
 def basic_test_13():
 
     ds = gdal.GetDriverByName('MEM').Create('',1,1)
@@ -474,6 +491,7 @@ def basic_test_13():
 
 ###############################################################################
 # Test SetMetadata()
+
 
 def basic_test_14():
 
@@ -563,14 +581,18 @@ def basic_test_14():
 ###############################################################################
 # Test errors with progress callback
 
+
 def basic_test_15_cbk_no_argument():
     return None
+
 
 def basic_test_15_cbk_no_ret(a, b, c):
     return None
 
+
 def basic_test_15_cbk_bad_ret(a, b, c):
     return 'ok'
+
 
 def basic_test_15():
 
@@ -605,6 +627,7 @@ def basic_test_15():
 ###############################################################################
 # Test unrecognized and recognized open options prefixed by @
 
+
 def basic_test_16():
 
     gdal.ErrorReset()
@@ -627,6 +650,7 @@ def basic_test_16():
 
 ###############################################################################
 # Test mix of gdal/ogr.UseExceptions()/DontUseExceptions()
+
 
 def basic_test_17():
 
@@ -674,6 +698,7 @@ def basic_test_17():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [ basic_test_1,
                   basic_test_2,

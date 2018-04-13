@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def paux_1():
 
     tst = gdaltest.GDALTest( 'PAux', 'small16.raw', 2, 12816 )
@@ -45,6 +46,7 @@ def paux_1():
 
 ###############################################################################
 # Test copying.
+
 
 def paux_2():
 
@@ -55,6 +57,7 @@ def paux_2():
 ###############################################################################
 # Test /vsimem based.
 
+
 def paux_3():
 
     tst = gdaltest.GDALTest( 'PAux', 'byte.tif', 1, 4672 )
@@ -64,10 +67,12 @@ def paux_3():
 ###############################################################################
 # Cleanup.
 
+
 def paux_cleanup():
     gdaltest.clean_tmp()
     gdal.Unlink('/vsimem/byte.tif.tst.aux.xml')
     return 'success'
+
 
 gdaltest_list = [
     paux_1,

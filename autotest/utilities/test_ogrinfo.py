@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_ogrinfo_1():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -59,6 +60,7 @@ def test_ogrinfo_1():
 ###############################################################################
 # Test -ro option
 
+
 def test_ogrinfo_2():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -71,6 +73,7 @@ def test_ogrinfo_2():
 
 ###############################################################################
 # Test -al option
+
 
 def test_ogrinfo_3():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -101,6 +104,7 @@ def test_ogrinfo_3():
 ###############################################################################
 # Test layer name
 
+
 def test_ogrinfo_4():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -114,6 +118,7 @@ def test_ogrinfo_4():
 ###############################################################################
 # Test -sql option
 
+
 def test_ogrinfo_5():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -126,6 +131,7 @@ def test_ogrinfo_5():
 
 ###############################################################################
 # Test -geom=NO option
+
 
 def test_ogrinfo_6():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -141,6 +147,7 @@ def test_ogrinfo_6():
 
 ###############################################################################
 # Test -geom=SUMMARY option
+
 
 def test_ogrinfo_7():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -159,6 +166,7 @@ def test_ogrinfo_7():
 ###############################################################################
 # Test -spat option
 
+
 def test_ogrinfo_8():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -176,6 +184,7 @@ def test_ogrinfo_8():
 ###############################################################################
 # Test -where option
 
+
 def test_ogrinfo_9():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -191,6 +200,7 @@ def test_ogrinfo_9():
 ###############################################################################
 # Test -fid option
 
+
 def test_ogrinfo_10():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -203,6 +213,7 @@ def test_ogrinfo_10():
 
 ###############################################################################
 # Test -fields=no option
+
 
 def test_ogrinfo_11():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -219,6 +230,7 @@ def test_ogrinfo_11():
 ###############################################################################
 # Test ogrinfo --version
 
+
 def test_ogrinfo_12():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -232,6 +244,7 @@ def test_ogrinfo_12():
 
 ###############################################################################
 # Test erroneous use of --config
+
 
 def test_ogrinfo_13():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -247,6 +260,7 @@ def test_ogrinfo_13():
 ###############################################################################
 # Test erroneous use of --mempreload.
 
+
 def test_ogrinfo_14():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -260,6 +274,7 @@ def test_ogrinfo_14():
 
 ###############################################################################
 # Test --mempreload
+
 
 def test_ogrinfo_15():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -275,6 +290,7 @@ def test_ogrinfo_15():
 ###############################################################################
 # Test erroneous use of --debug.
 
+
 def test_ogrinfo_16():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -288,6 +304,7 @@ def test_ogrinfo_16():
 
 ###############################################################################
 # Test erroneous use of --optfile.
+
 
 def test_ogrinfo_17():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -320,6 +337,7 @@ def test_ogrinfo_17():
 ###############################################################################
 # Test --optfile
 
+
 def test_ogrinfo_18():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -339,6 +357,7 @@ def test_ogrinfo_18():
 ###############################################################################
 # Test --formats
 
+
 def test_ogrinfo_19():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -352,6 +371,7 @@ def test_ogrinfo_19():
 
 ###############################################################################
 # Test --help-general
+
 
 def test_ogrinfo_20():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -367,6 +387,7 @@ def test_ogrinfo_20():
 ###############################################################################
 # Test --locale
 
+
 def test_ogrinfo_21():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -380,6 +401,7 @@ def test_ogrinfo_21():
 
 ###############################################################################
 # Test RFC 41 support
+
 
 def test_ogrinfo_22():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -463,6 +485,7 @@ OGRFeature(test_ogrinfo_22):1
 ###############################################################################
 # Test -geomfield (RFC 41) support
 
+
 def test_ogrinfo_23():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -540,6 +563,7 @@ OGRFeature(test_ogrinfo_23):2
 
 ###############################################################################
 # Test metadata
+
 
 def test_ogrinfo_24():
     if test_cli_utilities.get_ogrinfo_path() is None:
@@ -711,6 +735,7 @@ PRFEDEA: String (16.0)
 ###############################################################################
 # Test -rl
 
+
 def test_ogrinfo_25():
     if test_cli_utilities.get_ogrinfo_path() is None:
         return 'skip'
@@ -726,6 +751,7 @@ def test_ogrinfo_25():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_ogrinfo_1,

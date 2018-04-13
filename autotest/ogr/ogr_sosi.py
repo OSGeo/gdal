@@ -37,6 +37,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def ogr_sosi_1():
 
     if ogr.GetDriverByName('SOSI') is None:

@@ -38,6 +38,7 @@ import gdaltest
 # Test reading a - fake - SAFE dataset. Note: the tiff files are fake,
 # reduced to 1% of their initial size and metadata stripped
 
+
 def safe_1():
 
     tst = gdaltest.GDALTest(
@@ -46,12 +47,14 @@ def safe_1():
         '008EA0_24EE.SAFE/manifest.safe', 1, 65372 )
     return tst.testOpen()
 
+
 def safe_2():
 
     tst = gdaltest.GDALTest(
         'SAFE', 'SAFE_FAKE/S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_'
         '006672_008EA0_24EE.SAFE/manifest.safe', 2, 3732 )
     return tst.testOpen()
+
 
 def safe_3():
 
@@ -60,12 +63,14 @@ def safe_3():
         'SENTINEL1_DS:data/SAFE_FAKE/S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW_VH', 1, 65372, filename_absolute = 1 )
     return tst.testOpen()
 
+
 def safe_4():
 
     tst = gdaltest.GDALTest(
         'SAFE',
         'SENTINEL1_DS:data/SAFE_FAKE/S1A_IW_GRDH_1SDV_20150705T064241_20150705T064306_006672_008EA0_24EE.SAFE:IW_VV', 1, 3732, filename_absolute = 1 )
     return tst.testOpen()
+
 
 def safe_5():
 

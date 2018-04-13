@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test CreateCopy() of int16.tif
 
+
 def bt_1():
 
     tst = gdaltest.GDALTest( 'BT', 'int16.tif', 1, 4672 )
@@ -49,6 +50,7 @@ def bt_1():
 
 ###############################################################################
 # Test CreateCopy() of int32.tif
+
 
 def bt_2():
 
@@ -61,6 +63,7 @@ def bt_2():
 ###############################################################################
 # Test CreateCopy() of float32.tif
 
+
 def bt_3():
 
     tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
@@ -72,6 +75,7 @@ def bt_3():
 ###############################################################################
 # Test Create() of float32.tif
 
+
 def bt_4():
 
     tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
@@ -79,6 +83,7 @@ def bt_4():
 
 ###############################################################################
 # Test testSetProjection() of float32.tif
+
 
 def bt_5():
 
@@ -88,6 +93,7 @@ def bt_5():
 ###############################################################################
 # Test testSetGeoTransform() of float32.tif
 
+
 def bt_6():
 
     tst = gdaltest.GDALTest( 'BT', 'float32.tif', 1, 4672 )
@@ -95,6 +101,7 @@ def bt_6():
 
 ###############################################################################
 # Cleanup
+
 
 def bt_cleanup():
 

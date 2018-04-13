@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # Test a fairly default case.
 
+
 def proximity_1():
 
     drv = gdal.GetDriverByName( 'GTiff' )
@@ -69,6 +70,7 @@ def proximity_1():
 
 ###############################################################################
 # Try several options
+
 
 def proximity_2():
 
@@ -105,6 +107,7 @@ def proximity_2():
 ###############################################################################
 # Try input nodata option
 
+
 def proximity_3():
 
     drv = gdal.GetDriverByName( 'GTiff' )
@@ -136,6 +139,7 @@ def proximity_3():
         return 'fail'
     else:
         return 'success'
+
 
 gdaltest_list = [
     proximity_1,

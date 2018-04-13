@@ -86,6 +86,7 @@ def compare_ogrinfo_output(gmlfile, reffile, options = ''):
 ###############################################################################
 # Basic test
 
+
 def ogr_gmlas_basic():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -112,11 +113,11 @@ def ogr_gmlas_basic():
     return compare_ogrinfo_output('data/gmlas/gmlas_test1.xml',
                                   'data/gmlas/gmlas_test1.txt')
 
-
     return 'success'
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_gmlas_test_ogrsf():
 
@@ -144,6 +145,7 @@ def ogr_gmlas_test_ogrsf():
 ###############################################################################
 # Test virtual file support
 
+
 def ogr_gmlas_virtual_file():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -162,7 +164,6 @@ def ogr_gmlas_virtual_file():
 <xs:element name="main_elt" type="xs:string"/>
 </xs:schema>""")
 
-
     ds = gdal.OpenEx('GMLAS:/vsimem/ogr_gmlas_8.xml')
     if ds is None:
         gdaltest.post_reason('fail')
@@ -175,6 +176,7 @@ def ogr_gmlas_virtual_file():
 
 ###############################################################################
 # Test opening with XSD option
+
 
 def ogr_gmlas_datafile_with_xsd_option():
 
@@ -191,6 +193,7 @@ def ogr_gmlas_datafile_with_xsd_option():
 ###############################################################################
 # Test opening with just XSD option
 
+
 def ogr_gmlas_no_datafile_with_xsd_option():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -205,6 +208,7 @@ def ogr_gmlas_no_datafile_with_xsd_option():
 
 ###############################################################################
 # Test opening with just XSD option but pointing to a non-xsd filename
+
 
 def ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
 
@@ -226,6 +230,7 @@ def ogr_gmlas_no_datafile_xsd_which_is_not_xsd():
 ###############################################################################
 # Test opening with nothing
 
+
 def ogr_gmlas_no_datafile_no_xsd():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -245,6 +250,7 @@ def ogr_gmlas_no_datafile_no_xsd():
 
 ###############################################################################
 # Test opening an inexisting GML file
+
 
 def ogr_gmlas_non_existing_gml():
 
@@ -266,6 +272,7 @@ def ogr_gmlas_non_existing_gml():
 ###############################################################################
 # Test opening with just XSD option but pointing to a non existing file
 
+
 def ogr_gmlas_non_existing_xsd():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -285,6 +292,7 @@ def ogr_gmlas_non_existing_xsd():
 
 ###############################################################################
 # Test opening a GML file without schemaLocation
+
 
 def ogr_gmlas_gml_without_schema_location():
 
@@ -311,6 +319,7 @@ def ogr_gmlas_gml_without_schema_location():
 ###############################################################################
 # Test invalid schema
 
+
 def ogr_gmlas_invalid_schema():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -330,6 +339,7 @@ def ogr_gmlas_invalid_schema():
 
 ###############################################################################
 # Test invalid XML
+
 
 def ogr_gmlas_invalid_xml():
 
@@ -352,6 +362,7 @@ def ogr_gmlas_invalid_xml():
 
 ###############################################################################
 # Test links with gml:ReferenceType
+
 
 def ogr_gmlas_gml_Reference():
 
@@ -382,6 +393,7 @@ def ogr_gmlas_gml_Reference():
 
 ###############################################################################
 # Test that we fix ambiguities in class names
+
 
 def ogr_gmlas_same_element_in_different_ns():
 
@@ -423,6 +435,7 @@ def ogr_gmlas_same_element_in_different_ns():
 ###############################################################################
 # Test a corner case of relative path resolution
 
+
 def ogr_gmlas_corner_case_relative_path():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -437,6 +450,7 @@ def ogr_gmlas_corner_case_relative_path():
 
 ###############################################################################
 # Test unexpected repeated element
+
 
 def ogr_gmlas_unexpected_repeated_element():
 
@@ -466,6 +480,7 @@ def ogr_gmlas_unexpected_repeated_element():
 ###############################################################################
 # Test unexpected repeated element
 
+
 def ogr_gmlas_unexpected_repeated_element_variant():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -493,6 +508,7 @@ def ogr_gmlas_unexpected_repeated_element_variant():
 
 ###############################################################################
 # Test reading geometries embedded in a geometry property element
+
 
 def ogr_gmlas_geometryproperty():
 
@@ -654,6 +670,7 @@ def ogr_gmlas_geometryproperty():
 ###############################################################################
 # Test reading geometries referenced by a AbstractGeometry element
 
+
 def ogr_gmlas_abstractgeometry():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -694,6 +711,7 @@ def ogr_gmlas_abstractgeometry():
 ###############################################################################
 # Test validation against schema
 
+
 class MyHandler:
     def __init__(self):
         self.error_list = []
@@ -701,6 +719,7 @@ class MyHandler:
     def error_handler(self, err_type, err_no, err_msg):
         if err_type != 1: # 1 == Debug
             self.error_list.append((err_type, err_no, err_msg))
+
 
 def ogr_gmlas_validate():
 
@@ -818,6 +837,7 @@ def ogr_gmlas_validate():
 ###############################################################################
 # Test correct namespace prefix handling
 
+
 def ogr_gmlas_test_ns_prefix():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -838,6 +858,7 @@ def ogr_gmlas_test_ns_prefix():
 ###############################################################################
 # Test parsing documents without namespace
 
+
 def ogr_gmlas_no_namespace():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -855,6 +876,7 @@ def ogr_gmlas_no_namespace():
 
 ###############################################################################
 # Test CONFIG_FILE
+
 
 def ogr_gmlas_conf():
 
@@ -962,6 +984,7 @@ def ogr_gmlas_conf():
 
 ###############################################################################
 # Test IgnoredXPaths aspect of config file
+
 
 def ogr_gmlas_conf_ignored_xpath():
 
@@ -1106,7 +1129,10 @@ def ogr_gmlas_conf_ignored_xpath():
 
 ###############################################################################
 
+
 do_log = False
+
+
 class GMLASHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
@@ -1146,6 +1172,7 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
 
 ###############################################################################
 # Test schema caching
+
 
 def ogr_gmlas_cache():
 
@@ -1321,6 +1348,7 @@ def ogr_gmlas_link_nested_independant_child():
 ###############################################################################
 # Test some pattern found in geosciml schemas
 
+
 def ogr_gmlas_composition_compositionPart():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -1358,6 +1386,7 @@ def ogr_gmlas_composition_compositionPart():
 # Test that when importing GML we expose by default only elements deriving
 # from _Feature/AbstractFeature
 
+
 def ogr_gmlas_instantiate_only_gml_feature():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -1374,6 +1403,7 @@ def ogr_gmlas_instantiate_only_gml_feature():
 
 ###############################################################################
 # Test that WFS style timeStamp are ignored for hash generation
+
 
 def ogr_gmlas_timestamp_ignored_for_hash():
 
@@ -1398,6 +1428,7 @@ def ogr_gmlas_timestamp_ignored_for_hash():
 
 ###############################################################################
 # Test dataset GetNextFeature()
+
 
 def ogr_gmlas_dataset_getnextfeature():
 
@@ -1506,7 +1537,6 @@ def ogr_gmlas_dataset_getnextfeature():
         print(expected_count)
         return 'fail'
 
-
     for layers in [ ['_ogr_fields_metadata'],
                     ['_ogr_layers_metadata'],
                     ['_ogr_layer_relationships'],
@@ -1561,12 +1591,12 @@ def ogr_gmlas_dataset_getnextfeature():
         print(count)
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 #  Test that with schemas that have a structure like a base:identifier, we
 # will inline it.
+
 
 def ogr_gmlas_inline_identifier():
 
@@ -1589,6 +1619,7 @@ def ogr_gmlas_inline_identifier():
 
 ###############################################################################
 #  Test that we can handle things like gml:name and au:name
+
 
 def ogr_gmlas_avoid_same_name_inlined_classes():
 
@@ -1684,6 +1715,7 @@ def ogr_gmlas_remove_unused_layers_and_fields():
 
 ###############################################################################
 #  Test xlink resolution
+
 
 def ogr_gmlas_xlink_resolver():
 
@@ -2168,6 +2200,7 @@ bar""" or \
 ###############################################################################
 # Test UTF-8 support
 
+
 def ogr_gmlas_recoding():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2191,6 +2224,7 @@ def ogr_gmlas_recoding():
 
 ###############################################################################
 # Test schema without namespace prefix
+
 
 def ogr_gmlas_schema_without_namespace_prefix():
 
@@ -2235,6 +2269,7 @@ def ogr_gmlas_schema_without_namespace_prefix():
 ###############################################################################
 # Test parsing truncated XML
 
+
 def ogr_gmlas_truncated_xml():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2253,6 +2288,7 @@ def ogr_gmlas_truncated_xml():
 
 ###############################################################################
 # Test identifier truncation
+
 
 def ogr_gmlas_identifier_truncation():
 
@@ -2324,6 +2360,7 @@ def ogr_gmlas_identifier_truncation():
 ###############################################################################
 # Test behaviour when identifiers have same case
 
+
 def ogr_gmlas_identifier_case_ambiguity():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2359,6 +2396,7 @@ def ogr_gmlas_identifier_case_ambiguity():
 ###############################################################################
 # Test writing support
 
+
 def ogr_gmlas_writer():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2384,6 +2422,7 @@ def ogr_gmlas_writer():
 
 ###############################################################################
 # Check the generated .xml and .xsd
+
 
 def ogr_gmlas_writer_check_xml_xsd():
 
@@ -2448,6 +2487,7 @@ def ogr_gmlas_writer_check_xml_xsd():
 ###############################################################################
 # Check that the .xml read back by the GMLAS driver has the same content
 # as the original one.
+
 
 def ogr_gmlas_writer_check_xml_read_back():
 
@@ -2517,6 +2557,7 @@ def ogr_gmlas_writer_check_xml_read_back():
 ###############################################################################
 # Test writing support with geometries
 
+
 def ogr_gmlas_writer_gml():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2577,6 +2618,7 @@ def ogr_gmlas_writer_gml():
 
 ###############################################################################
 # Test writing support with geometries and -a_srs
+
 
 def ogr_gmlas_writer_gml_assign_srs():
 
@@ -2647,6 +2689,7 @@ def ogr_gmlas_writer_gml_assign_srs():
 ###############################################################################
 # Test writing support with geometries with original XML content preserved
 
+
 def ogr_gmlas_writer_gml_original_xml():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -2701,6 +2744,7 @@ def ogr_gmlas_writer_gml_original_xml():
 
 ###############################################################################
 # Test writing support with XSD, INDENT_SIZE, COMMENT, OUTPUT_XSD_FILENAME, TIMESTAMP options
+
 
 def ogr_gmlas_writer_options():
 
@@ -2763,7 +2807,6 @@ def ogr_gmlas_writer_options():
         print(content)
         return 'fail'
 
-
     # Test TIMESTAMP option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
         open_options = [ '@HASH=hash', 'EXPOSE_METADATA_LAYERS=YES' ])
@@ -2795,7 +2838,6 @@ def ogr_gmlas_writer_options():
         gdaltest.post_reason('fail')
         print(content)
         return 'fail'
-
 
     # Test WFS20_SCHEMALOCATION option
     src_ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_geometryproperty_gml32_no_error.gml', \
@@ -2858,6 +2900,7 @@ def ogr_gmlas_writer_options():
 
 ###############################################################################
 # Test writing support error handle
+
 
 def ogr_gmlas_writer_errors():
 
@@ -2998,6 +3041,7 @@ def ogr_gmlas_writer_errors():
 # Test reading a particular construct with group, etc... that could cause
 # crashes
 
+
 def ogr_gmlas_read_fake_gmljp2():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3024,6 +3068,7 @@ def ogr_gmlas_read_fake_gmljp2():
 
 ###############################################################################
 #  Test TypingConstraints
+
 
 def ogr_gmlas_typing_constraints():
 
@@ -3058,7 +3103,6 @@ def ogr_gmlas_typing_constraints():
         f.DumpReadable()
         return 'fail'
     ds = None
-
 
     # One substitution, with repetition
 
@@ -3131,6 +3175,7 @@ def ogr_gmlas_typing_constraints():
 
 ###############################################################################
 #  Test swe:DataArray
+
 
 def ogr_gmlas_swe_dataarray():
 
@@ -3251,6 +3296,7 @@ def ogr_gmlas_swe_datarecord():
 ###############################################################################
 #  Test a xs:any field at end of a type declaration
 
+
 def ogr_gmlas_any_field_at_end_of_declaration():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3282,6 +3328,7 @@ def ogr_gmlas_any_field_at_end_of_declaration():
 ###############################################################################
 #  Test auxiliary schema without namespace prefix
 
+
 def ogr_gmlas_aux_schema_without_namespace_prefix():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3300,6 +3347,7 @@ def ogr_gmlas_aux_schema_without_namespace_prefix():
 # Test importing a GML geometry that is in an element that is a substitutionGroup
 # of another one (#6990)
 
+
 def ogr_gmlas_geometry_as_substitutiongroup():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3316,6 +3364,8 @@ def ogr_gmlas_geometry_as_substitutiongroup():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_gmlas_extra_piezometre():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3326,6 +3376,8 @@ def ogr_gmlas_extra_piezometre():
                                   options = '-oo REMOVE_UNUSED_LAYERS=YES')
 
 ###############################################################################
+
+
 def ogr_gmlas_extra_eureg():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3512,6 +3564,7 @@ def ogr_gmlas_internal_xlink_href():
 ###############################################################################
 #  Cleanup
 
+
 def ogr_gmlas_cleanup():
 
     if ogr.GetDriverByName('GMLAS') is None:
@@ -3525,6 +3578,7 @@ def ogr_gmlas_cleanup():
     gdal.SetConfigOption('GDAL_XML_VALIDATION', ogrtest.old_val_GDAL_XML_VALIDATION)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_gmlas_basic,

@@ -39,6 +39,7 @@ from osgeo import gdal, osr
 ###############################################################################
 # Test error case (#5586)
 
+
 def tps_1():
 
     drv = gdal.GetDriverByName('MEM')

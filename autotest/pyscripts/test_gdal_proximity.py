@@ -42,6 +42,7 @@ from osgeo import gdal
 ###############################################################################
 # Test a fairly default case.
 
+
 def test_gdal_proximity_1():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
@@ -73,6 +74,7 @@ def test_gdal_proximity_1():
 ###############################################################################
 # Try several options
 
+
 def test_gdal_proximity_2():
 
     script_path = test_py_scripts.get_py_script('gdal_proximity')
@@ -99,6 +101,7 @@ def test_gdal_proximity_2():
 
 ###############################################################################
 # Try input nodata option
+
 
 def test_gdal_proximity_3():
 
@@ -127,6 +130,7 @@ def test_gdal_proximity_3():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_proximity_cleanup():
 
     lst = [ 'tmp/proximity_1.tif',
@@ -139,6 +143,7 @@ def test_gdal_proximity_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_proximity_1,

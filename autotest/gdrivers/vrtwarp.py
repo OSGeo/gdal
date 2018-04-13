@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Verify reading from simple existing warp definition.
 
+
 def vrtwarp_1():
 
     tst = gdaltest.GDALTest( 'VRT', 'rgb_warp.vrt', 2, 21504 )
@@ -47,6 +48,7 @@ def vrtwarp_1():
 
 ###############################################################################
 # Create a new VRT warp in the temp directory.
+
 
 def vrtwarp_2():
 
@@ -74,6 +76,7 @@ def vrtwarp_2():
 # Force the VRT warp file to be written to disk and close it.  Reopen, and
 # verify checksum.
 
+
 def vrtwarp_3():
 
     gdaltest.vrtwarp_ds.SetDescription( 'tmp/warp.vrt' )
@@ -96,6 +99,7 @@ def vrtwarp_3():
 
 ###############################################################################
 # Test implicit overviews with default source overview level strategy (AUTO)
+
 
 def vrtwarp_4():
 
@@ -172,6 +176,7 @@ def vrtwarp_4():
 ###############################################################################
 # Test implicit overviews with selection of the upper source overview level
 
+
 def vrtwarp_5():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -217,6 +222,7 @@ def vrtwarp_5():
 
 ###############################################################################
 # Test implicit overviews with GCP
+
 
 def vrtwarp_6():
 
@@ -273,6 +279,7 @@ def vrtwarp_6():
 ###############################################################################
 # Test implicit overviews with GCP (TPS)
 
+
 def vrtwarp_7():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -324,6 +331,7 @@ def vrtwarp_7():
 ###############################################################################
 # Test implicit overviews with RPC
 
+
 def vrtwarp_8():
 
     shutil.copy('../gcore/data/byte.tif', 'tmp/vrtwarp_8.tif')
@@ -359,6 +367,7 @@ def vrtwarp_8():
 
 ###############################################################################
 # Test implicit overviews with GEOLOCATION
+
 
 def vrtwarp_9():
 
@@ -423,6 +432,7 @@ def vrtwarp_9():
 ###############################################################################
 # Test implicit overviews with selection of the full resolution level
 
+
 def vrtwarp_10():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -468,6 +478,7 @@ def vrtwarp_10():
 ###############################################################################
 # Test implicit overviews with dest alpha band (#6081)
 
+
 def vrtwarp_11():
 
     ds = gdal.Open('data/bug6581.vrt')
@@ -488,6 +499,7 @@ def vrtwarp_11():
 ###############################################################################
 # Test reading a regular VRT whose source is a warped VRT inlined
 
+
 def vrtwarp_read_vrt_of_warped_vrt():
 
     ds = gdal.Open('data/vrt_of_warped_vrt.vrt')
@@ -500,6 +512,7 @@ def vrtwarp_read_vrt_of_warped_vrt():
 
 ###############################################################################
 # Test different nodata values on bands and partial blocks (#6581)
+
 
 gdaltest_list = [
     vrtwarp_1,

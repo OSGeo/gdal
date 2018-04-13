@@ -38,6 +38,7 @@ from osgeo import ogr
 from osgeo import osr
 from osgeo import gdal
 
+
 def ogr_jml_init():
 
     try:
@@ -55,6 +56,7 @@ def ogr_jml_init():
 
 ###############################################################################
 # Test reading
+
 
 def ogr_jml_1():
 
@@ -132,6 +134,7 @@ def ogr_jml_1():
 
 ###############################################################################
 # Test creating a file
+
 
 def ogr_jml_2():
 
@@ -445,6 +448,7 @@ def ogr_jml_2():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_jml_3():
 
     if not gdaltest.jml_read_support:
@@ -464,6 +468,7 @@ def ogr_jml_3():
 
 ###############################################################################
 # Test a few error cases
+
 
 def ogr_jml_4():
 
@@ -655,6 +660,7 @@ def ogr_jml_4():
 ###############################################################################
 # Test reading SRS
 
+
 def ogr_jml_read_srs():
 
     if not gdaltest.jml_read_support:
@@ -675,11 +681,13 @@ def ogr_jml_read_srs():
 ###############################################################################
 #
 
+
 def ogr_jml_cleanup():
 
     gdal.Unlink('/vsimem/ogr_jml.jml')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_jml_init,

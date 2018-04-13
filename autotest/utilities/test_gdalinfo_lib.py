@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Simple test
 
+
 def test_gdalinfo_lib_1():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -54,6 +55,7 @@ def test_gdalinfo_lib_1():
 ###############################################################################
 # Test Json format
 
+
 def test_gdalinfo_lib_2():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -68,6 +70,7 @@ def test_gdalinfo_lib_2():
 
 ###############################################################################
 # Test extraMDDomains()
+
 
 def test_gdalinfo_lib_3():
 
@@ -91,6 +94,7 @@ def test_gdalinfo_lib_3():
 ###############################################################################
 # Test allMetadata
 
+
 def test_gdalinfo_lib_4():
 
     ds = gdal.Open('../gdrivers/data/byte_with_xmp.tif')
@@ -104,6 +108,7 @@ def test_gdalinfo_lib_4():
 
 ###############################################################################
 # Test all options
+
 
 def test_gdalinfo_lib_5():
 
@@ -137,6 +142,7 @@ def test_gdalinfo_lib_5():
 ###############################################################################
 # Test command line syntax + dataset as string
 
+
 def test_gdalinfo_lib_6():
 
     ret = gdal.Info('../gcore/data/byte.tif', options = '-json')
@@ -150,6 +156,7 @@ def test_gdalinfo_lib_6():
 ###############################################################################
 # Test with unicode strings
 
+
 def test_gdalinfo_lib_7():
 
     ret = gdal.Info('../gcore/data/byte.tif'.encode('ascii').decode('ascii'), options = '-json'.encode('ascii').decode('ascii'))
@@ -161,6 +168,7 @@ def test_gdalinfo_lib_7():
     return 'success'
 
 ###############################################################################
+
 
 def test_gdalinfo_lib_nodatavalues():
 

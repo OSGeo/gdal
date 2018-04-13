@@ -37,6 +37,7 @@ from osgeo import osr
 # Spherical datums should have inverse flattening parameter 0.0, not 1.0.
 #
 
+
 def osr_erm_1():
 
     for sphere_datum in ['SPHERE', 'SPHERE2', 'USSPHERE']:
@@ -54,6 +55,7 @@ def osr_erm_1():
 # Confirm that unsupported SRSes will be translated from/to EPSG:n
 # format (#3955)
 #
+
 
 def osr_erm_2():
 
@@ -73,6 +75,7 @@ def osr_erm_2():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_erm_1,

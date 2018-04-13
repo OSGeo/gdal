@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Test reading a - fake - MFF dataset
 
+
 def mff_1():
 
     tst = gdaltest.GDALTest( 'MFF', 'fakemff.hdr', 1, 1 )
@@ -44,6 +45,7 @@ def mff_1():
 
 ###############################################################################
 # Test reading a - fake - tiled MFF dataset
+
 
 def mff_2():
 
@@ -58,6 +60,7 @@ def mff_3():
 
     tst = gdaltest.GDALTest( 'MFF', 'bytemff.hdr', 1, 4672 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     mff_1,

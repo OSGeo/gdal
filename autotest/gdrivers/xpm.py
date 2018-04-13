@@ -63,6 +63,7 @@ def xpm_1():
     tst = gdaltest.GDALTest( 'XPM', 'byte.tif', 1, 4583 )
     return tst.testCreateCopy( vsimem = 1, check_minmax = False )
 
+
 gdaltest_list = []
 
 xpm_list = [ ('http://download.osgeo.org/gdal/data/xpm', 'utm.xpm', 44206, -1),

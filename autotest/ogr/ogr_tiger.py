@@ -40,6 +40,8 @@ import gdaltest
 import ogrtest
 
 ###############################################################################
+
+
 def ogr_tiger_1():
 
     ogrtest.tiger_ds = None
@@ -102,6 +104,7 @@ def ogr_tiger_1():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_tiger_2():
 
     if ogrtest.tiger_ds is None:
@@ -121,6 +124,7 @@ def ogr_tiger_2():
 
 ###############################################################################
 # Test TIGER writing
+
 
 def ogr_tiger_3():
 
@@ -170,6 +174,7 @@ def ogr_tiger_3():
 
 ###############################################################################
 # Load into a /vsimem instance to test virtualization.
+
 
 def ogr_tiger_4():
 
@@ -234,6 +239,7 @@ def ogr_tiger_4():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_tiger_cleanup():
 

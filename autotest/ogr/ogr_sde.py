@@ -53,9 +53,10 @@ try:
     gdaltest.sde_dr = ogr.GetDriverByName( 'SDE' )
 except:
     pass
+
+
 def ogr_sde_1():
     "Test basic opening of a database"
-
 
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -72,6 +73,7 @@ def ogr_sde_1():
     ds.Destroy()
 
     return 'success'
+
 
 def ogr_sde_2():
     "Test creation of a layer"
@@ -135,7 +137,6 @@ def ogr_sde_3():
 def ogr_sde_4():
     "Test basic version creation"
 
-
     if gdaltest.sde_dr is None:
         return 'skip'
     version_name = 'TESTING'
@@ -151,8 +152,8 @@ def ogr_sde_4():
     ds = ogr.Open(base, update=1)
     ds.Destroy()
 
-
     return 'success'
+
 
 def ogr_sde_5():
     "Test versioned editing"
@@ -199,7 +200,6 @@ def ogr_sde_5():
         gdaltest.post_reason('versioned editing failed for child version SDE.TESTING')
         return 'fail'
 
-
     ds3.Destroy()
     del ds3
 
@@ -210,7 +210,6 @@ def ogr_sde_5():
         gdaltest.post_reason('versioned editing failed for parent version SDE.DEFAULT')
         return 'fail'
 
-
     idx = f4.GetFieldIndex('WHEN')
     df = f4.GetField(idx)
     if df != '2008/03/19 16:15:00':
@@ -218,6 +217,7 @@ def ogr_sde_5():
     ds4.Destroy()
     del ds4
     return 'success'
+
 
 def ogr_sde_6():
     "Extent fetching"
@@ -238,6 +238,7 @@ def ogr_sde_6():
     if extent != (478316.0, 481645.0, 4762881.0, 4765611.0):
         gdaltest.post_reason("forced extent did not equal expected value")
     return 'success'
+
 
 def ogr_sde_7():
     "Bad layer test"
@@ -279,8 +280,8 @@ def ogr_sde_7():
         gdaltest.post_reason("we got a layer when we should not have")
     ds.Destroy()
 
-
     return 'success'
+
 
 def ogr_sde_8():
     "Test spatial references"
@@ -310,8 +311,6 @@ def ogr_sde_8():
 
     dst_feat = ogr.Feature( feature_def = lyr.GetLayerDefn() )
 
-
-
     feat = shp_lyr.GetNextFeature()
     gdaltest.poly_feat = []
 
@@ -327,6 +326,7 @@ def ogr_sde_8():
     dst_feat.Destroy()
     return 'success'
 
+
 def ogr_sde_cleanup():
     if gdaltest.sde_dr is None:
         return 'skip'
@@ -335,8 +335,8 @@ def ogr_sde_cleanup():
     ds.DeleteLayer('%s.%s'%(sde_user.upper(),'TPOLY'))
     ds.Destroy()
 
-
     return 'success'
+
 
 gdaltest_list = [
     ogr_sde_1,

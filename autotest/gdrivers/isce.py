@@ -38,6 +38,8 @@ import gdaltest
 
 ###############################################################################
 # Perform simple read test.
+
+
 def isce_1():
 
     tst = gdaltest.GDALTest( 'isce', 'isce.slc', 1, 350 )
@@ -65,6 +67,7 @@ def isce_1():
 ###############################################################################
 # Test reading of metadata from the ISCE metadata domain
 
+
 def isce_2():
 
     ds = gdal.Open( 'data/isce.slc' )
@@ -77,6 +80,7 @@ def isce_2():
 ###############################################################################
 # Verify this can be exported losslessly.
 
+
 def isce_3():
 
     tst = gdaltest.GDALTest( 'isce', 'isce.slc', 1, 350 )
@@ -85,10 +89,12 @@ def isce_3():
 ###############################################################################
 # Verify VSIF*L capacity
 
+
 def isce_4():
 
     tst = gdaltest.GDALTest( 'isce', 'isce.slc', 1, 350 )
     return tst.testCreateCopy( check_gt = 0, new_filename = 'isce.tst.slc', vsimem = 1 )
+
 
 gdaltest_list = [
     isce_1,
@@ -96,7 +102,6 @@ gdaltest_list = [
     isce_3,
     isce_4,
     ]
-
 
 
 if __name__ == '__main__':

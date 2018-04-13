@@ -33,6 +33,7 @@
 import sys
 from osgeo import gdal
 
+
 def Usage():
     print('Usage:  dump_jp2 [-dump_gmljp2 out.xml|-] [-dump_crsdictionary out.xml|-]')
     print('                 [-extract_all_xml_boxes filename_prefix]')
@@ -49,6 +50,7 @@ def Usage():
     print('                        links to on-disk files.')
 
     return 1
+
 
 def dump_gmljp2(filename, out_gmljp2):
     ds = gdal.Open(filename)
@@ -67,6 +69,7 @@ def dump_gmljp2(filename, out_gmljp2):
         f.close()
         print('INFO: %s written with content of GMLJP2 box' % out_gmljp2)
     return 0
+
 
 def dump_crsdictionary(filename, out_crsdictionary):
     ds = gdal.Open(filename)
@@ -91,6 +94,7 @@ def dump_crsdictionary(filename, out_crsdictionary):
 
     print('No CRS dictionary content found in %s' % filename)
     return 1
+
 
 def extract_all_xml_boxes(filename, prefix):
     ds = gdal.Open(filename)
@@ -149,6 +153,7 @@ def extract_all_xml_boxes(filename, prefix):
         return 1
     return 0
 
+
 def main():
     i = 1
     out_gmljp2 = None
@@ -198,6 +203,7 @@ def main():
         print(s)
 
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

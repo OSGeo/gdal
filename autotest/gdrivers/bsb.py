@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Test driver availability
 
+
 def bsb_0():
     try:
         gdaltest.bsb_dr = gdal.GetDriverByName( 'BSB' )
@@ -52,6 +53,7 @@ def bsb_0():
 ###############################################################################
 # Test Read
 
+
 def bsb_1():
     if gdaltest.bsb_dr is None:
         return 'skip'
@@ -62,6 +64,7 @@ def bsb_1():
 
 ###############################################################################
 # Test CreateCopy
+
 
 def bsb_2():
     if gdaltest.bsb_dr is None:
@@ -81,6 +84,7 @@ def bsb_2():
 # data of first line from offset 2382 to offset 2384, and generating the index table
 # --> This is probably not a valid BSB file, but it proves that we can read the index table
 
+
 def bsb_3():
     if gdaltest.bsb_dr is None:
         return 'skip'
@@ -94,6 +98,7 @@ def bsb_3():
 # The rgbsmall_with_line_break.kap has been generated from rgbsmall.kap by
 # adding a 0 character in the middle of line data
 
+
 def bsb_4():
     if gdaltest.bsb_dr is None:
         return 'skip'
@@ -104,6 +109,7 @@ def bsb_4():
 
 ###############################################################################
 # Read a truncated BSB (at the level of the written scanline number starting a new row)
+
 
 def bsb_5():
     if gdaltest.bsb_dr is None:
@@ -119,6 +125,7 @@ def bsb_5():
 
 ###############################################################################
 # Read another truncated BSB (in the middle of row data)
+
 
 def bsb_6():
     if gdaltest.bsb_dr is None:

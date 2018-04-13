@@ -62,6 +62,7 @@ def jp2metadata_1():
 ###############################################################################
 # Test Pleiades imagery metadata
 
+
 def jp2metadata_2():
 
     try:
@@ -112,6 +113,7 @@ def jp2metadata_2():
 # metadata junk.  This file is also handled currently with axis reordering
 # disabled.
 
+
 def jp2metadata_3():
 
     gdal.SetConfigOption( 'GDAL_IGNORE_AXIS_ORIENTATION', 'YES' )
@@ -150,6 +152,7 @@ def jp2metadata_3():
 # Test reading a file with axis orientation set properly for an alternate
 # axis order coordinate system (urn:...:EPSG::4326).
 
+
 def jp2metadata_4():
 
     exp_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
@@ -185,6 +188,7 @@ def jp2metadata_4():
 ###############################################################################
 # Test reading a file with EPSG axis orientation being northing, easting,
 # but with explicit axisName being easting, northing (#5960)
+
 
 def jp2metadata_5():
 

@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Test a fake E00GRID dataset
 
+
 def e00grid_1():
 
     tst = gdaltest.GDALTest( 'E00GRID', 'fake_e00grid.e00', 1, 65359 )
@@ -76,6 +77,7 @@ def e00grid_1():
 
 ###############################################################################
 # Test a fake E00GRID dataset, compressed and with statistics
+
 
 def e00grid_2():
 
@@ -131,6 +133,7 @@ def e00grid_2():
             return 'fail'
 
     return ret
+
 
 gdaltest_list = [
     e00grid_1,

@@ -111,7 +111,6 @@ def blx_5():
     return 'success'
 
 
-
 gdaltest_list = [
     blx_1,
     blx_2,

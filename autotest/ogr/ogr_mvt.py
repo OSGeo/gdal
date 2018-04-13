@@ -42,6 +42,7 @@ from osgeo import osr
 
 ###############################################################################
 
+
 def ogr_mvt_datatypes():
 
     # With metadata.json
@@ -131,6 +132,7 @@ def ogr_mvt_datatypes():
 
 ###############################################################################
 
+
 def ogr_mvt_datatype_promotion():
 
     ds = ogr.Open('data/mvt/datatype_promotion.pbf')
@@ -156,6 +158,7 @@ def ogr_mvt_datatype_promotion():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_limit_cases():
 
@@ -211,6 +214,7 @@ def ogr_mvt_limit_cases():
 
 ###############################################################################
 
+
 def ogr_mvt_with_extension_fields():
 
     ds = ogr.Open('data/mvt/with_extension_fields.pbf')
@@ -224,6 +228,7 @@ def ogr_mvt_with_extension_fields():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_mixed():
 
@@ -244,6 +249,7 @@ def ogr_mvt_mixed():
 
 ###############################################################################
 
+
 def ogr_mvt_linestring():
 
     ds = ogr.Open('data/mvt/linestring/0/0/0.pbf')
@@ -263,6 +269,7 @@ def ogr_mvt_linestring():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_multilinestring():
 
@@ -287,7 +294,6 @@ def ogr_mvt_multilinestring():
 
 def ogr_mvt_polygon():
 
-
     ds = ogr.Open('data/mvt/polygon/0/0/0.pbf')
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -302,10 +308,10 @@ def ogr_mvt_polygon():
         f.DumpReadable()
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_point_polygon():
 
@@ -324,6 +330,7 @@ def ogr_mvt_point_polygon():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_point_polygon_clip():
 
@@ -347,6 +354,7 @@ def ogr_mvt_point_polygon_clip():
 
 ###############################################################################
 
+
 def ogr_mvt_tileset_without_readdir():
 
     with gdaltest.config_option('MVT_USE_READDIR', 'NO'):
@@ -359,6 +367,7 @@ def ogr_mvt_tileset_without_readdir():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_tileset_tilegl():
 
@@ -375,6 +384,7 @@ def ogr_mvt_tileset_tilegl():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_tileset_without_metadata_file():
 
@@ -396,6 +406,7 @@ def ogr_mvt_tileset_without_metadata_file():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_tileset_json_field():
 
@@ -431,6 +442,7 @@ def ogr_mvt_tileset_json_field():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_open_variants():
 
@@ -472,6 +484,7 @@ def ogr_mvt_open_variants():
 
 ###############################################################################
 
+
 def ogr_mvt_xyz_options():
 
     ds = gdal.OpenEx('data/mvt/datatypes/0/0/0.pbf',
@@ -486,6 +499,7 @@ def ogr_mvt_xyz_options():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_test_ogrsf_pbf():
 
@@ -504,6 +518,7 @@ def ogr_mvt_test_ogrsf_pbf():
 
 ###############################################################################
 
+
 def ogr_mvt_test_ogrsf_directory():
 
     import test_cli_utilities
@@ -520,6 +535,7 @@ def ogr_mvt_test_ogrsf_directory():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_mbtiles():
 
@@ -543,6 +559,7 @@ def ogr_mvt_mbtiles():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_mbtiles_json_field():
 
@@ -574,6 +591,7 @@ def ogr_mvt_mbtiles_json_field():
 
 ###############################################################################
 
+
 def ogr_mvt_mbtiles_json_field_auto():
 
     if ogr.GetDriverByName('MBTILES') is None:
@@ -604,6 +622,7 @@ def ogr_mvt_mbtiles_json_field_auto():
 
 ###############################################################################
 
+
 def ogr_mvt_mbtiles_test_ogrsf():
 
     import test_cli_utilities
@@ -624,6 +643,7 @@ def ogr_mvt_mbtiles_test_ogrsf():
 
 ###############################################################################
 
+
 def ogr_mvt_mbtiles_open_vector_in_raster_mode():
 
     if ogr.GetDriverByName('MBTILES') is None:
@@ -636,6 +656,7 @@ def ogr_mvt_mbtiles_open_vector_in_raster_mode():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_x_y_z_filename_scheme():
 
@@ -655,6 +676,7 @@ def ogr_mvt_x_y_z_filename_scheme():
 
 ###############################################################################
 
+
 def ogr_mvt_polygon_larger_than_header():
 
     ds = gdal.OpenEx('data/mvt/polygon_larger_than_header.pbf',
@@ -667,6 +689,7 @@ def ogr_mvt_polygon_larger_than_header():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_errors():
 
@@ -738,6 +761,7 @@ def ogr_mvt_errors():
 
 ###############################################################################
 
+
 def ogr_mvt_http_start():
 
     gdaltest.webserver_process = None
@@ -753,6 +777,7 @@ def ogr_mvt_http_start():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_http():
 
@@ -847,6 +872,7 @@ def ogr_mvt_http():
 
 ###############################################################################
 
+
 def ogr_mvt_http_stop():
 
     if gdaltest.webserver_port == 0:
@@ -857,6 +883,7 @@ def ogr_mvt_http_stop():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_one_layer():
 
@@ -1176,12 +1203,12 @@ def ogr_mvt_write_one_layer():
         print(data_json['json'])
         return 'fail'
 
-
     gdal.RmdirRecursive('/vsimem/outmvt')
 
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_conf():
 
@@ -1251,18 +1278,17 @@ def ogr_mvt_write_conf():
         }
     }
 
-
     if json_json != expected_json_json:
         gdaltest.post_reason('fail')
         print(data_json['json'])
         return 'fail'
-
 
     gdal.RmdirRecursive('/vsimem/outmvt')
 
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_mbtiles():
 
@@ -1299,6 +1325,7 @@ def ogr_mvt_write_mbtiles():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_limitations_max_size():
 
@@ -1349,6 +1376,7 @@ def ogr_mvt_write_limitations_max_size():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_polygon_repaired():
 
@@ -1406,6 +1434,7 @@ def ogr_mvt_write_polygon_repaired():
 
 ###############################################################################
 
+
 def ogr_mvt_write_conflicting_innner_ring():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
@@ -1443,6 +1472,7 @@ def ogr_mvt_write_conflicting_innner_ring():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_limitations_max_size_polygon():
 
@@ -1482,6 +1512,7 @@ def ogr_mvt_write_limitations_max_size_polygon():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_limitations_max_features():
 
@@ -1529,6 +1560,7 @@ def ogr_mvt_write_limitations_max_features():
 
 ###############################################################################
 
+
 def ogr_mvt_write_custom_tiling_scheme():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:
@@ -1570,6 +1602,7 @@ def ogr_mvt_write_custom_tiling_scheme():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_mvt_write_errors():
 
@@ -1757,6 +1790,8 @@ def ogr_mvt_write_errors():
 
 ###############################################################################
 #
+
+
 def ogr_mvt_write_reuse_temp_db():
 
     if not ogrtest.have_geos() or ogr.GetDriverByName('SQLITE') is None:

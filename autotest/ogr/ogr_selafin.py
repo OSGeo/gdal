@@ -43,6 +43,7 @@ from osgeo import osr
 ###############################################################################
 # Create wasp datasource
 
+
 def ogr_selafin_create_ds():
 
     gdaltest.selafin_ds = None
@@ -54,7 +55,6 @@ def ogr_selafin_create_ds():
 
     gdaltest.selafin_ds = selafin_drv.CreateDataSource( 'tmp/tmp.slf' )
 
-
     if gdaltest.selafin_ds is not None:
         return 'success'
     else:
@@ -62,6 +62,7 @@ def ogr_selafin_create_ds():
 
 ###############################################################################
 # Add a few points to the datasource
+
 
 def ogr_selafin_create_nodes():
     if ogr_selafin_create_ds() != 'success':
@@ -95,6 +96,7 @@ def ogr_selafin_create_nodes():
 
 ###############################################################################
 # Add a set of elements to the datasource
+
 
 def ogr_selafin_create_elements():
 
@@ -157,6 +159,8 @@ def ogr_selafin_create_elements():
 
 ###############################################################################
 # Add a field and set its values for point features
+
+
 def ogr_selafin_set_field():
 
     gdaltest.selafin_ds = ogr.Open( 'tmp/tmp.slf',1 )
@@ -200,6 +204,7 @@ def ogr_selafin_cleanup():
     selafin_drv = ogr.GetDriverByName('Selafin')
     selafin_drv.DeleteDataSource( 'tmp/tmp.slf' )
     return 'success'
+
 
 gdaltest_list = [
     ogr_selafin_create_ds,

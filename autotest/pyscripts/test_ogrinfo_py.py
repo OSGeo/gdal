@@ -40,6 +40,7 @@ import test_py_scripts
 ###############################################################################
 # Simple test
 
+
 def test_ogrinfo_py_1():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -53,6 +54,7 @@ def test_ogrinfo_py_1():
 
 ###############################################################################
 # Test -ro option
+
 
 def test_ogrinfo_py_2():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -68,6 +70,7 @@ def test_ogrinfo_py_2():
 ###############################################################################
 # Test -al option
 
+
 def test_ogrinfo_py_3():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -81,6 +84,7 @@ def test_ogrinfo_py_3():
 
 ###############################################################################
 # Test layer name
+
 
 def test_ogrinfo_py_4():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -96,6 +100,7 @@ def test_ogrinfo_py_4():
 ###############################################################################
 # Test -sql option
 
+
 def test_ogrinfo_py_5():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -109,6 +114,7 @@ def test_ogrinfo_py_5():
 
 ###############################################################################
 # Test -geom=NO option
+
 
 def test_ogrinfo_py_6():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -125,6 +131,7 @@ def test_ogrinfo_py_6():
 
 ###############################################################################
 # Test -geom=SUMMARY option
+
 
 def test_ogrinfo_py_7():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -144,6 +151,7 @@ def test_ogrinfo_py_7():
 ###############################################################################
 # Test -spat option
 
+
 def test_ogrinfo_py_8():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -162,6 +170,7 @@ def test_ogrinfo_py_8():
 ###############################################################################
 # Test -where option
 
+
 def test_ogrinfo_py_9():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -176,6 +185,7 @@ def test_ogrinfo_py_9():
 ###############################################################################
 # Test -fid option
 
+
 def test_ogrinfo_py_10():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -189,6 +199,7 @@ def test_ogrinfo_py_10():
 
 ###############################################################################
 # Test -fields=no option
+
 
 def test_ogrinfo_py_11():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -205,6 +216,7 @@ def test_ogrinfo_py_11():
 
 ###############################################################################
 # Test RFC 41 support
+
 
 def test_ogrinfo_py_22():
     script_path = test_py_scripts.get_py_script('ogrinfo')
@@ -289,6 +301,7 @@ OGRFeature(test_ogrinfo_22):1
 ###############################################################################
 # Test -geomfield (RFC 41) support
 
+
 def test_ogrinfo_py_23():
     script_path = test_py_scripts.get_py_script('ogrinfo')
     if script_path is None:
@@ -364,6 +377,7 @@ OGRFeature(test_ogrinfo_23):2
     os.unlink('tmp/test_ogrinfo_23.csv')
 
     return 'success'
+
 
 gdaltest_list = [
     test_ogrinfo_py_1,

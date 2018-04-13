@@ -38,6 +38,7 @@ from osgeo import gdal
 ###############################################################################
 # Simple try of identify driver on a tiff file.
 
+
 def identify_1():
 
     file_list = gdal.ReadDir( 'data' )
@@ -51,6 +52,7 @@ def identify_1():
 
 ###############################################################################
 # Test a file that won't be recognised.
+
 
 def identify_2():
 
@@ -66,6 +68,7 @@ def identify_2():
 ###############################################################################
 # Try identify on a directory.
 
+
 def identify_3():
 
     dr = gdal.IdentifyDriver( 'data' )
@@ -77,6 +80,7 @@ def identify_3():
 
 ###############################################################################
 # Try IdentifyDriverEx
+
 
 def identify_4():
 
@@ -111,6 +115,7 @@ def identify_4():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     identify_1,

@@ -35,6 +35,8 @@ import sys
 from osgeo import ogr
 
 #############################################################################
+
+
 def Usage():
     print('Usage: load2odbc.py [-where attr_filter] infile odbc_dsn layer')
     print('')
@@ -42,6 +44,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 extents_flag = 1
 infile = None

@@ -43,6 +43,8 @@ from osgeo import gdal
 # hsv values will be with hue and saturation in the range [0,1] and value
 # in the range [0,255]
 #
+
+
 def rgb_to_hsv( r,g,b ):
 
     maxc = numpy.maximum(r,numpy.maximum(g,b))
@@ -82,6 +84,7 @@ def rgb_to_hsv( r,g,b ):
 # hsv comes in as [h,s,v] with hue and saturation in the range [0,1],
 # but value in the range [0,255].
 
+
 def hsv_to_rgb( hsv ):
 
     h = hsv[0]
@@ -106,6 +109,7 @@ def hsv_to_rgb( hsv ):
 # =============================================================================
 # Usage()
 
+
 def Usage():
     print("""Usage: hsv_merge.py [-q] [-of format] src_color src_greyscale dst_color
 
@@ -119,6 +123,7 @@ where src_color is a RGB or RGBA dataset,
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 argv = gdal.GeneralCmdLineProcessor( sys.argv )
 if argv is None:

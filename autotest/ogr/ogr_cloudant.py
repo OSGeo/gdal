@@ -42,6 +42,7 @@ from osgeo import ogr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_cloudant_init():
 
     ogrtest.cloudant_drv = None
@@ -73,6 +74,7 @@ def ogr_cloudant_init():
 ###############################################################################
 # Test GetFeatureCount()
 
+
 def ogr_cloudant_GetFeatureCount():
     if ogrtest.cloudant_drv is None:
         return 'skip'
@@ -95,6 +97,7 @@ def ogr_cloudant_GetFeatureCount():
 
 ###############################################################################
 # Test GetNextFeature()
+
 
 def ogr_cloudant_GetNextFeature():
     if ogrtest.cloudant_drv is None:
@@ -122,6 +125,7 @@ def ogr_cloudant_GetNextFeature():
 ###############################################################################
 # Test GetSpatialRef()
 
+
 def ogr_cloudant_GetSpatialRef():
     if ogrtest.cloudant_drv is None:
         return 'skip'
@@ -143,6 +147,7 @@ def ogr_cloudant_GetSpatialRef():
 
 ###############################################################################
 # Test GetExtent()
+
 
 def ogr_cloudant_GetExtent():
     if ogrtest.cloudant_drv is None:
@@ -171,6 +176,7 @@ def ogr_cloudant_GetExtent():
 ###############################################################################
 # Test SetSpatialFilter()
 
+
 def ogr_cloudant_SetSpatialFilter():
     if ogrtest.cloudant_drv is None:
         return 'skip'
@@ -198,6 +204,7 @@ def ogr_cloudant_SetSpatialFilter():
         return 'fail'
 
     return 'success'
+
 
 if gdaltest.skip_on_travis():
     gdaltest_list = []

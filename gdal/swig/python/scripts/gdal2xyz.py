@@ -39,6 +39,8 @@ except ImportError:
     import Numeric
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: gdal2xyz.py [-skip factor] [-srcwin xoff yoff width height]')
     print('                   [-band b] [-csv] srcfile [dstfile]')
@@ -49,6 +51,7 @@ def Usage():
 #
 # Program mainline.
 #
+
 
 if __name__ == '__main__':
 

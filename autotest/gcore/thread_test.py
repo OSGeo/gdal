@@ -37,8 +37,10 @@ sys.path.append( '../pymod' )
 import gdaltest
 from osgeo import gdal
 
+
 def my_error_handler(err_type, err_no, err_msg):
     pass
+
 
 def thread_test_1_worker(args_dict):
     for i in range(1000):
@@ -52,6 +54,7 @@ def thread_test_1_worker(args_dict):
         gdal.PushErrorHandler(my_error_handler)
         ds = gdal.Open('i_dont_exist')
         gdal.PopErrorHandler()
+
 
 def thread_test_1():
 
@@ -77,6 +80,7 @@ def thread_test_1():
             ret = 'fail'
 
     return ret
+
 
 gdaltest_list = [ thread_test_1 ]
 

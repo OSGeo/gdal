@@ -41,6 +41,7 @@ import test_cli_utilities
 ###############################################################################
 # Test basic usage
 
+
 def test_gdallocationinfo_1():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
         return 'skip'
@@ -65,6 +66,7 @@ def test_gdallocationinfo_1():
 ###############################################################################
 # Test -xml
 
+
 def test_gdallocationinfo_2():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
         return 'skip'
@@ -85,6 +87,7 @@ def test_gdallocationinfo_2():
 ###############################################################################
 # Test -valonly
 
+
 def test_gdallocationinfo_3():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
         return 'skip'
@@ -99,6 +102,7 @@ def test_gdallocationinfo_3():
 
 ###############################################################################
 # Test -geoloc
+
 
 def test_gdallocationinfo_4():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
@@ -119,6 +123,7 @@ def test_gdallocationinfo_4():
 ###############################################################################
 # Test -lifonly
 
+
 def test_gdallocationinfo_5():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
         return 'skip'
@@ -134,6 +139,7 @@ def test_gdallocationinfo_5():
 
 ###############################################################################
 # Test -overview
+
 
 def test_gdallocationinfo_6():
     if test_cli_utilities.get_gdallocationinfo_path() is None:
@@ -154,6 +160,7 @@ def test_gdallocationinfo_6():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdallocationinfo_1,

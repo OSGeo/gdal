@@ -43,6 +43,7 @@ example_compd_wkt = 'COMPD_CS["OSGB36 / British National Grid + ODN",PROJCS["OSG
 ###############################################################################
 # Test parsing and a few operations on a compound coordinate system.
 
+
 def osr_compd_1():
 
     srs = osr.SpatialReference()
@@ -86,6 +87,7 @@ def osr_compd_1():
 ###############################################################################
 # Test SetFromUserInput()
 
+
 def osr_compd_2():
 
     srs = osr.SpatialReference()
@@ -103,6 +105,7 @@ def osr_compd_2():
 
 ###############################################################################
 # Test expansion of compound coordinate systems from EPSG definition.
+
 
 def osr_compd_3():
 
@@ -158,6 +161,7 @@ def osr_compd_3():
 ###############################################################################
 # Test expansion of GCS+VERTCS compound coordinate system.
 
+
 def osr_compd_4():
 
     srs = osr.SpatialReference()
@@ -201,6 +205,7 @@ def osr_compd_4():
 ###############################################################################
 # Test that compound coordinate systems with grid shift files are
 # expanded properly and converted to PROJ.4 format with the grids.
+
 
 def osr_compd_5():
 
@@ -266,6 +271,7 @@ def osr_compd_5():
 ###############################################################################
 # Test conversion from PROJ.4 to WKT including vertical units.
 
+
 def osr_compd_6():
 
     if not osr_proj4.have_proj480():
@@ -322,6 +328,7 @@ def osr_compd_6():
 
 ###############################################################################
 # Test SetCompound()
+
 
 def osr_compd_7():
 
@@ -381,6 +388,7 @@ def osr_compd_7():
 ###############################################################################
 # Test ImportFromURN()
 
+
 def osr_compd_8():
 
     srs = osr.SpatialReference()
@@ -397,6 +405,7 @@ def osr_compd_8():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_compd_1,

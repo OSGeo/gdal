@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Open VRT datasource.
 
+
 def ogr_vrt_1():
 
     with gdaltest.error_handler():
@@ -57,6 +58,7 @@ def ogr_vrt_1():
 # Verify the geometries, in the "test2" layer based on x,y,z columns.
 #
 # Also tests FID-copied-from-source.
+
 
 def ogr_vrt_2():
     if gdaltest.vrt_ds is None:
@@ -102,6 +104,7 @@ def ogr_vrt_2():
 # Same test on layer 3 derived from WKT column.
 #
 # Also tests FID-from-attribute.
+
 
 def ogr_vrt_3():
     if gdaltest.vrt_ds is None:
@@ -198,6 +201,7 @@ def ogr_vrt_5():
 ###############################################################################
 # Test GetFeature() on layer with FID coming from a column.
 
+
 def ogr_vrt_6():
 
     if gdaltest.vrt_ds is None:
@@ -216,6 +220,7 @@ def ogr_vrt_6():
 ###############################################################################
 # Same as test 3, but on the result of an SQL query.
 #
+
 
 def ogr_vrt_7():
     if gdaltest.vrt_ds is None:
@@ -255,6 +260,7 @@ def ogr_vrt_7():
 # Similar test, but now we put the whole VRT contents directly into the
 # "filename".
 #
+
 
 def ogr_vrt_8():
     if gdaltest.vrt_ds is None:
@@ -330,6 +336,7 @@ def ogr_vrt_9():
 # Test capabilities
 #
 
+
 def ogr_vrt_10():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -352,6 +359,7 @@ def ogr_vrt_10():
 ###############################################################################
 # Test VRT write capabilities with PointFromColumns geometries
 # Test also the reportGeomSrcColumn attribute
+
 
 def ogr_vrt_11():
     if gdaltest.vrt_ds is None:
@@ -464,6 +472,7 @@ def ogr_vrt_11():
 ###############################################################################
 # Test VRT write capabilities with WKT geometries
 
+
 def ogr_vrt_12():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -507,6 +516,7 @@ def ogr_vrt_12():
 ###############################################################################
 # Test VRT write capabilities with WKB geometries
 
+
 def ogr_vrt_13():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -548,6 +558,7 @@ def ogr_vrt_13():
 
 ###############################################################################
 # Test SrcRegion element for VGS_Direct
+
 
 def ogr_vrt_14():
     if gdaltest.vrt_ds is None:
@@ -850,6 +861,7 @@ def ogr_vrt_17():
 # Test that attribute filters are *not* passed to sublayer by default
 # when explicit fields are defined.
 
+
 def ogr_vrt_18():
 
     if gdaltest.vrt_ds is None:
@@ -881,6 +893,7 @@ def ogr_vrt_18():
 ###############################################################################
 # Run test_ogrsf (optimized path)
 
+
 def ogr_vrt_19_optimized():
 
     if gdaltest.vrt_ds is None:
@@ -900,6 +913,7 @@ def ogr_vrt_19_optimized():
 ###############################################################################
 # Run test_ogrsf (non optimized path)
 
+
 def ogr_vrt_19_nonoptimized():
 
     if gdaltest.vrt_ds is None:
@@ -918,6 +932,7 @@ def ogr_vrt_19_nonoptimized():
 
 ###############################################################################
 # Test VGS_Direct
+
 
 def ogr_vrt_20():
     if gdaltest.vrt_ds is None:
@@ -1048,6 +1063,7 @@ def ogr_vrt_20():
 ###############################################################################
 # Test lazy initialization with valid layer
 
+
 def ogr_vrt_21_internal():
 
     if gdaltest.vrt_ds is None:
@@ -1171,6 +1187,7 @@ def ogr_vrt_21_internal():
 
     return 'success'
 
+
 def ogr_vrt_21():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
@@ -1182,6 +1199,7 @@ def ogr_vrt_21():
 
 ###############################################################################
 # Test lazy initialization with invalid layer
+
 
 def ogr_vrt_22_internal():
 
@@ -1308,6 +1326,7 @@ def ogr_vrt_22_internal():
 
     return 'success'
 
+
 def ogr_vrt_22():
     gdal.PushErrorHandler('CPLQuietErrorHandler')
     try:
@@ -1319,6 +1338,7 @@ def ogr_vrt_22():
 
 ###############################################################################
 # Test anti-recursion mechanism
+
 
 def ogr_vrt_23(shared_ds_flag = ''):
 
@@ -1363,6 +1383,7 @@ def ogr_vrt_23(shared_ds_flag = ''):
 
 ###############################################################################
 # Test anti-recursion mechanism on shared DS
+
 
 def ogr_vrt_24():
 
@@ -1442,6 +1463,7 @@ def ogr_vrt_25():
 ###############################################################################
 # Test transaction support
 
+
 def ogr_vrt_26():
 
     if ogr.GetDriverByName('SQLite') is None:
@@ -1505,6 +1527,7 @@ def ogr_vrt_26():
 ###############################################################################
 # Test shapebin geometry
 
+
 def ogr_vrt_27():
 
     csv = """dummy,shapebin
@@ -1546,6 +1569,7 @@ def ogr_vrt_27():
 
 ###############################################################################
 # Invalid VRT testing
+
 
 def ogr_vrt_28():
 
@@ -1603,6 +1627,7 @@ def ogr_vrt_28():
 
 ###############################################################################
 # Test OGRVRTWarpedLayer
+
 
 def ogr_vrt_29():
 
@@ -2014,7 +2039,6 @@ def ogr_vrt_30():
     ds.ExecuteSQL('CREATE SPATIAL INDEX ON ogr_vrt_30_1')
 
     ds = None
-
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/ogr_vrt_30_2.shp')
     sr = osr.SpatialReference()
@@ -2491,6 +2515,7 @@ def ogr_vrt_30():
 ###############################################################################
 # Test anti-recursion mechanism with union layer
 
+
 def ogr_vrt_31(shared_ds_flag = ''):
 
     rec1 = """<OGRVRTDataSource>
@@ -2538,6 +2563,7 @@ def ogr_vrt_31(shared_ds_flag = ''):
 
 ###############################################################################
 # Test anti-recursion mechanism on shared DS
+
 
 def ogr_vrt_32():
 
@@ -3303,6 +3329,7 @@ def ogr_vrt_33():
 ###############################################################################
 # Test SetIgnoredFields() with with PointFromColumns geometries
 
+
 def ogr_vrt_34():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -3343,6 +3370,7 @@ def ogr_vrt_34():
 
 ###############################################################################
 # Test nullable fields
+
 
 def ogr_vrt_35():
     if gdaltest.vrt_ds is None:
@@ -3423,6 +3451,7 @@ def ogr_vrt_35():
 ###############################################################################
 # Test editing direct geometries
 
+
 def ogr_vrt_36():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -3469,6 +3498,7 @@ def ogr_vrt_36():
 ###############################################################################
 # Test implict non-spatial layers (#6336)
 
+
 def ogr_vrt_37():
 
     with gdaltest.error_handler():
@@ -3491,6 +3521,7 @@ def ogr_vrt_37():
 
 ###############################################################################
 # Test reading geometry type
+
 
 def ogr_vrt_38():
     if gdaltest.vrt_ds is None:
@@ -3546,6 +3577,7 @@ def ogr_vrt_38():
 ###############################################################################
 # Test that attribute filtering works with <FID>
 
+
 def ogr_vrt_39():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -3589,6 +3621,7 @@ def ogr_vrt_39():
 ###############################################################################
 # Test PointZM support with encoding="PointFromColumns"
 
+
 def ogr_vrt_40():
     if gdaltest.vrt_ds is None:
         return 'skip'
@@ -3629,6 +3662,7 @@ def ogr_vrt_40():
 ###############################################################################
 # Test GetExtent() on erroneous definition
 
+
 def ogr_vrt_41():
 
     ds = ogr.Open("""<OGRVRTDataSource>
@@ -3644,6 +3678,7 @@ def ogr_vrt_41():
 
 ###############################################################################
 #
+
 
 def ogr_vrt_cleanup():
 
@@ -3667,6 +3702,7 @@ def ogr_vrt_cleanup():
     gdaltest.vrt_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_vrt_1,

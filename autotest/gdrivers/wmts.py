@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Find WMTS driver
 
+
 def wmts_1():
 
     gdaltest.wmts_drv = gdal.GetDriverByName('WMTS')
@@ -60,6 +61,7 @@ def wmts_1():
 
 ###############################################################################
 # Error: no URL and invalid GDAL_WMTS service file documents
+
 
 def wmts_2():
 
@@ -99,6 +101,7 @@ def wmts_2():
 ###############################################################################
 # Error: invalid URL
 
+
 def wmts_3():
 
     if gdaltest.wmts_drv is None:
@@ -116,6 +119,7 @@ def wmts_3():
 ###############################################################################
 # Error: invalid URL
 
+
 def wmts_4():
 
     if gdaltest.wmts_drv is None:
@@ -132,6 +136,7 @@ def wmts_4():
 
 ###############################################################################
 # Error: invalid XML in GetCapabilities response
+
 
 def wmts_5():
 
@@ -152,6 +157,7 @@ def wmts_5():
 ###############################################################################
 # Error: invalid content in GetCapabilities response
 
+
 def wmts_6():
 
     if gdaltest.wmts_drv is None:
@@ -171,6 +177,7 @@ def wmts_6():
 ###############################################################################
 # Error: no layers
 
+
 def wmts_7():
 
     if gdaltest.wmts_drv is None:
@@ -189,6 +196,7 @@ def wmts_7():
 
 ###############################################################################
 # Error: missing TileMatrixSetLink and Style
+
 
 def wmts_8():
 
@@ -214,6 +222,7 @@ def wmts_8():
 
 ###############################################################################
 # Error: missing TileMatrixSet
+
 
 def wmts_9():
 
@@ -246,6 +255,7 @@ def wmts_9():
 
 ###############################################################################
 # Error: Missing SupportedCRS
+
 
 def wmts_10():
 
@@ -281,6 +291,7 @@ def wmts_10():
 
 ###############################################################################
 # Error: Cannot find TileMatrix in TileMatrixSet
+
 
 def wmts_11():
 
@@ -318,6 +329,7 @@ def wmts_11():
 ###############################################################################
 # Error: Missing required element in TileMatrix element
 
+
 def wmts_12():
 
     if gdaltest.wmts_drv is None:
@@ -354,6 +366,7 @@ def wmts_12():
 
 ###############################################################################
 # Error: Missing ResourceURL
+
 
 def wmts_12bis():
 
@@ -398,6 +411,7 @@ def wmts_12bis():
 
 ###############################################################################
 # Minimal
+
 
 def wmts_13():
 
@@ -539,6 +553,7 @@ def wmts_13():
 
 ###############################################################################
 # Nominal RESTful
+
 
 def wmts_14():
 
@@ -836,6 +851,7 @@ def wmts_14():
 ###############################################################################
 # Nominal KVP
 
+
 def wmts_15():
 
     if gdaltest.wmts_drv is None:
@@ -997,6 +1013,7 @@ def wmts_15():
 ###############################################################################
 # AOI from layer WGS84BoundingBox
 
+
 def wmts_16():
 
     if gdaltest.wmts_drv is None:
@@ -1085,6 +1102,7 @@ def wmts_16():
 
 ###############################################################################
 # AOI from layer BoundingBox
+
 
 def wmts_17():
 
@@ -1175,6 +1193,7 @@ def wmts_17():
 ###############################################################################
 # AOI from TileMatrixSet BoundingBox
 
+
 def wmts_18():
 
     if gdaltest.wmts_drv is None:
@@ -1263,6 +1282,7 @@ def wmts_18():
 
 ###############################################################################
 # AOI from TileMatrixSetLimits
+
 
 def wmts_19():
 
@@ -1357,6 +1377,7 @@ def wmts_19():
 
 ###############################################################################
 # AOI from layer BoundingBox but restricted with TileMatrixSetLimits
+
 
 def wmts_20():
 
@@ -1455,6 +1476,7 @@ def wmts_20():
 
 ###############################################################################
 # Test ExtendBeyondDateLine
+
 
 def wmts_21():
 
@@ -1568,6 +1590,7 @@ def wmts_21():
 ###############################################################################
 # Test when WGS84BoundingBox is a densified reprojection of the tile matrix bbox
 
+
 def wmts_22():
 
     if gdaltest.wmts_drv is None:
@@ -1638,6 +1661,7 @@ def wmts_22():
 ###############################################################################
 #
 
+
 def wmts_23( imagetype, expected_cs ):
 
     if gdaltest.wmts_drv is None:
@@ -1706,23 +1730,29 @@ def wmts_23( imagetype, expected_cs ):
 
     return 'success'
 
+
 def wmts_23_gray():
     return wmts_23( 'gray', [ 60137, 60137, 60137, 4428 ] )
+
 
 def wmts_23_grayalpha():
     return wmts_23( 'gray+alpha', [ 39910, 39910, 39910, 63180 ] )
 
+
 def wmts_23_pal():
     return wmts_23( 'pal', [ 62950, 59100, 63864, 453 ] )
 
+
 def wmts_23_rgb():
     return wmts_23( 'rgb', [ 1020, 3665, 6180, 4428 ] )
+
 
 def wmts_23_rgba():
     return wmts_23( 'rgba', [ 65530, 51449, 1361, 59291 ] )
 
 ###############################################################################
 #
+
 
 def wmts_CleanCache():
     hexstr = '012346789abcdef'
@@ -1735,6 +1765,7 @@ def wmts_CleanCache():
 
 ###############################################################################
 #
+
 
 def wmts_cleanup():
 

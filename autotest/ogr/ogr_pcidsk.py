@@ -48,6 +48,7 @@ wkts = [ ('POINT (0 1 2)', 'points', 0),
 ###############################################################################
 # Test creation
 
+
 def ogr_pcidsk_1():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
@@ -139,6 +140,7 @@ def ogr_pcidsk_1():
 ###############################################################################
 # Test reading
 
+
 def ogr_pcidsk_2():
 
     ogr_drv = ogr.GetDriverByName('PCIDSK')
@@ -210,6 +212,7 @@ def ogr_pcidsk_2():
 ###############################################################################
 # Check with test_ogrsf
 
+
 def ogr_pcidsk_3():
 
     import test_cli_utilities
@@ -239,6 +242,7 @@ def ogr_pcidsk_3():
 ###############################################################################
 # Test that we cannot open a raster only pcidsk in read-only mode
 
+
 def ogr_pcidsk_4():
 
     if ogr.GetDriverByName('PCIDSK') is None:
@@ -257,6 +261,7 @@ def ogr_pcidsk_4():
 ###############################################################################
 # Test that we can open a raster only pcidsk in update mode
 
+
 def ogr_pcidsk_5():
 
     if ogr.GetDriverByName('PCIDSK') is None:
@@ -273,6 +278,8 @@ def ogr_pcidsk_5():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_pcidsk_add_field_to_non_empty_layer():
 
     if ogr.GetDriverByName('PCIDSK') is None:
@@ -300,6 +307,8 @@ def ogr_pcidsk_add_field_to_non_empty_layer():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_pcidsk_too_many_layers():
 
     if ogr.GetDriverByName('PCIDSK') is None:
@@ -356,6 +365,7 @@ def ogr_pcidsk_online_1():
 ###############################################################################
 # Check a polygon layer
 
+
 def ogr_pcidsk_online_2():
 
     import test_cli_utilities
@@ -379,11 +389,13 @@ def ogr_pcidsk_online_2():
 ###############################################################################
 # Cleanup
 
+
 def ogr_pcidsk_cleanup():
 
     gdal.Unlink('tmp/ogr_pcidsk_1.pix')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_pcidsk_1,

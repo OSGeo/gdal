@@ -41,6 +41,7 @@ from osgeo import ogr
 ###############################################################################
 # Check
 
+
 def ogr_ods_check(ds):
 
     if ds.TestCapability("foo") != 0:
@@ -125,6 +126,7 @@ def ogr_ods_check(ds):
 ###############################################################################
 # Basic tests
 
+
 def ogr_ods_1():
 
     drv = ogr.GetDriverByName('ODS')
@@ -144,6 +146,7 @@ def ogr_ods_1():
 
 ###############################################################################
 # Basic tests
+
 
 def ogr_ods_kspread_1():
 
@@ -242,6 +245,7 @@ def ogr_ods_kspread_1():
 ###############################################################################
 # Test OGR_ODS_HEADERS = DISABLE
 
+
 def ogr_ods_2():
 
     drv = ogr.GetDriverByName('ODS')
@@ -265,6 +269,7 @@ def ogr_ods_2():
 ###############################################################################
 # Test OGR_ODS_FIELD_TYPES = STRING
 
+
 def ogr_ods_3():
 
     drv = ogr.GetDriverByName('ODS')
@@ -287,6 +292,7 @@ def ogr_ods_3():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_ods_4():
 
     drv = ogr.GetDriverByName('ODS')
@@ -307,6 +313,7 @@ def ogr_ods_4():
 
 ###############################################################################
 # Test write support
+
 
 def ogr_ods_5():
 
@@ -330,6 +337,7 @@ def ogr_ods_5():
 
 ###############################################################################
 # Test formula evaluation
+
 
 def ogr_ods_6():
 
@@ -377,6 +385,7 @@ AB,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ###############################################################################
 # Test update support
 
+
 def ogr_ods_7():
 
     drv = ogr.GetDriverByName('ODS')
@@ -421,6 +430,7 @@ def ogr_ods_7():
 ###############################################################################
 # Test Integer64
 
+
 def ogr_ods_8():
 
     drv = ogr.GetDriverByName('ODS')
@@ -460,6 +470,7 @@ def ogr_ods_8():
 
 ###############################################################################
 # Test DateTime with milliseconds
+
 
 def ogr_ods_9():
 
@@ -508,6 +519,7 @@ def ogr_ods_9():
 ###############################################################################
 # Test Boolean
 
+
 def ogr_ods_boolean():
 
     drv = ogr.GetDriverByName('ODS')
@@ -550,6 +562,7 @@ def ogr_ods_boolean():
     gdal.Unlink(out_filename)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_ods_1,

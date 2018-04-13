@@ -42,6 +42,7 @@ from osgeo import osr, gdal
 ###############################################################################
 # Class to perform the tests.
 
+
 class MetaCRSTest:
     def __init__( self, test_line ):
         self.test_line = test_line
@@ -162,6 +163,7 @@ class MetaCRSTest:
 
 ###############################################################################
 # When imported build a list of units based on the files available.
+
 
 gdaltest_list = []
 

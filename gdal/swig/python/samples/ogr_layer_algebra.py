@@ -38,6 +38,7 @@ from osgeo import osr
 
 ###############################################################################
 
+
 def Usage():
     print("""
 Usage: ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Clip|Erase
@@ -52,10 +53,12 @@ Usage: ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Cli
 
 ###############################################################################
 
+
 def EQUAL(a, b):
     return a.lower() == b.lower()
 
 ###############################################################################
+
 
 def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
                 input_lyr, input_fields, \
@@ -117,6 +120,7 @@ def CreateLayer(output_ds, output_lyr_name, srs, geom_type, lco, \
     return output_lyr
 
 ###############################################################################
+
 
 def main(argv = None):
 
@@ -439,6 +443,7 @@ def main(argv = None):
     return 0
 
 ###############################################################################
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

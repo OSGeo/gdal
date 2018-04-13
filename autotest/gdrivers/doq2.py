@@ -39,6 +39,7 @@ import gdaltest
 # Read a truncated and modified version of C3607614.NWS
 # downloaded from http://edcftp.cr.usgs.gov/pub/data/samples/doq-clr-native.tar.gz
 
+
 def doq2_1():
 
     ds = gdal.Open('data/C3607614_truncated.NWS')
@@ -73,6 +74,7 @@ def doq2_1():
     ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     doq2_1 ]

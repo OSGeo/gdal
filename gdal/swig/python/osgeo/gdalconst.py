@@ -5,9 +5,6 @@
 # the SWIG interface file instead.
 
 
-
-
-
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -70,6 +67,7 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
+
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -81,6 +79,7 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
+
 try:
     _object = object
     _newclass = 1
@@ -88,7 +87,6 @@ except AttributeError:
     class _object:
         pass
     _newclass = 0
-
 
 
 _gdalconst.GDT_Unknown_swigconstant(_gdalconst)

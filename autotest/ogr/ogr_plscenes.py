@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Find PLScenes driver
 
+
 def ogr_plscenes_init():
 
     gdaltest.plscenes_drv = ogr.GetDriverByName('PLScenes')
@@ -52,6 +53,7 @@ def ogr_plscenes_init():
 
 ###############################################################################
 # Test Data V1 API catalog listing with a single catalog
+
 
 def ogr_plscenes_data_v1_catalog_no_paging():
 
@@ -86,6 +88,7 @@ def ogr_plscenes_data_v1_catalog_no_paging():
 
 ###############################################################################
 # Test Data V1 API catalog listing with catalog paging
+
 
 def ogr_plscenes_data_v1_catalog_paging():
 
@@ -130,6 +133,7 @@ def ogr_plscenes_data_v1_catalog_paging():
 
 ###############################################################################
 # Test Data V1 API
+
 
 def ogr_plscenes_data_v1_nominal():
 
@@ -297,10 +301,8 @@ def ogr_plscenes_data_v1_nominal():
         gdaltest.post_reason('fail')
         return 'fail'
 
-
     gdal.FileFromMemBuffer("""/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"GeometryFilter","field_name":"geometry","config":{"type":"Point","coordinates":[2.0,49.0]}}]}}""",
 """{"features" : [ { "id": "id3", "geometry": { "type": "Point", "coordinates": [2,49]} } ] }""")
-
 
     # POINT spatial filter
     lyr.SetSpatialFilterRect(2,49,2,49)
@@ -616,6 +618,7 @@ def ogr_plscenes_data_v1_nominal():
 ###############################################################################
 # Test robustness to errors in Data V1 API
 
+
 def ogr_plscenes_data_v1_errors():
 
     if gdaltest.plscenes_drv is None:
@@ -730,6 +733,7 @@ def ogr_plscenes_data_v1_errors():
 
 ###############################################################################
 # Test Data V1 API against real server
+
 
 def ogr_plscenes_data_v1_live():
 

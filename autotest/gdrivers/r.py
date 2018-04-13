@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test on an ascii file.
 
+
 def r_1():
 
     tst = gdaltest.GDALTest( 'R', 'r_test.asc', 2, 202 )
@@ -46,6 +47,7 @@ def r_1():
 ###############################################################################
 # Perform a simple read test on a binary (uncompressed) file.
 
+
 def r_2():
 
     tst = gdaltest.GDALTest( 'R', 'r_test.rdb', 1, 202 )
@@ -53,6 +55,7 @@ def r_2():
 
 ###############################################################################
 # Verify a simple createcopy operation with 16bit data.
+
 
 def r_3():
 
@@ -63,12 +66,14 @@ def r_3():
 ###############################################################################
 # Test creating a compressed binary stream and reading it back.
 
+
 def r_4():
 
     tst = gdaltest.GDALTest( 'R', 'byte.tif', 1, 4672 )
     return tst.testCreateCopy( new_filename = 'tmp/r_4.rda' )
 
 ###############################################################################
+
 
 gdaltest_list = [
     r_1,

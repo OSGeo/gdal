@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test a GRD dataset with three bands + Z
 
+
 def nwt_grd_1():
 
     tst1 = gdaltest.GDALTest('NWT_GRD', 'nwt_grd.grd', 1, 28093)
@@ -54,6 +55,7 @@ def nwt_grd_1():
     else:
         return 'fail'
 
+
 def nwt_grd_2():
     """
     Test writing a GRD via CreateCopy
@@ -64,6 +66,7 @@ def nwt_grd_2():
     gdal.Unlink('tmp/nwt_grd.grd')
     gdal.Unlink('tmp/nwt_grd.grd.aux.xml')
     return ret
+
 
 gdaltest_list = [
     nwt_grd_1, nwt_grd_2 ]

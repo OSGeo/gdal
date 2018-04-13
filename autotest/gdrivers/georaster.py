@@ -40,6 +40,8 @@ import gdaltest
 
 ###############################################################################
 #
+
+
 def get_connection_str():
 
     oci_dsname = os.environ.get('OCI_DSNAME')
@@ -52,6 +54,8 @@ def get_connection_str():
 
 ###############################################################################
 #
+
+
 def georaster_init():
 
     gdaltest.oci_ds = None
@@ -94,6 +98,7 @@ def georaster_init():
 ###############################################################################
 #
 
+
 def georaster_byte():
 
     if gdaltest.georasterDriver is None:
@@ -119,6 +124,7 @@ def georaster_byte():
 
 ###############################################################################
 #
+
 
 def georaster_int16():
 
@@ -148,6 +154,7 @@ def georaster_int16():
 ###############################################################################
 #
 
+
 def georaster_int32():
 
     if gdaltest.georasterDriver is None:
@@ -176,6 +183,7 @@ def georaster_int32():
 ###############################################################################
 #
 
+
 def georaster_rgb_b1():
 
     if gdaltest.georasterDriver is None:
@@ -202,6 +210,7 @@ def georaster_rgb_b1():
 
 ###############################################################################
 #
+
 
 def georaster_rgb_b2():
 
@@ -230,6 +239,7 @@ def georaster_rgb_b2():
 ###############################################################################
 #
 
+
 def georaster_rgb_b3_bsq():
 
     if gdaltest.georasterDriver is None:
@@ -256,6 +266,7 @@ def georaster_rgb_b3_bsq():
 
 ###############################################################################
 #
+
 
 def georaster_rgb_b3_bip():
 
@@ -284,6 +295,7 @@ def georaster_rgb_b3_bip():
 ###############################################################################
 #
 
+
 def georaster_rgb_b3_bil():
 
     if gdaltest.georasterDriver is None:
@@ -310,6 +322,7 @@ def georaster_rgb_b3_bil():
 
 ###############################################################################
 #
+
 
 def georaster_byte_deflate():
 
@@ -338,6 +351,7 @@ def georaster_byte_deflate():
 ###############################################################################
 #
 
+
 def georaster_rgb_deflate_b3():
 
     if gdaltest.georasterDriver is None:
@@ -364,6 +378,7 @@ def georaster_rgb_deflate_b3():
 
 ###############################################################################
 #
+
 
 def georaster_1bit():
 
@@ -392,6 +407,7 @@ def georaster_1bit():
 ###############################################################################
 #
 
+
 def georaster_2bit():
 
     if gdaltest.georasterDriver is None:
@@ -418,6 +434,7 @@ def georaster_2bit():
 
 ###############################################################################
 #
+
 
 def georaster_4bit():
 
@@ -446,6 +463,7 @@ def georaster_4bit():
 ###############################################################################
 #
 
+
 def georaster_cleanup():
 
     if gdaltest.georasterDriver is None:
@@ -464,6 +482,7 @@ def georaster_cleanup():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     georaster_init,

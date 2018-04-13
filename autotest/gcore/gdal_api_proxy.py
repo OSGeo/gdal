@@ -39,6 +39,8 @@ import gdaltest
 
 ###############################################################################
 # Test forked gdalserver
+
+
 def gdal_api_proxy_1():
 
     import test_py_scripts
@@ -56,6 +58,8 @@ def gdal_api_proxy_1():
 
 ###############################################################################
 # Test connection to TCP server
+
+
 def gdal_api_proxy_2():
 
     if sys.version_info < (2,6,0):
@@ -71,6 +75,8 @@ def gdal_api_proxy_2():
 
 ###############################################################################
 # Test connection to Unix socket server
+
+
 def gdal_api_proxy_3():
 
     if sys.version_info < (2,6,0):
@@ -94,6 +100,7 @@ def gdal_api_proxy_3():
 ###############################################################################
 # Test -nofork mode
 
+
 def gdal_api_proxy_4():
 
     if sys.version_info < (2,6,0):
@@ -116,6 +123,8 @@ def gdal_api_proxy_4():
 
 ###############################################################################
 #
+
+
 def gdal_api_proxy_sub():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -590,6 +599,8 @@ def gdal_api_proxy_sub():
 
 ###############################################################################
 #
+
+
 def gdal_api_proxy_sub_clean():
     if gdaltest.api_proxy_server_p is not None:
         try:
@@ -603,6 +614,7 @@ def gdal_api_proxy_sub_clean():
         pass
 
     return 'success'
+
 
 gdaltest_list = [ gdal_api_proxy_1,
                   gdal_api_proxy_2,

@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+
 def open_for_read(uri):
     """
     Opens a test file for reading.
@@ -44,6 +45,8 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+
+
 def vsiswift_init():
 
     gdaltest.az_vars = {}
@@ -57,6 +60,7 @@ def vsiswift_init():
 
 ###############################################################################
 # Error cases
+
 
 def vsiswift_real_server_errors():
 
@@ -79,7 +83,6 @@ def vsiswift_real_server_errors():
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
-
 
     gdal.SetConfigOption('SWIFT_STORAGE_URL', 'http://0.0.0.0')
 
@@ -115,6 +118,8 @@ def vsiswift_real_server_errors():
     return 'success'
 
 ###############################################################################
+
+
 def vsiswift_start_webserver():
 
     gdaltest.webserver_process = None
@@ -131,6 +136,7 @@ def vsiswift_start_webserver():
 
 ###############################################################################
 # Test authentication with SWIFT_AUTH_V1_URL + SWIFT_USER + SWIFT_KEY
+
 
 def vsiswift_fake_auth_v1_url():
 
@@ -233,6 +239,7 @@ def vsiswift_fake_auth_v1_url():
 ###############################################################################
 # Test authentication with SWIFT_STORAGE_URL + SWIFT_AUTH_TOKEN
 
+
 def vsiswift_fake_auth_storage_url_and_auth_token():
 
     if gdaltest.webserver_port == 0:
@@ -295,6 +302,7 @@ def vsiswift_fake_auth_storage_url_and_auth_token():
 ###############################################################################
 # Test VSIStatL()
 
+
 def vsiswift_stat():
 
     if gdaltest.webserver_port == 0:
@@ -342,6 +350,7 @@ def vsiswift_stat():
 
 ###############################################################################
 # Test ReadDir()
+
 
 def vsiswift_fake_readdir():
 
@@ -472,6 +481,7 @@ def vsiswift_fake_readdir():
 ###############################################################################
 # Test write
 
+
 def vsiswift_fake_write():
 
     if gdaltest.webserver_port == 0:
@@ -531,6 +541,7 @@ def vsiswift_fake_write():
 ###############################################################################
 # Test Unlink()
 
+
 def vsiswift_fake_unlink():
 
     if gdaltest.webserver_port == 0:
@@ -565,6 +576,7 @@ def vsiswift_fake_unlink():
 
 ###############################################################################
 # Test Mkdir() / Rmdir()
+
 
 def vsiswift_fake_mkdir_rmdir():
 
@@ -670,6 +682,8 @@ def vsiswift_fake_mkdir_rmdir():
     return 'success'
 
 ###############################################################################
+
+
 def vsiswift_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -685,6 +699,7 @@ def vsiswift_stop_webserver():
 
 ###############################################################################
 # Nominal cases (require valid credentials)
+
 
 def vsiswift_extra_1():
 
@@ -793,13 +808,11 @@ def vsiswift_extra_1():
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
-
         ret = gdal.Rmdir(subpath)
         if ret < 0:
             gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
-
 
         return 'success'
 
@@ -839,12 +852,15 @@ def vsiswift_extra_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsiswift_cleanup():
 
     for var in gdaltest.az_vars:
         gdal.SetConfigOption(var, gdaltest.az_vars[var])
 
     return 'success'
+
 
 gdaltest_list = [ vsiswift_init,
                   vsiswift_real_server_errors,

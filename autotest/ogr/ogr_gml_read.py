@@ -46,6 +46,7 @@ import shutil
 # Test reading geometry and attribute from ionic wfs gml file.
 #
 
+
 def ogr_gml_1():
 
     gdaltest.have_gml_reader = 0
@@ -90,6 +91,7 @@ def ogr_gml_1():
 ###############################################################################
 # Do the same test somewhere without a .gfs file.
 
+
 def ogr_gml_2():
     if not gdaltest.have_gml_reader:
         return 'skip'
@@ -124,6 +126,7 @@ def ogr_gml_2():
 
 ###############################################################################
 # Similar test for RNF style line data.
+
 
 def ogr_gml_3():
     if not gdaltest.have_gml_reader:
@@ -161,6 +164,7 @@ def ogr_gml_3():
 ###############################################################################
 # Test of read GML file with UTF-8 BOM indicator.
 # Test also support for nested GML elements (#3680)
+
 
 def ogr_gml_4():
     if not gdaltest.have_gml_reader:
@@ -229,6 +233,8 @@ def ogr_gml_5():
 
 ###############################################################################
 # Test of various FIDs (various prefixes and lengths) (Ticket#1017)
+
+
 def ogr_gml_6():
 
     if not gdaltest.have_gml_reader:
@@ -257,6 +263,7 @@ def ogr_gml_6():
 
 ###############################################################################
 # Test of colon terminated prefixes for attribute values (Ticket#2493)
+
 
 def ogr_gml_7():
 
@@ -294,6 +301,7 @@ def ogr_gml_7():
 ###############################################################################
 # Test a GML file with some non-ASCII UTF-8 content that triggered a bug (Ticket#2948)
 
+
 def ogr_gml_8():
 
     if not gdaltest.have_gml_reader:
@@ -315,6 +323,7 @@ def ogr_gml_8():
 
 ###############################################################################
 # Test writing invalid UTF-8 content in a GML file (ticket #2971)
+
 
 def ogr_gml_9():
 
@@ -357,6 +366,7 @@ def ogr_gml_9():
 ###############################################################################
 # Test writing different data types in a GML file (ticket #2857)
 # TODO: Add test for other data types as they are added to the driver.
+
 
 def ogr_gml_10():
 
@@ -452,6 +462,7 @@ def ogr_gml_10():
 ###############################################################################
 # Test reading a geometry element specified with <GeometryElementPath>
 
+
 def ogr_gml_11():
 
     if not gdaltest.have_gml_reader:
@@ -495,6 +506,7 @@ def ogr_gml_11():
 ###############################################################################
 # Test reading a virtual GML file
 
+
 def ogr_gml_12():
 
     if not gdaltest.have_gml_reader:
@@ -522,6 +534,7 @@ def ogr_gml_12():
 
 ###############################################################################
 # Test reading GML with StringList, IntegerList and RealList fields
+
 
 def ogr_gml_13():
 
@@ -551,6 +564,7 @@ def ogr_gml_13():
 
 ###############################################################################
 # Test xlink resolution
+
 
 def ogr_gml_14():
 
@@ -622,6 +636,7 @@ def ogr_gml_14():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_gml_15():
 
     if not gdaltest.have_gml_reader:
@@ -641,6 +656,7 @@ def ogr_gml_15():
 
 ###############################################################################
 # Read CityGML generic attributes
+
 
 def ogr_gml_16():
 
@@ -662,6 +678,7 @@ def ogr_gml_16():
 
 ###############################################################################
 # Read layer SRS for WFS 1.0.0 return
+
 
 def ogr_gml_17():
 
@@ -690,6 +707,7 @@ def ogr_gml_17():
 ###############################################################################
 # Read layer SRS for WFS 1.1.0 return
 
+
 def ogr_gml_18():
 
     if not gdaltest.have_gml_reader:
@@ -717,6 +735,7 @@ def ogr_gml_18():
 ###############################################################################
 # Read layer SRS for WFS 1.1.0 return, but without trying to restore
 # (long, lat) order. So we should get EPSGA:4326 and (lat, long) order
+
 
 def ogr_gml_19():
 
@@ -753,6 +772,7 @@ def ogr_gml_19():
 
 ###############################################################################
 # Test parsing a .xsd where the type definition is before its reference
+
 
 def ogr_gml_20():
 
@@ -808,6 +828,7 @@ def ogr_gml_20():
 
 ###############################################################################
 # Test writing GML3
+
 
 def ogr_gml_21(format = 'GML3'):
 
@@ -893,14 +914,17 @@ def ogr_gml_21(format = 'GML3'):
 
     return 'success'
 
+
 def ogr_gml_21_deegree3():
     return ogr_gml_21('GML3Deegree')
+
 
 def ogr_gml_21_gml32():
     return ogr_gml_21('GML3.2')
 
 ###############################################################################
 # Read a OpenLS DetermineRouteResponse document
+
 
 def ogr_gml_22():
 
@@ -928,6 +952,7 @@ def ogr_gml_22():
 ###############################################################################
 # Test that use SRS defined in global gml:Envelope if no SRS is set for any
 # feature geometry
+
 
 def ogr_gml_23():
 
@@ -973,6 +998,7 @@ def ogr_gml_23():
 # Test that use SRS defined in global gml:Envelope if no SRS is set for any
 # feature geometry
 
+
 def ogr_gml_24():
 
     if not gdaltest.have_gml_reader:
@@ -1017,6 +1043,7 @@ def ogr_gml_24():
 ###############################################################################
 # Test fixes for #3934 and #3935
 
+
 def ogr_gml_25():
 
     if not gdaltest.have_gml_reader:
@@ -1050,6 +1077,7 @@ def ogr_gml_25():
 ###############################################################################
 # Test writing and reading 3D geoms (GML2)
 
+
 def ogr_gml_26():
 
     if not gdaltest.have_gml_reader:
@@ -1080,6 +1108,7 @@ def ogr_gml_26():
 
 ###############################################################################
 # Test writing and reading 3D geoms (GML3)
+
 
 def ogr_gml_27():
 
@@ -1113,6 +1142,7 @@ def ogr_gml_27():
 
 ###############################################################################
 # Test writing and reading layers of type wkbNone (#4154)
+
 
 def ogr_gml_28():
 
@@ -1155,6 +1185,7 @@ def ogr_gml_28():
 ###############################################################################
 # Test reading FME GMLs
 
+
 def ogr_gml_29():
 
     if not gdaltest.have_gml_reader:
@@ -1187,6 +1218,7 @@ def ogr_gml_29():
 
 ###############################################################################
 # Test reading a big field and a big geometry
+
 
 def ogr_gml_30():
 
@@ -1241,6 +1273,7 @@ def ogr_gml_30():
 ###############################################################################
 # Test SEQUENTIAL_LAYERS
 
+
 def ogr_gml_31():
 
     if not gdaltest.have_gml_reader:
@@ -1276,6 +1309,7 @@ def ogr_gml_31():
 
 ###############################################################################
 # Test SEQUENTIAL_LAYERS without a .gfs
+
 
 def ogr_gml_32():
 
@@ -1315,11 +1349,11 @@ def ogr_gml_32():
     gdal.Unlink("/vsimem/ogr_gml_31.gml")
     gdal.Unlink("/vsimem/ogr_gml_31.gfs")
 
-
     return 'success'
 
 ###############################################################################
 # Test INTERLEAVED_LAYERS
+
 
 def ogr_gml_33():
 
@@ -1362,6 +1396,7 @@ def ogr_gml_33():
 ###############################################################################
 # Test writing non-ASCII UTF-8 content (#4117, #4299)
 
+
 def ogr_gml_34():
 
     if not gdaltest.have_gml_reader:
@@ -1392,6 +1427,7 @@ def ogr_gml_34():
 
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=HUGE (#4380)
+
 
 def ogr_gml_35():
 
@@ -1461,6 +1497,7 @@ def ogr_gml_35():
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=NONE (and new GMLTopoSurface interpretation)
 
+
 def ogr_gml_36(GML_FACE_HOLE_NEGATIVE = 'NO'):
 
     if not gdaltest.have_gml_reader:
@@ -1518,11 +1555,13 @@ def ogr_gml_36(GML_FACE_HOLE_NEGATIVE = 'NO'):
 ###############################################################################
 # Test GML_SKIP_RESOLVE_ELEMS=NONE with old GMLTopoSurface interpretation
 
+
 def ogr_gml_37():
     return ogr_gml_36('YES')
 
 ###############################################################################
 # Test new GMLTopoSurface interpretation (#3934) with HUGE xlink resolver
+
 
 def ogr_gml_38(resolver = 'HUGE'):
 
@@ -1582,11 +1621,13 @@ def ogr_gml_38(resolver = 'HUGE'):
 ###############################################################################
 # Test new GMLTopoSurface interpretation (#3934) with standard xlink resolver
 
+
 def ogr_gml_39():
     return ogr_gml_38('NONE')
 
 ###############################################################################
 # Test parsing XSD where simpleTypes not inlined, but defined elsewhere in the .xsd (#4328)
+
 
 def ogr_gml_40():
 
@@ -1603,6 +1644,7 @@ def ogr_gml_40():
 
 ###############################################################################
 # Test validating against .xsd
+
 
 def ogr_gml_41():
 
@@ -1637,6 +1679,7 @@ def ogr_gml_41():
 
 ###############################################################################
 # Test validating against .xsd
+
 
 def ogr_gml_42():
 
@@ -1673,6 +1716,7 @@ def ogr_gml_42():
 ###############################################################################
 # Test automated downloading of WFS schema
 
+
 def ogr_gml_43():
 
     # The service times out
@@ -1706,6 +1750,7 @@ def ogr_gml_43():
 
 ###############################################################################
 # Test providing a custom XSD filename
+
 
 def ogr_gml_44():
 
@@ -1760,6 +1805,7 @@ def ogr_gml_44():
 
 ###############################################################################
 # Test PREFIX and TARGET_NAMESPACE creation options
+
 
 def ogr_gml_45():
 
@@ -1928,6 +1974,7 @@ def ogr_gml_46():
 ###############################################################################
 # Test validation of WFS GML documents
 
+
 def ogr_gml_47():
 
     if not gdaltest.have_gml_validation:
@@ -1969,6 +2016,7 @@ def ogr_gml_47():
 #    </xsd:complexType>
 #    </xsd:element>
 
+
 def ogr_gml_48():
 
     if not gdaltest.have_gml_reader:
@@ -1996,6 +2044,7 @@ def ogr_gml_48():
 
 ###############################################################################
 # Test a pseudo Inspire GML file
+
 
 def ogr_gml_49():
 
@@ -2038,6 +2087,7 @@ def ogr_gml_49():
 
 ###############################################################################
 # Test support for StringList, IntegerList, RealList
+
 
 def ogr_gml_50():
 
@@ -2084,6 +2134,7 @@ def ogr_gml_50():
 
 ###############################################################################
 # Test -dsco WRITE_FEATURE_BOUNDED_BY=no -dsco STRIP_PREFIX=YES
+
 
 def ogr_gml_51():
 
@@ -2135,6 +2186,7 @@ def ogr_gml_51():
 
 ###############################################################################
 # Test reading MTKGML files
+
 
 def ogr_gml_52():
 
@@ -2208,6 +2260,7 @@ def ogr_gml_52():
 ###############################################################################
 # Test that we don't recognize .xsd files themselves
 
+
 def ogr_gml_53():
 
     if not gdaltest.have_gml_reader:
@@ -2223,6 +2276,7 @@ def ogr_gml_53():
 
 ###############################################################################
 # Test that we can open an empty GML datasource (#249, #5205)
+
 
 def ogr_gml_54():
 
@@ -2258,6 +2312,7 @@ def ogr_gml_54():
 # Test support for <xs:include> in schemas
 # Necessary for Finnish NLS data
 
+
 def ogr_gml_55():
 
     if not gdaltest.have_gml_reader:
@@ -2280,6 +2335,7 @@ def ogr_gml_55():
 ###############################################################################
 # Test support for gml:FeaturePropertyType and multiple geometry field
 # Necessary for Finnish NLS data
+
 
 def ogr_gml_56():
 
@@ -2353,6 +2409,7 @@ def ogr_gml_56():
 ###############################################################################
 # Test write support for multiple geometry field
 
+
 def ogr_gml_57():
 
     if not gdaltest.have_gml_reader:
@@ -2425,6 +2482,7 @@ def ogr_gml_57():
 
 ###############################################################################
 # Test support for Inspire Cadastral schemas
+
 
 def ogr_gml_58():
 
@@ -2515,7 +2573,6 @@ def ogr_gml_58():
     feat = None
     lyr = None
     ds = None
-
 
     ds = ogr.Open('data/inspire_basicpropertyunit.xml')
     lyr = ds.GetLayer(0)
@@ -2726,6 +2783,7 @@ def ogr_gml_58():
 ###############################################################################
 # Test GFS conditions
 
+
 def ogr_gml_59():
 
     if not gdaltest.have_gml_reader:
@@ -2770,6 +2828,7 @@ def ogr_gml_59():
 # Test reading WFS 2.0 GetFeature documents with wfs:FeatureCollection
 # as a wfs:member of the top wfs:FeatureCollection
 
+
 def ogr_gml_60():
 
     if not gdaltest.have_gml_reader:
@@ -2810,6 +2869,7 @@ def ogr_gml_60():
 
 ###############################################################################
 # Test reading a element specified with a full path in <ElementPath>
+
 
 def ogr_gml_61():
 
@@ -2864,6 +2924,7 @@ def ogr_gml_61():
 
 ###############################################################################
 # Test GML_ATTRIBUTES_TO_OGR_FIELDS option
+
 
 def ogr_gml_62():
 
@@ -2938,6 +2999,7 @@ def ogr_gml_62():
 ###############################################################################
 # Test reading RUIAN VFR files
 
+
 def ogr_gml_63():
 
     if not gdaltest.have_gml_reader:
@@ -2983,6 +3045,7 @@ def ogr_gml_63():
 ###############################################################################
 # Test multiple instances of parsers (#5571)
 
+
 def ogr_gml_64():
 
     if not gdaltest.have_gml_reader:
@@ -3003,6 +3066,7 @@ def ogr_gml_64():
 
 ###############################################################################
 # Test SRSDIMENSION_LOC=GEOMETRY option (#5606)
+
 
 def ogr_gml_65():
 
@@ -3047,6 +3111,7 @@ def ogr_gml_65():
 
 ###############################################################################
 # Test curve geometries
+
 
 def ogr_gml_66():
 
@@ -3179,7 +3244,6 @@ def ogr_gml_66():
     f.SetGeometry(ogr.CreateGeometryFromWkt('MULTILINESTRING ((0 0,0 1,1 1,0 0))'))
     lyr.CreateFeature(f)
     f = None
-
 
     ds = None
 
@@ -3395,6 +3459,7 @@ def ogr_gml_66():
 ###############################################################################
 # Test boolean, int16, integer64 type
 
+
 def ogr_gml_67():
 
     if not gdaltest.have_gml_reader:
@@ -3500,6 +3565,7 @@ def ogr_gml_67():
 ###############################################################################
 # Test reading GML with xsd with a choice of geometry properites
 
+
 def ogr_gml_68():
 
     if not gdaltest.have_gml_reader:
@@ -3529,6 +3595,7 @@ def ogr_gml_68():
 
 ###############################################################################
 # Test not nullable fields
+
 
 def ogr_gml_69():
 
@@ -3602,6 +3669,7 @@ def ogr_gml_69():
 # Test default fields (not really supported, but we must do something as we
 # support not nullable fields)
 
+
 def ogr_gml_70():
 
     if not gdaltest.have_gml_reader:
@@ -3637,6 +3705,7 @@ def ogr_gml_70():
 
 ###############################################################################
 # Test reading WFS 2.0 layer resulting from a join operation
+
 
 def ogr_gml_71_helper(ds):
 
@@ -3711,6 +3780,7 @@ def ogr_gml_71_helper(ds):
 
     return 'success'
 
+
 def ogr_gml_71():
 
     if not gdaltest.have_gml_reader:
@@ -3777,6 +3847,7 @@ def ogr_gml_71():
 ###############################################################################
 # Test name and description
 
+
 def ogr_gml_72():
 
     if not gdaltest.have_gml_reader:
@@ -3817,6 +3888,7 @@ def ogr_gml_72():
 ###############################################################################
 # Read a CSW GetRecordsResponse document
 
+
 def ogr_gml_73():
 
     if not gdaltest.have_gml_reader:
@@ -3856,6 +3928,7 @@ def ogr_gml_73():
 
 ###############################################################################
 # Test FORCE_SRS_DETECTION open option
+
 
 def ogr_gml_74():
 
@@ -3908,6 +3981,7 @@ def ogr_gml_74():
 ###############################################################################
 # Test we don't open a WMTS Capabilities doc
 
+
 def ogr_gml_75():
 
     if not gdaltest.have_gml_reader:
@@ -3951,6 +4025,7 @@ version="1.0.0">
 ###############################################################################
 # Test we are robust to content of XML elements bigger than 2 GB
 
+
 def ogr_gml_76():
 
     if not gdaltest.have_gml_reader:
@@ -3974,6 +4049,7 @@ def ogr_gml_76():
 
 ###############################################################################
 # Test interpretation of http://www.opengis.net/def/crs/EPSG/0/ URLs (#6678)
+
 
 def ogr_gml_77():
 
@@ -4030,6 +4106,7 @@ def ogr_gml_77():
 ###############################################################################
 # Test effect of SWAP_COORDINATES (#6678)
 
+
 def ogr_gml_78():
 
     if not gdaltest.have_gml_reader:
@@ -4085,6 +4162,7 @@ def ogr_gml_78():
 ###############################################################################
 # Test SRSNAME_FORMAT
 
+
 def ogr_gml_79():
 
     sr = osr.SpatialReference()
@@ -4123,6 +4201,7 @@ def ogr_gml_79():
 
 ###############################################################################
 # Test null / unset
+
 
 def ogr_gml_80():
 
@@ -4198,6 +4277,7 @@ def ogr_gml_81():
 ###############################################################################
 # Test GML_FEATURE_COLLECTION=YES
 
+
 def ogr_gml_82():
 
     if not gdaltest.have_gml_reader:
@@ -4244,6 +4324,7 @@ def ogr_gml_82():
 
 ###############################################################################
 
+
 def ogr_gml_gml2_write_geometry_error():
 
     ds = ogr.GetDriverByName('GML').CreateDataSource('/vsimem/ogr_gml_83.gml')
@@ -4261,6 +4342,7 @@ def ogr_gml_gml2_write_geometry_error():
 
 ###############################################################################
 #  Cleanup
+
 
 def ogr_gml_cleanup():
     if not gdaltest.have_gml_reader:
@@ -4391,6 +4473,7 @@ def ogr_gml_clean_files():
     gdal.Unlink('data/test_xsi_nil_gfs.gfs')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_gml_clean_files,

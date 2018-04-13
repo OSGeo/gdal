@@ -32,9 +32,11 @@ import sys
 
 from osgeo import gdal
 
+
 def Usage():
     print('Usage: gdal_mkdir filename')
     return -1
+
 
 def gdal_mkdir(argv, progress = None):
     filename = None
@@ -60,6 +62,7 @@ def gdal_mkdir(argv, progress = None):
     if ret != 0:
         print('Creation failed')
     return ret
+
 
 if __name__ == '__main__':
     sys.exit(gdal_mkdir(sys.argv))

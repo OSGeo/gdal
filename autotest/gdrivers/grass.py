@@ -52,6 +52,7 @@ def grass_1():
 ###############################################################################
 # Read existing simple 1 band GRASS dataset.
 
+
 def grass_2():
 
     if gdaltest.grass_drv is None:

@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # Test writing a ZIP with multiple files and directories
 
+
 def vsizip_1():
 
     # We can keep the handle open during all the ZIP writing
@@ -220,6 +221,7 @@ def vsizip_1():
 ###############################################################################
 # Test writing 2 files in the ZIP by closing it completely between the 2
 
+
 def vsizip_2():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/test2.zip/foo.bar", "wb")
@@ -325,6 +327,7 @@ def vsizip_3():
 ###############################################################################
 # Test ReadRecursive on valid zip
 
+
 def vsizip_4():
 
     # read recursive and validate content
@@ -343,6 +346,7 @@ def vsizip_4():
 
 ###############################################################################
 # Test ReadRecursive on deep zip
+
 
 def vsizip_5():
 
@@ -380,6 +384,7 @@ def vsizip_5():
 
 ###############################################################################
 # Test writing 2 files with same name in a ZIP (#4785)
+
 
 def vsizip_6():
 
@@ -429,6 +434,7 @@ def vsizip_6():
 ###############################################################################
 # Test that we use the extended field for UTF-8 filenames (#5361).
 
+
 def vsizip_7():
 
     content = gdal.ReadDir("/vsizip/data/cp866_plus_utf8.zip")
@@ -451,6 +457,7 @@ def vsizip_7():
 ###############################################################################
 # Basic test for ZIP64 support (5 GB file that compresses in less than 4 GB)
 
+
 def vsizip_8():
 
     if gdal.VSIStatL('/vsizip/vsizip/data/zero.bin.zip.zip/zero.bin.zip').size != 5000 * 1000 * 1000 + 1:
@@ -460,6 +467,7 @@ def vsizip_8():
 
 ###############################################################################
 # Basic test for ZIP64 support (5 GB file that is stored)
+
 
 def vsizip_9():
 
@@ -492,6 +500,7 @@ def vsizip_9():
 ###############################################################################
 # Test that we recode filenames in ZIP (#5361)
 
+
 def vsizip_10():
 
     gdal.SetConfigOption('CPL_ZIP_ENCODING', 'CP866')
@@ -519,6 +528,7 @@ def vsizip_10():
 ###############################################################################
 # Test that we don't do anything with ZIP with filenames in UTF-8 already (#5361)
 
+
 def vsizip_11():
 
     content = gdal.ReadDir("/vsizip/data/utf8.zip")
@@ -540,6 +550,7 @@ def vsizip_11():
 
 ###############################################################################
 # Test changing the content of a zip file (#6005)
+
 
 def vsizip_12():
 
@@ -593,6 +604,7 @@ def vsizip_12():
 ###############################################################################
 # Test ReadDir() truncation
 
+
 def vsizip_13():
 
     fmain = gdal.VSIFOpenL("/vsizip/vsimem/vsizip_13.zip", "wb")
@@ -617,6 +629,7 @@ def vsizip_13():
 
 ###############################################################################
 # Test that we can recode filenames in ZIP when writing (#6631)
+
 
 def vsizip_14():
 

@@ -45,6 +45,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+
 def jp2openjpeg_1():
 
     try:
@@ -59,6 +60,7 @@ def jp2openjpeg_1():
 
 ###############################################################################
 # Open byte.jp2
+
 
 def jp2openjpeg_2():
 
@@ -92,6 +94,7 @@ def jp2openjpeg_2():
 ###############################################################################
 # Open int16.jp2
 
+
 def jp2openjpeg_3():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -122,6 +125,7 @@ def jp2openjpeg_3():
 ###############################################################################
 # Test copying byte.jp2
 
+
 def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -147,7 +151,6 @@ def jp2openjpeg_4(out_filename = 'tmp/jp2openjpeg_4.jp2'):
     if gdal.VSIStatL(out_filename + '.aux.xml') is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     ds = gdal.Open(out_filename)
     cs = ds.GetRasterBand(1).Checksum()
@@ -199,6 +202,7 @@ def jp2openjpeg_4_vsimem():
 ###############################################################################
 # Test copying int16.jp2
 
+
 def jp2openjpeg_5():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -209,6 +213,7 @@ def jp2openjpeg_5():
 
 ###############################################################################
 # Test reading ll.jp2
+
 
 def jp2openjpeg_6():
 
@@ -229,6 +234,7 @@ def jp2openjpeg_6():
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
+
 def jp2openjpeg_7():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -239,6 +245,7 @@ def jp2openjpeg_7():
 
 ###############################################################################
 # Test a JP2OpenJPEG with the 3 bands having 13bit depth and the 4th one 1 bit
+
 
 def jp2openjpeg_8():
 
@@ -262,6 +269,7 @@ def jp2openjpeg_8():
 
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
+
 
 def jp2openjpeg_9():
 
@@ -287,6 +295,7 @@ def jp2openjpeg_9():
 
 ###############################################################################
 # Test YCBCR420 creation option
+
 
 def jp2openjpeg_10():
 
@@ -318,6 +327,7 @@ def jp2openjpeg_10():
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
+
 
 def jp2openjpeg_11():
 
@@ -370,6 +380,7 @@ def jp2openjpeg_11():
 ###############################################################################
 # Check that PAM overrides internal georeferencing (#5279)
 
+
 def jp2openjpeg_12():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -417,6 +428,7 @@ def jp2openjpeg_12():
 
 ###############################################################################
 # Check that PAM overrides internal GCPs (#5279)
+
 
 def jp2openjpeg_13():
 
@@ -481,6 +493,7 @@ def jp2openjpeg_13():
 ###############################################################################
 # Check that we get GCPs even there's no projection info
 
+
 def jp2openjpeg_14():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -495,6 +508,7 @@ def jp2openjpeg_14():
 
 ###############################################################################
 # Test multi-threading reading
+
 
 def jp2openjpeg_15():
 
@@ -516,6 +530,7 @@ def jp2openjpeg_15():
 
 ###############################################################################
 # Test reading PixelIsPoint file (#5437)
+
 
 def jp2openjpeg_16():
 
@@ -556,6 +571,7 @@ def jp2openjpeg_16():
 ###############################################################################
 # Test writing PixelIsPoint file (#5437)
 
+
 def jp2openjpeg_17():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -592,6 +608,7 @@ def jp2openjpeg_17():
 # Test when using the decode_area API when one dimension of the dataset is not a
 # multiple of 1024 (#5480)
 
+
 def jp2openjpeg_18():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -616,6 +633,7 @@ def jp2openjpeg_18():
 ###############################################################################
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
+
 def jp2openjpeg_19():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -631,6 +649,7 @@ def jp2openjpeg_19():
 
 ###############################################################################
 # Validate GMLJP2 content against schema
+
 
 def jp2openjpeg_20():
 
@@ -666,7 +685,6 @@ def jp2openjpeg_20():
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/gml/3.1.1/profiles/gmlJP2Profile/1.0.0/gmlJP2Profile.xsd')
     except:
         gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
-
 
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
@@ -704,6 +722,7 @@ def jp2openjpeg_20():
 ###############################################################################
 # Test YCC=NO creation option
 
+
 def jp2openjpeg_21():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -725,6 +744,7 @@ def jp2openjpeg_21():
 
 ###############################################################################
 # Test RGBA support
+
 
 def jp2openjpeg_22():
 
@@ -884,11 +904,11 @@ def jp2openjpeg_22():
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test NBITS support
+
 
 def jp2openjpeg_23():
 
@@ -918,7 +938,6 @@ def jp2openjpeg_23():
     gdal.Unlink('/vsimem/jp2openjpeg_23.jp2')
     gdal.Unlink('/vsimem/jp2openjpeg_23_2.jp2')
 
-
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -927,6 +946,7 @@ def jp2openjpeg_23():
 
 ###############################################################################
 # Test Grey+alpha support
+
 
 def jp2openjpeg_24():
 
@@ -992,6 +1012,7 @@ def jp2openjpeg_24():
 ###############################################################################
 # Test multiband support
 
+
 def jp2openjpeg_25():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1026,6 +1047,8 @@ def jp2openjpeg_25():
     return 'success'
 
 ###############################################################################
+
+
 def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc = None, inspire_tg = True):
 
     try:
@@ -1059,6 +1082,7 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc
 
 ###############################################################################
 # Test INSPIRE_TG support
+
 
 def jp2openjpeg_26():
 
@@ -1269,6 +1293,7 @@ def jp2openjpeg_26():
 ###############################################################################
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
+
 def jp2openjpeg_27():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1292,9 +1317,11 @@ def jp2openjpeg_27():
 ###############################################################################
 # Test CODEBLOCK_WIDTH/_HEIGHT
 
+
 XML_TYPE_IDX = 0
 XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
+
 
 def find_xml_node(ar, element_name, only_attributes = False):
     #type = ar[XML_TYPE_IDX]
@@ -1310,6 +1337,7 @@ def find_xml_node(ar, element_name, only_attributes = False):
             return found
     return None
 
+
 def get_attribute_val(ar, attr_name):
     node = find_xml_node(ar, attr_name, True)
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
@@ -1318,6 +1346,7 @@ def get_attribute_val(ar, attr_name):
         node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
+
 
 def find_element_with_name(ar, element_name, name):
     type = ar[XML_TYPE_IDX]
@@ -1331,6 +1360,7 @@ def find_element_with_name(ar, element_name, name):
             return found
     return None
 
+
 def get_element_val(node):
     if node is None:
         return None
@@ -1340,6 +1370,7 @@ def get_element_val(node):
             return child[XML_VALUE_IDX]
     return None
 
+
 def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
     xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
@@ -1347,6 +1378,7 @@ def jp2openjpeg_test_codeblock(filename, codeblock_width, codeblock_height):
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True
+
 
 def jp2openjpeg_28():
 
@@ -1386,6 +1418,7 @@ def jp2openjpeg_28():
 ###############################################################################
 # Test TILEPARTS option
 
+
 def jp2openjpeg_29():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1422,6 +1455,7 @@ def jp2openjpeg_29():
 
 ###############################################################################
 # Test color table support
+
 
 def jp2openjpeg_30():
 
@@ -1524,6 +1558,7 @@ def jp2openjpeg_30():
 ###############################################################################
 # Test unusual band color interpretation order
 
+
 def jp2openjpeg_31():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1551,7 +1586,6 @@ def jp2openjpeg_31():
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_31.jp2')
-
 
     # With alpha now
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 4)
@@ -1586,6 +1620,7 @@ def jp2openjpeg_31():
 ###############################################################################
 # Test creation of "XLBoxes" for JP2C
 
+
 def jp2openjpeg_32():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1605,6 +1640,7 @@ def jp2openjpeg_32():
 
 ###############################################################################
 # Test crazy tile size
+
 
 def jp2openjpeg_33():
 
@@ -1630,6 +1666,7 @@ def jp2openjpeg_33():
 
 ###############################################################################
 # Test opening a file whose dimensions are > 2^31-1
+
 
 def jp2openjpeg_34():
 
@@ -1666,6 +1703,7 @@ def jp2openjpeg_35():
 ###############################################################################
 # Test we cannot create files with more than 16384 bands
 
+
 def jp2openjpeg_36():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1683,6 +1721,7 @@ def jp2openjpeg_36():
 
 ###############################################################################
 # Test metadata reading & writing
+
 
 def jp2openjpeg_37():
 
@@ -1814,6 +1853,7 @@ def jp2openjpeg_37():
 ###############################################################################
 # Test non-EPSG SRS (so written with a GML dictionary)
 
+
 def jp2openjpeg_38():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -1856,6 +1896,7 @@ def jp2openjpeg_38():
 
 ###############################################################################
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
+
 
 def jp2openjpeg_39():
 
@@ -1929,6 +1970,7 @@ def jp2openjpeg_39():
 
 ###############################################################################
 # Test we can parse GMLJP2 v2.0
+
 
 def jp2openjpeg_40():
 
@@ -2013,6 +2055,7 @@ def jp2openjpeg_40():
 ###############################################################################
 # Test USE_SRC_CODESTREAM=YES
 
+
 def jp2openjpeg_41():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -2061,6 +2104,7 @@ def jp2openjpeg_41():
 
 ###############################################################################
 # Test update of existing file
+
 
 def jp2openjpeg_42():
 
@@ -2274,6 +2318,7 @@ def jp2openjpeg_42():
 ###############################################################################
 # Get structure of a JPEG2000 file
 
+
 def jp2openjpeg_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
@@ -2284,6 +2329,7 @@ def jp2openjpeg_43():
 
 ###############################################################################
 # Check a file against a OrthoimageryCoverage document
+
 
 def jp2openjpeg_44():
 
@@ -2301,6 +2347,7 @@ def jp2openjpeg_44():
 
 ###############################################################################
 # Test GMLJP2v2
+
 
 def jp2openjpeg_45():
 
@@ -2500,7 +2547,6 @@ def jp2openjpeg_45():
     ds = None
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
 
-
     # Test most invalid cases
     import json
 
@@ -2583,7 +2629,6 @@ def jp2openjpeg_45():
     gdal.PopErrorHandler()
     del out_ds
     gdal.Unlink('/vsimem/jp2openjpeg_45.jp2')
-
 
     # Test most options: valid case
     gdal.FileFromMemBuffer("/vsimem/second_metadata.xml",
@@ -3092,6 +3137,7 @@ def jp2openjpeg_45():
 ###############################################################################
 # Test GMLJP2v2 metadata generator / XPath
 
+
 def jp2openjpeg_46():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3146,7 +3192,6 @@ yeah: """) < 0:
 
     gdal.Unlink('/vsimem/jp2openjpeg_46.jp2')
 
-
     for invalid_template in [
             '<gmljp2:metadata>{{{</gmljp2:metadata>',
             '<gmljp2:metadata>{{{}}}</gmljp2:metadata>',
@@ -3180,7 +3225,6 @@ yeah: """) < 0:
             print(invalid_template)
             print(gmljp2)
             return 'fail'
-
 
     # Nonexistent template.
     gdal.FileFromMemBuffer("/vsimem/source.xml","""<A/>""")
@@ -3263,6 +3307,7 @@ yeah: """) < 0:
 ###############################################################################
 # Test writing & reading RPC in GeoJP2 box
 
+
 def jp2openjpeg_47():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3288,6 +3333,7 @@ def jp2openjpeg_47():
 ###############################################################################
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
+
 def jp2openjpeg_48():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3307,6 +3353,8 @@ def jp2openjpeg_48():
     return 'success'
 
 ###############################################################################
+
+
 def jp2openjpeg_online_1():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3328,6 +3376,8 @@ def jp2openjpeg_online_1():
     return 'success'
 
 ###############################################################################
+
+
 def jp2openjpeg_online_2():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3358,6 +3408,8 @@ def jp2openjpeg_online_2():
     return 'success'
 
 ###############################################################################
+
+
 def jp2openjpeg_online_3():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3390,6 +3442,8 @@ def jp2openjpeg_online_3():
     return 'success'
 
 ###############################################################################
+
+
 def jp2openjpeg_online_4():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3424,6 +3478,7 @@ def jp2openjpeg_online_4():
 ###############################################################################
 # Try reading JP2OpenJPEG with color table
 
+
 def jp2openjpeg_online_5():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3448,6 +3503,7 @@ def jp2openjpeg_online_5():
 ###############################################################################
 # Try reading YCbCr JP2OpenJPEG as RGB
 
+
 def jp2openjpeg_online_6():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3471,6 +3527,7 @@ def jp2openjpeg_online_6():
 
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
+
 
 def jp2openjpeg_49():
 
@@ -3602,6 +3659,7 @@ def jp2openjpeg_49():
 ###############################################################################
 # Test opening an image of small dimension with very small tiles (#7012)
 
+
 def jp2openjpeg_50():
 
     if gdaltest.jp2openjpeg_drv is None:
@@ -3622,11 +3680,14 @@ def jp2openjpeg_50():
     return 'success'
 
 ###############################################################################
+
+
 def jp2openjpeg_cleanup():
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     jp2openjpeg_1,

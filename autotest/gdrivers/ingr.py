@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Read test of byte file.
 
+
 def ingr_1():
 
     tst = gdaltest.GDALTest( 'INGR', '8bit_rgb.cot', 2, 4855 )
@@ -49,6 +50,7 @@ def ingr_1():
 ###############################################################################
 # Read uint32 file.
 
+
 def ingr_2():
 
     tst = gdaltest.GDALTest( 'INGR', 'uint32.cot', 1, 4672 )
@@ -56,6 +58,7 @@ def ingr_2():
 
 ###############################################################################
 # Test paletted file, including checking the palette (format 02 I think).
+
 
 def ingr_3():
 
@@ -75,6 +78,7 @@ def ingr_3():
 ###############################################################################
 # frmt02 is a plain byte format
 
+
 def ingr_4():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
@@ -82,6 +86,7 @@ def ingr_4():
 
 ###############################################################################
 # Test creation.
+
 
 def ingr_5():
 
@@ -91,6 +96,7 @@ def ingr_5():
 ###############################################################################
 # Test createcopy.
 
+
 def ingr_6():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
@@ -98,6 +104,7 @@ def ingr_6():
 
 ###############################################################################
 # JPEG 8bit
+
 
 def ingr_7():
 
@@ -107,6 +114,7 @@ def ingr_7():
 ###############################################################################
 # Read simple RLE
 
+
 def ingr_8():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt09.cot', 1, 23035 )
@@ -114,6 +122,7 @@ def ingr_8():
 
 ###############################################################################
 # Read Simple RLE Variable
+
 
 def ingr_9():
 
@@ -123,6 +132,7 @@ def ingr_9():
 ###############################################################################
 # CCITT bitonal
 
+
 def ingr_10():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt24.cit', 1, 23035 )
@@ -130,6 +140,7 @@ def ingr_10():
 
 ###############################################################################
 # Adaptive RLE - 24 bit.
+
 
 def ingr_11():
 
@@ -139,6 +150,7 @@ def ingr_11():
 ###############################################################################
 # Uncompressed RGB
 
+
 def ingr_12():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt28.cot', 2, 45616 )
@@ -147,6 +159,7 @@ def ingr_12():
 ###############################################################################
 # Adaptive RLE 8bit.
 
+
 def ingr_13():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt29.cot', 1, 26968 )
@@ -154,6 +167,7 @@ def ingr_13():
 
 ###############################################################################
 # JPEG RGB
+
 
 def ingr_14():
 
@@ -170,6 +184,7 @@ def ingr_14():
 ###############################################################################
 # Same, but through vsimem all in memory.
 
+
 def ingr_15():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt02.cot', 1, 26968 )
@@ -185,6 +200,7 @@ def ingr_15():
 ###############################################################################
 # Read simple RLE tiled
 
+
 def ingr_16():
 
     tst = gdaltest.GDALTest( 'INGR', 'frmt09t.cot', 1, 3178 )
@@ -192,6 +208,7 @@ def ingr_16():
 
 ###############################################################################
 # Test writing 9 RLE bitonal compression (#5030)
+
 
 def ingr_17():
 
@@ -217,6 +234,7 @@ def ingr_17():
 
 ###############################################################################
 # Test 'random access' in simple RLE
+
 
 def ingr_18():
 
@@ -245,10 +263,12 @@ def ingr_18():
 
     return 'success'
 
+
 def ingr_cleanup():
 
     gdal.Unlink('data/frmt09.cot.aux.xml')
     return 'success'
+
 
 gdaltest_list = [
     ingr_1,

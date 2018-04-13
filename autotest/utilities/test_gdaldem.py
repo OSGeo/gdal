@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Test gdaldem hillshade
 
+
 def test_gdaldem_hillshade():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -87,6 +88,7 @@ def test_gdaldem_hillshade():
 ###############################################################################
 # Test gdaldem hillshade
 
+
 def test_gdaldem_hillshade_compressed_tiled_output():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -119,6 +121,7 @@ def test_gdaldem_hillshade_compressed_tiled_output():
 
 ###############################################################################
 # Test gdaldem hillshade -combined
+
 
 def test_gdaldem_hillshade_combined():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -161,6 +164,7 @@ def test_gdaldem_hillshade_combined():
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
+
 def test_gdaldem_hillshade_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -183,6 +187,7 @@ def test_gdaldem_hillshade_compute_edges():
 
 ###############################################################################
 # Test gdaldem hillshade with -az parameter
+
 
 def test_gdaldem_hillshade_azimuth():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -221,6 +226,7 @@ def test_gdaldem_hillshade_azimuth():
 ###############################################################################
 # Test gdaldem hillshade to PNG
 
+
 def test_gdaldem_hillshade_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -244,6 +250,7 @@ def test_gdaldem_hillshade_png():
 ###############################################################################
 # Test gdaldem hillshade to PNG with -compute_edges
 
+
 def test_gdaldem_hillshade_png_compute_edges():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -266,6 +273,7 @@ def test_gdaldem_hillshade_png_compute_edges():
 
 ###############################################################################
 # Test gdaldem slope
+
 
 def test_gdaldem_slope():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -306,6 +314,7 @@ def test_gdaldem_slope():
 ###############################################################################
 # Test gdaldem aspect
 
+
 def test_gdaldem_aspect():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -344,6 +353,7 @@ def test_gdaldem_aspect():
 
 ###############################################################################
 # Test gdaldem color relief
+
 
 def test_gdaldem_color_relief():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -436,6 +446,7 @@ def test_gdaldem_color_relief_cpt():
 ###############################################################################
 # Test gdaldem color relief to VRT
 
+
 def test_gdaldem_color_relief_vrt():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -472,6 +483,7 @@ def test_gdaldem_color_relief_vrt():
 ###############################################################################
 # Test gdaldem color relief from a Float32 dataset
 
+
 def test_gdaldem_color_relief_from_float32():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -506,6 +518,7 @@ def test_gdaldem_color_relief_from_float32():
 ###############################################################################
 # Test gdaldem color relief to PNG
 
+
 def test_gdaldem_color_relief_png():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -536,6 +549,7 @@ def test_gdaldem_color_relief_png():
 
 ###############################################################################
 # Test gdaldem color relief from a Float32 to PNG
+
 
 def test_gdaldem_color_relief_from_float32_to_png():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -570,6 +584,7 @@ def test_gdaldem_color_relief_from_float32_to_png():
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry
 
+
 def test_gdaldem_color_relief_nearest_color_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -601,6 +616,7 @@ def test_gdaldem_color_relief_nearest_color_entry():
 ###############################################################################
 # Test gdaldem color relief with -nearest_color_entry and -of VRT
 
+
 def test_gdaldem_color_relief_nearest_color_entry_vrt():
     if test_cli_utilities.get_gdaldem_path() is None:
         return 'skip'
@@ -631,6 +647,7 @@ def test_gdaldem_color_relief_nearest_color_entry_vrt():
 
 ###############################################################################
 # Test gdaldem color relief with a nan nodata
+
 
 def test_gdaldem_color_relief_nodata_nan():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -673,6 +690,7 @@ NODATA_value nan
 
 ###############################################################################
 # Test gdaldem color relief with entries with repeated DEM values in the color table (#6422)
+
 
 def test_gdaldem_color_relief_repeated_entry():
     if test_cli_utilities.get_gdaldem_path() is None:
@@ -733,6 +751,7 @@ NODATA_value 5
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdaldem_cleanup():
     try:
@@ -810,6 +829,7 @@ def test_gdaldem_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     test_gdaldem_hillshade,

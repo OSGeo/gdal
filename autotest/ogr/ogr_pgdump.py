@@ -42,6 +42,7 @@ from osgeo import gdal
 ###############################################################################
 # Create table from data/poly.shp
 
+
 def ogr_pgdump_1():
 
     try:
@@ -108,6 +109,7 @@ def ogr_pgdump_1():
 
 ###############################################################################
 # Create table from data/poly.shp with PG_USE_COPY=YES
+
 
 def ogr_pgdump_2():
 
@@ -268,6 +270,7 @@ def ogr_pgdump_3():
 ###############################################################################
 # Test multi-geometry support
 
+
 def ogr_pgdump_4():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('tmp/ogr_pgdump_4.sql', options = [ 'LINEFORMAT=LF' ] )
@@ -319,6 +322,7 @@ def ogr_pgdump_4():
 
 ###############################################################################
 # Test non nullable field support
+
 
 def ogr_pgdump_5():
 
@@ -380,6 +384,7 @@ def ogr_pgdump_5():
 
 ###############################################################################
 # Test default values
+
 
 def ogr_pgdump_6():
 
@@ -473,6 +478,7 @@ def ogr_pgdump_6():
 
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
+
 
 def ogr_pgdump_7():
 
@@ -583,6 +589,7 @@ def ogr_pgdump_7():
 
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
+
 
 def ogr_pgdump_8():
 
@@ -702,6 +709,7 @@ def ogr_pgdump_8():
 ###############################################################################
 # Test creating a field with the fid name (PG_USE_COPY=NO)
 
+
 def ogr_pgdump_9(pg_use_copy = 'YES'):
 
     gdal.SetConfigOption( 'PG_USE_COPY', pg_use_copy )
@@ -763,11 +771,13 @@ def ogr_pgdump_9(pg_use_copy = 'YES'):
 
     return 'success'
 
+
 def ogr_pgdump_10():
     return ogr_pgdump_9('NO')
 
 ###############################################################################
 # Export POINT EMPTY for PostGIS 2.2
+
 
 def ogr_pgdump_11():
 
@@ -799,6 +809,7 @@ def ogr_pgdump_11():
 # This is important for the ogr2ogr use case when the source geometry column
 # is not-nullable, and hence the CreateGeomField() interface is used.
 
+
 def ogr_pgdump_12():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_12.sql', options = [ 'LINEFORMAT=LF' ] )
@@ -820,6 +831,7 @@ def ogr_pgdump_12():
 
 ###############################################################################
 # Test ZM support
+
 
 def ogr_pgdump_13():
 
@@ -894,6 +906,7 @@ def ogr_pgdump_13():
 ###############################################################################
 # Test description
 
+
 def ogr_pgdump_14():
 
     # Set with DESCRIPTION layer creation option
@@ -952,6 +965,7 @@ def ogr_pgdump_14():
 ###############################################################################
 # NULL vs unset
 
+
 def ogr_pgdump_15():
 
     ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_15.sql', options = [ 'LINEFORMAT=LF' ] )
@@ -980,6 +994,7 @@ def ogr_pgdump_15():
 
 ###############################################################################
 # Test sequence updating
+
 
 def ogr_pgdump_16():
 
@@ -1012,6 +1027,7 @@ def ogr_pgdump_16():
 ###############################################################################
 # Cleanup
 
+
 def ogr_pgdump_cleanup():
 
     try:
@@ -1023,6 +1039,7 @@ def ogr_pgdump_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     ogr_pgdump_1,

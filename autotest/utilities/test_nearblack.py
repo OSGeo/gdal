@@ -42,6 +42,7 @@ import test_cli_utilities
 ###############################################################################
 # Basic test
 
+
 def test_nearblack_1():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
@@ -92,6 +93,7 @@ def test_nearblack_1():
 ###############################################################################
 # Add alpha band
 
+
 def test_nearblack_2():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
@@ -113,6 +115,7 @@ def test_nearblack_2():
 
 ###############################################################################
 # Set existing alpha band
+
 
 def test_nearblack_3():
     if test_cli_utilities.get_nearblack_path() is None:
@@ -136,6 +139,7 @@ def test_nearblack_3():
 
 ###############################################################################
 # Test -white
+
 
 def test_nearblack_4():
     if test_cli_utilities.get_nearblack_path() is None:
@@ -162,6 +166,7 @@ def test_nearblack_4():
 ###############################################################################
 # Add mask band
 
+
 def test_nearblack_5():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
@@ -183,6 +188,7 @@ def test_nearblack_5():
 
 ###############################################################################
 # Set existing mask band
+
 
 def test_nearblack_6():
     if test_cli_utilities.get_nearblack_path() is None:
@@ -209,6 +215,7 @@ def test_nearblack_6():
 ###############################################################################
 # Test -color
 
+
 def test_nearblack_7():
     if test_cli_utilities.get_nearblack_path() is None:
         return 'skip'
@@ -234,6 +241,7 @@ def test_nearblack_7():
 
 ###############################################################################
 # Test in-place update
+
 
 def test_nearblack_8():
     if test_cli_utilities.get_nearblack_path() is None:
@@ -272,6 +280,7 @@ def test_nearblack_8():
 
 ###############################################################################
 # Cleanup
+
 
 def test_nearblack_cleanup():
     try:
@@ -319,6 +328,7 @@ def test_nearblack_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     test_nearblack_1,

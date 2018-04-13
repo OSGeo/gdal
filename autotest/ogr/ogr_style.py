@@ -40,6 +40,8 @@ from osgeo import gdal
 ###############################################################################
 #
 #
+
+
 def ogr_style_styletable():
 
     style_table = ogr.StyleTable()
@@ -138,6 +140,7 @@ def ogr_style_styletable():
 
 ###############################################################################
 # Build tests runner
+
 
 gdaltest_list = [
     ogr_style_styletable ]

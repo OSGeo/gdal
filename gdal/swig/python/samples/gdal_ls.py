@@ -34,15 +34,19 @@ import sys
 
 from osgeo import gdal
 
+
 def needsVSICurl(filename):
     return filename.startswith('http://') or filename.startswith('https://') or filename.startswith('ftp://')
+
 
 def iszip(filename):
     return filename.endswith('.zip') or filename.endswith('.ZIP')
 
+
 def istgz(filename):
     return filename.endswith('.tgz') or filename.endswith('.TGZ') or \
            filename.endswith('.tar.gz') or filename.endswith('.TAR.GZ')
+
 
 def display_file(fout, dirname, prefix, filename, longformat, check_open = False):
 
@@ -92,6 +96,7 @@ def display_file(fout, dirname, prefix, filename, longformat, check_open = False
     except:
         fout.write(line)
 
+
 def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, first = False):
 
     if depth <= 0:
@@ -137,6 +142,7 @@ def readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, rec
                 readDir(fout, dirname + '/' + filename, new_prefix, \
                         longformat, recurse, depth - 1, recurseInZip, recurseInTGZ)
 
+
 def Usage():
     print('Usage: gdal_ls [-l] [-r] [-depth d] [-Rzip] [-Rtgz] name_of_virtual_directory')
     print('')
@@ -149,6 +155,7 @@ def Usage():
     print(' -Rzip : list content of .zip archives')
     print(' -Rtgz : list content of .tar.gz/.tgz archives (potentially slow on /vsicurl/)')
     return -1
+
 
 def gdal_ls(argv, fout = sys.stdout):
     longformat = False
@@ -214,6 +221,7 @@ def gdal_ls(argv, fout = sys.stdout):
         prefix = dirname + '/'
     readDir(fout, dirname, prefix, longformat, recurse, depth, recurseInZip, recurseInTGZ, True)
     return 0
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

@@ -45,6 +45,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+
 def jp2lura_1():
 
     try:
@@ -73,6 +74,7 @@ def jp2lura_1():
 ###############################################################################
 #
 
+
 def jp2lura_missing_license_num():
 
     if gdaltest.jp2lura_drv is None:
@@ -95,6 +97,7 @@ def jp2lura_missing_license_num():
 ###############################################################################
 #
 
+
 def jp2lura_invalid_license_num():
 
     if gdaltest.jp2lura_drv is None:
@@ -115,6 +118,8 @@ def jp2lura_invalid_license_num():
     return 'success'
 
 ###############################################################################
+
+
 def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc = None, inspire_tg = True):
 
     try:
@@ -149,6 +154,7 @@ def validate(filename, expected_gmljp2 = True, return_error_count = False, oidoc
 ###############################################################################
 # Open byte.jp2
 
+
 def jp2lura_2():
 
     if gdaltest.jp2lura_drv is None:
@@ -181,6 +187,7 @@ def jp2lura_2():
 ###############################################################################
 # Open int16.jp2
 
+
 def jp2lura_3():
 
     if gdaltest.jp2lura_drv is None:
@@ -210,6 +217,7 @@ def jp2lura_3():
 
 ###############################################################################
 # Test copying byte.jp2
+
 
 def jp2lura_4(out_filename = 'tmp/jp2lura_4.jp2'):
 
@@ -291,6 +299,7 @@ def jp2lura_4_vsimem():
 ###############################################################################
 # Test copying int16.jp2
 
+
 def jp2lura_5():
 
     if gdaltest.jp2lura_drv is None:
@@ -301,6 +310,7 @@ def jp2lura_5():
 
 ###############################################################################
 # Test reading ll.jp2
+
 
 def jp2lura_6():
 
@@ -321,6 +331,7 @@ def jp2lura_6():
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
 
+
 def jp2lura_7():
 
     if gdaltest.jp2lura_drv is None:
@@ -331,6 +342,7 @@ def jp2lura_7():
 
 ###############################################################################
 # Test a JP2Lura with the 3 bands having 13bit depth and the 4th one 1 bit
+
 
 def jp2lura_8():
 
@@ -354,6 +366,7 @@ def jp2lura_8():
 
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
+
 
 def jp2lura_9():
 
@@ -379,6 +392,7 @@ def jp2lura_9():
 
 ###############################################################################
 # Test YCBCR420 creation option
+
 
 def DISABLED_jp2lura_10():
 
@@ -410,6 +424,7 @@ def DISABLED_jp2lura_10():
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
+
 
 def DISABLED_jp2lura_11():
 
@@ -462,6 +477,7 @@ def DISABLED_jp2lura_11():
 ###############################################################################
 # Check that PAM overrides internal georeferencing (#5279)
 
+
 def jp2lura_12():
 
     if gdaltest.jp2lura_drv is None:
@@ -509,6 +525,7 @@ def jp2lura_12():
 
 ###############################################################################
 # Check that PAM overrides internal GCPs (#5279)
+
 
 def jp2lura_13():
 
@@ -573,6 +590,7 @@ def jp2lura_13():
 ###############################################################################
 # Check that we get GCPs even there's no projection info
 
+
 def jp2lura_14():
 
     if gdaltest.jp2lura_drv is None:
@@ -587,6 +605,7 @@ def jp2lura_14():
 
 ###############################################################################
 # Test reading PixelIsPoint file (#5437)
+
 
 def jp2lura_16():
 
@@ -627,6 +646,7 @@ def jp2lura_16():
 ###############################################################################
 # Test writing PixelIsPoint file (#5437)
 
+
 def jp2lura_17():
 
     if gdaltest.jp2lura_drv is None:
@@ -663,6 +683,7 @@ def jp2lura_17():
 # Test when using the decode_area API when one dimension of the dataset is not a
 # multiple of 1024 (#5480)
 
+
 def jp2lura_18():
 
     if gdaltest.jp2lura_drv is None:
@@ -687,6 +708,7 @@ def jp2lura_18():
 ###############################################################################
 # Test reading file where GMLJP2 has nul character instead of \n (#5760)
 
+
 def jp2lura_19():
 
     if gdaltest.jp2lura_drv is None:
@@ -702,6 +724,7 @@ def jp2lura_19():
 
 ###############################################################################
 # Validate GMLJP2 content against schema
+
 
 def jp2lura_20():
 
@@ -738,7 +761,6 @@ def jp2lura_20():
     except:
         gdaltest.unzip( 'tmp/cache/SCHEMAS_OPENGIS_NET', 'tmp/cache/SCHEMAS_OPENGIS_NET.zip')
 
-
     try:
         os.stat('tmp/cache/SCHEMAS_OPENGIS_NET/xlink.xsd')
     except:
@@ -774,6 +796,7 @@ def jp2lura_20():
 
 ###############################################################################
 # Test RGBA support
+
 
 def jp2lura_22():
 
@@ -939,11 +962,11 @@ def jp2lura_22():
             gdaltest.post_reason('Image too different from reference')
             return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test NBITS support
+
 
 def DISABLED_jp2lura_23():
 
@@ -973,7 +996,6 @@ def DISABLED_jp2lura_23():
     gdal.Unlink('/vsimem/jp2lura_23.jp2')
     gdal.Unlink('/vsimem/jp2lura_23_2.jp2')
 
-
     if maxdiff > 1:
         gdaltest.post_reason('Image too different from reference')
         return 'fail'
@@ -982,6 +1004,7 @@ def DISABLED_jp2lura_23():
 
 ###############################################################################
 # Test Grey+alpha support
+
 
 def jp2lura_24():
 
@@ -1053,6 +1076,7 @@ def jp2lura_24():
 ###############################################################################
 # Test multiband support
 
+
 def jp2lura_25():
 
     if gdaltest.jp2lura_drv is None:
@@ -1089,6 +1113,7 @@ def jp2lura_25():
 ###############################################################################
 # Test CreateCopy() from a JPEG2000 with a 2048x2048 tiling
 
+
 def jp2lura_27():
 
     if gdaltest.jp2lura_drv is None:
@@ -1112,9 +1137,11 @@ def jp2lura_27():
 ###############################################################################
 # Test CODEBLOCK_WIDTH/_HEIGHT
 
+
 XML_TYPE_IDX = 0
 XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
+
 
 def find_xml_node(ar, element_name, only_attributes = False):
     #type = ar[XML_TYPE_IDX]
@@ -1130,6 +1157,7 @@ def find_xml_node(ar, element_name, only_attributes = False):
             return found
     return None
 
+
 def get_attribute_val(ar, attr_name):
     node = find_xml_node(ar, attr_name, True)
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
@@ -1138,6 +1166,7 @@ def get_attribute_val(ar, attr_name):
         node[XML_FIRST_CHILD_IDX][XML_TYPE_IDX] == gdal.CXT_Text:
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
+
 
 def find_element_with_name(ar, element_name, name):
     type = ar[XML_TYPE_IDX]
@@ -1151,6 +1180,7 @@ def find_element_with_name(ar, element_name, name):
             return found
     return None
 
+
 def get_element_val(node):
     if node is None:
         return None
@@ -1160,6 +1190,7 @@ def get_element_val(node):
             return child[XML_VALUE_IDX]
     return None
 
+
 def jp2lura_test_codeblock(filename, codeblock_width, codeblock_height):
     node = gdal.GetJPEG2000Structure(filename, ['ALL=YES'])
     xcb = 2**(2+int(get_element_val(find_element_with_name(node, "Field", "SPcod_xcb_minus_2"))))
@@ -1167,6 +1198,7 @@ def jp2lura_test_codeblock(filename, codeblock_width, codeblock_height):
     if xcb != codeblock_width or ycb != codeblock_height:
         return False
     return True
+
 
 def jp2lura_28():
 
@@ -1206,6 +1238,7 @@ def jp2lura_28():
 ###############################################################################
 # Test color table support
 
+
 def jp2lura_30():
 
     if gdaltest.jp2lura_drv is None:
@@ -1230,6 +1263,7 @@ def jp2lura_30():
 
 ###############################################################################
 # Test unusual band color interpretation order
+
 
 def DISABLED_jp2lura_31():
 
@@ -1258,7 +1292,6 @@ def DISABLED_jp2lura_31():
         return 'fail'
     ds = None
     gdal.Unlink('/vsimem/jp2lura_31.jp2')
-
 
     # With alpha now
     src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 4)
@@ -1293,6 +1326,7 @@ def DISABLED_jp2lura_31():
 ###############################################################################
 # Test crazy tile size
 
+
 def DISABLED_jp2lura_33():
 
     if gdaltest.jp2lura_drv is None:
@@ -1315,6 +1349,7 @@ def DISABLED_jp2lura_33():
 
 ###############################################################################
 # Test opening a file whose dimensions are > 2^31-1
+
 
 def jp2lura_34():
 
@@ -1351,6 +1386,7 @@ def jp2lura_35():
 ###############################################################################
 # Test we cannot create files with more than 16384 bands
 
+
 def jp2lura_36():
 
     if gdaltest.jp2lura_drv is None:
@@ -1368,6 +1404,7 @@ def jp2lura_36():
 
 ###############################################################################
 # Test metadata reading & writing
+
 
 def jp2lura_37():
 
@@ -1488,6 +1525,7 @@ def jp2lura_37():
 ###############################################################################
 # Test non-EPSG SRS (so written with a GML dictionary)
 
+
 def jp2lura_38():
 
     if gdaltest.jp2lura_drv is None:
@@ -1529,6 +1567,7 @@ def jp2lura_38():
 
 ###############################################################################
 # Test GMLJP2OVERRIDE configuration option and DGIWG GMLJP2
+
 
 def jp2lura_39():
 
@@ -1602,6 +1641,7 @@ def jp2lura_39():
 
 ###############################################################################
 # Test we can parse GMLJP2 v2.0
+
 
 def jp2lura_40():
 
@@ -1686,6 +1726,7 @@ def jp2lura_40():
 ###############################################################################
 # Test USE_SRC_CODESTREAM=YES
 
+
 def jp2lura_41():
 
     if gdaltest.jp2lura_drv is None:
@@ -1735,6 +1776,7 @@ def jp2lura_41():
 ###############################################################################
 # Get structure of a JPEG2000 file
 
+
 def jp2lura_43():
 
     ret = gdal.GetJPEG2000StructureAsString('data/byte.jp2', ['ALL=YES'])
@@ -1745,6 +1787,7 @@ def jp2lura_43():
 
 ###############################################################################
 # Test GMLJP2v2
+
 
 def jp2lura_45():
 
@@ -1838,6 +1881,7 @@ def jp2lura_45():
 ###############################################################################
 # Test writing & reading RPC in GeoJP2 box
 
+
 def jp2lura_47():
 
     if gdaltest.jp2lura_drv is None:
@@ -1863,6 +1907,7 @@ def jp2lura_47():
 ###############################################################################
 # Test reading a dataset whose tile dimensions are larger than dataset ones
 
+
 def jp2lura_48():
 
     if gdaltest.jp2lura_drv is None:
@@ -1882,6 +1927,8 @@ def jp2lura_48():
     return 'success'
 
 ###############################################################################
+
+
 def jp2lura_online_1():
 
     if gdaltest.jp2lura_drv is None:
@@ -1903,6 +1950,8 @@ def jp2lura_online_1():
     return 'success'
 
 ###############################################################################
+
+
 def jp2lura_online_2():
 
     if gdaltest.jp2lura_drv is None:
@@ -1933,6 +1982,8 @@ def jp2lura_online_2():
     return 'success'
 
 ###############################################################################
+
+
 def jp2lura_online_3():
 
     if gdaltest.jp2lura_drv is None:
@@ -1965,6 +2016,8 @@ def jp2lura_online_3():
     return 'success'
 
 ###############################################################################
+
+
 def jp2lura_online_4():
 
     if gdaltest.jp2lura_drv is None:
@@ -1999,6 +2052,7 @@ def jp2lura_online_4():
 ###############################################################################
 # Try reading JP2Lura with color table
 
+
 def jp2lura_online_5():
 
     if gdaltest.jp2lura_drv is None:
@@ -2022,6 +2076,7 @@ def jp2lura_online_5():
 
 ###############################################################################
 # Try reading YCbCr JP2Lura as RGB
+
 
 def jp2lura_online_6():
 
@@ -2047,6 +2102,7 @@ def jp2lura_online_6():
 
 ###############################################################################
 # Test GDAL_GEOREF_SOURCES
+
 
 def jp2lura_49():
 
@@ -2192,6 +2248,7 @@ def jp2lura_50():
 ###############################################################################
 # Test split IEEE-754 Float32
 
+
 def jp2lura_51():
 
     if gdaltest.jp2lura_drv is None:
@@ -2256,7 +2313,6 @@ def jp2lura_51():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_51.jp2')
 
-
     # Test reversible
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_51.jp2', src_ds,
                                          options = ['SPLIT_IEEE754=YES', 'REVERSIBLE=YES'])
@@ -2273,6 +2329,7 @@ def jp2lura_51():
 
 ###############################################################################
 # Test other data types
+
 
 def jp2lura_52():
 
@@ -2314,6 +2371,7 @@ def jp2lura_52():
 ###############################################################################
 # Test RATE and QUALITY
 
+
 def jp2lura_53():
 
     if gdaltest.jp2lura_drv is None:
@@ -2331,7 +2389,6 @@ def jp2lura_53():
         return 'fail'
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
-
 
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_53.jp2', src_ds,
                                          options = [ 'QUALITY=100' ] )
@@ -2356,7 +2413,6 @@ def jp2lura_53():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
-
     # QUALITY ignored
     ds = gdaltest.jp2lura_drv.CreateCopy('/vsimem/jp2lura_53.jp2', src_ds,
                                          options = [ 'REVERSIBLE=YES', 'QUALITY=100' ] )
@@ -2369,11 +2425,11 @@ def jp2lura_53():
 
     gdaltest.jp2lura_drv.Delete('/vsimem/jp2lura_53.jp2')
 
-
     return 'success'
 
 ###############################################################################
 # Test RasterIO edge cases
+
 
 def jp2lura_54():
 
@@ -2417,6 +2473,7 @@ def jp2lura_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     jp2lura_1,

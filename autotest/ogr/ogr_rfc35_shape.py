@@ -39,6 +39,8 @@ from osgeo import gdal
 
 ###############################################################################
 #
+
+
 def CheckFileSize(src_filename):
 
     import test_py_scripts
@@ -59,6 +61,7 @@ def CheckFileSize(src_filename):
 
 ###############################################################################
 # Initiate the test file
+
 
 def ogr_rfc35_shape_1():
 
@@ -106,11 +109,13 @@ def ogr_rfc35_shape_1():
 ###############################################################################
 # Test ReorderField()
 
+
 def Truncate(val, lyr_defn, fieldname):
     if val is None:
         return val
 
     return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
+
 
 def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'):
 
@@ -138,6 +143,7 @@ def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'
 
     return 'success'
 
+
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
@@ -146,6 +152,7 @@ def CheckColumnOrder(lyr, expected_order):
             return 'fail'
 
     return 'success'
+
 
 def Check(lyr, expected_order):
 
@@ -169,6 +176,7 @@ def Check(lyr, expected_order):
         return ret
 
     return 'success'
+
 
 def ogr_rfc35_shape_2():
 
@@ -251,6 +259,7 @@ def ogr_rfc35_shape_2():
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
+
 def ogr_rfc35_shape_3():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
@@ -306,6 +315,7 @@ def ogr_rfc35_shape_3():
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
+
 
 def ogr_rfc35_shape_4():
 
@@ -465,6 +475,7 @@ def ogr_rfc35_shape_4():
 ###############################################################################
 # Test DeleteField()
 
+
 def ogr_rfc35_shape_5():
 
     ds = ogr.Open('/vsimem/rfc35_test.dbf', update = 1)
@@ -543,11 +554,13 @@ def ogr_rfc35_shape_5():
 ###############################################################################
 # Initiate the test file
 
+
 def ogr_rfc35_shape_cleanup():
 
     ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/rfc35_test.dbf')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_rfc35_shape_1,

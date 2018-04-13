@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/022gdeme
 
+
 def usgsdem_1():
 
     tst = gdaltest.GDALTest( 'USGSDEM', '022gdeme_truncated', 1, 1583 )
@@ -50,6 +51,7 @@ def usgsdem_1():
 
 ###############################################################################
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/114p01_0100_deme.dem
+
 
 def usgsdem_2():
 
@@ -62,6 +64,7 @@ def usgsdem_2():
 ###############################################################################
 # Test truncated version of file that triggered bug #2348
 
+
 def usgsdem_3():
 
     tst = gdaltest.GDALTest( 'USGSDEM', '39079G6_truncated.dem', 1, 61424 )
@@ -73,6 +76,7 @@ def usgsdem_3():
 
 ###############################################################################
 # Test CreateCopy()
+
 
 def usgsdem_4():
 
@@ -122,6 +126,7 @@ def usgsdem_5():
 # Test CreateCopy() without a few creation options. Then create a new copy with TEMPLATE
 # creation option and check that both files are binary identical.
 
+
 def usgsdem_6():
 
     ds = gdal.Open('data/n43.dt0')
@@ -155,6 +160,7 @@ def usgsdem_6():
 
 ###############################################################################
 # Test CreateCopy() with CDED50K profile
+
 
 def usgsdem_7():
 
@@ -196,6 +202,7 @@ def usgsdem_7():
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/39109h1.dem
 # Undocumented format
 
+
 def usgsdem_8():
 
     tst = gdaltest.GDALTest( 'USGSDEM', '39109h1_truncated.dem', 1, 39443 )
@@ -209,6 +216,7 @@ def usgsdem_8():
 # Test truncated version of http://download.osgeo.org/gdal/data/usgsdem/various.zip/4619old.dem
 # Old format
 
+
 def usgsdem_9():
 
     tst = gdaltest.GDALTest( 'USGSDEM', '4619old_truncated.dem', 1, 10659 )
@@ -219,6 +227,7 @@ def usgsdem_9():
 
 ###############################################################################
 # Cleanup
+
 
 def usgsdem_cleanup():
 

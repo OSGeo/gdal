@@ -40,6 +40,7 @@ from osgeo import osr
 # Check that EPSG:27572 lookup has the prime meridian properly set,
 # and the central meridian.
 
+
 def osr_pm_1():
 
     srs = osr.SpatialReference()
@@ -58,6 +59,7 @@ def osr_pm_1():
 ###############################################################################
 # Check that EPSG:27572 lookup has the prime meridian properly set,
 # and the central meridian in the PROJ.4 string.
+
 
 def osr_pm_2():
 
@@ -80,6 +82,7 @@ def osr_pm_2():
 ###############################################################################
 # Convert PROJ.4 format to WKT and verify that PM and central meridian
 # are properly preserved.
+
 
 def osr_pm_3():
 

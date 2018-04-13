@@ -43,6 +43,7 @@ from osgeo import ogr
 # Open file, check number of layers, get first layer,
 # check number of fields and features
 
+
 def ogr_vfk_1():
 
     try:
@@ -92,6 +93,7 @@ def ogr_vfk_1():
 ###############################################################################
 # Read the first feature from layer 'PAR', check envelope
 
+
 def ogr_vfk_2():
 
     if gdaltest.vfk_drv is None:
@@ -123,6 +125,7 @@ def ogr_vfk_2():
 ###############################################################################
 # Read features from layer 'SOBR', test attribute query
 
+
 def ogr_vfk_3():
 
     if gdaltest.vfk_drv is None:
@@ -153,6 +156,7 @@ def ogr_vfk_3():
 ###############################################################################
 # Read features from layer 'SBP', test random access, check length
 
+
 def ogr_vfk_4():
 
     if gdaltest.vfk_drv is None:
@@ -176,6 +180,7 @@ def ogr_vfk_4():
 ###############################################################################
 # Read features from layer 'HP', check geometry type
 
+
 def ogr_vfk_5():
 
     if gdaltest.vfk_drv is None:
@@ -197,6 +202,7 @@ def ogr_vfk_5():
 
 ###############################################################################
 # Re-Open file (test .db persistence)
+
 
 def ogr_vfk_6():
 
@@ -240,6 +246,7 @@ def ogr_vfk_6():
 ###############################################################################
 # Read PAR layer, check data types (Integer64 new in GDAL 2.2)
 
+
 def ogr_vfk_7():
 
     if gdaltest.vfk_drv is None:
@@ -260,6 +267,7 @@ def ogr_vfk_7():
 
 ###############################################################################
 # Open DB file as datasource (new in GDAL 2.2)
+
 
 def ogr_vfk_8():
 
@@ -288,6 +296,7 @@ def ogr_vfk_8():
 ###############################################################################
 # Open datasource with SUPPRESS_GEOMETRY open option (new in GDAL 2.3)
 
+
 def ogr_vfk_9():
 
     if gdaltest.vfk_drv is None:
@@ -314,6 +323,7 @@ def ogr_vfk_9():
 ###############################################################################
 # cleanup
 
+
 def ogr_vfk_cleanup():
 
     if gdaltest.vfk_drv is None:
@@ -333,6 +343,7 @@ def ogr_vfk_cleanup():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     ogr_vfk_1,

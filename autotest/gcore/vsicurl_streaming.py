@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 #
 
+
 def vsicurl_streaming_1():
     try:
         drv = gdal.GetDriverByName( 'HTTP' )
@@ -140,6 +141,7 @@ def vsicurl_streaming_1():
     gdal.VSIFCloseL(fp)
 
     return 'success'
+
 
 gdaltest_list = [ vsicurl_streaming_1 ]
 

@@ -118,6 +118,7 @@ def test_gdalbuildvrt_1():
 ###############################################################################
 # Test with tile index
 
+
 def test_gdalbuildvrt_2():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -149,6 +150,7 @@ def test_gdalbuildvrt_2():
 
 ###############################################################################
 # Test with file list
+
 
 def test_gdalbuildvrt_3():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -183,6 +185,7 @@ def test_gdalbuildvrt_4():
 ###############################################################################
 # Try adding a raster with different band count
 
+
 def test_gdalbuildvrt_5():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -203,6 +206,7 @@ def test_gdalbuildvrt_5():
 
 ###############################################################################
 # Test -separate option
+
 
 def test_gdalbuildvrt_6():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -238,6 +242,7 @@ def test_gdalbuildvrt_6():
 
 ###############################################################################
 # Test source rasters with nodata
+
 
 def test_gdalbuildvrt_7():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -301,6 +306,7 @@ def test_gdalbuildvrt_7():
 ###############################################################################
 # Test -tr option
 
+
 def test_gdalbuildvrt_8():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -327,6 +333,7 @@ def test_gdalbuildvrt_8():
 ###############################################################################
 # Test -te option
 
+
 def test_gdalbuildvrt_9():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -352,6 +359,7 @@ def test_gdalbuildvrt_9():
 
 ###############################################################################
 # Test explicit nodata setting (#3254)
+
 
 def test_gdalbuildvrt_10():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -391,6 +399,7 @@ def test_gdalbuildvrt_10():
 ###############################################################################
 # Test that we can stack ungeoreference single band images with -separate (#3432)
 
+
 def test_gdalbuildvrt_11():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -428,6 +437,7 @@ def test_gdalbuildvrt_11():
 ###############################################################################
 # Test -tap option
 
+
 def test_gdalbuildvrt_12():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -458,6 +468,7 @@ def test_gdalbuildvrt_12():
 ###############################################################################
 # Test -a_srs
 
+
 def test_gdalbuildvrt_13():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -473,6 +484,7 @@ def test_gdalbuildvrt_13():
 
 ###############################################################################
 # Test -r
+
 
 def test_gdalbuildvrt_14():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -502,6 +514,7 @@ def test_gdalbuildvrt_14():
 ###############################################################################
 # Test -b
 
+
 def test_gdalbuildvrt_15():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
         return 'skip'
@@ -521,6 +534,7 @@ def test_gdalbuildvrt_15():
 
 ###############################################################################
 # Test output to non writable file
+
 
 def test_gdalbuildvrt_16():
     if test_cli_utilities.get_gdalbuildvrt_path() is None:
@@ -546,6 +560,7 @@ def test_gdalbuildvrt_16():
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdalbuildvrt_cleanup():
 

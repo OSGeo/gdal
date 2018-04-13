@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Try opening a file with a Chinese name using the Python UTF-8 string.
 
+
 def rfc30_1():
 
     if version_info >= (3,0,0):
@@ -74,6 +75,7 @@ def rfc30_1():
 
 ###############################################################################
 # Try creating, then renaming a utf-8 named file.
+
 
 def rfc30_2():
 

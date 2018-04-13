@@ -45,6 +45,7 @@ import gdaltest
 ###############################################################################
 # Verify real part extraction from a complex dataset.
 
+
 def pixfun_real_c():
 
     if not numpy_available:

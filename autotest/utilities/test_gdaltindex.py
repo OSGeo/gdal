@@ -43,6 +43,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_gdaltindex_1():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
@@ -129,6 +130,7 @@ def test_gdaltindex_1():
 ###############################################################################
 # Try adding the same rasters again
 
+
 def test_gdaltindex_2():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
@@ -186,6 +188,7 @@ def test_gdaltindex_3():
 # Try adding a raster in another projection with -t_srs
 # 5th tile should be inserted, will not be if there is a srs transformation error
 
+
 def test_gdaltindex_4():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
@@ -210,6 +213,7 @@ def test_gdaltindex_4():
 
 ###############################################################################
 # Test -src_srs_name, -src_srs_format options
+
 
 def test_gdaltindex_5():
     if test_cli_utilities.get_gdaltindex_path() is None:
@@ -259,6 +263,7 @@ def test_gdaltindex_5():
 ###############################################################################
 # Test -f, -lyr_name
 
+
 def test_gdaltindex_6():
     if test_cli_utilities.get_gdaltindex_path() is None:
         return 'skip'
@@ -279,6 +284,7 @@ def test_gdaltindex_6():
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdaltindex_cleanup():
 

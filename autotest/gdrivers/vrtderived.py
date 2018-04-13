@@ -39,6 +39,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+
 def _xmlsearch(root, nodetype, name):
     for node in root[2:]:
         if node[0] == nodetype and node[1] == name:
@@ -48,6 +49,7 @@ def _xmlsearch(root, nodetype, name):
 
 ###############################################################################
 # Verify raster band subClass
+
 
 def vrtderived_1():
     filename = 'tmp/derived.vrt'
@@ -98,6 +100,7 @@ def vrtderived_1():
 ###############################################################################
 # Verify derived raster band pixel function type
 
+
 def vrtderived_2():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
@@ -145,6 +148,7 @@ def vrtderived_2():
 ###############################################################################
 # Verify derived raster band transfer type
 
+
 def vrtderived_3():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
@@ -183,6 +187,7 @@ def vrtderived_3():
 ###############################################################################
 # Check handling of invalid derived raster band transfer type
 
+
 def vrtderived_4():
     filename = 'tmp/derived.vrt'
     vrt_ds = gdal.GetDriverByName('VRT').Create(filename, 50, 50, 0)
@@ -203,6 +208,7 @@ def vrtderived_4():
 
 ###############################################################################
 # Check Python derived function with BufferRadius=1
+
 
 def vrtderived_5():
 
@@ -226,6 +232,7 @@ def vrtderived_5():
 ###############################################################################
 # Check Python derived function with BufferRadius=0 and no source
 
+
 def vrtderived_6():
 
     try:
@@ -247,6 +254,7 @@ def vrtderived_6():
 
 ###############################################################################
 # Check Python derived function with no started Python interpreter
+
 
 def vrtderived_7():
 
@@ -317,6 +325,7 @@ def vrtderived_7():
 ###############################################################################
 # Check that GDAL_VRT_ENABLE_PYTHON=NO or undefined is honored
 
+
 def vrtderived_8():
 
     try:
@@ -347,6 +356,7 @@ def vrtderived_8():
 
 ###############################################################################
 # Check various failure modes with Python functions
+
 
 def vrtderived_9():
 
@@ -596,6 +606,7 @@ uncallable_object = True
 
     return 'success'
 
+
 def vrtderived_code_that_only_makes_sense_with_GDAL_VRT_ENABLE_PYTHON_equal_IF_SAFE_but_that_is_now_disabled():
 
     # untrusted import
@@ -640,7 +651,6 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
         print(gdal.GetLastErrorMsg())
         return 'fail'
 
-
     # GDAL_VRT_ENABLE_PYTHON not set to YES
     ds = gdal.Open("""<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -662,8 +672,10 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
 ###############################################################################
 # Check Python function in another module
 
+
 def one_pix_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize, r, gt, **kwargs):
     out_ar.fill(1)
+
 
 def vrtderived_10():
 
@@ -740,6 +752,7 @@ def vrtderived_10():
 ###############################################################################
 # Test serializing with python code
 
+
 def vrtderived_11():
 
     try:
@@ -771,6 +784,7 @@ def vrtderived_11():
 
 ###############################################################################
 # Test all data types with python code
+
 
 def vrtderived_12():
 
@@ -829,11 +843,11 @@ def vrtderived_12():
             print(gdal.GetLastErrorMsg())
             return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test translating a Python derived VRT
+
 
 def vrtderived_13():
 
@@ -861,6 +875,7 @@ def vrtderived_13():
 ###############################################################################
 # Test statistics functions
 
+
 def vrtderived_14():
 
     try:
@@ -881,7 +896,6 @@ def vrtderived_14():
         print(my_min, my_max)
         return 'fail'
 
-
     if (my_min2, my_max2, mean, stddev) != (1.0, 1.0, 1.0, 0.0):
         gdaltest.post_reason( 'invalid ComputeStatistics' )
         print(my_min2, my_max2, mean, stddev)
@@ -900,6 +914,7 @@ def vrtderived_14():
 ###############################################################################
 # Test threading
 
+
 def vrtderived_15_worker(args_dict):
 
     content = """<VRTDataset rasterXSize="2000" rasterYSize="2000">
@@ -917,6 +932,7 @@ def vrtderived_15_worker(args_dict):
             print(cs)
             args_dict['ret'] = False
         ds.FlushCache()
+
 
 def vrtderived_15():
 
@@ -957,6 +973,7 @@ def vrtderived_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     vrtderived_1,

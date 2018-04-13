@@ -116,6 +116,7 @@ def png_copy_icc():
 
     return 'success'
 
+
 def cvtTuple2String(a):
     s = ''
     for i in range(0, len(a)):
@@ -127,6 +128,7 @@ def cvtTuple2String(a):
 
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
+
 
 def png_copy_options_icc():
 
@@ -169,6 +171,7 @@ def png_copy_options_icc():
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data from options
+
 
 def png_copy_options_colorimetric_data():
     # sRGB values
@@ -248,6 +251,7 @@ def png_copy_options_colorimetric_data():
 
 ###############################################################################
 # Test writing and reading of ICC colorimetric data in the file
+
 
 def png_copy_colorimetric_data():
     # sRGB values
@@ -331,6 +335,7 @@ def png_copy_colorimetric_data():
 ###############################################################################
 # Test sRGB
 
+
 def png_sRGB():
     # Create dummy file
     options = [ 'SOURCE_ICC_PROFILE_NAME=sRGB' ]
@@ -365,6 +370,7 @@ def png_sRGB():
     return 'success'
 
 ############################################################################
+
 
 gdaltest_list.append( (png_copy_icc) )
 gdaltest_list.append( (png_copy_options_icc) )

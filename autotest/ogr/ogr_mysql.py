@@ -49,6 +49,7 @@ from osgeo import gdal
 ###############################################################################
 # Open Database.
 
+
 def ogr_mysql_1():
 
     gdaltest.mysql_ds = None
@@ -70,6 +71,7 @@ def ogr_mysql_1():
 
 ###############################################################################
 # Create table from data/poly.shp
+
 
 def ogr_mysql_2():
 
@@ -127,6 +129,7 @@ def ogr_mysql_2():
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
 
+
 def ogr_mysql_3():
     if gdaltest.mysql_ds is None:
         return 'skip'
@@ -181,6 +184,7 @@ def ogr_mysql_3():
 ###############################################################################
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.
+
 
 def ogr_mysql_4():
 
@@ -238,11 +242,11 @@ def ogr_mysql_4():
 
         feat_read.Destroy()
 
-
     return 'success'
 
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
+
 
 def ogr_mysql_5():
 
@@ -269,6 +273,7 @@ def ogr_mysql_5():
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
+
 
 def ogr_mysql_6():
 
@@ -308,6 +313,7 @@ def ogr_mysql_6():
 
 ###############################################################################
 # Test spatial filtering.
+
 
 def ogr_mysql_7():
 
@@ -351,6 +357,7 @@ def ogr_mysql_7():
 #
 # No geometry in this test.
 
+
 def ogr_mysql_8():
 
     if gdaltest.mysql_ds is None:
@@ -383,6 +390,7 @@ def ogr_mysql_8():
 
 ###############################################################################
 # Verify inplace update of a feature with SetFeature().
+
 
 def ogr_mysql_9():
 
@@ -442,6 +450,7 @@ def ogr_mysql_9():
 
 ###############################################################################
 # Verify that DeleteFeature() works properly.
+
 
 def ogr_mysql_10():
 
@@ -528,6 +537,7 @@ def ogr_mysql_16():
 ###############################################################################
 # Test requesting a non-existent table by name (bug 1480).
 
+
 def ogr_mysql_17():
 
     if gdaltest.mysql_ds is None:
@@ -552,6 +562,7 @@ def ogr_mysql_17():
 ###############################################################################
 # Test getting a layer by name that was not previously a layer.
 
+
 def ogr_mysql_18():
 
     if gdaltest.mysql_ds is None:
@@ -571,6 +582,7 @@ def ogr_mysql_18():
 
 ###############################################################################
 # Test reading a layer extent
+
 
 def ogr_mysql_19():
 
@@ -598,6 +610,7 @@ def ogr_mysql_19():
 
 ###############################################################################
 # Test using reserved keywords as column names and table names
+
 
 def ogr_mysql_20():
 
@@ -628,6 +641,7 @@ def ogr_mysql_20():
 ###############################################################################
 # Test inserting NULL geometries into a table with a spatial index -> must FAIL
 
+
 def ogr_mysql_21():
 
     if gdaltest.mysql_ds is None:
@@ -655,6 +669,7 @@ def ogr_mysql_21():
 ###############################################################################
 # Test inserting NULL geometries into a table without a spatial index
 
+
 def ogr_mysql_22():
 
     if gdaltest.mysql_ds is None:
@@ -679,6 +694,7 @@ def ogr_mysql_22():
 
 ###############################################################################
 # Check for right precision
+
 
 def ogr_mysql_23():
 
@@ -720,6 +736,7 @@ def ogr_mysql_23():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_mysql_24():
 
     if gdaltest.mysql_ds is None:
@@ -739,6 +756,7 @@ def ogr_mysql_24():
 
 ###############################################################################
 # Test 64 bit FID
+
 
 def ogr_mysql_72():
 
@@ -794,6 +812,7 @@ def ogr_mysql_72():
 
 ###############################################################################
 # Test nullable
+
 
 def ogr_mysql_25():
 
@@ -854,6 +873,7 @@ def ogr_mysql_25():
 
 ###############################################################################
 # Test default values
+
 
 def ogr_mysql_26():
 
@@ -949,6 +969,7 @@ def ogr_mysql_26():
 ###############################################################################
 #
 
+
 def ogr_mysql_cleanup():
 
     if gdaltest.mysql_ds is None:
@@ -969,6 +990,7 @@ def ogr_mysql_cleanup():
     gdaltest.mysql_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_mysql_1,

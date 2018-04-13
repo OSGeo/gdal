@@ -38,6 +38,7 @@ import sys
 from queue import Queue
 from threading import Thread
 
+
 def run_func(func):
     try:
         result = func()
@@ -56,6 +57,7 @@ def run_func(func):
         traceback.print_exc()
         return result
 
+
 def urlescape(url):
     # Escape any non-ASCII characters
     try:
@@ -64,6 +66,7 @@ def urlescape(url):
     except:
         pass
     return url
+
 
 def gdalurlopen(url, timeout = 10):
     old_timeout = socket.getdefaulttimeout()
@@ -102,6 +105,7 @@ def gdalurlopen(url, timeout = 10):
         socket.setdefaulttimeout(old_timeout)
         return None
 
+
 def spawn_async(cmd):
     command = shlex.split(cmd)
     try:
@@ -110,8 +114,10 @@ def spawn_async(cmd):
     except:
         return (None, None)
 
+
 def wait_process(process):
     process.wait()
+
 
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding='latin1'):
     command = shlex.split(cmd)
@@ -144,9 +150,11 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
 
     return ret
 
+
 def read_in_thread(f, q):
     q.put(f.read())
     f.close()
+
 
 def runexternal_out_and_err(cmd, check_memleak = True):
     command = shlex.split(cmd)

@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Test a fake ACE2 dataset
 
+
 def ace2_1():
 
     f = gdal.VSIFOpenL('/vsimem/45N015E_5M.ACE2', 'wb')
@@ -63,6 +64,7 @@ def ace2_1():
     gdal.Unlink('/vsimem/45N015E_5M.ACE2')
 
     return ret
+
 
 gdaltest_list = [
     ace2_1 ]

@@ -50,8 +50,10 @@ LONG_STRING_DATA = numpy.array(["sdfsdfsdfs", "sdweddw", "sdewdweee", "3423dedd"
                             "jkejjjdjd", "edcdcdcdc", "fcdkmk4m534m", "edwededdd",
                             "dedwedew", "wdedefrfrfrf"])
 
+
 class HFATestError(Exception):
     pass
+
 
 def CreateAndWriteRAT(fname):
     """
@@ -101,7 +103,6 @@ def CreateAndWriteRAT(fname):
 
     if rat.CreateColumn("StringAsDouble", gdal.GFT_String, gdal.GFU_Generic ) != gdal.CE_None:
         raise HFATestError("Create column failed")
-
 
     rat.SetRowCount(INT_DATA.size)
 
@@ -162,6 +163,7 @@ def CreateAndWriteRAT(fname):
 
     return 'success'
 
+
 def ReadAndCheckValues(fname, numrows):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
@@ -211,6 +213,7 @@ def ReadAndCheckValues(fname, numrows):
 
     return 'success'
 
+
 def CheckSetGetValues(fname):
     # check the 'legacy' get and set value calls
     ds = gdal.Open(fname, gdal.GA_Update)
@@ -253,6 +256,7 @@ def CheckSetGetValues(fname):
 
     return 'success'
 
+
 def ExtendAndWrite(fname):
     # write more data to the end of the RAT - will extend it
     ds = gdal.Open(fname, gdal.GA_Update)
@@ -279,6 +283,7 @@ def ExtendAndWrite(fname):
 
     return 'success'
 
+
 def CheckExtension(fname):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
@@ -301,6 +306,7 @@ def CheckExtension(fname):
 
     return 'success'
 
+
 def WriteLongStrings(fname):
     # this will force the string column to be re-written to accommodate
     # a longer string size
@@ -317,6 +323,7 @@ def WriteLongStrings(fname):
 
     return 'success'
 
+
 def CheckLongStrings(fname):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
@@ -331,6 +338,7 @@ def CheckLongStrings(fname):
 
     return 'success'
 
+
 def SetLinearBinning(fname):
     ds = gdal.Open(fname, gdal.GA_Update)
     band = ds.GetRasterBand(1)
@@ -344,6 +352,7 @@ def SetLinearBinning(fname):
     ds = None
 
     return 'success'
+
 
 def CheckLinearBinning(fname):
     ds = gdal.Open(fname)
@@ -365,6 +374,7 @@ def CheckLinearBinning(fname):
 
     return 'success'
 
+
 def CheckClone(fname):
     ds = gdal.Open(fname)
     band = ds.GetRasterBand(1)
@@ -385,62 +395,89 @@ def CheckClone(fname):
     return 'success'
 
 # basic tests
+
+
 def hfa_rfc40_1():
     return CreateAndWriteRAT("tmp/test.img")
+
 
 def hfa_rfc40_2():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # the older interface
+
+
 def hfa_rfc40_3():
     return CheckSetGetValues("tmp/test.img")
 
 # make sure original data not changed
+
+
 def hfa_rfc40_4():
     return ReadAndCheckValues("tmp/test.img", 10)
 
 # make it longer - data will be re-written
+
+
 def hfa_rfc40_5():
     return ExtendAndWrite("tmp/test.img")
 
 # make sure old data not changed
+
+
 def hfa_rfc40_6():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # new data at the end ok?
+
+
 def hfa_rfc40_7():
     return CheckExtension("tmp/test.img")
 
 # write some longer strings - string column will
 # have to be re-written
+
+
 def hfa_rfc40_8():
     return WriteLongStrings("tmp/test.img")
 
 # make sure old data not changed
+
+
 def hfa_rfc40_9():
     return ReadAndCheckValues("tmp/test.img", 20)
 
 # check new data ok
+
+
 def hfa_rfc40_10():
     return CheckLongStrings("tmp/test.img")
 
 # linear binning
+
+
 def hfa_rfc40_11():
     return SetLinearBinning("tmp/test.img")
 
 # linear binning
+
+
 def hfa_rfc40_12():
     return CheckLinearBinning("tmp/test.img")
 
 # clone
+
+
 def hfa_rfc40_13():
     return CheckClone("tmp/test.img")
 
 # serialize not available from Python...
 
+
 def hfa_rfc40_cleanup():
     gdal.GetDriverByName('HFA').Delete("tmp/test.img")
     return 'success'
+
 
 gdaltest_list = [
     hfa_rfc40_1,

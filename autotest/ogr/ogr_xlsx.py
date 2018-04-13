@@ -41,6 +41,7 @@ from osgeo import ogr
 ###############################################################################
 # Check
 
+
 def ogr_xlsx_check(ds):
 
     if ds.TestCapability("foo") != 0:
@@ -124,6 +125,7 @@ def ogr_xlsx_check(ds):
 ###############################################################################
 # Basic tests
 
+
 def ogr_xlsx_1():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -143,6 +145,7 @@ def ogr_xlsx_1():
 
 ###############################################################################
 # Test OGR_XLSX_HEADERS = DISABLE
+
 
 def ogr_xlsx_2():
 
@@ -167,6 +170,7 @@ def ogr_xlsx_2():
 ###############################################################################
 # Test OGR_XLSX_FIELD_TYPES = STRING
 
+
 def ogr_xlsx_3():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -189,6 +193,7 @@ def ogr_xlsx_3():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_xlsx_4():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -209,6 +214,7 @@ def ogr_xlsx_4():
 
 ###############################################################################
 # Test write support
+
 
 def ogr_xlsx_5():
 
@@ -232,6 +238,7 @@ def ogr_xlsx_5():
 
 ###############################################################################
 # Test reading a file using inlineStr representation.
+
 
 def ogr_xlsx_6():
 
@@ -266,6 +273,7 @@ def ogr_xlsx_6():
 
 ###############################################################################
 # Test update support
+
 
 def ogr_xlsx_7():
 
@@ -312,6 +320,7 @@ def ogr_xlsx_7():
 ###############################################################################
 # Test number of columns > 26 (#5774)
 
+
 def ogr_xlsx_8():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -343,6 +352,7 @@ def ogr_xlsx_8():
 
 ###############################################################################
 # Test Integer64
+
 
 def ogr_xlsx_9():
 
@@ -383,6 +393,7 @@ def ogr_xlsx_9():
 
 ###############################################################################
 # Test DateTime with milliseconds
+
 
 def ogr_xlsx_10():
 
@@ -431,6 +442,7 @@ def ogr_xlsx_10():
 ###############################################################################
 # Test reading sheet with more than 26 columns with holes (#6363)"
 
+
 def ogr_xlsx_11():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -452,6 +464,7 @@ def ogr_xlsx_11():
 # Test reading a sheet whose file is stored as "absolute" in
 # workbook.xml.rels (#6733)
 
+
 def ogr_xlsx_12():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -469,6 +482,7 @@ def ogr_xlsx_12():
 
 ###############################################################################
 # Test that data types are correctly picked up even if first row is missing data
+
 
 def ogr_xlsx_13():
 
@@ -521,6 +535,7 @@ def ogr_xlsx_13():
 ###############################################################################
 # Test that field names are picked up even if last field has no data
 
+
 def ogr_xlsx_14():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -572,6 +587,7 @@ def ogr_xlsx_14():
 ###############################################################################
 # Test appending a layer to an existing document
 
+
 def ogr_xlsx_15():
 
     drv = ogr.GetDriverByName('XLSX')
@@ -596,6 +612,7 @@ def ogr_xlsx_15():
 
 ###############################################################################
 # Test Boolean
+
 
 def ogr_xlsx_boolean():
 
@@ -632,6 +649,7 @@ def ogr_xlsx_boolean():
     gdal.Unlink(out_filename)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_xlsx_1,

@@ -52,6 +52,7 @@ def ogr_grass_1():
 ###############################################################################
 # Read 'point' datasource
 
+
 def ogr_grass_2():
 
     if gdaltest.ogr_grass_drv is None:

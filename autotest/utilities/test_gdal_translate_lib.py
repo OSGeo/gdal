@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Simple test
 
+
 def test_gdal_translate_lib_1():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -70,9 +71,11 @@ def test_gdal_translate_lib_1():
 ###############################################################################
 # Test format option and callback
 
+
 def mycallback(pct, msg, user_data):
     user_data[0] = pct
     return 1
+
 
 def test_gdal_translate_lib_2():
 
@@ -97,6 +100,7 @@ def test_gdal_translate_lib_2():
 ###############################################################################
 # Test outputType option
 
+
 def test_gdal_translate_lib_3():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -118,6 +122,7 @@ def test_gdal_translate_lib_3():
 
 ###############################################################################
 # Test bandList option
+
 
 def test_gdal_translate_lib_4():
 
@@ -146,6 +151,7 @@ def test_gdal_translate_lib_4():
 
 ###############################################################################
 # Test rgbExpand option
+
 
 def test_gdal_translate_lib_5():
 
@@ -185,6 +191,7 @@ def test_gdal_translate_lib_5():
 ###############################################################################
 # Test oXSizePixel and oYSizePixel option
 
+
 def test_gdal_translate_lib_6():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -203,6 +210,7 @@ def test_gdal_translate_lib_6():
 ###############################################################################
 # Test oXSizePct and oYSizePct option
 
+
 def test_gdal_translate_lib_7():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -220,6 +228,7 @@ def test_gdal_translate_lib_7():
 
 ###############################################################################
 # Test outputSRS and GCPs options
+
 
 def test_gdal_translate_lib_8():
 
@@ -249,6 +258,7 @@ def test_gdal_translate_lib_8():
 ###############################################################################
 # Test nodata option
 
+
 def test_gdal_translate_lib_9():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -267,6 +277,7 @@ def test_gdal_translate_lib_9():
 ###############################################################################
 # Test srcWin option
 
+
 def test_gdal_translate_lib_10():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -284,6 +295,7 @@ def test_gdal_translate_lib_10():
 
 ###############################################################################
 # Test projWin option
+
 
 def test_gdal_translate_lib_11():
 
@@ -307,6 +319,7 @@ def test_gdal_translate_lib_11():
 ###############################################################################
 # Test outputBounds option
 
+
 def test_gdal_translate_lib_12():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -329,6 +342,7 @@ def test_gdal_translate_lib_12():
 ###############################################################################
 # Test metadataOptions
 
+
 def test_gdal_translate_lib_13():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -348,6 +362,7 @@ def test_gdal_translate_lib_13():
 ###############################################################################
 # Test creationOptions
 
+
 def test_gdal_translate_lib_14():
 
     ds = gdal.Open('../gcore/data/byte.tif')
@@ -366,6 +381,7 @@ def test_gdal_translate_lib_14():
 
 ###############################################################################
 # Test internal wrappers
+
 
 def test_gdal_translate_lib_100():
 
@@ -388,6 +404,7 @@ def test_gdal_translate_lib_100():
 ###############################################################################
 # Test behaviour with SIGNEDBYTE
 
+
 def test_gdal_translate_lib_101():
 
     ds = gdal.Translate('/vsimem/test_gdal_translate_lib_101.tif', gdal.Open('../gcore/data/byte.tif'), creationOptions = ['PIXELTYPE=SIGNEDBYTE'], noData = '-128')
@@ -409,6 +426,7 @@ def test_gdal_translate_lib_101():
 
 ###############################################################################
 # Test -scale
+
 
 def test_gdal_translate_lib_102():
 
@@ -438,6 +456,7 @@ def test_gdal_translate_lib_102():
 # Test that -projwin with nearest neighbor resampling uses integer source
 # pixel boundaries (#6610)
 
+
 def test_gdal_translate_lib_103():
 
     ds = gdal.Translate('', '../gcore/data/byte.tif', format = 'MEM', projWin = [440730, 3751310, 441910, 3750140])
@@ -457,6 +476,7 @@ def test_gdal_translate_lib_103():
 ###############################################################################
 # Test translate with a MEM source to a anonymous VRT
 
+
 def test_gdal_translate_lib_104():
 
     src_ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
@@ -470,6 +490,7 @@ def test_gdal_translate_lib_104():
 
 ###############################################################################
 # Test GCPs propagation in "VRT path"
+
 
 def test_gdal_translate_lib_gcp_vrt_path():
 
@@ -492,6 +513,7 @@ def test_gdal_translate_lib_gcp_vrt_path():
 ###############################################################################
 # Test RPC propagation in "VRT path"
 
+
 def test_gdal_translate_lib_rcp_vrt_path():
 
     src_ds = gdal.Open( '../gcore/data/rpc.vrt' )
@@ -503,6 +525,7 @@ def test_gdal_translate_lib_rcp_vrt_path():
 
 ###############################################################################
 # Test GeoLocation propagation in "VRT path"
+
 
 def test_gdal_translate_lib_geolocation_vrt_path():
 
@@ -516,6 +539,7 @@ def test_gdal_translate_lib_geolocation_vrt_path():
 
 ###############################################################################
 # Test -colorinterp and -colorinterp_X
+
 
 def test_gdal_translate_lib_colorinterp():
 
@@ -572,6 +596,7 @@ def test_gdal_translate_lib_colorinterp():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_translate_lib_cleanup():
     for i in range(14):
         try:
@@ -584,6 +609,7 @@ def test_gdal_translate_lib_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_translate_lib_1,

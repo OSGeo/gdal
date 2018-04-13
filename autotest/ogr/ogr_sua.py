@@ -39,6 +39,7 @@ from osgeo import ogr
 ###############################################################################
 # Basic test
 
+
 def ogr_sua_1():
 
     ds = ogr.Open('data/za.sua')
@@ -68,6 +69,7 @@ def ogr_sua_1():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_sua_1 ]

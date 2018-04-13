@@ -31,6 +31,7 @@
 
 import sys
 
+
 def find_start_identifier_pos(content, pos_start_identifier):
     level_parenthesis = 0
     level_bracket = 0
@@ -64,6 +65,7 @@ def find_start_identifier_pos(content, pos_start_identifier):
             break
     pos_start_identifier += 1
     return pos_start_identifier
+
 
 content = open(sys.argv[1], 'rb').read()
 pos = 0
@@ -136,7 +138,6 @@ while True:
             non_empty = True
         elif content[pos_cur-2:pos_cur] == '||':
             non_empty = True
-
 
     if empty:
         modified = True

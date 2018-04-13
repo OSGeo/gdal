@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Test handling NaN with GDT_Float32 data
 
+
 def stats_nan_1():
 
     gdaltest.gtiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -60,6 +61,7 @@ def stats_nan_1():
 ###############################################################################
 # Test handling NaN with GDT_Float64 data
 
+
 def stats_nan_2():
 
     if gdaltest.gtiff_drv is None:
@@ -78,6 +80,7 @@ def stats_nan_2():
 
 ###############################################################################
 # Test stats on signed byte (#3151)
+
 
 def stats_signedbyte():
 
@@ -195,6 +198,7 @@ def stats_nan_3():
 # Test reading a VRT with a complex source that define nan as band nodata
 # and complex source nodata (#3576)
 
+
 def stats_nan_4():
 
     ds = gdal.Open('data/nan32_nodata.vrt')
@@ -216,6 +220,7 @@ def stats_nan_4():
 ###############################################################################
 # Test reading a VRT with a complex source that define 0 as band nodata
 # and complex source nodata (nan must be translated to 0 then) (#3576)
+
 
 def stats_nan_5():
 
@@ -260,6 +265,7 @@ def stats_nan_6():
 ###############################################################################
 # Test reading a warped VRT with nan as src nodata and 0 as dest nodata (#3576)
 
+
 def stats_nan_7():
 
     ds = gdal.Open('data/nan32_nodata_warp_nan_to_zero.vrt')
@@ -303,8 +309,10 @@ def stats_nan_8():
 ###############################################################################
 # Test statistics computation when nodata = +/- inf
 
+
 def stats_nodata_inf_progress_cbk(value, string, extra):
     extra[0] = value
+
 
 def stats_nodata_inf():
 
@@ -348,20 +356,25 @@ def stats_nodata_check(filename, expected_nodata):
 
     return 'success'
 
+
 def stats_nodata_neginf_linux():
     return stats_nodata_check('data/stats_nodata_neginf.tif', gdaltest.neginf())
+
 
 def stats_nodata_neginf_msvc():
     return stats_nodata_check('data/stats_nodata_neginf_msvc.tif', gdaltest.neginf())
 
+
 def stats_nodata_posinf_linux():
     return stats_nodata_check('data/stats_nodata_posinf.tif', gdaltest.posinf())
+
 
 def stats_nodata_posinf_msvc():
     return stats_nodata_check('data/stats_nodata_posinf_msvc.tif', gdaltest.posinf())
 
 ###############################################################################
 # Test standard deviation computation on huge values
+
 
 def stats_stddev_huge_values():
 
@@ -389,6 +402,7 @@ cellsize     1
 ###############################################################################
 # Test approximate statistics computation on a square shaped raster whose first column
 # of blocks is nodata only
+
 
 def stats_square_shape():
 
@@ -419,6 +433,7 @@ def stats_square_shape():
 
 ###############################################################################
 # Test when nodata = FLT_MIN (#6578)
+
 
 def stats_flt_min():
 
@@ -462,6 +477,7 @@ def stats_flt_min():
 ###############################################################################
 # Test when nodata = DBL_MIN (#6578)
 
+
 def stats_dbl_min():
 
     shutil.copyfile('data/dbl_min.tif', 'tmp/dbl_min.tif')
@@ -503,6 +519,7 @@ def stats_dbl_min():
 
 ###############################################################################
 # Test stats on a tiled Byte with partial tiles
+
 
 def stats_byte_partial_tiles():
 
@@ -627,6 +644,7 @@ def stats_byte_partial_tiles():
 
 ###############################################################################
 # Test stats on uint16
+
 
 def stats_uint16():
 
@@ -754,6 +772,7 @@ def stats_uint16():
 ###############################################################################
 # Test a case where the nodata value is almost the maximum value of float32
 
+
 def stats_nodata_almost_max_float32():
 
     gdal.FileFromMemBuffer('/vsimem/float32_almost_nodata_max_float32.tif',
@@ -783,6 +802,7 @@ def stats_nodata_almost_max_float32():
 
 ###############################################################################
 # Run tests
+
 
 gdaltest_list = [
     stats_nan_1,

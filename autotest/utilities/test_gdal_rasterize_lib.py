@@ -40,8 +40,8 @@ import gdaltest
 ###############################################################################
 # Simple polygon rasterization (adapted from alg/rasterize.py).
 
-def test_gdal_rasterize_lib_1():
 
+def test_gdal_rasterize_lib_1():
 
     # Setup working spatial reference
     #sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -110,6 +110,7 @@ def test_gdal_rasterize_lib_1():
 ###############################################################################
 # Test creating an output file
 
+
 def test_gdal_rasterize_lib_3():
 
     import test_cli_utilities
@@ -158,6 +159,7 @@ def test_gdal_rasterize_lib_3():
 ###############################################################################
 # Rasterization without georeferencing
 
+
 def test_gdal_rasterize_lib_100():
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
@@ -196,6 +198,7 @@ def test_gdal_rasterize_lib_100():
 ###############################################################################
 # Rasterization on empty geometry
 
+
 def test_gdal_rasterize_lib_101():
 
     target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
@@ -233,6 +236,7 @@ def test_gdal_rasterize_lib_101():
 
 ###############################################################################
 # Rasterization on raster with RPC
+
 
 def test_gdal_rasterize_lib_102():
 
@@ -283,7 +287,6 @@ def test_gdal_rasterize_lib_102():
 
         return 'fail'
 
-
     # Re-try with transformer options
     target_ds.GetRasterBand(1).Fill(255)
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [0],
@@ -306,8 +309,8 @@ def test_gdal_rasterize_lib_102():
 ###############################################################################
 # Simple rasterization with all values of the optim option
 
-def test_gdal_rasterize_lib_4():
 
+def test_gdal_rasterize_lib_4():
 
     # Setup working spatial reference
     #sr_wkt = 'LOCAL_CS["arbitrary"]'
@@ -372,6 +375,7 @@ def test_gdal_rasterize_lib_4():
         target_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_rasterize_lib_1,

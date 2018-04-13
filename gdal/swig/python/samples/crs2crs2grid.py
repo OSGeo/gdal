@@ -48,6 +48,7 @@ from osgeo import gdal_array
   Z                  4077985.572         4077985.735 m      0.72 mm/yr
 """
 
+
 def next_point(fd):
 
     line = fd.readline().strip()
@@ -103,6 +104,8 @@ def read_grid_crs_to_crs(filename,shape):
 # This function creates a regular grid of lat/long values with one
 # "band" for latitude, and one for longitude.
 #
+
+
 def new_create_grid( griddef ):
 
     lon_start = -1 * griddef[0]
@@ -134,6 +137,8 @@ def new_create_grid( griddef ):
 ##############################################################################
 # This function writes a grid out in form suitable to use as input to the
 # htdp program.
+
+
 def write_grid(grid,out_filename):
     fd_out = open(out_filename,'w')
     for i in range(grid.shape[2]):
@@ -143,6 +148,8 @@ def write_grid(grid,out_filename):
 
 ##############################################################################
 # Write the resulting grid out in GeoTIFF format.
+
+
 def write_gdal_grid(filename, grid, griddef ):
 
     ps_x = (griddef[2] - griddef[0]) / (griddef[4]-1)
@@ -155,6 +162,7 @@ def write_gdal_grid(filename, grid, griddef ):
     ds.SetGeoTransform( geotransform )
 
 #############################################################################
+
 
 def write_control( control_fn, out_grid_fn, in_grid_fn,
                    src_crs_id, src_crs_date,
@@ -187,6 +195,8 @@ def write_control( control_fn, out_grid_fn, in_grid_fn,
     open(control_fn,'w').write(control_filled)
 
 #############################################################################
+
+
 def Usage( brief = 1 ):
     print("""
 crs2crs2grid.py
@@ -240,6 +250,7 @@ CRS Ids
 
 #############################################################################
 # Main
+
 
 if __name__ == '__main__':
 

@@ -43,6 +43,8 @@ class Module:
         self.poly_line_links = {}
 
 #############################################################################
+
+
 def Usage():
     print('Usage: tigerpoly.py infile [outfile].shp')
     print('')
@@ -50,6 +52,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 infile = None
 outfile = None

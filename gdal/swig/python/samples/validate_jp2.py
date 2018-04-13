@@ -34,6 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
+
 def Usage():
     print('Usage: validate_jp2 [-expected_gmljp2] [-inspire_tg] [-datatype imagery|non_imagery]')
     print('                    [-oidoc in.xml] [-ogc_schemas_location path|disabled] test.jp2')
@@ -47,9 +48,11 @@ def Usage():
     print('-ogc_schemas_location: Path to directory with OGC schemas. Needed for GMLJP2 validation.')
     return 1
 
+
 XML_TYPE_IDX = 0
 XML_VALUE_IDX = 1
 XML_FIRST_CHILD_IDX = 2
+
 
 def find_xml_node(ar, element_name, only_attributes = False):
     #type = ar[XML_TYPE_IDX]
@@ -65,6 +68,7 @@ def find_xml_node(ar, element_name, only_attributes = False):
             return found
     return None
 
+
 def get_attribute_val(ar, attr_name):
     node = find_xml_node(ar, attr_name, True)
     if node is None or node[XML_TYPE_IDX] != gdal.CXT_Attribute:
@@ -74,11 +78,13 @@ def get_attribute_val(ar, attr_name):
         return node[XML_FIRST_CHILD_IDX][XML_VALUE_IDX]
     return None
 
+
 def find_message(ar):
     msg = get_attribute_val(ar, "message")
     if msg is None:
         return 'unknown'
     return msg
+
 
 def find_element_with_name(ar, element_name, name, attribute_name = 'name'):
     type = ar[XML_TYPE_IDX]
@@ -92,11 +98,14 @@ def find_element_with_name(ar, element_name, name, attribute_name = 'name'):
             return found
     return None
 
+
 def find_jp2box(ar, jp2box_name):
     return find_element_with_name(ar, 'JP2Box', jp2box_name)
 
+
 def find_marker(ar, marker_name):
     return find_element_with_name(ar, 'Marker', marker_name)
+
 
 def get_count_and_indices_of_jp2boxes(ar):
     the_dic = {}
@@ -110,6 +119,7 @@ def get_count_and_indices_of_jp2boxes(ar):
                 the_dic[jp2box_name] = (1, child_idx)
 
     return the_dic
+
 
 def get_count_of_uuidboxes(ar):
     the_dic = {}
@@ -126,8 +136,10 @@ def get_count_of_uuidboxes(ar):
 
     return the_dic
 
+
 def find_field(ar, field_name):
     return find_element_with_name(ar, 'Field', field_name)
+
 
 def get_element_val(node):
     if node is None:
@@ -138,8 +150,10 @@ def get_element_val(node):
             return child[XML_VALUE_IDX]
     return None
 
+
 def get_field_val(ar, field_name):
     return get_element_val(find_field(ar, field_name))
+
 
 def gdalOpenWithOpenJPEGDriverPreferably(filename):
     drivers = []
@@ -164,6 +178,7 @@ def gdalOpenWithOpenJPEGDriverPreferably(filename):
 
     return ds
 
+
 def get_gmljp2(filename):
     ds = gdalOpenWithOpenJPEGDriverPreferably(filename)
     if ds is None:
@@ -172,6 +187,7 @@ def get_gmljp2(filename):
     if mdd is None:
         return None
     return mdd[0]
+
 
 class ErrorReport:
     def __init__(self, collect_internally = False):
@@ -212,6 +228,8 @@ class ErrorReport:
             print(full_msg)
 
 # Report JP2 boxes errors
+
+
 def find_remaining_bytes(error_report, ar, parent_node_name = None):
     type = ar[XML_TYPE_IDX]
     value = ar[XML_VALUE_IDX]
@@ -241,6 +259,7 @@ def find_errors(error_report, ar, parent_node = None):
         child = ar[child_idx]
         find_errors(error_report, child, ar)
 
+
 def validate_bitsize(error_report, inspire_tg, val_ori, field_name, datatype):
     val = val_ori
     signedness = "unsigned"
@@ -258,10 +277,12 @@ def validate_bitsize(error_report, inspire_tg, val_ori, field_name, datatype):
     elif val is None or val > 37:
         error_report.EmitError('GENERAL', '%s=%s (%s %d bits), which is not allowed' % (field_name, str(val_ori), signedness, nbits))
 
+
 def int_or_none(val):
     if val is None:
         return None
     return int(val)
+
 
 def check_geojp2_gmljp2_consistency(filename, error_report):
     gdal.SetConfigOption('GDAL_USE_GEOJP2', 'YES')
@@ -376,6 +397,7 @@ def check_oi_rg_consistency(filename, serialized_oi_rg, error_report):
         oi_proj4 = oi_sr.ExportToProj4()
         if proj4 != oi_proj4:
             error_report.EmitError('INSPIRE_TG', 'Inconsistent SRS between OrthoImagery (wkt=%s, proj4=%s) and GMLJP2/GeoJP2 (wkt=%s, proj4=%s)' % (wkt, proj4, oi_wkt, oi_proj4), conformance_class = 'A.8.8')
+
 
 def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype = 'imagery', error_report = None, expected_ftyp_branding = None):
 
@@ -1106,7 +1128,6 @@ def validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location,
                             if count_fields != 3:
                                 error_report.EmitError('INSPIRE_TG', 'count(OrthoImageryCoverage.rangeType.field)(=%d) != 3 (for color table)' % (count_fields), conformance_class = 'A.8.6')
 
-
     # Validate content of COD marker
     cod = find_marker(cs, 'COD')
     if not cod:
@@ -1234,6 +1255,7 @@ def main():
                 return 1
 
     return validate(filename, oidoc, inspire_tg, expected_gmljp2, ogc_schemas_location, datatype).error_count
+
 
 if __name__ == '__main__':
     sys.exit(main())

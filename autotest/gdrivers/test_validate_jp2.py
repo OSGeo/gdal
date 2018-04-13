@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the JP2OpenJPEG driver.
 
+
 def test_validate_jp2_1():
 
     gdaltest.has_validate_jp2_and_build_jp2 = False
@@ -66,6 +67,8 @@ def test_validate_jp2_1():
     return 'success'
 
 ###############################################################################
+
+
 def validate(filename, inspire_tg = True, expected_gmljp2 = True, oidoc = None):
 
     try:
@@ -87,6 +90,7 @@ def validate(filename, inspire_tg = True, expected_gmljp2 = True, oidoc = None):
 
 ###############################################################################
 # Highly corrupted file
+
 
 def test_validate_jp2_2():
 
@@ -155,6 +159,7 @@ def test_validate_jp2_2():
 ###############################################################################
 # Another highly corrupted file
 
+
 def test_validate_jp2_3():
 
     if not gdaltest.has_validate_jp2_and_build_jp2:
@@ -211,6 +216,7 @@ def test_validate_jp2_3():
 ###############################################################################
 # Another highly corrupted file
 
+
 def test_validate_jp2_4():
 
     if not gdaltest.has_validate_jp2_and_build_jp2:
@@ -254,6 +260,7 @@ def test_validate_jp2_4():
 ###############################################################################
 # Slightly less corrupted file. Test mainly issues with JP2boxes and color table
 # Also a RGN marker
+
 
 def test_validate_jp2_5():
 
@@ -301,6 +308,7 @@ def test_validate_jp2_5():
 ###############################################################################
 # Nominal case with single band data
 
+
 def test_validate_jp2_6():
 
     if not gdaltest.has_validate_jp2_and_build_jp2:
@@ -329,6 +337,7 @@ def test_validate_jp2_6():
 
 ###############################################################################
 # Nominal case with RGBA data
+
 
 def test_validate_jp2_7():
 
@@ -359,6 +368,7 @@ def test_validate_jp2_7():
 ###############################################################################
 # Nominal case with color table data
 
+
 def test_validate_jp2_8():
 
     if not gdaltest.has_validate_jp2_and_build_jp2:
@@ -386,12 +396,15 @@ def test_validate_jp2_8():
     return 'success'
 
 ###############################################################################
+
+
 def test_validate_jp2_cleanup():
 
     if gdaltest.has_validate_jp2_and_build_jp2:
         gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     test_validate_jp2_1,

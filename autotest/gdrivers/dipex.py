@@ -37,10 +37,12 @@ import gdaltest
 ###############################################################################
 # Test a fake DIPex dataset
 
+
 def dipex_1():
 
     tst = gdaltest.GDALTest( 'DIPEx', 'fakedipex.dat', 1, 1 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     dipex_1 ]

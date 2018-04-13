@@ -41,6 +41,7 @@ APPEND_ONLY = 2
 ###############################################################
 # Usage()
 
+
 def Usage():
     print('ogrupdate.py -src name -dst name [-srclayer name] [-dstlayer name] [-matchfield name] [-update_only | -append_new_only]')
     print('             [-compare_before_update] [-preserve_fid] [-select field_list] [-dry_run] [-progress] [-skip_failures] [-quiet]')
@@ -71,6 +72,7 @@ def Usage():
 
 ###############################################################
 # ogrupdate_analyse_args()
+
 
 def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
 
@@ -249,6 +251,7 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
 ###############################################################
 # AreFeaturesEqual()
 
+
 def AreFeaturesEqual(src_feat, dst_feat):
     for i in range(src_feat.GetFieldCount()):
         src_val = src_feat.GetField(i)
@@ -268,6 +271,7 @@ def AreFeaturesEqual(src_feat, dst_feat):
 
 ###############################################################
 # ogrupdate_process()
+
 
 def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode = DEFAULT, \
                       preserve_fid = False, compare_before_update = False, \
@@ -458,6 +462,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
 
 ###############################################################
 # Entry point
+
 
 if __name__ == '__main__':
     argv = ogr.GeneralCmdLineProcessor( sys.argv )

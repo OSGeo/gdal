@@ -34,6 +34,8 @@ import sys
 from osgeo import gdal, osr
 
 ###############################################################################
+
+
 def fmt_loc( srs_obj, loc):
     if srs_obj.IsProjected():
         return '%12.3f %12.3f' % (loc[0], loc[1])
@@ -41,6 +43,8 @@ def fmt_loc( srs_obj, loc):
         return '%12.8f %12.8f' % (loc[0], loc[1])
 
 ###############################################################################
+
+
 def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
 
     # -------------------------------------------------------------------------
@@ -67,7 +71,6 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
         (ds.RasterXSize/2.0, ds.RasterYSize/2.0, 0.0) ]
 
     orig_gt = ds.GetGeoTransform()
-
 
     corners_s_geo = []
     for item in corners_pixel_line:
@@ -141,7 +144,6 @@ def move( filename, t_srs, s_srs=None, pixel_threshold = None ):
                            corners_t_new_geo[i][1] - corners_t_geo[i][1],
                            0.0) )
 
-
         item = corners_t_geo[i]
         corners_pixel_line_new.append(
             (inv_new_gt[0] + item[0] * inv_new_gt[1] + item[1] * inv_new_gt[2],
@@ -199,6 +201,8 @@ error threshold so the file has not been updated.""" % max_error)
     ds = None
 
 ###############################################################################
+
+
 def Usage():
     print("""
 gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
@@ -208,6 +212,7 @@ gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
 
 #############################################################################
 # Main
+
 
 def main():
     # Default GDAL argument parsing.
@@ -252,7 +257,6 @@ def main():
         i = i + 1
         # next argument
 
-
     if filename is None:
         print('Missing name of file to operate on, but required.')
         Usage()
@@ -260,7 +264,6 @@ def main():
     if t_srs is None:
         print('Target SRS (-t_srs) missing, but required.')
         Usage()
-
 
     move( filename, t_srs, s_srs, pixel_threshold )
 

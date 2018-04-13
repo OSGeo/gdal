@@ -36,6 +36,7 @@
 
 import sys
 
+
 def do(sqlite3name, gdalname):
     try:
         import ctypes
@@ -107,6 +108,7 @@ def do(sqlite3name, gdalname):
         ret = sqlite_handle.SPLite3_close(db)
     if ret != 0:
         sys.exit(1)
+
 
 gdaltest_list = []
 

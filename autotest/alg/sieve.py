@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Test a fairly default case.
 
+
 def sieve_1():
 
     drv = gdal.GetDriverByName( 'GTiff' )
@@ -70,6 +71,7 @@ def sieve_1():
 
 ###############################################################################
 # Try eight connected.
+
 
 def sieve_2():
 
@@ -102,6 +104,7 @@ def sieve_2():
 ###############################################################################
 # Do a sieve resulting in unmergable polygons.
 
+
 def sieve_3():
 
     drv = gdal.GetDriverByName( 'GTiff' )
@@ -133,6 +136,7 @@ def sieve_3():
 
 ###############################################################################
 # Try the bug 2634 simplified data.
+
 
 def sieve_4():
 
@@ -199,6 +203,7 @@ def sieve_5():
 # Performance test. When increasing the 'size' parameter, performance
 # should stay roughly linear with the number of pixels (i.e. size^2)
 
+
 def sieve_6():
 
     try:
@@ -237,6 +242,7 @@ def sieve_6():
 ###############################################################################
 # Test with nodata
 
+
 def sieve_7():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_7.asc', """ncols        7
@@ -253,7 +259,6 @@ NODATA_value 0
  0 1 1 2 2 2 1
  0 1 1 1 1 1 1
  """)
-
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('/vsimem/sieve_7.asc')
@@ -295,6 +300,7 @@ NODATA_value 0
 ###############################################################################
 # Test propagation in our search of biggest neighbour
 
+
 def sieve_8():
 
     gdal.FileFromMemBuffer('/vsimem/sieve_8.asc',
@@ -311,7 +317,6 @@ cellsize     60.000000000000
  0 0 0 0 9 9 0
  0 0 0 0 0 0 0
  """)
-
 
     drv = gdal.GetDriverByName( 'GTiff' )
     src_ds = gdal.Open('/vsimem/sieve_8.asc')

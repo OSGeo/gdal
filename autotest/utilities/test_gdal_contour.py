@@ -45,6 +45,7 @@ import array
 ###############################################################################
 # Test with -a and -i options
 
+
 def test_gdal_contour_1():
     if test_cli_utilities.get_gdal_contour_path() is None:
         return 'skip'
@@ -143,6 +144,7 @@ def test_gdal_contour_1():
 ###############################################################################
 # Test with -fl option and -3d option
 
+
 def test_gdal_contour_2():
     if test_cli_utilities.get_gdal_contour_path() is None:
         return 'skip'
@@ -207,6 +209,7 @@ def test_gdal_contour_2():
 ###############################################################################
 # Test on a real DEM
 
+
 def test_gdal_contour_3():
     if test_cli_utilities.get_gdal_contour_path() is None:
         return 'skip'
@@ -251,6 +254,7 @@ def test_gdal_contour_3():
 
 ###############################################################################
 # Test contour orientation
+
 
 def test_gdal_contour_4():
     if test_cli_utilities.get_gdal_contour_path() is None:
@@ -357,6 +361,7 @@ def test_gdal_contour_4():
 ###############################################################################
 # Test contour orientation
 
+
 def test_gdal_contour_5():
     if test_cli_utilities.get_gdal_contour_path() is None:
         return 'skip'
@@ -407,6 +412,7 @@ def test_gdal_contour_5():
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdal_contour_cleanup():
     if test_cli_utilities.get_gdal_contour_path() is None:

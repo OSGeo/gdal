@@ -41,6 +41,7 @@ from osgeo import osr
 ###############################################################################
 # Test simple Geotransform based transformer.
 
+
 def transformer_1():
 
     ds = gdal.Open('data/byte.tif')
@@ -70,6 +71,7 @@ def transformer_1():
 
 ###############################################################################
 # Test GCP based transformer with polynomials.
+
 
 def transformer_2():
 
@@ -101,6 +103,7 @@ def transformer_2():
 ###############################################################################
 # Test GCP based transformer with thin plate splines.
 
+
 def transformer_3():
 
     ds = gdal.Open('data/gcps.vrt')
@@ -131,6 +134,7 @@ def transformer_3():
 ###############################################################################
 # Test geolocation based transformer.
 
+
 def transformer_4():
 
     ds = gdal.Open('data/sstgeo.vrt')
@@ -160,6 +164,7 @@ def transformer_4():
 
 ###############################################################################
 # Test RPC based transformer.
+
 
 def transformer_5():
 
@@ -379,6 +384,7 @@ def transformer_6():
 ###############################################################################
 # Test Transformer.TransformPoints
 
+
 def transformer_7():
 
     ds = gdal.Open('data/byte.tif')
@@ -398,6 +404,7 @@ def transformer_7():
 
 ###############################################################################
 # Test handling of nodata in RPC DEM (#5680)
+
 
 def transformer_8():
 
@@ -430,13 +437,13 @@ def transformer_8():
             gdaltest.post_reason( 'got wrong reverse transform result.' )
             return 'fail'
 
-
     gdal.Unlink('/vsimem/dem.tif')
 
     return 'success'
 
 ###############################################################################
 # Test RPC DEM line optimization
+
 
 def transformer_9():
 
@@ -480,13 +487,13 @@ def transformer_9():
             print(pnt_optimized)
             return 'fail'
 
-
     gdal.Unlink('/vsimem/dem.tif')
 
     return 'success'
 
 ###############################################################################
 # Test RPC DEM transform from geoid height to ellipsoidal height
+
 
 def transformer_10():
 
@@ -575,6 +582,7 @@ def transformer_10():
 ###############################################################################
 # Test failed inverse RPC transform (#6162)
 
+
 def transformer_11():
 
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
@@ -613,6 +621,7 @@ def transformer_11():
 
 ###############################################################################
 # Test degenerate cases of TPS transformer
+
 
 def transformer_12():
 
@@ -691,6 +700,7 @@ def transformer_12():
 ###############################################################################
 # Test inverse RPC transform at DEM edge (#6377)
 
+
 def transformer_13():
 
     ds = gdal.GetDriverByName('MEM').Create('', 6600, 4400)
@@ -718,11 +728,11 @@ def transformer_13():
         print(pnt)
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Test inverse RPC transform when iterations do oscillations (#6377)
+
 
 def transformer_14():
     ds = gdal.GetDriverByName('MEM').Create('', 4032, 2688)
@@ -787,6 +797,7 @@ def transformer_14():
 ###############################################################################
 # Test inverse RPC transform with DEM in [-180,180] but guessed longitude going
 # beyond
+
 
 def transformer_15():
 
@@ -884,6 +895,7 @@ def transformer_15():
 # Test approximate sub-transformers in GenImgProjTransformer
 # (we mostly test that the parameters are well recognized and serialized)
 
+
 def transformer_16():
 
     gdal.Translate('/vsimem/transformer_16.tif', 'data/byte.tif', options = "-gcp 0 0 440720.000 3751320.000 -gcp 0 20 440720.000 3750120.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 -a_srs EPSG:26711")
@@ -922,6 +934,7 @@ def transformer_17():
     if tr is not None:
         return 'fail'
     return 'success'
+
 
 gdaltest_list = [
     transformer_1,

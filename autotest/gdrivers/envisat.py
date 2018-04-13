@@ -73,6 +73,8 @@ def _get_mds_num(filename):
 
 ###############################################################################
 #
+
+
 class TestEnvisat:
     # Just a base class
 
@@ -189,6 +191,8 @@ class TestEnvisat:
 
 ###############################################################################
 #
+
+
 class TestEnvisatASAR(TestEnvisat):
     def test_envisat_asar_1( self ):
         # test sensor ID
@@ -255,6 +259,8 @@ class TestEnvisatASAR(TestEnvisat):
 
 ###############################################################################
 #
+
+
 class TestEnvisatMERIS(TestEnvisat):
     def test_envisat_meris_1( self ):
         # test sensor ID

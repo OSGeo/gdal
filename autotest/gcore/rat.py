@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Create a raster attribute table.
 
+
 def rat_1():
 
     gdaltest.saved_rat = None
@@ -96,6 +97,7 @@ def rat_1():
 
 ###############################################################################
 # Save a RAT in a file, written to .aux.xml, read it back and check it.
+
 
 def rat_2():
 
@@ -160,6 +162,7 @@ def rat_2():
 ###############################################################################
 # Save an empty RAT (#5451)
 
+
 def rat_3():
 
     ds = gdal.GetDriverByName('GTiff').Create('/vsimem/rat_3.tif', 1, 1 )
@@ -170,6 +173,7 @@ def rat_3():
 
     return 'success'
 ##############################################################################
+
 
 gdaltest_list = [
     rat_1,

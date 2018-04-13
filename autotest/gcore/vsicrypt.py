@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Use common test for /vsicrypt
 
+
 def vsicrypt_1():
 
     gdaltest.has_vsicrypt = False
@@ -55,6 +56,7 @@ def vsicrypt_1():
 
 ###############################################################################
 # Test various error cases
+
 
 def vsicrypt_2():
 
@@ -159,7 +161,6 @@ def vsicrypt_2():
                                     '/vsimem/file.bin', 'rb')
             if fp is not None:
                 gdal.VSIFCloseL(fp)
-
 
     gdal.SetConfigOption('VSICRYPT_IV', 'TOO_SHORT')
     with gdaltest.error_handler():
@@ -292,6 +293,7 @@ def vsicrypt_2():
 ###############################################################################
 # Test various options
 
+
 def vsicrypt_3():
 
     if not gdaltest.has_vsicrypt:
@@ -412,6 +414,7 @@ def vsicrypt_3():
 ###############################################################################
 # Test "random" operations against reference filesystem
 
+
 def vsicrypt_4():
 
     if not gdaltest.has_vsicrypt:
@@ -480,6 +483,7 @@ def vsicrypt_4():
 ###############################################################################
 # Test random filling of last sector
 
+
 def vsicrypt_5():
 
     if not gdaltest.has_vsicrypt:
@@ -543,6 +547,7 @@ def vsicrypt_5():
 
 ###############################################################################
 # Test VSISetCryptKey
+
 
 def vsicrypt_6():
 
@@ -621,6 +626,7 @@ def vsicrypt_6():
     gdal.Unlink('/vsimem/file.bin')
 
     return 'success'
+
 
 gdaltest_list = [ vsicrypt_1,
                   vsicrypt_2,

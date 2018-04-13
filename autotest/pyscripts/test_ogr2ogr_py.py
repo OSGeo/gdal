@@ -46,6 +46,7 @@ import test_py_scripts
 ###############################################################################
 # Simple test
 
+
 def test_ogr2ogr_py_1():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -81,6 +82,7 @@ def test_ogr2ogr_py_1():
 ###############################################################################
 # Test -sql
 
+
 def test_ogr2ogr_py_2():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -105,6 +107,7 @@ def test_ogr2ogr_py_2():
 
 ###############################################################################
 # Test -spat
+
 
 def test_ogr2ogr_py_3():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -135,6 +138,7 @@ def test_ogr2ogr_py_3():
 ###############################################################################
 # Test -where
 
+
 def test_ogr2ogr_py_4():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -159,6 +163,7 @@ def test_ogr2ogr_py_4():
 
 ###############################################################################
 # Test -append
+
 
 def test_ogr2ogr_py_5():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -197,6 +202,7 @@ def test_ogr2ogr_py_5():
 ###############################################################################
 # Test -overwrite
 
+
 def test_ogr2ogr_py_6():
 
     import ogr_pg
@@ -229,6 +235,7 @@ def test_ogr2ogr_py_6():
 ###############################################################################
 # Test -gt
 
+
 def test_ogr2ogr_py_7():
 
     import ogr_pg
@@ -260,6 +267,7 @@ def test_ogr2ogr_py_7():
 ###############################################################################
 # Test -t_srs
 
+
 def test_ogr2ogr_py_8():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -285,6 +293,7 @@ def test_ogr2ogr_py_8():
 ###############################################################################
 # Test -a_srs
 
+
 def test_ogr2ogr_py_9():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -309,6 +318,7 @@ def test_ogr2ogr_py_9():
 
 ###############################################################################
 # Test -select
+
 
 def test_ogr2ogr_py_10():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -348,6 +358,7 @@ def test_ogr2ogr_py_10():
 ###############################################################################
 # Test -lco
 
+
 def test_ogr2ogr_py_11():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -373,6 +384,7 @@ def test_ogr2ogr_py_11():
 
 ###############################################################################
 # Test -nlt
+
 
 def test_ogr2ogr_py_12():
 
@@ -400,6 +412,7 @@ def test_ogr2ogr_py_12():
 ###############################################################################
 # Add explicit source layer name
 
+
 def test_ogr2ogr_py_13():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -424,6 +437,7 @@ def test_ogr2ogr_py_13():
 
 ###############################################################################
 # Test -segmentize
+
 
 def test_ogr2ogr_py_14():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -452,6 +466,7 @@ def test_ogr2ogr_py_14():
 
 ###############################################################################
 # Test -overwrite with a shapefile
+
 
 def test_ogr2ogr_py_15():
 
@@ -486,6 +501,7 @@ def test_ogr2ogr_py_15():
 ###############################################################################
 # Test -fid
 
+
 def test_ogr2ogr_py_16():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -516,6 +532,7 @@ def test_ogr2ogr_py_16():
 ###############################################################################
 # Test -progress
 
+
 def test_ogr2ogr_py_17():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -542,6 +559,7 @@ def test_ogr2ogr_py_17():
 
 ###############################################################################
 # Test -wrapdateline
+
 
 def test_ogr2ogr_py_18():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -597,6 +615,7 @@ def test_ogr2ogr_py_18():
 ###############################################################################
 # Test -clipsrc
 
+
 def test_ogr2ogr_py_19():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -632,6 +651,7 @@ def test_ogr2ogr_py_19():
 # Test correct remap of fields when laundering to Shapefile format
 # Test that the data is going into the right field
 # FIXME: Any field is skipped if a subsequent field with same name is found.
+
 
 def test_ogr2ogr_py_20():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -709,6 +729,7 @@ def test_ogr2ogr_py_20():
 # Test ogr2ogr when the output driver has already created the fields
 # at dataset creation (#3247)
 
+
 def test_ogr2ogr_py_21():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -777,6 +798,7 @@ def test_ogr2ogr_py_22():
 ###############################################################################
 # Same as previous but with -select
 
+
 def test_ogr2ogr_py_23():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -809,6 +831,7 @@ def test_ogr2ogr_py_23():
 
 ###############################################################################
 # Test -clipsrc with WKT geometry (#3530)
+
 
 def test_ogr2ogr_py_24():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -843,6 +866,7 @@ def test_ogr2ogr_py_24():
 
 ###############################################################################
 # Test -clipsrc with clip from external datasource
+
 
 def test_ogr2ogr_py_25():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -884,6 +908,7 @@ def test_ogr2ogr_py_25():
 ###############################################################################
 # Test -clipdst with WKT geometry (#3530)
 
+
 def test_ogr2ogr_py_26():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
     if script_path is None:
@@ -917,6 +942,7 @@ def test_ogr2ogr_py_26():
 
 ###############################################################################
 # Test -clipdst with clip from external datasource
+
 
 def test_ogr2ogr_py_27():
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -958,6 +984,7 @@ def test_ogr2ogr_py_27():
 ###############################################################################
 # Test that -overwrite work if the output file doesn't yet exist (#3825)
 
+
 def test_ogr2ogr_py_31():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -982,6 +1009,7 @@ def test_ogr2ogr_py_31():
 
 ###############################################################################
 # Test that -append/-overwrite to a single-file shapefile work without specifying -nln
+
 
 def test_ogr2ogr_py_32():
 
@@ -1017,6 +1045,7 @@ def test_ogr2ogr_py_32():
 
 ###############################################################################
 # Test -explodecollections
+
 
 def test_ogr2ogr_py_33():
 
@@ -1086,6 +1115,7 @@ def test_ogr2ogr_py_33():
 # This should result in creating a someDirThatDoesNotExist directory with
 # someDirThatDoesNotExist.shp/dbf/shx inside this directory
 
+
 def test_ogr2ogr_py_34():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -1127,6 +1157,7 @@ def test_ogr2ogr_py_34():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist src.shp'
+
 
 def test_ogr2ogr_py_35():
 
@@ -1170,6 +1201,7 @@ def test_ogr2ogr_py_35():
 ###############################################################################
 # Test ogr2ogr -zfield
 
+
 def test_ogr2ogr_py_36():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -1198,6 +1230,7 @@ def test_ogr2ogr_py_36():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer'
+
 
 def test_ogr2ogr_py_37():
 
@@ -1238,6 +1271,7 @@ def test_ogr2ogr_py_37():
 # Test that we take into account the fields by the where clause when combining
 # -select and -where (#4015)
 
+
 def test_ogr2ogr_py_38():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -1265,6 +1299,7 @@ def test_ogr2ogr_py_38():
 
 ###############################################################################
 # Test 'ogr2ogr someDirThatDoesNotExist.shp dataSourceWithMultipleLayer -sql "select * from alayer"' (#4268)
+
 
 def test_ogr2ogr_py_39():
 
@@ -1303,6 +1338,7 @@ def test_ogr2ogr_py_39():
 
 ###############################################################################
 # Test -dim 3 and -dim 2
+
 
 def test_ogr2ogr_py_43():
 
@@ -1345,6 +1381,7 @@ def test_ogr2ogr_py_43():
 
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
+
 
 def test_ogr2ogr_py_44():
 
@@ -1403,6 +1440,7 @@ def test_ogr2ogr_py_44():
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for polygon/multipolygon
 
+
 def test_ogr2ogr_py_45():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -1460,6 +1498,7 @@ def test_ogr2ogr_py_45():
 ###############################################################################
 # Test -nlt PROMOTE_TO_MULTI for linestring/multilinestring
 
+
 def test_ogr2ogr_py_46():
 
     script_path = test_py_scripts.get_py_script('ogr2ogr')
@@ -1513,6 +1552,7 @@ def test_ogr2ogr_py_46():
     os.unlink('tmp/test_ogr2ogr_45.xsd')
 
     return 'success'
+
 
 gdaltest_list = [
     test_ogr2ogr_py_1,

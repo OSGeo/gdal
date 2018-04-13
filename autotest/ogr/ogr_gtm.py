@@ -38,6 +38,7 @@ import gdaltest
 import ogrtest
 from osgeo import ogr
 
+
 def ogr_gtm_init():
     gdaltest.gtm_ds = None
 
@@ -62,6 +63,7 @@ def ogr_gtm_init():
 
 ###############################################################################
 # Test waypoints gtm layer.
+
 
 def ogr_gtm_read_1():
     if not gdaltest.have_gtm:
@@ -111,7 +113,6 @@ def ogr_gtm_read_1():
         gdaltest.post_reason( 'Wrong comment field value' )
         return 'fail'
 
-
     if feat.GetField('icon') != 4:
         gdaltest.post_reason( 'Wrong icon field value' )
         return 'fail'
@@ -153,6 +154,8 @@ def ogr_gtm_read_1():
 
 ###############################################################################
 # Test tracks gtm layer.
+
+
 def ogr_gtm_read_2():
     if not gdaltest.have_gtm:
         return 'skip'
@@ -318,6 +321,8 @@ def ogr_gtm_write_1():
 
 ###############################################################################
 # Check previous test
+
+
 def ogr_gtm_check_write_1():
     if not gdaltest.have_gtm:
         return 'skip'
@@ -475,6 +480,7 @@ def ogr_gtm_cleanup():
     gdaltest.gtm_ds = None
     os.remove('tmp/gtm.gtm')
     return 'success'
+
 
 gdaltest_list = [
     ogr_gtm_init,

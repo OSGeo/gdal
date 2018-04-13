@@ -28,6 +28,8 @@ import sys
 from osgeo import gdal
 
 # =============================================================================
+
+
 def names_to_fileinfos( names ):
     """
     Translate a list of GDAL filenames, into file_info objects.
@@ -49,6 +51,8 @@ def names_to_fileinfos( names ):
     return file_infos
 
 # *****************************************************************************
+
+
 class file_info:
     """A class holding information about a GDAL file."""
 
@@ -157,6 +161,8 @@ class file_info:
         t_fh.write('\t\t</SimpleSource>\n')
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: gdal_vrtmerge.py [-o out_filename] [-separate] [-pct]')
     print('           [-ul_lr ulx uly lrx lry] [-ot datatype] [-i input_file_list')
@@ -166,6 +172,7 @@ def Usage():
 #
 # Program mainline.
 #
+
 
 if __name__ == '__main__':
 

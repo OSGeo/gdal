@@ -44,6 +44,8 @@ import gdaltest
 
 ###############################################################################
 #
+
+
 def rasdaman_1():
     try:
         gdaltest.rasdamanDriver = gdal.GetDriverByName('RASDAMAN')
@@ -73,6 +75,8 @@ def rasdaman_1():
 
 ###############################################################################
 # Test opening a non existing collection
+
+
 def rasdaman_2():
     if gdaltest.rasdamanDriver is None:
         return 'skip'
@@ -85,6 +89,8 @@ def rasdaman_2():
 
 ###############################################################################
 # Test syntax error
+
+
 def rasdaman_3():
     if gdaltest.rasdamanDriver is None:
         return 'skip'
@@ -94,6 +100,7 @@ def rasdaman_3():
         return 'success'
     else:
         return 'fail'
+
 
 gdaltest_list = [
     rasdaman_1,

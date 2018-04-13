@@ -38,6 +38,7 @@ from osgeo import ogr
 ###############################################################################
 # Test reading
 
+
 def ogr_sdts_1():
 
     gdaltest.sdts_ds = ogr.Open( 'data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF' )

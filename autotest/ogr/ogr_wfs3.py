@@ -41,6 +41,7 @@ import webserver
 # Init
 #
 
+
 def ogr_wfs3_init():
 
     gdaltest.wfs3_drv = ogr.GetDriverByName('WFS3')
@@ -55,6 +56,7 @@ def ogr_wfs3_init():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_wfs3_errors():
     if gdaltest.wfs3_drv is None:
@@ -150,6 +152,7 @@ def ogr_wfs3_errors():
 
 ###############################################################################
 
+
 def ogr_wfs3_empty_layer():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -188,6 +191,7 @@ def ogr_wfs3_empty_layer():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_wfs3_schema_from_api():
     if gdaltest.wfs3_drv is None:
@@ -327,6 +331,7 @@ def ogr_wfs3_schema_from_api():
 
 ###############################################################################
 
+
 def ogr_wfs3_fc_no_links_next_legacy_behaviour():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -434,6 +439,7 @@ def ogr_wfs3_fc_no_links_next_legacy_behaviour():
 
 ###############################################################################
 
+
 def ogr_wfs3_fc_links_next_geojson():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -511,6 +517,7 @@ def ogr_wfs3_fc_links_next_geojson():
 
 ###############################################################################
 
+
 def ogr_wfs3_fc_links_next_headers():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -586,6 +593,7 @@ def ogr_wfs3_fc_links_next_headers():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_wfs3_spatial_filter():
     if gdaltest.wfs3_drv is None:
@@ -672,6 +680,7 @@ def ogr_wfs3_spatial_filter():
 
 ###############################################################################
 
+
 def ogr_wfs3_get_feature_count():
     if gdaltest.wfs3_drv is None:
         return 'skip'
@@ -740,6 +749,7 @@ def ogr_wfs3_get_feature_count():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_wfs3_attribute_filter():
     if gdaltest.wfs3_drv is None:
@@ -865,6 +875,7 @@ def ogr_wfs3_attribute_filter():
 
 ###############################################################################
 
+
 def ogr_wfs3_cleanup():
 
     if gdaltest.wfs3_drv is None:
@@ -874,6 +885,7 @@ def ogr_wfs3_cleanup():
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_wfs3_init,

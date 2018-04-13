@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Verify warped result.
 
+
 def geoloc_1():
 
     tst = gdaltest.GDALTest( 'VRT', 'warpsst.vrt', 1, 61818 )

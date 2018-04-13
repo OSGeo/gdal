@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Test opening a little endian file
 
+
 def ngsgeoid_1():
 
     tst = gdaltest.GDALTest( 'NGSGEOID', 'g2009u01_le_truncated.bin', 1, 65534 )
@@ -44,6 +45,7 @@ def ngsgeoid_1():
 
 ###############################################################################
 # Test opening a big endian file
+
 
 def ngsgeoid_2():
 

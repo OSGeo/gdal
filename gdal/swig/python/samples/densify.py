@@ -130,7 +130,6 @@ class Translator(object):
                                                 geom_type = self.input.GetLayerDefn().GetGeomType(),
                                                 srs= self.out_srs)
 
-
     def make_fields(self):
         defn = self.input.GetLayerDefn()
 
@@ -169,6 +168,7 @@ class Translator(object):
     def __del__(self):
         if self.output:
             self.output.SyncToDisk()
+
 
 class Densify(Translator):
 
@@ -306,6 +306,7 @@ class Densify(Translator):
         self.open()
         self.make_fields()
         self.translate(geometry_callback = self.densify)
+
 
 def GetLength(geometry):
 

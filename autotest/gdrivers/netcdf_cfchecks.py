@@ -72,8 +72,10 @@ def normalize_whitespace(text):
     "Remove redundant whitespace from a string."
     return ' '.join(text.split())
 
+
 def my_cmp(a,b):
     return (a>b)-(a<b)
+
 
 class CFVersion(object):
     """A CF version number, stored as a tuple, that can be instantiated with
@@ -117,6 +119,7 @@ class CFVersion(object):
                     return 0  # e.g. 3.2 == 3.2
             pos += 1
 
+
 vn1_0 = CFVersion((1, 0))
 vn1_1 = CFVersion((1, 1))
 vn1_2 = CFVersion((1, 2))
@@ -132,6 +135,7 @@ class ConstructDict(ContentHandler):
     """Parse the xml standard_name table, reading all entries
        into a dictionary; storing standard_name and units.
     """
+
     def __init__(self):
         self.inUnitsContent = 0
         self.inEntryIdContent = 0
@@ -165,7 +169,6 @@ class ConstructDict(ContentHandler):
         elif name == 'last_modified':
             self.inLastModifiedContent = 1
             self.last_modified = ""
-
 
     def characters(self, ch):
         if self.inUnitsContent:
@@ -209,10 +212,12 @@ class ConstructDict(ContentHandler):
             self.inLastModifiedContent = 0
             self.last_modified = normalize_whitespace(self.last_modified)
 
+
 class ConstructList(ContentHandler):
     """Parse the xml area_type table, reading all area_types
        into a list.
     """
+
     def __init__(self):
         self.inVersionNoContent = 0
         self.inLastModifiedContent = 0
@@ -371,7 +376,6 @@ class CFChecker:
             print("WARNING: Cannot determine CF version from the Conventions attribute; checking against latest CF version:",newest_version)
             self.warn = self.warn+1
             self.version = newest_version
-
 
     # Set up dictionary of all valid attributes, their type and use
     self.setUpAttributeList()
@@ -556,7 +560,6 @@ class CFChecker:
             print("ERROR (9.4): The global attribute 'featureType' must be present (A ragged array representation has been used)")
             self.err = self.err + 1
 
-
         if 'featureType' in self.f.attributes:
             featureType = self.f.attributes['featureType']
 
@@ -574,7 +577,6 @@ class CFChecker:
                 print("ERROR (9.5): CF Files containing",featureType,"featureType may contain 2 occurrences of a cf_role attribute")
                 self.err = self.err + 1
 
-
     print("")
     print("ERRORS detected:",self.err)
     print("WARNINGS given:",self.warn)
@@ -589,7 +591,6 @@ class CFChecker:
     else:
         # No errors or warnings - return success!
         return 0
-
 
   #-----------------------------
   def setUpAttributeList(self):
@@ -646,7 +647,6 @@ class CFChecker:
 
       return
 
-
   #---------------------------
   def uniqueList(self, list):
   #---------------------------
@@ -660,7 +660,6 @@ class CFChecker:
           else:
               seen.append(x)
       return 1
-
 
   #-------------------------
   def isNumeric(self, var):
@@ -757,7 +756,6 @@ class CFChecker:
 
     # Not possible to deduce interpretation
     return None
-
 
   #--------------------------------
   def getCoordinateDataVars(self):
@@ -986,7 +984,6 @@ class CFChecker:
 
     return (coordVars, auxCoordVars, boundaryVars, climatologyVars, gridMappingVars)
 
-
   #-------------------------------------
   def chkGridMappingVar(self, varName):
   #-------------------------------------
@@ -1023,7 +1020,6 @@ class CFChecker:
           self.warn = self.warn+1
 
       return rc
-
 
   #------------------------
   def setUpFormulas(self):
@@ -1091,7 +1087,6 @@ class CFChecker:
       else:
           return 0
 
-
   #------------------------------
   def chkGlobalAttributes(self):
   #------------------------------
@@ -1149,7 +1144,6 @@ class CFChecker:
                 self.err = self.err+1
     return rc
 
-
   #------------------------------
   def getFileCFVersion(self):
   #------------------------------
@@ -1193,7 +1187,6 @@ class CFChecker:
         return 0
 
     return 1
-
 
   #---------------------------------------------
   def chkDimensions(self,varName,allcoordVars):
@@ -1355,7 +1348,6 @@ class CFChecker:
         else:
             print("Unknown Type for attribute:",attribute,attrType)
 
-
         # If attrType = 'NoneType' then it has been automatically created e.g. missing_value
         typeError=0
         if attrType != 'NoneType':
@@ -1405,7 +1397,6 @@ class CFChecker:
             else:
                 i=i+1
 
-
         # Check no time variable attributes. E.g. calendar, month_lengths etc.
         TimeAttributes=['calendar','month_lengths','leap_year','leap_month','climatology']
         if attribute in TimeAttributes:
@@ -1428,7 +1419,6 @@ class CFChecker:
                 rc=0
 
     return rc
-
 
   #----------------------------------
   def chkCellMethods(self, varName):
@@ -1559,7 +1549,6 @@ class CFChecker:
       udunits.ut_free(udunitsUnit)
 
       return rc
-
 
   #---------------------------------------------------
   def isValidCellMethodTypeValue(self, type, value):
@@ -1710,7 +1699,6 @@ class CFChecker:
 
     return rc
 
-
   #----------------------------------
   def chkCellMeasures(self,varName):
   #----------------------------------
@@ -1778,7 +1766,6 @@ class CFChecker:
 
     return rc
 
-
   #----------------------------------
   def chkFormulaTerms(self,varName,allCoordVars):
   #----------------------------------
@@ -1803,7 +1790,6 @@ class CFChecker:
             self.err = self.err+1
             # No sense in carrying on as can't validate formula_terms without valid standard name
             return 0
-
 
         (stdName,modifier) = self.getStdName(var)
 
@@ -1845,7 +1831,6 @@ class CFChecker:
                         rc=0
 
     return rc
-
 
   #----------------------------------------
   def chkUnits(self,varName,allCoordVars):
@@ -1971,7 +1956,6 @@ class CFChecker:
 
       return rc
 
-
   #----------------------------
   def chkBADCUnits(self, var):
   #----------------------------
@@ -1992,7 +1976,6 @@ class CFChecker:
 
       return rc
 
-
   #---------------------------------------
   def chkValidMinMaxRange(self, varName):
   #---------------------------------------
@@ -2008,7 +1991,6 @@ class CFChecker:
               return 0
 
       return 1
-
 
   #---------------------------------
   def chk_FillValue(self, varName):
@@ -2109,7 +2091,6 @@ class CFChecker:
 
     return rc
 
-
   #------------------------------------
   def chkAxisAttribute(self, varName):
   #------------------------------------
@@ -2151,7 +2132,6 @@ class CFChecker:
 
       return 1
 
-
   #----------------------------------------
   def chkPositiveAttribute(self, varName):
   #----------------------------------------
@@ -2163,7 +2143,6 @@ class CFChecker:
               return 0
 
       return 1
-
 
   #-----------------------------------------
   def chkTimeVariableAttributes(self, varName):
@@ -2232,7 +2211,6 @@ class CFChecker:
 
     return rc
 
-
   #----------------------------------
   def chkDescription(self, varName):
   #----------------------------------
@@ -2283,7 +2261,6 @@ class CFChecker:
                       rc=0
 
       return rc
-
 
   #-----------------------------------
   def chkCompressAttr(self, varName):
@@ -2467,7 +2444,6 @@ class CFChecker:
 
       return rc
 
-
   #-----------------------
   def getType(self, arg):
   #-----------------------
@@ -2483,7 +2459,6 @@ class CFChecker:
       else:
           print("<cfchecker> ERROR: Unknown Type in getType("+arg+")")
           return 0
-
 
   #----------------------------------------
   def equalNumOfValues(self, arg1, arg2):
@@ -2512,7 +2487,6 @@ class CFChecker:
 
       return 1
 
-
   #------------------------------------------
   def chkMultiDimCoord(self, varName, axes):
   #------------------------------------------
@@ -2529,7 +2503,6 @@ class CFChecker:
               print("WARNING (5): The name of a multi-dimensional coordinate variable")
               print("             should not match the name of any of its dimensions.")
               self.warn = self.warn + 1
-
 
   #--------------------------------------
   def chkValuesMonotonic(self, varName):
@@ -2578,7 +2551,6 @@ class CFChecker:
 
 
 def getargs(arglist):
-
     '''getargs(arglist): parse command line options and environment variables'''
 
     from getopt import getopt, GetoptError

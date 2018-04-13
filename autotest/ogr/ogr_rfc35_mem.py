@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # Initiate the test file
 
+
 def ogr_rfc35_mem_1():
 
     gdaltest.rfc35_mem_ds = ogr.GetDriverByName('Memory').CreateDataSource('rfc35_test')
@@ -85,6 +86,7 @@ def ogr_rfc35_mem_1():
 ###############################################################################
 # Test ReorderField()
 
+
 def Truncate(val, lyr_defn, fieldname):
     #if val is None:
     #    return val
@@ -92,6 +94,7 @@ def Truncate(val, lyr_defn, fieldname):
     #return val[0:lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
     # Mem driver doesn't actually truncate
     return val
+
 
 def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'):
 
@@ -119,6 +122,7 @@ def CheckFeatures(lyr, foo = 'foo5', bar = 'bar10', baz = 'baz15', baw = 'baw20'
 
     return 'success'
 
+
 def CheckColumnOrder(lyr, expected_order):
 
     lyr_defn = lyr.GetLayerDefn()
@@ -127,6 +131,7 @@ def CheckColumnOrder(lyr, expected_order):
             return 'fail'
 
     return 'success'
+
 
 def Check(lyr, expected_order):
 
@@ -139,6 +144,7 @@ def Check(lyr, expected_order):
         return ret
 
     return 'success'
+
 
 def ogr_rfc35_mem_2():
 
@@ -207,6 +213,7 @@ def ogr_rfc35_mem_2():
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
+
 def ogr_rfc35_mem_3():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
@@ -257,6 +264,7 @@ def ogr_rfc35_mem_3():
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
+
 
 def ogr_rfc35_mem_4():
 
@@ -368,6 +376,7 @@ def ogr_rfc35_mem_4():
 ###############################################################################
 # Test DeleteField()
 
+
 def ogr_rfc35_mem_5():
 
     lyr = gdaltest.rfc35_mem_ds.GetLayer(0)
@@ -424,11 +433,13 @@ def ogr_rfc35_mem_5():
 ###############################################################################
 # Initiate the test file
 
+
 def ogr_rfc35_mem_cleanup():
 
     gdaltest.rfc35_mem_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_rfc35_mem_1,

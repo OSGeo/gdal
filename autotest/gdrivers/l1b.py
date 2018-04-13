@@ -66,6 +66,8 @@ class TestL1B:
 
 ###############################################################################
 #
+
+
 def l1b_geoloc():
     try:
         os.stat('tmp/cache/n12gac8bit.l1b')
@@ -105,6 +107,8 @@ def l1b_geoloc():
 
 ###############################################################################
 #
+
+
 def l1b_solar_zenith_angles_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
@@ -134,6 +138,8 @@ def l1b_solar_zenith_angles_before_noaa_15():
 
 ###############################################################################
 #
+
+
 def l1b_metadata_before_noaa_15():
     try:
         os.stat('tmp/cache/n12gac10bit.l1b')
@@ -164,6 +170,8 @@ def l1b_metadata_before_noaa_15():
 
 ###############################################################################
 #
+
+
 def l1b_angles_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -203,6 +211,8 @@ def l1b_angles_after_noaa_15():
 
 ###############################################################################
 #
+
+
 def l1b_clouds_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -232,6 +242,8 @@ def l1b_clouds_after_noaa_15():
 
 ###############################################################################
 #
+
+
 def l1b_metadata_after_noaa_15():
     try:
         os.stat('tmp/cache/n16gac10bit.l1b')
@@ -262,6 +274,8 @@ def l1b_metadata_after_noaa_15():
 
 ###############################################################################
 #
+
+
 def l1b_little_endian():
 
     ds = gdal.Open('/vsizip/data/hrpt_little_endian.l1b.zip')

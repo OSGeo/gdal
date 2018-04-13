@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # verify that we can load Numeric python, and find the Numpy driver.
 
+
 def numpy_rw_1():
 
     gdaltest.numpy_drv = None
@@ -59,6 +60,7 @@ def numpy_rw_1():
 
 ###############################################################################
 # Load a test file into a memory Numpy array, and verify the checksum.
+
 
 def numpy_rw_2():
 
@@ -88,6 +90,7 @@ def numpy_rw_2():
 ###############################################################################
 # Test loading complex data.
 
+
 def numpy_rw_3():
 
     if gdaltest.numpy_drv is None:
@@ -106,6 +109,7 @@ def numpy_rw_3():
 ###############################################################################
 # Test a band read with downsampling.
 
+
 def numpy_rw_4():
 
     if gdaltest.numpy_drv is None:
@@ -123,6 +127,7 @@ def numpy_rw_4():
 
 ###############################################################################
 # Test reading a multi-band file.
+
 
 def numpy_rw_5():
 
@@ -172,6 +177,7 @@ def numpy_rw_5():
 ###############################################################################
 # Check that Band.ReadAsArray() can accept an already allocated array (#2658, #3028)
 
+
 def numpy_rw_6():
 
     if gdaltest.numpy_drv is None:
@@ -195,6 +201,7 @@ def numpy_rw_6():
 
 ###############################################################################
 # Check that Dataset.ReadAsArray() can accept an already allocated array (#2658, #3028)
+
 
 def numpy_rw_7():
 
@@ -243,6 +250,7 @@ def numpy_rw_7():
 ###############################################################################
 # Check that Dataset.ReadAsArray() with multi-band data
 
+
 def numpy_rw_8():
 
     if gdaltest.numpy_drv is None:
@@ -264,6 +272,7 @@ def numpy_rw_8():
 
 ###############################################################################
 # Test Band.WriteArray()
+
 
 def numpy_rw_9():
 
@@ -288,6 +297,7 @@ def numpy_rw_9():
 
 ###############################################################################
 # Test signed byte handling
+
 
 def numpy_rw_10():
 
@@ -325,6 +335,7 @@ def numpy_rw_10():
 
 ###############################################################################
 # Test all datatypes
+
 
 def numpy_rw_11():
 
@@ -400,6 +411,7 @@ def numpy_rw_11():
 ###############################################################################
 # Test array with slices (#3542)
 
+
 def numpy_rw_12():
 
     if gdaltest.numpy_drv is None:
@@ -432,6 +444,7 @@ def numpy_rw_12():
 
 ###############################################################################
 # Test expected errors
+
 
 def numpy_rw_13():
 
@@ -634,6 +647,7 @@ def numpy_rw_13():
 ###############################################################################
 # Test callback of ReadAsArray()
 
+
 def numpy_rw_14_progress_callback(pct, message, user_data):
     if abs(pct - user_data[0]) > 1e-5:
         print('Expected %f, got %f' % (user_data[0], pct))
@@ -641,11 +655,13 @@ def numpy_rw_14_progress_callback(pct, message, user_data):
     user_data[0] = user_data[0] + 0.05
     return 1 # 1 to continue, 0 to stop
 
+
 def numpy_rw_14_progress_interrupt_callback(pct, message, user_data):
     user_data[0] = pct
     if pct >= 0.5:
         return 0
     return 1 # 1 to continue, 0 to stop
+
 
 def numpy_rw_14_progress_callback_2(pct, message, user_data):
     if pct < user_data[0]:
@@ -653,6 +669,7 @@ def numpy_rw_14_progress_callback_2(pct, message, user_data):
         return 0
     user_data[0] = pct
     return 1 # 1 to continue, 0 to stop
+
 
 def numpy_rw_14():
 
@@ -737,6 +754,7 @@ def numpy_rw_14():
 ###############################################################################
 # Test NumPy GetGeoTransform/SetGeoTransform
 
+
 def numpy_rw_15():
 
     if gdaltest.numpy_drv is None:
@@ -761,6 +779,7 @@ def numpy_rw_15():
 
 ###############################################################################
 # Test errors of OpenArray()
+
 
 def numpy_rw_16():
 
@@ -799,6 +818,7 @@ def numpy_rw_16():
 ###############################################################################
 # Test old deprecated way with gdal_array.GetArrayFilename()
 
+
 def numpy_rw_17():
 
     if gdaltest.numpy_drv is None:
@@ -831,10 +851,12 @@ def numpy_rw_17():
 
     return 'success'
 
+
 def numpy_rw_cleanup():
     gdaltest.numpy_drv = None
 
     return 'success'
+
 
 gdaltest_list = [
     numpy_rw_1,

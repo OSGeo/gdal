@@ -36,6 +36,7 @@ import sys
 # EscapeLine - escape anything C-problematic in a line.
 # -----------------------------------------------------------------------------
 
+
 def EscapeLine( line ):
 
     line_out = ''
@@ -49,6 +50,7 @@ def EscapeLine( line ):
 
 # -----------------------------------------------------------------------------
 #
+
 
 if __name__ != '__main__':
     print 'This module should only be used as a mainline.'

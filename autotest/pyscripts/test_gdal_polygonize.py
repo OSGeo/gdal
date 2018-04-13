@@ -43,6 +43,7 @@ from osgeo import ogr
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
+
 def test_gdal_polygonize_1():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
@@ -105,6 +106,7 @@ def test_gdal_polygonize_1():
 ###############################################################################
 # Test a simple case without masking.
 
+
 def test_gdal_polygonize_2():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
@@ -145,6 +147,7 @@ def test_gdal_polygonize_2():
     else:
         return 'fail'
 
+
 def test_gdal_polygonize_3():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
@@ -183,6 +186,7 @@ def test_gdal_polygonize_3():
 ###############################################################################
 # Test -b mask
 
+
 def test_gdal_polygonize_4():
 
     script_path = test_py_scripts.get_py_script('gdal_polygonize')
@@ -214,6 +218,7 @@ def test_gdal_polygonize_4():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_polygonize_1,

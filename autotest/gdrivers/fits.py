@@ -38,6 +38,8 @@ import gdaltest
 
 ###############################################################################
 #
+
+
 def fits_init():
     try:
         gdaltest.fitsDriver = gdal.GetDriverByName('FITS')
@@ -51,6 +53,8 @@ def fits_init():
 
 ###############################################################################
 #
+
+
 class TestFITS:
     def __init__( self, fileName ):
         self.fileName = fileName
@@ -75,6 +79,8 @@ class TestFITS:
 
 ###############################################################################
 #
+
+
 def fits_metadata():
     if gdaltest.fitsDriver is None:
         return 'skip'
@@ -115,6 +121,7 @@ def fits_metadata():
     gdaltest.fitsDriver.Delete('tmp/byte.fits' )
 
     return 'success'
+
 
 ###############################################################################
 #

@@ -40,6 +40,7 @@ from osgeo import ogr
 ###############################################################################
 #
 
+
 def search_all_features(lyr):
 
     geoms = []
@@ -106,6 +107,7 @@ def search_all_features(lyr):
 ###############################################################################
 # Test
 
+
 def ogr_shape_sbn_1():
 
     if not gdaltest.download_file('http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip', 'Cochiti_shapefiles.zip' ):
@@ -135,11 +137,13 @@ def ogr_shape_sbn_1():
 ###############################################################################
 # Test
 
+
 def ogr_shape_sbn_2():
 
     ds = ogr.Open('data/CoHI_GCS12.shp')
     lyr = ds.GetLayer(0)
     return search_all_features(lyr)
+
 
 gdaltest_list = [
     ogr_shape_sbn_1,

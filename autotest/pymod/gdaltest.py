@@ -79,6 +79,7 @@ argv = gdal.GeneralCmdLineProcessor( sys.argv )
 
 ###############################################################################
 
+
 def setup_run( name ):
 
     if 'APPLY_LOCALE' in os.environ:
@@ -90,12 +91,14 @@ def setup_run( name ):
 
 ###############################################################################
 
+
 def git_status():
 
     out, err = runexternal_out_and_err('git status --porcelain .')
     return out
 
 ###############################################################################
+
 
 def run_tests( test_list ):
     global success_counter, failure_counter, expected_failure_counter, blow_counter, skip_counter
@@ -210,6 +213,7 @@ def get_lineno_2framesback( frames ):
 
 ###############################################################################
 
+
 def post_reason( msg, frames=2 ):
     lineno = get_lineno_2framesback( frames )
     global reason
@@ -220,6 +224,7 @@ def post_reason( msg, frames=2 ):
         reason = msg
 
 ###############################################################################
+
 
 def summarize():
     global count_skipped_tests_download, count_skipped_tests_slow
@@ -259,6 +264,7 @@ def summarize():
     return failure_counter + blow_counter
 
 ###############################################################################
+
 
 def run_all( dirlist, run_as_external = False ):
 
@@ -352,6 +358,7 @@ def run_all( dirlist, run_as_external = False ):
 
 ###############################################################################
 
+
 def clean_tmp():
     all_files = os.listdir('tmp')
     for file in all_files:
@@ -365,6 +372,8 @@ def clean_tmp():
     return 'success'
 
 ###############################################################################
+
+
 def testCreateCopyInterruptCallback(pct, message, user_data):
     if pct > 0.5:
         return 0 # to stop
@@ -372,6 +381,7 @@ def testCreateCopyInterruptCallback(pct, message, user_data):
         return 1 # to continue
 
 ###############################################################################
+
 
 class GDALTest:
     def __init__(self, drivername, filename, band, chksum,
@@ -1202,10 +1212,12 @@ def approx_equal( a, b ):
     else:
         return 1
 
+
 def user_srs_to_wkt( user_text ):
     srs = osr.SpatialReference()
     srs.SetFromUserInput( user_text )
     return srs.ExportToWkt()
+
 
 def equal_srs_from_wkt( expected_wkt, got_wkt ):
     expected_srs = osr.SpatialReference()
@@ -1226,6 +1238,7 @@ def equal_srs_from_wkt( expected_wkt, got_wkt ):
 ###############################################################################
 # Compare two sets of RPC metadata, and establish if they are essentially
 # equivalent or not.
+
 
 def rpcs_equal( md1, md2 ):
 
@@ -1282,6 +1295,7 @@ def rpcs_equal( md1, md2 ):
 ###############################################################################
 # Test if geotransforms are equal with an epsilon tolerance
 #
+
 
 def geotransform_equals(gt1, gt2, gt_epsilon):
     for i in range(6):
@@ -1408,6 +1422,7 @@ def gdal_data_type_to_python_struct_format(datatype):
 ###############################################################################
 # Compare the values of the pixels
 
+
 def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
     import struct
 
@@ -1443,7 +1458,6 @@ def compare_ds(ds1, ds2, xoff = 0, yoff = 0, width = 0, height = 0, verbose=1):
         print("Number of diffs : %d" % (ndiffs))
 
     return maxdiff
-
 
 
 ###############################################################################
@@ -1515,6 +1529,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 # Re-register all JPEG2000 drivers previously disabled by
 # deregister_all_jpeg2000_drivers_but
 
+
 def reregister_all_jpeg2000_drivers():
     global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv,jp2lura_drv
     global jp2kak_drv_unregistered,jpeg2000_drv_unregistered,jp2ecw_drv_unregistered,jp2mrsid_drv_unregistered,jp2openjpeg_drv_unregistered,jp2lura_drv_unregistered
@@ -1574,6 +1589,7 @@ def reregister_all_jpeg2000_drivers():
 # Currently, this will only work on Linux (or any *NIX that has the stat
 # command line utility)
 
+
 def filesystem_supports_sparse_files(path):
 
     if skip_on_travis():
@@ -1609,6 +1625,7 @@ def filesystem_supports_sparse_files(path):
 ###############################################################################
 # Unzip a file
 
+
 def unzip(target_dir, zipfilename, verbose = False):
 
     try:
@@ -1639,6 +1656,7 @@ def unzip(target_dir, zipfilename, verbose = False):
 ###############################################################################
 # Return if a number is the NaN number
 
+
 def isnan(val):
     if val == val:
         # Python 2.3 unlike later versions return True for nan == nan
@@ -1664,6 +1682,7 @@ def NaN():
 ###############################################################################
 # Return positive infinity
 
+
 def posinf():
     try:
         # Python >= 2.6
@@ -1674,6 +1693,7 @@ def posinf():
 ###############################################################################
 # Return negative infinity
 
+
 def neginf():
     try:
         # Python >= 2.6
@@ -1683,6 +1703,7 @@ def neginf():
 
 ###############################################################################
 # Has the user requested to run the slow tests
+
 
 def run_slow_tests():
     global count_skipped_tests_slow
@@ -1699,6 +1720,7 @@ def run_slow_tests():
 ###############################################################################
 # Return true if the platform support symlinks
 
+
 def support_symlink():
     if sys.platform.startswith('linux'):
         return True
@@ -1713,6 +1735,7 @@ def support_symlink():
 ###############################################################################
 # Return True if the test must be skipped
 
+
 def skip_on_travis():
     val = gdal.GetConfigOption('TRAVIS', None)
     if val is not None:
@@ -1722,6 +1745,7 @@ def skip_on_travis():
 
 ###############################################################################
 # Return True if the provided name is in TRAVIS_BRANCH or BUILD_NAME
+
 
 def is_travis_branch(name):
     if 'TRAVIS_BRANCH' in os.environ:
@@ -1737,6 +1761,7 @@ def is_travis_branch(name):
 ###############################################################################
 # find_lib_linux()
 # Parse /proc/self/maps to find an occurrence of libXXXXX.so.*
+
 
 def find_lib_linux(libname):
 
@@ -1781,6 +1806,7 @@ def find_lib_linux(libname):
 # find_lib_sunos()
 # Parse output of pmap to find an occurrence of libXXX.so.*
 
+
 def find_lib_sunos(libname):
 
     pid = os.getpid()
@@ -1806,6 +1832,7 @@ def find_lib_sunos(libname):
 ###############################################################################
 # find_lib_windows()
 # use Module32First() / Module32Next() API on the current process
+
 
 def find_lib_windows(libname):
 
@@ -1897,6 +1924,7 @@ def find_lib_windows(libname):
 ###############################################################################
 # find_lib()
 
+
 def find_lib(mylib):
     if sys.platform.startswith('linux'):
         return find_lib_linux(mylib)
@@ -1912,7 +1940,9 @@ def find_lib(mylib):
 ###############################################################################
 # get_opened_files()
 
+
 get_opened_files_has_warned = False
+
 
 def get_opened_files():
     if not sys.platform.startswith('linux'):
@@ -1938,6 +1968,7 @@ def get_opened_files():
 ###############################################################################
 # is_file_open()
 
+
 def is_file_open(filename):
     for got_filename in get_opened_files():
         if got_filename.find(filename) >= 0:
@@ -1947,6 +1978,7 @@ def is_file_open(filename):
 ###############################################################################
 # built_against_curl()
 
+
 def built_against_curl():
     return gdal.GetDriverByName('HTTP') is not None
 
@@ -1954,6 +1986,7 @@ def built_against_curl():
 # error_handler()
 # Allow use of "with" for an ErrorHandler that always pops at the scope close.
 # Defaults to suppressing errors and warnings.
+
 
 @contextlib.contextmanager
 def error_handler(error_name = 'CPLQuietErrorHandler'):
@@ -1965,6 +1998,7 @@ def error_handler(error_name = 'CPLQuietErrorHandler'):
 
 ###############################################################################
 # Temporarily define a new value of block cache
+
 
 @contextlib.contextmanager
 def SetCacheMax(val):
@@ -1978,6 +2012,7 @@ def SetCacheMax(val):
 ###############################################################################
 # Temporarily define a configuration option
 
+
 @contextlib.contextmanager
 def config_option(key, val):
   oldval = gdal.GetConfigOption(key)
@@ -1989,6 +2024,7 @@ def config_option(key, val):
 
 ###############################################################################
 # Temporarily define a set of configuration options
+
 
 @contextlib.contextmanager
 def config_options(options):
@@ -2004,6 +2040,7 @@ def config_options(options):
 ###############################################################################
 # Temporarily create a file
 
+
 @contextlib.contextmanager
 def tempfile(filename, content):
   gdal.FileFromMemBuffer(filename, content)
@@ -2011,6 +2048,7 @@ def tempfile(filename, content):
       yield
   finally:
       gdal.Unlink(filename)
+
 
 ###############################################################################
 run_func = gdaltestaux.run_func

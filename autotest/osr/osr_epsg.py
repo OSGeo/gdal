@@ -41,6 +41,7 @@ from osgeo import osr
 # Verify that EPSG:26591 picks up the entry from the pcs.override.csv
 # file with the adjusted central_meridian.
 
+
 def osr_epsg_1():
 
     srs = osr.SpatialReference()
@@ -56,6 +57,7 @@ def osr_epsg_1():
 ###############################################################################
 # Check that EPSG:4312 lookup has the towgs84 values set properly
 # from gcs.override.csv.
+
 
 def osr_epsg_2():
 
@@ -73,6 +75,7 @@ def osr_epsg_2():
 ###############################################################################
 # Check that various EPSG lookups based on Pulvoko 1942 have the
 # towgs84 values set properly (#3579)
+
 
 def osr_epsg_3():
 
@@ -94,6 +97,7 @@ def osr_epsg_3():
 ###############################################################################
 #   Check that EPSG:4326 is *not* considered as lat/long (#3813)
 
+
 def osr_epsg_4():
 
     srs = osr.SpatialReference()
@@ -111,6 +115,7 @@ def osr_epsg_4():
 
 ###############################################################################
 #   Check that EPSGA:4326 is considered as lat/long
+
 
 def osr_epsg_5():
 
@@ -130,6 +135,7 @@ def osr_epsg_5():
 ###############################################################################
 #   Test datum shift for OSGB 36
 
+
 def osr_epsg_6():
 
     srs = osr.SpatialReference()
@@ -144,6 +150,7 @@ def osr_epsg_6():
 
 ###############################################################################
 #   Check that EPSG:2193 is *not* considered as N/E
+
 
 def osr_epsg_7():
 
@@ -163,6 +170,7 @@ def osr_epsg_7():
 ###############################################################################
 #   Check that EPSGA:2193 is considered as N/E
 
+
 def osr_epsg_8():
 
     srs = osr.SpatialReference()
@@ -180,6 +188,7 @@ def osr_epsg_8():
 
 ###############################################################################
 #   Check EPSG:3857
+
 
 def osr_epsg_9():
 
@@ -199,6 +208,7 @@ def osr_epsg_9():
 
 ###############################################################################
 #   Test AutoIdentifyEPSG() on Polar Stereographic
+
 
 def osr_epsg_10():
 
@@ -275,6 +285,7 @@ def osr_epsg_10():
 ###############################################################################
 # Test datum shift for EPSG:2065 (PCS based override)
 
+
 def osr_epsg_11():
 
     srs = osr.SpatialReference()
@@ -291,6 +302,7 @@ def osr_epsg_11():
 # Test IsSame() on SRS that differs only by their PROJ4 EXTENSION (besides
 # different EPSG codes)
 
+
 def osr_epsg_12():
 
     sr1 = osr.SpatialReference()
@@ -305,6 +317,7 @@ def osr_epsg_12():
 
 ###############################################################################
 # Test FindMatches()
+
 
 def osr_epsg_13():
 
@@ -390,6 +403,7 @@ def osr_epsg_13():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     osr_epsg_1,

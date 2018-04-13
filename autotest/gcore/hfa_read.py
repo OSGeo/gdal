@@ -61,6 +61,7 @@ def hfa_read_completedefn_recursion():
         gdal.Open('data/hfa_completedefn_recursion.img')
     return 'success'
 
+
 for item in init_list:
     ut = gdaltest.GDALTest( 'HFA', item[0], item[1], item[2] )
     if ut is None:

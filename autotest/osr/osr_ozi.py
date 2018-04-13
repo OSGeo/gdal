@@ -38,6 +38,7 @@ from osgeo import osr
 ###############################################################################
 # Test with WGS 84 datum
 
+
 def osr_ozi_1():
 
     srs = osr.SpatialReference()
@@ -58,6 +59,7 @@ def osr_ozi_1():
 
 ###############################################################################
 # Test with another datum known by OZI and whose EPSG code is known
+
 
 def osr_ozi_2():
 
@@ -80,6 +82,7 @@ def osr_ozi_2():
 
 ###############################################################################
 # Test with another datum known by OZI and whose EPSG code is unknown
+
 
 def osr_ozi_3():
 

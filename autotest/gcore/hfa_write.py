@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # test that we can write a small file with a custom layer name.
 
+
 def hfa_write_desc():
 
     src_ds = gdal.Open( 'data/byte.tif' )
@@ -71,6 +72,7 @@ def hfa_write_desc():
 ###############################################################################
 # test writing 4 bit files.
 
+
 def hfa_write_4bit():
     drv = gdal.GetDriverByName('HFA')
     src_ds = gdal.Open('data/byte.tif')
@@ -94,6 +96,7 @@ def hfa_write_4bit():
 
 ###############################################################################
 # test writing 4 bit files compressed.
+
 
 def hfa_write_4bit_compressed():
     drv = gdal.GetDriverByName('HFA')
@@ -121,6 +124,7 @@ def hfa_write_4bit_compressed():
 # Test creating a file with a nodata value, and fetching otherwise unread
 # blocks and verifying they are the nodata value.  (#2427)
 
+
 def hfa_write_nd_invalid():
 
     drv = gdal.GetDriverByName('HFA')
@@ -145,8 +149,8 @@ def hfa_write_nd_invalid():
 ###############################################################################
 # Test updating .rrd overviews in place (#2524).
 
-def hfa_update_overviews():
 
+def hfa_update_overviews():
 
     shutil.copyfile( 'data/small_ov.img', 'tmp/small.img' )
     shutil.copyfile( 'data/small_ov.rrd', 'tmp/small.rrd' )
@@ -164,6 +168,7 @@ def hfa_update_overviews():
 
 ###############################################################################
 # Test cleaning external overviews.
+
 
 def hfa_clean_external_overviews():
 
@@ -203,6 +208,7 @@ def hfa_clean_external_overviews():
 ###############################################################################
 # Test writing high frequency data (#2525).
 
+
 def hfa_bug_2525():
     drv = gdal.GetDriverByName('HFA')
     ds = drv.Create('tmp/test_hfa.img', 64, 64, 1, gdal.GDT_UInt16, options = [ 'COMPRESSED=YES'] )
@@ -218,6 +224,7 @@ def hfa_bug_2525():
 
 ###############################################################################
 # Test building external overviews with HFA_USE_RRD=YES
+
 
 def hfa_use_rrd():
 
@@ -341,6 +348,7 @@ def hfa_update_existing_aux_overviews():
 ###############################################################################
 # Test writing invalid WKT (#5258)
 
+
 def hfa_write_invalid_wkt():
 
     # No GEOGCS
@@ -399,6 +407,7 @@ def hfa_write_invalid_wkt():
 
 ###############################################################################
 # Get the driver, and verify a few things about it.
+
 
 init_list = [ \
     ('byte.tif', 1, 4672, None),

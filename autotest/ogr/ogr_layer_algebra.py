@@ -50,11 +50,13 @@ D1 = None
 D2 = None
 empty = None
 
+
 def recreate_layer_C():
     global C
 
     ds.DeleteLayer( 'C' )
     C = ds.CreateLayer('C')
+
 
 def print_layer(A):
     A.ResetReading()
@@ -64,6 +66,7 @@ def print_layer(A):
             return
         g = f.GetGeometryRef()
         print(g.ExportToWkt())
+
 
 def is_same(A,B):
 
@@ -80,6 +83,7 @@ def is_same(A,B):
             return False
         if fA.Equal(fB) != 0:
             return False
+
 
 def algebra_setup():
 
@@ -263,6 +267,7 @@ def algebra_intersection():
 
     return 'success'
 
+
 def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if not ogrtest.have_geos():
         return 'skip'
@@ -313,7 +318,6 @@ def algebra_KEEP_LOWER_DIMENSION_GEOMETRIES():
     if layer3.GetFeatureCount() != 4:
         gdaltest.post_reason( 'Lower dimension geometries not removed in union' )
         return 'fail'
-
 
     layer3 = ds.CreateLayer('layer3d')
     layer1.Union(layer2, layer3, ['KEEP_LOWER_DIMENSION_GEOMETRIES=YES'])
@@ -500,6 +504,7 @@ def algebra_identify():
 
     return 'success'
 
+
 def algebra_update():
     if not ogrtest.have_geos():
         return 'skip'
@@ -649,7 +654,6 @@ def algebra_erase():
 
     recreate_layer_C()
 
-
     # Erase with empty layer (or no intersection)
 
     A.Erase( empty, C )
@@ -678,6 +682,7 @@ def algebra_erase():
     recreate_layer_C()
 
     return 'success'
+
 
 def algebra_cleanup():
     if not ogrtest.have_geos():

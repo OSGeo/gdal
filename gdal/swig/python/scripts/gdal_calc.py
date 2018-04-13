@@ -61,15 +61,18 @@ AlphaList=["A","B","C","D","E","F","G","H","I","J","K","L","M",
 # set up some default nodatavalues for each datatype
 DefaultNDVLookup={'Byte':255, 'UInt16':65535, 'Int16':-32767, 'UInt32':4294967293, 'Int32':-2147483647, 'Float32':3.402823466E+38, 'Float64':1.7976931348623158E+308}
 
+
 def DoesDriverHandleExtension(drv, ext):
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
+
 
 def GetExtension(filename):
     ext = os.path.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]
     return ext
+
 
 def GetOutputDriversFor(filename):
     drv_list = []
@@ -94,6 +97,7 @@ def GetOutputDriversFor(filename):
 
     return drv_list
 
+
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
     if len(drv_list) == 0:
@@ -107,6 +111,8 @@ def GetOutputDriverFor(filename):
     return drv_list[0]
 
 ################################################################
+
+
 def doit(opts, args):
 
     if opts.debug:
@@ -331,7 +337,6 @@ def doit(opts, args):
                     local_namespace[Alpha] = myval
                     myval=None
 
-
                 # try the calculation on the array blocks
                 try:
                     myResult = eval(opts.calc, global_namespace, local_namespace)
@@ -357,6 +362,8 @@ def doit(opts, args):
     return
 
 ################################################################
+
+
 def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_options=[], allBands='', overwrite=False, debug=False, quiet=False, **input_files):
     """ Perform raster calculations with numpy syntax.
     Use any basic arithmetic supported by numpy arrays such as +-*\ along with logical
@@ -391,10 +398,12 @@ def Calc(calc, outfile, NoDataValue=None, type=None, format=None, creation_optio
 
     doit(opts, None)
 
+
 def store_input_file(option, opt_str, value, parser):
     if not hasattr(parser.values, 'input_files'):
         parser.values.input_files = {}
     parser.values.input_files[opt_str.lstrip('-')] = value
+
 
 def main():
     usage = """usage: %prog --calc=expression --outfile=out_filename [-A filename]

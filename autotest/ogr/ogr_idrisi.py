@@ -39,6 +39,7 @@ import ogrtest
 ###############################################################################
 # Test point layer
 
+
 def ogr_idrisi_1():
 
     ds = ogr.Open('data/points.vct')
@@ -141,6 +142,7 @@ def ogr_idrisi_1():
 ###############################################################################
 # Test linestring layer
 
+
 def ogr_idrisi_2():
 
     ds = ogr.Open('data/lines.vct')
@@ -206,6 +208,7 @@ def ogr_idrisi_2():
 ###############################################################################
 # Test polygon layer
 
+
 def ogr_idrisi_3():
 
     ds = ogr.Open('data/polygons.vct')
@@ -267,6 +270,7 @@ def ogr_idrisi_3():
     ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_idrisi_1,

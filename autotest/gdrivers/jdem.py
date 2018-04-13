@@ -37,10 +37,12 @@ import gdaltest
 ###############################################################################
 # Test reading a - fake - JDEM dataset
 
+
 def jdem_1():
 
     tst = gdaltest.GDALTest( 'JDEM', 'fakejdem.mem', 1, 15 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     jdem_1 ]
