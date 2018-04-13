@@ -6945,7 +6945,7 @@ GDALDataset::Features GDALDataset::GetFeatures()
  @since GDAL 2.3
 */
 
-const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
+GDALDataset::Features::Iterator GDALDataset::Features::begin() const
 {
     return {m_poSelf, true};
 }
@@ -6960,7 +6960,7 @@ const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
  @since GDAL 2.3
 */
 
-const GDALDataset::Features::Iterator GDALDataset::Features::end() const
+GDALDataset::Features::Iterator GDALDataset::Features::end() const
 {
     return {m_poSelf, false};
 }
