@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Read a truncated and modified version of http://download.osgeo.org/gdal/data/pds/mc02.img
 
+
 def pds_1():
 
     tst = gdaltest.GDALTest( 'PDS', 'mc02_truncated.img', 1, 47151 )
@@ -99,6 +100,7 @@ def pds_2():
 # Read a truncated and modified version of ftp://pdsimage2.wr.usgs.gov/cdroms/messenger/MSGRMDS_1001/DATA/2004_232/EN0001426030M.IMG
 # 16bits image
 
+
 def pds_3():
 
     # Shut down warning about missing projection
@@ -121,6 +123,7 @@ def pds_3():
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3177.
 
+
 def pds_4():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3177.lbl', 1, 3418 )
@@ -135,6 +138,7 @@ def pds_4():
 ###############################################################################
 # Read a hacked example of reading a detached file with an offset #3355.
 
+
 def pds_5():
 
     tst = gdaltest.GDALTest( 'PDS', 'pds_3355.lbl', 1, 2748 )
@@ -143,6 +147,7 @@ def pds_5():
 ###############################################################################
 # Read an image via the PDS label.  This is a distinct mode of the PDS
 # driver mostly intended to support jpeg2000 files with PDS labels.
+
 
 def pds_6():
 
@@ -181,6 +186,7 @@ def pds_6():
 ###############################################################################
 # Read an uncompressed image via the PDS label. (#3943)
 
+
 def pds_7():
 
     tst = gdaltest.GDALTest( 'PDS', 'LDEM_4.LBL', 1, 50938,
@@ -214,6 +220,7 @@ def pds_7():
 # Test applying adjustment offsets via configuration variables for the
 # geotransform (#3940)
 
+
 def pds_8():
 
     # values for MAGELLAN FMAP data.
@@ -240,6 +247,7 @@ def pds_8():
 # Test a PDS with an image compressed in a ZIP, and with nodata expressed as
 # an hexadecimal floating point value (#3939)
 
+
 def pds_9():
 
     # Derived from http://pdsimage.wr.usgs.gov/data/co-v_e_j_s-radar-3-sbdr-v1.0/CORADR_0035/DATA/BIDR/BIEQI49N071_D035_T00AS01_V02.LBL
@@ -264,6 +272,7 @@ def pds_9():
 
 ###############################################################################
 # Test PDS label with nested arrays (#6970)
+
 
 def pds_10():
 
@@ -300,7 +309,6 @@ END
         print(ds.GetMetadataItem('NOTE'))
         return 'fail'
 
-
     gdal.FileFromMemBuffer('/vsimem/pds_10',
 """PDS_VERSION_ID                       = "PDS3"
 # Unpaired
@@ -311,7 +319,6 @@ END
     with gdaltest.error_handler():
         gdal.Open('/vsimem/pds_10')
 
-
     gdal.FileFromMemBuffer('/vsimem/pds_10',
 """PDS_VERSION_ID                       = "PDS3"
 # Unpaired
@@ -321,7 +328,6 @@ END
 
     with gdaltest.error_handler():
         gdal.Open('/vsimem/pds_10')
-
 
     gdal.Unlink('/vsimem/pds_10')
 

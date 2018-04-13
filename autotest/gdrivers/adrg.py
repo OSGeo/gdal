@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def adrg_read_gen():
 
     tst = gdaltest.GDALTest( 'ADRG', 'SMALL_ADRG/ABCDEF01.GEN', 1, 62833 )
@@ -48,6 +49,7 @@ def adrg_read_gen():
 
 ###############################################################################
 # Read test of simple byte reference data by the TRANSH01.THF file .
+
 
 def adrg_read_transh():
 
@@ -57,6 +59,7 @@ def adrg_read_transh():
 ###############################################################################
 # Read test of simple byte reference data by a subdataset file
 
+
 def adrg_read_subdataset_img():
 
     tst = gdaltest.GDALTest( 'ADRG', 'ADRG:data/SMALL_ADRG/ABCDEF01.GEN,data/SMALL_ADRG/ABCDEF01.IMG', 1, 62833, filename_absolute = 1 )
@@ -64,6 +67,7 @@ def adrg_read_subdataset_img():
 
 ###############################################################################
 # Test copying.
+
 
 def adrg_copy():
 
@@ -86,6 +90,7 @@ def adrg_copy():
 
 ###############################################################################
 # Test creating a fake 2 subdataset image and reading it.
+
 
 def adrg_2subdatasets():
 
@@ -130,6 +135,7 @@ def adrg_2subdatasets():
 ###############################################################################
 # Test creating an in memory copy.
 
+
 def adrg_copy_vsimem():
 
     drv = gdal.GetDriverByName( 'ADRG' )
@@ -163,6 +169,7 @@ def adrg_copy_vsimem():
 ###############################################################################
 # Test reading a fake North Polar dataset (#6560)
 
+
 def adrg_zna_9():
 
     ds = gdal.Open( 'data/SMALL_ADRG_ZNA9/ABCDEF01.GEN' )
@@ -183,6 +190,7 @@ def adrg_zna_9():
 ###############################################################################
 # Test reading a fake South Polar dataset (#6560)
 
+
 def adrg_zna_18():
 
     ds = gdal.Open( 'data/SMALL_ADRG_ZNA18/ABCDEF01.GEN' )
@@ -199,6 +207,7 @@ def adrg_zna_18():
         return 'fail'
 
     return 'success'
+
 
 ###############################################################################
 gdaltest_list = [

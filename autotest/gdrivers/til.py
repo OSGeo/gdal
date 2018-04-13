@@ -39,6 +39,7 @@ from osgeo import gdal
 ###############################################################################
 # Test a fake TIL dataset
 
+
 def til_1():
 
     tst = gdaltest.GDALTest( 'TIL', 'testtil.til', 1, 4672 )
@@ -46,6 +47,7 @@ def til_1():
 
 ###############################################################################
 # Check GetFileList() result (#4018) & IMD
+
 
 def til_2():
 
@@ -86,6 +88,7 @@ def til_2():
 ###############################################################################
 # Check GetFileList() & XML
 
+
 def til_3():
 
     try:
@@ -121,6 +124,7 @@ def til_3():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     til_1,

@@ -70,6 +70,7 @@ tags = [ ['TIFFTAG_IMAGEWIDTH', TIFFTAG_IMAGEWIDTH, [0, 1, 0x7FFFFFFF, 0xFFFFFFF
          #['TIFFTAG_SAMPLEFORMAT', TIFFTAG_SAMPLEFORMAT, [None, SAMPLEFORMAT_UINT]],
          ]
 
+
 def generate_tif(comb_val):
     idx_tab = []
     count_non_none = 0
@@ -113,6 +114,7 @@ def generate_tif(comb_val):
             content = content + ('%c' % (val & 255)) + ('%c' % ((val >> 8)& 255)) + ('%c' % ((val >> 16)& 255)) + ('%c' % ((val >> 24) & 255))
 
     return content
+
 
 nVals = 1
 for level in range(len(tags)):

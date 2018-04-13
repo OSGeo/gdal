@@ -42,6 +42,7 @@ import test_py_scripts
 ###############################################################################
 # Basic test
 
+
 def test_gdal_merge_1():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
@@ -59,6 +60,7 @@ def test_gdal_merge_1():
 
 ###############################################################################
 # Merge 4 tiles
+
 
 def test_gdal_merge_2():
 
@@ -126,6 +128,7 @@ def test_gdal_merge_2():
 ###############################################################################
 # Test -separate and -v options
 
+
 def test_gdal_merge_3():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
@@ -163,6 +166,7 @@ def test_gdal_merge_3():
 ###############################################################################
 # Test -init option
 
+
 def test_gdal_merge_4():
 
     script_path = test_py_scripts.get_py_script('gdal_merge')
@@ -182,6 +186,7 @@ def test_gdal_merge_4():
 
 ###############################################################################
 # Test merging with alpha band (#3669)
+
 
 def test_gdal_merge_5():
     try:
@@ -263,6 +268,7 @@ def test_gdal_merge_5():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_merge_cleanup():
 
     lst = [ 'tmp/test_gdal_merge_1.tif',
@@ -283,6 +289,7 @@ def test_gdal_merge_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_merge_1,

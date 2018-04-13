@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test a small GXF sample
 
+
 def gxf_1():
 
     tst = gdaltest.GDALTest( 'GXF', 'small.gxf', 1, 90 )
@@ -47,6 +48,7 @@ def gxf_1():
 
 ###############################################################################
 # Test an other GXF sample (with continuous line)
+
 
 def gxf_2():
 
@@ -69,6 +71,8 @@ def gxf_2():
 
 ###############################################################################
 #
+
+
 class TestGXF:
     def __init__( self, downloadURL, fileName, checksum, download_size ):
         self.downloadURL = downloadURL
@@ -87,7 +91,6 @@ class TestGXF:
             return 'fail'
 
         return 'success'
-
 
 
 gdaltest_list = [ gxf_1, gxf_2 ]

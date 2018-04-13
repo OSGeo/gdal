@@ -44,6 +44,7 @@ import webserver
 ###############################################################################
 # Find RDA driver
 
+
 def rda_test_presence():
 
     gdaltest.rda_drv = gdal.GetDriverByName('RDA')
@@ -61,6 +62,7 @@ def rda_test_presence():
     return 'success'
 
 ###############################################################################
+
 
 def rda_bad_connection_string():
 
@@ -92,6 +94,7 @@ def rda_bad_connection_string():
 
 ###############################################################################
 
+
 def rda_missing_credentials():
 
     if gdaltest.rda_drv is None:
@@ -106,6 +109,7 @@ def rda_missing_credentials():
     return 'success'
 
 ###############################################################################
+
 
 def rda_failed_authentication():
 
@@ -177,6 +181,7 @@ def rda_failed_authentication():
     return 'success'
 
 ###############################################################################
+
 
 def rda_error_metadata():
 
@@ -362,6 +367,7 @@ def rda_error_metadata():
 
 ###############################################################################
 
+
 def rda_graph_nominal():
 
     if gdaltest.rda_drv is None:
@@ -535,7 +541,6 @@ def rda_graph_nominal():
             gdaltest.post_reason('fail')
             return 'fail'
 
-
     tile_ds = gdal.GetDriverByName('GTiff').Create('/vsimem/tile_00.tif', 256, 256, 3)
     tile_ds.GetRasterBand(1).Fill(255)
     tile_ds.GetRasterBand(2).Fill(250)
@@ -695,6 +700,7 @@ def rda_graph_nominal():
 
 ###############################################################################
 
+
 def rda_read_gbdx_config():
 
     if gdaltest.rda_drv is None:
@@ -752,6 +758,7 @@ idaho_api_url = 127.0.0.1:%d/rda_api
     return 'success'
 
 ###############################################################################
+
 
 def rda_download_queue():
 
@@ -831,6 +838,7 @@ def rda_download_queue():
 
 ###############################################################################
 
+
 def rda_rpc():
 
     if gdaltest.rda_drv is None:
@@ -874,7 +882,6 @@ def rda_rpc():
         'GBDX_USERNAME': 'user_name',
         'GBDX_PASSWORD': 'password'
     }
-
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
@@ -936,6 +943,7 @@ def rda_rpc():
     return 'success'
 
 ###############################################################################
+
 
 def rda_real_cache_dir():
 
@@ -1030,6 +1038,7 @@ def rda_real_cache_dir():
 
 ###############################################################################
 
+
 def rda_real_expired_authentication():
 
     if gdaltest.rda_drv is None:
@@ -1089,6 +1098,7 @@ def rda_real_expired_authentication():
     return 'success'
 
 ###############################################################################
+
 
 def rda_bad_tile():
 
@@ -1206,6 +1216,7 @@ def rda_bad_tile():
 
 ###############################################################################
 #
+
 
 def rda_cleanup():
 

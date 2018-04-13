@@ -39,18 +39,24 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 # given fmt and nodata, encodes a value as bytes
+
+
 def pack(fmt, nodata, value):
     if value is None:
         value = nodata
     return struct.pack(fmt, value)
 
 # packs the given values together as bytes
+
+
 def encode(fmt, nodata, values):
     chunks = [pack(fmt, nodata, v) for v in values]
     return ''.encode('ascii').join(chunks)
 
 ###############################################################################
 #
+
+
 def arg_init():
     try:
         gdaltest.argDriver = gdal.GetDriverByName('ARG')
@@ -123,6 +129,7 @@ def arg_init():
 
     return 'success'
 
+
 def arg_unsupported():
     if gdaltest.argDriver is None:
         return 'skip'
@@ -142,6 +149,7 @@ def arg_unsupported():
 
     return 'success'
 
+
 def arg_getrastercount():
     if gdaltest.argDriver is None:
         return 'skip'
@@ -157,6 +165,7 @@ def arg_getrastercount():
                 return 'fail'
 
     return 'success'
+
 
 def arg_getgeotransform():
     if gdaltest.argDriver is None:
@@ -180,6 +189,7 @@ def arg_getgeotransform():
                 return 'fail'
 
     return 'success'
+
 
 def arg_blocksize():
     if gdaltest.argDriver is None:
@@ -212,6 +222,7 @@ def arg_blocksize():
         return 'fail'
 
     return 'success'
+
 
 def arg_layername():
     """
@@ -255,6 +266,7 @@ def arg_layername():
 
     return 'success'
 
+
 def arg_nodata():
     """
     Check that the NoData value for int8 images is 128, as per the
@@ -269,6 +281,7 @@ def arg_nodata():
         return 'fail'
 
     return 'success'
+
 
 def arg_byteorder():
     """
@@ -322,6 +335,7 @@ def arg_byteorder():
                 return 'fail'
 
     return 'success'
+
 
 def arg_destroy():
     if gdaltest.argDriver is None:

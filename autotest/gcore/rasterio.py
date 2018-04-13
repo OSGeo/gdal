@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Test writing a 1x1 buffer to a 10x6 raster and read it back
 
+
 def rasterio_1():
     data = 'A'.encode('ascii')
 
@@ -69,6 +70,7 @@ def rasterio_1():
 ###############################################################################
 # Test writing a 5x4 buffer to a 10x6 raster and read it back
 
+
 def rasterio_2():
     data = 'AAAAAAAAAAAAAAAAAAAA'.encode('ascii')
 
@@ -97,6 +99,7 @@ def rasterio_2():
 
 ###############################################################################
 # Test extensive read & writes into a non tiled raster
+
 
 def rasterio_3():
 
@@ -140,6 +143,7 @@ def rasterio_3():
 
 ###############################################################################
 # Test extensive read & writes into a tiled raster
+
 
 def rasterio_4():
 
@@ -191,6 +195,7 @@ def rasterio_4():
 
 ###############################################################################
 # Test error cases of ReadRaster()
+
 
 def rasterio_5():
 
@@ -277,6 +282,7 @@ def rasterio_5():
 ###############################################################################
 # Test error cases of WriteRaster()
 
+
 def rasterio_6():
 
     ds = gdal.GetDriverByName('MEM').Create('', 2, 2)
@@ -326,6 +332,7 @@ def rasterio_6():
 ###############################################################################
 # Test that default window reading works via ReadRaster()
 
+
 def rasterio_7():
 
     ds = gdal.Open('data/byte.tif')
@@ -347,6 +354,7 @@ def rasterio_7():
 ###############################################################################
 # Test callback of ReadRaster()
 
+
 def rasterio_8_progress_callback(pct, message, user_data):
     if abs(pct - (user_data[0] + 0.05)) > 1e-5:
         print('Expected %f, got %f' % (user_data[0] + 0.05, pct))
@@ -354,11 +362,13 @@ def rasterio_8_progress_callback(pct, message, user_data):
     user_data[0] = pct
     return 1 # 1 to continue, 0 to stop
 
+
 def rasterio_8_progress_interrupt_callback(pct, message, user_data):
     user_data[0] = pct
     if pct >= 0.5:
         return 0
     return 1 # 1 to continue, 0 to stop
+
 
 def rasterio_8_progress_callback_2(pct, message, user_data):
     if pct < user_data[0]:
@@ -366,6 +376,7 @@ def rasterio_8_progress_callback_2(pct, message, user_data):
         return 0
     user_data[0] = pct
     return 1 # 1 to continue, 0 to stop
+
 
 def rasterio_8():
 
@@ -501,6 +512,7 @@ def rasterio_8():
 ###############################################################################
 # Test resampling algorithm of ReadRaster()
 
+
 def rasterio_9_progress_callback(pct, message, user_data):
     if pct < user_data[0]:
         print('Got %f, last pct was %f' % (pct, user_data[0]))
@@ -510,11 +522,13 @@ def rasterio_9_progress_callback(pct, message, user_data):
         return 0
     return 1 # 1 to continue, 0 to stop
 
+
 def rasterio_9_checksum(data, buf_xsize, buf_ysize, data_type = gdal.GDT_Byte):
     ds = gdal.GetDriverByName('MEM').Create('', buf_xsize, buf_ysize, 1)
     ds.GetRasterBand(1).WriteRaster(0,0,buf_xsize,buf_ysize,data, buf_type = data_type)
     cs = ds.GetRasterBand(1).Checksum()
     return cs
+
 
 def rasterio_9():
     ds = gdal.Open('data/byte.tif')
@@ -596,7 +610,6 @@ def rasterio_9():
         gdaltest.post_reason('failure')
         return 'fail'
 
-
     # Test RasterBand.ReadRaster, with Bilinear on Complex, thus using warp API
     tab = [ 0, None ]
     complex_ds = gdal.GetDriverByName('MEM').Create('', 20, 20, 1, gdal.GDT_CInt16)
@@ -618,8 +631,6 @@ def rasterio_9():
     if abs(tab[0] - 1.0) > 1e-5:
         gdaltest.post_reason('failure')
         return 'fail'
-
-
 
     # Test interruption
     tab = [ 0, 0.5 ]
@@ -795,6 +806,7 @@ def rasterio_9():
 ###############################################################################
 # Test error when getting a block
 
+
 def rasterio_10():
     ds = gdal.Open('data/byte_truncated.tif')
 
@@ -826,6 +838,7 @@ def rasterio_10():
 
 ###############################################################################
 # Test cubic resampling and nbits
+
 
 def rasterio_11():
 
@@ -861,12 +874,14 @@ def rasterio_11():
 ###############################################################################
 # Test cubic resampling on dataset RasterIO with an alpha channel
 
+
 def rasterio_12_progress_callback(pct, message, user_data):
     if pct < user_data[0]:
         print('Got %f, last pct was %f' % (pct, user_data[0]))
         return 0
     user_data[0] = pct
     return 1 # 1 to continue, 0 to stop
+
 
 def rasterio_12():
 
@@ -929,6 +944,7 @@ def rasterio_12():
 ###############################################################################
 # Test cubic resampling with masking
 
+
 def rasterio_13():
 
     try:
@@ -958,6 +974,7 @@ def rasterio_13():
 
 ###############################################################################
 # Test average downsampling by a factor of 2 on exact boundaries
+
 
 def rasterio_14():
 
@@ -1022,6 +1039,7 @@ cellsize     0
 ###############################################################################
 # Test average oversampling by an integer factor (should behave like nearest)
 
+
 def rasterio_15():
 
     gdal.FileFromMemBuffer('/vsimem/rasterio_15.asc',
@@ -1052,6 +1070,7 @@ cellsize     0
 
 ###############################################################################
 # Test mode downsampling by a factor of 2 on exact boundaries
+
 
 def rasterio_16():
 

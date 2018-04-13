@@ -46,15 +46,18 @@ __version__ = '$id$'[5:-1]
 verbose = 0
 quiet = 0
 
+
 def DoesDriverHandleExtension(drv, ext):
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
+
 
 def GetExtension(filename):
     ext = os.path.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]
     return ext
+
 
 def GetOutputDriversFor(filename):
     drv_list = []
@@ -78,6 +81,7 @@ def GetOutputDriversFor(filename):
            drv_list = [ 'NETCDF', 'GMT' ]
 
     return drv_list
+
 
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
@@ -133,6 +137,8 @@ def raster_copy( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     return 0
 
 # =============================================================================
+
+
 def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                              t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                              nodata ):
@@ -156,6 +162,8 @@ def raster_copy_with_nodata( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     return 0
 
 # =============================================================================
+
+
 def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
                            t_fh, t_xoff, t_yoff, t_xsize, t_ysize, t_band_n,
                            m_band ):
@@ -181,6 +189,8 @@ def raster_copy_with_mask( s_fh, s_xoff, s_yoff, s_xsize, s_ysize, s_band_n,
     return 0
 
 # =============================================================================
+
+
 def names_to_fileinfos( names ):
     """
     Translate a list of GDAL filenames, into file_info objects.
@@ -200,6 +210,8 @@ def names_to_fileinfos( names ):
     return file_infos
 
 # *****************************************************************************
+
+
 class file_info:
     """A class holding information about a GDAL file."""
 
@@ -330,6 +342,7 @@ def Usage():
 #
 # Program mainline.
 #
+
 
 def main( argv=None ):
 
@@ -500,7 +513,6 @@ def main( argv=None ):
         xsize = int((lrx - ulx) / geotransform[1] + 0.5)
         ysize = int((lry - uly) / geotransform[5] + 0.5)
 
-
         if separate != 0:
             bands=0
 
@@ -508,7 +520,6 @@ def main( argv=None ):
                 bands=bands + fi.bands
         else:
             bands = file_infos[0].bands
-
 
         t_fh = Driver.Create( out_file, xsize, ysize, bands,
                               band_type, create_options )
@@ -579,6 +590,7 @@ def main( argv=None ):
 
     # Force file to be closed.
     t_fh = None
+
 
 if __name__ == '__main__':
     sys.exit(main())

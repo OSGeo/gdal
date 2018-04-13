@@ -68,6 +68,7 @@ init_list = [ \
 ###############################################################################
 # The VRT references a non existing TIF file
 
+
 def vrt_read_1():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -81,6 +82,7 @@ def vrt_read_1():
 
 ###############################################################################
 # The VRT references a non existing TIF file, but using the proxy pool dataset API (#2837)
+
 
 def vrt_read_2():
 
@@ -104,6 +106,7 @@ def vrt_read_2():
 
 ###############################################################################
 # Test init of band data in case of cascaded VRT (ticket #2867)
+
 
 def vrt_read_3():
 
@@ -179,6 +182,7 @@ def vrt_read_4():
 
 ###############################################################################
 # Test serializing and deserializing of various band metadata
+
 
 def vrt_read_5():
 
@@ -261,6 +265,7 @@ def vrt_read_5():
 ###############################################################################
 # Test GetMinimum() and GetMaximum()
 
+
 def vrt_read_6():
 
     try:
@@ -305,6 +310,7 @@ def vrt_read_6():
 ###############################################################################
 # Test GDALOpen() anti-recursion mechanism
 
+
 def vrt_read_7():
 
     filename = "/vsimem/vrt_read_7.vrt"
@@ -338,6 +344,7 @@ def vrt_read_7():
 ###############################################################################
 # Test ComputeRasterMinMax()
 
+
 def vrt_read_8():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -363,6 +370,7 @@ def vrt_read_8():
 ###############################################################################
 # Test ComputeStatistics()
 
+
 def vrt_read_9():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -387,6 +395,7 @@ def vrt_read_9():
 
 ###############################################################################
 # Test GetHistogram() & GetDefaultHistogram()
+
 
 def vrt_read_10():
 
@@ -480,6 +489,7 @@ def vrt_read_10():
 ###############################################################################
 # Test resolving files from a symlinked vrt using relativeToVRT with an absolute symlink
 
+
 def vrt_read_11():
 
     if not gdaltest.support_symlink():
@@ -506,6 +516,7 @@ def vrt_read_11():
 # Test resolving files from a symlinked vrt using relativeToVRT
 # with a relative symlink pointing to a relative symlink
 
+
 def vrt_read_12():
 
     if not gdaltest.support_symlink():
@@ -530,6 +541,7 @@ def vrt_read_12():
 
 ###############################################################################
 # Test resolving files from a symlinked vrt using relativeToVRT with a relative symlink
+
 
 def vrt_read_13():
 
@@ -562,6 +574,7 @@ def vrt_read_13():
 
 ###############################################################################
 # Test ComputeStatistics() when the VRT is a subwindow of the source dataset (#5468)
+
 
 def vrt_read_14():
 
@@ -597,6 +610,7 @@ def vrt_read_14():
 ###############################################################################
 # Test RasterIO() with resampling on SimpleSource
 
+
 def vrt_read_15():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
@@ -627,6 +641,7 @@ def vrt_read_15():
 
 ###############################################################################
 # Test RasterIO() with resampling on ComplexSource
+
 
 def vrt_read_16():
 
@@ -659,6 +674,7 @@ def vrt_read_16():
 ###############################################################################
 # Test RasterIO() with resampling on AveragedSource
 
+
 def vrt_read_17():
 
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
@@ -685,6 +701,7 @@ def vrt_read_17():
 ###############################################################################
 # Test that relative path is correctly VRT-in-VRT
 
+
 def vrt_read_18():
 
     vrt_ds = gdal.Open('data/vrtinvrt.vrt')
@@ -697,6 +714,7 @@ def vrt_read_18():
 
 ###############################################################################
 # Test shared="0"
+
 
 def vrt_read_19():
 
@@ -794,6 +812,7 @@ def vrt_read_20():
 
 ###############################################################################
 # Test implicit virtual overviews
+
 
 def vrt_read_21():
 
@@ -914,6 +933,7 @@ def vrt_read_21():
 ###############################################################################
 # Test that we honour NBITS with SimpleSource and ComplexSource
 
+
 def vrt_read_22():
 
     ds = gdal.Open('data/byte.tif')
@@ -1025,6 +1045,7 @@ def vrt_read_22():
 # Test non-nearest resampling on a VRT exposing a nodata value but with
 # an underlying dataset without nodata
 
+
 def vrt_read_23():
 
     try:
@@ -1082,11 +1103,11 @@ def vrt_read_23():
 
     gdal.Unlink('/vsimem/vrt_read_23.tif')
 
-
     return 'success'
 
 ###############################################################################
 # Test floating point rounding issues when the VRT does a zoom-in
+
 
 def vrt_read_24():
 
@@ -1111,6 +1132,7 @@ def vrt_read_24():
 
 ###############################################################################
 # Test GetDataCoverageStatus()
+
 
 def vrt_read_25():
 
@@ -1208,6 +1230,7 @@ def vrt_read_26():
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1553
 
+
 def vrt_read_27():
 
     gdal.Open('data/empty_gcplist.vrt')
@@ -1216,6 +1239,7 @@ def vrt_read_27():
 
 ###############################################################################
 # Test fix for https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=1551
+
 
 def vrt_read_28():
 
@@ -1306,6 +1330,7 @@ def vrt_read_29():
 ###############################################################################
 # Check VRT reading with DatasetRasterIO
 
+
 def vrt_read_30():
 
     ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="2">
@@ -1329,6 +1354,7 @@ def vrt_read_30():
 
 ###############################################################################
 # Check that we take into account intermediate data type demotion
+
 
 def vrt_read_31():
 
@@ -1363,6 +1389,7 @@ dy           1
     gdal.Unlink('/vsimem/in.asc')
 
     return 'success'
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'VRT', item[0], item[1], item[2] )

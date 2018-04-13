@@ -36,6 +36,8 @@ import FFT
 from osgeo import gdal
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: fft.py [-inv] [-of out_format] [-ot out_type] infile outfile')
     print('')
@@ -44,6 +46,8 @@ def Usage():
 # =============================================================================
 
 # =============================================================================
+
+
 def ParseType(type):
     if type == 'Byte':
         return gdal.GDT_Byte
@@ -70,6 +74,7 @@ def ParseType(type):
     else:
         return gdal.GDT_Byte
 # =============================================================================
+
 
 infile = None
 outfile = None

@@ -40,6 +40,7 @@ from osgeo import osr
 #                               Usage()
 #**********************************************************************
 
+
 def Usage():
     print( "Usage: gdalinfo [--help-general] [-mm] [-stats] [-hist] [-nogcp] [-nomd]\n" + \
             "                [-norat] [-noct] [-nofl] [-checksum] [-mdd domain]* datasetname" )
@@ -52,6 +53,7 @@ def EQUAL(a, b):
 #**********************************************************************
 #                                main()
 #**********************************************************************
+
 
 def main( argv = None ):
 
@@ -514,7 +516,6 @@ def main( argv = None ):
             for metadata in papszMetadata:
                 print( "    %s" % metadata )
 
-
         if bShowMetadata:
             papszMetadata = hBand.GetMetadata_List("IMAGE_STRUCTURE")
         else:
@@ -523,7 +524,6 @@ def main( argv = None ):
             print( "  Image Structure Metadata:" )
             for metadata in papszMetadata:
                 print( "    %s" % metadata )
-
 
         hTable = hBand.GetRasterColorTable()
         if hBand.GetRasterColorInterpretation() == gdal.GCI_PaletteIndex  \
@@ -557,8 +557,8 @@ def main( argv = None ):
 #                        GDALInfoReportCorner()
 #**********************************************************************
 
-def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
 
+def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
 
     line = "%-11s " % corner_name
 
@@ -598,6 +598,7 @@ def GDALInfoReportCorner( hDataset, hTransform, corner_name, x, y ):
     print(line)
 
     return True
+
 
 if __name__ == '__main__':
     version_num = int(gdal.VersionInfo('VERSION_NUM'))

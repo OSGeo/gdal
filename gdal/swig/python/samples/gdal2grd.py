@@ -37,6 +37,8 @@ from osgeo import gdal
 gdal.TermProgress = gdal.TermProgress_nocb
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: gdal2grd.py [-b band] [-quiet] infile outfile')
     print('Write out ASCII GRD rasters (used in Golden Software Surfer)')
@@ -49,6 +51,7 @@ def Usage():
     sys.exit(1)
 
 # =============================================================================
+
 
 infile = None
 outfile = None

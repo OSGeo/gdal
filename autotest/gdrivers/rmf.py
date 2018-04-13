@@ -39,10 +39,12 @@ import gdal
 ###############################################################################
 # Perform simple read tests.
 
+
 def rmf_1():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
     return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
 
 def rmf_2():
 
@@ -50,11 +52,13 @@ def rmf_2():
     with gdaltest.error_handler():
         return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
 
+
 def rmf_3():
 
     tst = gdaltest.GDALTest( 'rmf', 'float64.mtw', 1, 4672 )
     with gdaltest.error_handler():
         return tst.testOpen( check_gt = (440720, 60, 0, 3751320, 0, -60) )
+
 
 def rmf_4():
 
@@ -73,6 +77,7 @@ def rmf_4():
     tst = gdaltest.GDALTest( 'rmf', 'rgbsmall.rsw', 3, 21349 )
     return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432) )
+
 
 def rmf_5():
 
@@ -95,6 +100,7 @@ def rmf_5():
         return tst.testOpen( check_gt = (-44.840320, 0.003432, 0,
                                      -22.932584, 0, -0.003432) )
 
+
 def rmf_6():
 
     tst = gdaltest.GDALTest( 'rmf', 'big-endian.rsw', 1, 7782 )
@@ -116,11 +122,13 @@ def rmf_6():
 ###############################################################################
 # Create simple copy and check.
 
+
 def rmf_7():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672 )
 
     return tst.testCreateCopy( check_srs = 1, check_gt = 1, vsimem = 1 )
+
 
 def rmf_8():
 
@@ -131,6 +139,7 @@ def rmf_8():
 ###############################################################################
 # Create RMFHUGE=YES
 
+
 def rmf_9():
 
     tst = gdaltest.GDALTest( 'rmf', 'byte.rsw', 1, 4672, options = ['RMFHUGE=YES'] )
@@ -139,6 +148,7 @@ def rmf_9():
 
 ###############################################################################
 # Compressed DEM
+
 
 def rmf_10():
 
@@ -149,6 +159,7 @@ def rmf_10():
 
 ###############################################################################
 # Overviews
+
 
 def rmf_11():
 
@@ -188,6 +199,7 @@ def rmf_11():
 ###############################################################################
 # Check file open with cucled header offsets .
 
+
 def rmf_12a():
 
     tst = gdaltest.GDALTest( 'rmf', 'cucled-1.rsw', 1, 4672 )
@@ -196,6 +208,7 @@ def rmf_12a():
 
 ###############################################################################
 # Check file open with cucled header offsets .
+
 
 def rmf_12b():
 
@@ -206,6 +219,7 @@ def rmf_12b():
 ###############################################################################
 # Check file open with invalid subheader marker.
 
+
 def rmf_12c():
 
     tst = gdaltest.GDALTest( 'rmf', 'invalid-subheader.rsw', 1, 4672 )
@@ -215,6 +229,7 @@ def rmf_12c():
 ###############################################################################
 # Check file open with corrupted subheader.
 
+
 def rmf_12d():
 
     tst = gdaltest.GDALTest( 'rmf', 'corrupted-subheader.rsw', 1, 4672 )
@@ -222,6 +237,7 @@ def rmf_12d():
 
 ###############################################################################
 # Build overviews and check
+
 
 def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_count=1):
 
@@ -290,6 +306,7 @@ def rmf_build_ov(source, testid, options, ov_sizes, crs, reopen=False, pass_coun
 ###############################################################################
 # Build overviews on newly created RSW file
 
+
 def rmf_13():
     return rmf_build_ov(source='byte.rsw',
                         testid='13',
@@ -300,6 +317,7 @@ def rmf_13():
 
 ###############################################################################
 # Build overviews on newly created huge RSW file
+
 
 def rmf_14():
     return rmf_build_ov(source='byte.rsw',
@@ -312,6 +330,7 @@ def rmf_14():
 ###############################################################################
 # Build overviews on closed and reopened RSW file
 
+
 def rmf_15():
     return rmf_build_ov(source='byte.rsw',
                         testid='15',
@@ -322,6 +341,7 @@ def rmf_15():
 
 ###############################################################################
 # Build overviews on closed and reopened huge RSW file
+
 
 def rmf_16():
     return rmf_build_ov(source='byte.rsw',
@@ -334,6 +354,7 @@ def rmf_16():
 ###############################################################################
 # Build overviews on newly created MTW file
 
+
 def rmf_17():
     return rmf_build_ov(source='float64.mtw',
                         testid='17',
@@ -344,6 +365,7 @@ def rmf_17():
 
 ###############################################################################
 # Build overviews on newly created MTW file
+
 
 def rmf_18():
     return rmf_build_ov(source='float64.mtw',
@@ -356,6 +378,7 @@ def rmf_18():
 ###############################################################################
 # Build overviews on closed and reopened MTW file
 
+
 def rmf_19():
     return rmf_build_ov(source='float64.mtw',
                         testid='19',
@@ -366,6 +389,7 @@ def rmf_19():
 
 ###############################################################################
 # Build overviews on closed and reopened huge MTW file
+
 
 def rmf_20():
     return rmf_build_ov(source='float64.mtw',
@@ -378,6 +402,7 @@ def rmf_20():
 ###############################################################################
 # Recreate overviews on newly created MTW file
 
+
 def rmf_21():
     return rmf_build_ov(source='float64.mtw',
                         testid='21',
@@ -389,6 +414,7 @@ def rmf_21():
 
 ###############################################################################
 # Recreate overviews on newly created huge MTW file
+
 
 def rmf_22():
     return rmf_build_ov(source='float64.mtw',
@@ -415,6 +441,7 @@ def rmf_23():
 ###############################################################################
 # Recreate overviews on closed and reopened huge MTW file
 
+
 def rmf_24():
     return rmf_build_ov(source='float64.mtw',
                         testid='24',
@@ -426,6 +453,7 @@ def rmf_24():
 
 ###############################################################################
 # Nodata write test
+
 
 def rmf_25():
     rmf_drv = gdal.GetDriverByName( 'RMF' )
@@ -478,6 +506,7 @@ def rmf_25():
     return 'success'
 ###############################################################################
 # Unit write test
+
 
 def rmf_26():
     rmf_drv = gdal.GetDriverByName( 'RMF' )
@@ -536,6 +565,7 @@ def rmf_26():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     rmf_1,

@@ -5,9 +5,6 @@
 # the SWIG interface file instead.
 
 
-
-
-
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -70,6 +67,7 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
+
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -81,6 +79,7 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
+
 try:
     _object = object
     _newclass = 1
@@ -91,6 +90,8 @@ except AttributeError:
 
 
 import gdal
+
+
 class VirtualMem(_object):
     """Proxy of C++ CPLVirtualMemShadow class."""
 
@@ -109,7 +110,6 @@ class VirtualMem(_object):
         """GetAddr(VirtualMem self)"""
         return _gdal_array.VirtualMem_GetAddr(self)
 
-
     def Pin(self, start_offset=0, nsize=0, bWriteOp=0):
         """
         Pin(VirtualMem self, size_t start_offset=0, size_t nsize=0, int bWriteOp=0)
@@ -119,6 +119,7 @@ class VirtualMem(_object):
         """
         return _gdal_array.VirtualMem_Pin(self, start_offset, nsize, bWriteOp)
 
+
 VirtualMem_swigregister = _gdal_array.VirtualMem_swigregister
 VirtualMem_swigregister(VirtualMem)
 
@@ -127,36 +128,45 @@ def TermProgress_nocb(dfProgress, pszMessage=None, pData=None):
     """TermProgress_nocb(double dfProgress, char const * pszMessage=None, void * pData=None) -> int"""
     return _gdal_array.TermProgress_nocb(dfProgress, pszMessage, pData)
 
+
 _gdal_array.TermProgress_swigconstant(_gdal_array)
 TermProgress = _gdal_array.TermProgress
+
 
 def OpenNumPyArray(psArray):
     """OpenNumPyArray(PyArrayObject * psArray) -> Dataset"""
     return _gdal_array.OpenNumPyArray(psArray)
 
+
 def GetArrayFilename(psArray):
     """GetArrayFilename(PyArrayObject * psArray) -> retStringAndCPLFree *"""
     return _gdal_array.GetArrayFilename(psArray)
+
 
 def BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None):
     """BandRasterIONumPy(Band band, int bWrite, double xoff, double yoff, double xsize, double ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
     return _gdal_array.BandRasterIONumPy(band, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data)
 
+
 def DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback=0, callback_data=None):
     """DatasetIONumPy(Dataset ds, int bWrite, int xoff, int yoff, int xsize, int ysize, PyArrayObject * psArray, int buf_type, GDALRIOResampleAlg resample_alg, GDALProgressFunc callback=0, void * callback_data=None) -> CPLErr"""
     return _gdal_array.DatasetIONumPy(ds, bWrite, xoff, yoff, xsize, ysize, psArray, buf_type, resample_alg, callback, callback_data)
+
 
 def VirtualMemGetArray(virtualmem):
     """VirtualMemGetArray(VirtualMem virtualmem)"""
     return _gdal_array.VirtualMemGetArray(virtualmem)
 
+
 def RATValuesIONumPyWrite(poRAT, nField, nStart, psArray):
     """RATValuesIONumPyWrite(RasterAttributeTable poRAT, int nField, int nStart, PyArrayObject * psArray) -> CPLErr"""
     return _gdal_array.RATValuesIONumPyWrite(poRAT, nField, nStart, psArray)
 
+
 def RATValuesIONumPyRead(poRAT, nField, nStart, nLength):
     """RATValuesIONumPyRead(RasterAttributeTable poRAT, int nField, int nStart, int nLength) -> PyObject *"""
     return _gdal_array.RATValuesIONumPyRead(poRAT, nField, nStart, nLength)
+
 
 import numpy
 
@@ -176,6 +186,7 @@ codes = {   gdalconst.GDT_Byte      :   numpy.uint8,
             gdalconst.GDT_CFloat32  :   numpy.complex64,
             gdalconst.GDT_CFloat64  :   numpy.complex128
         }
+
 
 def OpenArray( array, prototype_ds = None ):
 
@@ -209,13 +220,16 @@ def flip_code(code):
         except KeyError:
             return None
 
+
 def NumericTypeCodeToGDALTypeCode(numeric_type):
     if not isinstance(numeric_type, (numpy.dtype,type)):
         raise TypeError("Input must be a type")
     return flip_code(numeric_type)
 
+
 def GDALTypeCodeToNumericTypeCode(gdal_code):
     return flip_code(gdal_code)
+
 
 def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None,
               buf_xsize=None, buf_ysize=None, buf_type=None,
@@ -229,6 +243,7 @@ def LoadFile( filename, xoff=0, yoff=0, xsize=None, ysize=None,
                                buf_xsize=buf_xsize, buf_ysize=buf_ysize, buf_type=buf_type,
                                resample_alg=resample_alg,
                                callback = callback, callback_data = callback_data )
+
 
 def SaveArray( src_array, filename, format = "GTiff", prototype = None ):
     driver = gdal.GetDriverByName( format )
@@ -306,6 +321,7 @@ def DatasetReadAsArray( ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_
 
     return buf_obj
 
+
 def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = None,
                      buf_xsize=None, buf_ysize=None, buf_type=None, buf_obj=None,
                      resample_alg = gdal.GRIORA_NearestNeighbour,
@@ -362,6 +378,7 @@ def BandReadAsArray( band, xoff = 0, yoff = 0, win_xsize = None, win_ysize = Non
 
     return buf_obj
 
+
 def BandWriteArray( band, array, xoff=0, yoff=0,
                     resample_alg = gdal.GRIORA_NearestNeighbour,
                     callback=None, callback_data=None ):
@@ -391,6 +408,7 @@ def BandWriteArray( band, array, xoff=0, yoff=0,
 
     return BandRasterIONumPy( band, 1, xoff, yoff, xsize, ysize,
                                 array, datatype, resample_alg, callback, callback_data )
+
 
 def RATWriteArray(rat, array, field, start=0):
     """
@@ -427,6 +445,7 @@ def RATWriteArray(rat, array, field, start=0):
 
     return RATValuesIONumPyWrite(rat, field, start, array)
 
+
 def RATReadArray(rat, field, start=0, length=None):
     """
     Pure Python implementation of reading a chunk of the RAT
@@ -436,6 +455,7 @@ def RATReadArray(rat, field, start=0, length=None):
         length = rat.GetRowCount() - start
 
     return RATValuesIONumPyRead(rat, field, start, length)
+
 
 def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """
@@ -450,7 +470,6 @@ def CopyDatasetInfo( src, dst, xoff=0, yoff=0 ):
     """
 
     dst.SetMetadata( src.GetMetadata() )
-
 
 
 #Check for geo transform

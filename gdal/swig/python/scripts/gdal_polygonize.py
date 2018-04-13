@@ -45,15 +45,18 @@ gdal_polygonize [-8] [-nomask] [-mask filename] raster_file [-b band|mask]
 """)
     sys.exit(1)
 
+
 def DoesDriverHandleExtension(drv, ext):
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
+
 
 def GetExtension(filename):
     ext = os.path.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]
     return ext
+
 
 def GetOutputDriversFor(filename):
     drv_list = []
@@ -72,6 +75,7 @@ def GetOutputDriversFor(filename):
 
     return drv_list
 
+
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
     if len(drv_list) == 0:
@@ -87,6 +91,7 @@ def GetOutputDriverFor(filename):
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 format = None
 options = []

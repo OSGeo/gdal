@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Read a simple byte file, checking projections and geotransform.
 
+
 def mrsid_1():
 
     gdaltest.mrsid_drv = gdal.GetDriverByName( 'MrSID' )
@@ -138,6 +139,7 @@ def mrsid_1():
 # builtin overview.  Checks for the bug Steve L found in the optimized
 # RasterIO implementation.
 
+
 def mrsid_2():
 
     if gdaltest.mrsid_drv is None:
@@ -180,6 +182,7 @@ def mrsid_2():
 ###############################################################################
 # Test overview reading.
 
+
 def mrsid_3():
 
     if gdaltest.mrsid_drv is None:
@@ -209,6 +212,7 @@ def mrsid_3():
 
 ###############################################################################
 # Check a new (V3) file which uses a different form for coordinate sys.
+
 
 def mrsid_4():
 
@@ -255,6 +259,7 @@ def mrsid_4():
 ###############################################################################
 # Test JP2MrSID driver
 
+
 def mrsid_5():
     gdaltest.jp2mrsid_drv = gdal.GetDriverByName( 'JP2MrSID' )
     if gdaltest.jp2mrsid_drv is None:
@@ -266,6 +271,7 @@ def mrsid_5():
 
 ###############################################################################
 # Open byte.jp2
+
 
 def mrsid_6():
 
@@ -327,6 +333,7 @@ def mrsid_7():
 ###############################################################################
 # Test PAM override for nodata, coordsys, and geotransform.
 
+
 def mrsid_8():
 
     if gdaltest.mrsid_drv is None:
@@ -372,6 +379,7 @@ def mrsid_8():
 ###############################################################################
 # Test VSI*L IO with .sid
 
+
 def mrsid_9():
 
     if gdaltest.mrsid_drv is None:
@@ -395,6 +403,7 @@ def mrsid_9():
 
 ###############################################################################
 # Test VSI*L IO with .jp2
+
 
 def mrsid_10():
 
@@ -420,6 +429,7 @@ def mrsid_10():
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
+
 def mrsid_11():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -443,6 +453,8 @@ def mrsid_11():
     return 'success'
 
 ###############################################################################
+
+
 def mrsid_online_1():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -464,6 +476,8 @@ def mrsid_online_1():
     return 'success'
 
 ###############################################################################
+
+
 def mrsid_online_2():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -495,6 +509,8 @@ def mrsid_online_2():
     return 'success'
 
 ###############################################################################
+
+
 def mrsid_online_3():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -530,6 +546,8 @@ def mrsid_online_3():
     return 'success'
 
 ###############################################################################
+
+
 def mrsid_online_4():
 
     if gdaltest.jp2mrsid_drv is None:
@@ -565,6 +583,7 @@ def mrsid_online_4():
 ###############################################################################
 # Cleanup.
 
+
 def mrsid_cleanup():
 
     try:
@@ -576,6 +595,7 @@ def mrsid_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     mrsid_1,

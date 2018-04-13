@@ -38,6 +38,8 @@ import gdaltest
 
 ###############################################################################
 # Helper to make gcps
+
+
 def _list2gcps(src_list):
     gcp_list = []
     for src_tuple in src_list:
@@ -69,6 +71,7 @@ def gcps2gt_1():
 ###############################################################################
 # Similar but non-exact.
 
+
 def gcps2gt_2():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
@@ -85,6 +88,7 @@ def gcps2gt_2():
 
 ###############################################################################
 # bApproxOK false, and no good solution.
+
 
 def gcps2gt_3():
 
@@ -104,6 +108,7 @@ def gcps2gt_3():
 ###############################################################################
 # Single point - Should return None.
 
+
 def gcps2gt_4():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
@@ -117,6 +122,7 @@ def gcps2gt_4():
 
 ###############################################################################
 # Two points - simple offset and scale, no rotation.
+
 
 def gcps2gt_5():
 
@@ -132,6 +138,7 @@ def gcps2gt_5():
 
 ###############################################################################
 # Special case for four points in a particular order.  Exact result.
+
 
 def gcps2gt_6():
 
@@ -150,6 +157,7 @@ def gcps2gt_6():
 ###############################################################################
 # Try a case that is hard to do without normalization.
 
+
 def gcps2gt_7():
 
     gt = gdal.GCPsToGeoTransform(_list2gcps([
@@ -166,6 +174,7 @@ def gcps2gt_7():
 
 ###############################################################################
 # A fairly messy real world case without a easy to predict result.
+
 
 def gcps2gt_8():
 

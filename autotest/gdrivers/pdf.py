@@ -44,6 +44,7 @@ import ogrtest
 ###############################################################################
 # Test driver presence
 
+
 def pdf_init():
 
     try:
@@ -64,6 +65,7 @@ def pdf_init():
 ###############################################################################
 # Returns True if we run with poppler
 
+
 def pdf_is_poppler():
 
     md = gdaltest.pdf_drv.GetMetadata()
@@ -76,6 +78,7 @@ def pdf_is_poppler():
 ###############################################################################
 # Returns True if we run with pdfium
 
+
 def pdf_is_pdfium():
 
     md = gdaltest.pdf_drv.GetMetadata()
@@ -87,6 +90,7 @@ def pdf_is_pdfium():
 
 ###############################################################################
 # Returns True if we can compute the checksum
+
 
 def pdf_checksum_available():
 
@@ -113,6 +117,7 @@ def pdf_checksum_available():
 
 ###############################################################################
 # Test OGC best practice geospatial PDF
+
 
 def pdf_online_1():
 
@@ -172,6 +177,7 @@ def pdf_online_1():
 
 ###############################################################################
 
+
 def pdf_online_2():
 
     if gdaltest.pdf_drv is None:
@@ -215,6 +221,7 @@ def pdf_online_2():
 
 ###############################################################################
 # Test Adobe style geospatial pdf
+
 
 def pdf_1():
 
@@ -273,6 +280,7 @@ def pdf_1():
 ###############################################################################
 # Test write support with ISO32000 geo encoding
 
+
 def pdf_iso32000():
 
     if gdaltest.pdf_drv is None:
@@ -286,6 +294,7 @@ def pdf_iso32000():
 ###############################################################################
 # Test write support with ISO32000 geo encoding, with DPI=300
 
+
 def pdf_iso32000_dpi_300():
 
     if gdaltest.pdf_drv is None:
@@ -298,6 +307,7 @@ def pdf_iso32000_dpi_300():
 
 ###############################################################################
 # Test write support with OGC_BP geo encoding
+
 
 def pdf_ogcbp():
 
@@ -314,6 +324,7 @@ def pdf_ogcbp():
 ###############################################################################
 # Test write support with OGC_BP geo encoding, with DPI=300
 
+
 def pdf_ogcbp_dpi_300():
 
     if gdaltest.pdf_drv is None:
@@ -325,6 +336,7 @@ def pdf_ogcbp_dpi_300():
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
     return ret
+
 
 def pdf_ogcbp_lcc():
 
@@ -375,6 +387,7 @@ def pdf_ogcbp_lcc():
 ###############################################################################
 # Test no compression
 
+
 def pdf_no_compression():
 
     if gdaltest.pdf_drv is None:
@@ -387,6 +400,7 @@ def pdf_no_compression():
 
 ###############################################################################
 # Test compression methods
+
 
 def pdf_jpeg_compression(filename = 'byte.tif'):
 
@@ -401,6 +415,7 @@ def pdf_jpeg_compression(filename = 'byte.tif'):
 
     return ret
 
+
 def pdf_get_J2KDriver(drv_name):
     drv = gdal.GetDriverByName(drv_name)
     if drv is None:
@@ -410,6 +425,7 @@ def pdf_get_J2KDriver(drv_name):
         if not ecw.has_write_support():
             return None
     return drv
+
 
 def pdf_jpx_compression(filename, drv_name = None):
 
@@ -435,29 +451,37 @@ def pdf_jpx_compression(filename, drv_name = None):
 
     return ret
 
+
 def pdf_jp2_auto_compression():
     return pdf_jpx_compression('utm.tif')
+
 
 def pdf_jp2kak_compression():
     return pdf_jpx_compression('utm.tif', 'JP2KAK')
 
+
 def pdf_jp2ecw_compression():
     return pdf_jpx_compression('utm.tif', 'JP2ECW')
+
 
 def pdf_jp2openjpeg_compression():
     return pdf_jpx_compression('utm.tif', 'JP2OpenJpeg')
 
+
 def pdf_jpeg2000_compression():
     return pdf_jpx_compression('utm.tif', 'JPEG2000')
 
+
 def pdf_jp2ecw_compression_rgb():
     return pdf_jpx_compression('rgbsmall.tif', 'JP2ECW')
+
 
 def pdf_jpeg_compression_rgb():
     return pdf_jpeg_compression('rgbsmall.tif')
 
 ###############################################################################
 # Test RGBA
+
 
 def pdf_rgba_default_compression(options_param = []):
 
@@ -522,14 +546,17 @@ def pdf_rgba_default_compression(options_param = []):
 
     return 'success'
 
+
 def pdf_rgba_default_compression_tiled():
     return pdf_rgba_default_compression(['BLOCKXSIZE=32', 'BLOCKYSIZE=32'])
+
 
 def pdf_jpeg_compression_rgba():
     return pdf_jpeg_compression('../../gcore/data/stefan_full_rgba.tif')
 
 ###############################################################################
 # Test PREDICTOR=2
+
 
 def pdf_predictor_2():
 
@@ -540,6 +567,7 @@ def pdf_predictor_2():
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
+
 
 def pdf_predictor_2_rgb():
 
@@ -554,6 +582,7 @@ def pdf_predictor_2_rgb():
 ###############################################################################
 # Test tiling
 
+
 def pdf_tiled():
 
     if gdaltest.pdf_drv is None:
@@ -563,6 +592,7 @@ def pdf_tiled():
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
+
 
 def pdf_tiled_128():
 
@@ -576,6 +606,7 @@ def pdf_tiled_128():
 
 ###############################################################################
 # Test raster with color table
+
 
 def pdf_color_table():
 
@@ -592,6 +623,7 @@ def pdf_color_table():
 
 ###############################################################################
 # Test XMP support
+
 
 def pdf_xmp():
 
@@ -628,6 +660,7 @@ def pdf_xmp():
 
 ###############################################################################
 # Test Info
+
 
 def pdf_info():
 
@@ -675,6 +708,7 @@ def pdf_info():
 
 ###############################################################################
 # Check SetGeoTransform() / SetProjection()
+
 
 def pdf_update_gt():
 
@@ -752,6 +786,7 @@ def pdf_update_gt():
 ###############################################################################
 # Check SetMetadataItem() for Info
 
+
 def pdf_update_info():
 
     if gdaltest.pdf_drv is None:
@@ -820,6 +855,7 @@ def pdf_update_info():
 ###############################################################################
 # Check SetMetadataItem() for xml:XMP
 
+
 def pdf_update_xmp():
 
     if gdaltest.pdf_drv is None:
@@ -886,6 +922,7 @@ def pdf_update_xmp():
 
 ###############################################################################
 # Check SetGCPs() but with GCPs that resolve to a geotransform
+
 
 def pdf_update_gcps(dpi = 300):
 
@@ -992,10 +1029,12 @@ def pdf_update_gcps(dpi = 300):
 
     return 'success'
 
+
 def pdf_update_gcps_iso32000():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', None)
     ret = pdf_update_gcps()
     return ret
+
 
 def pdf_update_gcps_ogc_bp():
     gdal.SetConfigOption('GDAL_PDF_GEO_ENCODING', 'OGC_BP')
@@ -1005,6 +1044,7 @@ def pdf_update_gcps_ogc_bp():
 
 ###############################################################################
 # Check SetGCPs() but with GCPs that do *not* resolve to a geotransform
+
 
 def pdf_set_5_gcps_ogc_bp(dpi = 300):
 
@@ -1209,14 +1249,17 @@ def pdf_set_neatline(geo_encoding, dpi = 300):
 
     return 'success'
 
+
 def pdf_set_neatline_iso32000():
     return pdf_set_neatline('ISO32000')
+
 
 def pdf_set_neatline_ogc_bp():
     return pdf_set_neatline('OGC_BP')
 
 ###############################################################################
 # Check that we can generate identical file
+
 
 def pdf_check_identity_iso32000():
 
@@ -1248,6 +1291,7 @@ def pdf_check_identity_iso32000():
 
 ###############################################################################
 # Check that we can generate identical file
+
 
 def pdf_check_identity_ogc_bp():
 
@@ -1281,6 +1325,7 @@ def pdf_check_identity_ogc_bp():
 
 ###############################################################################
 # Check layers support
+
 
 def pdf_layers():
 
@@ -1341,6 +1386,7 @@ def pdf_layers():
 ###############################################################################
 # Test MARGIN, EXTRA_STREAM, EXTRA_LAYER_NAME and EXTRA_IMAGES options
 
+
 def pdf_custom_layout():
 
     if gdaltest.pdf_drv is None:
@@ -1383,6 +1429,7 @@ if (button == 4) app.launchURL('http://gdal.org/');"""
 
 ###############################################################################
 # Test CLIPPING_EXTENT, EXTRA_RASTERS, EXTRA_RASTERS_LAYER_NAME, OFF_LAYERS, EXCLUSIVE_LAYERS options
+
 
 def pdf_extra_rasters():
 
@@ -1453,6 +1500,7 @@ def pdf_extra_rasters():
 
 ###############################################################################
 # Test adding a OGR datasource
+
 
 def pdf_write_ogr():
 
@@ -1557,6 +1605,7 @@ def pdf_write_ogr():
 ###############################################################################
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
+
 def pdf_write_ogr_with_reprojection():
 
     if gdaltest.pdf_drv is None:
@@ -1622,6 +1671,7 @@ def pdf_write_ogr_with_reprojection():
 ###############################################################################
 # Test direct copy of source JPEG file
 
+
 def pdf_jpeg_direct_copy():
 
     if gdaltest.pdf_drv is None:
@@ -1664,6 +1714,7 @@ def pdf_jpeg_direct_copy():
 
 ###############################################################################
 # Test direct copy of source JPEG file within VRT file
+
 
 def pdf_jpeg_in_vrt_direct_copy():
 
@@ -1720,6 +1771,7 @@ def pdf_jpeg_in_vrt_direct_copy():
 ###############################################################################
 # Test reading georeferencing attached to an image, and not to the page (#4695)
 
+
 def pdf_georef_on_image(src_filename = 'data/byte.tif'):
 
     if gdaltest.pdf_drv is None:
@@ -1762,11 +1814,13 @@ def pdf_georef_on_image(src_filename = 'data/byte.tif'):
 
     return 'success'
 
+
 def pdf_georef_on_image_rgb():
     return pdf_georef_on_image('data/rgbsmall.tif')
 
 ###############################################################################
 # Test writing a PDF that hits Acrobat limits in term of page dimensions (#5412)
+
 
 def pdf_write_huge():
 
@@ -1840,6 +1894,7 @@ def pdf_write_huge():
 ###############################################################################
 # Test creating overviews
 
+
 def pdf_overviews():
 
     if gdaltest.pdf_drv is None:
@@ -1890,6 +1945,7 @@ def pdf_overviews():
 
 ###############################################################################
 # Test password
+
 
 def pdf_password():
 
@@ -1948,6 +2004,7 @@ def pdf_password():
 ###############################################################################
 # Test multi page support
 
+
 def pdf_multipage():
 
     if gdaltest.pdf_drv is None:
@@ -2003,6 +2060,7 @@ def pdf_multipage():
 ###############################################################################
 # Test PAM metadata support
 
+
 def pdf_metadata():
 
     if gdaltest.pdf_drv is None:
@@ -2028,6 +2086,7 @@ def pdf_metadata():
 
 ###############################################################################
 # Test PAM georef support
+
 
 def pdf_pam_georef():
 
@@ -2060,6 +2119,7 @@ def pdf_pam_georef():
     gdal.GetDriverByName('PDF').Delete('tmp/pdf_pam_georef.pdf')
 
     return 'success'
+
 
 gdaltest_list_for_full_backend = [
     pdf_online_1,
@@ -2126,6 +2186,7 @@ gdaltest_list_for_short_backend = [
     pdf_multipage
 ]
 
+
 def pdf_run_all():
     gdaltest.run_tests( [ pdf_init ] )
 
@@ -2158,6 +2219,7 @@ def pdf_run_all():
                 gdaltest.run_tests( gdaltest_list_for_short_backend )
 
     return 'success'
+
 
 gdaltest_list = [ pdf_run_all ]
 #gdaltest_list = [ pdf_init, pdf_metadata ]

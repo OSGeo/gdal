@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 ## Try ogr.Open(), Driver.CreateDataSource(), Driver.DeleteDataSource()
 
+
 def ogr_rfc30_1_internal(filename, layer_name):
 
     ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource(filename)
@@ -59,6 +60,7 @@ def ogr_rfc30_1_internal(filename, layer_name):
 
     return 'success'
 
+
 def ogr_rfc30_1():
 
     if version_info >= (3,0,0):
@@ -70,6 +72,7 @@ def ogr_rfc30_1():
         exec("layer_name = u'\u00e9'.encode( 'utf-8' )") # FIXME? we should perhaps accept Unicode strings for layernames as well
 
     return ogr_rfc30_1_internal(filename, layer_name)
+
 
 def ogr_rfc30_1_bis():
 
@@ -83,6 +86,7 @@ def ogr_rfc30_1_bis():
     exec("layer_name = u'\u00e9'.encode( 'utf-8' )") # FIXME? we should perhaps accept Unicode strings for layernames as well
 
     return ogr_rfc30_1_internal(filename, layer_name)
+
 
 gdaltest_list = [ ogr_rfc30_1,
                   ogr_rfc30_1_bis

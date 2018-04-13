@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def pcraster_1():
 
     gdaltest.pcraster_drv = gdal.GetDriverByName( 'PCRaster' )
@@ -50,6 +51,7 @@ def pcraster_1():
 
 ###############################################################################
 # Verify some auxiliary data.
+
 
 def pcraster_2():
 

@@ -42,6 +42,8 @@ from osgeo import gdal
 ###############################################################################
 # Test basic open operation for KML datastore.
 #
+
+
 def ogr_libkml_datastore():
 
     ogrtest.kml_ds = None
@@ -89,6 +91,8 @@ def ogr_libkml_datastore():
 ###############################################################################
 # Test reading attributes for first layer (point).
 #
+
+
 def ogr_libkml_attributes_1():
 
     if not ogrtest.have_read_libkml:
@@ -143,6 +147,8 @@ def ogr_libkml_attributes_1():
 ###############################################################################
 # Test reading attributes for another layer (point).
 #
+
+
 def ogr_libkml_attributes_2():
 
     if not ogrtest.have_read_libkml:
@@ -174,6 +180,8 @@ def ogr_libkml_attributes_2():
 ###############################################################################
 # Test reading attributes for another layer (linestring).
 #
+
+
 def ogr_libkml_attributes_3():
 
     if not ogrtest.have_read_libkml:
@@ -217,6 +225,8 @@ def ogr_libkml_attributes_3():
 ###############################################################################
 # Test reading attributes for another layer (polygon).
 #
+
+
 def ogr_libkml_attributes_4():
 
     if not ogrtest.have_read_libkml:
@@ -249,6 +259,8 @@ def ogr_libkml_attributes_4():
 ###############################################################################
 # Test reading of KML point geometry
 #
+
+
 def ogr_libkml_point_read():
 
     if not ogrtest.have_read_libkml:
@@ -292,6 +304,8 @@ def ogr_libkml_point_read():
 ###############################################################################
 # Test reading of KML linestring geometry
 #
+
+
 def ogr_libkml_linestring_read():
 
     if not ogrtest.have_read_libkml:
@@ -332,6 +346,8 @@ def ogr_libkml_linestring_read():
 ###############################################################################
 # Test reading of KML polygon geometry
 #
+
+
 def ogr_libkml_polygon_read():
 
     if not ogrtest.have_read_libkml:
@@ -380,6 +396,7 @@ def ogr_libkml_polygon_read():
 
 ###############################################################################
 # Write test
+
 
 def ogr_libkml_write(filename):
 
@@ -470,6 +487,7 @@ def ogr_libkml_write(filename):
 ###############################################################################
 # Check previous test
 
+
 def ogr_libkml_check_write(filename):
 
     if not ogrtest.have_read_libkml:
@@ -549,17 +567,23 @@ def ogr_libkml_check_write(filename):
     return 'success'
 
 ###############################################################################
+
+
 def ogr_libkml_write_kml():
     return ogr_libkml_write('/vsimem/libkml.kml')
+
 
 def ogr_libkml_check_write_kml():
     return ogr_libkml_check_write('/vsimem/libkml.kml')
 
+
 def ogr_libkml_write_kmz():
     return ogr_libkml_write('/vsimem/libkml.kmz')
 
+
 def ogr_libkml_check_write_kmz():
     return ogr_libkml_check_write('/vsimem/libkml.kmz')
+
 
 def ogr_libkml_write_kmz_use_doc_off():
     gdal.SetConfigOption("LIBKML_USE_DOC.KML", "NO")
@@ -567,11 +591,14 @@ def ogr_libkml_write_kmz_use_doc_off():
     gdal.SetConfigOption("LIBKML_USE_DOC.KML", None)
     return ret
 
+
 def ogr_libkml_check_write_kmz_use_doc_off():
     return ogr_libkml_check_write('/vsimem/libkml_use_doc_off.kmz')
 
+
 def ogr_libkml_write_dir():
     return ogr_libkml_write('/vsimem/libkmldir')
+
 
 def ogr_libkml_check_write_dir():
     if not ogrtest.have_read_libkml:
@@ -587,6 +614,8 @@ def ogr_libkml_check_write_dir():
 ###############################################################################
 # Test reading attributes with XML content in them
 #
+
+
 def ogr_libkml_xml_attributes():
 
     if not ogrtest.have_read_libkml:
@@ -609,6 +638,8 @@ def ogr_libkml_xml_attributes():
 ###############################################################################
 # Test reading all geometry types (#3558)
 #
+
+
 def ogr_libkml_read_geometries():
 
     if not ogrtest.have_read_libkml:
@@ -627,6 +658,7 @@ def ogr_libkml_read_geometries():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_libkml_test_ogrsf():
 
@@ -648,6 +680,7 @@ def ogr_libkml_test_ogrsf():
 ###############################################################################
 # Test reading KML with only Placemark
 
+
 def ogr_libkml_read_placemark():
 
     if not ogrtest.have_read_libkml:
@@ -666,6 +699,7 @@ def ogr_libkml_read_placemark():
 ###############################################################################
 # Test reading KML without any layer
 
+
 def ogr_libkml_read_empty():
 
     if not ogrtest.have_read_libkml:
@@ -683,6 +717,7 @@ def ogr_libkml_read_empty():
 
 ###############################################################################
 # Test reading KML with empty layers
+
 
 def ogr_libkml_read_emptylayers():
 
@@ -716,6 +751,7 @@ def ogr_libkml_read_emptylayers():
 ###############################################################################
 # Test reading KML with empty layers without folder
 
+
 def ogr_libkml_read_emptylayers_without_folder():
 
     if not ogrtest.have_read_libkml:
@@ -739,6 +775,7 @@ def ogr_libkml_read_emptylayers_without_folder():
 
 ###############################################################################
 # Test reading KML with empty layers without_folder
+
 
 def ogr_libkml_read_schema():
 
@@ -783,6 +820,7 @@ def ogr_libkml_read_schema():
 # Test reading KML with <Data> elements of <ExtendedData> in case
 # <ExtendedData> doesn't use a <SchemaData> (test changeset r22127)
 
+
 def ogr_libkml_extended_data_without_schema_data():
 
     if not ogrtest.have_read_libkml:
@@ -817,6 +855,7 @@ def ogr_libkml_extended_data_without_schema_data():
 ###############################################################################
 # Test reading KML with <gx:Track> element (#5095)
 
+
 def ogr_libkml_gxtrack():
 
     if not ogrtest.have_read_libkml:
@@ -839,6 +878,7 @@ def ogr_libkml_gxtrack():
 ###############################################################################
 # Test reading KML with <gx:MultiTrack> element
 
+
 def ogr_libkml_gxmultitrack():
 
     if not ogrtest.have_read_libkml:
@@ -860,6 +900,7 @@ def ogr_libkml_gxmultitrack():
 
 ###############################################################################
 # Test generating and reading KML with <Camera> element
+
 
 def ogr_libkml_camera():
 
@@ -931,6 +972,7 @@ def ogr_libkml_camera():
 
 ###############################################################################
 # Test generating a LookAt element at Document level
+
 
 def ogr_libkml_write_layer_lookat():
 
@@ -1009,6 +1051,7 @@ def ogr_libkml_write_layer_camera():
 ###############################################################################
 # Test writing MultiGeometry
 
+
 def ogr_libkml_write_multigeometry():
 
     if not ogrtest.have_read_libkml:
@@ -1045,6 +1088,7 @@ def ogr_libkml_write_multigeometry():
 
 ###############################################################################
 # Test writing <snippet>
+
 
 def ogr_libkml_write_snippet():
 
@@ -1087,6 +1131,7 @@ def ogr_libkml_write_snippet():
 ###############################################################################
 # Test writing <atom:author>
 
+
 def ogr_libkml_write_atom_author():
 
     if not ogrtest.have_read_libkml:
@@ -1118,6 +1163,7 @@ def ogr_libkml_write_atom_author():
 ###############################################################################
 # Test writing <atom:link>
 
+
 def ogr_libkml_write_atom_link():
 
     if not ogrtest.have_read_libkml:
@@ -1147,6 +1193,7 @@ def ogr_libkml_write_atom_link():
 ###############################################################################
 # Test writing <phoneNumber>
 
+
 def ogr_libkml_write_phonenumber():
 
     if not ogrtest.have_read_libkml:
@@ -1174,6 +1221,7 @@ def ogr_libkml_write_phonenumber():
 
 ###############################################################################
 # Test writing Region
+
 
 def ogr_libkml_write_region():
 
@@ -1223,6 +1271,7 @@ def ogr_libkml_write_region():
 ###############################################################################
 # Test writing ScreenOverlay
 
+
 def ogr_libkml_write_screenoverlay():
 
     if not ogrtest.have_read_libkml:
@@ -1271,6 +1320,7 @@ def ogr_libkml_write_screenoverlay():
 
 ###############################################################################
 # Test writing Model
+
 
 def ogr_libkml_write_model():
 
@@ -1345,6 +1395,7 @@ def ogr_libkml_write_model():
 
 ###############################################################################
 # Test read / write of style
+
 
 def ogr_libkml_read_write_style():
 
@@ -1599,6 +1650,7 @@ def ogr_libkml_read_write_style():
 ###############################################################################
 # Test writing Update
 
+
 def ogr_libkml_write_update():
 
     if not ogrtest.have_read_libkml:
@@ -1659,6 +1711,7 @@ def ogr_libkml_write_update():
 ###############################################################################
 # Test writing NetworkLinkControl
 
+
 def ogr_libkml_write_networklinkcontrol():
 
     if not ogrtest.have_read_libkml:
@@ -1718,6 +1771,7 @@ def ogr_libkml_write_networklinkcontrol():
 ###############################################################################
 # Test writing ListStyle
 
+
 def ogr_libkml_write_liststyle():
 
     if not ogrtest.have_read_libkml:
@@ -1757,6 +1811,7 @@ def ogr_libkml_write_liststyle():
 
 ###############################################################################
 # Test writing NetworkLink
+
 
 def ogr_libkml_write_networklink():
 
@@ -1827,6 +1882,7 @@ def ogr_libkml_write_networklink():
 
 ###############################################################################
 # Test writing PhotoOverlay
+
 
 def ogr_libkml_write_photooverlay():
 
@@ -1916,6 +1972,7 @@ def ogr_libkml_write_photooverlay():
 ###############################################################################
 # Test writing and reading Data element
 
+
 def ogr_libkml_read_write_data():
 
     if not ogrtest.have_read_libkml:
@@ -1955,6 +2012,7 @@ def ogr_libkml_read_write_data():
 ###############################################################################
 # Test writing layer as Folder
 
+
 def ogr_libkml_write_folder():
 
     if not ogrtest.have_read_libkml:
@@ -1983,6 +2041,7 @@ def ogr_libkml_write_folder():
 
 ###############################################################################
 # Test writing datasource and layer container propreties
+
 
 def ogr_libkml_write_container_properties():
 
@@ -2018,6 +2077,7 @@ def ogr_libkml_write_container_properties():
 ###############################################################################
 # Test reading gx:TimeStamp and gx:TimeSpan
 
+
 def ogr_libkml_read_gx_timestamp():
 
     if not ogrtest.have_read_libkml:
@@ -2041,6 +2101,7 @@ def ogr_libkml_read_gx_timestamp():
 ###############################################################################
 # Test reading KML with kml: prefix
 
+
 def ogr_libkml_read_placemark_with_kml_prefix():
 
     if not ogrtest.have_read_libkml:
@@ -2056,6 +2117,7 @@ def ogr_libkml_read_placemark_with_kml_prefix():
 
 ###############################################################################
 # Test reading KML with dumplicated folder name
+
 
 def ogr_libkml_read_duplicate_folder_name():
 
@@ -2078,6 +2140,7 @@ def ogr_libkml_read_duplicate_folder_name():
 
 ###############################################################################
 # Test reading KML with a placemark in root document, and a subfolder (#7221)
+
 
 def ogr_libkml_read_placemark_in_root_and_subfolder():
 
@@ -2106,6 +2169,7 @@ def ogr_libkml_read_placemark_in_root_and_subfolder():
 ###############################################################################
 # Test reading KML with coordinate tuples separated by tabulations (#7231)
 
+
 def ogr_libkml_read_tab_separated_coord_triplet():
 
     if not ogrtest.have_read_libkml:
@@ -2125,6 +2189,7 @@ def ogr_libkml_read_tab_separated_coord_triplet():
 ###############################################################################
 # Test reading KML with coordinate with space only content (#7232)
 
+
 def ogr_libkml_read_kml_with_space_content_in_coordinates():
 
     if not ogrtest.have_read_libkml:
@@ -2143,6 +2208,7 @@ def ogr_libkml_read_kml_with_space_content_in_coordinates():
 
 ###############################################################################
 #  Cleanup
+
 
 def ogr_libkml_cleanup():
     if not ogrtest.have_read_libkml:
@@ -2191,6 +2257,7 @@ def ogr_libkml_cleanup():
 
 ###############################################################################
 # Build tests runner
+
 
 gdaltest_list = [
     ogr_libkml_datastore,

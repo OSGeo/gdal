@@ -44,6 +44,7 @@ from osgeo import gdal
 ###############################################################################
 # Basic test without snapshoting
 
+
 def ograpispy_1():
 
     gdal.SetConfigOption('OGR_API_SPY_FILE', 'tmp/ograpispy_1.py')
@@ -69,6 +70,7 @@ def ograpispy_1():
 
 ###############################################################################
 # With snapshoting
+
 
 def ograpispy_2():
 
@@ -129,6 +131,7 @@ def ograpispy_2():
 ###############################################################################
 #
 
+
 def ograpispy_cleanup():
     try:
         os.unlink('tmp/ograpispy_1.py')
@@ -154,6 +157,7 @@ def ograpispy_cleanup():
     gdal.Unlink('/vsimem/test2.csv')
 
     return 'success'
+
 
 gdaltest_list = [
     ograpispy_1,

@@ -46,6 +46,7 @@ from osgeo import ogr
 # Test reading a NAS file
 #
 
+
 def ogr_nas_1():
 
     try:
@@ -108,6 +109,7 @@ def ogr_nas_1():
 ###############################################################################
 # Test reading a sample NAS file from PostNAS
 #
+
 
 def ogr_nas_2():
 
@@ -173,6 +175,7 @@ def ogr_nas_2():
 # Test that we can open and read empty files successfully.
 #
 
+
 def ogr_nas_3():
 
     try:
@@ -200,6 +203,7 @@ def ogr_nas_3():
 ###############################################################################
 # Test that we can read files with wfs:Delete transactions in them properly.
 #
+
 
 def ogr_nas_4():
 
@@ -260,6 +264,7 @@ def ogr_nas_4():
 ###############################################################################
 # Test that we can read files with wfsext:Replace transactions properly
 #
+
 
 def ogr_nas_5():
 
@@ -348,6 +353,7 @@ def ogr_nas_5():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_nas_1,

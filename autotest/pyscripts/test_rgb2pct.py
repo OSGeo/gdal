@@ -42,6 +42,7 @@ import test_py_scripts
 ###############################################################################
 # Test rgb2pct
 
+
 def test_rgb2pct_1():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
@@ -60,6 +61,7 @@ def test_rgb2pct_1():
 
 ###############################################################################
 # Test pct2rgb
+
 
 def test_pct2rgb_1():
     try:
@@ -92,6 +94,7 @@ def test_pct2rgb_1():
 ###############################################################################
 # Test rgb2pct -n option
 
+
 def test_rgb2pct_2():
 
     script_path = test_py_scripts.get_py_script('rgb2pct')
@@ -118,6 +121,7 @@ def test_rgb2pct_2():
 
 ###############################################################################
 # Test rgb2pct -pct option
+
 
 def test_rgb2pct_3():
 
@@ -199,6 +203,7 @@ def test_rgb2pct_cleanup():
             pass
 
     return 'success'
+
 
 gdaltest_list = [
     test_rgb2pct_1,

@@ -41,6 +41,7 @@ from osgeo import ogr
 ###############################################################################
 # Test points bna layer.
 
+
 def ogr_bna_1():
 
     gdaltest.bna_ds = ogr.Open( 'data/test.bna' )
@@ -69,6 +70,7 @@ def ogr_bna_1():
 ###############################################################################
 # Test lines bna layer.
 
+
 def ogr_bna_2():
 
     gdaltest.bna_ds = ogr.Open( 'data/test.bna' )
@@ -90,6 +92,7 @@ def ogr_bna_2():
 
 ###############################################################################
 # Test polygons bna layer.
+
 
 def ogr_bna_3():
 
@@ -119,6 +122,7 @@ def ogr_bna_3():
 
 ###############################################################################
 # Test ellipses bna layer.
+
 
 def ogr_bna_4():
 
@@ -162,6 +166,7 @@ def ogr_bna_check_content(lyr1, lyr2):
 
     return 'success'
 
+
 def ogr_bna_write(creation_options):
 
     output_ds = ogr.GetDriverByName('BNA').CreateDataSource('tmp/out.bna', options = creation_options )
@@ -200,9 +205,11 @@ def ogr_bna_write(creation_options):
 
     return 'success'
 
+
 def ogr_bna_5():
 
     return ogr_bna_write( ['ELLIPSES_AS_ELLIPSES=YES'] )
+
 
 def ogr_bna_6():
 
@@ -236,6 +243,7 @@ def ogr_bna_6():
 ###############################################################################
 #
 
+
 def ogr_bna_cleanup():
 
     gdaltest.bna_ds = None
@@ -246,6 +254,7 @@ def ogr_bna_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_bna_1,

@@ -37,10 +37,12 @@ import gdaltest
 ###############################################################################
 # Test a fake EIR dataset
 
+
 def eir_1():
 
     tst = gdaltest.GDALTest( 'EIR', 'fakeeir.hdr', 1, 1 )
     return tst.testOpen()
+
 
 gdaltest_list = [
     eir_1 ]

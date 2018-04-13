@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Open a little-endian NTv2 grid
 
+
 def ntv2_1():
 
     tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10 )
@@ -47,6 +48,7 @@ def ntv2_1():
 
 ###############################################################################
 # Open a big-endian NTv2 grid
+
 
 def ntv2_2():
 
@@ -57,6 +59,7 @@ def ntv2_2():
 ###############################################################################
 # Test creating a little-endian NTv2 grid
 
+
 def ntv2_3():
 
     tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=LE'] )
@@ -65,6 +68,7 @@ def ntv2_3():
 ###############################################################################
 # Test creating a big-endian NTv2 grid
 
+
 def ntv2_4():
 
     tst = gdaltest.GDALTest( 'NTV2', 'test_ntv2_le.gsb', 2, 10, options = ['ENDIANNESS=BE'] )
@@ -72,6 +76,7 @@ def ntv2_4():
 
 ###############################################################################
 # Test appending to a little-endian NTv2 grid
+
 
 def ntv2_5():
 
@@ -96,6 +101,7 @@ def ntv2_5():
 ###############################################################################
 # Test appending to a big-endian NTv2 grid
 
+
 def ntv2_6():
 
     src_ds = gdal.Open('data/test_ntv2_le.gsb')
@@ -119,6 +125,7 @@ def ntv2_6():
 ###############################################################################
 # Test creating a file with invalid filename
 
+
 def ntv2_7():
 
     with gdaltest.error_handler():
@@ -134,6 +141,7 @@ def ntv2_7():
     return 'success'
 
 ###############################################################################
+
 
 def ntv2_online_1():
 
@@ -151,6 +159,7 @@ def ntv2_online_1():
 
 ###############################################################################
 
+
 def ntv2_online_2():
 
     try:
@@ -162,6 +171,7 @@ def ntv2_online_2():
     return tst.testCreateCopy( vsimem = 1 )
 
 ###############################################################################
+
 
 def ntv2_online_3():
 

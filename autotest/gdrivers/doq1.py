@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Test a fake DOQ1 dataset
 
+
 def doq1_1():
 
     tst = gdaltest.GDALTest( 'DOQ1', 'fakedoq1.doq', 1, 1 )
@@ -45,6 +46,7 @@ def doq1_1():
     ret = tst.testOpen()
     gdal.PopErrorHandler()
     return ret
+
 
 gdaltest_list = [
     doq1_1 ]

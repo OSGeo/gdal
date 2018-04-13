@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Simple test
 
+
 def vrtlut_1():
 
     tst = gdaltest.GDALTest( 'VRT', 'byte_lut.vrt', 1, 4655 )
@@ -48,6 +49,7 @@ def vrtlut_1():
 
 def vrtlut_cleanup():
     return 'success'
+
 
 gdaltest_list = [
     vrtlut_1,

@@ -53,6 +53,7 @@ def bmp_online_1():
 
     return tst.testOpen()
 
+
 def bmp_online_2():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/bmp/24bit.bmp', '24bit.bmp'):
@@ -63,6 +64,7 @@ def bmp_online_2():
         tst = gdaltest.GDALTest( 'BMP', 'tmp/cache/24bit.bmp', 3, 27670, filename_absolute = 1 )
 
     return tst.testOpen()
+
 
 for item in init_list:
     ut = gdaltest.GDALTest( 'BMP', item[0], item[1], item[2] )

@@ -36,6 +36,7 @@ from osgeo import osr
 # Test the osr.SpatialReference.ImportFromPCI() function.
 #
 
+
 def osr_pci_1():
 
     prj_parms = (0.0, 0.0, 45.0, 54.5, 47.0, 62.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -70,6 +71,7 @@ def osr_pci_1():
 # Test the osr.SpatialReference.ExportToPCI() function.
 #
 
+
 def osr_pci_2():
 
     srs = osr.SpatialReference()
@@ -101,6 +103,7 @@ def osr_pci_2():
 ###############################################################################
 # Test MGRS interpretation. (#3379)
 #
+
 
 def osr_pci_3():
 
@@ -140,6 +143,7 @@ def osr_pci_3():
 # Test Datum lookup in pci_datum.txt
 #
 
+
 def osr_pci_4():
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -166,6 +170,7 @@ def osr_pci_4():
 # Test Datum ellisoid lookup in pci_ellpis.txt
 #
 
+
 def osr_pci_5():
 
     prj_parms = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -191,6 +196,7 @@ def osr_pci_5():
 ###############################################################################
 # Test Datum lookup in pci_datum.txt
 #
+
 
 def osr_pci_6():
 
@@ -219,6 +225,7 @@ def osr_pci_6():
 # to identify it.
 #
 
+
 def osr_pci_7():
 
     srs = osr.SpatialReference()
@@ -235,6 +242,7 @@ def osr_pci_7():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_pci_1,

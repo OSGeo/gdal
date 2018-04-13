@@ -35,6 +35,8 @@ from osgeo import osr
 import sys
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: val_at_coord.py [-display_xy] [longitude latitude | -coordtype=georef X Y] filename')
     print('')
@@ -45,6 +47,7 @@ def Usage():
     sys.exit( 1 )
 
 # =============================================================================
+
 
 display_xy = False
 coordtype_georef = False

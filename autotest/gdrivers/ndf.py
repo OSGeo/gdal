@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Simple image test of an NLAPS/NDF2 dataset.
 
+
 def ndf_1():
 
     tst = gdaltest.GDALTest( 'NDF', 'LE7134052000500350.H3', 1, 6510,
@@ -68,6 +69,7 @@ def ndf_1():
 
     return tst.testOpen( check_gt = gt, gt_epsilon = 0.0001,
                          check_prj = wkt )
+
 
 gdaltest_list = [
     ndf_1 ]

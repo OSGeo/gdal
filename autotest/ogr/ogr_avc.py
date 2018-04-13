@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 #
 
+
 def check_content(ds):
 
     lyr = ds.GetLayerByName( 'ARC' )
@@ -61,6 +62,7 @@ def check_content(ds):
 ###############################################################################
 # Open AVCE00 datasource.
 
+
 def ogr_avc_1():
 
     # Example given at Annex A of http://avce00.maptools.org/docs/v7_e00_cover.html
@@ -77,6 +79,7 @@ def ogr_avc_1():
 ###############################################################################
 # Open AVCBin datasource.
 
+
 def ogr_avc_2():
 
     avc_ds = ogr.Open( 'data/testavc/testavc' )
@@ -91,6 +94,7 @@ def ogr_avc_2():
 
 ###############################################################################
 # Try opening a compressed E00 (which is not supported)
+
 
 def ogr_avc_3():
 
@@ -111,6 +115,7 @@ def ogr_avc_3():
 
 ###############################################################################
 # Open larger AVCBin datasource.
+
 
 def ogr_avc_4():
 
@@ -152,6 +157,7 @@ def ogr_avc_4():
 
 ###############################################################################
 # Open AVCBin datasource with polygon
+
 
 def ogr_avc_5():
 
@@ -196,6 +202,7 @@ def ogr_avc_5():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_avc_1,

@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Test if HDF5 driver is present
 
+
 def hdf5_1():
 
     try:
@@ -53,6 +54,7 @@ def hdf5_1():
 
 ###############################################################################
 # Confirm expected subdataset information.
+
 
 def hdf5_2():
 
@@ -86,6 +88,7 @@ def hdf5_2():
 # Confirm that single variable files can be accessed directly without
 # subdataset stuff.
 
+
 def hdf5_3():
 
     if gdaltest.hdf5_drv is None:
@@ -109,6 +112,7 @@ def hdf5_3():
 ###############################################################################
 # Confirm subdataset access, and checksum.
 
+
 def hdf5_4():
 
     if gdaltest.hdf5_drv is None:
@@ -126,6 +130,7 @@ def hdf5_4():
 ###############################################################################
 # Similar check on a 16bit dataset.
 
+
 def hdf5_5():
 
     if gdaltest.hdf5_drv is None:
@@ -142,6 +147,7 @@ def hdf5_5():
 
 ###############################################################################
 # Test generating an overview on a subdataset.
+
 
 def hdf5_6():
 
@@ -177,13 +183,13 @@ def hdf5_6():
         return 'fail'
     ds = None
 
-
     gdaltest.clean_tmp()
 
     return 'success'
 
 ###############################################################################
 # Coarse metadata check (regression test for #2412).
+
 
 def hdf5_7():
 
@@ -214,6 +220,7 @@ def hdf5_7():
 
 ###############################################################################
 # Test metadata names.
+
 
 def hdf5_8():
 
@@ -276,11 +283,11 @@ def hdf5_8():
             if scanMetadata([h5group, h5dataset]) is not None:
                 return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 # Variable length string metadata check (regression test for #4228).
+
 
 def hdf5_9():
 
@@ -329,6 +336,7 @@ def hdf5_9():
 ###############################################################################
 # Test CSK_DGM.h5 (#4160)
 
+
 def hdf5_10():
 
     if gdaltest.hdf5_drv is None:
@@ -369,6 +377,7 @@ def hdf5_10():
 ###############################################################################
 # Test CSK_GEC.h5 (#4160)
 
+
 def hdf5_11():
 
     if gdaltest.hdf5_drv is None:
@@ -408,6 +417,7 @@ def hdf5_11():
 ###############################################################################
 # Test ODIM_H5 (#5032)
 
+
 def hdf5_12():
 
     if gdaltest.hdf5_drv is None:
@@ -439,6 +449,7 @@ def hdf5_12():
 ###############################################################################
 # Test MODIS L2 HDF5 GCPs (#6666)
 
+
 def hdf5_13():
 
     if gdaltest.hdf5_drv is None:
@@ -464,6 +475,7 @@ def hdf5_13():
 
 ###############################################################################
 # Test complex data subsets
+
 
 def hdf5_14():
 
@@ -496,6 +508,8 @@ def hdf5_14():
 ###############################################################################
 # Confirm complex subset data access and checksum
 # Start with Float32
+
+
 def hdf5_15():
 
     if gdaltest.hdf5_drv is None:
@@ -511,6 +525,8 @@ def hdf5_15():
     return 'success'
 
 #Repeat for Float64
+
+
 def hdf5_16():
 
     if gdaltest.hdf5_drv is None:
@@ -526,6 +542,8 @@ def hdf5_16():
     return 'success'
 
 #Repeat for Float16
+
+
 def hdf5_17():
 
     if gdaltest.hdf5_drv is None:
@@ -539,6 +557,7 @@ def hdf5_17():
         return 'fail'
 
     return 'success'
+
 
 class TestHDF5:
     def __init__( self, downloadURL, fileName, subdatasetname, checksum, download_size ):

@@ -5,9 +5,6 @@
 # the SWIG interface file instead.
 
 
-
-
-
 from sys import version_info
 if version_info >= (2, 6, 0):
     def swig_import_helper():
@@ -70,6 +67,7 @@ def _swig_getattr_nondynamic(self, class_type, name, static=1):
     else:
         raise AttributeError(name)
 
+
 def _swig_getattr(self, class_type, name):
     return _swig_getattr_nondynamic(self, class_type, name, 0)
 
@@ -81,6 +79,7 @@ def _swig_repr(self):
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
 
+
 try:
     _object = object
     _newclass = 1
@@ -90,18 +89,21 @@ except AttributeError:
     _newclass = 0
 
 
-
 def GetUseExceptions(*args):
     """GetUseExceptions() -> int"""
     return _gnm.GetUseExceptions(*args)
+
 
 def UseExceptions(*args):
     """UseExceptions()"""
     return _gnm.UseExceptions(*args)
 
+
 def DontUseExceptions(*args):
     """DontUseExceptions()"""
     return _gnm.DontUseExceptions(*args)
+
+
 import ogr
 import osr
 
@@ -123,13 +125,17 @@ GNM_EDGE_DIR_SRCTOTGT = _gnm.GNM_EDGE_DIR_SRCTOTGT
 _gnm.GNM_EDGE_DIR_TGTTOSRC_swigconstant(_gnm)
 GNM_EDGE_DIR_TGTTOSRC = _gnm.GNM_EDGE_DIR_TGTTOSRC
 
+
 def CastToNetwork(*args):
     """CastToNetwork(MajorObject base) -> Network"""
     return _gnm.CastToNetwork(*args)
 
+
 def CastToGenericNetwork(*args):
     """CastToGenericNetwork(MajorObject base) -> GenericNetwork"""
     return _gnm.CastToGenericNetwork(*args)
+
+
 class Network(ogr.MajorObject):
     """Proxy of C++ GNMNetworkShadow class."""
 
@@ -152,98 +158,82 @@ class Network(ogr.MajorObject):
         """ReleaseResultSet(Network self, Layer layer)"""
         return _gnm.Network_ReleaseResultSet(self, *args)
 
-
     def GetVersion(self, *args):
         """GetVersion(Network self) -> int"""
         return _gnm.Network_GetVersion(self, *args)
-
 
     def GetName(self, *args):
         """GetName(Network self) -> char const *"""
         return _gnm.Network_GetName(self, *args)
 
-
     def GetFeatureByGlobalFID(self, *args):
         """GetFeatureByGlobalFID(Network self, GIntBig GFID) -> Feature"""
         return _gnm.Network_GetFeatureByGlobalFID(self, *args)
-
 
     def GetPath(self, *args, **kwargs):
         """GetPath(Network self, GIntBig nStartFID, GIntBig nEndFID, GNMGraphAlgorithmType eAlgorithm, char ** options=None) -> Layer"""
         return _gnm.Network_GetPath(self, *args, **kwargs)
 
-
     def DisconnectAll(self, *args):
         """DisconnectAll(Network self) -> CPLErr"""
         return _gnm.Network_DisconnectAll(self, *args)
-
 
     def GetProjection(self, *args):
         """GetProjection(Network self) -> char const *"""
         return _gnm.Network_GetProjection(self, *args)
 
-
     def GetProjectionRef(self, *args):
         """GetProjectionRef(Network self) -> char const *"""
         return _gnm.Network_GetProjectionRef(self, *args)
-
 
     def GetFileList(self, *args):
         """GetFileList(Network self) -> char **"""
         return _gnm.Network_GetFileList(self, *args)
 
-
     def CreateLayer(self, *args, **kwargs):
         """CreateLayer(Network self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type, char ** options=None) -> Layer"""
         return _gnm.Network_CreateLayer(self, *args, **kwargs)
-
 
     def CopyLayer(self, *args, **kwargs):
         """CopyLayer(Network self, Layer src_layer, char const * new_name, char ** options=None) -> Layer"""
         return _gnm.Network_CopyLayer(self, *args, **kwargs)
 
-
     def DeleteLayer(self, *args):
         """DeleteLayer(Network self, int index) -> OGRErr"""
         return _gnm.Network_DeleteLayer(self, *args)
-
 
     def GetLayerCount(self, *args):
         """GetLayerCount(Network self) -> int"""
         return _gnm.Network_GetLayerCount(self, *args)
 
-
     def GetLayerByIndex(self, *args):
         """GetLayerByIndex(Network self, int index=0) -> Layer"""
         return _gnm.Network_GetLayerByIndex(self, *args)
-
 
     def GetLayerByName(self, *args):
         """GetLayerByName(Network self, char const * layer_name) -> Layer"""
         return _gnm.Network_GetLayerByName(self, *args)
 
-
     def TestCapability(self, *args):
         """TestCapability(Network self, char const * cap) -> bool"""
         return _gnm.Network_TestCapability(self, *args)
-
 
     def StartTransaction(self, *args, **kwargs):
         """StartTransaction(Network self, int force=False) -> OGRErr"""
         return _gnm.Network_StartTransaction(self, *args, **kwargs)
 
-
     def CommitTransaction(self, *args):
         """CommitTransaction(Network self) -> OGRErr"""
         return _gnm.Network_CommitTransaction(self, *args)
-
 
     def RollbackTransaction(self, *args):
         """RollbackTransaction(Network self) -> OGRErr"""
         return _gnm.Network_RollbackTransaction(self, *args)
 
+
 Network_swigregister = _gnm.Network_swigregister
 Network_swigregister(Network)
+
 
 class GenericNetwork(Network):
     """Proxy of C++ GNMGenericNetworkShadow class."""
@@ -267,55 +257,46 @@ class GenericNetwork(Network):
         """ConnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr"""
         return _gnm.GenericNetwork_ConnectFeatures(self, *args)
 
-
     def DisconnectFeatures(self, *args):
         """DisconnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID) -> CPLErr"""
         return _gnm.GenericNetwork_DisconnectFeatures(self, *args)
-
 
     def DisconnectFeaturesWithId(self, *args):
         """DisconnectFeaturesWithId(GenericNetwork self, GIntBig nFID) -> CPLErr"""
         return _gnm.GenericNetwork_DisconnectFeaturesWithId(self, *args)
 
-
     def ReconnectFeatures(self, *args):
         """ReconnectFeatures(GenericNetwork self, GIntBig nSrcFID, GIntBig nTgtFID, GIntBig nConFID, double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr"""
         return _gnm.GenericNetwork_ReconnectFeatures(self, *args)
-
 
     def CreateRule(self, *args):
         """CreateRule(GenericNetwork self, char const * pszRuleStr) -> CPLErr"""
         return _gnm.GenericNetwork_CreateRule(self, *args)
 
-
     def DeleteAllRules(self, *args):
         """DeleteAllRules(GenericNetwork self) -> CPLErr"""
         return _gnm.GenericNetwork_DeleteAllRules(self, *args)
-
 
     def DeleteRule(self, *args):
         """DeleteRule(GenericNetwork self, char const * pszRuleStr) -> CPLErr"""
         return _gnm.GenericNetwork_DeleteRule(self, *args)
 
-
     def GetRules(self, *args):
         """GetRules(GenericNetwork self) -> char **"""
         return _gnm.GenericNetwork_GetRules(self, *args)
-
 
     def ConnectPointsByLines(self, *args, **kwargs):
         """ConnectPointsByLines(GenericNetwork self, char ** papszLayerList, double dfTolerance, double dfCost, double dfInvCost, GNMDirection eDir) -> CPLErr"""
         return _gnm.GenericNetwork_ConnectPointsByLines(self, *args, **kwargs)
 
-
     def ChangeBlockState(self, *args):
         """ChangeBlockState(GenericNetwork self, GIntBig nFID, bool bIsBlock) -> CPLErr"""
         return _gnm.GenericNetwork_ChangeBlockState(self, *args)
 
-
     def ChangeAllBlockState(self, *args):
         """ChangeAllBlockState(GenericNetwork self, bool bIsBlock=False) -> CPLErr"""
         return _gnm.GenericNetwork_ChangeAllBlockState(self, *args)
+
 
 GenericNetwork_swigregister = _gnm.GenericNetwork_swigregister
 GenericNetwork_swigregister(GenericNetwork)

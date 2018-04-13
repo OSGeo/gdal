@@ -56,6 +56,7 @@ init_list = [ \
 ###############################################################################
 # Verify we have the driver.
 
+
 def gta_1():
 
     try:
@@ -68,6 +69,7 @@ def gta_1():
 
 ###############################################################################
 # Test updating existing dataset, check srs, check gt
+
 
 def gta_2():
 
@@ -120,6 +122,7 @@ def gta_2():
 ###############################################################################
 # Test writing and readings GCPs
 
+
 def gta_3():
 
     if gdaltest.gta_drv is None:
@@ -158,6 +161,7 @@ def gta_3():
 
 ###############################################################################
 # Test band metadata
+
 
 def gta_4():
 
@@ -232,6 +236,7 @@ def gta_4():
 ###############################################################################
 # Test compression algorithms
 
+
 def gta_5():
 
     if gdaltest.gta_drv is None:
@@ -260,6 +265,7 @@ def gta_5():
     gdaltest.gta_drv.Delete( '/vsimem/gta_5.gta' )
 
     return 'success'
+
 
 for item in init_list:
     if item[0] == 'byte_signed.tif':

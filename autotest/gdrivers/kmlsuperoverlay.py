@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Test CreateCopy() to a KMZ file
 
+
 def kmlsuperoverlay_1():
 
     tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
@@ -50,6 +51,7 @@ def kmlsuperoverlay_1():
 ###############################################################################
 # Test CreateCopy() to a KML file
 
+
 def kmlsuperoverlay_2():
 
     tst = gdaltest.GDALTest( 'KMLSUPEROVERLAY', 'small_world.tif', 1, 30111, options = [ 'FORMAT=PNG'] )
@@ -58,6 +60,7 @@ def kmlsuperoverlay_2():
 
 ###############################################################################
 # Test CreateCopy() to a KML file
+
 
 def kmlsuperoverlay_3():
 
@@ -91,6 +94,7 @@ def kmlsuperoverlay_3():
 
 ###############################################################################
 # Test overviews
+
 
 def kmlsuperoverlay_4():
 
@@ -194,6 +198,7 @@ def kmlsuperoverlay_4():
 ###############################################################################
 # Test that a raster which crosses the anti-meridian will be able to be displayed correctly (#4528)
 
+
 def kmlsuperoverlay_5():
 
     try:
@@ -262,6 +267,7 @@ def kmlsuperoverlay_5():
 ###############################################################################
 # Test raster KML with alternate structure (such as http://opentopo.sdsc.edu/files/Haiti/NGA_Haiti_LiDAR2.kmz))
 
+
 def kmlsuperoverlay_6():
 
     ds = gdal.Open('data/kmlimage.kmz')
@@ -298,6 +304,7 @@ def kmlsuperoverlay_6():
 ###############################################################################
 # Test raster KML with single Overlay (such as https://trac.osgeo.org/gdal/ticket/6712)
 
+
 def kmlsuperoverlay_7():
 
     ds = gdal.Open('data/small_world.kml')
@@ -326,6 +333,7 @@ def kmlsuperoverlay_7():
 ###############################################################################
 # Test that a raster with lots of blank space doesn't have unnecessary child
 # KML/PNG files in transparent areas
+
 
 def kmlsuperoverlay_8():
 
@@ -432,6 +440,7 @@ def kmlsuperoverlay_8():
 
 ###############################################################################
 # Cleanup
+
 
 def kmlsuperoverlay_cleanup():
 

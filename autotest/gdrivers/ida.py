@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def ida_1():
 
     tst = gdaltest.GDALTest( 'ida', 'DWI01012.AFC', 1, 4026 )
@@ -45,6 +46,7 @@ def ida_1():
 
 ###############################################################################
 # Verify some auxiliary data.
+
 
 def ida_2():
 
@@ -77,6 +79,7 @@ def ida_2():
 ###############################################################################
 # Create simple copy and check.
 
+
 def ida_3():
 
     tst = gdaltest.GDALTest( 'ida', 'DWI01012.AFC', 1, 4026 )
@@ -87,6 +90,7 @@ def ida_3():
 
 ###############################################################################
 # Test ACEA Projection.
+
 
 def ida_4():
 
@@ -111,6 +115,7 @@ def ida_4():
 ###############################################################################
 # Test Goodes Projection.
 
+
 def ida_5():
 
     gdaltest.ida_tst = gdaltest.GDALTest( 'ida', 'DWI01012.AFC', 1, 4026 )
@@ -130,6 +135,7 @@ def ida_5():
 
 ###############################################################################
 # Test LCC Projection.
+
 
 def ida_6():
 
@@ -154,6 +160,7 @@ def ida_6():
 ###############################################################################
 # Test LAEA Projection.
 
+
 def ida_7():
 
     gdaltest.ida_tst = gdaltest.GDALTest( 'ida', 'DWI01012.AFC', 1, 4026 )
@@ -172,6 +179,7 @@ def ida_7():
 
     return gdaltest.ida_tst.testSetProjection( prj = prj )
 
+
 gdaltest_list = [
     ida_1,
     ida_2,
@@ -181,7 +189,6 @@ gdaltest_list = [
     ida_6,
     ida_7
     ]
-
 
 
 if __name__ == '__main__':

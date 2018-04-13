@@ -37,6 +37,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+
 def open_for_read(uri):
     """
     Opens a test file for reading.
@@ -44,6 +45,8 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+
+
 def vsiaz_init():
 
     gdaltest.az_vars = {}
@@ -61,6 +64,7 @@ def vsiaz_init():
 
 ###############################################################################
 # Error cases
+
 
 def vsiaz_real_server_errors():
 
@@ -84,7 +88,6 @@ def vsiaz_real_server_errors():
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-
     # Invalid AZURE_STORAGE_CONNECTION_STRING
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING', 'invalid')
     gdal.ErrorReset()
@@ -94,7 +97,6 @@ def vsiaz_real_server_errors():
         gdaltest.post_reason('fail')
         return 'fail'
     gdal.SetConfigOption('AZURE_STORAGE_CONNECTION_STRING', '')
-
 
     gdal.SetConfigOption('AZURE_STORAGE_ACCOUNT', 'AZURE_STORAGE_ACCOUNT')
 
@@ -132,6 +134,8 @@ def vsiaz_real_server_errors():
     return 'success'
 
 ###############################################################################
+
+
 def vsiaz_start_webserver():
 
     gdaltest.webserver_process = None
@@ -154,6 +158,7 @@ def vsiaz_start_webserver():
 
 ###############################################################################
 # Test with a fake Azure Blob server
+
 
 def vsiaz_fake_basic():
 
@@ -262,6 +267,7 @@ def vsiaz_fake_basic():
 
 ###############################################################################
 # Test ReadDir() with a fake Azure Blob server
+
 
 def vsiaz_fake_readdir():
 
@@ -399,6 +405,7 @@ def vsiaz_fake_readdir():
 ###############################################################################
 # Test write
 
+
 def vsiaz_fake_write():
 
     if gdaltest.webserver_port == 0:
@@ -439,7 +446,6 @@ def vsiaz_fake_write():
         request.send_header('Content-Length', 0)
         request.end_headers()
 
-
     handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', custom_method = method)
     with webserver.install_http_handler(handler):
         ret = gdal.VSIFWriteL('x' * 35000, 1, 35000, f)
@@ -450,7 +456,6 @@ def vsiaz_fake_write():
             gdal.VSIFCloseL(f)
             return 'fail'
         gdal.VSIFCloseL(f)
-
 
     # Simulate illegal read
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -464,7 +469,6 @@ def vsiaz_fake_write():
         print(ret)
         return 'fail'
     gdal.VSIFCloseL(f)
-
 
     # Simulate illegal seek
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -546,7 +550,6 @@ def vsiaz_fake_write():
     handler.add('PUT', '/azure/blob/myaccount/test_copy/file.bin', 201)
     with webserver.install_http_handler(handler):
         gdal.VSIFCloseL(f)
-
 
     # Test creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
@@ -631,8 +634,6 @@ def vsiaz_fake_write():
             return 'fail'
         gdal.VSIFCloseL(f)
 
-
-
     # Test failed creation of AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -661,7 +662,6 @@ def vsiaz_fake_write():
             return 'fail'
         gdal.VSIFCloseL(f)
 
-
     # Test failed writing of a block of an AppendBlob
     gdal.SetConfigOption('VSIAZ_CHUNK_SIZE_BYTES', '10')
     f = gdal.VSIFOpenL('/vsiaz/test_copy/file.bin', 'wb')
@@ -683,11 +683,11 @@ def vsiaz_fake_write():
             return 'fail'
         gdal.VSIFCloseL(f)
 
-
     return 'success'
 
 ###############################################################################
 # Test Unlink()
+
 
 def vsiaz_fake_unlink():
 
@@ -719,6 +719,7 @@ def vsiaz_fake_unlink():
 
 ###############################################################################
 # Test Mkdir() / Rmdir()
+
 
 def vsiaz_fake_mkdir_rmdir():
 
@@ -856,6 +857,8 @@ def vsiaz_fake_mkdir_rmdir():
     return 'success'
 
 ###############################################################################
+
+
 def vsiaz_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -871,6 +874,7 @@ def vsiaz_stop_webserver():
 
 ###############################################################################
 # Nominal cases (require valid credentials)
+
 
 def vsiaz_extra_1():
 
@@ -979,13 +983,11 @@ def vsiaz_extra_1():
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
-
         ret = gdal.Rmdir(subpath)
         if ret < 0:
             gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
-
 
         return 'success'
 
@@ -1051,12 +1053,15 @@ def vsiaz_extra_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsiaz_cleanup():
 
     for var in gdaltest.az_vars:
         gdal.SetConfigOption(var, gdaltest.az_vars[var])
 
     return 'success'
+
 
 gdaltest_list = [ vsiaz_init,
                   vsiaz_real_server_errors,

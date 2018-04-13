@@ -41,6 +41,8 @@ from osgeo import ogr
 
 ###############################################################################
 # Check driver existence.
+
+
 def ogr_cad_1():
 
     gdaltest.cad_ds = None
@@ -57,6 +59,8 @@ def ogr_cad_1():
 
 ###############################################################################
 # Check driver properly opens simple file, reads correct feature (ellipse).
+
+
 def ogr_cad_2():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -133,6 +137,8 @@ def ogr_cad_2():
 
 ###############################################################################
 # Check proper read of 3 layers (one circle on each) with different parameters.
+
+
 def ogr_cad_3():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -181,7 +187,6 @@ def ogr_cad_3():
     if feat.extentity_data is not None:
         gdaltest.post_reason( 'expected feature ExtendedEntityData to be null.' )
         return 'fail'
-
 
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
@@ -277,7 +282,6 @@ def ogr_cad_3():
         gdaltest.post_reason( 'expected feature ExtendedEntityData to be null.' )
         return 'fail'
 
-
     expected_style = 'PEN(c:#FFFFFFFF,w:5px)'
     if feat.GetStyleString() != expected_style:
         gdaltest.post_reason( 'Got unexpected style string on feature 0:\n%s\ninstead of:\n%s.'
@@ -294,6 +298,8 @@ def ogr_cad_3():
 
 ###############################################################################
 # Check reading of a single point.
+
+
 def ogr_cad_4():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -321,6 +327,8 @@ def ogr_cad_4():
 
 ###############################################################################
 # Check reading of a simple line.
+
+
 def ogr_cad_5():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -349,6 +357,8 @@ def ogr_cad_5():
 ###############################################################################
 # Check reading of a text (point with attached 'text' attribute, and set up
 # OGR feature style string to LABEL.
+
+
 def ogr_cad_6():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -381,6 +391,8 @@ def ogr_cad_6():
 
 ###############################################################################
 # Check MTEXT as TEXT geometry.
+
+
 def ogr_cad_7():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -400,6 +412,8 @@ def ogr_cad_7():
 
 ###############################################################################
 # Check ATTDEF as TEXT geometry.
+
+
 def ogr_cad_8():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -420,6 +434,7 @@ def ogr_cad_8():
 ###############################################################################
 # Open a not handled DWG version
 
+
 def ogr_cad_9():
     if gdaltest.cad_dr is None:
         return 'skip'
@@ -438,11 +453,14 @@ def ogr_cad_9():
 
 ###############################################################################
 # Cleanup
+
+
 def ogr_cad_cleanup():
     gdaltest.cad_layer = None
     gdaltest.cad_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_cad_1,

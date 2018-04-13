@@ -43,6 +43,7 @@ if len(argv) < 2:
     print("Usage: gdalimport.py [--help-general] source_file [newfile]")
     sys.exit(1)
 
+
 def progress_cb( complete, message, cb_data ):
     print('%s %d' % (cb_data, complete))
 

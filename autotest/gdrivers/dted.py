@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def dted_1():
 
     tst = gdaltest.GDALTest( 'dted', 'n43.dt0', 1, 49187)
@@ -48,6 +49,7 @@ def dted_1():
 
 ###############################################################################
 # Verify some auxiliary data.
+
 
 def dted_2():
 
@@ -82,6 +84,7 @@ def dted_2():
 ###############################################################################
 # Create simple copy and check.
 
+
 def dted_3():
 
     tst = gdaltest.GDALTest( 'DTED', 'n43.dt0', 1, 49187 )
@@ -93,6 +96,7 @@ def dted_3():
 ###############################################################################
 # Read subwindow.  Tests the tail recursion problem.
 
+
 def dted_4():
 
     tst = gdaltest.GDALTest( 'dted', 'n43.dt0', 1, 305,
@@ -101,6 +105,7 @@ def dted_4():
 
 ###############################################################################
 # Test a DTED Level 1 (made from a DTED Level 0)
+
 
 def dted_5():
 
@@ -125,6 +130,7 @@ def dted_5():
 ###############################################################################
 # Test a DTED Level 2 (made from a DTED Level 0)
 
+
 def dted_6():
 
     driver = gdal.GetDriverByName( "GTiff" )
@@ -148,6 +154,7 @@ def dted_6():
 ###############################################################################
 # Test a WGS72 georeferenced DTED
 
+
 def dted_7():
     ds = gdal.Open( 'data/n43_wgs72.dt0' )
 
@@ -168,6 +175,7 @@ def dted_7():
 
 ###############################################################################
 # Test a file whose checksum is corrupted
+
 
 def dted_8():
     # this will enable DTED_VERIFY_CHECKSUM
@@ -197,6 +205,7 @@ def dted_8():
 
 ###############################################################################
 # Test a DTED Level 1 above latitude 50 (made from a DTED Level 0)
+
 
 def dted_9():
 
@@ -235,6 +244,7 @@ def dted_9():
 
 ###############################################################################
 # Test creating an in memory copy.
+
 
 def dted_10():
 
@@ -281,6 +291,7 @@ def dted_11():
 ###############################################################################
 # Test a DTED file that begins with a HDR record, and not directly the UHL record (#2951)
 
+
 def dted_12():
 
     ds = gdal.Open( 'data/w118n033_trunc.dt1' )
@@ -293,6 +304,7 @@ def dted_12():
 # Test a DTED file that has only a few (sequential) columns. Derived from
 # a real-world DTED file
 
+
 def dted_13():
 
     tst = gdaltest.GDALTest( 'dted', 'n43_partial_cols.dt0', 1, 56006)
@@ -302,6 +314,7 @@ def dted_13():
 # Test a DTED file that has only a few (non-sequential) columns. Only theoretical
 # case for now.
 
+
 def dted_14():
 
     tst = gdaltest.GDALTest( 'dted', 'n43_sparse_cols.dt0', 1, 56369)
@@ -309,6 +322,7 @@ def dted_14():
 
 ###############################################################################
 # Perform simple read test with GDAL_DTED_SINGLE_BLOCK = YES
+
 
 def dted_15():
 
@@ -320,6 +334,7 @@ def dted_15():
 
 ###############################################################################
 # Cleanup.
+
 
 def dted_cleanup():
     try:
@@ -335,6 +350,7 @@ def dted_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     dted_1,

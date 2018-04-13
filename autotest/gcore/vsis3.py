@@ -38,6 +38,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 import webserver
 
+
 def open_for_read(uri):
     """
     Opens a test file for reading.
@@ -45,6 +46,8 @@ def open_for_read(uri):
     return gdal.VSIFOpenExL(uri, 'rb', 1)
 
 ###############################################################################
+
+
 def vsis3_init():
 
     gdaltest.aws_vars = {}
@@ -67,6 +70,7 @@ def vsis3_init():
 
 ###############################################################################
 # Test AWS_NO_SIGN_REQUEST=YES
+
 
 def vsis3_no_sign_request():
 
@@ -98,6 +102,7 @@ def vsis3_no_sign_request():
 
 ###############################################################################
 # Error cases
+
 
 def vsis3_1():
 
@@ -158,6 +163,8 @@ def vsis3_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsis3_start_webserver():
 
     gdaltest.webserver_process = None
@@ -178,6 +185,7 @@ def vsis3_start_webserver():
     gdal.SetConfigOption('AWS_S3_ENDPOINT', '127.0.0.1:%d' % gdaltest.webserver_port)
 
     return 'success'
+
 
 def get_s3_fake_bucket_resource_method(request):
     request.protocol_version = 'HTTP/1.1'
@@ -202,6 +210,7 @@ def get_s3_fake_bucket_resource_method(request):
 
 ###############################################################################
 # Test with a fake AWS server
+
 
 def vsis3_2():
 
@@ -247,8 +256,8 @@ def vsis3_2():
         print(data)
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
+
     def method(request):
         request.protocol_version = 'HTTP/1.1'
 
@@ -335,7 +344,6 @@ def vsis3_2():
             print(stat_res)
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
 
     def method(request):
@@ -421,7 +429,6 @@ def vsis3_2():
         print(data)
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
 
     def method(request):
@@ -452,7 +459,6 @@ def vsis3_2():
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><oops>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
@@ -469,7 +475,6 @@ def vsis3_2():
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error/>'
     response = '%x\r\n%s\r\n0\r\n\r\n' % (len(response), response)
@@ -485,7 +490,6 @@ def vsis3_2():
         gdaltest.post_reason('fail')
         print(gdal.VSIGetLastErrorMsg())
         return 'fail'
-
 
     handler = webserver.SequentialHandler()
     response = '<?xml version="1.0" encoding="UTF-8"?><Error><Code>AuthorizationHeaderMalformed</Code></Error>'
@@ -657,6 +661,7 @@ def vsis3_2():
 
 ###############################################################################
 # Test ReadDir() with a fake AWS server
+
 
 def vsis3_3():
 
@@ -1012,6 +1017,7 @@ def vsis3_3():
 ###############################################################################
 # Test simple PUT support with a fake AWS server
 
+
 def vsis3_4():
 
     if gdaltest.webserver_port == 0:
@@ -1226,6 +1232,7 @@ def vsis3_4():
 ###############################################################################
 # Test simple DELETE support with a fake AWS server
 
+
 def vsis3_5():
 
     if gdaltest.webserver_port == 0:
@@ -1258,7 +1265,6 @@ def vsis3_5():
         gdaltest.post_reason('fail')
         return 'fail'
 
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_delete_bucket/delete_file', 404, {'Connection': 'close'}, 'foo')
     with webserver.install_http_handler(handler):
@@ -1275,7 +1281,6 @@ def vsis3_5():
     if ret == 0:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     handler = webserver.SequentialHandler()
 
@@ -1314,6 +1319,7 @@ def vsis3_5():
 
 ###############################################################################
 # Test multipart upload with a fake AWS server
+
 
 def vsis3_6():
 
@@ -1553,6 +1559,7 @@ def vsis3_6():
 ###############################################################################
 # Test Mkdir() / Rmdir()
 
+
 def vsis3_7():
 
     if gdaltest.webserver_port == 0:
@@ -1628,6 +1635,7 @@ def vsis3_7():
 ###############################################################################
 # Test handling of file and directory with same name
 
+
 def vsis3_8():
 
     if gdaltest.webserver_port == 0:
@@ -1673,6 +1681,7 @@ def vsis3_8():
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials
+
 
 def vsis3_read_credentials_file():
 
@@ -1721,6 +1730,7 @@ aws_secret_access_key = bar
 ###############################################################################
 # Read credentials from simulated  ~/.aws/config
 
+
 def vsis3_read_config_file():
 
     if gdaltest.webserver_port == 0:
@@ -1768,6 +1778,7 @@ aws_secret_access_key = bar
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
+
 
 def vsis3_read_credentials_config_file():
 
@@ -1833,6 +1844,7 @@ aws_secret_access_key = bar
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config with
 # a non default profile
 
+
 def vsis3_read_credentials_config_file_non_default():
 
     if gdaltest.webserver_port == 0:
@@ -1895,6 +1907,7 @@ aws_secret_access_key = bar
 
 ###############################################################################
 # Read credentials from simulated ~/.aws/credentials and ~/.aws/config
+
 
 def vsis3_read_credentials_config_file_inconsistent():
 
@@ -1965,6 +1978,7 @@ aws_secret_access_key = bar
 ###############################################################################
 # Read credentials from simulated EC2 instance
 
+
 def vsis3_read_credentials_ec2():
 
     if gdaltest.webserver_port == 0:
@@ -2010,7 +2024,6 @@ def vsis3_read_credentials_ec2():
     # Set a fake URL to check that credentials re-use works
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', '')
 
-
     handler = webserver.SequentialHandler()
     handler.add('GET', '/s3_fake_bucket/bar', 200, {}, 'bar')
     with webserver.install_http_handler(handler):
@@ -2034,6 +2047,7 @@ def vsis3_read_credentials_ec2():
 ###############################################################################
 # Read credentials from simulated EC2 instance with expiration of the
 # cached credentials
+
 
 def vsis3_read_credentials_ec2_expiration():
 
@@ -2092,6 +2106,8 @@ def vsis3_read_credentials_ec2_expiration():
     return 'success'
 
 ###############################################################################
+
+
 def vsis3_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -2107,6 +2123,7 @@ def vsis3_stop_webserver():
 
 ###############################################################################
 # Nominal cases (require valid credentials)
+
 
 def vsis3_extra_1():
 
@@ -2227,13 +2244,11 @@ def vsis3_extra_1():
             print('Unlink(%s) should not return an error' % (subpath + '/test.txt'))
             return 'fail'
 
-
         ret = gdal.Rmdir(subpath)
         if ret < 0:
             gdaltest.post_reason('fail')
             print('Rmdir(%s) should not return an error' % subpath)
             return 'fail'
-
 
         return 'success'
 
@@ -2300,6 +2315,8 @@ def vsis3_extra_1():
     return 'success'
 
 ###############################################################################
+
+
 def vsis3_cleanup():
 
     for var in gdaltest.aws_vars:
@@ -2310,6 +2327,7 @@ def vsis3_cleanup():
     gdal.SetConfigOption('CPL_AWS_EC2_CREDENTIALS_URL', None)
 
     return 'success'
+
 
 gdaltest_list = [ vsis3_init,
                   vsis3_no_sign_request,

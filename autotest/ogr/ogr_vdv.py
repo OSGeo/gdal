@@ -42,6 +42,7 @@ from osgeo import ogr
 ###############################################################################
 # Basic test of .idf file
 
+
 def ogr_idf_1():
 
     ds = ogr.Open('data/test.idf')
@@ -78,6 +79,7 @@ def ogr_idf_1():
 ###############################################################################
 # Run test_ogrsf on .idf
 
+
 def ogr_idf_2():
 
     import test_cli_utilities
@@ -94,6 +96,7 @@ def ogr_idf_2():
 
 ###############################################################################
 # Create a VDV file
+
 
 def ogr_vdv_1(filename = 'tmp/test.x10', dsco = [], lco = []):
 
@@ -146,6 +149,7 @@ def ogr_vdv_1(filename = 'tmp/test.x10', dsco = [], lco = []):
 
 ###############################################################################
 # Read it
+
 
 def ogr_vdv_2(src_filename = 'tmp/test.x10'):
 
@@ -218,6 +222,7 @@ eof; 4
 ###############################################################################
 # Run test_ogrsf on it
 
+
 def ogr_vdv_3():
 
     import test_cli_utilities
@@ -235,17 +240,20 @@ def ogr_vdv_3():
 ###############################################################################
 # Create a VDV directory
 
+
 def ogr_vdv_4():
     return ogr_vdv_1(filename = 'tmp/test_x10', dsco = ['SINGLE_FILE=NO'], lco = ['EXTENSION=txt'])
 
 ###############################################################################
 # Read it
 
+
 def ogr_vdv_5():
     return ogr_vdv_2(src_filename = 'tmp/test_x10')
 
 ###############################################################################
 # Run test_ogrsf on it
+
 
 def ogr_vdv_6():
 
@@ -263,6 +271,7 @@ def ogr_vdv_6():
 
 ###############################################################################
 # Run VDV452
+
 
 def ogr_vdv_7():
 
@@ -296,7 +305,6 @@ def ogr_vdv_7():
         ds = None
 
         gdal.Unlink('/vsimem/vdv/ogr_vdv_7.x10')
-
 
     tests = [ ('VDV-452', True), ('VDV-452-ENGLISH', False), ('VDV-452-GERMAN', False) ]
 
@@ -344,6 +352,7 @@ def ogr_vdv_7():
 
 ###############################################################################
 # Test a few error cases
+
 
 def ogr_vdv_8():
 
@@ -527,6 +536,7 @@ eof; 2
 ###############################################################################
 # Cleanup
 
+
 def ogr_vdv_cleanup():
 
     gdal.Unlink('tmp/test.x10')
@@ -540,6 +550,7 @@ def ogr_vdv_cleanup():
     gdal.Rmdir('tmp/test_x10')
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_idf_1,

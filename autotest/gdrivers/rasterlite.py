@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Get the rasterlite driver
 
+
 def rasterlite_1():
 
     try:
@@ -62,6 +63,7 @@ def rasterlite_1():
 
 ###############################################################################
 # Test opening a rasterlite DB without overviews
+
 
 def rasterlite_2():
 
@@ -141,6 +143,7 @@ def rasterlite_2():
 ###############################################################################
 # Test opening a rasterlite DB with overviews
 
+
 def rasterlite_3():
 
     if gdaltest.rasterlite_drv is None:
@@ -181,6 +184,7 @@ def rasterlite_3():
 ###############################################################################
 # Test opening a rasterlite DB with color table and user-defined spatial extent
 
+
 def rasterlite_4():
 
     if gdaltest.rasterlite_drv is None:
@@ -214,6 +218,7 @@ def rasterlite_4():
 
 ###############################################################################
 # Test opening a rasterlite DB with color table and do color table expansion
+
 
 def rasterlite_5():
 
@@ -255,6 +260,7 @@ def rasterlite_5():
 
 ###############################################################################
 # Test CreateCopy()
+
 
 def rasterlite_6():
 
@@ -308,6 +314,7 @@ def rasterlite_6():
 ###############################################################################
 # Test BuildOverviews()
 
+
 def rasterlite_7():
 
     if gdaltest.rasterlite_drv is None:
@@ -350,6 +357,7 @@ def rasterlite_7():
 ###############################################################################
 # Test CleanOverviews()
 
+
 def rasterlite_8():
 
     if gdaltest.rasterlite_drv is None:
@@ -370,6 +378,7 @@ def rasterlite_8():
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
 
+
 def rasterlite_9():
 
     if gdaltest.rasterlite_drv is None:
@@ -388,6 +397,7 @@ def rasterlite_9():
 ###############################################################################
 # Create a rasterlite dataset with EPSILON tiles
 
+
 def rasterlite_10():
 
     if gdaltest.rasterlite_drv is None:
@@ -405,6 +415,7 @@ def rasterlite_10():
 
 ###############################################################################
 # Test BuildOverviews() with AVERAGE resampling
+
 
 def rasterlite_11():
 
@@ -440,6 +451,7 @@ def rasterlite_11():
 ###############################################################################
 # Test opening a .rasterlite file
 
+
 def rasterlite_12():
 
     if gdaltest.rasterlite_drv is None:
@@ -456,6 +468,7 @@ def rasterlite_12():
 
 ###############################################################################
 # Test opening a .rasterlite.sql file
+
 
 def rasterlite_13():
 
@@ -476,6 +489,7 @@ def rasterlite_13():
 
 ###############################################################################
 # Cleanup
+
 
 def rasterlite_cleanup():
 
@@ -503,6 +517,7 @@ def rasterlite_cleanup():
         pass
 
     return 'success'
+
 
 gdaltest_list = [
     rasterlite_1,

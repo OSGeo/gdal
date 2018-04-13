@@ -36,6 +36,7 @@ from osgeo import ogr
 ###############################################################################
 # Open two datasets in shared mode.
 
+
 def ogr_refcount_1():
     #if ogr.GetOpenDSCount() != 0:
     #    gdaltest.post_reason( 'Initial Open DS count is not zero!' )
@@ -56,6 +57,7 @@ def ogr_refcount_1():
 
 ###############################################################################
 # Verify that reopening one of the datasets returns the existing shared handle.
+
 
 def ogr_refcount_2():
 
@@ -84,6 +86,7 @@ def ogr_refcount_2():
 ###############################################################################
 # Verify that releasing the datasources has the expected behaviour.
 
+
 def ogr_refcount_3():
 
     gdaltest.ds_3.Release()
@@ -103,6 +106,7 @@ def ogr_refcount_3():
 ###############################################################################
 # Verify that we can walk the open datasource list.
 
+
 def ogr_refcount_4():
 
     with gdaltest.error_handler():
@@ -117,6 +121,7 @@ def ogr_refcount_4():
     return 'success'
 
 ###############################################################################
+
 
 def ogr_refcount_cleanup():
     gdaltest.ds_2.Release()

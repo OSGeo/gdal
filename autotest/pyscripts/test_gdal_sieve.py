@@ -41,6 +41,7 @@ from osgeo import gdal
 ###############################################################################
 # Test a fairly default case.
 
+
 def test_gdal_sieve_1():
 
     script_path = test_py_scripts.get_py_script('gdal_sieve')
@@ -74,6 +75,7 @@ def test_gdal_sieve_1():
         return 'fail'
     else:
         return 'success'
+
 
 gdaltest_list = [
     test_gdal_sieve_1,

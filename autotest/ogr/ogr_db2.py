@@ -50,6 +50,7 @@ from osgeo import ogr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_db2_check_driver():
 
     ogrtest.db2_drv = None
@@ -67,6 +68,7 @@ def ogr_db2_check_driver():
 ###############################################################################
 # Test if environment variable for DB2 connection is set and we can connect
 
+
 def ogr_db2_init():
 
     if ogrtest.db2_drv is None:
@@ -82,6 +84,7 @@ def ogr_db2_init():
     return 'success'
 ###############################################################################
 # Test GetFeatureCount()
+
 
 def ogr_db2_GetFeatureCount():
 
@@ -107,6 +110,8 @@ def ogr_db2_GetFeatureCount():
 
 ###############################################################################
 # Test GetSpatialRef()
+
+
 def ogr_db2_GetSpatialRef():
 
     if ogrtest.db2_drv is None:
@@ -169,6 +174,8 @@ def ogr_db2_GetExtent():
 
 ###############################################################################
 # Test GetFeature()
+
+
 def ogr_db2_GetFeature():
 
     if ogrtest.db2_drv is None:
@@ -198,6 +205,8 @@ def ogr_db2_GetFeature():
 
 ###############################################################################
 # Test SetSpatialFilter()
+
+
 def ogr_db2_SetSpatialFilter():
 
     if ogrtest.db2_drv is None:
@@ -261,6 +270,8 @@ def ogr_db2_SetSpatialFilter():
 #
 # test what capabilities the DB2 driver provides
 #
+
+
 def ogr_db2_capabilities():
 
     if ogrtest.db2_drv is None:
@@ -295,6 +306,7 @@ def ogr_db2_capabilities():
         print("  %s = %s" % (cap, layer.TestCapability(cap)))
     return 'success'
 
+
 def ogr_db2_listdrivers():
     cnt = ogr.GetDriverCount()
     formatsList = []  # Empty List
@@ -312,6 +324,7 @@ def ogr_db2_listdrivers():
         print(i)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_db2_check_driver,

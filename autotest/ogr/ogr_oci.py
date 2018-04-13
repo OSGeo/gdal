@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Open ORACLE.
 
+
 def ogr_oci_1():
 
     gdaltest.oci_ds = None
@@ -61,6 +62,7 @@ def ogr_oci_1():
 
 ###############################################################################
 # Create Oracle table from data/poly.shp
+
 
 def ogr_oci_2():
 
@@ -124,6 +126,7 @@ def ogr_oci_2():
 # Helper method to reverse ring winding.  This is needed because the
 # winding direction in shapefiles, and in Oracle is opposite for polygons.
 
+
 def reverse_rings( poly ):
 
     for i_ring in range(poly.GetGeometryCount()):
@@ -137,6 +140,7 @@ def reverse_rings( poly ):
 
 ###############################################################################
 # Verify that stuff we just wrote is still OK.
+
 
 def ogr_oci_3():
     if gdaltest.oci_ds is None:
@@ -185,6 +189,7 @@ def ogr_oci_3():
 # Write more features with a bunch of different geometries, and verify the
 # geometries are still OK.
 
+
 def ogr_oci_4():
 
     if gdaltest.oci_ds is None:
@@ -222,6 +227,7 @@ def ogr_oci_4():
 ###############################################################################
 # Test ExecuteSQL() results layers without geometry.
 
+
 def ogr_oci_5():
 
     if gdaltest.oci_ds is None:
@@ -245,6 +251,7 @@ def ogr_oci_5():
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
+
 
 def ogr_oci_6():
 
@@ -274,6 +281,7 @@ def ogr_oci_6():
 ###############################################################################
 # Test spatial filtering.
 
+
 def ogr_oci_7():
 
     if gdaltest.oci_ds is None:
@@ -299,6 +307,7 @@ def ogr_oci_7():
 ###############################################################################
 # Test that we can create a layer with a coordinate system that is mapped
 # to an oracle coordinate system using the ORACLE authority code.
+
 
 def ogr_oci_8():
 
@@ -347,6 +356,7 @@ def ogr_oci_8():
 # This time we create a layer with a EPSG marked GEOGCS, and verify that
 # the coordinate system gets properly remapped to the Oracle WGS84.
 
+
 def ogr_oci_9():
 
     if gdaltest.oci_ds is None:
@@ -390,6 +400,7 @@ def ogr_oci_9():
 
 ###############################################################################
 # Test handling of specialized Oracle Rectangle Geometries.
+
 
 def ogr_oci_10():
 
@@ -441,6 +452,7 @@ SDO_ORDINATE_ARRAY(1,1, 5,7) -- only 2 points needed to
 ###############################################################################
 # Test handling of specialized Oracle circle Geometries.
 
+
 def ogr_oci_11():
 
     if gdaltest.oci_ds is None:
@@ -482,6 +494,7 @@ SDO_ORDINATE_ARRAY(8,7, 10,9, 8,11)
 ###############################################################################
 # Test handling of specialized Oracle circular arc linestring Geometries.
 
+
 def ogr_oci_12():
 
     if gdaltest.oci_ds is None:
@@ -520,6 +533,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
         return 'fail'
 ###############################################################################
 # Test handling of specialized Oracle circular arc polygon Geometries.
+
 
 def ogr_oci_13():
 
@@ -562,6 +576,7 @@ SDO_ORDINATE_ARRAY(0,0, 1,1, 0,2, -1,3, 0,4, 2,2, 0,0 )
 ###############################################################################
 # Test handling of compount linestring.
 
+
 def ogr_oci_14():
 
     if gdaltest.oci_ds is None:
@@ -602,6 +617,7 @@ SDO_ORDINATE_ARRAY(10,10, 10,14, 6,10, 14,10)
 
 ###############################################################################
 # Test handling of compount polygon.
+
 
 def ogr_oci_15():
 
@@ -644,6 +660,7 @@ SDO_ORDINATE_ARRAY(-10,10, 10,10, 0,0, -10,10)
 ###############################################################################
 # Test deleting an existing layer.
 
+
 def ogr_oci_16():
 
     if gdaltest.oci_ds is None:
@@ -678,6 +695,7 @@ def ogr_oci_16():
 
 ###############################################################################
 # Test that synctodisk actually sets the layer bounds metadata.
+
 
 def ogr_oci_17():
 
@@ -752,6 +770,7 @@ def ogr_oci_17():
 ###############################################################################
 # Test layer geometry types
 
+
 def ogr_oci_18():
 
     if gdaltest.oci_ds is None:
@@ -821,6 +840,7 @@ def ogr_oci_18():
 ###############################################################################
 # Test date / datetime
 
+
 def ogr_oci_19():
 
     if gdaltest.oci_ds is None:
@@ -853,6 +873,7 @@ def ogr_oci_19():
 
 ###############################################################################
 # Test not nullable fields
+
 
 def ogr_oci_20():
 
@@ -951,6 +972,7 @@ def ogr_oci_20():
 
 ###############################################################################
 # Test default values
+
 
 def ogr_oci_21():
 
@@ -1060,6 +1082,7 @@ def ogr_oci_21():
 ###############################################################################
 #
 
+
 def ogr_oci_cleanup():
 
     if gdaltest.oci_ds is None:
@@ -1091,6 +1114,7 @@ def ogr_oci_cleanup():
     gdaltest.shp_ds = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_oci_1,

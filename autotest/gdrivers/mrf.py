@@ -74,6 +74,7 @@ init_list = [
     ('12bit_rose_extract.jpg', 1, [30075, [29650, 29680, 29680, 29650]], ['COMPRESS=JPEG']),
 ]
 
+
 def mrf_zen_test():
     result = 'success'
     expectedCS = 770
@@ -146,6 +147,7 @@ def mrf_overview_near_fact_2():
 
     return 'success'
 
+
 def mrf_overview_near_with_nodata_fact_2():
 
     for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
@@ -179,6 +181,7 @@ def mrf_overview_near_with_nodata_fact_2():
 
     return 'success'
 
+
 def mrf_overview_avg_fact_2():
 
     for dt in [ gdal.GDT_Byte, gdal.GDT_Int16, gdal.GDT_UInt16,
@@ -211,6 +214,7 @@ def mrf_overview_avg_fact_2():
         gdal.Unlink('/vsimem/out.til')
 
     return 'success'
+
 
 def mrf_overview_avg_with_nodata_fact_2():
 
@@ -246,6 +250,7 @@ def mrf_overview_avg_with_nodata_fact_2():
 
     return 'success'
 
+
 def mrf_overview_near_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
@@ -272,6 +277,7 @@ def mrf_overview_near_fact_3():
 
     return 'success'
 
+
 def mrf_overview_avg_fact_3():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif',
@@ -297,6 +303,7 @@ def mrf_overview_avg_fact_3():
     gdal.Unlink('/vsimem/out.til')
 
     return 'success'
+
 
 def mrf_overview_avg_with_nodata_fact_3():
 
@@ -332,6 +339,7 @@ def mrf_overview_avg_with_nodata_fact_3():
 
     return 'success'
 
+
 def mrf_overview_partial_block():
 
     out_ds = gdal.Translate('/vsimem/out.mrf', 'data/byte.tif', format = 'MRF',
@@ -354,6 +362,7 @@ def mrf_overview_partial_block():
     gdal.Unlink('/vsimem/out.til')
 
     return 'success'
+
 
 def mrf_overview_near_implicit_level():
 
@@ -393,6 +402,7 @@ def mrf_overview_near_implicit_level():
     gdal.Unlink('/vsimem/out.til')
 
     return 'success'
+
 
 def mrf_overview_external():
 
@@ -448,6 +458,7 @@ def mrf_lerc_nodata():
 
     return 'success'
 
+
 def mrf_lerc_with_huffman():
 
     gdal.Translate('/vsimem/out.mrf', 'data/small_world.tif', format = 'MRF',
@@ -469,6 +480,7 @@ def mrf_lerc_with_huffman():
     gdal.Unlink('/vsimem/out.til')
 
     return 'success'
+
 
 def mrf_cached_source():
 
@@ -519,7 +531,6 @@ def mrf_cached_source():
         return 'fail'
     ds = None
 
-
     # Caching MRF in mp_safe mode
 
     gdal.Unlink('tmp/out.mrf')
@@ -563,7 +574,6 @@ def mrf_cached_source():
         print(expected_cs)
         return 'fail'
     ds = None
-
 
     # Cloning MRF
     open('tmp/cloning.mrf', 'wt').write(
@@ -613,6 +623,7 @@ def mrf_cached_source():
     gdal.Unlink('tmp/cloning.til')
 
     return 'success'
+
 
 def mrf_versioned():
 
@@ -683,6 +694,7 @@ def mrf_versioned():
 
     return 'success'
 
+
 def mrf_cleanup():
 
     files = [
@@ -714,6 +726,7 @@ def mrf_cleanup():
 
     return 'success'
 
+
 gdaltest_list = []
 
 
@@ -728,6 +741,7 @@ class myTestCreateCopyWrapper:
             if x.find('OPTIONS:LERC_PREC=') >= 0:
                 check_minmax = False
         return self.ut.testCreateCopy(check_minmax = check_minmax)
+
 
 for item in init_list:
     src_filename = item[0]

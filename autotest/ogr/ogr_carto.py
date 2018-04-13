@@ -43,6 +43,7 @@ from osgeo import osr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_carto_init():
 
     ogrtest.carto_drv = None
@@ -855,7 +856,6 @@ Error""")
         f.DumpReadable()
         return 'fail'
 
-
     ds = ogr.Open('CARTO:foo', update = 1)
     lyr = ds.GetLayer(0)
     f = ogr.Feature(lyr.GetLayerDefn())
@@ -930,9 +930,6 @@ Error""")
     if gdal.GetLastErrorMsg() != '':
         gdaltest.post_reason('fail')
         return 'fail'
-
-
-
 
     ds = ogr.Open('CARTO:foo', update = 1)
 
@@ -1020,6 +1017,7 @@ Error""")
 ###############################################################################
 #
 
+
 def ogr_carto_vsimem_cleanup():
     if ogrtest.carto_drv is None:
         return 'skip'
@@ -1037,6 +1035,7 @@ def ogr_carto_vsimem_cleanup():
 
 ###############################################################################
 #  Run test_ogrsf
+
 
 def ogr_carto_test_ogrsf():
     if ogrtest.carto_drv is None or gdal.GetConfigOption('SKIP_SLOW') is not None:
@@ -1064,6 +1063,7 @@ def ogr_carto_test_ogrsf():
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_carto_rw_init():
 
     ogrtest.carto_drv = None
@@ -1088,6 +1088,7 @@ def ogr_carto_rw_init():
 
 ###############################################################################
 # Read/write/update test
+
 
 def ogr_carto_rw_1():
 
@@ -1268,6 +1269,7 @@ def ogr_carto_rw_1():
     ds.ExecuteSQL("DELLAYER:" + lyr_name)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_carto_init,

@@ -36,6 +36,7 @@ from osgeo import ogr
 ###############################################################################
 # Verify we can open the test file.
 
+
 def ogr_dgn_1():
 
     gdaltest.dgn_ds = ogr.Open( 'data/smalltest.dgn' )
@@ -49,6 +50,7 @@ def ogr_dgn_1():
 
 ###############################################################################
 # Check first feature, a text element.
+
 
 def ogr_dgn_2():
     if gdaltest.dgn_ds is None:
@@ -74,6 +76,7 @@ def ogr_dgn_2():
 
 ###############################################################################
 # Check second feature, a circle.
+
 
 def ogr_dgn_3():
     if gdaltest.dgn_ds is None:
@@ -110,6 +113,7 @@ def ogr_dgn_3():
 ###############################################################################
 # Check third feature, a polygon with fill styling.
 
+
 def ogr_dgn_4():
     if gdaltest.dgn_ds is None:
         return 'skip'
@@ -136,6 +140,7 @@ def ogr_dgn_4():
 ###############################################################################
 # Use attribute query to pick just the type 15 level 2 object.
 
+
 def ogr_dgn_5():
 
     if gdaltest.dgn_ds is None:
@@ -152,6 +157,7 @@ def ogr_dgn_5():
 
 ###############################################################################
 # Use spatial filter to just pick the big circle.
+
 
 def ogr_dgn_6():
 
@@ -172,6 +178,7 @@ def ogr_dgn_6():
 
 ###############################################################################
 # Copy our small dgn file to a new dgn file.
+
 
 def ogr_dgn_7():
 
@@ -210,6 +217,7 @@ def ogr_dgn_7():
 # Currently the styling information is not well preserved.  Eventually
 # this should be fixed up and the test made more stringent.
 #
+
 
 def ogr_dgn_8():
 
@@ -287,6 +295,7 @@ def ogr_dgn_8():
 ###############################################################################
 # Test delta encoding (#6806)
 
+
 def ogr_dgn_online_1():
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/dgn/DGNSample_v7.dgn', 'DGNSample_v7.dgn'):
@@ -302,11 +311,11 @@ def ogr_dgn_online_1():
     if ogrtest.check_feature_geometry( feat, wkt):
         return 'fail'
 
-
     return 'success'
 
 ###############################################################################
 #  Cleanup
+
 
 def ogr_dgn_cleanup():
 
@@ -316,6 +325,7 @@ def ogr_dgn_cleanup():
 
     gdaltest.clean_tmp()
     return 'success'
+
 
 gdaltest_list = [
     ogr_dgn_1,

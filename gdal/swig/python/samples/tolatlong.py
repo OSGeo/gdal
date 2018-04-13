@@ -37,6 +37,8 @@ from osgeo import osr
 import sys
 
 # =============================================================================
+
+
 def Usage():
     print('')
     print('Read coordinate system and geotransformation matrix from input')
@@ -48,6 +50,7 @@ def Usage():
     sys.exit( 1 )
 
 # =============================================================================
+
 
 infile = None
 pixel = None

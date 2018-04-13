@@ -38,6 +38,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def jpipkak_1():
 
     return 'skip'
@@ -64,6 +65,7 @@ def jpipkak_1():
 
 ###############################################################################
 #
+
 
 def jpipkak_2():
 
@@ -97,13 +99,13 @@ def jpipkak_2():
 ###############################################################################
 # Test an 11bit image.
 
+
 def jpipkak_3():
 
     return 'skip'
 
     if gdaltest.jpipkak_drv is None:
         return 'skip'
-
 
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_11bit' )
     if ds is None:
@@ -124,13 +126,13 @@ def jpipkak_3():
 ###############################################################################
 # Test a 20bit image, reduced to 16bit during processing.
 
+
 def jpipkak_4():
 
     return 'skip'
 
     if gdaltest.jpipkak_drv is None:
         return 'skip'
-
 
     ds = gdal.Open( 'jpip://216.150.195.220/JP2Server/qb_boulder_pan_20bit' )
     if ds is None:
@@ -150,6 +152,7 @@ def jpipkak_4():
 
 ###############################################################################
 # Test an overview level that will result in multiple fetches with subwindows.
+
 
 def jpipkak_5():
 
@@ -173,6 +176,7 @@ def jpipkak_5():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     jpipkak_1,

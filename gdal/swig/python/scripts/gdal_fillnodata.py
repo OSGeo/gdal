@@ -33,11 +33,13 @@ import sys
 
 from osgeo import gdal
 
+
 def CopyBand( srcband, dstband ):
     for line in range(srcband.YSize):
         line_data = srcband.ReadRaster( 0, line, srcband.XSize, 1 )
         dstband.WriteRaster( 0, line, srcband.XSize, 1, line_data,
                              buf_type = srcband.DataType )
+
 
 def Usage():
     print("""
@@ -50,6 +52,7 @@ gdal_fillnodata [-q] [-md max_distance] [-si smooth_iterations]
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 max_distance = 100
 smoothing_iterations = 0

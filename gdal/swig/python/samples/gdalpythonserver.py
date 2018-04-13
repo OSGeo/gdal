@@ -37,6 +37,7 @@ import sys
 
 from osgeo import gdal
 
+
 class GDALPythonServerRasterBand:
 
     def __init__(self, gdal_band):
@@ -122,6 +123,7 @@ class GDALPythonServerRasterBand:
     def GetHistogram(self, dfMin, dfMax, nBuckets, bIncludeOutOfRange, bApproxOK):
         return self.gdal_band.GetHistogram(dfMin, dfMax, nBuckets, include_out_of_range = bIncludeOutOfRange, approx_ok = bApproxOK)
 
+
 class GDALPythonServerDataset:
 
     def __init__(self, filename, access = gdal.GA_ReadOnly, open_options = None):
@@ -181,6 +183,7 @@ class GDALPythonServerDataset:
                                        buf_xsize = nBufXSize, buf_ysize = nBufYSize, \
                                        buf_type = nBufType, band_list = panBandMap, \
                                        buf_pixel_space = nPixelSpace, buf_line_space = nLineSpace, buf_band_space = nBandSpace)
+
 
 INSTR_GetGDALVersion = 1
 INSTR_EXIT = 2
@@ -350,11 +353,13 @@ CE_Failure = 3
 
 VERBOSE = 0
 
+
 def read_int():
     if sys.version_info >= (3,0,0):
         return struct.unpack('i', sys.stdin.read(4).encode('latin1'))[0]
     else:
         return struct.unpack('i', sys.stdin.read(4))[0]
+
 
 def read_bigint():
     if sys.version_info >= (3,0,0):
@@ -362,11 +367,13 @@ def read_bigint():
     else:
         return struct.unpack('q', sys.stdin.read(8))[0]
 
+
 def read_double():
     if sys.version_info >= (3,0,0):
         return struct.unpack('d', sys.stdin.read(8).encode('latin1'))[0]
     else:
         return struct.unpack('d', sys.stdin.read(8))[0]
+
 
 def read_str():
     length = read_int()
@@ -377,12 +384,14 @@ def read_str():
         str =  str[0:len(str)-1]
     return str
 
+
 def read_strlist():
     count = read_int()
     strlist = []
     for i in range(count):
         strlist.append(read_str())
     return strlist
+
 
 def write_int(i):
     if i is True:
@@ -396,6 +405,7 @@ def write_int(i):
     else:
         sys.stdout.write(v)
 
+
 def write_uint64(i):
     v = struct.pack('Q', i)
     if sys.version_info >= (3,0,0):
@@ -403,11 +413,13 @@ def write_uint64(i):
     else:
         sys.stdout.write(v)
 
+
 def write_double(d):
     if sys.version_info >= (3,0,0):
         sys.stdout.write(struct.pack('d', d).decode('latin1'))
     else:
         sys.stdout.write(struct.pack('d', d))
+
 
 def write_str(s):
     if s is None:
@@ -417,6 +429,7 @@ def write_str(s):
         write_int(l+1)
         sys.stdout.write(s)
         sys.stdout.write('\x00')
+
 
 def write_band(band, isrv_num):
     if band is not None:
@@ -432,6 +445,7 @@ def write_band(band, isrv_num):
     else:
         write_int(-1)
 
+
 def write_ct(ct):
     if ct is None:
         write_int(-1)
@@ -446,11 +460,14 @@ def write_ct(ct):
             write_int(entry[2])
             write_int(entry[3])
 
+
 def write_marker():
     sys.stdout.write('\xDE\xAD\xBE\xEF')
 
+
 def write_zero_error():
     write_int(0)
+
 
 def main_loop():
 
@@ -850,5 +867,6 @@ def main_loop():
             break
 
         write_zero_error()
+
 
 main_loop()

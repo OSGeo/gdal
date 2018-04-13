@@ -59,6 +59,7 @@ init_list = [ \
 ###############################################################################
 # Test HDF4_SDS with single subdataset
 
+
 def hdf4_read_online_1():
 
     try:
@@ -78,6 +79,7 @@ def hdf4_read_online_1():
 
 ###############################################################################
 # Test HDF4_SDS with GEOLOCATION info
+
 
 def hdf4_read_online_2():
 
@@ -142,6 +144,7 @@ def hdf4_read_online_3():
 ###############################################################################
 # Test HDF4_SDS:SEAWIFS_L1A
 
+
 def hdf4_read_online_4():
 
     if gdaltest.hdf4_drv is None:
@@ -168,6 +171,7 @@ def hdf4_read_online_4():
 ###############################################################################
 # Test fix for #2208
 
+
 def hdf4_read_online_5():
 
     if gdaltest.hdf4_drv is None:
@@ -187,6 +191,7 @@ def hdf4_read_online_5():
 
 ###############################################################################
 # Test fix for #3386 where block size is dataset size
+
 
 def hdf4_read_online_6():
 
@@ -223,6 +228,7 @@ def hdf4_read_online_6():
 
 ###############################################################################
 # Test fix for #3386 where block size is smaller than dataset size
+
 
 def hdf4_read_online_7():
 
@@ -299,6 +305,7 @@ def hdf4_read_online_8():
 ###############################################################################
 # Test reading L1G MTL metadata metadata
 
+
 def hdf4_read_online_9():
 
     if gdaltest.hdf4_drv is None:
@@ -326,6 +333,7 @@ def hdf4_read_online_9():
 
 ###############################################################################
 # Test that non-tiled access works (#4672)
+
 
 def hdf4_read_online_10():
 

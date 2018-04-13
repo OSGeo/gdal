@@ -44,6 +44,7 @@ from osgeo import ogr
 ###############################################################################
 # Check some general things to see if they meet expectations.
 
+
 def ogr_dxf_1():
 
     gdaltest.dxf_ds = ogr.Open( 'data/assorted.dxf' )
@@ -89,6 +90,7 @@ def ogr_dxf_1():
 
 ###############################################################################
 # Read the first feature, an ellipse and see if it generally meets expectations.
+
 
 def ogr_dxf_2():
 
@@ -144,6 +146,7 @@ def ogr_dxf_2():
 ###############################################################################
 # Second feature should be a partial ellipse.
 
+
 def ogr_dxf_3():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
@@ -168,6 +171,7 @@ def ogr_dxf_3():
 ###############################################################################
 # Third feature: point.
 
+
 def ogr_dxf_4():
 
     feat = gdaltest.dxf_layer.GetNextFeature()
@@ -179,6 +183,7 @@ def ogr_dxf_4():
 
 ###############################################################################
 # Fourth feature: LINE
+
 
 def ogr_dxf_5():
 
@@ -195,6 +200,7 @@ def ogr_dxf_5():
 
 ###############################################################################
 # Fourth feature: MTEXT
+
 
 def ogr_dxf_6():
 
@@ -216,6 +222,7 @@ def ogr_dxf_6():
 
 ###############################################################################
 # Partial CIRCLE
+
 
 def ogr_dxf_7():
 
@@ -241,6 +248,7 @@ def ogr_dxf_7():
 
 ###############################################################################
 # Dimension
+
 
 def ogr_dxf_8():
 
@@ -296,6 +304,7 @@ def ogr_dxf_8():
 ###############################################################################
 # BLOCK (inlined)
 
+
 def ogr_dxf_9():
 
     # Skip two dimensions each with a line, two arrowheads and text.
@@ -345,6 +354,7 @@ def ogr_dxf_9():
 ###############################################################################
 # LWPOLYLINE in an Object Coordinate System.
 
+
 def ogr_dxf_10():
 
     ocs_ds = ogr.Open('data/LWPOLYLINE-OCS.dxf')
@@ -380,6 +390,7 @@ def ogr_dxf_10():
 ###############################################################################
 # Test reading from an entities-only dxf file (#3412)
 
+
 def ogr_dxf_11():
 
     eo_ds = ogr.Open('data/entities_only.dxf')
@@ -406,6 +417,7 @@ def ogr_dxf_11():
 
 ###############################################################################
 # Write a simple file with a polygon and a line, and read back.
+
 
 def ogr_dxf_12():
 
@@ -606,6 +618,7 @@ def ogr_dxf_14():
 # dynamically created layer 'abc' matches the definition of the default
 # layer '0'.
 
+
 def ogr_dxf_15():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_14.dxf',
@@ -799,6 +812,7 @@ def ogr_dxf_16():
 ###############################################################################
 # Write a file with blocks defined from a source blocks layer.
 
+
 def ogr_dxf_17():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_17.dxf',
@@ -944,6 +958,7 @@ def ogr_dxf_17():
 # Write a file with line patterns, and make sure corresponding Linetypes are
 # created.
 
+
 def ogr_dxf_18():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_18.dxf',
@@ -1069,6 +1084,7 @@ def ogr_dxf_18():
 # Test writing a file using references to blocks defined entirely in the
 # template - no blocks layer transferred.
 
+
 def ogr_dxf_19():
 
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/dxf_19.dxf',
@@ -1112,6 +1128,7 @@ def ogr_dxf_19():
 ###############################################################################
 # SPLINE
 
+
 def ogr_dxf_20():
 
     ds = ogr.Open('data/spline_qcad.dxf')
@@ -1127,6 +1144,7 @@ def ogr_dxf_20():
 
 ###############################################################################
 # CIRCLE
+
 
 def ogr_dxf_21():
 
@@ -1269,6 +1287,7 @@ def ogr_dxf_23():
 ###############################################################################
 # HATCH
 
+
 def ogr_dxf_24():
 
     ds = ogr.Open('data/hatch.dxf')
@@ -1296,6 +1315,7 @@ def ogr_dxf_24():
 ###############################################################################
 # 3DFACE
 
+
 def ogr_dxf_25():
 
     ds = ogr.Open('data/3dface.dxf')
@@ -1318,6 +1338,7 @@ def ogr_dxf_25():
 ###############################################################################
 # SOLID (#5380)
 
+
 def ogr_dxf_26():
 
     ds = ogr.Open('data/solid.dxf')
@@ -1335,6 +1356,7 @@ def ogr_dxf_26():
 ###############################################################################
 # Test reading a DXF file without .dxf extensions (#5994)
 
+
 def ogr_dxf_27():
 
     gdal.FileFromMemBuffer('/vsimem/a_dxf_without_extension', open('data/solid.dxf').read())
@@ -1349,6 +1371,7 @@ def ogr_dxf_27():
 
 ###############################################################################
 # Test reading a ELLIPSE with Z extrusion axis value of -1.0 (#5075)
+
 
 def ogr_dxf_28():
 
@@ -1371,6 +1394,7 @@ def ogr_dxf_28():
 
 ###############################################################################
 # SPLINE with weights
+
 
 def ogr_dxf_29():
 
@@ -1402,6 +1426,7 @@ def ogr_dxf_29():
 ###############################################################################
 # SPLINE closed
 
+
 def ogr_dxf_30():
 
     ds = ogr.Open('data/spline_closed.dxf')
@@ -1425,6 +1450,7 @@ def ogr_dxf_30():
 
 ###############################################################################
 # OCS2WCS transformations 1
+
 
 def ogr_dxf_31():
 
@@ -1864,6 +1890,7 @@ def ogr_dxf_31():
 
 ###############################################################################
 # OCS2WCS transformations 2. Also test RawCodeValues
+
 
 def ogr_dxf_32():
 
@@ -2437,6 +2464,7 @@ def ogr_dxf_32():
 ###############################################################################
 # Test 3D entities (polyface mesh, cylinder, 3D solid)
 
+
 def ogr_dxf_33():
 
     gdal.SetConfigOption('DXF_3D_EXTENSIBLE_MODE', 'TRUE')
@@ -2531,6 +2559,7 @@ def ogr_dxf_33():
 ###############################################################################
 # Writing Triangle geometry and checking if it is written properly
 
+
 def ogr_dxf_34():
     ds = ogr.GetDriverByName('DXF').CreateDataSource('tmp/triangle_test.dxf' )
     lyr = ds.CreateLayer( 'entities' )
@@ -2564,6 +2593,7 @@ def ogr_dxf_34():
 
 ###############################################################################
 # Test reading hatch with elliptical harts
+
 
 def ogr_dxf_35():
 
@@ -2672,6 +2702,7 @@ def ogr_dxf_35():
 ###############################################################################
 # Test reading files with only INSERT content (#7006)
 
+
 def ogr_dxf_36():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
@@ -2685,6 +2716,7 @@ def ogr_dxf_36():
 
 ###############################################################################
 # Create a blocks layer only
+
 
 def ogr_dxf_37():
 
@@ -2719,6 +2751,7 @@ def ogr_dxf_37():
 ###############################################################################
 # Test degenerated cases of SOLID (#7038)
 
+
 def ogr_dxf_38():
 
     ds = ogr.Open('data/solid-less-than-4-vertices.dxf')
@@ -2742,6 +2775,7 @@ def ogr_dxf_38():
 ###############################################################################
 # Test correct reordering of vertices in SOLID (#7038, #7089)
 
+
 def ogr_dxf_39():
 
     ds = ogr.Open('data/solid-vertex-ordering.dxf')
@@ -2764,6 +2798,7 @@ def ogr_dxf_39():
 ###############################################################################
 # Test handing of OCS vs WCS for MTEXT (#7049)
 
+
 def ogr_dxf_40():
 
     ds = ogr.Open('data/mtext-ocs-reduced.dxf')
@@ -2778,6 +2813,7 @@ def ogr_dxf_40():
 
 ###############################################################################
 # Test handing of OCS vs WCS for SOLID, HATCH and INSERT (#7077, #7098)
+
 
 def ogr_dxf_41():
 
@@ -2879,6 +2915,7 @@ def ogr_dxf_41():
 ###############################################################################
 # Test insertion of blocks within blocks (#7106)
 
+
 def ogr_dxf_42():
 
     # Inlining, merging
@@ -2961,6 +2998,7 @@ def ogr_dxf_42():
 ###############################################################################
 # Ensure recursively-included blocks don't fail badly
 
+
 def ogr_dxf_43():
 
     ds = ogr.Open('data/insert-recursive-pair.dxf')
@@ -2972,6 +3010,7 @@ def ogr_dxf_43():
 
 ###############################################################################
 # General tests of LEADER and MULTILEADER entities (#7111)
+
 
 def ogr_dxf_44():
 
@@ -3218,6 +3257,7 @@ def ogr_dxf_44():
 ###############################################################################
 # Test linetype scaling (#7129) and parsing of complex linetypes (#7134)
 
+
 def ogr_dxf_45():
 
     ds = ogr.Open('data/linetypes.dxf')
@@ -3267,6 +3307,7 @@ def ogr_dxf_45():
 
 ###############################################################################
 # Test handling of DIMENSION anonymous block insertion (#7120)
+
 
 def ogr_dxf_46():
 
@@ -3324,6 +3365,7 @@ def ogr_dxf_46():
 
 ###############################################################################
 # Test handling of DIMENSION fallback when there is no anonymous block (#7120)
+
 
 def ogr_dxf_47():
 
@@ -3431,6 +3473,7 @@ def ogr_dxf_47():
 ###############################################################################
 # Test ByLayer and ByBlock color values (#7130)
 
+
 def ogr_dxf_48():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
@@ -3533,6 +3576,7 @@ def ogr_dxf_48():
 ###############################################################################
 # Test block attributes (ATTRIB entities) (#7139)
 
+
 def ogr_dxf_49():
 
     # Inline blocks mode
@@ -3602,6 +3646,7 @@ def ogr_dxf_49():
 ###############################################################################
 # Test extended text styling (#7151) and additional ByBlock/ByLayer tests (#7130)
 
+
 def ogr_dxf_50():
 
     gdal.SetConfigOption('DXF_MERGE_BLOCK_GEOMETRIES', 'FALSE')
@@ -3648,7 +3693,6 @@ def ogr_dxf_50():
         f.DumpReadable()
         return 'fail'
 
-
     # Individually invisible object should be invisible
     f = lyr.GetFeature(5)
     if f.GetStyleString() != 'LABEL(f:"Times New Roman",bo:1,it:1,t:"Invisible text",p:1,s:5g,c:#00000000)':
@@ -3660,6 +3704,7 @@ def ogr_dxf_50():
 
 ###############################################################################
 # Test transformation of text inside blocks (ACAdjustText function)
+
 
 def ogr_dxf_51():
 
@@ -3687,6 +3732,7 @@ def ogr_dxf_51():
 
 ###############################################################################
 # Test HELIX, TRACE, HATCH with spline boundary, MLINE, and INSERT with rows/columns
+
 
 def ogr_dxf_52():
 
@@ -3798,6 +3844,7 @@ def ogr_dxf_52():
 ###############################################################################
 # Test block base points
 
+
 def ogr_dxf_53():
 
     ds = ogr.Open('data/block-basepoint.dxf')
@@ -3814,6 +3861,7 @@ def ogr_dxf_53():
 ###############################################################################
 # cleanup
 
+
 def ogr_dxf_cleanup():
     gdaltest.dxf_layer = None
     gdaltest.dxf_ds = None
@@ -3822,6 +3870,7 @@ def ogr_dxf_cleanup():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     ogr_dxf_1,

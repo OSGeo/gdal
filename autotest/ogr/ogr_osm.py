@@ -42,6 +42,7 @@ import ogrtest
 ###############################################################################
 # Test .pbf
 
+
 def ogr_osm_1(filename = 'data/test.pbf'):
 
     try:
@@ -283,11 +284,13 @@ def ogr_osm_1(filename = 'data/test.pbf'):
 ###############################################################################
 # Test .osm
 
+
 def ogr_osm_2():
     return ogr_osm_1('data/test.osm')
 
 ###############################################################################
 # Test ogr2ogr
+
 
 def ogr_osm_3(options = None, all_layers = False):
 
@@ -318,6 +321,7 @@ def ogr_osm_3(options = None, all_layers = False):
 ###############################################################################
 # Test ogr2ogr with --config OSM_USE_CUSTOM_INDEXING NO and -skip
 
+
 def ogr_osm_3_sqlite_nodes():
     gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
     ret = ogr_osm_3(options = '-skip')
@@ -326,6 +330,7 @@ def ogr_osm_3_sqlite_nodes():
 
 ###############################################################################
 # Test ogr2ogr with --config OSM_COMPRESS_NODES YES
+
 
 def ogr_osm_3_custom_compress_nodes():
     gdal.SetConfigOption('OSM_COMPRESS_NODES', 'YES')
@@ -336,11 +341,13 @@ def ogr_osm_3_custom_compress_nodes():
 ###############################################################################
 # Test ogr2ogr with all layers
 
+
 def ogr_osm_3_all_layers():
     return ogr_osm_3(options = '-skip', all_layers = True)
 
 ###############################################################################
 # Test optimization when reading only the points layer through a SQL request
+
 
 def ogr_osm_4():
 
@@ -405,6 +412,7 @@ def ogr_osm_4():
 ###############################################################################
 # Test optimizations for early attribute filter evaluation
 
+
 def ogr_osm_5():
 
     if ogrtest.osm_drv is None:
@@ -452,6 +460,7 @@ def ogr_osm_5():
 ###############################################################################
 # Test ogr2ogr -sql
 
+
 def ogr_osm_6():
 
     if ogrtest.osm_drv is None:
@@ -487,6 +496,7 @@ def ogr_osm_6():
 # Test optimization when reading only the points layer through a SQL request
 # with SQLite dialect (#4825)
 
+
 def ogr_osm_7():
 
     if ogrtest.osm_drv is None:
@@ -511,6 +521,7 @@ def ogr_osm_7():
 
 ###############################################################################
 # Test 64-bit ids
+
 
 def ogr_osm_8():
 
@@ -545,6 +556,7 @@ def ogr_osm_8():
 ###############################################################################
 # Same as ogr_osm_8 but with OSM_USE_CUSTOM_INDEXING=NO
 
+
 def ogr_osm_9():
 
     if ogrtest.osm_drv is None:
@@ -559,6 +571,7 @@ def ogr_osm_9():
 
 ###############################################################################
 # Some error conditions
+
 
 def ogr_osm_10():
 
@@ -649,6 +662,7 @@ def ogr_osm_10():
 ###############################################################################
 # Test all_tags
 
+
 def ogr_osm_11():
 
     if ogrtest.osm_drv is None:
@@ -706,17 +720,21 @@ def ogr_osm_12():
 ###############################################################################
 # Test test_uncompressed_dense_true_nometadata.pbf
 
+
 def ogr_osm_test_uncompressed_dense_true_nometadata_pbf():
     return ogr_osm_1('data/test_uncompressed_dense_true_nometadata.pbf')
 
 ###############################################################################
 # Test test_uncompressed_dense_false.pbf
 
+
 def ogr_osm_test_uncompressed_dense_false_pbf():
     return ogr_osm_1('data/test_uncompressed_dense_false.pbf')
 
 # Special case: if an object has a 'osm_id' key, then do not use it to override
 # "our" osm_id field. But put it in other_fields (#6347)
+
+
 def ogr_osm_13():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
@@ -744,6 +762,7 @@ def ogr_osm_13():
 
 ###############################################################################
 # Test that we handle polygons in other_relations (#6475)
+
 
 def ogr_osm_14():
 
@@ -790,12 +809,15 @@ def ogr_osm_14():
 ###############################################################################
 # Test Dataset.GetNextFeature()
 
+
 def ogr_osm_15_progresscbk_return_true(pct, msg, user_data):
     user_data[0] = pct
     return 1
 
+
 def ogr_osm_15_progresscbk_return_false(pct, msg, user_data):
     return 0
+
 
 def ogr_osm_15():
 
@@ -886,6 +908,7 @@ def ogr_osm_15():
 ###############################################################################
 # Test laundering of tags (https://github.com/OSGeo/gdal/pull/161)
 
+
 def ogr_osm_16():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
@@ -925,6 +948,7 @@ attributes=foo:baar,foo:bar
 # Test converting an empty OSM file (this essentially tests the behaviour of
 # GDALVectorTranslate() in random feature mode, when there is no feature)
 
+
 def ogr_osm_17():
 
     if ogrtest.osm_drv is None or not ogrtest.osm_drv_parse_osm:
@@ -950,6 +974,7 @@ def ogr_osm_17():
 # Test correct reading of .pbf files with multiple densenode blocks and
 # regarding EOF
 
+
 def ogr_osm_18():
 
     if ogrtest.osm_drv is None:
@@ -968,6 +993,7 @@ def ogr_osm_18():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_osm_1,

@@ -37,6 +37,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def kea_init():
     try:
         gdaltest.kea_driver = gdal.GetDriverByName('KEA')
@@ -48,6 +50,7 @@ def kea_init():
 ###############################################################################
 # Test copying a reference sample with CreateCopy()
 
+
 def kea_1():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -57,6 +60,7 @@ def kea_1():
 
 ###############################################################################
 # Test CreateCopy() for various data types
+
 
 def kea_2():
     if gdaltest.kea_driver is None:
@@ -81,6 +85,7 @@ def kea_2():
 ###############################################################################
 # Test Create() for various data types
 
+
 def kea_3():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -103,6 +108,7 @@ def kea_3():
 
 ###############################################################################
 # Test Create()/CreateCopy() error cases or limit cases
+
 
 def kea_4():
     if gdaltest.kea_driver is None:
@@ -213,6 +219,7 @@ def kea_4():
 ###############################################################################
 # Test Create() creation options
 
+
 def kea_5():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -250,6 +257,7 @@ def kea_5():
 
 ###############################################################################
 # Test metadata
+
 
 def kea_6():
     if gdaltest.kea_driver is None:
@@ -355,6 +363,7 @@ def kea_6():
 ###############################################################################
 # Test georef
 
+
 def kea_7():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -431,6 +440,7 @@ def kea_7():
 ###############################################################################
 # Test colortable
 
+
 def kea_8():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -478,6 +488,7 @@ def kea_8():
 ###############################################################################
 # Test color interpretation
 
+
 def kea_9():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -509,6 +520,7 @@ def kea_9():
 
 ###############################################################################
 # Test nodata
+
 
 def kea_10():
     if gdaltest.kea_driver is None:
@@ -574,6 +586,7 @@ def kea_10():
 ###############################################################################
 # Test AddBand
 
+
 def kea_11():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -608,6 +621,7 @@ def kea_11():
 
 ###############################################################################
 # Test RAT
+
 
 def kea_12():
     if gdaltest.kea_driver is None:
@@ -772,6 +786,7 @@ def kea_12():
 ###############################################################################
 # Test overviews
 
+
 def kea_13():
     if gdaltest.kea_driver is None:
         return 'skip'
@@ -811,6 +826,7 @@ def kea_13():
 
 ###############################################################################
 # Test mask bands
+
 
 def kea_14():
     if gdaltest.kea_driver is None:
@@ -855,6 +871,7 @@ def kea_14():
     gdaltest.kea_driver.Delete('tmp/out2.kea')
 
     return 'success'
+
 
 gdaltest_list = [
     kea_init,

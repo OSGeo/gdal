@@ -45,6 +45,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple polygon rasterization (adapted from alg/rasterize.py).
 
+
 def test_gdal_rasterize_1():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
@@ -102,7 +103,6 @@ def test_gdal_rasterize_1():
     # Close file
     rast_ogr_ds.Destroy()
 
-
     # Run the algorithm.
     (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdal_rasterize_path() + ' -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 tmp/rast1.tab tmp/rast1.tif')
     if not (err is None or err == '') :
@@ -127,6 +127,7 @@ def test_gdal_rasterize_1():
 
 ###############################################################################
 # Test rasterization with ALL_TOUCHED (adapted from alg/rasterize.py).
+
 
 def test_gdal_rasterize_2():
 
@@ -162,6 +163,7 @@ def test_gdal_rasterize_2():
 
 ###############################################################################
 # Test creating an output file
+
 
 def test_gdal_rasterize_3():
 
@@ -205,6 +207,7 @@ def test_gdal_rasterize_3():
 
 ###############################################################################
 # Same but with -tr argument
+
 
 def test_gdal_rasterize_4():
 
@@ -256,6 +259,7 @@ def test_gdal_rasterize_4():
 
 ###############################################################################
 # Test point rasterization (#3774)
+
 
 def test_gdal_rasterize_5():
 
@@ -312,6 +316,7 @@ def test_gdal_rasterize_5():
 ###############################################################################
 # Test on the fly reprojection of input data
 
+
 def test_gdal_rasterize_6():
 
     if test_cli_utilities.get_gdal_rasterize_path() is None:
@@ -348,6 +353,7 @@ def test_gdal_rasterize_6():
 
 ###############################################################################
 # Test SQLITE dialect in SQL
+
 
 def test_gdal_rasterize_7():
 
@@ -402,6 +408,7 @@ def test_gdal_rasterize_7():
 ###############################################################################
 # Make sure we create output that encompasses all the input points on a point
 # layer, #6058.
+
 
 def test_gdal_rasterize_8():
 
@@ -460,6 +467,7 @@ def test_gdal_rasterize_cleanup():
     os.unlink('tmp/test_gdal_rasterize_8.csv')
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_rasterize_1,

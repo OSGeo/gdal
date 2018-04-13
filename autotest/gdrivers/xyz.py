@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Test CreateCopy() of byte.tif
 
+
 def xyz_1():
 
     tst = gdaltest.GDALTest( 'XYZ', 'byte.tif', 1, 4672 )
@@ -47,6 +48,7 @@ def xyz_1():
 
 ###############################################################################
 # Test CreateCopy() of float.img
+
 
 def xyz_2():
 
@@ -63,6 +65,7 @@ def xyz_2():
 
 ###############################################################################
 # Test random access to lines of imagery
+
 
 def xyz_3():
 
@@ -117,6 +120,7 @@ def xyz_4_checkline(ds, i, expected_bytes):
     if bytes != expected_bytes:
         return False
     return True
+
 
 def xyz_4():
 
@@ -278,6 +282,7 @@ def xyz_7():
 ###############################################################################
 # Test particular case of XYZ file with missed samples (#6934)
 
+
 def xyz_8():
 
     content = """0 500 50
@@ -302,7 +307,6 @@ def xyz_8():
         return 'fail'
 
     return 'success'
-
 
 
 ###############################################################################

@@ -37,11 +37,13 @@ import gdaltest
 ###############################################################################
 # Test reading a small gtx file.
 
+
 def gtx_1():
 
     tst = gdaltest.GDALTest( 'GTX', 'hydroc1.gtx', 1, 64183 )
     gt = (276.725, 0.05, 0.0, 42.775, 0.0, -0.05)
     return tst.testOpen( check_gt = gt, check_prj = 'WGS84' )
+
 
 gdaltest_list = [
     gtx_1 ]

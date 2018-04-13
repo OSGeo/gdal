@@ -59,6 +59,7 @@ def vsicurl_1():
 ###############################################################################
 #
 
+
 def vsicurl_2():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -74,6 +75,7 @@ def vsicurl_2():
 
 ###############################################################################
 # This server doesn't support range downloading
+
 
 def vsicurl_3():
     if not gdaltest.run_slow_tests():
@@ -91,6 +93,7 @@ def vsicurl_3():
 ###############################################################################
 # This server doesn't support range downloading
 
+
 def vsicurl_4():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -107,6 +110,7 @@ def vsicurl_4():
 ###############################################################################
 # Test URL unescaping when reading HTTP file list
 
+
 def vsicurl_5():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -122,6 +126,7 @@ def vsicurl_5():
 
 ###############################################################################
 # Test with FTP server that doesn't support EPSV command
+
 
 def vsicurl_6():
     if not gdaltest.run_slow_tests():
@@ -156,6 +161,7 @@ def vsicurl_7():
 ###############################################################################
 # Test interleaved reading between 2 datasets
 
+
 def vsicurl_8():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -174,6 +180,7 @@ def vsicurl_8():
 ###############################################################################
 # Test reading a file with Chinese characters, but the HTTP file listing
 # returns escaped sequences instead of the Chinese characters.
+
 
 def vsicurl_9():
     if not gdaltest.run_slow_tests():
@@ -197,6 +204,7 @@ def vsicurl_9():
 ###############################################################################
 # Test reading a file with escaped Chinese characters.
 
+
 def vsicurl_10():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -212,6 +220,7 @@ def vsicurl_10():
 
 ###############################################################################
 # Test ReadDir() after reading a file on the same server
+
 
 def vsicurl_11():
     if not gdaltest.run_slow_tests():
@@ -234,6 +243,8 @@ def vsicurl_11():
     return 'success'
 
 ###############################################################################
+
+
 def vsicurl_start_webserver():
 
     gdaltest.webserver_process = None
@@ -249,6 +260,8 @@ def vsicurl_start_webserver():
     return 'success'
 
 ###############################################################################
+
+
 def vsicurl_test_redirect():
 
     if gdaltest.is_travis_branch('trusty'):
@@ -330,6 +343,7 @@ def vsicurl_test_redirect():
     handler.add('GET', '/foo.s3.amazonaws.com/test_redirected/test.bin?Signature=foo&Expires=%d' % (current_time + 30), custom_method = method)
 
     current_time = int(time.time())
+
     def method(request):
         # We should go there after expiration of the first signed URL
         if 'Range' in request.headers and \
@@ -379,6 +393,7 @@ def vsicurl_test_redirect():
 ###############################################################################
 # TODO: better testing
 
+
 def vsicurl_test_clear_cache():
 
     gdal.VSICurlClearCache()
@@ -387,6 +402,7 @@ def vsicurl_test_clear_cache():
     return 'success'
 
 ###############################################################################
+
 
 def vsicurl_test_retry():
 
@@ -439,6 +455,7 @@ def vsicurl_test_retry():
 
 ###############################################################################
 
+
 def vsicurl_test_fallback_from_head_to_get():
 
     if gdaltest.webserver_port == 0:
@@ -459,6 +476,8 @@ def vsicurl_test_fallback_from_head_to_get():
     return 'success'
 
 ###############################################################################
+
+
 def vsicurl_stop_webserver():
 
     if gdaltest.webserver_port == 0:
@@ -471,6 +490,7 @@ def vsicurl_stop_webserver():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     return 'success'
+
 
 gdaltest_list = [ vsicurl_1,
                   #vsicurl_2,

@@ -32,6 +32,7 @@ import sys
 
 from osgeo import gdal
 
+
 def Usage():
     print('Usage: gdalchksum.py [-b band] [-srcwin xoff yoff xsize ysize] file')
     sys.exit(1)
@@ -39,6 +40,7 @@ def Usage():
 # =============================================================================
 # 	Mainline
 # =============================================================================
+
 
 srcwin = None
 bands = []

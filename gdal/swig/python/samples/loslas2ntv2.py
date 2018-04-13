@@ -34,10 +34,14 @@ from osgeo import gdal
 import sys
 
 # dummy object to hold options
+
+
 class Options:
     pass
 
 # =============================================================================
+
+
 def Usage():
 
     print('Usage: loslas2ntv2.py  [-a] [-auto] [-sub_name name] [-parent name]' )
@@ -99,6 +103,7 @@ def TranslateLOSLAS( los, ntv2_filename, options ):
 # Auto-process the normal NOAA director of los/las files, producing a
 # NAD27 NTv2 file, and an HPGN NTv2 file.
 
+
 def auto_noaa( options, loslas_list ):
 
     options.append = 0
@@ -147,6 +152,7 @@ def auto_noaa( options, loslas_list ):
     sys.exit(0)
 
 # =============================================================================
+
 
 if __name__ == '__main__':
 

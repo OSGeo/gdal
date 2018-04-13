@@ -39,6 +39,7 @@ from osgeo import ogr
 ###############################################################################
 # Basic test
 
+
 def ogr_htf_1():
 
     ds = ogr.Open('data/test.htf')
@@ -77,7 +78,6 @@ def ogr_htf_1():
         print(feat.GetField('IDENTIFIER'))
         return 'fail'
 
-
     lyr = ds.GetLayerByName('sounding')
     if lyr is None:
         gdaltest.post_reason('cannot find layer sounding')
@@ -105,6 +105,7 @@ def ogr_htf_1():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_htf_2():
 
     import test_cli_utilities
@@ -117,7 +118,6 @@ def ogr_htf_2():
         print(ret)
         return 'fail'
 
-
     ret = gdaltest.runexternal(test_cli_utilities.get_test_ogrsf_path() + ' -ro data/test.htf metadata')
 
     if ret.find('INFO') == -1 or ret.find('ERROR') != -1:
@@ -125,6 +125,7 @@ def ogr_htf_2():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_htf_1,

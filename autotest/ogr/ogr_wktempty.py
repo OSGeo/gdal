@@ -33,6 +33,7 @@ sys.path.append( '../pymod' )
 import gdaltest
 from osgeo import ogr
 
+
 class TestWktEmpty:
     def __init__( self, inString, expectedOutString ):
         self.inString = inString
@@ -67,6 +68,7 @@ class TestWktEmpty:
         else:
             gdaltest.post_reason( 'WKT is wrong: ' + wkt + '. Expected value is: ' + self.expectedOutString )
             return 'fail'
+
 
 empty_wkt_list = [ \
     ('GEOMETRYCOLLECTION(EMPTY)', 'GEOMETRYCOLLECTION EMPTY'),

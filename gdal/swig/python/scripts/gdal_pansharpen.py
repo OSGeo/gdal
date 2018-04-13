@@ -34,15 +34,18 @@ import os.path
 import sys
 from osgeo import gdal
 
+
 def DoesDriverHandleExtension(drv, ext):
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     return exts is not None and exts.lower().find(ext.lower()) >= 0
+
 
 def GetExtension(filename):
     ext = os.path.splitext(filename)[1]
     if ext.startswith('.'):
         ext = ext[1:]
     return ext
+
 
 def GetOutputDriversFor(filename):
     drv_list = []
@@ -67,6 +70,7 @@ def GetOutputDriversFor(filename):
 
     return drv_list
 
+
 def GetOutputDriverFor(filename):
     drv_list = GetOutputDriversFor(filename)
     if len(drv_list) == 0:
@@ -79,6 +83,7 @@ def GetOutputDriverFor(filename):
         print("Several drivers matching %s extension. Using %s" % (ext, drv_list[0]))
     return drv_list[0]
 
+
 def Usage():
     print('Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset')
     print('                       [-of format] [-b band]* [-w weight]*')
@@ -89,6 +94,7 @@ def Usage():
     print('')
     print('Create a dataset resulting from a pansharpening operation.')
     return -1
+
 
 def gdal_pansharpen(argv):
 
@@ -292,8 +298,10 @@ def gdal_pansharpen(argv):
         return 1
     return 0
 
+
 def main():
     return gdal_pansharpen(sys.argv)
+
 
 if __name__ == '__main__':
     sys.exit(gdal_pansharpen(sys.argv))

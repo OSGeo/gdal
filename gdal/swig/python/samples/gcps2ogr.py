@@ -40,6 +40,7 @@ def Usage():
     print('Usage: gcp2ogr.py [-f ogr_drv_name] gdal_in_dataset ogr_out_dataset')
     sys.exit(1)
 
+
 out_format = 'ESRI Shapefile'
 in_dataset = None
 out_dataset = None

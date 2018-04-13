@@ -41,6 +41,7 @@ from osgeo import osr
 ###############################################################################
 # Test a trivial case.
 
+
 def reproject_1():
 
     drv = gdal.GetDriverByName( 'GTiff' )
@@ -68,6 +69,7 @@ def reproject_1():
 
 ###############################################################################
 # Test a real reprojection case.
+
 
 def reproject_2():
 
@@ -102,6 +104,7 @@ def reproject_2():
 ###############################################################################
 # Test nodata values
 
+
 def reproject_3():
 
     data = '\x02\x7f\x7f\x02\x02\x7f\x7f\x02\x02\x7f\x7f\x02'
@@ -128,6 +131,7 @@ def reproject_3():
 
 ###############################################################################
 # Test warp options
+
 
 def reproject_4():
 

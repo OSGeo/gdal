@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Test GDAL_READDIR_LIMIT_ON_OPEN
 
+
 def envi_1():
 
     gdal.SetConfigOption('GDAL_READDIR_LIMIT_ON_OPEN', '1')
@@ -54,6 +55,7 @@ def envi_1():
 
 ###############################################################################
 # When imported build a list of units based on the files available.
+
 
 gdaltest_list = []
 

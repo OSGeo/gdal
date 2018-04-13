@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 #  Test test_FARSITE_UTM12.LCP
 
+
 def lcp_1():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
@@ -139,6 +140,7 @@ def lcp_1():
 ###############################################################################
 # test test_USGS_LFNM_Alb83.lcp
 
+
 def lcp_2():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
@@ -234,6 +236,7 @@ def lcp_2():
 ###############################################################################
 #  Test for empty prj
 
+
 def lcp_3():
 
     ds = gdal.Open('data/test_USGS_LFNM_Alb83.lcp')
@@ -247,6 +250,7 @@ def lcp_3():
 
 ###############################################################################
 #  Test that the prj file isn't added to the sibling list if it isn't there.
+
 
 def lcp_4():
 
@@ -262,6 +266,7 @@ def lcp_4():
 ###############################################################################
 #  Test for valid prj
 
+
 def lcp_5():
 
     ds = gdal.Open('data/test_FARSITE_UTM12.LCP')
@@ -275,6 +280,7 @@ def lcp_5():
 
 ###############################################################################
 #  Test for valid sibling list
+
 
 def lcp_6():
 
@@ -296,6 +302,7 @@ def lcp_6():
 
 ###############################################################################
 #  Test create copy that copies data over
+
 
 def lcp_7():
 
@@ -332,6 +339,7 @@ def lcp_7():
 ###############################################################################
 #  Test create copy with invalid bands
 
+
 def lcp_8():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -367,6 +375,7 @@ def lcp_8():
 ###############################################################################
 #  Test create copy
 
+
 def lcp_9():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -393,6 +402,7 @@ def lcp_9():
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
+
 
 def lcp_10():
 
@@ -433,6 +443,7 @@ def lcp_10():
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
+
 def lcp_11():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -472,6 +483,7 @@ def lcp_11():
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
+
 def lcp_12():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -509,6 +521,7 @@ def lcp_12():
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
+
 
 def lcp_13():
 
@@ -549,6 +562,7 @@ def lcp_13():
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
+
 def lcp_14():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -588,6 +602,7 @@ def lcp_14():
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
 
+
 def lcp_15():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -626,6 +641,7 @@ def lcp_15():
 
 ###############################################################################
 #  Test create copy and make sure all unit metadata co work
+
 
 def lcp_16():
 
@@ -672,6 +688,7 @@ def lcp_16():
 #  It is unclear whether the metadata generated is correct, or the
 #  documentation.  Docs say mg/ha * 10 and tn/ac * 10, metadata is not * 10.
 
+
 def lcp_17():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -712,6 +729,7 @@ def lcp_17():
 ###############################################################################
 #  Test create copy and make sure creation options work.
 
+
 def lcp_18():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -744,6 +762,7 @@ def lcp_18():
 
 ###############################################################################
 #  Test create copy and make sure creation options work.
+
 
 def lcp_19():
 
@@ -779,6 +798,7 @@ def lcp_19():
 ###############################################################################
 #  Test create copy and make sure DESCRIPTION co works
 
+
 def lcp_20():
 
     mem_drv = gdal.GetDriverByName('MEM')
@@ -812,6 +832,7 @@ def lcp_20():
 
 ###############################################################################
 #  Test create copy and make data is copied over via checksums
+
 
 def lcp_21():
     try:
@@ -855,6 +876,7 @@ def lcp_21():
 
 ###############################################################################
 #  Test create copy and make data is copied over via numpy comparison.
+
 
 def lcp_22():
     try:
@@ -936,6 +958,7 @@ def lcp_23():
             pass
 
     return retval
+
 
 gdaltest_list = [
     lcp_1,

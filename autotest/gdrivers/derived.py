@@ -35,6 +35,7 @@ sys.path.append( '../pymod' )
 
 import gdaltest
 
+
 def derived_test1():
     filename = "../gcore/data/cfloat64.tif"
     gdal.ErrorReset()
@@ -86,6 +87,7 @@ def derived_test1():
                 pprint.pprint("Expected projection: "+str(expected_prj)+", got: "+str(gt))
                 return 'fail'
     return 'success'
+
 
 def derived_test2():
     filename = "../gcore/data/cint_sar.tif"
@@ -141,6 +143,8 @@ def derived_test2():
     return 'success'
 
 # Error cases
+
+
 def derived_test3():
 
     with gdaltest.error_handler():
@@ -177,6 +181,7 @@ def derived_test3():
             ds.GetRasterBand(1).Checksum()
 
     return 'success'
+
 
 gdaltest_list = [
     derived_test1,

@@ -38,6 +38,8 @@ import gdaltest
 import test_py_scripts
 
 ###############################################################################
+
+
 def run_gdal_ls(argv):
     script_path = test_py_scripts.get_py_script('gdal_ls')
     if script_path is None:
@@ -73,6 +75,7 @@ def run_gdal_ls(argv):
 ###############################################################################
 # List one file
 
+
 def test_gdal_ls_py_1():
     # TODO: Why the '' as the first element of the list here and below?
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data/poly.shp'])
@@ -89,6 +92,7 @@ def test_gdal_ls_py_1():
 ###############################################################################
 # List one dir
 
+
 def test_gdal_ls_py_2():
     ret, ret_str = run_gdal_ls(['', '-l', '../ogr/data'])
 
@@ -104,6 +108,7 @@ def test_gdal_ls_py_2():
 ###############################################################################
 # List recursively
 
+
 def test_gdal_ls_py_3():
     ret, ret_str = run_gdal_ls(['', '-R', '../ogr/data'])
 
@@ -118,6 +123,7 @@ def test_gdal_ls_py_3():
 
 ###############################################################################
 # List in a .zip
+
 
 def test_gdal_ls_py_4():
     ret, ret_str = run_gdal_ls(['', '-l', '/vsizip/../ogr/data/poly.zip'])
@@ -138,6 +144,7 @@ def test_gdal_ls_py_4():
 
 ###############################################################################
 # List dir in /vsicurl/
+
 
 def test_gdal_ls_py_5():
 
@@ -175,6 +182,7 @@ def test_gdal_ls_py_5():
 ###############################################################################
 # List in a .zip in /vsicurl/
 
+
 def test_gdal_ls_py_6():
 
     try:
@@ -211,6 +219,7 @@ def test_gdal_ls_py_6():
 
 ###############################################################################
 # List dir in /vsicurl/ and recurse in zip
+
 
 def test_gdal_ls_py_7():
 
@@ -253,6 +262,7 @@ def test_gdal_ls_py_7():
 ###############################################################################
 # List FTP dir in /vsicurl/
 
+
 def test_gdal_ls_py_8():
     if not gdaltest.run_slow_tests():
         return 'skip'
@@ -291,6 +301,7 @@ def test_gdal_ls_py_8():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_ls_py_1,

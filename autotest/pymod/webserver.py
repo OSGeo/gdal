@@ -43,6 +43,7 @@ from sys import version_info
 do_log = False
 custom_handler = None
 
+
 @contextlib.contextmanager
 def install_http_handler(handler_instance):
     global custom_handler
@@ -52,6 +53,7 @@ def install_http_handler(handler_instance):
     finally:
         handler_instance.final_check()
         custom_handler = None
+
 
 class RequestResponse:
     def __init__(self, method, path, code, headers = {}, body = None, custom_method = None, expected_headers = {}, expected_body = None):
@@ -63,6 +65,7 @@ class RequestResponse:
         self.custom_method = custom_method
         self.expected_headers = expected_headers
         self.expected_body = expected_body
+
 
 class FileHandler:
     def __init__(self, dict):
@@ -103,6 +106,7 @@ class FileHandler:
             request.send_header('Content-Length', len(filedata))
             request.end_headers()
             request.wfile.write(filedata[start:end])
+
 
 class SequentialHandler:
     def __init__(self):
@@ -190,6 +194,7 @@ class SequentialHandler:
     def do_DELETE(self, request):
         self.process('DELETE', request)
 
+
 class DispatcherHttpHandler(BaseHTTPRequestHandler):
 
     # protocol_version = 'HTTP/1.1'
@@ -241,6 +246,7 @@ class DispatcherHttpHandler(BaseHTTPRequestHandler):
             f.close()
 
         custom_handler.do_GET(self)
+
 
 class GDAL_Handler(BaseHTTPRequestHandler):
 
@@ -330,6 +336,7 @@ class GDAL_HttpServer(HTTPServer):
         self.running = False
         self.stop_requested = False
 
+
 class GDAL_ThreadedHttpServer(Thread):
 
     def __init__(self, handlerClass = None):
@@ -382,6 +389,7 @@ class GDAL_ThreadedHttpServer(Thread):
             count = count + 0.5
         self.stop()
 
+
 def launch(fork_process = None, handler = None):
     if handler is not None:
         if fork_process:
@@ -420,6 +428,7 @@ def launch(fork_process = None, handler = None):
 
     return (process, port)
 
+
 def server_stop(process, port):
 
     if isinstance(process, GDAL_ThreadedHttpServer):
@@ -428,6 +437,7 @@ def server_stop(process, port):
 
     gdaltest.gdalurlopen('http://127.0.0.1:%d/shutdown' % port)
     gdaltest.wait_process(process)
+
 
 def main():
     try:
@@ -441,6 +451,7 @@ def main():
         sys.exit(0)
 
     server.run_server(10)
+
 
 if __name__ == '__main__':
     main()

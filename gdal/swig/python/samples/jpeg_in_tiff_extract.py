@@ -36,6 +36,7 @@ from osgeo import gdal
 ###############################################################
 # Usage()
 
+
 def Usage():
     print('Usage: jpeg_in_tiff_extract.py in.tif out.jpg [tile_x tile_y [band_nbr]]')
     print('')
@@ -47,6 +48,8 @@ def Usage():
     return 1
 
 ###############################################################
+
+
 def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
 
     block_offset = ds.GetRasterBand(src_band_nbr).GetMetadataItem('BLOCK_OFFSET_%d_%d' % (tile_x, tile_y), 'TIFF')
@@ -138,6 +141,8 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
     return 0
 
 ###############################################################
+
+
 def jpeg_in_tiff_extract(argv):
 
     if len(argv) < 2:
@@ -246,6 +251,7 @@ def jpeg_in_tiff_extract(argv):
 
 ###############################################################
 # Entry point
+
 
 if __name__ == '__main__':
     argv = gdal.GeneralCmdLineProcessor( sys.argv )

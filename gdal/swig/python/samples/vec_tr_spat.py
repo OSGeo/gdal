@@ -33,6 +33,8 @@ import sys
 from osgeo import ogr
 
 #############################################################################
+
+
 def Usage():
     print('Usage: vec_tr_spat.py [-spat xmin ymin xmax ymax] infile outfile [layer]')
     print('')
@@ -40,6 +42,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 infile = None
 outfile = None

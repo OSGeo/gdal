@@ -44,6 +44,7 @@ from osgeo import osr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_fgdb_init():
 
     ogrtest.fgdb_drv = None
@@ -71,6 +72,8 @@ def ogr_fgdb_init():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_fgdb_is_sdk_1_4_or_later():
 
     if ogrtest.fgdb_drv is None:
@@ -259,6 +262,7 @@ def ogr_fgdb_1():
 ###############################################################################
 # Test DeleteField()
 
+
 def ogr_fgdb_DeleteField():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -334,6 +338,7 @@ def ogr_fgdb_DeleteField():
 ###############################################################################
 # Run test_ogrsf
 
+
 def ogr_fgdb_2():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -352,6 +357,7 @@ def ogr_fgdb_2():
 
 ###############################################################################
 # Run ogr2ogr
+
 
 def ogr_fgdb_3():
     if ogrtest.fgdb_drv is None:
@@ -389,6 +395,7 @@ def ogr_fgdb_3():
 ###############################################################################
 # Test SQL support
 
+
 def ogr_fgdb_sql():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -416,6 +423,7 @@ def ogr_fgdb_sql():
 
 ###############################################################################
 # Test delete layer
+
 
 def ogr_fgdb_4():
     if ogrtest.fgdb_drv is None:
@@ -458,6 +466,7 @@ def ogr_fgdb_4():
 ###############################################################################
 # Test DeleteDataSource()
 
+
 def ogr_fgdb_5():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -477,6 +486,7 @@ def ogr_fgdb_5():
 
 ###############################################################################
 # Test adding a layer to an existing feature dataset
+
 
 def ogr_fgdb_6():
     if ogrtest.fgdb_drv is None:
@@ -499,6 +509,7 @@ def ogr_fgdb_6():
 
 ###############################################################################
 # Test bulk loading (#4420)
+
 
 def ogr_fgdb_7():
     if ogrtest.fgdb_drv is None:
@@ -537,6 +548,7 @@ def ogr_fgdb_7():
 ###############################################################################
 # Test field name laundering (#4458)
 
+
 def ogr_fgdb_8():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -574,6 +586,7 @@ def ogr_fgdb_8():
 
 ###############################################################################
 # Test layer name laundering (#4466)
+
 
 def ogr_fgdb_9():
     if ogrtest.fgdb_drv is None:
@@ -621,6 +634,7 @@ def ogr_fgdb_9():
 
 ###############################################################################
 # Test SRS support
+
 
 def ogr_fgdb_10():
     if ogrtest.fgdb_drv is None:
@@ -724,6 +738,7 @@ def ogr_fgdb_10():
 ###############################################################################
 # Test all data types
 
+
 def ogr_fgdb_11():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -796,6 +811,7 @@ def ogr_fgdb_11():
 ###############################################################################
 # Test failed Open()
 
+
 def ogr_fgdb_12():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -839,6 +855,7 @@ def ogr_fgdb_12():
 
 ###############################################################################
 # Test failed CreateDataSource() and DeleteDataSource()
+
 
 def ogr_fgdb_13():
     if ogrtest.fgdb_drv is None:
@@ -889,6 +906,7 @@ def ogr_fgdb_13():
 ###############################################################################
 # Test interleaved opening and closing of databases (#4270)
 
+
 def ogr_fgdb_14():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -909,6 +927,7 @@ def ogr_fgdb_14():
 
 ###############################################################################
 # Test opening a FGDB with both SRID and LatestSRID set (#5638)
+
 
 def ogr_fgdb_15():
     if ogrtest.fgdb_drv is None:
@@ -936,6 +955,7 @@ def ogr_fgdb_15():
 
 ###############################################################################
 # Test fix for #5674
+
 
 def ogr_fgdb_16():
     if ogrtest.fgdb_drv is None or ogrtest.openfilegdb_drv is None:
@@ -972,11 +992,11 @@ def ogr_fgdb_16():
 ###############################################################################
 # Test not nullable fields
 
+
 def ogr_fgdb_17():
 
     if ogrtest.fgdb_drv is None:
         return 'skip'
-
 
     try:
         shutil.rmtree("tmp/test.gdb")
@@ -1047,6 +1067,7 @@ def ogr_fgdb_17():
 
 ###############################################################################
 # Test default values
+
 
 def ogr_fgdb_18():
 
@@ -1139,6 +1160,7 @@ def ogr_fgdb_18_test_results():
 ###############################################################################
 # Test transaction support
 
+
 def ogr_fgdb_19_open_update(filename):
 
     # We need the OpenFileGDB driver for Linux improved StartTransaction()
@@ -1160,6 +1182,7 @@ def ogr_fgdb_19_open_update(filename):
         ogrtest.fgdb_drv.Register()
 
     return (bPerLayerCopyingForTransaction, ds)
+
 
 def ogr_fgdb_19():
 
@@ -1463,7 +1486,6 @@ def ogr_fgdb_19():
         print(lyr_count)
         print(ds.GetLayerCount())
         return 'fail'
-
 
     # Simulate an error case where StartTransaction() cannot reopen database
     gdal.SetConfigOption('FGDB_SIMUL_FAIL', 'CASE2')
@@ -1826,6 +1848,8 @@ def ogr_fgdb_19():
 
 # Same, but retry without per-layer copying optimization (in the case
 # this was what was tested in previous step)
+
+
 def ogr_fgdb_19bis():
 
     if ogrtest.fgdb_drv is None:
@@ -1843,6 +1867,7 @@ def ogr_fgdb_19bis():
 
 ###############################################################################
 # Test CreateFeature() with user defined FID
+
 
 def ogr_fgdb_20():
 
@@ -2038,7 +2063,6 @@ def ogr_fgdb_20():
     if ret != 0:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     for (fid, fgdb_fid) in [ (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10), (12, 11) ]:
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -2283,7 +2307,6 @@ def ogr_fgdb_20():
                 print(fid)
                 return 'fail'
 
-
     # Simulate different errors when database reopening is done
     # to sync ids
     for case in ('CASE1', 'CASE2', 'CASE3'):
@@ -2358,6 +2381,7 @@ def ogr_fgdb_20():
 ###############################################################################
 # Test M support
 
+
 def ogr_fgdb_21():
 
     if ogrtest.fgdb_drv is None:
@@ -2373,7 +2397,6 @@ def ogr_fgdb_21():
         pass
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
-
 
     datalist = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
                  [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
@@ -2443,6 +2466,7 @@ def ogr_fgdb_21():
 ###############################################################################
 # Read curves
 
+
 def ogr_fgdb_22():
 
     if ogrtest.fgdb_drv is None:
@@ -2488,6 +2512,7 @@ def ogr_fgdb_22():
 ###############################################################################
 # Test opening '.'
 
+
 def ogr_fgdb_23():
 
     if ogrtest.fgdb_drv is None:
@@ -2504,6 +2529,7 @@ def ogr_fgdb_23():
 ###############################################################################
 # Read polygons with M component where the M of the closing point is not the
 # one of the starting point (#7017)
+
 
 def ogr_fgdb_24():
 
@@ -2536,6 +2562,7 @@ def ogr_fgdb_24():
 ###############################################################################
 # Test selecting FID column with OGRSQL
 
+
 def ogr_fgdb_25():
 
     ds = ogr.Open('data/curves.gdb')
@@ -2567,6 +2594,7 @@ def ogr_fgdb_25():
 ###############################################################################
 # Cleanup
 
+
 def ogr_fgdb_cleanup():
     if ogrtest.fgdb_drv is None:
         return 'skip'
@@ -2596,6 +2624,7 @@ def ogr_fgdb_cleanup():
         ogrtest.fgdb_drv.Register()
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_fgdb_init,

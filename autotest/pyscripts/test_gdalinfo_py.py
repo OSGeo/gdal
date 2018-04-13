@@ -39,6 +39,7 @@ import test_py_scripts
 ###############################################################################
 # Simple test
 
+
 def test_gdalinfo_py_1():
 
     script_path = test_py_scripts.get_py_script('gdalinfo')
@@ -54,6 +55,7 @@ def test_gdalinfo_py_1():
 ###############################################################################
 # Test -checksum option
 
+
 def test_gdalinfo_py_2():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
@@ -67,6 +69,7 @@ def test_gdalinfo_py_2():
 
 ###############################################################################
 # Test -nomd option
+
 
 def test_gdalinfo_py_3():
     script_path = test_py_scripts.get_py_script('gdalinfo')
@@ -86,6 +89,7 @@ def test_gdalinfo_py_3():
 ###############################################################################
 # Test -noct option
 
+
 def test_gdalinfo_py_4():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
@@ -103,6 +107,7 @@ def test_gdalinfo_py_4():
 
 ###############################################################################
 # Test -stats option
+
 
 def test_gdalinfo_py_5():
     script_path = test_py_scripts.get_py_script('gdalinfo')
@@ -134,6 +139,7 @@ def test_gdalinfo_py_5():
 ###############################################################################
 # Test a dataset with overviews and RAT
 
+
 def test_gdalinfo_py_6():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
@@ -149,6 +155,7 @@ def test_gdalinfo_py_6():
 
 ###############################################################################
 # Test a dataset with GCPs
+
 
 def test_gdalinfo_py_7():
     script_path = test_py_scripts.get_py_script('gdalinfo')
@@ -176,6 +183,7 @@ def test_gdalinfo_py_7():
 
 ###############################################################################
 # Test -hist option
+
 
 def test_gdalinfo_py_8():
     script_path = test_py_scripts.get_py_script('gdalinfo')
@@ -207,6 +215,7 @@ def test_gdalinfo_py_8():
 ###############################################################################
 # Test -mdd option
 
+
 def test_gdalinfo_py_9():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
@@ -229,6 +238,7 @@ def test_gdalinfo_py_9():
 ###############################################################################
 # Test -mm option
 
+
 def test_gdalinfo_py_10():
     script_path = test_py_scripts.get_py_script('gdalinfo')
     if script_path is None:
@@ -243,6 +253,7 @@ def test_gdalinfo_py_10():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdalinfo_py_1,

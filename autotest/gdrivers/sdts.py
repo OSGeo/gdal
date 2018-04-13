@@ -40,6 +40,7 @@ import gdaltest
 # Test a truncated version of an SDTS DEM downloaded at
 # http://thor-f5.er.usgs.gov/sdts/datasets/raster/dem/dem_oct_2001/1107834.dem.sdts.tar.gz
 
+
 def sdts_1():
 
     tst = gdaltest.GDALTest( 'SDTS', 'STDS_1107834_truncated/1107CATD.DDF', 1, 61672 )

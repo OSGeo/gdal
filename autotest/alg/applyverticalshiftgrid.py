@@ -39,6 +39,7 @@ from osgeo import gdal, osr
 ###############################################################################
 # Rather dummy test: grid = DEM
 
+
 def applyverticalshiftgrid_1():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -106,6 +107,7 @@ def applyverticalshiftgrid_1():
 
 ###############################################################################
 # Error cases
+
 
 def applyverticalshiftgrid_2():
 
@@ -207,6 +209,7 @@ def applyverticalshiftgrid_2():
 ###############################################################################
 # Test with grid and src not in same projection
 
+
 def applyverticalshiftgrid_3():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -256,6 +259,7 @@ def applyverticalshiftgrid_3():
 
 ###############################################################################
 # Test nodata
+
 
 def applyverticalshiftgrid_4():
 
@@ -342,6 +346,7 @@ def applyverticalshiftgrid_4():
 ###############################################################################
 # Test scaling parameters
 
+
 def applyverticalshiftgrid_5():
 
     src_ds = gdal.Open('../gcore/data/byte.tif')
@@ -375,6 +380,7 @@ def applyverticalshiftgrid_5():
 ###############################################################################
 # Simulate EGM grids
 
+
 def applyverticalshiftgrid_6():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
@@ -398,6 +404,7 @@ def applyverticalshiftgrid_6():
 ###############################################################################
 # Simulate USA geoid grids with long origin > 180
 
+
 def applyverticalshiftgrid_7():
 
     grid_ds = gdal.GetDriverByName('GTX').Create(
@@ -413,7 +420,6 @@ def applyverticalshiftgrid_7():
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-
 
     gdal.Unlink('/vsimem/applyverticalshiftgrid_7.gtx')
 

@@ -43,6 +43,7 @@ import ogrtest
 # Test an expression with a left side value and right side column and an \
 # expression for the value.
 
+
 def ogr_rfc28_1():
     gdaltest.ds = ogr.Open( 'data' )
     gdaltest.lyr = gdaltest.ds.GetLayerByName( 'poly' )
@@ -59,6 +60,7 @@ def ogr_rfc28_1():
 ###############################################################################
 # Test CONCAT operator in the context of a WHERE clause.
 
+
 def ogr_rfc28_2():
     gdaltest.lyr.SetAttributeFilter( "CONCAT('x',PRFEDEA) = 'x35043423'" )
 
@@ -72,6 +74,7 @@ def ogr_rfc28_2():
 
 ###############################################################################
 # Test '+' operator on strings.
+
 
 def ogr_rfc28_3():
     gdaltest.lyr.SetAttributeFilter( "'x'+PRFEDEA = 'x35043423'" )
@@ -87,6 +90,7 @@ def ogr_rfc28_3():
 ###############################################################################
 # Test '%' operator.
 
+
 def ogr_rfc28_4():
     gdaltest.lyr.SetAttributeFilter( "EAS_ID % 5 = 1" )
 
@@ -100,6 +104,7 @@ def ogr_rfc28_4():
 
 ###############################################################################
 # Test '%' operator.
+
 
 def ogr_rfc28_5():
     gdaltest.lyr.SetAttributeFilter( "EAS_ID % 5 = 1" )
@@ -115,6 +120,7 @@ def ogr_rfc28_5():
 ###############################################################################
 # Test support for a quoted field name.
 
+
 def ogr_rfc28_6():
     gdaltest.lyr.SetAttributeFilter( "\"EAS_ID\" = 166" )
 
@@ -129,6 +135,7 @@ def ogr_rfc28_6():
 ###############################################################################
 # test with distinguished name for field in where clause.
 
+
 def ogr_rfc28_7_wrong_quoting():
     with gdaltest.error_handler():
         ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where \"idlink.eas_id\" = 166" )
@@ -140,6 +147,7 @@ def ogr_rfc28_7_wrong_quoting():
 
     gdaltest.ds.ReleaseResultSet( ql )
     return 'success'
+
 
 def ogr_rfc28_7_good_quoting():
     ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink where idlink.eas_id = 166" )
@@ -154,6 +162,7 @@ def ogr_rfc28_7_good_quoting():
 
 ###############################################################################
 # test with distinguished name for field in target columns.
+
 
 def ogr_rfc28_8_wrong_quoting():
     with gdaltest.error_handler():
@@ -173,6 +182,7 @@ def ogr_rfc28_8_wrong_quoting():
         return 'success'
     else:
         return 'fail'
+
 
 def ogr_rfc28_8_good_quoting():
     ql = gdaltest.ds.ExecuteSQL( "select idlink.eas_id from idlink where idlink.eas_id = 166" )
@@ -195,6 +205,7 @@ def ogr_rfc28_8_good_quoting():
 ###############################################################################
 # Test with quoted funky (non-identifier) name.
 
+
 def ogr_rfc28_9():
     ds = ogr.Open( 'data/oddname.csv')
     lyr = ds.GetLayer(0)
@@ -215,6 +226,7 @@ def ogr_rfc28_9():
 # TODO: unparse quoting?
 ###############################################################################
 # test quoted names for funky columns in SELECT WHERE (confirm unparse quoting)
+
 
 def ogr_rfc28_10():
     ds = ogr.Open( 'data/oddname.csv')
@@ -237,6 +249,7 @@ def ogr_rfc28_10():
 ###############################################################################
 # test quoted funky names in output columns list.
 
+
 def ogr_rfc28_11():
     ds = ogr.Open( 'data/oddname.csv')
     lyr = ds.ExecuteSQL( "SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'" )
@@ -257,6 +270,7 @@ def ogr_rfc28_11():
 
 ###############################################################################
 # test selecting fixed string fields.
+
 
 def ogr_rfc28_12():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT 'constant string', 'other' as abc, eas_id from idlink where eas_id = 165" )
@@ -289,6 +303,7 @@ def ogr_rfc28_12():
 ###############################################################################
 # Test SUBSTR operator in the context of a WHERE clause.
 
+
 def ogr_rfc28_13():
     gdaltest.lyr.SetAttributeFilter( "SUBSTR(PRFEDEA,5,4) = '3423'" )
 
@@ -302,6 +317,7 @@ def ogr_rfc28_13():
 
 ###############################################################################
 # test selecting fixed string fields.
+
 
 def ogr_rfc28_14():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)" )
@@ -319,6 +335,7 @@ def ogr_rfc28_14():
 ###############################################################################
 # Test CONCAT with more than two arguments.
 
+
 def ogr_rfc28_15():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT CONCAT(PRFEDEA,' ',CAST(EAS_ID AS CHARACTER(3))) from poly where eas_id in (168,179)" )
 
@@ -334,6 +351,7 @@ def ogr_rfc28_15():
 
 ###############################################################################
 # Test parse support for negative numbers (#3724)
+
 
 def ogr_rfc28_16():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT -1, 3--1,3*-1,2e-1,3-1 from poly where eas_id = 168" )
@@ -366,6 +384,7 @@ def ogr_rfc28_16():
 
 ###############################################################################
 # Test evaluation of division - had a problem with type conversion.
+
 
 def ogr_rfc28_17():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT 5/2, 5.0/2.0, 5/2.0, 5.0/2 from poly where eas_id = 168" )
@@ -458,6 +477,7 @@ def ogr_rfc28_20():
 ###############################################################################
 # Verify that BETWEEN works
 
+
 def ogr_rfc28_21():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( 'select * from poly where eas_id between 165 and 169' )
@@ -480,6 +500,7 @@ def ogr_rfc28_21():
 
 ###############################################################################
 # Verify that NOT BETWEEN works
+
 
 def ogr_rfc28_22():
 
@@ -504,6 +525,7 @@ def ogr_rfc28_22():
 ###############################################################################
 # Verify that NOT LIKE works
 
+
 def ogr_rfc28_23():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( "select * from poly where PRFEDEA NOT LIKE '35043413'" )
@@ -526,6 +548,7 @@ def ogr_rfc28_23():
 
 ###############################################################################
 # Verify that NULL works
+
 
 def ogr_rfc28_24():
 
@@ -561,6 +584,7 @@ def ogr_rfc28_24():
 ###############################################################################
 # Verify that LIKE pattern ESCAPE escape_char works
 
+
 def ogr_rfc28_25():
 
     sql_lyr = gdaltest.ds.ExecuteSQL( "select * from poly where prfedea LIKE 'x35043408' ESCAPE 'x'" )
@@ -578,6 +602,7 @@ def ogr_rfc28_25():
 ###############################################################################
 # Test SUBSTR with negative offsets
 
+
 def ogr_rfc28_26():
     lyr = gdaltest.ds.ExecuteSQL( "SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)" )
 
@@ -593,6 +618,7 @@ def ogr_rfc28_26():
 
 ###############################################################################
 # Test that we correctly let floating point values as floating point, and not as integer (#4634)"
+
 
 def ogr_rfc28_27():
 
@@ -610,6 +636,7 @@ def ogr_rfc28_27():
 ###############################################################################
 # Extensive test of the evaluation of arithmetic and logical operators
 
+
 def ogr_rfc28_28_test_boolean(formula, expected_bool):
     lyr = gdaltest.ds.ExecuteSQL( "SELECT * from poly where fid = 0 and " + formula )
     count = lyr.GetFeatureCount()
@@ -625,6 +652,7 @@ def ogr_rfc28_28_test_boolean(formula, expected_bool):
         return 'fail'
 
     return 'success'
+
 
 def ogr_rfc28_28():
 
@@ -716,6 +744,7 @@ def ogr_rfc28_28():
 ###############################################################################
 # Test behaviour of binary operations when one operand is a NULL value
 
+
 def ogr_rfc28_29():
 
     lyr = gdaltest.ds.ExecuteSQL( "select * from idlink where (eas_id + cast(null as integer)) is not null or eas_id = 170 + cast(null as integer) or (eas_id + cast(null as float)) is not null or eas_id = 170.0 + cast(null as float)" )
@@ -731,6 +760,7 @@ def ogr_rfc28_29():
 
 ###############################################################################
 # Test behaviour of binary operations on strings when one operand is a NULL value
+
 
 def ogr_rfc28_30():
 
@@ -748,6 +778,7 @@ def ogr_rfc28_30():
 ###############################################################################
 # Test UNION ALL
 
+
 def ogr_rfc28_31():
 
     lyr = gdaltest.ds.ExecuteSQL( "select * from idlink union all select * from idlink2" )
@@ -763,6 +794,7 @@ def ogr_rfc28_31():
 
 ###############################################################################
 # Test UNION ALL with parenthesis
+
 
 def ogr_rfc28_32():
 
@@ -780,6 +812,7 @@ def ogr_rfc28_32():
 ###############################################################################
 # Test lack of end-of-string character
 
+
 def ogr_rfc28_33():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -793,6 +826,7 @@ def ogr_rfc28_33():
 
 ###############################################################################
 # Test wildcard expansion of an unknown table.
+
 
 def ogr_rfc28_34():
 
@@ -812,6 +846,7 @@ def ogr_rfc28_34():
 ###############################################################################
 # Test selecting more than one distinct
 
+
 def ogr_rfc28_35():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -828,6 +863,7 @@ def ogr_rfc28_35():
 
 ###############################################################################
 # Test selecting more than one distinct
+
 
 def ogr_rfc28_35_bis():
 
@@ -846,6 +882,7 @@ def ogr_rfc28_35_bis():
 ###############################################################################
 # Test selecting more than one distinct
 
+
 def ogr_rfc28_35_ter():
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
@@ -862,6 +899,7 @@ def ogr_rfc28_35_ter():
 
 ###############################################################################
 # Test ORDER BY a DISTINCT list by more than one key
+
 
 def ogr_rfc28_36():
 
@@ -880,6 +918,7 @@ def ogr_rfc28_36():
 ###############################################################################
 # Test different fields for ORDER BY and DISTINCT
 
+
 def ogr_rfc28_37():
 
     gdal.ErrorReset()
@@ -896,6 +935,7 @@ def ogr_rfc28_37():
 
 ###############################################################################
 # Test invalid SUBSTR
+
 
 def ogr_rfc28_38():
 
@@ -924,6 +964,7 @@ def ogr_rfc28_38():
 ###############################################################################
 # Test COUNT() on a 0-row result
 
+
 def ogr_rfc28_39():
 
     lyr = gdaltest.ds.ExecuteSQL( "SELECT COUNT(*) from poly where 0 = 1" )
@@ -939,6 +980,7 @@ def ogr_rfc28_39():
 
 ###############################################################################
 # Test MIN(), MAX() and AVG() on a date (#5333)
+
 
 def ogr_rfc28_40():
 
@@ -1005,6 +1047,7 @@ def ogr_rfc28_41():
 
 ###############################################################################
 # Test boolean and int16 support
+
 
 def ogr_rfc28_42():
 
@@ -1091,6 +1134,7 @@ def ogr_rfc28_42():
 ###############################################################################
 # Test integer64 support
 
+
 def ogr_rfc28_43():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
@@ -1150,6 +1194,7 @@ def ogr_rfc28_43():
 
 ###############################################################################
 # Test crazy quoting of table and fields
+
 
 def ogr_rfc28_44():
 
@@ -1238,6 +1283,7 @@ def ogr_rfc28_44():
 ###############################################################################
 # Test 'FROM table_name AS alias'
 
+
 def ogr_rfc28_45():
 
     ql = gdaltest.ds.ExecuteSQL( "select eas_id from idlink as il where il.eas_id = 166" )
@@ -1252,6 +1298,7 @@ def ogr_rfc28_45():
 
 ###############################################################################
 # Test fid special column and 64 bit
+
 
 def ogr_rfc28_46():
 
@@ -1314,6 +1361,7 @@ def ogr_rfc28_46():
 
 ###############################################################################
 # Test LIMIT and OFFSET
+
 
 def ogr_rfc28_47():
 
@@ -1455,6 +1503,7 @@ def ogr_rfc28_47():
 ###############################################################################
 # Test date/datetime comparisons (#6810)
 
+
 def ogr_rfc28_48():
 
     ds = ogr.GetDriverByName('Memory').CreateDataSource('')
@@ -1566,6 +1615,8 @@ def ogr_rfc28_48():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_rfc28_cleanup():
     gdaltest.lyr = None
     gdaltest.ds = None

@@ -35,6 +35,8 @@ import sys
 from osgeo import ogr
 
 #############################################################################
+
+
 def Usage():
     print('Usage: get_soundg.py <s57file> <shapefile>')
     print('')
@@ -42,6 +44,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 if len(sys.argv) != 3:
     Usage()

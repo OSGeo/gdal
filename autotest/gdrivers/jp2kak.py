@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def jp2kak_1():
 
     gdaltest.jp2kak_drv = gdal.GetDriverByName('JP2KAK')
@@ -54,6 +55,7 @@ def jp2kak_1():
 ###############################################################################
 # Read test of simple 16bit reference data.
 
+
 def jp2kak_2():
 
     if gdaltest.jp2kak_drv is None:
@@ -64,6 +66,7 @@ def jp2kak_2():
 
 ###############################################################################
 # Test lossless copying.
+
 
 def jp2kak_3():
 
@@ -78,6 +81,7 @@ def jp2kak_3():
 ###############################################################################
 # Test GeoJP2 production with geotransform.
 
+
 def jp2kak_4():
 
     if gdaltest.jp2kak_drv is None:
@@ -90,6 +94,7 @@ def jp2kak_4():
 
 ###############################################################################
 # Test GeoJP2 production with gcps.
+
 
 def jp2kak_5():
 
@@ -104,6 +109,7 @@ def jp2kak_5():
 ###############################################################################
 # Test VSI*L support with a JPC rather than jp2 datastream.
 #
+
 
 def jp2kak_8():
 
@@ -120,6 +126,7 @@ def jp2kak_8():
 # Test checksum values for a YCbCr color model file.
 #
 
+
 def jp2kak_9():
 
     if gdaltest.jp2kak_drv is None:
@@ -132,6 +139,7 @@ def jp2kak_9():
 # Confirm that we can also read this file using the DirectRasterIO()
 # function and get appropriate values.
 #
+
 
 def jp2kak_10():
 
@@ -160,6 +168,7 @@ def jp2kak_10():
 # Test handle of 11bit signed file.
 #
 
+
 def jp2kak_11():
 
     if gdaltest.jp2kak_drv is None:
@@ -176,6 +185,7 @@ def jp2kak_11():
 ###############################################################################
 # Test handle of 10bit unsigned file.
 #
+
 
 def jp2kak_12():
 
@@ -231,6 +241,7 @@ def jp2kak_13():
 # Test external overviews.
 #
 
+
 def jp2kak_14():
 
     if gdaltest.jp2kak_drv is None:
@@ -280,6 +291,7 @@ def jp2kak_14():
 # Confirm we can read resolution information.
 #
 
+
 def jp2kak_15():
 
     if gdaltest.jp2kak_drv is None:
@@ -301,6 +313,7 @@ def jp2kak_15():
 ###############################################################################
 # Confirm we can write and then reread resolution information.
 #
+
 
 def jp2kak_16():
 
@@ -334,6 +347,7 @@ def jp2kak_16():
 # option is turned on to match that situation.
 # This test case was adapted from the "jp2kak_7()" case above.
 
+
 def jp2kak_17():
 
     if gdaltest.jp2kak_drv is None:
@@ -366,6 +380,7 @@ def jp2kak_17():
 ###############################################################################
 # Test lossless copying of Int16
 
+
 def jp2kak_18():
 
     if gdaltest.jp2kak_drv is None:
@@ -379,6 +394,7 @@ def jp2kak_18():
 ###############################################################################
 # Test lossless copying of UInt16
 
+
 def jp2kak_19():
 
     if gdaltest.jp2kak_drv is None:
@@ -391,6 +407,7 @@ def jp2kak_19():
 
 ###############################################################################
 # Test auto-promotion of 1bit alpha band to 8bit
+
 
 def jp2kak_20():
 
@@ -449,6 +466,7 @@ def jp2kak_20():
 ###############################################################################
 # Test non nearest upsampling
 
+
 def jp2kak_21():
 
     if gdaltest.jp2kak_drv is None:
@@ -486,11 +504,11 @@ def jp2kak_21():
 ###############################################################################
 # Test RGBA datasets
 
+
 def jp2kak_22():
 
     if gdaltest.jp2kak_drv is None:
         return 'skip'
-
 
     src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     gdaltest.jp2kak_drv.CreateCopy('/vsimem/jp2kak_22.jp2', src_ds, options = ['QUALITY=100'])
@@ -523,6 +541,7 @@ def jp2kak_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     jp2kak_1,

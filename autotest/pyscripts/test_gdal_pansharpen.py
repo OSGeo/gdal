@@ -40,6 +40,7 @@ import test_py_scripts
 ###############################################################################
 # Simple test
 
+
 def test_gdal_pansharpen_1():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
@@ -77,6 +78,7 @@ def test_gdal_pansharpen_1():
 ###############################################################################
 # Full options
 
+
 def test_gdal_pansharpen_2():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
@@ -100,6 +102,7 @@ def test_gdal_pansharpen_2():
 ###############################################################################
 # Cleanup
 
+
 def test_gdal_pansharpen_cleanup():
 
     script_path = test_py_scripts.get_py_script('gdal_pansharpen')
@@ -109,6 +112,7 @@ def test_gdal_pansharpen_cleanup():
     gdal.GetDriverByName('GTiff').Delete('tmp/small_world_pan.tif')
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_pansharpen_1,

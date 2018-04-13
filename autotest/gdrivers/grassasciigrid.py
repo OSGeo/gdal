@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def grassasciigrid_1():
 
     tst = gdaltest.GDALTest( 'GRASSASCIIGrid', 'grassascii.txt', 1, 212 )
@@ -44,6 +45,7 @@ def grassasciigrid_1():
     return tst.testOpen(check_gt = expected_gt)
 
 ###############################################################################
+
 
 gdaltest_list = [
     grassasciigrid_1

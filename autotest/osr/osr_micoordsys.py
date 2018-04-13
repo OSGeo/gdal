@@ -39,6 +39,7 @@ from osgeo import osr
 # Test the osr.SpatialReference.ImportFromMICoordSys() function.
 #
 
+
 def osr_micoordsys_1():
 
     srs = osr.SpatialReference()
@@ -59,6 +60,7 @@ def osr_micoordsys_1():
 ###############################################################################
 # Test the osr.SpatialReference.ExportToMICoordSys() function.
 #
+
 
 def osr_micoordsys_2():
 
@@ -88,6 +90,7 @@ def osr_micoordsys_2():
 ###############################################################################
 # Test EPSG:3857
 #
+
 
 def osr_micoordsys_3():
 

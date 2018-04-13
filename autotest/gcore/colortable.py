@@ -40,6 +40,7 @@ from osgeo import gdal
 ###############################################################################
 # Create a color table.
 
+
 def colortable_1():
 
     gdaltest.test_ct_data = [ (255,0,0), (0,255,0), (0,0,255), (255,255,255,0)]
@@ -52,6 +53,7 @@ def colortable_1():
 
 ###############################################################################
 # verify contents.
+
 
 def colortable_2():
 
@@ -74,6 +76,7 @@ def colortable_2():
 ###############################################################################
 # Test CreateColorRamp()
 
+
 def colortable_3():
 
     ct = gdal.ColorTable()
@@ -95,9 +98,11 @@ def colortable_3():
 ###############################################################################
 # Cleanup.
 
+
 def colortable_cleanup():
     gdaltest.test_ct = None
     return 'success'
+
 
 gdaltest_list = [
     colortable_1,

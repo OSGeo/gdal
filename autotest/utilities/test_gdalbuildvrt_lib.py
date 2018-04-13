@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Simple test
 
+
 def test_gdalbuildvrt_lib_1():
 
     # Source = String
@@ -86,9 +87,11 @@ def test_gdalbuildvrt_lib_1():
 ###############################################################################
 # Test callback
 
+
 def mycallback(pct, msg, user_data):
     user_data[0] = pct
     return 1
+
 
 def test_gdalbuildvrt_lib_2():
 

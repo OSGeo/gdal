@@ -41,6 +41,7 @@ import test_cli_utilities
 ###############################################################################
 # Simple test
 
+
 def test_gdal_translate_1():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -114,6 +115,7 @@ def test_gdal_translate_3():
 ###############################################################################
 # Test -b option
 
+
 def test_gdal_translate_4():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -142,6 +144,7 @@ def test_gdal_translate_4():
 
 ###############################################################################
 # Test -expand option
+
 
 def test_gdal_translate_5():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -206,6 +209,7 @@ def test_gdal_translate_6():
 ###############################################################################
 # Test -outsize option in percentage mode
 
+
 def test_gdal_translate_7():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -226,6 +230,7 @@ def test_gdal_translate_7():
 
 ###############################################################################
 # Test -a_srs and -gcp options
+
 
 def test_gdal_translate_8():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -301,6 +306,7 @@ def test_gdal_translate_10():
 ###############################################################################
 # Test -projwin option
 
+
 def test_gdal_translate_11():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -325,6 +331,7 @@ def test_gdal_translate_11():
 
 ###############################################################################
 # Test -a_ullr option
+
 
 def test_gdal_translate_12():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -351,6 +358,7 @@ def test_gdal_translate_12():
 ###############################################################################
 # Test -mo option
 
+
 def test_gdal_translate_13():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -372,6 +380,7 @@ def test_gdal_translate_13():
 
 ###############################################################################
 # Test -co option
+
 
 def test_gdal_translate_14():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -395,6 +404,7 @@ def test_gdal_translate_14():
 ###############################################################################
 # Test -sds option
 
+
 def test_gdal_translate_15():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -411,6 +421,7 @@ def test_gdal_translate_15():
 
 ###############################################################################
 # Test -of VRT which is a special case
+
 
 def test_gdal_translate_16():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -432,6 +443,7 @@ def test_gdal_translate_16():
 
 ###############################################################################
 # Test -expand option to VRT
+
 
 def test_gdal_translate_17():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -550,6 +562,7 @@ def test_gdal_translate_19():
 ###############################################################################
 # Test -a_nodata None
 
+
 def test_gdal_translate_20():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -573,6 +586,7 @@ def test_gdal_translate_20():
 ###############################################################################
 # Test that statistics are copied only when appropriate (#3889)
 # in that case, they must be copied
+
 
 def test_gdal_translate_21():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -599,6 +613,7 @@ def test_gdal_translate_21():
 # Test that statistics are copied only when appropriate (#3889)
 # in that case, they must *NOT* be copied
 
+
 def test_gdal_translate_22():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -621,6 +636,7 @@ def test_gdal_translate_22():
 
 ###############################################################################
 # Test -stats option (#3889)
+
 
 def test_gdal_translate_23():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -651,6 +667,7 @@ def test_gdal_translate_23():
 ###############################################################################
 # Test -srcwin option when partially outside
 
+
 def test_gdal_translate_24():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -674,6 +691,7 @@ def test_gdal_translate_24():
 ###############################################################################
 # Test -norat
 
+
 def test_gdal_translate_25():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -691,6 +709,7 @@ def test_gdal_translate_25():
 
 ###############################################################################
 # Test -a_nodata and -stats (#5463)
+
 
 def test_gdal_translate_26():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -721,6 +740,7 @@ def test_gdal_translate_26():
 
 ###############################################################################
 # Test that we don't preserve statistics when we ought not.
+
 
 def test_gdal_translate_27():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -772,6 +792,7 @@ cellsize     60.000000000000
 ###############################################################################
 # Test -oo
 
+
 def test_gdal_translate_28():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -788,6 +809,7 @@ def test_gdal_translate_28():
 
 ###############################################################################
 # Test -r
+
 
 def test_gdal_translate_29():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -839,6 +861,7 @@ def test_gdal_translate_29():
 ###############################################################################
 # Test -tr option
 
+
 def test_gdal_translate_30():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -861,6 +884,7 @@ def test_gdal_translate_30():
 
 ###############################################################################
 # Test -projwin_srs option
+
 
 def test_gdal_translate_31():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -887,6 +911,7 @@ def test_gdal_translate_31():
 ###############################################################################
 # Test subsetting a file with a RPC
 
+
 def test_gdal_translate_32():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -906,6 +931,7 @@ def test_gdal_translate_32():
 
 ###############################################################################
 # Test -outsize option in auto mode
+
 
 def test_gdal_translate_33():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -941,6 +967,7 @@ def test_gdal_translate_33():
 ###############################################################################
 # Test NBITS is preserved
 
+
 def test_gdal_translate_34():
     if test_cli_utilities.get_gdal_translate_path() is None:
         return 'skip'
@@ -959,6 +986,7 @@ def test_gdal_translate_34():
 
 ###############################################################################
 # Test various errors (missing source or dest...)
+
 
 def test_gdal_translate_35():
     if test_cli_utilities.get_gdal_translate_path() is None:
@@ -992,6 +1020,7 @@ def test_gdal_translate_35():
 
 ###############################################################################
 # Cleanup
+
 
 def test_gdal_translate_cleanup():
     for i in range(14):
@@ -1098,6 +1127,7 @@ def test_gdal_translate_cleanup():
     except:
         pass
     return 'success'
+
 
 gdaltest_list = [
     test_gdal_translate_1,

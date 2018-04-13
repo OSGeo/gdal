@@ -47,6 +47,8 @@ from netcdf import netcdf_setup, netcdf_test_copy
 
 ###############################################################################
 #check for necessary files and software
+
+
 def netcdf_cf_setup():
 
     #global vars
@@ -137,6 +139,7 @@ def netcdf_cf_setup():
 
 ###############################################################################
 #build a command used to check ifile
+
 
 def netcdf_cf_get_command(ifile, version='auto'):
 
@@ -350,9 +353,9 @@ netcdf_cfproj_format_fnames = {"HFA":"img", "GTiff":"tif", "NITF":"nitf",
 # Check support for given projection tuple definitions
 # For each projection, warp the original file and then create a netcdf
 
+
 def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
         resFilename):
-
     """Test a Geotiff file can be converted to NetCDF, and projection in
     CF-1 conventions can be successfully maintained. Save results to file.
 
@@ -511,6 +514,7 @@ def netcdf_cfproj_testcopy(projTuples, origTiff, interFormats, inPath, outPath,
 # Note: current testing strategy is a fairly simple attribute search.
 # this could use GDAL NetCDF driver for getting attribs instead.
 
+
 def netcdf_cfproj_test_cf(proj, projNc):
 
     transWorked = True
@@ -633,6 +637,8 @@ def netcdf_cf_3():
 
 ###############################################################################
 #test support for various CF projections
+
+
 def netcdf_cf_4():
 
     if gdaltest.netcdf_drv is None:
@@ -648,6 +654,8 @@ def netcdf_cf_4():
 
 ###############################################################################
 #test support for PS variants (bug #2893)
+
+
 def netcdf_cf_5():
 
     if gdaltest.netcdf_drv is None:
@@ -669,6 +677,7 @@ def netcdf_cf_5():
     return 'success'
 
 ###############################################################################
+
 
 gdaltest_list = [
     netcdf_cf_1,

@@ -37,6 +37,8 @@ import sys
 ###############################################################################
 # Return the path in which the Python script is found
 #
+
+
 def get_py_script(script_name):
 
     for subdir in [ 'scripts', 'samples' ]:
@@ -58,10 +60,13 @@ def get_py_script(script_name):
 
     return None
 
+
 ###############################################################################
 # Utility function of run_py_script_as_py_module()
 #
 has_main = False
+
+
 def find_main_in_module(names):
     global has_main
     has_main = 'main' in names
@@ -103,6 +108,8 @@ def run_py_script_as_external_script(script_path, script_name, concatenated_argv
 # scripts without forking a new process. This way we don't need to know the
 # name and path of the python interpreter.
 #
+
+
 def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
     import sys
 

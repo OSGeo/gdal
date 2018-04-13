@@ -37,6 +37,7 @@ from sys import version_info
 from Queue import Queue
 from threading import Thread
 
+
 def run_func(func):
     try:
         result = func()
@@ -55,6 +56,7 @@ def run_func(func):
         traceback.print_exc()
         return result
 
+
 def urlescape(url):
     # Escape any non-ASCII characters
     try:
@@ -63,6 +65,7 @@ def urlescape(url):
     except:
         pass
     return url
+
 
 def gdalurlopen(url, timeout = 10):
     old_timeout = socket.getdefaulttimeout()
@@ -101,6 +104,7 @@ def gdalurlopen(url, timeout = 10):
         socket.setdefaulttimeout(old_timeout)
         return None
 
+
 def warn_if_memleak(cmd, out_str):
 
     # If DEBUG_VSIMALLOC_STATS is defined, this is an easy way
@@ -111,6 +115,7 @@ def warn_if_memleak(cmd, out_str):
         print('memory leak detected')
         print(out_str)
 
+
 def spawn_async26(cmd):
     import shlex
     import subprocess
@@ -120,6 +125,7 @@ def spawn_async26(cmd):
         return (process, process.stdout)
     except:
         return (None, None)
+
 
 def spawn_async(cmd):
     if version_info >= (2,6,0):
@@ -135,10 +141,13 @@ def spawn_async(cmd):
     process.tochild.close()
     return (process, process.fromchild)
 
+
 def wait_process(process):
     process.wait()
 
 # Compatible with Python 2.6 or above
+
+
 def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
     import subprocess
     import shlex
@@ -174,6 +183,7 @@ def _runexternal_subprocess(cmd, strin = None, check_memleak = True, display_liv
     if encoding is not None:
         ret = ret.decode(encoding)
     return ret
+
 
 def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_stdout = False, encoding = None):
     from gdaltest import is_travis_branch
@@ -221,11 +231,14 @@ def runexternal(cmd, strin = None, check_memleak = True, display_live_on_parent_
         out_str = out_str.decode(encoding)
     return out_str
 
+
 def read_in_thread(f, q):
     q.put(f.read())
     f.close()
 
 # Compatible with Python 2.6 or above
+
+
 def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
     import subprocess
     import shlex
@@ -259,6 +272,7 @@ def _runexternal_out_and_err_subprocess(cmd, check_memleak = True):
         ret_stderr = ret_stderr + '\nERROR ret code = %d' % waitcode
 
     return (ret_stdout, ret_stderr)
+
 
 def runexternal_out_and_err(cmd, check_memleak = True):
     from gdaltest import is_travis_branch

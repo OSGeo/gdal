@@ -43,6 +43,7 @@ from osgeo import ogr
 ###############################################################################
 # Test if driver is available
 
+
 def ogr_couchdb_init():
 
     ogrtest.couchdb_drv = None
@@ -71,6 +72,7 @@ def ogr_couchdb_init():
 ###############################################################################
 # Basic test
 
+
 def ogr_couchdb_1():
     if ogrtest.couchdb_drv is None:
         return 'skip'
@@ -94,6 +96,7 @@ def ogr_couchdb_1():
 
 ###############################################################################
 # Test null / unset
+
 
 def ogr_couchdb_2():
     if ogrtest.couchdb_drv is None:
@@ -150,6 +153,7 @@ def ogr_couchdb_cleanup():
     ds.ExecuteSQL('DELLAYER:' + ogrtest.couchdb_temp_layer_name)
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_couchdb_init,

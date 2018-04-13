@@ -41,6 +41,7 @@ from osgeo import gdal, ogr, osr
 ###############################################################################
 # Simple polygon rasterization.
 
+
 def rasterize_1():
 
     # Setup working spatial reference
@@ -104,6 +105,7 @@ def rasterize_1():
 ###############################################################################
 # Test rasterization with ALL_TOUCHED.
 
+
 def rasterize_2():
 
     # Setup working spatial reference
@@ -148,6 +150,7 @@ def rasterize_2():
 
 ###############################################################################
 # Rasterization with BURN_VALUE_FROM.
+
 
 def rasterize_3():
 
@@ -203,6 +206,7 @@ def rasterize_3():
 
 ###############################################################################
 # Rasterization with ATTRIBUTE.
+
 
 def rasterize_4():
 
@@ -261,6 +265,7 @@ def rasterize_4():
 
 ###############################################################################
 # Rasterization with MERGE_ALG=ADD.
+
 
 def rasterize_5():
 

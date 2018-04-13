@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Read test of simple byte reference data.
 
+
 def png_1():
 
     tst = gdaltest.GDALTest( 'PNG', 'test.png', 1, 57921 )
@@ -47,6 +48,7 @@ def png_1():
 
 ###############################################################################
 # Test lossless copying.
+
 
 def png_2():
 
@@ -56,6 +58,7 @@ def png_2():
 
 ###############################################################################
 # Verify the geotransform, colormap, and nodata setting for test file.
+
 
 def png_3():
 
@@ -93,6 +96,7 @@ def png_3():
 ###############################################################################
 # Test RGB mode creation and reading.
 
+
 def png_4():
 
     tst = gdaltest.GDALTest( 'PNG', 'rgb.ntf', 3, 21349 )
@@ -102,6 +106,7 @@ def png_4():
 ###############################################################################
 # Test RGBA 16bit read support.
 
+
 def png_5():
 
     tst = gdaltest.GDALTest( 'PNG', 'rgba16.png', 3, 1815 )
@@ -109,6 +114,7 @@ def png_5():
 
 ###############################################################################
 # Test RGBA 16bit mode creation and reading.
+
 
 def png_6():
 
@@ -119,6 +125,7 @@ def png_6():
 ###############################################################################
 # Test RGB NODATA_VALUES metadata write (and read) support.
 # This is handled via the tRNS block in PNG.
+
 
 def png_7():
 
@@ -145,6 +152,7 @@ def png_7():
 ###############################################################################
 # Test PNG file with broken IDAT chunk. This poor man test of clean
 # recovery from errors caused by reading broken file..
+
 
 def png_8():
 
@@ -208,6 +216,7 @@ def png_9():
 ###############################################################################
 # Test writing to /vsistdout/
 
+
 def png_10():
 
     src_ds = gdal.Open('data/byte.tif')
@@ -230,6 +239,7 @@ def png_10():
 ###############################################################################
 # Test CreateCopy() interruption
 
+
 def png_11():
 
     tst = gdaltest.GDALTest( 'PNG', 'byte.tif', 1, 4672 )
@@ -240,6 +250,7 @@ def png_11():
 
 ###############################################################################
 # Test optimized IRasterIO
+
 
 def png_12():
     ds = gdal.Open( '../gcore/data/stefan_full_rgba.png' )
@@ -277,6 +288,7 @@ def png_12():
 ###############################################################################
 # Test metadata
 
+
 def png_13():
 
     src_ds = gdal.GetDriverByName('MEM').Create('',1,1)
@@ -300,6 +312,7 @@ def png_13():
 ###############################################################################
 # Test support for nbits < 8
 
+
 def png_14():
 
     src_ds = gdal.Open('../gcore/data/oddsize1bit.tif')
@@ -319,7 +332,6 @@ def png_14():
         gdaltest.post_reason('failure')
         print(nbits)
         return 'fail'
-
 
     # check that no PAM file is created
     if gdal.VSIStatL('/vsimem/tmp.png.aux.xml') == 0:
@@ -348,6 +360,7 @@ def png_14():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     png_1,

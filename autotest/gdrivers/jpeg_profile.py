@@ -90,6 +90,7 @@ def jpeg_copy_icc():
 ###############################################################################
 # Test writing and reading of ICC profile in CreateCopy() options
 
+
 def jpeg_copy_options_icc():
 
     f = open('data/sRGB.icc', 'rb')
@@ -131,6 +132,7 @@ def jpeg_copy_options_icc():
 
 ###############################################################################
 # Test writing and reading of 64K+ ICC profile in CreateCopy()
+
 
 def jpeg_copy_icc_64K():
 
@@ -212,6 +214,7 @@ def jpeg_copy_icc_64K():
     return 'success'
 
 ###############################################################################################
+
 
 gdaltest_list.append( (jpeg_copy_icc) )
 gdaltest_list.append( (jpeg_copy_options_icc) )

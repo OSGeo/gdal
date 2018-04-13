@@ -40,6 +40,7 @@ import gdaltest
 ###############################################################################
 # Open and verify a the GCPs and metadata.
 
+
 def dimap_1():
 
     shutil.copy('data/dimap/METADATA.DIM', 'tmp')
@@ -97,6 +98,7 @@ def dimap_1():
 
 ###############################################################################
 # Open DIMAP 2
+
 
 def dimap_2():
 

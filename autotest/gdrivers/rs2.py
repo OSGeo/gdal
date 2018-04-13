@@ -40,6 +40,7 @@ import gdaltest
 # the code of the driver. It is really not meant as being used by other readers. If RS2 code
 # evolves, this might break the test legitimately !
 
+
 def rs2_1():
     tst = gdaltest.GDALTest( 'RS2', 'product.xml', 1, 4672 )
     return tst.testOpen()
@@ -50,6 +51,8 @@ def rs2_2():
     return tst.testOpen()
 
 # Test reading our dummy RPC
+
+
 def rs2_3():
     ds = gdal.Open('data/product.xml')
     got_rpc = ds.GetMetadata('RPC')
@@ -74,6 +77,7 @@ def rs2_3():
         print(got_rpc)
         return 'fail'
     return 'success'
+
 
 gdaltest_list = [
     rs2_1,

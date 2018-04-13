@@ -33,6 +33,8 @@ import sys
 from osgeo import ogr
 
 #############################################################################
+
+
 def TransformPoint( xyz ):
 
     x = xyz[0]
@@ -44,6 +46,8 @@ def TransformPoint( xyz ):
     return (x,y,z)
 
 #############################################################################
+
+
 def WalkAndTransform( geom ):
 
     if geom.GetGeometryCount() > 0:
@@ -64,6 +68,8 @@ def WalkAndTransform( geom ):
     return geom
 
 #############################################################################
+
+
 def Usage():
     print('Usage: vec_tr.py infile outfile [layer]')
     print('')
@@ -71,6 +77,7 @@ def Usage():
 
 #############################################################################
 # Argument processing.
+
 
 infile = None
 outfile = None

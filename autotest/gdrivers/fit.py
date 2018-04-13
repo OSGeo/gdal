@@ -37,6 +37,8 @@ import gdaltest
 
 ###############################################################################
 #
+
+
 class TestFIT:
     def __init__( self, fileName ):
         self.fileName = fileName

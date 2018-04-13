@@ -40,6 +40,7 @@ from osgeo import ogr
 ###############################################################################
 #
 
+
 def check_qix_non_overlapping_geoms(lyr):
 
     geoms = []
@@ -77,12 +78,15 @@ def check_qix_non_overlapping_geoms(lyr):
     return 'success'
 
 ###############################################################################
+
+
 def build_rectangle_from_point(x, y, radius = 0.1):
     return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
         (x-radius,y-radius,x-radius,y+radius,x+radius,y+radius,x+radius,y-radius,x-radius,y-radius))
 
 ###############################################################################
 # Test geoms on a 10x10 grid
+
 
 def ogr_shape_qix_1():
 
@@ -112,6 +116,7 @@ def ogr_shape_qix_1():
 ###############################################################################
 # Test geoms on a 100x100 grid
 
+
 def ogr_shape_qix_2():
 
     shape_drv = ogr.GetDriverByName('ESRI Shapefile')
@@ -139,6 +144,7 @@ def ogr_shape_qix_2():
 
 ###############################################################################
 # Test 2 separated regions of 10x10 geoms
+
 
 def ogr_shape_qix_3():
 
@@ -174,6 +180,7 @@ def ogr_shape_qix_3():
 
 ###############################################################################
 #
+
 
 def check_qix_random_geoms(lyr):
 
@@ -218,12 +225,15 @@ def check_qix_random_geoms(lyr):
     return 'success'
 
 ###############################################################################
+
+
 def build_rectangle(x1,y1,x2,y2):
     return ogr.CreateGeometryFromWkt('POLYGON((%f %f,%f %f,%f %f,%f %f,%f %f))' % \
         (x1,y1,x1,y2,x2,y2,x2,y1,x1,y1))
 
 ###############################################################################
 # Test random geometries
+
 
 def ogr_shape_qix_4():
 
@@ -243,7 +253,6 @@ def ogr_shape_qix_4():
         lyr.CreateFeature(feat)
         feat = None
 
-
     # And add statistically non overlapping features
     for x in range(1000):
         feat = ogr.Feature(lyr.GetLayerDefn())
@@ -262,6 +271,7 @@ def ogr_shape_qix_4():
     shape_drv.DeleteDataSource('/vsimem/ogr_shape_qix.shp')
 
     return ret
+
 
 gdaltest_list = [
     ogr_shape_qix_1,

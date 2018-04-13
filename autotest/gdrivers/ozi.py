@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Test reading OZF2 file
 
+
 def ozi_online_1():
 
     if not gdaltest.download_file('http://www.oziexplorer2.com/maps/Europe2001_setup.exe', 'Europe2001_setup.exe'):
@@ -96,8 +97,6 @@ def ozi_online_1():
         print(wkt)
         return 'fail'
 
-
-
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 16025:
         gdaltest.post_reason('bad checksum')
@@ -105,6 +104,7 @@ def ozi_online_1():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ozi_online_1 ]

@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Error cases
 
+
 def vrtpansharpen_1():
 
     src_ds = gdal.Open('data/small_world.tif')
@@ -410,7 +411,6 @@ def vrtpansharpen_1():
     if vrt_ds is not None:
         gdaltest.post_reason('fail')
         return 'fail'
-
 
     # SpectralBand.SourceFilename missing
     gdal.PushErrorHandler()
@@ -879,6 +879,7 @@ def vrtpansharpen_1():
 ###############################################################################
 # Nominal cases
 
+
 def vrtpansharpen_2():
 
     shutil.copy('data/small_world.tif', 'tmp/small_world.tif')
@@ -993,7 +994,6 @@ def vrtpansharpen_2():
         gdaltest.post_reason('fail')
         print(cs)
         return 'fail'
-
 
     # Expose pan band too
     vrt_ds = gdal.Open("""<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
@@ -1111,6 +1111,7 @@ def vrtpansharpen_2():
 ###############################################################################
 # Test with overviews
 
+
 def vrtpansharpen_3():
 
     ds = gdal.Open('tmp/small_world_pan.tif')
@@ -1198,6 +1199,7 @@ def vrtpansharpen_3():
 ###############################################################################
 # Test RasterIO() with various buffer datatypes
 
+
 def vrtpansharpen_4():
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
@@ -1241,6 +1243,7 @@ def vrtpansharpen_4():
 
 ###############################################################################
 # Test RasterIO() with various band datatypes
+
 
 def vrtpansharpen_5():
 
@@ -1324,6 +1327,7 @@ def vrtpansharpen_5():
 
 ###############################################################################
 # Test BitDepth limitations
+
 
 def vrtpansharpen_6():
 
@@ -1412,6 +1416,7 @@ def vrtpansharpen_6():
 
 ###############################################################################
 # Test bands with different extents
+
 
 def vrtpansharpen_7():
 
@@ -1590,6 +1595,7 @@ def vrtpansharpen_7():
 ###############################################################################
 # Test SerializeToXML()
 
+
 def vrtpansharpen_8():
 
     xml = """<VRTDataset subClass="VRTPansharpenedDataset">
@@ -1645,6 +1651,7 @@ def vrtpansharpen_8():
 
 ###############################################################################
 # Test NoData support
+
 
 def vrtpansharpen_9():
 
@@ -1728,6 +1735,7 @@ def vrtpansharpen_9():
 
 ###############################################################################
 # Test UInt16 optimizations
+
 
 def vrtpansharpen_10():
 
@@ -1869,6 +1877,7 @@ def vrtpansharpen_10():
 ###############################################################################
 # Test gdal.CreatePansharpenedVRT()
 
+
 def vrtpansharpen_11():
 
     pan_ds = gdal.Open('tmp/small_world_pan.tif')
@@ -1943,7 +1952,6 @@ def vrtpansharpen_11():
         return 'fail'
     vrt_ds = None
 
-
     # Test error cases as well
     gdal.PushErrorHandler()
     vrt_ds = gdal.CreatePansharpenedVRT("""<invalid_xml""", pan_mem_ds.GetRasterBand(1), [ ms_mem_ds.GetRasterBand(i+1) for i in range(3)] )
@@ -1990,6 +1998,7 @@ def vrtpansharpen_11():
 
 ###############################################################################
 # Cleanup
+
 
 def vrtpansharpen_cleanup():
 

@@ -36,7 +36,6 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 
-
 ###############################################################################
 # Open DODS datasource.
 
@@ -63,6 +62,7 @@ def dods_1():
 ###############################################################################
 # Simple read test on a single variable.
 
+
 def dods_2():
     if gdaltest.dods_dr is None:
         return 'skip'
@@ -71,6 +71,7 @@ def dods_2():
 
 ###############################################################################
 # Access all grids at once.
+
 
 def dods_3():
     if gdaltest.dods_dr is None:
@@ -81,6 +82,7 @@ def dods_3():
 ###############################################################################
 # Test explicit transpose.
 
+
 def dods_4():
     if gdaltest.dods_dr is None:
         return 'skip'
@@ -89,6 +91,7 @@ def dods_4():
 
 ###############################################################################
 # Test explicit flipping.
+
 
 def dods_5():
     if gdaltest.dods_dr is None:
@@ -99,6 +102,7 @@ def dods_5():
 
 ###############################################################################
 # Check nodata value.
+
 
 def dods_6():
     if gdaltest.dods_dr is None:
@@ -120,6 +124,7 @@ def dods_6():
 ###############################################################################
 # Cleanup
 
+
 def dods_cleanup():
     if gdaltest.dods_dr is None:
         return 'skip'
@@ -128,6 +133,7 @@ def dods_cleanup():
     gdaltest.dods_grid_ds = None
 
     return 'success'
+
 
 gdaltest_list = []
 

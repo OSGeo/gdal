@@ -43,13 +43,13 @@ from osgeo import osr
 ###############################################################################
 # Create wasp datasource
 
+
 def ogr_wasp_create_ds():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource( 'tmp.map' )
 
     gdaltest.wasp_ds = wasp_drv.CreateDataSource( 'tmp.map' )
-
 
     if gdaltest.wasp_ds is not None:
         return 'success'
@@ -58,6 +58,7 @@ def ogr_wasp_create_ds():
 
 ###############################################################################
 # Create elevation .map from linestrings z
+
 
 def ogr_wasp_elevation_from_linestring_z():
 
@@ -118,6 +119,7 @@ def ogr_wasp_elevation_from_linestring_z():
 
 ###############################################################################
 # Create elevation .map from linestrings z with simplification
+
 
 def ogr_wasp_elevation_from_linestring_z_toler():
 
@@ -243,6 +245,7 @@ def ogr_wasp_elevation_from_linestring_field():
 ###############################################################################
 # Create roughness .map from linestrings fields
 
+
 def ogr_wasp_roughness_from_linestring_fields():
 
     if ogr_wasp_create_ds() != 'success':
@@ -304,6 +307,7 @@ def ogr_wasp_roughness_from_linestring_fields():
 
 ###############################################################################
 # Create .map from polygons z
+
 
 def ogr_wasp_roughness_from_polygon_z():
 
@@ -374,6 +378,7 @@ def ogr_wasp_roughness_from_polygon_z():
 
 ###############################################################################
 # Create .map from polygons field
+
 
 def ogr_wasp_roughness_from_polygon_field():
 
@@ -450,6 +455,7 @@ def ogr_wasp_roughness_from_polygon_field():
 # especially the unwanted merging of a corner point that could be merged with
 # a continuing line (pichart map)
 
+
 def ogr_wasp_merge():
 
     if ogr_wasp_create_ds() != 'success':
@@ -520,6 +526,7 @@ def ogr_wasp_merge():
 ###############################################################################
 # Read map file
 
+
 def ogr_wasp_reading():
     if ogr_wasp_elevation_from_linestring_z() != 'success':
         return 'skip'
@@ -545,11 +552,13 @@ def ogr_wasp_reading():
 ###############################################################################
 # Cleanup
 
+
 def ogr_wasp_cleanup():
 
     wasp_drv = ogr.GetDriverByName('WAsP')
     wasp_drv.DeleteDataSource( 'tmp.map' )
     return 'success'
+
 
 gdaltest_list = [
     ogr_wasp_create_ds,

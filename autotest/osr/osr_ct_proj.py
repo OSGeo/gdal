@@ -43,6 +43,7 @@ bonne = 'PROJCS["bonne",GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1
 ###############################################################################
 # Class to perform the tests.
 
+
 class ProjTest:
     def __init__( self, src_srs, src_xyz, src_error,
                   dst_srs, dst_xyz, dst_error, options, requirements ):
@@ -158,6 +159,7 @@ class ProjTest:
 #   way transformation).  For now just put None.
 # - requirements: string with minimum proj version required, GRID:<gridname>
 #                 or None depend on requirements for the test.
+
 
 transform_list = [ \
 

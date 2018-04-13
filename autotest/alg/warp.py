@@ -48,6 +48,8 @@ import gdaltest
 # Warp the image using the VRT file and compare result with reference image
 
 # Upsampling
+
+
 def warp_1():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -65,6 +67,7 @@ def warp_1():
         return 'fail'
 
     return 'success'
+
 
 def warp_1_short():
 
@@ -84,6 +87,7 @@ def warp_1_short():
 
     return 'success'
 
+
 def warp_1_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -101,6 +105,7 @@ def warp_1_ushort():
         return 'fail'
 
     return 'success'
+
 
 def warp_1_float():
 
@@ -120,6 +125,7 @@ def warp_1_float():
 
     return 'success'
 
+
 def warp_2():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -137,6 +143,7 @@ def warp_2():
         return 'fail'
 
     return 'success'
+
 
 def warp_2_short():
 
@@ -156,6 +163,7 @@ def warp_2_short():
 
     return 'success'
 
+
 def warp_2_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -173,6 +181,7 @@ def warp_2_ushort():
         return 'fail'
 
     return 'success'
+
 
 def warp_2_downsize():
 
@@ -192,6 +201,7 @@ def warp_2_downsize():
 
     return 'success'
 
+
 def warp_3():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -209,6 +219,7 @@ def warp_3():
         return 'fail'
 
     return 'success'
+
 
 def warp_3_short():
 
@@ -228,6 +239,7 @@ def warp_3_short():
 
     return 'success'
 
+
 def warp_3_ushort():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -245,6 +257,7 @@ def warp_3_ushort():
         return 'fail'
 
     return 'success'
+
 
 def warp_3_downsize():
 
@@ -264,6 +277,7 @@ def warp_3_downsize():
 
     return 'success'
 
+
 def warp_3_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -281,6 +295,7 @@ def warp_3_float_downsize():
         return 'fail'
 
     return 'success'
+
 
 def warp_4():
 
@@ -300,6 +315,7 @@ def warp_4():
 
     return 'success'
 
+
 def warp_4_short():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -317,6 +333,7 @@ def warp_4_short():
         return 'fail'
 
     return 'success'
+
 
 def warp_4_ushort():
 
@@ -336,6 +353,7 @@ def warp_4_ushort():
 
     return 'success'
 
+
 def warp_4_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -353,6 +371,7 @@ def warp_4_downsize():
         return 'fail'
 
     return 'success'
+
 
 def warp_4_short_downsize():
 
@@ -372,6 +391,7 @@ def warp_4_short_downsize():
 
     return 'success'
 
+
 def warp_4_float_downsize():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -390,6 +410,7 @@ def warp_4_float_downsize():
 
     return 'success'
 
+
 def warp_5():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -407,6 +428,7 @@ def warp_5():
         return 'fail'
 
     return 'success'
+
 
 def warp_5_downsize():
 
@@ -427,6 +449,8 @@ def warp_5_downsize():
     return 'success'
 
 # Downsampling
+
+
 def warp_6():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -436,6 +460,7 @@ def warp_6():
     tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_near.vrt', 1, 4770 )
 
     return tst.testOpen()
+
 
 def warp_7():
 
@@ -447,6 +472,7 @@ def warp_7():
 
     return tst.testOpen()
 
+
 def warp_8():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -456,6 +482,7 @@ def warp_8():
     tst = gdaltest.GDALTest( 'VRT', 'utmsmall_ds_cubic.vrt', 1, 4833 )
 
     return tst.testOpen()
+
 
 def warp_9():
 
@@ -475,6 +502,7 @@ def warp_9():
 
     return 'success'
 
+
 def warp_10():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -493,6 +521,7 @@ def warp_10():
 
     return 'success'
 
+
 def warp_11():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -504,6 +533,8 @@ def warp_11():
     return tst.testOpen()
 
 # Test warping an empty RGBA with bilinear resampling
+
+
 def warp_12():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -527,6 +558,8 @@ def warp_12():
     return ret
 
 # Test warping an empty RGBA with cubic resampling
+
+
 def warp_13():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -550,6 +583,8 @@ def warp_13():
     return ret
 
 # Test warping an empty RGBA with cubic spline resampling
+
+
 def warp_14():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -573,6 +608,8 @@ def warp_14():
     return ret
 
 # Test GWKNearestFloat with transparent source alpha band
+
+
 def warp_15():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -596,6 +633,8 @@ def warp_15():
     return ret
 
 # Test GWKNearestFloat with opaque source alpha band
+
+
 def warp_16():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -619,6 +658,8 @@ def warp_16():
     return ret
 
 # Test GWKNearestShort with transparent source alpha band
+
+
 def warp_17():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -642,6 +683,8 @@ def warp_17():
     return ret
 
 # Test GWKNearestShort with opaque source alpha band
+
+
 def warp_18():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -743,6 +786,7 @@ def warp_20():
 ###############################################################################
 # Test overviews on warped VRT files
 
+
 def warp_21():
 
     shutil.copy( 'data/utmsmall_near.vrt', 'tmp/warp_21.vrt' )
@@ -766,6 +810,7 @@ def warp_21():
 ###############################################################################
 # Test warping with datasets which are "bigger" than the wm parameter.
 # Would have detected issue of #3458
+
 
 def warp_22():
 
@@ -819,6 +864,7 @@ def warp_22():
 
 ###############################################################################
 # Test warping with datasets where some RasterIO() requests involve nBufXSize == 0 (#3582)
+
 
 def warp_23():
 
@@ -896,6 +942,7 @@ def warp_23():
 # Test fix for #3658 (numerical imprecision with Ubuntu 8.10 GCC 4.4.3 -O2 leading to upper
 # left pixel being not set in GWKBilinearResample() case)
 
+
 def warp_24():
 
     ds_ref = gdal.Open('data/test3658.tif')
@@ -912,6 +959,7 @@ def warp_24():
 ###############################################################################
 # Test -refine_gcps (#4143)
 
+
 def warp_25():
 
     ds = gdal.Open('data/refine_gcps.vrt')
@@ -926,6 +974,7 @@ def warp_25():
 
 ###############################################################################
 # Test serializing and deserializing TPS transformer
+
 
 def warp_26():
 
@@ -952,9 +1001,11 @@ def warp_26():
 # Pure Python reprojection example. Nothing particular, just make use of existing
 # API.
 
+
 def warp_27_progress_callback(pct, message, user_data):
     #print(pct)
     return 1 # 1 to continue, 0 to stop
+
 
 def warp_27():
 
@@ -1025,6 +1076,7 @@ def warp_27():
 # Test reading a VRT with a destination alpha band, but no explicit
 # INIT_DEST setting
 
+
 def warp_28():
 
     ds = gdal.Open( 'data/utm_alpha_noinit.vrt' )
@@ -1041,6 +1093,7 @@ def warp_28():
 
 ###############################################################################
 # Test multi-thread computations
+
 
 def warp_29():
 
@@ -1102,7 +1155,6 @@ def warp_29():
         gdaltest.post_reason('failed')
         return 'fail'
 
-
     src_ds = None
 
     return 'success'
@@ -1110,11 +1162,13 @@ def warp_29():
 ###############################################################################
 # Test warping interruption
 
+
 def warp_30_progress_callback(pct, message, user_data):
     if pct > 0.2:
         return 0 # stop
     else:
         return 1 # continue
+
 
 def warp_30():
 
@@ -1191,6 +1245,8 @@ def warp_30():
     return 'success'
 
 # Average (Byte)
+
+
 def warp_31():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1210,6 +1266,8 @@ def warp_31():
     return 'success'
 
 # Average (Float)
+
+
 def warp_32():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1229,6 +1287,8 @@ def warp_32():
     return 'success'
 
 # Mode (Byte)
+
+
 def warp_33():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1248,6 +1308,8 @@ def warp_33():
     return 'success'
 
 # Mode (Int16)
+
+
 def warp_34():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1267,6 +1329,8 @@ def warp_34():
     return 'success'
 
 # Mode (Int16 - signed with negative values)
+
+
 def warp_35():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1286,6 +1350,8 @@ def warp_35():
     return 'success'
 
 # Mode (Int32) - this uses algorithm 2 (inefficient)
+
+
 def warp_36():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1306,6 +1372,7 @@ def warp_36():
 
 ###############################################################################
 # Test a few error cases
+
 
 def warp_37():
 
@@ -1343,6 +1410,8 @@ def warp_37():
 
 ###############################################################################
 # Test a warp with GCPs on the *destination* image.
+
+
 def warp_38():
 
     # Create an output file with GCPs.
@@ -1377,6 +1446,8 @@ def warp_38():
 
 ###############################################################################
 # Test a warp with GCPs for TPS on the *destination* image.
+
+
 def warp_39():
 
     # Create an output file with GCPs.
@@ -1411,6 +1482,8 @@ def warp_39():
 
 ###############################################################################
 # test average (#5311)
+
+
 def warp_40():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1431,6 +1504,8 @@ def warp_40():
 
 ###############################################################################
 # test GDALSuggestedWarpOutput (#5693)
+
+
 def warp_41():
 
     src_ds = gdal.Open("""<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
@@ -1465,6 +1540,8 @@ def warp_41():
 ###############################################################################
 
 # Maximum
+
+
 def warp_42():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1484,6 +1561,8 @@ def warp_42():
     return 'success'
 
 # Minimum
+
+
 def warp_43():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1503,6 +1582,8 @@ def warp_43():
     return 'success'
 
 # Median
+
+
 def warp_44():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1522,6 +1603,8 @@ def warp_44():
     return 'success'
 
 # Quartile 1
+
+
 def warp_45():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1541,6 +1624,8 @@ def warp_45():
     return 'success'
 
 # Quartile 3
+
+
 def warp_46():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1560,6 +1645,8 @@ def warp_46():
     return 'success'
 
 # Maximum (Int16 - signed with negative values)
+
+
 def warp_47():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1579,6 +1666,8 @@ def warp_47():
     return 'success'
 
 # Minimum (Int16 - signed with negative values)
+
+
 def warp_48():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1598,6 +1687,8 @@ def warp_48():
     return 'success'
 
 # Median (Int16 - signed with negative values)
+
+
 def warp_49():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1617,6 +1708,8 @@ def warp_49():
     return 'success'
 
 # Quartile 1 (Int16 - signed with negative values)
+
+
 def warp_50():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1636,6 +1729,8 @@ def warp_50():
     return 'success'
 
 # Quartile 3 (Int16 - signed with negative values)
+
+
 def warp_51():
 
     gdaltest.tiff_drv = gdal.GetDriverByName( 'GTiff' )
@@ -1656,6 +1751,7 @@ def warp_51():
 
 ###############################################################################
 # Test fix for #6182
+
 
 def warp_52():
 
@@ -1708,6 +1804,7 @@ def warp_52():
 ###############################################################################
 # Test Grey+Alpha
 
+
 def warp_53():
 
     for typestr in ('Byte', 'UInt16', 'Int16'):
@@ -1747,6 +1844,7 @@ def warp_53():
 
 ###############################################################################
 # Test Alpha on UInt16/Int16
+
 
 def warp_54():
 
@@ -1803,6 +1901,7 @@ def warp_54():
 # Test warped VRT with source overview, target GT != GenImgProjetion target GT
 # and subsampling (#6972)
 
+
 def warp_55():
 
     ds = gdal.Open('data/warpedvrt_with_ovr.vrt')
@@ -1818,6 +1917,7 @@ def warp_55():
 ###############################################################################
 # Test bilinear interpolation when warping into same coordinate system (and
 # same size). This test crops a single pixel out of a 3-by-3 image.
+
 
 def warp_56():
 
@@ -1848,6 +1948,7 @@ def warp_56():
             return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     warp_1,

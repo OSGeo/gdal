@@ -34,6 +34,7 @@ import sys
 from osgeo import gdal
 from osgeo import osr
 
+
 def Usage():
     print('Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def] [-a_ullr ulx uly lrx lry]')
     print('                 [-tr xres yres] [-unsetgt] [-a_nodata value] [-unsetnodata]')
@@ -56,6 +57,7 @@ def ArgIsNumeric(s):
         i = i + 1
 
     return True
+
 
 def gdal_edit(argv):
 
@@ -317,8 +319,10 @@ def gdal_edit(argv):
 
     return 0
 
+
 def main():
     return gdal_edit(sys.argv)
+
 
 if __name__ == '__main__':
     sys.exit(gdal_edit(sys.argv))

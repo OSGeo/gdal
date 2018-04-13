@@ -49,6 +49,7 @@ from osgeo import osr
 # from "EPSG" form to ESRI from when the exception list comes from the
 # gdal_datum.csv file.
 
+
 def osr_esri_1():
 
     srs = osr.SpatialReference()
@@ -79,6 +80,7 @@ def osr_esri_1():
 # Verify that exact correct form of UTM names is established when
 # translating certain GEOGCSes to ESRI format.
 
+
 def osr_esri_2():
 
     srs = osr.SpatialReference()
@@ -101,6 +103,7 @@ def osr_esri_2():
 ###############################################################################
 # Verify that Unnamed is changed to Unknown in morphToESRI().
 
+
 def osr_esri_3():
 
     srs = osr.SpatialReference()
@@ -117,6 +120,7 @@ def osr_esri_3():
 
 ###############################################################################
 # Verify Polar Stereographic translations work properly OGR to ESRI.
+
 
 def osr_esri_4():
 
@@ -139,6 +143,7 @@ def osr_esri_4():
 
 ###############################################################################
 # Verify Polar Stereographic translations work properly ESRI to OGR.
+
 
 def osr_esri_5():
 
@@ -163,6 +168,7 @@ def osr_esri_5():
 # Verify Lambert 2SP with a 1.0 scale factor still gets translated to 2SP
 # per bug 187.
 
+
 def osr_esri_6():
 
     srs = osr.SpatialReference()
@@ -180,6 +186,7 @@ def osr_esri_6():
 
 ###############################################################################
 # Verify that FEET is treated as US survey feet per bug #1533.
+
 
 def osr_esri_7():
 
@@ -231,6 +238,7 @@ def osr_esri_7():
 ###############################################################################
 # Verify that handling of numerically specified units (see bug #1533)
 
+
 def osr_esri_8():
 
     prj = [ 'Projection    STATEPLANE',
@@ -279,6 +287,7 @@ def osr_esri_8():
 ###############################################################################
 # Verify Equidistant Conic handling.
 
+
 def osr_esri_9():
 
     srs = osr.SpatialReference()
@@ -311,6 +320,7 @@ def osr_esri_9():
 ###############################################################################
 # Verify Plate_Carree handling.
 
+
 def osr_esri_10():
 
     srs = osr.SpatialReference()
@@ -342,6 +352,7 @@ def osr_esri_10():
 
 ###############################################################################
 # Verify arc/info style TM handling.
+
 
 def osr_esri_11():
 
@@ -376,6 +387,7 @@ def osr_esri_11():
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 
+
 def osr_esri_12():
 
     srs = osr.SpatialReference()
@@ -407,6 +419,7 @@ def osr_esri_12():
 ###############################################################################
 # Test automatic morphing of ESRI-style LCC WKT prefixed with 'ESRI::'
 # but read directly from file.
+
 
 def osr_esri_13():
 
@@ -471,13 +484,13 @@ def osr_esri_14():
 # Verify hotine oblique mercator handling, particularly handling
 # of the rectified_grid_angle parameter.
 
+
 def osr_esri_15():
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput('PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.0174532925199433]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]' )
 
     expected = 'PROJCS["Bern_1898_Bern_LV03C",GEOGCS["GCS_Bern_1898_Bern",DATUM["D_Bern_1898",SPHEROID["Bessel_1841",6377397.155,299.1528128]],PRIMEM["Bern",7.439583333333333],UNIT["Degree",0.017453292519943295]],PROJECTION["Hotine_Oblique_Mercator_Azimuth_Center"],PARAMETER["False_Easting",0.0],PARAMETER["False_Northing",0.0],PARAMETER["Scale_Factor",1.0],PARAMETER["Azimuth",90.0],PARAMETER["Longitude_Of_Center",0.0],PARAMETER["Latitude_Of_Center",46.95240555555556],UNIT["Meter",1.0]]'
-
 
     srs.MorphFromESRI()
     wkt = srs.ExportToWkt()
@@ -505,6 +518,7 @@ def osr_esri_15():
 ###############################################################################
 # Verify translation of equirectangular to equidistant cylindrical with
 # cleanup of parameters.
+
 
 def osr_esri_16():
 
@@ -560,6 +574,7 @@ def osr_esri_17():
 ###############################################################################
 # Test EC morphing.
 
+
 def osr_esri_18():
 
     original = """PROJCS["World_Equidistant_Cylindrical",
@@ -606,6 +621,7 @@ def osr_esri_18():
 ###############################################################################
 # Test spheroid remapping (per #3904)
 
+
 def osr_esri_19():
 
     original = """GEOGCS["GCS_South_American_1969",DATUM["D_South_American_1969",SPHEROID["GRS_1967_Truncated",6378160.0,298.25]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]"""
@@ -635,6 +651,8 @@ def osr_esri_19():
 
 ###############################################################################
 # Test esri->ogc, esri->proj / ogc->esri, ogc->proj / proj->esri, proj->ogc
+
+
 def osr_esri_test( wkt_esri, wkt_ogc, proj4 ):
 
     silent = True
@@ -718,6 +736,7 @@ def osr_esri_test( wkt_esri, wkt_ogc, proj4 ):
 # Double_Stereographic / Oblique_Stereographic (#1428 and #4267)
 # Stereographic_North_Pole / Polar_Stereographic
 # Orthographics (#4249)
+
 
 def osr_esri_20():
 
@@ -1097,6 +1116,7 @@ def osr_esri_test_ogc_esri_ogc( ifile, ofile_base, fix_config='NO', check_epsg=F
 ###############################################################################
 # Test EPSG->OGC->ESRI->OGC
 
+
 def osr_esri_22():
 
     result = 'success'
@@ -1116,6 +1136,7 @@ def osr_esri_22():
 ###############################################################################
 # Test EPSG->OGC->ESRI->OGC
 # set GDAL_FIX_ESRI_WKT=DATUM (bugs #4378 and #4345), don't expect to fail
+
 
 def osr_esri_23():
 
@@ -1138,6 +1159,7 @@ def osr_esri_23():
 ###############################################################################
 # Test LCC_2 Central_Parallel <--> latitude_of_origin issue (#3191)
 #
+
 
 def osr_esri_24():
 
@@ -1166,6 +1188,8 @@ def osr_esri_24():
 ###############################################################################
 # Test Pseudo-Mercator (#3962)
 #
+
+
 def osr_esri_25():
     srs = osr.SpatialReference()
     srs.SetFromUserInput(
@@ -1210,6 +1234,8 @@ def osr_esri_25():
 ###############################################################################
 # Test LCC_1SP (#2072)
 #
+
+
 def osr_esri_26():
     srs = osr.SpatialReference()
     srs.SetFromUserInput("""PROJCS["NAD_1983_HARN_WISCRS_Washburn_County_Meters",GEOGCS["GCS_North_American_1983_HARN",DATUM["D_North_American_1983_HARN",SPHEROID["GRS_1980",6378137.0,298.257222101]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["False_Easting",234086.8682],PARAMETER["False_Northing",188358.6058],PARAMETER["Central_Meridian",-91.78333333333333],PARAMETER["Standard_Parallel_1",45.96121983333334],PARAMETER["Scale_Factor",1.0000475376],PARAMETER["Latitude_Of_Origin",45.96121983333334],UNIT["Meter",1.0]]""")
@@ -1223,6 +1249,8 @@ def osr_esri_26():
 
 ###############################################################################
 # Test Mercator_2SP (#4861)
+
+
 def osr_esri_27():
 
     esri_wkt = """PROJCS["Batavia_NEIEZ",
@@ -1353,6 +1381,7 @@ def osr_esri_28():
 ###############################################################################
 # Test Web Mercator
 
+
 def osr_esri_29():
 
     srs = osr.SpatialReference()
@@ -1440,6 +1469,7 @@ def osr_esri_29():
 ###############################################################################
 # Verify import of custom ellipsoid
 
+
 def osr_esri_30():
 
     prj = [ 'Projection    GEOGRAPHIC',
@@ -1466,6 +1496,7 @@ def osr_esri_30():
 
 ###############################################################################
 # Verify import of old-style Mercator
+
 
 def osr_esri_31():
 
@@ -1517,6 +1548,7 @@ def osr_esri_31():
 ###############################################################################
 # Bad Equidistant Conic
 
+
 def osr_esri_32():
     # Autofuzz POC from b/65416453
     prj = [
@@ -1536,6 +1568,7 @@ def osr_esri_32():
 ###############################################################################
 # Test morphing invalid PROJCS WKT does not crash
 
+
 def osr_esri_33():
 
     sr = osr.SpatialReference()
@@ -1547,6 +1580,7 @@ def osr_esri_33():
 
 ###############################################################################
 #
+
 
 gdaltest_list = [
     osr_esri_1,

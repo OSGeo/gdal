@@ -40,6 +40,7 @@ from osgeo import osr
 # Test the osr.SpatialReference.ImportFromUSGS() function.
 #
 
+
 def osr_usgs_1():
 
     srs = osr.SpatialReference()
@@ -65,6 +66,7 @@ def osr_usgs_1():
 ###############################################################################
 # Test the osr.SpatialReference.ExportToUSGS() function.
 #
+
 
 def osr_usgs_2():
 
@@ -93,6 +95,7 @@ def osr_usgs_2():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     osr_usgs_1,

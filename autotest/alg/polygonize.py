@@ -41,6 +41,7 @@ from osgeo import gdal, ogr
 ###############################################################################
 # Test a fairly simple case, with nodata masking.
 
+
 def polygonize_1(is_int_polygonize = True):
 
     src_ds = gdal.Open('data/polygonize_in.grd')
@@ -89,11 +90,13 @@ def polygonize_1(is_int_polygonize = True):
     else:
         return 'fail'
 
+
 def polygonize_1_float():
     return polygonize_1(is_int_polygonize = False)
 
 ###############################################################################
 # Test a simple case without masking.
+
 
 def polygonize_2():
 
@@ -134,6 +137,7 @@ def polygonize_2():
 
 ###############################################################################
 # A more involved case with a complex looping.
+
 
 def polygonize_3():
 
@@ -180,6 +184,7 @@ def polygonize_3():
 ###############################################################################
 # Test a simple case without masking but with 8-connectedness.
 
+
 def polygonize_4():
 
     src_ds = gdal.Open('data/polygonize_in.grd')
@@ -216,6 +221,7 @@ def polygonize_4():
         return 'success'
     else:
         return 'fail'
+
 
 gdaltest_list = [
     polygonize_1,

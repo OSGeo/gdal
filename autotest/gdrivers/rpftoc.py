@@ -41,6 +41,7 @@ import gdaltest
 # Read a simple and hand-made RPFTOC dataset, made of one single CADRG frame
 # whose content is fully empty.
 
+
 def rpftoc_1():
     tst = gdaltest.GDALTest( 'RPFTOC', 'NITF_TOC_ENTRY:CADRG_ONC_1,000,000_2_0:data/A.TOC', 1, 53599, filename_absolute = 1 )
     gt = (1.9999416000000001, 0.0017833876302083334, 0.0, 36.000117500000002, 0.0, -0.0013461816406249993)
@@ -48,6 +49,7 @@ def rpftoc_1():
 
 ###############################################################################
 # Same test as rpftoc_1, but the dataset is forced to be opened in RGBA mode
+
 
 def rpftoc_2():
     gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'YES' )
@@ -58,6 +60,7 @@ def rpftoc_2():
 
 ###############################################################################
 # Test reading the metadata
+
 
 def rpftoc_3():
     ds = gdal.Open('data/A.TOC')
@@ -76,6 +79,7 @@ def rpftoc_3():
 
 ###############################################################################
 # Add an overview
+
 
 def rpftoc_4():
     gdal.SetConfigOption( 'RPFTOC_FORCE_RGBA', 'YES' )
@@ -109,6 +113,7 @@ def rpftoc_4():
     os.unlink('tmp/RPFTOC01.ON2')
 
     return 'success'
+
 
 gdaltest_list = [
     rpftoc_1,

@@ -39,6 +39,8 @@ import gdaltest
 import ogrtest
 
 ###############################################################################
+
+
 def ogr_edigeo_1():
 
     filelist = ['E000AB01.THF',

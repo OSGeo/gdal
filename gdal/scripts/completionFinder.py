@@ -34,6 +34,7 @@ import os.path as op
 
 from subprocess import call, Popen, PIPE, STDOUT
 
+
 def showHelp():
   print "Usage : completionFinder.py  output_script"
 
@@ -66,6 +67,7 @@ def processLine(line):
 
   return outList
 
+
 def processTool(toolName):
   command = [toolName, "-"]
 
@@ -90,6 +92,7 @@ def processTool(toolName):
 
   return options
 
+
 def parseGDALGeneralOptions():
   command = ["gdalinfo", "--help-general"]
   process = Popen(command,stdout=PIPE,stderr=STDOUT)
@@ -105,6 +108,7 @@ def parseGDALGeneralOptions():
       options.append(words[0])
     index += 1
   return options
+
 
 def parseOGRGeneralOptions():
   command = ["ogr2ogr", "--help-general"]
@@ -125,6 +129,8 @@ def parseOGRGeneralOptions():
 # generate completion script section for :
 #   - name : the given gdal/ogr tool
 #   - optList : option list
+
+
 def getCompletionScript(name,optList):
   output = []
   output.append("_"+name+"()\n")
@@ -198,6 +204,7 @@ def getCompletionScript(name,optList):
   output.append("complete -o default -F _"+name+" "+name+"\n")
 
   return output
+
 
 def main(argv):
   if len(argv) < 2 :

@@ -47,6 +47,8 @@ except ImportError:
     import gdalnumeric
 
 # =============================================================================
+
+
 def Usage():
     print('Usage: rel.py -lsrcaz azimuth -lsrcel elevation [-elstep step]')
     print('       [-dx xsize] [-dy ysize] [-b band] [-ot type] infile outfile')
@@ -71,6 +73,8 @@ def Usage():
 # =============================================================================
 
 # =============================================================================
+
+
 def ParseType(type):
     if type == 'Byte':
         return gdal.GDT_Byte
@@ -97,6 +101,7 @@ def ParseType(type):
     else:
         return gdal.GDT_Byte
 # =============================================================================
+
 
 infile = None
 outfile = None

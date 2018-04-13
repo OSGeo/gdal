@@ -41,6 +41,7 @@ import gdaltest
 ###############################################################################
 # Test gdaldem hillshade
 
+
 def test_gdaldem_lib_hillshade():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -78,6 +79,7 @@ def test_gdaldem_lib_hillshade():
 ###############################################################################
 # Test gdaldem hillshade with source being floating point
 
+
 def test_gdaldem_lib_hillshade_float():
 
     src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
@@ -114,6 +116,7 @@ def test_gdaldem_lib_hillshade_float():
 
 ###############################################################################
 # Test gdaldem hillshade with source being floating point
+
 
 def test_gdaldem_lib_hillshade_float_png():
 
@@ -154,6 +157,7 @@ def test_gdaldem_lib_hillshade_float_png():
 ###############################################################################
 # Test gdaldem hillshade -combined
 
+
 def test_gdaldem_lib_hillshade_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -190,6 +194,7 @@ def test_gdaldem_lib_hillshade_combined():
 
 ###############################################################################
 # Test gdaldem hillshade -alg ZevenbergenThorne
+
 
 def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 
@@ -228,6 +233,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne():
 ###############################################################################
 # Test gdaldem hillshade -alg ZevenbergenThorne -combined
 
+
 def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -265,6 +271,7 @@ def test_gdaldem_lib_hillshade_ZevenbergenThorne_combined():
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges
 
+
 def test_gdaldem_lib_hillshade_compute_edges():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -285,6 +292,7 @@ def test_gdaldem_lib_hillshade_compute_edges():
 ###############################################################################
 # Test gdaldem hillshade with -compute_edges with floating point
 
+
 def test_gdaldem_lib_hillshade_compute_edges_float():
 
     src_ds = gdal.Translate('', gdal.Open('../gdrivers/data/n43.dt0'), format = 'MEM', outputType = gdal.GDT_Float32)
@@ -304,6 +312,7 @@ def test_gdaldem_lib_hillshade_compute_edges_float():
 
 ###############################################################################
 # Test gdaldem hillshade with -az parameter
+
 
 def test_gdaldem_lib_hillshade_azimuth():
 
@@ -338,6 +347,7 @@ def test_gdaldem_lib_hillshade_azimuth():
 ###############################################################################
 # Test gdaldem hillshade -multidirectional
 
+
 def test_gdaldem_lib_hillshade_multidirectional():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -358,6 +368,7 @@ def test_gdaldem_lib_hillshade_multidirectional():
 ###############################################################################
 # Test gdaldem hillshade -multidirectional
 
+
 def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -377,6 +388,7 @@ def test_gdaldem_lib_hillshade_multidirectional_ZevenbergenThorne():
 
 ###############################################################################
 # Test gdaldem color relief
+
 
 def test_gdaldem_lib_color_relief():
 
@@ -425,6 +437,7 @@ def test_gdaldem_lib_color_relief():
 ###############################################################################
 # Test gdaldem tpi
 
+
 def test_gdaldem_lib_tpi():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -444,6 +457,7 @@ def test_gdaldem_lib_tpi():
 
 ###############################################################################
 # Test gdaldem tri
+
 
 def test_gdaldem_lib_tri():
 
@@ -465,6 +479,7 @@ def test_gdaldem_lib_tri():
 ###############################################################################
 # Test gdaldem roughness
 
+
 def test_gdaldem_lib_roughness():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -485,6 +500,7 @@ def test_gdaldem_lib_roughness():
 ###############################################################################
 # Test gdaldem slope -alg ZevenbergenThorne
 
+
 def test_gdaldem_lib_slope_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -503,6 +519,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
 ###############################################################################
 # Test gdaldem aspect -alg ZevenbergenThorne
 
+
 def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
     src_ds = gdal.Open('../gdrivers/data/n43.dt0')
@@ -520,6 +537,7 @@ def test_gdaldem_lib_aspect_ZevenbergenThorne():
 
 ###############################################################################
 # Test gdaldem hillshade with nodata values
+
 
 def test_gdaldem_lib_nodata():
 
@@ -591,6 +609,7 @@ def test_gdaldem_lib_nodata():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_gdaldem_lib_hillshade,

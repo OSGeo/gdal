@@ -39,6 +39,7 @@ from osgeo import ogr
 ###############################################################################
 # Read points
 
+
 def ogr_arcgen_points():
 
     ds = ogr.Open('data/points.gen')
@@ -74,6 +75,7 @@ def ogr_arcgen_points():
 
 ###############################################################################
 # Read points25d
+
 
 def ogr_arcgen_points25d():
 
@@ -111,6 +113,7 @@ def ogr_arcgen_points25d():
 ###############################################################################
 # Read lines
 
+
 def ogr_arcgen_lines():
 
     ds = ogr.Open('data/lines.gen')
@@ -142,6 +145,7 @@ def ogr_arcgen_lines():
 
 ###############################################################################
 # Read lines25d
+
 
 def ogr_arcgen_lines25d():
 
@@ -175,6 +179,7 @@ def ogr_arcgen_lines25d():
 ###############################################################################
 # Read polygons
 
+
 def ogr_arcgen_polygons():
 
     ds = ogr.Open('data/polygons.gen')
@@ -207,6 +212,7 @@ def ogr_arcgen_polygons():
 ###############################################################################
 # Read polygons25d
 
+
 def ogr_arcgen_polygons25d():
 
     ds = ogr.Open('data/polygons25d.gen')
@@ -235,6 +241,7 @@ def ogr_arcgen_polygons25d():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_arcgen_points,

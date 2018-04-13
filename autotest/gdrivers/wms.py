@@ -44,6 +44,7 @@ import gdaltest
 ###############################################################################
 # Verify we have the driver.
 
+
 def wms_1():
 
     try:
@@ -58,6 +59,7 @@ def wms_1():
 
 ###############################################################################
 # Open the WMS dataset
+
 
 def wms_2():
 
@@ -85,6 +87,7 @@ def wms_2():
 
 ###############################################################################
 # Check various things about the configuration.
+
 
 def wms_3():
 
@@ -129,6 +132,7 @@ def wms_3():
 ###############################################################################
 # Check checksum for a small region.
 
+
 def wms_4():
 
     if gdaltest.wms_drv is None or gdaltest.wms_ds is None:
@@ -160,6 +164,7 @@ def wms_4():
 ###############################################################################
 # Open the WMS service using XML as filename.
 
+
 def wms_5():
 
     if gdaltest.wms_drv is None:
@@ -189,6 +194,7 @@ def wms_5():
 ###############################################################################
 # Test TileService
 
+
 def wms_6():
 
     if gdaltest.wms_drv is None:
@@ -217,6 +223,7 @@ def wms_6():
 
 ###############################################################################
 # Test TMS
+
 
 def wms_7():
 
@@ -507,6 +514,7 @@ def wms_8():
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
+
 def wms_9():
 
     if gdaltest.wms_drv is None:
@@ -544,6 +552,7 @@ def wms_9():
 ###############################################################################
 # Test getting subdatasets from GetCapabilities
 
+
 def wms_10():
 
     if gdaltest.wms_drv is None:
@@ -578,6 +587,7 @@ def wms_10():
 
 ###############################################################################
 # Test getting subdatasets from GetTileService
+
 
 def wms_11():
 
@@ -617,6 +627,7 @@ def wms_11():
 
 ###############################################################################
 # Test getting subdatasets from a TMS server
+
 
 def wms_12():
 
@@ -659,6 +670,7 @@ def wms_12():
 ###############################################################################
 # Test reading WMS through VRT (test effect of r21866)
 
+
 def wms_13():
 
     if gdaltest.wms_drv is None:
@@ -673,7 +685,6 @@ def wms_13():
     ds = None
 
     return 'success'
-
 
 
 ###############################################################################
@@ -728,6 +739,7 @@ def wms_14():
 
 ###############################################################################
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
+
 
 def wms_15():
 
@@ -785,6 +797,7 @@ def wms_15():
 
 ###############################################################################
 # Test getting subdatasets from WMS-C Capabilities
+
 
 def wms_16():
 
@@ -882,6 +895,7 @@ def wms_16():
 ###############################################################################
 # Test a TiledWMS dataset with a color table (#4613)
 
+
 def wms_17():
 
     if gdaltest.wms_drv is None:
@@ -907,6 +921,7 @@ def wms_17():
 
 ###############################################################################
 # Test a ArcGIS Server
+
 
 def wms_18():
 
@@ -950,6 +965,7 @@ def wms_18():
 ###############################################################################
 # Test a IIP server
 
+
 def wms_19():
 
     if gdaltest.wms_drv is None:
@@ -980,6 +996,8 @@ def wms_19():
 
     return 'success'
 ###############################################################################
+
+
 def wms_cleanup():
 
     gdaltest.wms_ds = None

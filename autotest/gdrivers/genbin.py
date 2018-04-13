@@ -37,6 +37,7 @@ import gdaltest
 ###############################################################################
 # Perform simple read test.
 
+
 def genbin_1():
 
     tst = gdaltest.GDALTest( 'GenBin', 'tm4628_96.bil', 1, 5738,
@@ -70,6 +71,7 @@ def genbin_1():
           596254.01050186157, 0.0, -82.021003723045894 )
 
     return tst.testOpen( check_prj = prj, check_gt = gt )
+
 
 gdaltest_list = [
     genbin_1

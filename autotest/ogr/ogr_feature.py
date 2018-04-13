@@ -41,6 +41,7 @@ import gdaltest
 # Create a destination feature type with one field for each field in the source
 # feature, with the same names, but all the field types of a specific type.
 
+
 def mk_dst_feature( src_feature, field_type ):
 
     dst_feat_defn = ogr.FeatureDefn( 'dst' )
@@ -55,6 +56,7 @@ def mk_dst_feature( src_feature, field_type ):
 
 ###############################################################################
 # Create a source feature
+
 
 def mk_src_feature():
 
@@ -122,6 +124,7 @@ def mk_src_feature():
 ###############################################################################
 # Helper function to check a single field value
 
+
 def check( feat, fieldname, value ):
     if feat.GetField( fieldname ) != value:
         gdaltest.post_reason( 'did not get value %s for field %s, got %s.' \
@@ -135,6 +138,7 @@ def check( feat, fieldname, value ):
 
 ###############################################################################
 # Copy to Integer
+
 
 def ogr_feature_cp_integer():
     src_feature = mk_src_feature()
@@ -186,6 +190,7 @@ def ogr_feature_cp_integer():
 
 ###############################################################################
 # Copy to Integer64
+
 
 def ogr_feature_cp_integer64():
     src_feature = mk_src_feature()
@@ -243,6 +248,7 @@ def ogr_feature_cp_integer64():
 ###############################################################################
 # Copy to Real
 
+
 def ogr_feature_cp_real():
     src_feature = mk_src_feature()
     src_feature.field_integerlist = [15]
@@ -286,6 +292,7 @@ def ogr_feature_cp_real():
 
 ###############################################################################
 # Copy to String
+
 
 def ogr_feature_cp_string():
     src_feature = mk_src_feature()
@@ -333,6 +340,7 @@ def ogr_feature_cp_string():
 
 ###############################################################################
 # Copy to Binary
+
 
 def ogr_feature_cp_binary():
     src_feature = mk_src_feature()
@@ -389,6 +397,7 @@ def ogr_feature_cp_binary():
 ###############################################################################
 # Copy to date
 
+
 def ogr_feature_cp_date():
     src_feature = mk_src_feature()
 
@@ -435,6 +444,7 @@ def ogr_feature_cp_date():
 
 ###############################################################################
 # Copy to time
+
 
 def ogr_feature_cp_time():
     src_feature = mk_src_feature()
@@ -483,6 +493,7 @@ def ogr_feature_cp_time():
 ###############################################################################
 # Copy to datetime
 
+
 def ogr_feature_cp_datetime():
     src_feature = mk_src_feature()
 
@@ -529,6 +540,7 @@ def ogr_feature_cp_datetime():
 
 ###############################################################################
 # Copy to integerlist
+
 
 def ogr_feature_cp_integerlist():
     src_feature = mk_src_feature()
@@ -579,6 +591,7 @@ def ogr_feature_cp_integerlist():
 ###############################################################################
 # Copy to integer64list
 
+
 def ogr_feature_cp_integer64list():
     src_feature = mk_src_feature()
 
@@ -626,6 +639,7 @@ def ogr_feature_cp_integer64list():
 ###############################################################################
 # Copy to reallist
 
+
 def ogr_feature_cp_reallist():
     src_feature = mk_src_feature()
 
@@ -672,6 +686,7 @@ def ogr_feature_cp_reallist():
 
 ###############################################################################
 # Copy to stringlist
+
 
 def ogr_feature_cp_stringlist():
     src_feature = mk_src_feature()
@@ -755,6 +770,7 @@ def ogr_feature_unicode():
 ###############################################################################
 # Test 64bit FID
 
+
 def ogr_feature_64bit_fid():
 
     feat_def = ogr.FeatureDefn( 'test' )
@@ -766,6 +782,7 @@ def ogr_feature_64bit_fid():
 
 ###############################################################################
 # Test 64bit integer
+
 
 def ogr_feature_overflow_64bit_integer():
 
@@ -790,6 +807,7 @@ def ogr_feature_overflow_64bit_integer():
 
 ###############################################################################
 # Test SetNullable(), IsNullable() and Validate()
+
 
 def ogr_feature_nullable_validate():
     # No fields
@@ -921,6 +939,7 @@ def ogr_feature_nullable_validate():
 ###############################################################################
 # Test SetDefault(), GetDefault(), IsDefaultDriverSpecific() and FillUnsetWithDefault()
 
+
 def ogr_feature_default():
 
     feat_def = ogr.FeatureDefn( 'test' )
@@ -1007,6 +1026,7 @@ def ogr_feature_default():
 
 ###############################################################################
 # Test GetNativeData(), SetNativeData(), GetNativeMediaType(), SetNativeMediaType():
+
 
 def ogr_feature_native_data():
 
@@ -1099,6 +1119,7 @@ def ogr_feature_native_data():
 ###############################################################################
 # Test assigning our geometry to ourselves
 
+
 def ogr_feature_set_geometry_self():
 
     feat_def = ogr.FeatureDefn( 'test' )
@@ -1116,6 +1137,7 @@ def ogr_feature_set_geometry_self():
 
 ###############################################################################
 # Test SetFieldNull(), IsFieldNull()
+
 
 def ogr_feature_null_field():
 
@@ -1212,11 +1234,13 @@ def ogr_feature_null_field():
 
     return 'success'
 
+
 def ogr_feature_cleanup():
 
     gdaltest.src_feature = None
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_feature_cp_integer,

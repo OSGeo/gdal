@@ -41,6 +41,7 @@ from osgeo import gdal, ogr
 ###############################################################################
 # Verify we can open the test file.
 
+
 def ogr_dgnv8_1():
 
     gdaltest.dgnv8_drv = ogr.GetDriverByName('DGNv8')
@@ -56,6 +57,7 @@ def ogr_dgnv8_1():
 
 ###############################################################################
 # Compare with a reference CSV dump
+
 
 def ogr_dgnv8_2():
 
@@ -77,6 +79,7 @@ def ogr_dgnv8_2():
 
 ###############################################################################
 # Run test_ogrsf
+
 
 def ogr_dgnv8_3():
 
@@ -108,6 +111,7 @@ def ogr_dgnv8_3():
 ###############################################################################
 # Test creation code
 
+
 def ogr_dgnv8_4():
 
     if gdaltest.dgnv8_drv is None:
@@ -133,6 +137,7 @@ def ogr_dgnv8_4():
 
 ###############################################################################
 # Test creation options
+
 
 def ogr_dgnv8_5():
 
@@ -219,6 +224,7 @@ def ogr_dgnv8_5():
 def ogr_dgnv8_cleanup():
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_dgnv8_1,

@@ -138,6 +138,7 @@ def ogr_gml_fgd_2():
 ###############################################################################
 # List test cases
 
+
 gdaltest_list = [
     ogr_gml_fgd_1,
     ogr_gml_fgd_2

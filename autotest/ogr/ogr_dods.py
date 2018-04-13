@@ -38,6 +38,7 @@ from osgeo import gdal
 ###############################################################################
 # Open DODS datasource.
 
+
 def ogr_dods_1():
     gdaltest.dods_ds = None
     try:
@@ -80,6 +81,7 @@ def ogr_dods_1():
 # Read a single feature from the profiles layer and verify a few things.
 #
 
+
 def ogr_dods_2():
 
     if gdaltest.dods_ds is None:
@@ -113,6 +115,7 @@ def ogr_dods_2():
 ###############################################################################
 # Read the normalized form of the same profile, and verify some values.
 #
+
 
 def ogr_dods_3():
 
@@ -158,6 +161,7 @@ def ogr_dods_3():
 ###############################################################################
 # Read the "lines" from from the same server and verify some values.
 #
+
 
 def ogr_dods_4():
 
@@ -221,6 +225,7 @@ def ogr_dods_5():
 ###############################################################################
 #
 
+
 def ogr_dods_cleanup():
 
     if gdaltest.dods_ds is None:
@@ -233,6 +238,7 @@ def ogr_dods_cleanup():
     gdaltest.dods_ds = None
 
     return 'success'
+
 
 gdaltest_list = []
 

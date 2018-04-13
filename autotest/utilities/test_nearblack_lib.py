@@ -39,6 +39,7 @@ import gdaltest
 ###############################################################################
 # Basic test
 
+
 def test_nearblack_lib_1():
 
     src_ds = gdal.Open('../gdrivers/data/rgbsmall.tif')
@@ -81,6 +82,7 @@ def test_nearblack_lib_1():
 ###############################################################################
 # Add alpha band
 
+
 def test_nearblack_lib_2():
 
     ds = gdal.Nearblack('', '../gdrivers/data/rgbsmall.tif', format = 'MEM', maxNonBlack = 0, setAlpha = True)
@@ -98,6 +100,7 @@ def test_nearblack_lib_2():
 
 ###############################################################################
 # Set existing alpha band
+
 
 def test_nearblack_lib_3():
 
@@ -118,6 +121,7 @@ def test_nearblack_lib_3():
 ###############################################################################
 # Test -white
 
+
 def test_nearblack_lib_4():
 
     src_ds = gdal.Warp('', '../gdrivers/data/rgbsmall.tif', format = 'MEM', warpOptions = ["INIT_DEST=255"], srcNodata = 0)
@@ -136,6 +140,7 @@ def test_nearblack_lib_4():
 
 ###############################################################################
 # Add mask band
+
 
 def test_nearblack_lib_5():
 
@@ -158,6 +163,7 @@ def test_nearblack_lib_5():
 ###############################################################################
 # Test -color
 
+
 def test_nearblack_lib_7():
 
     ds = gdal.Nearblack('', 'data/whiteblackred.tif', format = 'MEM', colors = ((0,0,0),(255,255,255)))
@@ -179,6 +185,7 @@ def test_nearblack_lib_7():
 
 ###############################################################################
 # Test in-place update
+
 
 def test_nearblack_lib_8():
 
@@ -205,6 +212,7 @@ def test_nearblack_lib_8():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     test_nearblack_lib_1,

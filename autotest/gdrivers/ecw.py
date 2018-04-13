@@ -44,6 +44,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def has_write_support():
     if hasattr(gdaltest, 'b_ecw_has_write_support'):
         return gdaltest.b_ecw_has_write_support
@@ -61,6 +63,7 @@ def has_write_support():
 ###############################################################################
 #
 
+
 def ecw_init():
 
     gdaltest.deregister_all_jpeg2000_drivers_but('JP2ECW')
@@ -68,6 +71,7 @@ def ecw_init():
 
 ###############################################################################
 # Verify we have the driver.
+
 
 def ecw_1():
 
@@ -108,6 +112,7 @@ def ecw_1():
 ###############################################################################
 # Verify various information about our test image.
 
+
 def ecw_2():
 
     if gdaltest.ecw_drv is None:
@@ -145,6 +150,7 @@ def ecw_2():
 ###############################################################################
 # Verify that an write the imagery out to a new file.
 
+
 def ecw_3():
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -170,6 +176,7 @@ def ecw_3():
 
 ###############################################################################
 # Verify various information about our generated image.
+
 
 def ecw_4():
 
@@ -219,6 +226,7 @@ def ecw_4():
 ###############################################################################
 # Now try writing a JPEG2000 compressed version of the same with the ECW driver
 
+
 def ecw_5():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -237,6 +245,7 @@ def ecw_5():
 
 ###############################################################################
 # Verify various information about our generated image.
+
 
 def ecw_6():
 
@@ -294,6 +303,7 @@ def ecw_6():
 ###############################################################################
 # Write the same image to NITF.
 
+
 def ecw_7():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -307,6 +317,7 @@ def ecw_7():
 
 ###############################################################################
 # Verify various information about our generated image.
+
 
 def ecw_8():
 
@@ -346,6 +357,7 @@ def ecw_8():
 ###############################################################################
 # Try writing 16bit JP2 file directly using Create().
 
+
 def ecw_9():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -374,6 +386,7 @@ def ecw_9():
 
 ###############################################################################
 # Verify previous 16bit file.
+
 
 def ecw_10():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
@@ -413,6 +426,7 @@ def ecw_10():
 ###############################################################################
 # Test direct creation of an NITF/JPEG2000 file.
 
+
 def ecw_11():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -440,6 +454,7 @@ def ecw_11():
 
 ###############################################################################
 # Verify previous file
+
 
 def ecw_12():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
@@ -480,6 +495,7 @@ def ecw_12():
 # which we then checksum.  To stress the RasterIO(), we also change data
 # type and select an altered band list.
 
+
 def ecw_13():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -510,6 +526,7 @@ def ecw_13():
 ###############################################################################
 # Write out image with GCPs.
 
+
 def ecw_14():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -521,6 +538,7 @@ def ecw_14():
     return 'success'
 ###############################################################################
 # Verify various information about our generated image.
+
 
 def ecw_15():
 
@@ -555,6 +573,7 @@ def ecw_15():
 ###############################################################################
 # Open byte.jp2
 
+
 def ecw_16():
 
     if gdaltest.jp2ecw_drv is None:
@@ -587,6 +606,7 @@ def ecw_16():
 ###############################################################################
 # Open int16.jp2
 
+
 def ecw_17():
 
     if gdaltest.jp2ecw_drv is None:
@@ -613,6 +633,7 @@ def ecw_17():
 
 ###############################################################################
 # Open byte.jp2.gz (test use of the VSIL API)
+
 
 def ecw_18():
 
@@ -646,6 +667,7 @@ def ecw_18():
 ###############################################################################
 # Test a JPEG2000 with the 3 bands having 13bit depth and the 4th one 1 bit
 
+
 def ecw_19():
 
     if gdaltest.jp2ecw_drv is None:
@@ -669,6 +691,7 @@ def ecw_19():
 ###############################################################################
 # Confirm that we have an overview for this image and that the statistics
 # are as expected.
+
 
 def ecw_20():
 
@@ -712,6 +735,7 @@ def ecw_20():
 # line access typical of ComputeBandStats.  Make sure we get the same as
 # line by line.
 
+
 def ecw_21():
 
     if gdaltest.ecw_drv is None:
@@ -741,6 +765,7 @@ def ecw_21():
 # This tests reading of georeferencing and coordinate system from within an
 # ECW file.
 
+
 def ecw_22():
 
     if gdaltest.ecw_drv is None:
@@ -761,6 +786,7 @@ def ecw_22():
 ###############################################################################
 # This tests overriding the coordinate system from an .aux.xml file, while
 # preserving the ecw derived georeferencing.
+
 
 def ecw_23():
 
@@ -797,6 +823,7 @@ def ecw_23():
 
 ###############################################################################
 # Test that we can alter geotransform on existing ECW
+
 
 def ecw_24():
 
@@ -846,6 +873,7 @@ def ecw_24():
 
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetProjection())
+
 
 def ecw_25():
 
@@ -916,6 +944,7 @@ def ecw_25():
 
 ###############################################################################
 # Test that we can alter projection info on existing ECW (through SetMetadataItem())
+
 
 def ecw_26():
 
@@ -990,6 +1019,7 @@ def ecw_26():
 ###############################################################################
 # Check that we can use .j2w world files (#4651)
 
+
 def ecw_27():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
@@ -1014,6 +1044,7 @@ def ecw_27():
 
 ###############################################################################
 # Check picking use case
+
 
 def ecw_28():
 
@@ -1043,6 +1074,7 @@ def ecw_28():
 
 ###############################################################################
 # Test supersampling
+
 
 def ecw_29():
 
@@ -1114,6 +1146,7 @@ def ecw_29():
 ###############################################################################
 # Test IReadBlock()
 
+
 def ecw_30():
 
     if gdaltest.ecw_drv is None:
@@ -1132,6 +1165,7 @@ def ecw_30():
 
 ###############################################################################
 # Test async reader interface ( SDK >= 4.x )
+
 
 def ecw_31():
 
@@ -1182,6 +1216,7 @@ def ecw_31():
 # number of bands of the dataset, but not in the "natural order".
 # It ignores the content of panBandMap. (#4234)
 
+
 def ecw_32():
 
     if gdaltest.ecw_drv is None:
@@ -1224,6 +1259,7 @@ def ecw_32():
 
 ###############################################################################
 # Test heuristics that detect successive band reading pattern
+
 
 def ecw_33():
 
@@ -1282,6 +1318,7 @@ def ecw_33():
 ###############################################################################
 # Check bugfix for #5262
 
+
 def ecw_33_bis():
 
     if gdaltest.ecw_drv is None:
@@ -1324,6 +1361,7 @@ def ecw_33_bis():
 ###############################################################################
 # Verify that an write the imagery out to a new ecw file. Source file is 16 bit.
 
+
 def ecw_34():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0 :
@@ -1355,6 +1393,7 @@ def ecw_34():
 ###############################################################################
 # Verify that an write the imagery out to a new JP2 file. Source file is 16 bit.
 
+
 def ecw_35():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
         return 'skip'
@@ -1376,6 +1415,8 @@ def ecw_35():
 
 ###############################################################################
 # Make sure that band descriptions are preserved for version 3 ECW files.
+
+
 def ecw_36():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
@@ -1440,6 +1481,7 @@ def ecw_36():
 # Make sure that band descriptions are preserved for version 2 ECW files when
 # color space set implicitly to sRGB.
 
+
 def ecw_37():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_write == 0:
@@ -1481,6 +1523,7 @@ def ecw_37():
 
 ###############################################################################
 # Check opening unicode files.
+
 
 def ecw_38():
 
@@ -1549,6 +1592,7 @@ def ecw_39():
 ###############################################################################
 # Check reading a ECW v3 file
 
+
 def ecw_40():
 
     if gdaltest.ecw_drv is None:
@@ -1606,6 +1650,7 @@ def ecw_40():
 
 ###############################################################################
 # Check generating statistics & histogram for a ECW v3 file
+
 
 def ecw_41():
 
@@ -1721,6 +1766,7 @@ def ecw_41():
 ###############################################################################
 # Test setting/unsetting file metadata of a ECW v3 file
 
+
 def ecw_42():
 
     if gdaltest.ecw_drv is None or gdaltest.ecw_drv.major_version < 5:
@@ -1807,6 +1853,7 @@ def ecw_42():
 # Test auto-promotion of 1bit alpha band to 8bit
 # Note: only works on reversible files like this one
 
+
 def ecw_43():
 
     if gdaltest.jp2ecw_drv is None:
@@ -1857,6 +1904,7 @@ def ecw_43():
 ###############################################################################
 # Test metadata retrieval from JP2 file
 
+
 def ecw_44():
 
     if gdaltest.jp2ecw_drv is None:
@@ -1899,6 +1947,7 @@ def ecw_44():
 ###############################################################################
 # Test metadata reading & writing
 
+
 def RemoveDriverMetadata(md):
     if 'COMPRESSION_RATE_TARGET' in md:
         del md['COMPRESSION_RATE_TARGET']
@@ -1907,6 +1956,7 @@ def RemoveDriverMetadata(md):
     if 'VERSION' in md:
         del md['VERSION']
     return md
+
 
 def ecw_45():
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
@@ -2009,6 +2059,7 @@ def ecw_45():
 ###############################################################################
 # Test non nearest upsampling
 
+
 def ecw_46():
 
     if gdaltest.jp2ecw_drv is None or gdaltest.ecw_write == 0:
@@ -2041,6 +2092,7 @@ def ecw_46():
 
 ###############################################################################
 # /vsi reading with ECW (#6482)
+
 
 def ecw_47():
 
@@ -2077,6 +2129,8 @@ def ecw_47():
 
 ###############################################################################
 # Test "Upward" orientation is forced by default
+
+
 def ecw_48():
 
     if gdaltest.ecw_drv is None:
@@ -2101,6 +2155,8 @@ def ecw_48():
 
 ###############################################################################
 # Test "Upward" orientation can be overridden with ECW_ALWAYS_UPWARD=FALSE
+
+
 def ecw_49():
 
     if gdaltest.ecw_drv is None:
@@ -2122,6 +2178,8 @@ def ecw_49():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_online_1():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2142,6 +2200,8 @@ def ecw_online_1():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_online_2():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2171,6 +2231,8 @@ def ecw_online_2():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_online_3():
     if gdaltest.jp2ecw_drv is None:
         return 'skip'
@@ -2206,6 +2268,8 @@ def ecw_online_3():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_online_4():
 
     if gdaltest.jp2ecw_drv is None:
@@ -2243,6 +2307,8 @@ def ecw_online_4():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_online_5():
 
     if gdaltest.ecw_drv is None:
@@ -2275,6 +2341,7 @@ def ecw_online_5():
 ###############################################################################
 # This tests the HTTP driver in fact. To ensure if keeps the original filename,
 # and in particular the .ecw extension, to make the ECW driver happy
+
 
 def ecw_online_6():
 
@@ -2322,6 +2389,7 @@ def ecw_online_6():
 ###############################################################################
 # ECWv2 file with alpha channel (#6028)
 
+
 def ecw_online_7():
 
     if gdaltest.ecw_drv is None:
@@ -2342,6 +2410,8 @@ def ecw_online_7():
     return 'success'
 
 ###############################################################################
+
+
 def ecw_cleanup():
 
     #gdaltest.clean_tmp()
@@ -2432,6 +2502,7 @@ def ecw_cleanup():
     gdaltest.reregister_all_jpeg2000_drivers()
 
     return 'success'
+
 
 gdaltest_list = [
     ecw_init,

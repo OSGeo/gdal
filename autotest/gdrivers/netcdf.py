@@ -52,6 +52,7 @@ import test_cli_utilities
 ###############################################################################
 # Get netcdf version and test for supported files
 
+
 def netcdf_setup():
 
     gdaltest.netcdf_drv_version = 'unknown'
@@ -100,12 +101,16 @@ def netcdf_setup():
 ###############################################################################
 # test file copy
 # helper function needed so we can call Process() on it from netcdf_test_copy_timeout()
+
+
 def netcdf_test_copy( ifile, band, checksum, ofile, opts=[], driver='NETCDF' ):
     test = gdaltest.GDALTest( 'NETCDF', '../'+ifile, band, checksum, options=opts )
     return test.testCreateCopy(check_gt=0, check_srs=0, new_filename=ofile, delete_copy = 0, check_minmax = 0)
 
 ###############################################################################
 #test file copy, optional timeout arg
+
+
 def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NETCDF', timeout=None ):
 
     from multiprocessing import Process
@@ -141,6 +146,8 @@ def netcdf_test_copy_timeout( ifile, band, checksum, ofile, opts=[], driver='NET
 
 ###############################################################################
 #check support for DEFLATE compression, requires HDF5 and zlib
+
+
 def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
 
     try:
@@ -188,6 +195,8 @@ def netcdf_test_deflate( ifile, checksum, zlevel=1, timeout=None ):
 
 ###############################################################################
 # check support for reading attributes (single values and array values)
+
+
 def netcdf_check_vars( ifile, vals_global=None, vals_band=None ):
 
     src_ds = gdal.Open( ifile )
@@ -210,7 +219,6 @@ def netcdf_check_vars( ifile, vals_global=None, vals_band=None ):
     if metadata_band is None:
         gdaltest.post_reason( 'could not get Band metadata' )
         return 'fail'
-
 
     metadata = metadata_global
     vals = vals_global
@@ -275,6 +283,7 @@ def netcdf_1():
 # Verify a simple createcopy operation.  We can't do the trivial gdaltest
 # operation because the new file will only be accessible via subdatasets.
 
+
 def netcdf_2():
 
     if gdaltest.netcdf_drv is None:
@@ -325,6 +334,7 @@ def netcdf_2():
 
 ###############################################################################
 
+
 def netcdf_3():
 
     if gdaltest.netcdf_drv is None:
@@ -345,6 +355,7 @@ def netcdf_3():
 
 ###############################################################################
 # In #2582 5dimensional files were causing problems.  Verify use ok.
+
 
 def netcdf_4():
 
@@ -368,6 +379,7 @@ def netcdf_4():
 # In #2583 5dimensional files were having problems unrolling the highest
 # dimension - check handling now on band 7.
 
+
 def netcdf_5():
 
     if gdaltest.netcdf_drv is None:
@@ -389,6 +401,8 @@ def netcdf_5():
 ###############################################################################
 #ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
 #1 standard parallel.
+
+
 def netcdf_6():
 
     if gdaltest.netcdf_drv is None:
@@ -413,6 +427,8 @@ def netcdf_6():
 ###############################################################################
 #ticket #3324 check spatial reference reading for cf-1.4 lambert conformal
 #2 standard parallels.
+
+
 def netcdf_7():
 
     if gdaltest.netcdf_drv is None:
@@ -440,6 +456,8 @@ def netcdf_7():
 #check for cf convention read of albers equal area
 # Previous version compared entire wkt, which varies slightly among driver versions
 # now just look for PROJECTION=Albers_Conic_Equal_Area and some parameters
+
+
 def netcdf_8():
 
     if gdaltest.netcdf_drv is None:
@@ -471,6 +489,8 @@ def netcdf_8():
 
 ###############################################################################
 #check to see if projected systems default to wgs84 if no spheroid def
+
+
 def netcdf_9():
 
     if gdaltest.netcdf_drv is None:
@@ -496,6 +516,8 @@ def netcdf_9():
 
 ###############################################################################
 #check if km pixel size makes it through to gt
+
+
 def netcdf_10():
 
     if gdaltest.netcdf_drv is None:
@@ -528,6 +550,8 @@ def netcdf_10():
 
 ###############################################################################
 #check if ll gets caught in km pixel size check
+
+
 def netcdf_11():
 
     if gdaltest.netcdf_drv is None:
@@ -548,6 +572,8 @@ def netcdf_11():
 
 ###############################################################################
 #check for scale/offset set/get.
+
+
 def netcdf_12():
 
     if gdaltest.netcdf_drv is None:
@@ -568,6 +594,8 @@ def netcdf_12():
 
 ###############################################################################
 #check for scale/offset = None if no scale or offset is available
+
+
 def netcdf_13():
 
     if gdaltest.netcdf_drv is None:
@@ -588,6 +616,8 @@ def netcdf_13():
 
 ###############################################################################
 #check for scale/offset for two variables
+
+
 def netcdf_14():
 
     if gdaltest.netcdf_drv is None:
@@ -621,6 +651,8 @@ def netcdf_14():
 ###############################################################################
 #check support for netcdf-2 (64 bit)
 # This test fails in 1.8.1, because the driver does not support NC2 (bug #3890)
+
+
 def netcdf_15():
 
     if gdaltest.netcdf_drv is None:
@@ -640,6 +672,8 @@ def netcdf_15():
 
 ###############################################################################
 #check support for netcdf-4
+
+
 def netcdf_16():
 
     if gdaltest.netcdf_drv is None:
@@ -675,6 +709,8 @@ def netcdf_16():
 
 ###############################################################################
 #check support for netcdf-4 - make sure hdf5 is not read by netcdf driver
+
+
 def netcdf_17():
 
     if gdaltest.netcdf_drv is None:
@@ -715,6 +751,8 @@ def netcdf_17():
 
 ###############################################################################
 #check support for netcdf-4 classic (NC4C)
+
+
 def netcdf_18():
 
     if gdaltest.netcdf_drv is None:
@@ -747,6 +785,8 @@ def netcdf_18():
 
 ###############################################################################
 #check support for reading with DEFLATE compression, requires NC4
+
+
 def netcdf_19():
 
     if gdaltest.netcdf_drv is None:
@@ -764,6 +804,8 @@ def netcdf_19():
 
 ###############################################################################
 #check support for writing with DEFLATE compression, requires NC4
+
+
 def netcdf_20():
 
     if gdaltest.netcdf_drv is None:
@@ -852,6 +894,8 @@ def netcdf_22():
 
 ###############################################################################
 #check support for hdf4 - make sure  hdf4 file is not read by netcdf driver
+
+
 def netcdf_23():
 
     #don't skip if netcdf is not enabled in GDAL
@@ -890,6 +934,8 @@ def netcdf_23():
 
 ###############################################################################
 # check support for reading attributes (single values and array values)
+
+
 def netcdf_24():
 
     if gdaltest.netcdf_drv is None:
@@ -910,6 +956,8 @@ def netcdf_24():
 
 ###############################################################################
 # check support for NC4 reading attributes (single values and array values)
+
+
 def netcdf_24_nc4():
 
     if gdaltest.netcdf_drv is None:
@@ -944,6 +992,8 @@ def netcdf_24_nc4():
 
 ###############################################################################
 # check support for writing attributes (single values and array values)
+
+
 def netcdf_25():
 
     if gdaltest.netcdf_drv is None:
@@ -968,6 +1018,8 @@ def netcdf_25():
 
 ###############################################################################
 # check support for NC4 writing attributes (single values and array values)
+
+
 def netcdf_25_nc4():
 
     if gdaltest.netcdf_drv is None:
@@ -1008,6 +1060,8 @@ def netcdf_25_nc4():
 # check support for WRITE_BOTTOMUP file creation option
 # use a dummy file with no lon/lat info to force a different checksum
 # depending on y-axis order
+
+
 def netcdf_26():
 
     if gdaltest.netcdf_drv is None:
@@ -1036,6 +1090,8 @@ def netcdf_26():
 
 ###############################################################################
 # check support for GDAL_NETCDF_BOTTOMUP configuration option
+
+
 def netcdf_27():
 
     if gdaltest.netcdf_drv is None:
@@ -1067,6 +1123,8 @@ def netcdf_27():
 
 ###############################################################################
 # check support for writing multi-dimensional files (helper function)
+
+
 def netcdf_test_4dfile( ofile ):
 
     # test result file has 8 bands and 0 subdasets (instead of 0 bands and 8 subdatasets)
@@ -1121,6 +1179,8 @@ def netcdf_test_4dfile( ofile ):
 
 ###############################################################################
 # check support for writing multi-dimensional files using CreateCopy()
+
+
 def netcdf_28():
 
     if gdaltest.netcdf_drv is None:
@@ -1145,6 +1205,8 @@ def netcdf_28():
 # in netCDFDataset::CreateCopy() and necessary dimension metadata
 # is not saved to netcdf when using gdalwarp (as the driver does not write
 # metadata to netcdf file with SetMetadata() and SetMetadataItem()).
+
+
 def netcdf_29():
 
     if gdaltest.netcdf_drv is None:
@@ -1185,6 +1247,8 @@ def netcdf_29():
 
 ###############################################################################
 # check support for file with nan values (bug #4705)
+
+
 def netcdf_30():
 
     if gdaltest.netcdf_drv is None:
@@ -1203,6 +1267,8 @@ def netcdf_30():
 ###############################################################################
 #check if 2x2 file has proper geotransform
 #1 pixel (in width or height) still unsupported because we can't get the pixel dimensions
+
+
 def netcdf_31():
 
     if gdaltest.netcdf_drv is None:
@@ -1226,6 +1292,7 @@ def netcdf_31():
 
 ###############################################################################
 # Test NC_UBYTE write/read - netcdf-4 (FORMAT=NC4) only (#5053)
+
 
 def netcdf_32():
 
@@ -1252,6 +1319,8 @@ def netcdf_32():
 
 ###############################################################################
 # TEST NC_UBYTE metadata read - netcdf-4 (FORMAT=NC4) only (#5053)
+
+
 def netcdf_33():
 
     if gdaltest.netcdf_drv is None:
@@ -1269,6 +1338,8 @@ def netcdf_33():
 ###############################################################################
 # check support for reading large file with chunking and DEFLATE compression
 # if chunking is not supported within the netcdf driver, this test can take very long
+
+
 def netcdf_34():
 
     filename = 'utm-big-chunks.nc'
@@ -1316,6 +1387,8 @@ def netcdf_34():
 
 ###############################################################################
 # test writing a long metadata > 8196 chars (bug #5113)
+
+
 def netcdf_35():
 
     if gdaltest.netcdf_drv is None:
@@ -1350,6 +1423,8 @@ def netcdf_35():
 
 ###############################################################################
 # test for correct geotransform (bug #5114)
+
+
 def netcdf_36():
 
     if gdaltest.netcdf_drv is None:
@@ -1375,6 +1450,8 @@ def netcdf_36():
 
 ###############################################################################
 # test for reading gaussian grid (bugs #4513 and #5118)
+
+
 def netcdf_37():
 
     if gdaltest.netcdf_drv is None:
@@ -1412,6 +1489,8 @@ def netcdf_37():
 
 ###############################################################################
 # test for correct geotransform of projected data in km units (bug #5118)
+
+
 def netcdf_38():
 
     if gdaltest.netcdf_drv is None:
@@ -1439,6 +1518,7 @@ def netcdf_38():
 
 ###############################################################################
 # Test VRT and NETCDF:
+
 
 def netcdf_39():
 
@@ -1516,6 +1596,7 @@ def netcdf_39():
 ###############################################################################
 # Check support of reading of chunked bottom-up files.
 
+
 def netcdf_40():
 
     if gdaltest.netcdf_drv is None or not gdaltest.netcdf_drv_has_nc4:
@@ -1525,6 +1606,7 @@ def netcdf_40():
 
 ###############################################################################
 # Test support for georeferenced file without CF convention
+
 
 def netcdf_41():
 
@@ -1546,6 +1628,7 @@ def netcdf_41():
 
 ###############################################################################
 # Test writing & reading GEOLOCATION array
+
 
 def netcdf_42():
 
@@ -1601,6 +1684,7 @@ def netcdf_42():
 ###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
 
+
 def netcdf_43():
 
     if gdaltest.netcdf_drv is None:
@@ -1629,6 +1713,7 @@ def netcdf_43():
 ###############################################################################
 # Test NC_USHORT/UINT read/write - netcdf-4 only (#6337)
 
+
 def netcdf_44():
 
     if gdaltest.netcdf_drv is None:
@@ -1646,6 +1731,7 @@ def netcdf_44():
 
 ###############################################################################
 # Test reading a vector NetCDF 3 file
+
 
 def netcdf_45():
 
@@ -1702,6 +1788,7 @@ def netcdf_45():
 ###############################################################################
 # Test reading a vector NetCDF 3 file
 
+
 def netcdf_46():
 
     if gdaltest.netcdf_drv is None:
@@ -1720,6 +1807,7 @@ def netcdf_46():
 
 ###############################################################################
 # Test reading a vector NetCDF 4 file
+
 
 def netcdf_47():
 
@@ -1774,6 +1862,7 @@ def netcdf_47():
 ###############################################################################
 # Test reading a vector NetCDF 3 file without any geometry
 
+
 def netcdf_48():
 
     if gdaltest.netcdf_drv is None:
@@ -1794,6 +1883,7 @@ def netcdf_48():
 
 ###############################################################################
 # Test reading a vector NetCDF 3 file with X,Y,Z vars as float
+
 
 def netcdf_49():
 
@@ -1824,6 +1914,7 @@ def netcdf_49():
 
 ###############################################################################
 # Test creating a vector NetCDF 3 file with WKT geometry field
+
 
 def netcdf_50():
 
@@ -1872,6 +1963,7 @@ def netcdf_50():
 
 ###############################################################################
 # Test creating a vector NetCDF 3 file with X,Y,Z fields
+
 
 def netcdf_51():
 
@@ -1956,6 +2048,7 @@ def netcdf_51():
 ###############################################################################
 # Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
 
+
 def netcdf_51_no_gdal_tags():
 
     if gdaltest.netcdf_drv is None:
@@ -2005,6 +2098,7 @@ def netcdf_51_no_gdal_tags():
 
 ###############################################################################
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
+
 
 def netcdf_52():
 
@@ -2089,6 +2183,7 @@ def netcdf_52():
 ###############################################################################
 # Test creating a vector NetCDF 4 file with WKT geometry field
 
+
 def netcdf_53():
 
     if gdaltest.netcdf_drv is None:
@@ -2140,6 +2235,7 @@ def netcdf_53():
 ###############################################################################
 # Test appending to a vector NetCDF 4 file with unusual types (ubyte, ushort...)
 
+
 def netcdf_54():
 
     if gdaltest.netcdf_drv is None:
@@ -2185,6 +2281,7 @@ def netcdf_54():
 
 ###############################################################################
 # Test auto-grow of bidimensional char variables in a vector NetCDF 4 file
+
 
 def netcdf_55():
 
@@ -2232,6 +2329,7 @@ def netcdf_55():
 ###############################################################################
 # Test truncation of bidimensional char variables and WKT in a vector NetCDF 3 file
 
+
 def netcdf_56():
 
     if gdaltest.netcdf_drv is None:
@@ -2266,6 +2364,7 @@ def netcdf_56():
 
 ###############################################################################
 # Test one layer per file creation
+
 
 def netcdf_57():
 
@@ -2318,6 +2417,7 @@ def netcdf_57():
 ###############################################################################
 # Test one layer per group (NC4)
 
+
 def netcdf_58():
 
     if gdaltest.netcdf_drv is None:
@@ -2351,6 +2451,8 @@ def netcdf_58():
 
 ###############################################################################
 #check for UnitType set/get.
+
+
 def netcdf_59():
 
     if gdaltest.netcdf_drv is None:
@@ -2375,6 +2477,7 @@ def netcdf_59():
 ###############################################################################
 # Test reading a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 # http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
+
 
 def netcdf_60():
 
@@ -2417,6 +2520,7 @@ def netcdf_60():
 ###############################################################################
 # Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
+
 def netcdf_61():
 
     if gdaltest.netcdf_drv is None:
@@ -2453,6 +2557,7 @@ def netcdf_61():
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
+
 def netcdf_62():
 
     if gdaltest.netcdf_drv is None:
@@ -2481,6 +2586,7 @@ def netcdf_62():
 
     return 'success'
 
+
 def netcdf_62_ncdump_check():
 
     if gdaltest.netcdf_drv is None:
@@ -2508,6 +2614,7 @@ def netcdf_62_ncdump_check():
 
     return 'success'
 
+
 def netcdf_62_cf_check():
 
     if gdaltest.netcdf_drv is None:
@@ -2527,6 +2634,7 @@ def netcdf_62_cf_check():
 
 ###############################################################################
 # Test creating a NC4 "Indexed ragged array representation of profiles" v1.6.0 H3.5
+
 
 def netcdf_63():
 
@@ -2559,6 +2667,7 @@ def netcdf_63():
     gdal.Unlink('/vsimem/netcdf_63.csv')
 
     return 'success'
+
 
 def netcdf_63_ncdump_check():
 
@@ -2596,6 +2705,7 @@ def netcdf_63_ncdump_check():
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 # but without a profile field.
 
+
 def netcdf_64():
 
     if gdaltest.netcdf_drv is None:
@@ -2629,6 +2739,7 @@ def netcdf_64():
 # Test creating a NC4 file with empty string fields / WKT fields
 # (they must be filled as empty strings to avoid crashes in netcdf lib)
 
+
 def netcdf_65():
 
     if gdaltest.netcdf_drv is None:
@@ -2660,6 +2771,7 @@ def netcdf_65():
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 # from a config file
+
 
 def netcdf_66():
 
@@ -2763,6 +2875,7 @@ def netcdf_66():
 
     return 'success'
 
+
 def netcdf_66_ncdump_check():
 
     if gdaltest.netcdf_drv is None:
@@ -2797,6 +2910,8 @@ def netcdf_66_ncdump_check():
 ###############################################################################
 # ticket #5950: optimize IReadBlock() and CheckData() handling of partial
 # blocks in the x axischeck for partial block reading.
+
+
 def netcdf_67():
 
     if gdaltest.netcdf_drv is None:
@@ -2849,6 +2964,7 @@ def netcdf_68():
 ###############################################################################
 # Test opening a dataset with a 1D variable with 0 record (#6645)
 
+
 def netcdf_69():
 
     if gdaltest.netcdf_drv is None:
@@ -2862,6 +2978,7 @@ def netcdf_69():
 
 ###############################################################################
 # Test that we don't erroneously identify non-longitude axis as longitude (#6759)
+
 
 def netcdf_70():
 
@@ -2881,6 +2998,7 @@ def netcdf_70():
 # Test that we take into account x and y offset and scaling
 # (https://github.com/OSGeo/gdal/pull/200)
 
+
 def netcdf_71():
 
     if gdaltest.netcdf_drv is None:
@@ -2897,6 +3015,7 @@ def netcdf_71():
 
 ###############################################################################
 # test int64 attributes / dim
+
 
 def netcdf_72():
 
@@ -2917,6 +3036,7 @@ def netcdf_72():
 ###############################################################################
 # test geostationary with radian units (https://github.com/OSGeo/gdal/pull/220)
 
+
 def netcdf_73():
 
     if gdaltest.netcdf_drv is None:
@@ -2934,6 +3054,7 @@ def netcdf_73():
 ###############################################################################
 # test geostationary with microradian units (https://github.com/OSGeo/gdal/pull/220)
 
+
 def netcdf_74():
 
     if gdaltest.netcdf_drv is None:
@@ -2950,6 +3071,7 @@ def netcdf_74():
 
 ###############################################################################
 # test opening a ncdump file
+
 
 def netcdf_75():
 
@@ -2986,6 +3108,7 @@ def netcdf_75():
 ###############################################################################
 # test opening a vector ncdump file
 
+
 def netcdf_76():
 
     if gdaltest.netcdf_drv is None:
@@ -3005,6 +3128,7 @@ def netcdf_76():
 
 ###############################################################################
 # test opening a raster file that used to be confused with a vector file (#6974)
+
 
 def netcdf_77():
 
@@ -3052,6 +3176,7 @@ def netcdf_78():
 # test we handle correctly _Unsigned="true" for a byte dataset with
 # negative nodata value
 
+
 def netcdf_79():
 
     if gdaltest.netcdf_drv is None:
@@ -3072,6 +3197,8 @@ def netcdf_79():
 
 ###############################################################################
 # Test creating and opening with accent
+
+
 def netcdf_80():
 
     if gdaltest.netcdf_drv is None:
@@ -3082,6 +3209,7 @@ def netcdf_80():
 
 ###############################################################################
 # netCDF file in rotated_pole projection
+
 
 def netcdf_81():
 
@@ -3116,6 +3244,7 @@ def netcdf_81():
 # netCDF file with extra dimensions that are oddly indexed (1D variable
 # corresponding to the dimension but with a differentn ame, no corresponding
 # 1D variable, several corresponding variables)
+
 
 def netcdf_82():
 
@@ -3156,6 +3285,7 @@ def netcdf_82():
 
 ###############################################################################
 # main tests list
+
 
 gdaltest_list = [
     netcdf_1,

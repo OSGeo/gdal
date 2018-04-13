@@ -38,6 +38,7 @@ from osgeo import gdal
 ###############################################################################
 # Test AsyncReader interface on the default (synchronous) implementation
 
+
 def asyncreader_1():
 
     ds = gdal.Open('data/rgbsmall.tif')

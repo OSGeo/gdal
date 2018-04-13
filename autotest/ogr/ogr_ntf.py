@@ -85,6 +85,8 @@ sys.path.append( '../pymod' )
 import gdaltest
 
 ###############################################################################
+
+
 def ogr_ntf_1():
 
     if not gdaltest.download_file('http://www.ordnancesurvey.co.uk/oswebsite/products/strategi/sampledata/stratntf.exe', 'stratntf.exe'):
@@ -188,6 +190,7 @@ def ogr_ntf_2():
     ds.Destroy()
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_ntf_1,

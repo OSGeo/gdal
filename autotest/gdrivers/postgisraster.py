@@ -44,6 +44,8 @@ import gdaltest
 
 ###############################################################################
 #
+
+
 def postgisraster_init():
     try:
         gdaltest.postgisrasterDriver = gdal.GetDriverByName('PostGISRaster')
@@ -70,6 +72,8 @@ def postgisraster_init():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_open_error1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -83,6 +87,8 @@ def postgisraster_test_open_error1():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_open_error2():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -96,6 +102,8 @@ def postgisraster_test_open_error2():
 
 ###############################################################################
 #
+
+
 def postgisraster_compare_utm():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -114,6 +122,8 @@ def postgisraster_compare_utm():
 
 ###############################################################################
 #
+
+
 def postgisraster_compare_small_world():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -132,6 +142,8 @@ def postgisraster_compare_small_world():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_utm_open():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -154,6 +166,8 @@ def postgisraster_test_utm_open():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_small_world_open_b1():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -176,6 +190,8 @@ def postgisraster_test_small_world_open_b1():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_small_world_open_b2():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -190,7 +206,6 @@ def postgisraster_test_small_world_open_b2():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-
     main_ds = gdal.Open( gdaltest.postgisraster_connection_string + "table='small_world'" )
 
     # Try to open PostGISRaster with the same data than original tif file
@@ -199,6 +214,8 @@ def postgisraster_test_small_world_open_b2():
 
 ###############################################################################
 #
+
+
 def postgisraster_test_small_world_open_b3():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -222,6 +239,7 @@ def postgisraster_test_small_world_open_b3():
 
     return tst.testOpen(check_prj = prj, check_gt = gt, skip_checksum = True)
 
+
 def postgisraster_test_create_copy_bad_conn_string():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -234,6 +252,7 @@ def postgisraster_test_create_copy_bad_conn_string():
         return 'success'
     else:
         return 'fail'
+
 
 def postgisraster_test_create_copy_no_dbname():
     if gdaltest.postgisrasterDriver is None:
@@ -252,6 +271,7 @@ def postgisraster_test_create_copy_no_dbname():
     else:
         return 'fail'
 
+
 def postgisraster_test_create_copy_no_tablename():
     if gdaltest.postgisrasterDriver is None:
         return 'skip'
@@ -268,6 +288,7 @@ def postgisraster_test_create_copy_no_tablename():
         return 'success'
     else:
         return 'fail'
+
 
 def postgisraster_test_create_copy_and_delete():
     """
@@ -290,6 +311,7 @@ def postgisraster_test_create_copy_and_delete():
         return 'fail'
     else:
         return 'success'
+
 
 def postgisraster_test_create_copy_and_delete_phases():
     """
@@ -372,6 +394,7 @@ def postgisraster_test_create_copy_and_delete_phases():
 
     return 'success'
 
+
 def postgisraster_test_norid():
     """
     Test the ability to connect to a data source if it has no 'rid' column.
@@ -394,6 +417,7 @@ def postgisraster_test_norid():
                 return 'fail'
 
     return 'success'
+
 
 def postgisraster_test_serial():
     """
@@ -420,6 +444,7 @@ def postgisraster_test_serial():
 
     return 'success'
 
+
 def postgisraster_test_unique():
     """
     Test the ability to connect to a data source if it has no primary key,
@@ -444,6 +469,7 @@ def postgisraster_test_unique():
                 return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     postgisraster_init,

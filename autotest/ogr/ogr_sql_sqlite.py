@@ -49,6 +49,7 @@ import webserver
 ###############################################################################
 # Detect OGR SQLite dialect availability
 
+
 def ogr_sql_sqlite_available():
 
     ogrtest.has_sqlite_dialect = False
@@ -72,6 +73,7 @@ def ogr_sql_sqlite_available():
 
 ###############################################################################
 # Tests that don't involve geometry
+
 
 def ogr_sql_sqlite_1():
 
@@ -264,7 +266,6 @@ def ogr_sql_sqlite_1():
             sql_lyr = ds.ExecuteSQL( "SELECT * FROM my_layer WHERE GEOMETRY = x'00'", dialect = 'SQLite' )
             ds.ReleaseResultSet( sql_lyr )
 
-
         # Test INSERT with specified ROWID/FID
         sql_lyr = ds.ExecuteSQL( "INSERT INTO my_layer (intfield, ROWID) VALUES (100, 1000)", dialect = 'SQLite' )
         ds.ReleaseResultSet( sql_lyr )
@@ -290,7 +291,6 @@ def ogr_sql_sqlite_1():
             return 'fail'
         feat = None
 
-
         ds.DeleteLayer(0)
 
     ds = None
@@ -299,6 +299,7 @@ def ogr_sql_sqlite_1():
 
 ###############################################################################
 # Tests that involve geometry  (but without needing Spatialite)
+
 
 def ogr_sql_sqlite_2():
 
@@ -427,6 +428,7 @@ def ogr_sql_sqlite_2():
 ###############################################################################
 # Test that involves a join
 
+
 def ogr_sql_sqlite_3():
 
     if not ogrtest.has_sqlite_dialect:
@@ -459,6 +461,7 @@ def ogr_sql_sqlite_3():
 ###############################################################################
 # Test that involves a self-join (to check that we can open twice the same table)
 
+
 def ogr_sql_sqlite_4():
 
     if not ogrtest.has_sqlite_dialect:
@@ -480,6 +483,7 @@ def ogr_sql_sqlite_4():
 
 ###############################################################################
 # Test that involves spatialite
+
 
 def ogr_sql_sqlite_5():
 
@@ -520,6 +524,7 @@ def ogr_sql_sqlite_5():
 # If Spatialite available, retry some tests without it, to check that
 # we are fully compatible with regular SQLite
 
+
 def ogr_sql_sqlite_6():
 
     if not ogrtest.has_sqlite_dialect:
@@ -549,13 +554,13 @@ def ogr_sql_sqlite_6():
 ###############################################################################
 # Test if there's a text column called GEOMETRY already in the table
 
+
 def ogr_sql_sqlite_7():
 
     if not ogrtest.has_sqlite_dialect:
         return 'skip'
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
-
 
     lyr = ds.CreateLayer( "my_layer" )
     field_defn = ogr.FieldDefn('intfield', ogr.OFTInteger)
@@ -602,6 +607,7 @@ def ogr_sql_sqlite_7():
 ###############################################################################
 # Test join with an external datasource
 
+
 def ogr_sql_sqlite_8():
 
     if not ogrtest.has_sqlite_dialect:
@@ -628,6 +634,7 @@ def ogr_sql_sqlite_8():
 ###############################################################################
 # Check parsing of sub-selects
 
+
 def ogr_sql_sqlite_9():
 
     if not ogrtest.has_sqlite_dialect:
@@ -651,6 +658,7 @@ def ogr_sql_sqlite_9():
 ###############################################################################
 # Test optimized count(*)
 
+
 def ogr_sql_sqlite_10():
 
     if not ogrtest.has_sqlite_dialect:
@@ -673,6 +681,7 @@ def ogr_sql_sqlite_10():
 
 ###############################################################################
 # Test correct parsing of litterals
+
 
 def ogr_sql_sqlite_11():
 
@@ -702,6 +711,7 @@ def ogr_sql_sqlite_11():
 
 ###############################################################################
 # Test various error conditions
+
 
 def ogr_sql_sqlite_12():
 
@@ -734,6 +744,7 @@ def ogr_sql_sqlite_12():
 
 ###############################################################################
 # Test ogr_layer_Extent(), ogr_layer_SRID() and ogr_layer_GeometryType()
+
 
 def ogr_sql_sqlite_13():
 
@@ -887,6 +898,7 @@ def ogr_sql_sqlite_13():
 ###############################################################################
 #
 
+
 def ogr_sql_sqlite_14_and_15(sql):
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource( "my_ds")
@@ -954,6 +966,7 @@ def ogr_sql_sqlite_14_and_15(sql):
 ###############################################################################
 # Test 'idx_layername_geometryname' spatial index recognition
 
+
 def ogr_sql_sqlite_14():
 
     if not ogrtest.has_sqlite_dialect:
@@ -971,6 +984,7 @@ def ogr_sql_sqlite_14():
 
 ###############################################################################
 # Test 'SpatialIndex' spatial index recognition
+
 
 def ogr_sql_sqlite_15():
 
@@ -991,6 +1005,8 @@ def ogr_sql_sqlite_15():
 
 ###############################################################################
 do_log = False
+
+
 class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 
     def log_request(self, code='-', size='-'):
@@ -1261,7 +1277,6 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
         self.send_error(404,'File Not Found: %s' % self.path)
 
 
-
 ###############################################################################
 def ogr_sql_sqlite_start_webserver():
 
@@ -1282,6 +1297,7 @@ def ogr_sql_sqlite_start_webserver():
 
 ###############################################################################
 # Test ogr_geocode()
+
 
 def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?q=%%s'):
 
@@ -1416,6 +1432,7 @@ def ogr_sql_sqlite_16(service = None, template = 'http://127.0.0.1:%d/geocoding?
 ###############################################################################
 # Test ogr_geocode_reverse()
 
+
 def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeocoding?lon={lon}&lat={lat}'):
 
     if not ogrtest.has_sqlite_dialect:
@@ -1540,12 +1557,14 @@ def ogr_sql_sqlite_17(service = None, template = 'http://127.0.0.1:%d/reversegeo
 ###############################################################################
 # Test ogr_geocode() with Yahoo geocoding service
 
+
 def ogr_sql_sqlite_18():
 
     return ogr_sql_sqlite_16('YAHOO', 'http://127.0.0.1:%d/yahoogeocoding?q=%%s')
 
 ###############################################################################
 # Test ogr_geocode_reverse() with Yahoo geocoding service
+
 
 def ogr_sql_sqlite_19():
 
@@ -1554,12 +1573,14 @@ def ogr_sql_sqlite_19():
 ###############################################################################
 # Test ogr_geocode() with GeoNames.org geocoding service
 
+
 def ogr_sql_sqlite_20():
 
     return ogr_sql_sqlite_16('GEONAMES', 'http://127.0.0.1:%d/geonamesgeocoding?q=%%s')
 
 ###############################################################################
 # Test ogr_geocode_reverse() with GeoNames.org geocoding service
+
 
 def ogr_sql_sqlite_21():
 
@@ -1568,6 +1589,7 @@ def ogr_sql_sqlite_21():
 ###############################################################################
 # Test ogr_geocode() with Bing geocoding service
 
+
 def ogr_sql_sqlite_22():
 
     return ogr_sql_sqlite_16('BING', 'http://127.0.0.1:%d/binggeocoding?q=%%s')
@@ -1575,12 +1597,14 @@ def ogr_sql_sqlite_22():
 ###############################################################################
 # Test ogr_geocode_reverse() with Bing geocoding service
 
+
 def ogr_sql_sqlite_23():
 
     return ogr_sql_sqlite_17('BING', 'http://127.0.0.1:%d/bingreversegeocoding?{lat},{lon}')
 
 ###############################################################################
 # Test ogr_deflate() and ogr_inflate()
+
 
 def ogr_sql_sqlite_24():
 
@@ -1671,6 +1695,8 @@ def ogr_sql_sqlite_24():
     return 'success'
 
 ###############################################################################
+
+
 def ogr_sql_sqlite_stop_webserver():
 
     if ogrtest.webserver_port == 0:
@@ -1685,6 +1711,7 @@ def ogr_sql_sqlite_stop_webserver():
 # implemented. Test it also if spatialite is available, so we have a cross
 # validation...
 
+
 def ogr_sql_sqlite_25_test_errors(ds, fct):
     for val in [ 'null', "'foo'", "x'00010203'" ]:
         sql_lyr = ds.ExecuteSQL("SELECT %s(%s)" % (fct, val), dialect = 'SQLite')
@@ -1696,6 +1723,7 @@ def ogr_sql_sqlite_25_test_errors(ds, fct):
             return False
         ds.ReleaseResultSet(sql_lyr)
         return True
+
 
 def ogr_sql_sqlite_25():
 
@@ -1760,6 +1788,7 @@ def ogr_sql_sqlite_25():
         return 'fail'
 
     return 'success'
+
 
 def ogr_sql_sqlite_26():
 
@@ -1884,7 +1913,6 @@ def ogr_sql_sqlite_26():
             gdaltest.post_reason('fail with %s' % op_str)
             return 'fail'
 
-
     op_str = 'Intersection'
     for val in [ 'null', "'foo'", "x'00010203'" ]:
         sql_lyr = ds.ExecuteSQL("SELECT ST_%s(ST_GeomFromText('%s'), %s)" % (op_str, geom1_wkt, val), dialect = 'SQLite')
@@ -1947,6 +1975,7 @@ def ogr_sql_sqlite_27():
 ###############################################################################
 # Test hstore_get_value()
 
+
 def ogr_sql_sqlite_28():
 
     if not ogrtest.has_sqlite_dialect:
@@ -1995,6 +2024,7 @@ def ogr_sql_sqlite_28():
 ###############################################################################
 # Test compat with curve geometries
 
+
 def ogr_sql_sqlite_29():
 
     if not ogrtest.has_sqlite_dialect:
@@ -2027,6 +2057,7 @@ def ogr_sql_sqlite_29():
 
 ###############################################################################
 # Test compat with M geometries
+
 
 def ogr_sql_sqlite_30():
 
@@ -2081,6 +2112,7 @@ def ogr_sql_sqlite_30():
 ###############################################################################
 # Test filtering complex field name
 
+
 def ogr_sql_sqlite_31():
 
     if not ogrtest.has_sqlite_dialect:
@@ -2104,6 +2136,7 @@ def ogr_sql_sqlite_31():
         return 'fail'
 
     return 'success'
+
 
 gdaltest_list = [
     ogr_sql_sqlite_1,
