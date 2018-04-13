@@ -56,7 +56,7 @@ class TestXMPRead:
 
         if self.drivername == 'PDF':
             md = drv.GetMetadata()
-            if not 'HAVE_POPPLER' in md and not 'HAVE_PODOFO' in md:
+            if 'HAVE_POPPLER' not in md and 'HAVE_PODOFO' not in md:
                 return 'skip'
 
         # we set ECW to not resolve projection and datum strings to get 3.x behavior.
@@ -121,7 +121,7 @@ list = [ [ "GTiff", "data/byte_with_xmp.tif", True ],
          [ "PDF", "data/adobe_style_geospatial.pdf", False ],
          [ "WEBP", "data/rgbsmall_with_xmp.webp", True ],
          [ "WEBP", "data/rgbsmall.webp", False ],
-]
+         ]
 
 for item in list:
     drivername = item[0]

@@ -592,7 +592,7 @@ def ogr_openfilegdb_4():
               ("id = 1 OR xml <> ''", [1,2,3,4,5], 0), # no index used
               ('id = id', [1,2,3,4,5], 0), # no index used
               ('id = 1 + 0', [1], 0), # no index used (currently...)
-             ]
+              ]
     for test in tests:
 
         if len(test) == 2:
@@ -635,7 +635,7 @@ def ogr_openfilegdb_4():
               ('id IS NULL OR id IS NOT NULL', [1,2,3,4,5,6]),
               ('id = 1 OR id IS NULL', [1, 6]),
               ('id IS NULL OR id = 1', [1, 6]),
-            ]
+              ]
     for test in tests:
 
         if len(test) == 2:
@@ -679,7 +679,7 @@ def ogr_openfilegdb_4():
               ('real < 4', 86 + 3 * 85, None),
               ('real > 1 AND real < 2', 0, None),
               ('real < 0', 0, None),
-            ]
+              ]
     for (where_clause, count, start) in tests:
 
         lyr.SetAttributeFilter(where_clause)
@@ -984,7 +984,7 @@ def ogr_openfilegdb_10():
                             error_msg = gdal.GetLastErrorMsg()
                 if feat is None or error_msg != '':
                     if offset - last_offset >= 4 or last_error_msg != error_msg:
-                        if error_msg != '' and not error_msg in errors:
+                        if error_msg != '' and error_msg not in errors:
                             errors.add(error_msg)
                             offsets.append(offset)
                         else:
@@ -1022,7 +1022,7 @@ def ogr_openfilegdb_10():
                             error_msg = gdal.GetLastErrorMsg()
                 if feat is None or error_msg != '':
                     if offset - last_offset >= 4 or last_error_msg != error_msg:
-                        if error_msg != '' and not error_msg in errors:
+                        if error_msg != '' and error_msg not in errors:
                             errors.add(error_msg)
                             offsets.append(offset)
                         else:
@@ -1615,4 +1615,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

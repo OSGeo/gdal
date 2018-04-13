@@ -112,4 +112,3 @@ while feat is not None:
     feat.Destroy()
 
     feat = poly_layer.GetNextFeature()
-

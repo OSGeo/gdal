@@ -3,7 +3,9 @@
 # This script set ups the environment variables needed for executing the
 # GDAL build in this tree, without installing it.
 
-set -eu
+# Do *NOT* use set set -e|-u flags as this script is intended to be sourced
+# and thus an error emitted will kill the shell.
+# set -eu
 
 called=$_
 

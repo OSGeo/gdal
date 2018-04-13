@@ -71,7 +71,7 @@ def jp2lura_1():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def jp2lura_missing_license_num():
 
@@ -93,7 +93,7 @@ def jp2lura_missing_license_num():
     return 'success'
 
 ###############################################################################
-# 
+#
 
 def jp2lura_invalid_license_num():
 
@@ -1182,7 +1182,7 @@ def jp2lura_28():
               ( ['CODEBLOCK_WIDTH=128', 'CODEBLOCK_HEIGHT=128'], 64, 64, True ),
               ( ['CODEBLOCK_WIDTH=63'], 32, 64, True ),
               ( ['CODEBLOCK_WIDTH=32', 'CODEBLOCK_HEIGHT=32'], 32, 32, False ),
-            ]
+              ]
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
@@ -2288,7 +2288,7 @@ def jp2lura_52():
                [ 2 ** 27 - 1, gdal.GDT_Int32, 'i'],
                [           0, gdal.GDT_UInt32, 'I'],
                [ 2 ** 28 - 1, gdal.GDT_UInt32, 'I'],
-             ]
+              ]
     for (val, dt, fmt) in tests:
 
         src_ds = gdal.GetDriverByName('MEM').Create('', 10, 10, 1, dt)
@@ -2495,4 +2495,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

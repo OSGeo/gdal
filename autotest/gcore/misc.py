@@ -326,7 +326,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                     gdaltest.post_reason(reason)
                     return 'fail'
 
-                if has_succeeded and not drv.ShortName in setDriversDone and nBands > 0:
+                if has_succeeded and drv.ShortName not in setDriversDone and nBands > 0:
                     setDriversDone.add(drv.ShortName)
 
                     # The first list of drivers fail to detect short writing
@@ -361,7 +361,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                 if fl is not None:
                                     print(fl)
 
-                    if not drv.ShortName in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
+                    if drv.ShortName not in ['ECW', 'JP2ECW', 'VRT', 'XPM', 'JPEG2000', 'FIT', 'RST', 'INGR', 'USGSDEM', 'KMLSUPEROVERLAY', 'GMT']:
                         dst_ds = drv.CreateCopy(filename, ds, callback = misc_6_interrupt_callback_class().cbk)
                         if dst_ds is not None:
                             gdaltest.post_reason('interruption did not work with drv = %s, nBands = %d, datatype = %s' % (drv.ShortName, nBands, gdal.GetDataTypeName(datatype)))

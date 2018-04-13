@@ -73,7 +73,7 @@ nLastTick = -1
 def TermProgress( dfComplete, pszMessage, pProgressArg ):
 
     global nLastTick
-    nThisTick = (int) (dfComplete * 40.0)
+    nThisTick = int(dfComplete * 40.0)
 
     if nThisTick < 0:
         nThisTick = 0
@@ -494,7 +494,7 @@ def main(args = None, progress_func = TermProgress, progress_data = None):
         elif pszDataSource is None:
             pszDataSource = args[iArg]
         else:
-            papszLayers.append (args[iArg] )
+            papszLayers.append(args[iArg])
 
         iArg = iArg + 1
 
@@ -1159,7 +1159,7 @@ def wkbFlatten(x):
 #                               SetZ()
 #**********************************************************************
 
-def SetZ (poGeom, dfZ ):
+def SetZ(poGeom, dfZ):
 
     if poGeom is None:
         return

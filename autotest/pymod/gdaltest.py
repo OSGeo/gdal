@@ -546,8 +546,8 @@ class GDALTest:
                 # because we need to support old and buggy Python 2.3.
                 # Tested on Linux, Mac OS X and Windows, with Python 2.3/2.4/2.5.
                 sv = str(new_stat[i]).lower()
-                if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
-                    post_reason( 'NaN or Invinite value encountered '%'.' % sv )
+                if 'n' in sv or 'i' in sv or '#' in sv:
+                    post_reason('NaN or infinity value encountered \'%s\'.' % sv)
                     return 'fail'
 
                 if abs(new_stat[i]-check_approx_stat[i]) > stat_epsilon:
@@ -570,8 +570,8 @@ class GDALTest:
             for i in range(4):
 
                 sv = str(new_stat[i]).lower()
-                if sv.find('n') >= 0 or sv.find('i') >= 0 or sv.find('#') >= 0:
-                    post_reason( 'NaN or Infinite value encountered '%'.' % sv )
+                if 'n' in sv or 'i' in sv or '#' in sv:
+                    post_reason('NaN or infinity value encountered \'%s\'.' % sv)
                     return 'fail'
 
                 if abs(new_stat[i]-check_stat[i]) > stat_epsilon:
@@ -1016,7 +1016,7 @@ class GDALTest:
 
         md_dict = new_ds.GetMetadata()
 
-        if (not 'TEST_KEY' in md_dict):
+        if 'TEST_KEY' not in md_dict:
             post_reason( 'Metadata item TEST_KEY does not exist.')
             return 'fail'
 
@@ -1052,7 +1052,7 @@ class GDALTest:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
 
-        if self.options is None or not 'PIXELTYPE=SIGNEDBYTE' in self.options:
+        if self.options is None or 'PIXELTYPE=SIGNEDBYTE' not in self.options:
             nodata = 130
         else:
             nodata = 11
@@ -1084,7 +1084,7 @@ class GDALTest:
         new_ds = None
 
         if delete:
-            new_ds = gdal.Open (new_filename)
+            new_ds = gdal.Open(new_filename)
             if new_ds.GetRasterBand(1).GetNoDataValue() is not None:
                 post_reason( 'Got nodata value whereas none was expected' )
                 return 'fail'

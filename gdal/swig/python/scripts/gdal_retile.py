@@ -311,7 +311,7 @@ def getTileIndexFromFiles( inputTiles, driverTyp):
 
 
 
-def getTargetDir (level = -1):
+def getTargetDir(level = -1):
     if level==-1:
         return TargetDir
     else:
@@ -893,7 +893,7 @@ def main(args = None):
 
     if Levels > 0:    #prepare Dirs for pyramid
         startIndx=1
-        for levelIndx in range (startIndx,Levels+1):
+        for levelIndx in range(startIndx,Levels+1):
             leveldir=TargetDir+str(levelIndx)+os.sep
             if (os.path.exists(leveldir)):
                 continue

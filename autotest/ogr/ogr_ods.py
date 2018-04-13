@@ -205,14 +205,14 @@ def ogr_ods_kspread_1():
                    ogr.OFTReal,
                    ogr.OFTReal,
                    ogr.OFTDate,
-                   ogr.OFTString, #ogr.OFTDateTime,
+                   ogr.OFTString,  # ogr.OFTDateTime,
                    ogr.OFTReal,
                    ogr.OFTTime,
                    ogr.OFTReal,
                    ogr.OFTInteger,
                    ogr.OFTReal,
-                   ogr.OFTString, #ogr.OFTDateTime
-                  ]
+                   ogr.OFTString,  # ogr.OFTDateTime
+                   ]
 
     for i in range(len(type_array)):
         if lyr.GetLayerDefn().GetFieldDefn(i).GetType() != type_array[i]:

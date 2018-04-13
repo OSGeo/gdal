@@ -35,7 +35,7 @@ def find_start_identifier_pos(content, pos_start_identifier):
     level_parenthesis = 0
     level_bracket = 0
     while True:
-        c  = content[pos_start_identifier]
+        c = content[pos_start_identifier]
         if level_parenthesis > 0 and c != '(' and c != ')':
             pos_start_identifier -= 1
         elif c == ')':
@@ -74,7 +74,7 @@ while True:
     if pos1 < 0 and pos2 < 0:
         break
     separator = ''
-    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0): 
+    if pos1 >= 0 and (pos1 < pos2 or pos2 < 0):
         pos = pos1
         pos_after = pos + len('.size()')
         separator = '.'

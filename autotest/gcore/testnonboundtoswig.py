@@ -308,13 +308,13 @@ def testnonboundtoswig_VRTDerivedBands():
     DerivedPixelFuncType = ctypes.CFUNCTYPE(ctypes.c_int, # ret CPLErr
                                             ctypes.POINTER(ctypes.c_void_p), # void **papoSources
                                             ctypes.c_int, # int nSources
-                                            ctypes.c_void_p, #void *pData
-                                            ctypes.c_int, #int nBufXSize
-                                            ctypes.c_int, #int nBufYSize
+                                            ctypes.c_void_p,  # void *pData
+                                            ctypes.c_int,  # int nBufXSize
+                                            ctypes.c_int,  # int nBufYSize
                                             ctypes.c_int, # GDALDataType eSrcType
                                             ctypes.c_int, # GDALDataType eBufType
-                                            ctypes.c_int, #int nPixelSpace
-                                            ctypes.c_int ) #int nLineSpace
+                                            ctypes.c_int,  # int nPixelSpace
+                                            ctypes.c_int )  # int nLineSpace
 
     my_cDerivedPixelFunc = DerivedPixelFuncType(my_pyDerivedPixelFunc)
 
@@ -379,4 +379,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

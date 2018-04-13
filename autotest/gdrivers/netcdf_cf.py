@@ -102,7 +102,7 @@ def netcdf_cf_setup():
             return 'success'
 
     #skip http method if GDAL_DOWNLOAD_TEST_DATA and GDAL_RUN_SLOW_TESTS are not defined
-    if not 'GDAL_DOWNLOAD_TEST_DATA' in os.environ:
+    if 'GDAL_DOWNLOAD_TEST_DATA' not in os.environ:
         print('NOTICE: skipping netcdf CF compliance checks')
         print('to enable remote http checker script, define GDAL_DOWNLOAD_TEST_DATA')
         return 'success'
@@ -185,7 +185,7 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
         return 'fail'
 
     # There should be a ERRORS detected summary
-    if not 'ERRORS detected' in ret:
+    if 'ERRORS detected' not in ret:
         gdaltest.post_reason('ERROR with command - ' + command)
         print(ret)
         print(err)
@@ -197,9 +197,9 @@ def netcdf_cf_check_file(ifile,version='auto', silent=True):
 
     for line in output_all.splitlines( ):
         #optimize this with regex
-        if 'ERROR' in line and not 'ERRORS' in line:
+        if 'ERROR' in line and 'ERRORS' not in line:
             output_err = output_err + '\n' + line
-        elif 'WARNING' in line and not 'WARNINGS' in line:
+        elif 'WARNING' in line and 'WARNINGS' not in line:
             output_warn = output_warn + '\n' + line
 
     result = 'success'
@@ -312,7 +312,7 @@ netcdf_cfproj_tuples = [
          'false_easting', 'false_northing'],
          ['projection_x_coordinate', 'projection_y_coordinate']),
     #Note: Rotated Pole not in this list, as seems not GDAL-supported
-    ("TM", "Transverse Mercator", "EPSG:32655", #UTM Zone 55N
+    ("TM", "Transverse Mercator", "EPSG:32655",  # UTM Zone 55N
         "transverse_mercator",
         [
          'scale_factor_at_central_meridian',
@@ -688,4 +688,3 @@ if __name__ == '__main__':
     gdaltest.clean_tmp()
 
     gdaltest.summarize()
-

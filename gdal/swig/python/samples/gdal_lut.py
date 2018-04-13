@@ -225,8 +225,3 @@ for iY in range(src_ds.RasterYSize):
 
 src_ds = None
 dst_ds = None
-
-
-
-
-

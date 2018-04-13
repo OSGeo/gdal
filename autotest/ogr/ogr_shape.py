@@ -2860,7 +2860,7 @@ def ogr_shape_59():
     geom = feat.GetGeometryRef()
 
     if geom.GetGeometryName() != 'POINT':
-        print (geom.GetGeometryName())
+        print(geom.GetGeometryName())
         gdaltest.post_reason( 'Geometry of wrong type.' )
         return 'fail'
 
@@ -2878,7 +2878,7 @@ def ogr_shape_59():
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'LINESTRING M (0 0 10,1 1 20)':
-        print (geom.ExportToIsoWkt())
+        print(geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
@@ -2894,13 +2894,13 @@ def ogr_shape_59():
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40))':
-        print (geom.ExportToIsoWkt())
+        print(geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     feat = shp_lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if geom.ExportToIsoWkt() != 'POLYGON M ((0 0 10,0 1 20,1 1 30,0 0 40),(0.25 0.25 50,0.75 0.75 60,0.25 0.75 70,0.25 0.25 80))':
-        print (geom.ExportToIsoWkt())
+        print(geom.ExportToIsoWkt())
         gdaltest.post_reason( 'fail' )
         return 'fail'
     geom = None
@@ -3947,12 +3947,12 @@ def ogr_shape_82():
     # save layer?
 
     # Read strings and compare with correct values.
-    feat = gdaltest.shape_lyr.GetFeature(0) #rus
+    feat = gdaltest.shape_lyr.GetFeature(0)  # rus
     if feat.cut_field != result_rus:
         gdaltest.post_reason('Wrong rus string cut')
         return 'fail'
 
-    feat = gdaltest.shape_lyr.GetFeature(1) #en
+    feat = gdaltest.shape_lyr.GetFeature(1)  # en
     if feat.cut_field != result_en:
         gdaltest.post_reason('Wrong en string cut')
         print(feat.cut_field)
@@ -4325,7 +4325,7 @@ def ogr_shape_94():
               [ "POLYGONM", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))" ],
               [ "POLYGONZ", ogr.wkbMultiPolygon25D, "MULTIPOLYGON Z (((0 0 2,0 1 2,1 1 2,1 0 2)),((0 0 2,0 1 2,1 1 2,1 0 2)))" ],
               [ "POLYGONZM", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)),((0 0 2 3,0 1 2 3,1 1 2 3,1 0 2 3)))" ],
-            ]
+              ]
 
     for test in tests:
         try:
@@ -5053,7 +5053,7 @@ def ogr_shape_104():
                   ['TRIANGLE Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
                   ['POLYGON Z ((0 0 0,0 1 2,1 1 3,0 0 0))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
                   ['MULTIPOLYGON Z (((0 0 0,0 1 2,1 1 3,0 0 0)))', ogr.wkbTINZ, [], 'TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))'],
-               ]:
+                  ]:
 
         if expected_wkt is None:
             expected_wkt = wkt

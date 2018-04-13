@@ -217,7 +217,7 @@ def netcdf_check_vars( ifile, vals_global=None, vals_band=None ):
     if vals is None:
         vals = dict()
     for k, v in vals.items():
-        if not k in metadata:
+        if k not in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
             return 'fail'
         # strip { and } as new driver uses these for array values
@@ -232,7 +232,7 @@ def netcdf_check_vars( ifile, vals_global=None, vals_band=None ):
     if vals is None:
         vals = dict()
     for k, v in vals.items():
-        if not k in metadata:
+        if k not in metadata:
             gdaltest.post_reason("missing metadata [%s]" % (str(k)))
             return 'fail'
         # strip { and } as new driver uses these for array values
@@ -1090,7 +1090,7 @@ def netcdf_test_4dfile( ofile ):
     except:
         print('NOTICE: ncdump not found')
         return 'success'
-    if err is None or not 'netcdf library version' in err:
+    if err is None or 'netcdf library version' not in err:
         print('NOTICE: ncdump not found')
         return 'success'
     (ret, err) = gdaltest.runexternal_out_and_err( 'ncdump -h '+ ofile )
@@ -1100,15 +1100,15 @@ def netcdf_test_4dfile( ofile ):
 
     # simple dimension tests using ncdump output
     err = ""
-    if not 'int t(time, levelist, lat, lon) ;' in ret:
+    if 'int t(time, levelist, lat, lon) ;' not in ret:
         err = err + 'variable (t) has wrong dimensions or is missing\n'
-    if not 'levelist = 2 ;' in ret:
+    if 'levelist = 2 ;' not in ret:
         err = err + 'levelist dimension is missing or incorrect\n'
-    if not 'int levelist(levelist) ;' in ret:
+    if 'int levelist(levelist) ;' not in ret:
         err = err + 'levelist variable is missing or incorrect\n'
-    if not 'time = 4 ;' in ret:
+    if 'time = 4 ;' not in ret:
         err = err + 'time dimension is missing or incorrect\n'
-    if not 'double time(time) ;' in ret:
+    if 'double time(time) ;' not in ret:
         err = err + 'time variable is missing or incorrect\n'
     # uncomment this to get full header in output
     #if err != '':
@@ -1335,7 +1335,7 @@ def netcdf_35():
         gdaltest.post_reason( 'open of copy failed' )
         return 'fail'
     md = ds.GetMetadata( '' )
-    if not 'U#bla' in md:
+    if 'U#bla' not in md:
         gdaltest.post_reason( 'U#bla metadata absent' )
         return 'fail'
     bla = md['U#bla']
@@ -1399,7 +1399,7 @@ def netcdf_37():
         return 'fail'
 
     md = ds.GetMetadata( 'GEOLOCATION2' )
-    if not md or not 'Y_VALUES' in md:
+    if not md or 'Y_VALUES' not in md:
         gdaltest.post_reason( 'did not get 1D geolocation' )
         return 'fail'
     y_vals = md['Y_VALUES']
@@ -3295,4 +3295,3 @@ if __name__ == '__main__':
     gdaltest.clean_tmp()
 
     gdaltest.summarize()
-

@@ -188,7 +188,7 @@ def pds4_8():
                    '+proj=poly +lat_0=9 +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    '+proj=sinu +lon_0=10 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    '+proj=tmerc +lat_0=11 +lon_0=10 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
-                 ]:
+                   ]:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1)
         sr = osr.SpatialReference()
         sr.ImportFromProj4(proj4)
@@ -1301,4 +1301,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

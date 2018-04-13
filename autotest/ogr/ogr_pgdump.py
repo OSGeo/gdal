@@ -840,7 +840,7 @@ def ogr_pgdump_13():
               [ ogr.wkbPoint, [ 'DIM=XYZM' ], 'POINT ZM (1 2 3 4)', [ "'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
               [ ogr.wkbPointZM, [], 'POINT ZM (1 2 3 4)', [ "'POINT',4)", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
               [ ogr.wkbPoint, [ 'DIM=XYZM', 'GEOM_TYPE=geography' ], 'POINT ZM (1 2 3 4)', [ "geography(POINTZM,", "01010000C0000000000000F03F000000000000004000000000000008400000000000001040" ] ],
-            ]
+              ]
 
     for (geom_type, options, wkt, expected_strings) in tests:
         ds = ogr.GetDriverByName('PGDump').CreateDataSource('/vsimem/ogr_pgdump_13.sql', options = [ 'LINEFORMAT=LF' ] )
@@ -979,7 +979,7 @@ def ogr_pgdump_15():
     return 'success'
 
 ###############################################################################
-# Test sequence updating 
+# Test sequence updating
 
 def ogr_pgdump_16():
 
@@ -1051,4 +1051,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

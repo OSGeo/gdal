@@ -909,7 +909,7 @@ def Info(ds, **kwargs):
           options --- return of gdal.InfoOptions(), string or array of strings
           other keywords arguments of gdal.InfoOptions()
         If options is provided as a gdal.InfoOptions() object, other keywords are ignored. """
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, format, deserialize) = InfoOptions(**kwargs)
     else:
         (opts, format, deserialize) = kwargs['options']
@@ -1058,7 +1058,7 @@ def Translate(destName, srcDS, **kwargs):
           other keywords arguments of gdal.TranslateOptions()
         If options is provided as a gdal.TranslateOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = TranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1232,7 +1232,7 @@ def Warp(destNameOrDestDS, srcDSOrSrcDSTab, **kwargs):
           other keywords arguments of gdal.WarpOptions()
         If options is provided as a gdal.WarpOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = WarpOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1387,7 +1387,7 @@ def VectorTranslate(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.VectorTranslateOptions()
         If options is provided as a gdal.VectorTranslateOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = VectorTranslateOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1478,7 +1478,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
           other keywords arguments of gdal.DEMProcessingOptions()
         If options is provided as a gdal.DEMProcessingOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, colorFilename, callback, callback_data) = DEMProcessingOptions(**kwargs)
     else:
         (opts, colorFilename, callback, callback_data) = kwargs['options']
@@ -1548,7 +1548,7 @@ def Nearblack(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.NearblackOptions()
         If options is provided as a gdal.NearblackOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = NearblackOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1651,7 +1651,7 @@ def Grid(destName, srcDS, **kwargs):
           other keywords arguments of gdal.GridOptions()
         If options is provided as a gdal.GridOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = GridOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1661,7 +1661,7 @@ def Grid(destName, srcDS, **kwargs):
     return GridInternal(destName, srcDS, opts, callback, callback_data)
 
 def RasterizeOptions(options = [], format = None,
-         outputType = GDT_Unknown, 
+         outputType = GDT_Unknown,
          creationOptions = None, noData = None, initValues = None,
          outputBounds = None, outputSRS = None,
          transformerOptions = None,
@@ -1779,7 +1779,7 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
           other keywords arguments of gdal.RasterizeOptions()
         If options is provided as a gdal.RasterizeOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = RasterizeOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']
@@ -1889,7 +1889,7 @@ def BuildVRT(destName, srcDSOrSrcDSTab, **kwargs):
           other keywords arguments of gdal.BuildVRTOptions()
         If options is provided as a gdal.BuildVRTOptions() object, other keywords are ignored. """
 
-    if not 'options' in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
+    if 'options' not in kwargs or type(kwargs['options']) == type([]) or _is_str_or_unicode(kwargs['options']):
         (opts, callback, callback_data) = BuildVRTOptions(**kwargs)
     else:
         (opts, callback, callback_data) = kwargs['options']

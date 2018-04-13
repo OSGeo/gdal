@@ -268,6 +268,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( explicit_gdaltest_list )
 
     gdaltest.summarize()
-
-
-

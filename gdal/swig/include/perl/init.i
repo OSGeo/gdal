@@ -1,7 +1,7 @@
 %perlcode %{
 
     # keeper maintains child -> parent relationships
-    # child is kept as a key, i.e., string not the real object 
+    # child is kept as a key, i.e., string not the real object
     # parent is kept as the value, i.e., a real object
     # a child may have only one parent!
     # call these as Geo::GDAL::*
@@ -38,7 +38,7 @@
         my ($child) = @_;
         delete $keeper{$child};
     }
-    
+
     sub parent {
         my ($child) = @_;
         $child = tied(%$child) if $child->isa('HASH');

@@ -63,7 +63,7 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test1':
 
     # Check that the .aux.xml in the proxyDB exists
     filelist = gdal.ReadDir('tmppamproxydir')
-    if not '000000_tmpdirreadonly_byte.tif.aux.xml' in filelist:
+    if '000000_tmpdirreadonly_byte.tif.aux.xml' not in filelist:
         print('did not get find 000000_tmpdirreadonly_byte.tif.aux.xml on filesystem')
         sys.exit(1)
 
@@ -100,7 +100,7 @@ if len(sys.argv) == 2 and sys.argv[1] == '-test1':
     ds = None
 
     filelist = gdal.ReadDir('tmppamproxydir')
-    if not '000001_tmpdirreadonly_byte.tif.ovr' in filelist:
+    if '000001_tmpdirreadonly_byte.tif.ovr' not in filelist:
         print('did not get find 000001_tmpdirreadonly_byte.tif.ovr')
         sys.exit(1)
 

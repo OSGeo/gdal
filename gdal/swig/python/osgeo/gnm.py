@@ -321,5 +321,3 @@ GenericNetwork_swigregister = _gnm.GenericNetwork_swigregister
 GenericNetwork_swigregister(GenericNetwork)
 
 # This file is compatible with both classic and new-style classes.
-
-

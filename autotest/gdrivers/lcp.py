@@ -119,7 +119,7 @@ def lcp_1():
                                 ('CBD_MAX', '21' ),
                                 ('CBD_NUM_CLASSES', '20' ),
                                 ('CBD_FILE', 'cbd.asc' ) ] )
-                  ]
+                    ]
 
     for i in range(8):
         band = ds.GetRasterBand(i+1)
@@ -214,7 +214,7 @@ def lcp_2():
                                 ('CBD_MAX', '21' ),
                                 ('CBD_NUM_CLASSES', '20' ),
                                 ('CBD_FILE', 'd:\\scratch\\dist\\79990093\\Output\\rastert_density_1.txt' ) ] )
-                  ]
+                    ]
 
     for i in range(8):
         band = ds.GetRasterBand(i+1)
@@ -969,4 +969,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

@@ -70,9 +70,9 @@ def ogr_dgnv8_2():
     ds = ogr.Open( 'data/test_dgnv8_ref.csv' )
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
-       
+
     gdal.Unlink('/vsimem/ogr_dgnv8_2.csv')
-        
+
     return ret
 
 ###############################################################################
@@ -126,9 +126,9 @@ def ogr_dgnv8_4():
     ds = ogr.Open( 'data/test_dgnv8_write_ref.csv' )
     lyr = ds.GetLayer(0)
     ret = ogrtest.compare_layers(lyr, lyr_ref, excluded_fields = ['WKT'])
-       
+
     gdal.Unlink(tmp_csv)
-        
+
     return ret
 
 ###############################################################################
@@ -165,7 +165,7 @@ def ogr_dgnv8_5():
         print(got_md)
         return 'fail'
     ds = None
-    
+
     tmp2_dgn = 'tmp/ogr_dgnv8_5_2.dgn'
     gdaltest.dgnv8_drv.CreateDataSource(tmp2_dgn, options = ['SEED=' + tmp_dgn, 'TITLE=another_title'])
     ds = ogr.Open(tmp2_dgn)
@@ -206,10 +206,10 @@ def ogr_dgnv8_5():
         f.DumpReadable()
         return 'fail'
     ds = None
-    
+
     gdal.Unlink(tmp_dgn)
     gdal.Unlink(tmp2_dgn)
-        
+
     return 'success'
 
 

@@ -309,7 +309,7 @@ def osr_basic_8():
         gdaltest.post_reason( 'false easting was unexpectedly updated.')
         return 'fail'
 
-    if not 'SetLinearUnitsAndUpdateParameters' in dir(srs):
+    if 'SetLinearUnitsAndUpdateParameters' not in dir(srs):
         return 'skip'
 
     srs.SetFromUserInput( '+proj=tmerc +x_0=1000 +datum=WGS84 +units=m' )
@@ -1495,4 +1495,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

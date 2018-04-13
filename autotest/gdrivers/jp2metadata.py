@@ -80,7 +80,7 @@ def jp2metadata_2():
         return 'fail'
 
     mddlist = ds.GetMetadataDomainList()
-    if not 'IMD' in mddlist or not 'RPC' in mddlist or not 'IMAGERY' in mddlist:
+    if 'IMD' not in mddlist or 'RPC' not in mddlist or 'IMAGERY' not in mddlist:
         gdaltest.post_reason( 'did not get expected metadata list.' )
         print(mddlist)
         return 'fail'
@@ -234,4 +234,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
