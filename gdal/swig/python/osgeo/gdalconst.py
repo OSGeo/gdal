@@ -529,5 +529,3 @@ GTO_BIT = _gdalconst.GTO_BIT
 _gdalconst.GTO_BSQ_swigconstant(_gdalconst)
 GTO_BSQ = _gdalconst.GTO_BSQ
 # This file is compatible with both classic and new-style classes.
-
-

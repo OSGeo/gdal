@@ -130,4 +130,3 @@ for iBand in range(1, indataset.RasterCount + 1):
     else:
         data_tr = FFT.inverse_fft2d(data)
     outband.WriteArray(data_tr)
-

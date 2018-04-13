@@ -82,7 +82,8 @@ def gpkg_init():
         gdaltest.post_reason('Environment variable DB2_TEST_SERVER not found')
         gdaltest.db2_drv = None
         return 'skip'
-    print("\ntest server: "  + gdaltest.db2_test_server + "\n")
+
+    print("\ntest server: " + gdaltest.db2_test_server + "\n")
 
     return 'success'
 

@@ -529,7 +529,7 @@ def stats_byte_partial_tiles():
 
     gdal.GetDriverByName('GTiff').Delete('/vsimem/stats_byte_tiled.tif')
 
-    expected_stats       = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
+    expected_stats = [1.0, 255.0, 50.311081057390084, 67.14541389488096]
     expected_stats_32bit = [1.0, 255.0, 50.311081057390084, 67.145413894880946]
     if stats != expected_stats and stats != expected_stats_32bit:
         gdaltest.post_reason('did not get expected stats')
@@ -817,4 +817,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

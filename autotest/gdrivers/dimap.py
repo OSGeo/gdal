@@ -79,7 +79,7 @@ def dimap_1():
     gcps = ds.GetGCPs()
     if len(gcps) != 4 \
        or gcps[0].GCPPixel != 0.5 \
-       or gcps[0].GCPLine  != 0.5 \
+       or gcps[0].GCPLine != 0.5 \
        or abs(gcps[0].GCPX - 4.3641728) > 0.0000002 \
        or abs(gcps[0].GCPY - 44.2082255) > 0.0000002 \
        or abs(gcps[0].GCPZ - 0) > 0.0000002:
@@ -144,4 +144,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

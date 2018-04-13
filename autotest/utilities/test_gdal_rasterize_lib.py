@@ -235,7 +235,7 @@ def test_gdal_rasterize_lib_101():
 # Rasterization on raster with RPC
 
 def test_gdal_rasterize_lib_102():
-    
+
     target_ds = gdal.GetDriverByName('MEM').Create( '', 353, 226 )
     target_ds.GetRasterBand(1).Fill(255)
     md = {
@@ -389,8 +389,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-
-
-
-
-

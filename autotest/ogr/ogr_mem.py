@@ -378,15 +378,15 @@ def ogr_mem_11():
 
     gdaltest.mem_lyr = None
     # Delete extra layer
-    if gdaltest.mem_ds.DeleteLayer(layer_count - 2)  != 0:
+    if gdaltest.mem_ds.DeleteLayer(layer_count - 2) != 0:
         gdaltest.post_reason( 'DeleteLayer() failed' )
         return 'fail'
 
-    if gdaltest.mem_ds.DeleteLayer(-1)  == 0:
+    if gdaltest.mem_ds.DeleteLayer(-1) == 0:
         gdaltest.post_reason( 'DeleteLayer() should have failed' )
         return 'fail'
 
-    if gdaltest.mem_ds.DeleteLayer(gdaltest.mem_ds.GetLayerCount())  == 0:
+    if gdaltest.mem_ds.DeleteLayer(gdaltest.mem_ds.GetLayerCount()) == 0:
         gdaltest.post_reason( 'DeleteLayer() should have failed' )
         return 'fail'
 

@@ -917,7 +917,7 @@ def hfa_xforms_3rd():
         return 'fail'
 
     if abs(gcps[14].GCPPixel - 1769.7) > 0.1 \
-       or abs(gcps[14].GCPLine  - 2124.9) > 0.1 \
+       or abs(gcps[14].GCPLine - 2124.9) > 0.1 \
        or abs(gcps[14].GCPX - 1665221.064) > 0.001 \
        or abs(gcps[14].GCPY - 2632414.379) > 0.001:
         print(gcps[14].GCPPixel, gcps[14].GCPLine, gcps[14].GCPX, gcps[14].GCPY)
@@ -1478,4 +1478,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

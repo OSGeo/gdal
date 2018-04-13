@@ -3257,7 +3257,7 @@ def ogr_gmlas_any_field_at_end_of_declaration():
         return 'skip'
 
     # Simplified test case for
-    # http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd 
+    # http://schemas.earthresourceml.org/earthresourceml-lite/1.0/erml-lite.xsd
     # http://services.ga.gov.au/earthresource/ows?service=wfs&version=2.0.0&request=GetFeature&typenames=erl:CommodityResourceView&count=10
 
     ds = gdal.OpenEx('GMLAS:data/gmlas/gmlas_any_field_at_end_of_declaration.xml')

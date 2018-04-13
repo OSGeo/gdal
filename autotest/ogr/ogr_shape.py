@@ -3947,12 +3947,12 @@ def ogr_shape_82():
     # save layer?
 
     # Read strings and compare with correct values.
-    feat = gdaltest.shape_lyr.GetFeature(0) #rus
+    feat = gdaltest.shape_lyr.GetFeature(0)  # rus
     if feat.cut_field != result_rus:
         gdaltest.post_reason('Wrong rus string cut')
         return 'fail'
 
-    feat = gdaltest.shape_lyr.GetFeature(1) #en
+    feat = gdaltest.shape_lyr.GetFeature(1)  # en
     if feat.cut_field != result_en:
         gdaltest.post_reason('Wrong en string cut')
         print(feat.cut_field)

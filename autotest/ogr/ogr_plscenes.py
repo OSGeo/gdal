@@ -827,7 +827,7 @@ def ogr_plscenes_data_v1_live():
     if ds is None:
         gdaltest.post_reason('fail')
         return 'fail'
-    if ds.RasterCount  == 0:
+    if ds.RasterCount == 0:
         gdaltest.post_reason('fail')
         return 'fail'
 
@@ -850,4 +850,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

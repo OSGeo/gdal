@@ -118,4 +118,3 @@ while feat is not None:
 
 shp_ds.Destroy()
 ds.Destroy()
-

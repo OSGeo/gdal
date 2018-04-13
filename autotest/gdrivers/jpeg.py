@@ -1089,13 +1089,13 @@ def jpeg_26():
 
 ###############################################################################
 # Test reading a file that contains the 2 denial of service
-# vulnerabilities listed in 
+# vulnerabilities listed in
 # http://www.libjpeg-jpeg_26.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 def jpeg_27():
 
     # Should error out with 'Reading this strip would require
-    #libjpeg to allocate at least...' 
+    #libjpeg to allocate at least...'
     gdal.ErrorReset()
     ds = gdal.Open('/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip')
     with gdaltest.error_handler():

@@ -2673,5 +2673,3 @@ if __name__ == '__main__':
     for file in files:
         rc = inst.checker(file)
         exit(rc)
-
-

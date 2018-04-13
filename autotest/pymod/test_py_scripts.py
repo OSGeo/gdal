@@ -161,5 +161,3 @@ def run_py_script_as_py_module(script_path, script_name, concatenated_argv):
         del sys.modules[script_name]
 
     return ret
-
-
