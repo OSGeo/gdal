@@ -7020,7 +7020,7 @@ GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
 {
     *m_poPrivate = *oOther.m_poPrivate;
     return *this;
-)
+}
 
 GDALDataset::Layers::Iterator& GDALDataset::Layers::Iterator::operator=(
 	GDALDataset::Layers::Iterator&& oOther)
