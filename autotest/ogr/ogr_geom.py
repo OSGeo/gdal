@@ -153,7 +153,7 @@ def ogr_geom_is_empty():
     geom_wkt = 'POINT( 1 2 )'
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
-        gdaltest.post_reason("A geometry could not be created from wkt: %s"%geom_wkt)
+        gdaltest.post_reason("A geometry could not be created from wkt: %s" % geom_wkt)
         return 'fail'
 
     if geom.IsEmpty():
@@ -184,7 +184,7 @@ def ogr_geom_is_empty_triangle():
 
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     if not geom:
-        gdaltest.post_reason("A geometry could not be created from wkt: %s"%geom_wkt)
+        gdaltest.post_reason("A geometry could not be created from wkt: %s" % geom_wkt)
         return 'fail'
 
     if geom.IsEmpty():
