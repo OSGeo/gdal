@@ -83,7 +83,7 @@ def srp_1(filename = 'USRP_PCB0/FKUSRP01.IMG'):
     got_md = ds.GetMetadata()
     for md in expected_md:
         (key,value) = md.split('=')
-        if key in got_md or got_md[key] != value:
+        if key not in got_md or got_md[key] != value:
             gdaltest.post_reason('did not find %s' % md)
             print(got_md)
             return 'fail'
