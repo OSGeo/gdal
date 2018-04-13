@@ -121,7 +121,7 @@ list = [ [ "GTiff", "data/byte_with_xmp.tif", True ],
          [ "PDF", "data/adobe_style_geospatial.pdf", False ],
          [ "WEBP", "data/rgbsmall_with_xmp.webp", True ],
          [ "WEBP", "data/rgbsmall.webp", False ],
-]
+         ]
 
 for item in list:
     drivername = item[0]

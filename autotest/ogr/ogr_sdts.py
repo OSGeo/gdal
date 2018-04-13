@@ -53,7 +53,7 @@ def ogr_sdts_1():
                ( 'NO01' , 88,  ogr.wkbPoint, [ ('RCID', '1') ] ),
                ( 'LE01' , 27,  ogr.wkbLineString, [ ('RCID', '1') ]  ),
                ( 'PC01' , 35,  ogr.wkbPolygon, [ ('RCID', '1') ] )
-             ]
+               ]
 
     for layer in layers:
         lyr = gdaltest.sdts_ds.GetLayerByName( layer[0] )

@@ -525,7 +525,7 @@ tiff_srs_list = [ 2758,  # tmerc
                   31491, # Germany Zone projection
                   [3857, False, True], # Web Mercator
                   [102113, False, True], # ESRI WGS_1984_Web_Mercator
-]
+                  ]
 
 for item in tiff_srs_list:
     try:
