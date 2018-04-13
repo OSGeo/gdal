@@ -674,10 +674,10 @@ private:
                 Iterator(const Iterator& oOther); 
                 Iterator(Iterator&& oOther); 
                 ~Iterator();
-				
+                
                 Iterator& operator=(const Iterator& oOther);
                 Iterator& operator=(Iterator&& oOther);
-				
+                
                 OGRLayer* operator*() const;
                 Iterator& operator++();
                 Iterator operator++(int);
