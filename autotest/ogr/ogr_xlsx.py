@@ -449,7 +449,7 @@ def ogr_xlsx_11():
     return 'success'
 
 ###############################################################################
-# Test reading a sheet whose file is stored as "absolute" in 
+# Test reading a sheet whose file is stored as "absolute" in
 # workbook.xml.rels (#6733)
 
 def ogr_xlsx_12():
@@ -466,7 +466,7 @@ def ogr_xlsx_12():
     ds = None
 
     return 'success'
-  
+
 ###############################################################################
 # Test that data types are correctly picked up even if first row is missing data
 
@@ -483,7 +483,7 @@ def ogr_xlsx_13():
     if lyr.GetName() != 'Sheet1':
         gdaltest.post_reason('bad layer name')
         return 'fail'
-      
+
     if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
         gdaltest.post_reason('invalid field name')
         return 'fail'
@@ -534,7 +534,7 @@ def ogr_xlsx_14():
     if lyr.GetName() != 'Sheet1':
         gdaltest.post_reason('bad layer name')
         return 'fail'
-      
+
     if lyr.GetLayerDefn().GetFieldDefn(0).GetName() != 'Asset Reference':
         gdaltest.post_reason('invalid field name')
         return 'fail'
@@ -659,4 +659,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

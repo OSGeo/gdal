@@ -1132,7 +1132,7 @@ def ogr_pg_21_3d_geometries():
         gdaltest.post_reason( 'No layer received' )
         return 'fail'
 
-    for i in range (0, 3):
+    for i in range(0, 3):
         feat = layer.GetFeature(i)
         geom = feat.GetGeometryRef()
 

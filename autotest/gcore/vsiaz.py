@@ -301,7 +301,7 @@ def vsiaz_fake_readdir():
                           </Blob>
                           <BlobPrefix>
                             <Name>a_dir/subdir/</Name>
-                          </BlobPrefix> 
+                          </BlobPrefix>
                         </Blobs>
                     </EnumerationResults>
                 """)
@@ -351,7 +351,7 @@ def vsiaz_fake_readdir():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, { 'Content-type': 'application/xml' },
         """<?xml version="1.0" encoding="UTF-8"?>
-        <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">  
+        <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">
             <Containers/>
             </EnumerationResults>
         """)
@@ -368,7 +368,7 @@ def vsiaz_fake_readdir():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, { 'Content-type': 'application/xml' },
         """<?xml version="1.0" encoding="UTF-8"?>
-        <EnumerationResults>  
+        <EnumerationResults>
             <Containers>
                 <Container>
                     <Name>mycontainer1</Name>
@@ -379,7 +379,7 @@ def vsiaz_fake_readdir():
         """)
     handler.add('GET', '/azure/blob/myaccount/?comp=list&marker=bla', 200, { 'Content-type': 'application/xml' },
         """<?xml version="1.0" encoding="UTF-8"?>
-        <EnumerationResults>  
+        <EnumerationResults>
             <Containers>
                 <Container>
                     <Name>mycontainer2</Name>

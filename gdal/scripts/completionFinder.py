@@ -287,4 +287,3 @@ function_exists _get_comp_words_by_ref || return 0
 
 if __name__ == "__main__":
   main(sys.argv)
-

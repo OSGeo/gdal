@@ -149,7 +149,7 @@ def ogr_gxt_3():
     src_ds = ogr.Open( 'data/points.gxt' )
 
     try:
-        os.remove ('tmp/tmp.gxt')
+        os.remove('tmp/tmp.gxt')
     except:
         pass
 
@@ -309,7 +309,7 @@ def ogr_gxt_cleanup():
 
     gdaltest.gxt_ds = None
     try:
-        os.remove ('tmp/tmp.gxt')
+        os.remove('tmp/tmp.gxt')
     except:
         pass
     return 'success'

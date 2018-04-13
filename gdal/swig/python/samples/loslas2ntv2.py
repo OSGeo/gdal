@@ -263,4 +263,3 @@ if __name__ == '__main__':
 
         TranslateLOSLAS( los, ntv2_filename, options )
         options.append = 1
-

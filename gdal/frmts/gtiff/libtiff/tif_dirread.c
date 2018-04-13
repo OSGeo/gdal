@@ -4070,7 +4070,7 @@ TIFFReadDirectory(TIFF* tif)
                     "Defining non-color channels as ExtraSamples.");
 
                 old_extrasamples = tif->tif_dir.td_extrasamples;
-                tif->tif_dir.td_extrasamples = (tif->tif_dir.td_samplesperpixel - color_channels);
+                tif->tif_dir.td_extrasamples = (uint16) (tif->tif_dir.td_samplesperpixel - color_channels);
 
                 // sampleinfo should contain information relative to these new extra samples
                 new_sampleinfo = (uint16*) _TIFFcalloc(tif->tif_dir.td_extrasamples, sizeof(uint16));

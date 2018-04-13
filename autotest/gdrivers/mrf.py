@@ -98,7 +98,7 @@ def mrf_zen_test():
         ds = gdal.Open(testvrt)
         cs = ds.GetRasterBand(1).Checksum()
         if cs != expectedCS:
-            gdaltest.post_reason('Interleave=' + interleave + 
+            gdaltest.post_reason('Interleave=' + interleave +
                                  ' expected checksum ' + str(expectedCS) + ' got ' + str(cs))
             result = 'fail'
         for f in glob.glob('tmp/masked.*'):

@@ -150,14 +150,14 @@ def tiff_write_4():
             data_blue[y][x] = x+y
 
     try:
-        data_red   = data_red.astype(gdalnumeric.UnsignedInt8)
+        data_red = data_red.astype(gdalnumeric.UnsignedInt8)
         data_green = data_green.astype(gdalnumeric.UnsignedInt8)
-        data_blue  = data_blue.astype(gdalnumeric.UnsignedInt8)
+        data_blue = data_blue.astype(gdalnumeric.UnsignedInt8)
     except AttributeError:
         try:
-            data_red   = data_red.astype(gdalnumeric.uint8)
+            data_red = data_red.astype(gdalnumeric.uint8)
             data_green = data_green.astype(gdalnumeric.uint8)
-            data_blue  = data_blue.astype(gdalnumeric.uint8)
+            data_blue = data_blue.astype(gdalnumeric.uint8)
         except:
             pass
 

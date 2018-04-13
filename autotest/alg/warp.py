@@ -1820,7 +1820,7 @@ def warp_55():
 # same size). This test crops a single pixel out of a 3-by-3 image.
 
 def warp_56():
-    
+
     try:
         from osgeo import gdalnumeric
         gdalnumeric.zeros
@@ -1835,12 +1835,12 @@ def warp_56():
                                                     [0,0,100]]))
     src_ds.SetGeoTransform([1, 1,  0,
                             1, 0,  1])
-        
+
     for off in numpy.linspace(0, 2, 21):
         pix_ds.SetGeoTransform([off + 1, 1,  0,
                                 off + 1, 0,  1])
         gdal.Warp(pix_ds, src_ds, resampleAlg='bilinear')
-        
+
         exp = 0 if off < 1 else 100 * (off - 1)**2
         warped = pix_ds.GetRasterBand(1).ReadAsArray()[0,0]
         if abs(warped - exp) > 0.6:
@@ -1933,4 +1933,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

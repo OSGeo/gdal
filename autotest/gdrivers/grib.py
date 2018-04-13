@@ -246,7 +246,7 @@ def grib_grib2_read_template_4_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret, err = gdaltest.runexternal_out_and_err (test_cli_utilities.get_gdalinfo_path() + ' data/grib/template_4_15.grb2 -checksum')
+    ret, err = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' data/grib/template_4_15.grb2 -checksum')
 
     # This is a JPEG2000 compressed file, so just check we can open it or that we get a message saying there's no JPEG2000 driver available
     if ret.find('Checksum=') < 0 and err.find('Is the JPEG2000 driver available?') < 0:
@@ -397,7 +397,7 @@ def grib_grib2_read_template_4_40():
     return 'success'
 
 ###############################################################################
-# Test support for a unhandled GRIB2 Section 4 Template 
+# Test support for a unhandled GRIB2 Section 4 Template
 
 def grib_grib2_read_template_4_unhandled():
 
@@ -1578,4 +1578,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

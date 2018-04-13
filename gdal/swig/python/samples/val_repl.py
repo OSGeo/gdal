@@ -132,4 +132,3 @@ for iBand in range(1, indataset.RasterCount + 1):
         scanline = numpy.choose( numpy.equal( scanline, inNoData),
                                        (scanline, outNoData) )
         outband.WriteArray(scanline, 0, i)
-

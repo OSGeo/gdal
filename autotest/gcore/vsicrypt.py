@@ -178,8 +178,8 @@ def vsicrypt_2():
                        0, 2, # sector size
                        0, # alg
                        0, # mode
-                       8, #size of IV (should be 16)
-                       32, 13, 169, 71, 154, 208, 22, 32, #IV
+                       8,  # size of IV (should be 16)
+                       32, 13, 169, 71, 154, 208, 22, 32,  # IV
                        0, 0, # size of free text
                        0, # size of key check
                        0, 0, 0, 0, 0, 0, 0, 0, # size of unencrypted file
@@ -205,8 +205,8 @@ def vsicrypt_2():
                        0, 2, # sector size
                        0, # alg
                        0, # mode
-                       8, #size of IV (should be 16)
-                       32, 13, 169, 71, 154, 208, 22, 32, #IV
+                       8,  # size of IV (should be 16)
+                       32, 13, 169, 71, 154, 208, 22, 32,  # IV
                        0, 0, # size of free text
                        1, # size of key check
                        0, # key check

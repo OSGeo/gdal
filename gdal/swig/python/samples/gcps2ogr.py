@@ -81,4 +81,3 @@ for i in range(len(gcps)):
     f.SetField('Y', gcps[i].GCPLine)
     f.SetGeometry(ogr.CreateGeometryFromWkt('POINT(%f %f)' % (gcps[i].GCPX, gcps[i].GCPY)))
     out_lyr.CreateFeature(f)
-

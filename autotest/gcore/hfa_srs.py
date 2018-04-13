@@ -91,25 +91,25 @@ class TestHFASRS:
 
 gdaltest_list = []
 
-hfa_srs_list = [ 2758, #tmerc
-                  [2036, True], #sterea   # failure caused by revert done in r22803
-                  2046, #tmerc
-                  [3031, True], #stere
-                  [32661, True], #stere
-                  3035, #laea
-                  2062, #lcc
-                  2065, #krovak
-                  2066, #cass
-                  2964, #aea
-                  [3410, True], #cea
-                  [3786, True],  #eqc
-                  [2934, True], #merc
-                  27200, #nzmg
-                  [2057, True], #omerc
-                  29100,  #poly
-                  2056, #somerc
-                  2027, #utm
-                  4326, #longlat
+hfa_srs_list = [ 2758,  # tmerc
+                  [2036, True],  # sterea   # failure caused by revert done in r22803
+                  2046,  # tmerc
+                  [3031, True],  # stere
+                  [32661, True],  # stere
+                  3035,  # laea
+                  2062,  # lcc
+                  2065,  # krovak
+                  2066,  # cass
+                  2964,  # aea
+                  [3410, True],  # cea
+                  [3786, True],  # eqc
+                  [2934, True],  # merc
+                  27200,  # nzmg
+                  [2057, True],  # omerc
+                  29100,  # poly
+                  2056,  # somerc
+                  2027,  # utm
+                  4326,  # longlat
                  ]
 
 for item in hfa_srs_list:
@@ -134,4 +134,3 @@ if __name__ == '__main__':
     gdaltest.run_tests( gdaltest_list )
 
     gdaltest.summarize()
-

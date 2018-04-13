@@ -356,7 +356,7 @@ def ogr_gpx_7():
     bna_ds = ogr.Open( 'data/bna_for_gpx.bna' )
 
     try:
-        os.remove ('tmp/gpx.gpx')
+        os.remove('tmp/gpx.gpx')
     except:
         pass
 
@@ -427,7 +427,7 @@ def ogr_gpx_8():
     gdaltest.gpx_ds = None
 
     try:
-        os.remove ('tmp/gpx.gpx')
+        os.remove('tmp/gpx.gpx')
     except:
         pass
 
@@ -535,7 +535,7 @@ def ogr_gpx_cleanup():
 
     gdaltest.gpx_ds = None
     try:
-        os.remove ('tmp/gpx.gpx')
+        os.remove('tmp/gpx.gpx')
     except:
         pass
     return 'success'
