@@ -927,10 +927,6 @@ json_object* GDALRDADataset::ReadJSonFile(const char* pszFilename,
                 osURL += std::get<0>(tup)+"="+std::get<1>(tup);
                 nCountOptions ++;
             }
-            if(osURL.endsWith("&"))
-            {
-                osURL.erase((osURL.begin() + osURL.size()-1), osURL.end());
-            }
         }
         else
         {
@@ -1701,14 +1697,13 @@ void GDALRDADataset::BatchFetch(int nXOff, int nYOff, int nXSize, int nYSize)
         {
             if( pasResults[j]->pszErrBuf != nullptr )
             {
-                CPLString url = apszURLLists[i+j];
-                CPLString message = pasResults[j]->pabyData ?
-                                    CPLSPrintf("%s: %s", pasResults[j]->pszErrBuf,
-                                               reinterpret_cast<const char*>(pasResults[j]->pabyData )) :
-                pasResults[j]->pszErrBuf;
                 CPLError( CE_Debug, CPLE_AppDefined,
                           "BatchFetch request %s failed: %s",
-                          url.c_str(), message.c_str());
+                          apszURLLists[i + j],
+                          pasResults[j]->pabyData ? CPLSPrintf("%s: %s",
+                                                               pasResults[j]->pszErrBuf,
+                                                               reinterpret_cast<const char*>(pasResults[j]->pabyData)) :
+                          pasResults[j]->pszErrBuf );
             }
             else if( pasResults[j]->pabyData )
             {
@@ -1814,14 +1809,13 @@ GDALRDADataset::GetTiles(
                 const int64_t nTileY = aTileIdx[nOutIdx].second;
                 if( pasResults[i]->pszErrBuf != nullptr )
                 {
-                    CPLString url = apszURLLists[i];
-                    CPLString message = pasResults[i]->pabyData ?
-                                        CPLSPrintf("%s: %s", pasResults[i]->pszErrBuf,
-                                                   reinterpret_cast<const char*>(pasResults[i]->pabyData )) :
-                                        pasResults[i]->pszErrBuf;
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "GetTiles request %s failed: %s",
-                              url.c_str(), message.c_str());
+                              apszURLLists[i],
+                              pasResults[i]->pabyData ? CPLSPrintf("%s: %s",
+                                                              pasResults[i]->pszErrBuf,
+                                                              reinterpret_cast<const char*>(pasResults[i]->pabyData )) :
+                              pasResults[i]->pszErrBuf );
                 }
                 else if( pasResults[i]->pabyData )
                 {

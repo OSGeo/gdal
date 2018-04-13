@@ -697,24 +697,16 @@ def rda_graph_nominal():
     handler.add('GET', '/rda_api/metadata/foo/bar/metadata.json', 200, {}, json.dumps(metadata_json))
     handler.add('GET', '/rda_api/tile/foo/bar/0/0.tif', 502, {}, json.dumps({"Error": "502"}))
 
-    try:
-        org_use_exceptions = gdal.GetUseExceptions()
-        if not org_use_exceptions:
-            gdal.UseExceptions()
-        gdal.PushErrorHandler('CPLQuietErrorHandler')
-        with webserver.install_http_handler(handler):
-            with gdaltest.config_options(config_options):
-                ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
-            data = ds.GetRasterBand(1).ReadBlock(0, 0)
-            if data is not None:
-                gdaltest.post_reason('fail')
-                return 'fail'
-    except:
-        pass
-    finally:
-        if not org_use_exceptions:
-            gdal.DontUseExceptions()
-        gdal.PopErrorHandler()
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(config_options):
+            ds = gdal.Open('{"graph-id":"foo","node-id":"bar","options":{"delete-on-close":false}}')
+            with gdaltest.error_handler():
+                data = ds.GetRasterBand(1).ReadBlock(0, 0)
+                if data is not None:
+                    gdaltest.post_reason('fail')
+                    return 'fail'
+
 
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
