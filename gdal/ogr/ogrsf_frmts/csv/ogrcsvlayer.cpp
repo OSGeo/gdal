@@ -599,7 +599,10 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
         {
             if( EQUAL(papszFieldTypes[iField], "WKT") )
             {
-                if( poFeatureDefn->GetGeomFieldCount() > knMAX_GEOM_COLUMNS )
+                if( bKeepGeomColumns )
+                    poFeatureDefn->AddFieldDefn(&oField);
+
+                if( poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS )
                 {
                     if( !bWarnedMaxGeomFields )
                     {
@@ -617,8 +620,6 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                 OGRGeomFieldDefn oGeomFieldDefn(oField.GetNameRef(),
                                                 wkbUnknown);
                 poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
-                if( bKeepGeomColumns )
-                    poFeatureDefn->AddFieldDefn(&oField);
                 continue;
             }
             else if( EQUAL(papszFieldTypes[iField], "CoordX") ||
@@ -735,7 +736,7 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                   STARTS_WITH_CI(oField.GetNameRef(), "_WKT")) &&
                  oField.GetType() == OFTString )
         {
-            if( poFeatureDefn->GetGeomFieldCount() > knMAX_GEOM_COLUMNS )
+            if( poFeatureDefn->GetGeomFieldCount() == knMAX_GEOM_COLUMNS )
             {
                 if( !bWarnedMaxGeomFields )
                 {
@@ -745,64 +746,65 @@ void OGRCSVLayer::BuildFeatureDefn( const char *pszNfdcGeomField,
                         knMAX_GEOM_COLUMNS);
                     bWarnedMaxGeomFields = true;
                 }
-                continue;
             }
-
-            eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
-
-            panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
-            OGRGeomFieldDefn oGeomFieldDefn(
-                EQUAL(pszFieldName, "WKT") ? "" : CPLSPrintf("geom_%s",
-                                                             pszFieldName),
-                wkbUnknown );
-
-            // Useful hack for RFC 41 testing.
-            const char *pszEPSG = strstr(pszFieldName, "_EPSG_");
-            if( pszEPSG != nullptr )
+            else
             {
-                const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
-                OGRSpatialReference *poSRS = new OGRSpatialReference();
-                poSRS->importFromEPSG(nEPSGCode);
-                oGeomFieldDefn.SetSpatialRef(poSRS);
-                poSRS->Release();
+                eGeometryFormat = OGR_CSV_GEOM_AS_WKT;
+
+                panGeomFieldIndex[iField] = poFeatureDefn->GetGeomFieldCount();
+                OGRGeomFieldDefn oGeomFieldDefn(
+                    EQUAL(pszFieldName, "WKT") ? "" : CPLSPrintf("geom_%s",
+                                                                pszFieldName),
+                    wkbUnknown );
+
+                // Useful hack for RFC 41 testing.
+                const char *pszEPSG = strstr(pszFieldName, "_EPSG_");
+                if( pszEPSG != nullptr )
+                {
+                    const int nEPSGCode = atoi(pszEPSG + strlen("_EPSG_"));
+                    OGRSpatialReference *poSRS = new OGRSpatialReference();
+                    poSRS->importFromEPSG(nEPSGCode);
+                    oGeomFieldDefn.SetSpatialRef(poSRS);
+                    poSRS->Release();
+                }
+
+                if( strstr(pszFieldName, "_POINT") )
+                    oGeomFieldDefn.SetType(wkbPoint);
+                else if( strstr(pszFieldName, "_LINESTRING") )
+                    oGeomFieldDefn.SetType(wkbLineString);
+                else if( strstr(pszFieldName, "_POLYGON") )
+                    oGeomFieldDefn.SetType(wkbPolygon);
+                else if( strstr(pszFieldName, "_MULTIPOINT") )
+                    oGeomFieldDefn.SetType(wkbMultiPoint);
+                else if( strstr(pszFieldName, "_MULTILINESTRING") )
+                    oGeomFieldDefn.SetType(wkbMultiLineString);
+                else if( strstr(pszFieldName, "_MULTIPOLYGON") )
+                    oGeomFieldDefn.SetType(wkbMultiPolygon);
+                else if( strstr(pszFieldName, "_CIRCULARSTRING") )
+                    oGeomFieldDefn.SetType(wkbCircularString);
+                else if( strstr(pszFieldName, "_COMPOUNDCURVE") )
+                    oGeomFieldDefn.SetType(wkbCompoundCurve);
+                else if( strstr(pszFieldName, "_CURVEPOLYGON") )
+                    oGeomFieldDefn.SetType(wkbCurvePolygon);
+                else if( strstr(pszFieldName, "_CURVE") )
+                    oGeomFieldDefn.SetType(wkbCurve);
+                else if( strstr(pszFieldName, "_SURFACE") )
+                    oGeomFieldDefn.SetType(wkbSurface);
+                else if( strstr(pszFieldName, "_MULTICURVE") )
+                    oGeomFieldDefn.SetType(wkbMultiCurve);
+                else if( strstr(pszFieldName, "_MULTISURFACE") )
+                    oGeomFieldDefn.SetType(wkbMultiSurface);
+                else if( strstr(pszFieldName, "_POLYHEDRALSURFACE") )
+                    oGeomFieldDefn.SetType(wkbPolyhedralSurface);
+                else if( strstr(pszFieldName, "_TIN") )
+                    oGeomFieldDefn.SetType(wkbTIN);
+                else if( strstr(pszFieldName, "_TRIANGLE") )
+                    oGeomFieldDefn.SetType(wkbTriangle);
+
+                poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
+                if( !bKeepGeomColumns )
+                    continue;
             }
-
-            if( strstr(pszFieldName, "_POINT") )
-                oGeomFieldDefn.SetType(wkbPoint);
-            else if( strstr(pszFieldName, "_LINESTRING") )
-                oGeomFieldDefn.SetType(wkbLineString);
-            else if( strstr(pszFieldName, "_POLYGON") )
-                oGeomFieldDefn.SetType(wkbPolygon);
-            else if( strstr(pszFieldName, "_MULTIPOINT") )
-                oGeomFieldDefn.SetType(wkbMultiPoint);
-            else if( strstr(pszFieldName, "_MULTILINESTRING") )
-                oGeomFieldDefn.SetType(wkbMultiLineString);
-            else if( strstr(pszFieldName, "_MULTIPOLYGON") )
-                oGeomFieldDefn.SetType(wkbMultiPolygon);
-             else if( strstr(pszFieldName, "_CIRCULARSTRING") )
-                oGeomFieldDefn.SetType(wkbCircularString);
-            else if( strstr(pszFieldName, "_COMPOUNDCURVE") )
-                oGeomFieldDefn.SetType(wkbCompoundCurve);
-            else if( strstr(pszFieldName, "_CURVEPOLYGON") )
-                oGeomFieldDefn.SetType(wkbCurvePolygon);
-            else if( strstr(pszFieldName, "_CURVE") )
-                oGeomFieldDefn.SetType(wkbCurve);
-            else if( strstr(pszFieldName, "_SURFACE") )
-                oGeomFieldDefn.SetType(wkbSurface);
-            else if( strstr(pszFieldName, "_MULTICURVE") )
-                oGeomFieldDefn.SetType(wkbMultiCurve);
-            else if( strstr(pszFieldName, "_MULTISURFACE") )
-                oGeomFieldDefn.SetType(wkbMultiSurface);
-            else if( strstr(pszFieldName, "_POLYHEDRALSURFACE") )
-                oGeomFieldDefn.SetType(wkbPolyhedralSurface);
-            else if( strstr(pszFieldName, "_TIN") )
-                oGeomFieldDefn.SetType(wkbTIN);
-            else if( strstr(pszFieldName, "_TRIANGLE") )
-                oGeomFieldDefn.SetType(wkbTriangle);
-
-            poFeatureDefn->AddGeomFieldDefn(&oGeomFieldDefn);
-            if( !bKeepGeomColumns )
-                continue;
         }
         else if( Matches(oField.GetNameRef(), papszGeomPossibleNames) )
         {
