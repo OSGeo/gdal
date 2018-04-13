@@ -1734,7 +1734,7 @@ def warp_53():
                           options = '-r ' + alg_name + ' ' + option)
                 cs1 = dst_ds.GetRasterBand(1).Checksum()
                 cs2 = dst_ds.GetRasterBand(2).Checksum()
-                if (not cs1 in expected_cs) or (not cs2 in [3903, 4138]):
+                if cs1 not in expected_cs or cs2 not in [3903, 4138]:
                     gdaltest.post_reason('fail')
                     print(typestr)
                     print(option)

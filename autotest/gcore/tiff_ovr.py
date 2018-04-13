@@ -1725,7 +1725,7 @@ def tiff_ovr_43():
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    if not 'NBITS' in md or md['NBITS'] != '12':
+    if 'NBITS' not in md or md['NBITS'] != '12':
         print(md)
         gdaltest.post_reason('did not get expected NBITS')
         return 'fail'

@@ -723,7 +723,7 @@ class myTestCreateCopyWrapper:
         self.ut = ut
 
     def myTestCreateCopy(self):
-        check_minmax = not 'COMPRESS=JPEG' in self.ut.options
+        check_minmax = 'COMPRESS=JPEG' not in self.ut.options
         for x in self.ut.options:
             if x.find('OPTIONS:LERC_PREC=') >= 0:
                 check_minmax = False

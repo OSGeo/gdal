@@ -588,7 +588,7 @@ def tiff_linearparmunits2():
 
 def tiff_g4_split():
 
-    if not 'GetBlockSize' in dir(gdal.Band):
+    if 'GetBlockSize' not in dir(gdal.Band):
         return 'skip'
 
     ds = gdal.Open('data/slim_g4.tif')

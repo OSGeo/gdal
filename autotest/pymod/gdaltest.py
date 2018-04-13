@@ -1016,7 +1016,7 @@ class GDALTest:
 
         md_dict = new_ds.GetMetadata()
 
-        if (not 'TEST_KEY' in md_dict):
+        if 'TEST_KEY' not in md_dict:
             post_reason( 'Metadata item TEST_KEY does not exist.')
             return 'fail'
 
@@ -1052,7 +1052,7 @@ class GDALTest:
             post_reason( 'Failed to create test file using Create method.' )
             return 'fail'
 
-        if self.options is None or not 'PIXELTYPE=SIGNEDBYTE' in self.options:
+        if self.options is None or 'PIXELTYPE=SIGNEDBYTE' not in self.options:
             nodata = 130
         else:
             nodata = 11
