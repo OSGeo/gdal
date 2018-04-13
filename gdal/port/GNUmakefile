@@ -78,6 +78,7 @@ INST_H_FILES = \
 	cpl_error.h \
 	cpl_hash_set.h \
 	cpl_http.h \
+        cpl_json.h \
 	cplkeywordparser.h \
 	cpl_list.h \
 	cpl_minixml.h \
