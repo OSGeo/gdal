@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -440,7 +440,7 @@ def vsizip_7():
     content = gdal.ReadDir("/vsizip/data/cp866_plus_utf8.zip")
     ok = 0
     try:
-        local_vars = { 'content': content, 'ok': ok }
+        local_vars = {'content': content, 'ok': ok}
         exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
         ok = local_vars['ok']
     except:
@@ -508,7 +508,7 @@ def vsizip_10():
     gdal.SetConfigOption('CPL_ZIP_ENCODING', None)
     ok = 0
     try:
-        local_vars = { 'content': content, 'ok': ok }
+        local_vars = {'content': content, 'ok': ok}
         exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
         ok = local_vars['ok']
     except:
@@ -534,7 +534,7 @@ def vsizip_11():
     content = gdal.ReadDir("/vsizip/data/utf8.zip")
     ok = 0
     try:
-        local_vars = { 'content': content, 'ok': ok }
+        local_vars = {'content': content, 'ok': ok}
         exec("if content == [u'\u0430\u0431\u0432\u0433\u0434\u0435', u'\u0436\u0437\u0438\u0439\u043a\u043b']: ok = 1", None, local_vars)
         ok = local_vars['ok']
     except:
@@ -635,7 +635,7 @@ def vsizip_14():
 
     fmain = gdal.VSIFOpenL('/vsizip//vsimem/vsizip_14.zip', 'wb')
     try:
-        x = [ '' ]
+        x = ['']
         exec("x[0] = u'\u0430\u0431\u0432\u0433\u0434\u0435'")
         cp866_filename = x[0]
     except:
@@ -663,7 +663,7 @@ def vsizip_14():
     return 'success'
 
 
-gdaltest_list = [ vsizip_1,
+gdaltest_list = [vsizip_1,
                   vsizip_2,
                   vsizip_3,
                   vsizip_4,
@@ -682,8 +682,8 @@ gdaltest_list = [ vsizip_1,
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsizip' )
+    gdaltest.setup_run('vsizip')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

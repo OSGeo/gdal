@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,7 +40,7 @@ import gdaltest
 
 def vrtlut_1():
 
-    tst = gdaltest.GDALTest( 'VRT', 'byte_lut.vrt', 1, 4655 )
+    tst = gdaltest.GDALTest('VRT', 'byte_lut.vrt', 1, 4655)
     return tst.testOpen()
 
 
@@ -53,12 +53,12 @@ def vrtlut_cleanup():
 
 gdaltest_list = [
     vrtlut_1,
-    vrtlut_cleanup ]
+    vrtlut_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vrtlut' )
+    gdaltest.setup_run('vrtlut')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

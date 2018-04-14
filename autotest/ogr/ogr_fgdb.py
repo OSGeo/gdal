@@ -33,7 +33,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -113,34 +113,34 @@ def ogr_fgdb_1():
 
     ds = ogrtest.fgdb_drv.CreateDataSource("tmp/test.gdb")
 
-    datalist = [ [ "none", ogr.wkbNone, None],
-                 [ "point", ogr.wkbPoint, "POINT (1 2)" ],
-                 [ "multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)" ],
-                 [ "linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))" ],
-                 [ "multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))" ],
-                 [ "polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))" ],
-                 [ "multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))" ],
-                 [ "point25D", ogr.wkbPoint25D, "POINT (1 2 3)" ],
-                 [ "multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)" ],
-                 [ "linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
-                 [ "multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))" ],
-                 [ "polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                 [ "multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))" ],
-                 [ "multipatch", ogr.wkbMultiPolygon25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))" ],
-                 [ "tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))" ],
-                 [ "null_polygon", ogr.wkbPolygon, None],
-                 [ "empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
+    datalist = [["none", ogr.wkbNone, None],
+                 ["point", ogr.wkbPoint, "POINT (1 2)"],
+                 ["multipoint", ogr.wkbMultiPoint, "MULTIPOINT (1 2,3 4)"],
+                 ["linestring", ogr.wkbLineString, "LINESTRING (1 2,3 4)", "MULTILINESTRING ((1 2,3 4))"],
+                 ["multilinestring", ogr.wkbMultiLineString, "MULTILINESTRING ((1 2,3 4),(5 6,7 8))"],
+                 ["polygon", ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,1 0,0 0))", "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))"],
+                 ["multipolygon", ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.25 0.25,0.75 0.25,0.75 0.75,0.25 0.75,0.25 0.25)),((2 0,2 1,3 1,3 0,2 0)))"],
+                 ["point25D", ogr.wkbPoint25D, "POINT (1 2 3)"],
+                 ["multipoint25D", ogr.wkbMultiPoint25D, "MULTIPOINT (1 2 -10,3 4 -20)"],
+                 ["linestring25D", ogr.wkbLineString25D, "LINESTRING (1 2 -10,3 4 -20)", "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                 ["multilinestring25D", ogr.wkbMultiLineString25D, "MULTILINESTRING ((1 2 -10,3 4 -20))"],
+                 ["polygon25D", ogr.wkbPolygon25D, "POLYGON ((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10))", "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                 ["multipolygon25D", ogr.wkbMultiPolygon25D, "MULTIPOLYGON (((0 0 -10,0 1 -10,1 1 -10,1 0 -10,0 0 -10)))"],
+                 ["multipatch", ogr.wkbMultiPolygon25D, "GEOMETRYCOLLECTION Z (TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0))),TIN Z (((10.0 0.0 0,10.0 1.0 0,11.0 0.0 0,10.0 0.0 0)),((10.0 0.0 0,11.0 0.0 0,10.0 -1.0 0,10.0 0.0 0))),TIN Z (((5.0 0.0 0,5.0 1.0 0,6.0 0.0 0,5.0 0.0 0))),MULTIPOLYGON Z (((100.0 0.0 0,100.0 1.0 0,101.0 1.0 0,101.0 0.0 0,100.0 0.0 0),(100.25 0.25 0,100.75 0.25 0,100.75 0.75 0,100.75 0.25 0,100.25 0.25 0))))"],
+                 ["tin", ogr.wkbTINZ, "TIN Z (((0.0 0.0 0,0.0 1.0 0,1.0 0.0 0,0.0 0.0 0)),((0.0 1.0 0,1.0 0.0 0,1.0 1.0 0,0.0 1.0 0)))"],
+                 ["null_polygon", ogr.wkbPolygon, None],
+                 ["empty_polygon", ogr.wkbPolygon, "POLYGON EMPTY", None],
                  ]
 
     options = ['COLUMN_TYPES=smallint=esriFieldTypeSmallInteger,float=esriFieldTypeSingle,guid=esriFieldTypeGUID,xml=esriFieldTypeXML']
 
     for data in datalist:
         if data[1] == ogr.wkbNone:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], options = options)
         elif data[0] == 'multipatch':
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [ 'CREATE_MULTIPATCH=YES', options[0] ] )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = ['CREATE_MULTIPATCH=YES', options[0]])
         else:
-            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options )
+            lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = options)
         lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
         lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
         lyr.CreateField(ogr.FieldDefn("smallint", ogr.OFTInteger))
@@ -307,13 +307,13 @@ def ogr_fgdb_DeleteField():
 
     # Test updating non-existing feature
     feat.SetFID(-10)
-    if lyr.SetFeature( feat ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason( 'Expected failure of SetFeature().' )
+    if lyr.SetFeature(feat) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('Expected failure of SetFeature().')
         return 'fail'
 
     # Test deleting non-existing feature
-    if lyr.DeleteFeature( -10 ) != ogr.OGRERR_NON_EXISTING_FEATURE:
-        gdaltest.post_reason( 'Expected failure of DeleteFeature().' )
+    if lyr.DeleteFeature(-10) != ogr.OGRERR_NON_EXISTING_FEATURE:
+        gdaltest.post_reason('Expected failure of DeleteFeature().')
         return 'fail'
 
     feat = None
@@ -573,7 +573,7 @@ def ogr_fgdb_8():
     gdal.PopErrorHandler()
 
     lyr_defn = lyr.GetLayerDefn()
-    expected_names = [ 'FROM_', '_1NUMBER', 'WITH_SPACE_AND_______special_characters',
+    expected_names = ['FROM_', '_1NUMBER', 'WITH_SPACE_AND_______special_characters',
                        'A123456789012345678901234567890123456789012345678901234567890123',
                        'A1234567890123456789012345678901234567890123456789012345678901_1',
                        'A1234567890123456789012345678901234567890123456789012345678901_2']
@@ -602,7 +602,7 @@ def ogr_fgdb_9():
 
     _160char = ''.join(['A123456789' for i in range(16)])
 
-    in_names = [ 'FROM', # reserved keyword
+    in_names = ['FROM', # reserved keyword
                  '1NUMBER', # starting with a number
                  'WITH SPACE AND !$*!- special characters', # banned characters
                  'sde_foo', # reserved prefixes
@@ -618,13 +618,13 @@ def ogr_fgdb_9():
     gdal.PopErrorHandler()
 
     lyr.GetLayerDefn()
-    expected_names = [ 'FROM_',
+    expected_names = ['FROM_',
                        '_1NUMBER',
                        'WITH_SPACE_AND_______special_characters',
                        '_sde_foo',
                        _160char,
                        _160char[0:158] + '_1',
-                       _160char[0:158] + '_2' ]
+                       _160char[0:158] + '_2']
     for i in range(len(expected_names)):
         if ds.GetLayerByIndex(i).GetName() != expected_names[i]:
             gdaltest.post_reason('did not find %s' % expected_names[i])
@@ -937,7 +937,7 @@ def ogr_fgdb_15():
         shutil.rmtree('tmp/test3005.gdb')
     except:
         pass
-    gdaltest.unzip( 'tmp', 'data/test3005.gdb.zip')
+    gdaltest.unzip('tmp', 'data/test3005.gdb.zip')
     ds = ogr.Open('tmp/test3005.gdb')
     lyr = ds.GetLayer(0)
     got_wkt = lyr.GetSpatialRef().ExportToWkt()
@@ -962,7 +962,7 @@ def ogr_fgdb_16():
         return 'skip'
 
     try:
-        gdaltest.unzip( 'tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
+        gdaltest.unzip('tmp/cache', 'data/ESSENCE_NAIPF_ORI_PROV_sub93.gdb.zip')
     except:
         pass
     try:
@@ -1082,26 +1082,26 @@ def ogr_fgdb_18():
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
     lyr = ds.CreateLayer('test', geom_type = ogr.wkbNone)
 
-    field_defn = ogr.FieldDefn( 'field_string', ogr.OFTString )
+    field_defn = ogr.FieldDefn('field_string', ogr.OFTString)
     field_defn.SetDefault("'a''b'")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_int', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_int', ogr.OFTInteger)
     field_defn.SetDefault('123')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_real', ogr.OFTReal )
+    field_defn = ogr.FieldDefn('field_real', ogr.OFTReal)
     field_defn.SetDefault('1.23')
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_nodefault', ogr.OFTInteger )
+    field_defn = ogr.FieldDefn('field_nodefault', ogr.OFTInteger)
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime', ogr.OFTDateTime)
     field_defn.SetDefault("CURRENT_TIMESTAMP")
     lyr.CreateField(field_defn)
 
-    field_defn = ogr.FieldDefn( 'field_datetime2', ogr.OFTDateTime )
+    field_defn = ogr.FieldDefn('field_datetime2', ogr.OFTDateTime)
     field_defn.SetDefault("'2015/06/30 12:34:56'")
     lyr.CreateField(field_defn)
 
@@ -1997,7 +1997,7 @@ def ogr_fgdb_20():
         return 'fail'
 
     lyr.ResetReading()
-    expected = [ (1, None), (2, None), (4, 3), (3, 4) ]
+    expected = [(1, None), (2, None), (4, 3), (3, 4)]
     for i in range(2):
         for (fid, fgdb_fid) in expected:
             if i == 0:
@@ -2023,7 +2023,7 @@ def ogr_fgdb_20():
                 print(fgdb_fid)
                 return 'fail'
 
-    for fid in [ -9876543210, 0, 100]:
+    for fid in [-9876543210, 0, 100]:
         f = lyr.GetFeature(fid)
         if f is not None:
             gdaltest.post_reason('fail')
@@ -2064,7 +2064,7 @@ def ogr_fgdb_20():
         gdaltest.post_reason('fail')
         return 'fail'
 
-    for (fid, fgdb_fid) in [ (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10), (12, 11) ]:
+    for (fid, fgdb_fid) in [(3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10), (12, 11)]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
         f.SetField('id', fid)
@@ -2087,7 +2087,7 @@ def ogr_fgdb_20():
     lyr.SetFeature(f)
 
     lyr.ResetReading()
-    expected = [ (2, None), (4, 3), (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10) ]
+    expected = [(2, None), (4, 3), (3, 5), (2049,6), (10,7), (7,8), (9, None), (8, 10)]
     for (fid, fgdb_fid) in expected:
         f = lyr.GetNextFeature()
         if f is None:
@@ -2186,7 +2186,7 @@ def ogr_fgdb_20():
             print(lyr.GetFeatureCount())
             return 'fail'
         lyr.ResetReading()
-        expected = [ 2, 3, 4, 7, 8, 9, 10, 12, 13, 2049 ]
+        expected = [2, 3, 4, 7, 8, 9, 10, 12, 13, 2049]
         for fid in expected:
             f = lyr.GetNextFeature()
             if gdal.GetLastErrorType() != 0:
@@ -2252,7 +2252,7 @@ def ogr_fgdb_20():
     # Insert new features
     ds = ogr.Open('tmp/test.gdb', update = 1)
     lyr = ds.GetLayerByName('ogr_fgdb_20')
-    for (fid, fgdb_fid) in [ (10000000, 2050), (10000001,2051), (8191,2052), (16384,2053) ]:
+    for (fid, fgdb_fid) in [(10000000, 2050), (10000001,2051), (8191,2052), (16384,2053)]:
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(fid)
         f.SetField('id', fid)
@@ -2266,7 +2266,7 @@ def ogr_fgdb_20():
     ds = None
 
     # Insert a new intermediate FIDs
-    for (fid, fgdb_fid) in [ (1000000, 10000002), (1000001,10000002) ]:
+    for (fid, fgdb_fid) in [(1000000, 10000002), (1000001,10000002)]:
 
         ds = ogr.Open('tmp/test.gdb', update = 1)
         lyr = ds.GetLayerByName('ogr_fgdb_20')
@@ -2291,7 +2291,7 @@ def ogr_fgdb_20():
             print(lyr.GetFeatureCount())
             return 'fail'
         lyr.ResetReading()
-        expected = [ 2, 3, 4, 7, 8, 9, 10, 12, 13, 2049, 8191, 16384, 1000000, 1000001, 10000000, 10000001 ]
+        expected = [2, 3, 4, 7, 8, 9, 10, 12, 13, 2049, 8191, 16384, 1000000, 1000001, 10000000, 10000001]
         for fid in expected:
             f = lyr.GetNextFeature()
             if gdal.GetLastErrorType() != 0:
@@ -2398,26 +2398,26 @@ def ogr_fgdb_21():
 
     ds = ogrtest.fgdb_drv.CreateDataSource('tmp/test.gdb')
 
-    datalist = [ [ "pointm", ogr.wkbPointM, "POINT M (1 2 3)" ],
-                 [ "pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)" ],
-                 [ "multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))" ],
-                 [ "multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))" ],
-                 [ "linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))" ],
-                 [ "linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
-                 [ "multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))" ],
-                 [ "multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))" ],
-                 [ "polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
-                 [ "polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
-                 [ "multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))" ],
-                 [ "multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))" ],
-                 [ "empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
+    datalist = [["pointm", ogr.wkbPointM, "POINT M (1 2 3)"],
+                 ["pointzm", ogr.wkbPointM, "POINT ZM (1 2 3 4)"],
+                 ["multipointm", ogr.wkbMultiPointM, "MULTIPOINT M ((1 2 3),(4 5 6))"],
+                 ["multipointzm", ogr.wkbMultiPointZM, "MULTIPOINT ZM ((1 2 3 4),(5 6 7 8))"],
+                 ["linestringm", ogr.wkbLineStringM, "LINESTRING M (1 2 3,4 5 6)", "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                 ["linestringzm", ogr.wkbLineStringZM, "LINESTRING ZM (1 2 3 4,5 6 7 8)", "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                 ["multilinestringm", ogr.wkbMultiLineStringM, "MULTILINESTRING M ((1 2 3,4 5 6))"],
+                 ["multilinestringzm", ogr.wkbMultiLineStringZM, "MULTILINESTRING ZM ((1 2 3 4,5 6 7 8))"],
+                 ["polygonm", ogr.wkbPolygonM, "POLYGON M ((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1))", "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                 ["polygonzm", ogr.wkbPolygonZM, "POLYGON ZM ((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1))", "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                 ["multipolygonm", ogr.wkbMultiPolygonM, "MULTIPOLYGON M (((0 0 1,0 1 2,1 1 3,1 0 4,0 0 1)))"],
+                 ["multipolygonzm", ogr.wkbMultiPolygonZM, "MULTIPOLYGON ZM (((0 0 1 -1,0 1 2 -2,1 1 3 -3,1 0 4 -4,0 0 1 -1)))"],
+                 ["empty_polygonm", ogr.wkbPolygonM, 'POLYGON M EMPTY', None],
                  ]
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput("WGS84")
 
     for data in datalist:
-        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [] )
+        lyr = ds.CreateLayer(data[0], geom_type=data[1], srs=srs, options = [])
 
         feat = ogr.Feature(lyr.GetLayerDefn())
         #print(data[2])
@@ -2667,8 +2667,8 @@ disabled_gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_fgdb' )
+    gdaltest.setup_run('ogr_fgdb')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

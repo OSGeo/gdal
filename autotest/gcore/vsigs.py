@@ -32,7 +32,7 @@ import stat
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -199,7 +199,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket_http_header_file/resource', 200,
                 {'Content-type': 'text/plain'}, 'Y',
-                expected_headers = { 'foo': 'bar'} )
+                expected_headers = {'foo': 'bar'})
     with webserver.install_http_handler(handler):
         with gdaltest.config_option('GDAL_HTTP_HEADER_FILE', '/vsimem/my_headers.txt'):
             f = open_for_read('/vsigs/gs_fake_bucket_http_header_file/resource')
@@ -228,7 +228,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket/resource', 200,
                 {'Content-type': 'text/plain'}, 'foo',
-                expected_headers = { 'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='} )
+                expected_headers = {'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs/gs_fake_bucket/resource')
         if f is None:
@@ -245,7 +245,7 @@ def vsigs_2():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket/resource', 200,
                 {'Content-type': 'text/plain'}, 'foo',
-                expected_headers = { 'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='} )
+                expected_headers = {'Authorization': 'GOOG1 GS_ACCESS_KEY_ID:8tndu9//BfmN+Kg4AFLdUMZMBDQ='})
     with webserver.install_http_handler(handler):
         f = open_for_read('/vsigs_streaming/gs_fake_bucket/resource')
         if f is None:
@@ -298,7 +298,7 @@ def vsigs_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&prefix=a_dir%2F', 200,
-                { 'Content-type': 'application/xml' },
+                {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>a_dir/</Prefix>
@@ -311,7 +311,7 @@ def vsigs_readdir():
                     </ListBucketResult>
                 """)
     handler.add('GET', '/gs_fake_bucket2/?delimiter=%2F&marker=bla&prefix=a_dir%2F', 200,
-                { 'Content-type': 'application/xml' },
+                {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <ListBucketResult>
                         <Prefix>a_dir/</Prefix>
@@ -358,7 +358,7 @@ def vsigs_readdir():
 
     # List buckets
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <ListAllMyBucketsResult>
         <Buckets>
@@ -370,7 +370,7 @@ def vsigs_readdir():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsigs/')
-    if dir_contents != [ 'mybucket' ]:
+    if dir_contents != ['mybucket']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -707,7 +707,7 @@ gwE6fxOLyJDxuWRf
             content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
             content_8080 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D'
             content_8081 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODEvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.0abOEg4%2FRApWTSeAs6YTHaNzdwOgZLm8DTMO2MKlOA%2Fiagyb4cBJxDpkD5gECPvi7qhkg7LsyFuj0a%2BK48Bsuj%2FgLHOU4MpB0dHwYnDO2UXzH%2FUPdgFCVak1P1V%2ByiDA%2B%2Ft4aDI5fD9qefKQiu3wsMDHzP71MNLzayrjqaqKKS4%3D'
-            if content not in [ content_8080, content_8081 ] :
+            if content not in [content_8080, content_8081] :
                 sys.stderr.write('Bad POST content: %s\n' % content)
                 request.send_response(403)
                 return
@@ -801,7 +801,7 @@ def vsigs_read_credentials_oauth2_service_account_json_file():
         content = request.rfile.read(int(request.headers['Content-Length'])).decode('ascii')
         content_8080 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODAvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.DAhqWtBgKpObxZ%2BGiXqwF%2Fa4SS%2FNWQRhLCI7DYZCuOTuf2w7dL8j4CdpiwwzQg1diIus7dyViRfzpsFmuZKAXwL%2B84iBoVVqnJJZ4TgwH49NdfMAnc4Rgm%2Bo2a2nEcMjX%2FbQ3jRY%2B9WNVl96hzULGvLrVeyego2f06wivqmvxHA%3D'
         content_8081 = 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiAiQ0xJRU5UX0VNQUlMIiwgInNjb3BlIjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvZGV2c3RvcmFnZS5yZWFkX3dyaXRlIiwgImF1ZCI6ICJodHRwOi8vbG9jYWxob3N0OjgwODEvb2F1dGgyL3Y0L3Rva2VuIiwgImlhdCI6IDEyMzQ1NiwgImV4cCI6IDEyNzA1Nn0%3D.0abOEg4%2FRApWTSeAs6YTHaNzdwOgZLm8DTMO2MKlOA%2Fiagyb4cBJxDpkD5gECPvi7qhkg7LsyFuj0a%2BK48Bsuj%2FgLHOU4MpB0dHwYnDO2UXzH%2FUPdgFCVak1P1V%2ByiDA%2B%2Ft4aDI5fD9qefKQiu3wsMDHzP71MNLzayrjqaqKKS4%3D'
-        if content not in [ content_8080, content_8081 ] :
+        if content not in [content_8080, content_8081] :
             sys.stderr.write('Bad POST content: %s\n' % content)
             request.send_response(403)
             return
@@ -1401,7 +1401,7 @@ def vsigs_cleanup():
     return 'success'
 
 
-gdaltest_list = [ vsigs_init,
+gdaltest_list = [vsigs_init,
                   vsigs_1,
                   vsigs_start_webserver,
                   vsigs_2,
@@ -1416,19 +1416,19 @@ gdaltest_list = [ vsigs_init,
                   vsigs_read_credentials_gce,
                   vsigs_read_credentials_gce_expiration,
                   vsigs_stop_webserver,
-                  vsigs_cleanup ]
+                  vsigs_cleanup]
 
 # gdaltest_list = [ vsigs_init, vsigs_start_webserver, vsigs_write, vsigs_stop_webserver, vsigs_cleanup ]
 
-gdaltest_list_extra = [ vsigs_extra_1 ]
+gdaltest_list_extra = [vsigs_extra_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsigs' )
+    gdaltest.setup_run('vsigs')
 
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests( gdaltest_list_extra )
+        gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ vsigs_cleanup ] )
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsigs_cleanup])
 
     gdaltest.summarize()

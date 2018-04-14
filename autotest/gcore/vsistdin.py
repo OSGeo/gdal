@@ -31,7 +31,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -139,7 +139,7 @@ def vsistdin_4():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>""" % (' '.join([' ' for i in range(1024*1024)])) )
+</VRTDataset>""" % (' '.join([' ' for i in range(1024*1024)])))
     f.close()
 
     # Should work on both Unix and Windows
@@ -163,7 +163,7 @@ def vsistdin_4():
     return 'success'
 
 
-gdaltest_list = [ vsistdin_1,
+gdaltest_list = [vsistdin_1,
                   vsistdin_2,
                   vsistdin_3,
                   vsistdin_4
@@ -172,8 +172,8 @@ gdaltest_list = [ vsistdin_1,
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsistdin' )
+    gdaltest.setup_run('vsistdin')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

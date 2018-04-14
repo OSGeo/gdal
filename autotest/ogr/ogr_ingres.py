@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -52,7 +52,7 @@ def ogr_ingres_1():
         return 'skip'
 
     try:
-        gdaltest.ingres_ds = ogr.Open( '@driver=ingres,dbname=test', update=1 )
+        gdaltest.ingres_ds = ogr.Open('@driver=ingres,dbname=test', update=1)
         if gdaltest.ingres_ds is None:
             return 'skip'
     except:
@@ -73,21 +73,21 @@ def ogr_ingres_2():
     # Create Layer
     gdaltest.ingres_lyr = gdaltest.ingres_ds.CreateLayer( \
         'tpoly', geom_type=ogr.wkbPolygon,
-        options = [ 'OVERWRITE=YES' ] )
+        options = ['OVERWRITE=YES'])
 
     #######################################################
     # Setup Schema
-    ogrtest.quick_create_layer_def( gdaltest.ingres_lyr,
-                                    [ ('AREA', ogr.OFTReal),
+    ogrtest.quick_create_layer_def(gdaltest.ingres_lyr,
+                                    [('AREA', ogr.OFTReal),
                                       ('EAS_ID', ogr.OFTInteger),
-                                      ('PRFEDEA', ogr.OFTString) ] )
+                                      ('PRFEDEA', ogr.OFTString)])
 
     #######################################################
     # Copy in poly.shp
 
-    dst_feat = ogr.Feature( feature_def = gdaltest.ingres_lyr.GetLayerDefn() )
+    dst_feat = ogr.Feature(feature_def = gdaltest.ingres_lyr.GetLayerDefn())
 
-    shp_ds = ogr.Open( 'data/poly.shp' )
+    shp_ds = ogr.Open('data/poly.shp')
     gdaltest.shp_ds = shp_ds
     shp_lyr = shp_ds.GetLayer(0)
 
@@ -96,10 +96,10 @@ def ogr_ingres_2():
 
     while feat is not None:
 
-        gdaltest.poly_feat.append( feat )
+        gdaltest.poly_feat.append(feat)
 
-        dst_feat.SetFrom( feat )
-        gdaltest.ingres_lyr.CreateFeature( dst_feat )
+        dst_feat.SetFrom(feat)
+        gdaltest.ingres_lyr.CreateFeature(dst_feat)
 
         feat = shp_lyr.GetNextFeature()
 
@@ -115,22 +115,22 @@ def ogr_ingres_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.ingres_lyr.SetAttributeFilter( 'eas_id < 170' )
-    tr = ogrtest.check_features_against_list( gdaltest.ingres_lyr,
-                                              'eas_id', expect )
-    gdaltest.ingres_lyr.SetAttributeFilter( None )
+    gdaltest.ingres_lyr.SetAttributeFilter('eas_id < 170')
+    tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr,
+                                              'eas_id', expect)
+    gdaltest.ingres_lyr.SetAttributeFilter(None)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.ingres_lyr.GetNextFeature()
 
         if ogrtest.check_feature_geometry(read_feat,orig_feat.GetGeometryRef(),
-                                          max_error = 0.000000001 ) != 0:
+                                          max_error = 0.000000001) != 0:
             return 'fail'
 
         for fld in range(3):
             if orig_feat.GetField(fld) != read_feat.GetField(fld):
-                gdaltest.post_reason( 'Attribute %d does not match' % fld )
+                gdaltest.post_reason('Attribute %d does not match' % fld)
                 return 'fail'
 
     gdaltest.poly_feat = None
@@ -154,13 +154,13 @@ def ogr_ingres_4():
     if gdaltest.ingres_ds is None:
         return 'skip'
 
-    expect = [ 179, 173, 172, 171, 170, 169, 168, 166, 165, 158 ]
+    expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
-    sql_lyr = gdaltest.ingres_ds.ExecuteSQL( 'select distinct eas_id from tpoly order by eas_id desc' )
+    sql_lyr = gdaltest.ingres_ds.ExecuteSQL('select distinct eas_id from tpoly order by eas_id desc')
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'eas_id', expect )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'eas_id', expect)
 
-    gdaltest.ingres_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -183,18 +183,18 @@ def ogr_ingres_5():
     return 'skip'
 
     sql_lyr = gdaltest.ingres_ds.ExecuteSQL( \
-        "select * from tpoly where prfedea = '35043413'" )
+        "select * from tpoly where prfedea = '35043413'")
 
-    tr = ogrtest.check_features_against_list( sql_lyr, 'prfedea',
-                                              [ '35043413' ] )
+    tr = ogrtest.check_features_against_list(sql_lyr, 'prfedea',
+                                              ['35043413'])
     if tr:
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if ogrtest.check_feature_geometry( feat_read, 'POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))' ) != 0:
+        if ogrtest.check_feature_geometry(feat_read, 'POLYGON ((479750.6875 4764702.0,479658.59375 4764670.0,479640.09375 4764721.0,479735.90625 4764752.0,479750.6875 4764702.0))') != 0:
             tr = 0
         feat_read.Destroy()
 
-    gdaltest.ingres_ds.ReleaseResultSet( sql_lyr )
+    gdaltest.ingres_ds.ReleaseResultSet(sql_lyr)
 
     if tr:
         return 'success'
@@ -210,17 +210,17 @@ def ogr_ingres_6():
     if gdaltest.ingres_ds is None:
         return 'skip'
 
-    gdaltest.ingres_lyr.SetAttributeFilter( None )
+    gdaltest.ingres_lyr.SetAttributeFilter(None)
 
     geom = ogr.CreateGeometryFromWkt( \
-        'LINESTRING(479505 4763195,480526 4762819)' )
-    gdaltest.ingres_lyr.SetSpatialFilter( geom )
+        'LINESTRING(479505 4763195,480526 4762819)')
+    gdaltest.ingres_lyr.SetSpatialFilter(geom)
     geom.Destroy()
 
-    tr = ogrtest.check_features_against_list( gdaltest.ingres_lyr, 'eas_id',
-                                              [ 158 ] )
+    tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr, 'eas_id',
+                                              [158])
 
-    gdaltest.ingres_lyr.SetSpatialFilter( None )
+    gdaltest.ingres_lyr.SetSpatialFilter(None)
 
     if tr:
         return 'success'
@@ -238,39 +238,39 @@ def ogr_ingres_7():
 
     ####################################################################
     # Add new string field.
-    field_defn = ogr.FieldDefn( 'new_string', ogr.OFTString )
-    result = gdaltest.ingres_lyr.CreateField( field_defn )
+    field_defn = ogr.FieldDefn('new_string', ogr.OFTString)
+    result = gdaltest.ingres_lyr.CreateField(field_defn)
     field_defn.Destroy()
 
     if result is not 0:
-        gdaltest.post_reason( 'CreateField failed!' )
+        gdaltest.post_reason('CreateField failed!')
         return 'fail'
 
     ####################################################################
     # Apply a value to this field in one feature.
 
-    gdaltest.ingres_lyr.SetAttributeFilter( "prfedea = '35043423'" )
+    gdaltest.ingres_lyr.SetAttributeFilter("prfedea = '35043423'")
     feat_read = gdaltest.ingres_lyr.GetNextFeature()
     if feat_read is None:
-        gdaltest.post_reason( 'failed to read target feature!' )
+        gdaltest.post_reason('failed to read target feature!')
         return 'fail'
 
     gdaltest.ingres_fid = feat_read.GetFID()
 
-    feat_read.SetField( 'new_string', 'test1' )
-    gdaltest.ingres_lyr.SetFeature( feat_read )
+    feat_read.SetField('new_string', 'test1')
+    gdaltest.ingres_lyr.SetFeature(feat_read)
     feat_read.Destroy()
 
     ####################################################################
     # Now fetch two features and verify the new column works OK.
 
     gdaltest.ingres_lyr.SetAttributeFilter( \
-        "PRFEDEA IN ( '35043423', '35043414' )" )
+        "PRFEDEA IN ( '35043423', '35043414' )")
 
-    tr = ogrtest.check_features_against_list( gdaltest.ingres_lyr, 'new_string',
-                                              [ None, 'test1' ] )
+    tr = ogrtest.check_features_against_list(gdaltest.ingres_lyr, 'new_string',
+                                              [None, 'test1'])
 
-    gdaltest.ingres_lyr.SetAttributeFilter( None )
+    gdaltest.ingres_lyr.SetAttributeFilter(None)
 
     if tr:
         return 'success'
@@ -286,8 +286,8 @@ def ogr_ingres_8():
     if gdaltest.ingres_ds is None:
         return 'skip'
 
-    if not gdaltest.ingres_lyr.TestCapability( 'DeleteFeature' ):
-        gdaltest.post_reason( 'DeleteFeature capability test failed.' )
+    if not gdaltest.ingres_lyr.TestCapability('DeleteFeature'):
+        gdaltest.post_reason('DeleteFeature capability test failed.')
         return 'fail'
 
     old_count = gdaltest.ingres_lyr.GetFeatureCount()
@@ -296,8 +296,8 @@ def ogr_ingres_8():
     # Delete target feature.
 
     target_fid = gdaltest.ingres_fid
-    if gdaltest.ingres_lyr.DeleteFeature( target_fid ) != 0:
-        gdaltest.post_reason( 'DeleteFeature returned error code.' )
+    if gdaltest.ingres_lyr.DeleteFeature(target_fid) != 0:
+        gdaltest.post_reason('DeleteFeature returned error code.')
         return 'fail'
 
     ####################################################################
@@ -305,11 +305,11 @@ def ogr_ingres_8():
     # can't be fetched.
     new_count = gdaltest.ingres_lyr.GetFeatureCount()
     if new_count != old_count - 1:
-        gdaltest.post_reason( 'got feature count of %d, not expected %d.' \
-                              % (new_count, old_count -1) )
+        gdaltest.post_reason('got feature count of %d, not expected %d.' \
+                              % (new_count, old_count -1))
 
-    if gdaltest.ingres_lyr.GetFeature( target_fid ) is not None:
-        gdaltest.post_reason( 'Got deleted feature!' )
+    if gdaltest.ingres_lyr.GetFeature(target_fid) is not None:
+        gdaltest.post_reason('Got deleted feature!')
         return 'fail'
 
     return 'success'
@@ -338,12 +338,12 @@ gdaltest_list = [
     ogr_ingres_6,
     ogr_ingres_7,
     ogr_ingres_8,
-    ogr_ingres_cleanup ]
+    ogr_ingres_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_ingres' )
+    gdaltest.setup_run('ogr_ingres')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

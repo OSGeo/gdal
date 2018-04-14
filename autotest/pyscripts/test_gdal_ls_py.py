@@ -32,7 +32,7 @@
 from osgeo import gdal
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_py_scripts
@@ -149,7 +149,7 @@ def test_gdal_ls_py_4():
 def test_gdal_ls_py_5():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -186,7 +186,7 @@ def test_gdal_ls_py_5():
 def test_gdal_ls_py_6():
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -229,7 +229,7 @@ def test_gdal_ls_py_7():
         return 'skip'
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -268,7 +268,7 @@ def test_gdal_ls_py_8():
         return 'skip'
 
     try:
-        drv = gdal.GetDriverByName( 'HTTP' )
+        drv = gdal.GetDriverByName('HTTP')
     except:
         drv = None
 
@@ -319,8 +319,8 @@ if __name__ == '__main__':
     if gdal.GetConfigOption('GDAL_RUN_SLOW_TESTS') is None:
         gdal.SetConfigOption('GDAL_RUN_SLOW_TESTS', 'YES')
 
-    gdaltest.setup_run( 'test_gdal_ls_py' )
+    gdaltest.setup_run('test_gdal_ls_py')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -35,8 +35,8 @@ from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 
-sys.path.append( '../pymod' )
-sys.path.append( '../osr' )
+sys.path.append('../pymod')
+sys.path.append('../osr')
 
 import gdaltest
 import ogrtest
@@ -286,7 +286,7 @@ def pdf_iso32000():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None )
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None)
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -300,7 +300,7 @@ def pdf_iso32000_dpi_300():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['DPI=300'] )
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['DPI=300'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -315,7 +315,7 @@ def pdf_ogcbp():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
-    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP'] )
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
@@ -331,7 +331,7 @@ def pdf_ogcbp_dpi_300():
         return 'skip'
 
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', 'FALSE')
-    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP', 'DPI=300'] )
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['GEO_ENCODING=OGC_BP', 'DPI=300'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 1, check_srs = True, check_checksum_not_null = pdf_checksum_available())
     gdal.SetConfigOption('GDAL_PDF_OGC_BP_WRITE_WKT', None)
 
@@ -393,7 +393,7 @@ def pdf_no_compression():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'byte.tif', 1, None, options = ['COMPRESS=NONE'] )
+    tst = gdaltest.GDALTest('PDF', 'byte.tif', 1, None, options = ['COMPRESS=NONE'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -410,7 +410,7 @@ def pdf_jpeg_compression(filename = 'byte.tif'):
     if gdal.GetDriverByName('JPEG') is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', filename, 1, None, options = ['COMPRESS=JPEG'] )
+    tst = gdaltest.GDALTest('PDF', filename, 1, None, options = ['COMPRESS=JPEG'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -446,7 +446,7 @@ def pdf_jpx_compression(filename, drv_name = None):
     else:
         options = ['COMPRESS=JPEG2000', 'JPEG2000_DRIVER=%s' % drv_name]
 
-    tst = gdaltest.GDALTest( 'PDF', filename, 1, None, options = options )
+    tst = gdaltest.GDALTest('PDF', filename, 1, None, options = options)
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -491,7 +491,7 @@ def pdf_rgba_default_compression(options_param = []):
     if not pdf_checksum_available():
         return 'skip'
 
-    src_ds = gdal.Open( '../gcore/data/stefan_full_rgba.tif')
+    src_ds = gdal.Open('../gcore/data/stefan_full_rgba.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/rgba.pdf', src_ds, options = options_param)
     out_ds = None
 
@@ -563,7 +563,7 @@ def pdf_predictor_2():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['PREDICTOR=2'] )
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['PREDICTOR=2'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -574,7 +574,7 @@ def pdf_predictor_2_rgb():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'rgbsmall.tif', 1, None, options = ['PREDICTOR=2'] )
+    tst = gdaltest.GDALTest('PDF', 'rgbsmall.tif', 1, None, options = ['PREDICTOR=2'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -588,7 +588,7 @@ def pdf_tiled():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['COMPRESS=DEFLATE', 'TILED=YES'] )
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['COMPRESS=DEFLATE', 'TILED=YES'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -599,7 +599,7 @@ def pdf_tiled_128():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'utm.tif', 1, None, options = ['BLOCKXSIZE=128', 'BLOCKYSIZE=128'] )
+    tst = gdaltest.GDALTest('PDF', 'utm.tif', 1, None, options = ['BLOCKXSIZE=128', 'BLOCKYSIZE=128'])
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -616,7 +616,7 @@ def pdf_color_table():
     if gdal.GetDriverByName('GIF') is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'PDF', 'bug407.gif', 1, None )
+    tst = gdaltest.GDALTest('PDF', 'bug407.gif', 1, None)
     ret = tst.testCreateCopy(check_minmax = 0, check_gt = 0, check_srs = None, check_checksum_not_null = pdf_checksum_available())
 
     return ret
@@ -630,7 +630,7 @@ def pdf_xmp():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    src_ds = gdal.Open( 'data/adobe_style_geospatial_with_xmp.pdf')
+    src_ds = gdal.Open('data/adobe_style_geospatial_with_xmp.pdf')
     gdaltest.pdf_drv.CreateCopy('tmp/pdf_xmp.pdf', src_ds, options = ['WRITE_INFO=NO'])
     out_ds = gdal.Open('tmp/pdf_xmp.pdf')
     if out_ds is None:
@@ -681,7 +681,7 @@ def pdf_info():
         'TITLE=title'
     ]
 
-    src_ds = gdal.Open( 'data/byte.tif')
+    src_ds = gdal.Open('data/byte.tif')
     out_ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info.pdf', src_ds, options = options)
     #print(out_ds.GetMetadata())
     out_ds2 = gdaltest.pdf_drv.CreateCopy('tmp/pdf_info_2.pdf', out_ds)
@@ -938,10 +938,10 @@ def pdf_update_gcps(dpi = 300):
     ds = None
     src_ds = None
 
-    gcp = [ [ 2., 8., 0, 0 ],
-            [ 2., 18., 0, 0 ],
-            [ 16., 18., 0, 0 ],
-            [ 16., 8., 0, 0 ] ]
+    gcp = [[2., 8., 0, 0],
+            [2., 18., 0, 0],
+            [16., 18., 0, 0],
+            [16., 8., 0, 0]]
 
     for i in range(4):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
@@ -961,10 +961,10 @@ def pdf_update_gcps(dpi = 300):
     <SourceBand>1</SourceBand>
     </SimpleSource>
 </VRTRasterBand>
-</VRTDataset>""" % (  gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
+</VRTDataset>""" % (gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
                       gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
                       gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
-                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3] )
+                      gcp[3][0], gcp[3][1], gcp[3][2], gcp[3][3])
     vrt_ds = gdal.Open(vrt_txt)
     gcps = vrt_ds.GetGCPs()
     vrt_ds = None
@@ -1058,11 +1058,11 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     src_gt = src_ds.GetGeoTransform()
     src_ds = None
 
-    gcp = [ [ 2., 8., 0, 0 ],
-            [ 2., 10., 0, 0 ],
-            [ 2., 18., 0, 0 ],
-            [ 16., 18., 0, 0 ],
-            [ 16., 8., 0, 0 ] ]
+    gcp = [[2., 8., 0, 0],
+            [2., 10., 0, 0],
+            [2., 18., 0, 0],
+            [16., 18., 0, 0],
+            [16., 8., 0, 0]]
 
     for i in range(len(gcp)):
         gcp[i][2] = src_gt[0] + gcp[i][0] * src_gt[1] + gcp[i][1] * src_gt[2]
@@ -1086,7 +1086,7 @@ def pdf_set_5_gcps_ogc_bp(dpi = 300):
     <SourceBand>1</SourceBand>
     </SimpleSource>
 </VRTRasterBand>
-</VRTDataset>""" % (  src_wkt,
+</VRTDataset>""" % (src_wkt,
                       gcp[0][0], gcp[0][1], gcp[0][2], gcp[0][3],
                       gcp[1][0], gcp[1][1], gcp[1][2], gcp[1][3],
                       gcp[2][0], gcp[2][1], gcp[2][2], gcp[2][3],
@@ -1395,7 +1395,7 @@ def pdf_custom_layout():
     js = """button = app.alert({cMsg: 'This file was generated by GDAL. Do you want to visit its website ?', cTitle: 'Question', nIcon:2, nType:2});
 if (button == 4) app.launchURL('http://gdal.org/');"""
 
-    options = [ 'LEFT_MARGIN=1',
+    options = ['LEFT_MARGIN=1',
                 'TOP_MARGIN=2',
                 'RIGHT_MARGIN=3',
                 'BOTTOM_MARGIN=4',
@@ -1462,7 +1462,7 @@ def pdf_extra_rasters():
     f.write(subbyte)
     f.close()
 
-    options = [ 'MARGIN=1',
+    options = ['MARGIN=1',
                 'DPI=300',
                 'WRITE_USERUNIT=YES',
                 'CLIPPING_EXTENT=440780,3750180,441860,3751260',
@@ -1534,7 +1534,7 @@ def pdf_write_ogr():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+    options = ['OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo']
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr.pdf', src_ds, options = options)
@@ -1555,7 +1555,7 @@ def pdf_write_ogr():
     if pdf_is_poppler() or pdf_is_pdfium():
 
         cs_tab = []
-        rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT' ]
+        rendering_options = ['RASTER', 'VECTOR', 'TEXT', 'RASTER,VECTOR', 'RASTER,TEXT', 'VECTOR,TEXT', 'RASTER,VECTOR,TEXT']
         for opt in rendering_options:
             gdal.ErrorReset()
             ds = gdal.OpenEx('tmp/pdf_write_ogr.pdf', open_options = ['RENDERING_OPTIONS=%s' % opt])
@@ -1572,8 +1572,8 @@ def pdf_write_ogr():
             for j in range(i+1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
                     gdaltest.post_reason('fail')
-                    print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
-                    print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]) )
+                    print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]))
+                    print('Checksum %s: %d' % (rendering_options[j], cs_tab[j]))
                     return 'fail'
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
@@ -1643,7 +1643,7 @@ def pdf_write_ogr_with_reprojection():
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFCloseL(f)
 
-    options = [ 'OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo' ]
+    options = ['OGR_DATASOURCE=tmp/test.vrt', 'OGR_DISPLAY_LAYER_NAMES=A_Layer', 'OGR_DISPLAY_FIELD=foo']
 
     src_ds = gdal.Open('data/byte.tif')
     ds = gdaltest.pdf_drv.CreateCopy('tmp/pdf_write_ogr_with_reprojection.pdf', src_ds, options = options)
@@ -1832,7 +1832,7 @@ def pdf_write_huge():
     else:
         tmp_filename = 'tmp/pdf_write_huge.pdf'
 
-    for (xsize, ysize) in [ (19200,1), (1,19200) ]:
+    for (xsize, ysize) in [(19200,1), (1,19200)]:
         src_ds = gdal.GetDriverByName('MEM').Create('', xsize, ysize, 1)
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
@@ -1867,11 +1867,11 @@ def pdf_write_huge():
 
         src_ds = None
 
-    for option in [ 'LEFT_MARGIN=14400', 'TOP_MARGIN=14400' ]:
+    for option in ['LEFT_MARGIN=14400', 'TOP_MARGIN=14400']:
         src_ds = gdal.GetDriverByName('MEM').Create('', 1, 1, 1)
         gdal.ErrorReset()
         gdal.PushErrorHandler('CPLQuietErrorHandler')
-        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = [ option ])
+        ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds, options = [option])
         gdal.PopErrorHandler()
         msg = gdal.GetLastErrorMsg()
         if msg == '':
@@ -2066,7 +2066,7 @@ def pdf_metadata():
     if gdaltest.pdf_drv is None:
         return 'skip'
 
-    gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format = 'PDF', metadataOptions = [ 'FOO=BAR' ])
+    gdal.Translate('tmp/pdf_metadata.pdf', 'data/byte.tif', format = 'PDF', metadataOptions = ['FOO=BAR'])
     ds = gdal.Open('tmp/pdf_metadata.pdf')
     md = ds.GetMetadata()
     if 'FOO' not in md:
@@ -2096,13 +2096,13 @@ def pdf_pam_georef():
     src_ds = gdal.Open('data/byte.tif')
 
     # Default behaviour should result in no PAM file
-    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds )
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds)
     if os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
         gdaltest.post_reason('fail')
         return 'fail'
 
     # Now disable internal georeferencing, so georef should go to PAM
-    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'] )
+    gdaltest.pdf_drv.CreateCopy('tmp/pdf_pam_georef.pdf', src_ds, options = ['GEO_ENCODING=NONE'])
     if not os.path.exists('tmp/pdf_pam_georef.pdf.aux.xml'):
         gdaltest.post_reason('fail')
         return 'fail'
@@ -2173,7 +2173,7 @@ gdaltest_list_for_full_backend = [
     pdf_password,
     pdf_multipage,
     pdf_metadata,
-    pdf_pam_georef ]
+    pdf_pam_georef]
 
 gdaltest_list_for_short_backend = [
     pdf_iso32000,
@@ -2188,7 +2188,7 @@ gdaltest_list_for_short_backend = [
 
 
 def pdf_run_all():
-    gdaltest.run_tests( [ pdf_init ] )
+    gdaltest.run_tests([pdf_init])
 
     if gdaltest.pdf_drv is not None:
         if pdf_is_poppler():
@@ -2198,7 +2198,7 @@ def pdf_run_all():
         else:
             print('Using podofo')
 
-    gdaltest.run_tests( gdaltest_list_for_full_backend )
+    gdaltest.run_tests(gdaltest_list_for_full_backend)
 
     if gdal.GetConfigOption('GDAL_PDF_LIB') is None:
         # Switch from pdfium to poppler if both are available
@@ -2207,7 +2207,7 @@ def pdf_run_all():
             if 'HAVE_POPPLER' in md and 'HAVE_PDFIUM' in md:
                 gdal.SetConfigOption("GDAL_PDF_LIB", "POPPLER")
                 print('Using poppler now')
-                gdaltest.run_tests( gdaltest_list_for_full_backend )
+                gdaltest.run_tests(gdaltest_list_for_full_backend)
 
         # Switch from poppler/pdfium to podofo if both are available
         if gdaltest.pdf_drv is not None:
@@ -2216,18 +2216,18 @@ def pdf_run_all():
                 gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
                 print('Using podofo now')
                 gdaltest.pdf_is_checksum_available = None
-                gdaltest.run_tests( gdaltest_list_for_short_backend )
+                gdaltest.run_tests(gdaltest_list_for_short_backend)
 
     return 'success'
 
 
-gdaltest_list = [ pdf_run_all ]
+gdaltest_list = [pdf_run_all]
 #gdaltest_list = [ pdf_init, pdf_metadata ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'PDF' )
+    gdaltest.setup_run('PDF')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

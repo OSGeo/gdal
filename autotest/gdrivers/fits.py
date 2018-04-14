@@ -32,7 +32,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -56,15 +56,15 @@ def fits_init():
 
 
 class TestFITS:
-    def __init__( self, fileName ):
+    def __init__(self, fileName):
         self.fileName = fileName
 
-    def test( self ):
+    def test(self):
         if gdaltest.fitsDriver is None:
             return 'skip'
 
         ds = gdal.Open('../gcore/data/' + self.fileName + '.tif')
-        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options = [ 'PAGESIZE=2,2' ] )
+        gdaltest.fitsDriver.CreateCopy('tmp/' + self.fileName + '.fits', ds, options = ['PAGESIZE=2,2'])
 
         ds2 = gdal.Open('tmp/' + self.fileName + '.fits')
         if ds2.GetRasterBand(1).Checksum() != ds.GetRasterBand(1).Checksum():
@@ -86,8 +86,8 @@ def fits_metadata():
         return 'skip'
 
     ds = gdal.Open('../gcore/data/byte.tif')
-    ds2 = gdaltest.fitsDriver.CreateCopy('tmp/byte.fits', ds )
-    md = { 'TEST' : 'test_value' }
+    ds2 = gdaltest.fitsDriver.CreateCopy('tmp/byte.fits', ds)
+    md = {'TEST' : 'test_value'}
     ds2.SetMetadata(md)
     ds2 = None
     try:
@@ -103,7 +103,7 @@ def fits_metadata():
         return 'fail'
 
     ds2 = gdal.Open('tmp/byte.fits', gdal.GA_Update)
-    md = { 'TEST2' : 'test_value2' }
+    md = {'TEST2' : 'test_value2'}
     ds2.SetMetadata(md)
     ds2 = None
     try:
@@ -118,27 +118,27 @@ def fits_metadata():
     if md['TEST2'] != 'test_value2':
         return 'fail'
 
-    gdaltest.fitsDriver.Delete('tmp/byte.fits' )
+    gdaltest.fitsDriver.Delete('tmp/byte.fits')
 
     return 'success'
 
 
 ###############################################################################
 #
-gdaltest_list = [ fits_init ]
+gdaltest_list = [fits_init]
 
-fits_list = [ 'byte', 'int16', 'int32', 'float32', 'float64' ]
+fits_list = ['byte', 'int16', 'int32', 'float32', 'float64']
 
 for item in fits_list:
-    ut = TestFITS( item )
-    gdaltest_list.append( (ut.test, item) )
+    ut = TestFITS(item)
+    gdaltest_list.append((ut.test, item))
 
 gdaltest_list.append(fits_metadata)
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'fits' )
+    gdaltest.setup_run('fits')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

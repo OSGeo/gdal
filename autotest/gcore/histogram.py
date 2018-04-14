@@ -33,7 +33,7 @@ import os
 import sys
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -45,13 +45,13 @@ import gdaltest
 
 def histogram_1():
 
-    ds = gdal.Open( 'data/utmsmall.tif' )
+    ds = gdal.Open('data/utmsmall.tif')
     hist = ds.GetRasterBand(1).GetHistogram()
 
     exp_hist = [2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 0, 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 178, 0, 0, 0, 0, 0, 0, 0, 193, 0, 0, 0, 0, 0, 0, 0, 212, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 365, 0, 0, 0, 0, 0, 0, 0, 460, 0, 0, 0, 0, 0, 0, 0, 533, 0, 0, 0, 0, 0, 0, 0, 544, 0, 0, 0, 0, 0, 0, 0, 0, 626, 0, 0, 0, 0, 0, 0, 0, 653, 0, 0, 0, 0, 0, 0, 0, 673, 0, 0, 0, 0, 0, 0, 0, 629, 0, 0, 0, 0, 0, 0, 0, 0, 586, 0, 0, 0, 0, 0, 0, 0, 541, 0, 0, 0, 0, 0, 0, 0, 435, 0, 0, 0, 0, 0, 0, 0, 348, 0, 0, 0, 0, 0, 0, 0, 341, 0, 0, 0, 0, 0, 0, 0, 0, 284, 0, 0, 0, 0, 0, 0, 0, 225, 0, 0, 0, 0, 0, 0, 0, 237, 0, 0, 0, 0, 0, 0, 0, 172, 0, 0, 0, 0, 0, 0, 0, 0, 159, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0, 824]
 
     if hist != exp_hist:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
 
@@ -63,13 +63,13 @@ def histogram_1():
 
 def histogram_2():
 
-    ds = gdal.Open( 'data/utmsmall.tif' )
-    hist = ds.GetRasterBand(1).GetHistogram( buckets=16, max=255.5, min=-0.5 )
+    ds = gdal.Open('data/utmsmall.tif')
+    hist = ds.GetRasterBand(1).GetHistogram(buckets=16, max=255.5, min=-0.5)
 
     exp_hist = [10, 52, 115, 219, 371, 493, 825, 1077, 1279, 1302, 1127, 783, 625, 462, 331, 929]
 
     if hist != exp_hist:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
 
@@ -81,15 +81,15 @@ def histogram_2():
 
 def histogram_3():
 
-    ds = gdal.Open( 'data/int32_withneg.grd' )
-    hist = ds.GetRasterBand(1).GetHistogram( buckets=21, max=100, min=-100,
+    ds = gdal.Open('data/int32_withneg.grd')
+    hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
                                              include_out_of_range = 1,
-                                             approx_ok = 0 )
+                                             approx_ok = 0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 3]
 
     if hist != exp_hist:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
 
@@ -101,22 +101,22 @@ def histogram_3():
 
 def histogram_4():
 
-    ds = gdal.Open( 'data/int32_withneg.grd' )
-    hist = ds.GetRasterBand(1).GetHistogram( buckets=21, max=100, min=-100,
+    ds = gdal.Open('data/int32_withneg.grd')
+    hist = ds.GetRasterBand(1).GetHistogram(buckets=21, max=100, min=-100,
                                              include_out_of_range = 0,
-                                             approx_ok = 0 )
+                                             approx_ok = 0)
 
     exp_hist = [0, 0, 0, 0, 0, 1, 0, 1, 1, 3, 3, 2, 0, 5, 3, 4, 0, 1, 1, 2, 0]
 
     if hist != exp_hist:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
 
     ds = None
 
     try:
-        os.unlink( 'data/int32_withneg.grd.aux.xml' )
+        os.unlink('data/int32_withneg.grd.aux.xml')
     except:
         pass
 
@@ -128,20 +128,20 @@ def histogram_4():
 
 def histogram_5():
 
-    ds = gdal.Open( 'data/utmsmall.tif' )
-    hist = ds.GetRasterBand(1).GetDefaultHistogram( force = 1 )
+    ds = gdal.Open('data/utmsmall.tif')
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 1)
 
     exp_hist = (-0.5, 255.5, 256, [2, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 46, 0, 0, 0, 0, 0, 0, 0, 69, 0, 0, 0, 0, 0, 0, 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 0, 178, 0, 0, 0, 0, 0, 0, 0, 193, 0, 0, 0, 0, 0, 0, 0, 212, 0, 0, 0, 0, 0, 0, 0, 281, 0, 0, 0, 0, 0, 0, 0, 0, 365, 0, 0, 0, 0, 0, 0, 0, 460, 0, 0, 0, 0, 0, 0, 0, 533, 0, 0, 0, 0, 0, 0, 0, 544, 0, 0, 0, 0, 0, 0, 0, 0, 626, 0, 0, 0, 0, 0, 0, 0, 653, 0, 0, 0, 0, 0, 0, 0, 673, 0, 0, 0, 0, 0, 0, 0, 629, 0, 0, 0, 0, 0, 0, 0, 0, 586, 0, 0, 0, 0, 0, 0, 0, 541, 0, 0, 0, 0, 0, 0, 0, 435, 0, 0, 0, 0, 0, 0, 0, 348, 0, 0, 0, 0, 0, 0, 0, 341, 0, 0, 0, 0, 0, 0, 0, 0, 284, 0, 0, 0, 0, 0, 0, 0, 225, 0, 0, 0, 0, 0, 0, 0, 237, 0, 0, 0, 0, 0, 0, 0, 172, 0, 0, 0, 0, 0, 0, 0, 0, 159, 0, 0, 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 0, 0, 0, 824])
 
     if hist != exp_hist:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
 
     ds = None
 
     try:
-        os.unlink( 'data/utmsmall.tif.aux.xml' )
+        os.unlink('data/utmsmall.tif.aux.xml')
     except:
         pass
 
@@ -153,15 +153,15 @@ def histogram_5():
 
 def histogram_6():
 
-    shutil.copy( '../gdrivers/data/albania.jpg', 'tmp/albania.jpg' )
-    ds = gdal.Open( 'tmp/albania.jpg' )
-    hist = ds.GetRasterBand(1).GetDefaultHistogram( force = 0 )
+    shutil.copy('../gdrivers/data/albania.jpg', 'tmp/albania.jpg')
+    ds = gdal.Open('tmp/albania.jpg')
+    hist = ds.GetRasterBand(1).GetDefaultHistogram(force = 0)
     if hist is not None:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(hist)
         return 'fail'
     ds = None
-    os.unlink( 'tmp/albania.jpg' )
+    os.unlink('tmp/albania.jpg')
 
     return 'success'
 
@@ -177,8 +177,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'histogram' )
+    gdaltest.setup_run('histogram')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

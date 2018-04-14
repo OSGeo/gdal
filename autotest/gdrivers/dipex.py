@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,17 +40,17 @@ import gdaltest
 
 def dipex_1():
 
-    tst = gdaltest.GDALTest( 'DIPEx', 'fakedipex.dat', 1, 1 )
+    tst = gdaltest.GDALTest('DIPEx', 'fakedipex.dat', 1, 1)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    dipex_1 ]
+    dipex_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'dipex' )
+    gdaltest.setup_run('dipex')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

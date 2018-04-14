@@ -32,7 +32,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -110,14 +110,14 @@ def search_all_features(lyr):
 
 def ogr_shape_sbn_1():
 
-    if not gdaltest.download_file('http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip', 'Cochiti_shapefiles.zip' ):
+    if not gdaltest.download_file('http://pubs.usgs.gov/sim/3194/contents/Cochiti_shapefiles.zip', 'Cochiti_shapefiles.zip'):
         return 'skip'
 
     try:
         os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/Cochiti_shapefiles.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/Cochiti_shapefiles.zip')
             try:
                 os.stat('tmp/cache/CochitiDamShapeFiles/CochitiBoundary.shp')
             except:
@@ -152,8 +152,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_shape_sbn' )
+    gdaltest.setup_run('ogr_shape_sbn')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

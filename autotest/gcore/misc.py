@@ -34,7 +34,7 @@ import sys
 import os
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -49,7 +49,7 @@ def misc_1():
     drv = gdal.GetDriverByName('MEM')
     for i in range(len(tab_ds)):
         name = 'mem_%d' % i
-        tab_ds[i] = drv.Create( name, 1, 1, 1 )
+        tab_ds[i] = drv.Create(name, 1, 1, 1)
         if tab_ds[i] is None:
             return 'fail'
 
@@ -676,7 +676,7 @@ def misc_cleanup():
     return 'success'
 
 
-gdaltest_list = [ misc_1,
+gdaltest_list = [misc_1,
                   misc_2,
                   misc_3,
                   misc_4,
@@ -689,14 +689,14 @@ gdaltest_list = [ misc_1,
                   misc_11,
                   misc_12,
                   misc_13,
-                  misc_cleanup ]
+                  misc_cleanup]
 
 #gdaltest_list = [ misc_6 ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'misc' )
+    gdaltest.setup_run('misc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

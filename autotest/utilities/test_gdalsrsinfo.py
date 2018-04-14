@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_cli_utilities
@@ -244,11 +244,11 @@ def test_gdalsrsinfo_10():
     if sys.platform == 'win32':
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '\\"')
-        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
-                                   " -V -o proj4 \"" + wkt + "\"" )
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 \"" + wkt + "\"")
     else:
-        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
-                                   " -V -o proj4 '" + wkt + "'" )
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 '" + wkt + "'")
 
     if ret.find('Validate Succeeds') == -1:
         print(ret)
@@ -268,11 +268,11 @@ def test_gdalsrsinfo_11():
     if sys.platform == 'win32':
         # Win32 shell quoting oddities
         wkt = wkt.replace('"', '\\"')
-        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
-                                   " -V -o proj4 \"" + wkt + "\"" )
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 \"" + wkt + "\"")
     else:
-        ret = gdaltest.runexternal( test_cli_utilities.get_gdalsrsinfo_path() + \
-                                   " -V -o proj4 '" + wkt + "'" )
+        ret = gdaltest.runexternal(test_cli_utilities.get_gdalsrsinfo_path() + \
+                                   " -V -o proj4 '" + wkt + "'")
 
     if ret.find('Validate Fails') == -1:
         return 'fail'
@@ -371,7 +371,7 @@ def test_gdalsrsinfo_16():
         ' GTIFF_RAW:../gcore/data/byte.tif'
 
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err( cmd )
+        (ret, err) = gdaltest.runexternal_out_and_err(cmd)
     except:
         gdaltest.post_reason('gdalsrsinfo execution failed')
         return 'fail'
@@ -446,8 +446,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalsrsinfo' )
+    gdaltest.setup_run('test_gdalsrsinfo')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

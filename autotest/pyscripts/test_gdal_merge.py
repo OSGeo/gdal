@@ -32,7 +32,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import osr
@@ -70,30 +70,30 @@ def test_gdal_merge_2():
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
-    srs.SetWellKnownGeogCS( 'WGS84' )
+    srs.SetWellKnownGeogCS('WGS84')
     wkt = srs.ExportToWkt()
 
     ds = drv.Create('tmp/in1.tif', 10, 10, 1)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 2, 0.1, 0, 49, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     ds.GetRasterBand(1).Fill(0)
     ds = None
 
     ds = drv.Create('tmp/in2.tif', 10, 10, 1)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 3, 0.1, 0, 49, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([3, 0.1, 0, 49, 0, -0.1])
     ds.GetRasterBand(1).Fill(63)
     ds = None
 
     ds = drv.Create('tmp/in3.tif', 10, 10, 1)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 2, 0.1, 0, 48, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([2, 0.1, 0, 48, 0, -0.1])
     ds.GetRasterBand(1).Fill(127)
     ds = None
 
     ds = drv.Create('tmp/in4.tif', 10, 10, 1)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 3, 0.1, 0, 48, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([3, 0.1, 0, 48, 0, -0.1])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
@@ -101,22 +101,22 @@ def test_gdal_merge_2():
 
     ds = gdal.Open('tmp/test_gdal_merge_2.tif')
     if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = [ 2, 0.1, 0, 49, 0, -0.1 ]
+    expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
             return 'fail'
 
     if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
         return 'fail'
 
     if ds.RasterCount != 1:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 3508:
@@ -135,26 +135,26 @@ def test_gdal_merge_3():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -v -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-separate -v -o tmp/test_gdal_merge_3.tif tmp/in1.tif tmp/in2.tif tmp/in3.tif tmp/in4.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_3.tif')
     if ds.GetProjectionRef().find('WGS 84') == -1:
-        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()) )
+        gdaltest.post_reason('Expected WGS 84\nGot : %s' % (ds.GetProjectionRef()))
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = [ 2, 0.1, 0, 49, 0, -0.1 ]
+    expected_gt = [2, 0.1, 0, 49, 0, -0.1]
     for i in range(6):
         if abs(gt[i] - expected_gt[i] > 1e-5):
-            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt) )
+            gdaltest.post_reason('Expected : %s\nGot : %s' % (expected_gt, gt))
             return 'fail'
 
     if ds.RasterXSize != 20 or ds.RasterYSize != 20:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
         return 'fail'
 
     if ds.RasterCount != 4:
-        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount) )
+        gdaltest.post_reason('Wrong raster count : %d ' % (ds.RasterCount))
         return 'fail'
 
     if ds.GetRasterBand(1).Checksum() != 0:
@@ -173,7 +173,7 @@ def test_gdal_merge_4():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-init 255 -o tmp/test_gdal_merge_4.tif tmp/in2.tif tmp/in3.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', '-init 255 -o tmp/test_gdal_merge_4.tif tmp/in2.tif tmp/in3.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_4.tif')
 
@@ -201,24 +201,24 @@ def test_gdal_merge_5():
 
     drv = gdal.GetDriverByName('GTiff')
     srs = osr.SpatialReference()
-    srs.SetWellKnownGeogCS( 'WGS84' )
+    srs.SetWellKnownGeogCS('WGS84')
     wkt = srs.ExportToWkt()
 
     ds = drv.Create('tmp/in5.tif', 10, 10, 4)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 2, 0.1, 0, 49, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
     ds = drv.Create('tmp/in6.tif', 10, 10, 4)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 2, 0.1, 0, 49, 0, -0.1 ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([2, 0.1, 0, 49, 0, -0.1])
     ds.GetRasterBand(2).Fill(255)
     ds.GetRasterBand(4).Fill(255)
     cs = ds.GetRasterBand(4).Checksum()
     ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in5.tif tmp/in6.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in5.tif tmp/in6.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_5.tif')
 
@@ -242,7 +242,7 @@ def test_gdal_merge_5():
 
     os.unlink('tmp/test_gdal_merge_5.tif')
 
-    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in6.tif tmp/in5.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_merge', ' -o tmp/test_gdal_merge_5.tif tmp/in6.tif tmp/in5.tif')
 
     ds = gdal.Open('tmp/test_gdal_merge_5.tif')
 
@@ -271,7 +271,7 @@ def test_gdal_merge_5():
 
 def test_gdal_merge_cleanup():
 
-    lst = [ 'tmp/test_gdal_merge_1.tif',
+    lst = ['tmp/test_gdal_merge_1.tif',
             'tmp/test_gdal_merge_2.tif',
             'tmp/test_gdal_merge_3.tif',
             'tmp/test_gdal_merge_4.tif',
@@ -281,7 +281,7 @@ def test_gdal_merge_cleanup():
             'tmp/in3.tif',
             'tmp/in4.tif',
             'tmp/in5.tif',
-            'tmp/in6.tif' ]
+            'tmp/in6.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -303,8 +303,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_merge' )
+    gdaltest.setup_run('test_gdal_merge')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -33,7 +33,7 @@ from osgeo import gdal
 import sys
 from sys import version_info
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -48,27 +48,27 @@ def rfc30_1():
         filename_escaped = gdaltest.urlescape(filename)
     else:
         exec("filename =  u'xx\u4E2D\u6587.\u4E2D\u6587'")
-        filename_escaped = gdaltest.urlescape(filename.encode( 'utf-8' ))
+        filename_escaped = gdaltest.urlescape(filename.encode('utf-8'))
 
     if not gdaltest.download_file('http://download.osgeo.org/gdal/data/gtiff/' + filename_escaped, filename):
         return 'skip'
 
     filename = 'tmp/cache/' + filename
 
-    ds = gdal.Open( filename )
+    ds = gdal.Open(filename)
 
     file_list = ds.GetFileList()
 
     if ds is None:
-        gdaltest.post_reason( 'failed to open utf filename.' )
+        gdaltest.post_reason('failed to open utf filename.')
         return 'fail'
 
     ds = None
 
-    ds = gdal.Open( file_list[0] )
+    ds = gdal.Open(file_list[0])
 
     if ds is None:
-        gdaltest.post_reason( 'failed to open utf filename (2).' )
+        gdaltest.post_reason('failed to open utf filename (2).')
         return 'fail'
 
     return 'success'
@@ -86,13 +86,13 @@ def rfc30_2():
         # The typemaps should accept Unicode strings directly
         #filename = filename.encode( 'utf-8' )
 
-    fd = gdal.VSIFOpenL( filename, 'w' )
+    fd = gdal.VSIFOpenL(filename, 'w')
     if fd is None:
-        gdaltest.post_reason( 'failed to create utf-8 named file.' )
+        gdaltest.post_reason('failed to create utf-8 named file.')
         return 'fail'
 
-    gdal.VSIFWriteL( 'abc', 3, 1, fd )
-    gdal.VSIFCloseL( fd )
+    gdal.VSIFWriteL('abc', 3, 1, fd)
+    gdal.VSIFCloseL(fd)
 
     # rename
 
@@ -101,47 +101,47 @@ def rfc30_2():
         filename_for_rename = filename
     else:
         exec("new_filename = u'tmp/yy\u4E2D\u6587.\u4E2D\u6587'")
-        filename_for_rename = filename.encode( 'utf-8' ) # FIXME ? rename should perhaps accept unicode strings
-        new_filename = new_filename.encode( 'utf-8' ) # FIXME ? rename should perhaps accept unicode strings
+        filename_for_rename = filename.encode('utf-8') # FIXME ? rename should perhaps accept unicode strings
+        new_filename = new_filename.encode('utf-8') # FIXME ? rename should perhaps accept unicode strings
 
-    if gdal.Rename( filename_for_rename, new_filename ) != 0:
-        gdaltest.post_reason( 'utf-8 rename failed.' )
+    if gdal.Rename(filename_for_rename, new_filename) != 0:
+        gdaltest.post_reason('utf-8 rename failed.')
         return 'fail'
 
-    fd = gdal.VSIFOpenL( new_filename, 'r' )
+    fd = gdal.VSIFOpenL(new_filename, 'r')
     if fd is None:
-        gdaltest.post_reason( 'reopen failed with utf8' )
+        gdaltest.post_reason('reopen failed with utf8')
         return 'fail'
 
-    data = gdal.VSIFReadL( 3, 1, fd )
-    gdal.VSIFCloseL( fd )
+    data = gdal.VSIFReadL(3, 1, fd)
+    gdal.VSIFCloseL(fd)
 
     if version_info >= (3,0,0):
         ok = eval("data == b'abc'")
     else:
         ok = data == 'abc'
     if not ok:
-        gdaltest.post_reason( 'did not get expected data.' )
+        gdaltest.post_reason('did not get expected data.')
         return 'fail'
 
-    gdal.Unlink( new_filename )
+    gdal.Unlink(new_filename)
 
-    fd = gdal.VSIFOpenL( new_filename, 'r' )
+    fd = gdal.VSIFOpenL(new_filename, 'r')
     if fd is not None:
-        gdaltest.post_reason( 'did unlink fail on utf8 filename?' )
+        gdaltest.post_reason('did unlink fail on utf8 filename?')
         return 'fail'
 
     return 'success'
 
 
-gdaltest_list = [ rfc30_1,
+gdaltest_list = [rfc30_1,
                   rfc30_2
                   ]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rfc30' )
+    gdaltest.setup_run('rfc30')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

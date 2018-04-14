@@ -27,7 +27,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -60,16 +60,16 @@ def osr_erm_1():
 def osr_erm_2():
 
     srs = osr.SpatialReference()
-    if srs.ImportFromERM( 'EPSG:3395', 'EPSG:3395', 'METRE' ) != 0 \
+    if srs.ImportFromERM('EPSG:3395', 'EPSG:3395', 'METRE') != 0 \
        or not srs.IsProjected():
-        gdaltest.post_reason( 'EPSG:n import failed.' )
+        gdaltest.post_reason('EPSG:n import failed.')
         return 'fail'
 
     srs2 = osr.SpatialReference()
     srs2.SetFromUserInput('EPSG:3395')
 
     if not srs2.IsSame(srs):
-        gdaltest.post_reason( 'EPSG:n import does not match.' )
+        gdaltest.post_reason('EPSG:n import does not match.')
         print(srs)
         print(srs2)
         return 'fail'
@@ -80,12 +80,12 @@ def osr_erm_2():
 gdaltest_list = [
     osr_erm_1,
     osr_erm_2,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_erm' )
+    gdaltest.setup_run('osr_erm')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

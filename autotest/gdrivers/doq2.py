@@ -31,7 +31,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,7 +44,7 @@ def doq2_1():
 
     ds = gdal.Open('data/C3607614_truncated.NWS')
 
-    mem_ds = gdal.GetDriverByName('MEM').Create( 'mem_1.mem', 500, 1, gdal.GDT_Byte, 1 )
+    mem_ds = gdal.GetDriverByName('MEM').Create('mem_1.mem', 500, 1, gdal.GDT_Byte, 1)
 
     mem_ds.GetRasterBand(1).WriteRaster(0, 0, 500, 1, ds.GetRasterBand(1).ReadRaster(0, 0, 500, 1))
     if mem_ds.GetRasterBand(1).Checksum() != 4201:
@@ -61,7 +61,7 @@ def doq2_1():
         gdaltest.post_reason('wrong checksum for band 3')
         return 'fail'
 
-    if ds.GetGeoTransform() != ( 377054, 1, 0, 4082205, 0, -1):
+    if ds.GetGeoTransform() != (377054, 1, 0, 4082205, 0, -1):
         gdaltest.post_reason('wrong geotransform')
         return 'fail'
 
@@ -77,12 +77,12 @@ def doq2_1():
 
 
 gdaltest_list = [
-    doq2_1 ]
+    doq2_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'doq2' )
+    gdaltest.setup_run('doq2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

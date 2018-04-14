@@ -206,10 +206,10 @@ def ogrupdate_analyse_args(argv, progress = None, progress_arg = None):
             print('-select is only compatible with -update_only')
             return 1
 
-    updated_count = [ 0 ]
-    inserted_count = [ 0 ]
-    updated_failed = [ 0 ]
-    inserted_failed = [ 0 ]
+    updated_count = [0]
+    inserted_count = [0]
+    updated_failed = [0]
+    inserted_failed = [0]
 
     if compare_before_update:
         src_layer_defn = src_layer.GetLayerDefn()
@@ -295,7 +295,7 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
         dst_type = dst_layer_defn.GetFieldDefn(dst_idx).GetType()
 
     if papszSelFields is not None:
-        for layer_defn in [ src_layer_defn, dst_layer_defn ]:
+        for layer_defn in [src_layer_defn, dst_layer_defn]:
             for fieldname in papszSelFields:
                 idx = layer_defn.GetFieldIndex(fieldname)
                 if idx < 0:
@@ -465,5 +465,5 @@ def ogrupdate_process(src_layer, dst_layer, matchfieldname = None, update_mode =
 
 
 if __name__ == '__main__':
-    argv = ogr.GeneralCmdLineProcessor( sys.argv )
+    argv = ogr.GeneralCmdLineProcessor(sys.argv)
     sys.exit(ogrupdate_analyse_args(argv[1:]))

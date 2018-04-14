@@ -565,7 +565,7 @@ def main_loop():
             else:
                 write_int(1) # Success
                 write_int(16) # caps length
-                caps = [ 0 for i in range(16)]
+                caps = [0 for i in range(16)]
                 for cap in caps_list:
                     caps[int(cap / 8)] = caps[int(cap / 8)] | (1 << (cap % 8))
                 for i in range(16):

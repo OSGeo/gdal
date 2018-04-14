@@ -31,7 +31,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import osr
@@ -44,14 +44,14 @@ from osgeo import osr
 def osr_pm_1():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 27572 )
+    srs.ImportFromEPSG(27572)
 
-    if abs(float(srs.GetAttrValue( 'PRIMEM', 1))-2.33722917) > 0.0000005:
-        gdaltest.post_reason( 'Wrong prime meridian.' )
+    if abs(float(srs.GetAttrValue('PRIMEM', 1))-2.33722917) > 0.0000005:
+        gdaltest.post_reason('Wrong prime meridian.')
         return 'fail'
 
-    if abs(srs.GetProjParm( osr.SRS_PP_CENTRAL_MERIDIAN )-0.0) > 0.0000005:
-        gdaltest.post_reason( 'Wrong central meridian.' )
+    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN)-0.0) > 0.0000005:
+        gdaltest.post_reason('Wrong central meridian.')
         return 'fail'
 
     return 'success'
@@ -64,17 +64,17 @@ def osr_pm_1():
 def osr_pm_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromEPSG( 27572 )
+    srs.ImportFromEPSG(27572)
     proj4_srs = srs.ExportToProj4()
 
-    if proj4_srs.find('+pm=paris' ) == -1:
+    if proj4_srs.find('+pm=paris') == -1:
         print(proj4_srs)
-        gdaltest.post_reason( 'prime meridian wrong or missing.' )
+        gdaltest.post_reason('prime meridian wrong or missing.')
         return 'fail'
 
-    if proj4_srs.find('+lon_0=0' ) == -1:
+    if proj4_srs.find('+lon_0=0') == -1:
         print(proj4_srs)
-        gdaltest.post_reason( '+lon_0 is wrong.' )
+        gdaltest.post_reason('+lon_0 is wrong.')
         return 'fail'
 
     return 'success'
@@ -87,14 +87,14 @@ def osr_pm_2():
 def osr_pm_3():
 
     srs = osr.SpatialReference()
-    srs.ImportFromProj4( '+proj=utm +zone=30 +datum=WGS84 +pm=bogota' )
+    srs.ImportFromProj4('+proj=utm +zone=30 +datum=WGS84 +pm=bogota')
 
-    if abs(float(srs.GetAttrValue( 'PRIMEM', 1))+74.08091666678081) > 0.0000005:
-        gdaltest.post_reason( 'Wrong prime meridian.' )
+    if abs(float(srs.GetAttrValue('PRIMEM', 1))+74.08091666678081) > 0.0000005:
+        gdaltest.post_reason('Wrong prime meridian.')
         return 'fail'
 
-    if abs(srs.GetProjParm( osr.SRS_PP_CENTRAL_MERIDIAN )+3.0) > 0.0000005:
-        gdaltest.post_reason( 'Wrong central meridian.' )
+    if abs(srs.GetProjParm(osr.SRS_PP_CENTRAL_MERIDIAN)+3.0) > 0.0000005:
+        gdaltest.post_reason('Wrong central meridian.')
         return 'fail'
 
     return 'success'
@@ -106,12 +106,12 @@ gdaltest_list = [
     osr_pm_1,
     osr_pm_2,
     osr_pm_3,
-    None ]
+    None]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'osr_pm' )
+    gdaltest.setup_run('osr_pm')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

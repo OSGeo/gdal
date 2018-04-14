@@ -32,7 +32,7 @@ import array
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import ogr
@@ -64,26 +64,26 @@ def contour_1():
     precision = 1.0 / size
 
     ds = drv.Create('tmp/gdal_contour.tif', size, size, 1)
-    ds.SetProjection( wkt )
-    ds.SetGeoTransform( [ 1, precision, 0, 50, 0, -precision ] )
+    ds.SetProjection(wkt)
+    ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
     raw_data = array.array('h',[10 for i in range(int(size/2))]).tostring()
     for i in range(int(size/2)):
-        ds.WriteRaster( int(size/4), i+int(size/4), int(size/2), 1, raw_data,
+        ds.WriteRaster(int(size/4), i+int(size/4), int(size/2), 1, raw_data,
                         buf_type = gdal.GDT_Int16,
-                        band_list = [1] )
+                        band_list = [1])
 
     raw_data = array.array('h',[20 for i in range(int(size/2))]).tostring()
     for i in range(int(size/4)):
-        ds.WriteRaster( int(size/4)+int(size/8), i+int(size/4)+int(size/8), int(size/4), 1, raw_data,
+        ds.WriteRaster(int(size/4)+int(size/8), i+int(size/4)+int(size/8), int(size/4), 1, raw_data,
                         buf_type = gdal.GDT_Int16,
-                        band_list = [1] )
+                        band_list = [1])
 
     raw_data = array.array('h',[25 for i in range(int(size/4))]).tostring()
     for i in range(int(size/8)):
-        ds.WriteRaster( int(size/4)+int(size/8)+int(size/16), i+int(size/4)+int(size/8)+int(size/16), int(size/8), 1, raw_data,
+        ds.WriteRaster(int(size/4)+int(size/8)+int(size/16), i+int(size/4)+int(size/8)+int(size/16), int(size/8), 1, raw_data,
                         buf_type = gdal.GDT_Int16,
-                        band_list = [1] )
+                        band_list = [1])
 
     ogr_ds = ogr.GetDriverByName('ESRI Shapefile').CreateDataSource('tmp/contour.shp')
     ogr_lyr = ogr_ds.CreateLayer('contour')
@@ -96,9 +96,9 @@ def contour_1():
 
     ds = None
 
-    expected_envelopes = [ [ 1.25, 1.75, 49.25, 49.75 ],
-                           [ 1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125 ] ]
-    expected_height = [ 10, 20 ]
+    expected_envelopes = [[1.25, 1.75, 49.25, 49.75],
+                           [1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125]]
+    expected_height = [10, 20]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
@@ -161,10 +161,10 @@ def contour_2():
     size = 160
     precision = 1. / size
 
-    expected_envelopes = [ [ 1.25, 1.75, 49.25, 49.75 ],
-                           [ 1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125 ],
-                           [ 1.25+0.125+0.0625, 1.75-0.125-0.0625, 49.25+0.125+0.0625, 49.75-0.125-0.0625 ] ]
-    expected_height = [ 10, 20, 25 ]
+    expected_envelopes = [[1.25, 1.75, 49.25, 49.75],
+                           [1.25+0.125, 1.75-0.125, 49.25+0.125, 49.75-0.125],
+                           [1.25+0.125+0.0625, 1.75-0.125-0.0625, 49.25+0.125+0.0625, 49.75-0.125-0.0625]]
+    expected_height = [10, 20, 25]
 
     lyr = ogr_ds.ExecuteSQL("select * from contour order by elev asc")
 
@@ -221,8 +221,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'contour' )
+    gdaltest.setup_run('contour')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

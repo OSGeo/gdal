@@ -34,7 +34,7 @@ import sys
 from osgeo import gdal
 import shutil
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,11 +44,11 @@ import gdaltest
 
 def mrsid_1():
 
-    gdaltest.mrsid_drv = gdal.GetDriverByName( 'MrSID' )
+    gdaltest.mrsid_drv = gdal.GetDriverByName('MrSID')
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    tst = gdaltest.GDALTest( 'MrSID', 'mercator.sid', 1, None )
+    tst = gdaltest.GDALTest('MrSID', 'mercator.sid', 1, None)
 
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
     #
@@ -112,14 +112,14 @@ def mrsid_1():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen( check_gt = gt, \
+    ret = tst.testOpen(check_gt = gt, \
         check_stat = (0.0, 255.0, 103.319, 55.153), \
-        check_approx_stat = (2.0, 243.0, 103.131, 43.978) )
+        check_approx_stat = (2.0, 243.0, 103.131, 43.978))
 
     if ret != 'success':
         return ret
 
-    ds = gdal.Open( 'data/mercator.sid' )
+    ds = gdal.Open('data/mercator.sid')
     got_prj = ds.GetProjectionRef()
     ds = None
 
@@ -145,12 +145,12 @@ def mrsid_2():
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/mercator.sid' )
+    ds = gdal.Open('data/mercator.sid')
 
     try:
-        data = ds.ReadRaster( 0, 0, 515, 515, buf_xsize = 10, buf_ysize = 10 )
+        data = ds.ReadRaster(0, 0, 515, 515, buf_xsize = 10, buf_ysize = 10)
     except:
-        gdaltest.post_reason( 'Small overview read failed: ' + gdal.GetLastErrorMsg() )
+        gdaltest.post_reason('Small overview read failed: ' + gdal.GetLastErrorMsg())
         return 'fail'
 
     ds = None
@@ -174,7 +174,7 @@ def mrsid_2():
     mean = float(sum) / len(data)
 
     if mean < 95 or mean > 105:
-        gdaltest.post_reason( 'image mean out of range.' )
+        gdaltest.post_reason('image mean out of range.')
         return 'fail'
 
     return 'success'
@@ -188,11 +188,11 @@ def mrsid_3():
     if gdaltest.mrsid_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/mercator.sid' )
+    ds = gdal.Open('data/mercator.sid')
 
     band = ds.GetRasterBand(1)
     if band.GetOverviewCount() != 4:
-        gdaltest.post_reason( 'did not get expected overview count' )
+        gdaltest.post_reason('did not get expected overview count')
         return 'fail'
 
     new_stat = band.GetOverview(3).GetStatistics(0,1)
@@ -205,7 +205,7 @@ def mrsid_3():
             print('')
             print('old = ', check_stat)
             print('new = ', new_stat)
-            gdaltest.post_reason( 'Statistics differ.' )
+            gdaltest.post_reason('Statistics differ.')
             return 'fail'
 
     return 'success'
@@ -224,7 +224,7 @@ def mrsid_4():
     except:
         pass
 
-    tst = gdaltest.GDALTest( 'MrSID', 'mercator_new.sid', 1, None )
+    tst = gdaltest.GDALTest('MrSID', 'mercator_new.sid', 1, None)
 
     gt = (-15436.385771224039, 60.0, 0.0, 3321987.8617962394, 0.0, -60.0)
     prj = """PROJCS["MER         E000",
@@ -245,9 +245,9 @@ def mrsid_4():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen( check_gt = gt, check_prj = prj, \
+    ret = tst.testOpen(check_gt = gt, check_prj = prj, \
         check_stat = (0.0, 255.0, 103.112, 52.477), \
-        check_approx_stat = (0.0, 255.0, 102.684, 51.614) )
+        check_approx_stat = (0.0, 255.0, 102.684, 51.614))
 
     try:
         os.remove('data/mercator_new.sid.aux.xml')
@@ -261,7 +261,7 @@ def mrsid_4():
 
 
 def mrsid_5():
-    gdaltest.jp2mrsid_drv = gdal.GetDriverByName( 'JP2MrSID' )
+    gdaltest.jp2mrsid_drv = gdal.GetDriverByName('JP2MrSID')
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
 
@@ -299,8 +299,8 @@ def mrsid_6():
 """
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest( 'JP2MrSID', 'byte.jp2', 1, 50054 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('JP2MrSID', 'byte.jp2', 1, 50054)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 
 ###############################################################################
@@ -311,8 +311,8 @@ def mrsid_7():
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/int16.jp2' )
-    ds_ref = gdal.Open( 'data/int16.tif' )
+    ds = gdal.Open('data/int16.jp2')
+    ds_ref = gdal.Open('data/int16.tif')
 
     maxdiff = gdaltest.compare_ds(ds, ds_ref)
 
@@ -343,36 +343,36 @@ def mrsid_8():
     new_srs = """PROJCS["OSGB 1936 / British National Grid",GEOGCS["OSGB 1936",DATUM["OSGB_1936",SPHEROID["Airy 1830",6377563.396,299.3249646,AUTHORITY["EPSG","7001"]],AUTHORITY["EPSG","6277"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329251994328,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4277"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",49],PARAMETER["central_meridian",-2],PARAMETER["scale_factor",0.9996012717],PARAMETER["false_easting",400000],PARAMETER["false_northing",-100000],AUTHORITY["EPSG","27700"],AXIS["Easting",EAST],AXIS["Northing",NORTH]]"""
 
     gdal.PushErrorHandler('CPLQuietErrorHandler')
-    gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
+    gdal.GetDriverByName('MrSID').Delete('tmp/mercator.sid')
     gdal.PopErrorHandler()
 
-    shutil.copyfile( 'data/mercator.sid', 'tmp/mercator.sid' )
+    shutil.copyfile('data/mercator.sid', 'tmp/mercator.sid')
 
-    ds = gdal.Open( 'tmp/mercator.sid' )
+    ds = gdal.Open('tmp/mercator.sid')
 
-    ds.SetGeoTransform( new_gt )
-    ds.SetProjection( new_srs )
-    ds.GetRasterBand(1).SetNoDataValue( 255 )
+    ds.SetGeoTransform(new_gt)
+    ds.SetProjection(new_srs)
+    ds.GetRasterBand(1).SetNoDataValue(255)
     ds = None
 
-    ds = gdal.Open( 'tmp/mercator.sid' )
+    ds = gdal.Open('tmp/mercator.sid')
 
     if new_srs != ds.GetProjectionRef():
         print(ds.GetProjectionRef())
-        gdaltest.post_reason( 'SRS Override failed.' )
+        gdaltest.post_reason('SRS Override failed.')
         return 'fail'
 
     if new_gt != ds.GetGeoTransform():
-        gdaltest.post_reason( 'Geotransform Override failed.' )
+        gdaltest.post_reason('Geotransform Override failed.')
         return 'fail'
 
     if ds.GetRasterBand(1).GetNoDataValue() != 255:
-        gdaltest.post_reason( 'Nodata override failed.' )
+        gdaltest.post_reason('Nodata override failed.')
         return 'fail'
 
     ds = None
 
-    gdal.GetDriverByName('MrSID').Delete( 'tmp/mercator.sid' )
+    gdal.GetDriverByName('MrSID').Delete('tmp/mercator.sid')
 
     return 'success'
 
@@ -435,7 +435,7 @@ def mrsid_11():
     if gdaltest.jp2mrsid_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/byte_without_geotransform.jp2' )
+    ds = gdal.Open('data/byte_without_geotransform.jp2')
 
     geotransform = ds.GetGeoTransform()
     if abs(geotransform[0]-440720) > 0.1 \
@@ -445,7 +445,7 @@ def mrsid_11():
         or abs(geotransform[4]-0) > 0.001 \
         or abs(geotransform[5]- -60) > 0.001:
         print(geotransform)
-        gdaltest.post_reason( 'geotransform differs from expected' )
+        gdaltest.post_reason('geotransform differs from expected')
         return 'fail'
 
     ds = None
@@ -464,7 +464,7 @@ def mrsid_online_1():
         return 'skip'
 
     # Checksum = 29473 on my PC
-    tst = gdaltest.GDALTest( 'JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/7sisters200.j2k', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -487,7 +487,7 @@ def mrsid_online_2():
         return 'skip'
 
     # Checksum = 209 on my PC
-    tst = gdaltest.GDALTest( 'JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/gcp.jp2', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -522,7 +522,7 @@ def mrsid_online_3():
         return 'skip'
 
     # checksum = 14443 on my PC
-    tst = gdaltest.GDALTest( 'JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne1.j2k', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -559,7 +559,7 @@ def mrsid_online_4():
         return 'skip'
 
     # Checksum = 53186 on my PC
-    tst = gdaltest.GDALTest( 'JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1 )
+    tst = gdaltest.GDALTest('JP2MrSID', 'tmp/cache/Bretagne2.j2k', 1, None, filename_absolute = 1)
 
     if tst.testOpen() != 'success':
         return 'fail'
@@ -587,8 +587,8 @@ def mrsid_online_4():
 def mrsid_cleanup():
 
     try:
-        os.remove( 'data/mercator.sid.aux.xml' )
-        os.remove( 'data/mercator_new.sid.aux.xml' )
+        os.remove('data/mercator.sid.aux.xml')
+        os.remove('data/mercator_new.sid.aux.xml')
     except:
         pass
 
@@ -613,12 +613,12 @@ gdaltest_list = [
     mrsid_online_2,
     mrsid_online_3,
     mrsid_online_4,
-    mrsid_cleanup ]
+    mrsid_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mrsid' )
+    gdaltest.setup_run('mrsid')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

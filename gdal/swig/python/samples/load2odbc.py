@@ -74,16 +74,16 @@ if layername is None:
 #############################################################################
 # Open the datasource to operate on.
 
-in_ds = ogr.Open( infile, update = 0 )
+in_ds = ogr.Open(infile, update = 0)
 
-in_layer = in_ds.GetLayerByName( layername )
+in_layer = in_ds.GetLayerByName(layername)
 
 if in_layer is None:
     print('Did not find layer: ', layername)
-    sys.exit( 1 )
+    sys.exit(1)
 
 if attr_filter is not None:
-    in_layer.SetAttributeFilter( attr_filter )
+    in_layer.SetAttributeFilter(attr_filter)
 
 #############################################################################
 #	Connect to ODBC DSN.
@@ -94,7 +94,7 @@ else:
     if len(odbc_dsn) < 6 or odbc_dsn[:5] != 'ODBC:':
         odbc_dsn = 'ODBC:' + odbc_dsn
 
-    out_ds = ogr.Open( odbc_dsn )
+    out_ds = ogr.Open(odbc_dsn)
 
     if out_ds is None:
         print('Unable to connect to ' + odbc_dsn)
@@ -108,7 +108,7 @@ try:
     if out_ds is None:
         print(cmd)
     else:
-        out_ds.ExecuteSQL( cmd )
+        out_ds.ExecuteSQL(cmd)
 except:
     pass
 
@@ -137,9 +137,9 @@ if out_ds is None:
     print(cmd)
 else:
     print('ExecuteSQL: ', cmd)
-    result = out_ds.ExecuteSQL( cmd )
+    result = out_ds.ExecuteSQL(cmd)
     if result is not None:
-        out_ds.ReleaseResultSet( result )
+        out_ds.ReleaseResultSet(result)
 
 #############################################################################
 # Read all features in the line layer, holding just the geometry in a hash
@@ -163,7 +163,7 @@ while feat is not None:
 
     for iField in range(defn.GetFieldCount()):
         fielddef = defn.GetFieldDefn(iField)
-        if feat.IsFieldSet( iField ) != 0:
+        if feat.IsFieldSet(iField) != 0:
             cmd_start = cmd_start + ', ' + fielddef.GetName()
 
         if fielddef.GetType() == ogr.OFTInteger:
@@ -181,7 +181,7 @@ while feat is not None:
         print(cmd)
     else:
         print('ExecuteSQL: ', cmd)
-        out_ds.ExecuteSQL( cmd )
+        out_ds.ExecuteSQL(cmd)
 
     feat.Destroy()
     feat = in_layer.GetNextFeature()

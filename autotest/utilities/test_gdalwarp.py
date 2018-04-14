@@ -33,7 +33,7 @@ import sys
 import os
 import stat
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -790,7 +790,7 @@ def test_gdalwarp_29():
         return 'fail'
 
     gt = ds.GetGeoTransform()
-    expected_gt = [ -20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684 ]
+    expected_gt = [-20037508.342789248, 90054.726863985939, 0.0, 16213801.067583967, 0.0, -90056.750611190684]
     for i in range(6):
         if abs(gt[i] - expected_gt[i]) > 1:
             print(gt)
@@ -934,7 +934,7 @@ def test_gdalwarp_32():
         return 'fail'
 
     if ds.RasterXSize != 13 or ds.RasterYSize != 25:
-        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize) )
+        gdaltest.post_reason('Wrong raster dimensions : %d x %d' % (ds.RasterXSize, ds.RasterYSize))
         return 'fail'
 
     ds = None
@@ -1163,7 +1163,7 @@ def test_gdalwarp_40():
     src_ds = gdal.Open('../gcore/data/byte.tif')
     out_ds = gdal.GetDriverByName('GTiff').CreateCopy('tmp/test_gdalwarp_40_src.tif', src_ds)
     cs_main = out_ds.GetRasterBand(1).Checksum()
-    out_ds.BuildOverviews( 'NONE', overviewlist = [2, 4] )
+    out_ds.BuildOverviews('NONE', overviewlist = [2, 4])
     out_ds.GetRasterBand(1).GetOverview(0).Fill(127)
     cs_ov0 = out_ds.GetRasterBand(1).GetOverview(0).Checksum()
     out_ds.GetRasterBand(1).GetOverview(1).Fill(255)
@@ -1370,8 +1370,8 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
-    expected_cs = [ 25382, 27573, 35297, 59540 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
         print(got_cs)
@@ -1382,8 +1382,8 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
-    expected_cs = [ 25382, 27573, 35297, 59540 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
         print(got_cs)
@@ -1394,8 +1394,8 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
-    expected_cs = [ 30111, 32302, 40026, 59540 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [30111, 32302, 40026, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
         print(got_cs)
@@ -1407,8 +1407,8 @@ def test_gdalwarp_42():
     gdaltest.runexternal(test_cli_utilities.get_gdalwarp_path() + ' tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES')
 
     ds = gdal.Open('tmp/test_gdalwarp_42.tif')
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
-    expected_cs = [ 25382, 27573, 35297, 59540 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [25382, 27573, 35297, 59540]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
         print(got_cs)
@@ -1438,8 +1438,8 @@ def test_gdalwarp_43():
     if ds.GetMetadataItem('FOO') != 'BAR':
         gdaltest.post_reason('failure')
         return 'fail'
-    got_cs = [ ds.GetRasterBand(i+1).Checksum() for i in range(4) ]
-    expected_cs = [ 30106, 32285, 40022, 64261 ]
+    got_cs = [ds.GetRasterBand(i+1).Checksum() for i in range(4)]
+    expected_cs = [30106, 32285, 40022, 64261]
     if got_cs != expected_cs:
         gdaltest.post_reason('failure')
         print(got_cs)
@@ -1577,7 +1577,7 @@ def test_gdalwarp_46():
 def test_gdalwarp_cleanup():
 
     # We don't clean up when run in debug mode.
-    if gdal.GetConfigOption( 'CPL_DEBUG', 'OFF' ) == 'ON':
+    if gdal.GetConfigOption('CPL_DEBUG', 'OFF') == 'ON':
         return 'success'
 
     for i in range(37):
@@ -1732,12 +1732,12 @@ gdaltest_list = [
 disabled_gdaltest_list = [
     test_gdalwarp_cleanup,
     test_gdalwarp_46,
-    test_gdalwarp_cleanup ]
+    test_gdalwarp_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalwarp' )
+    gdaltest.setup_run('test_gdalwarp')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -32,7 +32,7 @@ import stat
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import webserver
@@ -239,7 +239,7 @@ def vsiaz_fake_basic():
 
     handler = webserver.SequentialHandler()
     handler.add('HEAD', '/azure/blob/myaccount/az_fake_bucket/resource2.bin', 200,
-                {'Content-Length': '1000000'} )
+                {'Content-Length': '1000000'})
     with webserver.install_http_handler(handler):
         stat_res = gdal.VSIStatL('/vsiaz/az_fake_bucket/resource2.bin')
         if stat_res is None or stat_res.size != 1000000:
@@ -276,7 +276,7 @@ def vsiaz_fake_readdir():
 
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&prefix=a_dir%2F&restype=container', 200,
-                { 'Content-type': 'application/xml' },
+                {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>a_dir/</Prefix>
@@ -293,7 +293,7 @@ def vsiaz_fake_readdir():
                     </EnumerationResults>
                 """)
     handler.add('GET', '/azure/blob/myaccount/az_fake_bucket2?comp=list&delimiter=%2F&marker=bla&prefix=a_dir%2F&restype=container', 200,
-                { 'Content-type': 'application/xml' },
+                {'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>a_dir/</Prefix>
@@ -355,7 +355,7 @@ def vsiaz_fake_readdir():
 
     # List containers (empty result)
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults ServiceEndpoint="https://myaccount.blob.core.windows.net">
             <Containers/>
@@ -363,7 +363,7 @@ def vsiaz_fake_readdir():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
-    if dir_contents != [ '.' ]:
+    if dir_contents != ['.']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -372,7 +372,7 @@ def vsiaz_fake_readdir():
 
     # List containers
     handler = webserver.SequentialHandler()
-    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/azure/blob/myaccount/?comp=list', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults>
             <Containers>
@@ -383,7 +383,7 @@ def vsiaz_fake_readdir():
             <NextMarker>bla</NextMarker>
             </EnumerationResults>
         """)
-    handler.add('GET', '/azure/blob/myaccount/?comp=list&marker=bla', 200, { 'Content-type': 'application/xml' },
+    handler.add('GET', '/azure/blob/myaccount/?comp=list&marker=bla', 200, {'Content-type': 'application/xml'},
         """<?xml version="1.0" encoding="UTF-8"?>
         <EnumerationResults>
             <Containers>
@@ -395,7 +395,7 @@ def vsiaz_fake_readdir():
         """)
     with webserver.install_http_handler(handler):
         dir_contents = gdal.ReadDir('/vsiaz/')
-    if dir_contents != [ 'mycontainer1', 'mycontainer2' ]:
+    if dir_contents != ['mycontainer1', 'mycontainer2']:
         gdaltest.post_reason('fail')
         print(dir_contents)
         return 'fail'
@@ -696,7 +696,7 @@ def vsiaz_fake_unlink():
 
     # Success
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'} )
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'})
     handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 202, {'Connection':'close'})
     with webserver.install_http_handler(handler):
         ret = gdal.Unlink('/vsiaz/az_bucket_test_unlink/myfile')
@@ -706,7 +706,7 @@ def vsiaz_fake_unlink():
 
     # Failure
     handler = webserver.SequentialHandler()
-    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'} )
+    handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 200, {'Content-Length': '1'})
     handler.add('DELETE', '/azure/blob/myaccount/az_bucket_test_unlink/myfile', 400, {'Connection':'close'})
     with webserver.install_http_handler(handler):
         with gdaltest.error_handler():
@@ -747,7 +747,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml' },
+                {'Connection':'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir/</Prefix>
@@ -775,7 +775,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/it_is_a_file/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=it_is_a_file%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml' },
+                {'Connection':'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>it_is_a_file/</Prefix>
@@ -791,7 +791,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler = webserver.SequentialHandler()
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml' },
+                {'Connection':'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir/</Prefix>
@@ -824,7 +824,7 @@ def vsiaz_fake_mkdir_rmdir():
     handler.add('HEAD', '/azure/blob/myaccount/az_bucket_test_mkdir/dir_nonempty/', 404)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml' },
+                {'Connection':'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir_nonempty/</Prefix>
@@ -837,7 +837,7 @@ def vsiaz_fake_mkdir_rmdir():
                 """)
     handler.add('GET', '/azure/blob/myaccount/az_bucket_test_mkdir?comp=list&delimiter=%2F&maxresults=1&prefix=dir_nonempty%2F&restype=container',
                 200,
-                {'Connection':'close', 'Content-type': 'application/xml' },
+                {'Connection':'close', 'Content-type': 'application/xml'},
                 """<?xml version="1.0" encoding="UTF-8"?>
                     <EnumerationResults>
                         <Prefix>dir_nonempty/</Prefix>
@@ -1063,7 +1063,7 @@ def vsiaz_cleanup():
     return 'success'
 
 
-gdaltest_list = [ vsiaz_init,
+gdaltest_list = [vsiaz_init,
                   vsiaz_real_server_errors,
                   vsiaz_start_webserver,
                   vsiaz_fake_basic,
@@ -1072,19 +1072,19 @@ gdaltest_list = [ vsiaz_init,
                   vsiaz_fake_unlink,
                   vsiaz_fake_mkdir_rmdir,
                   vsiaz_stop_webserver,
-                  vsiaz_cleanup ]
+                  vsiaz_cleanup]
 
 # gdaltest_list = [ vsiaz_init, vsiaz_start_webserver, vsiaz_fake_mkdir_rmdir, vsiaz_stop_webserver, vsiaz_cleanup ]
 
-gdaltest_list_extra = [ vsiaz_extra_1 ]
+gdaltest_list_extra = [vsiaz_extra_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsiaz' )
+    gdaltest.setup_run('vsiaz')
 
     if gdal.GetConfigOption('RUN_MANUAL_ONLY', None):
-        gdaltest.run_tests( gdaltest_list_extra )
+        gdaltest.run_tests(gdaltest_list_extra)
     else:
-        gdaltest.run_tests( gdaltest_list + gdaltest_list_extra + [ vsiaz_cleanup ] )
+        gdaltest.run_tests(gdaltest_list + gdaltest_list_extra + [vsiaz_cleanup])
 
     gdaltest.summarize()

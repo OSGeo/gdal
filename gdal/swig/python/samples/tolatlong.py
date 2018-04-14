@@ -47,7 +47,7 @@ def Usage():
     print('')
     print('Usage: tolatlong.py pixel line infile')
     print('')
-    sys.exit( 1 )
+    sys.exit(1)
 
 # =============================================================================
 
@@ -85,7 +85,7 @@ if line is None:
     Usage()
 
 # Open input dataset
-indataset = gdal.Open( infile, gdal.GA_ReadOnly )
+indataset = gdal.Open(infile, gdal.GA_ReadOnly)
 
 # Read geotransform matrix and calculate ground coordinates
 geomatrix = indataset.GetGeoTransform()

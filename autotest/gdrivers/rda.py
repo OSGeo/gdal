@@ -34,7 +34,7 @@ import struct
 import sys
 import json
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 
@@ -471,7 +471,7 @@ def rda_graph_nominal():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     metadata_json["imageGeoreferencing"] = {"spatialReferenceSystemCode": "EPSG:32631", "scaleX": 1.0, "scaleY": 2.0,
-                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0 }
+                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0}
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
@@ -794,7 +794,7 @@ def rda_template_nominal():
     gdal.RmdirRecursive('/vsimem/cache_dir')
 
     metadata_json["imageGeoreferencing"] = {"spatialReferenceSystemCode": "EPSG:32631", "scaleX": 1.0, "scaleY": 2.0,
-                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0 }
+                                            "translateX": 123.0, "translateY": 456.0, "shearX": 0.0, "shearY": 0.0}
 
     handler = webserver.SequentialHandler()
     handler.add('POST', '/auth_url', 200, {}, '{"access_token": "token", "expires_in": 3600}')
@@ -1190,8 +1190,8 @@ def rda_rpc():
                 print(key, md)
                 return 'fail'
         else:
-            expected_vals = [ float(v) for v in expected_md[key].split(' ') ]
-            got_vals = [ float(v) for v in md[key].split(' ') ]
+            expected_vals = [float(v) for v in expected_md[key].split(' ')]
+            got_vals = [float(v) for v in md[key].split(' ')]
             for x in range(20):
                 if abs(expected_vals[x] - got_vals[x]) > 1e-8 * abs(expected_vals[x]):
                     gdaltest.post_reason('fail')
@@ -1505,12 +1505,12 @@ gdaltest_list = [
     rda_real_cache_dir,
     rda_real_expired_authentication,
     rda_bad_tile,
-    rda_cleanup ]
+    rda_cleanup]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'RDA' )
+    gdaltest.setup_run('RDA')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

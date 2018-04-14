@@ -32,7 +32,7 @@
 import os
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import test_py_scripts
@@ -49,11 +49,11 @@ def test_gdal_proximity_1():
     if script_path is None:
         return 'skip'
 
-    drv = gdal.GetDriverByName( 'GTiff' )
-    dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte )
+    drv = gdal.GetDriverByName('GTiff')
+    dst_ds = drv.Create('tmp/proximity_1.tif', 25, 25, 1, gdal.GDT_Byte)
     dst_ds = None
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '../alg/data/pat.tif tmp/proximity_1.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '../alg/data/pat.tif tmp/proximity_1.tif')
 
     dst_ds = gdal.Open('tmp/proximity_1.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -66,7 +66,7 @@ def test_gdal_proximity_1():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -81,7 +81,7 @@ def test_gdal_proximity_2():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata -1 -fixed-buf-val 255 ../alg/data/pat.tif tmp/proximity_2.tif')
 
     dst_ds = gdal.Open('tmp/proximity_2.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -94,7 +94,7 @@ def test_gdal_proximity_2():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -109,7 +109,7 @@ def test_gdal_proximity_3():
     if script_path is None:
         return 'skip'
 
-    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif' )
+    test_py_scripts.run_py_script(script_path, 'gdal_proximity', '-q -values 65,64 -maxdist 12 -nodata 0 -use_input_nodata yes ../alg/data/pat.tif tmp/proximity_3.tif')
 
     dst_ds = gdal.Open('tmp/proximity_3.tif')
     dst_band = dst_ds.GetRasterBand(1)
@@ -122,7 +122,7 @@ def test_gdal_proximity_3():
 
     if cs != cs_expected:
         print('Got: ', cs)
-        gdaltest.post_reason( 'got wrong checksum' )
+        gdaltest.post_reason('got wrong checksum')
         return 'fail'
     else:
         return 'success'
@@ -133,9 +133,9 @@ def test_gdal_proximity_3():
 
 def test_gdal_proximity_cleanup():
 
-    lst = [ 'tmp/proximity_1.tif',
+    lst = ['tmp/proximity_1.tif',
             'tmp/proximity_2.tif',
-            'tmp/proximity_3.tif' ]
+            'tmp/proximity_3.tif']
     for filename in lst:
         try:
             os.remove(filename)
@@ -154,8 +154,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_proximity' )
+    gdaltest.setup_run('test_gdal_proximity')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

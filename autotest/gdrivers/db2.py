@@ -37,7 +37,7 @@ if os.path.basename(sys.argv[0]) == os.path.basename(__file__):
     if os.path.dirname(sys.argv[0]) != '':
         os.chdir(os.path.dirname(sys.argv[0]))
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -51,24 +51,24 @@ def gpkg_init():
     gdaltest.db2_drv = None
 
     try:
-        gdaltest.db2_drv = gdal.GetDriverByName( 'DB2ODBC' )
+        gdaltest.db2_drv = gdal.GetDriverByName('DB2ODBC')
         if gdaltest.db2_drv is None:
             return 'skip'
     except:
         return 'skip'
 
     try:
-        gdaltest.png_dr = gdal.GetDriverByName( 'PNG' )
+        gdaltest.png_dr = gdal.GetDriverByName('PNG')
     except:
         gdaltest.png_dr = None
 
     try:
-        gdaltest.jpeg_dr = gdal.GetDriverByName( 'JPEG' )
+        gdaltest.jpeg_dr = gdal.GetDriverByName('JPEG')
     except:
         gdaltest.jpeg_dr = None
 
     try:
-        gdaltest.webp_dr = gdal.GetDriverByName( 'WEBP' )
+        gdaltest.webp_dr = gdal.GetDriverByName('WEBP')
     except:
         gdaltest.webp_dr = None
     gdaltest.webp_supports_rgba = False
@@ -198,19 +198,19 @@ def gpkg_1():
 #   clamped_expected_cs = get_expected_checksums(ds, gdaltest.png_dr, 1, clamp_output = False)[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options = ['TILE_FORMAT=PNG'] )
+    out_ds = gdaltest.db2_dr.CreateCopy('DB2ODBC:database=samp105;DSN=SAMP105A', ds, options = ['TILE_FORMAT=PNG'])
     out_ds = None
     ds = None
 
-    out_ds = gdal.OpenEx( gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options= ['TABLE=byte'])
+    out_ds = gdal.OpenEx(gdaltest.db2_test_server, gdal.OF_RASTER | gdal.OF_UPDATE, open_options= ['TABLE=byte'])
 
     bnd = out_ds.GetRasterBand(1)
     if bnd.Checksum() != 4672:
-        gdaltest.post_reason( 'Didnt get expected checksum on reopened file')
+        gdaltest.post_reason('Didnt get expected checksum on reopened file')
         return 'fail'
 
     if bnd.ComputeRasterMinMax() != (74.0, 255.0):
-        gdaltest.post_reason( 'ComputeRasterMinMax() returned wrong value' )
+        gdaltest.post_reason('ComputeRasterMinMax() returned wrong value')
         return 'fail'
 
     got_gt = out_ds.GetGeoTransform()
@@ -227,7 +227,7 @@ def gpkg_1():
     if got_wkt.find('11N') == -1:
         gdaltest.post_reason('fail')
         return 'fail'
-    expected_cs = [ expected_cs, expected_cs, expected_cs, 4873 ]
+    expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
     got_cs = [out_ds.GetRasterBand(i+1).Checksum() for i in range(4)]
     if got_cs != expected_cs:
         gdaltest.post_reason('fail')
@@ -246,8 +246,8 @@ gdaltest_list = [
 #gdaltest_list = [ gpkg_init, gpkg_26, gpkg_cleanup ]
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'gpkg' )
+    gdaltest.setup_run('gpkg')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

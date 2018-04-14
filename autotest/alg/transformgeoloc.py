@@ -32,7 +32,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import gdal
@@ -70,7 +70,7 @@ def transformgeoloc_1():
 
     ll_utm_transformer = gdal.Transformer(None, None,
                                           ['SRC_SRS='+wgs84_wkt,
-                                           'DST_SRS='+utm_wkt] )
+                                           'DST_SRS='+utm_wkt])
 
     # transform the geoloc dataset in place.
     status = ll_utm_transformer.TransformGeolocations(
@@ -91,8 +91,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'transform_geoloc' )
+    gdaltest.setup_run('transform_geoloc')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

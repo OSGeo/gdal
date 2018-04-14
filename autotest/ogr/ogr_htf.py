@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -60,7 +60,7 @@ def ogr_htf_1():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POLYGON ((320830 7678810,350840 7658030,308130 7595560,278310 7616820,320830 7678810))',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         print(geom.ExportToWkt())
         return 'fail'
@@ -68,7 +68,7 @@ def ogr_htf_1():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POLYGON ((320830 7678810,350840 7658030,308130 7595560,278310 7616820,320830 7678810),(0 0,0 1,1 1,0 0))',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         print(geom.ExportToWkt())
         return 'fail'
@@ -90,7 +90,7 @@ def ogr_htf_1():
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
     if ogrtest.check_feature_geometry(feat,'POINT (278670 7616330)',
-                                      max_error = 0.0000001 ) != 0:
+                                      max_error = 0.0000001) != 0:
         gdaltest.post_reason('did not get expected first geom')
         print(geom.ExportToWkt())
         return 'fail'
@@ -129,13 +129,13 @@ def ogr_htf_2():
 
 gdaltest_list = [
     ogr_htf_1,
-    ogr_htf_2 ]
+    ogr_htf_2]
 
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_htf' )
+    gdaltest.setup_run('ogr_htf')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

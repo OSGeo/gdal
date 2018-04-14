@@ -33,7 +33,7 @@ import os
 import struct
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 from osgeo import ogr
@@ -97,8 +97,8 @@ def pds4_1():
 """
     gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
-    tst = gdaltest.GDALTest( 'PDS4', 'byte_pds4.xml', 1, 4672 )
-    return tst.testOpen( check_prj = srs, check_gt = gt )
+    tst = gdaltest.GDALTest('PDS4', 'byte_pds4.xml', 1, 4672)
+    return tst.testOpen(check_prj = srs, check_gt = gt)
 
 ###############################################################################
 # hide_substitution_warnings_error_handler()
@@ -123,9 +123,9 @@ def hide_substitution_warnings_error_handler():
 
 def pds4_2():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053 )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053)
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -134,9 +134,9 @@ def pds4_2():
 
 def pds4_3():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BSQ'] )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BSQ'])
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -145,9 +145,9 @@ def pds4_3():
 
 def pds4_4():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP'] )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP'])
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -156,9 +156,9 @@ def pds4_4():
 
 def pds4_5():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIL'] )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIL'])
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -167,9 +167,9 @@ def pds4_5():
 
 def pds4_6():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BSQ', 'IMAGE_FORMAT=GEOTIFF'] )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BSQ', 'IMAGE_FORMAT=GEOTIFF'])
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -178,9 +178,9 @@ def pds4_6():
 
 def pds4_7():
 
-    tst = gdaltest.GDALTest( 'PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP', 'IMAGE_FORMAT=GEOTIFF'] )
+    tst = gdaltest.GDALTest('PDS4', 'rgbsmall.tif', 2, 21053, options = ['INTERLEAVE=BIP', 'IMAGE_FORMAT=GEOTIFF'])
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy( vsimem = 1, strict_in = 1, quiet_error_handler = False )
+        ret = tst.testCreateCopy(vsimem = 1, strict_in = 1, quiet_error_handler = False)
     return ret
 
 ###############################################################################
@@ -190,7 +190,7 @@ def pds4_7():
 def pds4_8():
 
     filename = '/vsimem/out.xml'
-    for proj4 in [ '+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
+    for proj4 in ['+proj=eqc +lat_ts=43.75 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs',
                    '+proj=lcc +lat_1=10 +lat_0=10 +lon_0=-112.5 +k_0=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # LCC_1SP
                    '+proj=lcc +lat_1=9 +lat_2=11 +lat_0=10 +lon_0=-112.5 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # LCC_2SP
                    '+proj=omerc +lat_0=10 +lonc=11 +alpha=12 +k=0.9 +x_0=0 +y_0=0 +a=2439400 +b=2439400 +units=m +no_defs', # Oblique Mercator Azimuth Center
@@ -305,11 +305,11 @@ def pds4_9():
 
     filename = '/vsimem/out.xml'
     # Test copy of all specialConstants and overide noData
-    for format in [ 'RAW', 'GEOTIFF' ]:
+    for format in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format = 'PDS4',
                            noData = 75,
-                           creationOptions = [ 'IMAGE_FORMAT='+format ] )
+                           creationOptions = ['IMAGE_FORMAT='+format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -338,11 +338,11 @@ def pds4_9():
         ds = None
 
     # Test just setting noData
-    for format in [ 'RAW', 'GEOTIFF' ]:
+    for format in ['RAW', 'GEOTIFF']:
         with hide_substitution_warnings_error_handler():
             gdal.Translate(filename, 'data/byte_pds4.xml', format = 'PDS4',
-                        creationOptions = [ 'USE_SRC_LABEL=NO',
-                                            'IMAGE_FORMAT='+format ] )
+                        creationOptions = ['USE_SRC_LABEL=NO',
+                                            'IMAGE_FORMAT='+format])
 
         ret = validate_xml(filename)
         if ret == 'fail':
@@ -361,7 +361,7 @@ def pds4_9():
 
         # Test filling with nodata
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'IMAGE_FORMAT=' + format ])
+                                    options = ['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetNoDataValue(1)
         with hide_substitution_warnings_error_handler():
             ds = None
@@ -377,7 +377,7 @@ def pds4_9():
 
         # Test setting nodata and then explicit Fill()
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'IMAGE_FORMAT=' + format ])
+                                    options = ['IMAGE_FORMAT=' + format])
         ds.GetRasterBand(1).SetNoDataValue(10)
         ds.GetRasterBand(1).Fill(1)
         with hide_substitution_warnings_error_handler():
@@ -441,7 +441,7 @@ def pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -508,7 +508,7 @@ def pds4_9():
     </File_Area_Observational>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     ds.GetRasterBand(1).SetNoDataValue(10)
     with hide_substitution_warnings_error_handler():
         ds = None
@@ -539,7 +539,7 @@ def pds4_10():
 
     filename = '/vsimem/out.xml'
     filename2 = '/vsimem/out2.xml'
-    for format in [ 'RAW', 'GEOTIFF' ]:
+    for format in ['RAW', 'GEOTIFF']:
         ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
                                                  options = ['IMAGE_FORMAT='+format])
         ds.GetRasterBand(1).SetScale(2)
@@ -573,7 +573,7 @@ def pds4_10():
 def pds4_11():
 
     filename = '/vsimem/out.xml'
-    for (dt, data) in [ (gdal.GDT_Byte, struct.pack('B', 255)),
+    for (dt, data) in [(gdal.GDT_Byte, struct.pack('B', 255)),
                         (gdal.GDT_UInt16, struct.pack('H', 65535)),
                         (gdal.GDT_Int16, struct.pack('h', -32768)),
                         (gdal.GDT_UInt32, struct.pack('I', 4000000000)),
@@ -1016,7 +1016,7 @@ def pds4_14():
     # Missing Product_Observational root
     gdal.FileFromMemBuffer(template, """<foo/>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1032,7 +1032,7 @@ def pds4_14():
                        xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     sr = osr.SpatialReference()
     sr.ImportFromProj4('+proj=longlat +a=2439400 +b=2439400 +no_defs')
     ds.SetProjection(sr.ExportToWkt())
@@ -1052,7 +1052,7 @@ def pds4_14():
                        xsi:schemaLocation="http://pds.nasa.gov/pds4/pds/v1 https://pds.nasa.gov/pds4/pds/v1/PDS4_PDS_1800.xsd">
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1071,7 +1071,7 @@ def pds4_14():
     <foo/>
 </Product_Observational>""")
     ds = gdal.GetDriverByName('PDS4').Create(filename, 1, 1,
-                                    options = [ 'TEMPLATE=' + template ])
+                                    options = ['TEMPLATE=' + template])
     gdal.ErrorReset()
     with gdaltest.error_handler():
         ds = None
@@ -1311,12 +1311,12 @@ gdaltest_list = [
     pds4_15,
     pds4_16,
     pds4_17,
-    pds4_18 ]
+    pds4_18]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'pds4' )
+    gdaltest.setup_run('pds4')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

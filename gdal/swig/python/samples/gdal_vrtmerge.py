@@ -30,7 +30,7 @@ from osgeo import gdal
 # =============================================================================
 
 
-def names_to_fileinfos( names ):
+def names_to_fileinfos(names):
     """
     Translate a list of GDAL filenames, into file_info objects.
 
@@ -64,7 +64,7 @@ class file_info:
 
         Returns 1 on success or 0 if the file can't be opened.
         """
-        fh = gdal.Open( filename )
+        fh = gdal.Open(filename)
         if fh is None:
             return False
 
@@ -184,9 +184,9 @@ if __name__ == '__main__':
     separate = False
     pre_init = None
 
-    argv = gdal.GeneralCmdLineProcessor( sys.argv )
+    argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv is None:
-        sys.exit( 0 )
+        sys.exit(0)
 
     # Parse command line arguments.
     i = 1
@@ -215,20 +215,20 @@ if __name__ == '__main__':
         elif arg[:1] == '-':
             print('Unrecognized command option: ', arg)
             Usage()
-            sys.exit( 1 )
+            sys.exit(1)
 
         else:
-            names.append( arg )
+            names.append(arg)
 
         i = i + 1
 
     if len(names) == 0:
         print('No input files selected.')
         Usage()
-        sys.exit( 1 )
+        sys.exit(1)
 
     # Collect information on all the source files.
-    file_infos = names_to_fileinfos( names )
+    file_infos = names_to_fileinfos(names)
     if len(file_infos) == 0:
         print('Nothing to process, exiting.')
         sys.exit(1)
@@ -290,7 +290,7 @@ if __name__ == '__main__':
         for fi in file_infos:
             band_n = band_n + 1
             if len(fi.band_types) != 2:
-                print( 'File %s has %d bands. Only first band will be taken '
+                print('File %s has %d bands. Only first band will be taken '
                         'into account' % (fi.filename, len(fi.band_types)-1))
             dataType = gdal.GetDataTypeName(fi.band_types[1])
 

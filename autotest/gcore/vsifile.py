@@ -33,7 +33,7 @@ from osgeo import gdal
 import sys
 import time
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -759,7 +759,7 @@ def vsifile_19():
     return 'success'
 
 
-gdaltest_list = [ vsifile_1,
+gdaltest_list = [vsifile_1,
                   vsifile_2,
                   vsifile_3,
                   vsifile_4,
@@ -777,12 +777,12 @@ gdaltest_list = [ vsifile_1,
                   vsifile_16,
                   vsifile_17,
                   vsifile_18,
-                  vsifile_19 ]
+                  vsifile_19]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'vsifile' )
+    gdaltest.setup_run('vsifile')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

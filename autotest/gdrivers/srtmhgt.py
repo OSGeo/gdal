@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -43,19 +43,19 @@ import gdaltest
 
 def srtmhgt_1():
 
-    ds = gdal.Open( 'data/n43.dt0' )
+    ds = gdal.Open('data/n43.dt0')
 
     bandSrc = ds.GetRasterBand(1)
 
-    driver = gdal.GetDriverByName( "GTiff" )
-    dsDst = driver.Create( 'tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16 )
+    driver = gdal.GetDriverByName("GTiff")
+    dsDst = driver.Create('tmp/n43.dt1.tif', 1201, 1201, 1, gdal.GDT_Int16)
     dsDst.SetProjection('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
     dsDst.SetGeoTransform((-80.0004166666666663, 0.0008333333333333, 0, 44.0004166666666670, 0, -0.0008333333333333))
 
     bandDst = dsDst.GetRasterBand(1)
 
-    data = bandSrc.ReadRaster( 0, 0, 121, 121, 1201, 1201, gdal.GDT_Int16 )
-    bandDst.WriteRaster( 0, 0, 1201, 1201, data, 1201, 1201, gdal.GDT_Int16 )
+    data = bandSrc.ReadRaster(0, 0, 121, 121, 1201, 1201, gdal.GDT_Int16)
+    bandDst.WriteRaster(0, 0, 1201, 1201, data, 1201, 1201, gdal.GDT_Int16)
 
     bandDst.FlushCache()
 
@@ -63,9 +63,9 @@ def srtmhgt_1():
     ds = None
     dsDst = None
 
-    ds = gdal.Open( 'tmp/n43.dt1.tif' )
-    driver = gdal.GetDriverByName( "SRTMHGT" )
-    dsDst = driver.CreateCopy( 'tmp/n43w080.hgt', ds)
+    ds = gdal.Open('tmp/n43.dt1.tif')
+    driver = gdal.GetDriverByName("SRTMHGT")
+    dsDst = driver.CreateCopy('tmp/n43w080.hgt', ds)
 
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
@@ -82,9 +82,9 @@ def srtmhgt_1():
 
 def srtmhgt_2():
 
-    ds = gdal.Open( 'tmp/n43w080.hgt' )
-    driver = gdal.GetDriverByName( "SRTMHGT" )
-    dsDst = driver.CreateCopy( '/vsimem/n43w080.hgt', ds)
+    ds = gdal.Open('tmp/n43w080.hgt')
+    driver = gdal.GetDriverByName("SRTMHGT")
+    dsDst = driver.CreateCopy('/vsimem/n43w080.hgt', ds)
 
     band = dsDst.GetRasterBand(1)
     chksum = band.Checksum()
@@ -95,7 +95,7 @@ def srtmhgt_2():
     dsDst = None
 
     # Test update support
-    dsDst = gdal.Open( '/vsimem/n43w080.hgt', gdal.GA_Update )
+    dsDst = gdal.Open('/vsimem/n43w080.hgt', gdal.GA_Update)
     dsDst.WriteRaster(0, 0, dsDst.RasterXSize, dsDst.RasterYSize,
                       dsDst.ReadRaster())
     dsDst.FlushCache()
@@ -113,9 +113,9 @@ def srtmhgt_2():
 
 def srtmhgt_3():
 
-    ds = gdal.Open( 'tmp/n43w080.hgt' )
-    driver = gdal.GetDriverByName( "SRTMHGT" )
-    driver.CreateCopy( '/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
+    ds = gdal.Open('tmp/n43w080.hgt')
+    driver = gdal.GetDriverByName("SRTMHGT")
+    driver.CreateCopy('/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt', ds)
 
     dsDst = gdal.Open('/vsimem/N43W080.SRTMGL1.hgt.zip')
 
@@ -160,10 +160,10 @@ def srtmhgt_4():
 
 def srtmhgt_cleanup():
     try:
-        gdal.GetDriverByName( "SRTMHGT" ).Delete('tmp/n43w080.hgt')
-        gdal.GetDriverByName( "SRTMHGT" ).Delete('/vsimem/n43w080.hgt')
+        gdal.GetDriverByName("SRTMHGT").Delete('tmp/n43w080.hgt')
+        gdal.GetDriverByName("SRTMHGT").Delete('/vsimem/n43w080.hgt')
         gdal.Unlink('/vsimem/N43W080.SRTMGL1.hgt.zip')
-        os.remove( 'tmp/n43.dt1.tif' )
+        os.remove('tmp/n43.dt1.tif')
     except:
         pass
     return 'success'
@@ -180,8 +180,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'srtmhgt' )
+    gdaltest.setup_run('srtmhgt')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

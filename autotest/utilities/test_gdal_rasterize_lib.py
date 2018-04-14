@@ -32,7 +32,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal, ogr, osr
 import gdaltest
@@ -52,16 +52,16 @@ def test_gdal_rasterize_lib_1():
 
     # Create a raster to rasterize into.
 
-    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
-                                                    gdal.GDT_Byte )
-    target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
-    target_ds.SetProjection( sr_wkt )
+    target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
+                                                    gdal.GDT_Byte)
+    target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+    target_ds.SetProjection(sr_wkt)
 
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
-    rast_lyr = vector_ds.CreateLayer( 'rast1', srs=sr )
+              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    rast_lyr = vector_ds.CreateLayer('rast1', srs=sr)
 
     rast_lyr.GetLayerDefn()
     field_defn = ogr.FieldDefn('foo')
@@ -71,23 +71,23 @@ def test_gdal_rasterize_lib_1():
 
     wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     # Add feature without geometry to test fix for #3310
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    rast_lyr.CreateFeature( feat )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    rast_lyr.CreateFeature(feat)
 
     # Add a linestring.
 
     wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, bands = [3,2,1], burnValues = [200,220,240], layers = 'rast1')
     if ret != 1:
@@ -99,7 +99,7 @@ def test_gdal_rasterize_lib_1():
     checksum = target_ds.GetRasterBand(2).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -127,7 +127,7 @@ def test_gdal_rasterize_lib_3():
 
     ds = gdal.Rasterize('', 'tmp/n43dt0.shp', format = 'MEM', outputType = gdal.GDT_Byte, useZ = True, layers = ['n43dt0'], width = 121, height = 121, noData = 0)
 
-    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource( 'tmp/n43dt0.shp' )
+    ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('tmp/n43dt0.shp')
 
     ds_ref = gdal.Open('../gdrivers/data/n43.dt0')
 
@@ -162,20 +162,20 @@ def test_gdal_rasterize_lib_3():
 
 def test_gdal_rasterize_lib_100():
 
-    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
+    target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
 
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
-    rast_lyr = vector_ds.CreateLayer( 'rast1' )
+              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    rast_lyr = vector_ds.CreateLayer('rast1')
 
     wkt_geom = 'POLYGON((20 20,20 80,80 80,80 20,20 20))'
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [255])
     if ret != 1:
@@ -187,7 +187,7 @@ def test_gdal_rasterize_lib_100():
     checksum = target_ds.GetRasterBand(1).Checksum()
     if checksum != expected:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -201,21 +201,21 @@ def test_gdal_rasterize_lib_100():
 
 def test_gdal_rasterize_lib_101():
 
-    target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100 )
+    target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100)
 
     # Create a layer to rasterize from.
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
-    rast_lyr = vector_ds.CreateLayer( 'rast1' )
+              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+    rast_lyr = vector_ds.CreateLayer('rast1')
 
     # polygon with empty exterior ring
     geom = ogr.CreateGeometryFromJson('{ "type": "Polygon", "coordinates": [ [ ] ] }')
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( geom )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(geom)
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [255])
     if ret != 1:
@@ -226,7 +226,7 @@ def test_gdal_rasterize_lib_101():
     checksum = target_ds.GetRasterBand(1).Checksum()
     if checksum != 0:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -240,7 +240,7 @@ def test_gdal_rasterize_lib_101():
 
 def test_gdal_rasterize_lib_102():
 
-    target_ds = gdal.GetDriverByName('MEM').Create( '', 353, 226 )
+    target_ds = gdal.GetDriverByName('MEM').Create('', 353, 226)
     target_ds.GetRasterBand(1).Fill(255)
     md = {
         'HEIGHT_OFF' : '430',
@@ -261,18 +261,18 @@ def test_gdal_rasterize_lib_102():
     target_ds.SetMetadata(md, "RPC")
 
     vector_ds = \
-              gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
+              gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
-    rast_lyr = vector_ds.CreateLayer( '', srs = sr )
+    rast_lyr = vector_ds.CreateLayer('', srs = sr)
 
     # polygon with empty exterior ring
     geom = ogr.CreateGeometryFromWkt("""POLYGON ((-3.967081661665 0.0003251483162,-4.976841813513 0.0003251483162,-4.904140485134 0.2151010973779,-4.904124933286 0.2151433982916,-4.904107210626 0.2151848366149,-4.904087364764 0.2152253010321,-4.904065449011 0.2152646828438,-4.904041522241 0.2153028762585,-4.904015648726 0.2153397786774,-4.903987897971 0.2153752909697,-4.903958344523 0.2154093177387,-4.903927067771 0.2154417675784,-4.903894151734 0.2154725533188,-4.903859684834 0.2155015922603,-4.90382375966 0.2155288063955,-4.903786472717 0.2155541226193,-4.903747924169 0.2155774729247,-4.90370821757 0.2155987945858,-4.903667459582 0.2156180303263,-4.903625759694 0.2156351284732,-4.903583229924 0.2156500430959,-4.90353998452 0.2156627341291,-4.903496139651 0.2156731674811,-4.9034518131 0.2156813151247,-4.903407123938 0.2156871551729,-4.903362192216 0.2156906719376,-4.903317138633 0.2156918559717,-4.903272084216 0.2156907040946,-4.903227149995 0.2156872194006,-4.903182456677 0.2156814112505,-3.945022212098 0.0658193544758,-3.94497805444 0.0658112751384,-3.944934372574 0.0658009277184,-3.944891282916 0.0657883397923,-3.944848900303 0.0657735449078,-3.944807337687 0.0657565824944,-3.944766705836 0.0657374977579,-3.944727113036 0.0657163415606,-3.944688664805 0.0656931702851,-3.94465146361 0.0656680456844,-3.944615608594 0.0656410347174,-3.944581195314 0.0656122093701,-3.944548315483 0.065581646464,-3.944517056729 0.0655494274513,-3.944487502358 0.065515638198,-3.944459731134 0.0654803687547,-3.944433817071 0.0654437131168,-3.944409829229 0.0654057689742,-3.94438783154 0.0653666374506,-3.944367882627 0.0653264228341,-3.944350035657 0.0652852322995,-3.944334338192 0.0652431756223,-3.944320832068 0.0652003648864,-3.944309553279 0.0651569141855,-3.944300531884 0.0651129393185,-3.944293791926 0.0650685574815,-3.944289351367 0.0650238869551,-3.944287222041 0.0649790467894,-3.944287409623 0.0649341564864,-3.944289913614 0.0648893356818,-3.94429472734 0.0648447038262,-3.944301837972 0.0648003798665,-3.94431122656 0.064756481929,-3.944322868082 0.0647131270048,-3.944336731513 0.0646704306378,-3.967081661665 0.0003251483162))""")
 
-    feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-    feat.SetGeometryDirectly( geom )
+    feat = ogr.Feature(rast_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(geom)
 
-    rast_lyr.CreateFeature( feat )
+    rast_lyr.CreateFeature(feat)
 
     ret = gdal.Rasterize(target_ds, vector_ds, burnValues = [0])
     if ret != 1:
@@ -283,7 +283,7 @@ def test_gdal_rasterize_lib_102():
     checksum = target_ds.GetRasterBand(1).Checksum()
     if checksum != 1604:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
 
@@ -299,7 +299,7 @@ def test_gdal_rasterize_lib_102():
     checksum = target_ds.GetRasterBand(1).Checksum()
     if checksum != 2003:
         print(checksum)
-        gdaltest.post_reason( 'Did not get expected image checksum' )
+        gdaltest.post_reason('Did not get expected image checksum')
 
         return 'fail'
     target_ds = None
@@ -320,17 +320,17 @@ def test_gdal_rasterize_lib_4():
     sr_wkt = sr.ExportToWkt()
 
     # Create a raster to rasterize into.
-    for optim in [ 'RASTER', 'VECTOR', 'AUTO' ]:
-        target_ds = gdal.GetDriverByName('MEM').Create( '', 100, 100, 3,
-                                                        gdal.GDT_Byte )
-        target_ds.SetGeoTransform( (1000,1,0,1100,0,-1) )
-        target_ds.SetProjection( sr_wkt )
+    for optim in ['RASTER', 'VECTOR', 'AUTO']:
+        target_ds = gdal.GetDriverByName('MEM').Create('', 100, 100, 3,
+                                                        gdal.GDT_Byte)
+        target_ds.SetGeoTransform((1000,1,0,1100,0,-1))
+        target_ds.SetProjection(sr_wkt)
 
         # Create a layer to rasterize from.
 
         vector_ds = \
-                gdal.GetDriverByName('Memory').Create( '', 0, 0, 0 )
-        rast_lyr = vector_ds.CreateLayer( 'rast1', srs=sr )
+                gdal.GetDriverByName('Memory').Create('', 0, 0, 0)
+        rast_lyr = vector_ds.CreateLayer('rast1', srs=sr)
 
         rast_lyr.GetLayerDefn()
         field_defn = ogr.FieldDefn('foo')
@@ -340,23 +340,23 @@ def test_gdal_rasterize_lib_4():
 
         wkt_geom = 'POLYGON((1020 1030,1020 1045,1050 1045,1050 1030,1020 1030))'
 
-        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-        feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+        feat = ogr.Feature(rast_lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-        rast_lyr.CreateFeature( feat )
+        rast_lyr.CreateFeature(feat)
 
         # Add feature without geometry to test fix for #3310
-        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-        rast_lyr.CreateFeature( feat )
+        feat = ogr.Feature(rast_lyr.GetLayerDefn())
+        rast_lyr.CreateFeature(feat)
 
         # Add a linestring.
 
         wkt_geom = 'LINESTRING(1000 1000, 1100 1050)'
 
-        feat = ogr.Feature( rast_lyr.GetLayerDefn() )
-        feat.SetGeometryDirectly( ogr.Geometry(wkt = wkt_geom) )
+        feat = ogr.Feature(rast_lyr.GetLayerDefn())
+        feat.SetGeometryDirectly(ogr.Geometry(wkt = wkt_geom))
 
-        rast_lyr.CreateFeature( feat )
+        rast_lyr.CreateFeature(feat)
 
         ret = gdal.Rasterize(target_ds, vector_ds, bands = [3,2,1], burnValues = [200,220,240], layers = 'rast1', optim = optim)
         if ret != 1:
@@ -368,7 +368,7 @@ def test_gdal_rasterize_lib_4():
         checksum = target_ds.GetRasterBand(2).Checksum()
         if checksum != expected:
             print(checksum, optim)
-            gdaltest.post_reason( 'Did not get expected image checksum' )
+            gdaltest.post_reason('Did not get expected image checksum')
 
             return 'fail'
 
@@ -388,8 +388,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_rasterize_lib' )
+    gdaltest.setup_run('test_gdal_rasterize_lib')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

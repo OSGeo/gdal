@@ -42,7 +42,7 @@ ysize = src_ds.RasterYSize
 src_image = src_ds.GetRasterBand(1).ReadAsArray()
 mag_image = pow(numpy.real(src_image)*numpy.real(src_image) \
                 + numpy.imag(src_image)*numpy.imag(src_image),0.5)
-gdalnumeric.SaveArray( mag_image, 'magnitude.tif' )
+gdalnumeric.SaveArray(mag_image, 'magnitude.tif')
 
 phase_image = numpy.angle(src_image)
-gdalnumeric.SaveArray( phase_image, 'phase.tif' )
+gdalnumeric.SaveArray(phase_image, 'phase.tif')

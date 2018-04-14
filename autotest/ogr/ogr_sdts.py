@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 from osgeo import ogr
@@ -41,28 +41,28 @@ from osgeo import ogr
 
 def ogr_sdts_1():
 
-    gdaltest.sdts_ds = ogr.Open( 'data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF' )
+    gdaltest.sdts_ds = ogr.Open('data/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF')
 
     if gdaltest.sdts_ds is None:
         return 'fail'
 
-    layers = [ ( 'ARDF' , 164, ogr.wkbNone, [ ('ENTITY_LABEL', '1700005') ] ),
-               ( 'ARDM' , 21,  ogr.wkbNone, [ ('ROUTE_NUMBER', 'SR 1200') ] ),
-               ( 'AHDR' , 1,   ogr.wkbNone, [ ('BANNER', 'USGS-NMD  DLG DATA - CHARACTER FORMAT - 09-29-87 VERSION                ') ] ),
-               ( 'NP01' , 4,   ogr.wkbPoint, [ ('RCID', '1') ] ),
-               ( 'NA01' , 34,  ogr.wkbPoint, [ ('RCID', '2') ] ),
-               ( 'NO01' , 88,  ogr.wkbPoint, [ ('RCID', '1') ] ),
-               ( 'LE01' , 27,  ogr.wkbLineString, [ ('RCID', '1') ]  ),
-               ( 'PC01' , 35,  ogr.wkbPolygon, [ ('RCID', '1') ] )
+    layers = [('ARDF' , 164, ogr.wkbNone, [('ENTITY_LABEL', '1700005')]),
+               ('ARDM' , 21,  ogr.wkbNone, [('ROUTE_NUMBER', 'SR 1200')]),
+               ('AHDR' , 1,   ogr.wkbNone, [('BANNER', 'USGS-NMD  DLG DATA - CHARACTER FORMAT - 09-29-87 VERSION                ')]),
+               ('NP01' , 4,   ogr.wkbPoint, [('RCID', '1')]),
+               ('NA01' , 34,  ogr.wkbPoint, [('RCID', '2')]),
+               ('NO01' , 88,  ogr.wkbPoint, [('RCID', '1')]),
+               ('LE01' , 27,  ogr.wkbLineString, [('RCID', '1')]),
+               ('PC01' , 35,  ogr.wkbPolygon, [('RCID', '1')])
                ]
 
     for layer in layers:
-        lyr = gdaltest.sdts_ds.GetLayerByName( layer[0] )
+        lyr = gdaltest.sdts_ds.GetLayerByName(layer[0])
         if lyr is None:
-            gdaltest.post_reason( 'could not get layer %s' % (layer[0]) )
+            gdaltest.post_reason('could not get layer %s' % (layer[0]))
             return 'fail'
         if lyr.GetFeatureCount() != layer[1] :
-            gdaltest.post_reason( 'wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]) )
+            gdaltest.post_reason('wrong number of features for layer %s : %d. %d were expected ' % (layer[0], lyr.GetFeatureCount(), layer[1]))
             return 'fail'
         if lyr.GetLayerDefn().GetGeomType() != layer[2]:
             return 'fail'
@@ -83,12 +83,12 @@ def ogr_sdts_1():
 #
 
 gdaltest_list = [
-    ogr_sdts_1 ]
+    ogr_sdts_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_sdts' )
+    gdaltest.setup_run('ogr_sdts')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

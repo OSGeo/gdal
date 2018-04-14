@@ -33,7 +33,7 @@ import sys
 import os
 import json
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -122,13 +122,13 @@ def test_gdalinfo_5():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') != -1:
-        gdaltest.post_reason( 'got wrong minimum.' )
+        gdaltest.post_reason('got wrong minimum.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -stats ../gcore/data/byte.tif')
     if ret.find('STATISTICS_MINIMUM=74') == -1:
-        gdaltest.post_reason( 'got wrong minimum (2).' )
+        gdaltest.post_reason('got wrong minimum (2).')
         print(ret)
         return 'fail'
 
@@ -195,13 +195,13 @@ def test_gdalinfo_8():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gcore/data/byte.tif')
     if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') != -1:
-        gdaltest.post_reason( 'did not expect histogram.' )
+        gdaltest.post_reason('did not expect histogram.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -hist ../gcore/data/byte.tif')
     if ret.find('0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 0 37 0 0 0 0 0 0 0 57 0 0 0 0 0 0 0 62 0 0 0 0 0 0 0 66 0 0 0 0 0 0 0 0 72 0 0 0 0 0 0 0 31 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 7 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1') == -1:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+        gdaltest.post_reason('did not get expected histogram.')
         print(ret)
         return 'fail'
 
@@ -220,13 +220,13 @@ def test_gdalinfo_9():
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') != -1:
-        gdaltest.post_reason( 'got unexpected extra MD.' )
+        gdaltest.post_reason('got unexpected extra MD.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -mdd TRE ../gdrivers/data/fake_nsif.ntf')
     if ret.find('BLOCKA=010000001000000000') == -1:
-        gdaltest.post_reason( 'did not get extra MD.' )
+        gdaltest.post_reason('did not get extra MD.')
         print(ret)
         return 'fail'
 
@@ -259,7 +259,7 @@ def test_gdalinfo_11():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --version', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --version', check_memleak = False)
     if ret.find(gdal.VersionInfo('--version')) != 0:
         print(ret)
         return 'fail'
@@ -274,7 +274,7 @@ def test_gdalinfo_12():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --build', check_memleak = False)
     ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('BUILD_INFO')) != 0:
         print(ret)
@@ -290,7 +290,7 @@ def test_gdalinfo_13():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --license', check_memleak = False)
     ret = ret.replace('\r\n', '\n')
     if ret.find(gdal.VersionInfo('LICENSE')) != 0:
         print(ret)
@@ -309,7 +309,7 @@ def test_gdalinfo_14():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --config', check_memleak = False)
     if err.find('--config option given without a key and value argument') < 0:
         print(err)
         return 'fail'
@@ -324,7 +324,7 @@ def test_gdalinfo_15():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --mempreload', check_memleak = False)
     if err.find('--mempreload option given without directory path') < 0:
         print(err)
         return 'fail'
@@ -339,7 +339,7 @@ def test_gdalinfo_16():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak = False )
+    (ret, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug on --mempreload ../gcore/data /vsimem/byte.tif', check_memleak = False)
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
         return 'fail'
@@ -354,7 +354,7 @@ def test_gdalinfo_17():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --debug', check_memleak = False)
     if err.find('--debug option given without debug level') < 0:
         print(err)
         return 'fail'
@@ -369,13 +369,13 @@ def test_gdalinfo_18():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile', check_memleak = False)
     if err.find('--optfile option given without filename') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --optfile /foo/bar', check_memleak = False)
     if err.find('Unable to open optfile') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -395,7 +395,7 @@ def test_gdalinfo_19():
     f.write('# comment\n')
     f.write('../gcore/data/byte.tif\n')
     f.close()
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --optfile tmp/optfile.txt', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --optfile tmp/optfile.txt', check_memleak = False)
     os.unlink('tmp/optfile.txt')
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
@@ -411,7 +411,7 @@ def test_gdalinfo_20():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --formats', check_memleak = False)
     if ret.find('GTiff -raster- (rw+vs): GeoTIFF') < 0:
         print(ret)
         return 'fail'
@@ -426,13 +426,13 @@ def test_gdalinfo_21():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format', check_memleak = False)
     if err.find('--format option given without a format code') < 0:
         gdaltest.post_reason('fail')
         print(err)
         return 'fail'
 
-    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak = False )
+    (out, err) = gdaltest.runexternal_out_and_err(test_cli_utilities.get_gdalinfo_path() + ' --format foo_bar', check_memleak = False)
     if err.find('--format option given with format') < 0:
         gdaltest.post_reason('fail')
         print(err)
@@ -448,7 +448,7 @@ def test_gdalinfo_22():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GTiff', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --format GTiff', check_memleak = False)
 
     expected_strings = [
         'Short Name:',
@@ -460,7 +460,7 @@ def test_gdalinfo_22():
         'Supports: CreateCopy()',
         'Supports: Virtual IO',
         'Creation Datatypes',
-        '<CreationOptionList>' ]
+        '<CreationOptionList>']
     for expected_string in expected_strings:
         if ret.find(expected_string) < 0:
             gdaltest.post_reason('did not find %s' % expected_string)
@@ -477,7 +477,7 @@ def test_gdalinfo_23():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --help-general', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --help-general', check_memleak = False)
     if ret.find('Generic GDAL utility command options') < 0:
         print(ret)
         return 'fail'
@@ -492,7 +492,7 @@ def test_gdalinfo_24():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --locale C ../gcore/data/byte.tif', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' --locale C ../gcore/data/byte.tif', check_memleak = False)
     if ret.find('Driver: GTiff/GeoTIFF') != 0:
         print(ret)
         return 'fail'
@@ -507,7 +507,7 @@ def test_gdalinfo_25():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False)
     if ret.find('Metadata domains:') < 0:
         print(ret)
         return 'fail'
@@ -525,7 +525,7 @@ def test_gdalinfo_26():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False)
     if ret.find('Metadata (xml:XMP)') < 0:
         print(ret)
         return 'fail'
@@ -540,7 +540,7 @@ def test_gdalinfo_27():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' ../gdrivers/data/float64.asc -oo datatype=float64', check_memleak = False)
     if ret.find('Type=Float64') < 0:
         print(ret)
         return 'fail'
@@ -637,14 +637,14 @@ def test_gdalinfo_32():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
     ret = json.loads(ret)
     if '' in ret['bands'][0]['metadata']:
-        gdaltest.post_reason( 'got wrong minimum.' )
+        gdaltest.post_reason('got wrong minimum.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -stats ../gcore/data/byte.tif')
     ret = json.loads(ret)
     if ret['bands'][0]['metadata']['']['STATISTICS_MINIMUM'] != '74':
-        gdaltest.post_reason( 'got wrong minimum (2).' )
+        gdaltest.post_reason('got wrong minimum (2).')
         print(ret)
         return 'fail'
 
@@ -710,14 +710,14 @@ def test_gdalinfo_35():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gcore/data/byte.tif')
     ret = json.loads(ret)
     if 'histogram' in ret['bands'][0]:
-        gdaltest.post_reason( 'did not expect histogram.' )
+        gdaltest.post_reason('did not expect histogram.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -hist ../gcore/data/byte.tif')
     ret = json.loads(ret)
-    if ret['bands'][0]['histogram']['buckets'] != [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 0, 0, 0, 0, 0, 66, 0, 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 ]:
-        gdaltest.post_reason( 'did not get expected histogram.' )
+    if ret['bands'][0]['histogram']['buckets'] != [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 57, 0, 0, 0, 0, 0, 0, 0, 62, 0, 0, 0, 0, 0, 0, 0, 66, 0, 0, 0, 0, 0, 0, 0, 0, 72, 0, 0, 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1]:
+        gdaltest.post_reason('did not get expected histogram.')
         print(ret)
         return 'fail'
 
@@ -737,14 +737,14 @@ def test_gdalinfo_36():
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/fake_nsif.ntf')
     ret = json.loads(ret)
     if 'TRE' in ret['metadata']:
-        gdaltest.post_reason( 'got unexpected extra MD.' )
+        gdaltest.post_reason('got unexpected extra MD.')
         print(ret)
         return 'fail'
 
     ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json -mdd TRE ../gdrivers/data/fake_nsif.ntf')
     ret = json.loads(ret)
     if ret['metadata']['TRE']['BLOCKA'].find('010000001000000000') == -1:
-        gdaltest.post_reason( 'did not get extra MD.' )
+        gdaltest.post_reason('did not get extra MD.')
         print(ret)
         return 'fail'
 
@@ -778,7 +778,7 @@ def test_gdalinfo_38():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -listmdd', check_memleak = False)
     ret = json.loads(ret)
     if 'metadataDomains' not in ret['metadata']:
         print(ret)
@@ -797,7 +797,7 @@ def test_gdalinfo_39():
     if test_cli_utilities.get_gdalinfo_path() is None:
         return 'skip'
 
-    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False )
+    ret = gdaltest.runexternal(test_cli_utilities.get_gdalinfo_path() + ' -json ../gdrivers/data/byte_with_xmp.tif -mdd all', check_memleak = False)
     ret = json.loads(ret)
     if 'xml:XMP' not in ret['metadata']:
         print(ret)
@@ -827,7 +827,7 @@ def test_gdalinfo_40():
     if 'coordinates' not in ret['wgs84Extent']:
         print(ret)
         return 'fail'
-    if ret['wgs84Extent']['coordinates'] != [ [ [ -180.0, 90.0 ], [ -180.0, -90.0 ], [ 180.0, -90.0 ], [ 180.0, 90.0 ], [ -180.0, 90.0 ] ] ]:
+    if ret['wgs84Extent']['coordinates'] != [[[-180.0, 90.0], [-180.0, -90.0], [180.0, -90.0], [180.0, 90.0], [-180.0, 90.0]]]:
         print(ret)
         return 'fail'
 
@@ -880,8 +880,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdalinfo' )
+    gdaltest.setup_run('test_gdalinfo')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

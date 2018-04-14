@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -40,17 +40,17 @@ import gdaltest
 
 def mff2_1():
 
-    tst = gdaltest.GDALTest( 'MFF2', 'bytemff2', 1, 4672 )
+    tst = gdaltest.GDALTest('MFF2', 'bytemff2', 1, 4672)
     return tst.testOpen()
 
 
 gdaltest_list = [
-    mff2_1 ]
+    mff2_1]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'mff2' )
+    gdaltest.setup_run('mff2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

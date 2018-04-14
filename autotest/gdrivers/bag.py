@@ -33,7 +33,7 @@
 import sys
 from osgeo import gdal
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 
@@ -44,7 +44,7 @@ import gdaltest
 def bag_1():
 
     try:
-        gdaltest.bag_drv = gdal.GetDriverByName( 'BAG' )
+        gdaltest.bag_drv = gdal.GetDriverByName('BAG')
     except:
         gdaltest.bag_drv = None
         return 'skip'
@@ -60,44 +60,44 @@ def bag_2():
     if gdaltest.bag_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/true_n_nominal.bag' )
+    ds = gdal.Open('data/true_n_nominal.bag')
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 1072:
-        gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
+        gdaltest.post_reason('Wrong checksum on band 1, got %d.' % cs)
         return 'fail'
 
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 150:
-        gdaltest.post_reason( 'Wrong checksum on band 2, got %d.' % cs )
+        gdaltest.post_reason('Wrong checksum on band 2, got %d.' % cs)
         return 'fail'
 
     cs = ds.GetRasterBand(3).Checksum()
     if cs != 1315:
-        gdaltest.post_reason( 'Wrong checksum on band 3, got %d.' % cs )
+        gdaltest.post_reason('Wrong checksum on band 3, got %d.' % cs)
         return 'fail'
 
     b1 = ds.GetRasterBand(1)
     if abs(b1.GetMinimum()-10) > 0.01:
-        gdaltest.post_reason( 'band 1 minimum wrong.' )
+        gdaltest.post_reason('band 1 minimum wrong.')
         return 'fail'
 
     if abs(b1.GetMaximum()-19.8) > 0.01:
-        gdaltest.post_reason( 'band 1 maximum wrong.' )
+        gdaltest.post_reason('band 1 maximum wrong.')
         return 'fail'
 
     if abs(b1.GetNoDataValue()-1000000.0) > 0.1:
-        gdaltest.post_reason( 'band 1 nodata wrong.' )
+        gdaltest.post_reason('band 1 nodata wrong.')
         return 'fail'
 
     b2 = ds.GetRasterBand(2)
     if abs(b2.GetNoDataValue()-1000000.0) > 0.1:
-        gdaltest.post_reason( 'band 2 nodata wrong.' )
+        gdaltest.post_reason('band 2 nodata wrong.')
         return 'fail'
 
     b3 = ds.GetRasterBand(3)
     if abs(b3.GetNoDataValue()-1000000.0) > 0.1:
-        gdaltest.post_reason( 'band 3 nodata wrong.' )
+        gdaltest.post_reason('band 3 nodata wrong.')
         return 'fail'
 
     # It would be nice to test srs and geotransform but they are
@@ -106,14 +106,14 @@ def bag_2():
     # Test the xml:BAG metadata domain
     xmlBag = ds.GetMetadata('xml:BAG')[0]
     if xmlBag.find('<?xml') != 0:
-        gdaltest.post_reason( 'did not get xml:BAG metadata' )
+        gdaltest.post_reason('did not get xml:BAG metadata')
         print(xmlBag)
         return 'fail'
 
     ds = None
 
     if gdaltest.is_file_open('data/true_n_nominal.bag'):
-        gdaltest.post_reason( 'file still opened.' )
+        gdaltest.post_reason('file still opened.')
         return 'fail'
 
     return 'success'
@@ -127,42 +127,42 @@ def bag_3():
     if gdaltest.bag_drv is None:
         return 'skip'
 
-    ds = gdal.Open( 'data/southern_hemi_false_northing.bag' )
+    ds = gdal.Open('data/southern_hemi_false_northing.bag')
 
     nr = ds.RasterCount
     if nr != 2:
-        gdaltest.post_reason( 'Expected 2 bands, got %d.' % nr )
+        gdaltest.post_reason('Expected 2 bands, got %d.' % nr)
         return 'fail'
 
     cs = ds.GetRasterBand(1).Checksum()
     if cs != 21402:
-        gdaltest.post_reason( 'Wrong checksum on band 1, got %d.' % cs )
+        gdaltest.post_reason('Wrong checksum on band 1, got %d.' % cs)
         return 'fail'
 
     cs = ds.GetRasterBand(2).Checksum()
     if cs != 33216:
-        gdaltest.post_reason( 'Wrong checksum on band 2, got %d.' % cs )
+        gdaltest.post_reason('Wrong checksum on band 2, got %d.' % cs)
         return 'fail'
 
     pj = ds.GetProjection()
     if 'Southern Hemisphere' not in pj:
-        gdaltest.post_reason( 'Southern Hemisphere not in projection')
+        gdaltest.post_reason('Southern Hemisphere not in projection')
         return 'fail'
     if 'PARAMETER["false_northing",10000000]' not in pj:
-        gdaltest.post_reason( 'Did not find false_northing of 10000000')
+        gdaltest.post_reason('Did not find false_northing of 10000000')
         return 'fail'
 
     return 'success'
 
 
-gdaltest_list = [ bag_1,
+gdaltest_list = [bag_1,
                   bag_2,
-                  bag_3 ]
+                  bag_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'hdf5' )
+    gdaltest.setup_run('hdf5')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

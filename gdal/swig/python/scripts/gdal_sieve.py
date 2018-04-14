@@ -64,17 +64,17 @@ def GetOutputDriversFor(filename):
             drv.GetMetadataItem(gdal.DCAP_CREATECOPY) is not None) and \
            drv.GetMetadataItem(gdal.DCAP_RASTER) is not None:
             if len(ext) > 0 and DoesDriverHandleExtension(drv, ext):
-                drv_list.append( drv.ShortName )
+                drv_list.append(drv.ShortName)
             else:
                 prefix = drv.GetMetadataItem(gdal.DMD_CONNECTION_PREFIX)
                 if prefix is not None and filename.lower().startswith(prefix.lower()):
-                    drv_list.append( drv.ShortName )
+                    drv_list.append(drv.ShortName)
 
     # GMT is registered before netCDF for opening reasons, but we want
     # netCDF to be used by default for output.
     if ext.lower() == 'nc' and len(drv_list) == 0 and \
        drv_list[0].upper() == 'GMT' and drv_list[1].upper() == 'NETCDF':
-           drv_list = [ 'NETCDF', 'GMT' ]
+           drv_list = ['NETCDF', 'GMT']
 
     return drv_list
 
@@ -108,9 +108,9 @@ format = None
 mask = 'default'
 
 gdal.AllRegister()
-argv = gdal.GeneralCmdLineProcessor( sys.argv )
+argv = gdal.GeneralCmdLineProcessor(sys.argv)
 if argv is None:
-    sys.exit( 0 )
+    sys.exit(0)
 
 # Parse command line arguments.
 i = 1
@@ -179,9 +179,9 @@ except:
 # =============================================================================
 
 if dst_filename is None:
-    src_ds = gdal.Open( src_filename, gdal.GA_Update )
+    src_ds = gdal.Open(src_filename, gdal.GA_Update)
 else:
-    src_ds = gdal.Open( src_filename, gdal.GA_ReadOnly )
+    src_ds = gdal.Open(src_filename, gdal.GA_ReadOnly)
 
 if src_ds is None:
     print('Unable to open %s ' % src_filename)
@@ -194,7 +194,7 @@ if mask is 'default':
 elif mask is 'none':
     maskband = None
 else:
-    mask_ds = gdal.Open( mask )
+    mask_ds = gdal.Open(mask)
     maskband = mask_ds.GetRasterBand(1)
 
 # =============================================================================
@@ -206,12 +206,12 @@ if dst_filename is not None:
         format = GetOutputDriverFor(dst_filename)
 
     drv = gdal.GetDriverByName(format)
-    dst_ds = drv.Create( dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
-                         srcband.DataType )
+    dst_ds = drv.Create(dst_filename,src_ds.RasterXSize, src_ds.RasterYSize,1,
+                         srcband.DataType)
     wkt = src_ds.GetProjection()
     if wkt != '':
-        dst_ds.SetProjection( wkt )
-    dst_ds.SetGeoTransform( src_ds.GetGeoTransform() )
+        dst_ds.SetProjection(wkt)
+    dst_ds.SetGeoTransform(src_ds.GetGeoTransform())
 
     dstband = dst_ds.GetRasterBand(1)
 else:
@@ -226,9 +226,9 @@ if quiet_flag:
 else:
     prog_func = gdal.TermProgress
 
-result = gdal.SieveFilter( srcband, maskband, dstband,
+result = gdal.SieveFilter(srcband, maskband, dstband,
                            threshold, connectedness,
-                           callback = prog_func )
+                           callback = prog_func)
 
 src_ds = None
 dst_ds = None

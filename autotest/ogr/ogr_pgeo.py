@@ -33,7 +33,7 @@ import os
 import sys
 from osgeo import ogr
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 import gdaltest
 import ogrtest
@@ -79,7 +79,7 @@ def ogr_pgeo_1(tested_driver = 'PGeo', other_driver = 'MDB'):
         os.stat('tmp/cache/Autodesk Test.mdb')
     except:
         try:
-            gdaltest.unzip( 'tmp/cache', 'tmp/cache/PGeoTest.zip')
+            gdaltest.unzip('tmp/cache', 'tmp/cache/PGeoTest.zip')
             try:
                 os.stat('tmp/cache/Autodesk Test.mdb')
             except:
@@ -305,7 +305,7 @@ gdaltest_list_internal = [
     ogr_pgeo_5,
     ogr_pgeo_6,
     ogr_pgeo_7,
-    ogr_pgeo_cleanup    ]
+    ogr_pgeo_cleanup]
 
 ###############################################################################
 #
@@ -314,12 +314,12 @@ gdaltest_list_internal = [
 def ogr_pgeo_main():
 
     # Run with the PGeo driver only (MDB disabled)
-    gdaltest.run_tests( [ ogr_pgeo_1 ] )
-    gdaltest.run_tests( gdaltest_list_internal )
+    gdaltest.run_tests([ogr_pgeo_1])
+    gdaltest.run_tests(gdaltest_list_internal)
 
     # Run with the MDB driver only (PGeo disabled)
-    gdaltest.run_tests( [ ogr_pgeo_mdb_1 ] )
-    gdaltest.run_tests( gdaltest_list_internal )
+    gdaltest.run_tests([ogr_pgeo_mdb_1])
+    gdaltest.run_tests(gdaltest_list_internal)
 
     return 'success'
 
@@ -330,8 +330,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'ogr_pgeo' )
+    gdaltest.setup_run('ogr_pgeo')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

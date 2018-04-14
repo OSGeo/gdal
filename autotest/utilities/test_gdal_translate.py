@@ -32,7 +32,7 @@
 import sys
 import os
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -248,11 +248,11 @@ def test_gdal_translate_8():
 
     gcps = ds.GetGCPs()
     if len(gcps) != 4:
-        gdaltest.post_reason( 'GCP count wrong.' )
+        gdaltest.post_reason('GCP count wrong.')
         return 'fail'
 
     if ds.GetGCPProjection().find('26711') == -1:
-        gdaltest.post_reason( 'Bad GCP projection.' )
+        gdaltest.post_reason('Bad GCP projection.')
         return 'fail'
 
     ds = None
@@ -530,10 +530,10 @@ def test_gdal_translate_19():
 
     ds = gdal.GetDriverByName('GTiff').Create('tmp/test_gdal_translate_19_src.tif',1,1,2)
     ct = gdal.ColorTable()
-    ct.SetColorEntry( 127, (1,2,3,255) )
-    ds.GetRasterBand( 1 ).SetRasterColorTable( ct )
-    ds.GetRasterBand( 1 ).Fill(127)
-    ds.GetRasterBand( 2 ).Fill(250)
+    ct.SetColorEntry(127, (1,2,3,255))
+    ds.GetRasterBand(1).SetRasterColorTable(ct)
+    ds.GetRasterBand(1).Fill(127)
+    ds.GetRasterBand(2).Fill(250)
     ds = None
 
     gdaltest.runexternal(test_cli_utilities.get_gdal_translate_path() + ' -expand rgba tmp/test_gdal_translate_19_src.tif tmp/test_gdal_translate_19_dst.tif')
@@ -599,12 +599,12 @@ def test_gdal_translate_21():
     ds = None
 
     if md['STATISTICS_MINIMUM'] != '8':
-        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        gdaltest.post_reason('STATISTICS_MINIMUM is wrong.')
         print(md['STATISTICS_MINIMUM'])
         return 'fail'
 
     if md['STATISTICS_HISTOBINVALUES'] != '0|0|0|0|0|0|0|0|8|0|0|0|0|0|0|0|23|0|0|0|0|0|0|0|0|29|0|0|0|0|0|0|0|46|0|0|0|0|0|0|0|69|0|0|0|0|0|0|0|99|0|0|0|0|0|0|0|0|120|0|0|0|0|0|0|0|178|0|0|0|0|0|0|0|193|0|0|0|0|0|0|0|212|0|0|0|0|0|0|0|281|0|0|0|0|0|0|0|0|365|0|0|0|0|0|0|0|460|0|0|0|0|0|0|0|533|0|0|0|0|0|0|0|544|0|0|0|0|0|0|0|0|626|0|0|0|0|0|0|0|653|0|0|0|0|0|0|0|673|0|0|0|0|0|0|0|629|0|0|0|0|0|0|0|0|586|0|0|0|0|0|0|0|541|0|0|0|0|0|0|0|435|0|0|0|0|0|0|0|348|0|0|0|0|0|0|0|341|0|0|0|0|0|0|0|0|284|0|0|0|0|0|0|0|225|0|0|0|0|0|0|0|237|0|0|0|0|0|0|0|172|0|0|0|0|0|0|0|0|159|0|0|0|0|0|0|0|105|0|0|0|0|0|0|0|824|':
-        gdaltest.post_reason( 'STATISTICS_HISTOBINVALUES is wrong.' )
+        gdaltest.post_reason('STATISTICS_HISTOBINVALUES is wrong.')
         return 'fail'
 
     return 'success'
@@ -625,11 +625,11 @@ def test_gdal_translate_22():
     ds = None
 
     if 'STATISTICS_MINIMUM' in md:
-        gdaltest.post_reason( 'did not expected a STATISTICS_MINIMUM value.' )
+        gdaltest.post_reason('did not expected a STATISTICS_MINIMUM value.')
         return 'fail'
 
     if 'STATISTICS_HISTOBINVALUES' in md:
-        gdaltest.post_reason( 'did not expected a STATISTICS_MINIMUM value.' )
+        gdaltest.post_reason('did not expected a STATISTICS_MINIMUM value.')
         return 'fail'
 
     return 'success'
@@ -649,13 +649,13 @@ def test_gdal_translate_23():
     ds = None
 
     if md['STATISTICS_MINIMUM'] != '74':
-        gdaltest.post_reason( 'STATISTICS_MINIMUM is wrong.' )
+        gdaltest.post_reason('STATISTICS_MINIMUM is wrong.')
         print(md['STATISTICS_MINIMUM'])
         return 'fail'
 
     try:
         os.stat('tmp/test_gdal_translate_23.tif.aux.xml')
-        gdaltest.post_reason( 'did not expect .aux.xml file presence' )
+        gdaltest.post_reason('did not expect .aux.xml file presence')
         return 'fail'
     except:
         pass
@@ -1171,8 +1171,8 @@ gdaltest_list = [
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'test_gdal_translate' )
+    gdaltest.setup_run('test_gdal_translate')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()

@@ -30,7 +30,7 @@
 
 import sys
 
-sys.path.append( '../pymod' )
+sys.path.append('../pymod')
 
 from osgeo import gdal
 import gdaltest
@@ -42,12 +42,12 @@ import gdaltest
 
 
 def rs2_1():
-    tst = gdaltest.GDALTest( 'RS2', 'product.xml', 1, 4672 )
+    tst = gdaltest.GDALTest('RS2', 'product.xml', 1, 4672)
     return tst.testOpen()
 
 
 def rs2_2():
-    tst = gdaltest.GDALTest( 'RS2', 'RADARSAT_2_CALIB:BETA0:data/product.xml', 1, 4848, filename_absolute=1 )
+    tst = gdaltest.GDALTest('RS2', 'RADARSAT_2_CALIB:BETA0:data/product.xml', 1, 4848, filename_absolute=1)
     return tst.testOpen()
 
 # Test reading our dummy RPC
@@ -82,12 +82,12 @@ def rs2_3():
 gdaltest_list = [
     rs2_1,
     rs2_2,
-    rs2_3 ]
+    rs2_3]
 
 if __name__ == '__main__':
 
-    gdaltest.setup_run( 'rs2' )
+    gdaltest.setup_run('rs2')
 
-    gdaltest.run_tests( gdaltest_list )
+    gdaltest.run_tests(gdaltest_list)
 
     gdaltest.summarize()
