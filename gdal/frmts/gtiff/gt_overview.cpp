@@ -254,7 +254,7 @@ void GTIFFBuildOverviewMetadata( const char *pszResampling,
 * type. 0 is returned if photometric type isn't supported or no default value
 * is defined by the specification.
 */
-static int GTIFFGetMaxColorChannels( uint16 photometric )
+static int GTIFFGetMaxColorChannels( int photometric )
 {
     switch (photometric) {
         case PHOTOMETRIC_PALETTE:
