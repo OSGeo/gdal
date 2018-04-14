@@ -870,23 +870,23 @@ def ogr_osm_15():
 
     ds.ResetReading()
     for i in range(count):
-        f, l = ds.GetNextFeature()
+        f, lyr = ds.GetNextFeature()
         #f.DumpReadable()
-        if f is None or l is None:
+        if f is None or lyr is None:
             gdaltest.post_reason('fail')
             print(i)
             return 'fail'
 
     ds.ResetReading()
-    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_false )
-    if f is not None or l is not None:
+    f, lyr = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_false )
+    if f is not None or lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
     pct_array = [ 0 ]
-    f, l = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array )
-    if f is None or l is None:
+    f, lyr = ds.GetNextFeature( callback = ogr_osm_15_progresscbk_return_true, callback_data = pct_array )
+    if f is None or lyr is None:
         gdaltest.post_reason('fail')
         return 'fail'
     if pct_array[ 0 ] != 1.0:

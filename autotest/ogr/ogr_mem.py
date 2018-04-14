@@ -754,51 +754,51 @@ def ogr_mem_17():
     f = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(f)
 
-    f, l = ds.GetNextFeature()
-    if f is None or l.GetName() != 'ogr_mem_1':
+    f, lyr = ds.GetNextFeature()
+    if f is None or lyr.GetName() != 'ogr_mem_1':
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is None or l.GetName() != 'ogr_mem_1':
+    f, lyr = ds.GetNextFeature()
+    if f is None or lyr.GetName() != 'ogr_mem_1':
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is None or l.GetName() != 'ogr_mem_2':
+    f, lyr = ds.GetNextFeature()
+    if f is None or lyr.GetName() != 'ogr_mem_2':
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is None or l.GetName() != 'ogr_mem_4':
+    f, lyr = ds.GetNextFeature()
+    if f is None or lyr.GetName() != 'ogr_mem_4':
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is not None or l is not None:
+    f, lyr = ds.GetNextFeature()
+    if f is not None or lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
-    f, l = ds.GetNextFeature()
-    if f is not None or l is not None:
+    f, lyr = ds.GetNextFeature()
+    if f is not None or lyr is not None:
         gdaltest.post_reason('fail')
         return 'fail'
 
     ds.ResetReading()
 
-    f, l = ds.GetNextFeature()
-    if f is None or l.GetName() != 'ogr_mem_1':
+    f, lyr = ds.GetNextFeature()
+    if f is None or lyr.GetName() != 'ogr_mem_1':
         gdaltest.post_reason('fail')
         print(f)
-        print(l.GetName())
+        print(lyr.GetName())
         return 'fail'
 
     ds.ResetReading()
