@@ -33,6 +33,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -365,7 +366,7 @@ field_value:
             $$->table_name = $$->string_value;
             $$->string_value = CPLStrdup($3->string_value);
             delete $3;
-            $3 = NULL;
+            $3 = nullptr;
         }
 
 value_expr_non_logical:
@@ -395,16 +396,28 @@ value_expr_non_logical:
 
     | SWQT_NULL
         {
-            $$ = new swq_expr_node((const char*)NULL);
+            $$ = new swq_expr_node((const char*)nullptr);
         }
 
     | '-' value_expr_non_logical %prec SWQT_UMINUS
         {
             if ($2->eNodeType == SNT_CONSTANT)
             {
-                $$ = $2;
-                $$->int_value *= -1;
-                $$->float_value *= -1;
+                if( $2->field_type == SWQ_FLOAT &&
+                    $2->string_value &&
+                    strcmp($2->string_value, "9223372036854775808") == 0 )
+                {
+                    $$ = $2;
+                    $$->field_type = SWQ_INTEGER64;
+                    $$->int_value = std::numeric_limits<GIntBig>::min();
+                    $$->float_value = static_cast<double>(std::numeric_limits<GIntBig>::min());
+                }
+                else
+                {
+                    $$ = $2;
+                    $$->int_value *= -1;
+                    $$->float_value *= -1;
+                }
             }
             else
             {
@@ -454,7 +467,7 @@ value_expr_non_logical:
             const swq_operation *poOp =
                     swq_op_registrar::GetOperator( $1->string_value );
 
-            if( poOp == NULL )
+            if( poOp == nullptr )
             {
                 if( context->bAcceptCustomFuncs )
                 {
@@ -623,7 +636,7 @@ column_spec:
             CPLString osTableName = $1->string_value;
 
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -652,7 +665,7 @@ column_spec:
             }
 
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -684,7 +697,7 @@ column_spec:
             }
 
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
 
             swq_expr_node *poNode = new swq_expr_node();
             poNode->eNodeType = SNT_COLUMN;
@@ -723,7 +736,7 @@ column_spec:
             swq_expr_node *count = new swq_expr_node( SWQ_COUNT );
             count->PushSubExpression( $4 );
 
-            if( !context->poCurSelect->PushField( count, NULL, TRUE ) )
+            if( !context->poCurSelect->PushField( count, nullptr, TRUE ) )
             {
                 delete count;
                 YYERROR;
@@ -799,19 +812,19 @@ sort_spec:
         {
             context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, TRUE );
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
         }
     | field_value SWQT_ASC
         {
             context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, TRUE );
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
         }
     | field_value SWQT_DESC
         {
             context->poCurSelect->PushOrderBy( $1->table_name, $1->string_value, FALSE );
             delete $1;
-            $1 = NULL;
+            $1 = nullptr;
         }
 
 opt_limit:
@@ -819,7 +832,7 @@ opt_limit:
     {
         context->poCurSelect->SetLimit( $2->int_value );
         delete $2;
-        $2 = NULL;
+        $2 = nullptr;
     }
 
 opt_offset:
@@ -827,15 +840,15 @@ opt_offset:
     {
         context->poCurSelect->SetOffset( $2->int_value );
         delete $2;
-        $2 = NULL;
+        $2 = nullptr;
     }
 
 table_def:
     SWQT_IDENTIFIER
     {
         const int iTable =
-            context->poCurSelect->PushTableDef( NULL, $1->string_value,
-                                                NULL );
+            context->poCurSelect->PushTableDef( nullptr, $1->string_value,
+                                                nullptr );
         delete $1;
 
         $$ = new swq_expr_node( iTable );
@@ -844,7 +857,7 @@ table_def:
     | SWQT_IDENTIFIER as_clause
     {
         const int iTable =
-            context->poCurSelect->PushTableDef( NULL, $1->string_value,
+            context->poCurSelect->PushTableDef( nullptr, $1->string_value,
                                                 $2->string_value );
         delete $1;
         delete $2;
@@ -856,7 +869,7 @@ table_def:
     {
         const int iTable =
             context->poCurSelect->PushTableDef( $1->string_value,
-                                                $3->string_value, NULL );
+                                                $3->string_value, nullptr );
         delete $1;
         delete $3;
 
@@ -880,7 +893,7 @@ table_def:
     {
         const int iTable =
             context->poCurSelect->PushTableDef( $1->string_value,
-                                                $3->string_value, NULL );
+                                                $3->string_value, nullptr );
         delete $1;
         delete $3;
 

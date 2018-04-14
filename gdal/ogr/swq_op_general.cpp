@@ -40,6 +40,7 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_safemaths.hpp"
 #include "cpl_string.h"
 #include "ogr_geometry.h"
 #include "ogr_p.h"
@@ -546,26 +547,60 @@ swq_expr_node *SWQGeneralEvaluator( swq_expr_node *node,
             break;
 
           case SWQ_ADD:
-            poRet->int_value = sub_node_values[0]->int_value
-                + sub_node_values[1]->int_value;
+            try
+            {
+                poRet->int_value = (CPLSM(sub_node_values[0]->int_value)
+                                  + CPLSM(sub_node_values[1]->int_value)).v();
+            }
+            catch( const std::exception& )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow");
+                poRet->is_null = true;
+            }
             break;
 
           case SWQ_SUBTRACT:
-            poRet->int_value = sub_node_values[0]->int_value
-                - sub_node_values[1]->int_value;
+            try
+            {
+                poRet->int_value = (CPLSM(sub_node_values[0]->int_value)
+                                  - CPLSM(sub_node_values[1]->int_value)).v();
+            }
+            catch( const std::exception& )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow");
+                poRet->is_null = true;
+            }
             break;
 
           case SWQ_MULTIPLY:
-            poRet->int_value = sub_node_values[0]->int_value
-                * sub_node_values[1]->int_value;
+            try
+            {
+                poRet->int_value = (CPLSM(sub_node_values[0]->int_value)
+                                  * CPLSM(sub_node_values[1]->int_value)).v();
+            }
+            catch( const std::exception& )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Int overflow");
+                poRet->is_null = true;
+            }
             break;
 
           case SWQ_DIVIDE:
             if( sub_node_values[1]->int_value == 0 )
                 poRet->int_value = INT_MAX;
             else
-                poRet->int_value = sub_node_values[0]->int_value
-                    / sub_node_values[1]->int_value;
+            {
+                try
+                {
+                    poRet->int_value = (CPLSM(sub_node_values[0]->int_value)
+                                    / CPLSM(sub_node_values[1]->int_value)).v();
+                }
+                catch( const std::exception& )
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Int overflow");
+                    poRet->is_null = true;
+                }
+            }
             break;
 
           case SWQ_MODULUS:

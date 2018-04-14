@@ -1614,6 +1614,50 @@ def ogr_rfc28_48():
 
     return 'success'
 
+
+###############################################################################
+def ogr_rfc28_int_overflows():
+
+    ds = ogr.GetDriverByName('Memory').CreateDataSource('')
+    lyr = ds.CreateLayer('lyr')
+    f = ogr.Feature(lyr.GetLayerDefn())
+    lyr.CreateFeature(f)
+    tests = [('SELECT -9223372036854775808 FROM lyr', -9223372036854775808),
+             ('SELECT -9223372036854775808/1 FROM lyr', -9223372036854775808),
+             ('SELECT 9223372036854775807 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807*1 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807/1 FROM lyr', 9223372036854775807),
+             ('SELECT 9223372036854775807/-1 FROM lyr', -9223372036854775807),
+             ('SELECT 9223372036854775807*-1 FROM lyr', -9223372036854775807),
+             ('SELECT 9223372036854775806+1 FROM lyr', 9223372036854775807),
+             ('SELECT -9223372036854775807-1 FROM lyr', -9223372036854775808),
+             ('SELECT 9223372036854775808 FROM lyr', 9223372036854775808.0),
+             ('SELECT -9223372036854775809 FROM lyr', -9223372036854775809.0),
+             ('SELECT 9223372036854775807+1 FROM lyr', None),
+             ('SELECT -9223372036854775808-1 FROM lyr', None),
+             ('SELECT 9223372036854775807*2 FROM lyr', None),
+             ('SELECT -9223372036854775807*2 FROM lyr', None),
+             ('SELECT 9223372036854775807*-2 FROM lyr', None),
+             ('SELECT -9223372036854775807*-2 FROM lyr', None),
+             ('SELECT -9223372036854775808*-1 FROM lyr', None),
+             ('SELECT -9223372036854775808/-1 FROM lyr', None),
+             ]
+    for sql, res in tests:
+        sql_lyr = ds.ExecuteSQL(sql)
+        if res is None:
+            with gdaltest.error_handler():
+                f = sql_lyr.GetNextFeature()
+        else:
+            f = sql_lyr.GetNextFeature()
+        if f.GetField(0) != res:
+            gdaltest.post_reason('fail')
+            print(sql, res, f.GetField(0))
+            return 'fail'
+        ds.ReleaseResultSet(sql_lyr)
+
+    return 'success'
+
+
 ###############################################################################
 
 
@@ -1677,6 +1721,7 @@ gdaltest_list = [
     ogr_rfc28_46,
     ogr_rfc28_47,
     ogr_rfc28_48,
+    ogr_rfc28_int_overflows,
     ogr_rfc28_cleanup]
 
 if __name__ == '__main__':
