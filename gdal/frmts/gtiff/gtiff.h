@@ -60,6 +60,11 @@ CPLString GTiffFormatGDALNoDataTagValue( double dfNoData );
 
 const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
 
+// Note: Was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10.
+constexpr uint16 DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
+
+uint16 GTiffGetAlphaValue(const char* pszValue, uint16 nDefault);
+
 #define TIFFTAG_GDAL_METADATA  42112
 #define TIFFTAG_GDAL_NODATA    42113
 #define TIFFTAG_RPCCOEFFICIENT 50844
